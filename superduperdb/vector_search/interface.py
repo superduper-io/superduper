@@ -3,7 +3,6 @@ import typing as t
 import numpy as np
 
 from superduperdb import CFG
-from superduperdb.base import exceptions
 from superduperdb.misc.server import request_server
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
@@ -36,29 +35,19 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param items: t.Sequence of VectorItems
         """
-        try:
-            vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
-            if CFG.cluster.vector_search:
-                request_server(
-                    service='vector_search',
-                    data=vector_items,
-                    endpoint='add/search',
-                    args={
-                        'vector_index': self.vector_index,
-                    },
-                )
-                return
-
-            return self.searcher.add(items)
-        except Exception as e:
-            local_msg = (
-                'remote vector search service'
-                if CFG.cluster.vector_search
-                else 'local vector search'
+        vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
+        if CFG.cluster.vector_search:
+            request_server(
+                service='vector_search',
+                data=vector_items,
+                endpoint='add/search',
+                args={
+                    'vector_index': self.vector_index,
+                },
             )
-            raise exceptions.VectorSearchException(
-                f'Error while adding vector to {local_msg}'
-            ) from e
+            return
+
+        return self.searcher.add(items)
 
     def delete(self, ids: t.Sequence[str]) -> None:
         """
@@ -66,28 +55,18 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param ids: t.Sequence of ids of vectors.
         """
-        try:
-            if CFG.cluster.vector_search:
-                request_server(
-                    service='vector_search',
-                    data=ids,
-                    endpoint='delete/search',
-                    args={
-                        'vector_index': self.vector_index,
-                    },
-                )
-                return
-
-            return self.searcher.delete(ids)
-        except Exception as e:
-            local_msg = (
-                'remote vector search service'
-                if CFG.cluster.vector_search
-                else 'local vector search'
+        if CFG.cluster.vector_search:
+            request_server(
+                service='vector_search',
+                data=ids,
+                endpoint='delete/search',
+                args={
+                    'vector_index': self.vector_index,
+                },
             )
-            raise exceptions.VectorSearchException(
-                f'Error while deleting ids {ids} from {local_msg}'
-            ) from e
+            return
+
+        return self.searcher.delete(ids)
 
     def find_nearest_from_id(
         self,
@@ -101,29 +80,15 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param _id: id of the vector
         :param n: number of nearest vectors to return
         """
-        try:
-            if CFG.cluster.vector_search:
-                response = request_server(
-                    service='vector_search',
-                    endpoint='query/id/search',
-                    args={'vector_index': self.vector_index, 'n': n, 'id': _id},
-                )
-                return response['ids'], response['scores']
-
-            return self.searcher.find_nearest_from_id(_id, n=n, within_ids=within_ids)
-        except Exception as e:
-            local_msg = (
-                'remote vector search service'
-                if CFG.cluster.vector_search
-                else 'local vector search'
+        if CFG.cluster.vector_search:
+            response = request_server(
+                service='vector_search',
+                endpoint='query/id/search',
+                args={'vector_index': self.vector_index, 'n': n, 'id': _id},
             )
-            raise exceptions.VectorSearchException(
-                f'Error while finding nearest array from {local_msg} \n\
-                The problem might be either wrong id {_id} provided or vector database \
-                is empty (Not initialized properly), check if model/listener outputs \
-                are successfully computed, generally have issues \
-                when computes is distributed to dask for example. '
-            ) from e
+            return response['ids'], response['scores']
+
+        return self.searcher.find_nearest_from_id(_id, n=n, within_ids=within_ids)
 
     def find_nearest_from_array(
         self,
@@ -137,29 +102,13 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param h: vector
         :param n: number of nearest vectors to return
         """
-        try:
-            if CFG.cluster.vector_search:
-                response = request_server(
-                    service='vector_search',
-                    data=h,
-                    endpoint='query/search',
-                    args={'vector_index': self.vector_index, 'n': n},
-                )
-                return response['ids'], response['scores']
+        if CFG.cluster.vector_search:
+            response = request_server(
+                service='vector_search',
+                data=h,
+                endpoint='query/search',
+                args={'vector_index': self.vector_index, 'n': n},
+            )
+            return response['ids'], response['scores']
 
-            return self.searcher.find_nearest_from_array(
-                h=h, n=n, within_ids=within_ids
-            )
-        except Exception as e:
-            local_msg = (
-                'remote vector search service'
-                if CFG.cluster.vector_search
-                else 'local vector search'
-            )
-            raise exceptions.VectorSearchException(
-                f'Error while finding nearest array from {local_msg} \n\
-                The problem might be either wrong vector provided or vector database \
-                is empty (Not initialized properly), check if model/listener outputs \
-                are successfully computed, generally have issues \
-                when computes is distributed to dask for example. '
-            ) from e
+        return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)

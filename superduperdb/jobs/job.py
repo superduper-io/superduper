@@ -4,7 +4,6 @@ import uuid
 from abc import abstractmethod
 
 import superduperdb as s
-from superduperdb.base import exceptions
 from superduperdb.jobs.tasks import callable_job, method_job
 
 
@@ -115,21 +114,18 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        try:
-            self.future = self.db.compute.submit(
-                callable_job,
-                cfg=s.CFG,
-                function_to_call=self.callable,
-                job_id=self.identifier,
-                args=self.args,
-                kwargs=self.kwargs,
-                dependencies=dependencies,
-                db=self.db if self.db.compute.type == 'local' else None,
-                local=self.db.compute.type == 'local',
-            )
+        self.future = self.db.compute.submit(
+            callable_job,
+            cfg=s.CFG,
+            function_to_call=self.callable,
+            job_id=self.identifier,
+            args=self.args,
+            kwargs=self.kwargs,
+            dependencies=dependencies,
+            db=self.db if self.db.compute.type == 'local' else None,
+            local=self.db.compute.type == 'local',
+        )
 
-        except Exception as e:
-            raise exceptions.JobException('Error while submitting job') from e
         return
 
     def __call__(self, db: t.Any = None, dependencies=()):
@@ -185,22 +181,19 @@ class ComponentJob(Job):
         Submit job for execution
         :param dependencies: list of dependencies
         """
-        try:
-            self.future = self.db.compute.submit(
-                method_job,
-                cfg=s.CFG,
-                type_id=self.type_id,
-                identifier=self.component_identifier,
-                method_name=self.method_name,
-                job_id=self.identifier,
-                args=self.args,
-                kwargs=self.kwargs,
-                dependencies=dependencies,
-                db=self.db if self.db.compute.type == 'local' else None,
-                local=self.db.compute.type == 'local',
-            )
-        except Exception as e:
-            raise exceptions.JobException('Error while submitting job') from e
+        self.future = self.db.compute.submit(
+            method_job,
+            cfg=s.CFG,
+            type_id=self.type_id,
+            identifier=self.component_identifier,
+            method_name=self.method_name,
+            job_id=self.identifier,
+            args=self.args,
+            kwargs=self.kwargs,
+            dependencies=dependencies,
+            db=self.db if self.db.compute.type == 'local' else None,
+            local=self.db.compute.type == 'local',
+        )
         return
 
     def __call__(self, db: t.Any = None, dependencies=()):

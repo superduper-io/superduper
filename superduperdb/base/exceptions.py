@@ -23,33 +23,9 @@ class BaseException(Exception):
         return self.msg
 
 
-class ComponentException(BaseException):
+class QueryException(BaseException):
     '''
-    ComponentException
-    '''
-
-
-class ComponentAddException(ComponentException):
-    '''
-    ComponentAddException
-    '''
-
-
-class ComponentReplaceException(ComponentException):
-    '''
-    ComponentReplaceException
-    '''
-
-
-class ComponentLoadException(ComponentException):
-    '''
-    ComponentLoadException
-    '''
-
-
-class DatabaseConnectionException(BaseException):
-    '''
-    DatabackendException
+    QueryException
     '''
 
 
@@ -59,176 +35,13 @@ class DatabackendException(BaseException):
     '''
 
 
-class MetadatastoreException(BaseException):
+class MetadataException(BaseException):
     '''
-    MetadatastoreException
-    '''
-
-
-class ArtifactStoreException(BaseException):
-    '''
-    ArtifactStoreException
+    MetadataException
     '''
 
 
-class ArtifactStoreDeleteException(ArtifactStoreException):
+class ComponentException(BaseException):
     '''
-    ArtifactStoreException
+    ComponentException
     '''
-
-
-class ArtifactStoreLoadException(ArtifactStoreException):
-    '''
-    ArtifactStoreException
-    '''
-
-
-class ArtifactStoreSaveException(ArtifactStoreException):
-    '''
-    ArtifactStoreException
-    '''
-
-
-class DatalayerException(BaseException):
-    '''
-    DatalayerException
-    '''
-
-
-class FileNotFoundException(BaseException):
-    '''
-    FileNotFoundException
-    '''
-
-
-class ServiceRequestException(BaseException):
-    '''
-    ServiceException
-    '''
-
-
-class ModelException(BaseException):
-    '''
-    ModelException
-    '''
-
-
-class VectorSearchException(ComponentException):
-    '''
-    VectorSearchException
-    '''
-
-
-class EncoderException(ComponentException):
-    '''
-    EncoderException
-    '''
-
-
-class QueryException(ComponentException):
-    '''
-    QueryException
-    '''
-
-
-class SelectQueryException(QueryException):
-    '''
-    SelectQueryException
-    '''
-
-
-class DeleteQueryException(QueryException):
-    '''
-    DeleteQueryException
-    '''
-
-
-class InsertQueryException(QueryException):
-    '''
-    InsertQueryException
-    '''
-
-
-class UpdateQueryException(QueryException):
-    '''
-    UpdateQueryException
-    '''
-
-
-class TableQueryException(QueryException):
-    '''
-    TableQueryException
-    '''
-
-
-class RawQueryException(QueryException):
-    '''
-    RawQueryException
-    '''
-
-
-class JobException(ComponentException):
-    '''
-    JobException
-    '''
-
-
-class TaskWorkflowException(ComponentException):
-    '''
-    TaskWorkflowException
-    '''
-
-
-class MetaDataStoreDeleteException(MetadatastoreException):
-    '''
-    MetaDataStoreDeleteException
-    '''
-
-
-class MetaDataStoreJobException(MetadatastoreException):
-    '''
-    MetaDataStoreJobException
-    '''
-
-
-class MetaDataStoreCreateException(MetadatastoreException):
-    '''
-    MetaDataStoreCreateException
-    '''
-
-
-class MetaDataStoreUpdateException(MetadatastoreException):
-    '''
-    MetaDataStoreUpdateException
-    '''
-
-
-class ModelPredictException(ModelException):
-    '''
-    ModelPredictException
-    '''
-
-
-class ModelFitException(ModelException):
-    '''
-    ModelFitException
-    '''
-
-
-_query_exceptions = {
-    'Delete': DeleteQueryException,
-    'Update': UpdateQueryException,
-    'Table': TableQueryException,
-    'Insert': InsertQueryException,
-    'Select': SelectQueryException,
-    'RawQuery': RawQueryException,
-}
-
-
-def query_exceptions(query):
-    query = str(query)
-    for k, v in _query_exceptions.items():
-        if k in query:
-            return v
-    else:
-        return QueryException

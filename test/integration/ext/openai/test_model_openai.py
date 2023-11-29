@@ -43,11 +43,11 @@ httpx_stubs._make_vcr_request = _make_vcr_request
 
 
 def before_record_response(response):
-    '''
+    """
     VCR filter function to only record the PNG signature in the response.
 
     This is necessary because the response is a PNG which can be quite large.
-    '''
+    """
     if 'body' not in response:
         return response
     if PNG_BYTE_SIGNATURE in response['body']['string']:

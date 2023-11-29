@@ -632,6 +632,6 @@ class RawQuery:
 
     @abstractmethod
     def execute(self, db):
-        '''
+        """
         A raw query method which executes the query and returns the result
-        '''
+        """

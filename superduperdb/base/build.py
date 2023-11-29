@@ -35,7 +35,7 @@ def build_artifact_store(cfg):
 def build(uri, mapping):
     logging.debug(f"Parsing data connection URI:{uri}")
 
-    if re.match('^mongodb:\/\/', uri) is not None:
+    if re.match(r'^mongodb:\/\/', uri) is not None:
         name = uri.split('/')[-1]
         conn = pymongo.MongoClient(
             uri,
@@ -43,7 +43,7 @@ def build(uri, mapping):
         )
         return mapping['mongodb'](conn, name)
 
-    elif re.match('^mongodb\+srv:\/\/', uri):
+    elif re.match(r'^mongodb\+srv:\/\/', uri):
         name = uri.split('/')[-1]
         conn = pymongo.MongoClient(
             '/'.join(uri.split('/')[:-1]),

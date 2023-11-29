@@ -25,12 +25,8 @@ class Job:
     """
     Base class for jobs. Jobs are used to run functions or methods on.
 
-    :param args: positional arguments to be passed to the function or method
-    :param kwargs: keyword arguments to be passed to the function or method
-    :param identifier: unique identifier
-    :param callable: function or method to be called
-    :param db: DB instance to be used
-    :param future: future object returned by dask
+    :param args: Positional arguments to be passed to the function or method
+    :param kwargs: Keyword arguments to be passed to the function or method
     """
 
     callable: t.Optional[t.Callable]
@@ -87,12 +83,11 @@ class Job:
 
 class FunctionJob(Job):
     """
-    Job for running a function.
-    on a dask cluster.
+    Job for running a function on a compute cluster.
 
-    :param callable: function to be called
-    :param args: positional arguments to be passed to the function
-    :param kwargs: keyword arguments to be passed to the function
+    :param callable: Function to be called
+    :param args: Positional arguments to be passed to the function
+    :param kwargs: Keyword arguments to be passed to the function
     """
 
     def __init__(

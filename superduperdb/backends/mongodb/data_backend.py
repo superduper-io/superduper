@@ -119,7 +119,7 @@ class MongoDataBackend(BaseDataBackend):
             vector_index.indexing_listener.select.table_or_collection.identifier
         )
         key = vector_index.indexing_listener.key
-        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
+        if re.match(r'^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
         model = vector_index.indexing_listener.model.identifier
         version = vector_index.indexing_listener.model.version

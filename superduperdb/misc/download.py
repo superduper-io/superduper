@@ -276,7 +276,7 @@ def gather_uris(
 
 
 def _gather_uris_for_document(r: t.Dict):
-    '''
+    """
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])
     >>> d = {'b': {'a': {'_content': {'uri': 'test'}}}}
@@ -285,7 +285,7 @@ def _gather_uris_for_document(r: t.Dict):
     >>> d = {'b': {'a': {'_content': {'uri': 'test', 'bytes': b'abc'}}}}
     >>> _gather_uris_for_document(d)
     ([], [])
-    '''
+    """
     uris = []
     keys = []
     for k in r:

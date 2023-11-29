@@ -22,7 +22,9 @@ class ComputeBackend(ABC):
         pass
 
     def get_local_client(self):
-        '''Returns a local version of self'''
+        """
+        Returns a local version of self
+        """
         pass
 
     @abstractmethod

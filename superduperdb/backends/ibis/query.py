@@ -357,8 +357,8 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     def repr_(self) -> str:
         out = super().repr_()
-        out = re.sub('\. ', ' ', out)
-        out = re.sub('\.\[', '[', out)
+        out = re.sub(r'\. ', ' ', out)
+        out = re.sub(r'\.\[', '[', out)
         return out
 
     @property
@@ -781,7 +781,7 @@ class IbisQueryComponent(QueryComponent):
         >>> IbisQueryComponent('__eq__(2)', type=QueryType.QUERY, args=[1, 2]).repr_()
         """
         out = super().repr_()
-        match = re.match('.*__([a-z]+)__\(([a-z0-9_\.\']+)\)', out)
+        match = re.match('.*__([a-z]+)__\\(([a-z0-9_\\.\']+)\\)', out)
         symbol = match.groups()[0] if match is not None else None
 
         if symbol == 'getitem':

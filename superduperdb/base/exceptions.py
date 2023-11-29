@@ -10,10 +10,10 @@ class ComponentInUseWarning(Warning):
 
 
 class BaseException(Exception):
-    '''
+    """
     BaseException which logs a message after
     exception
-    '''
+    """
 
     def __init__(self, msg):
         self.msg = msg
@@ -24,195 +24,195 @@ class BaseException(Exception):
 
 
 class ComponentException(BaseException):
-    '''
+    """
     ComponentException
-    '''
+    """
 
 
 class ComponentAddException(ComponentException):
-    '''
+    """
     ComponentAddException
-    '''
+    """
 
 
 class ComponentReplaceException(ComponentException):
-    '''
+    """
     ComponentReplaceException
-    '''
+    """
 
 
 class ComponentLoadException(ComponentException):
-    '''
+    """
     ComponentLoadException
-    '''
+    """
 
 
 class DatabaseConnectionException(BaseException):
-    '''
+    """
     DatabackendException
-    '''
+    """
 
 
 class DatabackendException(BaseException):
-    '''
+    """
     DatabackendException
-    '''
+    """
 
 
 class MetadatastoreException(BaseException):
-    '''
+    """
     MetadatastoreException
-    '''
+    """
 
 
 class ArtifactStoreException(BaseException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class ArtifactStoreDeleteException(ArtifactStoreException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class ArtifactStoreLoadException(ArtifactStoreException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class ArtifactStoreSaveException(ArtifactStoreException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class DatalayerException(BaseException):
-    '''
+    """
     DatalayerException
-    '''
+    """
 
 
 class FileNotFoundException(BaseException):
-    '''
+    """
     FileNotFoundException
-    '''
+    """
 
 
 class ServiceRequestException(BaseException):
-    '''
+    """
     ServiceException
-    '''
+    """
 
 
 class ModelException(BaseException):
-    '''
+    """
     ModelException
-    '''
+    """
 
 
 class VectorSearchException(ComponentException):
-    '''
+    """
     VectorSearchException
-    '''
+    """
 
 
 class EncoderException(ComponentException):
-    '''
+    """
     EncoderException
-    '''
+    """
 
 
 class QueryException(ComponentException):
-    '''
+    """
     QueryException
-    '''
+    """
 
 
 class SelectQueryException(QueryException):
-    '''
+    """
     SelectQueryException
-    '''
+    """
 
 
 class DeleteQueryException(QueryException):
-    '''
+    """
     DeleteQueryException
-    '''
+    """
 
 
 class InsertQueryException(QueryException):
-    '''
+    """
     InsertQueryException
-    '''
+    """
 
 
 class UpdateQueryException(QueryException):
-    '''
+    """
     UpdateQueryException
-    '''
+    """
 
 
 class TableQueryException(QueryException):
-    '''
+    """
     TableQueryException
-    '''
+    """
 
 
 class RawQueryException(QueryException):
-    '''
+    """
     RawQueryException
-    '''
+    """
 
 
 class JobException(ComponentException):
-    '''
+    """
     JobException
-    '''
+    """
 
 
 class TaskWorkflowException(ComponentException):
-    '''
+    """
     TaskWorkflowException
-    '''
+    """
 
 
 class MetaDataStoreDeleteException(MetadatastoreException):
-    '''
+    """
     MetaDataStoreDeleteException
-    '''
+    """
 
 
 class MetaDataStoreJobException(MetadatastoreException):
-    '''
+    """
     MetaDataStoreJobException
-    '''
+    """
 
 
 class MetaDataStoreCreateException(MetadatastoreException):
-    '''
+    """
     MetaDataStoreCreateException
-    '''
+    """
 
 
 class MetaDataStoreUpdateException(MetadatastoreException):
-    '''
+    """
     MetaDataStoreUpdateException
-    '''
+    """
 
 
 class ModelPredictException(ModelException):
-    '''
+    """
     ModelPredictException
-    '''
+    """
 
 
 class ModelFitException(ModelException):
-    '''
+    """
     ModelFitException
-    '''
+    """
 
 
 _query_exceptions = {

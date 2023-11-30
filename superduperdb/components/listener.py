@@ -52,7 +52,7 @@ class Listener(Component):
         if self.select is not None and self.select.variables:
             self.select = t.cast(CompoundSelect, self.select.set_variables(db))
 
-    def post_load(self, db: Datalayer) -> None:
+    def post_create(self, db: Datalayer) -> None:
         # Start cdc service if enabled
         if self.select is not None and self.active and not db.server_mode:
             if CFG.cluster.cdc:

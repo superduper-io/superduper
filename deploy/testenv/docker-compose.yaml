@@ -111,7 +111,7 @@ services:
       - /bin/sh
       - -c
       - |
-        dask scheduler --preload deploy/testenv/preload.py
+        PYTHONPATH=./:. dask scheduler --preload deploy/testenv/preload.py
 
   dask-worker:
     depends_on:
@@ -125,7 +125,7 @@ services:
       - /bin/sh
       - -c
       - |
-        dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
+        PYTHONPATH=./:. dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
     deploy:
       replicas: 1
 

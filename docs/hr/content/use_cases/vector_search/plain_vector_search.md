@@ -27,7 +27,7 @@ Before diving into the implementation, ensure that you have the necessary librar
 
 ```bash
 !pip install superduperdb
-!pip install ipython
+!pip install ipython openai==1.1.2
 ```
 
 Additionally, ensure that you have set your OpenAI API key as an environment variable. You can uncomment the following code and add your API key:

@@ -5,5 +5,5 @@ Connecting:
 ```python
 from superduperdb import superduper
 
-db = superduper('mysql://<snowflake-uri>')
+db = superduper('mysql://<mysql-uri>')
 ```

@@ -424,6 +424,10 @@ class Datalayer:
         if refresh and self.cdc.running:
             raise Exception('cdc cannot be activated and refresh=True')
 
+        if s.CFG.cluster.cdc is not None:
+            logging.info('CDC active, skipping refresh')
+            return inserted_ids, None
+
         if refresh:
             return inserted_ids, self.refresh_after_update_or_insert(
                 insert, ids=inserted_ids, verbose=False
@@ -500,7 +504,7 @@ class Datalayer:
 
     def add(
         self,
-        object: t.Union[Component, t.Sequence[Component], t.Any],
+        object: t.Union[Component, t.Sequence[t.Any], t.Any],
         dependencies: t.Sequence[Job] = (),
     ):
         """
@@ -521,9 +525,9 @@ class Datalayer:
                 for component in object
             )
         elif isinstance(object, Component):
-            return self._add(object=object, dependencies=dependencies)
+            return self._add(object=object, dependencies=dependencies), object
         else:
-            return self._add(superduper(object))
+            return self._add(superduper(object)), object
 
     def remove(
         self,
@@ -862,7 +866,7 @@ class Datalayer:
         existing_versions = self.show(object.type_id, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
             s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-            return [], object
+            return []
 
         if existing_versions:
             object.version = max(existing_versions) + 1
@@ -887,10 +891,10 @@ class Datalayer:
         self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
-
         object.post_create(self)
-        object.on_load(self)
-        return object.schedule_jobs(self, dependencies=dependencies), object
+        these_jobs = object.schedule_jobs(self, dependencies=dependencies)
+        jobs.extend(these_jobs)
+        return jobs
 
     def _create_children(self, component: Component, serialized: t.Dict):
         jobs = []
@@ -911,7 +915,7 @@ class Datalayer:
                     child,
                     serialized=serialized['dict'][k],
                     parent=component.unique_id,
-                )[0]
+                )
                 jobs.extend(sub_jobs)
                 serialized_dict = {
                     'type_id': child.type_id,
@@ -919,6 +923,7 @@ class Datalayer:
                     'version': child.version,
                 }
             serialized['dict'][k] = serialized_dict
+
         return jobs
 
     def _create_plan(self):

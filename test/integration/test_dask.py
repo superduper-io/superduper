@@ -1,4 +1,5 @@
 import io
+import time
 import uuid
 from contextlib import redirect_stdout
 
@@ -28,24 +29,27 @@ def add_and_cleanup_listener(database, collection_name):
     )
 
     database.add(listener_x)
-    try:
-        yield database
-    finally:
-        database.remove('listener', 'model_linear_a/x', force=True)
+    yield database
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_taskgraph_futures_with_dask(
-    dask_client, database_with_default_encoders_and_model, fake_updates
-):
-    collection_name = str(uuid.uuid4())
+@pytest.fixture
+def distributed_db(database_with_default_encoders_and_model, dask_client):
+    local_compute = database_with_default_encoders_and_model.get_compute()
     database_with_default_encoders_and_model.set_compute(dask_client)
-    _, graph = database_with_default_encoders_and_model.execute(
+    yield database_with_default_encoders_and_model
+    database_with_default_encoders_and_model.set_compute(local_compute)
+
+
+@pytest.mark.order(2)
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+def test_taskgraph_futures_with_dask(dask_client, distributed_db, fake_updates):
+    collection_name = str(uuid.uuid4())
+    _, graph = distributed_db.execute(
         Collection(identifier=collection_name).insert_many(fake_updates)
     )
 
     next(
-        database_with_default_encoders_and_model.execute(
+        distributed_db.execute(
             Collection(identifier=collection_name).find({'update': True})
         )
     )
@@ -57,23 +61,21 @@ def test_taskgraph_futures_with_dask(
     assert all([job.future.status == 'finished' for job in jobs])
 
 
+@pytest.mark.order(1)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     'dask_client, test_db',
     [('test_insert_with_distributed', 'test_insert_with_distributed')],
     indirect=True,
 )
-def test_insert_with_dask(
-    dask_client, database_with_default_encoders_and_model, fake_updates
-):
+def test_insert_with_dask(distributed_db, dask_client, fake_updates):
     collection_name = str(uuid.uuid4())
 
     with add_and_cleanup_listener(
-        database_with_default_encoders_and_model,
+        distributed_db,
         collection_name,
     ) as db:
         # Submit job
-        db.set_compute(dask_client)
         db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
         # Barrier
@@ -90,8 +92,9 @@ def test_insert_with_dask(
         assert 'model_linear_a' in r['_outputs']['x']
 
 
+@pytest.mark.order(3)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_dependencies_with_dask(dask_client, database_with_default_encoders_and_model):
+def test_dependencies_with_dask(dask_client, distributed_db):
     def test_node_1(*args, **kwargs):
         return 1
 
@@ -100,8 +103,7 @@ def test_dependencies_with_dask(dask_client, database_with_default_encoders_and_
 
     # Set Dask as Compute engine.
     # ------------------------------
-    database = database_with_default_encoders_and_model
-    database.set_compute(dask_client)
+    database = distributed_db
 
     # Build Task Graph
     # ------------------------------
@@ -135,13 +137,8 @@ def test_dependencies_with_dask(dask_client, database_with_default_encoders_and_
     assert futures[1].result() == 2
 
 
-def test_model_job_logs(
-    dask_client, database_with_default_encoders_and_model, fake_updates
-):
-    # Set Dask as compute engine.
-    # ------------------------------
-    database_with_default_encoders_and_model.set_compute(dask_client)
-
+@pytest.mark.order(4)
+def test_model_job_logs(distributed_db, fake_updates):
     # Set Collection Listener
     # ------------------------------
     collection = Collection(identifier=str(uuid.uuid4()))
@@ -151,13 +148,11 @@ def test_model_job_logs(
         model='model_linear_a',
         select=collection.find(),
     )
-    jobs, _ = database_with_default_encoders_and_model.add(listener_x)
+    jobs, _ = distributed_db.add(listener_x)
 
     # Insert data to the Collection
     # ------------------------------
-    database_with_default_encoders_and_model.execute(
-        collection.insert_many(fake_updates)
-    )
+    distributed_db.execute(collection.insert_many(fake_updates))
 
     # Validate Log Output
     # ------------------------------
@@ -166,4 +161,8 @@ def test_model_job_logs(
         jobs[0].watch()
     s = f.getvalue()
     logs = s.split('\n')
+    retry_left = 5
+    while not jobs[0].future.done() or retry_left != 0:
+        time.sleep(1)
+        retry_left -= 1
     assert len(logs) > 1

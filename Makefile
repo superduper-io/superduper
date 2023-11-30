@@ -76,9 +76,8 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 
-##@ CI Testing Environment
-
 SUPERDUPERDB_EXTRAS ?= dev
+SUPERDUPERDB_DATA ?= test
 
 testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
@@ -89,6 +88,9 @@ testenv_image: ## Build a sandbox image
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Ensure hostnames"
 	@deploy/testenv/validate_hostnames.sh
+
+	@echo "===> Ensure mongodb volume is present"
+	mkdir -p deploy/testenv/.$(SUPERDUPERDB_DATA)_data
 
 	@echo "===> Ensure Images"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
@@ -101,7 +103,7 @@ testenv_init: ## Initialize a local Testing environment
       	exit -1;\
     fi
 
-	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
+	SUPERDUPERDB_DATA=$(SUPERDUPERDB_DATA) docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"

@@ -91,6 +91,9 @@ jobs:
           # Destroy the testing environment
           make testenv_shutdown
 
+          # Remove the data directory
+          sudo rm -rf deploy/testenv/.test_data
+
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4
         with:

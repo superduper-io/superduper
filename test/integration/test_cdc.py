@@ -341,11 +341,7 @@ def add_and_cleanup_listeners(database, collection_name):
 
     database.add(listener_x)
     database.add(listener_z)
-    try:
-        yield database
-    finally:
-        database.remove('listener', 'model_linear_a/x', force=True)
-        database.remove('listener', 'model_linear_a/z', force=True)
+    yield database
 
 
 @pytest.fixture

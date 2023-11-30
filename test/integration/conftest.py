@@ -70,12 +70,6 @@ def database_with_default_encoders_and_model(test_db):
     )
     test_db.add(vi)
     yield test_db
-    try:
-        test_db.remove('model', 'model_linear_a', force=True)
-        test_db.remove('encoder', 'torch.float32[16]', force=True)
-        test_db.remove('encoder', 'torch.float32[32]', force=True)
-    except Exception:
-        print('Already removed, skipping model and encoder removal')
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

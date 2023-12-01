@@ -1,4 +1,4 @@
-# Sentiment Analysis
+# Sentiment analysis
 
 ## Sentiment analysis with transformers and SuperDuperDB
 

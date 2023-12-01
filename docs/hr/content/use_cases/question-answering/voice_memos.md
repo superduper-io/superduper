@@ -1,4 +1,4 @@
-# Voice Memo Assistant
+# Voice memo assistant
 
 ## Cataloguing voice-memos for a self managed personal assistant
 

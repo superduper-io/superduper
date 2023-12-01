@@ -1,0 +1,10 @@
+{
+  "label": "SQL examples",
+  "position": 2,
+  "collapsed": false,
+  "collapsible": false,
+  "link": {
+    "type": "generated-index",
+    "description": "Use SuperDuperDB with SQL databases"
+  }
+}

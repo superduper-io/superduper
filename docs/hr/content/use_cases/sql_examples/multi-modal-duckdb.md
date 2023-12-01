@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# SQL
+# Multimodal DuckDB
 
 ## End-to-End Example Using SQL Databases
 

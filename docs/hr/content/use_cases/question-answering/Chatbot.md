@@ -1,4 +1,4 @@
-# Chatbot with OpenAI
+# Chatbot
 
 ## Building Q&A Assistant Using Mongo and OpenAI
 

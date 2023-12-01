@@ -61,6 +61,7 @@ class TestPipeline:
         output = pipeline.predict(X)
         assert len(output) == len(X)
 
+    # TODO: Test the sqldb
     @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(

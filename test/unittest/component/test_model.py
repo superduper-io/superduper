@@ -464,6 +464,14 @@ def test_model_validate(mock_validate):
 
 
 @patch.object(Model, '_predict')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.mongodb_data, {'n_data': 500}),
+        (DBConfig.sqldb_data, {'n_data': 500}),
+    ],
+    indirect=True,
+)
 def test_model_core_validate(model_predict, valid_dataset, db):
     # Check the validation is done correctly
     db.add(valid_dataset)

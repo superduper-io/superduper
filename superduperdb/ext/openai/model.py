@@ -16,6 +16,7 @@ from openai import (
     RateLimitError,
 )
 
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.model import Predictor
@@ -70,6 +71,10 @@ class OpenAI(Component, Predictor):
 
         if 'OPENAI_API_KEY' not in os.environ:
             raise ValueError('OPENAI_API_KEY not set')
+
+    def post_create(self, db: Datalayer) -> None:
+        # TODO: need to create table for ibis
+        super().post_create(db)
 
 
 @dc.dataclass

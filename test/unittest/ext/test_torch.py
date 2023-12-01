@@ -9,7 +9,9 @@ except ImportError:
 
 from test.db_config import DBConfig
 
+from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.components.encoder import Encoder
 from superduperdb.components.metric import Metric
 
 
@@ -52,7 +54,10 @@ def acc(x, y):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     'db',
-    [(DBConfig.mongodb_data, {'n_data': 500})],
+    [
+        (DBConfig.mongodb_data, {'n_data': 500}),
+        (DBConfig.sqldb_data, {'n_data': 500}),
+    ],
     indirect=True,
 )
 def test_fit(db, valid_dataset):
@@ -70,12 +75,20 @@ def test_fit(db, valid_dataset):
         ),
         preferred_devices=('cpu',),
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
+        encoder=Encoder(identifier='base'),
     )
+
+    if isinstance(db.databackend, MongoDataBackend):
+        select = Collection('documents').find()
+    else:
+        table = db.load('table', 'documents')
+        select = table.select('id', 'x', 'y', 'z', '_fold')
+
     m.fit(
         X='x',
         y='y',
         db=db,
-        select=Collection('documents').find(),
+        select=select,
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],
     )

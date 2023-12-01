@@ -29,6 +29,7 @@ def test_function_predict():
     assert function.predict([1, 1]) == [1, 1]
 
 
+# TODO: use table to test the sqldb
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_document_embedded(data_in_db):
     function = Model(

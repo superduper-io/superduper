@@ -2,6 +2,7 @@ import dataclasses as dc
 import enum
 import json
 import re
+import types
 import typing as t
 
 import ibis
@@ -716,7 +717,9 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
 
 def _compile_item(item, db, tables):
-    if hasattr(item, 'compile'):
+    if hasattr(item, 'compile') and isinstance(
+        getattr(item, 'compile'), types.MethodType
+    ):
         return item.compile(db, tables=tables)
     if isinstance(item, list) or isinstance(item, tuple):
         compiled = []

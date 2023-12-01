@@ -303,6 +303,20 @@ class IbisCompoundSelect(CompoundSelect):
                 r['output'] = r['output']['_content']['bytes']
         db.databackend.insert(f'_outputs/{model}/{version}', table_records)
 
+    def add_fold(self, fold: str) -> Select:
+        if self.query_linker is not None:
+            # make sure we have a fold column in the query
+            query_members = [
+                i
+                for i in self.query_linker.members
+                if isinstance(i, IbisQueryComponent)
+            ]
+            if query_members:
+                last_member = query_members[-1]
+                if '_fold' not in last_member.args:
+                    last_member.args = tuple(list(last_member.args) + ['_fold'])
+        return self.filter(self._fold == fold)
+
 
 class _LogicalExprMixin:
     def _logical_expr(self, members, collection, k, other: t.Optional[t.Any] = None):

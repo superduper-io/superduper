@@ -118,10 +118,15 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
 
 @pytest.fixture
-def valid_dataset():
+def valid_dataset(db):
+    if isinstance(db.databackend, MongoDataBackend):
+        select = Collection('documents').find({'_fold': 'valid'})
+    else:
+        table = db.load('table', 'documents')
+        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
     d = Dataset(
         identifier='my_valid',
-        select=Collection('documents').find({'_fold': 'valid'}),
+        select=select,
         sample_size=100,
     )
     return d

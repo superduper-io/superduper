@@ -4,9 +4,9 @@ sidebar_position: 23
 
 # Training models directly on your datastore
 
-Similarly to [applying models to create predictions](../fundamentals/21_apply_models.mdx), training models is possible both procedurally and declaratively in `superduperdb`.
+Similarly to [applying models to create predictions](./apply_models.md), training models is possible both procedurally and declaratively in `superduperdb`.
 
-When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.g. `dask://localhost:8786`), then `superduperdb` deploys [a job on the configured `dask` cluster](31_non_blocking_dask_jobs.md).
+When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.g. `dask://localhost:8786`), then `superduperdb` deploys [a job on the configured `dask` cluster](../production/non_blocking_dask_jobs.md)
 
 ## Basic pattern
 

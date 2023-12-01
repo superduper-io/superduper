@@ -363,12 +363,10 @@ class Datalayer:
         context = None
 
         if context_select is not None:
-            if isinstance(context_select, Select):
-                context = self._get_context(model, context_select, context_key)
-            elif isinstance(context_select, str):
+            if isinstance(context_select, str):
                 context = context_select
             else:
-                raise TypeError("context_select should be either Select or str")
+                context = self._get_context(model, context_select, context_key)
 
         try:
             out = model.predict(

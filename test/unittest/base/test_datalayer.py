@@ -39,7 +39,7 @@ class TestComponent(Component):
     version: Optional[int] = None
     type_id: str = 'test-component'
     is_on_create: bool = False
-    is_on_load: bool = False
+    is_after_create: bool = False
     is_schedule_jobs: bool = False
     check_clean_up: bool = False
     child: Optional['TestComponent'] = None
@@ -48,8 +48,8 @@ class TestComponent(Component):
     def pre_create(self, db):
         self.is_on_create = True
 
-    def on_load(self, db):
-        self.is_on_load = True
+    def post_create(self, db):
+        self.is_after_create = True
 
     def schedule_jobs(self, db, dependencies):
         self.is_schedule_jobs = True
@@ -105,7 +105,7 @@ def test_add_version(db):
     component = TestComponent(identifier='test')
     db.add(component)
     assert component.is_on_create is True
-    assert component.is_on_load is True
+    assert component.is_after_create is True
     assert component.is_schedule_jobs is True
     assert component.version == 0
     assert db.show('test-component', 'test') == [0]

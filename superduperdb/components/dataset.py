@@ -9,11 +9,9 @@ from overrides import override
 
 from superduperdb.backends.mongodb.query import Select
 from superduperdb.base.artifact import Artifact
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
-
-if t.TYPE_CHECKING:
-    from superduperdb.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -41,7 +39,7 @@ class Dataset(Component):
     type_id: t.ClassVar[str] = 'dataset'
 
     @override
-    def pre_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: 'Datalayer') -> None:
         if self.raw_data is None:
             if self.select is None:
                 raise ValueError('select cannot be None')

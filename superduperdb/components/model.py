@@ -19,7 +19,6 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
-from superduperdb.components.dataset import Dataset
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
@@ -28,6 +27,7 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.dataset import Dataset
 
 EncoderArg = t.Union[Encoder, FieldType, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
@@ -304,7 +304,7 @@ class Predictor:
                 },
             ),
             dependencies=dependencies,
-        )
+        )[0]
 
     def _predict_with_select(
         self,
@@ -563,6 +563,8 @@ class Model(Component, Predictor):
         metrics: t.Sequence[Metric],
     ):
         if isinstance(validation_set, str):
+            from superduperdb.components.dataset import Dataset
+
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
 
         mdicts = [MongoStyleDict(r.unpack()) for r in validation_set.data]
@@ -639,6 +641,8 @@ class Model(Component, Predictor):
         :param select: The select to use for training (optional)
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
+        from superduperdb.components.dataset import Dataset
+
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 

@@ -103,10 +103,11 @@ class Listener(Component):
         :param verbose: Whether to print verbose output
         """
         if not self.active:
-            return ()
+            return []
 
         assert not isinstance(self.model, str)
-        return [
+
+        out = [
             self.model.predict(
                 X=self.key,
                 db=database,
@@ -115,6 +116,8 @@ class Listener(Component):
                 **(self.predict_kwargs or {}),
             )
         ]
+
+        return out
 
     def cleanup(self, database: Datalayer) -> None:
         """Clean up when the listener is deleted

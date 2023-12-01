@@ -5,7 +5,7 @@ sidebar_position: 19
 # Using AI APIs as `Predictor` descendants
 
 In SuperDuperDB, developers are able to interact with popular AI API providers, in a way very similar to 
-[integrating with AI open-source or home-grown models](18_ai_models.mdx). Instantiating a model from 
+[integrating with AI open-source or home-grown models](./ai_models.md). Instantiating a model from 
 these providers is similar to instantiating a `Model`:
 
 ## OpenAI

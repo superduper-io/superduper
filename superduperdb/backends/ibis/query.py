@@ -884,7 +884,7 @@ class SQL(RawQuery):
 
             # Return the DataFrame containing the query result
             return df
-        except Exception as e:
+        except Exception:
             # If an exception occurs during fetching, return the cursor
             # This could be useful for handling errors or logging
             return cursor

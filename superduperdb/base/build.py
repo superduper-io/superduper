@@ -1,5 +1,6 @@
 import re
 import sys
+import typing as t
 
 import ibis
 import mongomock
@@ -15,20 +16,32 @@ from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.base.datalayer import Datalayer
 
 
-def build_artifact_store(cfg):
-    if cfg.artifact_store is None:
-        raise ValueError('No artifact store specified')
-    elif cfg.artifact_store.startswith('mongodb://'):
+def build_metadata(metadata_store=None):
+    if metadata_store is None:
+        metadata_store = s.CFG.metadata_store
+    return build(metadata_store, metadata_stores)
+
+
+def build_databackend(databackend: t.Optional[str] = None):
+    if databackend is None:
+        databackend = s.CFG.data_backend
+    return build(databackend, data_backends)
+
+
+def build_artifact_store(artifact_store: str):
+    if artifact_store.startswith('mongodb://'):
         import pymongo
 
-        conn = pymongo.MongoClient('/'.join(cfg.artifact_store.split('/')[:-1]))
-        name = cfg.artifact_store.split('/')[-1]
+        conn: pymongo.MongoClient = pymongo.MongoClient(
+            '/'.join(artifact_store.split('/')[:-1])
+        )
+        name = artifact_store.split('/')[-1]
         return MongoArtifactStore(conn, name)
-    elif cfg.artifact_store.startswith('filesystem://'):
-        directory = cfg.artifact_store.split('://')[1]
+    elif artifact_store.startswith('filesystem://'):
+        directory = artifact_store.split('://')[1]
         return FileSystemArtifactStore(directory)
     else:
-        raise ValueError(f'Unknown artifact store: {cfg.artifact_store}')
+        raise ValueError(f'Unknown artifact store: {artifact_store}')
 
 
 # Helper function to build a data backend based on the URI.
@@ -60,8 +73,7 @@ def build(uri, mapping):
         return mapping['ibis'](conn, name)
 
 
-def build_compute(cfg):
-    compute = cfg.cluster.compute
+def build_compute(compute):
     if compute == 'local' or compute is None:
         return LocalComputeBackend()
 
@@ -114,11 +126,11 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
             else databackend.build_metadata()
         ),
         artifact_store=(
-            build_artifact_store(cfg)
+            build_artifact_store(cfg.artifact_store)
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        compute=build_compute(cfg),
+        compute=build_compute(cfg.cluster.compute),
     )
 
     return db

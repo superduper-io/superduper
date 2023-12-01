@@ -674,8 +674,8 @@ def test_reload_dataset(db):
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.mongodb_no_vector_index, {'n_data': 500}),
-        (DBConfig.sqldb_no_vector_index, {'n_data': 500}),
+        (DBConfig.mongodb_no_vector_index, {'n_data': n_data_points}),
+        (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )

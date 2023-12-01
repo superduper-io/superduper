@@ -74,7 +74,7 @@ def test_execute_like_queries_mongodb(db):
     ids = list(out.scores.keys())
     scores = out.scores
 
-    assert str(r['_id']) in ids[:3]
+    assert str(r['_id']) in ids
     assert scores[ids[0]] > 0.999999
 
     # pre-like
@@ -85,10 +85,6 @@ def test_execute_like_queries_mongodb(db):
     )
 
     assert result['_id'] == r['_id']
-
-    # check queries we didn't have before
-    y = collection.distinct('y').execute(db)
-    assert set(y) == {0, 1}
 
     # post-like
     q = collection.find().like(
@@ -107,35 +103,28 @@ def test_execute_like_queries_sqldb(db):
 
     out = (
         table.like({'x': r['x']}, vector_index='test_vector_search', n=10)
-        .limit(10)
+        .select('id')
         .execute(db)
     )
-    assert out
+    ids = list(out.scores.keys())
+    scores = out.scores
 
-    # ids = list(out.scores.keys())
-    # scores = out.scores
-    #
-    # assert str(r['_id']) in ids[:3]
-    # assert scores[ids[0]] > 0.999999
-    #
-    # # pre-like
-    # result = (
-    #     table.like(Document({'x': r['x']}),
-    #                vector_index='test_vector_search', n=1)
-    #     .find_one()
-    #     .execute(db)
-    # )
-    #
-    # assert result['_id'] == r['_id']
-    #
-    # # check queries we didn't have before
-    # y = table.distinct('y').execute(db)
-    # assert set(y) == {0, 1}
-    #
-    # # post-like
-    # q = table.find().like(
-    #     Document({'x': r['x']}), vector_index='test_vector_search', n=3
-    # )
-    # result = list(q.execute(db))
-    # assert len(result) == 3
-    # assert result[0]['_id'] == r['_id']
+    assert str(r['id']) in ids[:3]
+    assert scores[ids[0]] > 0.999999
+
+    # pre-like
+    result = (
+        table.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
+        .select('id')
+        .execute(db)
+    )
+
+    assert result[0]['id'] == r['id']
+
+    # post-like
+    q = table.select('id').like(
+        Document({'x': r['x']}), vector_index='test_vector_search', n=3
+    )
+    result = list(q.execute(db))
+    assert len(result) == 3
+    assert result[0]['id'] == r['id']

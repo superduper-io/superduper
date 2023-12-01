@@ -17,7 +17,8 @@ from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.metadata import MetaDataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
-from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.query import Table, RawSQL
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions, serializable
 from superduperdb.base.cursor import SuperDuperCursor
@@ -45,7 +46,7 @@ InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = SuperDuperCursor
 UpdateResult = t.Any
 
-ExecuteQuery = t.Union[Select, Delete, Update, Insert]
+ExecuteQuery = t.Union[Select, Delete, Update, Insert, str]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
@@ -404,6 +405,11 @@ class Datalayer:
 
         :param query: select, insert, delete, update,
         """
+
+        if isinstance(query, str):
+            assert isinstance(self.databackend, IbisDataBackend)
+            query = RawSQL(query)
+
         try:
             if isinstance(query, Delete):
                 return self.delete(query, *args, **kwargs)
@@ -424,7 +430,7 @@ class Datalayer:
 
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {t.Union[Select, Delete, Update, Insert, str]}; '
             f'Got {type(query)};'
         )
 

@@ -37,7 +37,7 @@ mongosh --host mongodb  <<EOF
     rs.status()
 EOF
 
-echo "Creating normal user: superduper:superduper/test_db"
+echo "Creating normal user: ${SDDB_USER}:${SDDB_PASS}/${SDDB_DATABASE}"
 mongosh --host mongodb  <<EOF
   use ${SDDB_DATABASE}
   db.createUser(
@@ -49,7 +49,28 @@ mongosh --host mongodb  <<EOF
   )
 EOF
 
-echo "Confirm everything works properly"
+echo "Confirm normal user account"
 echo "---------------------------------------"
 mongosh --eval 'rs.status()' "mongodb://${SDDB_USER}:${SDDB_PASS}@mongodb:27017/${SDDB_DATABASE}"
 echo "---------------------------------------"
+
+
+echo "Creating test user: ${SDDB_TEST_USER}:${SDDB_TEST_PASS}/${SDDB_TEST_DATABASE}"
+mongosh --host mongodb  <<EOF
+  use ${SDDB_TEST_DATABASE}
+  db.createUser(
+    {
+      user: "${SDDB_TEST_USER}",
+      pwd: "${SDDB_TEST_PASS}",
+      roles: [ { role: "dbOwner", db: "${SDDB_TEST_DATABASE}" } ]
+    }
+  )
+EOF
+
+
+echo "Confirm test user account"
+echo "---------------------------------------"
+mongosh --eval 'rs.status()' "mongodb://${SDDB_TEST_USER}:${SDDB_TEST_PASS}@mongodb:27017/${SDDB_TEST_DATABASE}"
+echo "---------------------------------------"
+
+

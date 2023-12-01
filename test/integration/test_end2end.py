@@ -101,7 +101,7 @@ def distributed_db(monkeypatch, test_db, dask_client):
 
     existing_databackend = CFG.data_backend
     CFG.force_set(
-        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
+        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/user_db'
     )
     cdc = 'http://localhost:8001'
     vector_search = 'http://localhost:8000'

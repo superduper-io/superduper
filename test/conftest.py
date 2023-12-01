@@ -103,7 +103,7 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
     # mongodb instead of localhost is required for CFG compatibility with docker-host
     db_name = "test_db"
-    data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
+    data_backend = f'mongodb://superduper_test:superduper_test@mongodb:27017/{db_name}'
 
     monkeypatch.setattr(CFG, 'data_backend', data_backend)
 

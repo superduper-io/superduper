@@ -9,6 +9,8 @@ services:
     hostname: mongodb
     ports:
       - "27017:27017"
+    volumes:
+      - ./.mongo_data:/data/db
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
 
   mongo-init: # Once finished, Mongo is assumed to be ready.
@@ -35,7 +37,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/user_db'
       SUPERDUPERDB_CLUSTER_VECTOR_SEARCH: 'http://localhost:8000'
     command:
       - /bin/sh
@@ -70,7 +72,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/user_db'
       SUPERDUPERDB_CLUSTER_CDC: 'http://localhost:8001'
     command:
       - /bin/sh
@@ -106,7 +108,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/user_db'
     command:
       - /bin/sh
       - -c
@@ -120,7 +122,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/user_db'
     command:
       - /bin/sh
       - -c

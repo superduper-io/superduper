@@ -22,8 +22,8 @@ configurations will then take on their default values.
 
 ```yaml
 
-# URI of your database/ datastore (here the name of the db is `test_db`)
-data_backend: mongodb://superduper:superduper@localhost:27017/test_db
+# URI of your database/ datastore (here the name of the db is `user_db`)
+data_backend: mongodb://superduper:superduper@localhost:27017/user_db
 
 # URI of your artifact store (defaults to `data_backend`)
 artifact_store: null

@@ -30,7 +30,7 @@ Now add these configurations to your setup by running:
 ```bash
 mkdir -p .superduperdb
 cat << Multi > .superduperdb/config.yaml
-data_backend: mongodb://superduper:superduper@mongodb:27017/test_db
+data_backend: mongodb://superduper:superduper@mongodb:27017/user_db
 cluster:
   cdc: http://cdc:8001
   compute: dask://scheduler:8786

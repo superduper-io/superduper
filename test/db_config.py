@@ -1,4 +1,4 @@
-MONGOMOCK_URI = 'mongomock:///test_db'
+MONGOMOCK_URI = 'mongomock:///user_db'
 SQLITE_URI = 'sqlite://:memory:'
 N_DATA_POINTS = 5
 

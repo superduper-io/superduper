@@ -125,7 +125,7 @@ class Config(BaseConfigJSONable):
     def self_hosted_vector_search(self) -> bool:
         return self.data_backend == self.vector_search
 
-    data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
+    data_backend: str = 'mongodb://superduper:superduper@localhost:27017/user_db'
 
     vector_search: 'str' = 'in_memory'
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')

@@ -7,10 +7,10 @@
 
 ### Available users:
 
-`superduper:superduper` on `test_db` database
+`superduper:superduper` on `user_db` database
 
 ```shell
-mongosh "mongodb://superduper:superduper@mongodb:27017/test_db"
+mongosh "mongodb://superduper:superduper@mongodb:27017/user_db"
 ```
 
 Have in mind that `docker-compose` with source the `default credentials` from `.env` file.

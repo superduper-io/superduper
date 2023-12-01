@@ -243,7 +243,7 @@ class IbisCompoundSelect(CompoundSelect):
 
         output = output.to_dict(orient='records')
         return SuperDuperIbisResult(
-            output, id_field=self.table_or_collection.primary_id
+            output, id_field=self.table_or_collection.primary_id, scores=scores
         )
 
     def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
@@ -483,9 +483,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
                 self, self.table_or_collection.primary_id
             )
             other_query = self.join(symbol_table, symbol_table.input_id == attr)
-            other_query.filter(
-                symbol_table.key == key and symbol_table.query_id == query_id
-            )
+            other_query = other_query.filter(symbol_table.key == key)
             return other_query
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):

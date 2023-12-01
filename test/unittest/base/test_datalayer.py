@@ -538,7 +538,10 @@ def test_insert_sql_db(db):
     )
     assert len(inserted_ids) == 5
 
-    new_docs = list(db.execute(table.outputs(x='fake_model/0')))
+    q = table.select('id', 'x').outputs(x='fake_model/0')
+    new_docs = db.execute(q)
+    new_docs = list(new_docs)
+    # new_docs = list(db.execute(table.outputs(x='fake_model/0')))
 
     result = [doc.unpack()['_outputs.x.fake_model.0'] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']

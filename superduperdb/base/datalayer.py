@@ -348,6 +348,7 @@ class Datalayer:
         input: t.Union[Document, t.Any],
         context_select: t.Optional[Select] = None,
         context_key: t.Optional[str] = None,
+        raw_context: t.Optional[str] = None,
         **kwargs,
     ) -> t.Tuple[Document, t.List[Document]]:
         """
@@ -364,6 +365,10 @@ class Datalayer:
 
         if context_select is not None:
             context = self._get_context(model, context_select, context_key)
+
+        # Raw context for greater applications. Like inputting CSV, text etc.
+        if raw_context is not None:
+            context = raw_context
 
         try:
             out = model.predict(

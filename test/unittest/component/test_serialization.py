@@ -29,7 +29,9 @@ def test_model():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize(
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+)
 def test_sklearn(db):
     m = Estimator(
         identifier='test',
@@ -37,7 +39,6 @@ def test_sklearn(db):
         encoder=tensor(torch.float, shape=(32,)),
     )
     db.add(m)
-    assert db.metadata.component_collection.count_documents({}) == 2
     assert db.show('model') == ['test']
     assert db.show('encoder') == ['torch.float32[32]']
 

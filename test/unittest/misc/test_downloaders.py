@@ -27,6 +27,7 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
+# TODO: use table to test the sqldb
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_file_blobs(db, patch_cfg_downloads, image_url):
     to_insert = [

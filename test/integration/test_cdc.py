@@ -53,6 +53,9 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 def database_listener_with_lance_searcher(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
 
+    from superduperdb import CFG
+
+    CFG.force_set('vector_search', 'lance')
     db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
         'test_index',
         searcher_type='lance',
@@ -63,6 +66,7 @@ def database_listener_with_lance_searcher(database_with_default_encoders_and_mod
 
     yield db, 'documents'
 
+    CFG.force_set('vector_search', 'in_memory')
     db.cdc.stop()
     shutil.rmtree('.superduperdb/vector_indices')
 
@@ -183,7 +187,6 @@ def test_vector_database_sync(
     fake_inserts,
 ):
     db, name = database_listener_with_lance_searcher
-
     db.execute(
         Collection(name).insert_many([fake_inserts[0]]),
         refresh=False,

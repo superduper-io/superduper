@@ -95,6 +95,19 @@ class Datalayer:
         self.compute = compute
         self._server_mode = False
 
+    def rebuild(self, cfg=None):
+        from superduperdb.base import build
+
+        self.databackend = build.build_databackend(cfg.data_backend if cfg else None)
+        self.compute = build.build_compute(cfg.cluster.compute if cfg else None)
+
+        if cfg:
+            self.metadata = build.build_metadata(cfg.metadata_store)
+            self.artifact_store = build.build_artifact_store(cfg.artifact_store)
+        else:
+            self.metadata = self.databackend.build_metadata()
+            self.artifact_store = self.databackend.build_artifact_store()
+
     @property
     def server_mode(self):
         return self._server_mode
@@ -405,6 +418,7 @@ class Datalayer:
             if isinstance(query, RawQuery):
                 return query.execute(self)
         except Exception as e:
+            breakpoint()
             QueryExceptionCls = exceptions.query_exceptions(query)
             raise QueryExceptionCls(f"Error while executing {str(query)} query") from e
 
@@ -821,6 +835,7 @@ class Datalayer:
             # if a vector-searcher is not loaded, then skip
             # since s.CFG.vector_search == 'in_memory' implies the
             # program is standalone
+
             if (
                 s.CFG.vector_search == 'in_memory'
                 and identifier not in self.fast_vector_searchers

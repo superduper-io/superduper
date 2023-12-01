@@ -58,8 +58,6 @@ dependencies = [
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0",
     "ibis-framework[snowflake]>=5.1.0",
-    "ibis-framework[postgres]>=5.1.0",
-    "ibis-framework[mysql]>=5.1.0",
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv"

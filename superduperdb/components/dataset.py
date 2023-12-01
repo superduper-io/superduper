@@ -50,6 +50,10 @@ class Dataset(Component):
             self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
     @override
+    def post_create(self, db: 'Datalayer') -> None:
+        return self.on_load(db)
+
+    @override
     def on_load(self, db: Datalayer) -> None:
         assert isinstance(self.raw_data, Artifact)
         self.data = [

@@ -238,7 +238,8 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             if component is None:
                 raise FileNotFoundError(
-                    f'Can\'t find {type_id}: {identifier} in metadata'
+                    f"Cannot find '{type_id}' with identifier "
+                    f"'{identifier}' in metadata"
                 )
             return component.version
 

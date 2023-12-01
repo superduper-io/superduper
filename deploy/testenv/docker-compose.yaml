@@ -12,6 +12,13 @@ services:
     volumes:
       - ./.mongo_data:/data/db
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
+
+
 
   mongo-init: # Once finished, Mongo is assumed to be ready.
     image: mongo:6
@@ -44,13 +51,19 @@ services:
       - -c
       - |
         python -m superduperdb vector-search
-
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
     healthcheck:
       test: curl http://localhost:8000/health || exit 1
       interval: 40s
       timeout: 30s
       retries: 10
       start_period: 60s
+
+
 
   vector-search-init: # Once finished, Vector Search is assumed to be ready.
     image: busybox
@@ -79,7 +92,11 @@ services:
       - -c
       - |
         python -m superduperdb cdc
-
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
     healthcheck:
       test: curl http://localhost:8001/health || exit 1
       interval: 40s
@@ -130,6 +147,10 @@ services:
         PYTHONPATH=./:. dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
 
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------
@@ -156,3 +177,8 @@ services:
       - -c
       - |
         jupyter lab --port=8888 --no-browser --ip=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G

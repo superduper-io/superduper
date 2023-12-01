@@ -413,6 +413,7 @@ class DatabaseChangeDataCapture:
             for _, listener in self._CDC_LISTENERS.items():
                 listener.stop()
         finally:
+            self._running = False
             self._CDC_LISTENERS = {}
             self.stop_handler()
 

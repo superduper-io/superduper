@@ -6,6 +6,7 @@ import typing as t
 
 import ibis
 import pandas
+from sqlalchemy import text
 
 from superduperdb import Document, logging
 from superduperdb.backends.base.query import (
@@ -856,3 +857,34 @@ class RawSQL(RawQuery):
         cursor = db.databackend.conn.raw_sql(self.query).mappings().all()
         cursor = _SQLDictIterable(cursor)
         return SuperDuperIbisResult(cursor, id_field=self.id_field)
+
+
+@dc.dataclass
+class SQL(RawQuery):
+    # Data class representing a SQL query, inherits from RawQuery
+    query: str
+
+    def execute(self, db):
+        # Convert the User Given Query to adapt with many types of Query
+        # Use SQLAlchemy's text construct to create a SQL query
+        sql_query = text(self.query)
+
+        # Execute the raw SQL query using the database backend connection
+        cursor = db.databackend.conn.raw_sql(sql_query)
+
+        try:
+            # Try to fetch all rows as a list of tuples from the cursor
+            rows = cursor.fetchall()
+
+            # Get column names from the cursor set
+            columns = cursor.keys()
+
+            # Create a DataFrame using pandas
+            df = pandas.DataFrame(rows, columns=columns)
+
+            # Return the DataFrame containing the query result
+            return df
+        except Exception as e:
+            # If an exception occurs during fetching, return the cursor
+            # This could be useful for handling errors or logging
+            return cursor

@@ -141,7 +141,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     db = Datalayer(
         databackend=databackend,
         metadata=(
-            build(cfg.metadata_store, metadata_stores)
+            build(cfg.metadata_store, metadata_stores, type='metadata')
             if cfg.metadata_store is not None
             else databackend.build_metadata()
         ),

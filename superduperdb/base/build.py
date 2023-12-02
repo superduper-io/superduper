@@ -20,7 +20,7 @@ from superduperdb.base.datalayer import Datalayer
 def build_metadata(metadata_store=None):
     if metadata_store is None:
         metadata_store = s.CFG.metadata_store
-    return build(metadata_store, metadata_stores)
+    return build(metadata_store, metadata_stores, type='metadata')
 
 
 def build_databackend(databackend: t.Optional[str] = None):
@@ -46,7 +46,7 @@ def build_artifact_store(artifact_store: str):
 
 
 # Helper function to build a data backend based on the URI.
-def build(uri, mapping):
+def build(uri, mapping, type: str = 'data_backend'):
     logging.debug(f"Parsing data connection URI:{uri}")
 
     if re.match('^mongodb:\/\/', uri) is not None:
@@ -64,11 +64,15 @@ def build(uri, mapping):
             serverSelectionTimeoutMS=5000,
         )
         return mapping['mongodb'](conn, name)
+
     elif uri.startswith('mongomock://'):
         name = uri.split('/')[-1]
         conn = mongomock.MongoClient()
         return mapping['mongodb'](conn, name)
     elif uri.endswith('.csv'):
+        if type == 'metadata':
+            raise ValueError('Cannot build metadata from a CSV file.')
+
         import glob
         csv_files = glob.glob(uri)
         tables = {
@@ -79,8 +83,14 @@ def build(uri, mapping):
         return mapping['ibis'](conn, uri.split('/')[0])
     else:
         name = uri.split('//')[0]
-        conn = ibis.connect(uri)
-        return mapping['ibis'](conn, name)
+        if type == 'data_backend':
+            conn = ibis.connect(uri)
+            return mapping['ibis'](conn, name)
+        else:
+            assert type == 'metadata'
+            from sqlalchemy import create_engine
+            conn = create_engine(uri)
+            return mapping['sqlalchemy'](conn, name)
 
 
 def build_compute(compute):
@@ -131,7 +141,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     db = Datalayer(
         databackend=databackend,
         metadata=(
-            build(cfg.metadata_store, metadata_stores)
+            build(cfg.metadata_store, metadata_stores, type='metadata')
             if cfg.metadata_store is not None
             else databackend.build_metadata()
         ),

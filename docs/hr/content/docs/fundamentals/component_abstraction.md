@@ -56,7 +56,7 @@ instances.
 
 ### `Stack`
 
-A `Stack` is a way of connecting diverse and interoperating sets of functionality. See [here](../walkthrough/28_creating_stacks_of_functionality.md) for more details.
+A `Stack` is a way of connecting diverse and interoperating sets of functionality. See [here](../walkthrough/creating_stacks_of_functionality) for more details.
 
 ## Activating components
 

@@ -41,4 +41,4 @@ db = superduper('mongodb://localhost:27018', CFG=CFG)
 ```
 
 The `db` object is an instance of `superduperdb.base.datalayer.Datalayer`.
-The `Datalayer` class handles AI models and communicates with the databackend and associated components. Read more [here](07_datalayer_overview.md).
+The `Datalayer` class handles AI models and communicates with the databackend and associated components. Read more [here](../fundamentals/datalayer_overview.md).

@@ -335,7 +335,7 @@ class Datalayer:
         self,
         model_name: str,
         input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
+        context_select: t.Optional[t.Union[str, Select]] = None,
         context_key: t.Optional[str] = None,
         **kwargs,
     ) -> t.Tuple[Document, t.List[Document]]:
@@ -352,7 +352,12 @@ class Datalayer:
         context = None
 
         if context_select is not None:
-            context = self._get_context(model, context_select, context_key)
+            if isinstance(context_select, Select):
+                context = self._get_context(model, context_select, context_key)
+            elif isinstance(context_select, str):
+                context = context_select
+            else:
+                raise TypeError("context_select should be either Select or str")
 
         out = model.predict(
             input.unpack() if isinstance(input, Document) else input,

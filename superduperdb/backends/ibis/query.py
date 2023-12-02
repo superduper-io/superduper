@@ -861,6 +861,11 @@ class _SQLDictIterable:
         element = next(self.iterable)
         return dict(element)
 
+    def __iter__(self):
+        return self
+
+    __next__ = next
+
 
 @dc.dataclass
 class RawSQL(RawQuery):
@@ -868,6 +873,10 @@ class RawSQL(RawQuery):
     id_field: str = 'id'
 
     def execute(self, db):
-        cursor = db.databackend.conn.raw_sql(self.query).mappings().all()
-        cursor = _SQLDictIterable(cursor)
-        return SuperDuperIbisResult(cursor, id_field=self.id_field)
+        cursor = db.databackend.conn.raw_sql(self.query)
+        try:
+            cursor = cursor.mappings().all()
+            cursor = _SQLDictIterable(cursor)
+            return SuperDuperIbisResult(cursor, id_field=self.id_field)
+        except Exception:
+            return cursor

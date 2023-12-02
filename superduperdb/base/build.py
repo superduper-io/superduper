@@ -51,7 +51,7 @@ def build(uri, mapping, type: str = 'data_backend'):
 
     if re.match('^mongodb:\/\/', uri) is not None:
         name = uri.split('/')[-1]
-        conn = pymongo.MongoClient(
+        conn: pymongo.MongoClient = pymongo.MongoClient(
             uri,
             serverSelectionTimeoutMS=5000,
         )
@@ -69,28 +69,32 @@ def build(uri, mapping, type: str = 'data_backend'):
         name = uri.split('/')[-1]
         conn = mongomock.MongoClient()
         return mapping['mongodb'](conn, name)
+
     elif uri.endswith('.csv'):
         if type == 'metadata':
             raise ValueError('Cannot build metadata from a CSV file.')
 
         import glob
+
         csv_files = glob.glob(uri)
-        tables = {
-            re.match('^.*/(.*)\.csv$', csv_file).groups()[0]: pandas.read_csv(csv_file)
-            for csv_file in csv_files
-        }
-        conn = ibis.pandas.connect(tables)
-        return mapping['ibis'](conn, uri.split('/')[0])
+        tables = {}
+        for csv_file in csv_files:
+            pattern = re.match('^.*/(.*)\.csv$', csv_file)
+            assert pattern is not None
+            tables[pattern.groups()[0]] = pandas.read_csv(csv_file)
+        ibis_conn = ibis.pandas.connect(tables)
+        return mapping['ibis'](ibis_conn, uri.split('/')[0])
     else:
         name = uri.split('//')[0]
         if type == 'data_backend':
-            conn = ibis.connect(uri)
-            return mapping['ibis'](conn, name)
+            ibis_conn = ibis.connect(uri)
+            return mapping['ibis'](ibis_conn, name)
         else:
             assert type == 'metadata'
             from sqlalchemy import create_engine
-            conn = create_engine(uri)
-            return mapping['sqlalchemy'](conn, name)
+
+            sql_conn = create_engine(uri)
+            return mapping['sqlalchemy'](sql_conn, name)
 
 
 def build_compute(compute):

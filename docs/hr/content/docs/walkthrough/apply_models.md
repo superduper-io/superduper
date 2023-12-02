@@ -77,7 +77,7 @@ my_model.predict(
 Under-the-hood, this call creates a `Listener` which is deployed on 
 the query passed to the `.predict` call.
 
-Read more about the `Listener` abstraction [here](22_daemonizing_models_with_listeners.md)
+Read more about the `Listener` abstraction [here](daemonizing_models_with_listeners.md)
 
 ### Activating models for vector-search with `create_vector_index=True`
 

@@ -44,9 +44,9 @@ The databackend typically connects to your database (although `superduperdb` als
 and dispatches queries written in an query API which is compatible with that databackend, but which also includes additional aspects
 specific to `superduperdb`.
 
-Read more [here](../walkthrough/11_supported_query_APIs.md).
+Read more [here](../data_integrations/supported_query_APIs.md).
 
-The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../walkthrough/01_configuration.md).
+The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../setup/configuration.md).
 
 We support the same databackends as supported by the [`ibis` project](https://ibis-project.org/):
 
@@ -168,7 +168,7 @@ Here are the key methods which you'll use again and again:
 
 ### `db.execute`
 
-This method executes a query. For an overview of how this works see [here](../walkthrough/11_supported_query_APIs.md).
+This method executes a query. For an overview of how this works see [here](../data_integrations/supported_query_APIs.md).
 
 ### `db.add`
 
@@ -196,4 +196,4 @@ Validate your components (mostly models)
 
 ### `db.predict`
 
-Infer predictions from models hosted by `superduperdb`. Read more about this and about models [here](../fundamentals/21_apply_models.mdx).
+Infer predictions from models hosted by `superduperdb`. Read more about this and about models [here](../walkthrough/apply_models.md).

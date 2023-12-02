@@ -60,7 +60,7 @@ SuperDuperDB supports queries via:
 - `pymongo`
 - `ibis`
 
-Read more about this [here](../walkthrough/11_supported_query_APIs.md).
+Read more about this [here](../data_integrations/supported_query_APIs.md).
 
 In order to use vector-search in a query, one combines these APIs with the `.like` operator.
 

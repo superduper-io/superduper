@@ -74,6 +74,7 @@ def build(uri, mapping, type: str = 'data_backend'):
             raise ValueError('Cannot build metadata from a CSV file.')
 
         import glob
+
         csv_files = glob.glob(uri)
         tables = {
             re.match('^.*/(.*)\.csv$', csv_file).groups()[0]: pandas.read_csv(csv_file)
@@ -89,6 +90,7 @@ def build(uri, mapping, type: str = 'data_backend'):
         else:
             assert type == 'metadata'
             from sqlalchemy import create_engine
+
             conn = create_engine(uri)
             return mapping['sqlalchemy'](conn, name)
 

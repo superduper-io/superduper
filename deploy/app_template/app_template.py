@@ -14,17 +14,23 @@ app = FastAPI()
 
 @app.get("/")
 def show():
-    return {"models": db.show('model'), 'listeners': db.show('listener'), 'vector_indexes': db.show('vector_index')}
+    return {
+        "models": db.show('model'),
+        'listeners': db.show('listener'),
+        'vector_indexes': db.show('vector_index'),
+    }
 
 
 @app.get("/search")
 def search(input: str):
-    results = sorted(list(
-        collection
-            .like(Document({'<key>': input}), vector_index='<index-name>', n=20)
-            .find({}, {'_id': 0}),
-        key=lambda x: -x['score'],
-    ))
+    results = sorted(
+        list(
+            collection.like(
+                Document({'<key>': input}), vector_index='<index-name>', n=20
+            ).find({}, {'_id': 0}),
+            key=lambda x: -x['score'],
+        )
+    )
     return {'results': results}
 
 
@@ -35,9 +41,9 @@ def predict(input: str):
         model_name='<model-name>',
         input=input,
         context_select=(
-            collection
-                .like(Document({'<key>': input}), vector_index='<index-name>', n=num_results)
-                .find()
+            collection.like(
+                Document({'<key>': input}), vector_index='<index-name>', n=num_results
+            ).find()
         ),
         context_key='txt',
     )

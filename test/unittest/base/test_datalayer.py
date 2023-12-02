@@ -442,7 +442,11 @@ def test_predict_context(db: Datalayer):
             torch.randn(4, 2),
             torch.randn(4, 3),
         ]
-        y, context_out = db.predict('model', torch.randn(4, 16), context_select=True)
+        y, context_out = db.predict(
+            'model',
+            torch.randn(4, 16),
+            context_select=Collection('context_collection').find({}),
+        )
         assert context_out[0].content.shape == torch.Size([4, 2])
         assert context_out[1].content.shape == torch.Size([4, 3])
 

@@ -153,6 +153,7 @@ dmypy.json
 # links
 /architectures
 /superduperdb/server/static
+/superduperdb/snowflake
 /converters
 /models
 

@@ -41,7 +41,6 @@ class Component(Serializable):
         :param db: the db that creates the component
         """
         assert db
-        assert db
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store

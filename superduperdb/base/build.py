@@ -4,6 +4,7 @@ import typing as t
 
 import ibis
 import mongomock
+import pandas
 import pymongo
 
 import superduperdb as s
@@ -67,6 +68,15 @@ def build(uri, mapping):
         name = uri.split('/')[-1]
         conn = mongomock.MongoClient()
         return mapping['mongodb'](conn, name)
+    elif uri.endswith('.csv'):
+        import glob
+        csv_files = glob.glob(uri)
+        tables = {
+            re.match('^.*/(.*)\.csv$', csv_file).groups()[0]: pandas.read_csv(csv_file)
+            for csv_file in csv_files
+        }
+        conn = ibis.pandas.connect(tables)
+        return mapping['ibis'](conn, uri.split('/')[0])
     else:
         name = uri.split('//')[0]
         conn = ibis.connect(uri)

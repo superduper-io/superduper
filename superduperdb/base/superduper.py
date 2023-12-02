@@ -38,6 +38,9 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
         CFG.force_set('data_backend', item)
         CFG.force_set('vector_search', item)
 
+    elif item.endswith('.csv'):
+        CFG.force_set('data_backend', item)
+
     else:
         if re.match(r'^[a-zA-Z0-9]+://', item) is None:
             raise ValueError(f'{item} is not a valid connection string')

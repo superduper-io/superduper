@@ -4,7 +4,7 @@ sidebar_position: 16
 
 # Working with and inserting large pieces of data
 
-:::info
+:::warning
 This functionality is currently only supported by the MongDB API
 :::
 

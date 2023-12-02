@@ -7,8 +7,6 @@ from functools import wraps
 import networkx
 from networkx import DiGraph, ancestors
 
-from superduperdb.base import exceptions
-
 from .job import ComponentJob, FunctionJob, Job
 
 if t.TYPE_CHECKING:
@@ -53,16 +51,10 @@ class TaskWorkflow:
             for node in current_group:
                 job: Job = self.G.nodes[node]['job']
                 dependencies = [self.G.nodes[a]['job'].future for a in pred(node)]
-                try:
-                    job(
-                        self.database,
-                        dependencies=dependencies,
-                    )
-                except Exception as e:
-                    raise exceptions.TaskWorkflowException(
-                        f'Error while running job {job} with \
-                          dependencies {dependencies}'
-                    ) from e
+                job(
+                    self.database,
+                    dependencies=dependencies,
+                )
                 done.add(node)
 
             current_group = [

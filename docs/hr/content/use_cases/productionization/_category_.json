@@ -1,10 +1,10 @@
 {
-  "label": "Classification",
+  "label": "Productionization",
   "position": 6,
   "collapsed": false,
   "collapsible": false,
   "link": {
     "type": "generated-index",
-    "description": "Get started with Classification with SuperDuperDB"
+    "description": "Use SuperDuperDB in production contexts"
   }
 }

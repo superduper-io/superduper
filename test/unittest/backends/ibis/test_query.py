@@ -1,4 +1,5 @@
 import tempfile
+from test.db_config import DBConfig
 
 import numpy
 import pandas
@@ -12,6 +13,11 @@ from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
 from superduperdb.ext.pillow.encoder import pil_image
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 def test_serialize_table():
@@ -91,3 +97,21 @@ def test_serialize_deserialize():
     q = t.filter(t.id == 1).select(t.id, t.x)
 
     print(Serializable.deserialize(q.serialize()))
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 500}),
+    ],
+    indirect=True,
+)
+def test_add_fold(db):
+    table = db.load('table', 'documents')
+    select_train = table.select('id', 'x', '_fold').add_fold('train')
+    result_train = db.execute(select_train)
+
+    select_valid = table.select('id', 'x', '_fold').add_fold('valid')
+    result_vaild = db.execute(select_valid)
+    assert len(result_train) + len(result_vaild) == 500

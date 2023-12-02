@@ -19,7 +19,9 @@ from superduperdb.ext.transformers.model import (
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize(
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+)
 def transformers_model(db):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -59,6 +61,7 @@ def td():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
+# TODO: Test the sqldb
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_transformer_fit(transformers_model, db, td):
     repo_name = td

@@ -19,8 +19,7 @@ from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base import exceptions
-from superduperdb.base.artifact import Artifact
+from superduperdb.base.artifact import Artifact, ArtifactSavingError
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
@@ -145,7 +144,7 @@ def test_add_version(db):
 def test_add_component_with_bad_artifact(db):
     artifact = Artifact({'data': lambda x: x}, serializer='pickle')
     component = TestComponent(identifier='test', artifact=artifact)
-    with pytest.raises(exceptions.DatalayerException):
+    with pytest.raises(ArtifactSavingError):
         db.add(component)
 
 
@@ -177,7 +176,7 @@ def test_add_child(db):
     assert parents == [component.unique_id]
 
     component_2 = TestComponent(identifier='test-2', child='child-2')
-    with pytest.raises(exceptions.DatalayerException):
+    with pytest.raises(FileNotFoundError):
         db.add(component_2)
 
     child_component_2 = TestComponent(identifier='child-2')
@@ -279,7 +278,7 @@ def test_remove_component_from_data_layer_dict(db):
     test_encoder = Encoder(identifier='test_encoder', version=0)
     db.add(test_encoder)
     db._remove_component_version('encoder', 'test_encoder', 0, force=True)
-    with pytest.raises(exceptions.ComponentException):
+    with pytest.raises(FileNotFoundError):
         db.encoders['test_encoder']
 
 
@@ -339,7 +338,7 @@ def test_remove_multi_version(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_not_exist_component(db):
-    with pytest.raises(exceptions.ComponentException) as e:
+    with pytest.raises(FileNotFoundError) as e:
         db.remove('test-component', 'test', 0, force=True)
     assert 'test' in str(e)
 
@@ -543,7 +542,10 @@ def test_insert_sql_db(db):
     )
     assert len(inserted_ids) == 5
 
-    new_docs = list(db.execute(table.outputs(x='fake_model/0')))
+    q = table.select('id', 'x').outputs(x='fake_model/0')
+    new_docs = db.execute(q)
+    new_docs = list(new_docs)
+    # new_docs = list(db.execute(table.outputs(x='fake_model/0')))
 
     result = [doc.unpack()['_outputs.x.fake_model.0'] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
@@ -678,8 +680,8 @@ def test_reload_dataset(db):
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.mongodb_no_vector_index, {'n_data': 500}),
-        (DBConfig.sqldb_no_vector_index, {'n_data': 500}),
+        (DBConfig.mongodb_no_vector_index, {'n_data': n_data_points}),
+        (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )

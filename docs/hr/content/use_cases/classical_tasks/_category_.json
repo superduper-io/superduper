@@ -1,0 +1,10 @@
+{
+  "label": "Classical ML",
+  "position": 4,
+  "collapsed": false,
+  "collapsible": false,
+  "link": {
+    "type": "generated-index",
+    "description": "Get started with classical ML with SuperDuperDB"
+  }
+}

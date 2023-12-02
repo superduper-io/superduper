@@ -1,4 +1,4 @@
-# Transfer Learning
+# Transfer learning
 
 ## Transfer Learning with Sentence Transformers and Scikit-Learn
 

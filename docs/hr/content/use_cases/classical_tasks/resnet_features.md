@@ -1,4 +1,4 @@
-# Image
+# Image features
 
 # Building an Image Feature Database in `torchvision`
 

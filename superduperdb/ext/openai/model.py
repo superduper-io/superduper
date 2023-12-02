@@ -21,6 +21,8 @@ from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.model import Predictor
 from superduperdb.components.vector_index import vector
+from superduperdb.ext.default import str_type
+from superduperdb.ext.pillow import pil_image
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -151,6 +153,11 @@ class OpenAIChatCompletion(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
+    def __post_init__(self):
+        super().__post_init__()
+        if self.encoder is None:
+            self.encoder = str_type
+
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
@@ -214,6 +221,11 @@ class OpenAIImageCreation(OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.encoder is None:
+            self.encoder = pil_image
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -315,6 +327,11 @@ class OpenAIImageEdit(OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.encoder is None:
+            self.encoder = pil_image
 
     def _format_prompt(self, context):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -454,6 +471,11 @@ class OpenAIAudioTranscription(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
+    def __post_init__(self):
+        super().__post_init__()
+        if self.encoder is None:
+            self.encoder = str_type
+
     @retry
     def _predict_one(
         self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
@@ -548,6 +570,11 @@ class OpenAIAudioTranslation(OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.encoder is None:
+            self.encoder = str_type
 
     @retry
     def _predict_one(

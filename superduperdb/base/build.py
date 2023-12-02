@@ -10,6 +10,7 @@ import pymongo
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_backends, metadata_stores
+from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
@@ -51,7 +52,7 @@ def build(uri, mapping, type: str = 'data_backend'):
 
     if re.match('^mongodb:\/\/', uri) is not None:
         name = uri.split('/')[-1]
-        conn = pymongo.MongoClient(
+        conn: pymongo.MongoClient = pymongo.MongoClient(
             uri,
             serverSelectionTimeoutMS=5000,
         )
@@ -74,21 +75,27 @@ def build(uri, mapping, type: str = 'data_backend'):
             raise ValueError('Cannot build metadata from a CSV file.')
 
         import glob
-        csv_files = glob.glob(uri)
-        tables = {
-            re.match('^.*/(.*)\.csv$', csv_file).groups()[0]: pandas.read_csv(csv_file)
-            for csv_file in csv_files
-        }
-        conn = ibis.pandas.connect(tables)
-        return mapping['ibis'](conn, uri.split('/')[0])
+
+        tables = {}
+
+        for csv_file in glob.glob(uri):
+            match = re.match('^.*/(.*)\.csv$', csv_file)
+            if match:
+                table = match.groups()[0]
+                df = pandas.read_csv(csv_file)
+                tables.update({table: df})
+
+        ibis_conn = ibis.pandas.connect(tables)
+        return mapping['ibis'](ibis_conn, uri.split('/')[0])
     else:
         name = uri.split('//')[0]
         if type == 'data_backend':
-            conn = ibis.connect(uri)
-            return mapping['ibis'](conn, name)
+            ibis_conn = ibis.connect(uri)
+            return mapping['ibis'](ibis_conn, name)
         else:
             assert type == 'metadata'
             from sqlalchemy import create_engine
+
             conn = create_engine(uri)
             return mapping['sqlalchemy'](conn, name)
 
@@ -107,7 +114,9 @@ def build_compute(compute):
     return LocalComputeBackend()
 
 
-def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
+def build_datalayer(
+    cfg=None, databackend: t.Optional[BaseDataBackend] = None, **kwargs
+) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
 
@@ -130,6 +139,8 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     try:
         if not databackend:
             databackend = build(cfg.data_backend, data_backends)
+
+        assert isinstance(databackend, BaseDataBackend)
         logging.info("Data Client is ready.", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.

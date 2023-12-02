@@ -40,7 +40,7 @@ jobs:
         with:
           path: |
             ${{ env.pythonLocation }}
-          key: ubuntu-latest_python-3.11_${{ hashFiles('**/pyproject.toml') }}
+          key: ubuntu-latest_python-3.11_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
 
       - name: Build docs and use-cases
         # build is available in docs/hr/build

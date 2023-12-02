@@ -25,7 +25,12 @@ Then build the docker image required to run the environment:
 make testenv_image
 ```
 
-> If you want to install additional `pip` packages in the image, just list them in `requirements.txt`.
+> If you want to install additional `pip` dependencies in the image, you have to list them in `requirements.txt`.
+> 
+> The listed dependencies may refer to:
+> 1. standalone packages (e.g tensorflow)
+> 2. dependency groups listed in `pyproject.toml` (e.g `.[demo,server]`)
+
 
 Now add these configurations to your setup by running:
 

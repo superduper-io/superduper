@@ -54,4 +54,4 @@ db.add(
 )
 ```
 
-Read more about the `VectorIndex` concept [here](25_vector_search.mdx).
+Read more about the `VectorIndex` concept [here](../walkthrough/vector_search.md).

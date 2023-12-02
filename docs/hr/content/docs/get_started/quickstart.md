@@ -12,30 +12,30 @@ Follow these steps to quickly get started:
     hosted there, can be executed directly in the environment, but can also be cloned in [their original form in the open source repo](https://github.com/SuperDuperDB/superduperdb/tree/main/examples), and executed locally.
     These notebooks are also described on this documentation website in the [use-cases section](/docs/use-cases).
 
-1. **Get setup**
+2. **Get setup**
 
     Follow [the installation guide](./installation.md) and check the [minimum-working example](./minimum_working_example.md)
     to set-up your environment. For more detailed configuration, read the detailed [setup](/docs/category/setup) section.
 
-1. **Dive into the documentation**
+3. **Dive into the documentation**
 
     Refer to our comprehensive [`README.md`](https://github.com/superDuperDB/) for a high level of SuperDuperDB. The long-form documentation you are reading now provides deeper insights into features, usage, and best practices.
 
-1. **Explore the community apps examples**
+4. **Explore the community apps examples**
 
     Visit our [`community apps example`](https://github.com/superDuperDB/superduper-community-apps) repository to explore more examples of how SuperDuperDB can enhance your experience. Learn from real-world use cases and implementations.
 
-1. **Grasp the fundamentals**
+5. **Grasp the fundamentals**
 
     Read through the [`Fundamentals`](../fundamentals/glossary) section to gain a solid understanding of SuperDuperDB's architecture and refer to the [`API References`](https://docs.superduperdb.com/apidocs/source/superduperdb.html) for detailed information on API usage.
 
-1. **Engage with the Community**
+6. **Engage with the Community**
 
     If you encounter challenges, join our [Slack Channels](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA) for assistance. Report bugs and share feature requests [by raising an issue]((https://github.com/SuperDuperDB/superduperdb/issues).). Our community is here to support you.
 
     You are welcome to join the conversation on our [discussions forum](https://github.com/SuperDuperDB/superduperdb/discussions) and follow our open-source roadmap [here](https://github.com/orgs/SuperDuperDB/projects/1/views/10).
 
-1. **Contribute and Share**
+7. **Contribute and Share**
 
     Contribute to the SuperDuperDB community by sharing your solutions and experiences. 
     Help us grow by promoting SuperDuperDB to your peers and the wider world. Your involvement is valuable to us! Don't forget to give us a star ⭐!

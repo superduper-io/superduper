@@ -1,4 +1,4 @@
-# SuperDuperDB: cluster usage
+# Cluster usage
 
 SuperDuperDB allows developers, on the one hand to experiment and setup models quickly in scripts and notebooks, and on the other hand deploy persistent services, which are intended to "always" be on. These persistent services are:
 
@@ -34,28 +34,23 @@ Once this configuration has been added, you're ready to use the `superduperdb` s
 - Change-data-capture (CDC) service
 - Jupyter notebook service
 
-To set up this environment, navigate to your local copy of the `superduperdb` repository, edit the `requirements.txt` to look like this:
-
-```
-.[demo,server,apis]
-```
-
-(you can add any requirements you need in your system) and build the image with:
+To set up this environment, navigate to your local copy of the `superduperdb` repository, and build the image with:
 
 ```bash
 make testenv_image
 ```
 
+> If you want to install additional `pip` packages in the image, just list them in `requirements.txt`.  
+
 Then start the environment with:
 
 ```bash
-make testenv_init SUPERDUPERDB_DATA=sandbox
+make testenv_init
 ```
 
 This last command starts containers for each of the above services with `docker-compose`. You should see a bunch of logs for each service (mainly MongoDB).
 
-Once you have carried out these steps, you are ready to complete the rest of this notebook, which focuses on a implementing
-a production style implementation of vector-search.
+Once you have carried out these steps, you are ready to complete the rest of this notebook.
 
 
 ```python
@@ -70,8 +65,6 @@ from superduperdb import CFG
 assert CFG.data_backend == 'mongodb://superduper:superduper@mongodb:27017/test_db'
 ```
 
-We'll be using MongoDB to store the vectors and data:
-
 
 ```python
 from superduperdb.backends.mongodb import Collection
@@ -80,9 +73,6 @@ from superduperdb import superduper
 db = superduper()
 doc_collection = Collection('documents')
 ```
-
-We've already prepared some data which was scraped from the `pymongo` query API. You can download it 
-in the next cell:
 
 
 ```python
@@ -96,8 +86,6 @@ with open('pymongo.json') as f:
 data[0]
 ```
 
-Let's insert this data:
-
 
 ```python
 from superduperdb import Document
@@ -107,8 +95,10 @@ out, G = db.execute(
 )
 ```
 
-We'll use a `sentence-transformers` model to calculate the embeddings. Here's how to wrap the model 
-so that it works with `superduperdb`:
+
+```python
+db.metadata.show_jobs()
+```
 
 
 ```python
@@ -124,8 +114,6 @@ model = Model(
    batch_predict=True,                # Generate predictions for a set of observations all at once 
 )
 ```
-
-Now let's create the vector-search component:
 
 
 ```python
@@ -144,24 +132,15 @@ jobs, vi = db.add(
 )
 ```
 
-This command creates a job on `dask` to calculate the vectors and save them in the database. You can 
-follow the `stdout` of this job with this command:
-
 
 ```python
 jobs[0].watch()
 ```
 
-After a few moments, you'll be able to verify that the vectors have been saved in the documents:
-
 
 ```python
 db.execute(doc_collection.find_one())
 ```
-
-Let's test a similarity/ vector search using the hybrid query-API of `superduperdb`. This search 
-dispatches one part off to the vector-search server (running on port 8001) and the other (classical) part to MongoDB
-the results are combined by `superduperdb`:
 
 
 ```python
@@ -188,7 +167,12 @@ for r in result:
     display(Markdown('---'))
 ```
 
-One of the great things about this distributed setup, is that now allows data to be inserted into the service via other 
+
+```python
+db.drop(force=True)
+```
+
+The great thing about this production mode, is that now allows data to be inserted into the service via other 
 MongoDB clients, even from other programming languages and applications.
 
 We show-case this here, by inserting the rest of the data using the official Python MongoDB driver `pymongo`.
@@ -223,8 +207,12 @@ You can confirm that another job has been created and executed:
 db.metadata.show_jobs()
 ```
 
-We can now check that all of the outputs (including those inserted via the `pymongo` client) have been populated 
-by the system.
+You can view the `stdout` of the most recent job with this command:
+
+
+```python
+db.metadata.watch_job('a5077d81-0e00-4004-b501-23af356e0234')
+```
 
 
 ```python

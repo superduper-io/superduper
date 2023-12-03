@@ -22,8 +22,15 @@ cd superduperdb
 Then build the docker image required to run the environment:
 
 ```bash
-make testenv_image SUPERDUPERDB_EXTRAS=sandbox
+make testenv_image
 ```
+
+> If you want to install additional `pip` dependencies in the image, you have to list them in `requirements.txt`.
+> 
+> The listed dependencies may refer to:
+> 1. standalone packages (e.g `tensorflow>=2.15.0`)
+> 2. dependency groups listed in `pyproject.toml` (e.g `.[demo,server]`)
+
 
 Now add these configurations to your setup by running:
 
@@ -58,3 +65,10 @@ To stop the environment run:
 ```bash
 make testenv_shutdown
 ```
+
+# Known Issues
+
+To make sure data is saved between restarts, we connect a local data location to the `mongodb` container. 
+The location is specified in the `SUPERDUPERDB_DATA_DIR` of the Makefile and is initially set to `deploy/testenv/.test_data`. 
+
+However, since the `mongodb` container runs as 'root', the data directory will be owned by `root`, and you'll need `sudo` to delete it later.

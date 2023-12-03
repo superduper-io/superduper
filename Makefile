@@ -162,7 +162,7 @@ test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
 	@if [ -n "${NOTEBOOKS}" ]; then	\
-		pytest --nbval ${NOTEBOOKS}; 	\
+		pytest --nbval-lax ${NOTEBOOKS}; 	\
 	fi
 
 

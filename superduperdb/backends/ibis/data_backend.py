@@ -1,3 +1,4 @@
+import typing as t
 from warnings import warn
 
 import ibis
@@ -9,7 +10,7 @@ from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.components.model import Model
+from superduperdb.components.model import APIModel, Model
 from superduperdb.components.schema import Schema
 
 
@@ -36,7 +37,7 @@ class IbisDataBackend(BaseDataBackend):
         else:
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
 
-    def create_model_table_or_collection(self, model: Model):
+    def create_model_table_or_collection(self, model: t.Union[Model, APIModel]):
         msg = (
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."

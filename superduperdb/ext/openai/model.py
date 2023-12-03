@@ -17,12 +17,10 @@ from openai import (
 )
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
-from superduperdb.backends.ibis.field_types import FieldType, dtype
+from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
-from superduperdb.components.model import Predictor
-from superduperdb.components.vector_index import vector
+from superduperdb.components.model import APIModel
+from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -35,28 +33,8 @@ def _available_models():
 
 
 @dc.dataclass
-class OpenAI(Component, Predictor):
-    """OpenAI predictor.
-
-    :param model: The model to use, e.g. ``'text-embedding-ada-002'``.
-    :param identifier: The identifier to use, e.g. ``'my-model'``.
-    :param version: The version to use, e.g. ``0`` (leave empty)
-    :param takes_context: Whether the model takes context into account.
-    :param encoder: The encoder identifier.
-    """
-
-    model: str
-    identifier: str = ''
-    version: t.Optional[int] = None
-    takes_context: bool = False
-    encoder: t.Union[FieldType, Encoder, str, None] = None
-    model_update_kwargs: dict = dc.field(default_factory=dict)
-
-    @property
-    def child_components(self):
-        if self.encoder is not None:
-            return [('encoder', 'encoder')]
-        return []
+class OpenAI(APIModel):
+    """OpenAI predictor."""
 
     def __post_init__(self):
         # dall-e is not currently included in list returned by OpenAI model endpoint
@@ -74,10 +52,6 @@ class OpenAI(Component, Predictor):
         if 'OPENAI_API_KEY' not in os.environ:
             raise ValueError('OPENAI_API_KEY not set')
 
-    def post_create(self, db: Datalayer) -> None:
-        # TODO: need to create table for ibis
-        super().post_create(db)
-
 
 @dc.dataclass
 class OpenAIEmbedding(OpenAI):
@@ -94,7 +68,14 @@ class OpenAIEmbedding(OpenAI):
         super().__post_init__()
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
-        self.encoder = vector(self.shape)
+
+    def pre_create(self, db):
+        super().pre_create(db)
+        if isinstance(db.databackend, IbisDataBackend):
+            if self.encoder is None:
+                self.encoder = sqlvector(self.shape)
+        elif self.encoder is None:
+            self.encoder = vector(self.shape)
 
     @retry
     def _predict_one(self, X: str, **kwargs):
@@ -157,8 +138,8 @@ class OpenAIChatCompletion(OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
 
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype('str')
 
@@ -222,8 +203,8 @@ class OpenAIImageCreation(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype('bytes')
 
@@ -332,8 +313,8 @@ class OpenAIImageEdit(OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt
 
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype('bytes')
 
@@ -471,8 +452,8 @@ class OpenAIAudioTranscription(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype('str')
 
@@ -571,8 +552,8 @@ class OpenAIAudioTranslation(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype('str')
 

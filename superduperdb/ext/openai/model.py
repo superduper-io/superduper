@@ -16,6 +16,8 @@ from openai import (
     RateLimitError,
 )
 
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
@@ -47,7 +49,7 @@ class OpenAI(Component, Predictor):
     identifier: str = ''
     version: t.Optional[int] = None
     takes_context: bool = False
-    encoder: t.Union[Encoder, str, None] = None
+    encoder: t.Union[FieldType, Encoder, str, None] = None
     model_update_kwargs: dict = dc.field(default_factory=dict)
 
     @property
@@ -155,6 +157,11 @@ class OpenAIChatCompletion(OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
 
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('str')
+
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
         if context is not None:
@@ -214,6 +221,11 @@ class OpenAIImageCreation(OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('bytes')
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -319,6 +331,11 @@ class OpenAIImageEdit(OpenAI):
     def _format_prompt(self, context):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt
+
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('bytes')
 
     @retry
     def _predict_one(
@@ -454,6 +471,11 @@ class OpenAIAudioTranscription(OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('str')
+
     @retry
     def _predict_one(
         self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
@@ -548,6 +570,11 @@ class OpenAIAudioTranslation(OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('str')
 
     @retry
     def _predict_one(

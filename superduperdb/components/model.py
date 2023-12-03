@@ -404,7 +404,6 @@ class Predictor:
             outputs = encoded_ouputs if encoded_ouputs else outputs
 
         assert isinstance(self.version, int)
-
         select.model_update(
             db=db,
             model=self.identifier,
@@ -681,3 +680,35 @@ class Model(Component, Predictor):
 @wraps(_TrainingConfiguration)
 def TrainingConfiguration(identifier: str, **kwargs):
     return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
+
+
+@dc.dataclass
+class APIModel(Component, Predictor):
+    '''
+    A Component for representing api models like openai, cohere etc
+    :param model: The model to use, e.g. ``'text-embedding-ada-002'``.
+    :param identifier: The identifier to use, e.g. ``'my-model'``.
+    :param version: The version to use, e.g. ``0`` (leave empty)
+    :param takes_context: Whether the model takes context into account.
+    :param encoder: The encoder identifier.
+    '''
+
+    model: str
+    identifier: str = ''
+    version: t.Optional[int] = None
+    takes_context: bool = False
+    encoder: t.Union[FieldType, Encoder, str, None] = None
+    model_update_kwargs: dict = dc.field(default_factory=dict)
+
+    def post_create(self, db: Datalayer) -> None:
+        if isinstance(self.output_schema, Schema):
+            db.add(self.output_schema)
+        output_component = db.databackend.create_model_table_or_collection(self)
+        if output_component is not None:
+            db.add(output_component)
+
+    @property
+    def child_components(self):
+        if isinstance(self.encoder, Encoder):
+            return [('encoder', 'encoder')]
+        return []

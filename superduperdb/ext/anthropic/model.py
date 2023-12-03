@@ -4,9 +4,10 @@ import typing as t
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
 
-from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
-from superduperdb.components.model import Predictor
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.components.model import APIModel
 from superduperdb.ext.utils import format_prompt, get_key
 from superduperdb.misc.retry import Retry
 
@@ -18,35 +19,13 @@ KEY_NAME = 'ANTHROPIC_API_KEY'
 
 
 @dc.dataclass
-class Anthropic(Component, Predictor):
-    """Anthropic predictor.
+class Anthropic(APIModel):
+    """Anthropic predictor."""
 
-    :param model: The model to use, e.g. ``'claude-2'``.
-    :param identifier: The identifier to use, e.g. ``'my-model'``.
-    :param version: The version to use, e.g. ``0`` (leave empty)
-    :param takes_context: Whether the model takes context into account.
-    :param encoder: The encoder identifier.
-    :param type_id: A unique name for the class
-    :param client_kwargs: Keyword arguments to pass to the client
-    """
-
-    model: str
-    identifier: str = ''
-    version: t.Optional[int] = None
-    takes_context: bool = False
-    encoder: t.Union[Encoder, str, None] = None
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
-
-    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
         self.identifier = self.identifier or self.model
-
-    @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
-        if self.encoder is not None:
-            return [('encoder', 'encoder')]
-        return []
 
 
 @dc.dataclass
@@ -59,6 +38,11 @@ class AnthropicCompletions(Anthropic):
 
     takes_context: bool = True
     prompt: str = ''
+
+    def pre_create(self, db: Datalayer) -> None:
+        super().pre_create(db)
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('str')
 
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):

@@ -366,7 +366,7 @@ class Datalayer:
             **kwargs,
         )
 
-        if model.encoder is not None:
+        if isinstance(model.encoder, Encoder):
             out = model.encoder(out)
 
         if context is not None:

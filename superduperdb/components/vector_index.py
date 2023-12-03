@@ -1,6 +1,7 @@
 import dataclasses as dc
 import typing as t
 
+import numpy as np
 from overrides import override
 
 import superduperdb as s
@@ -173,6 +174,25 @@ class VectorIndex(Component):
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
 
+class EncodeArray:
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def __call__(self, x):
+        x = np.asarray(x)
+        if x.dtype != self.dtype:
+            raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
+        return memoryview(x).tobytes()
+
+
+class DecodeArray:
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def __call__(self, bytes):
+        return np.frombuffer(bytes, dtype=self.dtype).tolist()
+
+
 def vector(shape):
     """
     Create an encoder for a vector (list of ints/ floats) of a given shape
@@ -184,4 +204,19 @@ def vector(shape):
         shape=shape,
         encoder=None,
         decoder=None,
+    )
+
+
+def sqlvector(shape):
+    """
+    Create an encoder for a vector (list of ints/ floats) of a given shape
+    compatible with sql databases.
+
+    :param shape: The shape of the vector
+    """
+    return Encoder(
+        identifier=f'sqlvector[{str_shape(shape)}]',
+        shape=shape,
+        encoder=EncodeArray(dtype='float64'),
+        decoder=DecodeArray(dtype='float64'),
     )

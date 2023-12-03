@@ -28,7 +28,7 @@ make testenv_image
 > If you want to install additional `pip` dependencies in the image, you have to list them in `requirements.txt`.
 > 
 > The listed dependencies may refer to:
-> 1. standalone packages (e.g tensorflow)
+> 1. standalone packages (e.g `tensorflow>=2.15.0`)
 > 2. dependency groups listed in `pyproject.toml` (e.g `.[demo,server]`)
 
 

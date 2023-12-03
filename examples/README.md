@@ -5,7 +5,7 @@
 To run these notebooks with `docker`, in the root directory, build the image with:
 
 ```bash
-make testenv_image SUPERDUPERDB_EXTRAS=sandbox
+make testenv_image
 ```
 
 Then start Jupyter with:

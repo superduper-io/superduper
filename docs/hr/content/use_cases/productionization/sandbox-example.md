@@ -34,22 +34,23 @@ Once this configuration has been added, you're ready to use the `superduperdb` s
 - Change-data-capture (CDC) service
 - Jupyter notebook service
 
-To set up this environment, navigate to your local copy of the `superduperdb` repository, edit the `requirements.txt` to look like this:
 
-```
-.[demo,server,apis]
-```
-
-(you can add any requirements you need in your system) and build the image with:
+To build the `sandbox` image:
 
 ```bash
 make testenv_image
 ```
 
+> If you want to install additional `pip` dependencies in the image, you have to list them in `requirements.txt`.
+> 
+> The listed dependencies may refer to:
+> 1. standalone packages (e.g `tensorflow>=2.15.0`)
+> 2. dependency groups listed in `pyproject.toml` (e.g `.[demo,server]`)
+
 Then start the environment with:
 
 ```bash
-make testenv_init SUPERDUPERDB_DATA=sandbox
+make testenv_init
 ```
 
 This last command starts containers for each of the above services with `docker-compose`. You should see a bunch of logs for each service (mainly MongoDB).

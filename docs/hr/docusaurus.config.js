@@ -227,6 +227,11 @@ const config = {
             position: 'left',
           },
           {
+            href: 'https://github.com/SuperDuperDB/superduper-community-apps/',
+            label: 'Community Apps',
+            position: 'left',
+          },
+          {
             href: 'https://www.question-the-docs.superduperdb.com/',
             label: 'Ask our docs',
             position: 'left',

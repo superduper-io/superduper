@@ -13,7 +13,7 @@ SuperDuperDB is an open-source (Apache 2.0) package, framework and environment w
 :::
 
 
-![](/img/SuperDuperDB_diagram.svg)
+![](/img/superduperdb.gif)
 
 For a high-level introduction to SuperDuperDB refer to the [`README.md` of the open-source code-base of on GitHub](https://github.com/SuperDuperDB/superduperdb).
 

@@ -4,7 +4,7 @@ sidebar_position: 26
 
 # Component versioning
 
-Whenever a `Component` is created (see [here](../fundamentals/09_component_abstraction.md) for overview of `Component` classes),
+Whenever a `Component` is created (see [here](../fundamentals/component_abstraction.md) for overview of `Component` classes),
 information about that `Component` is saved in the `db.metadata` store.
 
 All components come with attributes `.identifier` which is a unique identifying string for that `Component` instance.
@@ -47,4 +47,5 @@ When one adds the `VectorIndex` with `db.add(vector_index)`,
 the sub-components are also versioned, if a version has not already 
 been assigned to those components in the same session.
 
-Read more about `VectorIndex` and vector-searches [here](../fundamentals/25_vector_search.mdx).
+Read more about `VectorIndex` and vector-searches [here](../walkthrough/vector_search.md).
+

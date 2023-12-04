@@ -39,11 +39,9 @@
 - Help us spread the word and inform the community and win swag by reposting this post: https://www.linkedin.com/company/superduperdb and tagging anyone who could be interested in SuperDuperDB (check the first comment for details) 📣
 
 ***To get started:***
-- Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/) 🚀
+- Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
 
-For more information about SuperDuperDB and why we believe it is much needed, [read the blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)
-
- `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
+For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
 
 ---
 
@@ -51,9 +49,9 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 
 SuperDuperDB is an open-source framework for integrating AI directly with your existing databases, including streaming inference, scalable model training, and vector search.
 
-SuperDuperDB is not a database. It transforms your favorite database into an AI development and deployment environment (making it super-duper). 
+*SuperDuperDB is not a database.* It transforms your favorite database into an AI development and deployment environment (making it super-duper). 
 
-SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - and the need to migrate and duplicate data** by integrating AI at the data's source, directly on top of your existing data infrastructure, **. This massively simplifies building and managing AI applications.
+SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - and the need to migrate and duplicate data by integrating AI at the data's source, directly on top of your existing data infrastructure. This massively simplifies building and managing AI applications:
 
 - Generative AI & LLM-Chat
 - Vector Search

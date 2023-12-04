@@ -252,30 +252,30 @@ Also find use-cases and apps built by the community in the [superduper-community
 <table>
   <tr>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Text-To-Video Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">Question the Docs</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
     </th>
   </tr>
   <tr>     

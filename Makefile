@@ -25,13 +25,14 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
+CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
-	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
+	@ if [[ "$(RELEASE_VERSION)" == "v$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
 
-	@echo "** Switching to branch release-${RELEASE_VERSION}"
-	@git checkout -b release-${RELEASE_VERSION}
+	@echo "** Switching to branch release-$(RELEASE_VERSION)"
+	@git checkout -b release-$(RELEASE_VERSION)
 
 	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION:v%=%)"
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
@@ -40,10 +41,10 @@ new_release: ## Release a new version of SuperDuperDB
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
-	@git tag ${RELEASE_VERSION}
+	@git tag $(RELEASE_VERSION)
 
-	@echo "** Push release-${RELEASE_VERSION}"
-	git push --set-upstream origin release-${RELEASE_VERSION} --tags
+	@echo "** Push release-$(RELEASE_VERSION)"
+	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
 
 
 ##@ DevKit

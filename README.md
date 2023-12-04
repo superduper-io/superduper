@@ -28,12 +28,20 @@
 ---
 
 
-***📣 Important Release Announcement!***
+### 📣 Today we are officially launching SuperDuperDB with release of v0.1, including:
+- Support of major SQL databases: PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino (next to MongoDB of course)
+- Improved docs
+- A modularized testing suite
 
-On the 5th of December, we will officially launch SuperDuperDB with the release of v0.1, including:
-- Integration of PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino.
-- Overhaul of the documentation
-- Revamped and modularized testing suite
+***SuperDuperDB is open-source. Please support us:***
+- Leave a star on the repo! ⭐
+- [Upvote on ProductHunt!](https://www.producthunt.com/posts/superduperdb) 🗳️
+- Help us spread the word and inform the community and win swag by reposting this post: https://www.linkedin.com/company/superduperdb and tagging anyone who could be interested in SuperDuperDB (check the first comment for details) 📣
+
+***To get started:***
+- Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/) 🚀
+
+For more information about SuperDuperDB and why we believe it is much needed, [read the blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)
 
  `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
 

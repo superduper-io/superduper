@@ -13,6 +13,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- ...
+
+#### New Features & Functionality
+
+- ...
+
+#### Bug Fixes
+
+- ...
+
+
+## [0.0.20](https://github.com/SuperDuperDB/superduperdb/compare/0.0.10...0.0.20])    (2023-Dec-04)
+
+#### Changed defaults / behaviours
+
+- Chop down large files from the history to reduce the size of the repo.
+
+#### New Features & Functionality
+
+- ...
+
+
+#### Bug Fixes
+
+- ...
+
+
+## [0.0.19](https://github.com/SuperDuperDB/superduperdb/compare/0.0.15...0.0.19])    (2023-Dec-04)  
+
+#### Changed defaults / behaviours
+
 - Add Changelog for tracking changes on the repo. It must be filled before any PR.
 - Remove ci-pinned-dependencies and replaced them with actions with better cache management.
 - Change logging mechanism from the default to loguru
@@ -38,7 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added libgl libraries in Dockerfile to correctly render the video in notebooks.
 
-  
 
 ## [0.0.15](https://github.com/SuperDuperDB/superduperdb/compare/0.0.14...0.0.15])    (2023-Nov-01)
 

@@ -90,7 +90,7 @@ testenv_init: ## Initialize a local Testing environment
 	@deploy/testenv/validate_hostnames.sh
 
 	@echo "===> Ensure mongodb volume is present"
-	mkdir -p $(SUPERDUPERDB_DATA_DIR)
+	mkdir -p deploy/testenv/$(SUPERDUPERDB_DATA_DIR)
 
 	@echo "===> Ensure Images"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \

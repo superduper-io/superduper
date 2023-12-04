@@ -84,7 +84,7 @@ class Component(Serializable):
 
     def schedule_jobs(
         self,
-        database: Datalayer,
+        db: Datalayer,
         dependencies: t.Sequence[Job] = (),
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:

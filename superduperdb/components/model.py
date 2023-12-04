@@ -8,6 +8,7 @@ from functools import wraps
 
 import tqdm
 from numpy import ndarray
+from overrides import override
 from sklearn.pipeline import Pipeline
 
 from superduperdb import logging
@@ -466,6 +467,7 @@ class Model(Component, Predictor):
     serializer: str = 'dill'
     device: str = "cpu"
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
+    validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None
 
     # Don't set these manually
     version: t.Optional[int] = None
@@ -496,6 +498,30 @@ class Model(Component, Predictor):
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)
+
+    @override
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        verbose: bool = False,
+    ) -> t.Sequence[t.Any]:
+        if self.train_X is not None:
+            assert isinstance(self.training_configuration, _TrainingConfiguration)
+            assert self.training_select is not None
+            return [
+                self.fit(
+                    X=self.train_X,
+                    y=self.train_y,
+                    configuration=self.training_configuration,
+                    select=self.training_select,
+                    db=db,
+                    dependencies=dependencies,
+                    metrics=self.metrics,  # type: ignore[arg-type]
+                    validation_sets=self.validation_sets,
+                )
+            ]
+        return []
 
     def on_load(self, db: Datalayer) -> None:
         if self._artifact_method and self.preferred_devices:

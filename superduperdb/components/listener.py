@@ -96,7 +96,7 @@ class Listener(Component):
     @override
     def schedule_jobs(
         self,
-        database: Datalayer,
+        db: Datalayer,
         dependencies: t.Sequence[Job] = (),
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
@@ -114,7 +114,7 @@ class Listener(Component):
         out = [
             self.model.predict(
                 X=self.key,
-                db=database,
+                db=db,
                 select=self.select,
                 dependencies=dependencies,
                 **(self.predict_kwargs or {}),

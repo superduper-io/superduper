@@ -6,6 +6,7 @@ from overrides import override
 from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import _OUTPUTS_KEY
 from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
@@ -39,6 +40,10 @@ class Listener(Component):
     version: t.Optional[int] = None
 
     type_id: t.ClassVar[str] = 'listener'
+
+    @property
+    def outputs(self):
+        return f'{_OUTPUTS_KEY}.{self.key}.{self.model.identifier}.{self.model.version}'
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:

@@ -206,12 +206,21 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
+      colorMode: {
+        defaultMode: 'light',
+        disableSwitch: false,
+        respectPrefersColorScheme: true,
+      },
       navbar: {
-        title: 'SuperDuperDB',
+        title: '',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.png',
+          alt: 'SuperDuperDB',
+          src: 'img/SuperDuperDB_logo_color_dark_noborder.svg',
+          srcDark: 'img/SuperDuperDB_logo_color.svg',
           href: 'https://superduperdb.com',
+          target: '_self',
+          // width: 250,
+          // height: 34,
         },
         items: [
           {
@@ -261,7 +270,7 @@ const config = {
               },
               {
                 label: 'Use cases',
-                to: '/docs/use_cases',
+                to: '/docs/category/use-cases',
               },
               {
                 label: 'Blog',
@@ -284,10 +293,10 @@ const config = {
                 label: 'Discussions',
                 href: 'https://github.com/SuperDuperDB/superduperdb/discussions',
               },
-              {
-                label: 'Roadmap',
-                href: 'https://github.com/orgs/SuperDuperDB/projects/1/views/10',
-              },
+              // {
+              //   label: 'Roadmap',
+              //   href: 'https://github.com/orgs/SuperDuperDB/projects/1/views/10',
+              // },
             ],
           },
           {

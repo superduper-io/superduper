@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
+## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
+
+#### Changed defaults / behaviours
+
+- ...
+
+#### New Features & Functionality
+
+- Introduced Chinese version of README
+
+
+#### Bug Fixes
+
+- Updated paths for docker-compose.
+
 
 ## [0.0.20](https://github.com/SuperDuperDB/superduperdb/compare/0.0.10...0.0.20])    (2023-Dec-04)
 

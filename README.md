@@ -48,7 +48,13 @@
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
 
----
+
+<div align="center">
+	
+[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
+
+</div>
+
 
 ## What is SuperDuperDB? 🔮 
 

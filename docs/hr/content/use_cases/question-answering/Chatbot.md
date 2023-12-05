@@ -273,3 +273,10 @@ db.remove('listener', 'text-embedding-ada-002/txt', force=True)
 # Remove a model with the identifier 'text-embedding-ada-002'
 db.remove('model', 'text-embedding-ada-002', force=True)
 ```
+
+## Now you can build an API as well just like we did
+
+### FastAPI Question the Docs Apps Tutorial
+
+This tutorial will guide you through setting up a basic FastAPI application for handling questions with documentation. The tutorial covers both local development and deployment to the Fly.io platform.
+[https://github.com/SuperDuperDB/chat-with-your-docs-backend](https://github.com/SuperDuperDB/chat-with-your-docs-backend)

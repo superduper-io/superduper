@@ -1,10 +1,13 @@
 ---
 slug: superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore
 title: 'Integrating AI directly with your databases, to eliminate complex MLOps and vector databases'
-authors: [blythed]
-tags: [Launching Blog]
+authors: [blythed, timo]
+image: /img/super_intro.png
+tags: [Launching Blog, release]
 ---
 🔮**TL;DR:** *We introduce SuperDuperDB, which has just published its first major v0.1 release. SuperDuperDB is an open-source AI development and deployment framework to seamlessly integrate AI models and APIs with your database. In the following, we will survey the challenges presented by current AI-data integration methods and tools, and how they motivated us in developing SuperDuperDB. We'll then provide an overview of SuperDuperDB, highlighting its core principles, features and existing integrations.*
+
+![](/img/introduction.png)
 
 ### AI adoption is pressing, but difficult
 
@@ -71,7 +74,7 @@ SuperDuperDB provides a unified environment for building, shipping, and managing
 - Standard machine learning use-cases (classification, segmentation, recommendation, etc.)
 - Highly custom AI use-cases involving application specific, home-grown models.
 
-:::info
+:::info Support us by leaving a star
 🔮 Please support us by leaving a star the GitHub repo and share it with anyone who could be interested: [https://github.com/SuperDuperDB/superduperdb](https://github.com/SuperDuperDB/superduperdb)
 :::
 
@@ -134,9 +137,12 @@ SuperDuperDB levels the playing field for all AI models, regardless of complexit
 ![](/img/AI1.png)
 ![](/img/AI2.png)
 
+
 # Use-cases and applications
 
-SuperDuperDB enables a huge variety of use-cases via its support for arbitrary python-based AI models. We have already implemented numerous use-cases and applications, such as LLM RAG chat, forecasting, recommenders, sentiment analysis which you can refer to in the [README of our main repository](https://github.com/SuperDuperDB/superduperdb) and in our [documentation](https://docs.superduperdb.com/docs/category/use-cases) 
+We have already implemented numerous use-cases and applications, such as LLM RAG chat, forecasting, recommenders, sentiment analysis which you can refer to in the [README of our main repository](https://github.com/SuperDuperDB/superduperdb) and in our [example use cases documentation](https://docs.superduperdb.com/docs/category/use-cases) 
+
+![](/img/usecase.png)
 
 In addition, we already have several impressive applications and use-cases built by the open-source community, which we are excited to present in our dedicated community apps showcase repo: [SuperDuperDB Community Apps](https://github.com/SuperDuperDB/superduper-community-apps).
 
@@ -146,6 +152,6 @@ After reviewing the use cases, you’ll be ready to build your own AI applicatio
 
 The current focus of the roadmap is making the deployment of SuperDuperDB absolutely production-ready and to improve optimizations for deployment, compute efficiency and scalability. 
 
-:::info
-❤️‍🔥 If you haven’t yet, now is the time to leave a star on GitHub to support the project and share it with your friends and colleagues: https://github.com/SuperDuperDB/superduperdb
+:::info Leave a star
+❤️‍🔥 If you haven’t yet, now is the time to leave a star on GitHub to support the project and share it with your friends and colleagues: https://github.com/SuperDuperDB/superduperdb
 :::

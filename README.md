@@ -32,6 +32,7 @@
 
 ---
 
+📣 Update: ***In response to increased traffic on our [Live Demo](https://demo.superduperdb.com/user-redirect/lab/tree/examples), we have reduced the expiration time from 1 hour and 30 minutes to 1 hour.***
 
 ### 📣 Today we are officially launching SuperDuperDB with release of v0.1, including:
 - Support of major SQL databases: PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino (next to MongoDB of course)

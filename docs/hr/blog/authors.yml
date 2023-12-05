@@ -1,8 +1,14 @@
 blythed:
   name: Duncan Blythe
-  title: Creator of SuperDuperDB
+  title: CTO & Co-founder of SuperDuperDB
   url: https://github.com/blythed
   image_url: https://avatars.githubusercontent.com/u/15139331?v=4
+
+timo:
+  name: Timo Hagenow
+  title: CEO & Co-founder of SuperDuperDB
+  url: https://www.linkedin.com/in/timohagenow/
+  image_url: https://media.licdn.com/dms/image/D4E03AQGg35RuVoXOYQ/profile-displayphoto-shrink_400_400/0/1682109861734?e=1707350400&v=beta&t=XA8MDWVZRB58IOpc_p-hdX943x6GJ71Xiv-_Ne4N1aw
 
 nenb:
   name: Nick Byrne

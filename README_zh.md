@@ -62,7 +62,7 @@ SuperDuperDB消除了复杂的MLOps管道和专用向量数据库的需求，使
 - **[模型调用链](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)：** 通过连接模型和API，轻松设置复杂的工作流程，以相互依赖和顺序的方式协同工作和调用。
 - **[简单易扩展的接口](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)：** 添加并利用Python生态系统中的任何函数、程序、脚本或算法，增强您的工作流和应用。在使用SuperDuperDB时，可以仅通过简单的Python命令即可深入到任何实现层级，包括模型的内部实现。
 - **[处理复杂数据类型](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)：** 在您的数据库中直接处理图像、视频、音频等数据，以及任何可以在Python中编码为`bytes`的类型的数据。
-- **[特征存储](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts)：** 将您的数据库转变为可用于存储和管理AI模型中任意数据类型的数据输入和输出的中心化存储库，使各种数据可以在熟悉的环境中易结构化的格式来使用。
+- **[特征存储](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types)：** 将您的数据库转变为可用于存储和管理AI模型中任意数据类型的数据输入和输出的中心化存储库，使各种数据可以在熟悉的环境中易结构化的格式来使用。
 - **[向量搜索](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search)：** 无需将数据复制和迁移到其他专门的向量数据库 - 将您现有的测试和生产的数据库转变为全功能的多模态向量搜索数据库，包括使用强大的模型和API轻松生成数据的向量Embedding和数据的向量索引。
 
 ### 选择SuperDuperDB的理由

@@ -1,7 +1,6 @@
 PYTEST_ARGUMENTS ?=
 DIRECTORIES = superduperdb test 
-
-SUPERDUPERDB_DATA_DIR ?= ./deploy/testenv/.test_data
+SUPERDUPERDB_DATA_DIR ?= .test_data
 
 ##@ General
 

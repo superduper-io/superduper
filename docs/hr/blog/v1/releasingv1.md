@@ -1,6 +1,6 @@
 ---
 slug: superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore
-title: 'Integrating AI directly with your databases, to eliminate complex MLOps and vector databases'
+title: 'Integrating AI directly with your databases to eliminate complex MLOps and vector databases'
 authors: [blythed, timo]
 image: /img/super_intro.png
 tags: [Launching Blog, release]

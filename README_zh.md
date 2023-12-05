@@ -24,57 +24,56 @@
 	<a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 
-<b>English</b> |
-[**中文**](README_zh.md) 
+[**English**](README.md) |
+<b>中文</b>
 
 </div>
 
 
 ---
 
+📣 重要发布公告！
 
-***📣 Important Release Announcement!***
+12月5日，我们将正式推出SuperDuperDB，并发布0.1版本，包括以下内容：
+ 
+- 整合了多种数据库技术，包括PostgreSQL、MySQL、SQLite、DuckDB、Snowflake、BigQuery、ClickHouse、DataFusion、Druid、Impala、MSSQL、Oracle、pandas、Polars、PySpark和Trino。
+- 全面更新了文档资料
+- 对测试套件进行了改进和模块化处理
 
-On the 5th of December, we will officially launch SuperDuperDB with the release of v0.1, including:
-- Integration of PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino.
-- Overhaul of the documentation
-- Revamped and modularized testing suite
-
- `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
+`⭐️ SuperDuperDB是开源项目：请点亮星星支持我们的项目！⭐️`
 
 ---
 
-## What is SuperDuperDB? 🔮 
+## SuperDuperDB是什么？🔮
 
-SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including streaming inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
+SuperDuperDB是一个通用的AI开发和部署框架，专为**集成任何机器学习模型**（如PyTorch、Sklearn、HuggingFace）和**AI API**（如OpenAI、Antrophic、Cohere）**直接与您现有的数据库相连**而设计，包括流式推理、模型训练和向量搜索。SuperDuperDB不是另一个新的数据库，它能“超级增强”您目前使用的数据库。
 
-SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications efficiently and flexibly with a simple Python interface!
+SuperDuperDB消除了复杂的MLOps管道和专用向量数据库的需求，使您能够通过简单的Python接口，高效灵活地构建端到端的AI应用！
 
-- Generative AI & LLM-Chat
-- Vector Search
-- Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
-- Highly custom AI use-cases involving ultra specialized models
+- 生成式AI & 基于LLM的Chatbot
+- 向量搜索
+- 标准的机器学习应用场景（分类、分割、推荐等）
+- 涉及到超专业模型的高度定制化AI应用场景
+
+### 核心特性：
+- **[将AI与现有数据基础设施集成](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models)：** 在单一可扩展的系统中将任何AI模型和API与您的数据库集成，无需额外的预处理步骤、ETL或冗余代码。
+- **[流式推理](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners)：** 当新数据到达时，让您的模型自动激活且立即计算输出，保持您的系统始终更新。
+- **[可扩展的模型训练](https://docs.superduperdb.com/docs/docs/walkthrough/training_models)：** 通过查询您的训练数据，在大型、多样化的数据集上训练AI模型。通过内置的计算优化确保最佳性能。
+- **[模型调用链](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)：** 通过连接模型和API，轻松设置复杂的工作流程，以相互依赖和顺序的方式协同工作和调用。
+- **[简单易扩展的接口](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)：** 添加并利用Python生态系统中的任何函数、程序、脚本或算法，增强您的工作流和应用。在使用SuperDuperDB时，可以仅通过简单的Python命令即可深入到任何实现层级，包括模型的内部实现。
+- **[处理复杂数据类型](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)：** 在您的数据库中直接处理图像、视频、音频等数据，以及任何可以在Python中编码为`bytes`的类型的数据。
+- **[特征存储](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts)：** 将您的数据库转变为可用于存储和管理AI模型中任意数据类型的数据输入和输出的中心化存储库，使各种数据可以在熟悉的环境中易结构化的格式来使用。
+- **[向量搜索](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search)：** 无需将数据复制和迁移到其他专门的向量数据库 - 将您现有的测试和生产的数据库转变为全功能的多模态向量搜索数据库，包括使用强大的模型和API轻松生成数据的向量Embedding和数据的向量索引。
+
+### 选择SuperDuperDB的理由
+|         | SuperDuperDB的优势                                               | 未采用SuperDuperDB的常见挑战                    |
+|---------|---------------------------------------------------------------|-----------------------------------------|
+| 数据管理与安全 | 数据始终存储在数据库中，AI产生的输出与输入也存储在数据库中，供下游应用使用。数据访问和安全性通过数据库访问管理外部控制。 | 数据复制和迁移到不同环境，以及专门的向量数据库，增加了数据管理负担和安全风险。 |
+| 基础设施    | 只需在一个环境内构建、发布和管理AI应用，提高了拓展性和最佳的计算效率。                          | 复杂的碎片化基础设施，包括多个管道，带来高昂的采用和维护成本，增加安全风险。  |
+| 代码      | 由于简单和声明式的API，学习曲线极小，仅需简单的Python命令。                            | 需要使用数百行代码, 不同的环境，不用的工具。                 |
 
 
-### Key Features:
-- **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
-- **[Model Chaining](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Add and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down to any layer of implementation, including to the inner workings of your models while operating SuperDuperDB with simple Python commands.
-- **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: Work directly with images, video, audio in your database, and any type which can be encoded as `bytes` in Python.
-- **[Feature Storing](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
-
-### Why opt for SuperDuperDB?
-|                            | With SuperDuperDB | Without |
-|----------------------------|-|-|
-| Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead.   |
-| Infrastructure             | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
-
-
-## Supported Datastores (*more coming soon*):
+## 目前支持的数据库 (*更多的在来的路上*):
 
 <table>
     <tr>
@@ -161,13 +160,13 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 
 </table>
 
-**Transform your existing database into a Python-only AI development and deployment stack with one command:**
+**一行命令，将您现有的数据库转化为基于Python的AI开发和部署平台：**
 
 ```
 db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-## Supported AI Frameworks and Models (*more coming soon*):
+## 目前支持的AI框架和模型 (*更多的在来的路上*):
 
 <table>
     <tr>
@@ -183,9 +182,9 @@ db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
     </tr>
 </table>
 
-**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
+**直接将任何AI模型（无论是开源、商业模型还是自行开发的）与您的数据库集成、训练和管理，仅需一个Python命令即可自动在数据库上模型进行计算输出：**
 
-- Install and deploy model:
+- 安装和部署模型
 
 ```
 m = db.add(
@@ -196,13 +195,13 @@ m = db.add(
 )
 ```
 
-- Predict:
+- 模型推理
 
 ```
 m.predict(X='<input_column>', db=db, select=<mongodb_query>, listen=False|True, create_vector_index=False|True)
 ```
 
-- Train model:
+- 模型训练
 
 ```
 m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mongodb_query>|<ibis_query>)
@@ -212,7 +211,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 
 
-## Pre-Integrated AI APIs (*more coming soon*):
+## 预置集成的 AI APIs (*更多的在来的路上*):
 
 <table >
     <tr>
@@ -228,7 +227,8 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
     </tr>
 </table>
 
-**Integrate externally hosted models accessible via API to work together with your other models with a simple Python command:**
+**通过一个简单的Python命令，将通过API访问的三方模型和您自己的其他模型集成在一起**
+
 
 ```
 m = db.add(
@@ -239,7 +239,7 @@ m = db.add(
 
 
 
-## Infrastructure Diagram
+## 架构图
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
@@ -247,11 +247,12 @@ m = db.add(
 
 
 
-## Featured Examples
+## 精选实例
 
-Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
+立即尝试我们的 Jupyter Notebook [直接在您的浏览器上体验](https://demo.superduperdb.com)。
 
-Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
+同时，您还可以在 [superduper-community-apps 仓库](https://github.com/SuperDuperDB/superduper-community-apps) 中找到由社区构建的用例和应用。
+
 
 
 <table>
@@ -274,13 +275,13 @@ Also find use-cases and apps built by the community in the [superduper-community
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">图像搜索</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">视频搜索</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">文档问答</a>
     </th>
   </tr>
   <tr>     
@@ -302,39 +303,41 @@ Also find use-cases and apps built by the community in the [superduper-community
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Semantic Search Engine</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">语义搜索引擎</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">Classical Machine Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">标准机器学习</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">跨框架迁移学习</a>
     </th>
   </tr>
 </table>
 
 
 
-## Installation
-#### 1. Install SuperDuperDB via `pip` *(~1 minute)*:
+## 安装
+
+#### 1. 通过`pip`安装SuperDuperDB *(~1分钟)* 
 ```
 pip install superduperdb
 ```
 
-#### 2. Try SuperDuperDB via Docker *(~2 minutes)*:
-   - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
+#### 2. 通过Docker安装SuperDuperDB *(~2分钟)*
+   - 如果你需要安装Docker, 查看这里的 <a href="https://docs.docker.com/engine/install/">文档</a>.
 
 ```
 docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
-## Preview
+## 代码样例
 
-Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use. You can visit the <a href="https://docs.superduperdb.com">docs</a> to learn more.
+以下是一些简短的介绍，帮助您了解`superduperdb`的工作原理以及它的简易使用方法。您可以访问<a href="https://docs.superduperdb.com">文档</a>了解更多信息。
 
+#### - 部署 ML/AI 模型到你的数据库
 
-#### - Deploy ML/AI models to your database:
-Automatically compute outputs (inference) with your database in a single environment.
+在单一环境下自动在你的数据库计算模型的输出结果
+
 
 ```python
 import pymongo
@@ -356,8 +359,9 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 ```
 
 
-#### - Train models directly from your database.
-Simply by querying your database, without additional ingestion and pre-processing:
+#### - 直接从您的数据库训练模型。
+仅通过查询您的数据库，无需额外的数据提取和预处理：
+
 
 ```python
 import pymongo
@@ -375,8 +379,8 @@ model = superduper(SVC())
 model.train(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
-#### - Vector-Search your data:
-Use your existing favorite database as a vector search database, including model management and serving. 
+#### - 基于你的数据进行向量搜索
+使用你现在喜欢的数据库作为一个向量搜索数据库，涵盖了模型管理和服务
 
 ```python
 # First a "Listener" makes sure vectors stay up-to-date
@@ -390,8 +394,9 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-#### - Integrate AI APIs to work together with other models. 
-Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search.
+#### - 将AI接口集成，与其他模型协同工作。
+使用OpenAI、PyTorch或Hugging Face模型作为向量搜索的嵌入模型。
+
 
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
@@ -415,7 +420,9 @@ cur = db.execute(
 ```
 
 
-#### - Add a Llama 2 model to SuperDuperDB!:
+#### - 将 Llama2 模型加到SuperDuperDB中
+
+
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -447,7 +454,7 @@ model.predict(
 )
 ```
 
-#### - Use models outputs as inputs to downstream models:
+#### - 将模型的输出结果作为下游模型的输入
 
 ```python
 model.predict(
@@ -460,44 +467,40 @@ model.predict(
 
 
 
-## Community & Getting Help 
+## 社区与帮助
 
-#### If you have any problems, questions, comments, or ideas:
-- Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
-- Search through <a href="https://github.com/SuperDuperDB/superduperdb/discussions">our GitHub Discussions</a>, or <a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">add a new question</a>.
-- Comment <a href="https://github.com/SuperDuperDB/superduperdb/issues/">an existing issue</a> or create <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">a new one</a>.
-- Help us to improve SuperDuperDB by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
-- Email us at `gethelp@superduperdb.com`.
-- Feel free to contact a maintainer or community volunteer directly! 
+#### 如果您遇到任何问题、疑问、意见或想法：
+- 加入我们的<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">Slack</a>（期待在那里见到您）。
+- 浏览<a href="https://github.com/SuperDuperDB/superduperdb/discussions">我们的GitHub讨论区</a>，或者<a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">提出新问题</a>。
+- 对<a href="https://github.com/SuperDuperDB/superduperdb/issues/">现有问题</a>进行评论，或者创建<a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">一个新问题</a>。
+- 通过<a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">这里</a>提供您宝贵的反馈，帮助我们改进SuperDuperDB！
+- 通过电子邮件联系我们：`gethelp@superduperdb.com`。
+- 随时直接联系维护者或社区志愿者！
 
+## 贡献
 
+#### 贡献的方式多种多样，并不仅限于编写代码。我们欢迎所有形式的贡献，如：
 
-## Contributing  
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Bug反馈</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">文档优化</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">优化建议</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">期待功能</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">扩展教程和使用案例示例</a>
 
-#### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+请查看我们的[贡献指南](CONTRIBUTING.md)了解详细信息。
 
-
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Bug reports</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Documentation improvements</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Enhancement suggestions</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Feature requests</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Expanding the tutorials and use case examples</a>
-
-Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Contributors
-#### Thanks goes to these wonderful people:
+## 贡献者
+#### 感谢这些出色的人们：
 
 <a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SuperDuperDB/superduperdb" />
 </a>
 
+## 许可证
 
-## License  
+SuperDuperDB是开源的，并旨在成为一个社区努力的结果，没有您的支持和热情是无法实现的。
+它根据Apache 2.0许可证的条款进行分发。对该项目的任何贡献都将受到同样的条款约束。
 
-SuperDuperDB is open-source and intended to be a community effort, and it wouldn't be possible without your support and enthusiasm.
-It is distributed under the terms of the Apache 2.0 license. Any contribution made to this project will be subject to the same provisions.
+## 加入我们
 
-## Join Us 
-
-We are looking for nice people who are invested in the problem we are trying to solve to join us full-time. Find roles that we are trying to fill <a href="https://join.com/companies/superduperdb">here</a>!
+我们正在寻找对我们试图解决的问题有兴趣的好人，全职加入我们。查看我们正在招募的职位<a href="https://join.com/companies/superduperdb">这里</a>！

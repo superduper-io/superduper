@@ -32,15 +32,20 @@
 
 ---
 
-📣 重要发布公告！
+### 📣 我们正式发布SuperDuperDB v0.1版本，包括以下内容:
+- 支持主要的SQL数据库：PostgreSQL、MySQL、SQLite、DuckDB、Snowflake、BigQuery、ClickHouse、DataFusion、Druid、Impala、MSSQL、Oracle、pandas、Polars、PySpark和Trino（当然还有MongoDB）
+- 改进了文档
+- 模块化测试套件
 
-12月5日，我们将正式推出SuperDuperDB，并发布0.1版本，包括以下内容：
- 
-- 整合了多种数据库技术，包括PostgreSQL、MySQL、SQLite、DuckDB、Snowflake、BigQuery、ClickHouse、DataFusion、Druid、Impala、MSSQL、Oracle、pandas、Polars、PySpark和Trino。
-- 全面更新了文档资料
-- 对测试套件进行了改进和模块化处理
+***SuperDuperDB是开源的。请支持我们：***
+- 在仓库给我们点亮一颗小星星！⭐
+- [在ProductHunt上为我们投票！](https://www.producthunt.com/posts/superduperdb) 🗳️
+- 通过在领英上转发[这篇帖子](https://www.linkedin.com/company/superduperdb)和在推特上转发[这条推文](https://twitter.com/superduperdb)，帮助我们传播消息，并标记任何可能对SuperDuperDB感兴趣的人 📣
 
-`⭐️ SuperDuperDB是开源项目：请点亮星星支持我们的项目！⭐️`
+***开始使用：***
+- 查看我们已经实现的使用案例[在这里的文档中](https://docs.superduperdb.com/docs/category/use-cases)，以及社区构建的应用，在专门的[superduper-community-apps仓库](https://github.com/SuperDuperDB/superduper-community-apps)中查看，并尝试在[浏览器中的Jupyter上](https://demo.superduperdb.com/)使用所有这些应用！
+
+想了解更多关于SuperDuperDB的信息，以及我们为什么认为它非常需要，请[阅读这篇博客文章](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)。
 
 ---
 

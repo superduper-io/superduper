@@ -43,7 +43,6 @@
 ***SuperDuperDB is open-source. Please support us:***
 - Leave a star on the repo! ⭐
 - [Upvote on ProductHunt!](https://www.producthunt.com/posts/superduperdb) 🗳️
-- Help us spread the word and win swag by reposting [this post](https://www.linkedin.com/posts/superduperdb_superduperdb-integrating-ai-directly-with-activity-7137754336897449984-zMbV/) on LinkedIn, and tag anyone in the comments who could be interested in SuperDuperDB 📣
 
 ***To get started:***
 - Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 

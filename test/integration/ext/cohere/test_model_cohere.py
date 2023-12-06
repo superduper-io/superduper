@@ -18,7 +18,7 @@ if os.getenv('COHERE_API_KEY') is None:
     filter_headers=['authorization'],
 )
 def test_embed_one():
-    embed = CohereEmbed(model='embed-english-v2.0')
+    embed = CohereEmbed(identifier='embed-english-v2.0')
     resp = embed.predict('Hello world')
 
     assert len(resp) == embed.shape[0]
@@ -31,7 +31,7 @@ def test_embed_one():
     filter_headers=['authorization'],
 )
 def test_embed_batch():
-    embed = CohereEmbed(model='embed-english-v2.0')
+    embed = CohereEmbed(identifier='embed-english-v2.0')
     resp = embed.predict(['Hello', 'world'], batch_size=1)
 
     assert len(resp) == 2
@@ -46,7 +46,7 @@ def test_embed_batch():
     filter_headers=['authorization'],
 )
 async def test_async_embed_one():
-    embed = CohereEmbed(model='embed-english-v2.0')
+    embed = CohereEmbed(identifier='embed-english-v2.0')
     resp = await embed.apredict('Hello world')
 
     assert len(resp) == embed.shape[0]
@@ -60,7 +60,7 @@ async def test_async_embed_one():
     filter_headers=['authorization'],
 )
 async def test_async_embed_batch():
-    embed = CohereEmbed(model='embed-english-v2.0')
+    embed = CohereEmbed(identifier='embed-english-v2.0')
     resp = await embed.apredict(['Hello', 'world'], batch_size=1)
 
     assert len(resp) == 2
@@ -74,7 +74,7 @@ async def test_async_embed_batch():
     filter_headers=['authorization'],
 )
 def test_generate():
-    e = CohereGenerate(model='base-light', prompt='Hello, {context}')
+    e = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
     resp = e.predict('', one=True, context=['world!'])
 
     assert isinstance(resp, str)
@@ -85,7 +85,7 @@ def test_generate():
     filter_headers=['authorization'],
 )
 def test_batch_generate():
-    e = CohereGenerate(model='base-light')
+    e = CohereGenerate(identifier='base-light')
     resp = e.predict(['Hello, world!'], one=False)
 
     assert isinstance(resp, list)
@@ -98,7 +98,7 @@ def test_batch_generate():
 )
 @pytest.mark.asyncio
 async def test_chat_async():
-    e = CohereGenerate(model='base-light', prompt='Hello, {context}')
+    e = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
     resp = await e.apredict('', one=True, context=['world!'])
 
     assert isinstance(resp, str)
@@ -110,7 +110,7 @@ async def test_chat_async():
 )
 @pytest.mark.asyncio
 async def test_batch_chat_async():
-    e = CohereGenerate(model='base-light')
+    e = CohereGenerate(identifier='base-light')
     resp = await e.apredict(['Hello, world!'], one=False)
 
     assert isinstance(resp, list)

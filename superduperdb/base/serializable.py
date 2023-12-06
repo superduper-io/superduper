@@ -37,7 +37,15 @@ def _deserialize(r: t.Any, db: None = None) -> t.Any:
     if 'db' in inspect.signature(component_cls.__init__).parameters:
         kwargs.update(db=db)
 
-    return component_cls(**kwargs)
+    instance = component_cls(**{k: v for k, v in kwargs.items() if k != 'version'})
+
+    # special handling of Component.version
+    from superduperdb.components.component import Component
+
+    if issubclass(component_cls, Component):
+        instance.version = r.get('version', None)
+
+    return instance
 
 
 def _serialize(item: t.Any) -> t.Dict[str, t.Any]:

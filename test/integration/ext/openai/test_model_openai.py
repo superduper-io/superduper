@@ -90,7 +90,7 @@ def mock_lru_cache():
 
 @vcr.use_cassette()
 def test_embed():
-    e = OpenAIEmbedding(model='text-embedding-ada-002')
+    e = OpenAIEmbedding(identifier='text-embedding-ada-002')
     resp = e.predict('Hello, world!')
 
     assert len(resp) == e.shape[0]
@@ -99,7 +99,7 @@ def test_embed():
 
 @vcr.use_cassette()
 def test_batch_embed():
-    e = OpenAIEmbedding(model='text-embedding-ada-002')
+    e = OpenAIEmbedding(identifier='text-embedding-ada-002')
     resp = e.predict(['Hello', 'world!'], batch_size=1)
 
     assert len(resp) == 2
@@ -110,7 +110,7 @@ def test_batch_embed():
 @vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_embed_async():
-    e = OpenAIEmbedding(model='text-embedding-ada-002')
+    e = OpenAIEmbedding(identifier='text-embedding-ada-002')
     resp = await e.apredict('Hello, world!')
 
     assert len(resp) == e.shape[0]
@@ -120,7 +120,7 @@ async def test_embed_async():
 @vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_embed_async():
-    e = OpenAIEmbedding(model='text-embedding-ada-002')
+    e = OpenAIEmbedding(identifier='text-embedding-ada-002')
     resp = await e.apredict(['Hello', 'world!'], batch_size=1)
 
     assert len(resp) == 2
@@ -130,7 +130,7 @@ async def test_batch_embed_async():
 
 @vcr.use_cassette()
 def test_chat():
-    e = OpenAIChatCompletion(model='gpt-3.5-turbo', prompt='Hello, {context}')
+    e = OpenAIChatCompletion(identifier='gpt-3.5-turbo', prompt='Hello, {context}')
     resp = e.predict('', one=True, context=['world!'])
 
     assert isinstance(resp, str)
@@ -138,7 +138,7 @@ def test_chat():
 
 @vcr.use_cassette()
 def test_batch_chat():
-    e = OpenAIChatCompletion(model='gpt-3.5-turbo')
+    e = OpenAIChatCompletion(identifier='gpt-3.5-turbo')
     resp = e.predict(['Hello, world!'], one=False)
 
     assert isinstance(resp, list)
@@ -148,7 +148,7 @@ def test_batch_chat():
 @vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_chat_async():
-    e = OpenAIChatCompletion(model='gpt-3.5-turbo', prompt='Hello, {context}')
+    e = OpenAIChatCompletion(identifier='gpt-3.5-turbo', prompt='Hello, {context}')
     resp = await e.apredict('', one=True, context=['world!'])
 
     assert isinstance(resp, str)
@@ -157,7 +157,7 @@ async def test_chat_async():
 @vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_chat_async():
-    e = OpenAIChatCompletion(model='gpt-3.5-turbo')
+    e = OpenAIChatCompletion(identifier='gpt-3.5-turbo')
     resp = await e.apredict(['Hello, world!'], one=False)
 
     assert isinstance(resp, list)
@@ -167,7 +167,8 @@ async def test_batch_chat_async():
 @vcr.use_cassette()
 def test_create_url():
     e = OpenAIImageCreation(
-        model='dall-e', prompt='a close up, studio photographic portrait of a {context}'
+        identifier='dall-e',
+        prompt='a close up, studio photographic portrait of a {context}',
     )
     resp = e.predict('', one=True, response_format='url', context=['cat'])
 
@@ -178,7 +179,7 @@ def test_create_url():
 @vcr.use_cassette()
 def test_create_url_batch():
     e = OpenAIImageCreation(
-        model='dall-e', prompt='a close up, studio photographic portrait of a'
+        identifier='dall-e', prompt='a close up, studio photographic portrait of a'
     )
     resp = e.predict(['cat', 'dog'], response_format='url')
 
@@ -191,7 +192,8 @@ def test_create_url_batch():
 @pytest.mark.asyncio
 async def test_create_async():
     e = OpenAIImageCreation(
-        model='dall-e', prompt='a close up, studio photographic portrait of a {context}'
+        identifier='dall-e',
+        prompt='a close up, studio photographic portrait of a {context}',
     )
     resp = await e.apredict('', one=True, context=['cat'])
 
@@ -205,7 +207,8 @@ async def test_create_async():
 @pytest.mark.asyncio
 async def test_create_url_async():
     e = OpenAIImageCreation(
-        model='dall-e', prompt='a close up, studio photographic portrait of a {context}'
+        identifier='dall-e',
+        prompt='a close up, studio photographic portrait of a {context}',
     )
     resp = await e.apredict('', one=True, response_format='url', context=['cat'])
 
@@ -217,7 +220,7 @@ async def test_create_url_async():
 @pytest.mark.asyncio
 async def test_create_url_async_batch():
     e = OpenAIImageCreation(
-        model='dall-e', prompt='a close up, studio photographic portrait of a'
+        identifier='dall-e', prompt='a close up, studio photographic portrait of a'
     )
     resp = await e.apredict(['cat', 'dog'], response_format='url')
 
@@ -229,7 +232,7 @@ async def test_create_url_async_batch():
 @vcr.use_cassette()
 def test_edit_url():
     e = OpenAIImageEdit(
-        model='dall-e', prompt='A celebration party at the launch of {context}'
+        identifier='dall-e', prompt='A celebration party at the launch of {context}'
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -243,7 +246,7 @@ def test_edit_url():
 @vcr.use_cassette()
 def test_edit_url_batch():
     e = OpenAIImageEdit(
-        model='dall-e', prompt='A celebration party at the launch of superduperdb'
+        identifier='dall-e', prompt='A celebration party at the launch of superduperdb'
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer_one = io.BytesIO(f.read())
@@ -264,7 +267,7 @@ def test_edit_url_batch():
 @pytest.mark.asyncio
 async def test_edit_async():
     e = OpenAIImageEdit(
-        model='dall-e', prompt='A celebration party at the launch of {context}'
+        identifier='dall-e', prompt='A celebration party at the launch of {context}'
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -281,7 +284,7 @@ async def test_edit_async():
 @pytest.mark.asyncio
 async def test_edit_url_async():
     e = OpenAIImageEdit(
-        model='dall-e', prompt='A celebration party at the launch of {context}'
+        identifier='dall-e', prompt='A celebration party at the launch of {context}'
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -298,7 +301,7 @@ async def test_edit_url_async():
 @pytest.mark.asyncio
 async def test_edit_url_async_batch():
     e = OpenAIImageEdit(
-        model='dall-e', prompt='A celebration party at the launch of superduperdb'
+        identifier='dall-e', prompt='A celebration party at the launch of superduperdb'
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer_one = io.BytesIO(f.read())
@@ -324,7 +327,7 @@ def test_transcribe():
         'i have some advice for you. write all text in lower-case.'
         'only make an exception for the following words: {context}'
     )
-    e = OpenAIAudioTranscription(model='whisper-1', prompt=prompt)
+    e = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
     resp = e.predict(buffer, one=True, context=['United States'])
     buffer.close()
 
@@ -341,7 +344,7 @@ def test_batch_transcribe():
         buffer2 = io.BytesIO(f.read())
         buffer2.name = 'test.wav'
 
-    e = OpenAIAudioTranscription(model='whisper-1')
+    e = OpenAIAudioTranscription(identifier='whisper-1')
     resp = e.predict([buffer, buffer2], one=False, batch_size=1)
     buffer.close()
 
@@ -360,7 +363,7 @@ async def test_transcribe_async():
         'i have some advice for you. write all text in lower-case.'
         'only make an exception for the following words: {context}'
     )
-    e = OpenAIAudioTranscription(model='whisper-1', prompt=prompt)
+    e = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
     resp = await e.apredict(buffer, one=True, context=['United States'])
     buffer.close()
 
@@ -377,7 +380,7 @@ async def test_batch_transcribe_async():
     with open('test/material/data/test.wav', 'rb') as f:
         buffer2 = io.BytesIO(f.read())
         buffer2.name = 'test1.wav'
-    e = OpenAIAudioTranscription(model='whisper-1')
+    e = OpenAIAudioTranscription(identifier='whisper-1')
 
     resp = await e.apredict([buffer, buffer2], one=False, batch_size=1)
     buffer.close()
@@ -396,7 +399,7 @@ def test_translate():
         'i have some advice for you. write all text in lower-case.'
         'only make an exception for the following words: {context}'
     )
-    e = OpenAIAudioTranslation(model='whisper-1', prompt=prompt)
+    e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
     resp = e.predict(buffer, one=True, context=['Emmerich'])
     buffer.close()
 
@@ -413,7 +416,7 @@ def test_batch_translate():
         buffer2 = io.BytesIO(f.read())
         buffer2.name = 'test.wav'
 
-    e = OpenAIAudioTranslation(model='whisper-1')
+    e = OpenAIAudioTranslation(identifier='whisper-1')
     resp = e.predict([buffer, buffer2], one=False, batch_size=1)
     buffer.close()
 
@@ -432,7 +435,7 @@ async def test_translate_async():
         'i have some advice for you. write all text in lower-case.'
         'only make an exception for the following words: {context}'
     )
-    e = OpenAIAudioTranslation(model='whisper-1', prompt=prompt)
+    e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
     resp = await e.apredict(buffer, one=True, context=['Emmerich'])
     buffer.close()
 
@@ -449,7 +452,7 @@ async def test_batch_translate_async():
     with open('test/material/data/german.wav', 'rb') as f:
         buffer2 = io.BytesIO(f.read())
         buffer2.name = 'test1.wav'
-    e = OpenAIAudioTranslation(model='whisper-1')
+    e = OpenAIAudioTranslation(identifier='whisper-1')
 
     resp = await e.apredict([buffer, buffer2], one=False, batch_size=1)
     buffer.close()

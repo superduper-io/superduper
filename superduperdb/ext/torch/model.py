@@ -19,13 +19,11 @@ from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
+from superduperdb.components.dataset import Dataset
 from superduperdb.components.encoder import Encodable
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.ext.torch.utils import device_of, eval, to_device
-
-if t.TYPE_CHECKING:
-    from superduperdb.components.dataset import Dataset
 
 
 class BasicDataset(data.Dataset):
@@ -85,6 +83,7 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
 
     def __post_init__(self):
+        super().__post_init__()
         if self.objective and not isinstance(self.objective, Artifact):
             self.objective = Artifact(artifact=self.objective)
 
@@ -94,278 +93,23 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
             self.target_preprocessors = Artifact(artifact=self.target_preprocessors)
 
 
-@dc.dataclass
-class Base:
-    collate_fn: t.Optional[t.Union[Artifact, t.Callable]] = None
+@dc.dataclass(kw_only=True)
+class TorchModel(Model):
     is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
     num_directions: int = 2
-    metrics: t.Optional[t.Sequence[t.Union[str, Metric]]] = None
-    training_select: t.Optional[Select] = None
-
-    @contextmanager
-    def evaluating(self):
-        raise NotImplementedError
-
-    def train(self):
-        raise NotImplementedError
-
-    if t.TYPE_CHECKING:
-        # TODO: We can't use the actual declarations because of the multiple
-        # inheritance issues.
-        @property
-        def training_keys(self) -> t.List[str]:
-            raise NotImplementedError
-
-        def _validate(
-            self, db: Datalayer, validation_set: Dataset, metrics: t.Sequence[Metric]
-        ):
-            raise NotImplementedError
-
-        def append_metrics(self, d: t.Dict[str, float]) -> None:
-            raise NotImplementedError
-
-    @property
-    def optimizers(self) -> t.List:
-        raise NotImplementedError
-
-    def preprocess(self, r):
-        raise NotImplementedError  # implemented in PyTorch wrapper and PyTorch pipeline
-
-    def save(self, database: Datalayer):
-        raise NotImplementedError
-
-    def stopping_criterion(self, iteration):
-        max_iterations = self.training_configuration.max_iterations
-        no_improve_then_stop = self.training_configuration.no_improve_then_stop
-        if isinstance(max_iterations, int) and iteration >= max_iterations:
-            return True
-        if isinstance(no_improve_then_stop, int):
-            if self.training_configuration.listen == 'objective':
-                to_listen = [-x for x in self.metric_values['objective']]
-            else:
-                to_listen = self.metric_values[self.training_configuration.listen]
-
-            if max(to_listen[-no_improve_then_stop:]) < max(to_listen):
-                logging.info('early stopping triggered!')
-                return True
-        return False
-
-    def saving_criterion(self):
-        if self.training_configuration.listen == 'objective':
-            to_listen = [-x for x in self.metric_values['objective']]
-        else:
-            to_listen = self.metric_values[self.training_configuration.listen]
-        if all([to_listen[-1] >= x for x in to_listen[:-1]]):
-            return True
-        return False
-
-    def _fit(
-        self,
-        X: t.Union[t.List[str], str],
-        y: t.Optional[t.Union[t.List, t.Any]] = None,
-        configuration: t.Optional[TorchTrainerConfiguration] = None,
-        data_prefetch: bool = False,
-        db: t.Optional[Datalayer] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
-        select: t.Optional[t.Union[Select, t.Dict]] = None,
-        validation_sets: t.Optional[t.List[str]] = None,
-    ):
-        if configuration is not None:
-            self.training_configuration = configuration
-        if isinstance(select, dict):
-            self.training_select = Serializable.deserialize(select)
-        else:
-            self.training_select = select
-        if validation_sets is not None:
-            self.validation_sets = validation_sets
-        if metrics is not None:
-            self.metrics = metrics
-
-        self.train_X = X
-        self.train_y = y
-
-        train_data, valid_data = self._get_data(db=db)
-
-        loader_kwargs = self.training_configuration.loader_kwargs
-        train_dataloader = DataLoader(train_data, **loader_kwargs)
-        valid_dataloader = DataLoader(valid_data, **loader_kwargs)
-
-        if db is None:
-            raise ValueError('db cannot be None')
-        return self._fit_with_dataloaders(
-            train_dataloader,
-            valid_dataloader,
-            db=db,
-            validation_sets=validation_sets or [],
-        )
-
-    def log(self, **kwargs):
-        out = ''
-        for k, v in kwargs.items():
-            if isinstance(v, dict):
-                for kk, vv in v.items():
-                    out += f'{k}/{kk}: {vv}; '
-            else:
-                out += f'{k}: {v}; '
-        logging.info(out)
-
-    def forward(self, X):
-        return self.object.artifact(X)
-
-    def extract_batch_key(self, batch, key: t.Union[t.List[str], str]):
-        if isinstance(key, str):
-            return batch[key]
-        return [batch[k] for k in key]
-
-    def extract_batch(self, batch):
-        if self.train_y is not None:
-            return [
-                self.extract_batch_key(batch, self.train_X),
-                self.extract_batch_key(batch, self.train_y),
-            ]
-        return [self.extract_batch_key(batch, self.train_X)]
-
-    def take_step(self, batch, optimizers):
-        batch = self.extract_batch(batch)
-        outputs = self.train_forward(*batch)
-        objective_value = self.training_configuration.objective.artifact(*outputs)
-        for opt in optimizers:
-            opt.zero_grad()
-        objective_value.backward()
-        for opt in optimizers:
-            opt.step()
-        return objective_value
-
-    def compute_validation_objective(self, valid_dataloader):
-        objective_values = []
-        with self.evaluating(), torch.no_grad():
-            for batch in valid_dataloader:
-                batch = self.extract_batch(batch)
-                objective_values.append(
-                    self.training_configuration.objective.artifact(
-                        *self.train_forward(*batch)
-                    ).item()
-                )
-            return sum(objective_values) / len(objective_values)
-
-    def _fit_with_dataloaders(
-        self,
-        train_dataloader: DataLoader,
-        valid_dataloader: DataLoader,
-        db: Datalayer,
-        validation_sets: t.List[str],
-    ):
-        self.train()
-        iteration = 0
-        while True:
-            for batch in train_dataloader:
-                train_objective = self.take_step(batch, self.optimizers)
-                self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
-
-                if iteration % self.training_configuration.validation_interval == 0:
-                    valid_loss = self.compute_validation_objective(valid_dataloader)
-                    all_metrics = {}
-                    assert isinstance(self.metrics, list)
-                    assert all(isinstance(m, Metric) for m in self.metrics)
-                    metrics = [t.cast(Metric, m) for m in self.metrics]
-                    for vs in validation_sets:
-                        m = self._validate(
-                            db=db,
-                            validation_set=vs,  # type: ignore[arg-type]
-                            metrics=metrics,
-                        )
-                        all_metrics.update(m)
-                    all_metrics.update({'objective': valid_loss})
-
-                    self.append_metrics(all_metrics)
-                    self.log(fold='VALID', iteration=iteration, **all_metrics)
-                    if self.saving_criterion():
-                        self.save(db)
-                    stop = self.stopping_criterion(iteration)
-                    if stop:
-                        return
-                iteration += 1
-
-    def train_preprocess(self):
-        preprocessors = {}
-        if isinstance(self.train_X, str):
-            preprocessors[self.train_X] = (
-                self.preprocess if self.preprocess else lambda x: x
-            )
-        else:
-            for model, X in zip(self.models, self.train_X):
-                preprocessors[X] = (
-                    model.preprocess if model.preprocess is not None else lambda x: x
-                )
-        if self.train_y is not None:
-            if (
-                isinstance(self.train_y, str)
-                and self.training_configuration.target_preprocessors
-            ):
-                preprocessors[
-                    self.train_y
-                ] = self.training_configuration.target_preprocessors.get(
-                    self.train_y, lambda x: x
-                )
-            elif isinstance(self.train_y, str):
-                preprocessors[self.train_y] = lambda x: x
-            elif (
-                isinstance(self.train_y, list)
-                and self.training_configuration.target_preprocessors
-            ):
-                for y in self.train_y:
-                    preprocessors[
-                        y
-                    ] = self.training_configuration.target_preprocessors.get(
-                        y, lambda x: x
-                    )
-
-        for k in preprocessors:
-            if isinstance(preprocessors[k], Artifact):
-                preprocessors[k] = preprocessors[k].artifact
-        return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
-
-    def _get_data(self, db: t.Optional[Datalayer]):
-        if self.training_select is None:
-            raise ValueError('self.training_select cannot be None')
-        train_data = QueryDataset(
-            select=self.training_select,
-            keys=self.training_keys,
-            fold='train',
-            transform=self.train_preprocess(),
-            db=db,
-        )
-        valid_data = QueryDataset(
-            select=self.training_select,
-            keys=self.training_keys,
-            fold='valid',
-            transform=self.train_preprocess(),
-            db=db,
-        )
-        return train_data, valid_data
-
-
-@dc.dataclass
-class TorchModel(Base, Model):  # type: ignore[misc]
-    """
-    :param optimizer_state: optional optimizer state, populated automatically on reload
-    :param forward_method: method to call for prediction, defaults to __call__
-    :param train_forward_method: method to call for training, defaults to __call__
-    """
-
     optimizer_state: t.Optional[Artifact] = None
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
 
     def __post_init__(self):
+        super().__post_init__()
+
         if self.model_to_device_method:
             s.logging.debug(
                 f'{self.model_to_device_method} will be overriden with `to`'
             )
 
         self.model_to_device_method = 'to'
-
-        super().__post_init__()
 
         self.object.serializer = 'torch'
 
@@ -495,6 +239,222 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 return (method(X),)
             else:
                 return [method(X), y]
+
+    def stopping_criterion(self, iteration):
+        max_iterations = self.training_configuration.max_iterations
+        no_improve_then_stop = self.training_configuration.no_improve_then_stop
+        if isinstance(max_iterations, int) and iteration >= max_iterations:
+            return True
+        if isinstance(no_improve_then_stop, int):
+            if self.training_configuration.listen == 'objective':
+                to_listen = [-x for x in self.metric_values['objective']]
+            else:
+                to_listen = self.metric_values[self.training_configuration.listen]
+
+            if max(to_listen[-no_improve_then_stop:]) < max(to_listen):
+                logging.info('early stopping triggered!')
+                return True
+        return False
+
+    def saving_criterion(self):
+        if self.training_configuration.listen == 'objective':
+            to_listen = [-x for x in self.metric_values['objective']]
+        else:
+            to_listen = self.metric_values[self.training_configuration.listen]
+        if all([to_listen[-1] >= x for x in to_listen[:-1]]):
+            return True
+        return False
+
+    def _fit(
+        self,
+        X: t.Any,
+        *,
+        y: t.Optional[t.Any] = None,
+        configuration: TorchTrainerConfiguration,  # type: ignore[override]
+        data_prefetch: bool = False,
+        db: t.Optional[Datalayer] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: t.Optional[t.Union[Select, t.Dict]] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+    ):
+        if configuration is not None:
+            self.training_configuration = configuration
+        if isinstance(select, dict):
+            self.training_select = Serializable.deserialize(select)
+        else:
+            self.training_select = select
+        if validation_sets is not None:
+            self.validation_sets = validation_sets
+        if metrics is not None:
+            self.metrics = metrics
+
+        self.train_X = X
+        self.train_y = y
+
+        train_data, valid_data = self._get_data(db=db)
+
+        loader_kwargs = self.training_configuration.loader_kwargs
+        train_dataloader = DataLoader(train_data, **loader_kwargs)
+        valid_dataloader = DataLoader(valid_data, **loader_kwargs)
+
+        if db is None:
+            raise ValueError('db cannot be None')
+        return self._fit_with_dataloaders(
+            train_dataloader,
+            valid_dataloader,
+            db=db,
+            validation_sets=validation_sets or [],
+        )
+
+    def log(self, **kwargs):
+        out = ''
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                for kk, vv in v.items():
+                    out += f'{k}/{kk}: {vv}; '
+            else:
+                out += f'{k}: {v}; '
+        logging.info(out)
+
+    def forward(self, X):
+        return self.object.artifact(X)
+
+    def extract_batch_key(self, batch, key: t.Union[t.List[str], str]):
+        if isinstance(key, str):
+            return batch[key]
+        return [batch[k] for k in key]
+
+    def extract_batch(self, batch):
+        if self.train_y is not None:
+            return [
+                self.extract_batch_key(batch, self.train_X),
+                self.extract_batch_key(batch, self.train_y),
+            ]
+        return [self.extract_batch_key(batch, self.train_X)]
+
+    def take_step(self, batch, optimizers):
+        batch = self.extract_batch(batch)
+        outputs = self.train_forward(*batch)
+        objective_value = self.training_configuration.objective.artifact(*outputs)
+        for opt in optimizers:
+            opt.zero_grad()
+        objective_value.backward()
+        for opt in optimizers:
+            opt.step()
+        return objective_value
+
+    def compute_validation_objective(self, valid_dataloader):
+        objective_values = []
+        with self.evaluating(), torch.no_grad():
+            for batch in valid_dataloader:
+                batch = self.extract_batch(batch)
+                objective_values.append(
+                    self.training_configuration.objective.artifact(
+                        *self.train_forward(*batch)
+                    ).item()
+                )
+            return sum(objective_values) / len(objective_values)
+
+    def _fit_with_dataloaders(
+        self,
+        train_dataloader: DataLoader,
+        valid_dataloader: DataLoader,
+        db: Datalayer,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+    ):
+        if validation_sets is None:
+            validation_sets = []
+        self.train()
+        iteration = 0
+
+        assert isinstance(self.training_configuration, TorchTrainerConfiguration)
+
+        while True:
+            for batch in train_dataloader:
+                train_objective = self.take_step(batch, self.optimizers)
+                self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
+
+                if iteration % self.training_configuration.validation_interval == 0:
+                    valid_loss = self.compute_validation_objective(valid_dataloader)
+                    all_metrics = {}
+                    assert isinstance(self.metrics, list)
+                    assert all(isinstance(m, Metric) for m in self.metrics)
+                    metrics = [t.cast(Metric, m) for m in self.metrics]
+                    for vs in validation_sets:
+                        m = self._validate(
+                            db=db,
+                            validation_set=vs,
+                            metrics=metrics,
+                        )
+                        all_metrics.update(m)
+                    all_metrics.update({'objective': valid_loss})
+
+                    self.append_metrics(all_metrics)
+                    self.log(fold='VALID', iteration=iteration, **all_metrics)
+                    if self.saving_criterion():
+                        self.save(db)
+                    stop = self.stopping_criterion(iteration)
+                    if stop:
+                        return
+                iteration += 1
+
+    def train_preprocess(self):
+        preprocessors = {}
+        if isinstance(self.train_X, str):
+            preprocessors[self.train_X] = (
+                self.preprocess if self.preprocess else lambda x: x
+            )
+        else:
+            for model, X in zip(self.models, self.train_X):
+                preprocessors[X] = (
+                    model.preprocess if model.preprocess is not None else lambda x: x
+                )
+        if self.train_y is not None:
+            if (
+                isinstance(self.train_y, str)
+                and self.training_configuration.target_preprocessors
+            ):
+                preprocessors[
+                    self.train_y
+                ] = self.training_configuration.target_preprocessors.get(
+                    self.train_y, lambda x: x
+                )
+            elif isinstance(self.train_y, str):
+                preprocessors[self.train_y] = lambda x: x
+            elif (
+                isinstance(self.train_y, list)
+                and self.training_configuration.target_preprocessors
+            ):
+                for y in self.train_y:
+                    preprocessors[
+                        y
+                    ] = self.training_configuration.target_preprocessors.get(
+                        y, lambda x: x
+                    )
+
+        for k in preprocessors:
+            if isinstance(preprocessors[k], Artifact):
+                preprocessors[k] = preprocessors[k].artifact
+        return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
+
+    def _get_data(self, db: t.Optional[Datalayer]):
+        if self.training_select is None:
+            raise ValueError('self.training_select cannot be None')
+        train_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='train',
+            transform=self.train_preprocess(),
+            db=db,
+        )
+        valid_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='valid',
+            transform=self.train_preprocess(),
+            db=db,
+        )
+        return train_data, valid_data
 
 
 def unpack_batch(args):

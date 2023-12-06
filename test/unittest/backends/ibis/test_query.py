@@ -92,7 +92,9 @@ def test_renamings(duckdb):
 def test_serialize_deserialize():
     from superduperdb.backends.ibis.query import Table
 
-    t = Table('test', 'id')
+    t = Table(
+        'test', primary_id='id', schema=Schema('my-schema', fields={'x': dtype(str)})
+    )
 
     q = t.filter(t.id == 1).select(t.id, t.x)
 

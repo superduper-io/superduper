@@ -20,27 +20,25 @@ if t.TYPE_CHECKING:
 
 
 @public_api(stability='stable')
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
     A component carrying the information to apply a vector index to a ``DB`` instance
-
-    :param identifier: Unique string identifier of index
+    {component_parameters}
     :param indexing_listener: Listener which is applied to created vectors
     :param compatible_listener: Listener which is applied to vectors to be compared
     :param measure: Measure to use for comparison
-    :param version: version of this index
     :param metric_values: Metric values for this index
     """
 
-    identifier: str
+    __doc__ = __doc__.format(component_parameters=Component.__doc__)
+
+    type_id: t.ClassVar[str] = 'vector_index'
+
     indexing_listener: t.Union[Listener, str]
     compatible_listener: t.Union[None, Listener, str] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
-    version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    type_id: t.ClassVar[str] = 'vector_index'
 
     @override
     def post_create(self, db: Datalayer) -> None:

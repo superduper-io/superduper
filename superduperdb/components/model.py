@@ -44,22 +44,17 @@ class _to_call:
         return self.callable(X, **self.kwargs)
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class _TrainingConfiguration(Component):
     """
     Training configuration object, containing all settings necessary for a particular
     learning-task use-case to be serialized and initiated. The object is ``callable``
     and returns a class which may be invoked to apply training.
 
-    :param identifier: Unique identifier of configuration
     :param **kwargs: Key-values pairs, the variables which configure training.
     """
 
-    identifier: str
     kwargs: t.Optional[t.Dict] = None
-
-    version: t.Optional[int] = None
-
     type_id: t.ClassVar[str] = 'training_configuration'
 
     def get(self, k, default=None):
@@ -69,37 +64,48 @@ class _TrainingConfiguration(Component):
             return self.kwargs.get(k, default)
 
 
+@dc.dataclass(kw_only=True)
 class _Predictor:
-    """
-    Mixin class for components which can predict.
-
-    :param identifier: Unique identifier of model
-    :param encoder: Encoder instance (optional)
-    :param output_schema: Output schema (mapping of encoders) (optional)
+    # Mixin class for components which can predict.
+    """:param encoder: Encoder instance
+    :param output_schema: Output schema (mapping of encoders)
     :param flatten: Flatten the model outputs
-    :param preprocess: Preprocess function (optional)
-    :param postprocess: Postprocess function (optional)
-    :param collate_fn: Collate function (optional)
-    :param batch_predict: Whether to batch predict (optional)
-    :param takes_context: Whether the model takes context into account (optional)
-    :param to_call: The method to use for prediction (optional)
-    :param model_update_kwargs: The kwargs to use for model update (optional)
-    """
+    :param preprocess: Preprocess function
+    :param postprocess: Postprocess function
+    :param collate_fn: Collate function
+    :param batch_predict: Whether to batch predict
+    :param takes_context: Whether the model takes context into account
+    :param metrics: The metrics to evaluate on
+    :param model_update_kwargs: The kwargs to use for model update
+    :param validation_sets: The validation ``Dataset`` instances to use
+    :param predict_X: The key of the input data to use for .predict
+    :param predict_select: The select to use for .predict
+    :param predict_max_chunk_size: The max chunk size to use for .predict"""
 
-    identifier: str
-    encoder: EncoderArg
+    type_id: t.ClassVar[str] = 'model'
+
+    encoder: EncoderArg = None
     output_schema: t.Optional[t.Union[Schema, dict]] = None
     flatten: bool = False
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
-    batch_predict: bool
-    takes_context: bool
-    to_call: t.Callable
-    model_update_kwargs: t.Dict
+    batch_predict: bool = False
+    takes_context: bool = False
+    metrics: t.Sequence[t.Union[str, Metric, None]] = ()
+    model_update_kwargs: t.Dict = dc.field(default_factory=dict)
+    validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None
 
-    version: t.Optional[int] = None
-    type_id: t.ClassVar[str] = 'model'
+    predict_X: t.Optional[str] = None
+    predict_select: t.Optional[CompoundSelect] = None
+    predict_max_chunk_size: t.Optional[int] = None
+
+    @abstractmethod
+    def to_call(self, X, *args, **kwargs):
+        """
+        The method to use to call prediction. Should be implemented
+        by the child class.
+        """
 
     def create_predict_job(
         self,
@@ -175,6 +181,7 @@ class _Predictor:
 
         if isinstance(self.collate_fn, Artifact):
             raise ValueError('Bad collate function')
+
         elif self.collate_fn is not None:
             X = self.collate_fn(X)
 
@@ -191,7 +198,7 @@ class _Predictor:
         self,
         X: t.Any,
         db: t.Optional[Datalayer] = None,
-        select: t.Optional[Select] = None,
+        select: t.Optional[CompoundSelect] = None,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
@@ -419,88 +426,82 @@ class _Predictor:
 
 
 @public_api(stability='stable')
-@dc.dataclass
-class Model(Component, _Predictor):
+@dc.dataclass(kw_only=True)
+class Model(_Predictor, Component):
     """Model component which wraps a model to become serializable
-
-    :param identifier: Unique identifier of model
+    {component_params}
+    {_predictor_params}
     :param object: Model object, e.g. sklearn model, etc..
-    :param encoder: Encoder instance (optional)
-    :param flatten: Flatten the model outputs
-    :param output_schema: Output schema (mapping of encoders) (optional)
-    :param preprocess: Preprocess function (optional)
-    :param postprocess: Postprocess function (optional)
-    :param collate_fn: Collate function (optional)
-    :param metrics: Metrics to use (optional)
-    :param predict_method: The method to use for prediction (optional)
     :param model_to_device_method: The method to transfer the model to a device
-    :param batch_predict: Whether to batch predict (optional)
-    :param takes_context: Whether the model takes context into account (optional)
-    :param train_X: The key of the input data to use for training (optional)
-    :param train_y: The key of the target data to use for training (optional)
-    :param training_select: The select to use for training (optional)
-    :param metric_values: The metric values (optional)
-    :param training_configuration: The training configuration (optional)
-    :param model_update_kwargs: The kwargs to use for model update (optional)
-    :param serializer: Serializer to store model to artifact store (optional)
-    :param device: The device to use (optional)
-    :param preferred_devices: The preferred devices to use (optional)
+    :param metric_values: The metric values
+    :param predict_method: The method to use for prediction
+    :param model_update_kwargs: The kwargs to use for model update
+    :param serializer: Serializer to store model to artifact store
+    :param device: The device to use
+    :param preferred_devices: The preferred devices to use
+    :param training_configuration: The training configuration
+    :param train_X: The key of the input data to use for training
+    :param train_y: The key of the target data to use for training
+    :param train_select: The select to use for training
     """
 
-    identifier: str
+    __doc__ = __doc__.format(
+        component_params=Component.__doc__,
+        _predictor_params=_Predictor.__doc__,
+    )
+
     object: t.Union[Artifact, t.Any]
-    flatten: bool = False
-    output_schema: t.Optional[t.Union[Schema, dict]] = None
-    encoder: EncoderArg = None
-    preprocess: t.Union[t.Callable, Artifact, None] = None
-    postprocess: t.Union[t.Callable, Artifact, None] = None
-    collate_fn: t.Union[t.Callable, Artifact, None] = None
-    metrics: t.Sequence[t.Union[str, Metric, None]] = ()
-    predict_method: t.Optional[str] = None
     model_to_device_method: t.Optional[str] = None
-    batch_predict: bool = False
-    takes_context: bool = False
-    train_X: t.Optional[str] = None
-    train_y: t.Optional[str] = None
-    training_select: t.Union[Select, None] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    predict_method: t.Optional[str] = None
     model_update_kwargs: dict = dc.field(default_factory=dict)
     serializer: str = 'dill'
     device: str = "cpu"
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
-    validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None
 
-    # Don't set these manually
-    version: t.Optional[int] = None
+    training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    train_X: t.Optional[str] = None
+    train_y: t.Optional[str] = None
+    train_select: t.Optional[CompoundSelect] = None
 
-    artifact_attributes: t.ClassVar[t.Sequence[str]] = ['object']
+    artifact_attributes: t.ClassVar[t.Sequence[str]] = (
+        'object',
+        'preprocess',
+        'postprocess',
+    )
     type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
+        super().__post_init__()
+
         if not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object, serializer=self.serializer)
         if self.preprocess and not isinstance(self.preprocess, Artifact):
             self.preprocess = Artifact(artifact=self.preprocess)
         if self.postprocess and not isinstance(self.postprocess, Artifact):
             self.postprocess = Artifact(artifact=self.postprocess)
-        if self.predict_method is None:
-            self.to_call = self.object.artifact
-        else:
-            self.to_call = getattr(self.object.artifact, self.predict_method)
 
         self._artifact_method = None
-
         if self.model_to_device_method is not None:
             self._artifact_method = getattr(self, self.model_to_device_method)
 
+    def to_call(self, X, *args, **kwargs):
+        if self.predict_method is None:
+            return self.object.artifact(X, *args, **kwargs)
+        return getattr(self.object.artifact, self.predict_method)(X, *args, **kwargs)
+
     def post_create(self, db: Datalayer) -> None:
+        if isinstance(self.training_configuration, str):
+            self.training_configuration = db.load(
+                'training_configuration', self.training_configuration
+            )  # type: ignore[assignment]
         if isinstance(self.output_schema, Schema):
             db.add(self.output_schema)
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)
 
+    # TODO - bring inside post_create
     @override
     def schedule_jobs(
         self,
@@ -508,10 +509,11 @@ class Model(Component, _Predictor):
         dependencies: t.Sequence[Job] = (),
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
+        jobs = []
         if self.train_X is not None:
             assert isinstance(self.training_configuration, _TrainingConfiguration)
             assert self.training_select is not None
-            return [
+            jobs.append(
                 self.fit(
                     X=self.train_X,
                     y=self.train_y,
@@ -522,8 +524,17 @@ class Model(Component, _Predictor):
                     metrics=self.metrics,  # type: ignore[arg-type]
                     validation_sets=self.validation_sets,
                 )
-            ]
-        return []
+            )
+        if self.predict_X is not None:
+            assert self.predict_select is not None
+            jobs.append(
+                self.predict(
+                    X=self.predict_X,
+                    select=self.predict_select,
+                    max_chunk_size=self.predict_max_chunk_size,
+                )
+            )
+        return jobs
 
     def on_load(self, db: Datalayer) -> None:
         if self._artifact_method and self.preferred_devices:
@@ -631,11 +642,10 @@ class Model(Component, _Predictor):
     def _fit(
         self,
         X: t.Any,
-        y: t.Any = None,
+        y: t.Optional[t.Any] = None,
         configuration: t.Optional[_TrainingConfiguration] = None,
         data_prefetch: bool = False,
         db: t.Optional[Datalayer] = None,
-        dependencies: t.Sequence[Job] = (),
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
@@ -645,7 +655,7 @@ class Model(Component, _Predictor):
     def fit(
         self,
         X: t.Any,
-        y: t.Any = None,
+        y: t.Optional[t.Any] = None,
         configuration: t.Optional[_TrainingConfiguration] = None,
         data_prefetch: bool = False,
         db: t.Optional[Datalayer] = None,
@@ -711,27 +721,31 @@ def TrainingConfiguration(identifier: str, **kwargs):
 
 
 @public_api(stability='beta')
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class APIModel(Component, _Predictor):
-    '''
-    A Component for representing api models like openai, cohere etc
-    :param model: The model to use, e.g. ``'text-embedding-ada-002'``.
-    :param identifier: The identifier to use, e.g. ``'my-model'``.
-    :param version: The version to use, e.g. ``0`` (leave empty)
-    :param takes_context: Whether the model takes context into account.
-    :param encoder: The encoder identifier.
-    '''
+    '''{component_params}
+    {predictor_params}
+    :param model: The model to use, e.g. ``'text-embedding-ada-002'``'''
 
-    model: str
-    identifier: str = ''
-    version: t.Optional[int] = None
-    takes_context: bool = False
-    encoder: t.Union[FieldType, Encoder, str, None] = None
-    model_update_kwargs: dict = dc.field(default_factory=dict)
+    __doc__ = __doc__.format(
+        component_params=Component.__doc__,
+        predictor_params=_Predictor.__doc__,
+    )
+
+    model: t.Optional[str] = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.model is None:
+            assert self.identifier is not None
+            self.model = self.identifier
 
     def post_create(self, db: Datalayer) -> None:
+        # TODO: This not necessary since added as a subcomponent
         if isinstance(self.output_schema, Schema):
             db.add(self.output_schema)
+        # TODO add this logic to pre_create,
+        # since then the `.add` clause is not necessary
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)

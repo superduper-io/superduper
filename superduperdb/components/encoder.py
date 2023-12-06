@@ -22,25 +22,27 @@ def _pickle_encoder(x: t.Any) -> bytes:
 
 
 @public_api(stability='stable')
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
     i.e. data inserted using ``db.base.db.Datalayer.insert``
-
+    {component_parameters}
     :param identifier: Unique identifier
     :param decoder: callable converting a ``bytes`` string to a ``Encodable``
                     of this ``Encoder``
     :param encoder: Callable converting an ``Encodable`` of this ``Encoder``
                     to ``bytes``
     :param shape: Shape of the data
-    :param version: Version of the encoder (don't use this)
     :param load_hybrid: Whether to load the data from the URI or return the URI in
                         `CFG.hybrid` mode
     """
 
+    __doc__ = __doc__.format(component_parameters=Component.__doc__)
+
+    type_id: t.ClassVar[str] = 'encoder'
+
     artifact_artibutes: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
-    identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)
     )
@@ -50,13 +52,12 @@ class Encoder(Component):
     shape: t.Optional[t.Sequence] = None
     load_hybrid: bool = True
 
-    # Don't set this manually
-    version: t.Optional[int] = None
-    type_id: t.ClassVar[str] = 'encoder'
     # TODO what's this for?
     encoders: t.ClassVar[t.List] = []
 
     def __post_init__(self):
+        super().__post_init__()
+
         self.encoders.append(self.identifier)
         if isinstance(self.decoder, t.Callable):
             self.decoder = Artifact(artifact=self.decoder)

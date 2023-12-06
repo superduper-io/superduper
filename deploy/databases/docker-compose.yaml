@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+
+  # PostgreSQL
+  # ------------------------------
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${SDDB_USER}
+      - POSTGRES_PASSWORD=${SDDB_PASS}
+      - POSTGRES_DB=${SDDB_DATABASE}

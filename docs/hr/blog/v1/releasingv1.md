@@ -82,7 +82,7 @@ SuperDuperDB provides a unified environment for building, shipping, and managing
 
 ### Open source
 
-We AI software should be open-sourced to the community. Truly open-source tools are the only sure way for developers to protect their stacks from vunerable dependencies.
+We believe AI software should be open-sourced to the community. Truly open-source tools are the only sure way for developers to protect their stacks from vunerable dependencies.
 
 With SuperDuperDB, we are excited to be part of a thriving open-source AI ecosystem. There is a wealth of open-source AI software and models available, including `transformers` from Hugging Face, `llama-2.0` and other LLMs that can compete with OpenAI's closed source models, computer vision models in PyTorch, and a plethora of new open-source tools and models emerging from GitHub.
 

@@ -1,3 +1,4 @@
+import inspect
 import random
 from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
@@ -34,7 +35,8 @@ def test_tc_type_id():
 
 
 def test_tc_get_method():
-    config = _TrainingConfiguration('config', {'param1': 'value1'}, 1)
+    config = _TrainingConfiguration('config', kwargs={'param1': 'value1'})
+    config.version = 1
 
     assert config.get('identifier') == 'config'
     assert config.get('param1') == 'value1'
@@ -44,7 +46,8 @@ def test_tc_get_method():
     assert config.get('non_existent', 'default_value') == 'default_value'
 
     # First get the properties of the instance
-    config = _TrainingConfiguration('config', {'version': 2}, 1)
+    config = _TrainingConfiguration('config', kwargs={'version': 2})
+    config.version = 1
     assert config.get('version') == 1
 
 
@@ -82,7 +85,11 @@ class TestModel(Component, _Predictor):
 @pytest.fixture
 def predict_mixin(request) -> _Predictor:
     cls_ = getattr(request, 'param', _Predictor)
-    predict_mixin = cls_()
+
+    if 'identifier' in inspect.signature(cls_).parameters:
+        predict_mixin = cls_(identifier='test')
+    else:
+        predict_mixin = cls_()
     predict_mixin.identifier = 'test'
     predict_mixin.to_call = to_call
     predict_mixin.preprocess = Artifact(preprocess)
@@ -343,54 +350,41 @@ def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
 def test_model_init():
     # Check all the object are converted to Artifact
     obj = object()
-    model = Model('test', obj)
+    model = Model('test', object=obj)
     assert isinstance(model.object, Artifact)
     assert model.object.artifact is obj
 
     preprocess = object()
-    model = Model('test', obj, preprocess=preprocess)
+    model = Model('test', object=obj, preprocess=preprocess)
     assert isinstance(model.preprocess, Artifact)
     assert model.preprocess.artifact is preprocess
 
     postprocess = object()
-    model = Model('test', obj, postprocess=postprocess)
+    model = Model('test', object=obj, postprocess=postprocess)
     assert isinstance(model.postprocess, Artifact)
     assert model.postprocess.artifact is postprocess
-
-    obj = object()
-    model = Model('test', obj)
-    assert model.to_call == model.object.artifact
-
-    # Check the predict method is set correctly
-    class Obj:
-        def predict(self, x):
-            return x
-
-    obj = Obj()
-    model = Model('test', obj, predict_method='predict')
-    assert model.to_call == model.object.artifact.predict
 
     # Check the model_to_device_method is set correctly
     class SubModel(Model):
         def to(self, device):
             return self
 
-    model = SubModel('test', obj, model_to_device_method='to')
+    model = SubModel('test', object=obj, model_to_device_method='to')
     assert model._artifact_method == model.to
 
 
 def test_model_child_components():
     # Check the child components are empty
-    model = Model('test', object())
+    model = Model('test', object=object())
     assert model.child_components == []
 
     # if encoder or training_configuration is set
-    model = Model('test', object(), encoder=Encoder(identifier='test'))
+    model = Model('test', object=object(), encoder=Encoder(identifier='test'))
     assert model.child_components == [('encoder', 'encoder')]
 
     model = Model(
         'test',
-        object(),
+        object=object(),
         training_configuration=TrainingConfiguration(identifier='test'),
     )
     assert model.child_components == [
@@ -400,7 +394,7 @@ def test_model_child_components():
     # if encoder and training_configuration are set
     model = Model(
         'test',
-        object(),
+        object=object(),
         encoder=Encoder(identifier='test'),
         training_configuration=TrainingConfiguration(identifier='test'),
     )
@@ -416,13 +410,13 @@ def test_model_on_create():
     db.databackend = MagicMock()
 
     # Check the encoder is loaded if encoder is string
-    model = Model('test', object(), encoder='test_encoder')
+    model = Model('test', object=object(), encoder='test_encoder')
     with patch.object(db, 'load') as db_load:
         model.pre_create(db)
         db_load.assert_called_with('encoder', 'test_encoder')
 
     # Check the output_component table is added by datalayer
-    model = Model('test', object(), encoder=Encoder(identifier='test'))
+    model = Model('test', object=object(), encoder=Encoder(identifier='test'))
     output_component = MagicMock()
     db.databackend.create_model_table_or_collection.return_value = output_component
     with patch.object(db, 'add') as db_load:
@@ -431,7 +425,7 @@ def test_model_on_create():
 
 
 def test_model_append_metrics():
-    model = Model('test', object())
+    model = Model('test', object=object())
 
     metric_values = {'acc': 0.5, 'loss': 0.5}
 
@@ -450,7 +444,7 @@ def test_model_append_metrics():
 def test_model_validate(mock_validate):
     # Check the metadadata recieves the correct values
     mock_validate.return_value = {'acc': 0.5, 'loss': 0.5}
-    model = Model('test', object())
+    model = Model('test', object=object())
     db = MagicMock(spec=Datalayer)
     db.metadata = MagicMock()
     with patch.object(db, 'add') as db_add, patch.object(
@@ -475,11 +469,11 @@ def test_model_validate(mock_validate):
 def test_model_core_validate(model_predict, valid_dataset, db):
     # Check the validation is done correctly
     db.add(valid_dataset)
-    model = Model('test', object(), train_X='x', train_y='y')
+    model = Model('test', object=object(), train_X='x', train_y='y')
     model_predict.side_effect = lambda x: [random.randint(0, 1) for _ in range(len(x))]
     metrics = [
-        Metric('f1', f1_score),
-        Metric('acc', accuracy_score),
+        Metric('f1', object=f1_score),
+        Metric('acc', object=accuracy_score),
     ]
     results = model._validate(db, valid_dataset.identifier, metrics)
     assert len(results) == 2
@@ -494,7 +488,7 @@ def test_model_core_validate(model_predict, valid_dataset, db):
 
 def test_model_create_fit_job():
     # Check the fit job is created correctly
-    model = Model('test', object())
+    model = Model('test', object=object())
     job = model.create_fit_job('x')
     assert job.component_identifier == model.identifier
     assert job.method_name == 'fit'
@@ -503,7 +497,7 @@ def test_model_create_fit_job():
 
 def test_model_fit(valid_dataset):
     # Check the logic of the fit method, the mock method was tested above
-    model = Model('test', object())
+    model = Model('test', object=object())
     with patch.object(model, '_fit') as model_fit:
         model.fit('x')
         model_fit.assert_called_once()

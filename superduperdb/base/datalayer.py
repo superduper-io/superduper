@@ -976,7 +976,8 @@ class Datalayer:
 
             if hasattr(component, 'artifact_attributes'):
                 for a in component.artifact_attributes:
-                    self.artifact_store.delete(info['dict'][a]['file_id'])
+                    if info['dict'][a] is not None:
+                        self.artifact_store.delete(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(  # TODO: duplicated function

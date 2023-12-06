@@ -24,36 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases.
 
+#### Refactorings
+
+- Added `kw_only` to most `@dataclass` decorators to simplify
+
 ## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
-
-#### Changed defaults / behaviours
-
-- ...
 
 #### New Features & Functionality
 
 - Introduced Chinese version of README
 
-
 #### Bug Fixes
 
 - Updated paths for docker-compose.
-
 
 ## [0.0.20](https://github.com/SuperDuperDB/superduperdb/compare/0.0.10...0.0.20])    (2023-Dec-04)
 
 #### Changed defaults / behaviours
 
 - Chop down large files from the history to reduce the size of the repo.
-
-#### New Features & Functionality
-
-- ...
-
-
-#### Bug Fixes
-
-- ...
 
 
 ## [0.0.19](https://github.com/SuperDuperDB/superduperdb/compare/0.0.15...0.0.19])    (2023-Dec-04)  
@@ -73,7 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add services for vector-search and CDC for more comprehensive cluster mode
 - Add a `Component.post_create` hook to enable logic to incorporate model versions
 - Fix multiple issues with `ibis`/ SQL code
-
 
 #### New Features & Functionality
 

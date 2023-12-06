@@ -18,7 +18,7 @@ retry = Retry(exception_types=(CohereAPIError, CohereConnectionError))
 KEY_NAME = 'COHERE_API_KEY'
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class Cohere(APIModel):
     """Cohere predictor"""
 
@@ -28,7 +28,7 @@ class Cohere(APIModel):
         self.identifier = self.identifier or self.model
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class CohereEmbed(Cohere):
     """Cohere embedding predictor
 
@@ -96,7 +96,7 @@ class CohereEmbed(Cohere):
         return out
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class CohereGenerate(Cohere):
     """Cohere realistic text generator (chat predictor)
 

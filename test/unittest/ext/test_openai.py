@@ -70,7 +70,7 @@ def open_ai_with_rhymes(db, monkeypatch):
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes
     m = OpenAIChatCompletion(
-        model='gpt-3.5-turbo',
+        identifier='gpt-3.5-turbo',
         prompt=(
             'Use the following facts to answer this question\n'
             '{context}\n\n'

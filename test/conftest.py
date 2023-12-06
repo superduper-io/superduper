@@ -213,21 +213,20 @@ def add_models(db: Datalayer):
         ['linear_b', (16, 8), 'torch.float32[8]'],
     ]
     for identifier, weight_shape, encoder in params:
-        db.add(
-            TorchModel(
-                object=torch.nn.Linear(*weight_shape),
-                identifier=identifier,
-                encoder=encoder,
-            )
+        m = TorchModel(
+            object=torch.nn.Linear(*weight_shape),
+            identifier=identifier,
+            encoder=encoder,
         )
+        db.add(m)
 
 
 def add_vector_index(
     db: Datalayer, collection_name='documents', identifier='test_vector_search'
 ):
     # TODO: Support configurable key and model
-    is_mongodb_bachend = isinstance(db.databackend, MongoDataBackend)
-    if is_mongodb_bachend:
+    is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
+    if is_mongodb_backend:
         select_x = Collection(collection_name).find()
         select_z = Collection(collection_name).find()
     else:
@@ -242,6 +241,7 @@ def add_vector_index(
             model='linear_a',
         )
     )
+
     db.add(
         Listener(
             select=select_z,
@@ -273,8 +273,8 @@ def create_db(CFG, **kwargs):
 
     # prepare data
     n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
-    is_mongodb_bachend = isinstance(db.databackend, MongoDataBackend)
-    if is_mongodb_bachend:
+    is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
+    if is_mongodb_backend:
         add_random_data_to_mongo_db(db, number_data_points=n_data)
     else:
         add_random_data_to_sql_db(db, number_data_points=n_data)
@@ -308,6 +308,7 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
     monkeypatch.setattr(CFG, 'data_backend', setup_config['data_backend'])
 
     db = create_db(CFG, **setup_config)
+
     yield db
 
     db_type = setup_config.get('db_type', 'mongodb')

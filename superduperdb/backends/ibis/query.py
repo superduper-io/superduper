@@ -527,24 +527,21 @@ class QueryType(str, enum.Enum):
     ATTR = 'attr'
 
 
-@dc.dataclass(repr=False)
+@dc.dataclass(repr=False, kw_only=True)
 class Table(Component):
     """
     This is a representation of an SQL table in ibis,
     saving the important meta-data associated with the table
     in the ``superduperdb`` meta-data store.
-
-    :param identifier: The name of the table
-    :param schema: The schema of the table
+    {component_params}:param schema: The schema of the table
     :param primary_id: The primary id of the table
-    :param version: The version of the table
     """
 
-    identifier: str
+    type_id: t.ClassVar[str] = 'table'
+    __doc__ = __doc__.format(component_params=Component.__doc__)
+
     schema: Schema
     primary_id: str = 'id'
-    version: t.Optional[int] = None
-    type_id: t.ClassVar[str] = 'table'
 
     def pre_create(self, db: 'Datalayer'):
         assert self.schema is not None, "Schema must be set"

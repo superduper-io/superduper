@@ -16,32 +16,38 @@ from .model import Model
 
 
 @public_api(stability='stable')
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class Listener(Component):
     """
     Listener object which is used to process a column/ key of a collection or table,
     and store the outputs.
-
+    {component_parameters}
     :param key: Key to be bound to model
     :param model: Model for processing data
     :param select: Object for selecting which data is processed
-    :param active: Toggle to ``False`` to deactivate change data triggering
     :param identifier: A string used to identify the model.
+    :param active: Toggle to ``False`` to deactivate change data triggering
     :param predict_kwargs: Keyword arguments to self.model.predict
-    :param version: Version number of the model(?)
     """
+
+    __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     key: str
     model: t.Union[str, Model]
     select: CompoundSelect
+    identifier: t.Optional[str] = None  # type: ignore[assignment]
     active: bool = True
-    identifier: t.Optional[str] = None
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-    # Don't set this manually
-    version: t.Optional[int] = None
-
     type_id: t.ClassVar[str] = 'listener'
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.identifier is None and self.model is not None:
+            if isinstance(self.model, str):
+                self.identifier = f'{self.model}/{self.id_key}'
+            else:
+                self.identifier = f'{self.model.identifier}/{self.id_key}'
 
     @property
     def outputs(self):
@@ -56,6 +62,7 @@ class Listener(Component):
     def pre_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
+
         if self.select is not None and self.select.variables:
             self.select = t.cast(CompoundSelect, self.select.set_variables(db))
 
@@ -87,13 +94,6 @@ class Listener(Component):
         if self.key.startswith('_outputs.'):
             return self.key.split('.')[1]
         return self.key
-
-    def __post_init__(self):
-        if self.identifier is None and self.model is not None:
-            if isinstance(self.model, str):
-                self.identifier = f'{self.model}/{self.id_key}'
-            else:
-                self.identifier = f'{self.model.identifier}/{self.id_key}'
 
     @override
     def schedule_jobs(

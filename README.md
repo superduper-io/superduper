@@ -60,7 +60,7 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 
 ## How does SuperDuperDB work?
 
-SuperDuperDB is built on the idea of a virtual data layer that serves as an intermediate between AI and data.
+SuperDuperDB is built on the idea of a virtual data layer that transparently handles the interaction of AI models with data.
  
 All things aside, this layer consists of:
 1. Clever simplifications for managing Data (like sources, encoders, listeners), Metadata (such as vector indexes), and Compute (covering sync, async, and parallel operations).

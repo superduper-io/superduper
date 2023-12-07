@@ -5,8 +5,10 @@ from functools import cached_property
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
+from superduperdb.misc.annotations import public_api
 
 
+@public_api(stability='beta')
 @dc.dataclass
 class Schema(Component):
     identifier: str

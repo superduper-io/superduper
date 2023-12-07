@@ -24,6 +24,7 @@ from superduperdb.components.encoder import Encoder
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
+from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -68,7 +69,7 @@ class _TrainingConfiguration(Component):
             return self.kwargs.get(k, default)
 
 
-class Predictor:
+class _Predictor:
     """
     Mixin class for components which can predict.
 
@@ -417,8 +418,9 @@ class Predictor:
         )
 
 
+@public_api(stability='stable')
 @dc.dataclass
-class Model(Component, Predictor):
+class Model(Component, _Predictor):
     """Model component which wraps a model to become serializable
 
     :param identifier: Unique identifier of model
@@ -708,8 +710,9 @@ def TrainingConfiguration(identifier: str, **kwargs):
     return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
 
 
+@public_api(stability='beta')
 @dc.dataclass
-class APIModel(Component, Predictor):
+class APIModel(Component, _Predictor):
     '''
     A Component for representing api models like openai, cohere etc
     :param model: The model to use, e.g. ``'text-embedding-ada-002'``.

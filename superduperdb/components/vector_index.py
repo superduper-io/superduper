@@ -11,6 +11,7 @@ from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 from superduperdb.ext.utils import str_shape
+from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 
@@ -18,6 +19,7 @@ if t.TYPE_CHECKING:
     pass
 
 
+@public_api(stability='stable')
 @dc.dataclass
 class VectorIndex(Component):
     """

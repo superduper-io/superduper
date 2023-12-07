@@ -18,8 +18,8 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
     Model,
-    Predictor,
     TrainingConfiguration,
+    _Predictor,
     _TrainingConfiguration,
 )
 
@@ -75,13 +75,13 @@ def mock_forward(self, x, **kwargs):
     return to_call(x)
 
 
-class TestModel(Component, Predictor):
+class TestModel(Component, _Predictor):
     batch_predict: bool = False
 
 
 @pytest.fixture
-def predict_mixin(request) -> Predictor:
-    cls_ = getattr(request, 'param', Predictor)
+def predict_mixin(request) -> _Predictor:
+    cls_ = getattr(request, 'param', _Predictor)
     predict_mixin = cls_()
     predict_mixin.identifier = 'test'
     predict_mixin.to_call = to_call
@@ -137,7 +137,7 @@ def test_pm_predict_one(predict_mixin):
     ],
 )
 def test_pm_forward(batch_predict, num_workers, expect_type):
-    predict_mixin = Predictor()
+    predict_mixin = _Predictor()
     X = np.random.randn(4, 5)
 
     predict_mixin.to_call = to_call
@@ -148,7 +148,7 @@ def test_pm_forward(batch_predict, num_workers, expect_type):
     assert np.allclose(output, to_call(X))
 
 
-@patch.object(Predictor, '_forward', mock_forward)
+@patch.object(_Predictor, '_forward', mock_forward)
 def test_pm_core_predict(predict_mixin):
     X = np.random.randn(4, 5)
 
@@ -287,7 +287,7 @@ def test_pm_predict_with_select(predict_mixin):
         assert kwargs.get('ids') == ids_of_missing_outputs
 
 
-@patch.object(Predictor, '_predict')
+@patch.object(_Predictor, '_predict')
 def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
     xs = [np.random.randn(4) for _ in range(10)]
     ys = [int(random.random() > 0.5) for i in range(10)]

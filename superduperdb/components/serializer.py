@@ -2,12 +2,14 @@ import dataclasses as dc
 import typing as t
 
 from superduperdb.components.component import Component
+from superduperdb.misc.annotations import public_api
 from superduperdb.misc.serialization import serializers
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
+@public_api(stability='beta')
 @dc.dataclass
 class Serializer(Component):
     identifier: str

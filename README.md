@@ -41,7 +41,7 @@
 
 SuperDuperDB is a Python framework for bringing AI closed to your favorate database.
 
-To achieve that, it wraps the database within a virtual data layer that transparently "wires together" critical components involved in AI/data interactions, including backend communication, data encoders and serializers, handlers for data changes, streaming inference, Vector Indexing, Parallel computation, and interfaces with popular AI frameworks and APIs.
+To achieve that, SuperDuperDB wraps the database into a virtual data layer that transparently "wires together" critical components involved in AI/data interactions, including backend communication, data encoders and serializers, handlers for data changes, streaming inference, Vector Indexing, Parallel computation, and interfaces with popular AI frameworks and APIs.
 
 This approach helps create a unified infrastructure where AI and data coexist seamlessly, thus simplifying deployment, monitoring, and maintenance, streamlining the overall AI workflow.
 
@@ -57,10 +57,13 @@ To develop AI workflows, SuperDuperDB provides a simple declarative API that you
 
 ## Why Such a Solution is Needed:
 
-In traditional AI development, the standard method involves executing AI processes independently of data sources, relying on complex MLops and specialized vector search databases for advanced tasks.
+Companies focused on AI encounter challenges when dealing with data, particularly in tasks such as ETL, feature shaping, transformations, and similarity searching—integral components of AI workflows. The difficulties stem from the common practice of running AI independently of its data source, resulting in inefficiencies that hinder the enhancement and scalability of AI.
 
-This approach introduces challenges related to data duplication and migration across diverse environments, along with increased costs and security risks due to the fragmented infrastructure.
+Addressing this challenge often involves adopting intricate approaches like MLops or employing specialized databases for vector searching. However, these solutions bring their own set of complications, including data duplications and inconsistencies across various systems. As a consequence, it not only increases costs due to data movement overheads but also jeopardizes the security of AI systems as data becomes dispersed.
 
+The solution lies in establishing a seamless system where data and AI processes seamlessly collaborate, facilitating the creation of a unified plan where ETL, feature shaping, transformations, and AI processes synergize.
+
+Enter SuperDuperDB—a precisely tailored solution for achieving this AI/Data integration!
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/) or watch the video:
 

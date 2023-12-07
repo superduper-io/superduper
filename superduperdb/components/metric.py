@@ -3,8 +3,10 @@ import typing as t
 
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
+from superduperdb.misc.annotations import public_api
 
 
+@public_api(stability='beta')
 @dc.dataclass
 class Metric(Component):
     """

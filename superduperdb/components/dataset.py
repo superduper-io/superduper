@@ -12,8 +12,10 @@ from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
+from superduperdb.misc.annotations import public_api
 
 
+@public_api(stability='stable')
 @dc.dataclass
 class Dataset(Component):
     """A dataset is an immutable collection of documents that used for training

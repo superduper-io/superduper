@@ -7,6 +7,7 @@ from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import _OUTPUTS_KEY
+from superduperdb.misc.annotations import public_api
 from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
@@ -14,6 +15,7 @@ from .component import Component
 from .model import Model
 
 
+@public_api(stability='stable')
 @dc.dataclass
 class Listener(Component):
     """

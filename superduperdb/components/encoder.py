@@ -5,6 +5,7 @@ import typing as t
 
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
+from superduperdb.misc.annotations import public_api
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -20,6 +21,7 @@ def _pickle_encoder(x: t.Any) -> bytes:
     return f.getvalue()
 
 
+@public_api(stability='stable')
 @dc.dataclass
 class Encoder(Component):
     """

@@ -11,7 +11,7 @@
 
 <div align="center">
 
-## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong> Live Notebooks</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://demo.superduperdb.com"><strong> Live Notebooks</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
 
 </div>
 
@@ -33,7 +33,7 @@
 
 ---
 
-📣 Update: ***In response to the high demand for our [Live Demo](https://demo.superduperdb.com/user-redirect/lab/tree/examples), we have adjusted the expiration time from 1 hour and 30 minutes to 1 hour. If you encounter extended queue times, we kindly ask you to try again later. Thank you for your understanding and patience.***
+📣 Update: ***In response to the high demand for our [Live Demo](https://demo.superduperdb.com), we have adjusted the expiration time from 1 hour and 30 minutes to 1 hour. If you encounter extended queue times, we kindly ask you to try again later. Thank you for your understanding and patience.***
 
 ### 📣 Today we are officially launching SuperDuperDB with release of v0.1, including:
 - Support of major SQL databases and tabular formats: PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino (as well as MongoDB)
@@ -284,30 +284,30 @@ Also find use-cases and apps built by the community in the [superduper-community
   </tr>
   <tr>     
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Semantic Search Engine</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">Classical Machine Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
     </th>
   </tr>
 </table>

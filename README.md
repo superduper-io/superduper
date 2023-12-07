@@ -28,33 +28,12 @@
 <b>English</b> |
 [**中文**](README_zh.md) 
 
+
+
 </div>
 
 
----
 
-📣 Update: ***In response to the high demand for our [Live Demo](https://demo.superduperdb.com), we have adjusted the expiration time from 1 hour and 30 minutes to 1 hour. If you encounter extended queue times, we kindly ask you to try again later. Thank you for your understanding and patience.***
-
-### 📣 Today we are officially launching SuperDuperDB with release of v0.1, including:
-- Support of major SQL databases and tabular formats: PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino (as well as MongoDB)
-- Improved docs
-- A modularized testing suite
-
-***SuperDuperDB is open-source. Please support us:***
-- Leave a star on the repo! ⭐
-- [Upvote on ProductHunt!](https://www.producthunt.com/posts/superduperdb) 🗳️
-
-***To get started:***
-- Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
-
-For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
-
-
-<div align="center">
-	
-[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
-
-</div>
 
 
 ## What is SuperDuperDB? 🔮 
@@ -70,6 +49,19 @@ SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - 
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
 - Highly custom AI use-cases involving ultra specialized models
 
+**To get started:**
+Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
+
+`SuperDuperDB is open-source: Please leave a star to support the project! ⭐`
+
+
+For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
+
+<div align="center">	
+	
+[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
+
+</div>
 
 ### Key Features:
 - **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.

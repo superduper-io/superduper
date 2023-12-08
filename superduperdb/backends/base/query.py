@@ -101,6 +101,12 @@ class Select(Serializable, ABC):
         """
         pass
 
+    def validate(self, db):
+        """
+        Validate the query on the DB instance.
+        """
+        return
+
 
 @dc.dataclass(repr=False)
 class Delete(Serializable, ABC):
@@ -117,6 +123,12 @@ class Delete(Serializable, ABC):
     @abstractmethod
     def execute(self, db):
         pass
+
+    def validate(self, db):
+        """
+        Validate the query on the DB instance.
+        """
+        return
 
 
 @dc.dataclass(repr=False)
@@ -136,6 +148,12 @@ class Update(Serializable, ABC):
     @abstractmethod
     def execute(self, db):
         pass
+
+    def validate(self, db):
+        """
+        Validate the query on the DB instance.
+        """
+        return
 
 
 @dc.dataclass(repr=False)

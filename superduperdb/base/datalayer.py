@@ -26,7 +26,6 @@ from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encodable, Encoder
-from superduperdb.components.model import Model
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.colors import Colors
@@ -224,31 +223,6 @@ class Datalayer:
         self.metadata.drop(force=True)
         self.artifact_store.drop(force=True)
 
-    def validate(
-        self,
-        identifier: str,
-        type_id: str,
-        validation_set: str,
-        metrics: t.Sequence[str],
-    ):
-        """
-        Evaluate quality of component, using `Component.validate`, if implemented.
-
-        :param identifier: identifier of semantic index
-        :param type_id: type_id of component
-        :param validation_set: validation dataset on which to validate
-        :param metrics: metric functions to compute
-        """
-        # TODO: never called
-        component = self.load(type_id, identifier)
-        metric_list = [self.load('metric', m) for m in metrics]
-        assert isinstance(component, Model)
-        return component.validate(
-            self,
-            validation_set,
-            metric_list,  # type: ignore[arg-type]
-        )
-
     def show(
         self,
         type_id: str,
@@ -372,6 +346,23 @@ class Datalayer:
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
+
+    def validate(self, query: ExecuteQuery, *args, **kwargs) -> None:
+        """
+        Validate a query on the db.
+
+        :param query: select, insert, delete, update,
+        """
+        if not isinstance(query, (Delete, Select, Update)):
+            return
+        assert isinstance(query, (Delete, Select, Update))
+        try:
+            if query.variables:
+                query.set_variables(self).validate(self)
+            else:
+                query.validate(self)
+        except exceptions.QueryValidationError:
+            raise
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
         """

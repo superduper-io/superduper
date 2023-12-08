@@ -21,6 +21,7 @@ from superduperdb.backends.base.query import (
     _ReprMixin,
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisResult
+from superduperdb.base.exceptions import QueryValidationError
 from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
@@ -89,6 +90,14 @@ class IbisCompoundSelect(CompoundSelect):
     def output_fields(self):
         return self.query_linker.output_fields
 
+    def validate(self, db: 'Datalayer'):
+        '''
+        A thin wrapper around query validation.
+        '''
+
+        assert isinstance(self.query_linker, IbisQueryLinker)
+        self.query_linker.compile(db)
+
     def _get_query_component(
         self,
         name: str,
@@ -149,8 +158,8 @@ class IbisCompoundSelect(CompoundSelect):
     def _get_all_fields(self, db):
         tables = self.get_all_tables()
         component_tables = []
-        for tab in tables:
-            component_tables.append(db.load('table', tab))
+        for table in tables:
+            component_tables.append(db.load('table', table))
         fields = {}
 
         for tab in component_tables:
@@ -815,7 +824,12 @@ class IbisQueryComponent(QueryComponent):
             return getattr(parent, self.name), tables
         args, tables = _compile_item(self.args, db, tables=tables)
         kwargs, tables = _compile_item(self.kwargs, db, tables=tables)
-        return getattr(parent, self.name)(*args, **kwargs), tables
+        try:
+            return getattr(parent, self.name)(*args, **kwargs), tables
+        except AttributeError:
+            raise QueryValidationError(
+                '{} is not a valid query member of ibis query'.format(self.name)
+            )
 
     def get_all_tables(self):
         out = []

@@ -29,6 +29,13 @@ class QueryException(BaseException):
     '''
 
 
+class QueryValidationError(QueryException):
+    '''
+    A query validation error signifies validation issues
+    in query declaration.
+    '''
+
+
 class DatabackendException(BaseException):
     '''
     DatabackendException

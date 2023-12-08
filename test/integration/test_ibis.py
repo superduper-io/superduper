@@ -160,6 +160,7 @@ def end2end_workflow(ibis_db, memory_table=False):
 
     # Build query to get the results back
     q = t.outputs(image='resnet18').select('id', 'image', 'age').filter(t.age > 25)
+    db.validate(q)
 
     # Get the results
     result = list(db.execute(q))

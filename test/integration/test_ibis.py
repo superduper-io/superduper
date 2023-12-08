@@ -11,6 +11,7 @@ from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import RawSQL, Table
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base import exceptions
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document as D
 from superduperdb.components.schema import Schema
@@ -189,6 +190,10 @@ def end2end_workflow(ibis_db, memory_table=False):
             {'id': '3'},
             {'id': '4'},
         ]
+
+    # Test bad query
+    with pytest.raises(exceptions.QueryValidationError):
+        db.validate(q.gibberish_query())
 
 
 def test_nested_query(ibis_sqllite_db):

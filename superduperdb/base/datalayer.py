@@ -355,14 +355,11 @@ class Datalayer:
         """
         if not isinstance(query, (Delete, Select, Update)):
             return
-        assert isinstance(query, (Delete, Select, Update))
-        try:
-            if query.variables:
-                query.set_variables(self).validate(self)
-            else:
-                query.validate(self)
-        except exceptions.QueryValidationError:
-            raise
+
+        if query.variables:
+            query.set_variables(self).validate(self)
+        else:
+            query.validate(self)
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
         """

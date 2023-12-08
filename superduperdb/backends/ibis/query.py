@@ -828,7 +828,7 @@ class IbisQueryComponent(QueryComponent):
             return getattr(parent, self.name)(*args, **kwargs), tables
         except AttributeError:
             raise QueryValidationError(
-                '{} is not a valid query member of ibis query'.format(self.name)
+                f'{self.name} is not a valid query member of ibis query'
             )
 
     def get_all_tables(self):

@@ -37,11 +37,35 @@
 
 
 
-## About 
+## Install
+ 
+```
+pip install superduperdb
+```
 
-SuperDuperDB is a Python framework to design unified environments where AI and data seamlessly coexist, thus simplifying deployment, monitoring, and maintenance of AI workflows. This environment is tailored to application's requirements, and wires together critical components involved in AI/data interaction, including backend communication, data encoding, handlers for data changes, and interfaces with popular AI frameworks and APIs.
+If you want to test our demo applications on your local machine: 
+```
+docker run -p 8888:8888 superduperdb/demo:latest
+```
 
-For the development of such environments, SuperDuperDB features a simple yet expressive declarative API, supporting AI workflows ranging from conventional machine learning to complex generative AI and vector search.
+Or even better, to try them [live on your browser](https://demo.superduperdb.com).
+   
+
+
+## What is SuperDuperDB? 
+
+SuperDuperDB is a Python framework for building virtual environments that harmoniously integrates AI models and data, perfectly tailored to the application's requirements. It is designed to work within an application, and transparently wiring together critical components involved in AI/data interaction.
+That includes: 
+* Backend Communication
+* Data Encoding and Serialization
+* Change Data Capture handlers
+* Vector Indexing and Searching
+* Model chaining
+* Interfacing with popular AI frameworks and APIs.
+
+
+SuperDuperDB can be thought of as an orchestrator for all the intricacies your AI and data-driven applications needs.
+
 
 
 <p align="center">
@@ -50,20 +74,24 @@ For the development of such environments, SuperDuperDB features a simple yet exp
 
 
 
-## Why Such a Solution is Needed:
+## Why SuperDuperDB?
 
-
-AI-focused companies often grapple with data-related challenges, such as ETL, feature shaping, and similarity searching within AI workflows. The difficulties arise from the common practice of running AI independently of its data sources, leading to inefficiencies that hinder AI enhancement and scalability.
+When building a modern AI application, you don’t want to worry about how are being brought to your model, or what happens with the outputs.
 
 Addressing this issue typically involves adopting complex approaches like MLops or utilizing specialized databases for vector searching. However, these solutions introduce complications such as data duplications and inconsistencies across systems, increasing costs due to data movement overheads and posing security risks as data becomes dispersed.
 
-In an ideal scenario, each AI application would function within a customized environment where data and AI processes seamlessly integrate, perfectly tailored to the application's requirements.
+SuperDuperDB is here to help you reduce development time and operational costs of AI applications.
 
-However, there is no universal solution, as each AI application has its unique requirements and characteristics. Consequently, developers must manually set up such environments, a process that often demands years of development and refinement.
+SuperDuperDB does the following for you:
 
-Enter SuperDuperDB — a framework designed to be the simplest and fastest way to create customized environments for AI/Data integration!
+1. It streamlines data-related challenges, such as ETL, feature shaping, and similarity searching.
+2. It works directly with images, video, audio in your database, and any type which can be encoded as bytes in Python.
+3. It compute outputs automatically and immediately as new data arrives, enabling streaming inference and real-time applications.
+4. It aligns computational and data access optimizations for scalable model training.
+5. It provides a declarative API for building AI workflows, ranging from straightforward ML tasks to complex AI apps like LLM-Chat.
+6. It integrates any function, program, script or algorithm from the Python ecosystem to enhance your workflows.
+7. It streamlines the development, deployment, monitoring, and maintenance of AI workflows.
 
-It achieves this by breaking down the components of AI/Data systems into narrowly defined elements, allowing AI application architects to later compose them in flexible ways using a declarative API. 
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/) or watch the video:
 
@@ -74,89 +102,7 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 </div>
 
 
-
-
-## How can I use SuperDuperDB?
-
-One way is to install SuperDuperDB via `pip` and use it directly on your applications. 
-
-```
-pip install superduperdb
-```
-
-Another way, is to test our demo applications on your local machine using `docker-compose`
-```
-docker run -p 8888:8888 superduperdb/demo:latest
-```
-
-A better way to get started, it to test our demo applications [live on your browser](https://demo.superduperdb.com).  
-
-Amongst others, you will find applications for:
-
-<table>
-  <tr>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
-    </th>
-  </tr>
-  <tr>     
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
-    </th>
-  </tr>
-</table>
-
-Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
-
-
-
-## Supported Integrations
+## Integrated Technologies:
 
 ### AI Frameworks and Models:
 
@@ -249,22 +195,76 @@ With more options coming soon ...
 
 
 
+## How can I use SuperDuperDB?
+
+Amongst others, you will find applications for:
+
+<table>
+  <tr>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
+    </th>
+  </tr>
+  <tr>     
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+    </th>
+  </tr>
+</table>
+
+Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
+
+
+
+
 
 ## Preview
-
-
-
-- **Backend Communication:** SuperDuperDB employs a sophisticated communication layer, ensuring efficient and secure interaction between AI components and underlying data infrastructure.
-
-- **Data Encoding and Serialization:** The framework utilizes advanced techniques for data encoding and serialization, optimizing data transfer and storage within the AI workflow.
-
-- **Change Handlers:** SuperDuperDB features robust change handlers that intelligently manage modifications to the underlying data, maintaining consistency and integrity throughout the AI process.
-
-- **Streaming Inference:** Leveraging cutting-edge streaming capabilities, SuperDuperDB facilitates real-time inference, a crucial feature for dynamic and evolving AI applications.
-
-- **Vector Indexing:** The framework incorporates powerful vector indexing mechanisms, enhancing the efficiency of similarity searches within AI workflows.
-
-
 
 The following snippets will give you an idea of how to Integrate, Train and Manage any AI model (whether from open-source, commercial models or self-developed) using SuperDuperDB:
 

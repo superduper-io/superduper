@@ -362,8 +362,8 @@ db = superduper(pymongo.MongoClient().my_db)
 # Models client can be converted to SuperDuperDB objects with a simple wrapper.
 model = superduper(SVC())
 
-# Predict on the selected data.
-model.train(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
+# Fit model on the training data.
+model.fit(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({}))
 ```
 
 #### - Vector-Search your data:

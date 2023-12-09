@@ -13,20 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
-- ...
+- Support 3.10+ due to `dataclass` supported features
 
 #### New Features & Functionality
 
 - Simplify the testing of SQL databases using containerized databases
 
-
 #### Bug Fixes
 
 - Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases.
-
-#### Refactorings
-
-- Added `kw_only` to most `@dataclass` decorators to simplify
 
 ## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
 

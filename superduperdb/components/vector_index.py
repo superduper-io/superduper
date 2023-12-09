@@ -43,7 +43,7 @@ class VectorIndex(Component):
     @override
     def post_create(self, db: Datalayer) -> None:
         super().post_create(db)
-        if s.CFG.vector_search == s.CFG.data_backend:
+        if s.CFG.self_hosted_vector_search:
             if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
                 msg = 'VectorIndex is not supported by the current database backend'
                 raise ValueError(msg)

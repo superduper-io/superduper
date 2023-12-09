@@ -78,7 +78,7 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 |----------------------------|-|-|
 | Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead.   |
 | Infrastructure             | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
+| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environments and tools.     |
 
 
 ## Supported Datastores (*more coming soon*):

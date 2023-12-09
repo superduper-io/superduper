@@ -119,8 +119,8 @@ class Datalayer:
 
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
-    ) -> BaseVectorSearcher:
-        searcher_type = searcher_type or s.CFG.vector_search
+    ) -> t.Optional[BaseVectorSearcher]:
+        searcher_type = searcher_type or s.CFG.cluster.vector_search_type
         logging.info(f"loading of vectors of vector-index: '{identifier}'")
         vi = self.vector_indices[identifier]
 
@@ -128,7 +128,7 @@ class Datalayer:
 
         if self.cdc.running:
             msg = 'CDC only supported for vector search via lance format'
-            assert s.CFG.vector_search == 'lance', msg
+            assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
         vector_comparison = vector_search_cls(
@@ -136,12 +136,10 @@ class Datalayer:
             dimensions=vi.dimensions,
             measure=vi.measure,
         )
+
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        if self.cdc.running:
-            # In this case, loading has already happened on disk via CDC mechanism
-            return vector_comparison
-        if backfill or s.CFG.cluster.vector_search is None:
+        if backfill or not s.CFG.cluster.is_remote_vector_search:
             self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
@@ -687,7 +685,7 @@ class Datalayer:
                 continue
 
             if (
-                s.CFG.vector_search == 'in_memory'
+                s.CFG.cluster.vector_search_type == 'in_memory'
                 and vi.identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -796,11 +794,11 @@ class Datalayer:
 
         for identifier in self.show('vector_index'):
             # if a vector-searcher is not loaded, then skip
-            # since s.CFG.vector_search == 'in_memory' implies the
+            # since s.CFG.cluster.vector_search_type == 'in_memory' implies the
             # program is standalone
 
             if (
-                s.CFG.vector_search == 'in_memory'
+                s.CFG.cluster.vector_search_type == 'in_memory'
                 and identifier not in self.fast_vector_searchers
             ):
                 continue

@@ -23,6 +23,12 @@ class BaseException(Exception):
         return self.msg
 
 
+class ServiceRequestException(BaseException):
+    '''
+    ServiceRequestException
+    '''
+
+
 class QueryException(BaseException):
     '''
     QueryException

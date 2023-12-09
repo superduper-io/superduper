@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 def client(monkeypatch, database_with_default_encoders_and_model):
     from superduperdb import CFG
 
-    vector_search = 'http://localhost:8000'
+    vector_search = 'in_memory://localhost:8000'
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
 
     from superduperdb.vector_search.server.app import app

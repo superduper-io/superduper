@@ -140,17 +140,17 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 
 ### Datastores
 
-|   Backend   | Data | Metadata | Artifacts | Require Changes |  
-|:-----------:|------|----------|-----------|-----------------|
-|   MongoDB   | X    | X        | X         | No              |
-| Mongo Atlas | X    | X        | X         | No              |
-| PostgreSQL  | X    |          | X         | No              |
-|    MySQL    | X    | X        | X         | Yes             |
-|   SQLite    | X    | X        | X         | No              |
-|   DuckDB    | X    | X        | X         | No              |
-|  SnowFlake  | X    |          |           | No              |
-|  BigQuery   | X    |          |           | No              |
-| ClickHouse  | X    |          |           | No              |
+|   Backend   | Data | Metadata | Artifacts | Vectors | Require Changes |  
+|:-----------:|------|----------|-----------|:--------|-----------------|
+|   MongoDB   | ✓    | ✓        | ✓         | Binary  | No              |
+| Mongo Atlas | ✓    | ✓        | ✓         | Binary  | No              |
+| PostgreSQL  | ✓    |          | ✓         | Native  | No              |
+|    MySQL    | ✓    | ✓        | ✓         | Native  | Yes             |
+|   SQLite    | ✓    | ✓        | ✓         | ...     | No              |
+|   DuckDB    | ✓    | ✓        | ✓         | ...     | No              |
+|  SnowFlake  | ✓    |          |           | ...     | No              |
+|  BigQuery   | ✓    |          |           | ...     | No              |
+| ClickHouse  | ✓    |          |           | ...     | No              |
 
 With more options coming soon ...
 

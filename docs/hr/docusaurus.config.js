@@ -335,8 +335,7 @@ const config = {
       ],
       announcementBar: {
         id: 'support_us',
-        content:
-          '🔮 We are officially launching SuperDuperDB with the release of v0.1 on December 5th on Github! 🔮',
+        content: '🔮 We officially released v0.1 on Github! 🔮',
         backgroundColor: '#7628f8',
         textColor: '#fff',
         isCloseable: true,

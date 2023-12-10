@@ -5,7 +5,7 @@
 </p>
 <div align="center">
 
-# Combine AI with your favorite database! 
+# Bring AI with your favorite database! 
 
 </div>
 

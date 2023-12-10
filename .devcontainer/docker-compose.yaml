@@ -1,0 +1,44 @@
+version: '3'
+services:
+  # ------------------------------
+  # MongoDB Database
+  # ------------------------------
+  superduperdb:
+    build:
+      dockerfile: .devcontainer/Dockerfile
+      context: ..
+    volumes:
+      # Update this to wherever you want VS Code to mount the folder of your project.
+      - ../..:/workspaces:cached
+    networks:
+      - superduperdb-network
+    extra_hosts:
+      - 'mongodb:127.0.0.1'
+    # environment:
+    #   MONGO_ROOT_USERNAME: root
+    #   MONGO_ROOT_PASSWORD: password
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:6
+    hostname: mongodb
+    restart: unless-stopped
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ../.localmongodata:/data/mongodb6
+    ports:
+      - '27017:27017'
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        'mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/mongodb6/',
+      ]
+    networks:
+      - superduperdb-network
+
+networks:
+  superduperdb-network:
+    driver: bridge

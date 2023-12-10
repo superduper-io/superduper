@@ -102,87 +102,6 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 
 
 
-## Usage
- 
-You can install superduperdb directly on your application:
-
-```
-pip install superduperdb
-```
-
-Or, you can test our demo applications on your local machine: 
-```
-docker run -p 8888:8888 superduperdb/demo:latest
-```
-
-Or even better, you can try them [live on your browser](https://demo.superduperdb.com).
-
-Here is a list of available notebooks to get started.
-
-<table>
-  <tr>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
-    </th>
-  </tr>
-  <tr>     
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
-    </th>
-  </tr>
-</table>
-
-Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
-
-
-
-
 
 ## Integrated Technologies
 
@@ -274,6 +193,88 @@ With more options coming soon ...
     </tr>
 
 </table>
+
+
+
+## Usage
+ 
+You can install superduperdb directly on your application:
+
+```
+pip install superduperdb
+```
+
+Or, you can test our demo applications on your local machine: 
+```
+docker run -p 8888:8888 superduperdb/demo:latest
+```
+
+Or even better, you can try them [live on your browser](https://demo.superduperdb.com).
+
+Here is a list of available notebooks to get started.
+
+<table>
+  <tr>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
+    </th>
+  </tr>
+  <tr>     
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+    </th>
+  </tr>
+</table>
+
+Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
+
+
 
 
 

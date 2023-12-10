@@ -45,9 +45,11 @@ SuperDuperDB is an open-source framework that makes your existing database ready
 * Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation, etc.)
 * Highly customized AI use-cases 
 
-To do so, SuperDuperDB introduces layers of functionality, interfaces, and integration points that enhance the native capabilities of your database to align with the specific needs of AI applications.
+The framework achieves this by introducing layers of functionality, interfaces, and integration points that enhance the native capabilities of your database, tailoring them to meet the specific requirements of AI applications.
 
-This way, SuperDuperDB aims to reduce the dependency on complex MLOps pipelines or specialized vector databases, and eliminate the operation costs associated with them. 
+A key design principle behind SuperDuperDB is the commitment to "invent nothing". This principle ensures that developers familiar with Python for data analysis will find the framework intuitive, with minimal learning curve.
+
+By doing so, SuperDuperDB aims to reduce the dependency on complex MLOps pipelines or specialized vector databases, and eliminate the operation costs associated with them. 
 
 
 # What does it do?

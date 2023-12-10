@@ -5,7 +5,7 @@
 </p>
 <div align="center">
 
-# Transform your favorite database into an AI powerhouse! 
+# Combine AI with your favorite database! 
 
 </div>
 
@@ -37,35 +37,35 @@
 
 
 
-## Install
- 
-```
-pip install superduperdb
-```
+# What is SuperDuperDB?
 
-If you want to test our demo applications on your local machine: 
-```
-docker run -p 8888:8888 superduperdb/demo:latest
-```
-
-Or even better, to try them [live on your browser](https://demo.superduperdb.com).
-   
+SuperDuperDB is an open-source framework that effortlessly combines AI with your preferred database.
 
 
-## What is SuperDuperDB? 
+Rather than operating as an independent database, SuperDuperDB introduces layers of functionality, interfaces, and integration points that enhance the native capabilities of your database. It prepares your database to support various AI applications, including
 
-SuperDuperDB is a Python framework for building virtual environments that harmoniously integrates AI models and data, perfectly tailored to the application's requirements. It is designed to work within an application, and transparently wiring together critical components involved in AI/data interaction.
-That includes: 
-* Backend Communication
-* Data Encoding and Serialization
-* Change Data Capture handlers
-* Vector Indexing and Searching
-* Model chaining
+* Generative AI & LLM-Chat
+* Vector Search
+* Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation, etc.)
+* Highly customized AI use-cases 
+
+By doing so, SuperDuperDB aims to reduce the dependency on complex MLOps pipelines or specialized vector databases, and eliminate the operation costs associated with them. 
+
+
+# How does it work?
+
+SuperDuperDB provides a client-side library that transparently wires together critical components involved in AI/Data integration. That includes:
+
+* Compatible Access for NoSQL and SQL databases.
 * Interfacing with popular AI frameworks and APIs.
+* Interoperability with scalable compute frameworks.
+* Flexible data types including video, images and audio.
+* Real-time data integration and streaming inference.
+* Vector Embeddings, Indexing and Searching.
+* Model chaining for inference and training purposes.
+* Movel Versioning, Lineage tracking, and  Rollback.
 
-
-SuperDuperDB can be thought of as an orchestrator for all the intricacies your AI and data-driven applications needs.
-
+This adaptable data layer can be customized to meet specific application requirements using a declarative API, robust enough to construct AI workflows ranging from simple ML tasks to entire AI applications like LLM-Chat.
 
 
 <p align="center">
@@ -74,13 +74,12 @@ SuperDuperDB can be thought of as an orchestrator for all the intricacies your A
 
 
 
-## Why SuperDuperDB?
-
+## Why is it needed ?
 When building a modern AI application, you don’t want to worry about how are being brought to your model, or what happens with the outputs.
 
 Addressing this issue typically involves adopting complex approaches like MLops or utilizing specialized databases for vector searching. However, these solutions introduce complications such as data duplications and inconsistencies across systems, increasing costs due to data movement overheads and posing security risks as data becomes dispersed.
 
-SuperDuperDB is here to help you reduce development time and operational costs of AI applications.
+SuperDuperDB is here to help you reduce development time and operational costs of AI applications, by transforming your database into an AI powerhouse.
 
 SuperDuperDB does the following for you:
 
@@ -102,7 +101,90 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 </div>
 
 
-## Integrated Technologies:
+
+## Usage
+ 
+You can install superduperdb directly on your application:
+
+```
+pip install superduperdb
+```
+
+Or, you can test our demo applications on your local machine: 
+```
+docker run -p 8888:8888 superduperdb/demo:latest
+```
+
+Or even better, you can try them [live on your browser](https://demo.superduperdb.com).
+
+Here is a list of available notebooks to get started.
+
+<table>
+  <tr>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
+    </th>
+  </tr>
+  <tr>     
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+    </th>
+  </tr>
+</table>
+
+Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
+
+
+
+
+
+## Integrated Technologies
 
 ### AI Frameworks and Models:
 
@@ -192,74 +274,6 @@ With more options coming soon ...
     </tr>
 
 </table>
-
-
-
-## How can I use SuperDuperDB?
-
-Amongst others, you will find applications for:
-
-<table>
-  <tr>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
-    </th>
-  </tr>
-  <tr>     
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
-    </th>
-  </tr>
-</table>
-
-Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
-
 
 
 

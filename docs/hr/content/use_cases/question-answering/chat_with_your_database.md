@@ -6,6 +6,8 @@ Imagine chatting with your database using just a few lines of code. Sounds unbel
 
 Here is the behemoth 10M dataset: [FREE COMPANY DATASET](https://app.snowflake.com/marketplace/listing/GZSTZRRVYL2/people-data-labs-free-company-dataset)
 
+Here is the [Google Colab Notebook](https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp) for you to quickstart!
+
 Chatting with this type of massive dataset using the standard RAG pipeline is next to impossible due to the cost and scale. However, with SuperDuperDB, you can achieve the same functionality with just a few lines of code.
 
 You can control the low level code while enjoying writing the high level code! So that, you can increase the capacity of it! Whether you're using `Snowflake` or `any other SQL dataset`, we've got your back.
@@ -25,7 +27,7 @@ Let's bring AI into your database! 🚀
 
 ```python
 # Only one dependency
-# %pip install superduperdb
+# !pip install superduperdb openai
 
 # Import SuperDuperDB and connect your database
 from superduperdb import superduper

@@ -39,20 +39,18 @@
 
 # What is SuperDuperDB?
 
-SuperDuperDB is an open-source framework that effortlessly combines AI with your preferred database.
-
-
-Rather than operating as an independent database, SuperDuperDB introduces layers of functionality, interfaces, and integration points that enhance the native capabilities of your database. It prepares your database to support various AI applications, including
-
+SuperDuperDB is an open-source framework that makes your existing database ready to support a broad range of AI applications, including:
 * Generative AI & LLM-Chat
 * Vector Search
 * Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation, etc.)
 * Highly customized AI use-cases 
 
-By doing so, SuperDuperDB aims to reduce the dependency on complex MLOps pipelines or specialized vector databases, and eliminate the operation costs associated with them. 
+To do so, SuperDuperDB introduces layers of functionality, interfaces, and integration points that enhance the native capabilities of your database to align with the specific needs of AI applications.
+
+This way, SuperDuperDB aims to reduce the dependency on complex MLOps pipelines or specialized vector databases, and eliminate the operation costs associated with them. 
 
 
-# How does it work?
+# What does it do?
 
 SuperDuperDB provides a client-side library that transparently wires together critical components involved in AI/Data integration. That includes:
 
@@ -63,7 +61,7 @@ SuperDuperDB provides a client-side library that transparently wires together cr
 * Real-time data integration and streaming inference.
 * Vector Embeddings, Indexing and Searching.
 * Model chaining for inference and training purposes.
-* Movel Versioning, Lineage tracking, and  Rollback.
+* Movel Versioning, Lineage tracking, and Rollback.
 
 This adaptable data layer can be customized to meet specific application requirements using a declarative API, robust enough to construct AI workflows ranging from simple ML tasks to entire AI applications like LLM-Chat.
 
@@ -74,7 +72,7 @@ This adaptable data layer can be customized to meet specific application require
 
 
 
-## Why is it needed ?
+## Why is it needed?
 When building a modern AI application, you don’t want to worry about how are being brought to your model, or what happens with the outputs.
 
 Addressing this issue typically involves adopting complex approaches like MLops or utilizing specialized databases for vector searching. However, these solutions introduce complications such as data duplications and inconsistencies across systems, increasing costs due to data movement overheads and posing security risks as data becomes dispersed.

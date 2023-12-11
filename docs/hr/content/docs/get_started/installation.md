@@ -29,7 +29,7 @@ Before you begin the installation process, please make sure you have the followi
 
 If you plan to install SuperDuperDB from source, you'll need the following:
 
-- `python3.8` or later
+- `python3.10` or `python3.11`
 - `pip` 22.0.4 or later
 
 Your experience with `superduperdb` on Linux may vary depending on your system and compute requirements.

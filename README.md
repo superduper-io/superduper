@@ -50,7 +50,7 @@ SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - 
 - Highly custom AI use-cases involving ultra specialized models
 
 **To get started:**
-Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
+Check the use-cases we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
 
 `SuperDuperDB is open-source: Please leave a star to support the project! ⭐`
 

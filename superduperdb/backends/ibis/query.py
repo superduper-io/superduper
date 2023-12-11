@@ -519,6 +519,8 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             raise IbisBackendError(
                 f'{native_query} Wrong query or not supported yet :: {exc}'
             )
+        for column in result.columns:
+            result[column] = result[column].map(db.databackend.recover_data_format)
         return result
 
 

@@ -159,7 +159,7 @@ class IbisCompoundSelect(CompoundSelect):
                 model = tab.identifier.split('/')[1]
                 for k in self.renamings.values():
                     if (
-                        re.match(f'^_outputs/{model}/[0-9]+$', tab.identifier)
+                        re.match(f'^_outputs/{model}/\d+$', tab.identifier)
                         is not None
                     ):
                         fields_copy[k] = fields_copy['output']
@@ -793,7 +793,7 @@ class IbisQueryComponent(QueryComponent):
         >>> IbisQueryComponent('__eq__(2)', type=QueryType.QUERY, args=[1, 2]).repr_()
         """
         out = super().repr_()
-        match = re.match('.*__([a-z]+)__\(([a-z0-9_\.\']+)\)', out)
+        match = re.match('.*__([a-z]+)__\(([a-z\d_\.\']+)\)', out)
         symbol = match.groups()[0] if match is not None else None
 
         if symbol == 'getitem':

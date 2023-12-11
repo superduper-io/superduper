@@ -695,7 +695,8 @@ class Collection(TableOrCollection):
                     if args:
                         second_part.append({"$match": args[0] if args else {}})
                     if args[1:]:
-                        project_args = args[1].update(
+                        project_args = args[1].copy()
+                        project_args.update(
                             {"score": {"$meta": "vectorSearchScore"}}
                         )
                         second_part.append({"$project": project_args})

@@ -307,13 +307,23 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 
 ## Installation
+
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*:
+
+**Requirements**:
+
+- Python 3.10 or 3.11
+- Working `pip` installation (e.g. via virtual environment)
+
 ```
 pip install superduperdb
 ```
 
 #### 2. Try SuperDuperDB via Docker *(~2 minutes)*:
-   - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
+  
+**Requirements**:
+   
+- Working `docker` [installation](https://docs.docker.com/engine/install/)
 
 ```
 docker run -p 8888:8888 superduperdb/demo:latest

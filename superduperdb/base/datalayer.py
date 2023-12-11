@@ -270,8 +270,10 @@ class Datalayer:
             return self.metadata.show_components(type_id=type_id)
 
         if version is None:
-            return self.metadata.show_component_versions(
-                type_id=type_id, identifier=identifier
+            return sorted(
+                self.metadata.show_component_versions(
+                    type_id=type_id, identifier=identifier
+                )
             )
 
         if version == -1:

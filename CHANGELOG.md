@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Bug Fixes
 
 - Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases.
+- Fixed a bug related to using Clickhouse as both databackend and metastore.
 
 ## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
 

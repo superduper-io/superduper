@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support 3.10+ due to `dataclass` supported features
 - Updated the table creation method in MetaDataStore to improve compatibility across various databases.
 - Replaced JSON data with String format before storage in SQLAlchemy.
+- Implemented storage of byte data in base64 format.
 
 #### New Features & Functionality
 

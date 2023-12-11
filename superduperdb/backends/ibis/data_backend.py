@@ -1,3 +1,4 @@
+import base64
 import typing as t
 from warnings import warn
 
@@ -12,6 +13,8 @@ from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.components.model import APIModel, Model
 from superduperdb.components.schema import Schema
+
+BASE64_PREFIX = 'base64:'
 
 
 class IbisDataBackend(BaseDataBackend):
@@ -32,10 +35,30 @@ class IbisDataBackend(BaseDataBackend):
         self.conn.create_table(identifier, schema=schema)
 
     def insert(self, table_name, raw_documents):
+        for doc in raw_documents:
+            for k, v in doc.items():
+                doc[k] = self.convert_data_format(v)
         if not self.in_memory:
             self.conn.insert(table_name, raw_documents)
         else:
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
+
+    @staticmethod
+    def convert_data_format(data):
+        """Convert byte data to base64 format for storage in the database."""
+
+        if isinstance(data, bytes):
+            return BASE64_PREFIX + base64.b64encode(data).decode('utf-8')
+        else:
+            return data
+
+    @staticmethod
+    def recover_data_format(data):
+        """Recover byte data from base64 format stored in the database."""
+        if isinstance(data, str) and data.startswith(BASE64_PREFIX):
+            return base64.b64decode(data[len(BASE64_PREFIX) :])
+        else:
+            return data
 
     def create_model_table_or_collection(self, model: t.Union[Model, APIModel]):
         msg = (

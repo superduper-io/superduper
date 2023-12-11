@@ -143,15 +143,41 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
         logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
 
+    # Connect to metadata store.
+    # ------------------------------
+    # 1. try to connect to the metadata store specified in the configuration.
+    # 2. if that fails, try to connect to the data backend engine.
+    # 3. if that fails, try to connect to the data backend uri.
+    if cfg.metadata_store is not None:
+        # try to connect to the metadata store specified in the configuration.
+        logging.info("Connecting to Metadata Client:", cfg.metadata_store)
+        metadata = build(cfg.metadata_store, metadata_stores, type='metadata')
+    else:
+        try:
+            # try to connect to the data backend engine.
+            logging.info(
+                "Connecting to Metadata Client with engine: ", databackend.conn
+            )
+            metadata = databackend.build_metadata()
+        except Exception as e:
+            logging.warn("Error building metadata from DataBackend:", str(e))
+            metadata = None
+
+    if metadata is None:
+        try:
+            # try to connect to the data backend uri.
+            logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
+            metadata = build(cfg.data_backend, metadata_stores, type='metadata')
+        except Exception as e:
+            # Exit quickly if a connection fails.
+            logging.error("Error initializing to Metadata Client:", str(e))
+            sys.exit(1)
+
     # Build DataLayer
     # ------------------------------
     db = Datalayer(
         databackend=databackend,
-        metadata=(
-            build(cfg.metadata_store, metadata_stores, type='metadata')
-            if cfg.metadata_store is not None
-            else databackend.build_metadata()
-        ),
+        metadata=metadata,
         artifact_store=(
             build_artifact_store(cfg.artifact_store)
             if cfg.artifact_store is not None

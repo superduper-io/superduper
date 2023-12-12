@@ -57,9 +57,11 @@ Check the use-cases we have already implemented [here in the docs](https://docs.
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
 
-<div align="center">	
-	
-[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
+[![Overview](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/overview.png)](https://www.youtube.com/watch?v=FxJs7pbHj3Q) [![QuickStart](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/quickstart.png)](https://www.youtube.com/watch?v=Hr0HkmIL3go)
+
+
+
+
 
 </div>
 

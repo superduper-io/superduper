@@ -1,15 +1,16 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.base.artifact import Artifact
-from superduperdb.misc.serialization import Info, serializers
 from superduperdb.misc.tree import tree_find, tree_rewrite
 
 if t.TYPE_CHECKING:
+    from superduperdb.base.artifact import Artifact
     from superduperdb.components.component import Component
 
 
 def _is_artifact(t: t.Any) -> bool:
+    from superduperdb.base.artifact import Artifact
+
     return isinstance(t, Artifact)
 
 
@@ -19,7 +20,7 @@ def _has_file_id(t: t.Any) -> bool:
 
 class ArtifactStoreMixin:
     @staticmethod
-    def get_artifacts(tree: t.Any) -> t.Iterator[Artifact]:
+    def get_artifacts(tree: t.Any) -> t.Iterator['Artifact']:
         """Yield all Artifacts in a tree
 
         :param tree: A tree made up of dicts and lists
@@ -51,8 +52,9 @@ class ArtifactStoreMixin:
     @staticmethod
     def load_artifacts(
         tree: t.Any,
-        cache: t.Dict[str, Artifact],
+        cache: t.Dict[str, 'Artifact'],
         getter: t.Callable[[str], bytes],
+        serializers: t.Dict,
     ) -> t.Any:
         """Replace ArtifactDesc dicts in a tree by Artifacts with a getter
 
@@ -67,8 +69,7 @@ class ArtifactStoreMixin:
 
         return ArtifactStoreMixin._load_artifacts(tree, make, cache)
 
-    @staticmethod
-    def _replace_artifacts(tree: t.Any, info: Info) -> t.Any:
+    def _replace_artifacts(self, tree: t.Any, info: t.Optional[t.Dict] = None) -> t.Any:
         """Replace every Artifact in a tree with hash of the value, looked up in Info
 
         :param tree: A tree made up of dicts and lists
@@ -76,12 +77,14 @@ class ArtifactStoreMixin:
         """
 
         def rewrite(t):
-            return info[t.sha1]
+            return info[t.sha1(self.serializers)]
 
         return tree_rewrite(tree, _is_artifact, rewrite)
 
     @staticmethod
-    def _load_artifacts_from_cache(tree: t.Any, cache: t.Dict[str, Artifact]) -> t.Any:
+    def _load_artifacts_from_cache(
+        tree: t.Any, cache: t.Dict[str, 'Artifact']
+    ) -> t.Any:
         """Replace ArtifactDesc dicts in a tree by Artifacts."""
 
         def rewrite(t):
@@ -94,10 +97,11 @@ class ArtifactStoreMixin:
     def _load_artifacts(
         tree: t.Any,
         make: t.Callable,
-        cache: t.Dict[str, Artifact],
+        cache: t.Dict[str, 'Artifact'],
         artifact_store: t.Optional['ArtifactStore'] = None,
     ) -> t.Any:
         """Replace ArtifactDesc dicts in a tree by Artifacts."""
+        from superduperdb.base.artifact import Artifact
 
         def rewrite(t):
             file_id = t['file_id']
@@ -105,12 +109,10 @@ class ArtifactStoreMixin:
                 return cache[file_id]
             except KeyError:
                 pass
-            info, serializer = t.get('info'), t['serializer']
-            artifact = make(file_id=file_id, serializer=serializer)
+            artifact = make(file_id=file_id, serializer=t['serializer'])
             cache[file_id] = Artifact(
                 artifact=artifact,
-                info=info,
-                serializer=serializer,
+                serializer=t['serializer'],
                 artifact_store=artifact_store,
                 file_id=file_id,
             )
@@ -134,6 +136,16 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
     ):
         self.name = name
         self.conn = conn
+        self._serializers = None
+
+    @property
+    def serializers(self):
+        assert self._serializers is not None, 'Serializers not initialized!'
+        return self._serializers
+
+    @serializers.setter
+    def serializers(self, value):
+        self._serializers = value
 
     @abstractmethod
     def url(self):
@@ -186,7 +198,7 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
         """
         pass
 
-    def load_artifact(self, file_id: str, serializer: str, info: Info = None) -> t.Any:
+    def load_artifact(self, file_id: str, serializer: str) -> t.Any:
         """
         Load artifact from artifact store, and deserialize.
 
@@ -194,10 +206,10 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
         :param serializer: Serializer to use for deserialization
         """
         bytes = self.load_bytes(file_id)
-        serializer_function = serializers[serializer]
-        return serializer_function.decode(bytes, info)
+        serializer_function = self.serializers[serializer]
+        return serializer_function.decode(bytes)
 
-    def save(self, artifacts: t.Iterator[Artifact]) -> t.Dict:
+    def save(self, artifacts: t.Iterator['Artifact']) -> t.Dict:
         """
         Save list of artifacts and replace the artifacts with file reference
         :param artifacts: List of ``Artifact`` instances
@@ -209,14 +221,14 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
             artifact_details[file_detail['sha1']] = file_detail
         return artifact_details
 
-    def replace(self, serialized: t.Dict, artifact_info: t.Dict) -> t.Dict:
+    def replace(self, serialized: t.Dict, info: t.Optional[t.Dict] = None) -> t.Dict:
         """Replace every Artifact in the given ``object`` serialized info with
         artifact lookup.
 
         :param serialized: Serialized component dict
         :param artifact_info: A dictionary mapping hashes to [TBD]
         """
-        return t.cast(t.Dict, self._replace_artifacts(serialized, artifact_info))
+        return t.cast(t.Dict, self._replace_artifacts(serialized, info))
 
     def update(self, object: 'Component', metadata_info: t.Dict = {}):
         """

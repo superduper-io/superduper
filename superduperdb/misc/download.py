@@ -3,8 +3,10 @@ import os
 import re
 import signal
 import sys
+import tempfile
 import typing as t
 import warnings
+import zipfile
 from contextlib import contextmanager
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
@@ -407,3 +409,16 @@ def download_content(
             downloader.results[id_],  # type: ignore[index]
         )
     return documents
+
+
+def remote_archive(uri, fetcher):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = tmp_dir / 'archive.zip'
+        logging.info(f'downloading {uri} to {tmp_path}')
+        fetcher(uri, path=tmp_path)
+
+        zipfile.ZipFile(tmp_path).extractall(tmp_dir / 'extracted')
+        assert 'artifact' in os.listdir(tmp_dir / 'extracted')
+
+        with open(tmp_dir / 'extracted' / 'artifact', 'rb') as f:
+            return f.read()

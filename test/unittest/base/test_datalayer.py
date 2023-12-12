@@ -158,7 +158,7 @@ def test_add_artifact_auto_replace(db):
     with patch.object(db.metadata, 'create_component') as create_component:
         db.add(component)
         serialized = create_component.call_args[0][0]
-        assert serialized['dict']['artifact']['sha1'] == artifact.sha1
+        assert serialized['dict']['artifact']['sha1'] == artifact.sha1(db.serializers)
 
 
 @pytest.mark.parametrize(

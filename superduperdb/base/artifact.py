@@ -3,8 +3,6 @@ import typing as t
 
 import typing_extensions as te
 
-from superduperdb.misc.serialization import Info, serializers
-
 if t.TYPE_CHECKING:
     from superduperdb.backends.base.artifact import ArtifactStore
 
@@ -27,18 +25,18 @@ class Artifact:
     :param hash: in case the object isn't hashable (deduplication not possible)
     """
 
+    # TODO Why do we need all this?? The annotations are clear below
     file_id: t.Optional[str] = None
-    info: Info = None
     object_id: int = 0
     save_method: t.Optional[str] = None
     serializer: str = 'dill'
     hash: t.Optional[int] = None
+    uri: t.Optional[str] = None
 
     def __init__(
         self,
         artifact: t.Any = None,
-        file_id: t.Any = None,
-        info: t.Optional[t.Dict] = None,
+        file_id: t.Optional[str] = None,
         object_id: int = 0,
         serializer: str = 'dill',
         sha1: str = '',
@@ -47,7 +45,6 @@ class Artifact:
     ):
         self._artifact = artifact
         self.file_id = file_id
-        self.info = info
         self.object_id = object_id
         self.serializer = serializer
         self.hash = hash
@@ -62,9 +59,7 @@ class Artifact:
             self._artifact = self.artifact_store.load_artifact(
                 file_id=self.file_id,
                 serializer=self.serializer,
-                info=self.info,
             )
-            self.load(self.artifact_store)
         return self._artifact
 
     @artifact.setter
@@ -75,13 +70,11 @@ class Artifact:
         self._artifact = artifact_store.load_artifact(
             file_id=self.file_id,
             serializer=self.serializer,
-            info=self.info,
         )
 
-    @property
-    def sha1(self):
+    def sha1(self, serializers):
         if not self._sha1:
-            b = self.serialize()
+            b = self.serialize(serializers)
             self._sha1 = hashlib.sha1(b).hexdigest()
             return self._sha1
         return self._sha1
@@ -114,7 +107,7 @@ class Artifact:
             return True
         return False
 
-    def serialize(self) -> bytes:
+    def serialize(self, serializers) -> bytes:
         """Serialize this artifact into bytes"""
 
         if self._is_self_serializable(self.artifact):
@@ -123,7 +116,7 @@ class Artifact:
 
         serializer = serializers[self.serializer]
         try:
-            return serializer.encode(self.artifact, self.info)
+            return serializer.encode(self.artifact)
         except Exception as e:
             raise ArtifactSavingError(
                 f'Error using serializer "{self.serializer}" '
@@ -135,21 +128,23 @@ class Artifact:
 
         :param artifact_store: the store to save the Artifact in
         """
-        b = self.serialize()
+        b = self.serialize(artifact_store.serializers)
         file_id = artifact_store.create(bytes=b)
-        return {'file_id': file_id, 'sha1': self.sha1, 'serializer': self.serializer}
+        return {
+            'file_id': file_id,
+            'sha1': self.sha1(artifact_store.serializers),
+            'serializer': self.serializer,
+        }
 
 
 class ArtifactDesc(te.TypedDict):
     """A description of an artifact in an artifact store
 
     :param file_id: A string identifying the artifact in the artifact store
-    :param info: An optional dictionary used to create the artifact
     :param serializer: The name of the serializer used for the artifact store
     """
 
     file_id: str
-    info: Info
     serializer: str
 
 

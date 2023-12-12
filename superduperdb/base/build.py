@@ -10,7 +10,6 @@ import pymongo
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_backends, metadata_stores
-from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
@@ -102,9 +101,13 @@ def build_compute(compute):
         return LocalComputeBackend()
 
     if compute == 'dask+thread':
+        from superduperdb.backends.dask.compute import DaskComputeBackend
+
         return DaskComputeBackend('', local=True)
 
     if compute.split('://')[0] == 'dask+tcp':
+        from superduperdb.backends.dask.compute import DaskComputeBackend
+
         uri = compute.split('+')[-1]
         return DaskComputeBackend(uri)
 

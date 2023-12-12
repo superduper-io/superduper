@@ -13,10 +13,11 @@ from superduperdb.ext.jina.client import JinaAPIClient
 class Jina(APIModel):
     """Cohere predictor"""
 
-    api_key: t.Optional[str] = dc.field(default_factory=None)
+    api_key: t.Optional[str] = None
 
     def __post_init__(self):
-        self.client = JinaAPIClient(model_name=self.model, api_key=self.api_key)
+        self.identifier = self.identifier or self.model
+        self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
 
 @dc.dataclass(kw_only=True)
@@ -45,7 +46,8 @@ class JinaEmbed(Jina):
         return self.client.encode_batch([X])[0]
 
     async def _apredict_one(self, X: str, **kwargs):
-        return await self.client.aencode_batch([X])[0]
+        embeddings = await self.client.aencode_batch([X])
+        return embeddings[0]
 
     def _predict_a_batch(self, texts: t.List[str], **kwargs):
         return self.client.encode_batch(texts)

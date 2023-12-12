@@ -20,7 +20,7 @@ class JinaAPIClient:
                  api_key: Optional[str] = None,
                  model_name: str = 'jina-embeddings-v2-base-en'):
         """
-        Create an JinaTextEmbedder component.
+        Create a JinaAPIClient to provide an interface to encode using Jina Embedding platform sync and async.
 
         :param api_key: The Jina API key. It can be explicitly provided or automatically read from the
             environment variable JINA_API_KEY (recommended).

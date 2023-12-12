@@ -223,7 +223,3 @@ push_demo: ## Push the superduperdb/demo:latest image
 	@echo "===> release superduperdb/demo:latest <==="
 	docker tag superduperdb/demo:$(RELEASE_VERSION:v%=%) superduperdb/demo:latest
 	docker push superduperdb/demo:latest
-
-devcontainer:
-	@echo "===> Making your environemnt ready <==="
-	source .venv/bin/activate

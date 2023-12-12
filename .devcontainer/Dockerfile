@@ -22,22 +22,24 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - && \
   sudo apt-get install -y nodejs
 
 # Set environment variable
-ENV PYTHONUNBUFFERED 1
 
 # Create a virtual environment named .venv
 RUN python3.11 -m venv .venv
 
+ENV PATH="/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED 1
+
 # Activate the virtual environment and install piptools
-RUN .venv/bin/python -m pip install piptools
+RUN python3.11 -m pip install --upgrade pip-tools
 
 # Activate the virtual environment and install required Python packages
-RUN .venv/bin/python -m pip install pytest ipykernel jupyter black interrogate ruff
+RUN python3.11 -m pip install pytest ipykernel jupyter black interrogate ruff ibis ibis-framework pydantic mypy 
 
-# Copy the pyproject.toml file
-COPY pyproject.toml ./
+# # Copy the pyproject.toml file
+# COPY pyproject.toml ./
 
-# Activate the virtual environment and install development dependencies
-RUN .venv/bin/python -m pip install -e '.[dev]'
+# # Activate the virtual environment and install development dependencies
+# RUN python3.11 -m pip install -e '.[dev]'
 
 # Set the default command to run when the container starts
 CMD ["/bin/bash"]

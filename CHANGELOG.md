@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Simplify the testing of SQL databases using containerized databases
 - Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
+- Add `QueryModel` and `SequentialModel` to make chaining searches and models easier.
+- Add `insert_to=<table-or-collection>` to `.predict` to allow single predictions to be saved.
 
 #### Bug Fixes
 

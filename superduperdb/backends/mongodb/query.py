@@ -128,7 +128,7 @@ class Find(QueryComponent):
                 args[1][
                     Variable(
                         f'_outputs.{k}.{v}' + '.{version}',
-                        lambda db, value: value.format(
+                        lambda db, value, kwargs: value.format(
                             version=db.show('model', model)[-1]
                         ),
                     )
@@ -604,6 +604,8 @@ class ChangeStream:
 @dc.dataclass(repr=False)
 class Collection(TableOrCollection):
     query_components: t.ClassVar[t.Dict] = {'find': Find, 'find_one': FindOne}
+    type_id: t.ClassVar[str] = 'collection'
+
     primary_id: t.ClassVar[str] = '_id'
 
     def get_table(self, db):
@@ -678,6 +680,9 @@ class Collection(TableOrCollection):
     def update_many(self, filter, update, *args, **kwargs):
         return self._update(filter, update, *args, one=False, **kwargs)
 
+    def insert(self, *args, **kwargs):
+        return self.insert_many(*args, **kwargs)
+
     def insert_many(self, *args, **kwargs):
         return self._insert(*args, **kwargs)
 
@@ -696,9 +701,7 @@ class Collection(TableOrCollection):
                         second_part.append({"$match": args[0] if args else {}})
                     if args[1:]:
                         project_args = args[1].copy()
-                        project_args.update(
-                            {"score": {"$meta": "vectorSearchScore"}}
-                        )
+                        project_args.update({"score": {"$meta": "vectorSearchScore"}})
                         second_part.append({"$project": project_args})
                     else:
                         second_part.append(
@@ -725,15 +728,16 @@ class Collection(TableOrCollection):
     def model_update(
         self,
         db,
-        ids: t.Sequence[t.Any],
+        ids: t.List[t.Any],
         key: str,
         model: str,
         version: int,
         outputs: t.Sequence[t.Any],
-        document_embedded: bool = True,
         flatten: bool = False,
         **kwargs,
     ):
+        document_embedded = kwargs.get('document_embedded', True)
+
         if key.startswith('_outputs'):
             key = key.split('.')[1]
         if not outputs:

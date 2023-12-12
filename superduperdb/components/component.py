@@ -25,10 +25,19 @@ class Component(Serializable):
     type_id: t.ClassVar[str]
     identifier: str
 
+    @property
+    def db(self):
+        return self._db
+
+    @db.setter
+    def db(self, value: Datalayer):
+        self._db = value
+
     def __post_init__(self) -> None:
         # set version in `__post_init__` so that is
         # cannot be set in `__init__` and is always set
         self.version: t.Optional[int] = None
+        self._db = None  # type: ignore[assignment]
 
     def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created

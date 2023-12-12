@@ -266,7 +266,7 @@ class IbisCompoundSelect(CompoundSelect):
     def model_update(  # type: ignore[override]
         self,
         db,
-        ids: t.Sequence[t.Any],
+        ids: t.List[t.Any],
         key: str,
         model: str,
         version: int,
@@ -468,7 +468,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
                     if version is not None
                     else Variable(
                         get_output_table_name(model, '{version}'),
-                        lambda db, value: value.format(
+                        lambda db, value, kwargs: value.format(
                             version=db.show('model', model)[-1]
                         ),
                     )
@@ -482,7 +482,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
                         if version is not None
                         else Variable(
                             f'_outputs.{key}.{model}' + '.{version}',
-                            lambda db, value: value.format(
+                            lambda db, value, kwargs: value.format(
                                 version=db.show('model', model)[-1]
                             ),
                         )
@@ -721,6 +721,19 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
     def execute(self, db):
         return db.databackend.conn.table(self.identifier).execute()
+
+    def model_update(
+        self,
+        db,
+        ids: t.List[t.Any],
+        key: str,
+        model: str,
+        version: int,
+        outputs: t.Sequence[t.Any],
+        flatten: bool = False,
+        **kwargs,
+    ):
+        raise NotImplementedError
 
 
 def _compile_item(item, db, tables):

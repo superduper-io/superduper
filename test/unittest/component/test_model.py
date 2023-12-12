@@ -3,15 +3,18 @@ import random
 from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
+import bson
 import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
 from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.local.compute import LocalComputeBackend
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
+from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.encoder import Encoder
@@ -19,6 +22,8 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
     Model,
+    QueryModel,
+    SequentialModel,
     TrainingConfiguration,
     _Predictor,
     _TrainingConfiguration,
@@ -307,6 +312,7 @@ def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
 
     # Check the base predict function
     predict_mock.return_value = ys
+    predict_mixin.db = db
     with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
         select, 'model_update'
     ) as model_update:
@@ -512,3 +518,84 @@ def test_model_fit(valid_dataset):
         )
         _, kwargs = model_fit.call_args
         assert kwargs.get('validation_sets') == [valid_dataset.identifier]
+
+
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.mongodb, {'n_data': 500}),
+    ],
+    indirect=True,
+)
+def test_query_model(db):
+    q = (
+        Collection(identifier='documents')
+        .like({'x': Variable('X')}, vector_index='test_vector_search', n=3)
+        .find_one({}, {'_id': 1})
+    )
+
+    m = QueryModel(
+        identifier='test-query-model',
+        select=q,
+        postprocess=lambda r: r['_id'],
+    )
+    m.db = db
+
+    import torch
+
+    out = m.predict(X=torch.randn(32), one=True)
+
+    assert isinstance(out, bson.ObjectId)
+
+    out = m.predict(X=torch.randn(4, 32))
+
+    assert len(out) == 4
+
+    db.add(m)
+
+    n = db.load('model', m.identifier)
+    assert set(x.value for x in n.select.variables) == set(x.value for x in q.variables)
+
+
+def test_sequential_model():
+    m = SequentialModel(
+        identifier='test-sequential-model',
+        predictors=[
+            Model(
+                identifier='test-predictor-1',
+                object=lambda x: x + 2,
+            ),
+            Model(
+                identifier='test-predictor-2',
+                object=lambda x: x + 1,
+            ),
+        ],
+    )
+
+    assert m.predict(X=1, one=True) == 4
+    assert m.predict(X=[1, 1, 1, 1]) == [4, 4, 4, 4]
+
+
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.mongodb_empty, {}),
+    ],
+    indirect=True,
+)
+def test_predict_insert(db):
+    # Check that when `insert_to` is specified, then the input
+    #  and output of the prediction are saved in the database
+
+    m = Model(
+        identifier='test-predictor-1',
+        object=lambda x: x + 2,
+    )
+
+    db.add(m)
+    m.predict(
+        X=Document({'x': 1}), key='x', one=True, insert_to=Collection('documents')
+    )
+    r = db.execute(Collection('documents').find_one())
+    out = r['_outputs']['x'][m.identifier]['0']
+    assert out == 3

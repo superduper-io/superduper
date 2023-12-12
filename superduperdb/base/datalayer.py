@@ -654,6 +654,7 @@ class Datalayer:
         info = self.artifact_store.load(info, lazy=True)
 
         m = Component.deserialize(info)
+        m.db = self
         m.on_load(self)
 
         if cm := self.type_id_to_cache_mapping.get(type_id):
@@ -864,6 +865,7 @@ class Datalayer:
         parent: t.Optional[str] = None,
     ):
         jobs = []
+        object.db = self
         object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
@@ -1209,12 +1211,15 @@ class Datalayer:
 
     def select_nearest(
         self,
-        like: Document,
+        like: t.Union[t.Dict, Document],
         vector_index: str,
         ids: t.Optional[t.Sequence[str]] = None,
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        if not isinstance(like, Document):
+            assert isinstance(like, dict)
+            like = Document(like)
         like = self._get_content_for_filter(like)
         vi = self.vector_indices[vector_index]
         if outputs is None:

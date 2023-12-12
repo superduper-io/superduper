@@ -152,7 +152,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
       GF_PATHS_PROVISIONING: '/app.cfg/provisioning'
     volumes:
-        - ./grafana:/app.cfg
+        - ./configs/grafana:/app.cfg
 
 
   #  Logging with Loki
@@ -162,7 +162,7 @@ services:
       ports:
         - "3100:3100"
       volumes:
-        - ./loki:/etc/loki
+        - ./configs/loki:/etc/loki
       command: -config.file=/etc/loki/loki-local-config.yaml
 
   promtail:
@@ -171,7 +171,7 @@ services:
       image: grafana/promtail:2.9.0
       volumes:
           # Configuration
-          - ./promtail:/etc/promtail
+          - ./configs/promtail:/etc/promtail
           # Read container labels and logs
           - /var/lib/docker/containers:/var/lib/docker/containers:ro
           - /var/run/docker.sock:/var/run/docker.sock
@@ -185,12 +185,10 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus:/app.cfg
+      - ./configs/prometheus:/app.cfg
     command: >-
       --config.file=/app.cfg/prometheus.yml
       --storage.tsdb.path=/prometheus
-      --web.console.libraries=/usr/share/prometheus/console_libraries
-      --web.console.templates=/usr/share/prometheus/consoles
 
   cadvisor:
       image: gcr.io/cadvisor/cadvisor

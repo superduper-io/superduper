@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 
 - Simplify the testing of SQL databases using containerized databases
+- Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
 
 #### Bug Fixes
 

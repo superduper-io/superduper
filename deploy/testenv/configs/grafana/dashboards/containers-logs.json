@@ -964,8 +964,8 @@
     ]
   },
   "timezone": "",
-  "title": "Logging Dashboard via Loki",
-  "uid": "fRIvzUZMzTEST",
-  "version": 3,
+  "title": "Container Logs",
+  "uid": "logs",
+  "version": 1,
   "weekStart": ""
 }

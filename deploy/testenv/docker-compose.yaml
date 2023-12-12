@@ -1,4 +1,11 @@
 version: "3.9"
+
+
+# set env variable COMPOSE_PROJECT_NAME and
+# label com.docker.compose.project
+name: testenv
+
+
 services:
 
   # ------------------------------
@@ -130,6 +137,70 @@ services:
         PYTHONPATH=./:. dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
     deploy:
       replicas: 1
+
+
+  #  Real-time Dashboards
+  #  ------------------------------
+  grafana:
+    depends_on:
+      - loki
+    image: grafana/grafana:10.2.2
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_PATHS_PROVISIONING: '/app.cfg/provisioning'
+    volumes:
+        - ./configs/grafana:/app.cfg
+
+
+  #  Logging with Loki
+  #  ------------------------------
+  loki:
+      image: grafana/loki:2.9.0
+      ports:
+        - "3100:3100"
+      volumes:
+        - ./configs/loki:/etc/loki
+      command: -config.file=/etc/loki/loki-local-config.yaml
+
+  promtail:
+      depends_on:
+          - loki
+      image: grafana/promtail:2.9.0
+      volumes:
+          # Configuration
+          - ./configs/promtail:/etc/promtail
+          # Read container labels and logs
+          - /var/lib/docker/containers:/var/lib/docker/containers:ro
+          - /var/run/docker.sock:/var/run/docker.sock
+      command: -config.file=/etc/promtail/docker-config.yaml
+
+
+  #  Monitoring with Prometheus
+  #  ------------------------------
+  prometheus:
+    image: prom/prometheus:v2.7.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus:/app.cfg
+    command: >-
+      --config.file=/app.cfg/prometheus.yml
+      --storage.tsdb.path=/prometheus
+
+  cadvisor:
+      image: gcr.io/cadvisor/cadvisor
+      ports:
+        - "8080:8080"
+      volumes:
+          - /:/rootfs:ro
+          - /var/run:/var/run:ro
+          - /sys:/sys:ro
+          - /var/lib/docker/:/var/lib/docker:ro
+          - /dev/disk/:/dev/disk:ro
+
 
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------

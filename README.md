@@ -57,10 +57,13 @@ Check the use-cases we have already implemented [here in the docs](https://docs.
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
 
-[![Overview](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/overview.png)](https://www.youtube.com/watch?v=FxJs7pbHj3Q) [![QuickStart](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/quickstart.png)](https://www.youtube.com/watch?v=Hr0HkmIL3go)
 
 
 
+<div align="center">
+	<a href="https://www.youtube.com/watch?v=FxJs7pbHj3Q"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/overview.png" alt="Overview" width="400"></a>
+	<a href="https://www.youtube.com/watch?v=Hr0HkmIL3go"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/quickstart.png" alt="QuickStart" width="400"></a>
+</div>
 
 
 </div>

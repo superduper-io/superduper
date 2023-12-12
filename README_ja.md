@@ -5,7 +5,7 @@
 </p>
 <div align="center">
 
-# Bring AI to your favorite database! 
+# お気に入りのデータベースに AI を導入しよう！
 
 </div>
 
@@ -19,15 +19,15 @@
 <div align="center">
 	<a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
 	<a href="https://pepy.tech/project/superduperdb"><img src="https://pepy.tech/badge/superduperdb" alt="Downloads"></a>
-  	<a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>    
-	<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>	
+  	<a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>
+	<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
 	<a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
-	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
+	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 
-<b>English</b> |
+[**English**](README.md) |
 [**中文**](README_zh.md) |
-[**日本語**](README_ja.md)
+<b>日本語</b>
 
 
 
@@ -37,54 +37,49 @@
 
 
 
-## What is SuperDuperDB? 🔮 
+## SuperDuperDB とは？ 🔮
 
-SuperDuperDB is an open-source framework for integrating AI directly with your existing databases, including streaming inference, scalable model training, and vector search.
+SuperDuperDB は、ストリーミング推論、スケーラブルなモデルトレーニング、ベクトル検索など、AI を既存のデータベースに直接統合するためのオープンソースのフレームワークです。
 
-SuperDuperDB is not a database. It transforms your favorite database into an AI development and deployment environment; think `db = superduper(db)`. 
+SuperDuperDB はデータベースではありません。お気に入りのデータベースを AI の開発・配備環境に変身させるもので、`db = superduper(db)` と考えてください。
 
-SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - and the need to migrate and duplicate data by integrating AI at the data's source, directly on top of your existing data infrastructure. This massively simplifies building and managing AI applications:
+SuperDuperDB は複雑な MLOps パイプラインや特殊なベクターデータベースを排除します - また、既存のデータインフラストラクチャの上に直接データのソースで AI を統合することで、データの移行や複製を行う必要がなくなります。これにより、AI アプリケーションの構築と管理が大幅に簡素化されます:
 
-- Generative AI & LLM-Chat
-- Vector Search
-- Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
-- Highly custom AI use-cases involving ultra specialized models
+- 生成 AI と LLM-Chat
+- ベクトル検索
+- 標準的な機械学習のユースケース（分類、セグメンテーション、推薦など）
+- 超特殊モデルを含む高度にカスタム化された AI ユースケース
 
-**To get started:**
-Check the use-cases we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
+**はじめに:**
+私たちがすでに実装したユースケースを[ドキュメント](https://docs.superduperdb.com/docs/category/use-cases)で、またコミュニティによって専用の [superduper-community-apps リポジトリ](https://github.com/SuperDuperDB/superduper-community-apps) で構築されたアプリをチェックし、[ブラウザで Jupyter](https://demo.superduperdb.com/) でそれらすべてを試してみてください！
 
-`SuperDuperDB is open-source: Please leave a star to support the project! ⭐`
-
-
-For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
+`SuperDuperDB はオープンソースです: プロジェクトをサポートするために star してください！ ⭐`
 
 
-
+SuperDuperDB についての詳細と、私たちが SuperDuperDB を必要とする理由については、[このブログ記事をお読みください](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)。
 
 <div align="center">
-	<a href="https://www.youtube.com/watch?v=FxJs7pbHj3Q"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/overview.png" alt="Overview" width="400"></a>
-	<a href="https://www.youtube.com/watch?v=Hr0HkmIL3go"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/quickstart.png" alt="QuickStart" width="400"></a>
-</div>
 
+[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
 
 </div>
 
-### Key Features:
-- **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
-- **[Model Chaining](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Add and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down to any layer of implementation, including to the inner workings of your models while operating SuperDuperDB with simple Python commands.
-- **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: Work directly with images, video, audio in your database, and any type which can be encoded as `bytes` in Python.
-- **[Feature Storing](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+### 主な特徴:
+- **[既存のデータインフラと AI の統合](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** 前処理、ETL、定型コードを追加することなく、スケーラブルな単一のデプロイメントで、あらゆる AI モデルと API をデータベースに統合します。
+- **[ストリーミング推論](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** 新しいデータが到着すると、モデルが自動的に即座に出力を計算するため、デプロイを常に最新の状態に保つことができます。
+- **[スケーラブルなモデルトレーニング](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** トレーニングデータをクエリするだけで、大規模で多様なデータセットでAIモデルをトレーニング。インビルドの計算最適化により、最適なパフォーマンスを保証します。
+- **[モデルチェイニング](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: モデルと API を相互依存的かつ逐次的に連携させることで、複雑なワークフローを簡単に設定できます。
+- **[シンプルだが拡張可能なインターフェース](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Python エコシステムからあらゆる関数、プログラム、スクリプト、アルゴリズムを追加、活用し、ワークフローやアプリケーションを強化します。シンプルな Python コマンドで SuperDuperDB を操作しながら、モデルの内部構造を含む実装のあらゆるレイヤーまでドリルダウンすることができます。
+- **[難しいデータ型](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: データベース内の画像、動画、音声、そして Python で `bytes` としてエンコードできるあらゆる型を直接扱うことができます。
+- **[機能の保存](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** データベースを、任意のデータ型のAIモデルの入出力を保存・管理するための一元化されたリポジトリに変え、構造化されたフォーマットと既知の環境で利用できるようにします。
+- **[ベクトル検索](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** ベクターデータベースにデータを移行する必要がありません - 好みのモデルと API を使用して、データのベクトル埋め込みとベクトルインデックスを簡単に生成できます。
 
-### Why opt for SuperDuperDB?
-|                            | With SuperDuperDB | Without |
+### なぜ SuperDuperDB を選ぶのか？
+|                            | SuperDuperDB の場合 | それ以外 |
 |----------------------------|-|-|
-| Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead.   |
-| Infrastructure             | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environments and tools.     |
+| データ管理とセキュリティ       | データはデータベースに保存され、AI の出力は下流のアプリケーションで利用可能な入力と一緒に保存される。データへのアクセスとセキュリティは、データベースアクセス管理によって外部から制御される。  |  データの重複や異なる環境への移行、特殊なベクターデータベースなど、データ管理のオーバーヘッドが発生する。   |
+| インフラ                    | お客様の AI アプリケーションを構築、出荷、管理するための単一環境で、スケーラビリティと最適な計算効率を実現します。    |  複数のパイプラインを持つ複雑な断片化されたインフラは、高い導入コストとメンテナンスコストを伴い、セキュリティリスクを増大させる。 |
+| コード                      | シンプルな Python コマンドを必要とする、シンプルで宣言的な API により、学習曲線は最小限です。 |  何百行ものコードと、さまざまな環境やツールでの設定。     |
 
 
 ## Supported Datastores (*more coming soon*):
@@ -158,13 +153,13 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 
 </table>
 
-**Transform your existing database into a Python-only AI development and deployment stack with one command:**
+**コマンド 1 つで既存のデータベースを Python のみの AI 開発・導入スタックに変換:**
 
 ```
-db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
+db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-## Supported AI Frameworks and Models (*more coming soon*):
+## サポートされている AI フレームワークとモデル（*詳細は近日公開予定*）:
 
 <table>
     <tr>
@@ -180,9 +175,9 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
     </tr>
 </table>
 
-**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
+**あらゆる AI モデル（オープンソース、商用モデル、自社開発モデルを問わず）をデータストアに直接統合、学習、管理し、Python コマンド 1 つで自動的に出力を計算します:**
 
-- Install and deploy model:
+- モデルのインストールとデプロイ:
 
 ```
 m = db.add(
@@ -193,13 +188,13 @@ m = db.add(
 )
 ```
 
-- Predict:
+- 予測:
 
 ```
 m.predict(X='<input_column>', db=db, select=<mongodb_query>, listen=False|True, create_vector_index=False|True)
 ```
 
-- Train model:
+- モデルのトレーニング:
 
 ```
 m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mongodb_query>|<ibis_query>)
@@ -209,7 +204,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 
 
-## Pre-Integrated AI APIs (*more coming soon*):
+## 事前統合された AI API (*詳細は近日公開*):
 
 <table >
     <tr>
@@ -225,7 +220,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
     </tr>
 </table>
 
-**Integrate externally hosted models accessible via API to work together with your other models with a simple Python command:**
+**API 経由でアクセス可能な外部ホストモデルを統合し、シンプルな Python コマンドで他のモデルと連動させる:**
 
 ```
 m = db.add(
@@ -236,7 +231,7 @@ m = db.add(
 
 
 
-## Infrastructure Diagram
+## インフラ図
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
@@ -244,11 +239,11 @@ m = db.add(
 
 
 
-## Featured Examples
+## 機能例
 
-Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
+すぐに使える notebook [ブラウザでライブ](https://demo.superduperdb.com)をお試しください。
 
-Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
+また、[superduper-community-apps リポジトリ](https://github.com/SuperDuperDB/superduper-community-apps)で、コミュニティによって構築されたユースケースやアプリも見つけることができます。
 
 
 <table>
@@ -271,16 +266,16 @@ Also find use-cases and apps built by the community in the [superduper-community
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image 検索</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video 検索</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">Question the Docs</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">ドキュメントに質問する</a>
     </th>
   </tr>
-  <tr>     
+  <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
@@ -299,24 +294,24 @@ Also find use-cases and apps built by the community in the [superduper-community
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">Semantic Search Engine</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">セマンティック検索エンジン</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">Classical Machine Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">古典的な機械学習</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">フレームワーク横断的学習</a>
     </th>
   </tr>
 </table>
 
 
 
-## Installation
+## インストール
 
-#### 1. Install SuperDuperDB via `pip` *(~1 minute)*:
+#### 1. `pip` 経由で SuperDuperDB をインストールする *(~1 分)*:
 
-**Requirements**:
+**必要条件**:
 
 - Python 3.10 or 3.11
 - Working `pip` installation (e.g. via virtual environment)
@@ -325,23 +320,23 @@ Also find use-cases and apps built by the community in the [superduper-community
 pip install superduperdb
 ```
 
-#### 2. Try SuperDuperDB via Docker *(~2 minutes)*:
-  
-**Requirements**:
-   
+#### 2. Docker 経由で SuperDuperDB を試す *(~2 分)*:
+
+**必要条件**:
+
 - Working `docker` [installation](https://docs.docker.com/engine/install/)
 
 ```
 docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
-## Preview
+## プレビュー
 
-Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use. You can visit the <a href="https://docs.superduperdb.com">docs</a> to learn more.
+以下は `superduperdb` がどのように機能し、どのように使うのが簡単かを示すスニペットです。詳しくは<a href="https://docs.superduperdb.com">ドキュメント</a>をご覧ください。
 
 
-#### - Deploy ML/AI models to your database:
-Automatically compute outputs (inference) with your database in a single environment.
+#### - ML/AI モデルをデータベースにデプロイする:
+単一の環境で、データベースを使って自動的に出力（推論）を計算します。
 
 ```python
 import pymongo
@@ -363,8 +358,8 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 ```
 
 
-#### - Train models directly from your database.
-Simply by querying your database, without additional ingestion and pre-processing:
+#### - データベースから直接モデルをトレーニング。
+追加的な取り込みや前処理をすることなく、データベースへのクエリを実行するだけです:
 
 ```python
 import pymongo
@@ -382,8 +377,8 @@ model = superduper(SVC())
 model.fit(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({}))
 ```
 
-#### - Vector-Search your data:
-Use your existing favorite database as a vector search database, including model management and serving. 
+#### - ベクター-データを検索:
+ベクトル検索データベースとして、既存のお気に入りのデータベースをご利用ください。
 
 ```python
 # First a "Listener" makes sure vectors stay up-to-date
@@ -397,8 +392,8 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-#### - Integrate AI APIs to work together with other models. 
-Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search.
+#### - AI API を統合し、他のモデルと連携させる。
+ベクトル検索用の埋め込みモデルとして、OpenAI、PyTorch、Hugging Face モデルを使用する。
 
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
@@ -422,7 +417,7 @@ cur = db.execute(
 ```
 
 
-#### - Add a Llama 2 model to SuperDuperDB!:
+#### - SuperDuperDB に Llama 2 モデルを追加する！:
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -454,7 +449,7 @@ model.predict(
 )
 ```
 
-#### - Use models outputs as inputs to downstream models:
+#### - モデルの出力を下流モデルの入力として使用する:
 
 ```python
 model.predict(
@@ -467,44 +462,44 @@ model.predict(
 
 
 
-## Community & Getting Help 
+## コミュニティとヘルプ
 
-#### If you have any problems, questions, comments, or ideas:
-- Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
-- Search through <a href="https://github.com/SuperDuperDB/superduperdb/discussions">our GitHub Discussions</a>, or <a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">add a new question</a>.
-- Comment <a href="https://github.com/SuperDuperDB/superduperdb/issues/">an existing issue</a> or create <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">a new one</a>.
-- Help us to improve SuperDuperDB by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
-- Email us at `gethelp@superduperdb.com`.
-- Feel free to contact a maintainer or community volunteer directly! 
-
-
-
-## Contributing  
-
-#### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+#### 何か問題、質問、コメント、アイデアがあれば、ご連絡ください:
+- <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">私たちの Slack</a> に参加してください（そこでお会いできるのを楽しみにしています）。
+- <a href="https://github.com/SuperDuperDB/superduperdb/discussions">GitHub のディスカッション</a>を検索するか、<a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">新しい質問を追加</a>してください。
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/">既存の issue</a> にコメントするか、<a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">新しい issue</a> を作成してください。
+- 貴重なフィードバックを<a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">こちら</a>に提供することで、SuperDuperDB の改善にご協力ください！
+- `gethelp@superduperdb.com` まで電子メールをお送りください。
+- メンテナやコミュニティボランティアに直接連絡してください！
 
 
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Bug reports</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Documentation improvements</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Enhancement suggestions</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Feature requests</a>
-- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Expanding the tutorials and use case examples</a>
 
-Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## コントリビュート
 
-## Contributors
-#### Thanks goes to these wonderful people:
+#### 貢献の方法はたくさんあり、コードを書くことに限りません。私たちは以下のようなあらゆる貢献を歓迎します:
+
+
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">バグレポート</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">ドキュメント改善</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">強化の提案</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">機能リクエスト</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">チュートリアルとユースケース例の拡大</a>
+
+詳しくは[コントリビューティングガイド](CONTRIBUTING.md)をご覧ください。
+
+## コントリビューター
+#### これらの素晴らしい人々に感謝します:
 
 <a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SuperDuperDB/superduperdb" />
 </a>
 
 
-## License  
+## ライセンス
 
-SuperDuperDB is open-source and intended to be a community effort, and it wouldn't be possible without your support and enthusiasm.
-It is distributed under the terms of the Apache 2.0 license. Any contribution made to this project will be subject to the same provisions.
+SuperDuperDB はオープンソースであり、コミュニティの取り組みであることを意図しており、皆様のサポートと熱意なしでは不可能です。
+Apache 2.0 ライセンスの下で配布されており、このプロジェクトへのいかなるコントリビュートも、同じ規定に従います。
 
-## Join Us 
+## 参加する
 
-We are looking for nice people who are invested in the problem we are trying to solve to join us full-time. Find roles that we are trying to fill <a href="https://join.com/companies/superduperdb">here</a>!
+私たちは、私たちが解決しようとしている問題に投資し、フルタイムで参加してくれる素敵な人材を探しています。<a href="https://join.com/companies/superduperdb">こちら</a>で募集している職務を検索してください！

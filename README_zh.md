@@ -25,7 +25,8 @@
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 
 [**English**](README.md) |
-<b>中文</b>
+<b>中文</b> |
+[**日本語**](README_ja.md)
 
 </div>
 

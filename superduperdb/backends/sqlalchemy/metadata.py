@@ -10,7 +10,6 @@ from sqlalchemy import (
     delete,
     insert,
     select,
-    update,
 )
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
@@ -172,8 +171,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 .limit(1)
             )
-            res = session.execute(stmt)
-            res = self.parse_result(self.parent_child_association_table, res)
+            res = self.query_results(self.parent_child_association_table, stmt, session)
             return len(res) > 0
 
     def create_component(self, info: t.Dict):
@@ -202,8 +200,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 .limit(1)
             )
-            res = session.execute(stmt)
-            res = self.parse_result(self.component_table, res)
+            res = self.query_results(self.component_table, stmt, session)
             cv = res[0] if res else None
             if cv:
                 stmt_delete = delete(self.component_table).where(
@@ -219,24 +216,15 @@ class SQLAlchemyMetadata(MetaDataStore):
         allow_hidden: bool = False,
     ):
         with self.session_context() as session:
+            stmt = select(self.component_table).where(
+                self.component_table.c.type_id == type_id,
+                self.component_table.c.identifier == identifier,
+                self.component_table.c.version == version,
+            )
             if not allow_hidden:
-                stmt = select(self.component_table).where(
-                    self.component_table.c.type_id == type_id,
-                    self.component_table.c.identifier == identifier,
-                    self.component_table.c.version == version,
-                    self.component_table.c.hidden == allow_hidden,
-                )
-                res = session.execute(stmt)
-                res = self.parse_result(self.component_table, res)
-            else:
-                stmt = select(self.component_table).where(
-                    self.component_table.c.type_id == type_id,
-                    self.component_table.c.identifier == identifier,
-                    self.component_table.c.version == version,
-                )
-                res = session.execute(stmt)
-                res = self.parse_result(self.component_table, res)
+                stmt = stmt.where(self.component_table.c.hidden == allow_hidden)
 
+            res = self.query_results(self.component_table, stmt, session)
             return res[0] if res else None
 
     def get_component_version_parents(self, unique_id: str):
@@ -244,8 +232,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = select(self.parent_child_association_table).where(
                 self.parent_child_association_table.c.child_id == unique_id,
             )
-            res = session.execute(stmt)
-            res = self.parse_result(self.parent_child_association_table, res)
+            res = self.query_results(self.parent_child_association_table, stmt, session)
             parents = [r['parent_id'] for r in res]
             return parents
 
@@ -264,7 +251,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .limit(1)
             )
             res = session.execute(stmt)
-            res = self.parse_result(self.component_table, res)
+            res = self.query_results(self.component_table, stmt, session)
             versions = [r['version'] for r in res]
             if len(versions) == 0:
                 raise FileNotFoundError(
@@ -315,17 +302,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
     def show_components(self, type_id: t.Optional[str] = None, **kwargs):
-        if type_id is not None:
-            with self.session_context() as session:
-                stmt = select(self.component_table).where(
-                    self.component_table.c.type_id == type_id
-                )
-                res = session.execute(stmt)
-        else:
-            with self.session_context() as session:
-                stmt = select(self.component_table)
-                res = session.execute(stmt)
-        res = self.parse_result(self.component_table, res)
+        with self.session_context() as session:
+            stmt = select(self.component_table)
+            if type_id is not None:
+                stmt = stmt.where(self.component_table.c.type_id == type_id)
+            res = self.query_results(self.component_table, stmt, session)
         identifiers = [data['identifier'] for data in res]
         identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
         return identifiers
@@ -336,8 +317,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 self.component_table.c.type_id == type_id,
                 self.component_table.c.identifier == identifier,
             )
-            res = session.execute(stmt)
-            res = self.parse_result(self.component_table, res)
+            res = self.query_results(self.component_table, stmt, session)
             versions = [data['version'] for data in res]
             versions = sorted(set(versions), key=lambda x: versions.index(x))
             return versions
@@ -376,8 +356,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .where(self.job_table.c.identifier == job_id)
                 .limit(1)
             )
-            res = session.execute(stmt)
-            res = self.parse_result(self.job_table, res)
+            res = self.query_results(self.job_table, stmt, session)
             return res[0] if res else None
 
     def listen_job(self, identifier: str):
@@ -387,8 +366,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_jobs(self):
         with self.session_context() as session:
             stmt = select(self.job_table)
-            res = session.execute(stmt)
-            res = self.parse_result(self.job_table, res)
+            res = self.query_results(self.job_table, stmt, session)
             return [r['identifier'] for r in res]
 
     def update_job(self, job_id: str, key: str, value: t.Any):
@@ -414,8 +392,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     def get_metadata(self, key):
         with self.session_context() as session:
             stmt = select(self.meta_table).where(self.meta_table.c.key == key).limit(1)
-            res = session.execute(stmt)
-            res = self.parse_result(self.meta_table, res)
+            res = self.query_results(self.meta_table, stmt, session)
             value = res[0]['value'] if res else None
             return value
 
@@ -454,8 +431,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                     .where(self.query_id_table.c.query_id == str(query_hash))
                     .limit(1)
                 )
-                res = session.execute(stmt)
-                res = self.parse_result(self.query_id_table, res)
+                res = self.query_results(self.query_id_table, stmt, session)
                 out = res[0] if res else None
         except AttributeError as e:
             if 'NoneType' in str(e):
@@ -475,8 +451,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = select(self.query_id_table).where(
                 self.query_id_table.c.model == model
             )
-            res = session.execute(stmt)
-            queries = self.parse_result(self.query_id_table, res)
+            queries = self.query_results(self.query_id_table, stmt, session)
 
             unpacked_queries = []
             for row in queries:
@@ -495,7 +470,9 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         # TODO: implement me
 
-    def parse_result(self, table, result):
+    def query_results(self, table, statment, session):
+        # Some databases don't support defining statment outside of session
+        result = session.execute(statment)
         columns = [col.name for col in table.columns]
         results = []
         try:

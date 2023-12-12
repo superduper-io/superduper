@@ -7,13 +7,12 @@ from abc import abstractmethod
 from functools import wraps
 
 import tqdm
-from numpy import ndarray
 from overrides import override
 from sklearn.pipeline import Pipeline
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
-from superduperdb.backends.base.query import CompoundSelect, Select
+from superduperdb.backends.base.query import CompoundSelect, Select, TableOrCollection
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
@@ -170,9 +169,7 @@ class _Predictor:
                 outputs.append(self.to_call(r, **kwargs))
         return outputs
 
-    def _predict(
-        self, X: t.Any, one: bool = False, **predict_kwargs
-    ) -> t.Union[ndarray, int, t.Sequence[int]]:
+    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
         if one:
             return self._predict_one(X)
 
@@ -207,12 +204,17 @@ class _Predictor:
         listen: bool = False,
         one: bool = False,
         context: t.Optional[t.Dict] = None,
+        insert_to: t.Optional[t.Union[TableOrCollection, str]] = None,
+        key: t.Optional[str] = None,
         in_memory: bool = True,
         overwrite: bool = False,
         **kwargs,
     ) -> t.Any:
+        was_added = self.db is not None
+        db = self.db or db
+
         if one:
-            assert db is None, 'db must be None when ``one=True`` (direct call)'
+            assert select is None, 'select must be None when ``one=True`` (direct call)'
 
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
@@ -222,6 +224,9 @@ class _Predictor:
 
         if db is not None:
             if isinstance(select, IbisCompoundSelect):
+                from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+
+                assert isinstance(db.metadata, SQLAlchemyMetadata)
                 try:
                     _ = db.metadata.get_query(str(hash(select)))
                 except NonExistentMetadataError:
@@ -229,8 +234,9 @@ class _Predictor:
                     db.metadata.add_query(select, self.identifier)
                     logging.info('Done')
             logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.add(self)
+            if not was_added:
+                assert isinstance(self, Component)
+                db.add(self)
 
         if listen:
             assert db is not None
@@ -243,7 +249,8 @@ class _Predictor:
                 **kwargs,
             )
 
-        if db is not None and db.compute.type == 'distributed':
+        # TODO: tidy up this logic
+        if select is not None and db is not None and db.compute.type == 'distributed':
             return self.create_predict_job(
                 X,
                 select=select,
@@ -278,7 +285,45 @@ class _Predictor:
             else:
                 if self.takes_context:
                     kwargs['context'] = context
-                return self._predict(X, one=one, **kwargs)
+
+                output = self._predict(
+                    (X[key] if one else [r[key] for r in X]) if key else X,
+                    one=one,
+                    **kwargs,
+                )
+                if insert_to is not None:
+                    msg = (
+                        '`self.db` has not been set; this is necessary if'
+                        ' `insert_to` is not None; use `db.add(self)`'
+                    )
+
+                    from superduperdb.base.datalayer import Datalayer
+
+                    assert isinstance(db, Datalayer), msg
+                    if isinstance(insert_to, str):
+                        insert_to = db.load(
+                            'table',
+                            insert_to,
+                        )  # type: ignore[assignment]
+                    if one:
+                        output = [output]
+
+                    assert isinstance(insert_to, TableOrCollection)
+                    ids, _ = db.execute(insert_to.insert([X] if one else X))
+                    ids = t.cast(t.List[t.Any], ids)
+                    assert isinstance(key, str)
+
+                    insert_to.model_update(
+                        db=db,
+                        model=self.identifier,
+                        outputs=output,
+                        key=key,
+                        version=self.version,
+                        ids=ids,
+                        flatten=self.flatten,
+                        **self.model_update_kwargs,
+                    )
+                return output
 
     async def apredict(
         self,
@@ -783,3 +828,113 @@ class APIModel(Component, _Predictor):
         if isinstance(self.encoder, Encoder):
             return [('encoder', 'encoder')]
         return []
+
+
+@dc.dataclass(kw_only=True)
+class QueryModel(Component, _Predictor):
+    """
+    Model which can be used to query data and return those
+    results as pre-computed queries.
+
+    :param select: query used to find data (can include `like`)
+    :param postprocess: postprocess function
+    """
+
+    select: CompoundSelect
+    postprocess: t.Optional[t.Union[t.Callable, Artifact]] = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not isinstance(self.postprocess, Artifact):
+            self.postprocess = Artifact(artifact=self.postprocess)
+
+    @override
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        verbose: bool = False,
+    ) -> t.Sequence[t.Any]:
+        jobs = []
+        if self.predict_X is not None:
+            assert self.predict_select is not None
+            jobs.append(
+                self.predict(
+                    X=self.predict_X,
+                    select=self.predict_select,
+                    max_chunk_size=self.predict_max_chunk_size,
+                    db=db,
+                    **(self.predict_kwargs or {}),
+                )
+            )
+        return jobs
+
+    def _predict_one(self, X: t.Any, **kwargs):
+        select = self.select.set_variables(db=self.db, X=X)
+        out = self.db.execute(select)
+        if self.postprocess is not None:
+            assert isinstance(self.postprocess, Artifact)
+            return self.postprocess.artifact(out)
+        return out
+
+    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
+        if one:
+            return self._predict_one(X, **predict_kwargs)
+        return [self._predict_one(x, **predict_kwargs) for x in X]
+
+
+@dc.dataclass(kw_only=True)
+class SequentialModel(Component, _Predictor):
+    """
+    Sequential model component which wraps a model to become serializable
+
+    {component_params}
+    {_predictor_params}
+    :param predictors: A list of predictors to use
+    """
+
+    __doc__ = __doc__.format(
+        component_params=Component.__doc__,
+        _predictor_params=_Predictor.__doc__,
+    )
+    predictors: t.List[t.Union[str, Model, APIModel]]
+
+    @override
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        verbose: bool = False,
+    ) -> t.Sequence[t.Any]:
+        jobs = []
+        if self.predict_X is not None:
+            assert self.predict_select is not None
+            jobs.append(
+                self.predict(
+                    X=self.predict_X,
+                    select=self.predict_select,
+                    max_chunk_size=self.predict_max_chunk_size,
+                    db=db,
+                    **(self.predict_kwargs or {}),
+                )
+            )
+        return jobs
+
+    def post_create(self, db: Datalayer):
+        for p in self.predictors:
+            if isinstance(p, str):
+                continue
+            p.post_create(db)
+        self.on_load(db)
+
+    def on_load(self, db: Datalayer):
+        for i, p in enumerate(self.predictors):
+            if isinstance(p, str):
+                self.predictors[i] = db.load('model', p)  # type: ignore[call-overload]
+
+    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
+        out = X
+        for p in self.predictors:
+            assert isinstance(p, _Predictor)
+            out = p._predict(out, one=one, **predict_kwargs)
+        return out

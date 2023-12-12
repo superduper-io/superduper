@@ -25,6 +25,7 @@ class Cohere(APIModel):
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
     def __post_init__(self):
+        super().__post_init__()
         self.identifier = self.identifier or self.model
 
 

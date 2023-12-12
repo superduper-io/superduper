@@ -42,7 +42,7 @@ class Select(Serializable, ABC):
     def model_update(
         self,
         db,
-        ids: t.Sequence[str],
+        ids: t.List[str],
         key: str,
         model: str,
         version: int,
@@ -534,12 +534,12 @@ class Like(Serializable):
     """
     Base class for all like (vector-search) queries.
 
-    :param r: The vector to search for
+    :param r: The item to be converted to a vector, to search with.
     :param vector_index: The vector index to use
     :param n: The number of results to return
     """
 
-    r: Document
+    r: t.Union[t.Dict, Document]
     vector_index: str
     n: int = 10
 
@@ -572,6 +572,24 @@ class TableOrCollection(Serializable, ABC):
         return self.query_components.get(name, QueryComponent)(
             name=name, type=QueryType.ATTR
         )
+
+    @abstractmethod
+    def model_update(
+        self,
+        db,
+        ids: t.List[t.Any],
+        key: str,
+        model: str,
+        version: int,
+        outputs: t.Sequence[t.Any],
+        flatten: bool = False,
+        **kwargs,
+    ):
+        pass
+
+    @abstractmethod
+    def insert(self, documents: t.Sequence[Document], **kwargs) -> Insert:
+        pass
 
     @abstractmethod
     def _get_query(

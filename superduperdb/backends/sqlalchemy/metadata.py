@@ -10,6 +10,7 @@ from sqlalchemy import (
     delete,
     insert,
     select,
+    update,
 )
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
@@ -41,7 +42,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.name = name
         self.conn = conn
         self.dialect = conn.dialect.name
-        self.metadata = MetaData()
         self._init_tables()
 
         self._lock = threading.Lock()
@@ -65,9 +65,10 @@ class SQLAlchemyMetadata(MetaDataStore):
         component_table_args = DBConfig.component_table_args
         meta_table_args = DBConfig.meta_table_args
 
+        metadata = MetaData()
         self.query_id_table = Table(
             'query_id_table',
-            self.metadata,
+            metadata,
             Column('query_id', type_string, primary_key=True),
             Column('query', type_json_as_text),
             Column('model', type_string),
@@ -76,7 +77,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self.job_table = Table(
             'job',
-            self.metadata,
+            metadata,
             Column('identifier', type_string, primary_key=True),
             Column('component_identifier', type_string),
             Column('type_id', type_string),
@@ -94,7 +95,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self.parent_child_association_table = Table(
             'parent_child_association',
-            self.metadata,
+            metadata,
             Column('parent_id', type_string, primary_key=True),
             Column('child_id', type_string, primary_key=True),
             *parent_child_association_table_args,
@@ -102,7 +103,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self.component_table = Table(
             'component',
-            self.metadata,
+            metadata,
             Column('id', type_string, primary_key=True),
             Column('identifier', type_string),
             Column('version', type_integer),
@@ -116,12 +117,12 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self.meta_table = Table(
             'meta',
-            self.metadata,
+            metadata,
             Column('key', type_string, primary_key=True),
             Column('value', type_string),
             *meta_table_args,
         )
-        self.metadata.create_all(self.conn)
+        metadata.create_all(self.conn)
 
     def url(self):
         return self.conn.url + self.name
@@ -138,7 +139,11 @@ class SQLAlchemyMetadata(MetaDataStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
-        self.metadata.drop_all(self.conn)
+        self.query_id_table.drop(self.conn)
+        self.job_table.drop(self.conn)
+        self.parent_child_association_table.drop(self.conn)
+        self.component_table.drop(self.conn)
+        self.meta_table.drop(self.conn)
 
     @contextmanager
     def session_context(self):

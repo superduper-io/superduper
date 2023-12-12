@@ -3,7 +3,7 @@ import os
 import pytest
 import vcr
 
-from superduperdb.ext.jina import JinaEmbed
+from superduperdb.ext.jina import JinaEmbedding
 
 CASSETTE_DIR = 'test/integration/ext/jina/cassettes'
 
@@ -18,7 +18,7 @@ if os.getenv('JINA_API_KEY') is None:
     filter_headers=['Authorization'],
 )
 def test_embed_one():
-    embed = JinaEmbed(identifier='jina-embeddings-v2-base-en')
+    embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
     resp = embed.predict('Hello world')
 
     assert len(resp) == embed.shape[0]
@@ -31,7 +31,7 @@ def test_embed_one():
     filter_headers=['Authorization'],
 )
 def test_embed_batch():
-    embed = JinaEmbed(identifier='jina-embeddings-v2-base-en')
+    embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
     resp = embed.predict(['Hello', 'world', 'I', 'am', 'here'], batch_size=3)
 
     assert len(resp) == 5
@@ -46,7 +46,7 @@ def test_embed_batch():
     filter_headers=['authorization'],
 )
 async def test_async_embed_one():
-    embed = JinaEmbed(identifier='jina-embeddings-v2-base-en')
+    embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
     resp = await embed.apredict('Hello world')
 
     assert len(resp) == embed.shape[0]
@@ -60,7 +60,7 @@ async def test_async_embed_one():
     filter_headers=['authorization'],
 )
 async def test_async_embed_batch():
-    embed = JinaEmbed(identifier='jina-embeddings-v2-base-en')
+    embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
     resp = await embed.apredict(['Hello', 'world', 'I', 'am', 'here'], batch_size=3)
 
     assert len(resp) == 5

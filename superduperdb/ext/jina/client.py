@@ -15,10 +15,11 @@ retry = Retry(exception_types=(ClientResponseError, ClientConnectionError, HTTPE
 
 
 class JinaAPIClient:
-
-    def __init__(self,
-                 api_key: Optional[str] = None,
-                 model_name: str = 'jina-embeddings-v2-base-en'):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model_name: str = 'jina-embeddings-v2-base-en',
+    ):
         """
         Create a JinaAPIClient to provide an interface to encode using Jina Embedding platform sync and async.
 
@@ -41,7 +42,9 @@ class JinaAPIClient:
 
     @retry
     def encode_batch(self, texts: List[str]) -> List[List[float]]:
-        response = self._session.post(JINA_API_URL, json={"input": texts, "model": self.model_name}).json()
+        response = self._session.post(
+            JINA_API_URL, json={"input": texts, "model": self.model_name}
+        ).json()
         if "data" not in response:
             raise RuntimeError(response["detail"])
 
@@ -59,9 +62,9 @@ class JinaAPIClient:
             }
 
             async with session.post(
-                    JINA_API_URL,
-                    headers=self._headers,
-                    json=payload,
+                JINA_API_URL,
+                headers=self._headers,
+                json=payload,
             ) as response:
                 response.raise_for_status()
                 response_json = await response.json()
@@ -69,6 +72,8 @@ class JinaAPIClient:
                     raise RuntimeError(response_json["detail"])
 
                 # Sort resulting embeddings by index
-                sorted_embeddings = sorted(response_json["data"], key=lambda e: e["index"])
+                sorted_embeddings = sorted(
+                    response_json["data"], key=lambda e: e["index"]
+                )
                 embeddings = [result["embedding"] for result in sorted_embeddings]
                 return embeddings

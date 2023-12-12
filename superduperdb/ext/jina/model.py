@@ -21,7 +21,7 @@ class Jina(APIModel):
 
 
 @dc.dataclass(kw_only=True)
-class JinaEmbed(Jina):
+class JinaEmbedding(Jina):
     """Jina embedding predictor
 
     :param shape: The shape of the embedding as ``tuple``. If not provided, it will be obtained by sending a simple query to the API
@@ -32,7 +32,7 @@ class JinaEmbed(Jina):
     def __post_init__(self):
         super().__post_init__()
         if self.shape is None:
-            self.shape = (len(self.client.encode_batch(['shape'])[0]), )
+            self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 
     def pre_create(self, db):
         super().pre_create(db)

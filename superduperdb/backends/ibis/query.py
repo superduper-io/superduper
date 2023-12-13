@@ -5,7 +5,6 @@ import re
 import types
 import typing as t
 
-import ibis
 import pandas
 
 from superduperdb import Document, logging
@@ -517,7 +516,9 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
                 f'{native_query} Wrong query or not supported yet :: {exc}'
             )
         for column in result.columns:
-            result[column] = result[column].map(db.databackend.recover_data_format)
+            result[column] = result[column].map(
+                db.databackend.db_helper.recover_data_format
+            )
         return result
 
 
@@ -551,9 +552,7 @@ class Table(Component):
             return
 
         try:
-            db.databackend.create_ibis_table(  # type: ignore[attr-defined]
-                self.identifier, schema=ibis.schema(self.schema.raw)
-            )
+            db.databackend.create_table_and_schema(self.identifier, self.schema.raw)
         except Exception as e:
             if 'already exists' in str(e):
                 pass

@@ -1,4 +1,3 @@
-import base64
 import typing as t
 from warnings import warn
 
@@ -7,7 +6,7 @@ import pandas
 from ibis.backends.base import BaseBackend
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
-from superduperdb.backends.ibis.db_helper import get_insert_processor
+from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.ibis.utils import get_output_table_name
@@ -23,6 +22,8 @@ class IbisDataBackend(BaseDataBackend):
     def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
         super().__init__(conn=conn, name=name)
         self.in_memory = in_memory
+        self.dialect = getattr(conn, 'name', 'base')
+        self.db_helper = get_db_helper(self.dialect)
 
     def url(self):
         return self.conn.con.url + self.name
@@ -39,31 +40,14 @@ class IbisDataBackend(BaseDataBackend):
     def insert(self, table_name, raw_documents):
         for doc in raw_documents:
             for k, v in doc.items():
-                doc[k] = self.convert_data_format(v)
-        table_name, raw_documents = get_insert_processor(self.conn.name)(
+                doc[k] = self.db_helper.convert_data_format(v)
+        table_name, raw_documents = self.db_helper.process_before_insert(
             table_name, raw_documents
         )
         if not self.in_memory:
             self.conn.insert(table_name, raw_documents)
         else:
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
-
-    @staticmethod
-    def convert_data_format(data):
-        """Convert byte data to base64 format for storage in the database."""
-
-        if isinstance(data, bytes):
-            return BASE64_PREFIX + base64.b64encode(data).decode('utf-8')
-        else:
-            return data
-
-    @staticmethod
-    def recover_data_format(data):
-        """Recover byte data from base64 format stored in the database."""
-        if isinstance(data, str) and data.startswith(BASE64_PREFIX):
-            return base64.b64decode(data[len(BASE64_PREFIX) :])
-        else:
-            return data
 
     def create_model_table_or_collection(self, model: t.Union[Model, APIModel]):
         msg = (
@@ -95,6 +79,7 @@ class IbisDataBackend(BaseDataBackend):
         """
 
         try:
+            mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
         except Exception as e:
             if 'exists' in str(e):

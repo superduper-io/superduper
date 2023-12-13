@@ -40,7 +40,7 @@ class Schema(Component):
     @property
     def raw(self):
         return {
-            k: (v.identifier if not isinstance(v, Encoder) else 'String')
+            k: (v.identifier if not isinstance(v, Encoder) else 'Bytes')
             for k, v in self.fields.items()
         }
 

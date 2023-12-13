@@ -148,8 +148,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_AUTH_ANONYMOUS_ENABLED: true
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
       GF_PATHS_PROVISIONING: '/app.cfg/provisioning'
     volumes:
         - ./configs/grafana:/app.cfg
@@ -158,24 +158,24 @@ services:
   #  Logging with Loki
   #  ------------------------------
   loki:
-      image: grafana/loki:2.9.0
-      ports:
-        - "3100:3100"
-      volumes:
-        - ./configs/loki:/etc/loki
-      command: -config.file=/etc/loki/loki-local-config.yaml
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./configs/loki:/etc/loki
+    command: -config.file=/etc/loki/loki-local-config.yaml
 
   promtail:
-      depends_on:
-          - loki
-      image: grafana/promtail:2.9.0
-      volumes:
-          # Configuration
-          - ./configs/promtail:/etc/promtail
-          # Read container labels and logs
-          - /var/lib/docker/containers:/var/lib/docker/containers:ro
-          - /var/run/docker.sock:/var/run/docker.sock
-      command: -config.file=/etc/promtail/docker-config.yaml
+    depends_on:
+        - loki
+    image: grafana/promtail:2.9.0
+    volumes:
+        # Configuration
+        - ./configs/promtail:/etc/promtail
+        # Read container labels and logs
+        - /var/lib/docker/containers:/var/lib/docker/containers:ro
+        - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/docker-config.yaml
 
 
   #  Monitoring with Prometheus
@@ -191,15 +191,15 @@ services:
       --storage.tsdb.path=/prometheus
 
   cadvisor:
-      image: gcr.io/cadvisor/cadvisor
-      ports:
-        - "8080:8080"
-      volumes:
-          - /:/rootfs:ro
-          - /var/run:/var/run:ro
-          - /sys:/sys:ro
-          - /var/lib/docker/:/var/lib/docker:ro
-          - /dev/disk/:/dev/disk:ro
+    image: gcr.io/cadvisor/cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+        - /:/rootfs:ro
+        - /var/run:/var/run:ro
+        - /sys:/sys:ro
+        - /var/lib/docker/:/var/lib/docker:ro
+        - /dev/disk/:/dev/disk:ro
 
 
   #  Demo SuperDuperDB Notebooks

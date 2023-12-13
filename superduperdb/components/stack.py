@@ -34,11 +34,11 @@ class Stack(Component):
 
     type_id: t.ClassVar[str] = 'stack'
 
-    components: t.Optional[t.Sequence[Component]] = ()
+    components: t.Sequence[Component] = ()
 
-    def __post_init__(self):
-        super().__post_init__()
-        self._load_components()
+    @property
+    def child_components(self):
+        return (('components', 'component_list'),)
 
     def _load_components(self):
         self._component_type_store = {}

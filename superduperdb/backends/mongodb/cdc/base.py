@@ -1,5 +1,6 @@
 import dataclasses as dc
 import json
+import os
 import typing as t
 
 from bson import objectid
@@ -11,7 +12,7 @@ TokenType = t.Dict[str, str]
 
 
 class CachedTokens:
-    token_path = '.cdc.tokens'
+    token_path = os.path.join('.superduperdb', '.cdc.tokens')
     separate = '\n'
 
     def __init__(self):

@@ -35,22 +35,22 @@ class ComputeBackend(ABC):
         """
         pass
 
-    @abstractmethod
-    def list_all_pending_tasks(self) -> t.Any:
+    @abstractproperty
+    def tasks(self) -> t.Any:
         """
-        List for all pending tasks
+        List for all tasks
         """
         pass
 
     @abstractmethod
-    def wait_all_pending_tasks(self) -> None:
+    def wait_all(self) -> None:
         """
         Waits for all pending tasks to complete.
         """
         pass
 
     @abstractmethod
-    def get_result(self, identifier: str) -> t.Any:
+    def result(self, identifier: str) -> t.Any:
         """
         Retrieves the result of a previously submitted task.
         Note: This will block until the future is completed.

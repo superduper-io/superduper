@@ -26,8 +26,7 @@ class DaskComputeBackend(ComputeBackend):
         local: bool = False,
         **kwargs,
     ):
-        # Private field
-        self.__futures_collection: t.Dict[str, distributed.Future] = {}
+        self._futures_collection: t.Dict[str, distributed.Future] = {}
 
         if local:
             # Create and connect to the local cluster.
@@ -57,32 +56,41 @@ class DaskComputeBackend(ComputeBackend):
         :param function: The function to be executed.
         """
         future = self.client.submit(function, *args, **kwargs)
-        self.__futures_collection[future.key] = future
+        self._futures_collection[future.key] = future
 
         logging.success(f"Job submitted.  function:{function} future:{future}")
         return future
 
-    def list_all_pending_tasks(self) -> t.Dict[str, distributed.Future]:
+    @property
+    def tasks(self) -> t.Dict[str, distributed.Future]:
         """
         List for all pending tasks
         """
-        return self.__futures_collection
+        return self._futures_collection
 
-    def wait_all_pending_tasks(self) -> None:
+    def wait(self, identifier: str) -> None:
+        """
+        Waits for all pending tasks to complete.
+        :param identifier: Future task reference
+        """
+        futures = [self._futures_collection.get(identifier)]
+        distributed.wait(futures)
+
+    def wait_all(self) -> None:
         """
         Waits for all pending tasks to complete.
         """
-        futures = list(self.__futures_collection.values())
+        futures = list(self._futures_collection.values())
         distributed.wait(futures)
 
-    def get_result(self, identifier: str) -> t.Any:
+    def result(self, identifier: str) -> t.Any:
         """
         Retrieves the result of a previously submitted task.
         Note: This will block until the future is completed.
 
         :param identifier: The identifier of the submitted task.
         """
-        future = self.__futures_collection[identifier]
+        future = self._futures_collection[identifier]
         return self.client.gather(future)
 
     def disconnect(self) -> None:

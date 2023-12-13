@@ -36,7 +36,7 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
 
     elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
         CFG.force_set('data_backend', item)
-        CFG.force_set('vector_search', item)
+        CFG.force_set('cluster.vector_search', item)
 
     elif item.endswith('.csv'):
         CFG.force_set('data_backend', item)

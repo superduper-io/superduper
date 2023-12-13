@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -116,6 +117,23 @@ def dask_client(monkeypatch, request):
     client = DaskComputeBackend(
         address='tcp://localhost:8786',
         local=False,
+    )
+
+    yield client
+
+    client.disconnect()
+
+
+@pytest.fixture(scope='session')
+def ray_client():
+    # Change the default value
+    from superduperdb.backends.ray.compute import RayComputeBackend
+
+    working_dir = Path(__file__).parents[1]
+
+    client = RayComputeBackend(
+        address='ray://127.0.0.1:10001',
+        runtime_env={"working_dir": working_dir, 'excludes': ['unittest']},
     )
 
     yield client

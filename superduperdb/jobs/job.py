@@ -116,7 +116,7 @@ class FunctionJob(Job):
         """
         self.future = self.db.compute.submit(
             callable_job,
-            cfg=s.CFG,
+            cfg=s.CFG.dict(),
             function_to_call=self.callable,
             job_id=self.identifier,
             args=self.args,
@@ -183,7 +183,7 @@ class ComponentJob(Job):
         """
         self.future = self.db.compute.submit(
             method_job,
-            cfg=s.CFG,
+            cfg=s.CFG.dict(),
             type_id=self.type_id,
             identifier=self.component_identifier,
             method_name=self.method_name,

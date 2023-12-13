@@ -54,7 +54,9 @@ class ConfigSettings:
     def config(self) -> t.Any:
         """Read a Pydantic class"""
 
-        if self.base_config:
+        if isinstance(self.base_config, dict):
+            parent = self.base_config
+        elif isinstance(self.base_config, Config):
             parent = self.base_config.dict()
         else:
             parent = self.cls().dict()

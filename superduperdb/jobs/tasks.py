@@ -96,9 +96,9 @@ def callable_job(
     from superduperdb.base.configs import build_config
 
     if db is None:
-        CFG = build_config(cfg)
+        cfg = build_config(cfg)
         cfg.force_set('cluster.compute', None)
-        db = build_datalayer(CFG)
+        db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None
     try:

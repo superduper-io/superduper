@@ -13,6 +13,7 @@ from superduperdb.backends.base.backends import data_backends, metadata_stores
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
+from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 
 
@@ -110,6 +111,9 @@ def build_compute(compute):
 
         uri = compute.split('+')[-1]
         return DaskComputeBackend(uri)
+
+    if compute.split('://')[0] == 'ray':
+        return RayComputeBackend(compute)
 
     return LocalComputeBackend()
 

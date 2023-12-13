@@ -38,19 +38,20 @@ class LocalComputeBackend(ComputeBackend):
         logging.success(f"Job submitted.  function:{function} future:{future_key}")
         return future_key
 
-    def list_all_pending_tasks(self) -> t.Dict[str, t.Any]:
+    @property
+    def tasks(self) -> t.Dict[str, t.Any]:
         """
         List for all pending tasks
         """
         return self.__outputs
 
-    def wait_all_pending_tasks(self) -> None:
+    def wait_all(self) -> None:
         """
         Waits for all pending tasks to complete.
         """
         pass
 
-    def get_result(self, identifier: str) -> t.Any:
+    def result(self, identifier: str) -> t.Any:
         """
         Retrieves the result of a previously submitted task.
         Note: This will block until the future is completed.

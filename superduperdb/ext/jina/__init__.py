@@ -1,3 +1,3 @@
-from .model import JinaEmbed
+from .model import JinaEmbedding
 
-__all__ = 'JinaEmbed'
+__all__ = 'JinaEmbedding'

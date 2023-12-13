@@ -1,12 +1,12 @@
-import requests
-import aiohttp
-from aiohttp import ClientResponseError, ClientConnectionError
+from typing import List, Optional
 
-from typing import Optional, List
-from superduperdb.misc.retry import Retry
-from superduperdb.ext.utils import get_key
+import aiohttp
+import requests
+from aiohttp import ClientConnectionError, ClientResponseError
 from requests.exceptions import HTTPError
 
+from superduperdb.ext.utils import get_key
+from superduperdb.misc.retry import Retry
 
 JINA_API_URL: str = "https://api.jina.ai/v1/embeddings"
 KEY_NAME = 'JINA_API_KEY'
@@ -21,13 +21,17 @@ class JinaAPIClient:
         model_name: str = 'jina-embeddings-v2-base-en',
     ):
         """
-        Create a JinaAPIClient to provide an interface to encode using Jina Embedding platform sync and async.
+        Create a JinaAPIClient to provide an interface to encode using
+            Jina Embedding platform sync and async.
 
-        :param api_key: The Jina API key. It can be explicitly provided or automatically read from the
-            environment variable JINA_API_KEY (recommended).
-        :param model_name: The name of the Jina model to use. Check the list of available models on `https://jina.ai/embeddings/`
-        # if the user does not provide the API key, check if it is set in the module client
+        :param api_key: The Jina API key.
+            It can be explicitly provided or automatically read
+            from the environment variable JINA_API_KEY (recommended).
+        :param model_name: The name of the Jina model to use.
+         Check the list of available models on `https://jina.ai/embeddings/`
         """
+        # if the user does not provide the API key,
+        # check if it is set in the environment variable
         if api_key is None:
             api_key = get_key(KEY_NAME)
 

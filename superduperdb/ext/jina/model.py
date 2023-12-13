@@ -24,7 +24,8 @@ class Jina(APIModel):
 class JinaEmbedding(Jina):
     """Jina embedding predictor
 
-    :param shape: The shape of the embedding as ``tuple``. If not provided, it will be obtained by sending a simple query to the API
+    :param shape: The shape of the embedding as ``tuple``.
+        If not provided, it will be obtained by sending a simple query to the API
     """
 
     shape: t.Optional[t.Sequence[int]] = None

@@ -6,18 +6,24 @@ import pandas
 from ibis.backends.base import BaseBackend
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.ibis.utils import get_output_table_name
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.components.model import APIModel, Model
 from superduperdb.components.schema import Schema
+
+BASE64_PREFIX = 'base64:'
 
 
 class IbisDataBackend(BaseDataBackend):
     def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
         super().__init__(conn=conn, name=name)
         self.in_memory = in_memory
+        self.dialect = getattr(conn, 'name', 'base')
+        self.db_helper = get_db_helper(self.dialect)
 
     def url(self):
         return self.conn.con.url + self.name
@@ -32,6 +38,12 @@ class IbisDataBackend(BaseDataBackend):
         self.conn.create_table(identifier, schema=schema)
 
     def insert(self, table_name, raw_documents):
+        for doc in raw_documents:
+            for k, v in doc.items():
+                doc[k] = self.db_helper.convert_data_format(v)
+        table_name, raw_documents = self.db_helper.process_before_insert(
+            table_name, raw_documents
+        )
         if not self.in_memory:
             self.conn.insert(table_name, raw_documents)
         else:
@@ -55,7 +67,7 @@ class IbisDataBackend(BaseDataBackend):
             'key': dtype('string'),
         }
         return Table(
-            identifier=f'_outputs/{model.identifier}/{model.version}',
+            identifier=get_output_table_name(model.identifier, model.version),
             schema=Schema(
                 identifier=f'_schema/{model.identifier}/{model.version}', fields=fields
             ),
@@ -67,6 +79,7 @@ class IbisDataBackend(BaseDataBackend):
         """
 
         try:
+            mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
         except Exception as e:
             if 'exists' in str(e):

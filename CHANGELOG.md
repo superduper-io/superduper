@@ -14,14 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - Support 3.10+ due to `dataclass` supported features
+- Updated the table creation method in MetaDataStore to improve compatibility across various databases.
+- Replaced JSON data with String format before storage in SQLAlchemy.
+- Implemented storage of byte data in base64 format.
 
 #### New Features & Functionality
 
 - Simplify the testing of SQL databases using containerized databases
+- Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
 
 #### Bug Fixes
 
 - Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases.
+- Fixed a bug related to using Clickhouse as both databackend and metastore.
 
 ## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
 

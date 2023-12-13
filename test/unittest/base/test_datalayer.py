@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import pytest
@@ -99,7 +100,7 @@ def add_fake_model(db: Datalayer):
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
-def test_add_version(db):
+def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
     db.add(component)
@@ -230,10 +231,14 @@ def test_remove_component_version(db):
     # Remove if confirmed
     with patch('click.confirm', return_value=True):
         db._remove_component_version('test-component', 'test', 0)
+        # Wait for the db to update
+        time.sleep(0.1)
         assert db.show('test-component', 'test') == [1]
 
     # Remove force
     db._remove_component_version('test-component', 'test', 1, force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == []
 
 
@@ -314,6 +319,8 @@ def test_remove_one_version(db):
 
     # Only remove the version
     db.remove('test-component', 'test', 1, force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == [0]
 
 
@@ -330,6 +337,8 @@ def test_remove_multi_version(db):
     )
 
     db.remove('test-component', 'test', force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == []
 
 
@@ -599,11 +608,13 @@ def test_replace(db):
     new_model = Model(object=lambda x: x + 2, identifier='m')
     new_model.version = 0
     db.replace(new_model)
+    time.sleep(0.1)
     assert db.load('model', 'm').predict([1]) == [3]
 
     # replace the last version of the model
     new_model = Model(object=lambda x: x + 3, identifier='m')
     db.replace(new_model)
+    time.sleep(0.1)
     assert db.load('model', 'm').predict([1]) == [4]
 
 

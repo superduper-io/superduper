@@ -80,7 +80,8 @@ class _Predictor:
     :param validation_sets: The validation ``Dataset`` instances to use
     :param predict_X: The key of the input data to use for .predict
     :param predict_select: The select to use for .predict
-    :param predict_max_chunk_size: The max chunk size to use for .predict"""
+    :param predict_max_chunk_size: The max chunk size to use for .predict
+    :param predict_kwargs: The kwargs to use for .predict"""
 
     type_id: t.ClassVar[str] = 'model'
 
@@ -99,6 +100,7 @@ class _Predictor:
     predict_X: t.Optional[str] = None
     predict_select: t.Optional[CompoundSelect] = None
     predict_max_chunk_size: t.Optional[int] = None
+    predict_kwargs: t.Optional[t.Dict] = None
 
     @abstractmethod
     def to_call(self, X, *args, **kwargs):
@@ -511,14 +513,17 @@ class Model(_Predictor, Component):
     ) -> t.Sequence[t.Any]:
         jobs = []
         if self.train_X is not None:
-            assert isinstance(self.training_configuration, _TrainingConfiguration)
-            assert self.training_select is not None
+            assert (
+                isinstance(self.training_configuration, _TrainingConfiguration)
+                or self.training_configuration is None
+            )
+            assert self.train_select is not None
             jobs.append(
                 self.fit(
                     X=self.train_X,
                     y=self.train_y,
                     configuration=self.training_configuration,
-                    select=self.training_select,
+                    select=self.train_select,
                     db=db,
                     dependencies=dependencies,
                     metrics=self.metrics,  # type: ignore[arg-type]
@@ -532,6 +537,8 @@ class Model(_Predictor, Component):
                     X=self.predict_X,
                     select=self.predict_select,
                     max_chunk_size=self.predict_max_chunk_size,
+                    db=db,
+                    **(self.predict_kwargs or {}),
                 )
             )
         return jobs
@@ -749,6 +756,27 @@ class APIModel(Component, _Predictor):
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)
+
+    @override
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        verbose: bool = False,
+    ) -> t.Sequence[t.Any]:
+        jobs = []
+        if self.predict_X is not None:
+            assert self.predict_select is not None
+            jobs.append(
+                self.predict(
+                    X=self.predict_X,
+                    select=self.predict_select,
+                    max_chunk_size=self.predict_max_chunk_size,
+                    db=db,
+                    **(self.predict_kwargs or {}),
+                )
+            )
+        return jobs
 
     @property
     def child_components(self):

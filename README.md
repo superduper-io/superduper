@@ -160,7 +160,7 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 **Transform your existing database into a Python-only AI development and deployment stack with one command:**
 
 ```
-db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
+db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
 ## Supported AI Frameworks and Models (*more coming soon*):

@@ -270,8 +270,10 @@ class Datalayer:
             return self.metadata.show_components(type_id=type_id)
 
         if version is None:
-            return self.metadata.show_component_versions(
-                type_id=type_id, identifier=identifier
+            return sorted(
+                self.metadata.show_component_versions(
+                    type_id=type_id, identifier=identifier
+                )
             )
 
         if version == -1:
@@ -913,7 +915,8 @@ class Datalayer:
                 self.metadata.create_parent_child(
                     component.unique_id, Component.make_unique_id(**serialized_dict)
                 )
-            else:
+                serialized['dict'][k] = serialized_dict
+            elif isinstance(child, Component):
                 sub_jobs = self._add(
                     child,
                     serialized=serialized['dict'][k],
@@ -925,8 +928,27 @@ class Datalayer:
                     'identifier': child.identifier,
                     'version': child.version,
                 }
-            serialized['dict'][k] = serialized_dict
-
+                serialized['dict'][k] = serialized_dict
+            elif isinstance(child, list):
+                serialized_list = []
+                for i, sub in enumerate(child):
+                    assert isinstance(sub, Component)
+                    sub_jobs = self._add(
+                        sub,
+                        serialized=serialized['dict'][k][i],
+                        parent=component.unique_id,
+                    )
+                    jobs.extend(sub_jobs)
+                    serialized_list.append(
+                        {
+                            'type_id': sub.type_id,
+                            'identifier': sub.identifier,
+                            'version': sub.version,
+                        }
+                    )
+                serialized['dict'][k] = serialized_list
+            else:
+                raise ValueError(f'Unknown child type: {type(child)}')
         return jobs
 
     def _create_plan(self):

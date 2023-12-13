@@ -70,5 +70,6 @@ While the underlying algorithm for training remains unchanged, the key distincti
 
 This improved connectivity enables users to easily customize their models for different data subsets, offering flexibility in model development.
 
-Likewise, SuperDuperDB offers numerous conveniences for streaming inference, including Change-Data-Capture support, enabling the fast release of real-time applications. </details>
+Likewise, SuperDuperDB offers numerous conveniences for streaming inference, including Change-Data-Capture support, enabling the fast release of real-time applications. 
+</details>
  

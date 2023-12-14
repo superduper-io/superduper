@@ -1,11 +1,9 @@
 import os
 import typing as t
-
-from pgvector.psycopg2 import psycopg2, register_vector
 import numpy
-import pyarrow as pa
+import json
+from pgvector.psycopg import psycopg, register_vector
 
-from superduperdb import CFG
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
 
@@ -21,6 +19,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
     :param measure: measure to assess similarity
     """
 
+
     def __init__(
         self,
         identifier: str,
@@ -30,30 +29,37 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        self.engine = psycopg2.connect(dsn=uri)
+        self.connection = psycopg.connect(conninfo=uri)
         self.dimensions = dimensions
         self.identifier = identifier
-        self.measure = measure
-        with self.engine.connect() as conn:
-            register_vector(conn)
-            cursor = conn.cursor()
+        if measure == "l2" or not measure:
+            self.measure_query = "embedding <-> '%s'"
+        elif measure == "dot":
+            self.measure_query = "(embedding <#> '%s') * -1"
+        elif measure == "cosine":
+            self.measure_query = "1 - (embedding <=> '%s')"
+        else:
+            raise NotImplementedError("Unrecognized measure format")
+        with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
-            cursor.execute('CREATE TABLE %s (id varchar, embedding vector(%d)' % (self.identifier, self.dimensions))
+            cursor.execute('CREATE TABLE IF NOT EXISTS %s (id varchar, embedding vector(%d))' % (self.identifier, self.dimensions))
+        register_vector(self.connection)
         if h:
             self._create_or_append_to_dataset(h, index)
 
 
     def __len__(self):
-        with self.engine.connect().cursor() as curr:
+        with self.connection.cursor() as curr:
             length = curr.execute('SELECT COUNT(*) FROM %s' % self.identifier).fetchone()[0]
         return length
 
 
     def _create_or_append_to_dataset(self, vectors, ids):
-        with self.engine.connect().cursor().copy('COPY %s (id, embedding) PRIMARY KEY id FROM STDIN WITH (FORMAT BINARY)' % self.identifier) as copy:
+        with self.connection.cursor().copy('COPY %s (id, embedding) FROM STDIN WITH (FORMAT BINARY)' % self.identifier) as copy:
+            copy.set_types(['varchar', 'vector'])
             for id_vector, vector in zip(ids, vectors):
                 copy.write_row([id_vector, vector])
-            copy.commit()
+        self.connection.commit()
 
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
@@ -73,10 +79,10 @@ class PostgresVectorSearcher(BaseVectorSearcher):
 
         :param ids: t.Sequence of ids of vectors.
         """
-        with self.engine.connect().cursor() as curr:
+        with self.connection.cursor() as curr:
             for id_vector in ids:
-                curr.execute('DELETE FROM %s WHERE id = %d' % (self.identifier, id_vector))
-            curr.commit()
+                curr.execute("DELETE FROM %s WHERE id = '%s'" % (self.identifier, id_vector))
+        self.connection.commit()
     
 
     def find_nearest_from_id(
@@ -91,11 +97,11 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         :param _id: id of the vector
         :param n: number of nearest vectors to return
         """
-        with self.engine.connect().cursor() as curr:
+        with self.connection.cursor() as curr:
             curr.execute("""
                 SELECT embedding 
                 FROM %s 
-                WHERE id = %s""" % (self.identifier, _id)
+                WHERE id = '%s'""" % (self.identifier, _id)
             )
             h = curr.fetchone()[0]
         return self.find_nearest_from_array(h, n, within_ids)
@@ -117,15 +123,15 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         else:
             within_ids_str = ', '.join([f"'{i}'" for i in within_ids])
             condition = f"id in ({within_ids_str})"
-        with self.engine.connect().cursor() as curr:
-            curr.execute("""
-                SELECT id,  1 - (embedding <=> '%s') as cosine_similarity
+        query_search_nearest = f"""
+        SELECT id, {self.measure_query} as distance
                 FROM %s
                 WHERE %s
-                ORDER BY cosine_similarity
+                ORDER BY distance
                 LIMIT %d
-                """ % (h, self.identifier, condition, n)
-            )
+        """
+        with self.connection.cursor() as curr:
+            curr.execute(query_search_nearest % (json.dumps(h.tolist()), self.identifier, condition, n))
             nearest_items = curr.fetchall()
         ids = [row[0] for row in nearest_items]
         scores = [row[1] for row in nearest_items]

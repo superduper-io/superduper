@@ -43,7 +43,7 @@ SuperDuperDB は、ストリーミング推論、スケーラブルなモデル�
 
 SuperDuperDB はデータベースではありません。お気に入りのデータベースを AI の開発・配備環境に変身させるもので、`db = superduper(db)` と考えてください。
 
-SuperDuperDB は複雑な MLOps パイプラインや特殊なベクターデータベースを排除します - また、既存のデータインフラストラクチャの上に直接データのソースで AI を統合することで、データの移行や複製を行う必要がなくなります。これにより、AI アプリケーションの構築と管理が大幅に簡素化されます:
+SuperDuperDB は複雑な MLOps パイプラインや特殊なベクターデータベースを排除します - また、データのソースである既存のデータインフラストラクチャの直上にAIを統合することで、データの移行や複製を行う必要がなくなります。これにより、AI アプリケーションの構築と管理が大幅に簡素化されます:
 
 - 生成 AI と LLM-Chat
 - ベクトル検索
@@ -69,20 +69,20 @@ SuperDuperDB についての詳細と、私たちが SuperDuperDB を必要と�
 - **[ストリーミング推論](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** 新しいデータが到着すると、モデルが自動的に即座に出力を計算するため、デプロイを常に最新の状態に保つことができます。
 - **[スケーラブルなモデルトレーニング](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** トレーニングデータをクエリするだけで、大規模で多様なデータセットでAIモデルをトレーニング。インビルドの計算最適化により、最適なパフォーマンスを保証します。
 - **[モデルチェイニング](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: モデルと API を相互依存的かつ逐次的に連携させることで、複雑なワークフローを簡単に設定できます。
-- **[シンプルだが拡張可能なインターフェース](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Python エコシステムからあらゆる関数、プログラム、スクリプト、アルゴリズムを追加、活用し、ワークフローやアプリケーションを強化します。シンプルな Python コマンドで SuperDuperDB を操作しながら、モデルの内部構造を含む実装のあらゆるレイヤーまでドリルダウンすることができます。
-- **[難しいデータ型](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: データベース内の画像、動画、音声、そして Python で `bytes` としてエンコードできるあらゆる型を直接扱うことができます。
+- **[シンプル且つ拡張可能なインターフェース](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Python エコシステムからあらゆる関数、プログラム、スクリプト、アルゴリズムを追加、活用し、ワークフローやアプリケーションを強化します。シンプルな Python コマンドで SuperDuperDB を操作しながら、モデルの内部構造を含む実装のあらゆるレイヤーまでドリルダウンすることができます。
+- **[扱いにくいデータ型](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: データベース内の画像、動画、音声、そして Python で `bytes` としてエンコードできるあらゆる型を直接扱うことができます。
 - **[機能の保存](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** データベースを、任意のデータ型のAIモデルの入出力を保存・管理するための一元化されたリポジトリに変え、構造化されたフォーマットと既知の環境で利用できるようにします。
 - **[ベクトル検索](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** ベクターデータベースにデータを移行する必要がありません - 好みのモデルと API を使用して、データのベクトル埋め込みとベクトルインデックスを簡単に生成できます。
 
 ### なぜ SuperDuperDB を選ぶのか？
-|                            | SuperDuperDB の場合 | それ以外 |
+|                            | SuperDuperDBを利用する場合 | 利用しない場合 |
 |----------------------------|-|-|
 | データ管理とセキュリティ       | データはデータベースに保存され、AI の出力は下流のアプリケーションで利用可能な入力と一緒に保存される。データへのアクセスとセキュリティは、データベースアクセス管理によって外部から制御される。  |  データの重複や異なる環境への移行、特殊なベクターデータベースなど、データ管理のオーバーヘッドが発生する。   |
-| インフラ                    | お客様の AI アプリケーションを構築、出荷、管理するための単一環境で、スケーラビリティと最適な計算効率を実現します。    |  複数のパイプラインを持つ複雑な断片化されたインフラは、高い導入コストとメンテナンスコストを伴い、セキュリティリスクを増大させる。 |
+| インフラ                    | お客様の AI アプリケーションを構築、リリース、管理するための単一環境で、スケーラビリティと最適な計算効率を実現します。    |  複数のパイプラインを持つ複雑な断片化されたインフラは、高い導入コストとメンテナンスコストを伴い、セキュリティリスクを増大させる。 |
 | コード                      | シンプルな Python コマンドを必要とする、シンプルで宣言的な API により、学習曲線は最小限です。 |  何百行ものコードと、さまざまな環境やツールでの設定。     |
 
 
-## Supported Datastores (*more coming soon*):
+## サポートされているデータストア (*近日さらに追加予定*):
 
 <table>
     <tr>
@@ -159,7 +159,7 @@ SuperDuperDB についての詳細と、私たちが SuperDuperDB を必要と�
 db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-## サポートされている AI フレームワークとモデル（*詳細は近日公開予定*）:
+## サポートされている AI フレームワークとモデル（*近日さらに追加予定*）:
 
 <table>
     <tr>
@@ -314,7 +314,7 @@ m = db.add(
 **必要条件**:
 
 - Python 3.10 or 3.11
-- Working `pip` installation (e.g. via virtual environment)
+- 動作する `pip` 
 
 ```
 pip install superduperdb
@@ -324,7 +324,7 @@ pip install superduperdb
 
 **必要条件**:
 
-- Working `docker` [installation](https://docs.docker.com/engine/install/)
+- 動作するdocker `docker` [インストール](https://docs.docker.com/engine/install/)
 
 ```
 docker run -p 8888:8888 superduperdb/demo:latest
@@ -332,7 +332,7 @@ docker run -p 8888:8888 superduperdb/demo:latest
 
 ## プレビュー
 
-以下は `superduperdb` がどのように機能し、どのように使うのが簡単かを示すスニペットです。詳しくは<a href="https://docs.superduperdb.com">ドキュメント</a>をご覧ください。
+以下は `superduperdb` の動作や使い方の簡単さを感じることができるスニペットです。詳しくは<a href="https://docs.superduperdb.com">ドキュメント</a>をご覧ください。
 
 
 #### - ML/AI モデルをデータベースにデプロイする:
@@ -359,7 +359,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 
 #### - データベースから直接モデルをトレーニング。
-追加的な取り込みや前処理をすることなく、データベースへのクエリを実行するだけです:
+追加のデータ取り込みや前処理なしで、データベースをクエリするだけです:
 
 ```python
 import pymongo

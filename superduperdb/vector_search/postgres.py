@@ -1,7 +1,7 @@
-import os
-import typing as t
-import numpy
 import json
+import typing as t
+
+import numpy
 from pgvector.psycopg import psycopg, register_vector
 
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
@@ -19,17 +19,16 @@ class PostgresVectorSearcher(BaseVectorSearcher):
     :param measure: measure to assess similarity
     """
 
-
     def __init__(
         self,
         identifier: str,
         dimensions: int,
-        uri: str,
+        conninfo: str,
         h: t.Optional[numpy.ndarray] = None,
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        self.connection = psycopg.connect(conninfo=uri)
+        self.connection = psycopg.connect(conninfo=conninfo)
         self.dimensions = dimensions
         self.identifier = identifier
         if measure == "l2" or not measure:
@@ -42,25 +41,29 @@ class PostgresVectorSearcher(BaseVectorSearcher):
             raise NotImplementedError("Unrecognized measure format")
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
-            cursor.execute('CREATE TABLE IF NOT EXISTS %s (id varchar, embedding vector(%d))' % (self.identifier, self.dimensions))
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS %s (id varchar, embedding vector(%d))'
+                % (self.identifier, self.dimensions)
+            )
         register_vector(self.connection)
         if h:
             self._create_or_append_to_dataset(h, index)
 
-
     def __len__(self):
         with self.connection.cursor() as curr:
-            length = curr.execute('SELECT COUNT(*) FROM %s' % self.identifier).fetchone()[0]
+            length = curr.execute(
+                'SELECT COUNT(*) FROM %s' % self.identifier
+            ).fetchone()[0]
         return length
 
-
     def _create_or_append_to_dataset(self, vectors, ids):
-        with self.connection.cursor().copy('COPY %s (id, embedding) FROM STDIN WITH (FORMAT BINARY)' % self.identifier) as copy:
+        with self.connection.cursor().copy(
+            'COPY %s (id, embedding) FROM STDIN WITH (FORMAT BINARY)' % self.identifier
+        ) as copy:
             copy.set_types(['varchar', 'vector'])
             for id_vector, vector in zip(ids, vectors):
                 copy.write_row([id_vector, vector])
         self.connection.commit()
-
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
         """
@@ -72,7 +75,6 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         vectors = [item.vector for item in items]
         self._create_or_append_to_dataset(vectors, ids)
 
-
     def delete(self, ids: t.Sequence[str]) -> None:
         """
         Remove items from the index
@@ -81,9 +83,10 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         """
         with self.connection.cursor() as curr:
             for id_vector in ids:
-                curr.execute("DELETE FROM %s WHERE id = '%s'" % (self.identifier, id_vector))
+                curr.execute(
+                    "DELETE FROM %s WHERE id = '%s'" % (self.identifier, id_vector)
+                )
         self.connection.commit()
-    
 
     def find_nearest_from_id(
         self,
@@ -98,10 +101,12 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         """
         with self.connection.cursor() as curr:
-            curr.execute("""
+            curr.execute(
+                """
                 SELECT embedding 
                 FROM %s 
-                WHERE id = '%s'""" % (self.identifier, _id)
+                WHERE id = '%s'"""
+                % (self.identifier, _id)
             )
             h = curr.fetchone()[0]
         return self.find_nearest_from_array(h, n, within_ids)
@@ -118,6 +123,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         :param h: vector
         :param n: number of nearest vectors to return
         """
+        h = self.to_numpy(h)[None, :]
         if len(within_ids) == 0:
             condition = "1=1"
         else:
@@ -131,7 +137,9 @@ class PostgresVectorSearcher(BaseVectorSearcher):
                 LIMIT %d
         """
         with self.connection.cursor() as curr:
-            curr.execute(query_search_nearest % (json.dumps(h.tolist()), self.identifier, condition, n))
+            curr.execute(
+                query_search_nearest % (json.dumps(h), self.identifier, condition, n)
+            )
             nearest_items = curr.fetchall()
         ids = [row[0] for row in nearest_items]
         scores = [row[1] for row in nearest_items]

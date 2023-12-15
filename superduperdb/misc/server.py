@@ -22,7 +22,9 @@ def _handshake(service: str):
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):
-    url = getattr(CFG.cluster, service) + '/' + endpoint
+    service_uri = 'http://' + ''.join(getattr(CFG.cluster, service).split('://')[1:])
+
+    url = service_uri + '/' + endpoint
     logging.debug(f'Trying to connect {service} at {url} method: {type}')
 
     if type == 'post':

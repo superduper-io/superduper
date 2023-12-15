@@ -15,7 +15,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
-        if CFG.cluster.vector_search:
+        if CFG.cluster.is_remote_vector_search:
             if not db.server_mode:
                 request_server(
                     service='vector_search',
@@ -36,7 +36,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param items: t.Sequence of VectorItems
         """
         vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
-        if CFG.cluster.vector_search:
+        if CFG.cluster.is_remote_vector_search:
             request_server(
                 service='vector_search',
                 data=vector_items,
@@ -55,7 +55,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param ids: t.Sequence of ids of vectors.
         """
-        if CFG.cluster.vector_search:
+        if CFG.cluster.is_remote_vector_search:
             request_server(
                 service='vector_search',
                 data=ids,
@@ -80,7 +80,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param _id: id of the vector
         :param n: number of nearest vectors to return
         """
-        if CFG.cluster.vector_search:
+        if CFG.cluster.is_remote_vector_search:
             response = request_server(
                 service='vector_search',
                 endpoint='query/id/search',
@@ -102,7 +102,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param h: vector
         :param n: number of nearest vectors to return
         """
-        if CFG.cluster.vector_search:
+        if CFG.cluster.is_remote_vector_search:
             response = request_server(
                 service='vector_search',
                 data=h,

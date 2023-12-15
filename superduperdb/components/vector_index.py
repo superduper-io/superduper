@@ -11,6 +11,7 @@ from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 from superduperdb.ext.utils import str_shape
+from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 
@@ -18,32 +19,31 @@ if t.TYPE_CHECKING:
     pass
 
 
-@dc.dataclass
+@public_api(stability='stable')
+@dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
     A component carrying the information to apply a vector index to a ``DB`` instance
-
-    :param identifier: Unique string identifier of index
+    {component_parameters}
     :param indexing_listener: Listener which is applied to created vectors
     :param compatible_listener: Listener which is applied to vectors to be compared
     :param measure: Measure to use for comparison
-    :param version: version of this index
     :param metric_values: Metric values for this index
     """
 
-    identifier: str
+    __doc__ = __doc__.format(component_parameters=Component.__doc__)
+
+    type_id: t.ClassVar[str] = 'vector_index'
+
     indexing_listener: t.Union[Listener, str]
     compatible_listener: t.Union[None, Listener, str] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
-    version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    type_id: t.ClassVar[str] = 'vector_index'
 
     @override
     def post_create(self, db: Datalayer) -> None:
         super().post_create(db)
-        if s.CFG.vector_search == s.CFG.data_backend:
+        if s.CFG.self_hosted_vector_search:
             if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
                 msg = 'VectorIndex is not supported by the current database backend'
                 raise ValueError(msg)

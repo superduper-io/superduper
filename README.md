@@ -26,35 +26,15 @@
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 
 <b>English</b> |
-[**中文**](README_zh.md) 
+[**中文**](README_zh.md) |
+[**日本語**](README_ja.md)
+
+
 
 </div>
 
 
----
 
-📣 Update: ***In response to the high demand for our [Live Demo](https://demo.superduperdb.com), we have adjusted the expiration time from 1 hour and 30 minutes to 1 hour. If you encounter extended queue times, we kindly ask you to try again later. Thank you for your understanding and patience.***
-
-### 📣 Today we are officially launching SuperDuperDB with release of v0.1, including:
-- Support of major SQL databases and tabular formats: PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino (as well as MongoDB)
-- Improved docs
-- A modularized testing suite
-
-***SuperDuperDB is open-source. Please support us:***
-- Leave a star on the repo! ⭐
-- [Upvote on ProductHunt!](https://www.producthunt.com/posts/superduperdb) 🗳️
-
-***To get started:***
-- Check the uses cases that we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
-
-For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
-
-
-<div align="center">
-	
-[![SuperDuperDB in a Nutshell](https://img.youtube.com/vi/FxJs7pbHj3Q/0.jpg)](https://www.youtube.com/watch?v=FxJs7pbHj3Q)
-
-</div>
 
 
 ## What is SuperDuperDB? 🔮 
@@ -70,6 +50,24 @@ SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - 
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
 - Highly custom AI use-cases involving ultra specialized models
 
+**To get started:**
+Check the use-cases we have already implemented [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the community in the dedicated [superduper-community-apps repo](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [Jupyter right in your browser](https://demo.superduperdb.com/)! 
+
+`SuperDuperDB is open-source: Please leave a star to support the project! ⭐`
+
+
+For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
+
+
+
+
+<div align="center">
+	<a href="https://www.youtube.com/watch?v=FxJs7pbHj3Q"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/overview.png" alt="Overview" width="400"></a>
+	<a href="https://www.youtube.com/watch?v=Hr0HkmIL3go"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/quickstart.png" alt="QuickStart" width="400"></a>
+</div>
+
+
+</div>
 
 ### Key Features:
 - **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
@@ -86,7 +84,7 @@ SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - 
 |----------------------------|-|-|
 | Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead.   |
 | Infrastructure             | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
+| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environments and tools.     |
 
 
 ## Supported Datastores (*more coming soon*):
@@ -163,7 +161,7 @@ SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - 
 **Transform your existing database into a Python-only AI development and deployment stack with one command:**
 
 ```
-db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
+db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
 ## Supported AI Frameworks and Models (*more coming soon*):
@@ -315,13 +313,23 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 
 ## Installation
+
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*:
+
+**Requirements**:
+
+- Python 3.10 or 3.11
+- Working `pip` installation (e.g. via virtual environment)
+
 ```
 pip install superduperdb
 ```
 
 #### 2. Try SuperDuperDB via Docker *(~2 minutes)*:
-   - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
+  
+**Requirements**:
+   
+- Working `docker` [installation](https://docs.docker.com/engine/install/)
 
 ```
 docker run -p 8888:8888 superduperdb/demo:latest
@@ -370,8 +378,8 @@ db = superduper(pymongo.MongoClient().my_db)
 # Models client can be converted to SuperDuperDB objects with a simple wrapper.
 model = superduper(SVC())
 
-# Predict on the selected data.
-model.train(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
+# Fit model on the training data.
+model.fit(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({}))
 ```
 
 #### - Vector-Search your data:

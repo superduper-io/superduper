@@ -28,7 +28,7 @@ https://github.com/blog/1506-closing-issues-via-pull-requests
 ## Checklist
 
 - [ ] Is this code covered by new or existing unit tests or integration tests?
-- [ ] Did you run `make test` successfully?
+- [ ] Did you run `make unit-testing` and `make integration-testing` successfully?
 - [ ] Do new classes, functions, methods and parameters all have docstrings?
 - [ ] Were existing docstrings updated, if necessary?
 - [ ] Was external documentation updated, if necessary?

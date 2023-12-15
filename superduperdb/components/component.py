@@ -5,6 +5,7 @@ The component module provides the base class for all components in SuperDuperDB.
 
 from __future__ import annotations
 
+import dataclasses as dc
 import typing as t
 
 from superduperdb.backends.base.artifact import ArtifactStore
@@ -16,16 +17,18 @@ if t.TYPE_CHECKING:
     from superduperdb.components.dataset import Dataset
 
 
+@dc.dataclass
 class Component(Serializable):
     """
-    Base component which model, listeners, learning tasks etc. inherit from.
-    """
+    :param identifier: A unique identifier for the component"""
 
     type_id: t.ClassVar[str]
+    identifier: str
 
-    if t.TYPE_CHECKING:
-        identifier: t.Optional[str]
-        version: t.Optional[int]
+    def __post_init__(self) -> None:
+        # set version in `__post_init__` so that is
+        # cannot be set in `__init__` and is always set
+        self.version: t.Optional[int] = None
 
     def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created
@@ -40,7 +43,6 @@ class Component(Serializable):
 
         :param db: the db that creates the component
         """
-        assert db
         assert db
 
     def on_load(self, db: Datalayer) -> None:

@@ -26,6 +26,8 @@ RUN apt-get update \
         vim procps make \
         # Required by OpenCV
         libglib2.0-0 libgl1-mesa-glx \
+        # Required for PostgreSQL \
+        libpq-dev \
    # Purge apt cache
    && apt-get clean \
    && rm -rf /var/lib/apt/lists/*

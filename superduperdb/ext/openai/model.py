@@ -32,19 +32,19 @@ def _available_models():
     return tuple([r.id for r in SyncOpenAI().models.list().data])
 
 
-@dc.dataclass
-class OpenAI(APIModel):
-    """OpenAI predictor."""
+@dc.dataclass(kw_only=True)
+class _OpenAI(APIModel):
+    __doc__ = APIModel.__doc__  # type: ignore[assignment]
 
     def __post_init__(self):
+        super().__post_init__()
+
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if self.model not in (mo := _available_models()) and self.model not in (
             'dall-e'
         ):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
-
-        self.identifier = self.identifier or self.model
 
         self.syncClient = SyncOpenAI()
         self.asyncClient = AsyncOpenAI()
@@ -53,15 +53,17 @@ class OpenAI(APIModel):
             raise ValueError('OPENAI_API_KEY not set')
 
 
-@dc.dataclass
-class OpenAIEmbedding(OpenAI):
-    """OpenAI embedding predictor
-
+@dc.dataclass(kw_only=True)
+class OpenAIEmbedding(_OpenAI):
+    """
+    OpenAI embedding predictor
+    {_openai_parameters}
     :param shape: The shape as ``tuple`` of the embedding.
     """
 
-    shape: t.Optional[t.Sequence[int]] = None
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
+    shape: t.Optional[t.Sequence[int]] = None
     shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
 
     def __post_init__(self):
@@ -123,16 +125,20 @@ class OpenAIEmbedding(OpenAI):
         return out
 
 
-@dc.dataclass
-class OpenAIChatCompletion(OpenAI):
+@dc.dataclass(kw_only=True)
+class OpenAIChatCompletion(_OpenAI):
     """OpenAI chat completion predictor.
-
-    :param takes_context: Whether the model takes context into account.
+    {_openai_parameters}
     :param prompt: The prompt to use to seed the response.
     """
 
-    takes_context: bool = True
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
+
     prompt: str = ''
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.takes_context = True
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -192,13 +198,15 @@ class OpenAIChatCompletion(OpenAI):
         return [await self._apredict_one(msg) for msg in X]
 
 
-@dc.dataclass
-class OpenAIImageCreation(OpenAI):
+@dc.dataclass(kw_only=True)
+class OpenAIImageCreation(_OpenAI):
     """OpenAI image creation predictor.
-
+    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
     """
+
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
     takes_context: bool = True
     prompt: str = ''
@@ -298,13 +306,15 @@ class OpenAIImageCreation(OpenAI):
         ]
 
 
-@dc.dataclass
-class OpenAIImageEdit(OpenAI):
+@dc.dataclass(kw_only=True)
+class OpenAIImageEdit(_OpenAI):
     """OpenAI image edit predictor.
-
+    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
     """
+
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
     takes_context: bool = True
     prompt: str = ''
@@ -441,13 +451,15 @@ class OpenAIImageEdit(OpenAI):
         ]
 
 
-@dc.dataclass
-class OpenAIAudioTranscription(OpenAI):
+@dc.dataclass(kw_only=True)
+class OpenAIAudioTranscription(_OpenAI):
     """OpenAI audio transcription predictor.
-
+    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
     """
+
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__, context='{context}')
 
     takes_context: bool = True
     prompt: str = ''
@@ -541,13 +553,15 @@ class OpenAIAudioTranscription(OpenAI):
         return list(itertools.chain(*list_of_lists))
 
 
-@dc.dataclass
-class OpenAIAudioTranslation(OpenAI):
+@dc.dataclass(kw_only=True)
+class OpenAIAudioTranslation(_OpenAI):
     """OpenAI audio translation predictor.
-
+    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
     """
+
+    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__, context='{context}')
 
     takes_context: bool = True
     prompt: str = ''

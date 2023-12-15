@@ -1,5 +1,8 @@
 MONGOMOCK_URI = 'mongomock:///test_db'
-SQLITE_URI = 'sqlite://:memory:'
+SQL_URI = 'sqlite://:memory:'
+# We can use the following SQL_URI for testing with a different database:
+# SQL_URI = 'clickhouse://default:@localhost:8123/default'
+# SQL_URI = 'mysql://root:root123@localhost:3306/test_db'
 N_DATA_POINTS = 5
 
 
@@ -20,7 +23,7 @@ class DBConfig:
         'data_backend': MONGOMOCK_URI,
         **COMMON_CONFIG,
     }
-    _sqldb_base = {'db_type': 'sqldb', 'data_backend': SQLITE_URI, **COMMON_CONFIG}
+    _sqldb_base = {'db_type': 'sqldb', 'data_backend': SQL_URI, **COMMON_CONFIG}
 
     # Configurations for an empty database
     mongodb_empty = {**_mongodb_base, 'empty': True}

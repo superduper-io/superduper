@@ -42,7 +42,7 @@ def database_with_cdc(database_with_default_encoders_and_model):
 
     from superduperdb import CFG
 
-    CFG.force_set('vector_search', 'lance')
+    CFG.force_set('cluster.vector_search', 'lance')
     db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
         'test_index',
         searcher_type='lance',
@@ -54,7 +54,7 @@ def database_with_cdc(database_with_default_encoders_and_model):
 
     yield listener, 'documents', db
 
-    CFG.force_set('vector_search', 'in_memory')
+    CFG.force_set('cluster.vector_search', 'in_memory')
     db.cdc.stop()
     try:
         shutil.rmtree('.superduperdb/vector_indices')
@@ -317,7 +317,7 @@ def client(monkeypatch, database_with_default_encoders_and_model):
     from superduperdb import CFG
 
     cdc = 'http://localhost:8001'
-    vector_search = 'http://localhost:8000'
+    vector_search = 'in_memory://localhost:8000'
 
     monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)

@@ -5,26 +5,37 @@ from functools import cached_property
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
+from superduperdb.misc.annotations import public_api
 
 
-@dc.dataclass
+@public_api(stability='beta')
+@dc.dataclass(kw_only=True)
 class Schema(Component):
-    identifier: str
-    fields: t.Mapping[str, t.Union[Encoder, str]]
-    version: t.Optional[int] = None
+    """
+    A component carrying the information
+    about the types or `Encoders` of a `Table`
+    {component_parameters}
+    :param fields: A mapping of field names to types or `Encoders`
+    """
+
+    __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'schema'
+
+    fields: t.Mapping[str, t.Union[Encoder, str]]
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        assert self.identifier is not None, 'Schema must have an identifier'
+        assert self.fields is not None, 'Schema must have fields'
+        self.fields['_fold'] = dtype('str')
 
     def pre_create(self, db) -> None:
         for v in self.fields.values():
             if isinstance(v, Encoder):
                 db.add(v)
         return super().pre_create(db)
-
-    def __post_init__(self):
-        assert self.identifier is not None, 'Schema must have an identifier'
-        assert self.fields is not None, 'Schema must have fields'
-        self.fields['_fold'] = dtype('String')
 
     @property
     def raw(self):

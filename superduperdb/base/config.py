@@ -70,9 +70,21 @@ class Cluster(BaseConfigJSONable):
     """
 
     compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
-    vector_search: t.Optional[str] = None  # 'http://localhost:8000'  # None
+    vector_search: str = 'in_memory'  # '<in_memory|lance>://localhost:8000'
     cdc: t.Optional[str] = None  # 'http://localhost:8001'  # None
     backfill_batch_size: int = 100
+
+    @property
+    def vector_search_type(self):
+        search_type = self.vector_search.split('://')[0]
+        if search_type == 'http':
+            # Return default vector_search
+            return 'in_memory'
+        return search_type
+
+    @property
+    def is_remote_vector_search(self):
+        return len(self.vector_search.split('://')) > 1
 
 
 class LogLevel(str, Enum):
@@ -123,11 +135,10 @@ class Config(BaseConfigJSONable):
 
     @property
     def self_hosted_vector_search(self) -> bool:
-        return self.data_backend == self.vector_search
+        return self.data_backend == self.cluster.vector_search
 
     data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
-    vector_search: 'str' = 'in_memory'
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')
 
     artifact_store: t.Optional[str] = None

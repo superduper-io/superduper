@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import pytest
@@ -33,9 +34,8 @@ from superduperdb.components.schema import Schema
 n_data_points = 250
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class TestComponent(Component):
-    identifier: str
     version: Optional[int] = None
     type_id: str = 'test-component'
     is_on_create: bool = False
@@ -100,7 +100,7 @@ def add_fake_model(db: Datalayer):
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
-def test_add_version(db):
+def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
     db.add(component)
@@ -231,10 +231,14 @@ def test_remove_component_version(db):
     # Remove if confirmed
     with patch('click.confirm', return_value=True):
         db._remove_component_version('test-component', 'test', 0)
+        # Wait for the db to update
+        time.sleep(0.1)
         assert db.show('test-component', 'test') == [1]
 
     # Remove force
     db._remove_component_version('test-component', 'test', 1, force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == []
 
 
@@ -275,7 +279,7 @@ def test_remove_component_with_clean_up(db):
 )
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
-    test_encoder = Encoder(identifier='test_encoder', version=0)
+    test_encoder = Encoder(identifier='test_encoder')
     db.add(test_encoder)
     db._remove_component_version('encoder', 'test_encoder', 0, force=True)
     with pytest.raises(FileNotFoundError):
@@ -315,6 +319,8 @@ def test_remove_one_version(db):
 
     # Only remove the version
     db.remove('test-component', 'test', 1, force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == [0]
 
 
@@ -331,6 +337,8 @@ def test_remove_multi_version(db):
     )
 
     db.remove('test-component', 'test', force=True)
+    # Wait for the db to update
+    time.sleep(0.1)
     assert db.show('test-component', 'test') == []
 
 
@@ -351,14 +359,14 @@ def test_remove_not_exist_component(db):
 def test_show(db):
     db.add(
         [
-            TestComponent(identifier='a1', version=0),
-            TestComponent(identifier='a2', version=1),
-            TestComponent(identifier='a3', version=2),
-            TestComponent(identifier='b', version=0),
-            TestComponent(identifier='b', version=1),
-            TestComponent(identifier='b', version=2),
-            Encoder(identifier='c1', version=0),
-            Encoder(identifier='c2', version=0),
+            TestComponent(identifier='a1'),
+            TestComponent(identifier='a2'),
+            TestComponent(identifier='a3'),
+            TestComponent(identifier='b'),
+            TestComponent(identifier='b'),
+            TestComponent(identifier='b'),
+            Encoder(identifier='c1'),
+            Encoder(identifier='c2'),
         ]
     )
 
@@ -404,7 +412,6 @@ def test_predict(db: Datalayer):
             identifier='model3',
             encoder=Encoder(
                 identifier='test-encoder',
-                version=0,
                 encoder=lambda x: torch.argmax(x, dim=1),
             ),
         ),
@@ -482,19 +489,14 @@ def test_get_context(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_load(db):
+    m1 = Model(object=lambda x: x, identifier='m1', encoder=dtype('int32'))
     db.add(
         [
-            Encoder(identifier='e1', version=0),
-            Encoder(identifier='e2', version=0),
-            Model(
-                object=lambda x: x, identifier='m1', version=0, encoder=dtype('int32')
-            ),
-            Model(
-                object=lambda x: x, identifier='m1', version=1, encoder=dtype('int32')
-            ),
-            Model(
-                object=lambda x: x, identifier='m2', version=0, encoder=dtype('int32')
-            ),
+            Encoder(identifier='e1'),
+            Encoder(identifier='e2'),
+            m1,
+            Model(object=lambda x: x, identifier='m1', encoder=dtype('int32')),
+            m1,
         ]
     )
 
@@ -592,9 +594,9 @@ def test_replace(db):
     model = Model(
         object=lambda x: x + 1,
         identifier='m',
-        version=0,
         encoder=Encoder(identifier='base'),
     )
+    model.version = 0
     with pytest.raises(Exception):
         db.replace(model)
 
@@ -603,13 +605,16 @@ def test_replace(db):
     assert db.load('model', 'm').predict([1]) == [2]
 
     # replace the 0 version of the model
-    new_model = Model(object=lambda x: x + 2, identifier='m', version=0)
+    new_model = Model(object=lambda x: x + 2, identifier='m')
+    new_model.version = 0
     db.replace(new_model)
+    time.sleep(0.1)
     assert db.load('model', 'm').predict([1]) == [3]
 
     # replace the last version of the model
     new_model = Model(object=lambda x: x + 3, identifier='m')
     db.replace(new_model)
+    time.sleep(0.1)
     assert db.load('model', 'm').predict([1]) == [4]
 
 

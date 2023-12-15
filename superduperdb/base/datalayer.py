@@ -119,8 +119,8 @@ class Datalayer:
 
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
-    ) -> BaseVectorSearcher:
-        searcher_type = searcher_type or s.CFG.vector_search
+    ) -> t.Optional[BaseVectorSearcher]:
+        searcher_type = searcher_type or s.CFG.cluster.vector_search_type
         logging.info(f"loading of vectors of vector-index: '{identifier}'")
         vi = self.vector_indices[identifier]
 
@@ -128,7 +128,7 @@ class Datalayer:
 
         if self.cdc.running:
             msg = 'CDC only supported for vector search via lance format'
-            assert s.CFG.vector_search == 'lance', msg
+            assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
         vector_comparison = vector_search_cls(
@@ -136,12 +136,10 @@ class Datalayer:
             dimensions=vi.dimensions,
             measure=vi.measure,
         )
+
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        if self.cdc.running:
-            # In this case, loading has already happened on disk via CDC mechanism
-            return vector_comparison
-        if backfill or s.CFG.cluster.vector_search is None:
+        if backfill or not s.CFG.cluster.is_remote_vector_search:
             self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
@@ -272,8 +270,10 @@ class Datalayer:
             return self.metadata.show_components(type_id=type_id)
 
         if version is None:
-            return self.metadata.show_component_versions(
-                type_id=type_id, identifier=identifier
+            return sorted(
+                self.metadata.show_component_versions(
+                    type_id=type_id, identifier=identifier
+                )
             )
 
         if version == -1:
@@ -687,7 +687,7 @@ class Datalayer:
                 continue
 
             if (
-                s.CFG.vector_search == 'in_memory'
+                s.CFG.cluster.vector_search_type == 'in_memory'
                 and vi.identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -796,11 +796,11 @@ class Datalayer:
 
         for identifier in self.show('vector_index'):
             # if a vector-searcher is not loaded, then skip
-            # since s.CFG.vector_search == 'in_memory' implies the
+            # since s.CFG.cluster.vector_search_type == 'in_memory' implies the
             # program is standalone
 
             if (
-                s.CFG.vector_search == 'in_memory'
+                s.CFG.cluster.vector_search_type == 'in_memory'
                 and identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -915,7 +915,8 @@ class Datalayer:
                 self.metadata.create_parent_child(
                     component.unique_id, Component.make_unique_id(**serialized_dict)
                 )
-            else:
+                serialized['dict'][k] = serialized_dict
+            elif isinstance(child, Component):
                 sub_jobs = self._add(
                     child,
                     serialized=serialized['dict'][k],
@@ -927,8 +928,27 @@ class Datalayer:
                     'identifier': child.identifier,
                     'version': child.version,
                 }
-            serialized['dict'][k] = serialized_dict
-
+                serialized['dict'][k] = serialized_dict
+            elif isinstance(child, list):
+                serialized_list = []
+                for i, sub in enumerate(child):
+                    assert isinstance(sub, Component)
+                    sub_jobs = self._add(
+                        sub,
+                        serialized=serialized['dict'][k][i],
+                        parent=component.unique_id,
+                    )
+                    jobs.extend(sub_jobs)
+                    serialized_list.append(
+                        {
+                            'type_id': sub.type_id,
+                            'identifier': sub.identifier,
+                            'version': sub.version,
+                        }
+                    )
+                serialized['dict'][k] = serialized_list
+            else:
+                raise ValueError(f'Unknown child type: {type(child)}')
         return jobs
 
     def _create_plan(self):
@@ -976,7 +996,8 @@ class Datalayer:
 
             if hasattr(component, 'artifact_attributes'):
                 for a in component.artifact_attributes:
-                    self.artifact_store.delete(info['dict'][a]['file_id'])
+                    if info['dict'][a] is not None:
+                        self.artifact_store.delete(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(  # TODO: duplicated function

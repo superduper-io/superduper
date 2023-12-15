@@ -685,7 +685,7 @@ class Collection(TableOrCollection):
         return self._insert([document], *args, **kwargs)
 
     def like(self, r: Document, vector_index: str, n: int = 10):
-        if CFG.data_backend != CFG.vector_search:
+        if not CFG.self_hosted_vector_search:
             return super().like(r=r, n=n, vector_index=vector_index)
         else:
 

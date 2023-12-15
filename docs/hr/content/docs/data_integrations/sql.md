@@ -83,22 +83,26 @@ db.execute(
 ... the first query above is equivalent to:
 
 ```python
-db.execute(
-    'SELECT img FROM my-table WHERE rating > 3 LIMIT 5;'
-)
+from superduperdb.backends.ibis.query import RawSQL
+
+db.execute(RawSQL('SELECT img FROM my-table WHERE rating > 3 LIMIT 5;'))
 ```
 
 ... the second will be equivalent to:
 
 ```python
-db.execute(
+from superduperdb.backends.ibis.query import RawSQL
+
+raw_sql = RawSQL(
     '''
     SELECT img FROM my-table 
     LIKE text = 'something like this'
     WHERE rating > 3
     LIMIT 5;
     '''
-)
+    )
+
+db.execute(raw_sql)
 ```
 
 ## Updating data

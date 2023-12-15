@@ -60,4 +60,16 @@ For enhanced security, consider creating a new user specifically for SuperDuperD
 If you value privacy as well, we recommend engaging in a more in-depth discussion within the project's Slack channel: [SuperDuperDB Slack](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA).
 
 </details>
+
+
+
+<details>
+<summary> What benefits does superduperdb offer for training AI models (such as Classification) compared to conventional methods? Are there any fundamental distinctions? </summary>
+
+While the underlying algorithm for training remains unchanged, the key distinction lies in the enhanced connectivity between your model and the data stores. 
+
+This improved connectivity enables users to easily customize their models for different data subsets, offering flexibility in model development.
+
+Likewise, SuperDuperDB offers numerous conveniences for streaming inference, including Change-Data-Capture support, enabling the fast release of real-time applications. 
+</details>
  

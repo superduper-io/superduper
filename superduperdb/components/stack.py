@@ -6,6 +6,7 @@ import typing as t
 
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.base.serializable import Serializable
+from superduperdb.misc.annotations import public_api
 
 from .component import Component
 
@@ -17,26 +18,27 @@ ARTIFACTS = 'artifacts'
 _STACK_JSON_FILE = 'stack.json'
 
 
-@dc.dataclass
+@public_api(stability='alpha')
+@dc.dataclass(kw_only=True)
 class Stack(Component):
     """
     A placeholder to hold list of components under a namespace and packages them as
     a tarball
     This tarball can be retrieved back to a `Stack` instance with ``load`` method.
-
-    :param identifier: A string used to identify the model.
+    {component_parameters}
     :param components: List of components to stack together and add to database.
     :param version: Version number of the model(?)
     """
 
-    identifier: t.Optional[str] = None
-    components: t.Optional[t.Sequence[Component]] = ()
-    version: t.Optional[int] = None
+    __doct__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'stack'
 
-    def __post_init__(self):
-        self._load_components()
+    components: t.Sequence[Component] = ()
+
+    @property
+    def child_components(self):
+        return (('components', 'component_list'),)
 
     def _load_components(self):
         self._component_type_store = {}

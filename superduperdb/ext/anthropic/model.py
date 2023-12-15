@@ -18,7 +18,7 @@ retry = Retry(
 KEY_NAME = 'ANTHROPIC_API_KEY'
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class Anthropic(APIModel):
     """Anthropic predictor."""
 
@@ -28,7 +28,7 @@ class Anthropic(APIModel):
         self.identifier = self.identifier or self.model
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class AnthropicCompletions(Anthropic):
     """Cohere completions (chat) predictor.
 
@@ -36,7 +36,6 @@ class AnthropicCompletions(Anthropic):
     :param prompt: The prompt to use to seed the response.
     """
 
-    takes_context: bool = True
     prompt: str = ''
 
     def pre_create(self, db: Datalayer) -> None:

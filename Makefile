@@ -77,6 +77,7 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 	cd ../..
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
+##@ Testing Environments
 
 testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
@@ -109,6 +110,12 @@ testenv_shutdown: ## Terminate the local Testing environment
 	docker compose -f deploy/testenv/docker-compose.yaml down
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
+
+testdb_init: ## Initialize databases in Docker
+	cd deploy/databases/; docker compose up --remove-orphans &
+
+testdb_shutdown: ## Terminate Databases Containers
+	cd deploy/databases/; docker compose down
 
 ##@ CI Testing Functions
 

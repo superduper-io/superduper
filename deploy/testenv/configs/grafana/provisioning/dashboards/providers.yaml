@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+- name: 'main'
+  orgId: 1
+  folder: ''
+  type: file
+  disableDeletion: true
+  options:
+    path: /app.cfg/dashboards

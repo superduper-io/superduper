@@ -63,6 +63,7 @@ def open_ai_with_rhymes(db, monkeypatch):
     f'{CASSETTE_DIR}/test_retrieve_with_similar_context.yaml',
     filter_headers=['authorization'],
     record_on_exception=False,
+    ignore_localhost=True,
 )
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
@@ -70,7 +71,7 @@ def open_ai_with_rhymes(db, monkeypatch):
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes
     m = OpenAIChatCompletion(
-        model='gpt-3.5-turbo',
+        identifier='gpt-3.5-turbo',
         prompt=(
             'Use the following facts to answer this question\n'
             '{context}\n\n'

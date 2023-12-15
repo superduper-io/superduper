@@ -30,7 +30,7 @@ ENV PATH="/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED 1
 
 # Activate the virtual environment and install piptools
-RUN python3.11 -m pip install --upgrade pip-tools
+RUN python3.11 -m pip install pip-tools
 
 # Activate the virtual environment and install required Python packages
 RUN python3.11 -m pip install pytest ipykernel jupyter black interrogate ruff ibis ibis-framework pydantic mypy 

@@ -27,7 +27,7 @@ services:
     #   MONGO_INITDB_ROOT_USERNAME: root
     #   MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
-      - ../.localmongodata:/data/mongodb6
+      - ../.superduperdb:/data/mongodb6
     ports:
       - '27017:27017'
     command:

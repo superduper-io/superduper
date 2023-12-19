@@ -445,10 +445,10 @@ def test_predict_context(db: Datalayer):
     assert not context_out
 
     with patch.object(db, '_get_context') as mock_get_context:
-        mock_get_context.return_value = [
-            torch.randn(4, 2),
-            torch.randn(4, 3),
-        ]
+        mock_get_context.return_value = (
+            [None, None],
+            [Document(torch.randn(4, 2)), Document(torch.randn(4, 3))],
+        )
         y, context_out = db.predict(
             'model',
             torch.randn(4, 16),
@@ -472,11 +472,11 @@ def test_get_context(db):
     context_select.execute.return_value = fake_contexts
 
     # Test get_context without context_key
-    return_contexts = db._get_context(model, context_select, context_key=None)
+    return_contexts, _ = db._get_context(model, context_select, context_key=None)
     assert return_contexts == [{'text': f'hello world {i}'} for i in range(10)]
 
     # Test get context without context
-    return_contexts = db._get_context(model, context_select, context_key='text')
+    return_contexts, _ = db._get_context(model, context_select, context_key='text')
     assert return_contexts == [f'hello world {i}' for i in range(10)]
 
     # Testing models that cannot accept context

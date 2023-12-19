@@ -150,7 +150,7 @@ class Config(BaseConfigJSONable):
     downloads_folder: t.Optional[str] = None
     fold_probability: float = 0.05
 
-    log_level: LogLevel = LogLevel.DEBUG
+    log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
 
     dot_env: t.Optional[str] = None

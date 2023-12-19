@@ -288,12 +288,12 @@ class Datalayer:
     ):
         assert model.takes_context, 'model does not take context'
         assert context_select is not None
-        context = list(self.execute(context_select))
-        context = [x.unpack() for x in context]
+        sources = list(self.execute(context_select))
+        context = [x.unpack() for x in sources]
 
         if context_key is not None:
             context = [MongoStyleDict(x)[context_key] for x in context]
-        return context
+        return context, sources
 
     async def apredict(
         self,
@@ -314,9 +314,10 @@ class Datalayer:
         """
         model = self.models[model_name]
         context = None
+        sources: t.List[Document] = []
 
         if context_select is not None:
-            context = self._get_context(model, context_select, context_key)
+            context, sources = self._get_context(model, context_select, context_key)
         out = await model.apredict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
@@ -328,7 +329,7 @@ class Datalayer:
             out = model.encoder(out)
 
         if context is not None:
-            return Document(out), [Document(x) for x in context]
+            return Document(out), sources
         return Document(out), []
 
     def predict(
@@ -350,10 +351,11 @@ class Datalayer:
         """
         model = self.models[model_name]
         context = None
+        sources: t.List[Document] = []
 
         if context_select is not None:
             if isinstance(context_select, Select):
-                context = self._get_context(model, context_select, context_key)
+                context, sources = self._get_context(model, context_select, context_key)
             elif isinstance(context_select, str):
                 context = context_select
             else:
@@ -370,7 +372,7 @@ class Datalayer:
             out = model.encoder(out)
 
         if context is not None:
-            return Document(out), [Document(x) for x in context]
+            return Document(out), sources
         return Document(out), []
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:

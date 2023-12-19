@@ -222,6 +222,9 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xanthropic.png" width="139px"/>
         </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/jinaai.png" width="139px"/>
+        </td>
     </tr>
 </table>
 
@@ -229,7 +232,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 ```
 m = db.add(
-    OpenAI<Task>|Cohere<Task>|Anthropic<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
+    OpenAI<Task>|Cohere<Task>|Anthropic<Task>|JinaAI<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
 )
 ```
 
@@ -398,7 +401,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 ```
 
 #### - Integrate AI APIs to work together with other models. 
-Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search.
+Use OpenAI, Jina AI, PyTorch or Hugging face model as an embedding model for vector search.
 
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.

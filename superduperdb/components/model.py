@@ -233,8 +233,9 @@ class _Predictor:
                     logging.info(f'Query {select} not found in metadata, adding...')
                     db.metadata.add_query(select, self.identifier)
                     logging.info('Done')
-            logging.info(f'Adding model {self.identifier} to db')
+
             if not was_added:
+                logging.info(f'Adding model {self.identifier} to db')
                 assert isinstance(self, Component)
                 db.add(self)
 
@@ -382,8 +383,13 @@ class _Predictor:
         else:
             query = select.select_ids
 
+        try:
+            id_field = db.databackend.id_field
+        except AttributeError:
+            id_field = query.table_or_collection.primary_id
+
         for r in tqdm.tqdm(db.execute(query)):
-            ids.append(str(r[db.databackend.id_field]))
+            ids.append(str(r[id_field]))
 
         return self._predict_with_select_and_ids(
             X=X,
@@ -440,6 +446,13 @@ class _Predictor:
                 keys=[X],
             )
 
+        if len(X_data) > len(ids):
+            raise Exception(
+                'You\'ve specified more documents than unique ids;'
+                f' Is it possible that {select.table_or_collection.primary_id}'
+                f' isn\'t unique identifying?'
+            )
+
         outputs = self.predict(X=X_data, one=False, **kwargs)
 
         if isinstance(self.encoder, Encoder):
@@ -460,6 +473,8 @@ class _Predictor:
             outputs = encoded_ouputs if encoded_ouputs else outputs
 
         assert isinstance(self.version, int)
+
+        logging.info(f'Adding {len(outputs)} model outputs to `db`')
         select.model_update(
             db=db,
             model=self.identifier,
@@ -497,7 +512,7 @@ class Model(_Predictor, Component):
         _predictor_params=_Predictor.__doc__,
     )
 
-    object: t.Union[Artifact, t.Any]
+    object: t.Union[Artifact, t.Any, None]
     model_to_device_method: t.Optional[str] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     predict_method: t.Optional[str] = None
@@ -521,7 +536,7 @@ class Model(_Predictor, Component):
     def __post_init__(self):
         super().__post_init__()
 
-        if not isinstance(self.object, Artifact):
+        if not isinstance(self.object, Artifact) and self.object is not None:
             self.object = Artifact(artifact=self.object, serializer=self.serializer)
         if self.preprocess and not isinstance(self.preprocess, Artifact):
             self.preprocess = Artifact(artifact=self.preprocess)
@@ -535,7 +550,8 @@ class Model(_Predictor, Component):
     def to_call(self, X, *args, **kwargs):
         if self.predict_method is None:
             return self.object.artifact(X, *args, **kwargs)
-        return getattr(self.object.artifact, self.predict_method)(X, *args, **kwargs)
+        out = getattr(self.object.artifact, self.predict_method)(X, *args, **kwargs)
+        return out
 
     def post_create(self, db: Datalayer) -> None:
         if isinstance(self.training_configuration, str):
@@ -589,6 +605,7 @@ class Model(_Predictor, Component):
         return jobs
 
     def on_load(self, db: Datalayer) -> None:
+        logging.debug(f'Calling on_load method of {self}')
         if self._artifact_method and self.preferred_devices:
             for i, device in enumerate(self.preferred_devices):
                 try:

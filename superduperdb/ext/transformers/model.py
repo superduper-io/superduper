@@ -179,6 +179,7 @@ class Pipeline(Model):
 
         assert isinstance(self.collate_fn, Artifact)
         assert db is not None
+        assert isinstance(self.object, Artifact)
         trainer = _TrainerWithSaving(
             model=self.object.artifact,
             args=self.training_arguments,

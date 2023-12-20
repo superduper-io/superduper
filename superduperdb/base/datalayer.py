@@ -161,6 +161,8 @@ class Datalayer:
 
         logging.info(str(query))
 
+        id_field = query.table_or_collection.primary_id
+
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             self.execute(query),
@@ -172,7 +174,7 @@ class Datalayer:
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
 
-                id = record[self.databackend.id_field]
+                id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
                 h = record.outputs(
                     key,

@@ -5,8 +5,6 @@ from superduperdb.components.model import APIModel, Model
 
 
 class BaseDataBackend(ABC):
-    id_field = 'id'
-
     def __init__(self, conn: t.Any, name: str):
         self.conn = conn
         self.name = name

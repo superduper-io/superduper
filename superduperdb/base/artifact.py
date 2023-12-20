@@ -67,6 +67,10 @@ class Artifact:
             self.load(self.artifact_store)
         return self._artifact
 
+    @artifact.setter
+    def artifact(self, value):
+        self._artifact = value
+
     def load(self, artifact_store):
         self._artifact = artifact_store.load_artifact(
             file_id=self.file_id,

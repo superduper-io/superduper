@@ -113,6 +113,11 @@ class LogType(str, Enum):
     LOKI = "LOKI"
 
 
+class BytesEncoding(str, Enum):
+    BYTES = 'Bytes'
+    BASE64 = 'Str'
+
+
 class Config(BaseConfigJSONable):
     """
     The data class containing all configurable superduperdb values
@@ -130,6 +135,8 @@ class Config(BaseConfigJSONable):
 
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
+
+    :param bytes_encoding: The encoding of bytes in the data backend
 
     """
 
@@ -154,6 +161,8 @@ class Config(BaseConfigJSONable):
     logging_type: LogType = LogType.SYSTEM
 
     dot_env: t.Optional[str] = None
+
+    bytes_encoding: BytesEncoding = BytesEncoding.BYTES
 
     class Config(JSONable.Config):
         protected_namespaces = ()

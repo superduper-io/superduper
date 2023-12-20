@@ -3,6 +3,7 @@ import typing as t
 from functools import cached_property
 
 from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.base.configs import CFG
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.misc.annotations import public_api
@@ -40,7 +41,7 @@ class Schema(Component):
     @property
     def raw(self):
         return {
-            k: (v.identifier if not isinstance(v, Encoder) else 'Bytes')
+            k: (v.identifier if not isinstance(v, Encoder) else CFG.bytes_encoding)
             for k, v in self.fields.items()
         }
 

@@ -4,7 +4,7 @@
 
 In this use-case we describe how to implement vector-search using `superduperdb` on Snowflake.
 
-Here is the notebook [notebook](https://github.com/SuperDuperDB/superduperdb/blob/main/examples/snowflake-example.ipynb) for you to further test.
+Here is the notebook [notebook](https://github.com/SuperDuperDB/superduperdb/blob/main/examples/snowflake-example.ipynb) for you to run.
 
 ### Configure `superduperdb` to work with Snowflake
 

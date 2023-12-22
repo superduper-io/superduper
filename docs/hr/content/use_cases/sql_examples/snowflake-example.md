@@ -1,14 +1,18 @@
 # Snowflake vector-search 
 
+## How to implement vector-search using `superduperdb` on Snowflake
+
 In this use-case we describe how to implement vector-search using `superduperdb` on Snowflake. 
 
-## Connect to Snowflake
+### Configure `superduperdb` to work with Snowflake
 
-The first step in doing this is to connect to your snowflake account. When you log in, it should look something like this:
+The first step in doing this is 
+to connect to your snowflake account. When you log in it should look something like this:
 
 ![](/img/snowflake-login.png)
 
-The important thing to get from this login page is the **< organization-id >** and **< user-id >** from the menu in the bottom right (annotated on the image). You will set these values in the cell below.
+The important thing you need to get from this login is the **organization-id** and **user-id** from the menu in the bottom right (annotated on the image). You will set these values in the cell below.
+
 
 
 ```python
@@ -18,20 +22,16 @@ import os
 os.environ['SUPERDUPERDB_BYTES_ENCODING'] = 'Str'
 
 from superduperdb import superduper, CFG
-from superduperdb.backends.ibis.query import RawSQL
 
 user = "<USERNAME>"
 password = "<PASSWORD>"
-account = "WSWZPKW-LN66790"  # <ORGANIZATIONID>-<USERID>
-database= "FREE_COMPANY_DATASET/PUBLIC"
+account = "WSWZPKW-LN66790"  # ORGANIZATIONID-USERID
 
-db = superduper(
-    f"snowflake://{user}:{password}@{account}/{database}"
-    metadata_store='sqlite:///sqlite.db'
-)
+def make_uri(database):
+    return f"snowflake://{user}:{password}@{account}/{database}"
 ```
 
-## Load Dataset
+## Set up sample data to test vector-search
 
 We're going to use some of the Snowflake sample data in this example, namely the `FREE_COMPANY_DATASET`. You 
 can find the `FREE_COMPANY_DATASET` on [this link](https://app.snowflake.com/marketplace/listing/GZSTZRRVYL2/people-data-labs-free-company-dataset).
@@ -40,16 +40,35 @@ Since the database where this data is hosted is read-only, we copy a sample of t
 
 
 ```python
+from superduperdb.backends.ibis.query import RawSQL
+
+db = superduper(
+    make_uri("FREE_COMPANY_DATASET/PUBLIC"),
+    metadata_store='sqlite:///.testdb.db'
+)
+
 sample = db.execute(RawSQL('SELECT * FROM FREECOMPANYDATASET SAMPLE (5000 ROWS);')).as_pandas()
 ```
 
-### Create a table for vector-search index
+### Connect to your dedicated vector-search database
 
 We use the connection we created to get the snapshot, to also create the dataset we are going to work with:
 
 
 ```python
 db.databackend.conn.create_database('SUPERDUPERDB_EXAMPLE', force=True)
+```
+
+Now we are ready to connect to this database with `superduperdb`:
+
+
+```python
+from superduperdb.backends.ibis.query import RawSQL
+
+db = superduper(
+    make_uri("SUPERDUPERDB_EXAMPLE/PUBLIC"),
+    metadata_store='sqlite:///.testdb.db'
+)
 ```
 
 Since `superduperdb` implements extra features on top of your classical database/ datalake, it's necessary
@@ -161,7 +180,10 @@ db.add(
 
 This step will take a few moments (unless you have a GPU to hand).
 
-> **important** Once this step is finished you can search Snowflake with vector-search!
+:::important
+**Once this step is finished you can 
+search Snowflake with vector-search!**
+:::
 
 ### Execute a vector-search query with `.like`
 

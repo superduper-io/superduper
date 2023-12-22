@@ -2,13 +2,13 @@
 
 In this use-case we describe how to implement vector-search using `superduperdb` on Snowflake. 
 
-## Get Snowflake Credentials
+## Connect to Snowflake
 
 The first step in doing this is to connect to your snowflake account. When you log in, it should look something like this:
 
 ![](/img/snowflake-login.png)
 
-The important thing to get from this login page is the **organization-id** and **user-id** from the menu in the bottom right (annotated on the image). You will set these values in the cell below.
+The important thing to get from this login page is the **< organization-id >** and **< user-id >** from the menu in the bottom right (annotated on the image). You will set these values in the cell below.
 
 
 ```python
@@ -18,13 +18,17 @@ import os
 os.environ['SUPERDUPERDB_BYTES_ENCODING'] = 'Str'
 
 from superduperdb import superduper, CFG
+from superduperdb.backends.ibis.query import RawSQL
 
 user = "<USERNAME>"
 password = "<PASSWORD>"
-account = "WSWZPKW-LN66790"  # ORGANIZATIONID-USERID
+account = "WSWZPKW-LN66790"  # <ORGANIZATIONID>-<USERID>
+database= "FREE_COMPANY_DATASET/PUBLIC"
 
-def make_uri(database):
-    return f"snowflake://{user}:{password}@{account}/{database}"
+db = superduper(
+    f"snowflake://{user}:{password}@{account}/{database}"
+    metadata_store='sqlite:///sqlite.db'
+)
 ```
 
 ## Load Dataset
@@ -36,13 +40,6 @@ Since the database where this data is hosted is read-only, we copy a sample of t
 
 
 ```python
-from superduperdb.backends.ibis.query import RawSQL
-
-db = superduper(
-    make_uri("FREE_COMPANY_DATASET/PUBLIC"),
-    metadata_store='sqlite:///sqlite.db'
-)
-
 sample = db.execute(RawSQL('SELECT * FROM FREECOMPANYDATASET SAMPLE (5000 ROWS);')).as_pandas()
 ```
 

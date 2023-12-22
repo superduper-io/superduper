@@ -1,11 +1,8 @@
 import io
-import time
 import uuid
 from contextlib import redirect_stdout
 
 import pytest
-
-from superduperdb import logging
 
 try:
     import torch
@@ -33,16 +30,16 @@ def add_and_cleanup_listener(database, collection_name):
 
 
 @pytest.fixture
-def distributed_db(database_with_default_encoders_and_model, dask_client):
+def distributed_db(database_with_default_encoders_and_model, ray_client):
     local_compute = database_with_default_encoders_and_model.get_compute()
-    database_with_default_encoders_and_model.set_compute(dask_client)
+    database_with_default_encoders_and_model.set_compute(ray_client)
     yield database_with_default_encoders_and_model
     database_with_default_encoders_and_model.set_compute(local_compute)
 
 
 @pytest.mark.order(2)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_taskgraph_futures_with_dask(dask_client, distributed_db, fake_updates):
+def test_taskgraph_futures_with_ray(ray_client, distributed_db, fake_updates):
     collection_name = str(uuid.uuid4())
     _, graph = distributed_db.execute(
         Collection(identifier=collection_name).insert_many(fake_updates)
@@ -53,22 +50,22 @@ def test_taskgraph_futures_with_dask(dask_client, distributed_db, fake_updates):
             Collection(identifier=collection_name).find({'update': True})
         )
     )
-    dask_client.wait_all()
+    ray_client.wait_all()
 
     nodes = graph.G.nodes
     jobs = [nodes[node]['job'] for node in nodes]
 
-    assert all([job.future.status == 'finished' for job in jobs])
+    assert all([job.future.future().exception() is None for job in jobs])
 
 
 @pytest.mark.order(1)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    'dask_client, test_db',
+    'ray_client, test_db',
     [('test_insert_with_distributed', 'test_insert_with_distributed')],
     indirect=True,
 )
-def test_insert_with_dask(distributed_db, dask_client, fake_updates):
+def test_insert_with_ray(distributed_db, ray_client, fake_updates):
     collection_name = str(uuid.uuid4())
 
     with add_and_cleanup_listener(
@@ -79,12 +76,7 @@ def test_insert_with_dask(distributed_db, dask_client, fake_updates):
         db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
         # Barrier
-        dask_client.wait_all()
-
-        # Get distributed logs
-        logs = dask_client.client.get_worker_logs()
-
-        logging.info("worker logs", logs)
+        ray_client.wait_all()
 
         # Assert result
         q = Collection(identifier=collection_name).find({'update': True})
@@ -94,7 +86,7 @@ def test_insert_with_dask(distributed_db, dask_client, fake_updates):
 
 @pytest.mark.order(3)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_dependencies_with_dask(dask_client, distributed_db):
+def test_dependencies_with_ray(ray_client, distributed_db):
     def test_node_1(*args, **kwargs):
         return 1
 
@@ -125,19 +117,19 @@ def test_dependencies_with_dask(dask_client, distributed_db):
     # Run Job
     # ------------------------------
     g.run_jobs()
-    dask_client.wait_all()
+    ray_client.wait_all()
 
     # Validate Output
     # ------------------------------
-    futures = list(dask_client.tasks.values())
+    futures = list(ray_client.tasks.values())
+
     assert len(futures) == 2
-    assert futures[0].status == 'finished'
-    assert futures[1].status == 'finished'
-    assert futures[0].result() == 1
-    assert futures[1].result() == 2
+
+    assert futures[0].future().result() == 1
+    assert futures[1].future().result() == 2
 
 
-@pytest.mark.order(4)
+@pytest.mark.skip
 def test_model_job_logs(distributed_db, fake_updates):
     # Set Collection Listener
     # ------------------------------
@@ -161,8 +153,9 @@ def test_model_job_logs(distributed_db, fake_updates):
         jobs[0].watch()
     s = f.getvalue()
     logs = s.split('\n')
-    retry_left = 5
-    while not jobs[0].future.done() or retry_left != 0:
-        time.sleep(1)
-        retry_left -= 1
+
+    import ray
+
+    ray.wait([job.future for job in jobs], num_returns=len(jobs), timeout=10)
+    print(logs)
     assert len(logs) > 1

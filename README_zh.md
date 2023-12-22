@@ -214,6 +214,9 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xanthropic.png" width="139px"/>
         </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/jinaai.png" width="139px"/>
+        </td>
     </tr>
 </table>
 
@@ -222,7 +225,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 ```
 m = db.add(
-    OpenAI<Task>|Cohere<Task>|Anthropic<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
+    OpenAI<Task>|Cohere<Task>|Anthropic<Task>|JinaAI<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
 )
 ```
 
@@ -385,7 +388,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 ```
 
 #### - 将AI接口集成，与其他模型协同工作。
-使用OpenAI、PyTorch或Hugging Face模型作为向量搜索的嵌入模型。
+使用OpenAI、Jina AI、PyTorch或Hugging Face模型作为向量搜索的嵌入模型。
 
 
 ```python

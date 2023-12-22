@@ -130,4 +130,4 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
     assert 'hoax' in prediction[0].content
 
     assert isinstance(prediction[1][0], Document)
-    assert isinstance(prediction[1][0].content, str)
+    assert isinstance(prediction[1][0].content, dict)

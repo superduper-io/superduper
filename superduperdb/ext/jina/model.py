@@ -16,6 +16,7 @@ class Jina(APIModel):
     api_key: t.Optional[str] = None
 
     def __post_init__(self):
+        super().__post_init__()
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 

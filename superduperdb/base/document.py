@@ -40,6 +40,20 @@ class Document:
             return _encode_with_schema(self.content, schema)
         return _encode(self.content)
 
+    @property
+    def variables(self) -> t.List[str]:
+        from superduperdb.base.serializable import _find_variables
+
+        return _find_variables(self.content)
+
+    def set_variables(self, db, **kwargs) -> 'Document':
+        from superduperdb.base.serializable import _replace_variables
+
+        content = _replace_variables(
+            self.content, db, **kwargs
+        )  # replace variables with values
+        return Document(content)
+
     def outputs(self, key: str, model: str, version: t.Optional[int] = None) -> t.Any:
         """
         Get document ouputs on ``key`` from ``model``

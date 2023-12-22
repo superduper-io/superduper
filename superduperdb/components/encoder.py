@@ -1,9 +1,12 @@
+import base64
 import dataclasses as dc
 import io
 import pickle
 import typing as t
 
+from superduperdb import CFG
 from superduperdb.base.artifact import Artifact
+from superduperdb.base.config import BytesEncoding
 from superduperdb.components.component import Component
 from superduperdb.misc.annotations import public_api
 
@@ -69,12 +72,22 @@ class Encoder(Component):
     ) -> 'Encodable':
         return Encodable(self, x=x, uri=uri)
 
-    def decode(self, b: bytes) -> t.Any:
+    def decode(self, b: t.Union[bytes, str]) -> t.Any:
         assert isinstance(self.decoder, Artifact)
+        if CFG.bytes_encoding == BytesEncoding.BASE64:
+            b = self.from_base64(b)
         return self(self.decoder.artifact(b))
 
     def dump(self, other):
         return self.encoder.artifact(other)
+
+    @staticmethod
+    def to_base64(bytes):
+        return base64.b64encode(bytes).decode('utf-8')
+
+    @staticmethod
+    def from_base64(encoded):
+        return base64.b64decode(encoded)
 
     def encode(
         self,
@@ -83,10 +96,17 @@ class Encoder(Component):
         wrap: bool = True,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         # TODO clarify what is going on here
+
+        def _encode(x):
+            bytes_ = self.encoder.artifact(x)
+            if CFG.bytes_encoding == BytesEncoding.BASE64:
+                bytes_ = self.to_base64(bytes_)
+            return bytes_
+
         def _wrap_content(x):
             return {
                 '_content': {
-                    'bytes': self.encoder.artifact(x),
+                    'bytes': _encode(x),
                     'encoder': self.identifier,
                 }
             }
@@ -95,7 +115,7 @@ class Encoder(Component):
             if x is not None:
                 if wrap:
                     return _wrap_content(x)
-                return self.encoder.artifact(x)  # type: ignore[union-attr]
+                return _encode(x)
             else:
                 if wrap:
                     return {

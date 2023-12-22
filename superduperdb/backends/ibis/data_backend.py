@@ -60,7 +60,7 @@ class IbisDataBackend(BaseDataBackend):
         else:
             output_type = model.encoder
         fields = {
-            'output_id': dtype('int32'),
+            'output_id': dtype('str'),  # TODO why do we need this????
             'input_id': dtype('str'),
             'query_id': dtype('string'),
             'output': output_type,

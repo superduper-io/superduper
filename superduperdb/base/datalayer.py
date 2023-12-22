@@ -27,6 +27,7 @@ from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.model import Model
+from superduperdb.components.serializer import serializers
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.colors import Colors
@@ -82,11 +83,17 @@ class Datalayer:
         self.models = LoadDict(self, field='model')
         self.encoders = LoadDict(self, field='encoder')
         self.vector_indices = LoadDict(self, field='vector_index')
+        self.serializers = LoadDict(self, field='serializer')
+        for ser in serializers:
+            self.serializers[ser] = serializers[ser]
+
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
         )
         self.metadata = metadata
         self.artifact_store = artifact_store
+        self.artifact_store.serializers = self.serializers
+
         self.databackend = databackend
         # TODO: force set config stores connection url
 
@@ -104,9 +111,11 @@ class Datalayer:
         if cfg:
             self.metadata = build.build_metadata(cfg.metadata_store)
             self.artifact_store = build.build_artifact_store(cfg.artifact_store)
+            self.artifact_store.serializers = self.serializers
         else:
             self.metadata = self.databackend.build_metadata()
             self.artifact_store = self.databackend.build_artifact_store()
+            self.artifact_store.serializers = self.serializers
 
     @property
     def server_mode(self):
@@ -161,6 +170,8 @@ class Datalayer:
 
         logging.info(str(query))
 
+        id_field = query.table_or_collection.primary_id
+
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             self.execute(query),
@@ -172,7 +183,7 @@ class Datalayer:
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
 
-                id = record[self.databackend.id_field]
+                id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
                 h = record.outputs(
                     key,
@@ -288,12 +299,12 @@ class Datalayer:
     ):
         assert model.takes_context, 'model does not take context'
         assert context_select is not None
-        context = list(self.execute(context_select))
-        context = [x.unpack() for x in context]
+        sources = list(self.execute(context_select))
+        context = [x.unpack() for x in sources]
 
         if context_key is not None:
             context = [MongoStyleDict(x)[context_key] for x in context]
-        return context
+        return context, sources
 
     async def apredict(
         self,
@@ -314,9 +325,10 @@ class Datalayer:
         """
         model = self.models[model_name]
         context = None
+        sources: t.List[Document] = []
 
         if context_select is not None:
-            context = self._get_context(model, context_select, context_key)
+            context, sources = self._get_context(model, context_select, context_key)
         out = await model.apredict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
@@ -328,7 +340,7 @@ class Datalayer:
             out = model.encoder(out)
 
         if context is not None:
-            return Document(out), [Document(x) for x in context]
+            return Document(out), sources
         return Document(out), []
 
     def predict(
@@ -350,10 +362,11 @@ class Datalayer:
         """
         model = self.models[model_name]
         context = None
+        sources: t.List[Document] = []
 
         if context_select is not None:
             if isinstance(context_select, Select):
-                context = self._get_context(model, context_select, context_key)
+                context, sources = self._get_context(model, context_select, context_key)
             elif isinstance(context_select, str):
                 context = context_select
             else:
@@ -370,7 +383,7 @@ class Datalayer:
             out = model.encoder(out)
 
         if context is not None:
-            return Document(out), [Document(x) for x in context]
+            return Document(out), sources
         return Document(out), []
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
@@ -654,6 +667,7 @@ class Datalayer:
         info = self.artifact_store.load(info, lazy=True)
 
         m = Component.deserialize(info)
+        m.db = self
         m.on_load(self)
 
         if cm := self.type_id_to_cache_mapping.get(type_id):
@@ -864,6 +878,7 @@ class Datalayer:
         parent: t.Optional[str] = None,
     ):
         jobs = []
+        object.db = self
         object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
@@ -1209,12 +1224,15 @@ class Datalayer:
 
     def select_nearest(
         self,
-        like: Document,
+        like: t.Union[t.Dict, Document],
         vector_index: str,
         ids: t.Optional[t.Sequence[str]] = None,
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        if not isinstance(like, Document):
+            assert isinstance(like, dict)
+            like = Document(like)
         like = self._get_content_for_filter(like)
         vi = self.vector_indices[vector_index]
         if outputs is None:

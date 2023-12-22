@@ -18,7 +18,7 @@ services:
       - ${SUPERDUPERDB_DATA_DIR:-.test_data}:/data/db
     ports:
       - "27017:27017"
-    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
+    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/ --logpath /dev/null"]
 
   mongo-init: # Once finished, Mongo is assumed to be ready.
     image: mongo:6
@@ -201,6 +201,21 @@ services:
         - /var/lib/docker/:/var/lib/docker:ro
         - /dev/disk/:/dev/disk:ro
 
+  ray-cluster:
+     image: superduperdb/sandbox
+     ports:
+       - "10001:10001" # Peer communication
+       - "8265:8265"
+       - "6379:6379"
+     environment:
+       SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+     command:
+       - /bin/sh
+       - -c
+       - |
+         pip install "ray[default]==2.8.1" && pip install async_timeout &&  PYTHONPATH=./:. ray start  --head --dashboard-host "0.0.0.0" --include-dashboard=True --block
+     deploy:
+       replicas: 1
 
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------

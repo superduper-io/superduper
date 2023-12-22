@@ -39,12 +39,11 @@
 
 ## What is SuperDuperDB? 🔮 
 
-SuperDuperDB is an open-source framework for integrating AI directly with your existing databases, including streaming inference, scalable model training, and vector search.
+SuperDuperDB is an open-source framework for integrating your database with AI models, APIs, and vector search engines, providing streaming inference and scalable training/fine-tuning.
 
-SuperDuperDB is not a database. It transforms your favorite database into an AI development and deployment environment; think `db = superduper(db)`. 
+SuperDuperDB is **not** a database. SuperDuperDB is an open platform unifying data infrastructure and AI. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent system that leverages the full power of the AI, open-source and Python ecosystem. It is a single scalable environment for all your AI that can be deployed anywhere, in the cloud, on-prem, on your machine.
 
-SuperDuperDB eliminates complex MLOps pipelines, specialized vector databases - and the need to migrate and duplicate data by integrating AI at the data's source, directly on top of your existing data infrastructure. This massively simplifies building and managing AI applications:
-
+SuperDuperDB allows you to build AI applications easily without needing to move your data to complex MLOps pipelines and specialized vector databases by integrating AI at the data’s source, directly on top of your existing data infrastructure:
 - Generative AI & LLM-Chat
 - Vector Search
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
@@ -222,6 +221,9 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xanthropic.png" width="139px"/>
         </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/jinaai.png" width="139px"/>
+        </td>
     </tr>
 </table>
 
@@ -229,7 +231,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 ```
 m = db.add(
-    OpenAI<Task>|Cohere<Task>|Anthropic<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
+    OpenAI<Task>|Cohere<Task>|Anthropic<Task>|JinaAI<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
 )
 ```
 
@@ -398,7 +400,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 ```
 
 #### - Integrate AI APIs to work together with other models. 
-Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search.
+Use OpenAI, Jina AI, PyTorch or Hugging face model as an embedding model for vector search.
 
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.

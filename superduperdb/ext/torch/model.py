@@ -198,6 +198,7 @@ class TorchModel(Model):
             return args
 
     def _predict(self, x, one: bool = False, **kwargs):  # type: ignore[override]
+        assert isinstance(self.object, Artifact)
         with torch.no_grad(), eval(self.object.artifact):
             if one:
                 return self._predict_one(x)

@@ -229,6 +229,11 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
+          {
+            to: '/docs/category/use-cases/',
+            position: 'left',
+            label: 'Use Cases',
+          },
           { to: '/blog', label: 'Blog', position: 'left' },
           {
             href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',

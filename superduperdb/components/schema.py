@@ -24,6 +24,8 @@ class Schema(Component):
     type_id: t.ClassVar[str] = 'schema'
 
     fields: t.Mapping[str, t.Union[Encoder, str]]
+     # Add a new field for tags
+    tags: t.Optional[t.List[str]] = dc.field(default_factory=list, metadata={'_fold': StringEncoder()})
 
     def __post_init__(self):
         super().__post_init__()

@@ -97,6 +97,11 @@ class VectorIndexMeasureType(str, enum.Enum):
 
 @dataclass(frozen=True)
 class VectorSearchConfig:
+    '''
+    Represents search config which helps initiate a vector
+    searcher class.
+    '''
+
     id: str
     dimensions: int
     measure: VectorIndexMeasureType = VectorIndexMeasureType.l2
@@ -105,6 +110,12 @@ class VectorSearchConfig:
 
 @dataclass(frozen=True)
 class VectorItem:
+    '''
+    Class for representing a vector in vector search with
+    id and vector.
+
+    '''
+
     id: str
     vector: numpy.ndarray
 
@@ -123,19 +134,33 @@ class VectorItem:
 
 @dataclass(frozen=True)
 class VectorSearchResult:
+    '''
+    Dataclass for representing vector search results with
+    `id` and `score`.
+    '''
+
     id: str
     score: float
 
 
 def l2(x, y):
+    '''
+    L2 function for vector similarity search
+    '''
     return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
 
 
 def dot(x, y):
+    '''
+    Dot function for vector similarity search
+    '''
     return numpy.dot(x, y.T)
 
 
 def cosine(x, y):
+    '''
+    Cosine similarity function for vector search
+    '''
     x = x / numpy.linalg.norm(x, axis=1)[:, None]
     y = y / numpy.linalg.norm(y, axis=1)[:, None]
     return dot(x, y)

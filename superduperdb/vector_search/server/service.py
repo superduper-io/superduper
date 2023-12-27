@@ -34,10 +34,19 @@ def database(request: Request) -> Datalayer:
 
 
 def list_search(db: Datalayer):
+    '''
+    Helper functon for listing all vector search indices.
+    :param db: Datalayer instance
+    '''
     return db.show('vector_index')
 
 
 def create_search(vector_index: str, db=None):
+    '''
+    Initiates a vector search class corresponding to `vector_index`
+    :param vector_index: Vector class to initiate
+    :param db: Datalayer instance
+    '''
     db.fast_vector_searchers.update(
         {vector_index: db.initialize_vector_searcher(vector_index, backfill=True)}
     )
@@ -46,16 +55,34 @@ def create_search(vector_index: str, db=None):
 def query_search_from_array(
     array: ListVectorType, vector_index: str, n: int = 100, db=None
 ) -> VectorSearchResultType:
+    '''
+    Perform a vector search with an array
+    :param array: Array to perform vector search on index.
+    :param vector_index: Vector search index
+    :param db: Datalayer instance
+    '''
     return _vector_search(array, n=n, vector_index=vector_index, db=db)
 
 
 def query_search_from_id(
     id: str, vector_index: str, n: int = 100, db=None
 ) -> VectorSearchResultType:
+    '''
+    Perform a vector search with an id
+    :param id: Identifier for vector
+    :param vector_index: Vector search index
+    :param db: Datalayer instance
+    '''
     return _vector_search(id, n=n, vector_index=vector_index, db=db, by_array=False)
 
 
 def add_search(vector, vector_index: str, db=None):
+    '''
+    Adds a vector in vector index `vector_index`
+    :param vector: Vector to be added.
+    :param vector_index: Vector index where vector needs to be added.
+
+    '''
     vector = [VectorItem(id=v.id, vector=v.vector) for v in vector]
 
     vi = db.fast_vector_searchers[vector_index]
@@ -63,5 +90,8 @@ def add_search(vector, vector_index: str, db=None):
 
 
 def delete_search(ids: t.List[str], vector_index: str, db=None):
+    '''
+    Deletes a vector corresponding to `id`
+    '''
     vi = db.fast_vector_searchers[vector_index]
     vi.searcher.delete(ids)

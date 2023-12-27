@@ -912,6 +912,7 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
         object.post_create(self)
+        self.add_component_to_cache(object)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
         return jobs
@@ -1261,6 +1262,16 @@ class Datalayer:
 
         # TODO: gracefully close all opened connections
         return
+
+    def add_component_to_cache(self, component: Component):
+        type_id = component.type_id
+
+        # TODO: Only added model,
+        # if add other component will get an error, need to fix
+        if type_id != "model":
+            return
+
+        self.models[component.identifier] = component
 
 
 @dc.dataclass

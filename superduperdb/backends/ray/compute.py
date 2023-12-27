@@ -11,17 +11,21 @@ class RayComputeBackend(ComputeBackend):
     A client for interacting with a ray cluster. Initialize the ray client.
 
     :param address: The address of the ray cluster.
+    :param local: Set to True to create a local Dask cluster. (optional)
     :param **kwargs: Additional keyword arguments to be passed to the ray client.
     """
 
     def __init__(
         self,
         address: t.Optional[str] = None,
+        local: bool = False,
         **kwargs,
     ):
         self._futures_collection: t.Dict[str, ray.ObjectRef] = {}
-
-        ray.init(address=address, **kwargs)
+        if local:
+            ray.init()
+        else:
+            ray.init(address=address, **kwargs)
 
     @property
     def type(self) -> str:

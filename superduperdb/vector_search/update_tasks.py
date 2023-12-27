@@ -16,7 +16,7 @@ def delete_vectors(
     in the fast_vector_search backend.
 
     :param vector_index: A identifier of vector-index.
-    :param ids: List of ids which were observed as changed documents.
+    :param ids: List of ids which were observed as deleted documents.
     :param db: A ``DB`` instance.
     """
     return db.fast_vector_searchers[vector_index].delete(ids)
@@ -34,7 +34,7 @@ def copy_vectors(
 
     :param vector-index: A identifier of the vector-index.
     :param query: A query which was used by `db._build_task_workflow` method
-    :param ids: List of ids which were observed as changed documents.
+    :param ids: List of ids which were observed as added/updated documents.
     :param db: A ``DB`` instance.
     """
     vi = db.vector_indices[vector_index]

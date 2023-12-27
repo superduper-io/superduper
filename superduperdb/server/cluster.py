@@ -36,7 +36,7 @@ def local_cluster(db):
     """
     from superduperdb import CFG
 
-    # vector search local service
+    # Vector search local service
     CFG.force_set('cluster.vector_search', 'http://localhost:8000')
     CFG.force_set('cluster.cdc', 'http://localhost:8001')
     CFG.force_set('cluster.compute', 'dask+thread')
@@ -47,12 +47,12 @@ def local_cluster(db):
         'vector_search', vector_search_app, CFG
     )
 
-    # cdc local service
+    # Cdc local service
     from superduperdb.cdc.app import app as cdc_app
 
     cdc_server = _superduper_local_service('cdc', cdc_app, CFG)
 
-    # local compute
+    # Local compute
     from superduperdb.backends.dask.compute import DaskComputeBackend
 
     local_compute = DaskComputeBackend('', local=True)

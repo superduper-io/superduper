@@ -1,31 +1,16 @@
 import dataclasses as dc
-from typing import Any, List
+from typing import Any, Optional
 
-import requests
-
-from superduperdb.ext.llm.base import LLMAPI, LLMModel
+from superduperdb.ext.llm.base import BaseLLMModel, BaseOpenAI
 
 
 @dc.dataclass
-class VllmAPI(LLMAPI):
-    def get_response(self, prompt: str, n: int = 1) -> List[str]:
-        pload = {
-            "prompt": prompt,
-            "n": n,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-        }
-
-        pload["use_beam_search"] = n > 1
-        response = requests.post(self.api_url, json=pload)
-        return response.json()["text"]
-
-    def _predict_one(self, X, **kwargs):
-        return self.get_response(X)[0]
+class VllmAPI(BaseOpenAI):
+    openai_api_key: Optional[str] = "EMPTY"
 
 
 @dc.dataclass
-class VllmModel(LLMModel):
+class VllmModel(BaseLLMModel):
     tensor_parallel_size: int = 1
     trust_remote_code: bool = True
     dtype: Any = "auto"
@@ -47,7 +32,7 @@ class VllmModel(LLMModel):
             dtype=self.dtype,
         )
 
-    def _predict_one(self, X, **kwargs):
+    def _generate(self, prompt: str, **kwargs: Any) -> str:
         from vllm import SamplingParams
 
         # support more parameters
@@ -59,9 +44,9 @@ class VllmModel(LLMModel):
             import ray
 
             results = ray.get(
-                self.llm.generate.remote(X, sampling_params, use_tqdm=False)
+                self.llm.generate.remote(prompt, sampling_params, use_tqdm=False)
             )
         else:
-            results = self.llm.generate(X, sampling_params, use_tqdm=False)
+            results = self.llm.generate(prompt, sampling_params, use_tqdm=False)
 
         return results[0].outputs[0].text

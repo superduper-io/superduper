@@ -38,6 +38,8 @@ class Component(Serializable):
         # cannot be set in `__init__` and is always set
         self.version: t.Optional[int] = None
         self._db = None  # type: ignore[assignment]
+        if not self.identifier:
+            raise ValueError('identifier cannot be empty or None')
 
     def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created

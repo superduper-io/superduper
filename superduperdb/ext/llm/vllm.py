@@ -36,9 +36,7 @@ class VllmModel(BaseLLMModel):
         from vllm import SamplingParams
 
         # support more parameters
-        sampling_params = SamplingParams(
-            max_tokens=self.max_tokens, temperature=self.temperature
-        )
+        sampling_params = SamplingParams(**self.get_kwargs(SamplingParams, **kwargs))
 
         if self.on_ray:
             import ray

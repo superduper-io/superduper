@@ -28,6 +28,15 @@ def ensure_initialized(func):
 
 @dc.dataclass
 class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
+    """
+    Base class for LLMs
+    :param identifier: The identifier for the model.
+    :param max_tokens: The maximum number of tokens to generate.
+    :param temperature: The temperature to use for generation.
+    :param prompt_template: The template to use for the prompt.
+    :param prompt_func: The function to use for the prompt.
+    """
+
     max_tokens: int = 64
     temperature: float = 0.0
     prompt_template: str = "{input}"
@@ -100,6 +109,13 @@ class BaseOpenAI(_BaseLLM):
     """
     Base class for LLMs that use OpenAI API
     Use openai-python package to interact with OpenAI format API
+    :param openai_api_base: The base URL for the OpenAI API.
+    :param openai_api_key: The API key to use for the OpenAI API.
+    :param model_name: The name of the model to use.
+    :param chat: Whether to use the chat API.
+    :param system_prompt: The prompt to use for the system.
+    :param user_role: The role to use for the user.
+    :param system_role: The role to use for the system.
     """
 
     identifier: str = dc.field(default="")
@@ -123,7 +139,7 @@ class BaseOpenAI(_BaseLLM):
 
         self.client = OpenAI(api_key=self.openai_api_key, base_url=self.openai_api_base)
         model_list = self.client.models.list()
-        model_set = {model.id for model in model_list.data}
+        model_set = sorted({model.id for model in model_list.data})
         assert (
             self.model_name in model_set
         ), f"model_name {self.model_name} is not in model_set {model_set}"
@@ -169,6 +185,13 @@ class BaseOpenAI(_BaseLLM):
 
 @dc.dataclass
 class BaseLLMModel(_BaseLLM):
+    """
+    Base class for LLMs that use a model file
+    :param model_name: The name of the model to use.
+    :param on_ray: Whether to run the model on Ray.
+    :param ray_config: The Ray config to use.
+    """
+
     model_name: str = dc.field(default="")
     on_ray: bool = False
     ray_config: dict = dc.field(default_factory=dict)

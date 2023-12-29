@@ -2,6 +2,7 @@ import abc
 import asyncio
 import dataclasses as dc
 import inspect
+import typing
 from functools import wraps
 from logging import WARNING, getLogger
 from typing import Any, Callable, List, Optional, Union
@@ -10,6 +11,9 @@ from superduperdb import logging
 from superduperdb.components.component import Component
 from superduperdb.components.model import _Predictor
 from superduperdb.ext.utils import format_prompt
+
+if typing.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 # Disable httpx info level logging
 getLogger("httpx").setLevel(WARNING)
@@ -51,7 +55,25 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
     def __post_init__(self):
         super().__post_init__()
         self.takes_context = True
+        self.identifier = self.identifier.replace("/", "-")
         assert "{input}" in self.prompt_template, "Template must contain {input}"
+
+    def to_call(self, X, *args, **kwargs):
+        raise NotImplementedError
+
+    def post_create(self, db: "Datalayer") -> None:
+        # TODO: Do not make sense to add this logic here,
+        # Need a auto DataType to handle this
+        from superduperdb.backends.ibis.data_backend import IbisDataBackend
+        from superduperdb.backends.ibis.field_types import dtype
+
+        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
+            self.encoder = dtype('str')
+
+        # since then the `.add` clause is not necessary
+        output_component = db.databackend.create_model_table_or_collection(self)  # type: ignore[arg-type]
+        if output_component is not None:
+            db.add(output_component)
 
     @abc.abstractmethod
     def init(self):

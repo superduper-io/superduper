@@ -39,7 +39,7 @@ class VllmAPI(BaseLLMAPI):
         """
         post_data = self.build_post_data(prompt, **kwargs)
         response = requests.post(self.api_url, json=post_data)
-        return response.json()["text"]
+        return response.json()["text"][0]
 
     def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
         """
@@ -53,7 +53,7 @@ class VllmAPI(BaseLLMAPI):
             try:
                 async with session.post(self.api_url, json=post_data) as response:
                     response_json = await response.json()
-                    return response_json["text"]
+                    return response_json["text"][0]
             except aiohttp.ClientError as e:
                 logging.error(f"HTTP request failed: {e}. Prompt: {prompt}")
                 return ""

@@ -47,7 +47,7 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
     prompt_template: str = "{input}"
     prompt_func: Optional[Callable] = dc.field(default=None)
     max_batch_size: Optional[int] = 64
-    inference_kwargs: Optional[dict] = dc.field(default_factory=dict)
+    inference_kwargs: dict = dc.field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
@@ -304,7 +304,7 @@ class BaseLLMModel(_BaseLLM):
 
     __doc__ = __doc__.format(parent_doc=_BaseLLM.__doc__)
 
-    identifier: Optional[str] = dc.field(default="")
+    identifier: str = dc.field(default="")
     model_name: str = dc.field(default="")
     on_ray: bool = False
     ray_address: Optional[str] = None

@@ -8,6 +8,31 @@ import requests
 from superduperdb import logging
 from superduperdb.ext.llm.base import BaseLLMAPI, BaseLLMModel, BaseOpenAI
 
+VLLM_INFERENCE_PARAMETERS_LIST = [
+    "n",
+    "best_of",
+    "presence_penalty",
+    "frequency_penalty",
+    "repetition_penalty",
+    "temperature",
+    "top_p",
+    "top_k",
+    "min_p",
+    "use_beam_search",
+    "length_penalty",
+    "early_stopping",
+    "stop",
+    "stop_token_ids",
+    "include_stop_str_in_output",
+    "ignore_eos",
+    "max_tokens",
+    "logprobs",
+    "prompt_logprobs",
+    "skip_special_tokens",
+    "spaces_between_special_tokens",
+    "logits_processors",
+]
+
 
 @dc.dataclass
 class VllmOpenAI(BaseOpenAI):
@@ -67,8 +92,12 @@ class VllmAPI(BaseLLMAPI):
             ]
             return await asyncio.gather(*tasks)
 
-    def build_post_data(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
-        return {"prompt": prompt, **self.inference_kwargs}
+    def build_post_data(self, prompt: str, **kwargs: dict[str, Any]) -> dict[str, Any]:
+        total_kwargs = {}
+        for key, value in {**self.inference_kwargs, **kwargs}.items():
+            if key in VLLM_INFERENCE_PARAMETERS_LIST:
+                total_kwargs[key] = value
+        return {"prompt": prompt, **total_kwargs}
 
 
 @dc.dataclass
@@ -86,7 +115,7 @@ class VllmModel(BaseLLMModel):
 
     tensor_parallel_size: int = 1
     trust_remote_code: bool = True
-    vllm_kwargs: Optional[dict] = dc.field(default_factory=dict)
+    vllm_kwargs: dict = dc.field(default_factory=dict)
 
     def __post_init__(self):
         self.on_ray = self.on_ray or bool(self.ray_address)

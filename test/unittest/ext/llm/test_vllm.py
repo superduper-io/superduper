@@ -1,3 +1,4 @@
+import os
 from test.db_config import DBConfig
 from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
@@ -13,6 +14,12 @@ openai_api_base = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/v1"
 api_url = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/generate"
 
 
+@pytest.fixture
+def openai_mock(monkeypatch):
+    if os.getenv("OPENAI_API_KEY") is None:
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-TopSecret")
+
+
 @vcr.use_cassette(
     f"{CASSETTE_DIR}/test_predict_openai.yaml",
     filter_headers=["authorization"],
@@ -22,7 +29,7 @@ api_url = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/generate"
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
-def test_predict_openai(db):
+def test_predict_openai(db, openai_mock):
     """Test chat."""
     check_predict(
         db, VllmOpenAI(model_name=model_name, openai_api_base=openai_api_base)
@@ -45,7 +52,7 @@ def test_predict_openai(db):
     ignore_localhost=True,
 )
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_llm_as_listener_model_openai(db):
+def test_llm_as_listener_model_openai(db, openai_mock):
     check_llm_as_listener_model(
         db,
         VllmOpenAI(model_name=model_name, openai_api_base=openai_api_base),

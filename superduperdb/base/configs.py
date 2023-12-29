@@ -1,3 +1,4 @@
+import dataclasses as dc
 import os
 import typing as t
 from dataclasses import dataclass
@@ -72,7 +73,15 @@ class ConfigSettings:
             kwargs = {}
 
         kwargs = config_dicts.combine_configs((parent, kwargs, env))
-        return self.cls(**kwargs)
+
+        def _dataclass_from_dict(cls, d):
+            try:
+                fieldtypes = {f.name: f.type for f in dc.fields(cls)}
+                return cls(**{f: _dataclass_from_dict(fieldtypes[f], d[f]) for f in d})
+            except Exception:
+                return d
+
+        return _dataclass_from_dict(self.cls, kwargs)
 
 
 def build_config(cfg: t.Optional[Config] = None) -> Config:

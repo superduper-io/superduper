@@ -4,17 +4,19 @@ which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
 """
 
+import dataclasses as dc
 import json
 import os
 import typing as t
 from enum import Enum
 
-from .jsonable import Factory, JSONable
-
 _CONFIG_IMMUTABLE = True
 
 
-class BaseConfigJSONable(JSONable):
+@dc.dataclass
+class BaseConfigJSONable:
+    _lock: t.ClassVar[bool] = False
+
     def force_set(self, name, value):
         """
         Forcefully setattr of BaseConfigJSONable instance
@@ -22,7 +24,7 @@ class BaseConfigJSONable(JSONable):
         super().__setattr__(name, value)
 
     def __setattr__(self, name, value):
-        if not _CONFIG_IMMUTABLE:
+        if not _CONFIG_IMMUTABLE or self._lock is False:
             super().__setattr__(name, value)
             return
 
@@ -32,6 +34,7 @@ class BaseConfigJSONable(JSONable):
         )
 
 
+@dc.dataclass
 class Retry(BaseConfigJSONable):
     """
     Describes how to retry using the `tenacity` library
@@ -48,6 +51,7 @@ class Retry(BaseConfigJSONable):
     wait_multiplier: float = 1.0
 
 
+@dc.dataclass
 class Cluster(BaseConfigJSONable):
     """
     Describes a connection to distributed work via Dask
@@ -118,6 +122,7 @@ class BytesEncoding(str, Enum):
     BASE64 = 'Str'
 
 
+@dc.dataclass
 class Config(BaseConfigJSONable):
     """
     The data class containing all configurable superduperdb values
@@ -140,10 +145,6 @@ class Config(BaseConfigJSONable):
 
     """
 
-    @property
-    def self_hosted_vector_search(self) -> bool:
-        return self.data_backend == self.cluster.vector_search
-
     data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')
@@ -151,8 +152,8 @@ class Config(BaseConfigJSONable):
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
 
-    cluster: Cluster = Factory(Cluster)
-    retries: Retry = Factory(Retry)
+    cluster: Cluster = dc.field(default_factory=Cluster)
+    retries: Retry = dc.field(default_factory=Retry)
 
     downloads_folder: t.Optional[str] = None
     fold_probability: float = 0.05
@@ -164,14 +165,16 @@ class Config(BaseConfigJSONable):
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
 
-    class Config(JSONable.Config):
-        protected_namespaces = ()
-
     def __post_init__(self):
         if self.dot_env:
             import dotenv
 
             dotenv.load_dotenv(self.dot_env)
+        self._lock = True
+
+    @property
+    def self_hosted_vector_search(self) -> bool:
+        return self.data_backend == self.cluster.vector_search
 
     @property
     def hybrid_storage(self):
@@ -182,11 +185,14 @@ class Config(BaseConfigJSONable):
         """
         A dict of `self` excluding some defined attributes.
         """
-        _dict = self.dict()
+        _dict = dc.asdict(self)
         list(map(_dict.pop, ('cluster', 'retries', 'downloads_folder')))
         return _dict
 
-    def match(self, cfg: dict):
+    def dict(self):
+        return dc.asdict(self)
+
+    def match(self, cfg: t.Dict):
         """
         Match the target cfg dict with `self` comparables dict.
         """

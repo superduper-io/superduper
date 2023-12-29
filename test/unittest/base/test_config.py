@@ -3,7 +3,8 @@ from collections import Counter
 import pydantic
 import pytest
 
-from superduperdb.base.config import Config, Factory, JSONable
+from superduperdb.base.config import Config
+from superduperdb.base.jsonable import Factory, JSONable
 
 from .test_config_dicts import PARENT
 
@@ -15,22 +16,15 @@ dask -> port
   value is not a valid integer (type=type_error.integer)
 """
 NAME_ERROR = """
-1 validation error for Config
-bad_name
-  extra fields not permitted (type=value_error.extra)
-"""
-NAME_ERROR2 = """
-1 validation error for Config
-bad_name
-  Extra inputs are not permitted [type=extra_forbidden, input_value={}, input_type=dict]
+Config.__init__() got an unexpected keyword argument \'bad_name\'
 """
 
 
 def test_unknown_name():
-    with pytest.raises(pydantic.ValidationError) as pr:
+    with pytest.raises(TypeError) as pr:
         Config(bad_name={})
 
-    expected = (NAME_ERROR2 if IS_2 else NAME_ERROR).strip()
+    expected = NAME_ERROR.strip()
     actual = str(pr.value).strip()
     assert actual.startswith(expected)
 

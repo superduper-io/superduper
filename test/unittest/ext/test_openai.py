@@ -58,7 +58,6 @@ def open_ai_with_rhymes(db, monkeypatch):
     db.remove('model', 'text-embedding-ada-002', force=True)
 
 
-# TODO: Mock OpenAI API instead of using VCR in unittest
 @vcr.use_cassette(
     f'{CASSETTE_DIR}/test_retrieve_with_similar_context.yaml',
     filter_headers=['authorization'],

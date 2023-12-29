@@ -68,14 +68,7 @@ class VllmAPI(BaseLLMAPI):
             return await asyncio.gather(*tasks)
 
     def build_post_data(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
-        n = kwargs.get("n", 1)
-        return {
-            "prompt": prompt,
-            "n": n,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "use_beam_search": n > 1,
-        }
+        return {"prompt": prompt, **self.inference_kwargs}
 
 
 @dc.dataclass
@@ -93,7 +86,11 @@ class VllmModel(BaseLLMModel):
 
     tensor_parallel_size: int = 1
     trust_remote_code: bool = True
-    dtype: Any = "auto"
+    vllm_kwargs: Optional[dict] = dc.field(default_factory=dict)
+
+    def __post_init__(self):
+        self.on_ray = self.on_ray or bool(self.ray_address)
+        super().__post_init__()
 
     def init(self):
         try:
@@ -102,29 +99,42 @@ class VllmModel(BaseLLMModel):
             raise Exception("You must install vllm with command 'pip install vllm'")
 
         if self.on_ray:
-            import ray
+            try:
+                import ray
+            except ImportError:
+                raise Exception("You must install vllm with command 'pip install ray'")
 
-            LLM = ray.remote(**self.ray_config)(LLM).remote
+            runtime_env = {"pip": ["vllm"]}
+            if not ray.is_initialized():
+                ray.init(address=self.ray_address, runtime_env=runtime_env)
+
+            LLM = ray.remote(LLM).remote
+
         self.llm = LLM(
             model=self.model_name,
             tensor_parallel_size=self.tensor_parallel_size,
             trust_remote_code=self.trust_remote_code,
-            dtype=self.dtype,
+            **self.vllm_kwargs,
         )
 
-    def _generate(self, prompt: str, **kwargs: Any) -> str:
+    def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
         from vllm import SamplingParams
 
         # support more parameters
-        sampling_params = SamplingParams(**self.get_kwargs(SamplingParams, **kwargs))
+        sampling_params = SamplingParams(
+            **self.get_kwargs(SamplingParams, kwargs, self.inference_kwargs)
+        )
 
         if self.on_ray:
             import ray
 
             results = ray.get(
-                self.llm.generate.remote(prompt, sampling_params, use_tqdm=False)
+                self.llm.generate.remote(prompts, sampling_params, use_tqdm=False)
             )
         else:
-            results = self.llm.generate(prompt, sampling_params, use_tqdm=False)
+            results = self.llm.generate(prompts, sampling_params, use_tqdm=False)
 
-        return results[0].outputs[0].text
+        return [result.outputs[0].text for result in results]
+
+    def _generate(self, prompt: str, **kwargs: Any) -> str:
+        return self._batch_generate([prompt], **kwargs)[0]

@@ -3,7 +3,7 @@ import asyncio
 import dataclasses as dc
 import inspect
 import typing
-from functools import wraps
+from functools import reduce, wraps
 from logging import WARNING, getLogger
 from typing import Any, Callable, List, Optional, Union
 
@@ -38,19 +38,16 @@ def ensure_initialized(func):
 @dc.dataclass
 class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
     """
-    :param identifier: The identifier for the model.
-    :param max_tokens: The maximum number of tokens to generate.
-    :param temperature: The temperature to use for generation.
     :param prompt_template: The template to use for the prompt.
     :param prompt_func: The function to use for the prompt.
     :param max_batch_size: The maximum batch size to use for batch generation.
+    :param inference_kwargs: Parameters used during inference.
     """
 
-    max_tokens: int = 64
-    temperature: float = 0.0
     prompt_template: str = "{input}"
     prompt_func: Optional[Callable] = dc.field(default=None)
     max_batch_size: Optional[int] = 64
+    inference_kwargs: Optional[dict] = dc.field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
@@ -109,19 +106,21 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         :param kwargs: Any additional arguments to pass to the prompt function.
         """
         if self.prompt_func is not None:
-            return self.prompt_func(x, **self.get_kwargs(self.prompt_func, **kwargs))
+            return self.prompt_func(x, **self.get_kwargs(self.prompt_func, kwargs))
 
         return format_prompt(x, self.prompt_template, kwargs.get("context", None))
 
-    def get_kwargs(self, func, **kwargs):
+    def get_kwargs(self, func, *kwargs_list):
         """
         Get kwargs and object attributes that are in the function signature
         :param func (Callable): function to get kwargs for
-        :param kwargs (dict): kwargs to filter
+        :param kwargs (list of dict): kwargs to filter
         """
+
+        total_kwargs = reduce(lambda x, y: {**y, **x}, [self.dict(), *kwargs_list])
         sig = inspect.signature(func)
         new_kwargs = {}
-        for k, v in {**self.dict(), **kwargs}.items():
+        for k, v in total_kwargs.items():
             if k in sig.parameters:
                 new_kwargs[k] = v
         return new_kwargs
@@ -212,7 +211,9 @@ class BaseOpenAI(_BaseLLM):
         completion = self.client.completions.create(
             model=self.model_name,
             prompt=prompt,
-            **self.get_kwargs(self.client.completions.create, **kwargs),
+            **self.get_kwargs(
+                self.client.completions.create, kwargs, self.inference_kwargs
+            ),
         )
         return completion.choices[0].text
 
@@ -233,7 +234,9 @@ class BaseOpenAI(_BaseLLM):
         completion = self.client.chat.completions.create(
             messages=messages,
             model=self.model_name,
-            **self.get_kwargs(self.client.chat.completions.create, **kwargs),
+            **self.get_kwargs(
+                self.client.chat.completions.create, kwargs, self.inference_kwargs
+            ),
         )
         return completion.choices[0].message.content
 
@@ -251,7 +254,9 @@ class BaseOpenAI(_BaseLLM):
         completion = await self.aclient.completions.create(
             model=self.model_name,
             prompt=prompt,
-            **self.get_kwargs(self.aclient.completions.create, **kwargs),
+            **self.get_kwargs(
+                self.aclient.completions.create, kwargs, self.inference_kwargs
+            ),
         )
         return completion.choices[0].text
 
@@ -270,7 +275,9 @@ class BaseOpenAI(_BaseLLM):
         completion = await self.aclient.chat.completions.create(
             messages=messages,
             model=self.model_name,
-            **self.get_kwargs(self.aclient.chat.completions.create, **kwargs),
+            **self.get_kwargs(
+                self.aclient.chat.completions.create, kwargs, self.inference_kwargs
+            ),
         )
         return completion.choices[0].message.content
 
@@ -291,16 +298,20 @@ class BaseLLMModel(_BaseLLM):
     :param model_name: The name of the model to use.
     :param on_ray: Whether to run the model on Ray.
     :param ray_config: The Ray config to use.
+    :param ray_addredd: The address of the ray cluster.
     {parent_doc}
     """
 
     __doc__ = __doc__.format(parent_doc=_BaseLLM.__doc__)
 
+    identifier: Optional[str] = dc.field(default="")
     model_name: str = dc.field(default="")
     on_ray: bool = False
+    ray_address: Optional[str] = None
     ray_config: dict = dc.field(default_factory=dict)
 
     def __post_init__(self):
-        super().__post_init__()
+        self.identifier = self.identifier or self.model_name
         assert self.model_name, "model_name can not be empty"
         self._is_initialized = False
+        super().__post_init__()

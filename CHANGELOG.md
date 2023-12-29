@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
 - Add `QueryModel` and `SequentialModel` to make chaining searches and models easier.
 - Add `insert_to=<table-or-collection>` to `.predict` to allow single predictions to be saved.
+- Support vLLM (running locally or remotely on a ray cluster)
+- Support LLM service in OpenAI format
 
 #### Bug Fixes
 

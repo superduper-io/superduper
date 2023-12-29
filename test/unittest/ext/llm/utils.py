@@ -12,7 +12,7 @@ from superduperdb.components.listener import Listener
 
 
 def check_predict(db, llm):
-    """Test chat."""
+    """Test whether db can call model prediction normally."""
     db.add(llm)
     result = db.predict(llm.identifier, "1+1=")[0].content
     assert isinstance(result, str)
@@ -24,6 +24,7 @@ def check_predict(db, llm):
 
 
 def check_llm_as_listener_model(db, llm):
+    """Test whether the model can predict the data in the database normally"""
     collection_name = "question"
     datas = [Document({"question": f"1+{i}=", "id": str(i)}) for i in range(10)]
     if isinstance(db.databackend, MongoDataBackend):
@@ -60,3 +61,13 @@ def check_llm_as_listener_model(db, llm):
         except KeyError:
             output = result.unpack()[f'_outputs.question.{llm.identifier}.0']
         assert isinstance(output, str)
+
+
+# TODO: add test for llm_cdc
+def check_llm_cdc(db, llm):
+    """Test whether the model predicts normally for incremental data"""
+    pass
+
+
+# TODO: Expanded into a test tool class,
+# Used to test whether all model objects are normally compatible with superduperdb

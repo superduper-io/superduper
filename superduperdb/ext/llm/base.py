@@ -68,10 +68,13 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         from superduperdb.backends.ibis.field_types import dtype
 
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+            self.encoder = dtype("str")
 
         # since then the `.add` clause is not necessary
-        output_component = db.databackend.create_model_table_or_collection(self)  # type: ignore[arg-type]
+        output_component = db.databackend.create_model_table_or_collection(
+            self  # type: ignore[arg-type]
+        )
+
         if output_component is not None:
             db.add(output_component)
 

@@ -7,6 +7,7 @@ from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.vector_search.atlas import MongoAtlasVectorSearcher
 from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
 from superduperdb.vector_search.lance import LanceVectorSearcher
 
@@ -28,6 +29,7 @@ metadata_stores = {
 vector_searcher_implementations = {
     'lance': LanceVectorSearcher,
     'in_memory': InMemoryVectorSearcher,
+    'mongodb+srv': MongoAtlasVectorSearcher,
 }
 
 CONNECTIONS = {

@@ -105,8 +105,8 @@ def test_insert_from_uris(db, image_url):
 def test_insert_from_uris_bytes_encoding(db, image_url):
     import PIL
 
-    from superduperdb.ext.pillow.encoder import pil_image
     from superduperdb.base.config import BytesEncoding
+    from superduperdb.ext.pillow.encoder import pil_image
 
     db.add(pil_image)
     collection = Collection('documents')

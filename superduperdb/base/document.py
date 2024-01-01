@@ -163,7 +163,10 @@ def _encode(r: t.Any, bytes_encoding: t.Optional[str] = None) -> t.Any:
     return r
 
 
-def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
+def _encode_with_schema(
+    r: t.Any, schema: Schema, bytes_encoding: t.Optional[str] = None
+) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict):
         out = {
             k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
@@ -173,7 +176,7 @@ def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
         }
         return out
     if isinstance(r, Encodable):
-        return r.encode()
+        return r.encode(bytes_encoding=bytes_encoding)
     return r
 
 

@@ -34,11 +34,14 @@ class Document:
         """Dump this document into BSON and encode as bytes"""
         return bson.encode(self.encode())
 
-    def encode(self, schema: t.Optional[Schema] = None) -> t.Any:
+    def encode(
+        self, schema: t.Optional[Schema] = None, bytes_encoding: t.Optional[str] = None
+    ) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
         if schema is not None:
-            return _encode_with_schema(self.content, schema)
-        return _encode(self.content)
+            return _encode_with_schema(self.content, schema, bytes_encoding)
+        return _encode(self.content, bytes_encoding)
 
     @property
     def variables(self) -> t.List[str]:
@@ -71,11 +74,15 @@ class Document:
         return document
 
     @staticmethod
-    def decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+    def decode(
+        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[str] = None
+    ) -> t.Any:
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
         if isinstance(r, Document):
-            return Document(_decode(r, encoders))
+            return Document(_decode(r, encoders, bytes_encoding))
         elif isinstance(r, dict):
-            return _decode(r, encoders)
+            return _decode(r, encoders, bytes_encoding)
         raise NotImplementedError(f'type {type(r)} is not supported')
 
     def __repr__(self) -> str:

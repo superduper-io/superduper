@@ -101,6 +101,44 @@ def test_insert_from_uris(db, image_url):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_insert_from_uris_bytes_encoding(db, image_url):
+    import PIL
+
+    from superduperdb.ext.pillow.encoder import pil_image
+    from superduperdb.base.config import BytesEncoding
+
+    db.add(pil_image)
+    collection = Collection('documents')
+    to_insert = [
+        Document(
+            {
+                'item': {
+                    '_content': {
+                        'uri': image_url,
+                        'encoder': 'pil_image',
+                    }
+                },
+                'other': {
+                    'item': {
+                        '_content': {
+                            'uri': image_url,
+                            'encoder': 'pil_image',
+                        }
+                    }
+                },
+            }
+        ).encode(bytes_encoding=BytesEncoding.BASE64)
+        for _ in range(2)
+    ]
+    db.execute(collection.insert_many(to_insert))
+
+    r = db.execute(collection.find_one())
+    assert isinstance(r['item'].x, PIL.Image.Image)
+    assert isinstance(r['other']['item'].x, PIL.Image.Image)
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update_many(db):
     collection = Collection('documents')
     to_update = torch.randn(32)

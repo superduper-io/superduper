@@ -130,7 +130,10 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
-def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+def _decode(
+    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[str] = None
+) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
         encoder = encoders[r['_content']['encoder']]
         try:
@@ -144,17 +147,19 @@ def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
     elif isinstance(r, dict):
         for k in r:
             if k in encoders:
-                r[k] = encoders[k].decode(r[k]).x
+                r[k] = encoders[k].decode(r[k], bytes_encoding).x
             else:
-                r[k] = _decode(r[k], encoders)
+                r[k] = _decode(r[k], encoders, bytes_encoding)
     return r
 
 
-def _encode(r: t.Any) -> t.Any:
+def _encode(r: t.Any, bytes_encoding: t.Optional[str] = None) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
     if isinstance(r, dict):
         return {k: _encode(v) for k, v in r.items()}
     if isinstance(r, Encodable):
-        return r.encode()
+        return r.encode(bytes_encoding=bytes_encoding)
     return r
 
 

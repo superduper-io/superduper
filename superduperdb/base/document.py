@@ -35,8 +35,9 @@ class Document:
         return bson.encode(self.encode())
 
     def encode(
-        self, schema: t.Optional[Schema] = None, bytes_encoding:
-            t.Optional[t.Any] = None
+        self,
+        schema: t.Optional[Schema] = None,
+        bytes_encoding: t.Optional[t.Any] = None,
     ) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
         bytes_encoding = bytes_encoding or CFG.bytes_encoding

@@ -76,8 +76,8 @@ class Encoder(Component):
         self, b: t.Union[bytes, str], bytes_encoding: t.Optional[t.Any] = None
     ) -> t.Any:
         assert isinstance(self.decoder, Artifact)
-        bytes_encoding = bytes_encoding or CFG.bytes_encoding                
-        
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
         if (
             CFG.bytes_encoding == BytesEncoding.BASE64
             or bytes_encoding == BytesEncoding.BASE64

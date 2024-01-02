@@ -4,6 +4,7 @@ import bson
 from bson.objectid import ObjectId
 
 from superduperdb import CFG
+from superduperdb.base.config import BytesEncoding
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.schema import Schema
 from superduperdb.misc.files import get_file_from_uri
@@ -37,7 +38,7 @@ class Document:
     def encode(
         self,
         schema: t.Optional[Schema] = None,
-        bytes_encoding: t.Optional[t.Any] = None,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
     ) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
@@ -77,7 +78,7 @@ class Document:
 
     @staticmethod
     def decode(
-        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[t.Any] = None
+        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
     ) -> t.Any:
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
 
@@ -133,7 +134,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
 
 
 def _decode(
-    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[t.Any] = None
+    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
 ) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
@@ -155,7 +156,7 @@ def _decode(
     return r
 
 
-def _encode(r: t.Any, bytes_encoding: t.Optional[t.Any] = None) -> t.Any:
+def _encode(r: t.Any, bytes_encoding: t.Optional[BytesEncoding] = None) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
 
     if isinstance(r, dict):

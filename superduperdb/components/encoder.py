@@ -73,7 +73,7 @@ class Encoder(Component):
         return Encodable(self, x=x, uri=uri)
 
     def decode(
-        self, b: t.Union[bytes, str], bytes_encoding: t.Optional[t.Any] = None
+        self, b: t.Union[bytes, str], bytes_encoding: t.Optional[BytesEncoding] = None
     ) -> t.Any:
         assert isinstance(self.decoder, Artifact)
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
@@ -101,7 +101,7 @@ class Encoder(Component):
         x: t.Optional[t.Any] = None,
         uri: t.Optional[str] = None,
         wrap: bool = True,
-        bytes_encoding: t.Optional[t.Any] = None,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         # TODO clarify what is going on here
 
@@ -157,7 +157,7 @@ class Encodable:
     uri: t.Optional[str] = None
 
     def encode(
-        self, bytes_encoding: t.Optional[t.Any] = None
+        self, bytes_encoding: t.Optional[BytesEncoding] = None
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
         assert hasattr(self.encoder, 'encode')

@@ -167,7 +167,7 @@ def _encode(r: t.Any, bytes_encoding: t.Optional[BytesEncoding] = None) -> t.Any
 
 
 def _encode_with_schema(
-    r: t.Any, schema: Schema, bytes_encoding: t.Optional[str] = None
+    r: t.Any, schema: Schema, bytes_encoding: t.Optional[BytesEncoding] = None
 ) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict):

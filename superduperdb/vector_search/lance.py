@@ -15,7 +15,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
 
     :param identifier: Unique string identifier of index
     :param dimensions: Dimension of the vector embeddings in the Lance dataset
-    :param h: ``torch.Tensor``
+    :param h: Seed vectors ``numpy.ndarray``
     :param index: list of IDs
     :param measure: measure to assess similarity
     """

@@ -88,7 +88,9 @@ class Cluster(BaseConfigJSONable):
 
     @property
     def is_remote_vector_search(self):
-        return len(self.vector_search.split('://')) > 1
+        split = self.vector_search.split('://')
+        dialect = split[0]
+        return dialect != 'mongodb+srv' and len(split) > 1
 
 
 class LogLevel(str, Enum):

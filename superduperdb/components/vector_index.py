@@ -4,7 +4,6 @@ import typing as t
 import numpy as np
 from overrides import override
 
-import superduperdb as s
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
@@ -39,15 +38,6 @@ class VectorIndex(Component):
     compatible_listener: t.Union[None, Listener, str] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    @override
-    def post_create(self, db: Datalayer) -> None:
-        super().post_create(db)
-        if s.CFG.self_hosted_vector_search:
-            if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
-                msg = 'VectorIndex is not supported by the current database backend'
-                raise ValueError(msg)
-            create(self)
 
     @override
     def on_load(self, db: Datalayer) -> None:

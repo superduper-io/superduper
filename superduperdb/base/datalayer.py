@@ -140,11 +140,7 @@ class Datalayer:
             assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
-        vector_comparison = vector_search_cls(
-            identifier=vi.identifier,
-            dimensions=vi.dimensions,
-            measure=vi.measure,
-        )
+        vector_comparison = vector_search_cls.from_component(vi)
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
@@ -912,6 +908,7 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
         object.post_create(self)
+        self._add_component_to_cache(object)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
         return jobs
@@ -1261,6 +1258,16 @@ class Datalayer:
 
         # TODO: gracefully close all opened connections
         return
+
+    def _add_component_to_cache(self, component: Component):
+        """
+        Add component to cache when it is added to the db.
+        Avoiding the need to load it from the db again.
+        """
+        type_id = component.type_id
+        if cm := self.type_id_to_cache_mapping.get(type_id):
+            getattr(self, cm)[component.identifier] = component
+        component.on_load(self)
 
 
 @dc.dataclass

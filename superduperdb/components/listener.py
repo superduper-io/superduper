@@ -42,12 +42,12 @@ class Listener(Component):
     type_id: t.ClassVar[str] = 'listener'
 
     def __post_init__(self):
-        super().__post_init__()
         if self.identifier is None and self.model is not None:
             if isinstance(self.model, str):
                 self.identifier = f'{self.model}/{self.id_key}'
             else:
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
+        super().__post_init__()
 
     @property
     def outputs(self):

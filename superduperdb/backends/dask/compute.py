@@ -14,7 +14,6 @@ class DaskComputeBackend(ComputeBackend):
     :param serializers: A list of serializers to be used by the client. (optional)
     :param deserializers: A list of deserializers to be used by the client. (optional)
     :param local: Set to True to create a local Dask cluster. (optional)
-    :param envs: An environment dict for cluster.
     :param **kwargs: Additional keyword arguments to be passed to the DaskClient.
     """
 

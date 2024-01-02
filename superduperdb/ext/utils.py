@@ -22,13 +22,19 @@ def get_key(key_name: str) -> str:
 
 
 def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) -> str:
+    format_params = {}
+    if '{input}' in prompt:
+        format_params['input'] = X
+    else:
+        prompt += X
+
     if '{context}' in prompt:
         if context:
-            return prompt.format(context='\n'.join(context)) + X
+            format_params['context'] = '\n'.join(context)
         else:
             raise ValueError(f'A context is required for prompt {prompt}')
-    else:
-        return prompt + X
+
+    return prompt.format(**format_params)
 
 
 def superduperencode(object):

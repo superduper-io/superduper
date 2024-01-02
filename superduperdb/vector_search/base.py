@@ -8,8 +8,17 @@ from dataclasses import dataclass, field
 import numpy
 import numpy.typing
 
+if t.TYPE_CHECKING:
+    from superduperdb.components.vector_index import VectorIndex
+
 
 class BaseVectorSearcher(ABC):
+    @classmethod
+    def from_component(cls, vi: 'VectorIndex'):
+        return cls(
+            identifier=vi.identifier, dimensions=vi.dimensions, measure=vi.measure
+        )
+
     @abstractmethod
     def __init__(
         self,

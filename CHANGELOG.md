@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the table creation method in MetaDataStore to improve compatibility across various databases.
 - Replaced JSON data with String format before storage in SQLAlchemy.
 - Implemented storage of byte data in base64 format.
+- Migrated MongoDB Atlas vector search as a standalone searcher like lance.
 
 #### New Features & Functionality
 

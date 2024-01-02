@@ -4,6 +4,7 @@ import bson
 from bson.objectid import ObjectId
 
 from superduperdb import CFG
+from superduperdb.base.config import BytesEncoding
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.schema import Schema
 from superduperdb.misc.files import get_file_from_uri
@@ -34,11 +35,16 @@ class Document:
         """Dump this document into BSON and encode as bytes"""
         return bson.encode(self.encode())
 
-    def encode(self, schema: t.Optional[Schema] = None) -> t.Any:
+    def encode(
+        self,
+        schema: t.Optional[Schema] = None,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
+    ) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
         if schema is not None:
-            return _encode_with_schema(self.content, schema)
-        return _encode(self.content)
+            return _encode_with_schema(self.content, schema, bytes_encoding)
+        return _encode(self.content, bytes_encoding)
 
     @property
     def variables(self) -> t.List[str]:
@@ -71,11 +77,15 @@ class Document:
         return document
 
     @staticmethod
-    def decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+    def decode(
+        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
+    ) -> t.Any:
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
         if isinstance(r, Document):
-            return Document(_decode(r, encoders))
+            return Document(_decode(r, encoders, bytes_encoding))
         elif isinstance(r, dict):
-            return _decode(r, encoders)
+            return _decode(r, encoders, bytes_encoding)
         raise NotImplementedError(f'type {type(r)} is not supported')
 
     def __repr__(self) -> str:
@@ -123,7 +133,10 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
-def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+def _decode(
+    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
+) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
         encoder = encoders[r['_content']['encoder']]
         try:
@@ -137,31 +150,36 @@ def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
     elif isinstance(r, dict):
         for k in r:
             if k in encoders:
-                r[k] = encoders[k].decode(r[k]).x
+                r[k] = encoders[k].decode(r[k], bytes_encoding).x
             else:
-                r[k] = _decode(r[k], encoders)
+                r[k] = _decode(r[k], encoders, bytes_encoding)
     return r
 
 
-def _encode(r: t.Any) -> t.Any:
+def _encode(r: t.Any, bytes_encoding: t.Optional[BytesEncoding] = None) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
     if isinstance(r, dict):
-        return {k: _encode(v) for k, v in r.items()}
+        return {k: _encode(v, bytes_encoding) for k, v in r.items()}
     if isinstance(r, Encodable):
-        return r.encode()
+        return r.encode(bytes_encoding=bytes_encoding)
     return r
 
 
-def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
+def _encode_with_schema(
+    r: t.Any, schema: Schema, bytes_encoding: t.Optional[BytesEncoding] = None
+) -> t.Any:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict):
         out = {
             k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
             if isinstance(schema.fields[k], Encoder)
-            else _encode_with_schema(v, schema)
+            else _encode_with_schema(v, schema, bytes_encoding)
             for k, v in r.items()
         }
         return out
     if isinstance(r, Encodable):
-        return r.encode()
+        return r.encode(bytes_encoding=bytes_encoding)
     return r
 
 

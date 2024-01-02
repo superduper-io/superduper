@@ -64,7 +64,7 @@ def test_replace(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize('db', [DBConfig.mongodb_empty], indirect=True)
 def test_insert_from_uris(db, image_url):
     import PIL
 
@@ -98,6 +98,36 @@ def test_insert_from_uris(db, image_url):
     r = db.execute(collection.find_one())
     assert isinstance(r['item'].x, PIL.Image.Image)
     assert isinstance(r['other']['item'].x, PIL.Image.Image)
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize('db', [DBConfig.mongodb_empty], indirect=True)
+def test_insert_from_uris_bytes_encoding(db, image_url):
+    import PIL
+
+    from superduperdb.base.config import BytesEncoding
+    from superduperdb.ext.pillow.encoder import pil_image
+
+    db.add(pil_image)
+
+    if image_url.startswith('file://'):
+        image_url = image_url[7:]
+
+    collection = Collection('documents')
+    to_insert = [
+        Document(
+            {
+                'img': pil_image(PIL.Image.open(image_url)).encode(
+                    bytes_encoding=BytesEncoding.BASE64
+                )
+            }
+        )
+    ]
+
+    db.execute(collection.insert_many(to_insert))
+
+    r = db.execute(collection.find_one())
+    assert isinstance(r['img'].x, PIL.Image.Image)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

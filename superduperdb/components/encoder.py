@@ -72,9 +72,16 @@ class Encoder(Component):
     ) -> 'Encodable':
         return Encodable(self, x=x, uri=uri)
 
-    def decode(self, b: t.Union[bytes, str]) -> t.Any:
+    def decode(
+        self, b: t.Union[bytes, str], bytes_encoding: t.Optional[BytesEncoding] = None
+    ) -> t.Any:
         assert isinstance(self.decoder, Artifact)
-        if CFG.bytes_encoding == BytesEncoding.BASE64:
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
+
+        if (
+            CFG.bytes_encoding == BytesEncoding.BASE64
+            or bytes_encoding == BytesEncoding.BASE64
+        ):
             b = self.from_base64(b)
         return self(self.decoder.artifact(b))
 
@@ -94,12 +101,16 @@ class Encoder(Component):
         x: t.Optional[t.Any] = None,
         uri: t.Optional[str] = None,
         wrap: bool = True,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         # TODO clarify what is going on here
 
         def _encode(x):
             bytes_ = self.encoder.artifact(x)
-            if CFG.bytes_encoding == BytesEncoding.BASE64:
+            if (
+                CFG.bytes_encoding == BytesEncoding.BASE64
+                or bytes_encoding == BytesEncoding.BASE64
+            ):
                 bytes_ = self.to_base64(bytes_)
             return bytes_
 
@@ -145,9 +156,14 @@ class Encodable:
     x: t.Optional[t.Any] = None
     uri: t.Optional[str] = None
 
-    def encode(self) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+    def encode(
+        self, bytes_encoding: t.Optional[BytesEncoding] = None
+    ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+        bytes_encoding = bytes_encoding or CFG.bytes_encoding
         assert hasattr(self.encoder, 'encode')
-        return self.encoder.encode(x=self.x, uri=self.uri)
+        return self.encoder.encode(
+            x=self.x, uri=self.uri, bytes_encoding=bytes_encoding
+        )
 
 
 default_encoder = Encoder(identifier='_default')

@@ -35,7 +35,8 @@ class Document:
         return bson.encode(self.encode())
 
     def encode(
-        self, schema: t.Optional[Schema] = None, bytes_encoding: t.Optional[str] = None
+        self, schema: t.Optional[Schema] = None, bytes_encoding:
+            t.Optional[t.Any] = None
     ) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
@@ -75,7 +76,7 @@ class Document:
 
     @staticmethod
     def decode(
-        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[str] = None
+        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[t.Any] = None
     ) -> t.Any:
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
 
@@ -131,7 +132,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
 
 
 def _decode(
-    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[str] = None
+    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[t.Any] = None
 ) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
@@ -153,11 +154,11 @@ def _decode(
     return r
 
 
-def _encode(r: t.Any, bytes_encoding: t.Optional[str] = None) -> t.Any:
+def _encode(r: t.Any, bytes_encoding: t.Optional[t.Any] = None) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
 
     if isinstance(r, dict):
-        return {k: _encode(v) for k, v in r.items()}
+        return {k: _encode(v, bytes_encoding) for k, v in r.items()}
     if isinstance(r, Encodable):
         return r.encode(bytes_encoding=bytes_encoding)
     return r
@@ -171,7 +172,7 @@ def _encode_with_schema(
         out = {
             k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
             if isinstance(schema.fields[k], Encoder)
-            else _encode_with_schema(v, schema)
+            else _encode_with_schema(v, schema, bytes_encoding)
             for k, v in r.items()
         }
         return out

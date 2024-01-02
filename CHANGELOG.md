@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `insert_to=<table-or-collection>` to `.predict` to allow single predictions to be saved.
 - Support vLLM (running locally or remotely on a ray cluster)
 - Support LLM service in OpenAI format
+- Add ray compute backend
 
 #### Bug Fixes
 

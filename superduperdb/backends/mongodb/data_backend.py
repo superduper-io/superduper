@@ -1,6 +1,4 @@
-import json
 import os
-import re
 import typing as t
 
 import click
@@ -108,65 +106,6 @@ class MongoDataBackend(BaseDataBackend):
                 "name": vector_index.identifier,
             }
         )
-
-    def create_vector_index(self, vector_index, dry_run=False):
-        """
-        Create a vector index in the data backend if an Atlas deployment.
-
-        :param vector_index: vector index to create
-        """
-        collection = (
-            vector_index.indexing_listener.select.table_or_collection.identifier
-        )
-        key = vector_index.indexing_listener.key
-        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
-            key = key.split('.')[1]
-        model = vector_index.indexing_listener.model.identifier
-        version = vector_index.indexing_listener.model.version
-        fields4 = {
-            str(version): [
-                {
-                    "dimensions": vector_index.dimensions,
-                    "similarity": vector_index.measure,
-                    "type": "knnVector",
-                }
-            ]
-        }
-        fields3 = {
-            model: {
-                "fields": fields4,
-                "type": "document",
-            }
-        }
-        fields2 = {
-            key: {
-                "fields": fields3,
-                "type": "document",
-            }
-        }
-        fields1 = {
-            "_outputs": {
-                "fields": fields2,
-                "type": "document",
-            }
-        }
-        index_definition = {
-            "createSearchIndexes": collection,
-            "indexes": [
-                {
-                    "name": vector_index.identifier,
-                    "definition": {
-                        "mappings": {
-                            "dynamic": True,
-                            "fields": fields1,
-                        }
-                    },
-                }
-            ],
-        }
-        print(json.dumps(index_definition, indent=2))
-        if not dry_run:
-            self.db.command(index_definition)
 
     def disconnect(self):
         """

@@ -140,11 +140,7 @@ class Datalayer:
             assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
-        vector_comparison = vector_search_cls(
-            identifier=vi.identifier,
-            dimensions=vi.dimensions,
-            measure=vi.measure,
-        )
+        vector_comparison = vector_search_cls.from_component(vi)
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 

@@ -7,7 +7,6 @@ import pymongo
 from bson import ObjectId
 from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
 
-from superduperdb import CFG
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Delete,
@@ -246,14 +245,19 @@ class Aggregate(Select):
     def _replace_document_with_vector(step, vector_index, db):
         step = copy.deepcopy(step)
         assert "like" in step['$vectorSearch']
-        vector_index = db.vector_indices[vector_index]
-        models, keys = vector_index.models_keys
-        step['$vectorSearch']['queryVector'], _, _ = vector_index.get_vector(
-            like=step['$vectorSearch']['like'],
-            models=models,
-            keys=keys,
-            db=db,
-        )
+        vector = step['$vectorSearch']['like']
+
+        if not isinstance(vector, Document):
+            vector_index = db.vector_indices[vector_index]
+            models, keys = vector_index.models_keys
+            vector, _, _ = vector_index.get_vector(
+                like=vector,
+                models=models,
+                keys=keys,
+                db=db,
+            )
+
+        step['$vectorSearch']['queryVector'] = vector
         indexing_key = vector_index.indexing_listener.key
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
@@ -688,42 +692,6 @@ class Collection(TableOrCollection):
 
     def insert_one(self, document, *args, **kwargs):
         return self._insert([document], *args, **kwargs)
-
-    def like(self, r: Document, vector_index: str, n: int = 10):
-        if not CFG.self_hosted_vector_search:
-            return super().like(r=r, n=n, vector_index=vector_index)
-        else:
-
-            class LocalAggregate:
-                def find(this, *args, **kwargs):
-                    second_part = []
-                    if args:
-                        second_part.append({"$match": args[0] if args else {}})
-                    if args[1:]:
-                        project_args = args[1].copy()
-                        project_args.update({"score": {"$meta": "vectorSearchScore"}})
-                        second_part.append({"$project": project_args})
-                    else:
-                        second_part.append(
-                            {'$addFields': {'score': {'$meta': 'vectorSearchScore'}}}
-                        )
-                    pl = [
-                        {
-                            "$vectorSearch": {
-                                'like': r,
-                                "limit": n,
-                                'numCandidates': n,
-                            }
-                        },
-                        *second_part,
-                    ]
-                    return Aggregate(
-                        table_or_collection=self,
-                        args=[pl],
-                        vector_index=vector_index,
-                    )
-
-            return LocalAggregate()
 
     def model_update(
         self,

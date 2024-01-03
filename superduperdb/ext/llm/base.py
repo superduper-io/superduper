@@ -1,5 +1,5 @@
 import abc
-import asyncio
+import concurrent.futures
 import dataclasses as dc
 import inspect
 import typing
@@ -46,7 +46,7 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
 
     prompt_template: str = "{input}"
     prompt_func: Optional[Callable] = dc.field(default=None)
-    max_batch_size: Optional[int] = 64
+    max_batch_size: Optional[int] = 4
     inference_kwargs: dict = dc.field(default_factory=dict)
 
     def __post_init__(self):
@@ -91,8 +91,18 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         return [self._generate(prompt, **kwargs) for prompt in prompts]
 
     @ensure_initialized
-    def _predict(self, X: Union[str, List[str]], one: bool = False, **kwargs: Any):
-        if isinstance(X, str):
+    def _predict(
+        self,
+        X: Union[str, List[str], List[dict[str, str]]],
+        one: bool = False,
+        **kwargs: Any,
+    ):
+        # support string and dialog format
+        one = isinstance(X, str)
+        if not one and isinstance(X, list):
+            one = isinstance(X[0], dict)
+
+        if one:
             x = self.format_prompt(X, **kwargs)
             return self._generate(x, **kwargs)
         else:
@@ -108,7 +118,10 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         if self.prompt_func is not None:
             return self.prompt_func(x, **self.get_kwargs(self.prompt_func, kwargs))
 
-        return format_prompt(x, self.prompt_template, kwargs.get("context", None))
+        if isinstance(x, str):
+            return format_prompt(x, self.prompt_template, kwargs.get("context", None))
+        else:
+            return x
 
     def get_kwargs(self, func, *kwargs_list):
         """
@@ -137,16 +150,38 @@ class BaseLLMAPI(_BaseLLM):
 
     api_url: str = dc.field(default="")
 
-    def __post_init__(self):
-        super().__post_init__()
-        assert self.api_url, "api_url can not be empty"
-
     def init(self):
         pass
 
+    def _generate_wrapper(self, prompt: str, **kwargs: Any) -> str:
+        """
+        Wrapper for the _generate method to handle exceptions.
+        """
+        try:
+            return self._generate(prompt, **kwargs)
+        except Exception as e:
+            logging.error(f"Error generating response for prompt '{prompt}': {e}")
+            return ""
+
+    def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
+        """
+        Base method to batch generate text from a list of prompts using multi-threading.
+        Handles exceptions in _generate method.
+        """
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_batch_size
+        ) as executor:
+            results = list(
+                executor.map(
+                    lambda prompt: self._generate_wrapper(prompt, **kwargs), prompts
+                )
+            )
+
+        return results
+
 
 @dc.dataclass
-class BaseOpenAI(_BaseLLM):
+class BaseOpenAI(BaseLLMAPI):
     """
     :param openai_api_base: The base URL for the OpenAI API.
     :param openai_api_key: The API key to use for the OpenAI API.
@@ -161,7 +196,7 @@ class BaseOpenAI(_BaseLLM):
     __doc__ = __doc__.format(parent_doc=_BaseLLM.__doc__)
 
     identifier: str = dc.field(default="")
-    openai_api_base: Optional[str] = None
+    openai_api_base: str = "https://api.openai.com/v1"
     openai_api_key: Optional[str] = None
     model_name: str = "gpt-3.5-turbo"
     chat: bool = True
@@ -170,12 +205,13 @@ class BaseOpenAI(_BaseLLM):
     system_role: str = "system"
 
     def __post_init__(self):
+        self.api_url = self.openai_api_base
         self.identifier = self.identifier or self.model_name
         super().__post_init__()
 
     def init(self):
         try:
-            from openai import AsyncClient, OpenAI
+            from openai import OpenAI
         except ImportError:
             raise Exception("You must install openai with command 'pip install openai'")
 
@@ -185,7 +221,6 @@ class BaseOpenAI(_BaseLLM):
         }
 
         self.client = OpenAI(**params)
-        self.aclient = AsyncClient(**params)
         model_list = self.client.models.list()
         model_set = sorted({model.id for model in model_list.data})
         assert (
@@ -197,12 +232,6 @@ class BaseOpenAI(_BaseLLM):
             return self._chat_generate(prompt, **kwargs)
         else:
             return self._prompt_generate(prompt, **kwargs)
-
-    def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
-        """
-        Use asyncio to batch generate text from a list of prompts.
-        """
-        return asyncio.run(self._async_batch_generate(prompts, **kwargs))
 
     def _prompt_generate(self, prompt: str, **kwargs: Any) -> str:
         """
@@ -239,57 +268,6 @@ class BaseOpenAI(_BaseLLM):
             ),
         )
         return completion.choices[0].message.content
-
-    async def _async_generate(self, semaphore, prompt: str, **kwargs) -> str:
-        async with semaphore:
-            if self.chat:
-                return await self._async_chat_generate(prompt, **kwargs)
-            else:
-                return await self._async_prompt_generate(prompt, **kwargs)
-
-    async def _async_prompt_generate(self, prompt: str, **kwargs) -> str:
-        """
-        Async method to generate a completion for a given prompt with prompt format.
-        """
-        completion = await self.aclient.completions.create(
-            model=self.model_name,
-            prompt=prompt,
-            **self.get_kwargs(
-                self.aclient.completions.create, kwargs, self.inference_kwargs
-            ),
-        )
-        return completion.choices[0].text
-
-    async def _async_chat_generate(self, content: str, **kwargs) -> str:
-        """
-        Async method to generate a completion for a given prompt with chat format.
-        """
-        messages = kwargs.get("messages", [])
-
-        if self.system_prompt:
-            messages = [
-                {"role": self.system_role, "content": self.system_prompt}
-            ] + messages
-
-        messages.append({"role": self.user_role, "content": content})
-        completion = await self.aclient.chat.completions.create(
-            messages=messages,
-            model=self.model_name,
-            **self.get_kwargs(
-                self.aclient.chat.completions.create, kwargs, self.inference_kwargs
-            ),
-        )
-        return completion.choices[0].message.content
-
-    async def _async_batch_generate(self, prompts: List[str], **kwargs) -> List[str]:
-        """
-        Async method to concurrently process multiple prompts.
-        """
-        semaphore = asyncio.Semaphore(self.max_batch_size or len(prompts))
-        tasks = [
-            self._async_generate(semaphore, prompt, **kwargs) for prompt in prompts
-        ]
-        return await asyncio.gather(*tasks)
 
 
 @dc.dataclass

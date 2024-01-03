@@ -5,7 +5,7 @@ from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predi
 import pytest
 import vcr
 
-from superduperdb.ext.llm.vllm import VllmAPI, VllmOpenAI
+from superduperdb.ext.llm.vllm import VllmAPI
 
 CASSETTE_DIR = "test/unittest/ext/cassettes/llm/vllm"
 
@@ -18,45 +18,6 @@ api_url = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/generate"
 def openai_mock(monkeypatch):
     if os.getenv("OPENAI_API_KEY") is None:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-TopSecret")
-
-
-@vcr.use_cassette(
-    f"{CASSETTE_DIR}/test_predict_openai.yaml",
-    filter_headers=["authorization"],
-    record_on_exception=False,
-    ignore_localhost=True,
-)
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
-def test_predict_openai(db, openai_mock):
-    """Test chat."""
-    check_predict(
-        db, VllmOpenAI(model_name=model_name, openai_api_base=openai_api_base)
-    )
-    check_predict(
-        db,
-        VllmOpenAI(
-            identifier="chat-llm",
-            model_name=model_name,
-            openai_api_base=openai_api_base,
-            chat=True,
-        ),
-    )
-
-
-@vcr.use_cassette(
-    f"{CASSETTE_DIR}/test_llm_as_listener_model_openai.yaml",
-    filter_headers=["authorization"],
-    record_on_exception=False,
-    ignore_localhost=True,
-)
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_llm_as_listener_model_openai(db, openai_mock):
-    check_llm_as_listener_model(
-        db,
-        VllmOpenAI(model_name=model_name, openai_api_base=openai_api_base),
-    )
 
 
 @vcr.use_cassette(
@@ -74,7 +35,7 @@ def test_predict_api(db):
 
 
 @vcr.use_cassette(
-    f"{CASSETTE_DIR}/test_llm_as_listener_model_openapi.yaml",
+    f"{CASSETTE_DIR}/test_llm_as_listener_model_api.yaml",
     filter_headers=["authorization"],
     record_on_exception=False,
     ignore_localhost=True,
@@ -82,5 +43,5 @@ def test_predict_api(db):
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
-def test_llm_as_listener_model_openapi(db):
+def test_llm_as_listener_model_api(db):
     check_llm_as_listener_model(db, VllmAPI(identifier="llm", api_url=api_url))

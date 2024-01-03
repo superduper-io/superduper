@@ -2,4 +2,4 @@
 
 Here is a detailed view of the `superduperdb` architecture:
 
-![](/img/architecture_detailed.png)
+![architecture_detailed](/docs/hr/static/img/architecture_detailed.png)

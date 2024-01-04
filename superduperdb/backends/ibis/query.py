@@ -320,7 +320,7 @@ class IbisCompoundSelect(CompoundSelect):
 
 class _LogicalExprMixin:
     def _logical_expr(self, members, collection, k, other: t.Optional[t.Any] = None):
-        if other:
+        if other is not None:
             args = [other]
         else:
             args = []

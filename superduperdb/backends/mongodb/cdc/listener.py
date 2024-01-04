@@ -8,6 +8,7 @@ from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
 from superduperdb.backends.mongodb import query
+from superduperdb.backends.mongodb.cdc.base import MongoDBPacket
 from superduperdb.cdc import cdc
 from superduperdb.misc.runnable.runnable import Event
 
@@ -106,6 +107,11 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
             self.resume_token = resume_token
 
         self._change_pipeline = None
+
+        self.db_type = 'mongodb'
+        self.packet = lambda ids, query, event_type: MongoDBPacket(
+            ids, query, event_type
+        )
 
         super().__init__(
             db=db, on=on, stop_event=stop_event, identifier=identifier, timeout=timeout

@@ -40,8 +40,7 @@ torch and torch.manual_seed(42)
 np.random.seed(42)
 
 
-@pytest.fixture
-def database_with_default_encoders_and_model(test_db):
+def add_models_encoders(test_db):
     test_db.add(tensor(torch.float, shape=(32,)))
     test_db.add(tensor(torch.float, shape=(16,)))
     test_db.add(
@@ -71,7 +70,12 @@ def database_with_default_encoders_and_model(test_db):
         compatible_listener='model_linear_a/z',
     )
     test_db.add(vi)
-    yield test_db
+    return test_db
+
+
+@pytest.fixture
+def database_with_default_encoders_and_model(test_db):
+    yield add_models_encoders(test_db)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

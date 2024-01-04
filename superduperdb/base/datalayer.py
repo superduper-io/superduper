@@ -109,7 +109,7 @@ class Datalayer:
         self.compute = build.build_compute(cfg.cluster.compute if cfg else None)
 
         if cfg:
-            self.metadata = build.build_metadata(cfg.metadata_store)
+            self.metadata = build.build_metadata(cfg.metadata_store, self.databackend)
             self.artifact_store = build.build_artifact_store(cfg.artifact_store)
             self.artifact_store.serializers = self.serializers
         else:

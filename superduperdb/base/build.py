@@ -17,9 +17,21 @@ from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 
 
-def build_metadata(metadata_store=None):
+def build_metadata(metadata_store=None, databackend=None):
     if metadata_store is None:
         metadata_store = s.CFG.metadata_store
+        if metadata_store is None:
+            assert databackend
+            try:
+                # Try to connect to the data backend engine.
+                logging.info(
+                    "Connecting to Metadata Client with engine: ", databackend.conn
+                )
+                return databackend.build_metadata()
+            except Exception as e:
+                logging.warn("Error building metadata from DataBackend:", str(e))
+                raise
+
     return build(metadata_store, metadata_stores, type='metadata')
 
 

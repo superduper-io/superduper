@@ -1,18 +1,30 @@
+import random
 import shutil
+import tempfile
 import time
 from contextlib import contextmanager
 
+import ibis
 import pytest
 from fastapi.testclient import TestClient
 
 try:
     import torch
+
+    from superduperdb.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
+from superduperdb.components.vector_index import VectorIndex
+from superduperdb.ext.torch.encoder import tensor
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1
@@ -34,6 +46,131 @@ LISTEN_TIMEOUT = 0.1
 
 # NOTE 3:
 # TODO: Modify this module so that the tests are actually run in parallel...
+
+
+def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
+    return Datalayer(
+        databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
+        metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
+        artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
+    )
+
+
+@pytest.fixture
+def ibis_duckdb(duckdb_conn):
+    uri, connection, tmp_dir = duckdb_conn
+    yield uri, tmp_dir, make_ibis_db(connection, connection, tmp_dir)
+
+
+@pytest.fixture
+def duckdb_conn():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_db = f'{tmp_dir}/mydb.ddb'
+        uri = 'duckdb://' + str(tmp_db)
+        yield uri, ibis.connect(uri), tmp_dir
+
+
+def add_models_encoders(db, table):
+    db.add(tensor(torch.float, shape=(32,)))
+    db.add(tensor(torch.float, shape=(16,)))
+    db.add(
+        TorchModel(
+            object=torch.nn.Linear(32, 16),
+            identifier='model_linear_a',
+            encoder='torch.float32[16]',
+        )
+    )
+    db.add(
+        Listener(
+            select=table.select('id', 'x', 'y', 'z'),
+            key='x',
+            model='model_linear_a',
+        )
+    )
+    db.add(
+        Listener(
+            select=table.select('id', 'x', 'y', 'z'),
+            key='z',
+            model='model_linear_a',
+        )
+    )
+    vi = VectorIndex(
+        identifier='test_index',
+        indexing_listener='model_linear_a/x',
+        compatible_listener='model_linear_a/z',
+    )
+    db.add(vi)
+    return db
+
+
+@pytest.fixture
+def sql_database_with_cdc(ibis_duckdb):
+    import torch
+
+    from superduperdb.backends.ibis.query import Table
+    from superduperdb.components.schema import Schema
+    from superduperdb.ext.torch.encoder import tensor
+
+    encoder = tensor(torch.float, [32])
+
+    schema = Schema(
+        identifier='my_table',
+        fields={
+            'id': dtype('str'),
+            'x': encoder,
+            'y': dtype('int32'),
+            'z': encoder,
+            'auto_increment_field': dtype('int32'),
+        },
+    )
+
+    table = Table('documents', schema=schema)
+    uri, tmp_dir, db = ibis_duckdb
+
+    db.add(table)
+    db = add_models_encoders(db, table)
+
+    from superduperdb import CFG
+
+    CFG.force_set('cluster.vector_search', 'lance')
+    db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
+        'test_index',
+        searcher_type='lance',
+    )
+    cfg_databackend = CFG.data_backend
+
+    CFG.force_set('data_backend', uri)
+    CFG.force_set('artifact_store', 'filesystem://' + tmp_dir)
+
+    db.cdc._cdc_existing_collections = []
+    from functools import partial
+
+    db.rebuild = partial(db.rebuild, cfg=CFG)
+
+    listener = db.cdc.listen(
+        on=table,
+        timeout=LISTEN_TIMEOUT,
+        strategy={
+            'strategy': 'polling',
+            'options': {
+                'auto_increment_field': 'auto_increment_field',
+                'frequency': 0.5,
+            },
+        },
+    )
+    db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
+
+    yield listener, table, db
+
+    CFG.force_set('cluster.vector_search', 'in_memory')
+    CFG.force_set('artifact_store', None)
+    CFG.force_set('data_backend', cfg_databackend)
+
+    db.cdc.stop()
+    try:
+        shutil.rmtree('.superduperdb/vector_indices')
+    except FileNotFoundError:
+        pass
 
 
 @pytest.fixture
@@ -62,16 +199,17 @@ def database_with_cdc(database_with_default_encoders_and_model):
         pass
 
 
-def retry_state_check(state_check):
+def retry_state_check(state_check, retry_timeout=None, sleep=0.1):
     start = time.time()
 
     exc_msg = ''
-    while (time.time() - start) < RETRY_TIMEOUT:
+    retry_timeout = retry_timeout if retry_timeout else RETRY_TIMEOUT
+    while (time.time() - start) < retry_timeout:
         try:
             return state_check()
         except Exception as e:
             exc_msg = str(e)
-            time.sleep(0.1)
+            time.sleep(sleep)
 
     raise Exception(exc_msg)
 
@@ -95,7 +233,9 @@ def test_task_workflow(
 
     _, name, db = database_with_cdc
 
-    with add_and_cleanup_listeners(db, name) as database_with_listeners:
+    with add_and_cleanup_listeners(
+        db, Collection(name).find()
+    ) as database_with_listeners:
         # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
         data = None
         if op_type == 'insert':
@@ -293,23 +433,76 @@ def test_cdc_stop(database_with_cdc):
 
 
 @contextmanager
-def add_and_cleanup_listeners(database, collection_name):
+def add_and_cleanup_listeners(database, select):
     """Add listeners to the database and remove them after the test"""
     listener_x = Listener(
         key='x',
         model='model_linear_a',
-        select=Collection(collection_name).find(),
+        select=select,
     )
 
     listener_z = Listener(
         key='z',
         model='model_linear_a',
-        select=Collection(collection_name).find(),
+        select=select,
     )
 
     database.add(listener_x)
     database.add(listener_z)
     yield database
+
+
+@pytest.mark.parametrize('op_type', ['insert'])
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+def test_sql_task_workflow(
+    sql_database_with_cdc,
+    fake_inserts,
+    fake_updates,
+    op_type,
+):
+    """Test that task graph executed on `insert`"""
+
+    _, table, db = sql_database_with_cdc
+
+    with add_and_cleanup_listeners(
+        db, table.select('id', 'x', 'z')
+    ) as database_with_listeners:
+        # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
+        data = None
+        if op_type == 'insert':
+            data = fake_inserts
+        elif op_type == 'update':
+            data = fake_updates
+
+        data = []
+        for i in range(10):
+            x = torch.randn(32)
+            y = int(random.random() > 0.5)
+            z = torch.randn(32)
+            data.append(
+                Document(
+                    {'id': str(i), 'x': x, 'y': y, 'z': z, 'auto_increment_field': i}
+                )
+            )
+
+        _ = database_with_listeners.execute(
+            table.insert([data[0]]),
+            refresh=False,
+        )
+        time.sleep(2)
+        _ = database_with_listeners.execute(
+            table.insert([data[1]]),
+            refresh=False,
+        )
+
+        def state_check():
+            t = database_with_listeners.databackend.conn.table(
+                '_outputs_model_linear_a_0'
+            )
+            outputs = t.select('input_id').execute()
+            assert len(outputs) == 2
+
+        retry_state_check(state_check, 3, 1)
 
 
 @pytest.fixture

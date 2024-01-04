@@ -1,6 +1,8 @@
 import typing as t
 
 from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorItem
@@ -48,13 +50,24 @@ def copy_vectors(
     key = vi.indexing_listener.key
     model = vi.indexing_listener.model.identifier
     version = vi.indexing_listener.model.version
-    vectors = [
-        {
-            'vector': MongoStyleDict(doc)[f'_outputs.{key}.{model}.{version}'],
-            'id': str(doc['_id']),
-        }
-        for doc in docs
-    ]
+    # TODO: Refactor the below logic
+    if isinstance(db.databackend, MongoDataBackend):
+        vectors = [
+            {
+                'vector': MongoStyleDict(doc)[f'_outputs.{key}.{model}.{version}'],
+                'id': str(doc['_id']),
+            }
+            for doc in docs
+        ]
+    elif isinstance(db.databackend, IbisDataBackend):
+        docs = db.execute(select.outputs(**{key: model}))
+        vectors = [
+            {
+                'vector': doc['_outputs.{key}.{model}.{version}'].x,
+                'id': str(doc['input_id']),
+            }
+            for doc in docs
+        ]
     for r in vectors:
         if hasattr(r['vector'], 'numpy'):
             r['vector'] = r['vector'].numpy()

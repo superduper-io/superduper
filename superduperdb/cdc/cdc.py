@@ -42,6 +42,7 @@ from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import TableOrCollection
+    from superduperdb.backends.ibis.query import Table
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.base.serializable import Serializable
     from superduperdb.components.listener import Listener
@@ -71,7 +72,10 @@ class Packet:
         Collate a batch of packets into one
         """
         assert packets
-        ids = [packet.ids[0] for packet in packets]
+        ids = []
+        for packet in packets:
+            ids += packet.ids
+
         query = packets[0].query
 
         # TODO: cluster Packet for each event.
@@ -94,7 +98,7 @@ class BaseDatabaseListener(ABC):
     def __init__(
         self,
         db: 'Datalayer',
-        on: 'TableOrCollection',
+        on: t.Union['Table', 'TableOrCollection'],
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
@@ -107,18 +111,7 @@ class BaseDatabaseListener(ABC):
         self._startup_event = Event()
         self._scheduler = None
         self.timeout = timeout
-        self.db_type = None
-
-        from superduperdb.backends.base import backends
-        from superduperdb.backends.mongodb.cdc.base import MongoDBPacket
-
-        if isinstance(self.db.databackend, backends.MongoDataBackend):
-            self.db_type = 'mongodb'
-            self.packet = lambda ids, query, event_type: MongoDBPacket(
-                ids, query, event_type
-            )
-        else:
-            raise NotImplementedError(f'{self.db.databackend} not supported yet!')
+        self.db_type: t.Optional[str] = None
 
     @property
     def identity(self) -> str:
@@ -180,7 +173,7 @@ class BaseDatabaseListener(ABC):
         self,
         ids: t.Sequence,
         db: 'Datalayer',
-        table_or_collection: 'TableOrCollection',
+        table_or_collection: t.Union['Table', 'TableOrCollection'],
         event: DBEvent,
     ):
         """
@@ -207,15 +200,15 @@ class BaseDatabaseListener(ABC):
         """
         if event == DBEvent.insert:
             self._change_counters['inserts'] += 1
-            self.on_create(ids, db=self.db, collection=self._on_component)
+            self.on_create(ids, self.db, self._on_component)
 
         elif event == DBEvent.update:
             self._change_counters['updates'] += 1
-            self.on_update(ids, db=self.db, collection=self._on_component)
+            self.on_update(ids, self.db, self._on_component)
 
         elif event == DBEvent.delete:
             self._change_counters['deletes'] += 1
-            self.on_delete(ids, db=self.db, collection=self._on_component)
+            self.on_delete(ids, self.db, self._on_component)
 
 
 class DatabaseListenerThreadScheduler(threading.Thread):
@@ -295,7 +288,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
     `db_type`.
     """
 
-    SUPPORTED_LISTENERS: t.List[str] = ['mongodb']
+    SUPPORTED_LISTENERS: t.List[str] = ['mongodb', 'ibis']
 
     def __init__(self, db_type: str = 'mongodb'):
         if db_type not in self.SUPPORTED_LISTENERS:
@@ -308,7 +301,16 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         if self.db_type == 'mongodb':
             from superduperdb.backends.mongodb.cdc.listener import MongoDatabaseListener
 
-            listener = MongoDatabaseListener(*args, **kwargs)
+            listener = t.cast(
+                BaseDatabaseListener, MongoDatabaseListener(*args, **kwargs)
+            )
+            return t.cast(DBListenerType, listener)
+        elif self.db_type == 'ibis':
+            from superduperdb.backends.ibis.cdc.listener import IbisDatabaseListener
+
+            listener = t.cast(
+                BaseDatabaseListener, IbisDatabaseListener(*args, **kwargs)
+            )
             return t.cast(DBListenerType, listener)
         else:
             raise NotImplementedError
@@ -333,7 +335,9 @@ class DatabaseChangeDataCapture:
         self.cdc_change_handler: t.Optional[CDCHandler] = None
         self._CDC_LISTENERS: t.Dict[str, BaseDatabaseListener] = {}
         self._running: bool = False
-        self._cdc_existing_collections: t.MutableSequence['TableOrCollection'] = []
+        self._cdc_existing_collections: t.MutableSequence[
+            t.Union['TableOrCollection', 'Table']
+        ] = []
 
         listeners = self.db.show('listeners')
         if listeners:
@@ -354,13 +358,13 @@ class DatabaseChangeDataCapture:
         """
         self._running = True
 
-        # listen to existing collection without cdc enabled
+        # Listen to existing collection without cdc enabled
         for collection in self._cdc_existing_collections:
             self.listen(collection)
 
     def listen(
         self,
-        on: 'TableOrCollection',
+        on: t.Union['Table', 'TableOrCollection'],
         identifier: str = '',
         *args,
         **kwargs,
@@ -377,6 +381,8 @@ class DatabaseChangeDataCapture:
 
         if isinstance(self.db.databackend, backends.MongoDataBackend):
             db_type = 'mongodb'
+        elif isinstance(self.db.databackend, backends.IbisDataBackend):
+            db_type = 'ibis'
         else:
             raise NotImplementedError(f'{self.db.databackend} not supported yet!')
 

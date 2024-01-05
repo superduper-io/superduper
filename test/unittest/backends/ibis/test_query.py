@@ -7,7 +7,7 @@ import pytest
 
 from superduperdb import superduper
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.ibis.query import IbisQueryTable, Table
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema
@@ -62,7 +62,7 @@ def duckdb():
         )
 
         db.execute(
-            t.insert(pandas.DataFrame([{'x': 'test', 'id': str(i)} for i in range(20)]))
+            t.insert(pandas.DataFrame([{'x': f'test::{i}', 'id': str(i)} for i in range(20)]))
         )
 
         model = Model(
@@ -72,7 +72,47 @@ def duckdb():
         )
         model.predict('x', select=t, db=db)
 
+        _, s = db.add(
+            Table(
+                'other',
+                primary_id='other_id',
+                schema=Schema(
+                    'my-schema',
+                    fields={'y': dtype(str), 'other_id': dtype(str), 'id2': dtype(str)},
+                ),
+            )
+        )
+
+        db.execute(
+            s.insert(pandas.DataFrame([{'y': f'test2::{i}', 'other_id': str(i // 2), 'id2': str(i)} for i in range(40)]))
+        )
+
         yield db
+
+
+# def test_multi_ids(duckdb):
+#     s = duckdb.load('table', 'other')
+#     t = duckdb.load('table', 'test')
+#     df = duckdb.execute(t.join(s, t.id == s.other_id)).as_pandas()
+#     df = df.astype({'id': int, 'other_id': int})
+#     df = df.sort_values(by=['id', 'other_id'])
+
+#     # df = duckdb.execute(s).as_pandas()
+#     # df = duckdb.execute(t).as_pandas()
+
+
+def test_auto_inference_primary_id():
+
+    s = IbisQueryTable('other', primary_id='other_id')
+    t = IbisQueryTable('test', primary_id='id')
+
+    q = t.join(s, t.id == s.other_id)
+
+    assert q.primary_id == ['id', 'other_id']
+
+    q = t.join(s, t.id == s.other_id).group_by('id')
+
+    assert q.primary_id == 'other_id'
 
 
 def test_renamings(duckdb):

@@ -1,5 +1,6 @@
 import dataclasses as dc
 import enum
+from functools import cached_property
 import json
 import re
 import types
@@ -30,6 +31,7 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 PRIMARY_ID: str = 'id'
+JOIN_MEMBERS = ['join', 'inner_join', 'outer_join', 'left_join', 'anti_join', 'right_join']
 
 IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
@@ -50,6 +52,12 @@ class IbisCompoundSelect(CompoundSelect):
     """
 
     __doc__ = __doc__ + CompoundSelect.__doc__  # type: ignore[operator]
+
+    @property
+    def primary_id(self):
+        if self.query_linker is None:
+            return self.table_or_collection.primary_id
+        return self.query_linker.primary_id
 
     def __hash__(self) -> int:
         return hash(json.dumps(self.serialize()))
@@ -82,8 +90,8 @@ class IbisCompoundSelect(CompoundSelect):
         assert self.query_linker is not None
         return self.query_linker.__getitem__(item)
 
-    def _get_query_linker(cls, table_or_collection, members) -> 'IbisQueryLinker':
-        return IbisQueryLinker(table_or_collection=table_or_collection, members=members)
+    def _get_query_linker(self, table_or_collection, members, primary_id=None) -> 'IbisQueryLinker':
+        return IbisQueryLinker(table_or_collection=table_or_collection, members=members, primary_id=primary_id)
 
     @property
     def output_fields(self):
@@ -366,15 +374,19 @@ class _LogicalExprMixin:
 
 @dc.dataclass(repr=False)
 class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
+    primary_id: t.Union[str, t.List[str], None] = None
+
+    def __post_init__(self):
+        self._output_fields = {}
+        if self.primary_id is None:
+            self.primary_id = self.table_or_collection.primary_id
+
     @property
     def renamings(self):
         out = {}
         for m in self.members:
             out.update(m.renamings)
         return out
-
-    def __post_init__(self):
-        self._output_fields = {}
 
     def repr_(self) -> str:
         out = super().repr_()
@@ -419,11 +431,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             other, members=self.members, collection=self.table_or_collection
         )
 
-    @classmethod
-    def _get_query_linker(cls, table_or_collection, members):
-        return cls(
+    def _get_query_linker(self, table_or_collection, members):
+        return type(self)(
             table_or_collection=table_or_collection,
             members=members,
+            primary_id=self.primary_id,
         )
 
     def _get_query_component(self, k):
@@ -440,11 +452,14 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         )
 
     def select_using_ids(self, ids):
-        return self.filter(
-            self.table_or_collection.__getattr__(
-                self.table_or_collection.primary_id
-            ).isin(ids)
-        )
+        if isinstance(self.primary_id, str):
+            return self.filter(
+                self.table_or_collection.__getattr__(
+                    self.table_or_collection.primary_id
+                ).isin(ids)
+            )
+        else:
+            raise NotImplementedError
 
     def _select_ids_of_missing_outputs(
         self, key: str, model: str, query_id: str, version: int
@@ -505,6 +520,31 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             other_query = self.join(symbol_table, symbol_table.input_id == attr)
             other_query = other_query.filter(other_query.key == key)
             return other_query
+
+    def __call__(self, *args, **kwargs):
+        primary_id = [self.primary_id] if isinstance(self.primary_id, str) else self.primary_id[:]
+
+        for a in args:
+            if isinstance(a, IbisQueryLinker) or isinstance(a, IbisQueryTable):
+                pid = [a.primary_id] if isinstance(a.primary_id, str) else a.primary_id
+                primary_id.extend(pid)
+
+
+        for v in kwargs.values():
+            if isinstance(v, IbisQueryLinker) or isinstance(v, IbisQueryTable):
+                pid = [v.primary_id] if isinstance(v.primary_id, str) else v.primary_id
+                primary_id.extend(pid)
+
+        primary_id = sorted(list(set(primary_id)))
+
+        if self.members[-1].name in JOIN_MEMBERS:
+            primary_id = [*primary_id, args[0].primary_id[:]]
+        if self.members[-1].name == 'group_by':
+            primary_id = [x for x in primary_id if x != args[0]]
+        members = [*self.members[:-1], self.members[-1](*args, **kwargs)]
+        primary_id = sorted(list(set(primary_id)))
+        primary_id = primary_id[0] if len(primary_id) == 1 else primary_id
+        return type(self)(table_or_collection=self.table_or_collection, members=members, primary_id=primary_id)
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         table_id = self.table_or_collection.identifier
@@ -696,7 +736,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         return IbisCompoundSelect(
             table_or_collection=self,
             query_linker=self._get_query_linker(
-                members=[IbisQueryComponent('__getitem__', type=QueryType.ATTR)]
+                members=[IbisQueryComponent('__getitem__', type=QueryType.ATTR)],
             ),
         )(item)
 
@@ -720,10 +760,13 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         self,
         k,
     ):
-        return IbisQueryComponent(name=k, type=QueryType.ATTR)
+        if k == 'group_by':
+            return GroupBy(name=k, type=QueryType.QUERY)
+        else:
+            return IbisQueryComponent(name=k, type=QueryType.ATTR)
 
     def _get_query_linker(self, members) -> IbisQueryLinker:
-        return IbisQueryLinker(table_or_collection=self, members=members)
+        return IbisQueryLinker(table_or_collection=self, members=members, primary_id=self.primary_id)
 
     def insert(
         self,
@@ -792,6 +835,19 @@ class IbisQueryComponent(QueryComponent):
     """
 
     __doc__ = __doc__ + QueryComponent.__doc__  # type: ignore[operator]
+
+    @property
+    def primary_id(self):
+        assert self.type == QueryType.QUERY, 'can\'t get primary id of an attribute'
+        primary_id = []
+        for a in self.args:
+            if isinstance(a, IbisQueryComponent) and a.type == QueryType.QUERY:
+                primary_id.extend(a.primary_id)
+            if isinstance(a, IbisQueryTable):
+                primary_id.append(a.primary_id)
+            if isinstance(a, IbisCompoundSelect):
+                primary_id.extend(a.primary_id)
+        return sorted(list(set(primary_id)))
 
     @property
     def renamings(self):

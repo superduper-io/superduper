@@ -10,7 +10,7 @@ from superduperdb.base.serializable import Serializable, Variable
 
 GREEN = '\033[92m'
 BOLD = '\033[1m'
-END = '\033[0m}'
+END = '\033[0m'
 
 
 class _ReprMixin(ABC):

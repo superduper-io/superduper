@@ -1,12 +1,12 @@
 import logging
 import os
+import typing
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
 import bitsandbytes as bnb
 import torch
 import transformers
-from bitsandbytes.optim import lamb
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
@@ -15,6 +15,10 @@ from transformers import (
     BitsAndBytesConfig,
     deepspeed,
 )
+
+if typing.TYPE_CHECKING:
+    from superduperdb.backends.base.query import Select
+    from superduperdb.base.datalayer import Datalayer
 
 
 @dataclass
@@ -154,6 +158,49 @@ class LLMTrainer:
         )
         self.training_args.output_dir = self.output_dir
 
+    def _fit(self, X, Y, db: "Datalayer", select: "Select"):
+        from superduperdb.backends.query_dataset import QueryDataset
+
+        tokenizer = AutoTokenizer.from_pretrained(
+            self.model_args.model_name_or_path,
+            use_fast=False,
+            model_max_length=self.training_args.model_max_length,
+            padding_side="left",
+            trust_remote_code=self.model_args.trust_remote_code,
+        )
+        tokenizer.pad_token = tokenizer.pad_token or tokenizer.eos_token
+        def process_dataset(example):
+            instruction = example[X]
+            input = example.get("input", None)
+            output = example.get(Y, None)
+
+            if input is not None:
+                prompt = instruction_template["prompt_input"].format(
+                    instruction=instruction, input=input
+                )
+
+            else:
+                prompt = instruction_template["prompt_no_input"].format(
+                    instruction=instruction
+                )
+
+            if output is not None:
+                prompt = prompt + output + tokenizer.eos_token
+            result = tokenizer(
+                prompt,
+                truncation=True,
+                max_length=tokenizer.model_max_length,
+                padding="max_length",
+            )
+            result["labels"] = result["input_ids"].copy()
+            return result
+
+        self.train_dataset = QueryDataset(select=select.find({"_fold": "valid"}), db=db)
+        self.dev_dataset = QueryDataset(select=select.find({"_fold": "valid"}), db=db)
+        self.train_dataset = self.train_dataset.map(process_dataset)
+        self.eval_dataset = self.dev_dataset.map(process_dataset)
+        self.train()
+
     def train(self):
         world_size = int(os.environ.get("WORLD_SIZE", 1))
         ddp = world_size != 1
@@ -239,14 +286,12 @@ class LLMTrainer:
 
         tokenizer.pad_token = tokenizer.pad_token or tokenizer.eos_token
 
-        train_dataset, eval_dataset = create_dataset(tokenizer, self.data_args)
-
         trainer = transformers.Trainer(
             model=model,
             tokenizer=tokenizer,
             args=self.training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
         )
         model.config.use_cache = False
 

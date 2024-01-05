@@ -68,6 +68,11 @@ class QueryDataset:
             self.select_one = self.select.select_single_id
         self.suppress = suppress
         self.extract = extract
+        self._map_list = []
+
+    def map(self, func):
+        self._map_list.append(func)
+        return self
 
     @property
     def database(self):
@@ -104,6 +109,8 @@ class QueryDataset:
         out = self.transform(s)
         if self.extract:
             out = out[self.extract]
+        for func in self._map_list:
+            out = func(out)
         return out
 
 

@@ -15,7 +15,7 @@ By integrating AI at the data's source, we aim to make building AI applications 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
 
 
-![](/img/superduperdb.gif)
+![superduperdb](../../static/img/superduperdb.gif)
 
 
 

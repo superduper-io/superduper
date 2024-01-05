@@ -7,7 +7,7 @@ SuperDuperDB allows developers, on the one hand to experiment and setup models q
 - Vector-searcher service
 - Change-data-capture (CDC) service
 
-![](/img/light.png)
+![light](../../../static/img/light.png)
 
 To set up `superduperdb` to use this cluster mode, it's necessary to add explicit configurations 
 for each of these components. The following configuration does that, as well as enabling a pre-configured 

@@ -19,4 +19,4 @@ You'll probably also want to ready about the query API which is relevant to your
 - [MongoDB Query API](../data_integrations/mongodb.md)
 - [Ibis Query API for SQL](../data_integrations/sql.md)
 
-![](/img/walkthrough.png)
+![walkthrough](../../../static/img/walkthrough.png)

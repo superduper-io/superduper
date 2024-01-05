@@ -11,7 +11,7 @@ Here is the notebook [notebook](https://github.com/SuperDuperDB/superduperdb/blo
 The first step in doing this is 
 to connect to your snowflake account. When you log in it should look something like this:
 
-![](/img/snowflake-login.png)
+![snowflake-login](../../../static/img/snowflake-login.png)
 
 The important thing you need to get from this login is the **organization-id** and **user-id** from the menu in the bottom right (annotated on the image). You will set these values in the cell below.
 
@@ -100,7 +100,7 @@ _, t = db.add(
 
 If you log back into Snowflake now it should look like this:
 
-![](/img/snowflake-table.png)
+![snowflake-table](../../../static/img/snowflake-table.png)
 
 You'll see that the database and table have been created.
 

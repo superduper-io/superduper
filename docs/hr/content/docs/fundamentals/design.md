@@ -8,7 +8,7 @@ sidebar_position: 2
 
 Here is a schematic of the `superduperdb` design.
 
-![](/img/light.png)
+![light](../../../static/img/light.png)
 
 ## Explanation
 

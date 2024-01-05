@@ -21,7 +21,7 @@ using the system:
 
 Here is a schematic of how vector-search works:
 
-![](/img/vector-search.png)
+![vector-search](../../../static/img/vector-search.png)
 
 ## Explanation
 

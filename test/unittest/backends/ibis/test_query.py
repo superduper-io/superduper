@@ -62,7 +62,9 @@ def duckdb():
         )
 
         db.execute(
-            t.insert(pandas.DataFrame([{'x': f'test::{i}', 'id': str(i)} for i in range(20)]))
+            t.insert(
+                pandas.DataFrame([{'x': f'test::{i}', 'id': str(i)} for i in range(20)])
+            )
         )
 
         model = Model(
@@ -84,25 +86,20 @@ def duckdb():
         )
 
         db.execute(
-            s.insert(pandas.DataFrame([{'y': f'test2::{i}', 'other_id': str(i // 2), 'id2': str(i)} for i in range(40)]))
+            s.insert(
+                pandas.DataFrame(
+                    [
+                        {'y': f'test2::{i}', 'other_id': str(i // 2), 'id2': str(i)}
+                        for i in range(40)
+                    ]
+                )
+            )
         )
 
         yield db
 
 
-# def test_multi_ids(duckdb):
-#     s = duckdb.load('table', 'other')
-#     t = duckdb.load('table', 'test')
-#     df = duckdb.execute(t.join(s, t.id == s.other_id)).as_pandas()
-#     df = df.astype({'id': int, 'other_id': int})
-#     df = df.sort_values(by=['id', 'other_id'])
-
-#     # df = duckdb.execute(s).as_pandas()
-#     # df = duckdb.execute(t).as_pandas()
-
-
 def test_auto_inference_primary_id():
-
     s = IbisQueryTable('other', primary_id='other_id')
     t = IbisQueryTable('test', primary_id='id')
 

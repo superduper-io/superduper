@@ -61,10 +61,12 @@ def copy_vectors(
         ]
     elif isinstance(db.databackend, IbisDataBackend):
         docs = db.execute(select.outputs(**{key: model}))
+        from superduperdb.backends.ibis.data_backend import INPUT_KEY
+
         vectors = [
             {
                 'vector': doc['_outputs.{key}.{model}.{version}'].x,
-                'id': str(doc['input_id']),
+                'id': str(doc[INPUT_KEY]),
             }
             for doc in docs
         ]

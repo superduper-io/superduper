@@ -1,8 +1,6 @@
 import dataclasses as dc
 import typing as t
 
-import sentence_transformers
-
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.model import Model
 
@@ -14,6 +12,8 @@ class SentenceTransformer(Model):
     def __post_init__(self):
         super().__post_init__()
         if self.object is None:
+            import sentence_transformers
+
             self.object = Artifact(
                 artifact=sentence_transformers.SentenceTransformer(
                     self.identifier, device=self.device

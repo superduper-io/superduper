@@ -16,6 +16,7 @@ from superduperdb.components.model import APIModel, Model
 from superduperdb.components.schema import Schema
 
 BASE64_PREFIX = 'base64:'
+INPUT_KEY = '_input_id'
 
 
 class IbisDataBackend(BaseDataBackend):
@@ -60,8 +61,7 @@ class IbisDataBackend(BaseDataBackend):
         else:
             output_type = model.encoder
         fields = {
-            'output_id': dtype('str'),  # TODO why do we need this????
-            'input_id': dtype('str'),
+            INPUT_KEY: dtype('string'),
             'query_id': dtype('string'),
             'output': output_type,
             'key': dtype('string'),

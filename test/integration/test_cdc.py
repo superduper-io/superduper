@@ -493,7 +493,7 @@ def test_sql_task_workflow(
             t = database_with_listeners.databackend.conn.table(
                 '_outputs_model_linear_a_0'
             )
-            outputs = t.select('input_id').execute()
+            outputs = t.select('_input_id').execute()
             assert len(outputs) == 2
 
         retry_state_check(state_check, 3, 1)

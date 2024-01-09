@@ -33,7 +33,6 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             assert index is not None
             self._setup(h, index)
         else:
-            self.h_list = None
             self.h = None
             self.index = None
             self.lookup = None
@@ -48,7 +47,6 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return self.h.shape[0]
 
     def _setup(self, h, index):
-        self.h_list = h if isinstance(h, list) else h.tolist()
         self.h = numpy.array(h) if not isinstance(h, numpy.ndarray) else h
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))

@@ -10,6 +10,7 @@ import pymongo
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_backends, metadata_stores
+from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
@@ -17,31 +18,61 @@ from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 
 
-def build_metadata(metadata_store=None, databackend=None):
-    if metadata_store is None:
-        metadata_store = s.CFG.metadata_store
-        if metadata_store is None:
-            assert databackend
-            try:
-                # Try to connect to the data backend engine.
-                logging.info(
-                    "Connecting to Metadata Client with engine: ", databackend.conn
-                )
-                return databackend.build_metadata()
-            except Exception as e:
-                logging.warn("Error building metadata from DataBackend:", str(e))
-                raise
+def build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
+    # Connect to metadata store.
+    # ------------------------------
+    # 1. try to connect to the metadata store specified in the configuration.
+    # 2. if that fails, try to connect to the data backend engine.
+    # 3. if that fails, try to connect to the data backend uri.
+    if cfg.metadata_store is not None:
+        # try to connect to the metadata store specified in the configuration.
+        logging.info("Connecting to Metadata Client:", cfg.metadata_store)
+        return build(cfg.metadata_store, metadata_stores, type='metadata')
+    else:
+        try:
+            # try to connect to the data backend engine.
+            logging.info(
+                "Connecting to Metadata Client with engine: ", databackend.conn
+            )
+            assert isinstance(databackend, BaseDataBackend)
+            return databackend.build_metadata()
+        except Exception as e:
+            logging.warn("Error building metadata from DataBackend:", str(e))
+            metadata = None
 
-    return build(metadata_store, metadata_stores, type='metadata')
+    if metadata is None:
+        try:
+            # try to connect to the data backend uri.
+            logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
+            return build(cfg.data_backend, metadata_stores, type='metadata')
+        except Exception as e:
+            # Exit quickly if a connection fails.
+            logging.error("Error initializing to Metadata Client:", str(e))
+            sys.exit(1)
 
 
-def build_databackend(databackend: t.Optional[str] = None):
-    if databackend is None:
-        databackend = s.CFG.data_backend
-    return build(databackend, data_backends)
+def build_databackend(cfg, databackend=None):
+    # Connect to data backend.
+    # ------------------------------
+    try:
+        if not databackend:
+            databackend = build(cfg.data_backend, data_backends)
+        logging.info("Data Client is ready.", databackend.conn)
+    except Exception as e:
+        # Exit quickly if a connection fails.
+        logging.error("Error initializing to DataBackend Client:", str(e))
+        sys.exit(1)
+    return databackend
 
 
-def build_artifact_store(artifact_store: str):
+def build_artifact_store(
+    artifact_store: t.Optional[str] = None,
+    databackend: t.Optional['BaseDataBackend'] = None,
+):
+    if not artifact_store:
+        assert isinstance(databackend, BaseDataBackend)
+        return databackend.build_artifact_store()
+
     if artifact_store.startswith('mongodb://'):
         import pymongo
 
@@ -116,7 +147,7 @@ def build_compute(compute):
     if compute == 'dask+thread':
         from superduperdb.backends.dask.compute import DaskComputeBackend
 
-        return DaskComputeBackend('', local=True)
+        return DaskComputeBackend('local', local=True)
 
     if compute.split('://')[0] == 'dask+tcp':
         from superduperdb.backends.dask.compute import DaskComputeBackend
@@ -148,58 +179,26 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     for k, v in kwargs.items():
         cfg.force_set(k, v)
 
-    # Connect to data backend.
-    # ------------------------------
-    try:
-        if not databackend:
-            databackend = build(cfg.data_backend, data_backends)
-        logging.info("Data Client is ready.", databackend.conn)
-    except Exception as e:
-        # Exit quickly if a connection fails.
-        logging.error("Error initializing to DataBackend Client:", str(e))
-        sys.exit(1)
+    # Build databackend
+    databackend = build_databackend(cfg, databackend)
 
-    # Connect to metadata store.
-    # ------------------------------
-    # 1. try to connect to the metadata store specified in the configuration.
-    # 2. if that fails, try to connect to the data backend engine.
-    # 3. if that fails, try to connect to the data backend uri.
-    if cfg.metadata_store is not None:
-        # try to connect to the metadata store specified in the configuration.
-        logging.info("Connecting to Metadata Client:", cfg.metadata_store)
-        metadata = build(cfg.metadata_store, metadata_stores, type='metadata')
-    else:
-        try:
-            # try to connect to the data backend engine.
-            logging.info(
-                "Connecting to Metadata Client with engine: ", databackend.conn
-            )
-            metadata = databackend.build_metadata()
-        except Exception as e:
-            logging.warn("Error building metadata from DataBackend:", str(e))
-            metadata = None
+    # Build metadata store
+    metadata = build_metadata(cfg, databackend)
+    assert metadata
 
-    if metadata is None:
-        try:
-            # try to connect to the data backend uri.
-            logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
-            metadata = build(cfg.data_backend, metadata_stores, type='metadata')
-        except Exception as e:
-            # Exit quickly if a connection fails.
-            logging.error("Error initializing to Metadata Client:", str(e))
-            sys.exit(1)
+    # Build artifact store
+    artifact_store = build_artifact_store(cfg.artifact_store, databackend)
+
+    # Build compute
+    compute = build_compute(cfg.cluster.compute)
 
     # Build DataLayer
     # ------------------------------
     db = Datalayer(
         databackend=databackend,
         metadata=metadata,
-        artifact_store=(
-            build_artifact_store(cfg.artifact_store)
-            if cfg.artifact_store is not None
-            else databackend.build_artifact_store()
-        ),
-        compute=build_compute(cfg.cluster.compute),
+        artifact_store=artifact_store,
+        compute=compute,
     )
 
     return db

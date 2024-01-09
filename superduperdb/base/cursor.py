@@ -23,6 +23,7 @@ class SuperDuperCursor:
     id_field: str
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     scores: t.Optional[t.Dict[str, float]] = None
+    load_hybrid: bool = True
 
     _it: int = 0
 
@@ -59,8 +60,8 @@ class SuperDuperCursor:
         r = self.cursor_next()
         if self.scores is not None:
             r['score'] = self.scores[str(r[self.id_field])]
-        if CFG.hybrid_storage:
-            load_uris(r, CFG.downloads_folder, encoders=self.encoders)
+        if self.load_hybrid and CFG.hybrid_storage:
+            load_uris(r, encoders=self.encoders)
         return self.wrap_document(r, self.encoders)
 
     next = __next__

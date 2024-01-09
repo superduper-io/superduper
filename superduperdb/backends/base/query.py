@@ -95,7 +95,7 @@ class Select(Serializable, ABC):
         pass
 
     @abstractmethod
-    def execute(self, db):
+    def execute(self, db, load_hybrid: bool = True):
         """
         Execute the query on the DB instance.
         """
@@ -311,7 +311,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         )
 
     @abstractmethod
-    def execute(self, db):
+    def execute(self, db, load_hybrid: bool = True):
         """
         Execute the compound query on the DB instance.
 

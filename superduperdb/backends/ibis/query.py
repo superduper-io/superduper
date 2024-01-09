@@ -220,7 +220,8 @@ class IbisCompoundSelect(CompoundSelect):
             return self.query_linker.renamings
         return {}
 
-    def execute(self, db):
+    def execute(self, db, load_hybrid: bool = True):
+        # TODO handle load_hybrid for `ibis`
         output, scores = self._execute(db)
         fields = self._get_all_fields(db)
 
@@ -238,8 +239,11 @@ class IbisCompoundSelect(CompoundSelect):
             output['scores'] = output[self.primary_id].map(scores)
 
         output = output.to_dict(orient='records')
+        primary_id = self.table_or_collection.primary_id
         return SuperDuperIbisResult(
-            output, id_field=self.table_or_collection.primary_id, scores=scores
+            output,
+            id_field=primary_id,  # type: ignore[arg-type]
+            scores=scores,
         )
 
     def select_ids_of_missing_outputs(self, key: str, model: str, version: int):

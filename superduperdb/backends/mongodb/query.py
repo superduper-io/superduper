@@ -7,6 +7,7 @@ import pymongo
 from bson import ObjectId
 from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
 
+from superduperdb import CFG
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Delete,
@@ -22,6 +23,7 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
+from superduperdb.misc.files import load_uris
 
 
 class FindOne(QueryComponent):
@@ -286,7 +288,7 @@ class Aggregate(Select):
         )
         return pipeline
 
-    def execute(self, db):
+    def execute(self, db, load_hybrid=True):
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -301,6 +303,7 @@ class Aggregate(Select):
             raw_cursor=cursor,
             id_field='_id',
             encoders=db.encoders,
+            load_hybrid=load_hybrid,
         )
 
 
@@ -359,7 +362,7 @@ class MongoCompoundSelect(CompoundSelect):
         post_query_linker = self.query_linker.select_using_ids(similar_ids)
         return post_query_linker.execute(db), similar_scores
 
-    def execute(self, db):
+    def execute(self, db, load_hybrid=True):
         output, scores = self._execute(db)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
@@ -367,8 +370,11 @@ class MongoCompoundSelect(CompoundSelect):
                 id_field='_id',
                 scores=scores,
                 encoders=db.encoders,
+                load_hybrid=load_hybrid,
             )
         elif isinstance(output, dict):
+            if load_hybrid and CFG.hybrid_storage:
+                load_uris(output, encoders=db.encoders)
             return Document(Document.decode(output, encoders=db.encoders))
         return output
 

@@ -1,5 +1,6 @@
 import hashlib
 import typing as t
+import warnings
 
 from superduperdb import CFG
 
@@ -28,8 +29,8 @@ def get_file_from_uri(uri):
 
 def load_uris(
     r: dict,
-    root: str,
     encoders: t.Dict,
+    root: t.Optional[str] = None,
     raises: bool = False,
 ):
     """
@@ -65,10 +66,12 @@ def load_uris(
                 except FileNotFoundError as e:
                     if raises:
                         raise e
+                    else:
+                        warnings.warn(str(e))
             else:
-                load_uris(v, root, encoders=encoders)
+                load_uris(v, root=root, encoders=encoders, raises=raises)
         elif isinstance(v, list):
             for x in v:
-                load_uris(x, root, encoders=encoders)
+                load_uris(x, root=root, encoders=encoders, raises=raises)
         else:
             pass

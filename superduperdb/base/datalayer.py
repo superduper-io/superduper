@@ -105,17 +105,16 @@ class Datalayer:
     def rebuild(self, cfg=None):
         from superduperdb.base import build
 
-        self.databackend = build.build_databackend(cfg.data_backend if cfg else None)
-        self.compute = build.build_compute(cfg.cluster.compute if cfg else None)
+        cfg = cfg or s.CFG
 
-        if cfg:
-            self.metadata = build.build_metadata(cfg.metadata_store, self.databackend)
-            self.artifact_store = build.build_artifact_store(cfg.artifact_store)
-            self.artifact_store.serializers = self.serializers
-        else:
-            self.metadata = self.databackend.build_metadata()
-            self.artifact_store = self.databackend.build_artifact_store()
-            self.artifact_store.serializers = self.serializers
+        self.databackend = build.build_databackend(cfg.data_backend)
+        self.compute = build.build_compute(cfg.cluster.compute)
+
+        self.metadata = build.build_metadata(cfg.metadata_store, self.databackend)
+        self.artifact_store = build.build_artifact_store(
+            cfg.artifact_store, self.databackend
+        )
+        self.artifact_store.serializers = self.serializers
 
     @property
     def server_mode(self):

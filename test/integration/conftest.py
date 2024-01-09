@@ -1,3 +1,4 @@
+import os
 import random
 from pathlib import Path
 
@@ -111,11 +112,14 @@ def dask_client(monkeypatch, request):
     db_name = "test_db"
     data_backend = f'mongodb://superduper:superduper@localhost:27017/{db_name}'
 
+    data_backend = os.environ.get('SUPERDUPER_MONGO_URI', data_backend)
+    address = os.environ.get('SUPERDUPER_DASK_URI', 'tcp://localhost:8786')
+
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
 
     # Change the default value
     client = DaskComputeBackend(
-        address='tcp://localhost:8786',
+        address=address,
         local=False,
     )
 
@@ -130,9 +134,10 @@ def ray_client():
     from superduperdb.backends.ray.compute import RayComputeBackend
 
     working_dir = Path(__file__).parents[1]
+    address = os.environ.get('SUPERDUPER_RAY_URI', 'ray://127.0.0.1:10001')
 
     client = RayComputeBackend(
-        address='ray://127.0.0.1:10001',
+        address=address,
         runtime_env={"working_dir": working_dir, 'excludes': ['unittest']},
     )
 

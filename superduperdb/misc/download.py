@@ -350,12 +350,13 @@ def download_content(
             documents = list(db.execute(query).raw_cursor)
         else:
             select = query.select_using_ids(ids)
-            documents = list(db.execute(select))
+            documents = list(db.execute(select, load_hybrid=False))
     else:
         assert isinstance(query, Insert)
         documents = t.cast(t.List[Document], query.documents)
 
     uris, keys, place_ids = gather_uris([d.encode() for d in documents])
+
     if uris:
         logging.info(f'found {len(uris)} uris')
     if not uris:

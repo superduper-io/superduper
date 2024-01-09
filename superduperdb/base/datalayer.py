@@ -170,7 +170,7 @@ class Datalayer:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(query),
+            self.execute(query, load_hybrid=False),
             s.CFG.cluster.backfill_batch_size,
         ):
             items = []
@@ -188,6 +188,7 @@ class Datalayer:
                 )
                 if isinstance(h, Encodable):
                     h = h.x
+
                 items.append(VectorItem.create(id=str(id), vector=h))
 
             searcher.add(items)
@@ -448,7 +449,7 @@ class Datalayer:
             )
         return inserted_ids, None
 
-    def select(self, select: Select) -> SelectResult:
+    def select(self, select: Select, load_hybrid: bool = True) -> SelectResult:
         """
         Select data.
 
@@ -456,7 +457,7 @@ class Datalayer:
         """
         if select.variables:
             select = select.set_variables(self)  # type: ignore[assignment]
-        return select.execute(self)
+        return select.execute(self, load_hybrid=load_hybrid)
 
     def refresh_after_delete(
         self,

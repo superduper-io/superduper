@@ -319,6 +319,12 @@ class IbisCompoundSelect(CompoundSelect):
 
 
 class _LogicalExprMixin:
+    '''
+    Mixin class which holds '__eq__', '__or__', '__gt__', etc arithmetic operators
+    These methods are overloaded for ibis logical expression dynamic wrapping
+    with superduperdb.
+    '''
+
     def _logical_expr(self, members, collection, k, other: t.Optional[t.Any] = None):
         if other is not None:
             args = [other]
@@ -527,6 +533,12 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
 
 class QueryType(str, enum.Enum):
+    '''
+    This class holds type of query
+    query: This means Query and can be called
+    attr: This means Attribute and cannot be called
+    '''
+
     QUERY = 'query'
     ATTR = 'attr'
 

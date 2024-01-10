@@ -8,6 +8,11 @@ from superduperdb.base.document import Document
 
 @dc.dataclass
 class SuperDuperIbisResult(SuperDuperCursor):
+    '''
+    SuperDuperIbisResult represents ibis query results with options
+    to unroll results as i.e pandas
+    '''
+
     def as_pandas(self):
         return pandas.DataFrame([Document(r).unpack() for r in self.raw_cursor])
 

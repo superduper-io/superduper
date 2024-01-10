@@ -107,10 +107,10 @@ class Datalayer:
 
         cfg = cfg or s.CFG
 
-        self.databackend = build.build_databackend(cfg.data_backend)
+        self.databackend = build.build_databackend(cfg)
         self.compute = build.build_compute(cfg.cluster.compute)
 
-        self.metadata = build.build_metadata(cfg.metadata_store, self.databackend)
+        self.metadata = build.build_metadata(cfg, self.databackend)
         self.artifact_store = build.build_artifact_store(
             cfg.artifact_store, self.databackend
         )

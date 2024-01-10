@@ -31,10 +31,10 @@ def build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     else:
         try:
             # try to connect to the data backend engine.
+            assert isinstance(databackend, BaseDataBackend)
             logging.info(
                 "Connecting to Metadata Client with engine: ", databackend.conn
             )
-            assert isinstance(databackend, BaseDataBackend)
             return databackend.build_metadata()
         except Exception as e:
             logging.warn("Error building metadata from DataBackend:", str(e))

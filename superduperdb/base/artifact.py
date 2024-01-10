@@ -103,8 +103,8 @@ class Artifact:
         """Serialize this artifact into bytes"""
 
         if self._is_self_serializable(self.artifact):
-            assert hasattr(object, 'serialize')
-            return t.cast(bytes, object.serialize())
+            assert hasattr(self.artifact, 'serialize')
+            return t.cast(bytes, self.artifact.serialize())
 
         serializer = serializers[self.serializer]
         try:

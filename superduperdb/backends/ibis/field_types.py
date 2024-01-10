@@ -16,4 +16,8 @@ class FieldType(Serializable):
 
 
 def dtype(x):
+    '''
+    Ibis dtype to represent basic data types in ibis
+    e.g int, str, etc
+    '''
     return FieldType(_dtype(x))

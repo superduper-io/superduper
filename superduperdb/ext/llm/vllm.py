@@ -3,9 +3,10 @@ from typing import Any, List
 
 import requests
 
+from superduperdb import logging
 from superduperdb.ext.llm.base import BaseLLMAPI, BaseLLMModel
 
-__all__ = ["VllmAPI", "VllmModel", "VllmOpenAI"]
+__all__ = ["VllmAPI", "VllmModel"]
 
 VLLM_INFERENCE_PARAMETERS_LIST = [
     "n",
@@ -78,14 +79,14 @@ class VllmModel(BaseLLMModel):
 
     def __post_init__(self):
         self.on_ray = self.on_ray or bool(self.ray_address)
-        if 'tensor_parallel_size' not in self.vllm_kwargs:
-            self.vllm_kwargs['tensor_parallel_size'] = self.tensor_parallel_size
+        if "tensor_parallel_size" not in self.vllm_kwargs:
+            self.vllm_kwargs["tensor_parallel_size"] = self.tensor_parallel_size
 
-        if 'trust_remote_code' not in self.vllm_kwargs:
-            self.vllm_kwargs['trust_remote_code'] = self.trust_remote_code
+        if "trust_remote_code" not in self.vllm_kwargs:
+            self.vllm_kwargs["trust_remote_code"] = self.trust_remote_code
 
-        if 'model' not in self.vllm_kwargs:
-            self.vllm_kwargs['model'] = self.model_name
+        if "model" not in self.vllm_kwargs:
+            self.vllm_kwargs["model"] = self.model_name
 
         super().__post_init__()
 
@@ -119,21 +120,26 @@ class VllmModel(BaseLLMModel):
             except ImportError:
                 raise Exception("You must install vllm with command 'pip install ray'")
 
-            runtime_env = {
-                "pip": [
-                    "vllm",
-                ]
-            }
-            if not ray.is_initialized():
-                ray.init(address=self.ray_address, runtime_env=runtime_env)
+            self.ray_config.setdefault("runtime_env", {"pip": ["vllm"]})
 
-            if self.vllm_kwargs.get('tensor_parallel_size') == 1:
-                # must set num_gpus to 1 to avoid error
-                self.ray_config["num_gpus"] = 1
-                LLM = ray.remote(**self.ray_config)(_VLLMCore).remote
+            if not ray.is_initialized():
+                ray.init(address=self.ray_address, ignore_reinit_error=True)
+
+            # fix num_gpus for tensor parallel when using ray
+            if self.tensor_parallel_size == 1:
+                if self.ray_config.get("num_gpus", 1) != 1:
+                    logging.warn(
+                        "tensor_parallel_size == 1, num_gpus will be set to 1. "
+                        "If you want to use more gpus, "
+                        "please set tensor_parallel_size > 1."
+                    )
+                self.ray_config["num_gpus"] = self.tensor_parallel_size
             else:
-                # Don't know why using config will block the process, need to figure out
-                LLM = ray.remote(_VLLMCore).remote
+                if "num_gpus" in self.ray_config:
+                    logging.warn("tensor_parallel_size > 1, num_gpus will be ignored.")
+                    self.ray_config.pop("num_gpus", None)
+
+            LLM = ray.remote(**self.ray_config)(_VLLMCore).remote
         else:
             LLM = _VLLMCore
 

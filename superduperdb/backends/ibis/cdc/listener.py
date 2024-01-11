@@ -27,7 +27,7 @@ class PollingStrategyIbis:
         self._last_processed_id = -1
 
     def fetch_ids(self):
-        return ()
+        raise NotImplementedError
 
     def post_handling(self):
         time.sleep(self.frequency)

@@ -22,6 +22,7 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
+from superduperdb.cdc import PollingStrategy
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.torch.encoder import tensor
@@ -146,18 +147,11 @@ def sql_database_with_cdc(ibis_duckdb):
     from functools import partial
 
     db.rebuild = partial(db.rebuild, cfg=CFG)
-
-    listener = db.cdc.listen(
-        on=table,
-        timeout=LISTEN_TIMEOUT,
-        strategy={
-            'strategy': 'polling',
-            'options': {
-                'auto_increment_field': 'auto_increment_field',
-                'frequency': 0.5,
-            },
-        },
+    strategy = PollingStrategy(
+        type='incremental', auto_increment_field='auto_increment_field', frequency=0.5
     )
+
+    listener = db.cdc.listen(on=table, timeout=LISTEN_TIMEOUT, strategy=strategy)
     db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
     yield listener, table, db

@@ -69,7 +69,7 @@ class Listener(Component):
     def post_create(self, db: Datalayer) -> None:
         # Start cdc service if enabled
         if self.select is not None and self.active and not db.server_mode:
-            if CFG.cluster.cdc:
+            if CFG.cluster.cdc.uri:
                 request_server(
                     service='cdc',
                     endpoint='listener/add',

@@ -439,7 +439,7 @@ class Datalayer:
         if refresh and self.cdc.running:
             raise Exception('cdc cannot be activated and refresh=True')
 
-        if s.CFG.cluster.cdc is not None:
+        if s.CFG.cluster.cdc.uri is not None:
             logging.info('CDC active, skipping refresh')
             return inserted_ids, None
 

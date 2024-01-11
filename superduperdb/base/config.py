@@ -52,6 +52,32 @@ class Retry(BaseConfigJSONable):
 
 
 @dc.dataclass
+class CDCStrategy:
+    '''Base CDC strategy dataclass'''
+
+    type: str
+
+
+@dc.dataclass
+class PollingStrategy(CDCStrategy):
+    auto_increment_field: t.Optional[str] = None
+    frequency: float = 3600
+    type: 'str' = 'incremental'
+
+
+@dc.dataclass
+class LogBasedStrategy(CDCStrategy):
+    resume_token: t.Optional[t.Dict[str, str]] = None
+    type: str = 'logbased'
+
+
+@dc.dataclass
+class CDCConfig:
+    uri: t.Optional[str] = None  # None implies local mode
+    strategy: t.Optional[t.Union[PollingStrategy, LogBasedStrategy]] = None
+
+
+@dc.dataclass
 class Cluster(BaseConfigJSONable):
     """
     Describes a connection to distributed work via Dask
@@ -75,7 +101,7 @@ class Cluster(BaseConfigJSONable):
 
     compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
     vector_search: str = 'in_memory'  # '<in_memory|lance>://localhost:8000'
-    cdc: t.Optional[str] = None  # 'http://localhost:8001'  # None
+    cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     backfill_batch_size: int = 100
 
     @property

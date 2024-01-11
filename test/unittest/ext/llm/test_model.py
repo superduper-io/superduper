@@ -97,7 +97,7 @@ def test_training(db, tmpdir):
     # Test checkpoints
     assert len(checkpoints) == 3
 
-    # Test multi-adapter
+    # Test multi-lora adapters
     model = LLM(
         identifier="llm-inference",
         model_name_or_path="facebook/opt-125m",

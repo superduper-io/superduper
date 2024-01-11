@@ -1,4 +1,5 @@
 import dataclasses as dc
+import functools
 import os
 import typing
 import typing as t
@@ -29,8 +30,35 @@ if typing.TYPE_CHECKING:
 
 
 @dc.dataclass
-class LLMTrainingConfiguration(TrainingArguments):
-    identifier: str = ""
+class LLMTrainingArguments(TrainingArguments):
+    """
+    LLM Training Arguments.
+    Inherits from :class:`transformers.TrainingArguments`.
+
+    {training_arguments_doc}
+        lora_r (`int`, *optional*, defaults to 8):
+            Lora R dimension.
+
+        lora_alpha (`int`, *optional*, defaults to 16):
+            Lora alpha.
+
+        lora_dropout (`float`, *optional*, defaults to 0.05):
+            Lora dropout.
+
+        lora_target_modules (`List[str]`, *optional*, defaults to None):
+            Lora target modules. If None, will be automatically inferred.
+
+        lora_weight_path (`str`, *optional*, defaults to ""):
+            Lora weight path.
+
+        lora_bias (`str`, *optional*, defaults to "none"):
+            Lora bias.
+
+        max_length (`int`, *optional*, defaults to 512):
+            Maximum source sequence length during training.
+
+    """
+
     lora_r: int = 8
     lora_alpha: int = 16
     lora_dropout: float = 0.05
@@ -39,28 +67,47 @@ class LLMTrainingConfiguration(TrainingArguments):
     lora_bias: str = "none"
     max_length: t.Optional[int] = 512
 
+    __doc__ = __doc__.format(training_arguments_doc=TrainingArguments.__doc__)
+
+
+@functools.wraps(LLMTrainingArguments)
+def LLMTrainingConfiguration(identifier: str, **kwargs) -> _TrainingConfiguration:
+    return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
+
 
 @dc.dataclass
 class LLM(Model):
+    """
+    LLM model based on `transformers` library.
+    Parameters:
+    : param identifier: model identifier
+    : param model_name_or_path: model name or path
+    : param bits: quantization bits, [4, 8], default is None
+    : param model_kwargs: model kwargs,
+        all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
+    : param tokenizer_kwags: tokenizer kwargs,
+        all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
+    """
+
     identifier: str = ""
+    model_name_or_path: str = "facebook/opt-125m"
     bits: Optional[int] = None
     object: t.Optional[transformers.Trainer] = None
-    model_name_or_path: str = "facebook/opt-125m"
-    pretrain_kwargs: t.Dict = dc.field(default_factory=dict)
+    model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwags: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self):
         self.identifier = self.identifier or self.model_name_or_path
+        # overwrite model kwargs
+        if self.bits is not None:
+            self.model_kwargs["load_in_4bit"] = self.bits == 4
+            self.model_kwargs["load_in_8bit"] = self.bits == 8
         super().__post_init__()
 
-    def init_model_and_tokenizer(self, **kwargs):
+    def init_model_and_tokenizer(self):
         model = AutoModelForCausalLM.from_pretrained(
             self.model_name_or_path,
-            load_in_4bit=self.bits == 4,
-            load_in_8bit=self.bits == 8,
-            device_map=kwargs.get("device_map", None),
-            quantization_config=kwargs.get("quantization_config", None),
-            **self.pretrain_kwargs,
+            **self.model_kwargs,
         )
 
         tokenizer = AutoTokenizer.from_pretrained(
@@ -84,10 +131,7 @@ class LLM(Model):
         return trainer
 
     def init(self):
-        device_map = "auto"
-        self.model, self.tokenizer = self.init_model_and_tokenizer(
-            device_map=device_map,
-        )
+        self.model, self.tokenizer = self.init_model_and_tokenizer()
 
     def _fit(
         self,
@@ -102,23 +146,26 @@ class LLM(Model):
         **kwargs,
     ):
         assert configuration is not None, "configuration must be provided"
+
+        training_args = LLMTrainingArguments(**configuration.kwargs)  # type: ignore
+
+        # get device map
         device_map: t.Union[None, str, t.Dict[str, int]] = None
         if os.environ.get("LOCAL_RANK") is not None:
             device_map = {"": int(os.environ.get("LOCAL_RANK", "0"))}
         elif torch.backends.mps.is_available():
             device_map = "mps"
 
-        quantization_config = self._create_quantization_config(configuration)
+        quantization_config = self._create_quantization_config(training_args)
 
-        self.model, self.tokenizer = self.init_model_and_tokenizer(
-            device_map=device_map,
-            quantization_config=quantization_config,
-        )
+        self.model_kwargs["quantization_config"] = quantization_config
+        self.model_kwargs["device_map"] = device_map
+        self.model, self.tokenizer = self.init_model_and_tokenizer()
 
         self.tokenizer.model_max_length = (
-            configuration.max_length or self.tokenizer.model_max_length
+            training_args.max_length or self.tokenizer.model_max_length
         )
-        self._prepare_lora_training(configuration)
+        self._prepare_lora_training(training_args)
 
         train_dataset, eval_dataset = self.get_datasets(
             X,
@@ -131,12 +178,11 @@ class LLM(Model):
         )
 
         # TODO: Defind callbacks about superduperdb side
-
         trainer = self.create_trainer(
             train_dataset,
             eval_dataset,
             compute_metrics=metrics,
-            training_args=configuration,
+            training_args=training_args,
             **kwargs,
         )
         trainer.model.config.use_cache = False
@@ -145,9 +191,16 @@ class LLM(Model):
 
     @ensure_initialized
     def to_call(self, X: t.Any, **kwargs):
+        """
+        Overwrite `Model.to_call` method to support self.object=None.
+        """
         return self._generate(X, **kwargs)
 
     def _generate(self, X: t.Any, adapter_name=None, **kwargs):
+        """
+        Private method for `Model.to_call` method.
+        Support inference by multi-lora adapters.
+        """
         if adapter_name is not None:
             try:
                 self.model.set_adapter(adapter_name)
@@ -159,11 +212,15 @@ class LLM(Model):
 
         elif hasattr(self.model, "disable_adapter"):
             with self.model.disable_adapter():
-                return self._base_generate(X, **kwargs)
+                return self.generate(X, **kwargs)
 
-        return self._base_generate(X, **kwargs)
+        return self.generate(X, **kwargs)
 
-    def _base_generate(self, X: t.Any, **kwargs):
+    def generate(self, X: t.Any, **kwargs):
+        """
+        Generate text.
+        Can overwrite this method to support more inference methods.
+        """
         model_inputs = self.tokenizer(X, return_tensors="pt").to(self.model.device)
         kwargs.setdefault("pad_token_id", self.tokenizer.eos_token_id)
         outputs = self.model.generate(**model_inputs, **kwargs)
@@ -188,7 +245,7 @@ class LLM(Model):
         else:
             self.model.load_adapter(model_id, adapter_name)
 
-    def _create_quantization_config(self, config):
+    def _create_quantization_config(self, config: LLMTrainingArguments):
         compute_dtype = (
             torch.float16
             if config.fp16
@@ -208,7 +265,7 @@ class LLM(Model):
             quantization_config = None
         return quantization_config
 
-    def _prepare_lora_training(self, config):
+    def _prepare_lora_training(self, config: LLMTrainingArguments):
         try:
             from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
         except Exception as e:
@@ -236,9 +293,6 @@ class LLM(Model):
 
         self.model = get_peft_model(self.model, lora_config)
 
-        if config.deepspeed is not None and config.local_rank == 0:
-            self.model.print_trainable_parameters()
-
         if config.gradient_checkpointing:
             self.model.enable_input_require_grads()
 
@@ -249,9 +303,7 @@ class LLM(Model):
         try:
             import bitsandbytes as bnb
         except Exception as e:
-            raise ImportError(
-                "Please install bitsandbytes to use LoRA quantization."
-            ) from e
+            raise ImportError("Please install bitsandbytes to use LoRA training") from e
 
         if self.bits == 4:
             cls = bnb.nn.Linear4bit
@@ -266,8 +318,7 @@ class LLM(Model):
                 names = name.split(".")
                 lora_module_names.add(names[0] if len(names) == 1 else names[-1])
 
-        if "lm_head" in lora_module_names:  # needed for 16-bit
-            lora_module_names.remove("lm_head")
+        lora_module_names.discard("lm_head")
         return list(lora_module_names)
 
     def get_datasets(

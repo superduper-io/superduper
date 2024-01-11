@@ -22,7 +22,7 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.cdc import PollingStrategy
+from superduperdb.cdc.cdc import PollingStrategy
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.torch.encoder import tensor

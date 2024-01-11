@@ -52,7 +52,7 @@ class PollingStrategyIbisByIncrement(PollingStrategyIbis):
         query = self.table.select(self.primary_id).filter(_filter)
         ids = list(self.db.execute(query))
         ids = [id[self.primary_id] for id in ids]
-        self._last_processed_id += len(ids)
+        self._last_processed_id = int(max(ids)) if ids else self._last_processed_id
         return ids
 
 
@@ -96,21 +96,11 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         :param stop_event: A threading event flag to notify for stoppage.
         :param identifier: A identifier to represent the listener service.
         :param strategy: Used to select strategy used for listening changes
-                         from database.
-                         'strategy': Strategy to use for cdc i.e 'polling', 'logbased'
-                         'options': Options dict for the strategy.
-
-                         'polling' : Polling strategy is a daemon job which runs
-                         every `frequency` secs to poll new data from database.
-                         'options.frequency': Frequency of polling period i.e poll
-                         every `frequency` secs
-                         'opions.auto_increment_field': if there is an
-                         auto_increment_field field set it appropiately.
-
-
-                         'logbased': Logbased strategy uses log file from the database
-                         to retrieve DML operations.
-                         'options': None
+                        options:
+                            PollingStrategy (This strategy polls table every
+                                            `frequency` seconds, more info at
+                                            superduperdb.cdc.cdc.PollingStrategy)
+                            LogBasedStrategy (Not implemented yet)
         """
 
         self.strategy = strategy

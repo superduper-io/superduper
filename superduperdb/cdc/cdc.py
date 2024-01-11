@@ -442,15 +442,3 @@ class DatabaseChangeDataCapture:
         else:
             # Append to existing collection list
             self._cdc_existing_collections.append(collection)
-
-
-@dc.dataclass
-class PollingStrategy:
-    auto_increment_field: t.Optional[str]
-    frequency: float = 3600
-    type: 'str' = 'incremental'
-
-
-@dc.dataclass
-class LogBasedStrategy:
-    resume_token: t.Optional[t.Dict[str, str]]

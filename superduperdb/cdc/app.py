@@ -3,8 +3,10 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.listener import Listener
 from superduperdb.server import app as superduperapp
 
-assert isinstance(CFG.cluster.cdc, str), "cluster.cdc should be set with a valid uri"
-port = int(CFG.cluster.cdc.split(':')[-1])
+assert isinstance(
+    CFG.cluster.cdc.uri, str
+), "cluster.cdc.uri should be set with a valid uri"
+port = int(CFG.cluster.cdc.uri.split(':')[-1])
 app = superduperapp.SuperDuperApp('cdc', port=port)
 
 
@@ -31,4 +33,5 @@ def remove_listener(name: str, db: Datalayer = superduperapp.DatalayerDependency
     listener = db.load('listener', name)
     assert isinstance(listener, Listener)
     on = listener.select.table_or_collection.identifier
-    db.cdc.stop(on)  # type: ignore[arg-type]
+    assert isinstance(on, str)
+    db.cdc.stop(on)

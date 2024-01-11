@@ -2,9 +2,10 @@ import threading
 import time
 import typing as t
 
-from superduperdb import logging
+from superduperdb import CFG, logging
 from superduperdb.backends.ibis import query
 from superduperdb.backends.ibis.cdc.base import IbisDBPacket
+from superduperdb.base.config import LogBasedStrategy, PollingStrategy
 from superduperdb.cdc import cdc
 from superduperdb.misc.runnable.runnable import Event
 
@@ -84,10 +85,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
-        strategy: t.Dict = {
-            'strategy': 'polling',
-            'options': {'frequency': 3600, 'auto_increment_field': None},
-        },
+        strategy: t.Optional[t.Union['PollingStrategy', 'LogBasedStrategy']] = None,
     ):
         """__init__.
 
@@ -103,7 +101,12 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
                             LogBasedStrategy (Not implemented yet)
         """
 
-        self.strategy = strategy
+        if not strategy:
+            assert CFG.cluster.cdc
+            self.strategy = CFG.cluster.cdc.strategy
+        else:
+            self.strategy = strategy
+
         self.db_type = 'ibis'
         self.packet = lambda ids, query, event_type: IbisDBPacket(
             ids, query, event_type
@@ -139,7 +142,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         Setup cdc change stream from user provided
         """
-        if isinstance(self.strategy, cdc.PollingStrategy):
+        if isinstance(self.strategy, PollingStrategy):
             self.stream = PollingStrategyIbis(
                 self.db,
                 self._on_component,

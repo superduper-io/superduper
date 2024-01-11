@@ -105,7 +105,7 @@ def distributed_db(monkeypatch, test_db, dask_client):
     )
     cdc = 'http://localhost:8001'
     vector_search = 'in_memory://localhost:8000'
-    monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
+    monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
     test_db.set_compute(dask_client)
 

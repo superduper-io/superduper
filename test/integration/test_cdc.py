@@ -20,9 +20,9 @@ from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base.config import PollingStrategy
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.cdc.cdc import PollingStrategy
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.torch.encoder import tensor
@@ -506,7 +506,7 @@ def client(monkeypatch, database_with_default_encoders_and_model):
     cdc = 'http://localhost:8001'
     vector_search = 'in_memory://localhost:8000'
 
-    monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
+    monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
 
     database_with_default_encoders_and_model.cdc.start()

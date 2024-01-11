@@ -14,14 +14,16 @@ if t.TYPE_CHECKING:
 
 
 class PollingStrategyIbis:
-    def __init__(self, db: 'Datalayer', table: 'Table', options: t.Dict):
+    def __init__(
+        self, db: 'Datalayer', table: 'Table', strategy, primary_id: str = 'id'
+    ):
         self.db = db
         self.table = table
-        self.options = options
+        self.strategy = strategy
 
-        self.id = options.get('primary_id', 'id')
-        self.increment_field = options.get('auto_increment_field', None)
-        self.frequency = options.get('frequency', 3600)
+        self.primary_id = primary_id
+        self.increment_field = strategy.auto_increment_field
+        self.frequency = strategy.frequency
         self._last_processed_id = -1
 
     def fetch_ids(self):
@@ -32,9 +34,13 @@ class PollingStrategyIbis:
 
     def get_strategy(self):
         if self.increment_field:
-            return PollingStrategyIbisByIncrement(self.db, self.table, self.options)
+            return PollingStrategyIbisByIncrement(
+                self.db, self.table, self.strategy, primary_id=self.primary_id
+            )
         else:
-            return PollingStrategyIbisByID(self.db, self.table, self.options)
+            return PollingStrategyIbisByID(
+                self.db, self.table, self.strategy, primary_id=self.primary_id
+            )
 
 
 class PollingStrategyIbisByIncrement(PollingStrategyIbis):
@@ -43,9 +49,9 @@ class PollingStrategyIbisByIncrement(PollingStrategyIbis):
     ):
         assert self.increment_field
         _filter = self.table.__getattr__(self.increment_field) > self._last_processed_id
-        query = self.table.select(self.id).filter(_filter)
+        query = self.table.select(self.primary_id).filter(_filter)
         ids = list(self.db.execute(query))
-        ids = [id[self.id] for id in ids]
+        ids = [id[self.primary_id] for id in ids]
         self._last_processed_id += len(ids)
         return ids
 
@@ -143,20 +149,17 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         Setup cdc change stream from user provided
         """
-        strategy = self.strategy['strategy']
-        if strategy == 'polling':
-            increment_field = self.strategy['options']['auto_increment_field']
-            options = {}
-            options['auto_increment_field'] = increment_field
-            options['frequency'] = self.strategy['options']['frequency']
-            options['primary_id'] = self.DEFAULT_ID
+        if isinstance(self.strategy, cdc.PollingStrategy):
             self.stream = PollingStrategyIbis(
-                self.db, self._on_component, options
+                self.db,
+                self._on_component,
+                strategy=self.strategy,
+                primary_id=self.DEFAULT_ID,
             ).get_strategy()
-        elif strategy == 'logbased':
+        elif isinstance(self.strategy, cdc.LogBasedStrategy):
             raise NotImplementedError('logbased strategy not implemented yet')
         else:
-            raise TypeError(f'{strategy} is not a valid strategy')
+            raise TypeError(f'{self.strategy} is not a valid strategy')
         return self.stream
 
     def next_cdc(self, stream) -> None:

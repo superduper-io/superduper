@@ -12,7 +12,7 @@ class ExpiryCache(list):
         return item
 
 
-# TODO: need to refajctor theses classes to reuse codes
+# TODO: Two classes need to be refactored to reuse most of the logic
 class QueryDataset:
     """
     A dataset class which can be used to define a torch dataset class.

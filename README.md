@@ -72,6 +72,16 @@ Check the use-cases we have already implemented [here in the docs](https://docs.
 - **[Feature Storing](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
+
+
+| 🎯  Features     | ⚙️ Code Examples                                                                                                                                    |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Connect DB       | <code> db = superduper ("mongodb") </code>                                                                                                          |
+| Transcription    | <code> comp = db.add(Listener(Pipeline("voice-recognition", "facebook/librispeech"), key='recording', select=Collection('meetings').find()) </code> |
+| Vectorization    | <code> db.add(Listener(OpenAI('text-embedding-ada-002'), *comp.outputs())))  </code>                                                                |
+| LLM API          | <code> q  = 'tell me about the Q4 results' db.predict('gpt-4-turbo', q) </code>                                                                     |
+| LLM Self-Hosting | <code> q  = 'when was sensitive information shared?' db.predict('llama-2-11b', q) </code>                                                           |
+
 ### Why opt for SuperDuperDB?
 |                            | With SuperDuperDB                                                                                                                                                                              | Without                                                                                                                                    |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|

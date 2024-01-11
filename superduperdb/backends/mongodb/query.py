@@ -53,8 +53,8 @@ class FindOne(QueryComponent):
 
         :param fold: The fold to add
         """
-        if not self.args:
-            args: t.List[t.Any] = [{}]
+
+        args = self.args or [{}]
         args[0]['_fold'] = fold
         return FindOne(
             name=self.name,

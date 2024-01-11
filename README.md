@@ -250,10 +250,12 @@ You can use these examples as guildelines on how to make use of different model 
 To learn more about _how_ to use SuperDuperDB, please visit our [Docs](https://docs.superduperdb.com/) and official [Tutorials](https://docs.superduperdb.com/docs/docs/walkthrough/tutorial_walkthrough).
 For more examples, you may also find our [Blog](https://docs.superduperdb.com/blog) useful.
 
+<table >
+
 | Name                                                   | Link                                                                                                                                                                                                                                               |
 |--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Use ChatGTP to chat with Snowflake dataset             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/chat_with_your_database.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
-| Streaming Inference using Mnist and Mongo              | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |a
+| Streaming Inference using Mnist and Mongo              | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
 | Connecting text and images using CLIP model            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/multimodal_image_search_clip.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
 | Question your docs using ChatGTP                       | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
 | Question your docs using Vllm                          | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
@@ -264,6 +266,7 @@ For more examples, you may also find our [Blog](https://docs.superduperdb.com/bl
 | Search your videos using CLIP model                    | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/video_search.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                  |
 | Voice Assistant using LibriSpeech and Chat-Completion  | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/voice_memos.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
 
+</table >
 
 Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
 

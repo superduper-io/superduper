@@ -71,6 +71,7 @@ torch = [
     "transformers>=4.29.1",
     "torchvision",
     "torchaudio",
+    "datasets",
 ]
 apis = [
     "openai>=1.1.2",

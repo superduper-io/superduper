@@ -22,6 +22,7 @@ from superduperdb.components.model import (
     Model,
     _TrainingConfiguration,
 )
+from superduperdb.ext.llm.utils import Prompter
 from superduperdb.ext.utils import ensure_initialized
 
 if typing.TYPE_CHECKING:
@@ -96,6 +97,8 @@ class LLM(Model):
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
     : param tokenizer_kwags: tokenizer kwargs,
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
+    : param prompt_template: prompt template, default is "{input}"
+    : param prompt_func: prompt function, default is None
     """
 
     identifier: str = ""
@@ -104,6 +107,8 @@ class LLM(Model):
     object: t.Optional[transformers.Trainer] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwags: t.Dict = dc.field(default_factory=dict)
+    prompt_template: str = "{input}"
+    prompt_func: t.Optional[t.Callable] = dc.field(default=None)
 
     def __post_init__(self):
         self.identifier = self.identifier or self.model_name_or_path
@@ -140,6 +145,7 @@ class LLM(Model):
         return trainer
 
     def init(self):
+        self.prompter = Prompter(self.prompt_template, self.prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
 
     def _fit(
@@ -213,11 +219,21 @@ class LLM(Model):
         return compute_metrics
 
     @ensure_initialized
-    def to_call(self, X: t.Any, **kwargs):
-        """
-        Overwrite `Model.to_call` method to support self.object=None.
-        """
-        return self._generate(X, **kwargs)
+    def _predict(
+        self,
+        X: t.Union[str, t.List[str], t.List[dict[str, str]]],
+        one: bool = False,
+        **kwargs: t.Any,
+    ):
+        # support string and dialog format
+        one = isinstance(X, str)
+        if not one and isinstance(X, list):
+            one = isinstance(X[0], dict)
+
+        xs = [X] if one else X
+        xs = [self.prompter(x, **kwargs) for x in xs]
+        results = self._generate(xs, **kwargs)
+        return results[0] if one else results
 
     def _generate(self, X: t.Any, adapter_name=None, **kwargs):
         """
@@ -235,20 +251,23 @@ class LLM(Model):
 
         elif hasattr(self.model, "disable_adapter"):
             with self.model.disable_adapter():
-                return self.generate(X, **kwargs)
+                return self._base_generate(X, **kwargs)
 
-        return self.generate(X, **kwargs)
+        return self._base_generate(X, **kwargs)
 
-    def generate(self, X: t.Any, **kwargs):
+    def _base_generate(self, X: t.Any, **kwargs):
         """
         Generate text.
         Can overwrite this method to support more inference methods.
         """
-        model_inputs = self.tokenizer(X, return_tensors="pt").to(self.model.device)
+        model_inputs = self.tokenizer(X, return_tensors="pt", padding=True).to(
+            self.model.device
+        )
         kwargs.setdefault("pad_token_id", self.tokenizer.eos_token_id)
         outputs = self.model.generate(**model_inputs, **kwargs)
         texts = self.tokenizer.batch_decode(outputs)
         texts = [text.replace(self.tokenizer.eos_token, "") for text in texts]
+        texts = [text.replace(self.tokenizer.pad_token, "") for text in texts]
         if isinstance(X, str):
             return texts[0]
         return texts

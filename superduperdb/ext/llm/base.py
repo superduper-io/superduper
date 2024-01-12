@@ -10,7 +10,8 @@ from typing import Any, Callable, List, Optional, Union
 from superduperdb import logging
 from superduperdb.components.component import Component
 from superduperdb.components.model import _Predictor
-from superduperdb.ext.utils import ensure_initialized, format_prompt
+from superduperdb.ext.llm.utils import Prompter
+from superduperdb.ext.utils import ensure_initialized
 
 if typing.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -37,6 +38,7 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         super().__post_init__()
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
+        self.prompter = Prompter(self.prompt_template, self.prompt_func)
         assert "{input}" in self.prompt_template, "Template must contain {input}"
 
     def to_call(self, X, *args, **kwargs):
@@ -87,25 +89,11 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
             one = isinstance(X[0], dict)
 
         if one:
-            x = self.format_prompt(X, **kwargs)
+            x = self.prompter(X, **kwargs)
             return self._generate(x, **kwargs)
         else:
-            xs = [self.format_prompt(x, **kwargs) for x in X]
+            xs = [self.prompter(x, **kwargs) for x in X]
             return self._batch_generate(xs, **kwargs)
-
-    def format_prompt(self, x, **kwargs):
-        """
-        Format a prompt with the given prompt function or template.
-        :param x: The input to format.
-        :param kwargs: Any additional arguments to pass to the prompt function.
-        """
-        if self.prompt_func is not None:
-            return self.prompt_func(x, **self.get_kwargs(self.prompt_func, kwargs))
-
-        if isinstance(x, str):
-            return format_prompt(x, self.prompt_template, kwargs.get("context", None))
-        else:
-            return x
 
     def get_kwargs(self, func, *kwargs_list):
         """

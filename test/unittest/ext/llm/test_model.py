@@ -1,4 +1,5 @@
 import os
+import random
 from test.db_config import DBConfig
 from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
@@ -6,6 +7,8 @@ import pytest
 
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
+from superduperdb.components.dataset import Dataset
+from superduperdb.components.metric import Metric
 from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
 
 TEST_MODEL_NAME = "facebook/opt-125m"
@@ -46,8 +49,9 @@ def test_training(db, tmpdir):
         fold = "train" if i < 32 else "valid"
         datas.append({"text": text, "id": str(i), "fold": fold})
 
-    db.execute(Collection("doc").insert_many(list(map(Document, datas))))
-    select = Collection("doc").find()
+    collection = Collection("doc")
+    db.execute(collection.insert_many(list(map(Document, datas))))
+    select = collection.find()
 
     model = LLM(
         identifier="llm",
@@ -56,7 +60,7 @@ def test_training(db, tmpdir):
     )
     training_configuration = LLMTrainingConfiguration(
         identifier="llm-finetune",
-        output_dir=tmpdir,
+        output_dir=str(tmpdir),
         lora_r=64,
         lora_alpha=16,
         lora_dropout=0.05,
@@ -80,12 +84,35 @@ def test_training(db, tmpdir):
         max_length=64,
     )
 
+    def metric(predictions, targets):
+        return random.random()
+
     model.fit(
         X="text",
         db=db,
         select=select,
         configuration=training_configuration,
         prefetch_size=1000,
+        validation_sets=[
+            Dataset(
+                identifier="dataset_1",
+                select=collection.find({"_fold": "valid"}),
+            ),
+            Dataset(
+                identifier="dataset_2",
+                select=collection.find({"_fold": "valid"}),
+            ),
+        ],
+        metrics=[
+            Metric(
+                identifier="metrics1",
+                object=metric,
+            ),
+            Metric(
+                identifier="metrics2",
+                object=metric,
+            ),
+        ],
     )
 
     checkpoints = os.listdir(tmpdir)

@@ -157,7 +157,6 @@ class VllmModel(BaseLLMModel):
             results = ray.get(self.llm.generate.remote(prompts, **total_kwargs))
         else:
             results = self.llm.generate(prompts, **total_kwargs)
-            results = [result.outputs[0].text for result in results]
 
         return results
 

@@ -11,11 +11,13 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    TrainerCallback,
     TrainingArguments,
 )
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import query_dataset_factory
+from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.model import (
     Model,
     _TrainingConfiguration,
@@ -25,8 +27,15 @@ from superduperdb.ext.utils import ensure_initialized
 if typing.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.dataset import Dataset as _Dataset
     from superduperdb.components.metric import Metric
+
+
+class LLMCallback(TrainerCallback):
+    def __init__(self, llm: "LLM"):
+        self.llm = llm
+
+    def on_evaluate(self, args, state, control, **kwargs):
+        self.llm.append_metrics(state.log_history[-1])
 
 
 @dc.dataclass
@@ -167,27 +176,41 @@ class LLM(Model):
         )
         self._prepare_lora_training(training_args)
 
-        train_dataset, eval_dataset = self.get_datasets(
+        train_dataset, eval_datasets = self.get_datasets(
             X,
             y,
             db,
             select,
+            db_validation_sets=validation_sets,
             data_prefetch=data_prefetch,
-            eval=True,
             prefetch_size=kwargs.pop("prefetch_size", 10000),
         )
 
         # TODO: Defind callbacks about superduperdb side
         trainer = self.create_trainer(
             train_dataset,
-            eval_dataset,
-            compute_metrics=metrics,
+            eval_datasets,
+            compute_metrics=self.get_compute_metrics(metrics),
             training_args=training_args,
             **kwargs,
         )
+        trainer.add_callback(LLMCallback(self))
         trainer.model.config.use_cache = False
         trainer.train()
         trainer.save_state()
+
+    def get_compute_metrics(self, metrics):
+        if not metrics:
+            return None
+
+        def compute_metrics(eval_preds):
+            output = {}
+            logits, labels = eval_preds
+            for metric in metrics:
+                output[metric.identifier] = metric(logits, labels)
+            return output
+
+        return compute_metrics
 
     @ensure_initialized
     def to_call(self, X: t.Any, **kwargs):
@@ -327,8 +350,8 @@ class LLM(Model):
         y,
         db,
         select,
+        db_validation_sets: t.Optional[t.Sequence[t.Union[str, "_Dataset"]]] = None,
         data_prefetch: bool = False,
-        eval: bool = False,
         prefetch_size: int = 10000,
     ):
         keys = [X]
@@ -344,7 +367,11 @@ class LLM(Model):
             transform=self.preprocess,
             prefetch_size=prefetch_size,
         )
-        if eval:
+        train_dataset = Dataset.from_list(list(train_dataset))
+
+        validation_sets = {}
+        if db_validation_sets is None:
+            logging.warn("No validation sets provided, using validation set from db")
             eval_dataset = query_dataset_factory(
                 keys=keys,
                 data_prefetch=data_prefetch,
@@ -354,20 +381,35 @@ class LLM(Model):
                 transform=self.preprocess,
                 prefetch_size=prefetch_size,
             )
+            eval_dataset = Dataset.from_list(list(eval_dataset))
+            validation_sets["_DEFAULT"] = eval_dataset
         else:
-            eval_dataset = None
+            for _, db_dataset in enumerate(db_validation_sets):
+                if isinstance(db_dataset, str):
+                    db_dataset = db.load("dataset", db_dataset)
+
+                assert isinstance(db_dataset, _Dataset), (
+                    "Validation set must be a dataset, "
+                    f"got {type(db_dataset)} instead."
+                )
+
+                datas = []
+                for data in db_dataset.data:
+                    data = data.unpack()
+                    datas.append({key: data[key] for key in keys})
+                dataset = Dataset.from_list(datas)
+                validation_sets[db_dataset.identifier] = dataset
 
         def process_func(example):
             return self.tokenize(example, X, y)
 
-        train_dataset = Dataset.from_list(list(train_dataset))
-        if eval_dataset is not None:
-            eval_dataset = Dataset.from_list(list(eval_dataset))
-
         train_dataset = train_dataset.map(process_func)
-        if eval_dataset is not None:
-            eval_dataset = eval_dataset.map(process_func)
-        return train_dataset, eval_dataset
+        for key, dataset in validation_sets.items():
+            validation_sets[key] = dataset.map(process_func)
+
+        # If no validation sets provided, use the validation set from db
+        validation_sets = validation_sets.get("_DEFAULT", validation_sets)
+        return train_dataset, validation_sets
 
     def tokenize(self, example, X, y):
         prompt = example[X]
@@ -395,8 +437,4 @@ class LLM(Model):
         if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
             self.encoder = dtype("str")
 
-        # since then the `.add` clause is not necessary
-        output_component = db.databackend.create_model_table_or_collection(self)
-
-        if output_component is not None:
-            db.add(output_component)
+        super().post_create(db)

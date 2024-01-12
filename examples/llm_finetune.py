@@ -6,7 +6,7 @@ from datasets import load_dataset
 from superduperdb import superduper
 from superduperdb.backends.mongodb import Collection
 from superduperdb.base.document import Document
-from superduperdb.ext.llm import LLM, LLMTrainingConfiguration
+from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
 
 prompt_template = (
     "Below is an instruction that describes a task,"
@@ -104,7 +104,7 @@ def inference(db, model_identifier, output_dir):
 
 
 if __name__ == "__main__":
-    db = superduper("mongodb://localhost:27017/llm-finetune")
+    db = superduper("mongomock://llm-finetune")
     model = "facebook/opt-125m"
     output_dir = "outputs/llm-finetune"
 

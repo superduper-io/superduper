@@ -760,6 +760,8 @@ class Model(_Predictor, Component):
                     db.add(vs)
                     validation_sets[i] = vs.identifier
 
+        self.training_configuration = configuration or self.training_configuration
+
         if db is not None:
             db.add(self)
 

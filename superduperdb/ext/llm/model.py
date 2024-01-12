@@ -6,13 +6,13 @@ import typing as t
 
 import torch
 import transformers
+from datasets import Dataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
     TrainingArguments,
 )
-from typing_extensions import Optional
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import query_dataset_factory
@@ -25,7 +25,7 @@ from superduperdb.ext.utils import ensure_initialized
 if typing.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.dataset import Dataset
+    from superduperdb.components.dataset import Dataset as _Dataset
     from superduperdb.components.metric import Metric
 
 
@@ -91,7 +91,7 @@ class LLM(Model):
 
     identifier: str = ""
     model_name_or_path: str = "facebook/opt-125m"
-    bits: Optional[int] = None
+    bits: t.Optional[int] = None
     object: t.Optional[transformers.Trainer] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwags: t.Dict = dc.field(default_factory=dict)
@@ -142,7 +142,7 @@ class LLM(Model):
         db: t.Optional["Datalayer"] = None,
         metrics: t.Optional[t.Sequence["Metric"]] = None,
         select: t.Optional["Select"] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, "Dataset"]]] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, "_Dataset"]]] = None,
         **kwargs,
     ):
         assert configuration is not None, "configuration must be provided"
@@ -359,6 +359,10 @@ class LLM(Model):
 
         def process_func(example):
             return self.tokenize(example, X, y)
+
+        train_dataset = Dataset.from_list(list(train_dataset))
+        if eval_dataset is not None:
+            eval_dataset = Dataset.from_list(list(eval_dataset))
 
         train_dataset = train_dataset.map(process_func)
         if eval_dataset is not None:

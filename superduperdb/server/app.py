@@ -19,9 +19,9 @@ from superduperdb.base.datalayer import Datalayer
 
 
 class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    def dispatch(self, request: Request, call_next):
         try:
-            return await call_next(request)
+            return call_next(request)
         except Exception as e:
             host = getattr(getattr(request, "client", None), "host", None)
             port = getattr(getattr(request, "client", None), "port", None)

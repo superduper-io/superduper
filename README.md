@@ -244,7 +244,7 @@ m = db.add(
 
 
 
-# 👩🏻‍🍳 SuperDuperDB Cookbook
+# Example use-cases and apps (notebooks)
 A collection of example notebooks using SuperDuperDB 👇
 
 You can use these examples as guildelines on how to make use of different model providers, vector databases, retrieval techniques and more with SuperDuperDB. Most of them showcase a specific, small demo. 

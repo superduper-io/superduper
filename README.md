@@ -72,6 +72,7 @@ Check the use-cases we have already implemented [here in the docs](https://docs.
 - **[Feature Storing](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
+
 ### Why opt for SuperDuperDB?
 |                            | With SuperDuperDB                                                                                                                                                                              | Without                                                                                                                                    |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
@@ -243,16 +244,30 @@ m = db.add(
 
 
 
-## Featured Examples
+# 👩🏻‍🍳 SuperDuperDB Cookbook
+A collection of example notebooks using SuperDuperDB 👇
 
-Try our ready-to-use notebooks. 
+You can use these examples as guildelines on how to make use of different model providers, vector databases, retrieval techniques and more with SuperDuperDB. Most of them showcase a specific, small demo. 
+To learn more about _how_ to use SuperDuperDB, please visit our [Docs](https://docs.superduperdb.com/) and official [Tutorials](https://docs.superduperdb.com/docs/docs/walkthrough/tutorial_walkthrough).
+For more examples, you may also find our [Blog](https://docs.superduperdb.com/blog) useful.
 
-* [Text-To-Image Search](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/multimodal_image_search_clip.ipynb)
-* [Text-To-Video Search](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/video_search.ipynb)
-* [Question The Docs](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/question_the_docs.ipynb)
-* [Semantic Search Engine](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/vector_search.ipynb)
-* [Classic Machine Learning](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/mnist_torch.ipynb)
-* [Cross-Framework Transfer Learning](https://github.com/SuperDuperDB/superduperdb/tree/main/examples/transfer_learning.ipynb)
+<table >
+
+| Name                                                   | Link                                                                                                                                                                                                                                               |
+|--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Use ChatGTP to chat with Snowflake dataset             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/chat_with_your_database.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
+| Streaming Inference using Mnist and Mongo              | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Connecting text and images using CLIP model            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/multimodal_image_search_clip.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
+| Question your docs using ChatGTP                       | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| Question your docs using Vllm                          | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| High-throughput Embeddings using Dask and MiniLM model | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sandbox-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>               |
+| Multimodal Vector Search on SQL                        | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sql-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Transfer Learning between Transformers and Scikit      | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| Declarative Model Chaining                             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning_declarative.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| Search your videos using CLIP model                    | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/video_search.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                  |
+| Voice Assistant using LibriSpeech and Chat-Completion  | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/voice_memos.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+
+</table >
 
 Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/SuperDuperDB/superduper-community-apps).
 

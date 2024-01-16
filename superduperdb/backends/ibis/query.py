@@ -7,7 +7,7 @@ import typing as t
 
 import pandas
 
-from superduperdb import Document, logging
+from superduperdb import logging
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Insert,
@@ -21,6 +21,7 @@ from superduperdb.backends.base.query import (
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisResult
 from superduperdb.backends.ibis.utils import get_output_table_name
+from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder

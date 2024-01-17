@@ -21,7 +21,7 @@ def get_file_from_uri(uri):
         or uri.startswith('https://')
         or uri.startswith('s3://')
     ):
-        file = f'{CFG.downloads_folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
+        file = f'{CFG.downloads.folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
     else:
         raise NotImplementedError(f'File type of {file} not supported')
     return file

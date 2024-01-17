@@ -165,10 +165,15 @@ class Find(QueryComponent):
                         {f'_outputs.{key}.{model}.{version}': {'$exists': 0}},
                     ]
                 },
-                *self.args[1],
+                *self.args[1:],
             ]
         else:
             args = [{f'_outputs.{key}.{model}': {'$exists': 0}}]
+
+        if len(args) == 1:
+            args.append({})
+
+        args[1] = {'_id': 1}
 
         return Find(
             name='find',

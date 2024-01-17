@@ -155,9 +155,9 @@ class BaseDownloader:
 
     def _check_exists_if_hybrid(self, uri):
         if uri.startswith('file://'):
-            file = f'{CFG.downloads_folder}/{uri.split("file://")[-1]}'
+            file = f'{CFG.downloads.folder}/{uri.split("file://")[-1]}'
         else:
-            file = f'{CFG.downloads_folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
+            file = f'{CFG.downloads.folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
         if os.path.exists(file):
             return True
         return False
@@ -363,10 +363,7 @@ def download_content(
         return None
 
     if n_download_workers is None:
-        try:
-            n_download_workers = db.metadata.get_metadata(key='n_download_workers')
-        except TypeError:
-            n_download_workers = 0
+        n_download_workers = CFG.downloads.n_workers
 
     if headers is None:
         try:
@@ -375,14 +372,11 @@ def download_content(
             pass
 
     if timeout is None:
-        try:
-            timeout = db.metadata.get_metadata(key='download_timeout')
-        except TypeError:
-            pass
+        timeout = CFG.downloads.timeout
 
     if CFG.hybrid_storage:
-        assert isinstance(CFG.downloads_folder, str)
-        _download_update = SaveFile(CFG.downloads_folder)
+        assert isinstance(CFG.downloads.folder, str)
+        _download_update = SaveFile(CFG.downloads.folder)
     else:
 
         def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]

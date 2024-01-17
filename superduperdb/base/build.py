@@ -177,7 +177,10 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
 
     # Update configuration with keyword arguments.
     for k, v in kwargs.items():
-        cfg.force_set(k, v)
+        if '__' in k:
+            getattr(cfg, k.split('__')[0]).force_set(k.split('__')[1], v)
+        else:
+            cfg.force_set(k, v)
 
     # Build databackend
     databackend = build_databackend(cfg, databackend)

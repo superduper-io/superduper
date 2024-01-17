@@ -45,8 +45,6 @@ def _get_data_from_query(
         X_arr = numpy.stack(X_arr)
     if y is not None:
         y_arr = [r[y] for r in documents]
-        if y_preprocess is not None:
-            y_arr = [y_preprocess(item) for item in y_arr]
         if isinstance(y[0], numpy.ndarray):
             y_arr = numpy.stack(y_arr)
     return X_arr, y_arr
@@ -56,7 +54,12 @@ def _get_data_from_query(
 class SklearnTrainingConfiguration(_TrainingConfiguration):
     fit_params: t.Dict = dc.field(default_factory=dict)
     predict_params: t.Dict = dc.field(default_factory=dict)
-    y_preprocess: t.Optional[Artifact] = None
+    y_preprocess: t.Union[t.Callable, Artifact, None] = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not isinstance(self.y_preprocess, Artifact):
+            self.y_preprocess = Artifact(self.y_preprocess)
 
 
 @dc.dataclass
@@ -127,8 +130,8 @@ class Estimator(Model):
         if self.training_configuration is not None:
             assert not isinstance(self.training_configuration, str)
             to_return = self.estimator.fit(
-                X=X,
-                y=y,
+                X,
+                y,
                 **self.training_configuration.get('fit_params', {}),
             )
         else:

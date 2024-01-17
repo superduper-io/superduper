@@ -151,6 +151,14 @@ class BytesEncoding(str, Enum):
 
 
 @dc.dataclass
+class Downloads(BaseConfigJSONable):
+    folder: t.Optional[str] = None
+    n_workers: int = 0
+    headers: t.Dict = dc.field(default_factory=lambda: {'User-Agent': 'me'})
+    timeout: t.Optional[int] = None
+
+
+@dc.dataclass
 class Config(BaseConfigJSONable):
     """
     The data class containing all configurable superduperdb values
@@ -161,14 +169,10 @@ class Config(BaseConfigJSONable):
     :param metadata_store: The URI for the metadata store
     :param cluster: Settings distributed computing and change data capture
     :param retries: Settings for retrying failed operations
-
-    :param downloads_folder: Settings for downloading files
-
+    :param downloads: Settings for downloading files
     :param fold_probability: The probability of validation fold
-
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
-
     :param bytes_encoding: The encoding of bytes in the data backend
 
     """
@@ -182,8 +186,8 @@ class Config(BaseConfigJSONable):
 
     cluster: Cluster = dc.field(default_factory=Cluster)
     retries: Retry = dc.field(default_factory=Retry)
+    downloads: Downloads = dc.field(default_factory=Downloads)
 
-    downloads_folder: t.Optional[str] = None
     fold_probability: float = 0.05
 
     log_level: LogLevel = LogLevel.INFO
@@ -206,7 +210,7 @@ class Config(BaseConfigJSONable):
 
     @property
     def hybrid_storage(self):
-        return self.downloads_folder is not None
+        return self.downloads.folder is not None
 
     @property
     def comparables(self):
@@ -214,7 +218,7 @@ class Config(BaseConfigJSONable):
         A dict of `self` excluding some defined attributes.
         """
         _dict = dc.asdict(self)
-        list(map(_dict.pop, ('cluster', 'retries', 'downloads_folder')))
+        list(map(_dict.pop, ('cluster', 'retries', 'downloads')))
         return _dict
 
     def dict(self):

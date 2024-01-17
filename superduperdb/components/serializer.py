@@ -69,7 +69,7 @@ def pickle_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def dill_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
-    return dill.dumps(object)
+    return dill.dumps(object, recurse=True)
 
 
 def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:

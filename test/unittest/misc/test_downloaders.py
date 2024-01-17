@@ -23,7 +23,7 @@ def test_s3_and_web():
 def patch_cfg_downloads(monkeypatch):
     td = str(uuid.uuid4())
     with tempfile.TemporaryDirectory() as td:
-        monkeypatch.setattr(CFG, 'downloads_folder', td)
+        monkeypatch.setattr(CFG.downloads, 'folder', td)
         yield
 
 
@@ -54,4 +54,4 @@ def test_file_blobs(db, patch_cfg_downloads, image_url):
 
     db.execute(Collection('documents').insert_many(to_insert), encoders=(pil_image,))
     db.execute(Collection('documents').find_one())
-    assert os.listdir(CFG.downloads_folder)
+    assert os.listdir(CFG.downloads.folder)

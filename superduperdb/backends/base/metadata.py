@@ -180,6 +180,7 @@ class MetaDataStore(ABC):
         """
         pass
 
+    # TODO - do we still need this or can it be handled by configuration?
     @abstractmethod
     def get_metadata(self, key):
         """

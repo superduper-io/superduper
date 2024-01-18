@@ -31,6 +31,9 @@ if typing.TYPE_CHECKING:
     from superduperdb.components.metric import Metric
 
 
+DEFAULT_FETCH_SIZE = 10000
+
+
 class LLMCallback(TrainerCallback):
     def __init__(self, llm: "LLM"):
         self.llm = llm
@@ -114,16 +117,27 @@ class LLM(Model):
         self.identifier = self.identifier or self.model_name_or_path
         # overwrite model kwargs
         if self.bits is not None:
+            if (
+                "load_in_4bit" in self.model_kwargs
+                or "load_in_8bit" in self.model_kwargs
+            ):
+                logging.warn(
+                    "The bits is set, will overwrite the load_in_4bit and load_in_8bit"
+                )
             self.model_kwargs["load_in_4bit"] = self.bits == 4
             self.model_kwargs["load_in_8bit"] = self.bits == 8
         super().__post_init__()
 
     def init_model_and_tokenizer(self):
+        logging.info(f"Loading model from {self.model_name_or_path}")
+        logging.info(f"model_kwargs: {self.model_kwargs}")
         model = AutoModelForCausalLM.from_pretrained(
             self.model_name_or_path,
             **self.model_kwargs,
         )
 
+        logging.info(f"Loading tokenizer from {self.model_name_or_path}")
+        logging.info(f"tokenizer_kwargs: {self.tokenizer_kwags}")
         tokenizer = AutoTokenizer.from_pretrained(
             self.model_name_or_path,
             **self.tokenizer_kwags,
@@ -173,6 +187,10 @@ class LLM(Model):
 
         quantization_config = self._create_quantization_config(training_args)
 
+        logging.info("Overwriting model_kwargs for LLM training")
+        logging.info(f"quantization_config: {quantization_config}")
+        logging.info(f"device_map: {device_map}")
+
         self.model_kwargs["quantization_config"] = quantization_config
         self.model_kwargs["device_map"] = device_map
         self.model, self.tokenizer = self.init_model_and_tokenizer()
@@ -189,7 +207,7 @@ class LLM(Model):
             select,
             db_validation_sets=validation_sets,
             data_prefetch=data_prefetch,
-            prefetch_size=kwargs.pop("prefetch_size", 10000),
+            prefetch_size=kwargs.pop("prefetch_size", DEFAULT_FETCH_SIZE),
         )
 
         # TODO: Defind callbacks about superduperdb side

@@ -6,7 +6,6 @@ import typing as t
 
 import torch
 import transformers
-from datasets import Dataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -404,6 +403,8 @@ class LLM(Model):
             transform=self.preprocess,
             prefetch_size=prefetch_size,
         )
+        from datasets import Dataset
+
         train_dataset = Dataset.from_list(list(train_dataset))
 
         validation_sets = {}

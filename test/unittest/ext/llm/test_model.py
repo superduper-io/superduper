@@ -125,15 +125,22 @@ def test_training(db, tmpdir):
     assert len(checkpoints) == 3
 
     # Test multi-lora adapters
-    model = LLM(
-        identifier="llm-inference",
+    llm_base = LLM(
+        identifier="base",
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwags=dict(model_max_length=64),
     )
+    db.add(llm_base)
     for checkpoint in checkpoints:
-        model.add_adapter(os.path.join(tmpdir, checkpoint), adapter_name=checkpoint)
+        llm_checkpoint = LLM(
+            identifier=checkpoint,
+            adapter_id=os.path.join(tmpdir, checkpoint),
+            model_name_or_path="facebook/opt-125m",
+            tokenizer_kwags=dict(model_max_length=64),
+        )
+        db.add(llm_checkpoint)
 
-    db.add(model)
-    db.predict(model.identifier, "1+1=")
+    db.add(llm_base)
+    db.predict(llm_base.identifier, "1+1=")
     for checkpoint in checkpoints:
-        db.predict(model.identifier, "1+1=", adapter_name=checkpoint)
+        db.predict(checkpoint, "1+1=")

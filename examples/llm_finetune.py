@@ -60,7 +60,7 @@ def train(db, model_identifier, model_name, output_dir):
         logging_strategy="steps",
         logging_steps=5,
         gradient_checkpointing=True,
-        report_to=["wandb"],
+        report_to=[],
     )
 
     llm.fit(
@@ -74,14 +74,21 @@ def train(db, model_identifier, model_name, output_dir):
 
 def inference(db, model_identifier, output_dir):
     # inference
-    llm = db.load('model', model_identifier)
+    llm_base = db.load("model", model_identifier)
     checkpoints = [
         checkpoint
         for checkpoint in os.listdir(output_dir)
         if checkpoint.startswith("checkpoint")
     ]
+    db.add(llm_base)
     for checkpoint in checkpoints:
-        llm.add_adapter(os.path.join(output_dir, checkpoint), checkpoint)
+        llm_checkpoint = LLM(
+            identifier=checkpoint,
+            bits=4 if torch.cuda.is_available() else None,
+            adapter_id=os.path.join(output_dir, checkpoint),
+            model_name_or_path=llm_base.model_name_or_path,
+        )
+        db.add(llm_checkpoint)
 
     datas = list(Collection(collection_name).find().execute(db))
     data = datas[3].content
@@ -93,14 +100,12 @@ def inference(db, model_identifier, output_dir):
     print("-" * 20, "\n")
 
     print("Base model:\n")
-    print(llm.predict(prompt, max_new_tokens=100, one=True))
+    print(db.predict(llm_base.identifier, prompt, max_new_tokens=100, one=True))
 
     for checkpoint in checkpoints:
         print("-" * 20, "\n")
         print(f"Finetuned model-{checkpoint}:\n")
-        print(
-            llm.predict(prompt, max_new_tokens=100, one=True, adapter_name=checkpoint)
-        )
+        print(db.predict(checkpoint, prompt, max_new_tokens=100, one=True))
 
 
 if __name__ == "__main__":

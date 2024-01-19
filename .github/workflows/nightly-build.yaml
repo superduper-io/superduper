@@ -33,7 +33,7 @@ jobs:
 
       - name: Release Sandbox Image
         run: |
-          @echo "===> release superduperdb/superduperdb:latest"
+          echo "===> release superduperdb/superduperdb:latest"
           docker push superduperdb/sandbox:latest
 
           tag=$(date +'%Y%m%d')

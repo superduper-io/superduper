@@ -37,6 +37,6 @@ jobs:
           docker push superduperdb/sandbox:latest
 
           tag=$(date +'%Y%m%d')
-          @echo "===> release superduperdb/sandbox:${tag}"
+          echo "===> release superduperdb/sandbox:${tag}"
           docker tag superduperdb/sandbox:latest superduperdb/sandbox:${tag} 
           docker push superduperdb/sandbox:${tag}

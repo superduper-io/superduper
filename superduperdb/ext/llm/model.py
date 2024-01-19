@@ -16,6 +16,7 @@ from transformers import (
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import query_dataset_factory
+from superduperdb.base.artifact import Artifact
 from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.model import (
     Model,
@@ -95,6 +96,10 @@ class LLM(Model):
     : param identifier: model identifier
     : param model_name_or_path: model name or path
     : param bits: quantization bits, [4, 8], default is None
+    : param adapter_id: adapter id, default is None
+        Add a adapter to the base model for inference.
+        When model_name_or_path, bits, model_kwargs, tokenizer_kwags are the same,
+        will share the same base model and tokenizer cache.
     : param model_kwargs: model kwargs,
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
     : param tokenizer_kwags: tokenizer kwargs,
@@ -106,43 +111,67 @@ class LLM(Model):
     identifier: str = ""
     model_name_or_path: str = "facebook/opt-125m"
     bits: t.Optional[int] = None
+    adapter_id: t.Optional[str] = None
     object: t.Optional[transformers.Trainer] = None
-    model_kwargs: t.Dict = dc.field(default_factory=dict)
-    tokenizer_kwags: t.Dict = dc.field(default_factory=dict)
+    model_kwargs: t.Union[Artifact, t.Dict] = dc.field(default_factory=dict)
+    tokenizer_kwags: t.Union[Artifact, t.Dict] = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
-    prompt_func: t.Optional[t.Callable] = dc.field(default=None)
+    prompt_func: t.Optional[t.Union[Artifact, t.Callable]] = dc.field(default=None)
+
+    # Save models and tokenizers cache for sharing when using multiple models
+    _model_cache: t.ClassVar[dict] = {}
+    _tokenizer_cache: t.ClassVar[dict] = {}
 
     def __post_init__(self):
-        self.identifier = self.identifier or self.model_name_or_path
+        if not self.identifier:
+            self.identifier = self.adapter_id or self.model_name_or_path
+
+        if not isinstance(self.model_kwargs, Artifact):
+            self.model_kwargs = Artifact(artifact=self.model_kwargs)
+        if not isinstance(self.tokenizer_kwags, Artifact):
+            self.tokenizer_kwags = Artifact(artifact=self.tokenizer_kwags)
+
+        if not isinstance(self.prompt_func, Artifact) and self.prompt_func is not None:
+            self.prompt_func = Artifact(artifact=self.prompt_func)
+
         # overwrite model kwargs
         if self.bits is not None:
             if (
-                "load_in_4bit" in self.model_kwargs
-                or "load_in_8bit" in self.model_kwargs
+                "load_in_4bit" in self.model_kwargs.artifact
+                or "load_in_8bit" in self.model_kwargs.artifact
             ):
                 logging.warn(
                     "The bits is set, will overwrite the load_in_4bit and load_in_8bit"
                 )
-            self.model_kwargs["load_in_4bit"] = self.bits == 4
-            self.model_kwargs["load_in_8bit"] = self.bits == 8
+            self.model_kwargs.artifact["load_in_4bit"] = self.bits == 4
+            self.model_kwargs.artifact["load_in_8bit"] = self.bits == 8
         super().__post_init__()
 
     def init_model_and_tokenizer(self):
-        logging.info(f"Loading model from {self.model_name_or_path}")
-        logging.info(f"model_kwargs: {self.model_kwargs}")
-        model = AutoModelForCausalLM.from_pretrained(
-            self.model_name_or_path,
-            **self.model_kwargs,
-        )
+        model_key = hash(self.model_kwargs)
+        if model_key not in self._model_cache:
+            logging.info(f"Loading model from {self.model_name_or_path}")
+            logging.info(f"model_kwargs: {self.model_kwargs.artifact}")
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name_or_path,
+                **self.model_kwargs.artifact,
+            )
+            self._model_cache[model_key] = model
+        else:
+            logging.info("Reuse model from cache")
 
-        logging.info(f"Loading tokenizer from {self.model_name_or_path}")
-        logging.info(f"tokenizer_kwargs: {self.tokenizer_kwags}")
-        tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name_or_path,
-            **self.tokenizer_kwags,
-        )
-        tokenizer.pad_token = tokenizer.pad_token or tokenizer.unk_token
-        return model, tokenizer
+        tokenizer_key = hash(self.tokenizer_kwags)
+        if tokenizer_key not in self._tokenizer_cache:
+            logging.info(f"Loading tokenizer from {self.model_name_or_path}")
+            logging.info(f"tokenizer_kwargs: {self.tokenizer_kwags.artifact}")
+            tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name_or_path,
+                **self.tokenizer_kwags.artifact,
+            )
+            self._tokenizer_cache[tokenizer_key] = tokenizer
+        else:
+            logging.info("Reuse tokenizer from cache")
+        return self._model_cache[model_key], self._tokenizer_cache[tokenizer_key]
 
     def create_trainer(
         self, train_dataset, eval_dataset, training_args, **kwargs
@@ -158,8 +187,14 @@ class LLM(Model):
         return trainer
 
     def init(self):
-        self.prompter = Prompter(self.prompt_template, self.prompt_func)
+        if self.prompt_func is not None:
+            prompt_func = self.prompt_func.artifact
+        else:
+            prompt_func = None
+        self.prompter = Prompter(self.prompt_template, prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
+        if self.adapter_id is not None:
+            self.add_adapter(self.adapter_id, self.adapter_id)
 
     def _fit(
         self,
@@ -190,8 +225,9 @@ class LLM(Model):
         logging.info(f"quantization_config: {quantization_config}")
         logging.info(f"device_map: {device_map}")
 
-        self.model_kwargs["quantization_config"] = quantization_config
-        self.model_kwargs["device_map"] = device_map
+        assert isinstance(self.model_kwargs, Artifact)
+        self.model_kwargs.artifact["quantization_config"] = quantization_config
+        self.model_kwargs.artifact["device_map"] = device_map
         self.model, self.tokenizer = self.init_model_and_tokenizer()
 
         self.tokenizer.model_max_length = (
@@ -257,9 +293,11 @@ class LLM(Model):
         Private method for `Model.to_call` method.
         Support inference by multi-lora adapters.
         """
+        adapter_name = adapter_name or self.adapter_id
         if adapter_name is not None:
             try:
                 self.model.set_adapter(adapter_name)
+                logging.info(f"Using adapter {adapter_name} for inference")
             except Exception as e:
                 raise ValueError(
                     f"Adapter {adapter_name} is not found in the model, "
@@ -289,7 +327,6 @@ class LLM(Model):
             return texts[0]
         return texts
 
-    @ensure_initialized
     def add_adapter(self, model_id, adapter_name: str):
         try:
             from peft import PeftModel
@@ -297,10 +334,16 @@ class LLM(Model):
             raise ImportError("Please install peft to use LoRA training") from e
 
         logging.info(f"Loading adapter {adapter_name} from {model_id}")
+
+        if not hasattr(self, "model"):
+            self.init()
+
         if not isinstance(self.model, PeftModel):
             self.model = PeftModel.from_pretrained(
                 self.model, model_id, adapter_name=adapter_name
             )
+            # Update cache model
+            self._model_cache[hash(self.model_kwargs)] = self.model
         else:
             self.model.load_adapter(model_id, adapter_name)
 

@@ -23,9 +23,9 @@ class RayComputeBackend(ComputeBackend):
     ):
         self._futures_collection: t.Dict[str, ray.ObjectRef] = {}
         if local:
-            ray.init()
+            ray.init(ignore_reinit_error=True)
         else:
-            ray.init(address=address, **kwargs)
+            ray.init(address=address, **kwargs, ignore_reinit_error=True)
 
     @property
     def type(self) -> str:

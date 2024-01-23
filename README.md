@@ -39,11 +39,11 @@
 
 ## What is SuperDuperDB? 🔮 
 
-SuperDuperDB is an open-source framework for integrating your database with AI models, APIs, and vector search engines, providing streaming inference and scalable training/fine-tuning.
+SuperDuperDB is an AI development and deployment framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**.
 
-SuperDuperDB is **not** a database. SuperDuperDB is an open platform unifying data infrastructure and AI. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent system that leverages the full power of the AI, open-source and Python ecosystem. It is a single scalable environment for all your AI that can be deployed anywhere, in the cloud, on-prem, on your machine.
+Build AI (into your) apps without needing to set up complex pipelines and specialized vector databases, and moving our data there, by integrating AI at your data's source.
 
-SuperDuperDB allows you to build AI applications easily without needing to move your data to complex MLOps pipelines and specialized vector databases by integrating AI at the data’s source, directly on top of your existing data infrastructure:
+SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent system that allows you to leverage the full AI and Python ecosystem. It is a single scalable environment for all your AI, including hosting of your own models, streaming inference and scalable model training/fine-tuning: 
 - Generative AI & LLM-Chat
 - Vector Search
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)

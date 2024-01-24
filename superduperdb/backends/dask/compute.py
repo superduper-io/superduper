@@ -25,6 +25,7 @@ class DaskComputeBackend(ComputeBackend):
         local: bool = False,
         **kwargs,
     ):
+        self.address = address
         self._futures_collection: t.Dict[str, distributed.Future] = {}
 
         if local:
@@ -46,7 +47,7 @@ class DaskComputeBackend(ComputeBackend):
 
     @property
     def name(self) -> str:
-        return "dask"
+        return f"dask://{self.address}"
 
     def submit(self, function: t.Callable, *args, **kwargs) -> distributed.Future:
         """

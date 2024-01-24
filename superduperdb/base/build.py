@@ -158,7 +158,9 @@ def build_compute(compute):
     if compute.split('://')[0] == 'ray':
         return RayComputeBackend(compute)
 
-    return LocalComputeBackend()
+    compute = LocalComputeBackend()
+
+    logging.info("Connecting to compute client:", compute.name)
 
 
 def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:

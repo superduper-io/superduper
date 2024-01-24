@@ -22,6 +22,7 @@ class RayComputeBackend(ComputeBackend):
         **kwargs,
     ):
         self._futures_collection: t.Dict[str, ray.ObjectRef] = {}
+        self.address = address
         if local:
             ray.init(ignore_reinit_error=True)
         else:
@@ -33,7 +34,7 @@ class RayComputeBackend(ComputeBackend):
 
     @property
     def name(self) -> str:
-        return "ray"
+        return f"ray://{self.address}"
 
     def submit(self, function: t.Callable, *args, **kwargs) -> ray.ObjectRef:
         """

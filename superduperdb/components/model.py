@@ -849,6 +849,7 @@ class APIModel(Component, _Predictor):
         return []
 
 
+@public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class QueryModel(Component, _Predictor):
     """
@@ -902,6 +903,7 @@ class QueryModel(Component, _Predictor):
         return [self._predict_one(x, **predict_kwargs) for x in X]
 
 
+@public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class SequentialModel(Component, _Predictor):
     """

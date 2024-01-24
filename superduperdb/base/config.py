@@ -89,6 +89,7 @@ class Cluster(BaseConfigJSONable):
                     "local": same as above
                     "dask+thread": Run all jobs on a local threaded dask cluster
                     "dask+tcp://<host>:<port>": Run all jobs on a remote dask cluster
+                    "ray://<host>:<port>": Run all jobs on a remote ray cluster
 
     :param vector_search: The URI for the vector search service
                           "None": Run vector search on local
@@ -99,7 +100,7 @@ class Cluster(BaseConfigJSONable):
                 "http://<host>:<port>": Connect a remote cdc service
     """
 
-    compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
+    compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
     vector_search: str = 'in_memory'  # '<in_memory|lance>://localhost:8000'
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     backfill_batch_size: int = 100

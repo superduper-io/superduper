@@ -141,6 +141,8 @@ def build(uri, mapping, type: str = 'data_backend'):
 
 
 def build_compute(compute):
+    logging.info("Connecting to compute client:", compute)
+
     if compute == 'local' or compute is None:
         return LocalComputeBackend()
 
@@ -158,7 +160,7 @@ def build_compute(compute):
     if compute.split('://')[0] == 'ray':
         return RayComputeBackend(compute)
 
-    return LocalComputeBackend()
+    raise ValueError('Compute {compute} is not a valid compute configuration.')
 
 
 def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:

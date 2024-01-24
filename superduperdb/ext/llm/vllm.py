@@ -5,6 +5,7 @@ import requests
 
 from superduperdb import logging
 from superduperdb.ext.llm.base import BaseLLMAPI, BaseLLMModel
+from superduperdb.misc.annotations import public_api
 
 __all__ = ["VllmAPI", "VllmModel"]
 
@@ -34,6 +35,7 @@ VLLM_INFERENCE_PARAMETERS_LIST = [
 ]
 
 
+@public_api(stability='beta')
 @dc.dataclass
 class VllmAPI(BaseLLMAPI):
     """
@@ -60,6 +62,7 @@ class VllmAPI(BaseLLMAPI):
         return {"prompt": prompt, **total_kwargs}
 
 
+@public_api(stability='beta')
 @dc.dataclass
 class VllmModel(BaseLLMModel):
     """

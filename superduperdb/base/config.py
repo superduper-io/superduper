@@ -72,7 +72,7 @@ class LogBasedStrategy(CDCStrategy):
 
 
 @dc.dataclass
-class CDCConfig:
+class CDCConfig(BaseConfigJSONable):
     uri: t.Optional[str] = None  # None implies local mode
     strategy: t.Optional[t.Union[PollingStrategy, LogBasedStrategy]] = None
 

@@ -225,7 +225,6 @@ class DatabaseListenerThreadScheduler(threading.Thread):
 
     def run(self) -> None:
         try:
-            self.listener.db.rebuild()
             cdc_stream = self.listener.setup_cdc()
             self.start_event.set()
             while not self.stop_event.is_set():
@@ -248,7 +247,6 @@ class CDCHandler(threading.Thread):
         :param db: a superduperdb instance.
         :param stop_event: A threading event flag to notify for stoppage.
         """
-        db.rebuild()
 
         self.db = db
         self._stop_event = stop_event

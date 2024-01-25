@@ -34,6 +34,12 @@ def _available_models():
 
 @dc.dataclass(kw_only=True)
 class _OpenAI(APIModel):
+    '''
+    :param client_kwargs: The kwargs to be passed to OpenAI
+
+    '''
+
+    client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
     __doc__ = APIModel.__doc__  # type: ignore[assignment]
 
     def __post_init__(self):
@@ -46,8 +52,8 @@ class _OpenAI(APIModel):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
 
-        self.syncClient = SyncOpenAI()
-        self.asyncClient = AsyncOpenAI()
+        self.syncClient = SyncOpenAI(**self.client_kwargs)
+        self.asyncClient = AsyncOpenAI(**self.client_kwargs)
 
         if 'OPENAI_API_KEY' not in os.environ:
             raise ValueError('OPENAI_API_KEY not set')

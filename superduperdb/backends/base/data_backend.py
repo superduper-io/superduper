@@ -50,7 +50,6 @@ class BaseDataBackend(ABC):
         """
         Drop the databackend.
         """
-        pass
 
     @abstractmethod
     def disconnect(self):

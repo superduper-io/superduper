@@ -56,7 +56,7 @@ def test_training(db, tmpdir):
     model = LLM(
         identifier="llm",
         model_name_or_path="facebook/opt-125m",
-        tokenizer_kwags=dict(model_max_length=64),
+        tokenizer_kwargs=dict(model_max_length=64),
     )
     training_configuration = LLMTrainingConfiguration(
         identifier="llm-finetune",
@@ -128,7 +128,7 @@ def test_training(db, tmpdir):
     llm_base = LLM(
         identifier="base",
         model_name_or_path="facebook/opt-125m",
-        tokenizer_kwags=dict(model_max_length=64),
+        tokenizer_kwargs=dict(model_max_length=64),
     )
     db.add(llm_base)
     for checkpoint in checkpoints:
@@ -136,7 +136,7 @@ def test_training(db, tmpdir):
             identifier=checkpoint,
             adapter_id=os.path.join(tmpdir, checkpoint),
             model_name_or_path="facebook/opt-125m",
-            tokenizer_kwags=dict(model_max_length=64),
+            tokenizer_kwargs=dict(model_max_length=64),
         )
         db.add(llm_checkpoint)
 

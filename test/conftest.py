@@ -139,7 +139,7 @@ def add_random_data_to_sql_db(
     table_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_tensor = db.encoders['torch.float32[32]']
+    float_tensor = db.datatypes['torch.float32[32]']
     data = []
 
     schema = Schema(
@@ -179,7 +179,7 @@ def add_random_data_to_mongo_db(
     collection_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_tensor = db.encoders['torch.float32[32]']
+    float_tensor = db.datatypes['torch.float32[32]']
     data = []
 
     for i in range(number_data_points):
@@ -202,7 +202,7 @@ def add_random_data_to_mongo_db(
     )
 
 
-def add_encoders(db: Datalayer):
+def add_datatypes(db: Datalayer):
     for n in [8, 16, 32]:
         db.add(tensor(torch.float, shape=(n,)))
     db.add(pil_image)
@@ -214,11 +214,11 @@ def add_models(db: Datalayer):
         ['linear_a', (32, 16), 'torch.float32[16]'],
         ['linear_b', (16, 8), 'torch.float32[8]'],
     ]
-    for identifier, weight_shape, encoder in params:
+    for identifier, weight_shape, datatype in params:
         m = TorchModel(
             object=torch.nn.Linear(*weight_shape),
             identifier=identifier,
-            encoder=encoder,
+            datatype=datatype,
         )
         db.add(m)
 
@@ -271,7 +271,7 @@ def create_db(CFG, **kwargs):
     if kwargs.get('empty', False):
         return db
 
-    add_encoders(db)
+    add_datatypes(db)
 
     # prepare data
     n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)

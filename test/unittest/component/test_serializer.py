@@ -3,7 +3,7 @@ from test.db_config import DBConfig
 import pytest
 import torch.nn
 
-from superduperdb.components.serializer import build_torch_state_serializer
+from superduperdb.components.datatype import build_torch_state_serializer
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
@@ -14,9 +14,9 @@ def test_custom_serializer(db):
     )
 
     m = torch.nn.Linear(10, 32, bias=False)
-    bytes_ = s.encode(m)
+    bytes_ = s.encoder(m, info=s.info)
 
-    n = s.decode(bytes_)
+    n = s.decoder(bytes_, info=s.info)
 
     assert isinstance(n, torch.nn.Linear)
     assert n.weight.shape == m.weight.shape
@@ -26,8 +26,8 @@ def test_custom_serializer(db):
 
     db.add(s)
 
-    s_reload = db.load('serializer', s.identifier)
+    s_reload = db.load('datatype', s.identifier)
 
-    double_encoded = s_reload.decode(s_reload.encode(m))
+    double_encoded = s_reload.decoder(s_reload.encoder(m, s.info), s.info)
 
     assert isinstance(double_encoded, torch.nn.Linear)

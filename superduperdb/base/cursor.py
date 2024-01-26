@@ -3,8 +3,10 @@ import typing as t
 
 from superduperdb import CFG
 from superduperdb.base.document import Document
-from superduperdb.components.encoder import Encoder
 from superduperdb.misc.files import load_uris
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -21,9 +23,9 @@ class SuperDuperCursor:
 
     raw_cursor: t.Any
     id_field: str
-    encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
+    db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
-    load_hybrid: bool = True
+    reference: bool = False
 
     _it: int = 0
 
@@ -34,8 +36,9 @@ class SuperDuperCursor:
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
             id_field=self.id_field,
-            encoders=self.encoders,
+            db=self.db,
             scores=self.scores,
+            reference=self.reference,
         )
 
     def cursor_next(self):
@@ -47,12 +50,6 @@ class SuperDuperCursor:
             return r
         return self.raw_cursor.next()
 
-    def wrap_document(self, r, encoders):
-        """
-        Wrap a document in a ``Document``.
-        """
-        return Document(Document.decode(r, encoders))
-
     def __iter__(self):
         return self
 
@@ -60,8 +57,8 @@ class SuperDuperCursor:
         r = self.cursor_next()
         if self.scores is not None:
             r['score'] = self.scores[str(r[self.id_field])]
-        if self.load_hybrid and CFG.hybrid_storage:
-            load_uris(r, encoders=self.encoders)
-        return self.wrap_document(r, self.encoders)
+        if not self.reference and CFG.hybrid_storage:
+            load_uris(r, datatypes=self.db.datatypes)
+        return Document.decode(r, self.db, reference=self.reference)
 
     next = __next__

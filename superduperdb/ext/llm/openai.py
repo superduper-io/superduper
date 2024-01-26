@@ -12,8 +12,8 @@ class OpenAI(BaseOpenAI):
 
     __doc__ = __doc__.format(parent_doc=BaseOpenAI.__doc__)
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         """Set model name."""
         # only support chat mode
         self.chat = True
-        super().__post_init__()
+        super().__post_init__(artifacts)

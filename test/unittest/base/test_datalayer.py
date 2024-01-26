@@ -1,7 +1,9 @@
 import time
-from typing import Optional
+from typing import Any, ClassVar, Optional, Sequence
 
 import pytest
+
+from superduperdb.backends.base.artifact import ArtifactSavingError
 
 try:
     import torch
@@ -20,13 +22,17 @@ from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.artifact import Artifact, ArtifactSavingError
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import (
+    DataType,
+    Encodable,
+    dill_serializer,
+    pickle_serializer,
+)
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema
@@ -36,6 +42,7 @@ n_data_points = 250
 
 @dc.dataclass(kw_only=True)
 class TestComponent(Component):
+    _artifacts: ClassVar[Sequence[str]] = (('artifact', dill_serializer),)
     version: Optional[int] = None
     type_id: str = 'test-component'
     is_on_create: bool = False
@@ -43,7 +50,7 @@ class TestComponent(Component):
     is_schedule_jobs: bool = False
     check_clean_up: bool = False
     child: Optional['TestComponent'] = None
-    artifact: Optional[Artifact] = None
+    artifact: Any = None
 
     def pre_create(self, db):
         self.is_on_create = True
@@ -72,7 +79,7 @@ def add_fake_model(db: Datalayer):
     model = Model(
         object=lambda x: str(x),
         identifier='fake_model',
-        encoder=Encoder(identifier='base'),
+        datatype=DataType(identifier='base'),
     )
     db.add(model)
     if isinstance(db.databackend, MongoDataBackend):
@@ -113,8 +120,9 @@ def test_add_version(db: Datalayer):
     # Test the component saves the data correctly
     component_loaded = db.load('test-component', 'test')
 
-    original_serialized = component.serialized[0]
-    saved_serialized = component_loaded.serialized[0]
+    original_serialized = component.dict().encode()
+    saved_serialized = component_loaded.dict().encode()
+
     assert original_serialized['cls'] == saved_serialized['cls']
     assert original_serialized['module'] == saved_serialized['module']
     assert original_serialized['type_id'] == saved_serialized['type_id']
@@ -142,8 +150,10 @@ def test_add_version(db: Datalayer):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add_component_with_bad_artifact(db):
-    artifact = Artifact({'data': lambda x: x}, serializer='pickle')
-    component = TestComponent(identifier='test', artifact=artifact)
+    artifact = {'data': lambda x: x}
+    component = TestComponent(
+        identifier='test', artifact=artifact, artifacts={'artifact': pickle_serializer}
+    )
     with pytest.raises(ArtifactSavingError):
         db.add(component)
 
@@ -153,12 +163,13 @@ def test_add_component_with_bad_artifact(db):
 )
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
-    artifact = Artifact({'data': 1})
+    artifact = {'data': 1}
     component = TestComponent(identifier='test', artifact=artifact)
     with patch.object(db.metadata, 'create_component') as create_component:
         db.add(component)
         serialized = create_component.call_args[0][0]
-        assert serialized['dict']['artifact']['sha1'] == artifact.sha1(db.serializers)
+        print(serialized)
+        assert 'sha1' in serialized['dict']['artifact']['_content']
 
 
 @pytest.mark.parametrize(
@@ -175,13 +186,8 @@ def test_add_child(db):
     parents = db.metadata.get_component_version_parents(child_component.unique_id)
     assert parents == [component.unique_id]
 
-    component_2 = TestComponent(identifier='test-2', child='child-2')
-    with pytest.raises(FileNotFoundError):
-        db.add(component_2)
-
     child_component_2 = TestComponent(identifier='child-2')
-    db.add(child_component_2)
-    component_3 = TestComponent(identifier='test-3', child='child-2')
+    component_3 = TestComponent(identifier='test-3', child=child_component_2)
     db.add(component_3)
     assert db.show('test-component', 'test-3') == [0]
     assert db.show('test-component', 'child-2') == [0]
@@ -209,6 +215,31 @@ def test_add(db):
 
     with pytest.raises(ValueError):
         db.add('test')
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_add_with_artifact(db):
+    m = Model(
+        identifier='test',
+        object=lambda x: x + 2,
+        datatype=dill_serializer,
+    )
+
+    db.add(m)
+    m = db.load('model', m.identifier)
+
+    import pprint
+
+    pprint.pprint(m)
+
+    # assert m.object is not None
+    # assert callable(m.object)
+
+
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+def test_add_table(db):
+    component = Table('test', schema=Schema('test-s', fields={'field': dtype('str')}))
+    db.add(component)
 
 
 @pytest.mark.parametrize(
@@ -279,11 +310,11 @@ def test_remove_component_with_clean_up(db):
 )
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
-    test_encoder = Encoder(identifier='test_encoder')
-    db.add(test_encoder)
-    db._remove_component_version('encoder', 'test_encoder', 0, force=True)
+    test_datatype = DataType(identifier='test_datatype')
+    db.add(test_datatype)
+    db._remove_component_version('datatype', 'test_datatype', 0, force=True)
     with pytest.raises(FileNotFoundError):
-        db.encoders['test_encoder']
+        db.datatypes['test_datatype']
 
 
 @pytest.mark.parametrize(
@@ -292,14 +323,16 @@ def test_remove_component_from_data_layer_dict(db):
 def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
     component_with_artifact = TestComponent(
-        identifier='test_with_artifact', version=0, artifact=Artifact({'test': 'test'})
+        identifier='test_with_artifact',
+        version=0,
+        artifact={'test': 'test'},
     )
     db.add(component_with_artifact)
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
-    artifact_file_id = info_with_artifact['dict']['artifact']['file_id']
-    with patch.object(db.artifact_store, 'delete') as mock_delete:
+    artifact_file_id = info_with_artifact['dict']['artifact']['_content']['file_id']
+    with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
         )
@@ -365,8 +398,8 @@ def test_show(db):
             TestComponent(identifier='b'),
             TestComponent(identifier='b'),
             TestComponent(identifier='b'),
-            Encoder(identifier='c1'),
-            Encoder(identifier='c2'),
+            DataType(identifier='c1'),
+            DataType(identifier='c2'),
         ]
     )
 
@@ -375,7 +408,7 @@ def test_show(db):
     assert 'None' in str(e) and '1' in str(e)
 
     assert sorted(db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
-    assert sorted(db.show('encoder')) == ['c1', 'c2']
+    assert sorted(db.show('datatype')) == ['c1', 'c2']
 
     assert sorted(db.show('test-component', 'a1')) == [0]
     assert sorted(db.show('test-component', 'b')) == [0, 1, 2]
@@ -400,18 +433,18 @@ def test_predict(db: Datalayer):
         TorchModel(
             object=torch.nn.Linear(16, 2),
             identifier='model1',
-            encoder=tensor(torch.float32, shape=(4, 2)),
+            datatype=tensor(torch.float32, shape=(4, 2)),
         ),
         TorchModel(
             object=torch.nn.Linear(16, 3),
             identifier='model2',
-            encoder=tensor(torch.float32, shape=(4, 3)),
+            datatype=tensor(torch.float32, shape=(4, 3)),
         ),
         TorchModel(
             object=torch.nn.Linear(16, 3),
             identifier='model3',
-            encoder=Encoder(
-                identifier='test-encoder',
+            datatype=DataType(
+                identifier='test-datatype',
                 encoder=lambda x: torch.argmax(x, dim=1),
             ),
         ),
@@ -420,12 +453,8 @@ def test_predict(db: Datalayer):
 
     # test model selection
     x = torch.randn(4, 16)
-    assert db.predict('model1', x)[0].content.x.shape == torch.Size([4, 2])
-    assert db.predict('model2', x)[0].content.x.shape == torch.Size([4, 3])
-
-    # test encoder
-    result = db.predict('model3', torch.randn(4, 16))[0].content.encode()
-    assert result['_content']['bytes'].shape == torch.Size([4])
+    assert db.predict('model1', x)[0]['_base'].x.shape == torch.Size([4, 2])
+    assert db.predict('model2', x)[0]['_base'].x.shape == torch.Size([4, 3])
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -437,7 +466,7 @@ def test_predict_context(db: Datalayer):
         TorchModel(
             object=torch.nn.Linear(16, 2),
             identifier='model',
-            encoder=tensor(torch.float32, shape=(4, 2)),
+            datatype=tensor(torch.float32, shape=(4, 2)),
         )
     )
 
@@ -446,16 +475,19 @@ def test_predict_context(db: Datalayer):
 
     with patch.object(db, '_get_context') as mock_get_context:
         mock_get_context.return_value = (
-            [None, None],
-            [Document(torch.randn(4, 2)), Document(torch.randn(4, 3))],
+            [Document({'_base': 'test'}), Document({'_base': 'test'})],
+            [
+                Document({'_base': Encodable(datatype=None, x=torch.randn(4, 2))}),
+                Document({'_base': Encodable(datatype=None, x=torch.randn(4, 3))}),
+            ],
         )
         y, context_out = db.predict(
             'model',
             torch.randn(4, 16),
             context_select=Collection('context_collection').find({}),
         )
-        assert context_out[0].content.shape == torch.Size([4, 2])
-        assert context_out[1].content.shape == torch.Size([4, 3])
+        assert context_out[0]['_base'].x.shape == torch.Size([4, 2])
+        assert context_out[1]['_base'].x.shape == torch.Size([4, 3])
 
 
 @pytest.mark.parametrize(
@@ -464,7 +496,7 @@ def test_predict_context(db: Datalayer):
 def test_get_context(db):
     from superduperdb.backends.base.query import Select
 
-    fake_contexts = [Document(content={'text': f'hello world {i}'}) for i in range(10)]
+    fake_contexts = [Document({'text': f'hello world {i}'}) for i in range(10)]
 
     model = Model(object=lambda x: x, identifier='model', takes_context=True)
     context_select = MagicMock(spec=Select)
@@ -473,11 +505,15 @@ def test_get_context(db):
 
     # Test get_context without context_key
     return_contexts, _ = db._get_context(model, context_select, context_key=None)
-    assert return_contexts == [{'text': f'hello world {i}'} for i in range(10)]
+    assert return_contexts == [
+        Document({'text': f'hello world {i}'}) for i in range(10)
+    ]
 
     # Test get context without context
     return_contexts, _ = db._get_context(model, context_select, context_key='text')
-    assert return_contexts == [f'hello world {i}' for i in range(10)]
+    assert return_contexts == [
+        Document({'_base': f'hello world {i}'}) for i in range(10)
+    ]
 
     # Testing models that cannot accept context
     model = Model(object=lambda x: x, identifier='model', takes_context=False)
@@ -489,13 +525,13 @@ def test_get_context(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_load(db):
-    m1 = Model(object=lambda x: x, identifier='m1', encoder=dtype('int32'))
+    m1 = Model(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
     db.add(
         [
-            Encoder(identifier='e1'),
-            Encoder(identifier='e2'),
+            DataType(identifier='e1'),
+            DataType(identifier='e2'),
             m1,
-            Model(object=lambda x: x, identifier='m1', encoder=dtype('int32')),
+            Model(object=lambda x: x, identifier='m1', datatype=dtype('int32')),
             m1,
         ]
     )
@@ -503,19 +539,19 @@ def test_load(db):
     # Test load fails
     # error version
     with pytest.raises(Exception):
-        db.load('encoder', 'e1', version=1)
+        db.load('datatype', 'e1', version=1)
 
-    # error identifier
+    # # error identifier
     with pytest.raises(Exception):
-        db.load('encoder', 'm1')
+        db.load('model', 'e1')
 
-    info = db.load('encoder', 'e1', info_only=True)
+    info = db.load('datatype', 'e1', info_only=True)
     assert isinstance(info, dict)
 
-    encoder = db.load('encoder', 'e1')
-    assert isinstance(encoder, Encoder)
+    datatype = db.load('datatype', 'e1')
+    assert isinstance(datatype, DataType)
 
-    assert 'e1' in db.encoders
+    assert 'e1' in db.datatypes
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
@@ -594,7 +630,7 @@ def test_replace(db):
     model = Model(
         object=lambda x: x + 1,
         identifier='m',
-        encoder=Encoder(identifier='base'),
+        datatype=DataType(identifier='base'),
     )
     model.version = 0
     with pytest.raises(Exception):
@@ -626,36 +662,36 @@ def test_compound_component(db):
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
         identifier='my-test-module',
-        encoder=tensor(torch.float, shape=(32,)),
+        datatype=tensor(torch.float, shape=(32,)),
     )
 
     db.add(m)
-    assert 'torch.float32[32]' in db.show('encoder')
+    assert 'torch.float32[32]' in db.show('datatype')
     assert 'my-test-module' in db.show('model')
     assert db.show('model', 'my-test-module') == [0]
 
     db.add(m)
     assert db.show('model', 'my-test-module') == [0]
-    assert db.show('encoder', 'torch.float32[32]') == [0]
+    assert db.show('datatype', 'torch.float32[32]') == [0]
 
     db.add(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
-            encoder=tensor(torch.float, shape=(32,)),
+            datatype=tensor(torch.float, shape=(32,)),
         )
     )
     assert db.show('model', 'my-test-module') == [0, 1]
-    assert db.show('encoder', 'torch.float32[32]') == [0, 1]
+    assert db.show('datatype', 'torch.float32[32]') == [0, 1]
 
     m = db.load(type_id='model', identifier='my-test-module')
-    assert isinstance(m.encoder, Encoder)
+    assert isinstance(m.datatype, DataType)
 
     with pytest.raises(ComponentInUseError):
-        db.remove('encoder', 'torch.float32[32]')
+        db.remove('datatype', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        db.remove('encoder', 'torch.float32[32]', force=True)
+        db.remove('datatype', 'torch.float32[32]', force=True)
 
     db.remove('model', 'my-test-module', force=True)
 

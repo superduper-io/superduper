@@ -1,7 +1,6 @@
 import os
 import shutil
 import typing as t
-import uuid
 
 import click
 
@@ -29,10 +28,14 @@ class FileSystemArtifactStore(ArtifactStore):
             logging.info('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
 
+    def _exists(self, file_id: str):
+        path = os.path.join(self.conn, file_id)
+        return os.path.exists(path)
+
     def url(self):
         return self.conn
 
-    def delete(self, file_id: str):
+    def _delete_bytes(self, file_id: str):
         """
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
@@ -54,13 +57,15 @@ class FileSystemArtifactStore(ArtifactStore):
         shutil.rmtree(self.conn, ignore_errors=force)
         os.makedirs(self.conn)
 
-    def save_artifact(self, serialized: bytes) -> t.Any:
-        h = uuid.uuid4().hex
-        with open(os.path.join(self.conn, h), 'wb') as f:
+    def _save_bytes(
+        self,
+        serialized: bytes,
+        file_id: str,
+    ) -> t.Any:
+        with open(os.path.join(self.conn, file_id), 'wb') as f:
             f.write(serialized)
-        return h
 
-    def load_bytes(self, file_id: str) -> bytes:
+    def _load_bytes(self, file_id: str) -> bytes:
         with open(os.path.join(self.conn, file_id), 'rb') as f:
             return f.read()
 
@@ -68,5 +73,5 @@ class FileSystemArtifactStore(ArtifactStore):
         """
         Disconnect the client
         """
-
-        # TODO: implement me
+        # Not necessary since just local filesystem
+        pass

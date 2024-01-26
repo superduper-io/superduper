@@ -11,7 +11,6 @@ from transformers import (
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import query_dataset_factory
-from superduperdb.base.artifact import Artifact
 from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.model import (
     Model,
@@ -45,82 +44,71 @@ class LLM(Model):
     : param bits: quantization bits, [4, 8], default is None
     : param adapter_id: adapter id, default is None
         Add a adapter to the base model for inference.
-        When model_name_or_path, bits, model_kwargs, tokenizer_kwags are the same,
+        When model_name_or_path, bits, model_kwargs, tokenizer_kwargs are the same,
         will share the same base model and tokenizer cache.
     : param model_kwargs: model kwargs,
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
-    : param tokenizer_kwags: tokenizer kwargs,
+    : param tokenizer_kwagrs: tokenizer kwargs,
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
     : param prompt_template: prompt template, default is "{input}"
     : param prompt_func: prompt function, default is None
     """
 
+    _encodables: t.ClassVar[t.Sequence[str]] = ('model_kwargs', 'tokenizer_kwargs')
+
     identifier: str = ""
     model_name_or_path: str = "facebook/opt-125m"
     bits: t.Optional[int] = None
-    adapter_id: t.Optional[t.Union[Artifact, str]] = None
+    adapter_id: t.Optional[str] = None
     object: t.Optional[transformers.Trainer] = None
-    model_kwargs: t.Union[Artifact, t.Dict] = dc.field(default_factory=dict)
-    tokenizer_kwags: t.Union[Artifact, t.Dict] = dc.field(default_factory=dict)
+    model_kwargs: t.Dict = dc.field(default_factory=dict)
+    tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
-    prompt_func: t.Optional[t.Union[Artifact, t.Callable]] = dc.field(default=None)
+    prompt_func: t.Optional[t.Callable] = None
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}
     _tokenizer_cache: t.ClassVar[dict] = {}
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
-
-        if not isinstance(self.model_kwargs, Artifact):
-            self.model_kwargs = Artifact(artifact=self.model_kwargs)
-        if not isinstance(self.tokenizer_kwags, Artifact):
-            self.tokenizer_kwags = Artifact(artifact=self.tokenizer_kwags)
-
-        if not isinstance(self.prompt_func, Artifact) and self.prompt_func is not None:
-            self.prompt_func = Artifact(artifact=self.prompt_func)
-
-        if self.adapter_id is not None and not isinstance(self.adapter_id, Artifact):
-            self.adapter_id = Artifact(artifact=self.adapter_id)
 
         # overwrite model kwargs
         if self.bits is not None:
             if (
-                "load_in_4bit" in self.model_kwargs.artifact
-                or "load_in_8bit" in self.model_kwargs.artifact
+                "load_in_4bit" in self.model_kwargs
+                or "load_in_8bit" in self.model_kwargs
             ):
                 logging.warn(
                     "The bits is set, will overwrite the load_in_4bit and load_in_8bit"
                 )
-            self.model_kwargs.artifact["load_in_4bit"] = self.bits == 4
-            self.model_kwargs.artifact["load_in_8bit"] = self.bits == 8
-        super().__post_init__()
+            self.model_kwargs["load_in_4bit"] = self.bits == 4
+            self.model_kwargs["load_in_8bit"] = self.bits == 8
+        super().__post_init__(artifacts)
 
     def init_model_and_tokenizer(self):
-        model_key = self.model_name_or_path + str(hash(self.model_kwargs))
+        model_key = hash(str(self.model_kwargs))
         if model_key not in self._model_cache:
             logging.info(f"Loading model from {self.model_name_or_path}")
-            logging.info(f"model_kwargs: {self.model_kwargs.artifact}")
-            self.model_kwargs.artifact.setdefault(
-                "pretrained_model_name_or_path", self.model_name_or_path
-            )
+            logging.info(f"model_kwargs: {self.model_kwargs}")
             model = AutoModelForCausalLM.from_pretrained(
-                **self.model_kwargs.artifact,
+                self.model_name_or_path,
+                **self.model_kwargs,
             )
             self._model_cache[model_key] = model
         else:
             logging.info("Reuse model from cache")
 
-        tokenizer_key = hash(self.tokenizer_kwags)
+        tokenizer_key = hash(str(self.tokenizer_kwargs))
         if tokenizer_key not in self._tokenizer_cache:
             logging.info(f"Loading tokenizer from {self.model_name_or_path}")
-            logging.info(f"tokenizer_kwargs: {self.tokenizer_kwags.artifact}")
-            self.tokenizer_kwags.artifact.setdefault(
+            logging.info(f"tokenizer_kwargs: {self.tokenizer_kwargs}")
+            self.tokenizer_kwargs.setdefault(
                 "pretrained_model_name_or_path", self.model_name_or_path
             )
             tokenizer = AutoTokenizer.from_pretrained(
-                **self.tokenizer_kwags.artifact,
+                **self.tokenizer_kwargs,
             )
             self._tokenizer_cache[tokenizer_key] = tokenizer
 
@@ -131,11 +119,7 @@ class LLM(Model):
         return self._model_cache[model_key], self._tokenizer_cache[tokenizer_key]
 
     def init(self):
-        if self.prompt_func is not None:
-            prompt_func = self.prompt_func.artifact
-        else:
-            prompt_func = None
-        self.prompter = Prompter(self.prompt_template, prompt_func)
+        self.prompter = Prompter(self.prompt_template, self.prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
         if self.adapter_id is not None:
             self.add_adapter(self.adapter_id.artifact, self.adapter_id.artifact)
@@ -167,10 +151,8 @@ class LLM(Model):
             prefetch_size=kwargs.pop("prefetch_size", DEFAULT_FETCH_SIZE),
         )
 
-        assert isinstance(self.model_kwargs, Artifact)
-        assert isinstance(self.tokenizer_kwags, Artifact)
-        model_kwargs = self.model_kwargs.artifact
-        tokenizer_kwargs = self.tokenizer_kwags.artifact
+        model_kwargs = self.model_kwargs
+        tokenizer_kwargs = self.tokenizer_kwargs
         model_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
         tokenizer_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
 
@@ -225,8 +207,7 @@ class LLM(Model):
         Support inference by multi-lora adapters.
         """
         if adapter_name is None and self.adapter_id is not None:
-            assert isinstance(self.adapter_id, Artifact)
-            adapter_name = self.adapter_id.artifact
+            adapter_name = self.adapter_id
         if adapter_name is not None:
             try:
                 self.model.set_adapter(adapter_name)
@@ -351,7 +332,7 @@ class LLM(Model):
         from superduperdb.backends.ibis.data_backend import IbisDataBackend
         from superduperdb.backends.ibis.field_types import dtype
 
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype("str")
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype("str")
 
         super().post_create(db)

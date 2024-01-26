@@ -16,10 +16,9 @@ from superduperdb.backends.base.query import CompoundSelect, Select, TableOrColl
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
@@ -30,8 +29,7 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
 
-EncoderArg = t.Union[Encoder, FieldType, str, None]
-ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
+EncoderArg = t.Union[DataType, FieldType, str, None]
 
 
 class _to_call:
@@ -84,12 +82,12 @@ class _Predictor:
 
     type_id: t.ClassVar[str] = 'model'
 
-    encoder: EncoderArg = None
-    output_schema: t.Optional[t.Union[Schema, dict]] = None
+    datatype: EncoderArg = None
+    output_schema: t.Optional[Schema] = None
     flatten: bool = False
-    preprocess: t.Union[t.Callable, Artifact, None] = None
-    postprocess: t.Union[t.Callable, Artifact, None] = None
-    collate_fn: t.Union[t.Callable, Artifact, None] = None
+    preprocess: t.Optional[t.Callable] = None
+    postprocess: t.Optional[t.Callable] = None
+    collate_fn: t.Optional[t.Callable] = None
     batch_predict: bool = False
     takes_context: bool = False
     metrics: t.Sequence[t.Union[str, Metric, None]] = ()
@@ -122,7 +120,7 @@ class _Predictor:
             type_id='model',
             args=[X],
             kwargs={
-                'select': select.serialize() if select else None,
+                'select': select.dict().encode() if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
                 **kwargs,
@@ -136,18 +134,11 @@ class _Predictor:
         raise NotImplementedError
 
     def _predict_one(self, X: t.Any, **kwargs) -> int:
-        if isinstance(self.preprocess, Artifact):
-            X = self.preprocess.artifact(X)
-        elif self.preprocess is not None:
-            raise ValueError('Bad preprocess')
-
+        if self.preprocess:
+            X = self.preprocess(X)
         output = self.to_call(X, **kwargs)
-
-        if isinstance(self.postprocess, Artifact):
-            output = self.postprocess.artifact(output)
-        elif self.postprocess is not None:
-            raise ValueError('Bad postprocess')
-
+        if self.postprocess:
+            output = self.postprocess(output)
         return output
 
     def _forward(
@@ -173,21 +164,17 @@ class _Predictor:
         if one:
             return self._predict_one(X)
 
-        if isinstance(self.preprocess, Artifact):
-            X = [self.preprocess.artifact(i) for i in X]
+        if self.preprocess:
+            X = [self.preprocess(i) for i in X]
         elif self.preprocess is not None:
             raise ValueError('Bad preprocess')
-
-        if isinstance(self.collate_fn, Artifact):
-            raise ValueError('Bad collate function')
-
-        elif self.collate_fn is not None:
+        if self.collate_fn:
             X = self.collate_fn(X)
 
         outputs = self._forward(X, **predict_kwargs)
 
-        if isinstance(self.postprocess, Artifact):
-            outputs = [self.postprocess.artifact(o) for o in outputs]
+        if self.postprocess:
+            outputs = [self.postprocess(o) for o in outputs]
         elif self.postprocess is not None:
             raise ValueError('Bad postprocess')
 
@@ -217,7 +204,7 @@ class _Predictor:
             assert select is None, 'select must be None when ``one=True`` (direct call)'
 
         if isinstance(select, dict):
-            select = Serializable.deserialize(select)
+            select = Serializable.decode(select)
 
         if isinstance(select, Table):
             select = select.to_query()
@@ -455,20 +442,20 @@ class _Predictor:
 
         outputs = self.predict(X=X_data, one=False, **kwargs)
 
-        if isinstance(self.encoder, Encoder):
+        if isinstance(self.datatype, DataType):
             if self.flatten:
                 outputs = [
-                    [self.encoder(x).encode() for x in output] for output in outputs
+                    [self.datatype(x).encode() for x in output] for output in outputs
                 ]
             else:
-                outputs = [self.encoder(x).encode() for x in outputs]
+                outputs = [self.datatype(x).encode() for x in outputs]
         elif isinstance(self.output_schema, Schema):
             encoded_ouputs = []
             for output in outputs:
                 if isinstance(output, dict):
-                    encoded_ouputs.append(self.output_schema.encode(output))
+                    encoded_ouputs.append(self.output_schema(output))
                 elif self.flatten:
-                    encoded_output = [self.output_schema.encode(x) for x in output]
+                    encoded_output = [self.output_schema(x) for x in output]
                     encoded_ouputs.append(encoded_output)
             outputs = encoded_ouputs if encoded_ouputs else outputs
 
@@ -512,12 +499,15 @@ class Model(_Predictor, Component):
         _predictor_params=_Predictor.__doc__,
     )
 
-    object: t.Union[Artifact, t.Any, None]
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
+        ('object', dill_serializer),
+    )
+
+    object: t.Any
     model_to_device_method: t.Optional[str] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     predict_method: t.Optional[str] = None
     model_update_kwargs: dict = dc.field(default_factory=dict)
-    serializer: str = 'dill'
     device: str = "cpu"
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
 
@@ -526,31 +516,18 @@ class Model(_Predictor, Component):
     train_y: t.Optional[str] = None
     train_select: t.Optional[CompoundSelect] = None
 
-    artifact_attributes: t.ClassVar[t.Sequence[str]] = (
-        'object',
-        'preprocess',
-        'postprocess',
-    )
     type_id: t.ClassVar[str] = 'model'
 
-    def __post_init__(self):
-        super().__post_init__()
-
-        if not isinstance(self.object, Artifact) and self.object is not None:
-            self.object = Artifact(artifact=self.object, serializer=self.serializer)
-        if self.preprocess and not isinstance(self.preprocess, Artifact):
-            self.preprocess = Artifact(artifact=self.preprocess)
-        if self.postprocess and not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(artifact=self.postprocess)
-
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self._artifact_method = None
         if self.model_to_device_method is not None:
             self._artifact_method = getattr(self, self.model_to_device_method)
 
     def to_call(self, X, *args, **kwargs):
         if self.predict_method is None:
-            return self.object.artifact(X, *args, **kwargs)
-        out = getattr(self.object.artifact, self.predict_method)(X, *args, **kwargs)
+            return self.object(X, *args, **kwargs)
+        out = getattr(self.object, self.predict_method)(X, *args, **kwargs)
         return out
 
     def post_create(self, db: Datalayer) -> None:
@@ -558,6 +535,7 @@ class Model(_Predictor, Component):
             self.training_configuration = db.load(
                 'training_configuration', self.training_configuration
             )  # type: ignore[assignment]
+        # TODO is this necessary - should be handled by `db.add` automatically
         if isinstance(self.output_schema, Schema):
             db.add(self.output_schema)
         output_component = db.databackend.create_model_table_or_collection(self)
@@ -617,15 +595,6 @@ class Model(_Predictor, Component):
                         raise
 
     @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
-        out = []
-        if isinstance(self.encoder, Encoder):
-            out.append(('encoder', 'encoder'))
-        if self.training_configuration is not None:
-            out.append(('training_configuration', 'training_configuration'))
-        return out
-
-    @property
     def training_keys(self) -> t.List:
         if isinstance(self.train_X, list):
             out = list(self.train_X)
@@ -660,8 +629,11 @@ class Model(_Predictor, Component):
         )
 
     def pre_create(self, db: Datalayer):
-        if isinstance(self.encoder, str):
-            self.encoder = db.load('encoder', self.encoder)  # type: ignore[assignment]
+        # TODO this kind of thing should come from an enum component_types.datatype
+        # that will make refactors etc. easier
+        if isinstance(self.datatype, str):
+            # ruff: noqa: E501
+            self.datatype = db.load('datatype', self.datatype)  # type: ignore[assignment]
 
     def _validate(
         self,
@@ -702,12 +674,11 @@ class Model(_Predictor, Component):
             args=[X],
             kwargs={
                 'y': y,
-                'select': select.serialize() if select else None,
+                'select': select.dict().encode() if select else None,
                 **kwargs,
             },
         )
 
-    @abstractmethod
     def _fit(
         self,
         X: t.Any,
@@ -719,7 +690,7 @@ class Model(_Predictor, Component):
         select: t.Optional[Select] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
     ):
-        pass
+        raise NotImplementedError
 
     def fit(
         self,
@@ -748,7 +719,8 @@ class Model(_Predictor, Component):
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
         if isinstance(select, dict):
-            select = Serializable.deserialize(select)
+            # TODO replace with Document.decode(select)
+            select = Serializable.from_dict(select)
 
         if validation_sets:
             from superduperdb.components.dataset import Dataset
@@ -805,8 +777,8 @@ class APIModel(Component, _Predictor):
 
     model: t.Optional[str] = None
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         if self.model is None:
             assert self.identifier is not None
             self.model = self.identifier
@@ -842,12 +814,6 @@ class APIModel(Component, _Predictor):
             )
         return jobs
 
-    @property
-    def child_components(self):
-        if isinstance(self.encoder, Encoder):
-            return [('encoder', 'encoder')]
-        return []
-
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
@@ -857,18 +823,10 @@ class QueryModel(Component, _Predictor):
     results as pre-computed queries.
 
     :param select: query used to find data (can include `like`)
-    :param postprocess: postprocess function
     """
 
     select: CompoundSelect
-    postprocess: t.Optional[t.Union[t.Callable, Artifact]] = None
 
-    def __post_init__(self):
-        super().__post_init__()
-        if not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(artifact=self.postprocess)
-
-    @override
     def schedule_jobs(
         self,
         db: Datalayer,
@@ -893,8 +851,7 @@ class QueryModel(Component, _Predictor):
         select = self.select.set_variables(db=self.db, X=X)
         out = self.db.execute(select)
         if self.postprocess is not None:
-            assert isinstance(self.postprocess, Artifact)
-            return self.postprocess.artifact(out)
+            return self.postprocess(out)
         return out
 
     def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):

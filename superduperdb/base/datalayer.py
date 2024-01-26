@@ -25,15 +25,14 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encodable, Encoder
+from superduperdb.components.datatype import DataType, Encodable, serializers
 from superduperdb.components.model import Model
-from superduperdb.components.serializer import serializers
+from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
-from superduperdb.misc.download import Downloader, download_content, gather_uris
-from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.misc.download import download_content, download_from_one
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.interface import FastVectorSearcher
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
@@ -60,7 +59,7 @@ class Datalayer:
     type_id_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
-        'encoder': 'encoders',
+        'datatype': 'datatypes',
         'vector_index': 'vector_indices',
     }
 
@@ -81,18 +80,16 @@ class Datalayer:
 
         self.metrics = LoadDict(self, field='metric')
         self.models = LoadDict(self, field='model')
-        self.encoders = LoadDict(self, field='encoder')
+        self.datatypes = LoadDict(self, field='datatype')
         self.vector_indices = LoadDict(self, field='vector_index')
-        self.serializers = LoadDict(self, field='serializer')
-        for ser in serializers:
-            self.serializers[ser] = serializers[ser]
+        self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
         )
         self.metadata = metadata
         self.artifact_store = artifact_store
-        self.artifact_store.serializers = self.serializers
+        self.artifact_store.serializers = self.datatypes
 
         self.databackend = databackend
         # TODO: force set config stores connection url
@@ -142,13 +139,15 @@ class Datalayer:
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        if backfill or not s.CFG.cluster.is_remote_vector_search:
-            self.backfill_vector_search(vi, vector_comparison)
+        self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
         if s.CFG.self_hosted_vector_search:
+            return
+
+        if s.CFG.cluster.is_remote_vector_search and not self.server_mode:
             return
 
         logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")
@@ -173,7 +172,7 @@ class Datalayer:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(query, load_hybrid=False),
+            self.execute(query, reference=True),
             s.CFG.cluster.backfill_batch_size,
         ):
             items = []
@@ -268,7 +267,7 @@ class Datalayer:
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
 
-        :param type_id: type_id of component to show ['encoder', 'model', 'listener',
+        :param type_id: type_id of component to show ['datatype', 'model', 'listener',
                        'learning_task', 'training_configuration', 'metric',
                        'vector_index', 'job']
         :param identifier: identifying string to component
@@ -300,10 +299,14 @@ class Datalayer:
         assert model.takes_context, 'model does not take context'
         assert context_select is not None
         sources = list(self.execute(context_select))
-        context = [x.unpack() for x in sources]
-
+        context = sources[:]
         if context_key is not None:
-            context = [MongoStyleDict(x)[context_key] for x in context]
+            context = [
+                Document(r[context_key])
+                if isinstance(r[context_key], dict)
+                else Document({'_base': r[context_key]})
+                for r in context
+            ]
         return context, sources
 
     async def apredict(
@@ -311,7 +314,7 @@ class Datalayer:
         model_name: str,
         input: t.Union[Document, t.Any],
         context_select: t.Optional[Select] = None,
-        context_key: t.Optional[str] = None,
+        context_key: str = '_base',
         **kwargs,
     ):
         """
@@ -319,7 +322,7 @@ class Datalayer:
 
         :param model_name: model identifier
         :param input: input to be passed to the model.
-                      Must be possible to encode with registered encoders
+                      Must be possible to encode with registered datatypes
         :param context_select: select query object to provide context
         :param context_key: key to use to extract context from context_select
         """
@@ -329,6 +332,7 @@ class Datalayer:
 
         if context_select is not None:
             context, sources = self._get_context(model, context_select, context_key)
+
         out = await model.apredict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
@@ -336,8 +340,8 @@ class Datalayer:
             **kwargs,
         )
 
-        if model.encoder is not None:
-            out = model.encoder(out)
+        if model.datatype is not None:
+            out = model.datatype(out)
 
         if context is not None:
             return Document(out), sources
@@ -356,7 +360,7 @@ class Datalayer:
 
         :param model_name: model identifier
         :param input: input to be passed to the model.
-                      Must be possible to encode with registered encoders
+                      Must be possible to encode with registered datatypes
         :param context_select: select query object to provide context
         :param context_key: key to use to extract context from context_select
         """
@@ -375,12 +379,18 @@ class Datalayer:
         out = model.predict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
-            context=context,
+            context=[r.unpack() for r in context] if context else None,
             **kwargs,
         )
 
-        if isinstance(model.encoder, Encoder):
-            out = model.encoder(out)
+        if isinstance(model.datatype, DataType):
+            out = model.datatype(out)
+        elif isinstance(model.output_schema, Schema):
+            # TODO make Schema callable
+            out = model.output_schema.encode(out)
+
+        if not isinstance(out, dict):
+            out = {'_base': out}
 
         if context is not None:
             return Document(out), sources
@@ -424,19 +434,19 @@ class Datalayer:
         return result, None
 
     def insert(
-        self, insert: Insert, refresh: bool = True, encoders: t.Sequence[Encoder] = ()
+        self, insert: Insert, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
     ) -> InsertResult:
         """
         Insert data.
 
         :param insert: insert query object
         """
-        for e in encoders:
+        for e in datatypes:
             self.add(e)
         for r in insert.documents:
-            r['_fold'] = 'train'  # type: ignore[assignment]
+            r['_fold'] = 'train'
             if random.random() < s.CFG.fold_probability:
-                r['_fold'] = 'valid'  # type: ignore[assignment]
+                r['_fold'] = 'valid'
         inserted_ids = insert.execute(self)
 
         if refresh and self.cdc.running:
@@ -452,7 +462,7 @@ class Datalayer:
             )
         return inserted_ids, None
 
-    def select(self, select: Select, load_hybrid: bool = True) -> SelectResult:
+    def select(self, select: Select, reference: bool = True) -> SelectResult:
         """
         Select data.
 
@@ -460,7 +470,7 @@ class Datalayer:
         """
         if select.variables:
             select = select.set_variables(self)  # type: ignore[assignment]
-        return select.execute(self, load_hybrid=load_hybrid)
+        return select.execute(self, reference=reference)
 
     def refresh_after_delete(
         self,
@@ -557,7 +567,7 @@ class Datalayer:
         """
         Remove component (version: optional)
 
-        :param type_id: type_id of component to remove ['encoder', 'model', 'listener',
+        :param type_id: type_id of component to remove ['datatype', 'model', 'listener',
                         'training_configuration', 'vector_index']
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version to remove
@@ -618,19 +628,29 @@ class Datalayer:
         Load component using uniquely identifying information.
 
         :param type_id: type_id of component to remove
-                        ['encoder', 'model', 'listener', ...]
+                        ['datatype', 'model', 'listener', ...]
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version
         :param allow_hidden: toggle to ``True`` to allow loading of deprecated
                              components
         :param info_only: toggle to ``True`` to return metadata only
         """
+
+        if type_id == 'encoder':
+            logging.warn(
+                '"encoder" has moved to "datatype" this functionality will not work'
+                ' after version 0.2.0'
+            )
+            type_id = 'datatype'
+
         info = self.metadata.get_component(
             type_id=type_id,
             identifier=identifier,
             version=version,
             allow_hidden=allow_hidden,
         )
+
+        info = Document.decode(info, db=self)
 
         if info is None:
             raise exceptions.MetadataException(
@@ -641,32 +661,7 @@ class Datalayer:
         if info_only:
             return info
 
-        def get_children(info):
-            return {
-                k: v
-                for k, v in info['dict'].items()
-                if isinstance(v, dict) and serializable.is_component_metadata(v)
-            }
-
-        def replace_children(r):
-            if isinstance(r, dict):
-                children = get_children(r)
-                for k, v in children.items():
-                    c = replace_children(
-                        self.metadata.get_component(**v, allow_hidden=True)
-                    )
-                    try:
-                        r['dict'][k] = c
-                    except KeyError:
-                        raise exceptions.MetadataException(
-                            'Children {k} not found in `dict`'
-                        )
-            return r
-
-        info = replace_children(info)
-        info = self.artifact_store.load(info, lazy=True)
-
-        m = Component.deserialize(info)
+        m = serializable.Serializable.decode(info)
         m.db = self
         m.on_load(self)
 
@@ -743,7 +738,7 @@ class Datalayer:
                 args=[],
                 kwargs=dict(
                     ids=ids,
-                    query=query.serialize(),
+                    query=query.dict().encode(),
                 ),
             ),
         )
@@ -755,9 +750,8 @@ class Datalayer:
 
         for identifier in listeners:
             info = self.metadata.get_component('listener', identifier)
-            listener_query = info['dict']['select']
-
-            listener_select = serializable.Serializable.deserialize(listener_query)
+            listener_query = Document.decode(info['dict']['select'], None)
+            listener_select = serializable.Serializable.decode(listener_query)
             listener_selects.update({identifier: listener_select})
             if listener_select is None:
                 continue
@@ -775,7 +769,7 @@ class Datalayer:
                     args=[key],
                     kwargs={
                         'ids': ids,
-                        'select': listener_query,
+                        'select': listener_query.dict().encode(),
                         **info['dict']['predict_kwargs'],
                     },
                     method_name='predict',
@@ -834,7 +828,7 @@ class Datalayer:
                     kwargs={
                         'vector_index': identifier,
                         'ids': ids,
-                        'query': vi.indexing_listener.select.serialize(),
+                        'query': vi.indexing_listener.select.dict().encode(),
                     },
                 ),
             )
@@ -846,6 +840,7 @@ class Datalayer:
 
         return G
 
+    # TODO could be handled exclusively by `_Predictor.predict`
     def _compute_model_outputs(
         self,
         model_info,
@@ -867,9 +862,7 @@ class Datalayer:
             model = self.models[model_identifier]
         return model.predict(passed_docs, **(predict_kwargs or {}))
 
-    def _save_artifacts(self, artifact_dictionary: t.Dict):
-        raise NotImplementedError  # TODO use in the server code...
-
+    # TODO extra level not necessary
     def _add(
         self,
         object: Component,
@@ -877,7 +870,7 @@ class Datalayer:
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
-        jobs = []
+        jobs = list(dependencies)
         object.db = self
         object.pre_create(self)
         assert hasattr(object, 'identifier')
@@ -894,21 +887,25 @@ class Datalayer:
             object.version = 0
 
         if serialized is None:
-            serialized, artifacts = object.serialized
-            artifact_info = self.artifact_store.save(artifacts)
-            serialized = self.artifact_store.replace(serialized, artifact_info)
+            leaves = object.dict().get_leaves()
+            leaves = leaves.values()
+            artifacts = [leaf for leaf in leaves if isinstance(leaf, Encodable)]
+            children = [leaf for leaf in leaves if isinstance(leaf, Component)]
 
-        else:
-            try:
-                serialized['version'] = object.version
-                serialized['dict']['version'] = object.version
-            except KeyError:
-                raise exceptions.MetadataException(
-                    '`dict` or `version` not found in serialized dict.'
-                )
+        for child in children:
+            sub_jobs = self._add(child, parent=object.unique_id)
+            jobs.extend(sub_jobs)
 
-        jobs.extend(self._create_children(object, serialized))
+        # need to do this again to get the versions of the children
+        if serialized is None:
+            serialized = object.dict().encode()  # type: ignore[assignment]
+
+        assert serialized is not None
+        if artifacts:
+            self.artifact_store.save(serialized)
+
         self.metadata.create_component(serialized)
+
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
         object.post_create(self)
@@ -917,56 +914,7 @@ class Datalayer:
         jobs.extend(these_jobs)
         return jobs
 
-    def _create_children(self, component: Component, serialized: t.Dict):
-        jobs = []
-        for k, child_type_id in component.child_components:
-            assert isinstance(k, str)
-            child = getattr(component, k)
-            if isinstance(child, str):
-                serialized_dict = {
-                    'type_id': child_type_id,
-                    'identifier': child,
-                    'version': self.metadata.get_latest_version(child_type_id, child),
-                }
-                self.metadata.create_parent_child(
-                    component.unique_id, Component.make_unique_id(**serialized_dict)
-                )
-                serialized['dict'][k] = serialized_dict
-            elif isinstance(child, Component):
-                sub_jobs = self._add(
-                    child,
-                    serialized=serialized['dict'][k],
-                    parent=component.unique_id,
-                )
-                jobs.extend(sub_jobs)
-                serialized_dict = {
-                    'type_id': child.type_id,
-                    'identifier': child.identifier,
-                    'version': child.version,
-                }
-                serialized['dict'][k] = serialized_dict
-            elif isinstance(child, list):
-                serialized_list = []
-                for i, sub in enumerate(child):
-                    assert isinstance(sub, Component)
-                    sub_jobs = self._add(
-                        sub,
-                        serialized=serialized['dict'][k][i],
-                        parent=component.unique_id,
-                    )
-                    jobs.extend(sub_jobs)
-                    serialized_list.append(
-                        {
-                            'type_id': sub.type_id,
-                            'identifier': sub.identifier,
-                            'version': sub.version,
-                        }
-                    )
-                serialized['dict'][k] = serialized_list
-            else:
-                raise ValueError(f'Unknown child type: {type(child)}')
-        return jobs
-
+    # TODO doesn't seem to be used anywhere
     def _create_plan(self):
         G = networkx.DiGraph()
         for identifier in self.metadata.show_components('listener', active=True):
@@ -1001,7 +949,9 @@ class Datalayer:
             component = self.load(type_id, identifier, version=version)
             info = self.metadata.get_component(type_id, identifier, version=version)
             if hasattr(component, 'cleanup'):
+                # TODO - is there an abstract method thingy for this?
                 component.cleanup(self)
+
             if type_id in self.type_id_to_cache_mapping:
                 try:
                     del getattr(self, self.type_id_to_cache_mapping[type_id])[
@@ -1010,101 +960,17 @@ class Datalayer:
                 except KeyError:
                     pass
 
-            if hasattr(component, 'artifact_attributes'):
-                for a in component.artifact_attributes:
-                    if info['dict'][a] is not None:
-                        self.artifact_store.delete(info['dict'][a]['file_id'])
+            self.artifact_store.delete(info)
             self.metadata.delete_component_version(type_id, identifier, version=version)
-
-    def _download_content(  # TODO: duplicated function
-        self,
-        query: t.Optional[t.Union[Select, Insert]] = None,
-        ids=None,
-        documents=None,
-        timeout=None,
-        raises: bool = True,
-        n_download_workers=None,
-        headers=None,
-        **kwargs,
-    ):
-        update_db = False
-
-        if documents is not None:
-            pass
-        elif isinstance(query, Select):
-            update_db = True
-            if ids is None:
-                documents = list(self.select(query))
-            else:
-                select = query.select_using_ids(ids)
-                cursor = self.select(select).raw_cursor
-                documents = [Document(x) for x in cursor]
-        elif isinstance(query, Insert):
-            documents = query.documents
-        else:
-            raise NotImplementedError
-
-        documents = [x.content for x in documents]
-        uris, keys, place_ids = gather_uris(documents)
-        s.logging.info(f'found {len(uris)} uris')
-        if not uris:
-            return
-
-        if n_download_workers is None:
-            try:
-                n_download_workers = self.metadata.get_metadata(
-                    key='n_download_workers'
-                )
-            except exceptions.MetadatastoreException:
-                n_download_workers = 0
-
-        if headers is None:
-            try:
-                headers = self.metadata.get_metadata(key='headers')
-            except exceptions.MetadatastoreException:
-                headers = 0
-
-        if timeout is None:
-            try:
-                timeout = self.metadata.get_metadata(key='download_timeout')
-            except exceptions.MetadatastoreException:
-                timeout = None
-
-        def download_update(key, id, bytes):
-            return query.download_update(db=self, key=key, id=id, bytes=bytes)
-
-        downloader = Downloader(
-            uris=uris,
-            ids=place_ids,
-            keys=keys,
-            update_one=download_update,
-            n_workers=n_download_workers,
-            timeout=timeout,
-            headers=headers,
-            raises=raises,
-        )
-        downloader.go()
-        if update_db:
-            return
-        for id_, key in zip(place_ids, keys):
-            documents[id_] = self.databackend.set_content_bytes(
-                documents[id_], key, downloader.results[id_]  # type: ignore[index]
-            )
-        return documents
 
     def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
-            filter = Document(content=filter)
-        if '_id' not in filter.content:
+            filter = Document(filter)
+        if '_id' not in filter:
             filter['_id'] = 0
-        uris = gather_uris([filter.content])[0]
-        if uris:
-            output = self._download_content(
-                query=None, documents=[filter.content], timeout=None, raises=True
-            )[0]
-            filter = Document(Document.decode(output, encoders=self.encoders))
+        download_from_one(filter)
         if not filter['_id']:
-            del filter.content['_id']
+            del filter['_id']
         return filter
 
     def _get_dependencies_for_listener(self, identifier):
@@ -1117,15 +983,18 @@ class Datalayer:
             out.append(f'{model}/{key}')
         return out
 
+    # TODO should create file handler separately
     def _get_file_content(self, r):
         for k in r:
             if isinstance(r[k], dict):
                 r[k] = self._get_file_content(r[k])
         return r
 
+    # TODO should be confined to metadata implementation
     def _get_object_info(self, identifier, type_id, version=None):
         return self.metadata.get_component(type_id, identifier, version=version)
 
+    # TODO remove
     def _apply_listener(
         self,
         identifier,
@@ -1141,7 +1010,7 @@ class Datalayer:
         if listener_info is None:
             listener_info = self.metadata.get_component('listener', identifier)
 
-        select = serializable.Serializable.deserialize(listener_info['select'])
+        select = serializable.Serializable.from_dict(listener_info['select'])
         if ids is None:
             ids = select.get_ids(self)
         else:
@@ -1179,7 +1048,7 @@ class Datalayer:
         )
         type = model_info.get('type')
         if type is not None:
-            type = self.encoders[type]
+            type = self.datatypes[type]
             outputs = [type(x).encode() for x in outputs]
 
         select.model_update(
@@ -1215,7 +1084,8 @@ class Datalayer:
 
         # If object has no version, update the last version
         object.version = info['version']
-        new_info = self.artifact_store.update(object, metadata_info=info)
+        new_info = self.artifact_store.save(object.dict().encode())
+        self.artifact_store.delete(info)
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,
@@ -1231,17 +1101,19 @@ class Datalayer:
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        # TODO - make this un-ambiguous
         if not isinstance(like, Document):
             assert isinstance(like, dict)
             like = Document(like)
         like = self._get_content_for_filter(like)
         vi = self.vector_indices[vector_index]
         if outputs is None:
-            outs = {}
+            outs: t.Dict = {}
         else:
-            outs = outputs.encode()
+            outs = outputs.encode()  # type: ignore[assignment]
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
+        logging.info(str(outs))
         return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
     def close(self):

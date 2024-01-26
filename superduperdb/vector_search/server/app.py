@@ -2,7 +2,7 @@ import typing as t
 
 from pydantic import BaseModel
 
-from superduperdb import CFG
+from superduperdb import CFG, logging
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
@@ -56,6 +56,7 @@ def add_search(
     vector_index: str,
     db: Datalayer = DatalayerDependency(),
 ):
+    logging.info(f'Adding {len(vectors)} to search')
     service.add_search(vectors, vector_index=vector_index, db=db)
     return {'message': 'Added vectors successfully'}
 

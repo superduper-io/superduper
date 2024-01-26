@@ -37,9 +37,13 @@ def _request_server(
         data = superduperencode(data)
         if isinstance(data, dict):
             if '_content' in data:
-                data['_content']['bytes'] = base64.b64encode(
-                    data['_content']['bytes']
-                ).decode()
+                try:
+                    data['_content']['bytes'] = base64.b64encode(
+                        data['_content']['bytes']
+                    ).decode()
+                except Exception as e:
+                    logging.error(str(data))
+                    raise e
         response = requests.post(url, json=data, params=args)
         result = json.loads(response.content)
     else:

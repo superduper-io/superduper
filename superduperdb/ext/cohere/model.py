@@ -24,8 +24,8 @@ class Cohere(APIModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self.identifier = self.identifier or self.model
 
 
@@ -39,18 +39,18 @@ class CohereEmbed(Cohere):
     shapes: t.ClassVar[t.Dict] = {'embed-english-v2.0': (4096,)}
     shape: t.Optional[t.Sequence[int]] = None
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
 
     def pre_create(self, db):
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
-            if self.encoder is None:
-                self.encoder = sqlvector(self.shape)
-        elif self.encoder is None:
-            self.encoder = vector(self.shape)
+            if self.datatype is None:
+                self.datatype = sqlvector(self.shape)
+        elif self.datatype is None:
+            self.datatype = vector(self.shape)
 
     @retry
     def _predict_one(self, X: str, **kwargs):
@@ -110,8 +110,8 @@ class CohereGenerate(Cohere):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('str')
 
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):

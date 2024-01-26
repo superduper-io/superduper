@@ -17,7 +17,6 @@ from transformers import (
 from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 
 from superduperdb import logging
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
 
@@ -62,7 +61,9 @@ class LLMCallback(TrainerCallback):
             logging.warn("No checkpoint found, skip saving checkpoint")
             return
 
-        self.llm.adapter_id = Artifact(checkpoint_path, serializer="zip")
+        # ???
+        # self.llm.adapter_id = Artifact(checkpoint_path, serializer="zip")
+        self.llm.adapter_id = checkpoint_path
         self.db.replace(self.llm, upsert=True)
 
     def check_init(self):
@@ -303,7 +304,8 @@ def handle_ray_results(db, llm, results):
     # Pad the path to the checkpoint
     path = os.path.join(path, "checkpoint")
     if llm is not None:
-        llm.adapter_id = Artifact(path, serializer="zip")
+        # llm.adapter_id = Artifact(path, serializer="zip")
+        llm.adapter_id = path
         if db is not None:
             db.replace(llm, upsert=True)
 

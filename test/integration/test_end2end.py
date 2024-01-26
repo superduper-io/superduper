@@ -131,7 +131,8 @@ def test_advance_setup(distributed_db, image_url):
         {
             '_content': {
                 'uri': image_url,
-                'encoder': 'pil_image',
+                'datatype': 'pil_image',
+                'leaf_type': 'encodable',
             }
         }
     ]
@@ -152,7 +153,6 @@ def test_advance_setup(distributed_db, image_url):
 
     mixed_input = Collection('mixed_input')
     db.add(pil_image)
-    db.execute(Collection('mixed_input').insert_many(data))
 
     from superduperdb.ext.numpy import array
 
@@ -179,7 +179,7 @@ def test_advance_setup(distributed_db, image_url):
         preprocess=Model2.preprocess,
         postprocess=Model2.postprocess,
         predict_method='predict',
-        encoder=e,
+        datatype=e,
     )
     db.add(model2)
 
@@ -187,6 +187,9 @@ def test_advance_setup(distributed_db, image_url):
         model=db.load('model', 'model1'), key='int', select=mixed_input.find()
     )
     db.add(listener1)
+
+    db.execute(Collection('mixed_input').insert_many(data))
+
     n = _wait_for_outputs(db=db, n=10)
 
     db.add(

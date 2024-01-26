@@ -8,10 +8,15 @@ import numpy
 from overrides import override
 
 from superduperdb.backends.mongodb.query import Select
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
+from superduperdb.components.datatype import (
+    DataType,
+    dill_serializer,
+    pickle_decode,
+    pickle_encode,
+)
 from superduperdb.misc.annotations import public_api
 
 
@@ -30,12 +35,15 @@ class Dataset(Component):
     __doc__ = __doc__.format(component_params=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'dataset'
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
+        ('raw_data', dill_serializer),
+    )
 
     select: t.Optional[Select] = None
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None
-    raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
+    raw_data: t.Optional[t.Sequence[t.Any]] = None
 
     @override
     def pre_create(self, db: 'Datalayer') -> None:
@@ -46,7 +54,7 @@ class Dataset(Component):
             if self.sample_size is not None and self.sample_size < len(data):
                 perm = self.random.permutation(len(data)).tolist()
                 data = [data[perm[i]] for i in range(self.sample_size)]
-            self.raw_data = Artifact(artifact=[r.encode() for r in data])
+            self.raw_data = pickle_encode([r.encode() for r in data])
 
     @override
     def post_create(self, db: 'Datalayer') -> None:
@@ -54,11 +62,8 @@ class Dataset(Component):
 
     @override
     def on_load(self, db: 'Datalayer') -> None:
-        assert isinstance(self.raw_data, Artifact)
-        self.data = [
-            Document(Document.decode(r.copy(), encoders=db.encoders))
-            for r in self.raw_data.artifact
-        ]
+        # ruff: noqa: E501
+        self.data = [Document.decode(r, db) for r in pickle_decode(self.raw_data)]  # type: ignore[arg-type]
 
     @cached_property
     def random(self):

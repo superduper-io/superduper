@@ -15,12 +15,16 @@ import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.encoder import Encodable
+from superduperdb.components.datatype import (
+    DataType,
+    Encodable,
+    dill_serializer,
+    torch_serializer,
+)
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.ext.torch.utils import device_of, eval, to_device
@@ -70,39 +74,35 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     :param target_preprocessors: Preprocessors for the target
     """
 
-    objective: t.Optional[t.Union[Artifact, t.Callable]] = None
+    _encodables: t.ClassVar[t.Sequence[str]] = ('target_preprocessors',)
+
+    objective: t.Optional[t.Callable] = None
     loader_kwargs: t.Dict = dc.field(default_factory=dict)
     max_iterations: int = 10**100
     no_improve_then_stop: int = 5
-    splitter: t.Optional[Artifact] = None
+    splitter: t.Optional[t.Callable] = None
     download: bool = False
     validation_interval: int = 100
     listen: str = 'objective'
-    optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
+    optimizer_cls: t.Any = dc.field(default_factory=lambda: torch.optim.Adam)
     optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
-    target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
-
-    def __post_init__(self):
-        super().__post_init__()
-        if self.objective and not isinstance(self.objective, Artifact):
-            self.objective = Artifact(artifact=self.objective)
-
-        if self.target_preprocessors and not isinstance(
-            self.target_preprocessors, Artifact
-        ):
-            self.target_preprocessors = Artifact(artifact=self.target_preprocessors)
+    target_preprocessors: t.Optional[t.Dict] = None
 
 
 @dc.dataclass(kw_only=True)
 class TorchModel(Model):
-    is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
+        ('object', dill_serializer),
+        ('optimizer_state', torch_serializer),
+    )
+
     num_directions: int = 2
-    optimizer_state: t.Optional[Artifact] = None
+    optimizer_state: t.Optional[t.Any] = None
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts=artifacts)
 
         if self.model_to_device_method:
             s.logging.debug(
@@ -110,21 +110,20 @@ class TorchModel(Model):
             )
 
         self.model_to_device_method = 'to'
-
         self.object.serializer = 'torch'
 
         if self.optimizer_state is not None:
-            self.optimizer.load_state_dict(self.optimizer_state.artifact)
+            self.optimizer.load_state_dict(self.optimizer_state)
 
         self._validation_set_cache = {}
 
     def to(self, device):
-        self.object.artifact.to(device)
+        self.object.to(device)
 
     @cached_property
     def optimizer(self):
-        return self.training_configuration.optimizer_cls.artifact(
-            self.object.artifact.parameters(),
+        return self.training_configuration.optimizer_cls(
+            self.object.parameters(),
             **self.training_configuration.optimizer_kwargs,
         )
 
@@ -133,7 +132,6 @@ class TorchModel(Model):
         return [self.optimizer]
 
     def save(self, database: Datalayer):
-        self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
         database.replace(object=self, upsert=True)
 
     @contextmanager
@@ -141,10 +139,10 @@ class TorchModel(Model):
         yield eval(self)
 
     def train(self):
-        return self.object.artifact.train()
+        return self.object.train()
 
     def eval(self):
-        return self.object.artifact.eval()
+        return self.object.eval()
 
     def parameters(self):
         return self.object.parameters()
@@ -184,43 +182,35 @@ class TorchModel(Model):
                 )
 
     def _predict_one(self, x):
-        with torch.no_grad(), eval(self.object.artifact):
+        with torch.no_grad(), eval(self.object):
             if self.preprocess is not None:
-                x = self.preprocess.artifact(x)
-            x = to_device(x, device_of(self.object.artifact))
+                x = self.preprocess(x)
+            x = to_device(x, device_of(self.object))
             singleton_batch = create_batch(x)
-            method = getattr(self.object.artifact, self.forward_method)
+            method = getattr(self.object, self.forward_method)
             output = method(singleton_batch)
             output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
             if self.postprocess is not None:
-                args = self.postprocess.artifact(args)
+                args = self.postprocess(args)
             return args
 
     def _predict(self, x, one: bool = False, **kwargs):  # type: ignore[override]
-        assert isinstance(self.object, Artifact)
-        with torch.no_grad(), eval(self.object.artifact):
+        with torch.no_grad(), eval(self.object):
             if one:
                 return self._predict_one(x)
-            if not isinstance(self.preprocess, Artifact):
-
-                def func(x):
-                    return x
-
-            else:
-                func = self.preprocess.artifact
-            inputs = BasicDataset(x, func)
+            inputs = BasicDataset(x, self.preprocess or (lambda x: x))
             loader = torch.utils.data.DataLoader(inputs, **kwargs)
             out = []
             for batch in tqdm(loader, total=len(loader)):
-                batch = to_device(batch, device_of(self.object.artifact))
+                batch = to_device(batch, device_of(self.object))
 
-                method = getattr(self.object.artifact, self.forward_method)
+                method = getattr(self.object, self.forward_method)
                 tmp = method(batch)
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
-                if isinstance(self.postprocess, Artifact):
-                    tmp = [self.postprocess.artifact(t) for t in tmp]
+                if self.postprocess:
+                    tmp = [self.postprocess(t) for t in tmp]
                 out.extend(tmp)
             return out
 
@@ -229,8 +219,8 @@ class TorchModel(Model):
         if y is not None:
             y = y.to(self.device)
 
-        method = getattr(self.object.artifact, self.train_forward_method)
-        if hasattr(self.object.artifact, 'train_forward'):
+        method = getattr(self.object, self.train_forward_method)
+        if hasattr(self.object, 'train_forward'):
             if y is None:
                 return method(X)
             else:
@@ -281,7 +271,7 @@ class TorchModel(Model):
         if configuration is not None:
             self.training_configuration = configuration
         if isinstance(select, dict):
-            self.training_select = Serializable.deserialize(select)
+            self.training_select = Serializable.from_dict(select)
         else:
             self.training_select = select
         if validation_sets is not None:
@@ -318,7 +308,7 @@ class TorchModel(Model):
         logging.info(out)
 
     def forward(self, X):
-        return self.object.artifact(X)
+        return self.object(X)
 
     def extract_batch_key(self, batch, key: t.Union[t.List[str], str]):
         if isinstance(key, str):
@@ -336,7 +326,7 @@ class TorchModel(Model):
     def take_step(self, batch, optimizers):
         batch = self.extract_batch(batch)
         outputs = self.train_forward(*batch)
-        objective_value = self.training_configuration.objective.artifact(*outputs)
+        objective_value = self.training_configuration.objective(*outputs)
         for opt in optimizers:
             opt.zero_grad()
         objective_value.backward()
@@ -350,7 +340,7 @@ class TorchModel(Model):
             for batch in valid_dataloader:
                 batch = self.extract_batch(batch)
                 objective_values.append(
-                    self.training_configuration.objective.artifact(
+                    self.training_configuration.objective(
                         *self.train_forward(*batch)
                     ).item()
                 )
@@ -432,10 +422,6 @@ class TorchModel(Model):
                     ] = self.training_configuration.target_preprocessors.get(
                         y, lambda x: x
                     )
-
-        for k in preprocessors:
-            if isinstance(preprocessors[k], Artifact):
-                preprocessors[k] = preprocessors[k].artifact
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
     def _get_data(self, db: t.Optional[Datalayer]):

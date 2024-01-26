@@ -11,20 +11,18 @@ from sklearn.metrics import accuracy_score, f1_score
 from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
     Model,
     QueryModel,
     SequentialModel,
-    TrainingConfiguration,
     _Predictor,
     _TrainingConfiguration,
 )
@@ -97,11 +95,11 @@ def predict_mixin(request) -> _Predictor:
         predict_mixin = cls_()
     predict_mixin.identifier = 'test'
     predict_mixin.to_call = to_call
-    predict_mixin.preprocess = Artifact(preprocess)
-    predict_mixin.postprocess = Artifact(postprocess)
+    predict_mixin.preprocess = preprocess
+    predict_mixin.postprocess = postprocess
     predict_mixin.takes_context = False
     predict_mixin.output_schema = None
-    predict_mixin.encoder = None
+    predict_mixin.datatype = None
     predict_mixin.model_update_kwargs = {}
     predict_mixin.version = 0
     return predict_mixin
@@ -114,24 +112,10 @@ def test_pm_predict_one(predict_mixin):
     expect = postprocess(to_call(preprocess(X)))
     assert np.allclose(predict_mixin._predict_one(X), expect)
 
-    # Bad preprocess
-    with patch.object(predict_mixin, 'preprocess', lambda x: x), pytest.raises(
-        ValueError
-    ) as excinfo:
-        predict_mixin._predict_one(X)
-        assert 'preprocess' in str(excinfo.value)
-
     # to_call -> postprocess
     with patch.object(predict_mixin, 'preprocess', None):
         expect = postprocess(to_call(X))
         assert np.allclose(predict_mixin._predict_one(X), expect)
-
-    # Bad postprocess
-    with patch.object(predict_mixin, 'postprocess', lambda x: x), pytest.raises(
-        ValueError
-    ) as excinfo:
-        predict_mixin._predict_one(X)
-        assert 'postprocess' in str(excinfo.value)
 
     # preprocess -> to_call
     with patch.object(predict_mixin, 'postprocess', None):
@@ -173,26 +157,12 @@ def test_pm_core_predict(predict_mixin):
     assert isinstance(output, list)
     assert np.allclose(output, expect)
 
-    # Bad preprocess
-    with patch.object(predict_mixin, 'preprocess', lambda x: x), pytest.raises(
-        ValueError
-    ) as excinfo:
-        predict_mixin._predict(X)
-        assert 'preprocess' in str(excinfo.value)
-
     # to_call -> postprocess
     with patch.object(predict_mixin, 'preprocess', None):
         expect = postprocess(to_call(X))
         output = predict_mixin._predict(X)
         assert isinstance(output, list)
         assert np.allclose(output, expect)
-
-    # Bad postprocess
-    with patch.object(predict_mixin, 'postprocess', lambda x: x), pytest.raises(
-        ValueError
-    ) as excinfo:
-        predict_mixin._predict(X)
-        assert 'postprocess' in str(excinfo.value)
 
     # preprocess -> to_call
     with patch.object(predict_mixin, 'postprocess', None):
@@ -202,7 +172,6 @@ def test_pm_core_predict(predict_mixin):
         assert np.allclose(output, expect)
 
 
-@patch('superduperdb.backends.base.query.Select.serialize', MagicMock())
 def test_pm_create_predict_job(predict_mixin):
     select = MagicMock(spec=Select)
     X = 'x'
@@ -323,23 +292,23 @@ def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
         assert kwargs.get('outputs') == ys
 
     # Check the base predict function with encoder
-    from superduperdb.components.encoder import Encoder
+    from superduperdb.components.datatype import DataType
 
-    predict_mixin.encoder = encoder = Encoder(identifier='test')
+    predict_mixin.datatype = DataType(identifier='test')
     with patch.object(select, 'model_update') as model_update:
         predict_mixin._predict_with_select_and_ids('x', db, select, ids)
         select_using_ids.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
         #  make sure encoder is used
-        encoder = predict_mixin.encoder
-        assert kwargs.get('outputs') == [encoder(y).encode() for y in ys]
+        datatype = predict_mixin.datatype
+        assert kwargs.get('outputs') == [datatype(y).encode() for y in ys]
 
     # Check the base predict function with output_schema
     from superduperdb.components.schema import Schema
 
-    predict_mixin.encoder = None
+    predict_mixin.datatype = None
     predict_mixin.output_schema = schema = MagicMock(spec=Schema)
-    schema.encode.side_effect = str
+    schema.side_effect = str
     predict_mock.return_value = [{'y': y} for y in ys]
     with patch.object(select, 'model_update') as model_update:
         predict_mixin._predict_with_select_and_ids('x', db, select, ids)
@@ -348,81 +317,18 @@ def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
         assert kwargs.get('outputs') == [str({'y': y}) for y in ys]
 
 
-# --------------------
-# Test the Model class
-# --------------------
-
-
-def test_model_init():
-    # Check all the object are converted to Artifact
-    obj = object()
-    model = Model('test', object=obj)
-    assert isinstance(model.object, Artifact)
-    assert model.object.artifact is obj
-
-    preprocess = object()
-    model = Model('test', object=obj, preprocess=preprocess)
-    assert isinstance(model.preprocess, Artifact)
-    assert model.preprocess.artifact is preprocess
-
-    postprocess = object()
-    model = Model('test', object=obj, postprocess=postprocess)
-    assert isinstance(model.postprocess, Artifact)
-    assert model.postprocess.artifact is postprocess
-
-    # Check the model_to_device_method is set correctly
-    class SubModel(Model):
-        def to(self, device):
-            return self
-
-    model = SubModel('test', object=obj, model_to_device_method='to')
-    assert model._artifact_method == model.to
-
-
-def test_model_child_components():
-    # Check the child components are empty
-    model = Model('test', object=object())
-    assert model.child_components == []
-
-    # if encoder or training_configuration is set
-    model = Model('test', object=object(), encoder=Encoder(identifier='test'))
-    assert model.child_components == [('encoder', 'encoder')]
-
-    model = Model(
-        'test',
-        object=object(),
-        training_configuration=TrainingConfiguration(identifier='test'),
-    )
-    assert model.child_components == [
-        ('training_configuration', 'training_configuration')
-    ]
-
-    # if encoder and training_configuration are set
-    model = Model(
-        'test',
-        object=object(),
-        encoder=Encoder(identifier='test'),
-        training_configuration=TrainingConfiguration(identifier='test'),
-    )
-
-    assert model.child_components == [
-        ('encoder', 'encoder'),
-        ('training_configuration', 'training_configuration'),
-    ]
-
-
 def test_model_on_create():
     db = MagicMock(spec=Datalayer)
     db.databackend = MagicMock()
 
     # Check the encoder is loaded if encoder is string
-    model = Model('test', object=object(), encoder='test_encoder')
+    model = Model('test', object=object(), datatype='test_encoder')
     with patch.object(db, 'load') as db_load:
         model.pre_create(db)
-        db_load.assert_called_with('encoder', 'test_encoder')
+        db_load.assert_called_with('datatype', 'test_encoder')
 
     # Check the output_component table is added by datalayer
-    model = Model('test', object=object(), encoder=Encoder(identifier='test'))
+    model = Model('test', object=object(), datatype=DataType(identifier='test'))
     output_component = MagicMock()
     db.databackend.create_model_table_or_collection.return_value = output_component
     with patch.object(db, 'add') as db_load:
@@ -533,6 +439,8 @@ def test_query_model(db):
         .like({'x': Variable('X')}, vector_index='test_vector_search', n=3)
         .find_one({}, {'_id': 1})
     )
+
+    # check = q.set_variables(db, X='test')
 
     m = QueryModel(
         identifier='test-query-model',

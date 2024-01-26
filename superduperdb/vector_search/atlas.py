@@ -7,6 +7,7 @@ from functools import cached_property
 import pymongo
 
 from superduperdb import CFG, logging
+from superduperdb.components.model import APIModel
 from superduperdb.vector_search.base import BaseVectorSearcher
 
 if t.TYPE_CHECKING:
@@ -30,9 +31,8 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         **kwargs,
     ):
         self.identifier = identifier
-        self.database: pymongo.database.Database = pymongo.MongoClient(
-            CFG.cluster.vector_search
-        ).get_database()
+        db_name = CFG.cluster.vector_search.split('/')[-1]
+        self.database = getattr(pymongo.MongoClient(CFG.cluster.vector_search), db_name)
         assert output_path
         self.output_path = output_path
         self.collection = collection
@@ -60,7 +60,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         indexing_key = vi.indexing_listener.key
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
-        assert isinstance(vi.indexing_listener.model, Model)
+        assert isinstance(vi.indexing_listener.model, Model) or isinstance(vi.indexing_listener.model, APIModel)
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier
         indexing_version = vi.indexing_listener.model.version
@@ -147,6 +147,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         _, key, model, version = output_path.split('.')
         if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
+
         fields4 = {
             str(version): [
                 {

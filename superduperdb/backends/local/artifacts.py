@@ -52,6 +52,8 @@ class FileSystemArtifactStore(ArtifactStore):
             ):
                 logging.warn('Aborting...')
         shutil.rmtree(self.conn, ignore_errors=force)
+        os.makedirs(self.conn)
+    
 
     def save_artifact(self, serialized: bytes) -> t.Any:
         h = uuid.uuid4().hex

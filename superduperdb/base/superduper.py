@@ -15,9 +15,7 @@ def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
     """
 
     if item is None:
-        from superduperdb.base.build import build_datalayer
-
-        return build_datalayer()
+        item = CFG.data_backend
 
     if isinstance(item, str):
         return _auto_identify_connection_string(item, **kwargs)

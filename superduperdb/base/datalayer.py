@@ -129,7 +129,6 @@ class Datalayer:
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> t.Optional[BaseVectorSearcher]:
         searcher_type = searcher_type or s.CFG.cluster.vector_search_type
-        logging.info(f"loading of vectors of vector-index: '{identifier}'")
         vi = self.vector_indices[identifier]
 
         clt = vi.indexing_listener.select.table_or_collection
@@ -143,12 +142,19 @@ class Datalayer:
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        if backfill or not s.CFG.cluster.is_remote_vector_search:
-            self.backfill_vector_search(vi, vector_comparison)
+        self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
+        if s.CFG.self_hosted_vector_search:
+            return
+
+        if s.CFG.cluster.is_remote_vector_search:
+            return
+
+        logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")
+
         if vi.indexing_listener.select is None:
             raise ValueError('.select must be set')
 

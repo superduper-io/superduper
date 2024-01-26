@@ -1,3 +1,4 @@
+from collections import defaultdict
 import typing as t
 
 
@@ -46,3 +47,10 @@ class MongoStyleDict(t.Dict[str, t.Any]):
                 parent_item = MongoStyleDict({})
             parent_item[child] = value
             self[parent] = parent_item
+
+
+class ArgumentDefaultDict(defaultdict):
+    def __getitem__(self, item):
+        if item not in self:
+            self[item] = self.default_factory(item)
+        return super().__getitem__(item)

@@ -44,8 +44,8 @@ class _OpenAI(APIModel):
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
     __doc__ = APIModel.__doc__  # type: ignore[assignment]
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
 
         assert isinstance(self.client_kwargs, dict)
 
@@ -81,18 +81,18 @@ class OpenAIEmbedding(_OpenAI):
     shape: t.Optional[t.Sequence[int]] = None
     shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
 
     def pre_create(self, db):
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
-            if self.encoder is None:
-                self.encoder = sqlvector(self.shape)
-        elif self.encoder is None:
-            self.encoder = vector(self.shape)
+            if self.datatype is None:
+                self.datatype = sqlvector(self.shape)
+        elif self.datatype is None:
+            self.datatype = vector(self.shape)
 
     @retry
     def _predict_one(self, X: str, **kwargs):
@@ -149,8 +149,8 @@ class OpenAIChatCompletion(_OpenAI):
 
     prompt: str = ''
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self.takes_context = True
 
     def _format_prompt(self, context, X):
@@ -159,8 +159,8 @@ class OpenAIChatCompletion(_OpenAI):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('str')
 
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
@@ -226,8 +226,8 @@ class OpenAIImageCreation(_OpenAI):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('bytes')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('bytes')
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -338,8 +338,8 @@ class OpenAIImageEdit(_OpenAI):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('bytes')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('bytes')
 
     @retry
     def _predict_one(
@@ -479,8 +479,8 @@ class OpenAIAudioTranscription(_OpenAI):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('str')
 
     @retry
     def _predict_one(
@@ -581,8 +581,8 @@ class OpenAIAudioTranslation(_OpenAI):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('str')
 
     @retry
     def _predict_one(

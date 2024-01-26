@@ -20,11 +20,12 @@ from superduperdb.backends.base.query import (
     _ReprMixin,
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisResult
+from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.utils import get_output_table_name
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
 
 if t.TYPE_CHECKING:
@@ -67,7 +68,7 @@ class IbisCompoundSelect(CompoundSelect):
         return self.query_linker.primary_id
 
     def __hash__(self) -> int:
-        return hash(json.dumps(self.serialize()))
+        return hash(self.repr_())
 
     def __eq__(self, __value: object) -> bool:
         assert self.query_linker is not None
@@ -241,7 +242,7 @@ class IbisCompoundSelect(CompoundSelect):
             return self.query_linker.renamings
         return {}
 
-    def execute(self, db, load_hybrid: bool = True):
+    def execute(self, db, reference: bool = False):
         # TODO handle load_hybrid for `ibis`
         output, scores = self._execute(db)
         fields = self._get_all_fields(db)
@@ -253,8 +254,8 @@ class IbisCompoundSelect(CompoundSelect):
                 logging.warn(f'Disambiguation not yet supported of {column}: TODO!')
                 continue
 
-            if isinstance(type, Encoder):
-                output[column] = output[column].map(type.decode)
+            if isinstance(type, DataType):
+                output[column] = output[column].map(type.decoder)
 
         if scores is not None:
             output['scores'] = output[self.primary_id].map(scores)
@@ -620,12 +621,16 @@ class Table(Component):
     schema: Schema
     primary_id: str = 'id'
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        if '_fold' not in self.schema.fields:
+            self.schema = Schema(self.schema.identifier, fields={**self.schema.fields, '_fold': dtype('str')})
+
         assert self.primary_id != '_input_id', '"_input_id" is a reserved value'
 
     def pre_create(self, db: 'Datalayer'):
         assert self.schema is not None, "Schema must be set"
+        # TODO why? This is done already
         for e in self.schema.encoders:
             db.add(e)
         if db.databackend.in_memory:

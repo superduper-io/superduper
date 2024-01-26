@@ -31,16 +31,16 @@ def test_serialize_table():
         },
     )
 
-    s = schema.serialize()
+    s = schema.encode()
     print(s)
-    ds = Serializable.deserialize(s)
+    ds = Serializable.decode(s)
 
     print(ds)
 
     t = Table(identifier='my_table', schema=schema)
 
-    s = t.serialize()
-    ds = Serializable.deserialize(s)
+    s = t.encode()
+    ds = Serializable.decode(s)
 
     print(ds)
 
@@ -70,7 +70,7 @@ def duckdb():
         model = Model(
             object=lambda _: numpy.random.randn(32),
             identifier='test',
-            encoder=array('float64', shape=(32,)),
+            datatype=array('float64', shape=(32,)),
         )
         model.predict('x', select=t, db=db)
 
@@ -123,7 +123,7 @@ def test_renamings(duckdb):
 
     print(data.as_pandas())
 
-    assert isinstance(data[0]['_outputs.x.test.0'].x, numpy.ndarray)
+    assert isinstance(data[0]['_outputs.x.test.0'], numpy.ndarray)
 
 
 def test_serialize_deserialize():
@@ -135,7 +135,7 @@ def test_serialize_deserialize():
 
     q = t.filter(t.id == 1).select(t.id, t.x)
 
-    print(Serializable.deserialize(q.serialize()))
+    print(Serializable.decode(q.serialize()))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

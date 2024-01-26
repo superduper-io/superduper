@@ -17,13 +17,11 @@ from transformers import (
 from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 
 from superduperdb import logging
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
 
 if t.TYPE_CHECKING:
     from datasets import Dataset
-
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.ext.llm import LLM
 
@@ -62,6 +60,7 @@ class LLMCallback(TrainerCallback):
             logging.warn("No checkpoint found, skip saving checkpoint")
             return
 
+        # ???
         self.llm.adapter_id = Artifact(checkpoint_path, serializer="zip")
         self.db.replace(self.llm, upsert=True)
 

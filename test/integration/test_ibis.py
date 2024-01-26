@@ -129,7 +129,7 @@ def end2end_workflow(ibis_db, memory_table=False):
         preprocess=preprocess,
         postprocess=postprocess,
         object=torchvision.models.resnet18(pretrained=False),
-        encoder=dtype('int32'),
+        datatype=dtype('int32'),
     )
 
     # Apply the torchvision model
@@ -146,7 +146,7 @@ def end2end_workflow(ibis_db, memory_table=False):
         preprocess=lambda x: torch.randn(32),
         object=torch.nn.Linear(32, 16),
         identifier='model_linear_a',
-        encoder=tensor(torch.float, (16,)),
+        datatype=tensor(torch.float, (16,)),
     )
 
     # apply to the table

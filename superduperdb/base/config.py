@@ -14,7 +14,7 @@ _CONFIG_IMMUTABLE = True
 
 
 @dc.dataclass
-class BaseConfigJSONable:
+class BaseConfig:
     _lock: t.ClassVar[bool] = False
 
     def force_set(self, name, value):
@@ -35,7 +35,7 @@ class BaseConfigJSONable:
 
 
 @dc.dataclass
-class Retry(BaseConfigJSONable):
+class Retry(BaseConfig):
     """
     Describes how to retry using the `tenacity` library
 
@@ -72,13 +72,13 @@ class LogBasedStrategy(CDCStrategy):
 
 
 @dc.dataclass
-class CDCConfig(BaseConfigJSONable):
+class CDCConfig(BaseConfig):
     uri: t.Optional[str] = None  # None implies local mode
     strategy: t.Optional[t.Union[PollingStrategy, LogBasedStrategy]] = None
 
 
 @dc.dataclass
-class Cluster(BaseConfigJSONable):
+class Cluster(BaseConfig):
     """
     Describes a connection to distributed work via Dask
 
@@ -114,7 +114,7 @@ class Cluster(BaseConfigJSONable):
         return search_type
 
     @property
-    def is_remote_vector_search(self):
+    def is_remote_vector_search(self): 
         split = self.vector_search.split('://')
         dialect = split[0]
         return dialect != 'mongodb+srv' and len(split) > 1
@@ -152,7 +152,7 @@ class BytesEncoding(str, Enum):
 
 
 @dc.dataclass
-class Downloads(BaseConfigJSONable):
+class Downloads(BaseConfig):
     folder: t.Optional[str] = None
     n_workers: int = 0
     headers: t.Dict = dc.field(default_factory=lambda: {'User-Agent': 'me'})
@@ -160,7 +160,7 @@ class Downloads(BaseConfigJSONable):
 
 
 @dc.dataclass
-class Config(BaseConfigJSONable):
+class Config(BaseConfig):
     """
     The data class containing all configurable superduperdb values
 
@@ -201,7 +201,6 @@ class Config(BaseConfigJSONable):
     def __post_init__(self):
         if self.dot_env:
             import dotenv
-
             dotenv.load_dotenv(self.dot_env)
         self._lock = True
 

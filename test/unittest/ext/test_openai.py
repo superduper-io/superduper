@@ -101,7 +101,7 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
     assert set(models) == {'text-embedding-ada-002', 'gpt-3.5-turbo'}
     if isinstance(db.databackend, MongoDataBackend):
         r = list(db.execute(select))
-        assert '_outputs' in r[0].content
+        assert '_outputs' in r[0]
     else:
         r = db.execute(t.outputs(story='text-embedding-ada-002'))[0]
         assert '_outputs.story.text-embedding-ada-002.0' in r
@@ -126,7 +126,6 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
     )
 
     assert isinstance(prediction[0], Document)
-    assert 'hoax' in prediction[0].content
+    assert 'hoax' in prediction[0].unpack()
 
     assert isinstance(prediction[1][0], Document)
-    assert isinstance(prediction[1][0].content, dict)

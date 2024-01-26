@@ -2,11 +2,12 @@ import dataclasses as dc
 import pickle
 import typing as t
 
+# TODO add initialization code ensuring a version range for this code
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 from unstructured.partition.html import partition_html
 
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType
 
 
 def link2elements(link, unstructure_kwargs):
@@ -56,7 +57,7 @@ def create_decoder():
 
 
 @dc.dataclass
-class UnstructuredEncoder(Encoder):
+class UnstructuredEncoder(DataType):
     unstructure_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
     def __post_init__(self):

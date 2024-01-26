@@ -46,7 +46,7 @@ def add_models_encoders(test_db):
         TorchModel(
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
-            encoder='torch.float32[16]',
+            datatype='torch.float32[16]',
         )
     )
     test_db.add(
@@ -100,14 +100,14 @@ def fake_tensor_data(encoder, update: bool = True):
 
 @pytest.fixture
 def fake_inserts(database_with_default_encoders_and_model):
-    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
-    return fake_tensor_data(encoder, update=False)
+    dt = database_with_default_encoders_and_model.datatypes['torch.float32[32]']
+    return fake_tensor_data(dt, update=False)
 
 
 @pytest.fixture
 def fake_updates(database_with_default_encoders_and_model):
-    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
-    return fake_tensor_data(encoder, update=True)
+    dt = database_with_default_encoders_and_model.datatypes['torch.float32[32]']
+    return fake_tensor_data(dt, update=True)
 
 
 @pytest.fixture

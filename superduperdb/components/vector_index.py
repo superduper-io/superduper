@@ -7,7 +7,7 @@ from overrides import override
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
 from superduperdb.ext.utils import str_shape
 from superduperdb.misc.annotations import public_api
@@ -50,13 +50,6 @@ class VectorIndex(Component):
             self.compatible_listener = t.cast(
                 Listener, db.load('listener', self.compatible_listener)
             )
-
-    @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
-        out = [('indexing_listener', 'listener')]
-        if self.compatible_listener is not None:
-            out.append(('compatible_listener', 'listener'))
-        return out
 
     def get_vector(
         self,
@@ -122,7 +115,7 @@ class VectorIndex(Component):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
         within_ids = ids or ()
 
-        if isinstance(like.content, dict) and id_field in like.content:
+        if isinstance(like, dict) and id_field in like:
             return db.fast_vector_searchers[self.identifier].find_nearest_from_id(
                 str(like[id_field]), within_ids=within_ids, limit=n
             )
@@ -159,7 +152,7 @@ class VectorIndex(Component):
     def dimensions(self) -> int:
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.indexing_listener.model, str)
-        if shape := getattr(self.indexing_listener.model.encoder, 'shape', None):
+        if shape := getattr(self.indexing_listener.model.datatype, 'shape', None):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
@@ -189,7 +182,7 @@ def vector(shape):
 
     :param shape: The shape of the vector
     """
-    return Encoder(
+    return DataType(
         identifier=f'vector[{str_shape(shape)}]',
         shape=shape,
         encoder=None,
@@ -204,7 +197,7 @@ def sqlvector(shape):
 
     :param shape: The shape of the vector
     """
-    return Encoder(
+    return DataType(
         identifier=f'sqlvector[{str_shape(shape)}]',
         shape=shape,
         encoder=EncodeArray(dtype='float64'),

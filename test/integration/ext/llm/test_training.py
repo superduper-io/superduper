@@ -5,7 +5,6 @@ import transformers
 
 from superduperdb import superduper
 from superduperdb.backends.mongodb import Collection
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.document import Document
 from superduperdb.ext.llm import LLM
 from superduperdb.ext.llm.model import LLMTrainingConfiguration
@@ -119,8 +118,7 @@ def test_lora_finetune(db, base_config):
         db=db,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0
@@ -146,8 +144,7 @@ def test_qlora_finetune(db, base_config):
         db=db,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0
@@ -193,8 +190,7 @@ def test_local_ray_lora_finetune(db, base_config):
         ray_configs=ray_configs,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0
@@ -251,8 +247,7 @@ def test_local_ray_deepspeed_lora_finetune(db, base_config):
         ray_configs=ray_configs,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0
@@ -301,8 +296,7 @@ def test_remote_ray_lora_finetune(db, base_config):
         ray_configs=ray_configs,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0
@@ -361,8 +355,7 @@ def test_remote_ray_qlora_deepspeed_finetune(db, base_config):
         ray_configs=ray_configs,
     )
 
-    assert isinstance(llm.adapter_id, Artifact)
-    assert os.path.exists(llm.adapter_id.artifact)
+    assert os.path.exists(llm.adapter_id)
 
     result = db.predict("llm-finetune", prompt, max_new_tokens=100, do_sample=False)[
         0

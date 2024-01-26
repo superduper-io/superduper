@@ -1,5 +1,6 @@
 import click
 import gridfs
+import typing as t
 
 from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
@@ -33,14 +34,17 @@ class MongoArtifactStore(ArtifactStore):
                 logging.warn('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
-    def delete(self, file_id: str):
-        return self.filesystem.delete(file_id)
+    def _exists(self, file_id):
+        return self.filesystem.find_one({'filename': file_id}) is not None
 
-    def load_bytes(self, file_id: str):
-        return self.filesystem.get(file_id).read()
+    def _delete_bytes(self, file_id: str):
+        return self.filesystem.delete(self.filesystem.find_one({'filename': file_id})._id)
 
-    def save_artifact(self, serialized: bytes):
-        return self.filesystem.put(serialized)
+    def _load_bytes(self, file_id: str):
+        return next(self.filesystem.find_one({'filename': file_id}))
+
+    def _save_bytes(self, serialized: bytes, file_id: str):
+        return self.filesystem.put(serialized, filename=file_id)
 
     def disconnect(self):
         """

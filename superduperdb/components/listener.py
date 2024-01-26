@@ -41,22 +41,17 @@ class Listener(Component):
 
     type_id: t.ClassVar[str] = 'listener'
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         if self.identifier is None and self.model is not None:
             if isinstance(self.model, str):
                 self.identifier = f'{self.model}/{self.id_key}'
             else:
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
-        super().__post_init__()
+        super().__post_init__(artifacts)
 
     @property
     def outputs(self):
         return f'{_OUTPUTS_KEY}.{self.key}.{self.model.identifier}.{self.model.version}'
-
-    @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
-        """Returns a list of child components as pairs TBD"""
-        return [('model', 'model')]
 
     @override
     def pre_create(self, db: Datalayer) -> None:

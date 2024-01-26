@@ -25,9 +25,9 @@ def test_superduper_model():
     from sklearn.linear_model import LinearRegression
 
     model = superduper(torch.nn.Linear(1, 1))
-    assert isinstance(model.object.artifact, torch.nn.modules.linear.Linear)
+    assert isinstance(model.object, torch.nn.modules.linear.Linear)
     model = superduper(LinearRegression())
-    assert isinstance(model.object.artifact, LinearRegression)
+    assert isinstance(model.object, LinearRegression)
 
 
 def test_superduper_raise():

@@ -24,7 +24,8 @@ class Anthropic(APIModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self.identifier = self.identifier or self.model
 
 
@@ -40,8 +41,8 @@ class AnthropicCompletions(Anthropic):
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype('str')
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype('str')
 
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):

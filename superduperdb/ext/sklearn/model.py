@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import Model, _TrainingConfiguration
@@ -54,34 +53,25 @@ def _get_data_from_query(
 class SklearnTrainingConfiguration(_TrainingConfiguration):
     fit_params: t.Dict = dc.field(default_factory=dict)
     predict_params: t.Dict = dc.field(default_factory=dict)
-    y_preprocess: t.Union[t.Callable, Artifact, None] = None
-
-    def __post_init__(self):
-        super().__post_init__()
-        if not isinstance(self.y_preprocess, Artifact):
-            self.y_preprocess = Artifact(self.y_preprocess)
+    y_preprocess: t.Optional[t.Callable] = None
 
 
 @dc.dataclass
 class Estimator(Model):
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         if self.predict_method is not None:
             assert self.predict_method == 'predict'
         self.predict_method = 'predict'
-        super().__post_init__()
-
-    @property
-    def estimator(self):
-        return self.object.artifact
+        super().__post_init__(artifacts)
 
     def __getattr__(self, item):
         if item in ['transform', 'predict_proba', 'score']:
-            return getattr(self.estimator, item)
+            return getattr(self.object, item)
         else:
             return super().__getattribute__(item)
 
     def _forward(self, X, **kwargs):
-        return self.estimator.predict(X, **kwargs)
+        return self.object.predict(X, **kwargs)
 
     def _fit(  # type: ignore[override]
         self,
@@ -107,17 +97,10 @@ class Estimator(Model):
             y_preprocess = None
             if self.training_configuration is not None:
                 y_preprocess = self.training_configuration.get('y_preprocess', None)
-                if isinstance(y_preprocess, Artifact):
-                    y_preprocess = y_preprocess.artifact
             if select is None or db is None:
                 raise ValueError('Neither select nor db can be None')
 
-            if isinstance(self.preprocess, Artifact):
-                preprocess = self.preprocess.artifact
-            else:
-
-                def preprocess(x):
-                    return x
+            preprocess = self.preprocess or (lambda x: x)
 
             X, y = _get_data_from_query(
                 select=select,
@@ -129,13 +112,13 @@ class Estimator(Model):
             )
         if self.training_configuration is not None:
             assert not isinstance(self.training_configuration, str)
-            to_return = self.estimator.fit(
+            to_return = self.object.fit(
                 X,
                 y,
                 **self.training_configuration.get('fit_params', {}),
             )
         else:
-            to_return = self.estimator.fit(X, y)
+            to_return = self.object.fit(X, y)
 
         if validation_sets is not None:
             assert db is not None

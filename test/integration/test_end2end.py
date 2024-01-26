@@ -131,7 +131,8 @@ def test_advance_setup(distributed_db, image_url):
         {
             '_content': {
                 'uri': image_url,
-                'encoder': 'pil_image',
+                'datatype': 'pil_image',
+                'leaf_type': 'encodable'
             }
         }
     ]
@@ -179,7 +180,7 @@ def test_advance_setup(distributed_db, image_url):
         preprocess=Model2.preprocess,
         postprocess=Model2.postprocess,
         predict_method='predict',
-        encoder=e,
+        datatype=e,
     )
     db.add(model2)
 

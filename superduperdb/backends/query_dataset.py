@@ -88,7 +88,7 @@ class QueryDataset:
             input = self._documents[item]
         else:
             input = self.select_one(
-                self._ids[item], self.database, encoders=self.database.encoders
+                self._ids[item], self.database, encoders=self.database.datatypes
             )
         r = MongoStyleDict(input.unpack())
         s = MongoStyleDict({})

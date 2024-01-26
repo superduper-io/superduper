@@ -16,7 +16,6 @@ from transformers import (
 from superduperdb import logging
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import query_dataset_factory
-from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import Model, _TrainingConfiguration
@@ -49,27 +48,24 @@ class Pipeline(Model):
     postprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
     task: str = 'text-classification'
 
-    def __post_init__(self):
-        super().__post_init__()
-        if isinstance(self.object.artifact, BasePipeline):
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        if isinstance(self.object, BasePipeline):
             assert self.preprocess is None
             if self.preprocess_type == 'tokenizer':
-                self.preprocess = self.object.artifact.tokenizer
+                self.preprocess = self.object.tokenizer
             else:
                 raise NotImplementedError(
                     'Only tokenizer is supported for now in pipeline mode'
                 )
-            self.object = Artifact(artifact=self.object.artifact.model)
-            self.task = self.object.artifact.task
+            self.object = self.object.model
+            self.task = self.object.task
         if (
             self.collate_fn is None
             and self.preprocess is not None
             and self.preprocess_type == 'tokenizer'
         ):
-            self.collate_fn = Artifact(
-                DataCollatorWithPadding(self.preprocess.artifact),
-                hash=random.randrange(1000000),
-            )
+            self.collate_fn = DataCollatorWithPadding(self.preprocess)
         if not self.device:
             import torch
 
@@ -80,18 +76,17 @@ class Pipeline(Model):
         if self.preprocess_type == 'tokenizer':
             return _pipeline(
                 self.task,
-                model=self.object.artifact,
-                tokenizer=self.preprocess.artifact,
+                model=self.object,
+                tokenizer=self.preprocess,
             )
         else:
             warnings.warn('Only tokenizer is supported for now in pipeline mode')
 
     def _predict_with_preprocess_object_post(self, X, **kwargs):
-        X = self.preprocess.artifact(X, **self.preprocess_kwargs)
-        X = getattr(self.object.artifact, self.predict_method)(**X, **kwargs)
-        X = getattr(self, 'postprocess', Artifact(lambda x: x)).artifact(
-            X, **self.postprocess_kwargs
-        )
+        X = self.preprocess(X, **self.preprocess_kwargs)
+        X = getattr(self.object, self.predict_method)(**X, **kwargs)
+        postprocess = self.postprocess or (lambda x: x)
+        X = postprocess(X, **self.postprocess_kwargs)
         return X
 
     @functools.cached_property
@@ -108,7 +103,7 @@ class Pipeline(Model):
     ):
         def transform_function(r):
             text = r[X]
-            r.update(**self.preprocess.artifact(text, **self.preprocess_kwargs))
+            r.update(**self.preprocess(text, **self.preprocess_kwargs))
             return r
 
         train_data = query_dataset_factory(
@@ -177,15 +172,15 @@ class Pipeline(Model):
             self.append_metrics(output)
             return output
 
-        assert isinstance(self.collate_fn, Artifact)
+        assert self.collate_fn
         assert db is not None
-        assert isinstance(self.object, Artifact)
+        assert self.object
         trainer = _TrainerWithSaving(
-            model=self.object.artifact,
+            model=self.object,
             args=self.training_arguments,
             train_dataset=train_data,
             eval_dataset=valid_data,
-            data_collator=self.collate_fn.artifact,
+            data_collator=self.collate_fn,
             custom_saver=lambda: db.replace(self, upsert=True),
             compute_metrics=compute_metrics,
             **kwargs,

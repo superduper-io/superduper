@@ -34,8 +34,8 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
     max_batch_size: Optional[int] = 4
     inference_kwargs: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
         self.prompter = Prompter(self.prompt_template, self.prompt_func)
@@ -50,8 +50,8 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
         from superduperdb.backends.ibis.data_backend import IbisDataBackend
         from superduperdb.backends.ibis.field_types import dtype
 
-        if isinstance(db.databackend, IbisDataBackend) and self.encoder is None:
-            self.encoder = dtype("str")
+        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+            self.datatype = dtype("str")
 
         # since then the `.add` clause is not necessary
         output_component = db.databackend.create_model_table_or_collection(
@@ -176,10 +176,10 @@ class BaseOpenAI(BaseLLMAPI):
     user_role: str = "user"
     system_role: str = "system"
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         self.api_url = self.openai_api_base
         self.identifier = self.identifier or self.model_name
-        super().__post_init__()
+        super().__post_init__(artifacts)
 
     def init(self):
         try:

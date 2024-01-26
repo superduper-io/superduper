@@ -8,7 +8,7 @@ import numpy as np
 from superduperdb import logging
 
 if t.TYPE_CHECKING:
-    from superduperdb.components.encoder import Encoder
+    from superduperdb.components.datatype import DataType
 
 
 def str_shape(shape: t.Sequence[int]) -> str:
@@ -43,19 +43,18 @@ def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) 
 def superduperencode(object):
     if isinstance(object, np.ndarray):
         from superduperdb.ext.numpy import array
-
-        encoded = array(dtype=object.dtype, shape=object.shape).encode(object)
+        encoded = array(dtype=object.dtype, shape=object.shape)(object).encode()
         encoded['shape'] = object.shape
         encoded['dtype'] = str(object.dtype)
         return encoded
     return object
 
 
-def superduperdecode(r: t.Any, encoders: t.List['Encoder']):
+def superduperdecode(r: t.Any, encoders: t.List['DataType']):
     if isinstance(r, dict):
-        encoder = encoders[r['_content']['encoder']]
+        encoder = encoders[r['_content']['datatype']]
         b = base64.b64decode(r['_content']['bytes'])
-        return encoder.decode(b).x
+        return encoder.decoder(b)
     return r
 
 

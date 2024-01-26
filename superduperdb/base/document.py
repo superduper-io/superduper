@@ -1,12 +1,19 @@
+import dataclasses as dc
+import logging
+import os
+import re
 import typing as t
 
 import bson
 from bson.objectid import ObjectId
 
 from superduperdb import CFG
+from superduperdb.backends.base.artifact import _construct_file_id_from_uri
 from superduperdb.base.config import BytesEncoding
-from superduperdb.components.encoder import Encodable, Encoder
-from superduperdb.misc.files import get_file_from_uri
+from superduperdb.base.leaf import Leaf
+from superduperdb.base.serializable import Serializable
+from superduperdb.components.component import Component
+from superduperdb.components.datatype import Encodable, DataType
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -17,51 +24,55 @@ ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
 _OUTPUTS_KEY: str = '_outputs'
+_LEAF_TYPES = {
+    'component': Component,
+    'encodable': Encodable,
+    'serializable': Serializable,
+}
 
 
-class Document:
+class Document(MongoStyleDict):
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
-    that resource to a mix of JSONable and `bytes`
+    that resource to a mix of json-able content, ids and `bytes`
 
     :param content: The content to wrap
     """
 
     _DEFAULT_ID_KEY: str = '_id'
 
-    content: ContentType
-
-    def __init__(self, content: ContentType):
-        self.content = content
-
     def dump_bson(self) -> bytes:
         """Dump this document into BSON and encode as bytes"""
         return bson.encode(self.encode())
 
     def encode(
-        self,
+        self, 
         schema: t.Optional['Schema'] = None,
+        leaf_types_to_keep: t.Sequence[t.Type] = (),
         bytes_encoding: t.Optional[BytesEncoding] = None,
-    ) -> t.Any:
-        """Make a copy of the content with all the Encodables encoded"""
+    ) -> t.Tuple[dict, t.List[Leaf]]:
+        """Make a copy of the content with all the Leaves encoded"""
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
         if schema is not None:
-            return _encode_with_schema(self.content, schema, bytes_encoding)
-        return _encode(self.content, bytes_encoding)
+            return _encode_with_schema(dict(self), schema, bytes_encoding)
+        return _encode(dict(self), bytes_encoding, leaf_types_to_keep)
+
+    def get_leaves(self, leaf_type: t.Optional[str] = None):
+        keys, leaves = _find_leaves(self, leaf_type)
+        return dict(zip(keys, leaves))
 
     @property
     def variables(self) -> t.List[str]:
         from superduperdb.base.serializable import _find_variables
-
-        return _find_variables(self.content)
+        return _find_variables(self)
 
     def set_variables(self, db, **kwargs) -> 'Document':
         from superduperdb.base.serializable import _replace_variables
 
         content = _replace_variables(
-            self.content, db, **kwargs
+            self, db, **kwargs
         )  # replace variables with values
-        return Document(content)
+        return Document(**content)
 
     def outputs(self, key: str, model: str, version: t.Optional[int] = None) -> t.Any:
         """
@@ -78,33 +89,30 @@ class Document:
             version = max(list(tmp.keys()))
             return tmp[version]
         return document
-
+        
     @staticmethod
     def decode(
-        r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
+        r: t.Dict,
+        db,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
+        reference: bool = False,
     ) -> t.Any:
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
-
-        if isinstance(r, Document):
-            return Document(_decode(r, encoders, bytes_encoding))
-        elif isinstance(r, dict):
-            return _decode(r, encoders, bytes_encoding)
-        raise NotImplementedError(f'type {type(r)} is not supported')
+        decoded = _decode(dict(r), db, bytes_encoding, reference=reference)
+        if isinstance(decoded, dict):
+            return Document(decoded)
+        return decoded
 
     def __repr__(self) -> str:
-        return f'Document({repr(self.content)})'
-
-    def __getitem__(self, item: str) -> ItemType:
-        assert isinstance(self.content, dict)
-        return self.content[item]
-
-    def __setitem__(self, key: str, value: ItemType):
-        assert isinstance(self.content, dict)
-        self.content[key] = value
+        return f'Document({repr(dict(self))})'
 
     def unpack(self) -> t.Any:
         """Returns the content, but with any encodables replacecs by their contents"""
-        return _unpack(self.content)
+        if '_base' in self:
+            r = self['_base']
+        else:
+            r = dict(self)
+        return _unpack(r)
 
 
 def dump_bsons(documents: t.Sequence[Document]) -> bytes:
@@ -136,60 +144,130 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
+def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False):
+    if isinstance(r, dict):
+        keys = []
+        leaves = []
+        for k, v in r.items():
+            sub_keys, sub_leaves = _find_leaves(v, leaf_type)
+            leaves.extend(sub_leaves)
+            keys.extend([(f'{k}.{sub_key}' if sub_key else k)  for sub_key in sub_keys])
+        return keys, leaves
+    if isinstance(r, list) or isinstance(r, tuple):
+        keys = []
+        leaves = []
+        for i, x in enumerate(r):
+            sub_keys, sub_leaves = _find_leaves(x, leaf_type)
+            leaves.extend(sub_leaves)
+            keys.extend([(f'{k}.{i}' if k else f'{i}') for k in sub_keys])
+        return keys, leaves
+    if leaf_type:
+        if isinstance(r, _LEAF_TYPES[leaf_type]):
+            return [''], [r]
+        else:
+            return [], []
+    else:
+        if isinstance(r, Leaf):
+            return [''], [r]
+        else:
+            return [], []
+
+
 def _decode(
-    r: t.Dict, encoders: t.Dict, bytes_encoding: t.Optional[BytesEncoding] = None
+    r: t.Dict,
+    db: t.Optional[t.Any] = None,
+    bytes_encoding: t.Optional[BytesEncoding] = None,
+    reference: bool = False,
 ) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
-        encoder = encoders[r['_content']['encoder']]
-        try:
-            return encoder.decode(r['_content']['bytes'])
-        except KeyError:
-            if 'uri' in r['_content']:
-                return Encodable(uri=r['_content']['uri'], encoder=encoder)
-            return r
+        return _LEAF_TYPES[r['_content']['leaf_type']].decode(r, db, reference=reference)
     elif isinstance(r, list):
-        return [_decode(x, encoders) for x in r]
+        return [
+            _decode(x, db, bytes_encoding=bytes_encoding, reference=reference)
+            for x in r
+        ]
     elif isinstance(r, dict):
-        for k in r:
-            if k in encoders:
-                r[k] = encoders[k].decode(r[k], bytes_encoding).x
-            else:
-                r[k] = _decode(r[k], encoders, bytes_encoding)
-    return r
+        return {
+            k: _decode(v, db, bytes_encoding, reference=reference)
+            for k, v in r.items()
+        }
+    else:
+        return r
 
 
-def _encode(r: t.Any, bytes_encoding: t.Optional[BytesEncoding] = None) -> t.Any:
-    bytes_encoding = bytes_encoding or CFG.bytes_encoding
+@dc.dataclass
+class Reference(Leaf):
+    identifier: str
+    leaf_type: str
 
+
+
+def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, dict):
-        return {k: _encode(v, bytes_encoding) for k, v in r.items()}
-    if isinstance(r, Encodable):
-        return r.encode(bytes_encoding=bytes_encoding)
+        for k, v in r.items():
+            if isinstance(v, Leaf):
+                r[k] = f'${v.leaf_type}/{v.unique_id}'
+                references[v.leaf_type][v.unique_id] = v
+            else:
+                _encode_with_references(r[k], references=references)
+    if isinstance(r, list):
+        for i, x in enumerate(r):
+            if isinstance(x, Leaf):
+                ref = Reference(x.unique_id, leaf_type=x.leaf_type)
+                r[i] = ref
+                references[x.leaf_type][x.unique_id] = x
+            else:
+                _encode_with_references(x, references=references)
+
+
+def _encode(
+    r: t.Any,
+    bytes_encoding: t.Optional[BytesEncoding] = None,
+    leaf_types_to_keep: t.Sequence[t.Type] = (),
+) -> t.Tuple[t.Any, t.List[Leaf]]:
+    bytes_encoding = bytes_encoding or CFG.bytes_encoding
+    if isinstance(r, dict):
+        out = {}
+        for k, v in r.items():
+            out[k] = _encode(v, bytes_encoding, leaf_types_to_keep)
+        return out
+    if isinstance(r, list) or isinstance(r, tuple):
+        out = []
+        for x in r:
+            out.append(_encode(x, bytes_encoding, leaf_types_to_keep))
+        return out
+    if isinstance(r, Leaf) and not isinstance(r, leaf_types_to_keep):
+        return r.encode(bytes_encoding=bytes_encoding, leaf_types_to_keep=leaf_types_to_keep)
     return r
 
 
 def _encode_with_schema(
-    r: t.Any, schema: 'Schema', bytes_encoding: t.Optional[BytesEncoding] = None
-) -> t.Any:
+    r: t.Any, schema: 'Schema',
+    bytes_encoding: t.Optional[BytesEncoding] = None,
+) -> t.Tuple[t.Any, t.List[t.Any]]:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict):
-        out = {
-            k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
-            if isinstance(schema.fields[k], Encoder)
-            else _encode_with_schema(v, schema, bytes_encoding)
-            for k, v in r.items()
-        }
+        out = {}
+        for k, v in r.items():
+            if isinstance(schema.fields.get(k, None), DataType):
+                out[k] = schema.fields[k].encoder(v)
+            else:
+                tmp = _encode_with_schema(v, schema, bytes_encoding)
+                out[k] = tmp
         return out
-    if isinstance(r, Encodable):
+    if isinstance(r, Leaf):
         return r.encode(bytes_encoding=bytes_encoding)
     return r
 
 
 def _unpack(item: t.Any) -> t.Any:
     if isinstance(item, Encodable):
-        if CFG.hybrid_storage and not item.encoder.load_hybrid and item.x is None:
-            return get_file_from_uri(item.uri)
+        if item.reference:
+            file_id = _construct_file_id_from_uri(item.uri)
+            if item.datatype.directory:
+                file_id = os.path.join(item.datatype.directory, file_id)
+            return file_id
         return item.x
     elif isinstance(item, dict):
         return {k: _unpack(v) for k, v in item.items()}
@@ -197,3 +275,5 @@ def _unpack(item: t.Any) -> t.Any:
         return [_unpack(x) for x in item]
     else:
         return item
+
+    

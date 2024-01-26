@@ -293,7 +293,7 @@ class Aggregate(Select):
         )
         return pipeline
 
-    def execute(self, db, load_hybrid=True):
+    def execute(self, db, reference=False):
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -307,8 +307,8 @@ class Aggregate(Select):
         return SuperDuperCursor(
             raw_cursor=cursor,
             id_field='_id',
-            encoders=db.encoders,
-            load_hybrid=load_hybrid,
+            db=db,
+            reference=reference,
         )
 
 
@@ -367,20 +367,20 @@ class MongoCompoundSelect(CompoundSelect):
         post_query_linker = self.query_linker.select_using_ids(similar_ids)
         return post_query_linker.execute(db), similar_scores
 
-    def execute(self, db, load_hybrid=True):
+    def execute(self, db, reference=False):
         output, scores = self._execute(db)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
                 raw_cursor=output,
                 id_field='_id',
                 scores=scores,
-                encoders=db.encoders,
-                load_hybrid=load_hybrid,
+                db=db,
+                reference=reference,
             )
         elif isinstance(output, dict):
-            if load_hybrid and CFG.hybrid_storage:
-                load_uris(output, encoders=db.encoders)
-            return Document(Document.decode(output, encoders=db.encoders))
+            if reference and CFG.hybrid_storage:
+                load_uris(output, datatypes=db.datatypes)
+            return Document.decode(output, db)
         return output
 
     def download_update(self, db, id: str, key: str, bytes: bytearray) -> None:
@@ -399,6 +399,9 @@ class MongoCompoundSelect(CompoundSelect):
             self.table_or_collection.identifier
         )
         return collection.update_one({'_id': id}, update)
+
+    def check_exists(self, db):
+        ...
 
     @property
     def select_table(self):

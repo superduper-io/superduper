@@ -15,8 +15,8 @@ class Jina(APIModel):
 
     api_key: t.Optional[str] = None
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
@@ -31,18 +31,18 @@ class JinaEmbedding(Jina):
 
     shape: t.Optional[t.Sequence[int]] = None
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
         if self.shape is None:
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 
     def pre_create(self, db):
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
-            if self.encoder is None:
-                self.encoder = sqlvector(self.shape)
-        elif self.encoder is None:
-            self.encoder = vector(self.shape)
+            if self.datatype is None:
+                self.datatype = sqlvector(self.shape)
+        elif self.datatype is None:
+            self.datatype = vector(self.shape)
 
     def _predict_one(self, X: str, **kwargs):
         return self.client.encode_batch([X])[0]

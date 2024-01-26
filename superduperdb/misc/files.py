@@ -27,9 +27,10 @@ def get_file_from_uri(uri):
     return file
 
 
+# TODO inject this logic into `Document.decode`
 def load_uris(
     r: dict,
-    encoders: t.Dict,
+    datatypes: t.Dict,
     root: t.Optional[str] = None,
     raises: bool = False,
 ):
@@ -55,7 +56,7 @@ def load_uris(
                 k == '_content'
                 and 'uri' in v
                 and 'bytes' not in v
-                and encoders[v['encoder']].load_hybrid
+                and not datatypes[v['datatype']].reference
             ):
                 file = get_file_from_uri(v['uri'])
                 if root:
@@ -69,9 +70,9 @@ def load_uris(
                     else:
                         warnings.warn(str(e))
             else:
-                load_uris(v, root=root, encoders=encoders, raises=raises)
+                load_uris(v, root=root, datatypes=datatypes, raises=raises)
         elif isinstance(v, list):
             for x in v:
-                load_uris(x, root=root, encoders=encoders, raises=raises)
+                load_uris(x, root=root, datatypes=datatypes, raises=raises)
         else:
             pass

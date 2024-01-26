@@ -42,7 +42,7 @@ def copy_vectors(
     vi = db.vector_indices[vector_index]
     if isinstance(query, dict):
         # ruff: noqa: E501
-        query: CompoundSelect = Serializable.deserialize(query)  # type: ignore[no-redef]
+        query: CompoundSelect = Serializable.decode(query)  # type: ignore[no-redef]
     assert isinstance(query, CompoundSelect)
     select = query.select_using_ids(ids)
     docs = db.select(select)

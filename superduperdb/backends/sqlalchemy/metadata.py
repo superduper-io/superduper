@@ -412,7 +412,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         with self.session_context() as session:
             with self._lock:
                 row = {
-                    'query': query.serialize(),
+                    'query': query.dict().encode(),
                     'model': model,
                     'query_id': query_hash,
                 }
@@ -457,7 +457,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             for row in queries:
                 id = row['query_id']
                 serialized = row['query']
-                query = Serializable.deserialize(serialized)
+                query = Serializable.from_dict(serialized)
                 unpacked_queries.append(
                     {'query_id': id, 'query': query, 'sql': query.repr_()}
                 )

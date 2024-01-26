@@ -95,7 +95,7 @@ class Select(Serializable, ABC):
         pass
 
     @abstractmethod
-    def execute(self, db, load_hybrid: bool = True):
+    def execute(self, db, reference: bool = True):
         """
         Execute the query on the DB instance.
         """

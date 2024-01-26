@@ -55,11 +55,11 @@ class IbisDataBackend(BaseDataBackend):
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."
         )
-        assert model.encoder is not None, msg
-        if isinstance(model.encoder, FieldType):
-            output_type = dtype(model.encoder.identifier)
+        assert model.datatype is not None, msg
+        if isinstance(model.datatype, FieldType):
+            output_type = dtype(model.datatype.identifier)
         else:
-            output_type = model.encoder
+            output_type = model.datatype
         fields = {
             INPUT_KEY: dtype('string'),
             'query_id': dtype('string'),

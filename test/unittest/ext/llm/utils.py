@@ -14,10 +14,10 @@ from superduperdb.components.listener import Listener
 def check_predict(db, llm):
     """Test whether db can call model prediction normally."""
     db.add(llm)
-    result = db.predict(llm.identifier, "1+1=")[0].content
+    result = db.predict(llm.identifier, "1+1=")[0].unpack()
     assert isinstance(result, str)
 
-    results = db.predict(llm.identifier, ["1+1=", "2+2="])[0].content
+    results = db.predict(llm.identifier, ["1+1=", "2+2="])[0].unpack()
 
     assert isinstance(results, list)
     assert len(results) == 2

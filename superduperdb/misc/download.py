@@ -3,10 +3,8 @@ import os
 import re
 import signal
 import sys
-import tempfile
 import typing as t
 import warnings
-import zipfile
 from contextlib import contextmanager
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
@@ -117,6 +115,8 @@ class BaseDownloader:
         self.uris = uris
         self.headers = headers or {}
         self.raises = raises
+        self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
+        self.results: t.Dict = {}
 
     def go(self):
         """
@@ -153,6 +153,10 @@ class BaseDownloader:
 
         self._parallel_go(f)
 
+    def _download(self, i):
+        k = self.uris[i]
+        self.results[k] = self.fetcher(k)
+
     def _check_exists_if_hybrid(self, uri):
         if uri.startswith('file://'):
             file = f'{CFG.downloads.folder}/{uri.split("file://")[-1]}'
@@ -180,20 +184,40 @@ class BaseDownloader:
             f(i)
 
 
-class SaveFile:
-    """
-    Save file to disk.
+class Updater:
+    def __init__(self, db, query):
+        self.db = db
+        self.query = query
 
-    :param root: root directory to save files to.
-    """
+    def exists(self, uri, key, id, datatype):
+        if self.db.datatypes[datatype].artifact:
+            out = self.db.artifact_store.exists(uri=uri, datatype=datatype)
+        else:
+            table_or_collection = self.query.table_or_collection.identifier
+            out = self.db.databackend.exists(table_or_collection, id, key)
+        return out
 
-    def __init__(self, root: str):
-        self.root = root
-
-    def __call__(self, bytes_: bytearray, uri: str, **kwargs) -> None:
-        path = f'{self.root}/{hashlib.sha1(uri.encode()).hexdigest()}'
-        with open(path, 'wb') as f:
-            f.write(bytes_)
+    def __call__(
+        self,
+        *,
+        uri,
+        key,
+        id,
+        datatype,
+        bytes_,
+    ):
+        if self.db.datatypes[datatype].artifact:
+            self.db.artifact_store.save_artifact(
+                {
+                    'uri': uri,
+                    'datatype': datatype,
+                    'bytes': bytes_,
+                    'directory': self.db.datatypes[datatype].directory,
+                }
+            )
+        else:
+            # TODO move back to databackend
+            self.query.download_update(db=self.db, key=key, id=id, bytes=bytes_)
 
 
 class Downloader(BaseDownloader):
@@ -219,6 +243,7 @@ class Downloader(BaseDownloader):
         update_one: t.Optional[t.Callable] = None,
         ids: t.Optional[t.Union[t.List[str], t.List[int]]] = None,
         keys: t.Optional[t.List[str]] = None,
+        datatypes: t.Optional[t.List[str]] = None,
         n_workers: int = 20,
         headers: t.Optional[t.Dict] = None,
         skip_existing: bool = True,
@@ -235,27 +260,32 @@ class Downloader(BaseDownloader):
 
         self.ids = ids
         self.keys = keys
+        self.datatypes = datatypes
         self.failed = 0
         self.skip_existing = skip_existing
         self.update_one = update_one
-        self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
     def _download(self, i):
-        if CFG.hybrid_storage:
-            if self._check_exists_if_hybrid(self.uris[i]):
-                return
+        if self.update_one.exists(
+            id=self.ids[i],
+            key=self.keys[i],
+            uri=self.uris[i],
+            datatype=self.datatypes[i],
+        ):
+            return
         content = self.fetcher(self.uris[i])
         self.update_one(
             id=self.ids[i],
             key=self.keys[i],
+            datatype=self.datatypes[i],
             bytes_=content,
             uri=self.uris[i],
         )
 
 
 def gather_uris(
-    documents: t.Sequence[t.Dict], gather_ids: bool = True
-) -> t.Tuple[t.List[str], t.List[str], t.Union[t.List[int], t.List[str]]]:
+    documents: t.Sequence[Document], gather_ids: bool = True
+) -> t.Tuple[t.List[str], t.List[str], t.List[t.Any], t.List[str]]:
     """
     Get the uris out of all documents as denoted by ``{"_content": ...}``
 
@@ -264,19 +294,21 @@ def gather_uris(
     """
     uris = []
     mongo_keys = []
+    datatypes = []
     ids = []
     for i, r in enumerate(documents):
-        sub_uris, sub_mongo_keys = _gather_uris_for_document(r)
+        sub_uris, sub_mongo_keys, sub_datatypes = _gather_uris_for_document(r)
         if gather_ids:
             ids.extend([r['_id'] for _ in sub_uris])
         else:
             ids.append(i)
         uris.extend(sub_uris)
         mongo_keys.extend(sub_mongo_keys)
-    return uris, mongo_keys, ids
+        datatypes.extend(sub_datatypes)
+    return uris, mongo_keys, datatypes, ids
 
 
-def _gather_uris_for_document(r: t.Dict):
+def _gather_uris_for_document(r: Document, id_field: str = '_id'):
     '''
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])
@@ -289,16 +321,15 @@ def _gather_uris_for_document(r: t.Dict):
     '''
     uris = []
     keys = []
-    for k in r:
-        if isinstance(r[k], dict) and '_content' in r[k]:
-            if 'uri' in r[k]['_content'] and 'bytes' not in r[k]['_content']:
-                keys.append(k)
-                uris.append(r[k]['_content']['uri'])
-        elif isinstance(r[k], dict) and '_content' not in r[k]:
-            sub_uris, sub_keys = _gather_uris_for_document(r[k])
-            uris.extend(sub_uris)
-            keys.extend([f'{k}.{key}' for key in sub_keys])
-    return uris, keys
+    datatypes = []
+    leaf_lookup = r.get_leaves('encodable')
+    for k in leaf_lookup:
+        if leaf_lookup[k].uri is None:
+            continue
+        keys.append(k)
+        uris.append(leaf_lookup[k].uri)
+        datatypes.append(leaf_lookup[k].datatype.identifier)
+    return uris, keys, datatypes
 
 
 def download_content(
@@ -306,12 +337,8 @@ def download_content(
     query: t.Union[Select, Insert, t.Dict],
     ids: t.Optional[t.Sequence[str]] = None,
     documents: t.Optional[t.List[Document]] = None,
-    timeout: t.Optional[int] = None,
     raises: bool = True,
-    n_download_workers: t.Optional[int] = None,
-    headers: t.Optional[t.Dict] = None,
-    download_update: t.Optional[t.Callable] = None,
-    **kwargs,
+    n_workers: t.Optional[int] = None,
 ) -> t.Optional[t.Sequence[Document]]:
     """
     Download content contained in uploaded data. Items to be downloaded are identifier
@@ -336,84 +363,62 @@ def download_content(
     >>> download_content(None, None, ids=["0"], documents=[d]))
     ...
     """
-    logging.debug(query.__str__())
-    logging.debug(ids.__str__())
-    update_db = False
+    logging.debug(str(query))
+    logging.debug(str(ids))
+
     if isinstance(query, dict):
-        query = Serializable.deserialize(query)
+        query = Serializable.decode(query)
 
     if documents is not None:
         pass
     elif isinstance(query, Select):
-        update_db = True
         if ids is None:
-            documents = list(db.execute(query).raw_cursor)
+            documents = list(db.execute(query, reference=True))
         else:
             select = query.select_using_ids(ids)
-            documents = list(db.execute(select, load_hybrid=False))
+            documents = list(db.execute(select, reference=True))
     else:
         assert isinstance(query, Insert)
         documents = t.cast(t.List[Document], query.documents)
 
-    uris, keys, place_ids = gather_uris([d.encode() for d in documents])
+    uris, keys, datatypes, place_ids = gather_uris(documents)
 
     if uris:
         logging.info(f'found {len(uris)} uris')
+
     if not uris:
-        return None
+        return  # type: ignore[return-value]
 
-    if n_download_workers is None:
-        n_download_workers = CFG.downloads.n_workers
-
-    if headers is None:
-        try:
-            headers = db.metadata.get_metadata(key='headers')
-        except TypeError:
-            pass
-
-    if timeout is None:
-        timeout = CFG.downloads.timeout
-
-    if CFG.hybrid_storage:
-        assert isinstance(CFG.downloads.folder, str)
-        _download_update = SaveFile(CFG.downloads.folder)
-    else:
-
-        def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]
-            return query.download_update(db=db, key=key, id=id, bytes=bytes_)
-
-    assert place_ids is not None
     downloader = Downloader(
         uris=uris,
         ids=place_ids,
         keys=keys,
-        update_one=download_update or _download_update,
-        n_workers=n_download_workers,
-        timeout=timeout,
-        headers=headers,
+        datatypes=datatypes,
+        update_one=Updater(db, query),
+        n_workers=n_workers or CFG.downloads.n_workers,
+        timeout=CFG.downloads.timeout,
+        headers=CFG.downloads.headers,
         raises=raises,
     )
     downloader.go()
-    if update_db:
-        return None
 
-    for id_, key in zip(place_ids, keys):
-        documents[id_] = db.db.set_content_bytes(  # type: ignore[call-overload]
-            documents[id_],  # type: ignore[call-overload]
-            key,
-            downloader.results[id_],  # type: ignore[index]
-        )
-    return documents
+    return  # type: ignore[return-value]
 
 
-def remote_archive(uri, fetcher):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = tmp_dir / 'archive.zip'
-        logging.info(f'downloading {uri} to {tmp_path}')
-        fetcher(uri, path=tmp_path)
+def download_from_one(r: Document):
+    uris, keys, _, _ = gather_uris([r])
+    if not uris:
+        return
 
-        zipfile.ZipFile(tmp_path).extractall(tmp_dir / 'extracted')
-        assert 'artifact' in os.listdir(tmp_dir / 'extracted')
+    downloader = BaseDownloader(
+        uris=uris,
+        n_workers=0,
+        timeout=CFG.downloads.timeout,
+        headers=CFG.downloads.headers,
+        raises=True,
+    )
+    downloader.go()
+    for key, uri in zip(keys, uris):
+        r[key].x = r[key].datatype.decoder(downloader.results[uri])
 
-        with open(tmp_dir / 'extracted' / 'artifact', 'rb') as f:
-            return f.read()
+    return

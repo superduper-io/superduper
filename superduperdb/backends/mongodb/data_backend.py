@@ -69,8 +69,16 @@ class MongoDataBackend(BaseDataBackend):
         r[f'{key}._content.bytes'] = bytes_
         return r
 
+    def exists(self, table_or_collection, id, key):
+        return (
+            self.db[table_or_collection].find_one(
+                {'_id': id, f'{key}._content.bytes': {'$exists': 1}}
+            )
+            is not None
+        )
+
     def unset_outputs(self, info: t.Dict):
-        select = Serializable.deserialize(info['select'])
+        select = Serializable.from_dict(info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
         update = select.update(doc)

@@ -34,12 +34,28 @@ def asdict(obj, *, copy_method=copy.copy) -> t.Dict[str, t.Any]:
     """
     if not dc.is_dataclass(obj):
         raise TypeError("asdict() should be called on dataclass instances")
-    return _asdict_inner(obj, dict, copy_method)
+    return _asdict_inner(obj, dict, copy_method, top=True)
 
 
-def _asdict_inner(obj, dict_factory, copy_method) -> t.Any:
+def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
+    from superduperdb.base.leaf import Leaf
+    from superduperdb.base.serializable import Serializable
+
     if type(obj) in _ATOMIC_TYPES:
         return obj
+    elif not top and isinstance(obj, Leaf):
+        return obj
+    elif isinstance(obj, Serializable):
+        # TODO I don't think it's possible to reach this line since Serializable
+        # is a Leaf
+        return {
+            'cls': obj.__class__.__name__,
+            'module': obj.__class__.__module__,
+            'dict': {
+                f.name: _asdict_inner(getattr(obj, f.name), dict, copy_method)
+                for f in dc.fields(obj)
+            },
+        }
     elif dc.is_dataclass(obj):
         # fast path for the common case
         return {

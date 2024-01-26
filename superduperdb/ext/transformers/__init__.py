@@ -1,3 +1,3 @@
-from .model import Pipeline, TransformersTrainerConfiguration
+from .model import Pipeline  # , TransformersTrainerConfiguration
 
-__all__ = 'Pipeline', 'TransformersTrainerConfiguration'
+__all__ = ('Pipeline',)  #'TransformersTrainerConfiguration'

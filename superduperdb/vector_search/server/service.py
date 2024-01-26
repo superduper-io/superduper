@@ -21,7 +21,7 @@ def _vector_search(
 ) -> VectorSearchResultType:
     vi = db.fast_vector_searchers[vector_index]
     if by_array:
-        x = superduperdecode(x, db.encoders)
+        x = superduperdecode(x, db.datatypes)
         ids, scores = vi.searcher.find_nearest_from_array(x, n=n)
     else:
         ids, scores = vi.searcher.find_nearest_from_id(x, n=n)

@@ -78,7 +78,7 @@ def add_models_encoders(db, table):
         TorchModel(
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
-            encoder='torch.float32[16]',
+            datatype='torch.float32[16]',
         )
     )
     db.add(
@@ -112,15 +112,15 @@ def sql_database_with_cdc(ibis_duckdb):
     from superduperdb.components.schema import Schema
     from superduperdb.ext.torch.encoder import tensor
 
-    encoder = tensor(torch.float, [32])
+    datatype = tensor(torch.float, [32])
 
     schema = Schema(
         identifier='my_table',
         fields={
             'id': dtype('str'),
-            'x': encoder,
+            'x': datatype,
             'y': dtype('int32'),
-            'z': encoder,
+            'z': datatype,
             'auto_increment_field': dtype('int32'),
         },
     )
@@ -381,7 +381,7 @@ def test_many_update(
     inserted_ids, _ = db.execute(
         Collection(name).insert_many(fake_updates), refresh=False
     )
-    encoder = db.encoders['torch.float32[32]']
+    encoder = db.datatypes['torch.float32[32]']
     listener = db.cdc.listen(on=Collection('documents'), timeout=LISTEN_TIMEOUT)
 
     db.execute(
@@ -410,7 +410,7 @@ def test_insert_without_cdc_handler(
         refresh=False,
     )
     doc = db.execute(Collection(name).find_one({'_id': inserted_ids[0]}))
-    assert '_outputs' not in doc.content.keys()
+    assert '_outputs' not in doc.keys()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

@@ -10,10 +10,10 @@ from test.db_config import DBConfig
 
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
-from superduperdb.components.encoder import Encoder
+from superduperdb.components.datatype import DataType
 
 
-def get_new_data(encoder: Encoder, n=10, update=False):
+def get_new_data(encoder: DataType, n=10, update=False):
     data = []
     for i in range(n):
         x = torch.randn(32)
@@ -49,7 +49,7 @@ def test_replace(db):
     collection = Collection('documents')
     r = next(db.execute(collection.find()))
     x = torch.randn(32)
-    t = db.encoders['torch.float32[32]']
+    t = db.datatypes['torch.float32[32]']
     new_x = t(x)
     r['x'] = new_x
     db.execute(
@@ -78,14 +78,16 @@ def test_insert_from_uris(db, image_url):
                 'item': {
                     '_content': {
                         'uri': image_url,
-                        'encoder': 'pil_image',
+                        'datatype': 'pil_image',
+                        'leaf_type': 'encodable',
                     }
                 },
                 'other': {
                     'item': {
                         '_content': {
                             'uri': image_url,
-                            'encoder': 'pil_image',
+                            'datatype': 'pil_image',
+                            'leaf_type': 'encodable',
                         }
                     }
                 },
@@ -134,7 +136,7 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
 def test_update_many(db):
     collection = Collection('documents')
     to_update = torch.randn(32)
-    t = db.encoders['torch.float32[32]']
+    t = db.datatypes['torch.float32[32]']
     db.execute(collection.update_many({}, Document({'$set': {'x': t(to_update)}})))
     cur = db.execute(collection.find())
     r = next(cur)
@@ -151,7 +153,7 @@ def test_update_many(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_many(db):
     collection = Collection('documents')
-    an_update = get_new_data(db.encoders['torch.float32[32]'], 10, update=True)
+    an_update = get_new_data(db.datatypes['torch.float32[32]'], 10, update=True)
     db.execute(collection.insert_many(an_update))
     r = next(db.execute(collection.find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
@@ -174,7 +176,9 @@ def test_like(db):
 def test_insert_one(db):
     # MARK: empty Collection + a_single_insert
     collection = Collection('documents')
-    a_single_insert = get_new_data(db.encoders['torch.float32[32]'], 1, update=False)[0]
+    a_single_insert = get_new_data(db.datatypes['torch.float32[32]'], 1, update=False)[
+        0
+    ]
     out, _ = db.execute(collection.insert_one(a_single_insert))
     r = db.execute(collection.find({'_id': out[0]}))
     docs = list(r)
@@ -217,7 +221,7 @@ def test_replace_one(db):
     collection = Collection('documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
-    t = db.encoders['torch.float32[32]']
+    t = db.datatypes['torch.float32[32]']
     r = db.execute(collection.find_one())
     r['x'] = t(new_x)
     db.execute(collection.replace_one({'_id': r['_id']}, r))

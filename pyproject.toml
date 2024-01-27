@@ -116,7 +116,7 @@ server = [
 # Packages for enterprise testing
 enterprise = [
     "ray[default]",
-    "sentence-transformer",
+    "sentence-transformers",
 ]
 
 dev = ["superduperdb[torch,apis,docs,quality,testing,server,enterprise]"]

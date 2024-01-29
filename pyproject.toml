@@ -55,6 +55,7 @@ dependencies = [
     "scikit-learn>=1.1.3",
     "pillow>=9.4.0",
     "mongomock>=4.1.2",
+    "ibis>=3.3.0",
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0",
     "ibis-framework[snowflake]>=5.1.0",

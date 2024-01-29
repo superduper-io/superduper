@@ -34,13 +34,8 @@ def method_job(
     from superduperdb.base.configs import build_config
 
     if db is None:
-        try:
-            cfg['cluster']['compute'] = None
-        except KeyError:
-            # We pass since by default the compute is
-            # ``None`` in config
-            pass
         cfg = build_config(cfg)
+        cfg.force_set('cluster.compute', 'local')
         db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
@@ -101,15 +96,10 @@ def callable_job(
     from superduperdb.base.configs import build_config
 
     if db is None:
-        try:
-            cfg['cluster']['compute'] = None
-        except KeyError:
-            # We pass since by default the compute is
-            # ``None`` in config
-            pass
         cfg = build_config(cfg)
-
+        cfg.force_set('cluster.compute', 'local')
         db = build_datalayer(cfg)
+
     db.metadata.update_job(job_id, 'status', 'running')
     output = None
     try:

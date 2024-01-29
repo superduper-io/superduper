@@ -1,5 +1,5 @@
 MONGOMOCK_URI = 'mongomock:///test_db'
-SQL_URI = 'sqlite://:memory:'
+SQL_URI = 'sqlite://'
 # We can use the following SQL_URI for testing with a different database:
 # SQL_URI = 'clickhouse://default:@localhost:8123/default'
 # SQL_URI = 'mysql://root:root123@localhost:3306/test_db'

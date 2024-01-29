@@ -73,6 +73,10 @@ RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install -
 COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
 COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
+# Prepare Mountpoints
+# ---------------
+VOLUME /artifacts
+
 # ---------------
 # Build Sandbox
 # ---------------

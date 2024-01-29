@@ -1,10 +1,8 @@
 version: "3.9"
 
-
 # set env variable COMPOSE_PROJECT_NAME and
 # label com.docker.compose.project
 name: testenv
-
 
 services:
 
@@ -18,9 +16,13 @@ services:
       - ${SUPERDUPERDB_DATA_DIR:-.test_data}:/data/db
     ports:
       - "27017:27017"
-    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/ --logpath /dev/null"]
+    command:
+      - /bin/sh
+      - -c
+      - |      
+        mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/ --logpath /dev/null
 
-  mongo-init: # Once finished, Mongo is assumed to be ready.
+  mongo-init:
     image: mongo:6
     depends_on:
       - mongodb
@@ -28,131 +30,11 @@ services:
       - ./mongo-init.sh:/scripts/mongo-init.sh
     env_file:
     - users.env
-    command: sh -c "/scripts/mongo-init.sh"
-
-
-   # Vector Search Service
-   # ------------------------------
-  vector-search:
-    depends_on:
-      mongo-init:
-        condition: service_completed_successfully
-    image: superduperdb/sandbox
-    hostname: vector-search
-    ports:
-      - "8000:8000"
-    volumes:
-      - ../../:/home/superduper/superduperdb # mount the project path
-    environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-      SUPERDUPERDB_CLUSTER_VECTOR_SEARCH: 'http://localhost:8000'
     command:
       - /bin/sh
       - -c
-      - |
-        python -m superduperdb vector-search
-
-    healthcheck:
-      test: curl http://localhost:8000/health || exit 1
-      interval: 40s
-      timeout: 30s
-      retries: 10
-      start_period: 60s
-
-  vector-search-init: # Once finished, Vector Search is assumed to be ready.
-    image: busybox
-    depends_on:
-      vector-search:
-        condition: service_healthy
-
-
-   # Change Data Capture Service
-   # ------------------------------
-  cdc:
-    depends_on:
-      mongo-init:
-        condition: service_completed_successfully
-    image: superduperdb/sandbox
-    hostname: cdc
-    ports:
-      - "8001:8001"
-    volumes:
-      - ../../:/home/superduper/superduperdb # mount the project path
-    environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-      SUPERDUPERDB_CLUSTER_CDC_URI: 'http://localhost:8001'
-    command:
-      - /bin/sh
-      - -c
-      - |
-        python -m superduperdb cdc
-
-    healthcheck:
-      test: curl http://localhost:8001/health || exit 1
-      interval: 40s
-      timeout: 30s
-      retries: 10
-      start_period: 60s
-
-  cdc-init: # Once finished, CDC is assumed to be ready.
-    image: busybox
-    depends_on:
-      cdc:
-        condition: service_healthy
-
-
-  # Dask Parallel Computation
-  # ------------------------------
-  dask-scheduler:
-    depends_on:
-      mongo-init:
-        condition: service_completed_successfully
-    image: superduperdb/sandbox
-    hostname: scheduler
-    ports:
-      - "8786:8786" # Peer communication
-      - "8787:8787" # HTTP Dashboard
-    volumes:
-      - ../../:/home/superduper/superduperdb # mount the project path
-    environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-    command:
-      - /bin/sh
-      - -c
-      - |
-        PYTHONPATH=./:. dask scheduler --preload deploy/testenv/preload.py
-
-  dask-worker:
-    depends_on:
-      -   dask-scheduler
-    image: superduperdb/sandbox
-    volumes:
-      - ../../:/home/superduper/superduperdb # mount the project path
-    environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-    command:
-      - /bin/sh
-      - -c
-      - |
-        PYTHONPATH=./:. dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
-    deploy:
-      replicas: 1
-
-
-  #  Real-time Dashboards
-  #  ------------------------------
-  grafana:
-    depends_on:
-      - loki
-    image: grafana/grafana:10.2.2
-    ports:
-      - "3000:3000"
-    environment:
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-      GF_PATHS_PROVISIONING: '/app.cfg/provisioning'
-    volumes:
-        - ./configs/grafana:/app.cfg
+      - | 
+        /scripts/mongo-init.sh
 
 
   #  Logging with Loki
@@ -201,27 +83,129 @@ services:
         - /var/lib/docker/:/var/lib/docker:ro
         - /dev/disk/:/dev/disk:ro
 
-  ray-cluster:
+  #  Real-time Dashboards
+  #  ------------------------------
+  grafana:
+    depends_on:
+      - loki
+    image: grafana/grafana:10.2.2
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_PATHS_PROVISIONING: '/app.cfg/provisioning'
+    volumes:
+        - ./configs/grafana:/app.cfg
+
+  #  Ray Compute
+  #  ------------------------------
+  ray-head:
      image: superduperdb/sandbox
      ports:
        - "10001:10001" # Peer communication
        - "8265:8265"
        - "6379:6379"
-     environment:
-       SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+     env_file: users.env
      command:
        - /bin/sh
        - -c
        - |
-         pip install "ray[default]==2.8.1" && pip install async_timeout &&  PYTHONPATH=./:. ray start  --head --dashboard-host "0.0.0.0" --include-dashboard=True --block
+          ray start --head --dashboard-host=0.0.0.0 --block
      deploy:
        replicas: 1
 
+  ray-worker:
+    image: superduperdb/sandbox
+    depends_on:
+      - ray-head
+    volumes:
+        - ../../:/home/superduper/superduperdb # project path
+        - /tmp/artifacts:/artifacts:z # artifacts
+    command:
+       - /bin/sh
+       - -c
+       - |
+          ray start --address=ray-head:6379  --block
+    deploy:
+      mode: replicated
+      replicas: 2
+
+   # Vector Search Service
+   # ------------------------------
+  vector-search:
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+      ray-head:
+        condition: service_started
+    image: superduperdb/sandbox
+    hostname: vector-search
+    ports:
+      - "8000:8000"
+    env_file: users.env
+    volumes:
+        - ../../:/home/superduper/superduperdb # project path
+        - /tmp/artifacts:/artifacts:z # artifacts
+    command:
+      - /bin/sh
+      - -c
+      - |
+        python -m superduperdb vector-search
+    healthcheck:
+      test: curl http://localhost:8000/health || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  vector-search-init: # Once finished, Vector Search is assumed to be ready.
+    image: busybox
+    depends_on:
+      vector-search:
+        condition: service_healthy
+
+
+   # Change Data Capture Service
+   # ------------------------------
+  cdc:
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+      ray-head:
+        condition: service_started
+    image: superduperdb/sandbox
+    hostname: cdc
+    ports:
+      - "8001:8001"
+    env_file: users.env
+    volumes:
+        - ../../:/home/superduper/superduperdb # project path
+        - /tmp/artifacts:/artifacts:z # artifacts
+    command:
+      - /bin/sh
+      - -c
+      - |
+        python -m superduperdb cdc
+    healthcheck:
+      test: curl http://localhost:8001/health || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  cdc-init:
+    image: busybox
+    depends_on:
+      cdc:
+        condition: service_healthy
+
+
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------
-  demo-notebooks:
+  notebooks:
     image: superduperdb/sandbox
-    hostname: demo
+    hostname: hub
     depends_on:
       mongo-init:
         condition: service_completed_successfully
@@ -229,14 +213,14 @@ services:
         condition: service_completed_successfully
       cdc-init:
         condition: service_completed_successfully
-      dask-scheduler:
-        condition: service_started
-      dask-worker:
+      ray-head:
         condition: service_started
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:
-        - ../../:/home/superduper/superduperdb # mount the project path
+        - ../../:/home/superduper/superduperdb # project path
+        - /tmp/artifacts:/artifacts:z # artifacts
+    env_file: users.env
     command:
       - /bin/sh
       - -c

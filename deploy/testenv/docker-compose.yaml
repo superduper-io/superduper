@@ -102,6 +102,7 @@ services:
   #  ------------------------------
   ray-head:
      image: superduperdb/sandbox
+     hostname: ray-head
      ports:
        - "10001:10001" # Peer communication
        - "8265:8265"
@@ -111,7 +112,7 @@ services:
        - /bin/sh
        - -c
        - |
-          ray start --head --dashboard-host=0.0.0.0 --block
+          ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
      deploy:
        replicas: 1
 
@@ -120,7 +121,6 @@ services:
     depends_on:
       - ray-head
     volumes:
-        - ../../:/home/superduper/superduperdb # project path
         - /tmp/artifacts:/artifacts:z # artifacts
     command:
        - /bin/sh
@@ -145,7 +145,6 @@ services:
       - "8000:8000"
     env_file: users.env
     volumes:
-        - ../../:/home/superduper/superduperdb # project path
         - /tmp/artifacts:/artifacts:z # artifacts
     command:
       - /bin/sh
@@ -180,7 +179,6 @@ services:
       - "8001:8001"
     env_file: users.env
     volumes:
-        - ../../:/home/superduper/superduperdb # project path
         - /tmp/artifacts:/artifacts:z # artifacts
     command:
       - /bin/sh
@@ -218,11 +216,10 @@ services:
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:
-        - ../../:/home/superduper/superduperdb # project path
         - /tmp/artifacts:/artifacts:z # artifacts
     env_file: users.env
     command:
       - /bin/sh
       - -c
       - |
-        jupyter lab --port=8888 --no-browser --ip=0.0.0.0
+        jupyter lab --port=8888 --no-browser --ip=0.0.0.0 --NotebookApp.token=''

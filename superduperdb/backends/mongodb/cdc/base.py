@@ -17,6 +17,7 @@ class CachedTokens:
 
     def __init__(self):
         import pathlib
+
         pathlib.Path(".superduperdb").mkdir(parents=True, exist_ok=True)
 
         # BROKEN: self._current_tokens is never read from

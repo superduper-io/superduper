@@ -1,6 +1,6 @@
 PYTEST_ARGUMENTS ?=
 DIRECTORIES = superduperdb test 
-SUPERDUPERDB_DATA_DIR ?= .test_data
+SUPERDUPERDB_DATA_DIR ?= .superduperdb_data_dir
 
 ##@ General
 

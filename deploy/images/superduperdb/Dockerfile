@@ -73,9 +73,20 @@ RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install -
 COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
 COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
-# Prepare Mountpoints
+
+# Volumes
 # ---------------
 VOLUME /artifacts
+
+# Runtime Configuration
+# ---------------
+
+# Don't write .pyc files on the import of source modules.
+ENV PYTHONDONTWRITEBYTECODE 1
+# Set python cache directory
+ENV PYTHONPYCACHEPREFIX "$HOME/.cache/cpython/"
+
+
 
 # ---------------
 # Build Sandbox

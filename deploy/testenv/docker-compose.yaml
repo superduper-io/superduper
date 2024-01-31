@@ -112,7 +112,7 @@ services:
        - /bin/sh
        - -c
        - |
-          ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
+         PYTHONPATH=./:. ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
      deploy:
        replicas: 1
 
@@ -126,7 +126,7 @@ services:
        - /bin/sh
        - -c
        - |
-          ray start --address=ray-head:6379  --block
+         PYTHONPATH=./:. ray start --address=ray-head:6379  --block
     deploy:
       mode: replicated
       replicas: 2
@@ -145,7 +145,7 @@ services:
       - "8000:8000"
     env_file: users.env
     volumes:
-        - /tmp/artifacts:/artifacts:z # artifacts
+        - /tmp/artifacts:/tmp/artifacts:z # artifacts
     command:
       - /bin/sh
       - -c
@@ -179,7 +179,7 @@ services:
       - "8001:8001"
     env_file: users.env
     volumes:
-        - /tmp/artifacts:/artifacts:z # artifacts
+        - /tmp/artifacts:/tmp/artifacts:z # artifacts
     command:
       - /bin/sh
       - -c
@@ -216,7 +216,7 @@ services:
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:
-        - /tmp/artifacts:/artifacts:z # artifacts
+        - /tmp/artifacts:/tmp/artifacts:z # artifacts
     env_file: users.env
     command:
       - /bin/sh

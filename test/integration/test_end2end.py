@@ -25,7 +25,7 @@ from superduperdb.ext.pillow.encoder import pil_image
 # start cdc service
 # add new data to collection
 # collection should have one image, one string, one float, one int data
-# Make the entire service as distributed on dask
+# Make the entire service as distributed on ray
 
 
 class Model1:
@@ -96,18 +96,19 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 
 
 @pytest.fixture
-def distributed_db(monkeypatch, test_db, dask_client):
+def distributed_db(monkeypatch, test_db, ray_client):
     from superduperdb import CFG
 
     existing_databackend = CFG.data_backend
     CFG.force_set(
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
+    CFG.force_set('artifact_store', 'filesystem:///tmp/artifacts')
     cdc = 'http://localhost:8001'
     vector_search = 'in_memory://localhost:8000'
     monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
-    test_db.set_compute(dask_client)
+    test_db.set_compute(ray_client)
 
     def update_syspath():
         import sys

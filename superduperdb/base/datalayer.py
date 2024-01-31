@@ -142,15 +142,13 @@ class Datalayer:
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        self.backfill_vector_search(vi, vector_comparison)
+        if backfill or not s.CFG.cluster.is_remote_vector_search:
+            self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
         if s.CFG.self_hosted_vector_search:
-            return
-
-        if s.CFG.cluster.is_remote_vector_search:
             return
 
         logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")

@@ -1,6 +1,5 @@
 import os
 import random
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -137,14 +136,15 @@ def ray_client():
     # Change the default value
     from superduperdb.backends.ray.compute import RayComputeBackend
 
-    working_dir = Path(__file__).parents[1]
     address = os.environ.get('SUPERDUPER_RAY_URI', 'ray://127.0.0.1:10001')
+    import shutil
+    import tempfile
 
-    client = RayComputeBackend(
-        address=address,
-        runtime_env={"working_dir": working_dir, 'excludes': ['unittest']},
-    )
-
-    yield client
-
-    client.disconnect()
+    with tempfile.TemporaryDirectory() as working_dir:
+        shutil.copytree('./test', os.path.join(working_dir, 'test'))
+        client = RayComputeBackend(
+            address=address,
+            runtime_env={"working_dir": working_dir, "excludes": ["unittest"]},
+        )
+        yield client
+        client.disconnect()

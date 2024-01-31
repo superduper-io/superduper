@@ -106,7 +106,8 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     data_backend = os.environ.get('SUPERDUPER_MONGO_URI', data_backend)
     db_name = data_backend.split('/')[-1]
 
-    monkeypatch.setattr(CFG, 'data_backend', data_backend)
+    artifact_store = 'filesystem:///tmp/artifacts'
+    monkeypatch.setattr(CFG, 'artifact_store', artifact_store)
 
     db = build_datalayer(CFG)
 

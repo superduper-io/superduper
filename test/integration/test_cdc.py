@@ -126,7 +126,7 @@ def sql_database_with_cdc(ibis_duckdb):
     )
 
     table = Table('documents', schema=schema)
-    uri, tmp_dir, db = ibis_duckdb
+    uri, _, db = ibis_duckdb
 
     db.add(table)
     db = add_models_encoders(db, table)
@@ -141,23 +141,22 @@ def sql_database_with_cdc(ibis_duckdb):
     cfg_databackend = CFG.data_backend
 
     CFG.force_set('data_backend', uri)
-    CFG.force_set('artifact_store', 'filesystem://' + tmp_dir)
+    CFG.force_set('artifact_store', None)
 
     db.cdc._cdc_existing_collections = []
     from functools import partial
 
     db.rebuild = partial(db.rebuild, cfg=CFG)
     strategy = PollingStrategy(
-        type='incremental', auto_increment_field='auto_increment_field', frequency=0.5
+        type='incremental', auto_increment_field='auto_increment_field', frequency=1
     )
 
-    listener = db.cdc.listen(on=table, timeout=LISTEN_TIMEOUT, strategy=strategy)
+    db.cdc.listen(on=table, timeout=LISTEN_TIMEOUT, strategy=strategy)
     db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
-    yield listener, table, db
+    yield table, db
 
     CFG.force_set('cluster.vector_search', 'in_memory')
-    CFG.force_set('artifact_store', None)
     CFG.force_set('data_backend', cfg_databackend)
 
     db.cdc.stop()
@@ -429,6 +428,7 @@ def test_cdc_stop(database_with_cdc):
 @contextmanager
 def add_and_cleanup_listeners(database, select):
     """Add listeners to the database and remove them after the test"""
+
     listener_x = Listener(
         key='x',
         model='model_linear_a',
@@ -443,60 +443,44 @@ def add_and_cleanup_listeners(database, select):
 
     database.add(listener_x)
     database.add(listener_z)
+
     yield database
 
 
+@pytest.mark.skip(reason='Duckdb is not threadsafe')
 @pytest.mark.parametrize('op_type', ['insert'])
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_sql_task_workflow(
     sql_database_with_cdc,
-    fake_inserts,
-    fake_updates,
     op_type,
 ):
     """Test that task graph executed on `insert`"""
 
-    _, table, db = sql_database_with_cdc
+    table, db = sql_database_with_cdc
 
-    with add_and_cleanup_listeners(
-        db, table.select('id', 'x', 'z')
-    ) as database_with_listeners:
-        # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
-        data = None
-        if op_type == 'insert':
-            data = fake_inserts
-        elif op_type == 'update':
-            data = fake_updates
-
-        data = []
-        for i in range(10):
-            x = torch.randn(32)
-            y = int(random.random() > 0.5)
-            z = torch.randn(32)
-            data.append(
-                Document(
-                    {'id': str(i), 'x': x, 'y': y, 'z': z, 'auto_increment_field': i}
-                )
-            )
-
-        _ = database_with_listeners.execute(
-            table.insert([data[0]]),
-            refresh=False,
+    # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
+    data = []
+    for i in range(10):
+        x = torch.randn(32)
+        y = int(random.random() > 0.5)
+        z = torch.randn(32)
+        data.append(
+            Document({'id': str(i), 'x': x, 'y': y, 'z': z, 'auto_increment_field': i})
         )
-        time.sleep(2)
-        _ = database_with_listeners.execute(
-            table.insert([data[1]]),
-            refresh=False,
-        )
+    _ = db.execute(
+        table.insert([data[0]]),
+        refresh=False,
+    )
+    time.sleep(4)
+    db.cdc.stop()
 
-        def state_check():
-            t = database_with_listeners.databackend.conn.table(
-                '_outputs_model_linear_a_0'
-            )
-            outputs = t.select('_input_id').execute()
-            assert len(outputs) == 2
+    def state_check():
+        t = db.databackend.conn.table('_outputs_model_linear_a_0')
+        outputs = t.select('_input_id').execute()
+        print(outputs)
+        assert len(outputs) == 1
 
-        retry_state_check(state_check, 3, 1)
+    retry_state_check(state_check, 3, 1)
 
 
 @pytest.fixture

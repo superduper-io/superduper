@@ -31,6 +31,13 @@ def add_and_cleanup_listener(database, collection_name):
 
 @pytest.fixture
 def distributed_db(database_with_default_encoders_and_model, ray_client):
+    from superduperdb import CFG
+
+    CFG.force_set(
+        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    )
+    CFG.force_set('artifact_store', 'filesystem:///tmp/artifacts')
+
     local_compute = database_with_default_encoders_and_model.get_compute()
     database_with_default_encoders_and_model.set_compute(ray_client)
     yield database_with_default_encoders_and_model

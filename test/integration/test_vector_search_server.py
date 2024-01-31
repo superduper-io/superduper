@@ -10,6 +10,7 @@ def client(monkeypatch, database_with_default_encoders_and_model):
 
     vector_search = 'in_memory://localhost:8000'
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
+    monkeypatch.setattr(CFG, 'artifact_store', 'filesystem:///tmp/artifacts')
 
     from superduperdb.vector_search.server.app import app
 

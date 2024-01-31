@@ -307,6 +307,7 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
         raise ValueError(f'Unsupported param type: {type(param)}')
 
     monkeypatch.setattr(CFG, 'data_backend', setup_config['data_backend'])
+    monkeypatch.setattr(CFG, 'artifact_store', 'filesystem:///tmp/artifacts')
 
     db = create_db(CFG, **setup_config)
 

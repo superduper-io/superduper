@@ -60,7 +60,9 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         indexing_key = vi.indexing_listener.key
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
-        assert isinstance(vi.indexing_listener.model, Model) or isinstance(vi.indexing_listener.model, APIModel)
+        assert isinstance(vi.indexing_listener.model, Model) or isinstance(
+            vi.indexing_listener.model, APIModel
+        )
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier
         indexing_version = vi.indexing_listener.model.version

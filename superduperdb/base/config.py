@@ -114,7 +114,7 @@ class Cluster(BaseConfigJSONable):
         return search_type
 
     @property
-    def is_remote_vector_search(self): 
+    def is_remote_vector_search(self):
         split = self.vector_search.split('://')
         dialect = split[0]
         return dialect != 'mongodb+srv' and len(split) > 1
@@ -201,6 +201,7 @@ class Config(BaseConfigJSONable):
     def __post_init__(self):
         if self.dot_env:
             import dotenv
+
             dotenv.load_dotenv(self.dot_env)
         self._lock = True
 

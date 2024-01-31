@@ -18,6 +18,7 @@ class CachedTokens:
     def __init__(self):
         # BROKEN: self._current_tokens is never read from
         self._current_tokens = []
+        os.makedirs('.superduperdb', exist_ok=True)
 
     def append(self, token: TokenType) -> None:
         with open(CachedTokens.token_path, 'a') as fp:

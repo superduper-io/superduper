@@ -121,7 +121,7 @@ services:
     depends_on:
       - ray-head
     volumes:
-        - /tmp/artifacts:/artifacts:z # artifacts
+        - /tmp/artifacts:/tmp/artifacts:z # artifacts
     command:
        - /bin/sh
        - -c

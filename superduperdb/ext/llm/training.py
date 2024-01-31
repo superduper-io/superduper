@@ -70,6 +70,10 @@ class LLMCallback(TrainerCallback):
             self.llm = self.db.load("model", self.identifier)
 
 
+DEFAULT_MAX_LENGTH = 1024
+DEFAULT_LOG_TO_DB = False
+
+
 @dc.dataclass
 class LLMTrainingArguments(TrainingArguments):
     """
@@ -94,7 +98,15 @@ class LLMTrainingArguments(TrainingArguments):
 
         max_length (`int`, *optional*, defaults to 512):
             Maximum source sequence length during training.
-
+        log_to_db (`bool`, *optional*, defaults to True):
+            Log training to db.
+<<<<<<< HEAD
+            If True, will log checkpoint to superduperdb,
+=======
+            If True, will log checkpoint to superduperdb, 
+>>>>>>> 252d09e7 (Support finetuning on remote ray)
+                but need ray cluster can access to db.
+            If can't access to db, please set it to False.
     """
 
     use_lora: bool = True
@@ -102,10 +114,10 @@ class LLMTrainingArguments(TrainingArguments):
     lora_alpha: int = 16
     lora_dropout: float = 0.05
     lora_target_modules: t.Optional[t.List[str]] = None
-    lora_bias: str = "none"
+    lora_bias: t.Literal["none", "all", "lora_only"] = "none"
     bits: t.Optional[int] = None
-    max_length: t.Optional[int] = 512
-    on_ray: bool = False
+    max_length: int = DEFAULT_MAX_LENGTH
+    log_to_db: bool = DEFAULT_LOG_TO_DB
 
 
 def tokenize(tokenizer, example, X, y):
@@ -123,7 +135,7 @@ def tokenize(tokenizer, example, X, y):
 
 
 def train(
-    training_args: LLMTrainingArguments,
+    training_config,
     train_dataset,
     eval_datasets,
     model_kwargs,
@@ -132,14 +144,17 @@ def train(
     y=None,
     db=None,
     llm=None,
+    on_ray=False,
+    ray_address=None,
+    ray_configs=None,
     **kwargs,
 ):
     if X:
         tokenizer = AutoTokenizer.from_pretrained(
             **tokenizer_kwargs,
         )
-        tokenizer.model_max_length = (
-            training_args.max_length or tokenizer.model_max_length
+        tokenizer.model_max_length = training_config.get(
+            "max_length", DEFAULT_MAX_LENGTH
         )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
@@ -168,13 +183,16 @@ def train(
                 ],
             )
 
-    if not training_args.on_ray:
-        if db is not None and llm is not None:
+    on_ray = on_ray or bool(ray_address) or bool(ray_configs)
+    log_to_db = training_config.get("log_to_db", DEFAULT_LOG_TO_DB)
+
+    if not on_ray:
+        if db is not None and llm is not None and log_to_db:
             callbacks = [LLMCallback(db=db, llm=llm)]
         else:
             callbacks = None
         return train_func(
-            training_args,
+            training_config,
             train_dataset,
             eval_datasets,
             model_kwargs,
@@ -184,7 +202,7 @@ def train(
         )
 
     else:
-        if db is not None and llm is not None:
+        if db is not None and llm is not None and log_to_db:
             from superduperdb import CFG
 
             callbacks = [LLMCallback(cfg=CFG, identifier=llm.identifier)]
@@ -192,18 +210,20 @@ def train(
             callbacks = None
         # move the dataset logic here
         return ray_train(
-            training_args,
+            training_config,
             train_dataset,
             eval_datasets,
             model_kwargs=model_kwargs,
             tokenizer_kwargs=tokenizer_kwargs,
             callbacks=callbacks,
+            ray_address=ray_address,
+            ray_configs=ray_configs,
             **kwargs,
         )
 
 
 def train_func(
-    training_args: LLMTrainingArguments,
+    training_config,
     train_dataset,
     eval_datasets,
     model_kwargs,
@@ -212,6 +232,7 @@ def train_func(
     callbacks=None,
     **kwargs,
 ):
+    training_args = LLMTrainingArguments(**training_config)
     model_kwargs = deepcopy(model_kwargs)
     tokenizer_kwargs = deepcopy(tokenizer_kwargs)
     # get device map
@@ -273,11 +294,15 @@ def train_func(
 
 @wraps(train_func)
 def ray_train(
-    training_args: LLMTrainingArguments, train_dataset, eval_datasets, **kwargs
+    training_config,
+    train_dataset,
+    eval_datasets,
+    ray_address: t.Optional[str] = None,
+    ray_configs: t.Optional[t.Dict[str, t.Any]] = None,
+    **kwargs,
 ):
     import ray
     from ray import train
-    from ray.train import RunConfig, ScalingConfig
     from ray.train.huggingface.transformers import (
         RayTrainReportCallback,
         prepare_trainer,
@@ -300,28 +325,36 @@ def ray_train(
         eval_ds_iterable = ray_eval_ds.iter_torch_batches(batch_size=1)
 
         # Create a new training_args object
-        training_args = LLMTrainingArguments(**train_loop_config)
         kwargs["trainer_prepare_func"] = trainer_prepare_func
-        return train_func(training_args, train_ds_iterable, eval_ds_iterable, **kwargs)
+        return train_func(
+            train_loop_config, train_ds_iterable, eval_ds_iterable, **kwargs
+        )
+
+    if ray_address is not None:
+        ray.init(address=ray_address, ignore_reinit_error=True)
 
     ray_datasets = {
         "train": ray.data.from_huggingface(train_dataset),
         "eval": ray.data.from_huggingface(eval_datasets),
     }
 
+    ray_configs = ray_configs or {}
+    if "scaling_config" not in ray_configs:
+        logging.warn("No scaling_config provided, using default")
+        ray_configs["scaling_config"] = {
+            "num_workers": 1,
+            "use_gpu": True,
+        }
+        logging.info(f"scaling_config: {ray_configs['scaling_config']}")
+
+    if "run_config" not in ray_configs:
+        logging.warn("No run_config provided")
+
     trainer = TorchTrainer(
         train_loop_per_worker=ray_train_func,
-        # TODO: move this to a config
-        scaling_config=ScalingConfig(
-            num_workers=1,
-            # use_gpu=False,
-            # resources_per_worker={"GPU": 1},
-        ),
-        train_loop_config=training_args.to_dict(),
+        train_loop_config=training_config,
         datasets=ray_datasets,
-        run_config=RunConfig(
-            storage_path=os.path.abspath(training_args.output_dir),
-        ),
+        **ray_configs,
     )
 
     results = trainer.fit()

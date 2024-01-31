@@ -155,8 +155,8 @@ class LLM(Model):
     ):
         assert configuration is not None, "configuration must be provided"
 
-        training_args = training.LLMTrainingArguments(**(configuration.kwargs or {}))
-        training_args.bits = training_args.bits or self.bits
+        training_config = configuration.kwargs or {}
+        training_config['bits'] = training_config.get('bits', self.bits)
 
         train_dataset, eval_datasets = self.get_datasets(
             X,
@@ -176,7 +176,7 @@ class LLM(Model):
         tokenizer_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
 
         training.train(
-            training_args=training_args,
+            training_config=training_config,
             train_dataset=train_dataset,
             eval_datasets=eval_datasets,
             model_kwargs=model_kwargs,
@@ -186,6 +186,7 @@ class LLM(Model):
             y=y,
             db=db,
             llm=self,
+            **kwargs,
         )
 
     def get_compute_metrics(self, metrics):
@@ -258,6 +259,7 @@ class LLM(Model):
         return texts
 
     def add_adapter(self, model_id, adapter_name: str):
+        # TODO: Support lora checkpoint from s3
         try:
             from peft import PeftModel
         except Exception as e:

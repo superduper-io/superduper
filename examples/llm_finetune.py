@@ -29,11 +29,21 @@ def prepare_datas(db, size):
     db.execute(Collection(collection_name).insert_many(list(map(Document, datas))))
 
 
+deepspped = {
+    "train_batch_size": "auto",
+    "train_micro_batch_size_per_gpu": "auto",
+    "gradient_accumulation_steps": "auto",
+    "zero_optimization": {
+        "stage": 2,
+    }
+}
+
+
 def train(db, model_identifier, model_name, output_dir):
     # training
     llm = LLM(
         identifier=model_identifier,
-        bits=4 if torch.cuda.is_available() else None,
+        bits=4,
         model_name_or_path=model_name,
     )
     training_configuration = LLMTrainingConfiguration(
@@ -62,8 +72,26 @@ def train(db, model_identifier, model_name, output_dir):
         logging_steps=5,
         gradient_checkpointing=True,
         report_to=[],
-        on_ray=False,
+        deepspeed=deepspped,
+        use_lora=True,
     )
+
+    from ray.train import RunConfig, ScalingConfig
+
+    scaling_config = ScalingConfig(
+        num_workers=1,
+        use_gpu=True,
+        resources_per_worker={"GPU": 1},
+    )
+
+    run_config = RunConfig(
+        storage_path="s3://llm-test/llm-finetune",
+    )
+
+    ray_configs = {
+        "scaling_config": scaling_config,
+        "run_config": run_config,
+    }
 
     llm.fit(
         X="text",
@@ -71,6 +99,9 @@ def train(db, model_identifier, model_name, output_dir):
         select=Collection(collection_name).find(),
         configuration=training_configuration,
         prefetch_size=1000,
+        on_ray=True,
+        ray_address="ray://ec2-54-174-17-167.compute-1.amazonaws.com:10001",
+        ray_configs=ray_configs,
     )
 
 
@@ -102,17 +133,17 @@ def inference(db, model_identifier, output_dir):
     print("-" * 20, "\n")
 
     print("Base model:\n")
-    print(db.predict(llm_base.identifier, prompt, max_new_tokens=100))
+    print(db.predict(llm_base.identifier, prompt, max_new_tokens=100)[0].content)
 
     for checkpoint in checkpoints:
         print("-" * 20, "\n")
         print(f"Finetuned model-{checkpoint}:\n")
-        print(db.predict(checkpoint, prompt, max_new_tokens=100))
+        print(db.predict(checkpoint, prompt, max_new_tokens=100)[0].content)
 
 
 if __name__ == "__main__":
     db = superduper("mongomock://localhost:27017/test-llm")
-    model = "facebook/opt-125m"
+    model = "mistralai/Mistral-7B-Instruct-v0.2"
     output_dir = "outputs/llm-finetune"
 
     db.drop(force=True)

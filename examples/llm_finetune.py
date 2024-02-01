@@ -53,8 +53,8 @@ def train(db, model_identifier, model_name, output_dir):
         lora_r=8,
         lora_alpha=16,
         lora_dropout=0.05,
-        # num_train_epochs=1,
-        max_steps=10,
+        num_train_epochs=3,
+        # max_steps=10,
         fp16=torch.cuda.is_available(),  # mps don't support fp16
         per_device_train_batch_size=2,
         per_device_eval_batch_size=1,
@@ -84,7 +84,7 @@ def train(db, model_identifier, model_name, output_dir):
     )
 
     run_config = RunConfig(
-        storage_path="s3://llm-test-jalon/llm-finetune",
+        storage_path="s3://llm-test/llm-finetune",
         name="llm-finetune-test",
     )
 

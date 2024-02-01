@@ -156,7 +156,7 @@ class LLM(Model):
         assert configuration is not None, "configuration must be provided"
 
         training_config = configuration.kwargs or {}
-        training_config['bits'] = training_config.get('bits', self.bits)
+        training_config["bits"] = training_config.get("bits", self.bits)
 
         train_dataset, eval_datasets = self.get_datasets(
             X,
@@ -175,7 +175,7 @@ class LLM(Model):
         model_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
         tokenizer_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
 
-        training.train(
+        results = training.train(
             training_config=training_config,
             train_dataset=train_dataset,
             eval_datasets=eval_datasets,
@@ -188,6 +188,7 @@ class LLM(Model):
             llm=self,
             **kwargs,
         )
+        return results
 
     def get_compute_metrics(self, metrics):
         if not metrics:

@@ -17,6 +17,8 @@ If you're new to open-source development, we recommend going through the GitHub 
 
 We follow something called a "fork and pull request" workflow for collaborating on our project. See [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for a great overview on what some of these mysterious terms mean! 
 
+**Before getting started , make sure you have a `Python 3.11` version**
+
 Once you've 'forked' and 'cloned' the code to your local machine, please follow these steps:
 
 ```shell

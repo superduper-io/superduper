@@ -72,10 +72,6 @@ class LLMCallback(TrainerCallback):
             self.llm = self.db.load("model", self.identifier)
 
 
-DEFAULT_MAX_LENGTH = 1024
-DEFAULT_LOG_TO_DB = False
-
-
 @dc.dataclass
 class LLMTrainingArguments(TrainingArguments):
     """
@@ -114,8 +110,8 @@ class LLMTrainingArguments(TrainingArguments):
     lora_target_modules: t.Optional[t.List[str]] = None
     lora_bias: t.Literal["none", "all", "lora_only"] = "none"
     bits: t.Optional[int] = None
-    max_length: int = DEFAULT_MAX_LENGTH
-    log_to_db: bool = DEFAULT_LOG_TO_DB
+    max_length: int = 1024
+    log_to_db: bool = False
 
 
 def tokenize(tokenizer, example, X, y):
@@ -163,12 +159,23 @@ def train(
     :param ray_address: ray address, if not None, will run on ray cluster
     :param ray_configs: ray configs, must provide if using ray
     """
+
+    try:
+        training_args = LLMTrainingArguments(**training_config)
+    except ImportError as e:
+        # Do not raise error if deepspeed is not installed when using ray
+        if "deepspeed" in str(e) and on_ray:
+            deepspeed = training_config.pop("deepspeed")
+            training_args = LLMTrainingArguments(**training_config)
+            training_args.deepspeed = deepspeed
+        else:
+            raise e
     if X:
         tokenizer = AutoTokenizer.from_pretrained(
             **tokenizer_kwargs,
         )
         tokenizer.model_max_length = training_config.get(
-            "max_length", DEFAULT_MAX_LENGTH
+            "max_length", training_args.max_length
         )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
@@ -198,7 +205,7 @@ def train(
             )
 
     on_ray = on_ray or bool(ray_address) or bool(ray_configs)
-    log_to_db = training_config.get("log_to_db", DEFAULT_LOG_TO_DB)
+    log_to_db = training_args.log_to_db
 
     if not on_ray:
         # create local LLMCallback
@@ -207,7 +214,7 @@ def train(
         else:
             callbacks = None
         return train_func(
-            training_config,
+            training_args,
             train_dataset,
             eval_datasets,
             model_kwargs,
@@ -226,7 +233,7 @@ def train(
             callbacks = None
         # TODO: Record the result to db, checkpoint, metrics, etc.
         return ray_train(
-            training_config,
+            training_args,
             train_dataset,
             eval_datasets,
             model_kwargs=model_kwargs,
@@ -239,16 +246,15 @@ def train(
 
 
 def train_func(
-    training_config,
-    train_dataset,
-    eval_datasets,
-    model_kwargs,
-    tokenizer_kwargs,
-    trainer_prepare_func=None,
+    training_args: LLMTrainingArguments,
+    train_dataset: "Dataset",
+    eval_datasets: t.Union["Dataset", t.Dict[str, "Dataset"]],
+    model_kwargs: dict,
+    tokenizer_kwargs: dict,
+    trainer_prepare_func: t.Optional[t.Callable] = None,
     callbacks=None,
     **kwargs,
 ):
-    training_args = LLMTrainingArguments(**training_config)
     model_kwargs = deepcopy(model_kwargs)
     tokenizer_kwargs = deepcopy(tokenizer_kwargs)
     # Get device map
@@ -313,7 +319,7 @@ def train_func(
 
 @wraps(train_func)
 def ray_train(
-    training_config,
+    training_args: LLMTrainingArguments,
     train_dataset,
     eval_datasets,
     ray_address: t.Optional[str] = None,
@@ -322,6 +328,7 @@ def ray_train(
 ):
     import ray
     from ray import train
+    from ray.train import ScalingConfig
     from ray.train.huggingface.transformers import (
         RayTrainReportCallback,
         prepare_trainer,
@@ -346,8 +353,8 @@ def ray_train(
         # TODO: Rebuild the datasets.Dataset to train_func
         # So that we can improve compatibility with llm training framework
         # For example: Dataset.from_generator(ray_train_ds.iter_rows)
-        train_batch_size = train_loop_config.get("train_batch_size", 1)
-        eval_batch_size = train_loop_config.get("eval_batch_size", 1)
+        train_batch_size = train_loop_config["per_device_train_batch_size"]
+        eval_batch_size = train_loop_config["per_device_eval_batch_size"]
         train_ds_iterable = ray_train_ds.iter_torch_batches(batch_size=train_batch_size)
         eval_ds_iterable = ray_eval_ds.iter_torch_batches(batch_size=eval_batch_size)
 
@@ -362,15 +369,16 @@ def ray_train(
             logging.warn(
                 "Using Ray + LoRA + Gradient Checkpointing, set use_reentrant to False"
             )
-            gradient_checkpointing_kwargs = train_loop_config.get(
-                "gradient_checkpointing_kwargs", {}
+            gradient_checkpointing_kwargs = (
+                train_loop_config.get("gradient_checkpointing_kwargs", {}) or {}
             )
             gradient_checkpointing_kwargs["use_reentrant"] = False
             train_loop_config[
                 "gradient_checkpointing_kwargs"
             ] = gradient_checkpointing_kwargs
+        train_loop_args = LLMTrainingArguments(**train_loop_config)
         return train_func(
-            train_loop_config, train_ds_iterable, eval_ds_iterable, **kwargs
+            train_loop_args, train_ds_iterable, eval_ds_iterable, **kwargs
         )
 
     if ray_address is not None:
@@ -388,11 +396,31 @@ def ray_train(
     if "run_config" not in ray_configs:
         logging.warn("No run_config provided")
 
-    # TODO: Auto detect the max_steps from training_config if not provided
+    # Auto detect the max_steps from training_config if not provided
     # Can't use num_train_epochs, because it's not compatible with ray
+    scaling_config: ScalingConfig = ray_configs["scaling_config"]
+    if training_args.max_steps == -1 and isinstance(scaling_config.num_workers, int):
+        logging.info("Auto detect max_steps from training_config")
+
+        num_workers = scaling_config.num_workers
+        per_device_train_batch_size = training_args.per_device_train_batch_size
+        gradient_accumulation_steps = training_args.gradient_accumulation_steps
+
+        step_size = (
+            num_workers * per_device_train_batch_size * gradient_accumulation_steps
+        )
+        dataset_size = len(train_dataset)
+        num_train_epochs = training_args.num_train_epochs
+        max_steps = int(num_train_epochs * dataset_size / step_size)
+
+        training_args.max_steps = max_steps
+        logging.info(f"num_workers: {num_workers}")
+
+        logging.info(f"Set max_steps to {max_steps}")
+
     trainer = TorchTrainer(
         train_loop_per_worker=ray_train_func,
-        train_loop_config=training_config,
+        train_loop_config=training_args.to_dict(),
         datasets=ray_datasets,
         **ray_configs,
     )

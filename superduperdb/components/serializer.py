@@ -1,6 +1,9 @@
 import dataclasses as dc
 import io
+import os
 import pickle
+import shutil
+import tempfile
 import typing as t
 
 import dill
@@ -76,6 +79,39 @@ def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
     return dill.loads(b)
 
 
+def zip_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
+    assert isinstance(object, str), "object must be a string"
+    assert os.path.isdir(object), "object must be a directory"
+
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
+        temp_zip_path = temp_file.name
+        shutil.make_archive(temp_zip_path.replace(".zip", ""), "zip", object)
+
+    with open(temp_zip_path, "rb") as file:
+        dir_bytes = file.read()
+
+    os.remove(temp_zip_path)
+    return dir_bytes
+
+
+def zip_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
+    import zipfile
+
+    temp_dir = tempfile.mkdtemp()
+
+    temp_zip_path = os.path.join(temp_dir, "temp.zip")
+
+    with open(temp_zip_path, "wb") as f_zip:
+        f_zip.write(b)
+
+    with zipfile.ZipFile(temp_zip_path, "r") as zip_ref:
+        zip_ref.extractall(temp_dir)
+
+    os.remove(temp_zip_path)
+
+    return temp_dir
+
+
 def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
     import torch
 
@@ -120,6 +156,7 @@ serializers.add('dill', Serializer('dill', encoder=dill_encode, decoder=dill_dec
 serializers.add(
     'torch', Serializer('torch', encoder=torch_encode, decoder=torch_decode)
 )
+serializers.add('zip', Serializer('zip', encoder=zip_encode, decoder=zip_decode))
 
 
 def encode_torch_state_dict(module, info):

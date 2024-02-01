@@ -1,13 +1,18 @@
+import dataclasses as dc
+import typing as t
+from collections import OrderedDict
+from functools import cached_property
 from inspect import signature
 
 import networkx as nx
 
+from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
 from superduperdb.components.model import Model
+from superduperdb.ext.torch.model import TorchModel
 
-
-class Key(str):
-    ...
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 class KeyStore:
@@ -17,45 +22,67 @@ class KeyStore:
         for param in params:
             setattr(self, param, f'{model}.{param}')
 
+    def __len__(self):
+        return len(self._params)
+
+    @property
+    def params(self):
+        return self._params
+
+
+class RootModel:
+    def __init__(self):
+        self.input = KeyStore('root', [])
+
+    def predict(self, x):
+        return x
+
 
 class GraphModel:
-    def __init__(self, model: 'Model'):
+    def __init__(self, model: t.Union['Model', 'TorchModel']):
         self.identifier = model.identifier
         self.output = f'{model.identifier}.output'
-        self.forward_method = model.forward_method
+
+        predict_method = model.predict_method
+        if isinstance(model, TorchModel):
+            predict_method = model.forward_method
+
+        assert isinstance(model.object, Artifact)
         self.object = model.object.artifact
 
-        params = self.set_input(model.object.artifact)
+        if predict_method:
+            self.predict_method = getattr(self.object, predict_method)
+        else:
+            self.predict_method = self.object
+
+        params = self.set_input()
         self.input = KeyStore(model.identifier, params)
 
-    def set_input(self, object):
-        predict = getattr(object, self.forward_method)
-
-        sig = signature(predict)
+    def set_input(self):
+        sig = signature(self.predict_method)
         return list(sig.parameters.keys())
+
+    def predict(self, *args, **kwargs):
+        return self.predict_method(*args, **kwargs)
 
 
 class Node:
-    @staticmethod
-    def get_key(name):
-        key = '_base'
-        if name == '_Graph_input':
-            key = '_base'
-        else:
-            keys = name.split('.')
-            if len(keys) == 1:
-                key = '_base'
-            else:
-                key = keys[-1]
-        return key
-
     def __init__(self, name, db=None):
-        self.name = name.split('.')[0]
-        key = name.split('.')[-1]
-        self.key = key if key else '_base'
+        self.name = name
 
-        self.model = GraphModel(db.load(name))
+        if name == Graph._input:
+            self.model = RootModel()
+        else:
+            self.model = GraphModel(db.load('model', name))
         self._output = None
+
+    @cached_property
+    def params(self):
+        return self.model.input.params
+
+    @cached_property
+    def required_input(self):
+        return len(self.params)
 
     @property
     def output(self):
@@ -65,26 +92,39 @@ class Node:
     def output(self, output):
         self._output = output
 
+    def predict(self, *args, **kwargs):
+        self.output = self.model.predict(*args, **kwargs)
+        return self.output
 
+
+@dc.dataclass(kw_only=True)
 class Graph(Component):
     db: 'Datalayer'
+    _DEFAULT_ARG_WEIGHT: t.ClassVar[str] = '_base'
+    _input: t.ClassVar[str] = '_Graph_input'
 
     def __post_init__(self):
-        self.input = '_Graph_input'
         self.G = nx.DiGraph()
         self._key_store = {}
         self.nodes = {}
         self._node_output_cache = {}
 
-    def add_edge(self, u, v):
-        v_key = None
+    def connect(
+        self,
+        u: t.Union[str, Component],
+        v: t.Union[str, Model],
+        on: t.Optional[str] = None,
+    ):
+        assert isinstance(u, (Model, Graph, str))
+        assert isinstance(v, (Model, str))
 
         if isinstance(v, Model):
-            v_key = '_base'
-            v = f'{v.identifier}.{v_key}'
-
-        elif isinstance(u, Model):
+            v = v.identifier
+        if isinstance(u, Model):
             u = u.identifier
+
+        if isinstance(u, Graph):
+            u = self._input
 
         if u not in self.nodes:
             node = Node(u, self.db)
@@ -97,18 +137,19 @@ class Graph(Component):
             node = Node(v, self.db)
             self.nodes[node.name] = node
             self.G.add_node(node.name)
-
             v = node.name
-            v_key = v_key if v_key else node.key
 
-        self.G.add_edge(u, v, weight=v_key)
+        G_ = self.G.copy()
+        G_.add_edge(u, v, weight=on or self._DEFAULT_ARG_WEIGHT)
+
+        if not nx.is_directed_acyclic_graph(G_):
+            raise TypeError('The graph is not DAG with this edge')
+        self.G = G_
 
     def stash_node_output(self, node, output):
         self._node_output_cache[node.name] = output
 
     def group_nodes_by_degree(self, nodes):
-        from collections import OrderedDict
-
         grouped_dict = OrderedDict()
         for item in nodes:
             key = item[1]
@@ -120,7 +161,8 @@ class Graph(Component):
 
     def level_traversal(self, G, nodes, traversal_path=[]):
         if len(nodes) == 1:
-            return traversal_path.append(nodes[0])
+            traversal_path.append(nodes[0])
+            return traversal_path
         G = G.subgraph(nodes)
 
         # Traverse
@@ -152,15 +194,43 @@ class Graph(Component):
             return neighbors
 
         neighbors = find_level_neighbors(graph, nodes)
+
+        if not neighbors:
+            traversal_path += nodes
+            return traversal_path
+
         S = graph.subgraph(neighbors)
         traversal_path = self.level_traversal(S, neighbors, traversal_path)
 
         neighbors = find_level_neighbors(graph, neighbors)
         return self.traversal(graph, neighbors, traversal_path)
 
+    def validate(self, path):
+        for node in path:
+            nodes = list(self.G.predecessors(node))
+
+            arg_nodes = list(map(lambda x: self.nodes[x], nodes))
+            node = self.nodes[node]
+
+            if node.required_input != len(arg_nodes):
+                raise TypeError(
+                    f'Graph disconnected at Node: {node.name} '
+                    f'and is partially connected with {nodes}\n'
+                    f'Required connected node is {node.required_input} '
+                    f'but got only {len(nodes)}, '
+                    f'Node required params: {node.params}'
+                )
+
     def predict(self, x, one=True, select=None):
         # TODO: Implement select logic
-        path = self.traversal(self.G, [self.input], ['_Graph_input'])
+        if self._input not in self.G.nodes:
+            raise TypeError(
+                'Root graph node is not present'
+                ', make sure to add graph node'
+                'with atleast one other node'
+            )
+        path = self.traversal(self.G, [self._input], [self._input])
+        self.validate(path)
         output = None
 
         for graph_node in path:
@@ -180,17 +250,15 @@ class Graph(Component):
                 key = data['weight']
                 kwargs[key] = arg.output
             args = []
-            if '_base' in kwargs:
+            if self._DEFAULT_ARG_WEIGHT in kwargs:
                 args = list(kwargs.values())
                 kwargs = {}
-            model = getattr(node.model.object, node.model.forward_method)
-            output = model(*args, **kwargs)
-            node.output = output
+            output = node.predict(*args, **kwargs)
 
         return output
 
     def show(self):
-        path = self.traversal(self.G, [self.input], ['_Graph_input'])
+        path = self.traversal(self.G, [self._input], [self._input])
         path = ' --> '.join(path)
         print(path)
         return path

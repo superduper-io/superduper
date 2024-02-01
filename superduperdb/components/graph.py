@@ -90,6 +90,8 @@ class Node:
 
     @output.setter
     def output(self, output):
+        if self._output:
+            raise ValueError('Not allowed to set output of a graph node')
         self._output = output
 
     def predict(self, *args, **kwargs):
@@ -145,6 +147,7 @@ class Graph(Component):
         if not nx.is_directed_acyclic_graph(G_):
             raise TypeError('The graph is not DAG with this edge')
         self.G = G_
+        return self.nodes[v]
 
     def stash_node_output(self, node, output):
         self._node_output_cache[node.name] = output

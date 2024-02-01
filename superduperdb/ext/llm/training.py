@@ -100,11 +100,7 @@ class LLMTrainingArguments(TrainingArguments):
             Maximum source sequence length during training.
         log_to_db (`bool`, *optional*, defaults to True):
             Log training to db.
-<<<<<<< HEAD
             If True, will log checkpoint to superduperdb,
-=======
-            If True, will log checkpoint to superduperdb, 
->>>>>>> 252d09e7 (Support finetuning on remote ray)
                 but need ray cluster can access to db.
             If can't access to db, please set it to False.
     """
@@ -259,9 +255,11 @@ def train_func(
 
     model_kwargs["quantization_config"] = quantization_config
     model_kwargs["device_map"] = device_map
+    logging.info(f"model_kwargs: {model_kwargs}")
     model = AutoModelForCausalLM.from_pretrained(
         **model_kwargs,
     )
+    logging.info("tokenizer_kwargs: %s", tokenizer_kwargs)
     tokenizer = AutoTokenizer.from_pretrained(
         **tokenizer_kwargs,
     )
@@ -270,6 +268,7 @@ def train_func(
     tokenizer.model_max_length = training_args.max_length or tokenizer.model_max_length
 
     if training_args.use_lora:
+        logging.info("Preparing LoRA training")
         model = prepare_lora_training(model, training_args)
 
     trainer = Trainer(
@@ -288,8 +287,9 @@ def train_func(
     for callback in callbacks or []:
         trainer.add_callback(callback)
     trainer.model.config.use_cache = False
-    trainer.train()
+    results = trainer.train()
     trainer.save_state()
+    return results
 
 
 @wraps(train_func)
@@ -324,8 +324,24 @@ def ray_train(
         train_ds_iterable = ray_train_ds.iter_torch_batches(batch_size=1)
         eval_ds_iterable = ray_eval_ds.iter_torch_batches(batch_size=1)
 
-        # Create a new training_args object
         kwargs["trainer_prepare_func"] = trainer_prepare_func
+
+        # Note: Set use_reentrant to False when using ray+lora+gradient_checkpointing
+        # If not, will cause error "Varibable has been marked as ready twice"
+        # Seems to be some parameter compatibility issue between ray and peft
+        if train_loop_config.get(
+            'gradient_checkpointing', False
+        ) and train_loop_config.get('use_lora', False):
+            logging.warn(
+                "Using Ray + LoRA + Gradient Checkpointing, set use_reentrant to False"
+            )
+            gradient_checkpointing_kwargs = train_loop_config.get(
+                'gradient_checkpointing_kwargs', {}
+            )
+            gradient_checkpointing_kwargs['use_reentrant'] = False
+            train_loop_config[
+                'gradient_checkpointing_kwargs'
+            ] = gradient_checkpointing_kwargs
         return train_func(
             train_loop_config, train_ds_iterable, eval_ds_iterable, **kwargs
         )
@@ -340,12 +356,7 @@ def ray_train(
 
     ray_configs = ray_configs or {}
     if "scaling_config" not in ray_configs:
-        logging.warn("No scaling_config provided, using default")
-        ray_configs["scaling_config"] = {
-            "num_workers": 1,
-            "use_gpu": True,
-        }
-        logging.info(f"scaling_config: {ray_configs['scaling_config']}")
+        raise ValueError("Please provide scaling_config")
 
     if "run_config" not in ray_configs:
         logging.warn("No run_config provided")

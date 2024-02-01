@@ -57,8 +57,8 @@ def train(db, model_identifier, model_name, output_dir):
         max_steps=10,
         fp16=torch.cuda.is_available(),  # mps don't support fp16
         per_device_train_batch_size=2,
-        per_device_eval_batch_size=2,
-        gradient_accumulation_steps=4,
+        per_device_eval_batch_size=1,
+        gradient_accumulation_steps=2,
         evaluation_strategy="steps",
         eval_steps=1,
         save_strategy="steps",
@@ -72,7 +72,7 @@ def train(db, model_identifier, model_name, output_dir):
         logging_steps=5,
         gradient_checkpointing=True,
         report_to=[],
-        deepspeed=deepspped,
+        # deepspeed=deepspped,
         use_lora=True,
     )
 
@@ -81,11 +81,11 @@ def train(db, model_identifier, model_name, output_dir):
     scaling_config = ScalingConfig(
         num_workers=1,
         use_gpu=True,
-        resources_per_worker={"GPU": 1},
     )
 
     run_config = RunConfig(
         storage_path="s3://llm-test/llm-finetune",
+        name="llm-finetune-test",
     )
 
     ray_configs = {
@@ -100,7 +100,7 @@ def train(db, model_identifier, model_name, output_dir):
         configuration=training_configuration,
         prefetch_size=1000,
         on_ray=True,
-        ray_address="ray://ec2-54-174-17-167.compute-1.amazonaws.com:10001",
+        ray_address="ray://ec2-3-90-217-206.compute-1.amazonaws.com:10001",
         ray_configs=ray_configs,
     )
 
@@ -143,7 +143,8 @@ def inference(db, model_identifier, output_dir):
 
 if __name__ == "__main__":
     db = superduper("mongomock://localhost:27017/test-llm")
-    model = "mistralai/Mistral-7B-Instruct-v0.2"
+    model = "facebook/opt-125m"
+    # model = "mistralai/Mistral-7B-Instruct-v0.2"
     output_dir = "outputs/llm-finetune"
 
     db.drop(force=True)

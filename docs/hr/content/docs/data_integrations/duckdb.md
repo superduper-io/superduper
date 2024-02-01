@@ -37,11 +37,11 @@ Table data must correspond to the `Schema` for that table:
 import pandas
 
 df = pandas.DataFrame([
-       "id_1", "some-custom-text", 3
-       "id_2", "moar-custom-test", 2
-       "id_3", "guess what? this is 'custom text'", 4
-       "id_4", "I can't believe this isn't custom text", 8
-    ])
+       [1, "some-custom-text", 3],
+       [2, "moar-custom-test", 2],
+       [3, "guess what? this is 'custom text'", 4],
+       [4, "I can't believe this isn't custom text", 8,]
+    ], columns=["id", "custom_text", "custom_integer"])
 
 db.execute(t.insert(df))
 ```
@@ -53,9 +53,8 @@ db.execute(t.insert(df))
 The following are equivalent:
 
 ```python
-db.execute(
-    captions.filter(caption.custom_integer > 3).limit(5).select(t.custom_text)
-)
+results = db.execute(t.filter(t.custom_integer > 3).limit(5))
+results.as_pandas()["custom_text"].values.tolist()
 ```
 
 ### Vector-search

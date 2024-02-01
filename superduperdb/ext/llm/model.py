@@ -1,6 +1,5 @@
 import dataclasses as dc
 import functools
-import os
 import typing
 import typing as t
 
@@ -341,10 +340,6 @@ class LLM(Model):
         # If no validation sets provided, use the validation set from db
         validation_sets = validation_sets.get("_DEFAULT", validation_sets)
         return train_dataset, validation_sets
-
-    @property
-    def ddp(self):
-        return int(os.environ.get("WORLD_SIZE", 1)) != 1
 
     def post_create(self, db: "Datalayer") -> None:
         # TODO: Do not make sense to add this logic here,

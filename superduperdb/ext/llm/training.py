@@ -22,6 +22,8 @@ from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
 
 if t.TYPE_CHECKING:
+    from datasets import Dataset
+
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.ext.llm import LLM
 
@@ -131,20 +133,36 @@ def tokenize(tokenizer, example, X, y):
 
 
 def train(
-    training_config,
-    train_dataset,
-    eval_datasets,
-    model_kwargs,
-    tokenizer_kwargs,
-    X=None,
-    y=None,
-    db=None,
-    llm=None,
-    on_ray=False,
-    ray_address=None,
-    ray_configs=None,
+    training_config: dict,
+    train_dataset: "Dataset",
+    eval_datasets: t.Union["Dataset", t.Dict[str, "Dataset"]],
+    model_kwargs: dict,
+    tokenizer_kwargs: dict,
+    X: t.Optional[str] = None,
+    y: t.Optional[str] = None,
+    db: t.Optional["Datalayer"] = None,
+    llm: t.Optional["LLM"] = None,
+    on_ray: t.Optional[bool] = False,
+    ray_address: t.Optional[str] = None,
+    ray_configs: t.Optional[dict] = None,
     **kwargs,
 ):
+    """
+    Train LLM model.
+    Parameters:
+    :param training_config: training config for LLMTrainingArguments
+    :param train_dataset: training dataset
+    :param eval_datasets: evaluation dataset, can be a dict of datasets
+    :param model_kwargs: model kwargs for AutoModelForCausalLM
+    :param tokenizer_kwargs: tokenizer kwargs for AutoTokenizer
+    :param X: column name for input
+    :param y: column name for output
+    :param db: datalayer, used for creating LLMCallback
+    :param llm: llm model, used for creating LLMCallback
+    :param on_ray: whether to use ray, if True, will use ray_train
+    :param ray_address: ray address, if not None, will run on ray cluster
+    :param ray_configs: ray configs, must provide if using ray
+    """
     if X:
         tokenizer = AutoTokenizer.from_pretrained(
             **tokenizer_kwargs,
@@ -183,6 +201,7 @@ def train(
     log_to_db = training_config.get("log_to_db", DEFAULT_LOG_TO_DB)
 
     if not on_ray:
+        # create local LLMCallback
         if db is not None and llm is not None and log_to_db:
             callbacks = [LLMCallback(db=db, llm=llm)]
         else:
@@ -198,13 +217,14 @@ def train(
         )
 
     else:
+        # create remote LLMCallback, ray cluster must can access to db
         if db is not None and llm is not None and log_to_db:
             from superduperdb import CFG
 
             callbacks = [LLMCallback(cfg=CFG, identifier=llm.identifier)]
         else:
             callbacks = None
-        # move the dataset logic here
+        # TODO: Record the result to db, checkpoint, metrics, etc.
         return ray_train(
             training_config,
             train_dataset,
@@ -231,7 +251,7 @@ def train_func(
     training_args = LLMTrainingArguments(**training_config)
     model_kwargs = deepcopy(model_kwargs)
     tokenizer_kwargs = deepcopy(tokenizer_kwargs)
-    # get device map
+    # Get device map
     device_map: t.Union[None, str, t.Dict[str, int]] = model_kwargs.get("device_map")
     if os.environ.get("LOCAL_RANK") is not None:
         ddp = int(os.environ.get("WORLD_SIZE", 1)) != 1
@@ -279,12 +299,11 @@ def train_func(
         eval_dataset=eval_datasets,
         **kwargs,
     )
-    print("old trainer", trainer)
     if trainer_prepare_func is not None:
         trainer = trainer_prepare_func(trainer)
-        print("new trainer", trainer)
 
     for callback in callbacks or []:
+        logging.info(f"Add callback {callback}")
         trainer.add_callback(callback)
     trainer.model.config.use_cache = False
     results = trainer.train()
@@ -309,7 +328,10 @@ def ray_train(
     )
     from ray.train.torch import TorchTrainer
 
+    ray.data.DataContext.get_current().execution_options.verbose_progress = True
+
     def trainer_prepare_func(trainer):
+        # TODO: Check issues of RayTrainReportCallback run on multi-nodes
         trainer.add_callback(RayTrainReportCallback())
         trainer = prepare_trainer(trainer)
         return trainer
@@ -321,8 +343,13 @@ def ray_train(
         ray_train_ds = train.get_dataset_shard("train")
         ray_eval_ds = train.get_dataset_shard("eval")
 
-        train_ds_iterable = ray_train_ds.iter_torch_batches(batch_size=1)
-        eval_ds_iterable = ray_eval_ds.iter_torch_batches(batch_size=1)
+        # TODO: Rebuild the datasets.Dataset to train_func
+        # So that we can improve compatibility with llm training framework
+        # For example: Dataset.from_generator(ray_train_ds.iter_rows)
+        train_batch_size = train_loop_config.get("train_batch_size", 1)
+        eval_batch_size = train_loop_config.get("eval_batch_size", 1)
+        train_ds_iterable = ray_train_ds.iter_torch_batches(batch_size=train_batch_size)
+        eval_ds_iterable = ray_eval_ds.iter_torch_batches(batch_size=eval_batch_size)
 
         kwargs["trainer_prepare_func"] = trainer_prepare_func
 
@@ -330,17 +357,17 @@ def ray_train(
         # If not, will cause error "Varibable has been marked as ready twice"
         # Seems to be some parameter compatibility issue between ray and peft
         if train_loop_config.get(
-            'gradient_checkpointing', False
-        ) and train_loop_config.get('use_lora', False):
+            "gradient_checkpointing", False
+        ) and train_loop_config.get("use_lora", False):
             logging.warn(
                 "Using Ray + LoRA + Gradient Checkpointing, set use_reentrant to False"
             )
             gradient_checkpointing_kwargs = train_loop_config.get(
-                'gradient_checkpointing_kwargs', {}
+                "gradient_checkpointing_kwargs", {}
             )
-            gradient_checkpointing_kwargs['use_reentrant'] = False
+            gradient_checkpointing_kwargs["use_reentrant"] = False
             train_loop_config[
-                'gradient_checkpointing_kwargs'
+                "gradient_checkpointing_kwargs"
             ] = gradient_checkpointing_kwargs
         return train_func(
             train_loop_config, train_ds_iterable, eval_ds_iterable, **kwargs
@@ -361,6 +388,8 @@ def ray_train(
     if "run_config" not in ray_configs:
         logging.warn("No run_config provided")
 
+    # TODO: Auto detect the max_steps from training_config if not provided
+    # Can't use num_train_epochs, because it's not compatible with ray
     trainer = TorchTrainer(
         train_loop_per_worker=ray_train_func,
         train_loop_config=training_config,

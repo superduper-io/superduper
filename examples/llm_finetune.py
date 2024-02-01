@@ -43,7 +43,7 @@ def train(db, model_identifier, model_name, output_dir):
     # training
     llm = LLM(
         identifier=model_identifier,
-        bits=4,
+        # bits=4,
         model_name_or_path=model_name,
     )
     training_configuration = LLMTrainingConfiguration(
@@ -80,11 +80,11 @@ def train(db, model_identifier, model_name, output_dir):
 
     scaling_config = ScalingConfig(
         num_workers=1,
-        use_gpu=True,
+        # use_gpu=True,
     )
 
     run_config = RunConfig(
-        storage_path="s3://llm-test/llm-finetune",
+        storage_path="s3://llm-test-jalon/llm-finetune",
         name="llm-finetune-test",
     )
 
@@ -100,7 +100,7 @@ def train(db, model_identifier, model_name, output_dir):
         configuration=training_configuration,
         prefetch_size=1000,
         on_ray=True,
-        ray_address="ray://ec2-3-90-217-206.compute-1.amazonaws.com:10001",
+        # ray_address="ray://ec2-3-90-217-206.compute-1.amazonaws.com:10001",
         ray_configs=ray_configs,
     )
 

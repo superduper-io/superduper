@@ -47,9 +47,10 @@ def model3(test_db):
 def test_simple_graph(test_db, model1, model2):
     db = test_db
     g = Graph(identifier='simple-graph', db=db)
-    g.connect(g, model1)
+    intermediate_node = g.connect(g, model1)
     g.connect(model1, model2)
     assert g.predict(1) == 4
+    assert intermediate_node.output == 2
 
     # with names
     g = Graph(identifier='simple-graph-name', db=db)

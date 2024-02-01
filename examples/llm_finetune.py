@@ -43,16 +43,17 @@ def train(db, model_identifier, model_name, output_dir):
         lora_r=8,
         lora_alpha=16,
         lora_dropout=0.05,
-        num_train_epochs=1,
+        # num_train_epochs=1,
+        max_steps=10,
         fp16=torch.cuda.is_available(),  # mps don't support fp16
         per_device_train_batch_size=2,
         per_device_eval_batch_size=2,
         gradient_accumulation_steps=4,
         evaluation_strategy="steps",
-        eval_steps=10,
+        eval_steps=1,
         save_strategy="steps",
-        save_steps=10,
-        save_total_limit=5,
+        save_steps=1,
+        save_total_limit=3,
         learning_rate=2e-5,
         weight_decay=0.0,
         warmup_ratio=0.03,
@@ -61,6 +62,7 @@ def train(db, model_identifier, model_name, output_dir):
         logging_steps=5,
         gradient_checkpointing=True,
         report_to=[],
+        on_ray=False,
     )
 
     llm.fit(
@@ -100,19 +102,20 @@ def inference(db, model_identifier, output_dir):
     print("-" * 20, "\n")
 
     print("Base model:\n")
-    print(db.predict(llm_base.identifier, prompt, max_new_tokens=100, one=True))
+    print(db.predict(llm_base.identifier, prompt, max_new_tokens=100))
 
     for checkpoint in checkpoints:
         print("-" * 20, "\n")
         print(f"Finetuned model-{checkpoint}:\n")
-        print(db.predict(checkpoint, prompt, max_new_tokens=100, one=True))
+        print(db.predict(checkpoint, prompt, max_new_tokens=100))
 
 
 if __name__ == "__main__":
-    db = superduper("mongomock://llm-finetune")
+    db = superduper("mongomock://localhost:27017/test-llm")
     model = "facebook/opt-125m"
     output_dir = "outputs/llm-finetune"
 
+    db.drop(force=True)
     prepare_datas(db, size=200)
     train(db, "llm-finetune", model, output_dir)
     inference(db, "llm-finetune", output_dir)

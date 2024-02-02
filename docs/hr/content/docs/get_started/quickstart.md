@@ -40,6 +40,10 @@ In this quickstart, we will walk through extending the functionality of MongoDB 
 For this demo, 
 - we would be using MongoDB Test DB url:  `mongomock://test`.
 - We will also be using the json toy dataset below
+```
+
+
+```
 
 
 
@@ -51,7 +55,9 @@ First we'll need to import the SuperDuper x OpenAI integration package.
 pip install superduperdb[api]
 ```
 
-Accessing the OPENAI API requires an API key, which you can get by creating an account and heading here.
+Accessing the OPENAI API requires an API key, which you can get by creating an account and heading [here](https://platform.openai.com/account/api-keys).
+
+Once we have a key we'll want to set it as an environment variable by running:
 
 ```
 import os
@@ -68,7 +74,7 @@ openai_model = OpenAIEmbedding(model='text-embedding-ada-002')
 ```
  
 
-Next, we convert our DB into a SuperDuper object to expand the functionality by 
+Next, we convert our DB into a SuperDuper object to expand the functionality 
 
 ```
 from superduperdb import superduper
@@ -83,9 +89,9 @@ doc_collection = Collection('documents')
 
 ```
 
-Feel free to check the urls to your mongodb atlas url with existing datasets in it
+_Feel free to check the urls to your mongodb atlas url with existing datasets in it_
 
-Next , insert the data
+Next , we insert the data
 ```
 from superduperdb import Document
 
@@ -93,19 +99,20 @@ from superduperdb import Document
 db.execute(doc_collection.insert_many([Document(r) for r in data]))
 
 ```
-Note that if you already have data in your database, you can skip the "insert the data" part
+_Note that if you already have data in your database, you can skip the **"insert the data"** part_
 
-Next, add the vector search functionality and add our model to the DB to convert all text in the database into vectors and also convery incoming queries into vectors
+
+Next, we add the vector search functionality and add our model to the DB to convert all text in the database into vectors and also convery incoming queries into vectors
 
 ```
 from superduperdb import Listener, VectorIndex
 
 db.add(
     VectorIndex(
-        identifier=f'pymongo-docs-{model.identifier}',
+        identifier=f'mongodb-data-{model.identifier}',
         indexing_listener=Listener(
             select=doc_collection.find(),  
-            key='value',  
+            key='column_name',  
             model=openai_model
             predict_kwargs={'max_chunk_size': 1000}, 
         ),
@@ -113,7 +120,9 @@ db.add(
 )
 
 ```
-Now, you are ready to use vector search on the database. For this demo, we would limit the search results to 2. Feel free to increase the limit
+Now, you are ready to use vector search on the database. For this demo, we would limit the search results to 2. 
+
+_Feel free to increase the limit_
 
 ```
 user_query = 'what is the nearest place to the airport'
@@ -122,7 +131,7 @@ limit_search_results = 2
 
 result = db.execute(
     doc_collection
-        .like(Document({'value': user_query}), vector_index=f'pymongo-docs-{model.identifier}', n=num_results)
+        .like(Document({'column_name': user_query}), vector_index=f'mongodb-data-{model.identifier}', n=limit_search_results)
         .find()
 )
 

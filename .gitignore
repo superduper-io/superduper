@@ -191,3 +191,4 @@ test/sleep.json
 
 /tmp
 .superduperdb
+output/

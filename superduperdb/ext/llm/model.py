@@ -98,7 +98,7 @@ class LLM(Model):
         super().__post_init__()
 
     def init_model_and_tokenizer(self):
-        model_key = hash(self.model_kwargs)
+        model_key = self.model_name_or_path + str(hash(self.model_kwargs))
         if model_key not in self._model_cache:
             logging.info(f"Loading model from {self.model_name_or_path}")
             logging.info(f"model_kwargs: {self.model_kwargs.artifact}")
@@ -254,9 +254,13 @@ class LLM(Model):
         kwargs.setdefault("pad_token_id", self.tokenizer.eos_token_id)
         outputs = self.model.generate(**model_inputs, **kwargs)
         texts = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        results = []
+        for text, x in zip(texts, X):
+            text = text[len(x) :]
+            results.append(text)
         if isinstance(X, str):
-            return texts[0]
-        return texts
+            return results[0]
+        return results
 
     def add_adapter(self, model_id, adapter_name: str):
         # TODO: Support lora checkpoint from s3

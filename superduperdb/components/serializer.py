@@ -80,6 +80,7 @@ def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def zip_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
+    """Encode a directory into a zip file and return the bytes."""
     assert isinstance(object, str), "object must be a string"
     assert os.path.isdir(object), "object must be a directory"
 
@@ -95,6 +96,7 @@ def zip_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 
 def zip_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
+    """Decode the bytes into a directory and return the path."""
     import zipfile
 
     temp_dir = tempfile.mkdtemp()

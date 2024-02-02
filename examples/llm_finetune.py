@@ -29,7 +29,7 @@ def prepare_datas(db, size):
     db.execute(Collection(collection_name).insert_many(list(map(Document, datas))))
 
 
-deepspped = {
+deepspeed = {
     "train_batch_size": "auto",
     "train_micro_batch_size_per_gpu": "auto",
     "gradient_accumulation_steps": "auto",
@@ -72,7 +72,7 @@ def train(db, model_identifier, model_name, output_dir):
         logging_steps=5,
         gradient_checkpointing=True,
         report_to=[],
-        # deepspeed=deepspped,
+        # deepspeed=deepspeed,
         use_lora=True,
     )
 

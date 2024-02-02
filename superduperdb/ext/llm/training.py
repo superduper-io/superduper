@@ -79,6 +79,8 @@ class LLMTrainingArguments(TrainingArguments):
     Inherits from :class:`transformers.TrainingArguments`.
 
     {training_arguments_doc}
+        use_lora (`bool`, *optional*, defaults to True):
+            Whether to use LoRA training.
         lora_r (`int`, *optional*, defaults to 8):
             Lora R dimension.
 
@@ -103,6 +105,8 @@ class LLMTrainingArguments(TrainingArguments):
             If can't access to db, please set it to False.
     """
 
+    __doc__ = __doc__.format(training_arguments_doc=TrainingArguments.__doc__)
+
     use_lora: bool = True
     lora_r: int = 8
     lora_alpha: int = 16
@@ -115,6 +119,7 @@ class LLMTrainingArguments(TrainingArguments):
 
 
 def tokenize(tokenizer, example, X, y):
+    """Function to tokenize the example."""
     prompt = example[X]
 
     prompt = prompt + tokenizer.eos_token
@@ -144,7 +149,20 @@ def train(
     **kwargs,
 ):
     """
-    Train LLM model.
+    Train LLM model on specified dataset.
+    The training process can be run on these following modes:
+    - Local node without ray, but only support single GPU
+    - Local node with ray, support multi-nodes and multi-GPUs
+    - Remote node with ray, support multi-nodes and multi-GPUs
+
+    If run locally, will use train_func to train the model.
+        Can log the training process to db if db and llm provided.
+        Will reuse the db and llm from the current process.
+    If run on ray, will use ray_train to train the model.
+        Can log the training process to db if db and llm provided.
+        Will rebuild the db and llm for the new process that can access to db.
+        The ray cluster must can access to db.
+
     Parameters:
     :param training_config: training config for LLMTrainingArguments
     :param train_dataset: training dataset
@@ -255,6 +273,22 @@ def train_func(
     callbacks=None,
     **kwargs,
 ):
+    """
+    Base training function for LLM model.
+    :param training_args: training Arguments, see LLMTrainingArguments
+    :param train_dataset: training dataset,
+        can be huggingface datasets.Dataset or ray.data.Dataset
+    :param eval_datasets: evaluation dataset, can be a dict of datasets
+    :param model_kwargs: model kwargs for AutoModelForCausalLM
+    :param tokenizer_kwargs: tokenizer kwargs for AutoTokenizer
+    :param trainer_prepare_func: function to prepare trainer
+        This function will be called after the trainer is created,
+        we can add some custom settings to the trainer
+    :param callbacks: list of callbacks will be added to the trainer
+    :param **kwargs: other kwargs for Trainer
+        All the kwargs will be passed to Trainer,
+        make sure the Trainer support these kwargs
+    """
     model_kwargs = deepcopy(model_kwargs)
     tokenizer_kwargs = deepcopy(tokenizer_kwargs)
     # Get device map
@@ -326,6 +360,23 @@ def ray_train(
     ray_configs: t.Optional[t.Dict[str, t.Any]] = None,
     **kwargs,
 ):
+    """
+    Ray training function for LLM model.
+    The ray train function will handle the following logic:
+    - Prepare the datasets for ray
+    - Build the training_loop_func for ray
+    - Connect to ray cluster
+    - Make some modifications to be compatible with ray finetune llm
+
+    :param training_args: training Arguments, see LLMTrainingArguments
+    :param train_dataset: training dataset,
+        can be huggingface datasets.Dataset
+    :param eval_datasets: evaluation dataset,
+        Must be a Huggingface datasets.Dataset
+    :param ray_address: ray address, if not None, will run on ray cluster
+    :param ray_configs: ray configs, must provide if using ray_configs
+    :param **kwargs: other kwargs for Trainer
+    """
     import ray
     from ray import train
     from ray.train import ScalingConfig
@@ -430,6 +481,10 @@ def ray_train(
 
 
 def prepare_lora_training(model, config: LLMTrainingArguments):
+    """
+    Prepare LoRA training for the model.
+    Get the LoRA target modules and convert the model to peft model.
+    """
     try:
         from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
     except Exception as e:
@@ -467,6 +522,7 @@ def prepare_lora_training(model, config: LLMTrainingArguments):
 
 
 def get_lora_target_modules(model, bits):
+    """Find the LoRA target modules in the model."""
     try:
         import bitsandbytes as bnb
     except Exception as e:
@@ -490,6 +546,7 @@ def get_lora_target_modules(model, bits):
 
 
 def create_quantization_config(config: LLMTrainingArguments):
+    """Create quantization config for LLM training."""
     compute_dtype = (
         torch.float16
         if config.fp16

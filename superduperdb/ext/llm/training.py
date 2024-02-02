@@ -114,8 +114,16 @@ class LLMTrainingArguments(TrainingArguments):
     lora_target_modules: t.Optional[t.List[str]] = None
     lora_bias: t.Literal["none", "all", "lora_only"] = "none"
     bits: t.Optional[int] = None
-    max_length: int = 1024
+    max_length: int = 512
     log_to_db: bool = False
+
+    def __post_init__(self):
+        ...
+        # Overwrite __post_init__ for lazy build
+        # Cause we can run on remote ray, that can avoid building error on client side
+
+    def build(self):
+        super().__post_init__()
 
 
 def tokenize(tokenizer, example, X, y):
@@ -178,16 +186,7 @@ def train(
     :param ray_configs: ray configs, must provide if using ray
     """
 
-    try:
-        training_args = LLMTrainingArguments(**training_config)
-    except ImportError as e:
-        # Do not raise error if deepspeed is not installed when using ray
-        if "deepspeed" in str(e) and on_ray:
-            deepspeed = training_config.pop("deepspeed")
-            training_args = LLMTrainingArguments(**training_config)
-            training_args.deepspeed = deepspeed
-        else:
-            raise e
+    training_args = LLMTrainingArguments(**training_config)
     if X:
         tokenizer = AutoTokenizer.from_pretrained(
             **tokenizer_kwargs,
@@ -223,6 +222,23 @@ def train(
             )
 
     on_ray = on_ray or bool(ray_address) or bool(ray_configs)
+
+    # Auto detect multi-GPUs and use ray to run data parallel training
+    # If not todo this, will run on a bad parallel mode
+    if not on_ray and torch.cuda.device_count() > 1:
+        logging.warn("Detected multi-GPUs, will use ray to run training on multi-GPUs")
+        on_ray = True
+        from ray.train import ScalingConfig
+
+        ray_configs = {
+            "scaling_config": ScalingConfig(
+                num_workers=torch.cuda.device_count(),
+                use_gpu=True,
+            )
+        }
+        logging.warn(f"Set ray_configs to {ray_configs}")
+        logging.warn("Suggest to set ray_configs manually for better performance")
+
     log_to_db = training_args.log_to_db
 
     if not on_ray:
@@ -231,6 +247,8 @@ def train(
             callbacks = [LLMCallback(db=db, llm=llm)]
         else:
             callbacks = None
+        # build training_args for local training
+        training_args.build()
         return train_func(
             training_args,
             train_dataset,
@@ -249,8 +267,7 @@ def train(
             callbacks = [LLMCallback(cfg=CFG, identifier=llm.identifier)]
         else:
             callbacks = None
-        # TODO: Record the result to db, checkpoint, metrics, etc.
-        return ray_train(
+        results = ray_train(
             training_args,
             train_dataset,
             eval_datasets,
@@ -261,6 +278,34 @@ def train(
             ray_configs=ray_configs,
             **kwargs,
         )
+        logging.info(f"Training finished, results: {results}")
+
+        handle_ray_results(db, llm, results)
+        return results
+
+
+def handle_ray_results(db, llm, results):
+    """
+    Handle the ray results.
+    Will save the checkpoint to db if db and llm provided.
+    """
+    checkpoint = results.checkpoint
+    if checkpoint is None:
+        logging.warn("No checkpoint found, skip saving checkpoint")
+        return results
+    path = checkpoint.path
+    if checkpoint.filesystem.type_name == "s3":
+        # download the checkpoint from s3
+        logging.info(f"Download checkpoint from s3, {checkpoint}")
+        path = checkpoint.to_directory()
+        logging.info(f"Downloaded checkpoint to {path}")
+
+    # Pad the path to the checkpoint
+    path = os.path.join(path, "checkpoint")
+    if llm is not None:
+        llm.adapter_id = Artifact(path, serializer="zip")
+        if db is not None:
+            db.replace(llm, upsert=True)
 
 
 def train_func(
@@ -289,6 +334,8 @@ def train_func(
         All the kwargs will be passed to Trainer,
         make sure the Trainer support these kwargs
     """
+    logging.info("Start training LLM model")
+    logging.info(f"training_args: {training_args}")
     model_kwargs = deepcopy(model_kwargs)
     tokenizer_kwargs = deepcopy(tokenizer_kwargs)
     # Get device map
@@ -428,6 +475,8 @@ def ray_train(
                 "gradient_checkpointing_kwargs"
             ] = gradient_checkpointing_kwargs
         train_loop_args = LLMTrainingArguments(**train_loop_config)
+        # Build the training_args on remote machine
+        train_loop_args.build()
         return train_func(
             train_loop_args, train_ds_iterable, eval_ds_iterable, **kwargs
         )

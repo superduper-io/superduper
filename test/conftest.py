@@ -221,6 +221,7 @@ def add_models(db: Datalayer):
             object=torch.nn.Linear(*weight_shape),
             identifier=identifier,
             datatype=datatype,
+            preferred_devices=['cpu'],
         )
         db.add(m)
 

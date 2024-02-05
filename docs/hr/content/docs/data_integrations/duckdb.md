@@ -98,12 +98,13 @@ from superduperdb.backends.ibis.query import RawSQL
 raw_sql = RawSQL(
     '''
     SELECT custom_integer FROM my_table 
-    LIKE text = 'moar'
+    WHERE custom_text LIKE '%moar%'
     LIMIT 5;
     '''
     )
 
-db.execute(raw_sql)
+results = db.execute(raw_sql)
+results.as_pandas()["custom_integer"].values.tolist()
 ```
 
 ## Updating data
@@ -113,5 +114,11 @@ Updates are not covered for `superduperdb` SQL integrations.
 ## Deleting data
 
 ```python
-db.databackend.drop_table('my_table')
+raw_sql = RawSQL(
+    '''
+    DROP TABLE my_table;
+    '''
+    )
+
+results = db.execute(raw_sql)
 ```

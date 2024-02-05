@@ -1,14 +1,14 @@
 import dataclasses as dc
 import typing as t
 from collections import OrderedDict
-from functools import cached_property
+from functools import cached_property, partial
 from inspect import signature
 
 import networkx as nx
 
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
-from superduperdb.components.model import Model
+from superduperdb.components.model import Model, _Predictor
 from superduperdb.ext.torch.model import TorchModel
 
 if t.TYPE_CHECKING:
@@ -42,6 +42,8 @@ class GraphModel:
     def __init__(self, model: t.Union['Model', 'TorchModel']):
         self.identifier = model.identifier
         self.output = f'{model.identifier}.output'
+        self.encoder = model.encoder
+        self.output_schema = model.output_schema
 
         predict_method = model.predict_method
         if isinstance(model, TorchModel):
@@ -49,21 +51,93 @@ class GraphModel:
 
         assert isinstance(model.object, Artifact)
         self.object = model.object.artifact
+        self.model = model
+        self._generic_model = type(model) == Model
 
         if predict_method:
             self.predict_method = getattr(self.object, predict_method)
         else:
             self.predict_method = self.object
 
+        self.predict_kwargs = model.predict_kwargs or {}
+        self.predict_method = partial(self.predict_method, **self.predict_kwargs)
+
+        # TODO: CAUTION: check if this is not override model.
+        if predict_method:
+            setattr(self.object, predict_method, self.predict_method)
+        else:
+            self.object = self.predict_method
+
         params = self.set_input()
         self.input = KeyStore(model.identifier, params)
 
     def set_input(self):
         sig = signature(self.predict_method)
-        return list(sig.parameters.keys())
+        sig_keys = list(sig.parameters.keys())
+        params = []
+        for k in sig_keys:
+            if k in self.predict_kwargs or (
+                k == 'kwargs' and sig.parameters[k].kind == 4
+            ):
+                continue
+            params.append(k)
+        return params
 
-    def predict(self, *args, **kwargs):
-        return self.predict_method(*args, **kwargs)
+    def predict(self, *args, one=False, **kwargs):
+        if self._generic_model:
+            out = self._forward(*args, one=one, **kwargs)
+        else:
+            out = self.model._predict(*args, one=one, **kwargs)
+        return out
+
+    def _predict(self, *args, **kwargs):
+        outputs = self.predict_method(*args, **kwargs)
+        return outputs
+
+    def _forward(
+        self, *args, one=False, num_workers: int = 0, **kwargs
+    ) -> t.Sequence[int]:
+        if self.model.batch_predict or one is True:
+            return self._predict(*args, **kwargs)
+
+        if args and kwargs:
+            raise ValueError(
+                'Args and Kwargs at the same time not supported in graph mode'
+            )
+        if args:
+            return self._mutli_forward_args(*args, num_workers=num_workers)
+        return self._mutli_forward_kargs(num_workers=num_workers, **kwargs)
+
+    def _mutli_forward_kargs(self, num_workers=1, **kwargs):
+        outputs = []
+        if num_workers:
+            import multiprocessing
+
+            pool = multiprocessing.Pool(processes=num_workers)
+            for r in pool.starmap(self._predict, zip(*list(kwargs.values()))):
+                outputs.append(r)
+            pool.close()
+            pool.join()
+        else:
+            for r in zip(*list(kwargs.values())):
+                outputs.append(self._predict(*r))
+        return outputs
+
+    def _mutli_forward_args(self, *args, num_workers=1):
+        outputs = []
+        if num_workers:
+            to_call = partial(self._predict, *args)
+            import multiprocessing
+
+            pool = multiprocessing.Pool(processes=num_workers)
+            for r in pool.map(to_call, zip(*args)):
+                outputs.append(r)
+            pool.close()
+            pool.join()
+        else:
+            for r in zip(*args):
+                outputs.append(self._predict(*r))
+        return outputs
 
 
 class Node:
@@ -90,8 +164,6 @@ class Node:
 
     @output.setter
     def output(self, output):
-        if self._output:
-            raise ValueError('Not allowed to set output of a graph node')
         self._output = output
 
     def predict(self, *args, **kwargs):
@@ -100,7 +172,7 @@ class Node:
 
 
 @dc.dataclass(kw_only=True)
-class Graph(Component):
+class Graph(Component, _Predictor):
     db: 'Datalayer'
     _DEFAULT_ARG_WEIGHT: t.ClassVar[str] = '_base'
     _input: t.ClassVar[str] = '_Graph_input'
@@ -110,6 +182,7 @@ class Graph(Component):
         self._key_store = {}
         self.nodes = {}
         self._node_output_cache = {}
+        self.version = 0
 
     def connect(
         self,
@@ -224,8 +297,7 @@ class Graph(Component):
                     f'Node required params: {node.params}'
                 )
 
-    def predict(self, x, one=True, select=None):
-        # TODO: Implement select logic
+    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
         if self._input not in self.G.nodes:
             raise TypeError(
                 'Root graph node is not present'
@@ -236,11 +308,16 @@ class Graph(Component):
         self.validate(path)
         output = None
 
+        # Update graph encoder and outschema as per output node.
+        output_node = self.nodes[path[-1]]
+        self.encoder = output_node.model.encoder
+        self.output_schema = output_node.model.output_schema
+
         for graph_node in path:
             node = self.nodes[graph_node]
 
             if graph_node == '_Graph_input':
-                node.output = x
+                node.output = X
                 continue
 
             predecessors = list(self.G.predecessors(graph_node))
@@ -256,7 +333,7 @@ class Graph(Component):
             if self._DEFAULT_ARG_WEIGHT in kwargs:
                 args = list(kwargs.values())
                 kwargs = {}
-            output = node.predict(*args, **kwargs)
+            output = node.predict(*args, one=one, **kwargs)
 
         return output
 

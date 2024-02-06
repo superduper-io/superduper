@@ -59,38 +59,63 @@ results.as_pandas()["custom_text"].values.tolist()
 
 ### Vector-search
 
-Vector-searches are supported via the `like` operator:
+Vector-searches are supported via the `like` operator. Let's prepare a `Model` and a `VectorIndex`first:
 
 ```python
-db.execute(
-    t.like({'custom_text': 'moar'}, vector_index='my-index')
-     .limit(5)
-     .select(t.custom_integer, t.id)
+from sentence_transformers import SentenceTransformer
+from superduperdb.ext.numpy import array
+from superduperdb import Listener, VectorIndex, Model
+
+model = Model(
+    identifier='all-MiniLM-L6-v2',
+    object=SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'),
+    preprocess=lambda r: r,
+    encoder=array(dtype='float32', shape=(384,)),
+    predict_method='encode',
+    batch_predict=True,
+    device='mps')
+
+db.add(
+    VectorIndex(
+        identifier='my-index',
+        indexing_listener=Listener(
+            select=t,
+            key='custom_text',
+            model=model,
+            predict_kwargs={'max_chunk_size': 500, 'batch_size': 30},
+        ),
+    )
 )
 ```
 
-Vector-searches are either first or last in a chain of operations:
+You can perform a vector search:
 
 ```python
-db.execute(
-    t.filter(t.custom_integer > 3)
-     .limit(5)
-     .select(t.custom_text, t.id)
-     .like({'custom_text': 'guess what?'}, vector_index='my-index')
+from superduperdb import Document
+
+res = db.execute(
+    t
+    .like(Document({'custom_text': 'custom'}), vector_index='my-index', n=10)
+    .limit(10)
 )
+res.as_pandas()
 ```
 
 ### Support for raw-sql
 
-... the first query above is equivalent to:
+Raw SQL can be used to select data from the database.
+Here is an example inline:
 
 ```python
 from superduperdb.backends.ibis.query import RawSQL
 
-db.execute(RawSQL('SELECT custom_text FROM my_table WHERE custom_integer > 3 LIMIT 5;'))
+results = db.execute(
+            RawSQL('SELECT custom_text FROM my_table WHERE custom_integer > 3 LIMIT 5;')
+            )
+results.as_pandas()["custom_text"].values.tolist()
 ```
 
-... the second will be equivalent to:
+Here is another example:
 
 ```python
 from superduperdb.backends.ibis.query import RawSQL

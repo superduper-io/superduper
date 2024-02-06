@@ -11,9 +11,6 @@ from superduperdb.components.component import Component
 from superduperdb.components.model import Model, _Predictor
 from superduperdb.ext.torch.model import TorchModel
 
-if t.TYPE_CHECKING:
-    from superduperdb.base.datalayer import Datalayer
-
 
 class KeyStore:
     def __init__(self, model, params):
@@ -30,20 +27,22 @@ class KeyStore:
         return self._params
 
 
-class RootModel:
-    def __init__(self):
+class RootNode:
+    def __init__(self, name):
         self.input = KeyStore('root', [])
+        self.identifier = name
+        self.required_input = 0
 
     def predict(self, x):
         return x
 
 
-class GraphModel:
+class Node(RootNode):
     def __init__(self, model: t.Union['Model', 'TorchModel']):
         self.identifier = model.identifier
-        self.output = f'{model.identifier}.output'
         self.encoder = model.encoder
         self.output_schema = model.output_schema
+        self._output = None
 
         predict_method = model.predict_method
         if isinstance(model, TorchModel):
@@ -85,10 +84,10 @@ class GraphModel:
 
     def predict(self, *args, one=False, **kwargs):
         if self._generic_model:
-            out = self._forward(*args, one=one, **kwargs)
+            self.output = self._forward(*args, one=one, **kwargs)
         else:
-            out = self.model._predict(*args, one=one, **kwargs)
-        return out
+            self.output = self.model._predict(*args, one=one, **kwargs)
+        return self.output
 
     def _predict(self, *args, **kwargs):
         outputs = self.predict_method(*args, **kwargs)
@@ -139,20 +138,9 @@ class GraphModel:
                 outputs.append(self._predict(*r))
         return outputs
 
-
-class Node:
-    def __init__(self, name, db=None):
-        self.name = name
-
-        if name == Graph._input:
-            self.model = RootModel()
-        else:
-            self.model = GraphModel(db.load('model', name))
-        self._output = None
-
     @cached_property
     def params(self):
-        return self.model.input.params
+        return self.input.params
 
     @cached_property
     def required_input(self):
@@ -166,16 +154,15 @@ class Node:
     def output(self, output):
         self._output = output
 
-    def predict(self, *args, **kwargs):
-        self.output = self.model.predict(*args, **kwargs)
-        return self.output
-
 
 @dc.dataclass(kw_only=True)
 class Graph(Component, _Predictor):
-    db: 'Datalayer'
+    models: t.List[Model] = dc.field(default_factory=list)
+    edges: t.List[t.Tuple[str, str, t.Union[None, str]]] = dc.field(
+        default_factory=list
+    )
     _DEFAULT_ARG_WEIGHT: t.ClassVar[str] = '_base'
-    _input: t.ClassVar[str] = '_Graph_input'
+    type_id: t.ClassVar[str] = 'graph'
 
     def __post_init__(self):
         self.G = nx.DiGraph()
@@ -183,47 +170,63 @@ class Graph(Component, _Predictor):
         self.nodes = {}
         self._node_output_cache = {}
         self.version = 0
+        self._db = None
+
+        # Load the models and edges into a di graph
+        models = {m.identifier: m for m in self.models}
+        if self.edges and models:
+            for connection in self.edges:
+                u, v, on = connection
+                self.connect(
+                    models[u] if u != self.identifier else self,
+                    models[v],
+                    on=on,
+                    update_edge=False,
+                )
 
     def connect(
         self,
-        u: t.Union[str, Component],
-        v: t.Union[str, Model],
+        u: Component,
+        v: Model,
         on: t.Optional[str] = None,
+        update_edge: t.Optional[bool] = True,
     ):
-        assert isinstance(u, (Model, Graph, str))
-        assert isinstance(v, (Model, str))
+        assert isinstance(u, (Model, Graph))
+        assert isinstance(v, Model)
 
-        if isinstance(v, Model):
-            v = v.identifier
-        if isinstance(u, Model):
-            u = u.identifier
+        if u.identifier not in self.nodes:
+            if isinstance(u, Graph):
+                node = RootNode(u.identifier)
+            else:
+                node = Node(u)
 
-        if isinstance(u, Graph):
-            u = self._input
+            self.nodes[u.identifier] = node
+            self.G.add_node(u.identifier)
 
-        if u not in self.nodes:
-            node = Node(u, self.db)
-            u = node.name
-
-            self.nodes[u] = node
-            self.G.add_node(u)
-
-        if v not in self.nodes:
-            node = Node(v, self.db)
-            self.nodes[node.name] = node
-            self.G.add_node(node.name)
-            v = node.name
+        if v.identifier not in self.nodes:
+            node = Node(v)
+            self.nodes[v.identifier] = node
+            self.G.add_node(v.identifier)
 
         G_ = self.G.copy()
-        G_.add_edge(u, v, weight=on or self._DEFAULT_ARG_WEIGHT)
+        G_.add_edge(u.identifier, v.identifier, weight=on or self._DEFAULT_ARG_WEIGHT)
 
         if not nx.is_directed_acyclic_graph(G_):
             raise TypeError('The graph is not DAG with this edge')
         self.G = G_
-        return self.nodes[v]
+
+        if update_edge:
+            self.edges.append(
+                (u.identifier, v.identifier, on or self._DEFAULT_ARG_WEIGHT)
+            )
+            if isinstance(u, Model) and u not in self.models:
+                self.models.append(u)
+            if v not in self.models:
+                self.models.append(v)
+        return self.nodes[v.identifier]
 
     def stash_node_output(self, node, output):
-        self._node_output_cache[node.name] = output
+        self._node_output_cache[node.identifier] = output
 
     def group_nodes_by_degree(self, nodes):
         grouped_dict = OrderedDict()
@@ -290,7 +293,7 @@ class Graph(Component, _Predictor):
 
             if node.required_input != len(arg_nodes):
                 raise TypeError(
-                    f'Graph disconnected at Node: {node.name} '
+                    f'Graph disconnected at Node: {node.identifier} '
                     f'and is partially connected with {nodes}\n'
                     f'Required connected node is {node.required_input} '
                     f'but got only {len(nodes)}, '
@@ -298,13 +301,13 @@ class Graph(Component, _Predictor):
                 )
 
     def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
-        if self._input not in self.G.nodes:
+        if self.identifier not in self.G.nodes:
             raise TypeError(
                 'Root graph node is not present'
                 ', make sure to add graph node'
                 'with atleast one other node'
             )
-        path = self.traversal(self.G, [self._input], [self._input])
+        path = self.traversal(self.G, [self.identifier], [self.identifier])
         self.validate(path)
         output = None
 
@@ -316,7 +319,7 @@ class Graph(Component, _Predictor):
         for graph_node in path:
             node = self.nodes[graph_node]
 
-            if graph_node == '_Graph_input':
+            if graph_node == self.identifier:
                 node.output = X
                 continue
 
@@ -338,7 +341,7 @@ class Graph(Component, _Predictor):
         return output
 
     def show(self):
-        path = self.traversal(self.G, [self._input], [self._input])
+        path = self.traversal(self.G, [self.identifier], [self.identifier])
         path = ' --> '.join(path)
         print(path)
         return path

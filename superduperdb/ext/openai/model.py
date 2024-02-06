@@ -59,7 +59,7 @@ class _OpenAI(APIModel):
         self.syncClient = SyncOpenAI(**self.client_kwargs)
         self.asyncClient = AsyncOpenAI(**self.client_kwargs)
 
-        if 'OPENAI_API_KEY' not in os.environ or (
+        if 'OPENAI_API_KEY' not in os.environ and (
             'api_key' not in self.client_kwargs.keys() and self.client_kwargs
         ):
             raise ValueError(

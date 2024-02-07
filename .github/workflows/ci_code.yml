@@ -74,15 +74,17 @@ jobs:
         run: |
           make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
-      - name: Integration Testing
-        if: ${{ startsWith(matrix.python-version, '3.11') }} # Dask requires local python and Dockerfile to be in sync
+      - name: Build Sandbox Image
         run: |
-          # Update hostnames
-          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-          
           # Build sandbox image for testing.
           make testenv_image
           
+
+      - name: Integration Testing
+        run: |
+          # Update hostnames
+          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+                    
           # Run the integrated testing environment
           make testenv_init
           

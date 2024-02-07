@@ -69,6 +69,8 @@ jobs:
       - name: Install Dev Dependencies
         run: |
           # Install dependencies on the user directory, so to be reusable by the docker cache
+          docker run -v ~/.cache/pip:/home/runner/.cache/pip superduperdb/sandbox:latest
+          
           python -m pip install --user .[dev]
 
       - name: Unit Testing

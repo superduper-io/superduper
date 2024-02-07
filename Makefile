@@ -51,29 +51,42 @@ new_release: ## Release a new version of SuperDuperDB
 devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	pip install pre-commit
+	python -m pip install pre-commit
 	pre-commit autoupdate
 
 	# Download tools for code quality testing
-	pip install .[quality]
+	python -m pip install .[quality]
 
 	# Set git to continuously update submodules
 	git config --global submodule.recurse true
 
 
 lint-and-type-check: ##  Perform code linting and type checking
-	# Linting
-	mypy superduperdb
 	# Code formatting
 	black --check $(DIRECTORIES)
 	# Linter and code formatting
 	ruff check $(DIRECTORIES)
+	# Static Typing Checker
+	mypy superduperdb
 	# Check for missing docstrings
 	interrogate superduperdb
 	# Check for unused dependencies
 	# deptry ./
 	# Check for deadcode
 	# vulture ./
+
+
+fix-and-test: ##  Lint the code before testing
+	# Code formatting
+	black $(DIRECTORIES)
+	# Linter and code formatting
+	ruff check --fix $(DIRECTORIES)
+	# Static Typing Checker
+	mypy superduperdb
+	# Unit testing
+	pytest $(PYTEST_ARGUMENTS)
+	# Check for missing docstrings
+	interrogate superduperdb
 
 
 ##@ Image Management

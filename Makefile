@@ -71,8 +71,9 @@ lint-and-type-check: ##  Perform code linting and type checking
 	# Check for missing docstrings
 	interrogate superduperdb
 	# Check for unused dependencies
-	#deptry ./
-
+	# deptry ./
+	# Check for deadcode
+	# vulture ./
 
 
 ##@ Image Management

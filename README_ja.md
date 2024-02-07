@@ -330,7 +330,7 @@ pip install superduperdb
 - 動作するdocker `docker` [インストール](https://docs.docker.com/engine/install/)
 
 ```
-docker run -p 8888:8888 superduperdb/demo:latest
+docker run -p 8888:8888 superduperdb/superduperdb:latest
 ```
 
 ## プレビュー

@@ -70,12 +70,6 @@ If you prefer using Docker, you can pull a pre-built Docker image from Docker Hu
 docker run -p 8888:8888 superduperdb/superduperdb:latest
 ```
 
-This command installs the base `superduperdb` image. If you want to run the ready-to-use examples, you'll need to download the required  dependencies at runtime. Alternatively, we provide a pre-built image  with all the dependencies for examples preinstalled:
-
-```bash
-docker run -p 8888:8888 superduperdb/demo:latest
-```
-
 #### Building the image yourself
 
 For more control, you can build the Docker images yourself using the following commands:

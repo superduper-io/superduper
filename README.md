@@ -71,7 +71,7 @@ SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB tr
 
 ## Example use-cases and apps (notebooks)
 
-The demo notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
+The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
 
 To learn more about *how* to use SuperDuperDB with your database, please check our [Docs](https://docs.superduperdb.com/) and official [Tutorials](https://docs.superduperdb.com/docs/docs/walkthrough/tutorial_walkthrough).
 
@@ -81,8 +81,8 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 | Name                                                   | Link                                                                                                                                                                                                                                               |
 |--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Use ChatGTP to chat with Snowflake | <a href="https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
-| Streaming Inference using Mnist and MongoDB             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Use ChatGTP to chat with Snowflake                     | <a href="https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                           |
+| Streaming Inference using Mnist and MongoDB            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
 | Multimodal Vector Search with your SQL database        | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sql-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
 | Connecting text and images using CLIP model            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/multimodal_image_search_clip.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
 | Question your docs using ChatGTP                       | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |

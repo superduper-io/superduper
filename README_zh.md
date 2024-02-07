@@ -320,7 +320,7 @@ pip install superduperdb
    - 如果你需要安装Docker, 查看这里的 <a href="https://docs.docker.com/engine/install/">文档</a>.
 
 ```
-docker run -p 8888:8888 superduperdb/demo:latest
+docker run -p 8888:8888 superduperdb/superduperdb:latest
 ```
 
 ## 代码样例

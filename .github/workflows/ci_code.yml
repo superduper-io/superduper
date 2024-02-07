@@ -61,20 +61,14 @@ jobs:
           python -m pip install --user black ruff mypy interrogate types-PyYAML types-requests
           make lint-and-type-check
 
-
-#      - name: Install Dev Dependencies
-#        run: |
-#          python -m pip install --user .[dev]
-
-
       - name: Build Sandbox Image
         run: |
           # Build sandbox image for testing.
           make testenv_image
 
-
       - name: Unit Testing
         run: |
+          # Run unit tests, within the sandbox image
           docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
       - name: Integration Testing

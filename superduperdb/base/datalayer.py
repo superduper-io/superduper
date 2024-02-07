@@ -434,9 +434,9 @@ class Datalayer:
         for e in encoders:
             self.add(e)
         for r in insert.documents:
-            r['_fold'] = 'train'  # type: ignore[assignment]
+            r['_fold'] = 'train'
             if random.random() < s.CFG.fold_probability:
-                r['_fold'] = 'valid'  # type: ignore[assignment]
+                r['_fold'] = 'valid'
         inserted_ids = insert.execute(self)
 
         if refresh and self.cdc.running:

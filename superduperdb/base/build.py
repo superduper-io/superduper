@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import typing as t
@@ -122,9 +123,8 @@ def build(uri, mapping, type: str = 'data_backend'):
         csv_files = glob.glob(uri)
         tables = {}
         for csv_file in csv_files:
-            pattern = re.match('^.*/(.*)\.csv$', csv_file)
-            assert pattern is not None
-            tables[pattern.groups()[0]] = pandas.read_csv(csv_file)
+            filename = os.path.basename(csv_file)
+            tables[filename] = pandas.read_csv(csv_file)
         ibis_conn = ibis.pandas.connect(tables)
         return mapping['ibis'](ibis_conn, uri.split('/')[0])
     else:

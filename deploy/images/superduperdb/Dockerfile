@@ -64,8 +64,7 @@ RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip
     theme-darcula \
     ipywidgets \
     jupyterlab-lsp \
-    'python-lsp-server[all]' \
-    "dask-labextension>=5"
+    'python-lsp-server[all]'
 
 
 # Install Jupyterlab extensions

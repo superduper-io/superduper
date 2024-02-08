@@ -67,7 +67,8 @@ dependencies = [
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",
-    "ray[default]>=2.8.1"
+    "ray[default]>=2.8.1",
+    "llama_cpp_python>=0.2.39"
 ]
 
 # ---------------------------------

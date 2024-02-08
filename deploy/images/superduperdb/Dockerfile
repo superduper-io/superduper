@@ -28,6 +28,7 @@ RUN apt-get update \
         libglib2.0-0 libgl1-mesa-glx \
         # Required for PostgreSQL \
         libpq-dev \
+	build-essential \
    # Purge apt cache
    && apt-get clean \
    && rm -rf /var/lib/apt/lists/*

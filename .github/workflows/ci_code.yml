@@ -68,7 +68,8 @@ jobs:
 
       - name: Unit Testing
         run: |
-          # Run unit tests, within the sandbox image
+          # Run unit tests, within the sandbox image. This is to avoid downloading dependencies once for the
+          # container, and once for the host.
           docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
       - name: Integration Testing

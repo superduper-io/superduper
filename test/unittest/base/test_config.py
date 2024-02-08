@@ -10,11 +10,7 @@ from .test_config_dicts import PARENT
 
 IS_2 = pydantic.__version__.startswith('2')
 
-TYPE_ERROR = """
-1 validation error for Config
-dask -> port
-  value is not a valid integer (type=type_error.integer)
-"""
+
 NAME_ERROR = """
 Config.__init__() got an unexpected keyword argument \'bad_name\'
 """

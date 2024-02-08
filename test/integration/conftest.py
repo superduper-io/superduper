@@ -12,7 +12,6 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
@@ -26,7 +25,7 @@ which in this case means once per `test/integration/` directory.
 Fixtures included here can create:
 - a MongoDB client
 - a MongoDB collection with some basic data
-- a local Dask client
+- a local Ray client
 - a local SuperDuperDB server linked to the MongoDB client
 
 When adding new fixtures, please try to avoid building on top of other fixtures
@@ -108,27 +107,6 @@ def fake_inserts(database_with_default_encoders_and_model):
 def fake_updates(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=True)
-
-
-@pytest.fixture
-def dask_client(monkeypatch, request):
-    db_name = "test_db"
-    data_backend = f'mongodb://superduper:superduper@localhost:27017/{db_name}'
-
-    data_backend = os.environ.get('SUPERDUPER_MONGO_URI', data_backend)
-    address = os.environ.get('SUPERDUPER_DASK_URI', 'tcp://localhost:8786')
-
-    monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
-
-    # Change the default value
-    client = DaskComputeBackend(
-        address=address,
-        local=False,
-    )
-
-    yield client
-
-    client.disconnect()
 
 
 @pytest.fixture(scope='session')

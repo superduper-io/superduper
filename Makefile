@@ -125,7 +125,7 @@ testenv_init: ## Initialize a local Testing environment
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
         echo "superduper/sandbox found";\
         echo "*************************************************************************";\
-        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image' **";\
+        echo "** If Ray behaves funny, rebuild the image using 'make testenv_image' **";\
         echo "*************************************************************************";\
     else \
       	echo "superduper/sandbox not found. Please run 'make testenv_image'";\

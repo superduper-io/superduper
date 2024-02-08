@@ -33,7 +33,7 @@ There are several gradations of a more productionized deployment.
 In the most distributed case we have:
 
 - A `jupyter` environment running in its own process
-- A [distributed **Dask** cluster](non_blocking_dask_jobs.md), with scheduler and workers configured to work with `superduperdb`
+- A [distributed **Ray** cluster](non_blocking_ray_jobs.md), with scheduler and workers configured to work with `superduperdb`
 - A [**change-data-capture** service](change_data_capture.md)
 - A [**vector-search** service](vector_comparison_service.md), which finds similar vectors, given an input vector
 

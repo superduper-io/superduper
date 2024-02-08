@@ -2,8 +2,8 @@
 
 SuperDuperDB allows developers, on the one hand to experiment and setup models quickly in scripts and notebooks, and on the other hand deploy persistent services, which are intended to "always" be on. These persistent services are:
 
-- Dask scheduler
-- Dask workers
+- Ray scheduler
+- Ray workers
 - Vector-searcher service
 - Change-data-capture (CDC) service
 
@@ -18,7 +18,7 @@ data_backend: mongodb://superduper:superduper@mongodb:27017/test_db
 artifact_store: filesystem://./data
 cluster:
   cdc: http://cdc:8001
-  compute: dask+tcp://scheduler:8786
+  compute: ray://ray-head:10001
   vector_search: http://vector-search:8000
 ```
 
@@ -28,8 +28,8 @@ Once this configuration has been added, you're ready to use the `superduperdb` s
 `docker-compose` to deploy:
 
 - Standalone replica-set of MongoDB community edition
-- Dask scheduler
-- Dask workers
+- Ray scheduler
+- Ray workers
 - Vector-searcher service
 - Change-data-capture (CDC) service
 - Jupyter notebook service
@@ -145,7 +145,7 @@ jobs, vi = db.add(
 )
 ```
 
-This command creates a job on `dask` to calculate the vectors and save them in the database. You can 
+This command creates a job on `ray` to calculate the vectors and save them in the database. You can 
 follow the `stdout` of this job with this command:
 
 
@@ -215,7 +215,7 @@ docker logs -n 20 testenv_cdc_1
 Note this won't work inside this notebook since it's running in its own container.
 
 The CDC service should have captured the changes created with the `pymongo` insert, and has submitted a new job(s)
-to the `dask` cluster.
+to the `ray` cluster.
 
 You can confirm that another job has been created and executed:
 

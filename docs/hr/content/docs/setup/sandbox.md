@@ -40,7 +40,7 @@ cat << Multi > .superduperdb/config.yaml
 data_backend: mongodb://superduper:superduper@mongodb:27017/test_db
 cluster:
   cdc: http://cdc:8001
-  compute: dask://scheduler:8786
+  compute: ray://ray-head:10001
   vector_search: in_memory://vector-search:8000
 Multi
 ```
@@ -55,8 +55,8 @@ This uses `docker-compose` to spin up:
 
 - local testing `mongodb` deployment
 - `jupyter` notebook environment
-- `dask` scheduler
-- `dask` worker
+- `ray` scheduler
+- `ray` worker
 - `cdc` service
 - `vector-search` service
 

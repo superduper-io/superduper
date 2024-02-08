@@ -117,7 +117,7 @@ The compute-backend is designed to be a configurable engine for performing compu
 We support 2 backends:
 
 - Local (default: run compute in process on the local machine)
-- `dask` (run compute on a configured `dask` cluster)
+- `ray` (run compute on a configured `Ray` cluster)
 
 ## Default settings
 

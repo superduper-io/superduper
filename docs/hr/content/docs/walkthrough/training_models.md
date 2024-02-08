@@ -6,7 +6,7 @@ sidebar_position: 23
 
 Similarly to [applying models to create predictions](./apply_models.md), training models is possible both procedurally and declaratively in `superduperdb`.
 
-When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.g. `dask://localhost:8786`), then `superduperdb` deploys [a job on the configured `dask` cluster](../production/non_blocking_dask_jobs.md)
+When models are trained, if `CFG.cluster.compute` has been configured (e.g. `"ray://ray-head:10001"`), then `superduperdb` deploys [a job on the configured `Ray` cluster](../production/non_blocking_ray_jobs.md)
 
 ## Basic pattern
 

@@ -70,7 +70,7 @@ jobs:
         run: |
           # Run unit tests, within the sandbox image. This is to avoid downloading dependencies once for the
           # container, and once for the host.
-          docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+          docker run --net=host --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
       - name: Integration Testing
         run: |
@@ -81,8 +81,7 @@ jobs:
           make testenv_init
           
           # Run the test-suite
-          docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
-          #make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+          docker run --net=host --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
           
           # Destroy the testing environment
           make testenv_shutdown

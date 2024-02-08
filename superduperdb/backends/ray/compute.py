@@ -11,7 +11,7 @@ class RayComputeBackend(ComputeBackend):
     A client for interacting with a ray cluster. Initialize the ray client.
 
     :param address: The address of the ray cluster.
-    :param local: Set to True to create a local Dask cluster. (optional)
+    :param local: Set to True to create a local Ray cluster. (optional)
     :param **kwargs: Additional keyword arguments to be passed to the ray client.
     """
 

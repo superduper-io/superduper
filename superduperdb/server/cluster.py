@@ -29,7 +29,7 @@ class _Client:
 def local_cluster(db):
     """
     This method is used to create a local cluster consisting of
-    Vector search service, cdc service and dask setup.
+    Vector search service, cdc service and work scheduler setup.
 
     Once this cluster is up, user can offload vector search,
     cdc on these services.
@@ -39,7 +39,7 @@ def local_cluster(db):
     # Vector search local service
     CFG.force_set('cluster.vector_search', 'http://localhost:8000')
     CFG.force_set('cluster.cdc', 'http://localhost:8001')
-    CFG.force_set('cluster.compute', 'dask+thread')
+    CFG.force_set('cluster.compute', 'local')
 
     from superduperdb.vector_search.server.app import app as vector_search_app
 
@@ -51,11 +51,5 @@ def local_cluster(db):
     from superduperdb.cdc.app import app as cdc_app
 
     cdc_server = _superduper_local_service('cdc', cdc_app, CFG)
-
-    # Local compute
-    from superduperdb.backends.dask.compute import DaskComputeBackend
-
-    local_compute = DaskComputeBackend('', local=True)
-    db.set_compute(local_compute)
 
     return _Client(db=db, services=(cdc_server, vector_search_server))

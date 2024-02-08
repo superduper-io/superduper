@@ -80,15 +80,13 @@ class CDCConfig(BaseConfigJSONable):
 @dc.dataclass
 class Cluster(BaseConfigJSONable):
     """
-    Describes a connection to distributed work via Dask
+    Describes the connection to a work scheduler
 
     :param backfill_batch_size: The number of rows to backfill at a time
                                 for vector-search loading
-    :param compute: The URI for compute i.e 'local', 'dask+tcp://localhost:8786'
+    :param compute: The URI for compute:
                     "None": Run all jobs in local mode i.e simple function call
                     "local": same as above
-                    "dask+thread": Run all jobs on a local threaded dask cluster
-                    "dask+tcp://<host>:<port>": Run all jobs on a remote dask cluster
                     "ray://<host>:<port>": Run all jobs on a remote ray cluster
 
     :param vector_search: The URI for the vector search service
@@ -100,7 +98,7 @@ class Cluster(BaseConfigJSONable):
                 "http://<host>:<port>": Connect a remote cdc service
     """
 
-    compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
+    compute: str = 'local'  # 'local', 'ray
     vector_search: str = 'in_memory'  # '<in_memory|lance>://localhost:8000'
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     backfill_batch_size: int = 100

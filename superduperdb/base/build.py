@@ -146,17 +146,6 @@ def build_compute(compute):
     if compute == 'local' or compute is None:
         return LocalComputeBackend()
 
-    if compute == 'dask+thread':
-        from superduperdb.backends.dask.compute import DaskComputeBackend
-
-        return DaskComputeBackend('local', local=True)
-
-    if compute.split('://')[0] == 'dask+tcp':
-        from superduperdb.backends.dask.compute import DaskComputeBackend
-
-        uri = compute.split('+')[-1]
-        return DaskComputeBackend(uri)
-
     if compute.split('://')[0] == 'ray':
         return RayComputeBackend(compute)
 

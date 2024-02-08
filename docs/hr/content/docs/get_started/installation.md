@@ -76,5 +76,4 @@ For more control, you can build the Docker images yourself using the following c
 
 ```bash
 make build_superduperdb
-make build_demo
 ```

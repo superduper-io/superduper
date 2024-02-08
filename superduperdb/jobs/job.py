@@ -29,7 +29,7 @@ class Job:
     :param identifier: unique identifier
     :param callable: function or method to be called
     :param db: DB instance to be used
-    :param future: future object returned by dask
+    :param future: future object returned by worker scheduler
     """
 
     callable: t.Optional[t.Callable]
@@ -86,8 +86,7 @@ class Job:
 
 class FunctionJob(Job):
     """
-    Job for running a function.
-    on a dask cluster.
+    Job for running a function on a compute engine.
 
     :param callable: function to be called
     :param args: positional arguments to be passed to the function

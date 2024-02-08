@@ -6,9 +6,9 @@ sidebar_position: 1
 
 Follow these steps to quickly get started:
 
-1. **Explore the demo**
+1. **Explore the Notebooks**
 
-    Visit [https://demo.superduperdb.com](https://demo.superduperdb.com) to explore our interactive demo and get a feel for what SuperDuperDB has to offer. For a high-level overview of our framework, visit our website at [https://superduperdb.com](https://superduperdb.com). This provides a bird's-eye view of the capabilities and features SuperDuperDB has to offer. The notebooks
+    Visit [SuperDuperDB@Colab](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/) to explore our interactive notebooks and get a feel for what SuperDuperDB has to offer. For a high-level overview of our framework, visit our website at [https://superduperdb.com](https://superduperdb.com). This provides a bird's-eye view of the capabilities and features SuperDuperDB has to offer. The notebooks
     hosted there, can be executed directly in the environment, but can also be cloned in [their original form in the open source repo](https://github.com/SuperDuperDB/superduperdb/tree/main/examples), and executed locally.
     These notebooks are also described on this documentation website in the [use-cases section](/docs/use-cases).
 

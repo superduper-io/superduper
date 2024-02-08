@@ -58,7 +58,7 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install common dependencies
 # ---------------
-RUN python -m pip install setuptools pip
+RUN pip install setuptools pip
 RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user \
     # JupyterLab extensions \
     theme-darcula \

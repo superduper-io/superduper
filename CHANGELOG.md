@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced JSON data with String format before storage in SQLAlchemy.
 - Implemented storage of byte data in base64 format.
 - Migrated MongoDB Atlas vector search as a standalone searcher like lance.
+- Deprecated Demo Image. Now Notebooks run in Colab.
 
 #### New Features & Functionality
 

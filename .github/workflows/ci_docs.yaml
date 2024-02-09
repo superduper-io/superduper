@@ -42,18 +42,14 @@ jobs:
             ${{ env.pythonLocation }}
           key: ubuntu-latest_python-3.11_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
 
-      - name: Build docs and use-cases
-        # build is available in docs/hr/build
-        run: |
-          make hr-docs
-
       - name: Install dependencies
         run: pip install .[docs]
-    
-      - name: Build inline api docs
-        # build is available in docs/hr/build/apidocs
+
+      - name: Build docs
         run: |
-          make api-docs
+          # Build HR and API docs
+          make build-docs
+          
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

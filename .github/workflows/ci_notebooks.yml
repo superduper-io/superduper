@@ -49,8 +49,8 @@ jobs:
             key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
         #---------------------------------------------------
 
-        - name: Install Demo Dependencies
-          run: python -m pip install .[demo]
+        - name: Install Dependencies
+          run: python -m pip install .
 
         - name: Run notebook testing
           env:

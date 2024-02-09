@@ -35,7 +35,7 @@ Real life use cases could be vectorizing diverse things like images, texts and s
 Before proceeding with this use-case, ensure that you have installed the necessary software requirements:
 
 ```bash
-!pip install superduperdb[demo]
+!pip install superduperdb
 ```
 
 ## Connect to Datastore

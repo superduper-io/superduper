@@ -71,7 +71,7 @@ SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB tr
 
 ## Example use-cases and apps (notebooks)
 
-The demo notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
+The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
 
 To learn more about *how* to use SuperDuperDB with your database, please check our [Docs](https://docs.superduperdb.com/) and official [Tutorials](https://docs.superduperdb.com/docs/docs/walkthrough/tutorial_walkthrough).
 

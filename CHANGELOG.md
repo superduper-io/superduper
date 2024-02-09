@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced JSON data with String format before storage in SQLAlchemy.
 - Implemented storage of byte data in base64 format.
 - Migrated MongoDB Atlas vector search as a standalone searcher like lance.
+- Deprecated Demo Image. Now Notebooks run in Colab.
+- Replace dask with ray compute backend
 
 #### New Features & Functionality
 
@@ -27,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `insert_to=<table-or-collection>` to `.predict` to allow single predictions to be saved.
 - Support vLLM (running locally or remotely on a ray cluster)
 - Support LLM service in OpenAI format
-- Add ray compute backend
 
 #### Bug Fixes
 

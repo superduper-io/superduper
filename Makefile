@@ -160,6 +160,9 @@ testenv_init: ## Initialize a local Testing environment
 
 	SUPERDUPERDB_DATA_DIR=$(SUPERDUPERDB_DATA_DIR) docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
+	# Block waiting for the testenv to become ready.
+	@cd deploy/testenv/; ./wait_ready.sh
+
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
@@ -179,10 +182,6 @@ unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
 integration-testing: ## Execute integration testing
-	# Block waiting for the testenv to become ready.
-	@cd deploy/testenv/; ./wait_ready.sh
-
-	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)

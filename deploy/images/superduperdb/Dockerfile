@@ -58,14 +58,13 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install common dependencies
 # ---------------
-RUN pip install --upgrade setuptools pip
-RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user \
+RUN pip install setuptools pip
+RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
     jupyterlab-lsp \
-    'python-lsp-server[all]' \
-    "dask-labextension>=5"
+    'python-lsp-server[all]'
 
 
 # Install Jupyterlab extensions
@@ -97,10 +96,9 @@ ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
 # Install project dependencies.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --user --editable \
-    .[${SUPERDUPERDB_EXTRAS}]
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
 # Install user-defined dependencies
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --user  -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
 
 # ---------------
 # Build Release
@@ -111,8 +109,7 @@ ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
 ONBUILD COPY --chown=superduper ${PWD}/contrib ./contrib
 # Drop cache to reduce image size.
-ONBUILD RUN pip install --upgrade --user \
-    superduperdb[${SUPERDUPERDB_EXTRAS}] \
+ONBUILD RUN python -m pip install --user superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache
     && pip cache purge
 ONBUILD WORKDIR ${HOME}/examples

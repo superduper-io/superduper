@@ -74,6 +74,10 @@ jobs:
         run: |
           make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
+      - name: Cleanup Docker
+        run: |    
+          docker system prune -af
+
       - name: Integration Testing
         if: ${{ startsWith(matrix.python-version, '3.11') }} # Dask requires local python and Dockerfile to be in sync
         run: |

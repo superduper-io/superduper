@@ -49,7 +49,6 @@ jobs:
         run: |
           # Build HR and API docs
           make build-docs
-          
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

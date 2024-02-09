@@ -33,7 +33,7 @@ For more information about SuperDuperDB and why we believe it is much needed, [r
 **To get started:**
 This documentation serves as your comprehensive guide to kickstarting your `superduperdb` journey 🚀
 
-Additionally, you can check the use-cases [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the [superduper community](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [live on your browser](https://demo.superduperdb.com/)! 
+Additionally, you can check the use-cases [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the [superduper community](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [live on your browser](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/)! 
 
 
 

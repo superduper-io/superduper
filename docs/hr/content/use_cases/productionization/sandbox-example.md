@@ -45,7 +45,7 @@ make testenv_image
 > 
 > The listed dependencies may refer to:
 > 1. standalone packages (e.g `tensorflow>=2.15.0`)
-> 2. dependency groups listed in `pyproject.toml` (e.g `.[demo,server]`)
+> 2. dependency groups listed in `pyproject.toml` (e.g `.[dev]`)
 
 Then start the environment with:
 

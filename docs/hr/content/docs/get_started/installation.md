@@ -56,7 +56,6 @@ Here are the available categories you can use:
 - `quality`: Installs tools for aiding in the development of high-quality code.
 - `testing`: Installs tools for testing the SuperDuperDB ecosystem.
 - `dev`: Installs all the above categories.
-- `demo`: Installs all the common dependencies and the dependencies required for the `examples`.
 
 You can find more details on these categories in the [pyproject.toml](https://github.com/SuperDuperDB/superduperdb/blob/main/pyproject.toml) file.
 
@@ -70,11 +69,8 @@ If you prefer using Docker, you can pull a pre-built Docker image from Docker Hu
 docker run -p 8888:8888 superduperdb/superduperdb:latest
 ```
 
-This command installs the base `superduperdb` image. If you want to run the ready-to-use examples, you'll need to download the required  dependencies at runtime. Alternatively, we provide a pre-built image  with all the dependencies for examples preinstalled:
+This command installs the base `superduperdb` image. If you want to run the ready-to-use examples, you'll need to download the required  dependencies at runtime. 
 
-```bash
-docker run -p 8888:8888 superduperdb/demo:latest
-```
 
 #### Building the image yourself
 
@@ -82,5 +78,4 @@ For more control, you can build the Docker images yourself using the following c
 
 ```bash
 make build_superduperdb
-make build_demo
 ```

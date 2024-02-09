@@ -123,18 +123,6 @@ enterprise = [
 
 dev = ["superduperdb[torch,apis,docs,quality,testing,server,enterprise]"]
 
-# Dependencies for supported Notebooks in examples dir.
-# Whatever modules are defined in the notebooks, must be also defined here.
-demo = [
-    "ipython",
-    "openai-clip",
-    "datasets>=2.14.6",
-    "soundfile",
-    "sentence-transformers",
-    "opencv-python",
-    "matplotlib",
-    "librosa",
-]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

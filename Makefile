@@ -19,6 +19,8 @@ help: ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
+##@ Release Management
+
 # RELEASE_VERSION defines the project version for the operator.
 # Update this value when you upgrade the version of your project.
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
@@ -44,6 +46,20 @@ new_release: ## Release a new version of SuperDuperDB
 
 	@echo "** Push release-$(RELEASE_VERSION)"
 	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
+
+
+build-docs: ## Generate Docs and API
+	@echo "===> Generate docusaurus docs and blog-posts <==="
+	cd docs/hr && npm i --legacy-peer-deps && npm run build
+	cd ../..
+	@echo "Build finished. The HTML pages are in docs/hr/build"
+
+	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
+	rm -rf docs/api/source/
+	rm -rf docs/hr/build/apidocs
+	sphinx-apidoc -f -o docs/api/source superduperdb
+	sphinx-build -a docs/api docs/hr/build/apidocs
+	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
 
 ##@ DevKit
@@ -157,36 +173,7 @@ testdb_shutdown: ## Terminate Databases Containers
 	cd deploy/databases/; docker compose down
 
 
-##@ CI Doc Functions
-
-api-docs: ## Generate Sphinx inline-API HTML documentation
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf docs/api/source/
-	rm -rf docs/hr/build/apidocs
-	sphinx-apidoc -f -o docs/api/source superduperdb
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
-
-
-hr-docs: ## Generate Docusaurus documentation and blog posts
-	@echo "===> Generate docusaurus docs and blog-posts <==="
-	cd docs/hr && npm i --legacy-peer-deps && npm run build
-	cd ../..
-	@echo "Build finished. The HTML pages are in docs/hr/build"
-
-
-docs: ## Generate Docs and API
-	@echo "===> Generate docusaurus docs and blog-posts <==="
-	cd docs/hr && npm i --legacy-peer-deps && npm run build
-	cd ../..
-	@echo "Build finished. The HTML pages are in docs/hr/build"
-
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf docs/api/source/
-	rm -rf docs/hr/build/apidocs
-	sphinx-apidoc -f -o docs/api/source superduperdb
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
+##@ CI Testing Functions
 
 unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/

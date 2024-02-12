@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
+- 
+
+#### New Features & Functionality
+- CI fails if CHANGELOG.md is not updated on PRs
+
+#### Bug Fixes
+- 
+
+## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
+
+#### Changed defaults / behaviours
 
 - Support 3.10+ due to `dataclass` supported features
 - Updated the table creation method in MetaDataStore to improve compatibility across various databases.

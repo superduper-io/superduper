@@ -30,6 +30,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
+        # Remind users to update changelog
+      - name: Check Changelog Action
+        uses: tarides/changelog-check-action@v2
+        with:
+            changelog: CHANGELOG.md
+
       #---------------------------------------------------
       # Configuring Python environments.
       #

@@ -126,12 +126,12 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 
 
 
-testenv_image: ## Build a sandbox image
+testenv_image: ## Build a sandbox image (argument: EXTRA_ARGS=<docker build args>)
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg SUPERDUPERDB_EXTRAS="dev"
-
+		--build-arg SUPERDUPERDB_EXTRAS="dev" \
+		${EXTRA_ARGS}
 
 
 ##@ Testing Environments

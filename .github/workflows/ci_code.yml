@@ -1,6 +1,6 @@
 name: Code Testing
 
-on:  # rules for when this action will be triggered
+on:
   pull_request:
     branches:
       - main
@@ -9,104 +9,111 @@ on:  # rules for when this action will be triggered
       - '*.md'
       - '*.rst'
       - ".github"
-  workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
+  workflow_dispatch:
 
-# When this workflow is queued, automatically cancel any previous running
-# or pending jobs from the same branch
+
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  code-testing:
+  # ---------------------------------
+  # Code Quality
+  # ---------------------------------
+  code-quality:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
-        python-version: ["3.10", "3.11"] # Due to cache limitations, check only the earliest and the latest.
-
+        os: [ "ubuntu-latest" ]
+        python-version: ["3.10", "3.11"]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-        # Remind users to update changelog
-      - name: Check Changelog Action
-        uses: tarides/changelog-check-action@v2
-        with:
-            changelog: CHANGELOG.md
+      # Remind users to update changelog
+    - name: Check Changelog Action
+      uses: tarides/changelog-check-action@v2
+      with:
+        changelog: CHANGELOG.md
 
-      #---------------------------------------------------
-      # Configuring Python environments.
-      #
-      # We intentionally commented the `cache` field to remind us not to enable it.
-      # The reason is that most of the time is spent on package installation rather than package downloading.
-      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
-      - name: Set up Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          #cache: 'pip' # Do not activate
+    #---------------------------------------------------
+    # Configuring Python environments.
+    #
+    # We intentionally commented the `cache` field to remind us not to enable it.
+    # The reason is that most of the time is spent on package installation rather than package downloading.
+    # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
+    - name: Set up Python ${{ matrix.python-version }}
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        #cache: 'pip' # Do not activate
 
-      - name: Cache Python ${{ matrix.python-version }}
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml')}}
+    - name: Cache Python ${{ matrix.python-version }}
+      uses: actions/cache@v3
+      with:
+        #path: ${{ env.PIP_CACHE_DIR }} # # Cache the pip cache dir.  You still need to install the packages.
+        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
+        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
 
-      #---------------------------------------------------
+    - name: Check core imports
+      run: |
+        python -m pip install impall==1.3.1
+        python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
 
-      - name: Check core imports
-        run: |
-          # This job checks that no optional dependencies are imported in the core code.
-          python -m pip install impall==1.3.1
-          python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
+    - name: Lint and type-check
+      run: |
+        make lint-and-type-check
+        
 
-      - name: Lint and type-check
-        run: |
-          make lint-and-type-check
+  # ---------------------------------
+  # Code Testing
+  # ---------------------------------
+  code-testing:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Docker Cache Storage Backend
+      run: |
+        docker buildx create --use --driver=docker-container        
 
-      - name: Build Sandbox Image
-        run: |
-          # Cleanup images
-          docker system prune -af
-          
-          # Build sandbox image for testing.
-          make testenv_image
+    - name: Build Sandbox Image
+      run: |
+        # Build sandbox image for testing.
+        make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
 
-      - name: Unit Testing
-        run: |
-          # Run unit tests, within the sandbox image. This is to avoid downloading dependencies once for the
-          # container, and once for the host.
-          docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="-s --cov=superduperdb --cov-report=xml"'
+    - name: Unit Testing
+      run: |
+        # Run unit tests, within the sandbox image. This is to avoid downloading dependencies once for the
+        # container, and once for the host.
+        docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="-s --cov=superduperdb --cov-report=xml"'
 
-      - name: Start Testing Environment
-        run: |
-          # Update hostnames
-          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-          
-          # Run the integrated testing environment
-          make testenv_init
+    - name: Start Testing Environment
+      run: |
+        # Update hostnames
+        echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+        
+        # Run the integrated testing environment
+        make testenv_init
 
-      - name: Integration Testing
-        run: |
-          # Run the test-suite
-          docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+    - name: Integration Testing
+      run: |
+        # Run the test-suite
+        docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
-      - name: Shutdown Testing Environment
-        run: |         
-          # Run the integrated testing environment
-          make testenv_init
+    - name: Shutdown Testing Environment
+      run: |
+        # Run the integrated testing environment
+        make testenv_init
 
-          # Remove the data directory
-          sudo rm -rf deploy/testenv/.test_data     
+        # Remove the data directory
+        sudo rm -rf deploy/testenv/.test_data     
+    
 
-
-#      - name: Upload code coverage to Codecov
-#        uses: codecov/codecov-action@v3.1.4
-#        with:
-#          env_vars: RUNNER_OS,PYTHON_VERSION
-#          file: ./coverage.xml
-#          fail_ci_if_error: false
-#          name: codecov-umbrella
+    #      - name: Upload code coverage to Codecov
+    #        uses: codecov/codecov-action@v3.1.4
+    #        with:
+    #          env_vars: RUNNER_OS,PYTHON_VERSION
+    #          file: ./coverage.xml
+    #          fail_ci_if_error: false
+    #          name: codecov-umbrella

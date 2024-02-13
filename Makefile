@@ -84,13 +84,6 @@ lint-and-type-check: install-devkit ##  Perform code linting and type checking
 	black --check $(DIRECTORIES)
 	ruff check $(DIRECTORIES)
 
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf docs/api/source/
-	rm -rf docs/hr/build/apidocs
-	sphinx-apidoc -f -o docs/api/source superduperdb
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
-
 	@echo "===> Static Typing Check <==="
 	mypy superduperdb
 	# Check for missing docstrings

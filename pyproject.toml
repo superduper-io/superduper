@@ -80,13 +80,6 @@ apis = [
     "anthropic==0.12.0",
 ]
 
-quality = [
-    # Static Typing
-    "types-pillow>=9.5.0.4",
-    "types-tqdm>=4.65.0.1",
-    "monkeytype",
-    "boto3-stubs>=1.26.154",
-]
 testing = [
     "fastapi>=0.103.1",
     "httpx>=0.24.1",

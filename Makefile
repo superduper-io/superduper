@@ -63,7 +63,7 @@ install-devkit: ## Add essential development tools
 	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
 
 	@echo "Download Code Testing dependencies"
-	python -m pip install --user pytest
+	python -m pip install --user pytest pytest-cov
 
 
 ##@ Code Quality

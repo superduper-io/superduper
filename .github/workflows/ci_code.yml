@@ -57,9 +57,6 @@ jobs:
 
       #---------------------------------------------------
 
-      - name: Install Dependencies
-        run: python -m pip install .[dev]
-
       - name: Check core imports
         run: |
           # This job checks that no optional dependencies are imported in the core code.

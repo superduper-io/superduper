@@ -60,7 +60,7 @@ install-devkit: ## Add essential development tools
 	python -m pip install --user sphinx furo
 
 	@echo "Download Code Quality dependencies"
-	python -m pip install --user black ruff mypy myst_parser types-PyYAML types-requests
+	python -m pip install --user black ruff mypy myst_parser types-PyYAML types-requests interrogate
 
 
 ##@ Code Quality

@@ -31,18 +31,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-      #---------------------------------------------------
-      # Configuring Python environments.
-      #
-      # We intentionally commented the `cache` field to remind us not to enable it.
-      # The reason is that most of the time is spent on package installation rather than package downloading.
-      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
     - name: Set up Python ${{ matrix.python-version }}
       id: setup-python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install SuperDuperDB Project
+      run: |
+        python -m pip install --user .
+
+      #---------------------------------------------------
+      # Configuring Python environments.
+      #
+      # We intentionally commented the `cache` field to remind us not to enable it.
+      # The reason is that most of the time is spent on package installation rather than package downloading.
+      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
     - name: Cache Python ${{ matrix.python-version }}
       uses: actions/cache@v3
       with:
@@ -51,9 +55,6 @@ jobs:
         key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
       #---------------------------------------------------
 
-    - name: Install SuperDuperDB Project
-      run: |
-        python -m pip install --user .
 
     - name: Check core imports
       run: |

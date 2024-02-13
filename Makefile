@@ -51,7 +51,7 @@ install-devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	python -m pip install pre-commit
-	pre-commit autoupdate
+	#pre-commit autoupdate
 
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser

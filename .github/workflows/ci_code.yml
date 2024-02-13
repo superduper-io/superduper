@@ -68,7 +68,7 @@ jobs:
     - name: Unit Testing
       run: |
         make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
-        
+
 
   # ---------------------------------
   # Integration Testing

@@ -110,7 +110,7 @@ fix-and-test: install-devkit ##  Lint the code before testing
 
 
 
-##@ Base Image Management
+##@ Image Management
 
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build a minimal Docker image for general use
@@ -137,7 +137,7 @@ testenv_image: ## Build a sandbox image (argument: EXTRA_ARGS=<docker build args
 		${EXTRA_ARGS}
 
 
-##@ Testing Environments
+##@ Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Ensure hostnames"

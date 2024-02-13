@@ -62,6 +62,9 @@ install-devkit: ## Add essential development tools
 	@echo "Download Code Quality dependencies"
 	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
 
+	@echo "Download Code Testing dependencies"
+	python -m pip install --user pytest
+
 
 ##@ Code Quality
 
@@ -93,7 +96,7 @@ lint-and-type-check: install-devkit ##  Perform code linting and type checking
 	# Check for deadcode
 	# vulture ./
 
-fix-and-test: ##  Lint the code before testing
+fix-and-test: install-devkit ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

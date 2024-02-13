@@ -65,7 +65,7 @@ install-devkit: ## Add essential development tools
 
 ##@ Code Quality
 
-build-docs: install-devkit ## Generate Docs and API
+build-docs: ## Generate Docs and API
 	@echo "===> Generate docusaurus docs and blog-posts <==="
 	cd docs/hr && npm i --legacy-peer-deps && npm run build
 	cd ../..
@@ -79,7 +79,7 @@ build-docs: install-devkit ## Generate Docs and API
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
 
-lint-and-type-check: install-devkit ##  Perform code linting and type checking
+lint-and-type-check: ##  Perform code linting and type checking
 	@echo "===> Code Formatting <==="
 	black --check $(DIRECTORIES)
 	ruff check $(DIRECTORIES)
@@ -93,7 +93,7 @@ lint-and-type-check: install-devkit ##  Perform code linting and type checking
 	# Check for deadcode
 	# vulture ./
 
-fix-and-test: install-devkit ##  Lint the code before testing
+fix-and-test: ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting
@@ -174,13 +174,13 @@ testdb_shutdown: ## Terminate Databases Containers
 
 ##@ CI Testing Functions
 
-unit-testing: install-devkit ## Execute unit testing
+unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
-integration-testing: install-devkit ## Execute integration testing
+integration-testing: ## Execute integration testing
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
-test_notebooks: install-devkit  ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
+test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
 	@if [ -n "${NOTEBOOKS}" ]; then	\

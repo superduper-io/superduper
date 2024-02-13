@@ -53,7 +53,12 @@ jobs:
 
     - name: Install SuperDuperDB Project
       run: |
-        python -m pip install --user .[testsuite]
+        # Install core and testsuite dependencies on the cached python environment.
+        python -m pip install .[testsuite]
+
+    - name: Install DevKit (docs, testing, etc)
+      run: |
+        make install-devkit
 
     - name: Check core imports
       run: |
@@ -94,7 +99,7 @@ jobs:
     - name: Build Sandbox Image
       run: |
         # Build sandbox image for testing.
-        make testenv_image EXTRA_ARGS="0"
+        make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
 
     - name: Start Testing Environment
       run: |
@@ -107,7 +112,7 @@ jobs:
     - name: Integration Testing
       run: |
         # Run the test-suite within the sandbox image.
-        docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+        docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
     - name: Shutdown Testing Environment
       run: |

@@ -70,17 +70,16 @@ install-devkit: ## Add essential development tools
 	python -m pip install pre-commit
 	pre-commit autoupdate
 
-	# Download tools for code quality testing
-	python -m pip install .[quality]
-
 	# Set git to continuously update submodules
 	git config --global submodule.recurse true
 
+	@echo "Download Docs dependencies"
+	python -m pip install --user sphinx furo
+
+	@echo "Download Code Quality dependencies"
+	python -m pip install --user black ruff mypy myst_parser
 
 lint-and-type-check: ##  Perform code linting and type checking
-	@echo "Download dependencies"
-	python -m pip install --user sphinx black ruff mypy myst_parser furo
-
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
 	# Code formatting
 	rm -rf docs/api/source/

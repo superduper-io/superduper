@@ -65,6 +65,10 @@ jobs:
 
       - name: Lint and type-check
         run: |
+          # Install tools
+          make install-devkit
+          
+          # Run tlinter
           make lint-and-type-check
 
       - name: Build Sandbox Image

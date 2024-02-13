@@ -79,7 +79,7 @@ install-devkit: ## Add essential development tools
 
 lint-and-type-check: ##  Perform code linting and type checking
 	@echo "Download dependencies"
-	python -m pip install --user sphinx black ruff mypy myst_parser
+	python -m pip install --user sphinx black ruff mypy myst_parser furo
 
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
 	# Code formatting

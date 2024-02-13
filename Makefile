@@ -47,23 +47,6 @@ new_release: ## Release a new version of SuperDuperDB
 	@echo "** Push release-$(RELEASE_VERSION)"
 	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
 
-
-build-docs: ## Generate Docs and API
-	@echo "===> Generate docusaurus docs and blog-posts <==="
-	cd docs/hr && npm i --legacy-peer-deps && npm run build
-	cd ../..
-	@echo "Build finished. The HTML pages are in docs/hr/build"
-
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf docs/api/source/
-	rm -rf docs/hr/build/apidocs
-	sphinx-apidoc -f -o docs/api/source superduperdb
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
-
-
-##@ DevKit
-
 install-devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
@@ -79,7 +62,27 @@ install-devkit: ## Add essential development tools
 	@echo "Download Code Quality dependencies"
 	python -m pip install --user black ruff mypy myst_parser
 
-lint-and-type-check: ##  Perform code linting and type checking
+	@echo "Install mypy stubs"
+	python -m mypy --install-types
+
+
+##@ Code Quality
+
+build-docs: install-devkit ## Generate Docs and API
+	@echo "===> Generate docusaurus docs and blog-posts <==="
+	cd docs/hr && npm i --legacy-peer-deps && npm run build
+	cd ../..
+	@echo "Build finished. The HTML pages are in docs/hr/build"
+
+	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
+	rm -rf docs/api/source/
+	rm -rf docs/hr/build/apidocs
+	sphinx-apidoc -f -o docs/api/source superduperdb
+	sphinx-build -a docs/api docs/hr/build/apidocs
+	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
+
+
+lint-and-type-check: install-devkit ##  Perform code linting and type checking
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
 	# Code formatting
 	rm -rf docs/api/source/

@@ -78,6 +78,9 @@ install-devkit: ## Add essential development tools
 
 
 lint-and-type-check: ##  Perform code linting and type checking
+	@echo "Download dependencies"
+	python -m pip install --user sphinx black ruff mypy
+
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
 	# Code formatting
 	rm -rf docs/api/source/
@@ -87,6 +90,7 @@ lint-and-type-check: ##  Perform code linting and type checking
 	sphinx-apidoc -f -o docs/api/source superduperdb
 	ruff check $(DIRECTORIES)
 	sphinx-build -a docs/api docs/hr/build/apidocs
+
 	# Static Typing Checker
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 	mypy superduperdb

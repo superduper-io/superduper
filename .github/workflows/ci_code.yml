@@ -65,6 +65,7 @@ jobs:
 
       - name: Lint and type-check
         run: |
+          python -m pip install sphinx black ruff
           make lint-and-type-check
 
       - name: Build Sandbox Image

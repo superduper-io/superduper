@@ -57,10 +57,10 @@ install-devkit: ## Add essential development tools
 	git config --global submodule.recurse true
 
 	@echo "Download Docs dependencies"
-	python -m pip install --user sphinx furo
+	python -m pip install --user sphinx furo myst_parser
 
 	@echo "Download Code Quality dependencies"
-	python -m pip install --user black ruff mypy myst_parser types-PyYAML types-requests interrogate
+	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
 
 
 ##@ Code Quality
@@ -80,18 +80,18 @@ build-docs: install-devkit ## Generate Docs and API
 
 
 lint-and-type-check: install-devkit ##  Perform code linting and type checking
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	# Code formatting
-	rm -rf docs/api/source/
+	@echo "===> Code Formatting <==="
 	black --check $(DIRECTORIES)
-	rm -rf docs/hr/build/apidocs
-	# Linter and code formatting
-	sphinx-apidoc -f -o docs/api/source superduperdb
 	ruff check $(DIRECTORIES)
-	sphinx-build -a docs/api docs/hr/build/apidocs
 
-	# Static Typing Checker
+	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
+	rm -rf docs/api/source/
+	rm -rf docs/hr/build/apidocs
+	sphinx-apidoc -f -o docs/api/source superduperdb
+	sphinx-build -a docs/api docs/hr/build/apidocs
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
+
+	@echo "===> Static Typing Check <==="
 	mypy superduperdb
 	# Check for missing docstrings
 	interrogate superduperdb

@@ -66,49 +66,50 @@ jobs:
           python -m pip install impall==1.3.1
           python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
 
-      - name: Basic health check
-        run: |
-          black --version
-          ruff --version
-          mypy --version
-
       - name: Lint and type-check
         run: |
           make lint-and-type-check
 
+      - name: Build Sandbox Image
+        run: |
+          # Cleanup images
+          docker system prune -af
+          
+          # Build sandbox image for testing.
+          make testenv_image
+
       - name: Unit Testing
         run: |
-          make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+          # Run unit tests, within the sandbox image. This is to avoid downloading dependencies once for the
+          # container, and once for the host.
+          docker run -ti --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
 
-      - name: Cleanup Docker
-        run: |    
-          docker system prune -af
-
-      - name: Integration Testing
-        if: ${{ startsWith(matrix.python-version, '3.11') }} # Dask requires local python and Dockerfile to be in sync
+      - name: Start Testing Environment
         run: |
           # Update hostnames
           echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
           
-          # Build sandbox image for testing.
-          make testenv_image
-          
           # Run the integrated testing environment
           make testenv_init
-          
+
+      - name: Integration Testing
+        run: |
           # Run the test-suite
-          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
-          
-          # Destroy the testing environment
-          make testenv_shutdown
+          docker run -ti --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+
+      - name: Shutdown Testing Environment
+        run: |         
+          # Run the integrated testing environment
+          make testenv_init
 
           # Remove the data directory
-          sudo rm -rf deploy/testenv/.test_data
+          sudo rm -rf deploy/testenv/.test_data     
 
-      - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v3.1.4
-        with:
-          env_vars: RUNNER_OS,PYTHON_VERSION
-          file: ./coverage.xml
-          fail_ci_if_error: false
-          name: codecov-umbrella
+
+#      - name: Upload code coverage to Codecov
+#        uses: codecov/codecov-action@v3.1.4
+#        with:
+#          env_vars: RUNNER_OS,PYTHON_VERSION
+#          file: ./coverage.xml
+#          fail_ci_if_error: false
+#          name: codecov-umbrella

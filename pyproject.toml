@@ -68,7 +68,6 @@ dependencies = [
 
 [project.optional-dependencies]
 torch = [
-    "accelerate>=0.20.1",
     "torchvision",
     "torchaudio",
 ]
@@ -86,11 +85,7 @@ testsuite = [
 #    "fastapi>=0.103.1",
 #    "httpx>=0.24.1",
 #    "lorem>=0.1.1",
-#    "pytest>=7.3.1",
-#    "pytest-cov>=2.12.1",
 #    "pytest-xdist>=3.3.1",
-#    "nbval>=0.10.0",
-
 #    "pytest-asyncio",
 #    "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
@@ -105,7 +100,7 @@ enterprise = [
     "sentence-transformers",
 ]
 
-dev = ["superduperdb[torch,docs,quality,testsuite,server,enterprise]"]
+dev = ["superduperdb[torch,testsuite,server,enterprise]"]
 
 
 [project.urls]

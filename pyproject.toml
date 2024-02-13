@@ -72,17 +72,16 @@ torch = [
     "torchvision",
     "torchaudio",
 ]
-apis = [
-    "openai>=1.1.2",
-    "cohere==4.40",
-    "anthropic==0.12.0",
-]
 
+# Testsuite includes the dependencies imported on test-cases (e.g, torch).
+# It should not include the tooling for testing (e.g, pytest)
 testsuite = [
     "torch>=2.0.0,!=2.0.1",
     "transformers>=4.29.1",
     "vcrpy",
-
+    "openai>=1.1.2",
+    "cohere==4.40",
+    "anthropic==0.12.0",
 #    "fastapi>=0.103.1",
 #    "httpx>=0.24.1",
 #    "lorem>=0.1.1",
@@ -105,7 +104,7 @@ enterprise = [
     "sentence-transformers",
 ]
 
-dev = ["superduperdb[torch,apis,docs,quality,testsuite,server,enterprise]"]
+dev = ["superduperdb[torch,docs,quality,testsuite,server,enterprise]"]
 
 
 [project.urls]

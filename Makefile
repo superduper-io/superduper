@@ -53,9 +53,6 @@ install-devkit: ## Add essential development tools
 	python -m pip install pre-commit
 	pre-commit autoupdate
 
-	# Set git to continuously update submodules
-	git config --global submodule.recurse true
-
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser
 
@@ -177,13 +174,13 @@ testdb_shutdown: ## Terminate Databases Containers
 
 ##@ CI Testing Functions
 
-unit-testing: ## Execute unit testing
+unit-testing: install-devkit ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
-integration-testing: ## Execute integration testing
+integration-testing: install-devkit ## Execute integration testing
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
-test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
+test_notebooks: install-devkit  ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
 	@if [ -n "${NOTEBOOKS}" ]; then	\

@@ -31,22 +31,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    #---------------------------------------------------
+    # Configuring Python environments.
+    #
+    # We cache both the pip packages and the installation dir.
+    # If the pyproject remains unchanged, we re-use the existing installation dir.
+    # If the pyproject has changed, we reinstall everything using the cached pip packages.
+    - name: Cache Pip Packages
       id: setup-python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip' # caching pip dependencies
 
-      #---------------------------------------------------
-      # Configuring Python environments.
-      #
-      # We intentionally commented the `cache` field to remind us not to enable it.
-      # The reason is that most of the time is spent on package installation rather than package downloading.
-      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
-    - name: Cache Python ${{ matrix.python-version }}
+    - name: Cache Python Installation
       uses: actions/cache@v3
       with:
-        #path: ${{ env.PIP_CACHE_DIR }} # # Cache the pip cache dir.  You still need to install the packages.
         path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
         key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
       #---------------------------------------------------
@@ -69,6 +69,13 @@ jobs:
       run: |
         make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
+    - name: Upload code coverage to Codecov
+      uses: codecov/codecov-action@v3.1.4
+      with:
+        env_vars: RUNNER_OS,PYTHON_VERSION
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        name: codecov-umbrella
 
   # ---------------------------------
   # Integration Testing
@@ -87,7 +94,7 @@ jobs:
     - name: Build Sandbox Image
       run: |
         # Build sandbox image for testing.
-        make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
+        make testenv_image EXTRA_ARGS="0"
 
     - name: Start Testing Environment
       run: |
@@ -108,13 +115,4 @@ jobs:
         make testenv_init
 
         # Remove the data directory
-        sudo rm -rf deploy/testenv/.test_data     
-    
-
-    #      - name: Upload code coverage to Codecov
-    #        uses: codecov/codecov-action@v3.1.4
-    #        with:
-    #          env_vars: RUNNER_OS,PYTHON_VERSION
-    #          file: ./coverage.xml
-    #          fail_ci_if_error: false
-    #          name: codecov-umbrella
+        sudo rm -rf deploy/testenv/.test_data

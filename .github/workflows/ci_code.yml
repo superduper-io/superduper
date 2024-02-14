@@ -9,8 +9,8 @@ on:
       - ".github/**"
       - 'docs/**'
       - 'examples/**'
-      - '**.md'
-      - '**.rst'
+      - '*.md'
+      - '*.rst'
   workflow_dispatch:
 
 

@@ -103,8 +103,8 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
         with:
-          file: ./deploy/images/superduperdb
-          context: .
+          file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb
+          context: /home/runner/work/superduperdb/superduperdb
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

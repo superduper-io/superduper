@@ -104,13 +104,16 @@ jobs:
       - name: Build Sandbox Image
         run: |
           # Build sandbox image for testing.
-          make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha --output=type=image,dest=/tmp/sandbox.tar"  
+          make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
+          
+          # Use image as artifact for the next job
+          docker save -o ~/sandbox_latest.tar sandbox:latest
 
       - name: Upload Image as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: sandbox-image
-          path: /tmp/sandbox.tar
+          name: sandbox
+          path: ~/sandbox_latest.tar
 
   integration-testing:
     needs: [ 'build-image' ]
@@ -121,15 +124,15 @@ jobs:
 
       #---------------------------------------------------
       # Re-use docker layers from the previous step
-    - name: Download artifact
-      uses: actions/download-artifact@v3
+    - name: Download Image from Artifact
+      uses: actions/download-artifact@v4
       with:
-        name: sandbox-image
-        path: /tmp
+        name: sandbox
+        path: ~/
 
     - name: Load image
       run: |
-        docker load --input /tmp/sandbox.tar
+        docker load --input ~/sandbox_latest.tar
       # --------------------------------------------------
 
     - name: Start Testing Environment

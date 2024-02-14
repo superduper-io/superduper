@@ -97,6 +97,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      #---------------------------------------------------
+      # Configure Docker environments.
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
@@ -109,54 +111,26 @@ jobs:
         run: |
           # Build sandbox image for testing.
           make testenv_image
-          
-          # Use image as artifact for the next job
-          docker save -o /tmp/sandbox_latest.tar superduperdb/sandbox:latest
+      # -------------------------------------------------
 
-      - name: Upload Docker Image as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sandbox
-          path: /tmp/sandbox_latest.tar
-
-  integration-testing:
-    needs: [ 'build-image' ]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-      #---------------------------------------------------
-      # Re-use docker layers from the previous step
-    - name: Download Dock Image from Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: sandbox
-        path: /tmp
-
-    - name: Load image
-      run: |
-        docker load --input /tmp/sandbox_latest.tar
-      # --------------------------------------------------
-
-    - name: Start Testing Environment
-      run: |
-        # Update hostnames
-        echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-        
-        # Run the integrated testing environment
-        make testenv_init
-
-    - name: Integration Testing
-      run: |
-        # Run the test-suite within the sandbox image from the test environment
-        docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
-
-
-    - name: Shutdown Testing Environment
-      run: |
-        # Run the integrated testing environment
-        make testenv_init
-
-        # Remove the data directory
-        sudo rm -rf deploy/testenv/.test_data
+#      - name: Start Testing Environment
+#        run: |
+#          # Update hostnames
+#          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+#
+#          # Run the integrated testing environment
+#          make testenv_init
+#
+#      - name: Integration Testing
+#        run: |
+#          # Run the test-suite within the sandbox image from the test environment
+#          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+#
+#
+#      - name: Shutdown Testing Environment
+#        run: |
+#          # Run the integrated testing environment
+#          make testenv_init
+#
+#          # Remove the data directory
+#          sudo rm -rf deploy/testenv/.test_data

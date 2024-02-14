@@ -101,12 +101,12 @@ jobs:
       # Configure Docker environment.
       - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v5
-        with:
-          file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
-          context: /home/runner/work/superduperdb/superduperdb
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+#      - uses: docker/build-push-action@v5
+#        with:
+#          file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
+#          context: /home/runner/work/superduperdb/superduperdb
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
 
 
       - name: Build Docker Image

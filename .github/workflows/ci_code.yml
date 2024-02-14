@@ -91,7 +91,7 @@ jobs:
   # Integration Testing
   # ---------------------------------
   integration-testing:
-    needs: [ 'unit-testing' ]
+    #needs: [ 'unit-testing' ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

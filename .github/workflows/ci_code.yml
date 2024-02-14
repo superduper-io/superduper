@@ -113,6 +113,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+      #---------------------------------------------------
+      # Re-use docker layers from the previous step
+    - name: Create Docker Cache Storage Backend
+      run: |
+        docker buildx create --use --driver=docker-container        
+
+    - name: Build Sandbox Image
+      run: |
+        # Build sandbox image for testing.
+        make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
+      # --------------------------------------------------
+
     - name: Start Testing Environment
       run: |
         # Update hostnames

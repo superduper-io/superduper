@@ -1,6 +1,6 @@
+DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
-DIRECTORIES = superduperdb test 
-SUPERDUPERDB_DATA_DIR ?= .test_data
+
 
 ##@ General
 
@@ -131,32 +131,36 @@ testenv_image: ## Build a sandbox image (argument: EXTRA_ARGS=<docker build args
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
 		--build-arg SUPERDUPERDB_EXTRAS="dev" \
-		${EXTRA_ARGS}
+		$(EXTRA_ARGS)
 
 
 ##@ Testing Environment
 
+
+# Export variables
+export SUPERDUPERDB_DATA_DIR ?= .test_data
+export SUPERDUPERDB_ARTIFACTS_DIR ?= /tmp/artifacts
+
 testenv_init: ## Initialize a local Testing environment
-	@echo "===> Ensure hostnames"
-	@deploy/testenv/validate_hostnames.sh
-
-	@echo "===> Ensure mongodb volume is present"
-	mkdir -p deploy/testenv/$(SUPERDUPERDB_DATA_DIR)
-
-	@echo "===> Ensure Images"
+	@echo "===> Discover Images"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
         echo "superduper/sandbox found";\
-        echo "*************************************************************************";\
-        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image' **";\
-        echo "*************************************************************************";\
     else \
       	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
       	exit -1;\
     fi
 
-	SUPERDUPERDB_DATA_DIR=$(SUPERDUPERDB_DATA_DIR) docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
+	@echo "===> Discover Hostnames"
+	@deploy/testenv/validate_hostnames.sh
 
-	# Block waiting for the testenv to become ready.
+	@echo "===> Discover Paths"
+	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
+	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+
+	@echo "===> Run TestEnv"
+	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
+
+	@echo "===> Waiting for TestEnv to become ready"
 	@cd deploy/testenv/; ./wait_ready.sh
 
 testenv_shutdown: ## Terminate the local Testing environment
@@ -183,6 +187,6 @@ integration-testing: ## Execute integration testing
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
-	@if [ -n "${NOTEBOOKS}" ]; then	\
-		pytest --nbval-lax ${NOTEBOOKS}; 	\
+	@if [ -n "$(NOTEBOOKS)" ]; then	\
+		pytest --nbval-lax $(NOTEBOOKS); 	\
 	fi

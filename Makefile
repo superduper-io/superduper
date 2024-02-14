@@ -2,6 +2,11 @@ DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
 
 
+# Export variables
+export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
+export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
+
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -135,11 +140,6 @@ testenv_image: ## Build a sandbox image (argument: EXTRA_ARGS=<docker build args
 
 
 ##@ Testing Environment
-
-
-# Export variables
-export SUPERDUPERDB_DATA_DIR ?= .test_data
-export SUPERDUPERDB_ARTIFACTS_DIR ?= /tmp/artifacts
 
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Discover Images"

@@ -4,12 +4,13 @@ on:
   pull_request:
     branches:
       - main
+    paths: # Paths that may affect code quality
     paths-ignore:
+      - ".github/**"
       - 'docs/**'
-      - '*.md'
-      - '*.rst'
-      - ".github"
-      - "CHANGELOG.md"
+      - 'examples/**'
+      - '**.md'
+      - '**.rst'
   workflow_dispatch:
 
 

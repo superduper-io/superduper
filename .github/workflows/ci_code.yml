@@ -104,7 +104,13 @@ jobs:
       - name: Build Sandbox Image
         run: |
           # Build sandbox image for testing.
-          make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"  
+          make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha --output=type=image,dest=/tmp/sandbox.tar"  
+
+      - name: Upload Image as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sandbox-image
+          path: /tmp/sandbox.tar
 
   integration-testing:
     needs: [ 'build-image' ]
@@ -115,14 +121,15 @@ jobs:
 
       #---------------------------------------------------
       # Re-use docker layers from the previous step
-    - name: Create Docker Cache Storage Backend
-      run: |
-        docker buildx create --use --driver=docker-container        
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: sandbox-image
+        path: /tmp
 
-    - name: Build Sandbox Image
+    - name: Load image
       run: |
-        # Build sandbox image for testing.
-        make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
+        docker load --input /tmp/sandbox.tar
       # --------------------------------------------------
 
     - name: Start Testing Environment

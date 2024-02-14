@@ -4,13 +4,18 @@ sidebar_position: 2
 
 # Design
 
+## Architecture
+Here is a detailed view of the `superduperdb` architecture:
+
+![architecture_detailed](/img/architecture_detailed.png)
+
 ## Schematic
 
 Here is a schematic of the `superduperdb` design.
 
 ![](/img/light.png)
 
-## Explanation
+### Explanation
 
 1. `superduperdb` expects data and components to be added/ updated from a range of client-side mechanisms: **scripts**, **apps**, **notebooks** or **third-party database clients** (possibly non-python).
 

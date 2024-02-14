@@ -1,9 +1,8 @@
 ---
 sidebar_position: 1
 ---
-# Text
 
-# Vector-Search with SuperDuperDB
+# Building a Vanilla Text Vector-Search on MongoDB
 
 This guide shows how to use SuperDuperDB for vector search, a powerful technique to find similar documents. We'll cover the setup and demonstrate searching a dataset of documents. Vector search with SuperDuperDB is a useful tool in various situations:
 

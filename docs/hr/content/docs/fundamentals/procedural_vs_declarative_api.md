@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# Procedural/ Declarative
+# Procedural and Declarative API
 
 `superduperdb` provides 2 principle approaches for applying AI to the database
 

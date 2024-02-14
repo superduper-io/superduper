@@ -2,29 +2,10 @@
 sidebar_position: 5
 ---
 
-# Multimodal DuckDB
+# Building a Multimodel Vector-Search on DuckDB
 
-## End-to-End Example Using SQL Databases
 
-SuperDuperDB offers the flexibility to connect to various SQL databases, including but not limited to:
-
-- MongoDB
-- PostgreSQL
-- SQLite
-- DuckDB
-- BigQuery
-- ClickHouse
-- DataFusion
-- Druid
-- Impala
-- MSSQL
-- MySQL
-- Oracle
-- pandas
-- Polars
-- PySpark
-- Snowflake
-- Trino
+SuperDuperDB offers the flexibility to connect to various SQL databases. Check out range of supported SQL databases [here](../../docs/data_integrations/)
 
 In this example, we showcase how to implement multimodal vector-search with DuckDB. This is an extension of multimodal vector-search with MongoDB, which is just slightly easier to set up (see [here](https://docs.superduperdb.com/docs/use_cases/items/multimodal_image_search_clip)). Everything demonstrated here applies equally to any of the supported SQL databases mentioned above, as well as to tabular data formats on disk, such as `pandas`.
 

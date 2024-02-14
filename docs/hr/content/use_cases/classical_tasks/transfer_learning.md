@@ -1,6 +1,4 @@
-# Transfer learning
-
-## Transfer Learning with Sentence Transformers and Scikit-Learn
+# Transfer-Learning Using Transformers and Scikit-Learn on MongoDB
 
 In this notebook, we will explore the process of transfer learning using SuperDuperDB. We will demonstrate how to connect to a MongoDB datastore, load a dataset, create a SuperDuperDB model based on Sentence Transformers, train a downstream model using Scikit-Learn, and apply the trained model to the database. Transfer learning is a powerful technique that can be used in various applications, such as vector search and downstream learning tasks.
 

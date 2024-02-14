@@ -50,7 +50,7 @@ jobs:
 #        cache: 'pip' # caching pip dependencies
 #
 #    - name: Cache Python Installation
-#      uses: actions/cache@v3
+#      uses: actions/cache@v4
 #      with:
 #        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
 #        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
@@ -97,19 +97,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create Docker Cache Storage Backend
-        run: |
-          docker buildx create --use --driver=docker-container        
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
 
-      - name: Build Sandbox Image
+      - name: Build Docker Image
         run: |
           # Build sandbox image for testing.
-          make testenv_image EXTRA_ARGS="--cache-to type=gha --cache-from type=gha"
+          make testenv_image
           
           # Use image as artifact for the next job
           docker save -o ~/sandbox_latest.tar superduperdb/sandbox:latest
 
-      - name: Upload Image as Artifact
+      - name: Upload Docker Image as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: sandbox
@@ -124,7 +128,7 @@ jobs:
 
       #---------------------------------------------------
       # Re-use docker layers from the previous step
-    - name: Download Image from Artifact
+    - name: Download Dock Image from Artifact
       uses: actions/download-artifact@v4
       with:
         name: sandbox

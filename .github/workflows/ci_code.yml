@@ -104,7 +104,7 @@ jobs:
         with:
           file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
           context: /home/runner/work/superduperdb/superduperdb
-          push: true
+          load: true # Load output to Docker images
           tags: latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

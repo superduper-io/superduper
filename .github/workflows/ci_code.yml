@@ -112,27 +112,26 @@ jobs:
             "BUILD_ENV=sandbox"
             "SUPERDUPERDB_EXTRAS=dev"
             
-
       # -------------------------------------------------
-#
-#      - name: Start Testing Environment
-#        run: |
-#          # Update hostnames
-#          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-#
-#          # Run the integrated testing environment
-#          make testenv_init
-#
-#      - name: Integration Testing
-#        run: |
-#          # Run the test-suite within the sandbox image from the test environment
-#          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
-#
-#
-#      - name: Shutdown Testing Environment
-#        run: |
-#          # Run the integrated testing environment
-#          make testenv_init
-#
-#          # Remove the data directory
-#          sudo rm -rf deploy/testenv/.test_data
+
+      - name: Start Testing Environment
+        run: |
+          # Update hostnames
+          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+
+          # Run the integrated testing environment
+          make testenv_init
+
+      - name: Integration Testing
+        run: |
+          # Run the test-suite within the sandbox image from the test environment
+          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+
+
+      - name: Shutdown Testing Environment
+        run: |
+          # Run the integrated testing environment
+          make testenv_init
+
+          # Remove the data directory
+          sudo rm -rf deploy/testenv/.test_data

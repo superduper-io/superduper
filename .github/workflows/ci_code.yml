@@ -102,7 +102,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
         with:
-          load: true
+         # load: true
           file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
           context: /home/runner/work/superduperdb/superduperdb
           cache-from: type=gha
@@ -111,8 +111,6 @@ jobs:
           build-args: |
             "BUILD_ENV=sandbox"
             "SUPERDUPERDB_EXTRAS=dev"
-        
-            
             
 
       # -------------------------------------------------

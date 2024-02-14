@@ -9,6 +9,7 @@ on:
       - '*.md'
       - '*.rst'
       - ".github"
+      - "CHANGELOG.md"
   workflow_dispatch:
 
 

@@ -107,6 +107,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+          tags: ${{ steps.dockermeta.outputs.tags }}
           build-args: |
             "BUILD_ENV=sandbox"
             "SUPERDUPERDB_EXTRAS=dev"

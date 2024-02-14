@@ -114,7 +114,7 @@ const sidebars = {
         
       },
       items: [
-        'docs/fundamentals/architectural_design',
+        'docs/fundamentals/design',
         'docs/fundamentals/datalayer_overview',
         
          

@@ -100,7 +100,7 @@ jobs:
       #---------------------------------------------------
       # Configure Docker environment.
       - uses: actions/checkout@v3
-      #- uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v5
         with:
           file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
@@ -108,11 +108,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-#
-#      - name: Build Docker Image
-#        run: |
-#          # Build sandbox image for testing.
-#          make testenv_image
+
+      - name: Build Docker Image
+        run: |
+          # Build sandbox image for testing.
+          make testenv_image EXTRA_ARGS="--cache-from type=gha --cache-to type=gha,mode=max"
       # -------------------------------------------------
 #
 #      - name: Start Testing Environment

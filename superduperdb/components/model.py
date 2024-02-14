@@ -40,6 +40,27 @@ class _to_call:
     def __call__(self, X):
         return self.callable(X, **self.kwargs)
 
+import inspect
+
+class Inputs:
+    def __init__(self, fn, predict_kwargs: t.Dict = {}):
+         sig = inspect.signature(fn)
+         sig_keys = list(sig.parameters.keys())
+         params = []
+         for k in sig_keys:
+             if k in predict_kwargs or (
+                 k == 'kwargs' and sig.parameters[k].kind == 4
+             ):
+                 continue
+             params.append(k)
+
+         self.params = {p:p for p in params}
+    def __len__(self):
+        return len(self.params)
+
+    def __getattr__(self, attr):
+        return self.params[attr]
+
 
 @dc.dataclass(kw_only=True)
 class _TrainingConfiguration(Component):
@@ -105,6 +126,11 @@ class _Predictor:
         The method to use to call prediction. Should be implemented
         by the child class.
         """
+
+    @property
+    def inputs(self):
+        kwargs = self.predict_kwargs if self.predict_kwargs else {}
+        return Inputs(self.object, kwargs)
 
     def create_predict_job(
         self,
@@ -182,7 +208,7 @@ class _Predictor:
 
     def predict(
         self,
-        X: t.Any,
+        X: t.Union[t.Any, t.List, t.Dict],
         db: t.Optional[Datalayer] = None,
         select: t.Optional[CompoundSelect] = None,
         ids: t.Optional[t.List[str]] = None,
@@ -192,7 +218,7 @@ class _Predictor:
         one: bool = False,
         context: t.Optional[t.Dict] = None,
         insert_to: t.Optional[t.Union[TableOrCollection, str]] = None,
-        key: t.Optional[str] = None,
+        key: t.Optional[t.Union[t.Dict, t.List, str]] = None,
         in_memory: bool = True,
         overwrite: bool = False,
         **kwargs,
@@ -274,8 +300,19 @@ class _Predictor:
                 if self.takes_context:
                     kwargs['context'] = context
 
+                if isinstance(key, str):
+                    X = (X[key] if one else [r[key] for r in X]) if key else X,
+                elif isinstance(key, list):
+                    X = ((X[k] for k in key) if one else [(r[k] for k in key) for r in X]) if key else X,
+                elif isinstance(key, dict):
+                    pass
+
+                else:
+                    if key is not None:
+                        raise TypeError
+
                 output = self._predict(
-                    (X[key] if one else [r[key] for r in X]) if key else X,
+                    X,
                     one=one,
                     **kwargs,
                 )
@@ -419,10 +456,17 @@ class _Predictor:
             if db is None:
                 raise ValueError('db cannot be None')
             docs = list(db.execute(select.select_using_ids(ids)))
-            if X != '_base':
+            if X == '_base':
+                X_data = [r.unpack() for r in docs]
+            elif isinstance(X, str):
                 X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
             else:
-                X_data = [r.unpack() for r in docs]
+                assert isinstance(X, (tuple, list))
+                X_data = []
+                for doc in docs:
+                    doc = MongoStyleDict(doc.unpack())
+                    X_data.append( [doc[k] for k in X])
+
         else:
             X_data = QueryDataset(
                 select=select,
@@ -466,7 +510,7 @@ class _Predictor:
             db=db,
             model=self.identifier,
             outputs=outputs,
-            key=X,
+            key= ','.join(X) if isinstance(X, (tuple, list)) else X,
             version=self.version,
             ids=ids,
             flatten=self.flatten,
@@ -525,9 +569,15 @@ class Model(_Predictor, Component):
             self._artifact_method = getattr(self, self.model_to_device_method)
 
     def to_call(self, X, *args, **kwargs):
+        if isinstance(X, (tuple, list)):
+            required_args = len(self.inputs)
+            assert len(X) == required_args
+        else:
+            X = [X]
+
         if self.predict_method is None:
-            return self.object(X, *args, **kwargs)
-        out = getattr(self.object, self.predict_method)(X, *args, **kwargs)
+            return self.object(*X, *args, **kwargs)
+        out = getattr(self.object, self.predict_method)(*X, *args, **kwargs)
         return out
 
     def post_create(self, db: Datalayer) -> None:

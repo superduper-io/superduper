@@ -111,8 +111,10 @@ jobs:
 
     - name: Integration Testing
       run: |
-        # Run the test-suite within the sandbox image.
-        docker run --entrypoint '/bin/sh' superduperdb/sandbox:latest -c 'make install-devkit && make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"'
+        # Run the test-suite within the sandbox image from the test environment
+        docker exec -ti testenv-sandbox-1 \
+          make install-devkit && \
+          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
     - name: Shutdown Testing Environment
       run: |

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
-- 
+- Run Tests from within the container
 
 #### New Features & Functionality
 - CI fails if CHANGELOG.md is not updated on PRs

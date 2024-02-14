@@ -104,10 +104,10 @@ jobs:
         with:
           file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
           context: /home/runner/work/superduperdb/superduperdb
+          push: true
+          tags: latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true
-          tags: ${{ steps.dockermeta.outputs.tags }}
           build-args: |
             "BUILD_ENV=sandbox"
             "SUPERDUPERDB_EXTRAS=dev"

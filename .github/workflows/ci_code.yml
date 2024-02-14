@@ -107,9 +107,9 @@ jobs:
           context: /home/runner/work/superduperdb/superduperdb
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args:
-            - BUILD_ENV="sandbox"
-            - SUPERDUPERDB_EXTRAS="dev"
+          build-args: |
+            BUILD_ENV="sandbox"
+            SUPERDUPERDB_EXTRAS="dev"
 
       # -------------------------------------------------
 #

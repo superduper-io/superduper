@@ -99,6 +99,10 @@ jobs:
 
       #---------------------------------------------------
       # Configure Docker environments.
+      - name: Create Docker Cache Directory
+        run: |
+          mkdir -p /tmp/docker
+
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:

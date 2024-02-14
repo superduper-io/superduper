@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 
 - Add Llama cpp model in extensions.
+- Basic Ray server support to server models on ray cluster
 - Simplify the testing of SQL databases using containerized databases
 - Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
 - Add `QueryModel` and `SequentialModel` to make chaining searches and models easier.

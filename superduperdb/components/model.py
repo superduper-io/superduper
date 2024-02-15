@@ -11,7 +11,7 @@ import tqdm
 from overrides import override
 from sklearn.pipeline import Pipeline
 
-from superduperdb import Document, logging
+from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import CompoundSelect, Select, TableOrCollection
 from superduperdb.backends.ibis.field_types import FieldType
@@ -137,7 +137,20 @@ class _Predictor:
     @property
     def inputs(self):
         kwargs = self.predict_kwargs if self.predict_kwargs else {}
-        return Inputs(self.object, kwargs)
+        return Inputs(self.preprocess or self.object, kwargs)
+
+    def setup_required_inputs(self, X):
+        if isinstance(X, (tuple, list)):
+            required_args = len(self.inputs)
+            assert len(X) == required_args
+            X = self.inputs.get_kwargs(X)
+
+        elif isinstance(X, dict):
+            required_args = len(self.inputs)
+            assert len(X) == required_args
+        else:
+            X = self.inputs.get_kwargs([X])
+        return X
 
     def create_predict_job(
         self,
@@ -168,7 +181,8 @@ class _Predictor:
 
     def _predict_one(self, X: t.Any, **kwargs) -> int:
         if self.preprocess:
-            X = self.preprocess(X)
+            X = self.setup_required_inputs(X)
+            X = self.preprocess(**X)
         output = self.to_call(X, **kwargs)
         if self.postprocess:
             output = self.postprocess(output)
@@ -198,12 +212,16 @@ class _Predictor:
             return self._predict_one(X)
 
         if self.preprocess:
-            X = [self.preprocess(i) for i in X]
+            preprocessed_X = []
+            for r in X:
+                r = self.setup_required_inputs(r)
+                preprocessed_X.append(self.preprocess(**r))
+            X = preprocessed_X
+
         elif self.preprocess is not None:
             raise ValueError('Bad preprocess')
         if self.collate_fn:
             X = self.collate_fn(X)
-
         outputs = self._forward(X, **predict_kwargs)
 
         if self.postprocess:
@@ -212,6 +230,35 @@ class _Predictor:
             raise ValueError('Bad postprocess')
 
         return outputs
+
+    def validate_keys(self, X, key, one=False):
+        if isinstance(key, str):
+            if one:
+                assert isinstance(X, dict)
+                X = X[key]
+            else:
+                X = [r[key] for r in X]
+        elif isinstance(key, list):
+            X = (
+                ((X[k] for k in key) if one else [(r[k] for k in key) for r in X])
+                if key
+                else X,
+            )
+        elif isinstance(key, dict):
+            X = (
+                (
+                    (X[k] for k in key.values())
+                    if one
+                    else [(r[k] for k in key.values()) for r in X]
+                )
+                if key
+                else X,
+            )
+
+        else:
+            if key is not None:
+                raise TypeError
+        return X
 
     def predict(
         self,
@@ -307,39 +354,10 @@ class _Predictor:
                 if self.takes_context:
                     kwargs['context'] = context
 
-                if isinstance(key, str):
-                    if one:
-                        assert isinstance(X, dict)
-                        X = X[key]
-                    else:
-                        X = [r[key] for r in X]
-                elif isinstance(key, list):
-                    X = (
-                        (
-                            (X[k] for k in key)
-                            if one
-                            else [(r[k] for k in key) for r in X]
-                        )
-                        if key
-                        else X,
-                    )
-                elif isinstance(key, dict):
-                    X = (
-                        (
-                            (X[k] for k in key.values())
-                            if one
-                            else [(r[k] for k in key.values()) for r in X]
-                        )
-                        if key
-                        else X,
-                    )
-
-                else:
-                    if key is not None:
-                        raise TypeError
+                X_predict = self.validate_keys(X, key, one=one)
 
                 output = self._predict(
-                    X,
+                    X_predict,
                     one=one,
                     **kwargs,
                 )
@@ -361,7 +379,9 @@ class _Predictor:
                         output = [output]
 
                     assert isinstance(insert_to, TableOrCollection)
-                    X = [Document(X)] if one else [Document(x) for x in X]
+                    if one:
+                        X = [X]
+
                     inserted_ids, _ = db.execute(insert_to.insert(X))
                     inserted_ids = t.cast(t.List[t.Any], inserted_ids)
                     assert isinstance(key, str)
@@ -611,17 +631,7 @@ class Model(_Predictor, Component):
         return border_msg(s, title='SuperDuper Model')
 
     def to_call(self, X, *args, **kwargs):
-        if isinstance(X, (tuple, list)):
-            required_args = len(self.inputs)
-            assert len(X) == required_args
-            X = self.inputs.get_kwargs(X)
-
-        elif isinstance(X, dict):
-            required_args = len(self.inputs)
-            assert len(X) == required_args
-        else:
-            X = self.inputs.get_kwargs([X])
-
+        X = self.setup_required_inputs(X)
         if self.predict_method is None:
             return self.object(*args, **X, **kwargs)
         out = getattr(self.object, self.predict_method)(*X, *args, **kwargs)

@@ -63,14 +63,28 @@ def return_self(x):
     return x
 
 
+def return_self_multikey(x, y, z):
+    return [x, y, z]
+
+
 def to_call(x):
     if isinstance(x, list):
         return [to_call(i) for i in x]
     return x * 5
 
 
+def to_call_multi(x):
+    if isinstance(x[0], list):
+        return [1] * len(x)
+    return 1
+
+
 def preprocess(x):
     return x + 1
+
+
+def preprocess_multi(x, y):
+    return x + y
 
 
 def postprocess(x):
@@ -79,6 +93,10 @@ def postprocess(x):
 
 def mock_forward(self, x, **kwargs):
     return to_call(x)
+
+
+def mock_forward_multi(self, x, **kwargs):
+    return to_call_multi(x)
 
 
 class TestModel(Component, _Predictor):
@@ -96,6 +114,26 @@ def predict_mixin(request) -> _Predictor:
     predict_mixin.identifier = 'test'
     predict_mixin.to_call = to_call
     predict_mixin.preprocess = preprocess
+    predict_mixin.postprocess = postprocess
+    predict_mixin.takes_context = False
+    predict_mixin.output_schema = None
+    predict_mixin.datatype = None
+    predict_mixin.model_update_kwargs = {}
+    predict_mixin.version = 0
+    return predict_mixin
+
+
+@pytest.fixture
+def predict_mixin_multikey(request) -> _Predictor:
+    cls_ = getattr(request, 'param', _Predictor)
+
+    if 'identifier' in inspect.signature(cls_).parameters:
+        predict_mixin = cls_(identifier='test')
+    else:
+        predict_mixin = cls_()
+    predict_mixin.identifier = 'test'
+    predict_mixin.to_call = to_call_multi
+    predict_mixin.preprocess = preprocess_multi
     predict_mixin.postprocess = postprocess
     predict_mixin.takes_context = False
     predict_mixin.output_schema = None
@@ -142,6 +180,45 @@ def test_pm_forward(batch_predict, num_workers, expect_type):
     output = predict_mixin._forward(X, num_workers=num_workers)
     assert isinstance(output, expect_type)
     assert np.allclose(output, to_call(X))
+
+
+@patch.object(_Predictor, '_forward', mock_forward_multi)
+def test_predict_core_multikey(predict_mixin_multikey):
+    X = 1
+    Y = 2
+    Z = 2
+
+    # Multi key with preprocess
+    # As list
+    predict_mixin_multikey.preprocess = None
+    expect = postprocess(to_call_multi([X, Y, Z]))
+    output = predict_mixin_multikey._predict([[X, Y, Z], [X, Y, Z]])
+    assert isinstance(output, list)
+    assert np.allclose(output, expect)
+
+
+@patch.object(_Predictor, '_forward', mock_forward)
+def test_predict_core_multikey_dict(predict_mixin_multikey):
+    X = 1
+    Y = 2
+    # As Dict
+    predict_mixin_multikey.preprocess = preprocess_multi
+    output = predict_mixin_multikey._predict([{'x': X, 'y': Y}])
+    assert isinstance(output, list)
+    assert np.allclose(output, 15.1)
+
+
+@patch.object(_Predictor, '_forward', mock_forward)
+def test_predict_preprocess_multikey(predict_mixin_multikey):
+    X = 1
+    Y = 2
+
+    # Multi key with preprocess
+    predict_mixin_multikey.to_call = to_call
+    expect = postprocess(to_call(preprocess_multi(X, Y)))
+    output = predict_mixin_multikey._predict([[X, Y], [X, Y]])
+    assert isinstance(output, list)
+    assert np.allclose(output, expect)
 
 
 @patch.object(_Predictor, '_forward', mock_forward)
@@ -266,55 +343,6 @@ def test_pm_predict_with_select(predict_mixin):
         )
         _, kwargs = mock_predict.call_args
         assert kwargs.get('ids') == ids_of_missing_outputs
-
-
-@patch.object(_Predictor, '_predict')
-def test_pm_predict_with_select_ids(predict_mock, predict_mixin):
-    xs = [np.random.randn(4) for _ in range(10)]
-    ys = [int(random.random() > 0.5) for i in range(10)]
-    docs = [Document({'x': x}) for x in xs]
-    ids = [i for i in range(10)]
-
-    select = MagicMock(spec=Select)
-    db = MagicMock(spec=Datalayer)
-    db.execute.return_value = docs
-
-    # Check the base predict function
-    predict_mock.return_value = ys
-    predict_mixin.db = db
-    with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
-        select, 'model_update'
-    ) as model_update:
-        predict_mixin._predict_with_select_and_ids('x', db, select, ids)
-        select_using_ids.assert_called_once_with(ids)
-        _, kwargs = model_update.call_args
-        #  make sure the outputs are set
-        assert kwargs.get('outputs') == ys
-
-    # Check the base predict function with encoder
-    from superduperdb.components.datatype import DataType
-
-    predict_mixin.datatype = DataType(identifier='test')
-    with patch.object(select, 'model_update') as model_update:
-        predict_mixin._predict_with_select_and_ids('x', db, select, ids)
-        select_using_ids.assert_called_once_with(ids)
-        _, kwargs = model_update.call_args
-        #  make sure encoder is used
-        datatype = predict_mixin.datatype
-        assert kwargs.get('outputs') == [datatype(y).encode() for y in ys]
-
-    # Check the base predict function with output_schema
-    from superduperdb.components.schema import Schema
-
-    predict_mixin.datatype = None
-    predict_mixin.output_schema = schema = MagicMock(spec=Schema)
-    schema.side_effect = str
-    predict_mock.return_value = [{'y': y} for y in ys]
-    with patch.object(select, 'model_update') as model_update:
-        predict_mixin._predict_with_select_and_ids('x', db, select, ids)
-        select_using_ids.assert_called_once_with(ids)
-        _, kwargs = model_update.call_args
-        assert kwargs.get('outputs') == [str({'y': y}) for y in ys]
 
 
 def test_model_on_create():
@@ -482,6 +510,70 @@ def test_sequential_model():
 
     assert m.predict(X=1, one=True) == 4
     assert m.predict(X=[1, 1, 1, 1]) == [4, 4, 4, 4]
+
+
+@patch.object(_Predictor, '_predict')
+def test_pm_predict_with_select_ids(
+    predict_mock, predict_mixin_multikey, predict_mixin
+):
+    def _test(multi_key, predict_mixin_multikey):
+        xs = [np.random.randn(4) for _ in range(10)]
+        ys = [int(random.random() > 0.5) for i in range(10)]
+        if multi_key:
+            docs = [Document({'x': x, 'y': x, 'z': x}) for x in xs]
+            X = ['x', 'y', 'z']
+        else:
+            docs = [Document({'x': x}) for x in xs]
+            X = 'x'
+
+        ids = [i for i in range(10)]
+
+        select = MagicMock(spec=Select)
+        db = MagicMock(spec=Datalayer)
+        db.execute.return_value = docs
+
+        # Check the base predict function
+        predict_mock.return_value = ys
+        predict_mixin_multikey.db = db
+        with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
+            select, 'model_update'
+        ) as model_update:
+            predict_mixin_multikey._predict_with_select_and_ids(X, db, select, ids)
+            select_using_ids.assert_called_once_with(ids)
+            _, kwargs = model_update.call_args
+            #  make sure the outputs are set
+            assert kwargs.get('outputs') == ys
+
+        # Check the base predict function with encoder
+        from superduperdb.components.datatype import DataType
+
+        predict_mixin_multikey.datatype = DataType(identifier='test')
+        with patch.object(select, 'model_update') as model_update:
+            predict_mixin_multikey._predict_with_select_and_ids(X, db, select, ids)
+            select_using_ids.assert_called_once_with(ids)
+            _, kwargs = model_update.call_args
+            #  make sure encoder is used
+            datatype = predict_mixin_multikey.datatype
+            assert kwargs.get('outputs') == [datatype(y).encode() for y in ys]
+
+        # Check the base predict function with output_schema
+        from superduperdb.components.schema import Schema
+
+        predict_mixin_multikey.datatype = None
+        predict_mixin_multikey.output_schema = schema = MagicMock(spec=Schema)
+        schema.side_effect = str
+        predict_mock.return_value = [{'y': y} for y in ys]
+        with patch.object(select, 'model_update') as model_update:
+            predict_mixin_multikey._predict_with_select_and_ids(X, db, select, ids)
+            select_using_ids.assert_called_once_with(ids)
+            _, kwargs = model_update.call_args
+            assert kwargs.get('outputs') == [str({'y': y}) for y in ys]
+
+    # Test multikey
+    _test(1, predict_mixin_multikey)
+
+    # Test single key
+    _test(0, predict_mixin)
 
 
 @pytest.mark.parametrize(

@@ -32,7 +32,7 @@ class Listener(Component):
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
-    key: str
+    key: t.Union[str, t.List, t.Dict]
     model: t.Union[str, Model]
     select: CompoundSelect
     identifier: t.Optional[str] = None  # type: ignore[assignment]
@@ -51,7 +51,9 @@ class Listener(Component):
 
     @property
     def outputs(self):
-        return f'{_OUTPUTS_KEY}.{self.key}.{self.model.identifier}.{self.model.version}'
+        return (
+            f'{_OUTPUTS_KEY}.{self.id_key}.{self.model.identifier}.{self.model.version}'
+        )
 
     @override
     def pre_create(self, db: Datalayer) -> None:
@@ -77,18 +79,44 @@ class Listener(Component):
     @property
     def dependencies(self) -> t.List[str]:
         out = []
-        if self.key.startswith('_outputs.'):
-            _, key, model = self.key.split('.')
-            out.append(f'{model}/{key}')
+
+        def check_dependable(k):
+            nonlocal out
+            if k.startswith('_outputs.'):
+                _, key, model = k.split('.')
+                out.append(f'{model}/{key}')
+
+        if isinstance(self.key, str):
+            check_dependable(self.key)
+
+        elif isinstance(self.key, (tuple, list)):
+            for k in self.key:
+                check_dependable(k)
+
+        elif isinstance(self.key, dict):
+            for k in self.key.values():
+                check_dependable(k)
+
         if self.select.output_fields:
             out.extend([f'{v}/{k}' for k, v in self.select.output_fields.items()])
         return out
 
     @property
     def id_key(self) -> str:
-        if self.key.startswith('_outputs.'):
-            return self.key.split('.')[1]
-        return self.key
+        def _id_key(key) -> str:
+            if isinstance(key, str):
+                if key.startswith('_outputs.'):
+                    return key.split('.')[1]
+                else:
+                    return key
+            elif isinstance(key, (tuple, list)):
+                return ','.join([_id_key(k) for k in key])
+            elif isinstance(key, dict):
+                return ','.join([_id_key(k) for k in key.values()])
+            else:
+                raise TypeError('Type of key is not valid')
+
+        return _id_key(self.key)
 
     @override
     def schedule_jobs(

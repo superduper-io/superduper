@@ -14,8 +14,7 @@ from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 
-if t.TYPE_CHECKING:
-    pass
+KeyType = t.Union[str, t.List, t.Dict]
 
 
 @public_api(stability='stable')
@@ -55,7 +54,7 @@ class VectorIndex(Component):
         self,
         like: Document,
         models: t.List[str],
-        keys: t.List[str],
+        keys: KeyType,
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
     ):
@@ -67,22 +66,41 @@ class VectorIndex(Component):
             document['_outputs'].update(outputs)
 
             assert not isinstance(self.indexing_listener, str)
-        available_keys = list(document.keys()) + ['_base']
-        try:
-            model_name, key = next(
-                (m, k) for m, k in zip(models, keys) if k in available_keys
-            )
-        except StopIteration:
-            raise Exception(
-                f'Keys in provided {like} don\'t match'
-                f'VectorIndex keys: {keys}, with model: {models}'
-            )
+        available_keys = list(document.keys())
 
-        model_input = document
-        if key == '_base' and key in document:
+        key: t.Optional[t.Any] = None
+        model_name: t.Optional[str] = None
+        for m, k in zip(models, keys):
+            if isinstance(k, str):
+                if k in available_keys:
+                    model_name, key = m, k
+
+            elif isinstance(k, (tuple, list)):
+                if all([i in available_keys for i in list(k)]):
+                    model_name, key = m, k
+            elif isinstance(k, dict):
+                if all([i in available_keys for i in k.values()]):
+                    model_name, key = m, k
+
+        if not key:
+            try:
+                assert isinstance(keys, list)
+                kix = keys.index('_base')
+                model_name, key = models[kix], keys[kix]
+            except ValueError:
+                raise Exception(
+                    f'Keys in provided {like} don\'t match'
+                    f'VectorIndex keys: {keys}, with model: {models}'
+                )
+
+        if isinstance(key, str):
             model_input = document[key]
-        elif key != '_base':
-            model_input = document[key]
+        elif isinstance(key, (tuple, list)):
+            model_input = [document[k] for k in list(key)]
+        elif isinstance(key, dict):
+            model_input = [document[k] for k in key.values()]
+        else:
+            model_input = document
 
         model = db.models[model_name]
         return (
@@ -132,7 +150,7 @@ class VectorIndex(Component):
         )
 
     @property
-    def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:
+    def models_keys(self) -> t.Tuple[t.List[str], t.List[KeyType]]:
         """
         Return a list of model and keys for each listener
         """

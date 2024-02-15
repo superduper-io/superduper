@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
+import inspect
 import multiprocessing
 import typing as t
 from abc import abstractmethod
@@ -10,7 +11,7 @@ import tqdm
 from overrides import override
 from sklearn.pipeline import Pipeline
 
-from superduperdb import logging
+from superduperdb import Document, logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import CompoundSelect, Select, TableOrCollection
 from superduperdb.backends.ibis.field_types import FieldType
@@ -30,6 +31,7 @@ if t.TYPE_CHECKING:
     from superduperdb.components.dataset import Dataset
 
 EncoderArg = t.Union[DataType, FieldType, str, None]
+XType = t.Union[t.Any, t.List, t.Dict]
 
 
 class _to_call:
@@ -40,26 +42,30 @@ class _to_call:
     def __call__(self, X):
         return self.callable(X, **self.kwargs)
 
-import inspect
 
 class Inputs:
     def __init__(self, fn, predict_kwargs: t.Dict = {}):
-         sig = inspect.signature(fn)
-         sig_keys = list(sig.parameters.keys())
-         params = []
-         for k in sig_keys:
-             if k in predict_kwargs or (
-                 k == 'kwargs' and sig.parameters[k].kind == 4
-             ):
-                 continue
-             params.append(k)
+        sig = inspect.signature(fn)
+        sig_keys = list(sig.parameters.keys())
+        params = []
+        for k in sig_keys:
+            if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
+                continue
+            params.append(k)
 
-         self.params = {p:p for p in params}
+        self.params = {p: p for p in params}
+
     def __len__(self):
         return len(self.params)
 
     def __getattr__(self, attr):
         return self.params[attr]
+
+    def get_kwargs(self, args):
+        kwargs = {}
+        for k, arg in zip(self.params, args):
+            kwargs[k] = arg
+        return kwargs
 
 
 @dc.dataclass(kw_only=True)
@@ -134,7 +140,7 @@ class _Predictor:
 
     def create_predict_job(
         self,
-        X: str,
+        X: XType,
         select: t.Optional[Select] = None,
         ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
@@ -208,7 +214,7 @@ class _Predictor:
 
     def predict(
         self,
-        X: t.Union[t.Any, t.List, t.Dict],
+        X: XType,
         db: t.Optional[Datalayer] = None,
         select: t.Optional[CompoundSelect] = None,
         ids: t.Optional[t.List[str]] = None,
@@ -301,11 +307,31 @@ class _Predictor:
                     kwargs['context'] = context
 
                 if isinstance(key, str):
-                    X = (X[key] if one else [r[key] for r in X]) if key else X,
+                    if one:
+                        assert isinstance(X, dict)
+                        X = X[key]
+                    else:
+                        X = [r[key] for r in X]
                 elif isinstance(key, list):
-                    X = ((X[k] for k in key) if one else [(r[k] for k in key) for r in X]) if key else X,
+                    X = (
+                        (
+                            (X[k] for k in key)
+                            if one
+                            else [(r[k] for k in key) for r in X]
+                        )
+                        if key
+                        else X,
+                    )
                 elif isinstance(key, dict):
-                    pass
+                    X = (
+                        (
+                            (X[k] for k in key.values())
+                            if one
+                            else [(r[k] for k in key.values()) for r in X]
+                        )
+                        if key
+                        else X,
+                    )
 
                 else:
                     if key is not None:
@@ -334,8 +360,9 @@ class _Predictor:
                         output = [output]
 
                     assert isinstance(insert_to, TableOrCollection)
-                    ids, _ = db.execute(insert_to.insert([X] if one else X))
-                    ids = t.cast(t.List[t.Any], ids)
+                    X = [Document(X)] if one else [Document(x) for x in X]
+                    inserted_ids, _ = db.execute(insert_to.insert(X))
+                    inserted_ids = t.cast(t.List[t.Any], inserted_ids)
                     assert isinstance(key, str)
 
                     insert_to.model_update(
@@ -344,7 +371,7 @@ class _Predictor:
                         outputs=output,
                         key=key,
                         version=self.version,
-                        ids=ids,
+                        ids=inserted_ids,
                         flatten=self.flatten,
                         **self.model_update_kwargs,
                     )
@@ -461,11 +488,15 @@ class _Predictor:
             elif isinstance(X, str):
                 X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
             else:
-                assert isinstance(X, (tuple, list))
                 X_data = []
                 for doc in docs:
                     doc = MongoStyleDict(doc.unpack())
-                    X_data.append( [doc[k] for k in X])
+                    if isinstance(X, (tuple, list)):
+                        X_data.append([doc[k] for k in X])
+                    elif isinstance(X, dict):
+                        X_data.append([doc[k] for k in X.values()])
+                    else:
+                        raise TypeError
 
         else:
             X_data = QueryDataset(
@@ -506,11 +537,17 @@ class _Predictor:
         assert isinstance(self.version, int)
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
+        key = X
+        if isinstance(X, (tuple, list)):
+            key = ','.join(X)
+        elif isinstance(X, dict):
+            key = ','.join(list(X.values()))
+
         select.model_update(
             db=db,
             model=self.identifier,
             outputs=outputs,
-            key= ','.join(X) if isinstance(X, (tuple, list)) else X,
+            key=key,
             version=self.version,
             ids=ids,
             flatten=self.flatten,
@@ -572,11 +609,16 @@ class Model(_Predictor, Component):
         if isinstance(X, (tuple, list)):
             required_args = len(self.inputs)
             assert len(X) == required_args
+            X = self.inputs.get_kwargs(X)
+
+        elif isinstance(X, dict):
+            required_args = len(self.inputs)
+            assert len(X) == required_args
         else:
-            X = [X]
+            X = self.inputs.get_kwargs([X])
 
         if self.predict_method is None:
-            return self.object(*X, *args, **kwargs)
+            return self.object(*args, **X, **kwargs)
         out = getattr(self.object, self.predict_method)(*X, *args, **kwargs)
         return out
 

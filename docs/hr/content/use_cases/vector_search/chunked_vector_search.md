@@ -1,9 +1,8 @@
 ---
 sidebar_position: 4
 ---
-# Chunked
 
-## Implementing Chunked Vector Search with Multiple Inputs per Document
+# Building a Vector-Search Using Chunked Data on MongoDB
 
 Let's find specific text within documents using vector-search. In this
 example, we show how to do vector-search. But here, we want to go one

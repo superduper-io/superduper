@@ -4,7 +4,7 @@ tags:
   - quickstart
 ---
 
-# Connecting
+# Connecting to the Database
 
 :::info
 In this document we instantiate the variable `db` based on configuration and overrides.

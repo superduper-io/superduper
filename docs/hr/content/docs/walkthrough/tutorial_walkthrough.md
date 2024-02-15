@@ -2,7 +2,9 @@
 sidebar_position: 1
 ---
 
-# Start here
+# How-To Guide
+
+## Start here
 
 This how-to walkthrough is designed to take you through `superduperdb` usage step-by-step.
 To build more understanding of `superduperdb` read the ["Fundmentals" section](../fundamentals/glossary.md).
@@ -20,3 +22,12 @@ You'll probably also want to ready about the query API which is relevant to your
 - [Ibis Query API for SQL](../data_integrations/sql.md)
 
 ![](/img/walkthrough.png)
+
+
+## Time to Explore
+
+```mdx-code-block
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
+```

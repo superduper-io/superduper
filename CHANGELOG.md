@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### New Features & Functionality
 - CI fails if CHANGELOG.md is not updated on PRs
+- Update Menu structure and renamed use-cases
 
 #### Bug Fixes
 - 

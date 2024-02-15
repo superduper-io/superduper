@@ -1,9 +1,9 @@
 ---
 sidebar_position: 3
 ---
-# Video
 
-## Search Within Videos with Text
+
+# Build in Video Vector-Search with Text on MongoDB
 
 This notebook guides you through the process of searching for specific textual information within videos and retrieving relevant video segments. To achieve this, we leverage various libraries and techniques, including:
 * clip: A library for vision and language understanding.

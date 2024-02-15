@@ -1,6 +1,6 @@
-# Chat with your Database
+# Chatting with your SnowFlakes Database Using OpenAI
 
-## Chatting instantly with a 10-million-record SQL database using SuperDuperDB and OpenAI.
+<!-- ## Chatting instantly with a 10-million-record SQL database using SuperDuperDB and OpenAI. -->
 
 Imagine chatting with your database using just a few lines of code. Sounds unbelievable, right? Well, believe it! We'll show you how you can effortlessly chat with a huge database containing 10 million business records—all with just a few lines of SuperDuperDB code. 
 

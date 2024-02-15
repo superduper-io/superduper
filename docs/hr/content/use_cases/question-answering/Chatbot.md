@@ -1,6 +1,5 @@
-# Chatbot
 
-## Building Q&A Assistant Using Mongo and OpenAI
+# Building Q&A Assistant Using OpenAI on MongoDB
 
 This notebook is designed to demonstrate how to implement a document Question-and-Answer (Q&A) task using SuperDuperDB in conjunction with OpenAI and MongoDB. It provides a step-by-step guide and explanation of each component involved in the process.
 

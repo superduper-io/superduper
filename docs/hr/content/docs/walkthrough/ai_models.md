@@ -2,11 +2,12 @@
 sidebar_position: 18
 ---
 
-# AI Models via `Model` and Descendants
+# Adding Models to the Database
+SuperDuperDB integrates with both AI models and AI APIs
+
+## Using AI Models 
 
 AI models may be wrapped and used in `superduperdb` with the `Model` class and descendants.
-
-### Creating AI Models in a Range of Frameworks
 
 Model instances may be saved to `superduperdb` using `db.add`.
 
@@ -92,3 +93,79 @@ db.add(model)
 | `postprocess` | `Callable` applied to individual rows/items or output |
 | `encoder` | An `Encoder` instance applied to the model output to save that output in the database |
 | `schema` | A `Schema` instance applied to a model's output, whose rows are dictionaries |
+
+
+## Using AI APIs 
+
+In SuperDuperDB, developers are able to interact with popular AI API providers, in a way very similar to 
+[integrating with AI open-source or home-grown models](./ai_models.md). Instantiating a model from 
+these providers is similar to instantiating a `Model`:
+
+### OpenAI
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `OpenAIEmbedding` |
+| Chat models | `OpenAIChatCompletion` |
+| Image generation models | `OpenAIImageCreation` |
+| Image edit models | `OpenAIImageEdit` |
+| Audio transcription models | `OpenAIAudioTranscription` |
+
+**Usage**
+
+```python
+from superduperdb.ext.openai import OpenAI<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Cohere
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `CohereEmbedding` |
+| Chat models | `CohereChatCompletion` |
+
+**Usage**
+
+```python
+from superduperdb.ext.cohere import Cohere<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Anthropic
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Chat models | `AnthropicCompletions` |
+
+**Usage**
+
+```python
+from superduperdb.ext.anthropic import Anthropic<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Jina
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `JinaEmbedding` |
+
+**Usage**
+
+```python
+from superduperdb.ext.jina import JinaEmbedding
+
+db.add(JinaEmbedding(identifier='jina-embeddings-v2-base-en', api_key='JINA_API_KEY')) # You can also set JINA_API_KEY as environment variable
+```

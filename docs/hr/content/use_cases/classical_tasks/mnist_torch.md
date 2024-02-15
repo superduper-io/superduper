@@ -1,6 +1,4 @@
-# MNIST classifier
-
-## Training and Managing MNIST Predictions in SuperDuperDB
+# Training and Managing MNIST Predictions on MongoDB
 
 This notebook guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly in a database using SuperDuperDB.
 

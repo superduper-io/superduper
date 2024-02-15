@@ -78,6 +78,7 @@ const sidebars = {
             'docs/data_integrations/postgresql',
             'docs/data_integrations/snowflake',
             'docs/data_integrations/sqlite',
+            'docs/data_integrations/duckdb',
           ]
            },
            'docs/data_integrations/pandas', 

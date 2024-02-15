@@ -58,6 +58,9 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         collection = vi.indexing_listener.select.table_or_collection.identifier
 
         indexing_key = vi.indexing_listener.key
+        assert isinstance(
+            indexing_key, str
+        ), 'Only single key is support for atlas search'
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
         assert isinstance(vi.indexing_listener.model, Model) or isinstance(

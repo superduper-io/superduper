@@ -382,7 +382,7 @@ class _Predictor:
                     if one:
                         X = [X]
 
-                    inserted_ids, _ = db.execute(insert_to.insert(X))
+                    inserted_ids, _ = db.execute(insert_to.insert(X))  # type: ignore[arg-type]
                     inserted_ids = t.cast(t.List[t.Any], inserted_ids)
                     assert isinstance(key, str)
 
@@ -634,7 +634,7 @@ class Model(_Predictor, Component):
         X = self.setup_required_inputs(X)
         if self.predict_method is None:
             return self.object(*args, **X, **kwargs)
-        out = getattr(self.object, self.predict_method)(*X, *args, **kwargs)
+        out = getattr(self.object, self.predict_method)(*args, **X, **kwargs)
         return out
 
     def post_create(self, db: Datalayer) -> None:

@@ -46,8 +46,12 @@ def test_serialize_table():
 
 
 @pytest.fixture
-def duckdb():
+def duckdb(monkeypatch):
     with tempfile.TemporaryDirectory() as d:
+        from superduperdb import CFG
+        from superduperdb.base.config import Cluster
+
+        monkeypatch.setattr(CFG, 'cluster', Cluster())
         db = superduper(f'duckdb://{d}/test.ddb')
 
         _, t = db.add(
@@ -114,15 +118,9 @@ def test_auto_inference_primary_id():
 
 def test_renamings(duckdb):
     t = duckdb.load('table', 'test')
-
     q = t.outputs(x='test')
-
     print(q)
-
     data = duckdb.execute(t.outputs(x='test'))
-
-    print(data.as_pandas())
-
     assert isinstance(data[0]['_outputs.x.test.0'], numpy.ndarray)
 
 

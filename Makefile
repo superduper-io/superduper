@@ -1,6 +1,7 @@
 PYTEST_ARGUMENTS ?=
 DIRECTORIES = superduperdb test 
 SUPERDUPERDB_DATA_DIR ?= .test_data
+SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/pytest.env'
 
 ##@ General
 
@@ -182,7 +183,7 @@ unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
 integration-testing: ## Execute integration testing
-	pytest $(PYTEST_ARGUMENTS) ./test/integration
+	ENV_FILE=$(SUPERDUPERDB_PYTEST_ENV_FILE) pytest $(PYTEST_ARGUMENTS) ./test/integration
 
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"

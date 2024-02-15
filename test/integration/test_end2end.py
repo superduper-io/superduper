@@ -99,15 +99,11 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 def distributed_db(monkeypatch, test_db, ray_client):
     from superduperdb import CFG
 
-    existing_databackend = CFG.data_backend
-    CFG.force_set(
-        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
-    )
-    CFG.force_set('artifact_store', 'filesystem:///tmp/artifacts')
     cdc = 'http://localhost:8001'
     vector_search = 'in_memory://localhost:8000'
     monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
+
     test_db.set_compute(ray_client)
 
     def update_syspath():
@@ -118,9 +114,9 @@ def distributed_db(monkeypatch, test_db, ray_client):
     test_db.get_compute().submit(update_syspath)
 
     yield test_db
-    CFG.force_set('data_backend', existing_databackend)
-    monkeypatch.setattr(CFG.cluster, 'cdc', None)
-    monkeypatch.setattr(CFG.cluster, 'vector_search', None)
+    from superduperdb.base.config import Cluster
+
+    monkeypatch.setattr(CFG, 'cluster', Cluster())
 
 
 def test_advance_setup(distributed_db, image_url):

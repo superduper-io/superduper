@@ -6,9 +6,9 @@ on:  # rules for when this action will be triggered
       - main
     paths-ignore:
       - 'docs/**'
-      - '*.md'
-      - '*.rst'
-      - ".github"
+      - '**/*.md'
+      - '**/*.rst'
+      - ".github/**"
   workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
 
 # When this workflow is queued, automatically cancel any previous running

@@ -23,6 +23,7 @@ from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
+from superduperdb.misc import border_msg
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -604,6 +605,10 @@ class Model(_Predictor, Component):
         self._artifact_method = None
         if self.model_to_device_method is not None:
             self._artifact_method = getattr(self, self.model_to_device_method)
+
+    def __repr__(self):
+        s = f'Identifier: {self.identifier}\nParams: {self.inputs.params}\nPreferred Devices: {self.preferred_devices}'
+        return border_msg(s, title='SuperDuper Model')
 
     def to_call(self, X, *args, **kwargs):
         if isinstance(X, (tuple, list)):

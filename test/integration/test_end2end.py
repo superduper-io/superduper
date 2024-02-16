@@ -3,7 +3,17 @@ import random
 import time
 
 import numpy as np
-import pytest
+
+try:
+    import pytest
+except ImportError:
+
+    class _pytest:
+        def fixture(self, *args, **kwargs):
+            return
+
+    pytest = _pytest()
+
 from PIL import Image
 
 from superduperdb.backends.mongodb.query import Collection

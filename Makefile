@@ -5,7 +5,7 @@ SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
 # Export variables
 export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
-export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
+export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts2
 
 
 ##@ General

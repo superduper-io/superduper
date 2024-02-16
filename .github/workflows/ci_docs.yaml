@@ -42,8 +42,9 @@ jobs:
             ${{ env.pythonLocation }}
           key: ubuntu-latest_python-3.11_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
 
-      - name: Install dependencies
-        run: pip install .[docs]
+      - name: Install DevKit (docs, testing, etc)
+        run: |
+          make install-devkit
 
       - name: Build docs
         run: |

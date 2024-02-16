@@ -1,3 +1,4 @@
+import os
 import random
 import shutil
 import tempfile
@@ -497,7 +498,9 @@ def test_sql_task_workflow(
 def client(monkeypatch, database_with_default_encoders_and_model):
     from superduperdb import CFG
 
-    monkeypatch.setattr(CFG.cluster.cdc, 'uri', 'http://localhost:8001')
+    monkeypatch.setattr(
+        CFG.cluster.cdc, 'uri', os.environ['SUPERDUPERDB_CLUSTER_CDC_URI']
+    )
     database_with_default_encoders_and_model.cdc.start()
     from superduperdb.cdc.app import app as cdc_app
 

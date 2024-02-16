@@ -1,3 +1,4 @@
+import os
 import random
 import time
 
@@ -99,8 +100,8 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 def distributed_db(monkeypatch, test_db, ray_client):
     from superduperdb import CFG
 
-    cdc = 'http://localhost:8001'
-    vector_search = 'in_memory://localhost:8000'
+    cdc = os.environ['SUPERDUPERDB_CLUSTER_CDC_URI']
+    vector_search = os.environ['SUPERDUPERDB_CLUSTER_VECTOR_SEARCH']
     monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
 

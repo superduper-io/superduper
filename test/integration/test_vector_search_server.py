@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,7 +9,7 @@ from fastapi.testclient import TestClient
 def client(monkeypatch, database_with_default_encoders_and_model):
     from superduperdb import CFG
 
-    vector_search = 'in_memory://localhost:8000'
+    vector_search = os.environ['SUPERDUPERDB_CLUSTER_VECTOR_SEARCH']
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
 
     from superduperdb.vector_search.server.app import app

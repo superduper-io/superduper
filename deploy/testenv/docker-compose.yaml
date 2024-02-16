@@ -12,8 +12,8 @@ services:
   mongodb:
     image: mongo:6
     hostname: mongodb
-    volumes:
-      - ${SUPERDUPERDB_DATA_DIR}:/data/db
+#    volumes:
+#      - ${SUPERDUPERDB_DATA_DIR}:/data/db
     ports:
       - "27017:27017"
     command:
@@ -203,7 +203,7 @@ services:
   #  ------------------------------
   sandbox:
     image: superduperdb/sandbox
-    hostname: hub
+    hostname: sandbox
     depends_on:
       mongo-init:
         condition: service_completed_successfully

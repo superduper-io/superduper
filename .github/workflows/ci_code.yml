@@ -132,7 +132,6 @@ jobs:
           # Run the test-suite within the sandbox image from the test environment
           docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing'
 
-
       - name: Shutdown Testing Environment
         run: |
           # Run the integrated testing environment

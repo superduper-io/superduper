@@ -96,9 +96,9 @@ ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
 # Install project dependencies.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
+#ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
 # Install user-defined dependencies
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
+#ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
 
 # ---------------
 # Build Release

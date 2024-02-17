@@ -5,7 +5,7 @@ SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
 # Export variables
 export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
-export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts2
+export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
 
 
 ##@ General
@@ -155,7 +155,6 @@ testenv_init: ## Initialize a local Testing environment
 	@deploy/testenv/validate_hostnames.sh
 
 	@echo "===> Discover Paths"
-	rm -rf ${SUPERDUPERDB_DATA_DIR} ${SUPERDUPERDB_ARTIFACTS_DIR}
 	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
 	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
 
@@ -168,6 +167,7 @@ testenv_init: ## Initialize a local Testing environment
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
+
 	rm -rf ${SUPERDUPERDB_DATA_DIR} ${SUPERDUPERDB_ARTIFACTS_DIR}
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment

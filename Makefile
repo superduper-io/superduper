@@ -1,6 +1,12 @@
+DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
-DIRECTORIES = superduperdb test 
-SUPERDUPERDB_DATA_DIR ?= .test_data
+
+export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
+
+# Export variables
+export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
+export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
+
 
 ##@ General
 
@@ -47,6 +53,23 @@ new_release: ## Release a new version of SuperDuperDB
 	@echo "** Push release-$(RELEASE_VERSION)"
 	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
 
+install-devkit: ## Add essential development tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	python -m pip install pre-commit
+	#pre-commit autoupdate
+
+	@echo "Download Docs dependencies"
+	python -m pip install --user sphinx furo myst_parser
+
+	@echo "Download Code Quality dependencies"
+	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
+
+	@echo "Download Code Testing dependencies"
+	python -m pip install --user pytest pytest-cov "nbval>=0.10.0"
+
+
+##@ Code Quality
 
 build-docs: ## Generate Docs and API
 	@echo "===> Generate docusaurus docs and blog-posts <==="
@@ -62,33 +85,12 @@ build-docs: ## Generate Docs and API
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
 
-##@ DevKit
-
-install-devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	python -m pip install pre-commit
-	pre-commit autoupdate
-
-	# Download tools for code quality testing
-	python -m pip install .[quality]
-
-	# Set git to continuously update submodules
-	git config --global submodule.recurse true
-
-
 lint-and-type-check: ##  Perform code linting and type checking
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	# Code formatting
-	rm -rf docs/api/source/
+	@echo "===> Code Formatting <==="
 	black --check $(DIRECTORIES)
-	rm -rf docs/hr/build/apidocs
-	# Linter and code formatting
-	sphinx-apidoc -f -o docs/api/source superduperdb
 	ruff check $(DIRECTORIES)
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	# Static Typing Checker
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
+
+	@echo "===> Static Typing Check <==="
 	mypy superduperdb
 	# Check for missing docstrings
 	interrogate superduperdb
@@ -111,7 +113,7 @@ fix-and-test: ##  Lint the code before testing
 
 
 
-##@ Base Image Management
+##@ Image Management
 
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build a minimal Docker image for general use
@@ -134,38 +136,41 @@ testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg SUPERDUPERDB_EXTRAS="dev"
+		--build-arg SUPERDUPERDB_EXTRAS="dev" \
 
 
-
-##@ Testing Environments
+##@ Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	@echo "===> Ensure hostnames"
-	@deploy/testenv/validate_hostnames.sh
-
-	@echo "===> Ensure mongodb volume is present"
-	mkdir -p deploy/testenv/$(SUPERDUPERDB_DATA_DIR)
-
-	@echo "===> Ensure Images"
+	@echo "===> Discover Images"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
         echo "superduper/sandbox found";\
-        echo "*************************************************************************";\
-        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image' **";\
-        echo "*************************************************************************";\
     else \
       	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
       	exit -1;\
     fi
 
-	SUPERDUPERDB_DATA_DIR=$(SUPERDUPERDB_DATA_DIR) docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
+	@echo "===> Discover Hostnames"
+	@deploy/testenv/validate_hostnames.sh
 
-	# Block waiting for the testenv to become ready.
+	@echo "===> Discover Paths"
+	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
+	echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+
+	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
+	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+
+
+	@echo "===> Run TestEnv"
+	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
+
+	@echo "===> Waiting for TestEnv to become ready"
 	@cd deploy/testenv/; ./wait_ready.sh
 
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
+
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 
@@ -187,6 +192,6 @@ integration-testing: ## Execute integration testing
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
-	@if [ -n "${NOTEBOOKS}" ]; then	\
-		pytest --nbval-lax ${NOTEBOOKS}; 	\
+	@if [ -n "$(NOTEBOOKS)" ]; then	\
+		pytest --nbval-lax $(NOTEBOOKS); 	\
 	fi

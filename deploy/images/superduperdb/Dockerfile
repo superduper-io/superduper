@@ -58,7 +58,7 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install common dependencies
 # ---------------
-RUN pip install setuptools pip
+RUN python -m pip install setuptools pip
 RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user \
     # JupyterLab extensions \
     theme-darcula \
@@ -107,7 +107,6 @@ FROM base AS build_release
 
 ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-ONBUILD COPY --chown=superduper ${PWD}/contrib ./contrib
 # Drop cache to reduce image size.
 ONBUILD RUN python -m pip install --user superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache

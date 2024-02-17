@@ -1,3 +1,4 @@
+import os
 import random
 import shutil
 import tempfile
@@ -105,7 +106,7 @@ def add_models_encoders(db, table):
 
 
 @pytest.fixture
-def sql_database_with_cdc(ibis_duckdb):
+def sql_database_with_cdc(ibis_duckdb, monkeypatch):
     import torch
 
     from superduperdb.backends.ibis.query import Table
@@ -133,6 +134,10 @@ def sql_database_with_cdc(ibis_duckdb):
 
     from superduperdb import CFG
 
+    cfg_artifact_store = CFG.artifact_store
+    cfg_metadata_store = CFG.metadata_store
+    cfg_in_memory = CFG.cluster.vector_search
+
     CFG.force_set('cluster.vector_search', 'lance')
     db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
         'test_index',
@@ -156,8 +161,10 @@ def sql_database_with_cdc(ibis_duckdb):
 
     yield table, db
 
-    CFG.force_set('cluster.vector_search', 'in_memory')
+    CFG.force_set('cluster.vector_search', cfg_in_memory)
     CFG.force_set('data_backend', cfg_databackend)
+    CFG.force_set('artifact_store', cfg_artifact_store)
+    CFG.force_set('metadata_store', cfg_metadata_store)
 
     db.cdc.stop()
     try:
@@ -167,11 +174,15 @@ def sql_database_with_cdc(ibis_duckdb):
 
 
 @pytest.fixture
-def database_with_cdc(database_with_default_encoders_and_model):
+def database_with_cdc(database_with_default_encoders_and_model, monkeypatch):
     db = database_with_default_encoders_and_model
 
     from superduperdb import CFG
 
+    cfg_in_memory = CFG.cluster.vector_search
+    from superduperdb.base.config import Cluster
+
+    monkeypatch.setattr(CFG, 'cluster', Cluster())
     CFG.force_set('cluster.vector_search', 'lance')
     db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
         'test_index',
@@ -184,7 +195,7 @@ def database_with_cdc(database_with_default_encoders_and_model):
 
     yield listener, 'documents', db
 
-    CFG.force_set('cluster.vector_search', 'in_memory')
+    CFG.force_set('cluster.vector_search', cfg_in_memory)
     db.cdc.stop()
     try:
         shutil.rmtree('.superduperdb/vector_indices')
@@ -487,12 +498,9 @@ def test_sql_task_workflow(
 def client(monkeypatch, database_with_default_encoders_and_model):
     from superduperdb import CFG
 
-    cdc = 'http://localhost:8001'
-    vector_search = 'in_memory://localhost:8000'
-
-    monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
-    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
-
+    monkeypatch.setattr(
+        CFG.cluster.cdc, 'uri', os.environ['SUPERDUPERDB_CLUSTER_CDC_URI']
+    )
     database_with_default_encoders_and_model.cdc.start()
     from superduperdb.cdc.app import app as cdc_app
 
@@ -500,8 +508,9 @@ def client(monkeypatch, database_with_default_encoders_and_model):
     client = TestClient(cdc_app.app)
     yield client
 
-    monkeypatch.setattr(CFG.cluster, 'cdc', None)
-    monkeypatch.setattr(CFG.cluster, 'vector_search', None)
+    from superduperdb.base.config import Cluster
+
+    monkeypatch.setattr(CFG, 'cluster', Cluster())
 
 
 def test_basic_workflow(client):

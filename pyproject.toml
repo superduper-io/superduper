@@ -2,6 +2,10 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+# ---------------------------------
+# Project Configuration
+# ---------------------------------
+
 [project]
 name = "superduperdb"
 description = "🔮 Super-power your database with AI 🔮"
@@ -63,97 +67,97 @@ dependencies = [
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",
-    "ray[client]>=2.8.1"
+    "ray[default]>=2.8.1"
 ]
 
-[project.optional-dependencies]
-torch = [
-    "torch>=2.0.0,!=2.0.1",
-    "accelerate>=0.20.1",
-    "transformers>=4.29.1",
-    "torchvision",
-    "torchaudio",
-]
-apis = [
-    "openai>=1.1.2",
-    "cohere==4.40",
-    "anthropic==0.12.0",
-]
-docs = [
-    "furo",
-    "sphinx",
-    "sphinx-autodoc-typehints",
-    "myst_parser"
-]
-quality = [
-    # Static Typing
-    "mypy>=1.3.0",
-    "types-pillow>=9.5.0.4",
-    "types-requests>=2.31.0.1",
-    "types-PyYAML",
-    "types-tqdm>=4.65.0.1",
-    "monkeytype",
-    "boto3-stubs>=1.26.154",
-    "black>=23.3",
-    "interrogate>=1.5.0",
-    "ruff>=0.0.267",
-]
-testing = [
-    "fastapi>=0.103.1",
-    "httpx>=0.24.1",
-    "lorem>=0.1.1",
-    "pytest>=7.3.1",
-    "pytest-cov>=2.12.1",
-    "pytest-xdist>=3.3.1",
-    "nbval>=0.10.0",
-    "vcrpy",
-    "pytest-asyncio",
-    "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
-]
-# Dependencies for server
-server = [
-    "uvicorn>=0.24.0",
-    "fastapi>=0.103.2",
-]
-# Packages for enterprise testing
-enterprise = [
-    "ray[default]",
-    "sentence-transformers",
-]
-
-dev = ["superduperdb[torch,apis,docs,quality,testing,server,enterprise]"]
-
+# ---------------------------------
+# Project Information
+# ---------------------------------
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"
 documentation = "https://docs.superduperdb.com"
 source = "https://github.com/SuperDuperDB/superduperdb/"
 
+
+# ---------------------------------
+# Optional Dependencies
+# ---------------------------------
+
+[project.optional-dependencies]
+#
+# Testsuite includes the dependencies imported on test-cases (e.g, torch).
+# It should not include the tooling for testing (e.g, pytest)
+#
+testsuite = [
+    # Unit testing
+    "torch>=2.0.0,!=2.0.1",
+    "transformers>=4.29.1",
+    "vcrpy",
+    "openai>=1.1.2",
+    "cohere==4.40",
+    "anthropic==0.12.0",
+    "accelerate>=0.21.0",
+    # Integration testing
+    "lorem>=0.1.1",
+    "torchvision",
+    "torchaudio",
+]
+
+#
+# Server includes the dependencies for services like CDC and vector-search
+#
+server = [
+    "uvicorn>=0.24.0",
+    "fastapi>=0.103.2",
+]
+
+dev = ["superduperdb[testsuite,server]"]
+
+
+# ---------------------------------
+# Tooling Configuration
+# ---------------------------------
+
+#
+# Setuptools
+#
 [tool.setuptools.packages.find]
 include = ["superduperdb*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "superduperdb.__version__"}
 
+#
+# Black
+#
 [tool.black]
 skip-string-normalization = true
 target-version = ["py38"]
 
+#
+# Mypy
+#
 [tool.mypy]
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_ignores = true
 disable_error_code = ["has-type", "attr-defined"]
 
+#
+# Pytest
+#
 [tool.pytest.ini_options]
 addopts = "-W ignore"
 
+#
+# Interrogate
+#
 [tool.interrogate]
 # Uncomment these next lines to generate a badge
 #
 # badge-format = "svg"
 # generate-badge = "docs"
-
 color = true
 exclude = []
 fail-under = 35.1
@@ -169,6 +173,9 @@ quiet = false
 verbose = 0
 whitelist-regex = []
 
+#
+# Ruff
+#
 [tool.ruff]
 extend-select = [
     "I", # Missing required import (auto-fixable)

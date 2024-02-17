@@ -13,7 +13,7 @@ services:
     image: mongo:6
     hostname: mongodb
     volumes:
-      - ${SUPERDUPERDB_DATA_DIR:-.test_data}:/data/db
+      - ${SUPERDUPERDB_DATA_DIR}:/data/db
     ports:
       - "27017:27017"
     command:
@@ -121,7 +121,7 @@ services:
     depends_on:
       - ray-head
     volumes:
-        - /tmp/artifacts:/tmp/artifacts:z # artifacts
+        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
     command:
        - /bin/sh
        - -c
@@ -145,7 +145,7 @@ services:
       - "8000:8000"
     env_file: users.env
     volumes:
-        - /tmp/artifacts:/tmp/artifacts:z # artifacts
+        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
     command:
       - /bin/sh
       - -c
@@ -179,7 +179,7 @@ services:
       - "8001:8001"
     env_file: users.env
     volumes:
-        - /tmp/artifacts:/tmp/artifacts:z # artifacts
+        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
     command:
       - /bin/sh
       - -c
@@ -201,9 +201,9 @@ services:
 
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------
-  notebooks:
+  sandbox:
     image: superduperdb/sandbox
-    hostname: hub
+    hostname: sandbox
     depends_on:
       mongo-init:
         condition: service_completed_successfully
@@ -216,10 +216,22 @@ services:
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:
-        - /tmp/artifacts:/tmp/artifacts:z # artifacts
+        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
     env_file: users.env
     command:
       - /bin/sh
       - -c
       - |
         jupyter lab --port=8888 --no-browser --ip=0.0.0.0 --NotebookApp.token=''
+    healthcheck:
+      test: curl http://localhost:8888 || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  sandbox-init:
+    image: busybox
+    depends_on:
+      sandbox:
+        condition: service_healthy

@@ -1,6 +1,5 @@
 import os
 import socket
-import uuid
 from sys import stderr
 
 from loguru import logger
@@ -33,7 +32,6 @@ class Logging:
         logger.configure(
             extra={
                 "hostname": socket.gethostname(),
-                "session_id": str(uuid.uuid4()),
             }
         )
 
@@ -41,7 +39,6 @@ class Logging:
             "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
             "| <level>{level: <8}</level> "
             "| <cyan>{extra[hostname]: <8}</cyan>"
-            "| <cyan>{extra[session_id]}</cyan>"
             "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
             "| <level>{message}</level>"
         )

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
-- 
+- Run Tests from within the container
 
 #### New Features & Functionality
 - CI fails if CHANGELOG.md is not updated on PRs
@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- Test suite takes config from external .env file.
 - Support 3.10+ due to `dataclass` supported features
 - Updated the table creation method in MetaDataStore to improve compatibility across various databases.
 - Replaced JSON data with String format before storage in SQLAlchemy.

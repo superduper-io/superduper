@@ -6,6 +6,7 @@ on:
     paths:  # run this action only when the docs folder is changed
       - 'docs/hr/content/**'
       - 'docs/hr/blog/**'
+      - 'docs/hr/*.js'
   workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
 
 
@@ -42,8 +43,9 @@ jobs:
             ${{ env.pythonLocation }}
           key: ubuntu-latest_python-3.11_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
 
-      - name: Install dependencies
-        run: pip install .[docs]
+      - name: Install DevKit (docs, testing, etc)
+        run: |
+          make install-devkit
 
       - name: Build docs
         run: |

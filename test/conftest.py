@@ -7,6 +7,10 @@ from threading import Lock
 from typing import Iterator
 
 import pytest
+from dotenv import load_dotenv
+
+if env_file := os.environ.get('SUPERDUPERDB_PYTEST_ENV_FILE', ''):
+    load_dotenv(env_file)
 
 import superduperdb as s
 from superduperdb import CFG, logging
@@ -102,12 +106,10 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     from superduperdb.base.build import build_datalayer
 
     # mongodb instead of localhost is required for CFG compatibility with docker-host
-    data_backend = 'mongodb://superduper:superduper@mongodb:27017/test_db'
-    data_backend = os.environ.get('SUPERDUPER_MONGO_URI', data_backend)
-    db_name = data_backend.split('/')[-1]
+    db_name = CFG.data_backend.split('/')[-1]
+    from superduperdb.base.config import Cluster
 
-    artifact_store = 'filesystem:///tmp/artifacts'
-    monkeypatch.setattr(CFG, 'artifact_store', artifact_store)
+    monkeypatch.setattr(CFG, 'cluster', Cluster())
 
     db = build_datalayer(CFG)
 
@@ -292,6 +294,7 @@ def create_db(CFG, **kwargs):
     return db
 
 
+# Caution: This is only meant to be used in unit test cases
 @pytest.fixture
 def db(request, monkeypatch) -> Iterator[Datalayer]:
     # TODO: Use pre-defined config instead of dict here
@@ -307,9 +310,12 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
     else:
         raise ValueError(f'Unsupported param type: {type(param)}')
 
+    # This patch is required for testing sql databases
     monkeypatch.setattr(CFG, 'data_backend', setup_config['data_backend'])
-    monkeypatch.setattr(CFG, 'artifact_store', 'filesystem:///tmp/artifacts')
 
+    from superduperdb.base.config import Cluster
+
+    monkeypatch.setattr(CFG, 'cluster', Cluster())
     db = create_db(CFG, **setup_config)
 
     yield db

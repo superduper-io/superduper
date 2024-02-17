@@ -223,3 +223,15 @@ services:
       - -c
       - |
         jupyter lab --port=8888 --no-browser --ip=0.0.0.0 --NotebookApp.token=''
+    healthcheck:
+      test: curl http://localhost:8888 || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  sandbox-init:
+    image: busybox
+    depends_on:
+      sandbox:
+        condition: service_healthy

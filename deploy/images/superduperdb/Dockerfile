@@ -75,7 +75,7 @@ COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.j
 
 # Volumes
 # ---------------
-VOLUME /artifacts
+#VOLUME /artifacts
 
 # Runtime Configuration
 # ---------------
@@ -99,6 +99,8 @@ ONBUILD WORKDIR ${HOME}/superduperdb
 #ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
 # Install user-defined dependencies
 #ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
+ONBUILD VOLUME /artifacts
+
 
 # ---------------
 # Build Release

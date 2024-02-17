@@ -104,8 +104,8 @@ jobs:
           export SUPERDUPERDB_DATA_DIR=~/.cache/superduperdb/test_data
           export SUPERDUPERDB_ARTIFACTS_DIR=~/.cache/superduperdb/artifacts
 
-          @mkdir -p ${SUPERDUPERDB_DATA_DIR} && echo "SUPERDUPERDB_DATA_DIR: ${SUPERDUPERDB_DATA_DIR}"
-          @mkdir -p ${SUPERDUPERDB_ARTIFACTS_DIR} && echo "SUPERDUPERDB_ARTIFACTS_DIR: ${SUPERDUPERDB_ARTIFACTS_DIR}"
+          mkdir -p ${SUPERDUPERDB_DATA_DIR} && echo "SUPERDUPERDB_DATA_DIR: ${SUPERDUPERDB_DATA_DIR}"
+          mkdir -p ${SUPERDUPERDB_ARTIFACTS_DIR} && echo "SUPERDUPERDB_ARTIFACTS_DIR: ${SUPERDUPERDB_ARTIFACTS_DIR}"
   
           touch ${SUPERDUPERDB_DATA_DIR}/aa
           touch ${SUPERDUPERDB_ARTIFACTS_DIR}/bb

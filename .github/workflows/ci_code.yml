@@ -119,15 +119,6 @@ jobs:
         run: |
           make testenv_image
 
-      - name: Start Testing Environment
-        run: |
-          # Update hostnames
-          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-
-          # Run the integrated testing environment
-          make testenv_init
-
-
       - name: Checkout repository
         run: |
           export SUPERDUPERDB_DATA_DIR=~/.cache/superduperdb/test_data
@@ -142,7 +133,16 @@ jobs:
           ls -lah ${SUPERDUPERDB_DATA_DIR}
           ls -lah ${SUPERDUPERDB_ARTIFACTS_DIR}
 
-          docker exec testenv-sandbox-1 sh -c 'ls -lah /artifacts/ ; touch /artifacts/cc'
+          docker run superduperdb/sandbox:latest sh -c 'ls -lah /artifacts/ ; touch /artifacts/cc'
+
+
+      - name: Start Testing Environment
+        run: |
+          # Update hostnames
+          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+
+          # Run the integrated testing environment
+          make testenv_init
 
 
 #      - name: Integration Testing

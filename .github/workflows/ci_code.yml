@@ -119,29 +119,6 @@ jobs:
         run: |
           make testenv_image
 
-      - name: Checkout repository
-        run: |
-          export SUPERDUPERDB_DATA_DIR=~/.cache/superduperdb/test_data
-          export SUPERDUPERDB_ARTIFACTS_DIR=~/.cache/superduperdb/artifacts
-
-          echo "SUPERDUPERDB_DATA_DIR: ${SUPERDUPERDB_DATA_DIR}"
-          echo "SUPERDUPERDB_ARTIFACTS_DIR: ${SUPERDUPERDB_ARTIFACTS_DIR}"
-          
-          rm -rf ${SUPERDUPERDB_DATA_DIR}
-          rm -rf ${SUPERDUPERDB_ARTIFACTS_DIR}
-          
-          mkdir -p ${SUPERDUPERDB_DATA_DIR}
-          mkdir -p ${SUPERDUPERDB_ARTIFACTS_DIR} 
-          
-          touch ${SUPERDUPERDB_DATA_DIR}/aa
-          touch ${SUPERDUPERDB_ARTIFACTS_DIR}/bb
-          
-          ls -lah ${SUPERDUPERDB_DATA_DIR}
-          ls -lah ${SUPERDUPERDB_ARTIFACTS_DIR}
-
-          echo "-- FROM CONTAINER --"
-          docker run superduperdb/sandbox:latest sh -c 'df -h; ls -lah /artifacts/; touch /artifacts/cc'
-
 
       - name: Start Testing Environment
         run: |
@@ -150,6 +127,9 @@ jobs:
 
           # Run the integrated testing environment
           make testenv_init
+
+          echo "-- FROM CONTAINER --"
+          docker exec testenv-sandbox-1 sh -c 'df -h; ls -lah /artifacts/; touch /artifacts/cc'
 
 
 #      - name: Integration Testing

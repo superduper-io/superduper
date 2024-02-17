@@ -15,6 +15,24 @@ FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
 # ---------------
 USER root
 
+# Install system packages
+# ---------------
+RUN apt-get update \
+ && apt-get upgrade -y \
+ && apt-get install -y --no-install-recommends \
+        # Required for downloading code/data from the internet \
+        wget curl unzip git \
+        # DevOps
+        vim procps make \
+        # Required by OpenCV
+        libglib2.0-0 libgl1-mesa-glx \
+        # Required for PostgreSQL \
+        libpq-dev \
+   # Purge apt cache
+   && apt-get clean \
+   && rm -rf /var/lib/apt/lists/*
+
+
 # Replace the default Jupyter user with a SuperDuper user
 # ---------------
 ENV NB_USER=superduper \
@@ -38,6 +56,26 @@ USER ${NB_USER}
 ENV PATH="${HOME}/.local/bin:$PATH"
 
 
+# Install common dependencies
+# ---------------
+RUN python -m pip install setuptools pip
+RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user \
+    # JupyterLab extensions \
+    theme-darcula \
+    ipywidgets \
+    jupyterlab-lsp \
+    'python-lsp-server[all]'
+
+
+# Install Jupyterlab extensions
+# ---------------
+COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
+COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
+
+
+# Volumes
+# ---------------
+VOLUME /artifacts
 
 # Runtime Configuration
 # ---------------
@@ -57,7 +95,10 @@ FROM base AS build_sandbox
 ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD VOLUME /artifacts
+# Install project dependencies.
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
+# Install user-defined dependencies
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
 
 # ---------------
 # Build Release
@@ -78,4 +119,4 @@ ONBUILD WORKDIR ${HOME}/examples
 FROM build_${BUILD_ENV}
 EXPOSE 8888
 ENTRYPOINT ["tini", "--"]
-CMD ["sleep", "infinity"]
+CMD ["jupyter", "lab", "--port=8888", "--no-browser", "--ip=0.0.0.0"]

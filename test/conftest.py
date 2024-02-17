@@ -9,7 +9,7 @@ from typing import Iterator
 import pytest
 from dotenv import load_dotenv
 
-if env_file := os.environ.get('ENV_FILE', ''):
+if env_file := os.environ.get('SUPERDUPERDB_PYTEST_ENV_FILE', ''):
     load_dotenv(env_file)
 
 import superduperdb as s

@@ -1,7 +1,7 @@
 DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
-SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
+export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
 # Export variables
 export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
@@ -132,12 +132,11 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 
 
 
-testenv_image: ## Build a sandbox image (argument: EXTRA_ARGS=<docker build args>)
+testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
 		--build-arg SUPERDUPERDB_EXTRAS="dev" \
-		$(EXTRA_ARGS)
 
 
 ##@ Testing Environment
@@ -188,7 +187,7 @@ unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
 integration-testing: ## Execute integration testing
-	ENV_FILE=$(SUPERDUPERDB_PYTEST_ENV_FILE) pytest $(PYTEST_ARGUMENTS) ./test/integration
+	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"

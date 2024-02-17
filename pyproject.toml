@@ -67,7 +67,7 @@ dependencies = [
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",
-    "ray[client]>=2.8.1"
+    "ray[default]>=2.8.1"
 ]
 
 # ---------------------------------
@@ -112,16 +112,7 @@ server = [
     "fastapi>=0.103.2",
 ]
 
-#
-# Enterprise includes some basic packages for testing the image on the enterprise environment.
-# @WARN: to be deprecated.
-#
-enterprise = [
-    "ray[default]",
-    "sentence-transformers",
-]
-
-dev = ["superduperdb[testsuite,server,enterprise]"]
+dev = ["superduperdb[testsuite,server]"]
 
 
 # ---------------------------------

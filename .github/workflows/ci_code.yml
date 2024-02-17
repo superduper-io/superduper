@@ -133,12 +133,16 @@ jobs:
           mkdir -p ${SUPERDUPERDB_DATA_DIR}
           mkdir -p ${SUPERDUPERDB_ARTIFACTS_DIR} 
           
+          chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
+          chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR} 
+          
           touch ${SUPERDUPERDB_DATA_DIR}/aa
           touch ${SUPERDUPERDB_ARTIFACTS_DIR}/bb
           
           ls -lah ${SUPERDUPERDB_DATA_DIR}
           ls -lah ${SUPERDUPERDB_ARTIFACTS_DIR}
 
+          
 
       - name: Start Testing Environment
         run: |

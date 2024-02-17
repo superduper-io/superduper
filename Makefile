@@ -155,8 +155,12 @@ testenv_init: ## Initialize a local Testing environment
 	@deploy/testenv/validate_hostnames.sh
 
 	@echo "===> Discover Paths"
-	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
-	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
+	"SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+
+	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && @chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
+	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && @chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+
 
 	@echo "===> Run TestEnv"
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &

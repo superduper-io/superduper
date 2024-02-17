@@ -22,78 +22,78 @@ jobs:
   # ---------------------------------
   # Unit Testing
   # ---------------------------------
-#  unit-testing:
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ "ubuntu-latest" ]
-#        python-version: ["3.11"] # "3.10"
-#    steps:
-#    - name: Checkout repository
-#      uses: actions/checkout@v4
-#
-#    - name: Validate Changelog Update
-#      uses: tarides/changelog-check-action@v2
-#      with:
-#        changelog: CHANGELOG.md
-#
-#    #---------------------------------------------------
-#    # Configuring Python environments.
-#    #
-#    # We cache both the pip packages and the installation dir.
-#    # If the pyproject remains unchanged, we re-use the existing installation dir.
-#    # If the pyproject has changed, we reinstall everything using the cached pip packages.
-#    - name: Cache Pip Packages
-#      id: setup-python
-#      uses: actions/setup-python@v4
-#      with:
-#        python-version: ${{ matrix.python-version }}
-#        cache: 'pip' # caching pip dependencies
-#
-#    - name: Cache Python Installation
-#      uses: actions/cache@v4
-#      with:
-#        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
-#        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
-#      #---------------------------------------------------
-#
-#    - name: Install SuperDuperDB Project
-#      run: |
-#        # Install core and testsuite dependencies on the cached python environment.
-#        python -m pip install .[testsuite]
-#
-#    - name: Install DevKit (docs, testing, etc)
-#      run: |
-#        make install-devkit
-#
-#    - name: Check core imports
-#      run: |
-#        # This job checks that no optional dependencies are imported in the core code.
-#        python -m pip install impall==1.3.1
-#        python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
-#
-#    - name: Lint and type-check
-#      run: |
-#        make lint-and-type-check
-#
-#    - name: Unit Testing
-#      run: |
-#        make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
-#
-#    - name: Upload code coverage to Codecov
-#      uses: codecov/codecov-action@v3.1.4
-#      with:
-#        env_vars: RUNNER_OS,PYTHON_VERSION
-#        file: ./coverage.xml
-#        fail_ci_if_error: false
-#        name: codecov-umbrella
+  unit-testing:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: ["3.11"] # "3.10"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Validate Changelog Update
+      uses: tarides/changelog-check-action@v2
+      with:
+        changelog: CHANGELOG.md
+
+    #---------------------------------------------------
+    # Configuring Python environments.
+    #
+    # We cache both the pip packages and the installation dir.
+    # If the pyproject remains unchanged, we re-use the existing installation dir.
+    # If the pyproject has changed, we reinstall everything using the cached pip packages.
+    - name: Cache Pip Packages
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip' # caching pip dependencies
+
+    - name: Cache Python Installation
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
+        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
+      #---------------------------------------------------
+
+    - name: Install SuperDuperDB Project
+      run: |
+        # Install core and testsuite dependencies on the cached python environment.
+        python -m pip install .[testsuite]
+
+    - name: Install DevKit (docs, testing, etc)
+      run: |
+        make install-devkit
+
+    - name: Check core imports
+      run: |
+        # This job checks that no optional dependencies are imported in the core code.
+        python -m pip install impall==1.3.1
+        python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
+
+    - name: Lint and type-check
+      run: |
+        make lint-and-type-check
+
+    - name: Unit Testing
+      run: |
+        make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+
+    - name: Upload code coverage to Codecov
+      uses: codecov/codecov-action@v3.1.4
+      with:
+        env_vars: RUNNER_OS,PYTHON_VERSION
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        name: codecov-umbrella
 
   # ---------------------------------
   # Integration Testing
   # ---------------------------------
   integration-testing:
-    #needs: [ 'unit-testing' ]
+    needs: [ 'unit-testing' ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -118,30 +118,6 @@ jobs:
       - name: Build Docker Image
         run: |
           make testenv_image
-
-      - name: Checkout repository
-        run: |
-          export SUPERDUPERDB_DATA_DIR=~/.cache/superduperdb/test_data
-          export SUPERDUPERDB_ARTIFACTS_DIR=~/.cache/superduperdb/artifacts
-
-          echo "SUPERDUPERDB_DATA_DIR: ${SUPERDUPERDB_DATA_DIR}"
-          echo "SUPERDUPERDB_ARTIFACTS_DIR: ${SUPERDUPERDB_ARTIFACTS_DIR}"
-          
-          rm -rf ${SUPERDUPERDB_DATA_DIR}
-          rm -rf ${SUPERDUPERDB_ARTIFACTS_DIR}
-          
-          mkdir -p ${SUPERDUPERDB_DATA_DIR}
-          mkdir -p ${SUPERDUPERDB_ARTIFACTS_DIR} 
-          
-          chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
-          chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR} 
-          
-          touch ${SUPERDUPERDB_DATA_DIR}/aa
-          touch ${SUPERDUPERDB_ARTIFACTS_DIR}/bb
-          
-          ls -lah ${SUPERDUPERDB_DATA_DIR}
-          ls -lah ${SUPERDUPERDB_ARTIFACTS_DIR}
-
           
 
       - name: Start Testing Environment
@@ -151,17 +127,13 @@ jobs:
 
           # Run the integrated testing environment
           make testenv_init
-  
-          echo "-- FROM CONTAINER --"
-          docker exec testenv-sandbox-1 sh -c 'df -h; ls -lah /artifacts/; touch /artifacts/cc'
 
+      - name: Integration Testing
+        run: |
+          # Run the test-suite within the sandbox image from the test environment
+          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing'
 
-#      - name: Integration Testing
-#        run: |
-#          # Run the test-suite within the sandbox image from the test environment
-#          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing'
-#
-#      - name: Shutdown Testing Environment
-#        run: |
-#          # Run the integrated testing environment
-#          make testenv_shutdown
+      - name: Shutdown Testing Environment
+        run: |
+          # Run the integrated testing environment
+          make testenv_shutdown

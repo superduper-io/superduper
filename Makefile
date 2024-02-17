@@ -172,7 +172,6 @@ testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
 
-	rm -rf ${SUPERDUPERDB_DATA_DIR} ${SUPERDUPERDB_ARTIFACTS_DIR}
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 

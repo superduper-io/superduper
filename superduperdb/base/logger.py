@@ -1,6 +1,5 @@
 import os
 import socket
-import uuid
 from sys import stderr
 
 from loguru import logger

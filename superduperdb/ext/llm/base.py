@@ -193,11 +193,14 @@ class BaseOpenAI(BaseLLMAPI):
         }
 
         self.client = OpenAI(**params)
-        model_list = self.client.models.list()
-        model_set = sorted({model.id for model in model_list.data})
+        model_set = self.get_model_set()
         assert (
             self.model_name in model_set
         ), f"model_name {self.model_name} is not in model_set {model_set}"
+
+    def get_model_set(self):
+        model_list = self.client.models.list()
+        return sorted({model.id for model in model_list.data})
 
     def _generate(self, prompt: str, **kwargs: Any) -> str:
         if self.chat:

@@ -9,6 +9,7 @@ import typing as t
 import aiohttp
 import requests
 import tqdm
+from httpx import ResponseNotRead
 from openai import (
     APITimeoutError,
     AsyncOpenAI,
@@ -25,10 +26,18 @@ from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
-retry = Retry(exception_types=(RateLimitError, InternalServerError, APITimeoutError))
+retry = Retry(
+    exception_types=(
+        RateLimitError,
+        InternalServerError,
+        APITimeoutError,
+        ResponseNotRead,
+    )
+)
 
 
 @cache
+@retry
 def _available_models(skwargs):
     kwargs = json.loads(skwargs)
     return tuple([r.id for r in SyncOpenAI(**kwargs).models.list().data])

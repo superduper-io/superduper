@@ -19,7 +19,7 @@ if os.getenv('COHERE_API_KEY') is None:
 )
 def test_embed_one():
     embed = CohereEmbed(identifier='embed-english-v2.0')
-    resp = embed.predict('Hello world')
+    resp = embed.predict_one('Hello world')
 
     assert len(resp) == embed.shape[0]
     assert isinstance(resp, list)
@@ -31,37 +31,8 @@ def test_embed_one():
     filter_headers=['authorization'],
 )
 def test_embed_batch():
-    embed = CohereEmbed(identifier='embed-english-v2.0')
-    resp = embed.predict(['Hello', 'world'], batch_size=1)
-
-    assert len(resp) == 2
-    assert len(resp[0]) == embed.shape[0]
-    assert isinstance(resp[0], list)
-    assert all(isinstance(x, float) for x in resp[0])
-
-
-@pytest.mark.asyncio
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_async_embed_one.yaml',
-    filter_headers=['authorization'],
-)
-async def test_async_embed_one():
-    embed = CohereEmbed(identifier='embed-english-v2.0')
-    resp = await embed.apredict('Hello world')
-
-    assert len(resp) == embed.shape[0]
-    assert isinstance(resp, list)
-    assert all(isinstance(x, float) for x in resp)
-
-
-@pytest.mark.asyncio
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_async_embed_batch.yaml',
-    filter_headers=['authorization'],
-)
-async def test_async_embed_batch():
-    embed = CohereEmbed(identifier='embed-english-v2.0')
-    resp = await embed.apredict(['Hello', 'world'], batch_size=1)
+    embed = CohereEmbed(identifier='embed-english-v2.0', batch_size=1)
+    resp = embed.predict(['Hello', 'world'])
 
     assert len(resp) == 2
     assert len(resp[0]) == embed.shape[0]
@@ -75,7 +46,7 @@ async def test_async_embed_batch():
 )
 def test_generate():
     e = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
-    resp = e.predict('', one=True, context=['world!'])
+    resp = e.predict_one('', context=['world!'])
 
     assert isinstance(resp, str)
 
@@ -86,32 +57,11 @@ def test_generate():
 )
 def test_batch_generate():
     e = CohereGenerate(identifier='base-light')
-    resp = e.predict(['Hello, world!'], one=False)
-
-    assert isinstance(resp, list)
-    assert isinstance(resp[0], str)
-
-
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_generate_async.yaml',
-    filter_headers=['authorization'],
-)
-@pytest.mark.asyncio
-async def test_chat_async():
-    e = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
-    resp = await e.apredict('', one=True, context=['world!'])
-
-    assert isinstance(resp, str)
-
-
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_chat_async.yaml',
-    filter_headers=['authorization'],
-)
-@pytest.mark.asyncio
-async def test_batch_chat_async():
-    e = CohereGenerate(identifier='base-light')
-    resp = await e.apredict(['Hello, world!'], one=False)
+    resp = e.predict(
+        [
+            (('Hello, world!',), {}),
+        ]
+    )
 
     assert isinstance(resp, list)
     assert isinstance(resp[0], str)

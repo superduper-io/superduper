@@ -19,7 +19,7 @@ from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 
 
-def build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
+def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     # Connect to metadata store.
     # ------------------------------
     # 1. try to connect to the metadata store specified in the configuration.
@@ -28,7 +28,9 @@ def build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     if cfg.metadata_store is not None:
         # try to connect to the metadata store specified in the configuration.
         logging.info("Connecting to Metadata Client:", cfg.metadata_store)
-        return build(cfg.metadata_store, metadata_stores, type='metadata')
+        return _build_databackend_impl(
+            cfg.metadata_store, metadata_stores, type='metadata'
+        )
     else:
         try:
             # try to connect to the data backend engine.
@@ -45,19 +47,21 @@ def build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
         try:
             # try to connect to the data backend uri.
             logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
-            return build(cfg.data_backend, metadata_stores, type='metadata')
+            return _build_databackend_impl(
+                cfg.data_backend, metadata_stores, type='metadata'
+            )
         except Exception as e:
             # Exit quickly if a connection fails.
             logging.error("Error initializing to Metadata Client:", str(e))
             sys.exit(1)
 
 
-def build_databackend(cfg, databackend=None):
+def _build_databackend(cfg, databackend=None):
     # Connect to data backend.
     # ------------------------------
     try:
         if not databackend:
-            databackend = build(cfg.data_backend, data_backends)
+            databackend = _build_databackend_impl(cfg.data_backend, data_backends)
         logging.info("Data Client is ready.", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.
@@ -66,7 +70,7 @@ def build_databackend(cfg, databackend=None):
     return databackend
 
 
-def build_artifact_store(
+def _build_artifact_store(
     artifact_store: t.Optional[str] = None,
     databackend: t.Optional['BaseDataBackend'] = None,
 ):
@@ -90,7 +94,7 @@ def build_artifact_store(
 
 
 # Helper function to build a data backend based on the URI.
-def build(uri, mapping, type: str = 'data_backend'):
+def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
     logging.debug(f"Parsing data connection URI:{uri}")
 
     if re.match('^mongodb:\/\/', uri) is not None:
@@ -140,7 +144,7 @@ def build(uri, mapping, type: str = 'data_backend'):
             return mapping['sqlalchemy'](sql_conn, name)
 
 
-def build_compute(compute):
+def _build_compute(compute):
     logging.info("Connecting to compute client:", compute)
 
     if compute == 'local' or compute is None:
@@ -170,6 +174,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     :param cfg: Configuration to use. If None, use ``superduperdb.CFG``.
     :param databackend: Databacked to use.
                         If None, use ``superduperdb.CFG.data_backend``.
+    :pararm kwargs: keyword arguments to be adopted by the `CFG`
     """
 
     # Configuration
@@ -185,17 +190,17 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
             cfg.force_set(k, v)
 
     # Build databackend
-    databackend = build_databackend(cfg, databackend)
+    databackend = _build_databackend(cfg, databackend)
 
     # Build metadata store
-    metadata = build_metadata(cfg, databackend)
+    metadata = _build_metadata(cfg, databackend)
     assert metadata
 
     # Build artifact store
-    artifact_store = build_artifact_store(cfg.artifact_store, databackend)
+    artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
 
     # Build compute
-    compute = build_compute(cfg.cluster.compute)
+    compute = _build_compute(cfg.cluster.compute)
 
     # Build DataLayer
     # ------------------------------

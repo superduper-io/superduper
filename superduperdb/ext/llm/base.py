@@ -5,10 +5,10 @@ import inspect
 import typing
 from functools import reduce
 from logging import WARNING, getLogger
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Sequence, Union
 
 from superduperdb import logging
-from superduperdb.components.component import Component
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import _Predictor
 from superduperdb.ext.llm.utils import Prompter
 from superduperdb.ext.utils import ensure_initialized
@@ -21,7 +21,7 @@ getLogger("httpx").setLevel(WARNING)
 
 
 @dc.dataclass
-class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
+class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
     """
     :param prompt_template: The template to use for the prompt.
     :param prompt_func: The function to use for the prompt.
@@ -69,31 +69,22 @@ class _BaseLLM(Component, _Predictor, metaclass=abc.ABCMeta):
     def _generate(self, prompt: str, **kwargs: Any) -> str:
         ...
 
-    def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
+    def _batch_generate(self, prompts: List[str]) -> List[str]:
         """
         Base method to batch generate text from a list of prompts.
         If the model can run batch generation efficiently, pls override this method.
         """
-        return [self._generate(prompt, **kwargs) for prompt in prompts]
+        return [self._generate(prompt, **self.predict_kwargs) for prompt in prompts]
 
     @ensure_initialized
-    def _predict(
-        self,
-        X: Union[str, List[str], List[dict[str, str]]],
-        one: bool = False,
-        **kwargs: Any,
-    ):
-        # support string and dialog format
-        one = isinstance(X, str)
-        if not one and isinstance(X, list):
-            one = isinstance(X[0], dict)
+    def predict_one(self, X: Union[str, dict[str, str]], **kwargs):
+        x = self.prompter(X)
+        return self._generate(x, **kwargs)
 
-        if one:
-            x = self.prompter(X, **kwargs)
-            return self._generate(x, **kwargs)
-        else:
-            xs = [self.prompter(x, **kwargs) for x in X]
-            return self._batch_generate(xs, **kwargs)
+    @ensure_initialized
+    def predict(self, dataset: Union[List, QueryDataset]) -> Sequence:
+        xs = [self.prompter(dataset[i]) for i in range(len(dataset))]
+        return self._batch_generate(xs)
 
     def get_kwargs(self, func, *kwargs_list):
         """

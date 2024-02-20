@@ -440,15 +440,17 @@ def test_cdc_stop(database_with_cdc):
 def add_and_cleanup_listeners(database, select):
     """Add listeners to the database and remove them after the test"""
 
+    m = database.load('model', 'model_linear_a')
+
     listener_x = Listener(
         key='x',
-        model='model_linear_a',
+        model=m,
         select=select,
     )
 
     listener_z = Listener(
         key='z',
-        model='model_linear_a',
+        model=m,
         select=select,
     )
 

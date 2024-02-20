@@ -7,12 +7,13 @@ from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import _OUTPUTS_KEY
+from superduperdb.components.model import Mapping
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
 from .component import Component
-from .model import Model
+from .model import ModelInputType, _Predictor
 
 
 @public_api(stability='stable')
@@ -32,37 +33,42 @@ class Listener(Component):
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
-    key: t.Union[str, t.List, t.Dict]
-    model: t.Union[str, Model]
+    key: ModelInputType
+    model: _Predictor
     select: CompoundSelect
-    identifier: t.Optional[str] = None  # type: ignore[assignment]
     active: bool = True
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    identifier: t.Optional[str] = None  # type: ignore[assignment]
 
     type_id: t.ClassVar[str] = 'listener'
 
     def __post_init__(self, artifacts):
-        if self.identifier is None and self.model is not None:
-            if isinstance(self.model, str):
-                self.identifier = f'{self.model}/{self.id_key}'
-            else:
-                self.identifier = f'{self.model.identifier}/{self.id_key}'
+        identifier = f'{self.model.identifier}/{self.mapping.id_key}'
+        if self.identifier != identifier:
+            assert self.identifier is None, 'Don\'t set manually'
+        self.identifier = identifier
         super().__post_init__(artifacts)
+
+    @property
+    def mapping(self):
+        return Mapping(self.key, signature=self.model.signature)
 
     @property
     def outputs(self):
         return (
-            f'{_OUTPUTS_KEY}.{self.id_key}.{self.model.identifier}.{self.model.version}'
+            f'{_OUTPUTS_KEY}.{self.mapping.id_key}'
+            f'.{self.model.identifier}.{self.model.version}'
         )
 
     @override
     def pre_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
-            self.model = t.cast(Model, db.load('model', self.model))
+            self.model = t.cast(_Predictor, db.load('model', self.model))
 
         if self.select is not None and self.select.variables:
             self.select = t.cast(CompoundSelect, self.select.set_variables(db))
 
+    @override
     def post_create(self, db: Datalayer) -> None:
         # Start cdc service if enabled
         if self.select is not None and self.active and not db.server_mode:
@@ -123,7 +129,6 @@ class Listener(Component):
         self,
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
     ) -> t.Sequence[t.Any]:
         """
         Schedule jobs for the listener
@@ -137,12 +142,11 @@ class Listener(Component):
         assert not isinstance(self.model, str)
 
         out = [
-            self.model.predict(
+            self.model.predict_in_db_job(
                 X=self.key,
                 db=db,
                 select=self.select.copy(),
                 dependencies=dependencies,
-                **(self.predict_kwargs or {}),
             )
         ]
         return out

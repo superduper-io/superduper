@@ -133,7 +133,7 @@ def end2end_workflow(ibis_db, memory_table=False):
     )
 
     # Apply the torchvision model
-    resnet.predict(
+    resnet.predict_in_db(
         X='image',
         db=db,
         select=t.select('id', 'image'),
@@ -150,7 +150,7 @@ def end2end_workflow(ibis_db, memory_table=False):
     )
 
     # apply to the table
-    vectorize.predict(
+    vectorize.predict_in_db(
         X='image',
         db=db,
         select=t.select('id', 'image'),

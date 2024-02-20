@@ -213,8 +213,8 @@ def add_datatypes(db: Datalayer):
 def add_models(db: Datalayer):
     # identifier, weight_shape, encoder
     params = [
-        ['linear_a', (32, 16), 'torch.float32[16]'],
-        ['linear_b', (16, 8), 'torch.float32[8]'],
+        ['linear_a', (32, 16), db.load('datatype', 'torch.float32[16]')],
+        ['linear_b', (16, 8), db.load('datatype', 'torch.float32[8]')],
     ]
     for identifier, weight_shape, datatype in params:
         m = TorchModel(
@@ -228,7 +228,7 @@ def add_models(db: Datalayer):
 def add_vector_index(
     db: Datalayer, collection_name='documents', identifier='test_vector_search'
 ):
-    # TODO: Support configurable key and model
+    # TODO: Support configurable key and mode
     is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
     if is_mongodb_backend:
         select_x = Collection(collection_name).find()
@@ -238,25 +238,27 @@ def add_vector_index(
         select_x = table.select('id', 'x')
         select_z = table.select('id', 'z')
 
-    db.add(
+    model = db.load('model', 'linear_a')
+
+    _, i_list = db.add(
         Listener(
             select=select_x,
             key='x',
-            model='linear_a',
+            model=model,
         )
     )
 
-    db.add(
+    _, c_list = db.add(
         Listener(
             select=select_z,
             key='z',
-            model='linear_a',
+            model=model,
         )
     )
     vi = VectorIndex(
         identifier=identifier,
-        indexing_listener='linear_a/x',
-        compatible_listener='linear_a/z',
+        indexing_listener=i_list,
+        compatible_listener=c_list,
     )
     db.add(vi)
 

@@ -23,6 +23,8 @@ class MongoStyleDict(t.Dict[str, t.Any]):
     """
 
     def __getitem__(self, key: str) -> t.Any:
+        if key == '_base':
+            return self
         if '.' not in key:
             return super().__getitem__(key)
         else:

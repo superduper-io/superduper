@@ -1,11 +1,14 @@
+import dataclasses as dc
 import os
 import shutil
+import typing as t
 
 import pytest
 
-from superduperdb import Model
+from superduperdb import ObjectModel
+from superduperdb.base.document import Document
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import dill_serializer
+from superduperdb.components.datatype import Encodable, dill_serializer
 
 
 @pytest.fixture
@@ -16,10 +19,53 @@ def cleanup():
 
 
 def test_compile_decompile(cleanup):
-    m = Model('test_export', object=lambda x: x, datatype=dill_serializer)
+    m = ObjectModel('test_export', object=lambda x: x, datatype=dill_serializer)
     m.version = 0
     m.datatype.version = 0
     m.export()
     assert os.path.exists('test_export.tar.gz')
     m_reload = Component.import_('test_export.tar.gz')
-    assert isinstance(m_reload, Model)
+    assert isinstance(m_reload, ObjectModel)
+
+
+@dc.dataclass(kw_only=True)
+class MyComponent(Component):
+    _lazy_fields: t.ClassVar[t.Sequence[str]] = ('my_dict',)
+    my_dict: t.Dict
+    nested_list: t.List
+    a: t.Callable
+
+
+def test_init(monkeypatch):
+    from unittest.mock import MagicMock
+
+    def unpack(self, db):
+        if '_base' in self.keys():
+            return [lambda x: x + 1, lambda x: x + 2]
+        return {'a': lambda x: x + 1}
+
+    monkeypatch.setattr(Document, 'unpack', unpack)
+
+    e = Encodable(x=None, file_id='123', datatype=None)
+    a = Encodable(x=None, file_id='456', datatype=None)
+
+    def side_effect(*args, **kwargs):
+        a.x = lambda x: x + 1
+
+    a.init = MagicMock()
+    a.init.side_effect = side_effect
+
+    list_ = [e, a]
+
+    c = MyComponent('test', my_dict={'a': a}, a=a, nested_list=list_)
+
+    c.init()
+
+    assert callable(c.my_dict['a'])
+    assert c.my_dict['a'](1) == 2
+
+    assert callable(c.a)
+    assert c.a(1) == 2
+
+    assert callable(c.nested_list[1])
+    assert c.nested_list[1](1) == 3

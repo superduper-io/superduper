@@ -8,7 +8,14 @@ from llama_cpp import Llama
 from superduperdb.ext.llm.base import _BaseLLM
 
 
+# TODO use core downloader already implemented
 def download_uri(uri, save_path):
+    """
+    Download file
+
+    :param uri: URI to download
+    :param save_path: place to save
+    """
     response = requests.get(uri)
     if response.status_code == 200:
         with open(save_path, 'wb') as file:
@@ -19,8 +26,18 @@ def download_uri(uri, save_path):
 
 @dc.dataclass
 class LlamaCpp(_BaseLLM):
+    """
+    Llama.cpp connector
+
+    :param model_name_or_path: path or name of model
+    :param model_kwargs: dictionary of init-kwargs
+    :param download_dir: local caching directory
+    :param signature: s
+    """
+
+    signature: t.ClassVar[str] = 'singleton'
+
     model_name_or_path: str = "facebook/opt-125m"
-    object: t.Optional[Llama] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     download_dir: str = '.llama_cpp'
 

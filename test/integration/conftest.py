@@ -40,32 +40,32 @@ np.random.seed(42)
 
 def add_models_encoders(test_db):
     test_db.add(tensor(torch.float, shape=(32,)))
-    test_db.add(tensor(torch.float, shape=(16,)))
-    test_db.add(
+    _, dt_16 = test_db.add(tensor(torch.float, shape=(16,)))
+    _, model = test_db.add(
         TorchModel(
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
-            datatype='torch.float32[16]',
+            datatype=dt_16,
         )
     )
-    test_db.add(
+    _, indexing_listener = test_db.add(
         Listener(
             select=Collection(identifier='documents').find(),
             key='x',
-            model='model_linear_a',
+            model=model,
         )
     )
-    test_db.add(
+    _, compatible_listener = test_db.add(
         Listener(
             select=Collection(identifier='documents').find(),
             key='z',
-            model='model_linear_a',
+            model=model,
         )
     )
     vi = VectorIndex(
         identifier='test_index',
-        indexing_listener='model_linear_a/x',
-        compatible_listener='model_linear_a/z',
+        indexing_listener=indexing_listener,
+        compatible_listener=compatible_listener,
     )
     test_db.add(vi)
     return test_db

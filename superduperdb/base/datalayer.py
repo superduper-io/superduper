@@ -26,7 +26,7 @@ from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, Encodable, serializers
-from superduperdb.components.model import Model
+from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
@@ -104,11 +104,11 @@ class Datalayer:
 
         cfg = cfg or s.CFG
 
-        self.databackend = build.build_databackend(cfg)
-        self.compute = build.build_compute(cfg.cluster.compute)
+        self.databackend = build._build_databackend(cfg)
+        self.compute = build._build_compute(cfg.cluster.compute)
 
-        self.metadata = build.build_metadata(cfg, self.databackend)
-        self.artifact_store = build.build_artifact_store(
+        self.metadata = build._build_metadata(cfg, self.databackend)
+        self.artifact_store = build._build_artifact_store(
             cfg.artifact_store, self.databackend
         )
         self.artifact_store.serializers = self.serializers
@@ -250,7 +250,7 @@ class Datalayer:
         # TODO: never called
         component = self.load(type_id, identifier)
         metric_list = [self.load('metric', m) for m in metrics]
-        assert isinstance(component, Model)
+        assert isinstance(component, ObjectModel)
         return component.validate(
             self,
             validation_set,
@@ -296,7 +296,7 @@ class Datalayer:
     def _get_context(
         self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
     ):
-        assert model.takes_context, 'model does not take context'
+        assert 'context' in model.inputs.params, 'model does not take context'
         assert context_select is not None
         sources = list(self.execute(context_select))
         context = sources[:]
@@ -308,93 +308,6 @@ class Datalayer:
                 for r in context
             ]
         return context, sources
-
-    async def apredict(
-        self,
-        model_name: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
-        context_key: str = '_base',
-        **kwargs,
-    ):
-        """
-        Apply model to input using asyncio.
-
-        :param model_name: model identifier
-        :param input: input to be passed to the model.
-                      Must be possible to encode with registered datatypes
-        :param context_select: select query object to provide context
-        :param context_key: key to use to extract context from context_select
-        """
-        model = self.models[model_name]
-        context = None
-        sources: t.List[Document] = []
-
-        if context_select is not None:
-            context, sources = self._get_context(model, context_select, context_key)
-
-        out = await model.apredict(
-            input.unpack() if isinstance(input, Document) else input,
-            one=True,
-            context=context,
-            **kwargs,
-        )
-
-        if model.datatype is not None:
-            out = model.datatype(out)
-
-        if context is not None:
-            return Document(out), sources
-        return Document(out), []
-
-    def predict(
-        self,
-        model_name: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[t.Union[str, Select]] = None,
-        context_key: t.Optional[str] = None,
-        **kwargs,
-    ) -> t.Tuple[Document, t.List[Document]]:
-        """
-        Apply model to input.
-
-        :param model_name: model identifier
-        :param input: input to be passed to the model.
-                      Must be possible to encode with registered datatypes
-        :param context_select: select query object to provide context
-        :param context_key: key to use to extract context from context_select
-        """
-        model = self.models[model_name]
-        context = None
-        sources: t.List[Document] = []
-
-        if context_select is not None:
-            if isinstance(context_select, Select):
-                context, sources = self._get_context(model, context_select, context_key)
-            elif isinstance(context_select, str):
-                context = context_select
-            else:
-                raise TypeError("context_select should be either Select or str")
-
-        out = model.predict(
-            input.unpack() if isinstance(input, Document) else input,
-            one=True,
-            context=[r.unpack() for r in context] if context else None,
-            **kwargs,
-        )
-
-        if isinstance(model.datatype, DataType):
-            out = model.datatype(out)
-        elif isinstance(model.output_schema, Schema):
-            # TODO make Schema callable
-            out = model.output_schema.encode(out)
-
-        if not isinstance(out, dict):
-            out = {'_base': out}
-
-        if context is not None:
-            return Document(out), sources
-        return Document(out), []
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
         """
@@ -749,6 +662,7 @@ class Datalayer:
         listener_selects = {}
 
         for identifier in listeners:
+            # TODO reload listener here (with lazy loading)
             info = self.metadata.get_component('listener', identifier)
             listener_query = Document.decode(info['dict']['select'], None)
             listener_select = serializable.Serializable.decode(listener_query)
@@ -763,7 +677,7 @@ class Datalayer:
 
             model, _, key = identifier.rpartition('/')
             G.add_node(
-                f'{model}.predict({key})',
+                f'{model}.predict_in_db({key})',
                 job=ComponentJob(
                     component_identifier=model,
                     args=[key],
@@ -772,7 +686,7 @@ class Datalayer:
                         'select': listener_query.dict().encode(),
                         **info['dict']['predict_kwargs'],
                     },
-                    method_name='predict',
+                    method_name='predict_in_db',
                     type_id='model',
                 ),
             )
@@ -789,14 +703,14 @@ class Datalayer:
             model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',
-                f'{model}.predict({key})',
+                f'{model}.predict_in_db({key})',
             )
             deps = self._get_dependencies_for_listener(identifier)
             for dep in deps:
                 dep_model, _, dep_key = dep.rpartition('/')
                 G.add_edge(
-                    f'{dep_model}.predict({dep_key})',
-                    f'{model}.predict({key})',
+                    f'{dep_model}.predict_in_db({dep_key})',
+                    f'{model}.predict_in_db({key})',
                 )
 
         if s.CFG.self_hosted_vector_search:
@@ -835,7 +749,7 @@ class Datalayer:
             model = vi.indexing_listener.model.identifier
             key = vi.indexing_listener.key
             G.add_edge(
-                f'{model}.predict({key})', f'{identifier}.{copy_vectors.__name__}'
+                f'{model}.predict_in_db({key})', f'{identifier}.{copy_vectors.__name__}'
             )
 
         return G
@@ -1115,6 +1029,54 @@ class Datalayer:
                 raise TypeError(f'Expected dict, got {type(outputs)}')
         logging.info(str(outs))
         return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+
+    # TODO deprecate in favour of remote model calls
+    def predict(
+        self,
+        model_name: str,
+        input: t.Union[Document, t.Any],
+        context_select: t.Optional[t.Union[str, Select]] = None,
+        context_key: t.Optional[str] = None,
+    ) -> t.Tuple[Document, t.List[Document]]:
+        """
+        Apply model to input.
+
+        :param model_name: model identifier
+        :param input: input to be passed to the model.
+                      Must be possible to encode with registered datatypes
+        :param context_select: select query object to provide context
+        :param context_key: key to use to extract context from context_select
+        """
+        model = self.models[model_name]
+        context = None
+        sources: t.List[Document] = []
+
+        if context_select is not None:
+            assert 'context' in model.inputs.params
+            if isinstance(context_select, Select):
+                context, sources = self._get_context(model, context_select, context_key)
+            elif isinstance(context_select, str):
+                context = context_select
+            else:
+                raise TypeError("context_select should be either Select or str")
+            context = [r.unpack() for r in context]
+        else:
+            sources = []
+
+        if 'context' in model.inputs.params:
+            out = model.predict_one(input, context=context)
+        else:
+            out = model.predict_one(input)
+
+        if isinstance(model.datatype, DataType):
+            out = model.datatype(out)
+        elif isinstance(model.output_schema, Schema):
+            # TODO make Schema callable
+            out = model.output_schema.encode(out)
+
+        if not isinstance(out, dict):
+            out = {'_base': out}
+        return Document(out), sources
 
     def close(self):
         """

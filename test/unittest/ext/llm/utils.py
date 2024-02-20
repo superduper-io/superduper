@@ -17,11 +17,6 @@ def check_predict(db, llm):
     result = db.predict(llm.identifier, "1+1=")[0].unpack()
     assert isinstance(result, str)
 
-    results = db.predict(llm.identifier, ["1+1=", "2+2="])[0].unpack()
-
-    assert isinstance(results, list)
-    assert len(results) == 2
-
 
 def check_llm_as_listener_model(db, llm):
     """Test whether the model can predict the data in the database normally"""
@@ -44,13 +39,11 @@ def check_llm_as_listener_model(db, llm):
         select = table.select("id", "question")
         output_select = table.select("id", "question").outputs(question=llm.identifier)
 
-    db.add(llm)
-
     db.add(
         Listener(
             select=select,
             key="question",
-            model=llm.identifier,
+            model=llm,
         )
     )
 

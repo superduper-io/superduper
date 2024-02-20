@@ -1,27 +1,25 @@
-import asyncio
 import base64
 import dataclasses as dc
-import itertools
 import json
 import os
 import typing as t
 
-import aiohttp
 import requests
 import tqdm
 from httpx import ResponseNotRead
 from openai import (
     APITimeoutError,
-    AsyncOpenAI,
     InternalServerError,
     OpenAI as SyncOpenAI,
     RateLimitError,
 )
+from openai._types import NOT_GIVEN
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.components.model import APIModel
+from superduperdb.components.model import APIModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
@@ -47,7 +45,6 @@ def _available_models(skwargs):
 class _OpenAI(APIModel):
     '''
     :param client_kwargs: The kwargs to be passed to OpenAI
-
     '''
 
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
@@ -66,7 +63,6 @@ class _OpenAI(APIModel):
             raise ValueError(msg)
 
         self.syncClient = SyncOpenAI(**self.client_kwargs)
-        self.asyncClient = AsyncOpenAI(**self.client_kwargs)
 
         if 'OPENAI_API_KEY' not in os.environ and (
             'api_key' not in self.client_kwargs.keys() and self.client_kwargs
@@ -75,6 +71,15 @@ class _OpenAI(APIModel):
                 'OPENAI_API_KEY not available neither in environment vars '
                 'nor in `client_kwargs`'
             )
+
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        out = []
+        for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
+            batch = [
+                dataset[i] for i in range(i, min(len(dataset), i + self.batch_size))
+            ]
+            out.extend(self._predict_a_batch(batch))
+        return out
 
 
 @dc.dataclass(kw_only=True)
@@ -89,11 +94,17 @@ class OpenAIEmbedding(_OpenAI):
 
     shape: t.Optional[t.Sequence[int]] = None
     shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
+    signature: t.ClassVar[str] = 'singleton'
+    batch_size: int = 100
+
+    @property
+    def inputs(self):
+        return Inputs(['input'])
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         if self.shape is None:
-            self.shape = self.shapes[self.identifier]
+            self.shape = self.shapes[self.model]
 
     def pre_create(self, db):
         super().pre_create(db)
@@ -104,47 +115,18 @@ class OpenAIEmbedding(_OpenAI):
             self.datatype = vector(self.shape)
 
     @retry
-    def _predict_one(self, X: str, **kwargs):
-        e = self.syncClient.embeddings.create(input=X, model=self.model, **kwargs)
-        return e.data[0].embedding
-
-    @retry
-    async def _apredict_one(self, X: str, **kwargs):
-        e = await self.asyncClient.embeddings.create(
-            input=X, model=self.model, **kwargs
+    def predict_one(self, X: str):
+        e = self.syncClient.embeddings.create(
+            input=X, model=self.model, **self.predict_kwargs
         )
         return e.data[0].embedding
 
     @retry
-    def _predict_a_batch(self, texts: t.List[str], **kwargs):
-        out = self.syncClient.embeddings.create(input=texts, model=self.model, **kwargs)
-        return [r.embedding for r in out.data]
-
-    @retry
-    async def _apredict_a_batch(self, texts: t.List[str], **kwargs):
-        out = await self.asyncClient.embeddings.create(
-            input=texts, model=self.model, **kwargs
+    def _predict_a_batch(self, texts: t.List[t.Dict]):
+        out = self.syncClient.embeddings.create(
+            input=texts, model=self.model, **self.predict_kwargs
         )
         return [r.embedding for r in out.data]
-
-    def _predict(self, X, one: bool = False, **kwargs):
-        if isinstance(X, str):
-            return self._predict_one(X)
-        out = []
-        batch_size = kwargs.pop('batch_size', 100)
-        for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
-        return out
-
-    async def _apredict(self, X, one: bool = False, **kwargs):
-        if isinstance(X, str):
-            return await self._apredict_one(X)
-        out = []
-        batch_size = kwargs.pop('batch_size', 100)
-        # Note: we submit the async requests in serial to avoid rate-limiting
-        for i in range(0, len(X), batch_size):
-            out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
-        return out
 
 
 @dc.dataclass(kw_only=True)
@@ -154,9 +136,15 @@ class OpenAIChatCompletion(_OpenAI):
     :param prompt: The prompt to use to seed the response.
     """
 
+    signature: t.ClassVar[str] = 'singleton'
     __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
+    batch_size: int = 1
     prompt: str = ''
+
+    @property
+    def inputs(self):
+        return Inputs(['content', 'context'])
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
@@ -172,52 +160,27 @@ class OpenAIChatCompletion(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
+    def predict_one(self, X: str, context: t.Optional[str] = None):
         if context is not None:
             X = self._format_prompt(context, X)
         return (
             self.syncClient.chat.completions.create(
                 messages=[{'role': 'user', 'content': X}],
                 model=self.model,
-                **kwargs,
+                **self.predict_kwargs,
             )
             .choices[0]
             .message.content
         )
 
-    @retry
-    async def _apredict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
-        if context is not None:
-            X = self._format_prompt(context, X)
-        return (
-            (
-                await self.asyncClient.chat.completions.create(
-                    messages=[{'role': 'user', 'content': X}],
-                    model=self.model,
-                    **kwargs,
-                )
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        out = []
+        for i in range(len(dataset)):
+            args, kwargs = self.handle_input_type(
+                data=dataset[i], signature=self.signature
             )
-            .choices[0]
-            .message.content
-        )
-
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(X, context=context, **kwargs)
-        return [self._predict_one(msg) for msg in X]
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(X, context=context, **kwargs)
-        return [await self._apredict_one(msg) for msg in X]
+            out.append(self.predict_one(*args, **kwargs))
+        return out
 
 
 @dc.dataclass(kw_only=True)
@@ -228,10 +191,14 @@ class OpenAIImageCreation(_OpenAI):
     :param prompt: The prompt to use to seed the response.
     """
 
+    signature: t.ClassVar[str] = 'singleton'
+
     __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
     takes_context: bool = True
     prompt: str = ''
+    n: int = 1
+    response_format: str = 'b64_json'
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
@@ -243,89 +210,35 @@ class OpenAIImageCreation(_OpenAI):
         return prompt + X
 
     @retry
-    def _predict_one(
-        self,
-        X,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        **kwargs,
-    ):
-        if context is not None:
-            X = self._format_prompt(context, X)
-        if response_format == 'b64_json':
-            b64_json = (
-                self.syncClient.images.generate(
-                    prompt=X, n=n, response_format='b64_json'
-                )
-                .data[0]
-                .b64_json
+    def predict_one(self, X: str):
+        if self.response_format == 'b64_json':
+            resp = self.syncClient.images.generate(
+                prompt=X,
+                n=self.n,
+                response_format='b64_json',
+                **self.predict_kwargs,
             )
-            return base64.b64decode(b64_json)
-        else:
-            url = self.syncClient.images.generate(prompt=X, n=n, **kwargs).data[0].url
-            return requests.get(url).content
-
-    @retry
-    async def _apredict_one(
-        self,
-        X,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        **kwargs,
-    ):
-        if context is not None:
-            X = self._format_prompt(context, X)
-        if response_format == 'b64_json':
-            b64_json = (
-                (
-                    await self.asyncClient.images.generate(
-                        prompt=X, n=n, response_format='b64_json'
-                    )
-                )
-                .data[0]
-                .b64_json
-            )
+            b64_json = resp.data[0].b64_json
+            assert b64_json is not None
             return base64.b64decode(b64_json)
         else:
             url = (
-                (await self.asyncClient.images.generate(prompt=X, n=n, **kwargs))
+                self.syncClient.images.generate(
+                    prompt=X, n=self.n, **self.predict_kwargs
+                )
                 .data[0]
                 .url
             )
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    return await resp.read()
+            return requests.get(url).content
 
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        response_format = kwargs.pop('response_format', 'b64_json')
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(
-                X, n=1, response_format=response_format, context=context, **kwargs
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        out = []
+        for i in range(len(dataset)):
+            args, kwargs = self.handle_input_type(
+                data=dataset[i], signature=self.signature
             )
-        return [
-            self._predict_one(msg, n=1, response_format=response_format) for msg in X
-        ]
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        response_format = kwargs.pop('response_format', 'b64_json')
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(
-                X, context=context, n=1, response_format=response_format, **kwargs
-            )
-        return [
-            await self._apredict_one(msg, n=1, response_format=response_format)
-            for msg in X
-        ]
+            out.append(self.predict_one(*args, **kwargs))
+        return out
 
 
 @dc.dataclass(kw_only=True)
@@ -340,6 +253,8 @@ class OpenAIImageEdit(_OpenAI):
 
     takes_context: bool = True
     prompt: str = ''
+    response_format: str = 'b64_json'
+    n: int = 1
 
     def _format_prompt(self, context):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -351,126 +266,54 @@ class OpenAIImageEdit(_OpenAI):
             self.datatype = dtype('bytes')
 
     @retry
-    def _predict_one(
+    def predict_one(
         self,
         image: t.BinaryIO,
-        n: int,
-        response_format: str,
+        mask: t.Optional[t.BinaryIO] = None,
         context: t.Optional[t.List[str]] = None,
-        mask_png_path: t.Optional[str] = None,
-        **kwargs,
     ):
         if context is not None:
             self.prompt = self._format_prompt(context)
 
-        if mask_png_path is not None:
-            with open(mask_png_path, 'rb') as f:
-                mask = f.read()
-            kwargs['mask'] = mask
+        maybe_mask = mask or NOT_GIVEN
 
-        if response_format == 'b64_json':
+        if self.response_format == 'b64_json':
             b64_json = (
                 self.syncClient.images.edit(
                     image=image,
+                    mask=maybe_mask,
                     prompt=self.prompt,
-                    n=n,
+                    n=self.n,
                     response_format='b64_json',
-                    **kwargs,
+                    **self.predict_kwargs,
                 )
                 .data[0]
                 .b64_json
             )
-            return base64.b64decode(b64_json)
+            out = base64.b64decode(b64_json)
         else:
             url = (
                 self.syncClient.images.edit(
-                    image=image, prompt=self.prompt, n=n, **kwargs
+                    image=image,
+                    mask=maybe_mask,
+                    prompt=self.prompt,
+                    n=self.n,
+                    **self.predict_kwargs,
                 )
                 .data[0]
                 .url
             )
-            return requests.get(url).content
+            out = requests.get(url).content
+        return out
 
-    @retry
-    async def _apredict_one(
-        self,
-        image: t.BinaryIO,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        mask_png_path: t.Optional[str] = None,
-        **kwargs,
-    ):
-        if context is not None:
-            self.prompt = self._format_prompt(context)
-
-        if mask_png_path is not None:
-            with open(mask_png_path, 'rb') as f:
-                mask = f.read()
-            kwargs['mask'] = mask
-
-        if response_format == 'b64_json':
-            b64_json = (
-                (
-                    await self.asyncClient.images.edit(
-                        image=image,
-                        prompt=self.prompt,
-                        n=n,
-                        response_format='b64_json',
-                        **kwargs,
-                    )
-                )
-                .data[0]
-                .b64_json
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        out = []
+        for i in range(len(dataset)):
+            args, kwargs = self.handle_input_type(
+                data=dataset[i], signature=self.signature
             )
-            return base64.b64decode(b64_json)
-        else:
-            url = (
-                (
-                    await self.asyncClient.images.edit(
-                        image=image, prompt=self.prompt, n=n, **kwargs
-                    )
-                )
-                .data[0]
-                .url
-            )
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    return await resp.read()
-
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        response_format = kwargs.pop('response_format', 'b64_json')
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(
-                image=X, n=1, response_format=response_format, context=context, **kwargs
-            )
-        return [
-            self._predict_one(
-                image=image, n=1, response_format=response_format, **kwargs
-            )
-            for image in X
-        ]
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        response_format = kwargs.pop('response_format', 'b64_json')
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(
-                image=X, context=context, n=1, response_format=response_format, **kwargs
-            )
-        return [
-            await self._apredict_one(
-                image=image, n=1, response_format=response_format, **kwargs
-            )
-            for image in X
-        ]
+            out.append(self.predict_one(*args, **kwargs))
+        return out
 
 
 @dc.dataclass(kw_only=True)
@@ -492,9 +335,7 @@ class OpenAIAudioTranscription(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def _predict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
+    def predict_one(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
         "Converts a file-like Audio recording to text."
         if context is not None:
             self.prompt = self.prompt.format(context='\n'.join(context))
@@ -502,23 +343,7 @@ class OpenAIAudioTranscription(_OpenAI):
             file=file,
             model=self.model,
             prompt=self.prompt,
-            **kwargs,
-        ).text
-
-    @retry
-    async def _apredict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        "Converts a file-like Audio recording to text."
-        if context is not None:
-            self.prompt = self.prompt.format(context='\n'.join(context))
-        return (
-            await self.asyncClient.audio.transcriptions.create(
-                file=file,
-                model=self.model,
-                prompt=self.prompt,
-                **kwargs,
-            )
+            **self.predict_kwargs,
         ).text
 
     @retry
@@ -526,53 +351,11 @@ class OpenAIAudioTranscription(_OpenAI):
         "Converts multiple file-like Audio recordings to text."
         resps = [
             self.syncClient.audio.transcriptions.create(
-                file=file, model=self.model, **kwargs
+                file=file, model=self.model, **self.predict_kwargs
             )
             for file in files
         ]
         return [resp.text for resp in resps]
-
-    @retry
-    async def _apredict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
-        "Converts multiple file-like Audio recordings to text."
-        resps = await asyncio.gather(
-            *[
-                self.asyncClient.audio.transcriptions.create(
-                    file=file, model=self.model, **kwargs
-                )
-                for file in files
-            ]
-        )
-        return [resp.text for resp in resps]
-
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(X, context=context, **kwargs)
-        out = []
-        batch_size = kwargs.pop('batch_size', 10)
-        for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
-        return out
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(X, context=context, **kwargs)
-        batch_size = kwargs.pop('batch_size', 10)
-        list_of_lists = await asyncio.gather(
-            *[
-                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
-                for i in range(0, len(X), batch_size)
-            ]
-        )
-        return list(itertools.chain(*list_of_lists))
 
 
 @dc.dataclass(kw_only=True)
@@ -583,10 +366,13 @@ class OpenAIAudioTranslation(_OpenAI):
     :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
     """
 
+    signature: t.ClassVar[str] = 'singleton'
+
     __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__, context='{context}')
 
     takes_context: bool = True
     prompt: str = ''
+    batch_size: int = 1
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
@@ -594,8 +380,10 @@ class OpenAIAudioTranslation(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def _predict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+    def predict_one(
+        self,
+        file: t.BinaryIO,
+        context: t.Optional[t.List[str]] = None,
     ):
         "Translates a file-like Audio recording to English."
         if context is not None:
@@ -605,75 +393,18 @@ class OpenAIAudioTranslation(_OpenAI):
                 file=file,
                 model=self.model,
                 prompt=self.prompt,
-                **kwargs,
+                **self.predict_kwargs,
             )
         ).text
 
     @retry
-    async def _apredict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        "Translates a file-like Audio recording to English."
-        if context is not None:
-            self.prompt = self.prompt.format(context='\n'.join(context))
-        return (
-            await self.asyncClient.audio.translations.create(
-                file=file,
-                model=self.model,
-                prompt=self.prompt,
-                **kwargs,
-            )
-        ).text
-
-    @retry
-    def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
+    def _predict_a_batch(self, files: t.List[t.BinaryIO]):
         "Translates multiple file-like Audio recordings to English."
+        # TODO use async or threads
         resps = [
             self.syncClient.audio.translations.create(
-                file=file, model=self.model, **kwargs
+                file=file, model=self.model, **self.predict_kwargs
             )
             for file in files
         ]
         return [resp.text for resp in resps]
-
-    @retry
-    async def _apredict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
-        "Translates multiple file-like Audio recordings to English."
-        resps = await asyncio.gather(
-            *[
-                self.asyncClient.audio.translations.create(
-                    file=file, model=self.model, **kwargs
-                )
-                for file in files
-            ]
-        )
-        return [resp.text for resp in resps]
-
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(X, context=context, **kwargs)
-        out = []
-        batch_size = kwargs.pop('batch_size', 10)
-        for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
-        return out
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(X, context=context, **kwargs)
-        batch_size = kwargs.pop('batch_size', 10)
-        list_of_lists = await asyncio.gather(
-            *[
-                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
-                for i in range(0, len(X), batch_size)
-            ]
-        )
-        return list(itertools.chain(*list_of_lists))

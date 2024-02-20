@@ -46,7 +46,7 @@ class MongoArtifactStore(ArtifactStore):
         cur = self.filesystem.find_one({'filename': file_id})
         if cur is None:
             raise FileNotFoundError(f'File not found in {file_id}')
-        return next(cur)
+        return cur.read()
 
     def _save_bytes(self, serialized: bytes, file_id: str):
         return self.filesystem.put(serialized, filename=file_id)

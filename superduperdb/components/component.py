@@ -34,7 +34,6 @@ class Component(Serializable, Leaf):
     leaf_type: t.ClassVar[str] = 'component'
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
-
     identifier: str
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
@@ -44,6 +43,23 @@ class Component(Serializable, Leaf):
         self._db = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
+
+    def init(self, db=None):
+        from superduperdb.base.document import Document
+        from superduperdb.components.datatype import Encodable
+
+        for f in dc.fields(self):
+            item = getattr(self, f.name)
+            if isinstance(item, Component):
+                item.init(db=db)
+            if isinstance(item, dict):
+                setattr(self, f.name, Document(item).unpack(db=self.db or db))
+            if isinstance(item, list):
+                unpacked = Document({'_base': item}).unpack(db=self.db or db)
+                setattr(self, f.name, unpacked)
+            if isinstance(item, Encodable):
+                item.init(db=db)
+                setattr(self, f.name, item.x)
 
     @cached_property
     def artifact_schema(self):
@@ -155,7 +171,6 @@ class Component(Serializable, Leaf):
         self,
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
     ) -> t.Sequence[t.Any]:
         """Run the job for this listener
 

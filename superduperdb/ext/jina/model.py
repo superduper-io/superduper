@@ -4,6 +4,7 @@ import typing as t
 import tqdm
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import APIModel
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.jina.client import JinaAPIClient
@@ -29,6 +30,9 @@ class JinaEmbedding(Jina):
         If not provided, it will be obtained by sending a simple query to the API
     """
 
+    batch_size: int = 100
+    signature: t.ClassVar[str] = 'singleton'
+
     shape: t.Optional[t.Sequence[int]] = None
 
     def __post_init__(self, artifacts):
@@ -44,33 +48,17 @@ class JinaEmbedding(Jina):
         elif self.datatype is None:
             self.datatype = vector(self.shape)
 
-    def _predict_one(self, X: str, **kwargs):
+    def predict_one(self, X: str):
         return self.client.encode_batch([X])[0]
 
-    async def _apredict_one(self, X: str, **kwargs):
-        embeddings = await self.client.aencode_batch([X])
-        return embeddings[0]
-
-    def _predict_a_batch(self, texts: t.List[str], **kwargs):
+    def _predict_a_batch(self, texts: t.List[str]):
         return self.client.encode_batch(texts)
 
-    async def _apredict_a_batch(self, texts: t.List[str], **kwargs):
-        return await self.client.aencode_batch(texts)
-
-    def _predict(self, X, one=False, **kwargs):
-        if isinstance(X, str):
-            return self._predict_one(X)
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         out = []
-        batch_size = kwargs.pop('batch_size', 100)
-        for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
-        return out
-
-    async def _apredict(self, X, one=False, **kwargs):
-        if isinstance(X, str):
-            return await self._apredict_one(X)
-        out = []
-        batch_size = kwargs.pop('batch_size', 100)
-        for i in range(0, len(X), batch_size):
-            out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
+        for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
+            batch = [
+                dataset[i] for i in range(i, min(i + self.batch_size, len(dataset)))
+            ]
+            out.extend(self._predict_a_batch(batch))
         return out

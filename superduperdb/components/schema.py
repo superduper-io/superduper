@@ -2,6 +2,8 @@ import dataclasses as dc
 import typing as t
 from functools import cached_property
 
+from overrides import override
+
 from superduperdb.base.configs import CFG
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
@@ -29,6 +31,7 @@ class Schema(Component):
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
 
+    @override
     def pre_create(self, db) -> None:
         for v in self.fields.values():
             if isinstance(v, DataType):

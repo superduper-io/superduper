@@ -8,22 +8,21 @@ from abc import abstractmethod
 from functools import wraps
 
 import tqdm
-from overrides import override
 from sklearn.pipeline import Pipeline
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
-from superduperdb.backends.base.query import CompoundSelect, Select, TableOrCollection
+from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.misc import border_msg
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -31,30 +30,14 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
 
-EncoderArg = t.Union[DataType, FieldType, str, None]
-XType = t.Union[t.Any, t.List, t.Dict]
 
-
-class _to_call:
-    def __init__(self, callable, **kwargs):
-        self.callable = callable
-        self.kwargs = kwargs
-
-    def __call__(self, X):
-        return self.callable(X, **self.kwargs)
+EncoderArg = t.Union[DataType, FieldType, None]
+ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 
 
 class Inputs:
-    def __init__(self, fn, predict_kwargs: t.Dict = {}):
-        sig = inspect.signature(fn)
-        sig_keys = list(sig.parameters.keys())
-        params = []
-        for k in sig_keys:
-            if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
-                continue
-            params.append(k)
-
-        self.params = {p: p for p in params}
+    def __init__(self, params):
+        self.params = params
 
     def __len__(self):
         return len(self.params)
@@ -67,6 +50,18 @@ class Inputs:
         for k, arg in zip(self.params, args):
             kwargs[k] = arg
         return kwargs
+
+
+class CallableInputs(Inputs):
+    def __init__(self, fn, predict_kwargs: t.Dict = {}):
+        sig = inspect.signature(fn)
+        sig_keys = list(sig.parameters.keys())
+        params = []
+        for k in sig_keys:
+            if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
+                continue
+            params.append(k)
+        self.params = params
 
 
 @dc.dataclass(kw_only=True)
@@ -90,573 +85,21 @@ class _TrainingConfiguration(Component):
 
 
 @dc.dataclass(kw_only=True)
-class _Predictor:
-    # Mixin class for components which can predict.
-    """:param encoder: Encoder instance
-    :param output_schema: Output schema (mapping of encoders)
-    :param flatten: Flatten the model outputs
-    :param preprocess: Preprocess function
-    :param postprocess: Postprocess function
-    :param collate_fn: Collate function
-    :param batch_predict: Whether to batch predict
-    :param takes_context: Whether the model takes context into account
-    :param metrics: The metrics to evaluate on
-    :param model_update_kwargs: The kwargs to use for model update
-    :param validation_sets: The validation ``Dataset`` instances to use
-    :param predict_X: The key of the input data to use for .predict
-    :param predict_select: The select to use for .predict
-    :param predict_max_chunk_size: The max chunk size to use for .predict
-    :param predict_kwargs: The kwargs to use for .predict"""
-
-    type_id: t.ClassVar[str] = 'model'
-
-    datatype: EncoderArg = None
-    output_schema: t.Optional[Schema] = None
-    flatten: bool = False
-    preprocess: t.Optional[t.Callable] = None
-    postprocess: t.Optional[t.Callable] = None
-    collate_fn: t.Optional[t.Callable] = None
-    batch_predict: bool = False
-    takes_context: bool = False
-    metrics: t.Sequence[t.Union[str, Metric, None]] = ()
-    model_update_kwargs: t.Dict = dc.field(default_factory=dict)
-    validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None
-
-    predict_X: t.Optional[str] = None
-    predict_select: t.Optional[CompoundSelect] = None
-    predict_max_chunk_size: t.Optional[int] = None
-    predict_kwargs: t.Optional[t.Dict] = None
-
-    @abstractmethod
-    def to_call(self, X, *args, **kwargs):
-        """
-        The method to use to call prediction. Should be implemented
-        by the child class.
-        """
-
-    @property
-    def inputs(self):
-        kwargs = self.predict_kwargs if self.predict_kwargs else {}
-        return Inputs(self.preprocess or self.object, kwargs)
-
-    def setup_required_inputs(self, X):
-        if isinstance(X, (tuple, list)):
-            required_args = len(self.inputs)
-            assert len(X) == required_args
-            X = self.inputs.get_kwargs(X)
-
-        elif isinstance(X, dict):
-            required_args = len(self.inputs)
-            assert len(X) == required_args
-        else:
-            X = self.inputs.get_kwargs([X])
-        return X
-
-    def create_predict_job(
-        self,
-        X: XType,
-        select: t.Optional[Select] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        **kwargs,
-    ):
-        return ComponentJob(
-            component_identifier=self.identifier,
-            method_name='predict',
-            type_id='model',
-            args=[X],
-            kwargs={
-                'select': select.dict().encode() if select else None,
-                'ids': ids,
-                'max_chunk_size': max_chunk_size,
-                **kwargs,
-            },
-        )
-
-    async def _apredict_one(self, X: t.Any, **kwargs):
-        raise NotImplementedError
-
-    async def _apredict(self, X: t.Any, one: bool = False, **kwargs):
-        raise NotImplementedError
-
-    def _predict_one(self, X: t.Any, **kwargs) -> int:
-        if self.preprocess:
-            X = self.setup_required_inputs(X)
-            X = self.preprocess(**X)
-        output = self.to_call(X, **kwargs)
-        if self.postprocess:
-            output = self.postprocess(output)
-        return output
-
-    def _forward(
-        self, X: t.Sequence[int], num_workers: int = 0, **kwargs
-    ) -> t.Sequence[int]:
-        if self.batch_predict:
-            return self.to_call(X, **kwargs)
-
-        outputs = []
-        if num_workers:
-            to_call = _to_call(self.to_call, **kwargs)
-            pool = multiprocessing.Pool(processes=num_workers)
-            for r in pool.map(to_call, X):
-                outputs.append(r)
-            pool.close()
-            pool.join()
-        else:
-            for r in X:
-                outputs.append(self.to_call(r, **kwargs))
-        return outputs
-
-    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
-        if one:
-            return self._predict_one(X)
-
-        if self.preprocess:
-            preprocessed_X = []
-            for r in X:
-                r = self.setup_required_inputs(r)
-                preprocessed_X.append(self.preprocess(**r))
-            X = preprocessed_X
-
-        elif self.preprocess is not None:
-            raise ValueError('Bad preprocess')
-        if self.collate_fn:
-            X = self.collate_fn(X)
-        outputs = self._forward(X, **predict_kwargs)
-
-        if self.postprocess:
-            outputs = [self.postprocess(o) for o in outputs]
-        elif self.postprocess is not None:
-            raise ValueError('Bad postprocess')
-
-        return outputs
-
-    def validate_keys(self, X, key, one=False):
-        if isinstance(key, str):
-            if one:
-                assert isinstance(X, dict)
-                X = X[key]
-            else:
-                X = [r[key] for r in X]
-        elif isinstance(key, list):
-            X = (
-                ((X[k] for k in key) if one else [(r[k] for k in key) for r in X])
-                if key
-                else X,
-            )
-        elif isinstance(key, dict):
-            X = (
-                (
-                    (X[k] for k in key.values())
-                    if one
-                    else [(r[k] for k in key.values()) for r in X]
-                )
-                if key
-                else X,
-            )
-
-        else:
-            if key is not None:
-                raise TypeError
-        return X
-
-    def predict(
-        self,
-        X: XType,
-        db: t.Optional[Datalayer] = None,
-        select: t.Optional[CompoundSelect] = None,
-        ids: t.Optional[t.List[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
-        listen: bool = False,
-        one: bool = False,
-        context: t.Optional[t.Dict] = None,
-        insert_to: t.Optional[t.Union[TableOrCollection, str]] = None,
-        key: t.Optional[t.Union[t.Dict, t.List, str]] = None,
-        in_memory: bool = True,
-        overwrite: bool = False,
-        **kwargs,
-    ) -> t.Any:
-        was_added = self.db is not None
-        db = self.db or db
-
-        if one:
-            assert select is None, 'select must be None when ``one=True`` (direct call)'
-
-        if isinstance(select, dict):
-            select = Serializable.decode(select)
-
-        if isinstance(select, Table):
-            select = select.to_query()
-
-        if db is not None:
-            if isinstance(select, IbisCompoundSelect):
-                from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-
-                assert isinstance(db.metadata, SQLAlchemyMetadata)
-                try:
-                    _ = db.metadata.get_query(str(hash(select)))
-                except NonExistentMetadataError:
-                    logging.info(f'Query {select} not found in metadata, adding...')
-                    db.metadata.add_query(select, self.identifier)
-                    logging.info('Done')
-
-            if not was_added:
-                logging.info(f'Adding model {self.identifier} to db')
-                assert isinstance(self, Component)
-                db.add(self)
-
-        if listen:
-            assert db is not None
-            assert select is not None
-            return self._predict_and_listen(
-                X=X,
-                db=db,
-                select=select,
-                max_chunk_size=max_chunk_size,
-                **kwargs,
-            )
-
-        # TODO: tidy up this logic
-        if select is not None and db is not None and db.compute.type == 'distributed':
-            return self.create_predict_job(
-                X,
-                select=select,
-                ids=ids,
-                max_chunk_size=max_chunk_size,
-                overwrite=overwrite,
-                **kwargs,
-            )(db=db, dependencies=dependencies)
-        else:
-            if select is not None and ids is None:
-                assert db is not None
-                return self._predict_with_select(
-                    X=X,
-                    select=select,
-                    db=db,
-                    in_memory=in_memory,
-                    max_chunk_size=max_chunk_size,
-                    overwrite=overwrite,
-                    **kwargs,
-                )
-            elif select is not None and ids is not None:
-                assert db is not None
-                return self._predict_with_select_and_ids(
-                    X=X,
-                    select=select,
-                    ids=ids,
-                    db=db,
-                    max_chunk_size=max_chunk_size,
-                    in_memory=in_memory,
-                    **kwargs,
-                )
-            else:
-                if self.takes_context:
-                    kwargs['context'] = context
-
-                X_predict = self.validate_keys(X, key, one=one)
-
-                output = self._predict(
-                    X_predict,
-                    one=one,
-                    **kwargs,
-                )
-                if insert_to is not None:
-                    msg = (
-                        '`self.db` has not been set; this is necessary if'
-                        ' `insert_to` is not None; use `db.add(self)`'
-                    )
-
-                    from superduperdb.base.datalayer import Datalayer
-
-                    assert isinstance(db, Datalayer), msg
-                    if isinstance(insert_to, str):
-                        insert_to = db.load(
-                            'table',
-                            insert_to,
-                        )  # type: ignore[assignment]
-                    if one:
-                        output = [output]
-
-                    assert isinstance(insert_to, TableOrCollection)
-                    if one:
-                        X = [X]
-
-                    inserted_ids, _ = db.execute(insert_to.insert(X))  # type: ignore[arg-type]
-                    inserted_ids = t.cast(t.List[t.Any], inserted_ids)
-                    assert isinstance(key, str)
-
-                    insert_to.model_update(
-                        db=db,
-                        model=self.identifier,
-                        outputs=output,
-                        key=key,
-                        version=self.version,
-                        ids=inserted_ids,
-                        flatten=self.flatten,
-                        **self.model_update_kwargs,
-                    )
-                return output
-
-    async def apredict(
-        self,
-        X: t.Any,
-        context: t.Optional[t.Dict] = None,
-        one: bool = False,
-        **kwargs,
-    ):
-        if self.takes_context:
-            kwargs['context'] = context
-        return await self._apredict(X, one=one, **kwargs)
-
-    def _predict_and_listen(
-        self,
-        X: t.Any,
-        select: CompoundSelect,
-        db: Datalayer,
-        in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
-        **kwargs,
-    ):
-        from superduperdb.components.listener import Listener
-
-        return db.add(
-            Listener(
-                key=X,
-                model=t.cast(Model, self),
-                select=select,
-                predict_kwargs={
-                    **kwargs,
-                    'in_memory': in_memory,
-                    'max_chunk_size': max_chunk_size,
-                },
-            ),
-            dependencies=dependencies,
-        )[0]
-
-    def _predict_with_select(
-        self,
-        X: t.Any,
-        select: Select,
-        db: Datalayer,
-        max_chunk_size: t.Optional[int] = None,
-        in_memory: bool = True,
-        overwrite: bool = False,
-        **kwargs,
-    ):
-        ids = []
-        if not overwrite:
-            query = select.select_ids_of_missing_outputs(
-                key=X,
-                model=self.identifier,
-                version=t.cast(int, self.version),
-            )
-        else:
-            query = select.select_ids
-
-        try:
-            id_field = db.databackend.id_field
-        except AttributeError:
-            id_field = query.table_or_collection.primary_id
-
-        for r in tqdm.tqdm(db.execute(query)):
-            ids.append(str(r[id_field]))
-
-        return self._predict_with_select_and_ids(
-            X=X,
-            db=db,
-            ids=ids,
-            select=select,
-            max_chunk_size=max_chunk_size,
-            in_memory=in_memory,
-            **kwargs,
-        )
-
-    def _predict_with_select_and_ids(
-        self,
-        X: t.Any,
-        db: Datalayer,
-        select: Select,
-        ids: t.List[str],
-        in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
-        **kwargs,
-    ):
-        if max_chunk_size is not None:
-            it = 0
-            for i in range(0, len(ids), max_chunk_size):
-                logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
-                self._predict_with_select_and_ids(
-                    X=X,
-                    db=db,
-                    ids=ids[i : i + max_chunk_size],
-                    select=select,
-                    max_chunk_size=None,
-                    in_memory=in_memory,
-                    **kwargs,
-                )
-                it += 1
-            return
-
-        X_data: t.Any
-        if in_memory:
-            if db is None:
-                raise ValueError('db cannot be None')
-            docs = list(db.execute(select.select_using_ids(ids)))
-            if X == '_base':
-                X_data = [r.unpack() for r in docs]
-            elif isinstance(X, str):
-                X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
-            else:
-                X_data = []
-                for doc in docs:
-                    doc = MongoStyleDict(doc.unpack())
-                    if isinstance(X, (tuple, list)):
-                        X_data.append([doc[k] for k in X])
-                    elif isinstance(X, dict):
-                        X_data.append([doc[k] for k in X.values()])
-                    else:
-                        raise TypeError
-
-        else:
-            X_data = QueryDataset(
-                select=select,
-                ids=ids,
-                fold=None,
-                db=db,
-                in_memory=False,
-                keys=[X],
-            )
-
-        if len(X_data) > len(ids):
-            raise Exception(
-                'You\'ve specified more documents than unique ids;'
-                f' Is it possible that {select.table_or_collection.primary_id}'
-                f' isn\'t unique identifying?'
-            )
-
-        outputs = self.predict(X=X_data, one=False, **kwargs)
-
-        if isinstance(self.datatype, DataType):
-            if self.flatten:
-                outputs = [
-                    [self.datatype(x).encode() for x in output] for output in outputs
-                ]
-            else:
-                outputs = [self.datatype(x).encode() for x in outputs]
-        elif isinstance(self.output_schema, Schema):
-            encoded_ouputs = []
-            for output in outputs:
-                if isinstance(output, dict):
-                    encoded_ouputs.append(self.output_schema(output))
-                elif self.flatten:
-                    encoded_output = [self.output_schema(x) for x in output]
-                    encoded_ouputs.append(encoded_output)
-            outputs = encoded_ouputs if encoded_ouputs else outputs
-
-        assert isinstance(self.version, int)
-
-        logging.info(f'Adding {len(outputs)} model outputs to `db`')
-        key = X
-        if isinstance(X, (tuple, list)):
-            key = ','.join(X)
-        elif isinstance(X, dict):
-            key = ','.join(list(X.values()))
-
-        select.model_update(
-            db=db,
-            model=self.identifier,
-            outputs=outputs,
-            key=key,
-            version=self.version,
-            ids=ids,
-            flatten=self.flatten,
-            **self.model_update_kwargs,
-        )
-
-
-@public_api(stability='stable')
-@dc.dataclass(kw_only=True)
-class Model(_Predictor, Component):
-    """Model component which wraps a model to become serializable
-    {component_params}
-    {_predictor_params}
-    :param object: Model object, e.g. sklearn model, etc..
-    :param model_to_device_method: The method to transfer the model to a device
-    :param metric_values: The metric values
-    :param predict_method: The method to use for prediction
-    :param model_update_kwargs: The kwargs to use for model update
-    :param serializer: Serializer to store model to artifact store
-    :param device: The device to use
-    :param preferred_devices: The preferred devices to use
-    :param training_configuration: The training configuration
-    :param train_X: The key of the input data to use for training
-    :param train_y: The key of the target data to use for training
-    :param train_select: The select to use for training
-    """
-
-    __doc__ = __doc__.format(
-        component_params=Component.__doc__,
-        _predictor_params=_Predictor.__doc__,
-    )
-
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_serializer),
-    )
-
-    object: t.Any
-    model_to_device_method: t.Optional[str] = None
-    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    predict_method: t.Optional[str] = None
-    model_update_kwargs: dict = dc.field(default_factory=dict)
-    device: str = "cpu"
-    preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
-
+class _Fittable:
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
-    train_X: t.Optional[str] = None
+    train_X: t.Optional[ModelInputType] = None
     train_y: t.Optional[str] = None
     train_select: t.Optional[CompoundSelect] = None
-
-    type_id: t.ClassVar[str] = 'model'
-
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
-        self._artifact_method = None
-        if self.model_to_device_method is not None:
-            self._artifact_method = getattr(self, self.model_to_device_method)
-
-    def __repr__(self):
-        s = f'Identifier: {self.identifier}\nParams: {self.inputs.params}\nPreferred Devices: {self.preferred_devices}'
-        return border_msg(s, title='SuperDuper Model')
-
-    def to_call(self, X, *args, **kwargs):
-        X = self.setup_required_inputs(X)
-        if self.predict_method is None:
-            return self.object(*args, **X, **kwargs)
-        out = getattr(self.object, self.predict_method)(*args, **X, **kwargs)
-        return out
+    metric_values: t.Dict = dc.field(default_factory=lambda: {})
 
     def post_create(self, db: Datalayer) -> None:
         if isinstance(self.training_configuration, str):
             self.training_configuration = db.load(
                 'training_configuration', self.training_configuration
             )  # type: ignore[assignment]
-        # TODO is this necessary - should be handled by `db.add` automatically
-        if isinstance(self.output_schema, Schema):
-            db.add(self.output_schema)
-        output_component = db.databackend.create_model_table_or_collection(self)
-        if output_component is not None:
-            db.add(output_component)
+        # TODO is this necessary - should be handled by `db.add` automatically?
 
-    # TODO - bring inside post_create
-    @override
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
-    ) -> t.Sequence[t.Any]:
+    def schedule_jobs(self, db, dependencies=()):
         jobs = []
         if self.train_X is not None:
             assert (
@@ -672,75 +115,11 @@ class Model(_Predictor, Component):
                     select=self.train_select,
                     db=db,
                     dependencies=dependencies,
-                    metrics=self.metrics,  # type: ignore[arg-type]
+                    metrics=self.metrics,
                     validation_sets=self.validation_sets,
                 )
             )
-        if self.predict_X is not None:
-            assert self.predict_select is not None
-            jobs.append(
-                self.predict(
-                    X=self.predict_X,
-                    select=self.predict_select,
-                    max_chunk_size=self.predict_max_chunk_size,
-                    db=db,
-                    **(self.predict_kwargs or {}),
-                )
-            )
         return jobs
-
-    def on_load(self, db: Datalayer) -> None:
-        logging.debug(f'Calling on_load method of {self}')
-        if self._artifact_method and self.preferred_devices:
-            for i, device in enumerate(self.preferred_devices):
-                try:
-                    self._artifact_method(device)
-                    self.device = device
-                    return
-                except Exception:
-                    if i == len(self.preferred_devices) - 1:
-                        raise
-
-    @property
-    def training_keys(self) -> t.List:
-        if isinstance(self.train_X, list):
-            out = list(self.train_X)
-        elif self.train_X is not None:
-            out = [self.train_X]
-        if self.train_y is not None:
-            if isinstance(self.train_y, list):
-                out.extend(self.train_y)
-            else:
-                out.append(self.train_y)
-        return out
-
-    def append_metrics(self, d: t.Dict[str, float]) -> None:
-        if self.metric_values is not None:
-            for k, v in d.items():
-                self.metric_values.setdefault(k, []).append(v)
-
-    def validate(
-        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
-    ):
-        db.add(self)
-        out = self._validate(db, validation_set, metrics)
-        if self.metric_values is None:
-            raise ValueError('self.metric_values cannot be None')
-        self.metric_values.update(out)
-        db.metadata.update_object(
-            type_id='model',
-            identifier=self.identifier,
-            version=self.version,
-            key='dict.metric_values',
-            value=self.metric_values,
-        )
-
-    def pre_create(self, db: Datalayer):
-        # TODO this kind of thing should come from an enum component_types.datatype
-        # that will make refactors etc. easier
-        if isinstance(self.datatype, str):
-            # ruff: noqa: E501
-            self.datatype = db.load('datatype', self.datatype)  # type: ignore[assignment]
 
     def _validate(
         self,
@@ -755,7 +134,9 @@ class Model(_Predictor, Component):
 
         mdicts = [MongoStyleDict(r.unpack()) for r in validation_set.data]
         assert self.train_X is not None
-        prediction = self._predict([d[self.train_X] for d in mdicts])
+        mapping = Mapping(self.train_X, self.signature)
+        dataset = list(map(mapping, mdicts))
+        prediction = self.predict(dataset)
         assert self.train_y is not None
         target = [d[self.train_y] for d in mdicts]
         assert isinstance(prediction, list)
@@ -786,6 +167,7 @@ class Model(_Predictor, Component):
             },
         )
 
+    @abstractmethod
     def _fit(
         self,
         X: t.Any,
@@ -795,9 +177,9 @@ class Model(_Predictor, Component):
         db: t.Optional[Datalayer] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+        validation_sets: t.Optional[t.Sequence[Dataset]] = None,
     ):
-        raise NotImplementedError
+        pass
 
     def fit(
         self,
@@ -809,7 +191,7 @@ class Model(_Predictor, Component):
         dependencies: t.Sequence[Job] = (),
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+        validation_sets: t.Optional[t.Sequence[Dataset]] = None,
         **kwargs,
     ) -> t.Optional[Pipeline]:
         """
@@ -837,7 +219,7 @@ class Model(_Predictor, Component):
                 if isinstance(vs, Dataset):
                     assert db is not None
                     db.add(vs)
-                    validation_sets[i] = vs.identifier
+                    validation_sets[i] = vs
 
         self.training_configuration = configuration or self.training_configuration
 
@@ -864,15 +246,527 @@ class Model(_Predictor, Component):
                 **kwargs,
             )
 
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
+        if self.metric_values is not None:
+            for k, v in d.items():
+                self.metric_values.setdefault(k, []).append(v)
+
 
 @wraps(_TrainingConfiguration)
 def TrainingConfiguration(identifier: str, **kwargs):
     return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
 
 
+@dc.dataclass
+class Signature:
+    singleton: t.ClassVar[str] = 'singleton'
+    args: t.ClassVar[str] = '*args'
+    kwargs: t.ClassVar[str] = '**kwargs'
+    args_kwargs: t.ClassVar[str] = '*args,**kwargs'
+
+
+class Mapping:
+    def __init__(self, mapping: ModelInputType, signature: str):
+        self.mapping = self._map_args_kwargs(mapping)
+        self.signature = signature
+
+    @property
+    def id_key(self):
+        out = []
+        for arg in self.mapping[0]:
+            out.append(arg)
+        for k, v in self.mapping[1]:
+            if k.startswith('_outputs.'):
+                k = k.split('.')[1]
+            out.append(f'{k}={v}')
+        return ','.join(out)
+
+    @staticmethod
+    def _map_args_kwargs(mapping):
+        if isinstance(mapping, str):
+            return ([mapping], {})
+        elif isinstance(mapping, (list, tuple)) and isinstance(mapping[0], str):
+            return (mapping, {})
+        elif isinstance(mapping, dict):
+            return ((), mapping)
+        else:
+            assert isinstance(mapping[0], (list, tuple))
+            assert isinstance(mapping[1], dict)
+            return mapping
+
+    def __call__(self, r):
+        """
+        >>> r = {'a': 1, 'b': 2}
+        >>> self.mapping = [('a', 'b'), {}]
+        >>> _Predictor._data_from_input_type(docs)
+        ([1, 2], {})
+        >>> self.mapping = [('a',), {'b': 'X'}]
+        >>> _Predictor._data_from_input_type(docs)
+        ([1], {'X': 2})
+        """
+        args = []
+        kwargs = {}
+        for key in self.mapping[0]:
+            args.append(r[key])
+        for k, v in self.mapping[1].items():
+            kwargs[v] = r[k]
+        args = Document({'_base': args}).unpack()
+        kwargs = Document(kwargs).unpack()
+
+        if self.signature == Signature.kwargs:
+            return kwargs
+        elif self.signature == Signature.args:
+            return (*args, *list(kwargs.values()))
+        elif self.signature == Signature.singleton:
+            if args:
+                assert not kwargs
+                assert len(args) == 1
+                return args[0]
+            else:
+                assert kwargs
+                assert len(kwargs) == 1
+                return next(kwargs.values())
+        return args, kwargs
+
+
+@dc.dataclass(kw_only=True)
+class _Predictor(Component):
+    # Mixin class for components which can predict.
+    """:param datatype: DataType instance
+    :param output_schema: Output schema (mapping of encoders)
+    :param flatten: Flatten the model outputs
+    :param collate_fn: Collate function
+    :param model_update_kwargs: The kwargs to use for model update
+    :param metrics: The metrics to evaluate on
+    :param validation_sets: The validation ``Dataset`` instances to use
+    :param predict_kwargs: Additional arguments to use at prediction time
+    """
+
+    type_id: t.ClassVar[str] = 'model'
+    signature: t.ClassVar[str] = Signature.args_kwargs
+
+    datatype: EncoderArg = None
+    output_schema: t.Optional[Schema] = None
+    flatten: bool = False
+    model_update_kwargs: t.Dict = dc.field(default_factory=dict)
+    metrics: t.Sequence[Metric] = ()
+    validation_sets: t.Optional[t.Sequence[Dataset]] = None
+    predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
+
+    def post_create(self, db):
+        output_component = db.databackend.create_model_table_or_collection(self)
+        if output_component is not None:
+            db.add(output_component)
+
+    @property
+    def inputs(self) -> Inputs:
+        return Inputs(list(inspect.signature(self.predict_one).parameters.keys()))
+
+    @abstractmethod
+    def predict_one(self, *args, **kwargs) -> int:
+        """
+        Execute a single prediction on a datapoint
+        given by positional and keyword arguments.
+
+        :param args: arguments handled by model
+        :param kwargs: key-word arguments handled by model
+        """
+        pass
+
+    @abstractmethod
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """
+        Execute a single prediction on a datapoint
+        given by positional and keyword arguments.
+
+        :param args: arguments handled by model
+        :param kwargs: key-word arguments handled by model
+        """
+        pass
+
+    def _prepare_select_for_predict(self, select, db):
+        if isinstance(select, dict):
+            select = Serializable.decode(select)
+        # TODO logic in the wrong place
+        if isinstance(select, Table):
+            select = select.to_query()
+        if isinstance(select, IbisCompoundSelect):
+            from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+
+            assert isinstance(db.metadata, SQLAlchemyMetadata)
+            try:
+                _ = db.metadata.get_query(str(hash(select)))
+            except NonExistentMetadataError:
+                logging.info(f'Query {select} not found in metadata, adding...')
+                db.metadata.add_query(select, self.identifier)
+                logging.info('Done')
+        return select
+
+    def predict_in_db_job(
+        self,
+        X: ModelInputType,
+        db: Datalayer,
+        select: t.Optional[CompoundSelect],
+        ids: t.Optional[t.List[str]] = None,
+        max_chunk_size: t.Optional[int] = None,
+        dependencies: t.Sequence[Job] = (),
+        in_memory: bool = True,
+        overwrite: bool = False,
+    ):
+        """
+        Execute a single prediction on a datapoint
+        given by positional and keyword arguments as a job.
+
+        :param X: combination of input keys to be mapped to the model
+        :param db: SuperDuperDB instance
+        :param select: CompoundSelect query
+        :param ids: Iterable of ids
+        :param max_chunk_size: Chunks of data
+        :param dependencies: List of dependencies (jobs)
+        :param in_memory: Load data into memory or not
+        :param overwrite: Overwrite all documents or only new documents
+        """
+        job = ComponentJob(
+            component_identifier=self.identifier,
+            method_name='predict_in_db',
+            type_id='model',
+            args=[X],
+            kwargs={
+                'select': select.dict().encode() if select else None,
+                'ids': ids,
+                'max_chunk_size': max_chunk_size,
+                'in_memory': in_memory,
+                'overwrite': overwrite,
+            },
+        )
+        job(db, dependencies=dependencies)
+        return job
+
+    def _get_ids_from_select(self, X, select, db, overwrite: bool = False):
+        ids = []
+        if not overwrite:
+            query = select.select_ids_of_missing_outputs(
+                key=X,
+                model=self.identifier,
+                version=t.cast(int, self.version),
+            )
+        else:
+            query = select.select_ids
+        try:
+            id_field = db.databackend.id_field
+        except AttributeError:
+            id_field = query.table_or_collection.primary_id
+        for r in tqdm.tqdm(db.execute(query)):
+            ids.append(str(r[id_field]))
+        return ids
+
+    def predict_in_db(
+        self,
+        X: ModelInputType,
+        db: Datalayer,
+        select: CompoundSelect,
+        ids: t.Optional[t.List[str]] = None,
+        max_chunk_size: t.Optional[int] = None,
+        in_memory: bool = True,
+        overwrite: bool = False,
+    ) -> t.Any:
+        """
+        Execute a single prediction on a datapoint
+        given by positional and keyword arguments as a job.
+
+        :param X: combination of input keys to be mapped to the model
+        :param db: SuperDuperDB instance
+        :param select: CompoundSelect query
+        :param ids: Iterable of ids
+        :param max_chunk_size: Chunks of data
+        :param dependencies: List of dependencies (jobs)
+        :param in_memory: Load data into memory or not
+        :param overwrite: Overwrite all documents or only new documents
+        """
+        if isinstance(select, dict):
+            select = Serializable.decode(select)
+        if isinstance(select, Table):
+            select = select.to_query()
+
+        self._prepare_select_for_predict(select, db)
+        if self.identifier not in db.show('model'):
+            logging.info(f'Adding model {self.identifier} to db')
+            assert isinstance(self, Component)
+            db.add(self)
+        assert isinstance(
+            self.version, int
+        ), 'Something has gone wrong setting `self.version`'
+
+        if ids is None:
+            ids = self._get_ids_from_select(
+                X, select=select, db=db, overwrite=overwrite
+            )
+
+        return self._predict_with_select_and_ids(
+            X=X,
+            select=select,
+            ids=ids,
+            db=db,
+            max_chunk_size=max_chunk_size,
+            in_memory=in_memory,
+        )
+
+    def _prepare_inputs_from_select(
+        self,
+        X: ModelInputType,
+        db: Datalayer,
+        select: CompoundSelect,
+        ids,
+        in_memory: bool = True,
+    ):
+        X_data: t.Any
+        mapping = Mapping(X, self.signature)
+        if in_memory:
+            if db is None:
+                raise ValueError('db cannot be None')
+            docs = list(db.execute(select.select_using_ids(ids)))
+            # TODO add signature to Mapping.__call__
+            X_data = list(map(lambda x: mapping(x), docs))
+        else:
+            # TODO above logic missing in case of not a string
+            # idea: add the concept of tuple and dictionary strings to `Document`
+            X_data = QueryDataset(
+                select=select,
+                ids=ids,
+                fold=None,
+                db=db,
+                in_memory=False,
+                mapping=mapping,
+            )
+        if len(X_data) > len(ids):
+            raise Exception(
+                'You\'ve specified more documents than unique ids;'
+                f' Is it possible that {select.table_or_collection.primary_id}'
+                f' isn\'t uniquely identifying?'
+            )
+        return X_data, mapping
+
+    @staticmethod
+    def handle_input_type(data, signature):
+        if signature == Signature.singleton:
+            return (data,), {}
+        elif signature == Signature.args:
+            return data, {}
+        elif signature == Signature.kwargs:
+            return (), data
+        elif signature == Signature.args_kwargs:
+            return data[0], data[1]
+        else:
+            raise ValueError(
+                f'Unexpected signature {data}: '
+                f'Possible values {Signature.args_kwargs},'
+                f'{Signature.kwargs}, '
+                f'{Signature.args}, '
+                f'{Signature.singleton}.'
+            )
+            raise Exception('Unexpected signature')
+
+    def _predict_with_select_and_ids(
+        self,
+        X: t.Any,
+        db: Datalayer,
+        select: CompoundSelect,
+        ids: t.List[str],
+        in_memory: bool = True,
+        max_chunk_size: t.Optional[int] = None,
+    ):
+        if max_chunk_size is not None:
+            it = 0
+            for i in range(0, len(ids), max_chunk_size):
+                logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
+                self._predict_with_select_and_ids(
+                    X=X,
+                    db=db,
+                    ids=ids[i : i + max_chunk_size],
+                    select=select,
+                    max_chunk_size=None,
+                    in_memory=in_memory,
+                )
+                it += 1
+            return
+
+        dataset, mapping = self._prepare_inputs_from_select(
+            X=X, db=db, select=select, ids=ids, in_memory=in_memory
+        )
+        outputs = self.predict(dataset)
+        outputs = self._encode_outputs(outputs)
+
+        logging.info(f'Adding {len(outputs)} model outputs to `db`')
+
+        assert isinstance(
+            self.version, int
+        ), 'Version has not been set, can\'t save outputs...'
+
+        select.model_update(
+            db=db,
+            model=self.identifier,
+            outputs=outputs,
+            key=mapping.id_key,
+            version=self.version,
+            ids=ids,
+            flatten=self.flatten,
+            **self.model_update_kwargs,
+        )
+
+    def _encode_outputs(self, outputs):
+        if isinstance(self.datatype, DataType):
+            if self.flatten:
+                outputs = [
+                    [self.datatype(x).encode() for x in output] for output in outputs
+                ]
+            else:
+                outputs = [self.datatype(x).encode() for x in outputs]
+        elif isinstance(self.output_schema, Schema):
+            encoded_outputs = []
+            for output in outputs:
+                if isinstance(output, dict):
+                    encoded_outputs.append(self.output_schema(output))
+                elif self.flatten:
+                    encoded_output = [self.output_schema(x) for x in output]
+                    encoded_outputs.append(encoded_output)
+            outputs = encoded_outputs if encoded_outputs else outputs
+        return outputs
+
+
+@dc.dataclass(kw_only=True)
+class _DeviceManaged:
+    preferred_devices: t.Sequence[str] = ('cuda', 'mps', 'cpu')
+    device: t.Optional[str] = None
+
+    def on_load(self, db: Datalayer) -> None:
+        if self.preferred_devices:
+            for i, device in enumerate(self.preferred_devices):
+                try:
+                    self.to(device)
+                    self.device = device
+                    return
+                except Exception:
+                    if i == len(self.preferred_devices) - 1:
+                        raise
+        logging.info(f'Successfully mapped to {self.device}')
+
+    @abstractmethod
+    def to(self, device):
+        pass
+
+
+class Node:
+    def __init__(self, position):
+        self.position = position
+
+
+@dc.dataclass
+class IndexableNode:
+    def __init__(self, types):
+        self.types = types
+
+    def __getitem__(self, item):
+        assert type(item) in self.types
+        return Node(item)
+
+
+@public_api(stability='stable')
+@dc.dataclass(kw_only=True)
+class ObjectModel(_Predictor):
+    """Model component which wraps a model to become serializable
+    {_predictor_params}
+    :param object: Model object, e.g. sklearn model, etc..
+    :param num_workers: Number of workers
+    """
+
+    type_id: t.ClassVar[str] = 'model'
+
+    __doc__ = __doc__.format(_predictor_params=_Predictor.__doc__)
+
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
+        ('object', dill_serializer),
+    )
+
+    object: t.Any
+    num_workers: int = 0
+    signature: str = Signature.args_kwargs  # type: ignore[misc]
+
+    @property
+    def outputs(self):
+        return IndexableNode([int])
+
+    @property
+    def inputs(self):
+        kwargs = self.predict_kwargs if self.predict_kwargs else {}
+        return CallableInputs(self.object, kwargs)
+
+    @property
+    def training_keys(self) -> t.List:
+        if isinstance(self.train_X, list):
+            out = list(self.train_X)
+        elif self.train_X is not None:
+            out = [self.train_X]
+        if self.train_y is not None:
+            if isinstance(self.train_y, list):
+                out.extend(self.train_y)
+            else:
+                out.append(self.train_y)
+        return out
+
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
+        if self.metric_values is not None:
+            for k, v in d.items():
+                self.metric_values.setdefault(k, []).append(v)
+
+    def validate(
+        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+    ):
+        """
+        Validate model on `db` and validation set.
+
+        :param db: `db` SuperDuperDB instance
+        :param validation_set: Dataset on which to validate.
+        """
+        db.add(self)
+        out = self._validate(db, validation_set, metrics)
+        if self.metric_values is None:
+            raise ValueError('self.metric_values cannot be None')
+        self.metric_values.update(out)
+        db.metadata.update_object(
+            type_id='model',
+            identifier=self.identifier,
+            version=self.version,
+            key='dict.metric_values',
+            value=self.metric_values,
+        )
+
+    def _wrapper(self, data):
+        args, kwargs = self.handle_input_type(data, self.signature)
+        return self.object(*args, **kwargs)
+
+    def predict_one(self, *args, **kwargs):
+        return self.object(*args, **kwargs)
+
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        outputs = []
+        if self.num_workers:
+            pool = multiprocessing.Pool(processes=self.num_workers)
+            for r in pool.map(self._wrapper, dataset):  # type: ignore[arg-type]
+                outputs.append(r)
+            pool.close()
+            pool.join()
+        else:
+            for i in range(len(dataset)):
+                outputs.append(self._wrapper(dataset[i]))
+        return outputs
+
+
+Model = ObjectModel
+
+
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
-class APIModel(Component, _Predictor):
+class APIModel(_Predictor):
     '''{component_params}
     {predictor_params}
     :param model: The model to use, e.g. ``'text-embedding-ada-002'``'''
@@ -900,31 +794,10 @@ class APIModel(Component, _Predictor):
         if output_component is not None:
             db.add(output_component)
 
-    @override
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
-    ) -> t.Sequence[t.Any]:
-        jobs = []
-        if self.predict_X is not None:
-            assert self.predict_select is not None
-            jobs.append(
-                self.predict(
-                    X=self.predict_X,
-                    select=self.predict_select,
-                    max_chunk_size=self.predict_max_chunk_size,
-                    db=db,
-                    **(self.predict_kwargs or {}),
-                )
-            )
-        return jobs
-
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class QueryModel(Component, _Predictor):
+class QueryModel(_Predictor):
     """
     Model which can be used to query data and return those
     results as pre-computed queries.
@@ -932,78 +805,47 @@ class QueryModel(Component, _Predictor):
     :param select: query used to find data (can include `like`)
     """
 
+    preprocess: t.Optional[t.Callable] = None
+    postprocess: t.Optional[t.Callable] = None
     select: CompoundSelect
 
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
-    ) -> t.Sequence[t.Any]:
-        jobs = []
-        if self.predict_X is not None:
-            assert self.predict_select is not None
-            jobs.append(
-                self.predict(
-                    X=self.predict_X,
-                    select=self.predict_select,
-                    max_chunk_size=self.predict_max_chunk_size,
-                    db=db,
-                    **(self.predict_kwargs or {}),
-                )
-            )
-        return jobs
+    @property
+    def inputs(self) -> Inputs:
+        if self.preprocess is not None:
+            return CallableInputs(self.preprocess)
+        return Inputs([x.value for x in self.select.variables])
 
-    def _predict_one(self, X: t.Any, **kwargs):
-        select = self.select.set_variables(db=self.db, X=X)
+    def predict_one(self, X: t.Dict):
+        if self.preprocess is not None:
+            X = self.preprocess(X)
+        select = self.select.set_variables(db=self.db, **X)
         out = self.db.execute(select)
         if self.postprocess is not None:
             return self.postprocess(out)
         return out
 
-    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
-        if one:
-            return self._predict_one(X, **predict_kwargs)
-        return [self._predict_one(x, **predict_kwargs) for x in X]
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class SequentialModel(Component, _Predictor):
+class SequentialModel(_Predictor):
     """
     Sequential model component which wraps a model to become serializable
 
-    {component_params}
     {_predictor_params}
     :param predictors: A list of predictors to use
     """
 
     __doc__ = __doc__.format(
-        component_params=Component.__doc__,
         _predictor_params=_Predictor.__doc__,
     )
-    predictors: t.List[t.Union[str, Model, APIModel]]
+    predictors: t.List[_Predictor]
 
-    @override
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        verbose: bool = False,
-    ) -> t.Sequence[t.Any]:
-        jobs = []
-        if self.predict_X is not None:
-            assert self.predict_select is not None
-            jobs.append(
-                self.predict(
-                    X=self.predict_X,
-                    select=self.predict_select,
-                    max_chunk_size=self.predict_max_chunk_size,
-                    db=db,
-                    **(self.predict_kwargs or {}),
-                )
-            )
-        return jobs
+    @property
+    def inputs(self) -> Inputs:
+        return self.predictors[0].inputs
 
     def post_create(self, db: Datalayer):
         for p in self.predictors:
@@ -1015,11 +857,16 @@ class SequentialModel(Component, _Predictor):
     def on_load(self, db: Datalayer):
         for i, p in enumerate(self.predictors):
             if isinstance(p, str):
-                self.predictors[i] = db.load('model', p)  # type: ignore[call-overload]
+                self.predictors[i] = db.load('model', p)
 
-    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
-        out = X
-        for p in self.predictors:
+    def predict_one(self, *args, **kwargs):
+        return self.predict([(args, kwargs)])[0]
+
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        for i, p in enumerate(self.predictors):
             assert isinstance(p, _Predictor)
-            out = p._predict(out, one=one, **predict_kwargs)
+            if i == 0:
+                out = p.predict(dataset)
+            else:
+                out = p.predict(out)
         return out

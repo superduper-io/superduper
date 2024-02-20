@@ -9,6 +9,9 @@ class Leaf(ABC):
     def unique_id(self):
         pass
 
+    def unpack(self, db=None):
+        return self
+
     @abstractmethod
     def encode(
         self,
@@ -20,4 +23,7 @@ class Leaf(ABC):
     @classmethod
     @abstractmethod
     def decode(cls, r, db):
+        pass
+
+    def init(self, db=None):
         pass

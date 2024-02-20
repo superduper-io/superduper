@@ -19,9 +19,10 @@ from superduperdb.jobs.task_workflow import TaskWorkflow
 @contextmanager
 def add_and_cleanup_listener(database, collection_name):
     """Add listener to the database and remove it after the test"""
+    m = database.load('model', 'model_linear_a')
     listener_x = Listener(
         key='x',
-        model='model_linear_a',
+        model=m,
         select=Collection(identifier=collection_name).find(),
     )
 
@@ -133,11 +134,14 @@ def test_dependencies_with_ray(ray_client, distributed_db):
 def test_model_job_logs(distributed_db, fake_updates):
     # Set Collection Listener
     # ------------------------------
+
     collection = Collection(identifier=str(uuid.uuid4()))
+
+    m = distributed_db('model', 'model_linear_a')
 
     listener_x = Listener(
         key='x',
-        model='model_linear_a',
+        model=m,
         select=collection.find(),
     )
     jobs, _ = distributed_db.add(listener_x)

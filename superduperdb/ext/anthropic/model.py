@@ -6,6 +6,7 @@ from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutEr
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIModel
 from superduperdb.ext.utils import format_prompt, get_key
@@ -45,39 +46,14 @@ class AnthropicCompletions(Anthropic):
             self.datatype = dtype('str')
 
     @retry
-    def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
+    def predict_one(
+        self, prompt: str, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
         if context is not None:
-            X = format_prompt(X, self.prompt, context=context)
+            prompt = format_prompt(prompt, self.prompt, context=context)
         client = anthropic.Anthropic(api_key=get_key(KEY_NAME), **self.client_kwargs)
-        resp = client.completions.create(prompt=X, model=self.identifier, **kwargs)
+        resp = client.completions.create(prompt=prompt, model=self.identifier, **kwargs)
         return resp.completion
 
-    @retry
-    async def _apredict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
-        if context is not None:
-            X = format_prompt(X, self.prompt, context=context)
-        client = anthropic.AsyncAnthropic(
-            api_key=get_key(KEY_NAME), **self.client_kwargs
-        )
-        resp = await client.completions.create(
-            prompt=X, model=self.identifier, **kwargs
-        )
-        return resp.completion
-
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return self._predict_one(X, context=context, **kwargs)
-        return [self._predict_one(msg) for msg in X]
-
-    async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
-        if context:
-            assert one, 'context only works with ``one=True``'
-        if one:
-            return await self._apredict_one(X, context=context, **kwargs)
-        return [await self._apredict_one(msg) for msg in X]
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]

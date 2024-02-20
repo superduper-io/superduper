@@ -140,7 +140,7 @@ class Listener(Component):
             self.model.predict(
                 X=self.key,
                 db=db,
-                select=self.select,
+                select=self.select.copy(),
                 dependencies=dependencies,
                 **(self.predict_kwargs or {}),
             )

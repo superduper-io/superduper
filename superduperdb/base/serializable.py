@@ -108,6 +108,9 @@ class Serializable(Leaf):
 
         return Document(asdict(self))
 
+    def copy(self):
+        return self.decode(self.encode())
+
 
 @dc.dataclass
 class Variable(Serializable):

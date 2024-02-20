@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 - LLM CI random errors
+- Fixed the bug where select in listener is modified in schedule_jobs.
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 

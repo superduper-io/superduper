@@ -144,11 +144,6 @@ def build_torch_state_serializer(module, info):
 
 
 @dc.dataclass
-class LazyLoader:
-    info: t.Dict
-
-
-@dc.dataclass
 class Encodable(Leaf):
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
@@ -163,6 +158,7 @@ class Encodable(Leaf):
     datatype: DataType
     x: t.Optional[t.Any] = None
     uri: t.Optional[str] = None
+    file_id: t.Optional[str] = None
 
     @property
     def unique_id(self):
@@ -176,11 +172,27 @@ class Encodable(Leaf):
     def reference(self):
         return self.datatype.reference
 
+    def init(self, db):
+        self.x = db.artifact_store.load_artifact(self.file_id)
+
+    def unpack(self, db):
+        """
+        Unpack the content of the `Encodable`
+
+        :param db: `Datalayer` instance to assist with
+        """
+        if self.x is None:
+            self.init()
+        return self.x
+
     def encode(
         self,
         bytes_encoding: t.Optional[BytesEncoding] = None,
         leaf_types_to_keep: t.Sequence = (),
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+        """
+        :param bytes_encoding:
+        """
         from superduperdb.backends.base.artifact import ArtifactSavingError
 
         def _encode(x):
@@ -211,20 +223,37 @@ class Encodable(Leaf):
         }
 
     @classmethod
-    def decode(cls, r, db, reference: bool = False):
-        datatype = db.datatypes[r['_content']['datatype']]
-        # TODO tidy up this logic
-        if datatype.artifact and not datatype.reference and not reference:
-            object = db.artifact_store.load_artifact(r['_content'])
-        elif datatype.artifact and datatype.reference:
-            return Encodable(x=None, datatype=datatype, uri=r['_content']['uri'])
-        elif 'bytes' not in r['_content'] and reference:
-            assert (
-                'uri' in r['_content']
-            ), 'If load by reference, need a valid URI for data, found "None"'
-            return Encodable(x=None, datatype=datatype, uri=r['_content']['uri'])
-        else:
+    def decode(cls, r, db=None, reference: bool = False):
+        # TODO tidy up this logic by creating different subclasses of datatype
+        # Idea
+        if 'bytes' in r['_content']:
+            if db is None:
+                try:
+                    from superduperdb.components.datatype import serializers
+
+                    datatype = serializers[r['_content']['datatype']]
+                except KeyError:
+                    raise Exception(
+                        f'You specified a serializer which doesn\'t have a'
+                        f' default value: {r["_content"]["datatype"]}'
+                    )
+            else:
+                datatype = db.datatypes[r['_content']['datatype']]
+
             object = datatype.decoder(r['_content']['bytes'], info=datatype.info)
+        else:
+            datatype = db.datatypes[r['_content']['datatype']]
+            if datatype.artifact and not datatype.reference and not reference:
+                object = db.artifact_store.load_artifact(r['_content'])
+            elif datatype.artifact and datatype.reference:
+                return Encodable(x=None, datatype=datatype, uri=r['_content']['uri'])
+            elif 'bytes' not in r['_content'] and reference:
+                assert (
+                    'uri' in r['_content']
+                ), 'If load by reference, need a valid URI for data, found "None"'
+                return Encodable(x=None, datatype=datatype, uri=r['_content']['uri'])
+            else:
+                raise Exception('Incorrect argument combination.')
         return Encodable(
             x=object,
             datatype=datatype,

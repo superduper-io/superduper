@@ -19,7 +19,7 @@ from PIL import Image
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
-from superduperdb.components.model import Model
+from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import pil_image
@@ -48,27 +48,11 @@ class Model1:
             }
         ] * random.randint(1, 2)
 
-    @staticmethod
-    def preprocess(x):
-        return x
-
-    @staticmethod
-    def postprocess(x):
-        return x
-
 
 class Model2:
     def predict(self, x):
         if isinstance(x, str):
             return np.asarray([int(x) * 100] * 10)
-        return x
-
-    @staticmethod
-    def preprocess(x):
-        return x
-
-    @staticmethod
-    def postprocess(x):
         return x
 
 
@@ -163,31 +147,26 @@ def test_advance_setup(distributed_db, image_url):
 
     from superduperdb.ext.numpy import array
 
-    model1 = Model(
+    model1 = ObjectModel(
         identifier='model1',
-        object=Model1(),
-        preprocess=Model1.preprocess,
-        postprocess=Model1.postprocess,
+        object=Model1().predict,
         flatten=True,
         model_update_kwargs={'document_embedded': False},
         output_schema=Schema(
             identifier='myschema',
             fields={'image': pil_image, 'int': array('int64', (10,))},
         ),
-        predict_method='predict',
     )
     db.add(model1)
 
     e = array('int64', (10,))
 
-    model2 = Model(
+    model2 = ObjectModel(
         identifier='model2',
-        object=Model2(),
-        preprocess=Model2.preprocess,
-        postprocess=Model2.postprocess,
-        predict_method='predict',
+        object=Model2().predict,
         datatype=e,
     )
+
     db.add(model2)
 
     listener1 = Listener(

@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-
-
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
@@ -17,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
+- Change and simplify the contract for writing new `_Predictor` descendants (`.predict_one`, `.predict`)
 
 #### Bug Fixes
 - LLM CI random errors

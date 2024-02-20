@@ -14,6 +14,7 @@ from superduperdb.components.datatype import DataType, Encodable
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.schema import Schema
 
 
@@ -87,12 +88,14 @@ class Document(MongoStyleDict):
     @staticmethod
     def decode(
         r: t.Dict,
-        db,
+        db: t.Optional['Datalayer'] = None,
         bytes_encoding: t.Optional[BytesEncoding] = None,
         reference: bool = False,
     ) -> t.Any:
         bytes_encoding = bytes_encoding or CFG.bytes_encoding
-        decoded = _decode(dict(r), db, bytes_encoding, reference=reference)
+        decoded = _decode(
+            dict(r), db=db, bytes_encoding=bytes_encoding, reference=reference
+        )
         if isinstance(decoded, dict):
             return Document(decoded)
         return decoded
@@ -100,13 +103,12 @@ class Document(MongoStyleDict):
     def __repr__(self) -> str:
         return f'Document({repr(dict(self))})'
 
-    def unpack(self) -> t.Any:
-        """Returns the content, but with any encodables replacecs by their contents"""
-        if '_base' in self:
-            r = self['_base']
-        else:
-            r = dict(self)
-        return _unpack(r)
+    def unpack(self, db=None) -> t.Any:
+        """Returns the content, but with any encodables replaced by their contents"""
+        out = _unpack(self, db=db)
+        if '_base' in out:
+            out = out['_base']
+        return out
 
 
 def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False):
@@ -147,16 +149,17 @@ def _decode(
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
         return _LEAF_TYPES[r['_content']['leaf_type']].decode(
-            r, db, reference=reference
+            r, db=db, reference=reference
         )
     elif isinstance(r, list):
         return [
-            _decode(x, db, bytes_encoding=bytes_encoding, reference=reference)
+            _decode(x, db=db, bytes_encoding=bytes_encoding, reference=reference)
             for x in r
         ]
     elif isinstance(r, dict):
         return {
-            k: _decode(v, db, bytes_encoding, reference=reference) for k, v in r.items()
+            k: _decode(v, db=db, bytes_encoding=bytes_encoding, reference=reference)
+            for k, v in r.items()
         }
     else:
         return r
@@ -166,6 +169,8 @@ def _decode(
 class Reference(Serializable):
     identifier: str
     leaf_type: str
+    path: t.Optional[str] = None
+    db: t.Optional['Datalayer'] = None
 
 
 def _encode_with_references(r: t.Any, references: t.Dict):
@@ -231,17 +236,18 @@ def _encode_with_schema(
     return r
 
 
-def _unpack(item: t.Any) -> t.Any:
+def _unpack(item: t.Any, db=None) -> t.Any:
     if isinstance(item, Encodable):
+        # TODO move logic into Encodable
         if item.reference:
             file_id = _construct_file_id_from_uri(item.uri)
             if item.datatype.directory:
                 file_id = os.path.join(item.datatype.directory, file_id)
             return file_id
-        return item.x
+        return item.unpack(db=db)
     elif isinstance(item, dict):
-        return {k: _unpack(v) for k, v in item.items()}
+        return {k: _unpack(v, db=db) for k, v in item.items()}
     elif isinstance(item, list):
-        return [_unpack(x) for x in item]
+        return [_unpack(x, db=db) for x in item]
     else:
         return item

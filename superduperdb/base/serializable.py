@@ -87,6 +87,11 @@ class Serializable(Leaf):
         return sorted(list(out.values()), key=lambda x: x.value)
 
     def set_variables(self, db, **kwargs) -> 'Serializable':
+        """
+        Set free variables of self.
+
+        :param db:
+        """
         r = self.encode(leaf_types_to_keep=(Variable,))
         r = _replace_variables(r, db, **kwargs)
         return self.decode(r)

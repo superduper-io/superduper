@@ -51,19 +51,9 @@ def acc(x, y):
     return x == y
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    'db',
-    [
-        (DBConfig.mongodb_data, {'n_data': 500}),
-        (DBConfig.sqldb_data, {'n_data': 500}),
-    ],
-    indirect=True,
-)
-def test_fit(db, valid_dataset):
-    db.add(valid_dataset)
-
-    m = TorchModel(
+@pytest.fixture
+def model():
+    return TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',
         training_configuration=TorchTrainerConfiguration(
@@ -77,6 +67,21 @@ def test_fit(db, valid_dataset):
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
         datatype=DataType(identifier='base'),
     )
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    'db',
+    [
+        (DBConfig.mongodb_data, {'n_data': 500}),
+        (DBConfig.sqldb_data, {'n_data': 500}),
+    ],
+    indirect=True,
+)
+def test_fit(db, valid_dataset, model):
+    db.add(valid_dataset)
+
+    m = model
 
     if isinstance(db.databackend, MongoDataBackend):
         select = Collection('documents').find()
@@ -92,3 +97,8 @@ def test_fit(db, valid_dataset):
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],
     )
+
+
+def test_predict():
+    # Check that the pre-process etc. has been called
+    ...

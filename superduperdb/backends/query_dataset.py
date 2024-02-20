@@ -1,8 +1,12 @@
+import inspect
 import random
 import typing as t
 
 from superduperdb.backends.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
+
+if t.TYPE_CHECKING:
+    from superduperdb.components.model import Mapping
 
 
 class ExpiryCache(list):
@@ -31,51 +35,48 @@ class QueryDataset:
     def __init__(
         self,
         select: Select,
-        keys: t.Optional[t.List[str]] = None,
+        mapping: t.Optional['Mapping'] = None,
+        ids: t.Optional[t.List[str]] = None,
         fold: t.Union[str, None] = 'train',
-        suppress: t.Sequence[str] = (),
         transform: t.Optional[t.Callable] = None,
         db=None,
-        ids: t.Optional[t.List[str]] = None,
         in_memory: bool = True,
-        extract: t.Optional[str] = None,
-        **kwargs,
     ):
-        self._database = db
-        self.keys = keys
+        self._db = db
 
-        self.transform = transform if transform else lambda x: x
+        self.transform = transform
         if fold is not None:
             self.select = select.add_fold(fold)
         else:
             self.select = select
+
         self.in_memory = in_memory
         if self.in_memory:
             if ids is None:
-                self._documents = list(self.database.execute(self.select))
+                self._documents = list(self.db.execute(self.select))
             else:
                 self._documents = list(
-                    self.database.execute(self.select.select_using_ids(ids))
+                    self.db.execute(self.select.select_using_ids(ids))
                 )
         else:
             if ids is None:
                 self._ids = [
                     r[self.select.id_field]
-                    for r in self.database.execute(self.select.select_ids)
+                    for r in self.db.execute(self.select.select_ids)
                 ]
             else:
                 self._ids = ids
             self.select_one = self.select.select_single_id
-        self.suppress = suppress
-        self.extract = extract
+
+        self.mapping = mapping
 
     @property
-    def database(self):
-        if self._database is None:
+    def db(self):
+        if self._db is None:
             from superduperdb.base.build import build_datalayer
 
-            self._database = build_datalayer()
-        return self._database
+            self._db = build_datalayer()
+        return self._db
 
     def __len__(self):
         if self.in_memory:
@@ -88,22 +89,25 @@ class QueryDataset:
             input = self._documents[item]
         else:
             input = self.select_one(
-                self._ids[item], self.database, encoders=self.database.datatypes
+                self._ids[item], self.db, encoders=self.db.datatypes
             )
-        r = MongoStyleDict(input.unpack())
-        s = MongoStyleDict({})
+        input = MongoStyleDict(input.unpack(db=self.db))
+        from superduperdb.components.model import Signature
 
-        if self.keys is not None:
-            for k in self.keys:
-                if k == '_base':
-                    s[k] = r
-                else:
-                    s[k] = r[k]
-        else:
-            s = r
-        out = self.transform(s)
-        if self.extract:
-            out = out[self.extract]
+        out = input
+        if self.mapping is not None:
+            out = self.mapping(out)
+        if self.transform is not None and self.mapping is not None:
+            if self.mapping.signature == Signature.args_kwargs:
+                out = self.transform(*out[0], **out[1])
+            elif self.mapping.signature == Signature.args:
+                out = self.transform(*out)
+            elif self.mapping.signature == Signature.kwargs:
+                out = self.transform(**out)
+            elif self.mapping.signature == Signature.singleton:
+                out = self.transform(out)
+        elif self.transform is not None:
+            out = self.transform(out)
         return out
 
 
@@ -204,7 +208,12 @@ class CachedQueryDataset:
         return self.transform(s)
 
 
-def query_dataset_factory(data_prefetch: bool = False, **kwargs):
-    if data_prefetch:
+def query_dataset_factory(**kwargs):
+    if kwargs.get('data_prefetch', False):
         return CachedQueryDataset(**kwargs)
+    kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if k in inspect.signature(QueryDataset.__init__).parameters
+    }
     return QueryDataset(**kwargs)

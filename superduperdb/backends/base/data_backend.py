@@ -1,7 +1,7 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.components.model import APIModel, Model
+from superduperdb.components.model import APIModel, ObjectModel
 
 
 class BaseDataBackend(ABC):
@@ -35,7 +35,7 @@ class BaseDataBackend(ABC):
         """
         pass
 
-    def create_model_table_or_collection(self, model: t.Union[Model, APIModel]):
+    def create_model_table_or_collection(self, model: t.Union[ObjectModel, APIModel]):
         pass
 
     @abstractmethod

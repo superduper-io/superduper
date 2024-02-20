@@ -10,10 +10,11 @@ from transformers import (
 )
 
 from superduperdb import logging
-from superduperdb.backends.query_dataset import query_dataset_factory
+from superduperdb.backends.query_dataset import QueryDataset, query_dataset_factory
 from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.model import (
-    Model,
+    _Fittable,
+    _Predictor,
     _TrainingConfiguration,
 )
 from superduperdb.ext.llm import training
@@ -35,7 +36,7 @@ def LLMTrainingConfiguration(identifier: str, **kwargs) -> _TrainingConfiguratio
 
 
 @dc.dataclass
-class LLM(Model):
+class LLM(_Predictor, _Fittable):
     """
     LLM model based on `transformers` library.
     Parameters:
@@ -65,6 +66,7 @@ class LLM(Model):
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
+    signature: str = 'singleton'  # type: ignore[misc]
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}
@@ -122,7 +124,7 @@ class LLM(Model):
         self.prompter = Prompter(self.prompt_template, self.prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
         if self.adapter_id is not None:
-            self.add_adapter(self.adapter_id.artifact, self.adapter_id.artifact)
+            self.add_adapter(self.adapter_id, self.adapter_id)
 
     def _fit(
         self,
@@ -185,21 +187,15 @@ class LLM(Model):
         return compute_metrics
 
     @ensure_initialized
-    def _predict(
-        self,
-        X: t.Union[str, t.List[str], t.List[dict[str, str]]],
-        one: bool = False,
-        **kwargs: t.Any,
-    ):
-        # support string and dialog format
-        one = isinstance(X, str)
-        if not one and isinstance(X, list):
-            one = isinstance(X[0], dict)
+    def predict_one(self, X):
+        X = self.prompter(X)
+        results = self._generate([X], **self.predict_kwargs)
+        return results[0]
 
-        xs = [X] if one else X
-        xs = [self.prompter(x, **kwargs) for x in xs]
-        results = self._generate(xs, **kwargs)
-        return results[0] if one else results
+    @ensure_initialized
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        X = [self.prompter(dataset[i]) for i in range(len(dataset))]
+        return self._generate(X, **self.predict_kwargs)
 
     def _generate(self, X: t.Any, adapter_name=None, **kwargs):
         """
@@ -262,6 +258,7 @@ class LLM(Model):
             # Update cache model
             self._model_cache[hash(self.model_kwargs)] = self.model
         else:
+            # TODO where does this come from?
             self.model.load_adapter(model_id, adapter_name)
 
     def get_datasets(

@@ -1,12 +1,12 @@
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.listener import Listener
-from superduperdb.components.model import Model
+from superduperdb.components.model import ObjectModel
 
 
 def test_listener_serializes_properly():
     q = Collection('test').find({}, {})
     listener = Listener(
-        model=Model('test', object=lambda x: x),
+        model=ObjectModel('test', object=lambda x: x),
         select=q,
         key='test',
     )

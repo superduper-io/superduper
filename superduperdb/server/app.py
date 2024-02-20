@@ -106,7 +106,7 @@ class SuperDuperApp:
 
             return JSONResponse(
                 status_code=400,
-                content={'error': 'Config is not match'},
+                content={'error': 'Config doesn\'t match'},
             )
 
     def print_routes(self):

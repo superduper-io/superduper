@@ -105,11 +105,8 @@ fix-and-test: ##  Lint the code before testing
 	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
 	# Linting
+	rm -rf .mypy_cache/
 	mypy superduperdb
-	# Unit testing
-	pytest $(PYTEST_ARGUMENTS)
-	# Check for missing docstrings
-	interrogate superduperdb
 
 
 

@@ -23,7 +23,7 @@ def test_llama():
     )
 
     text = 'testing prompt'
-    output = llama.predict(text, one=True)
+    output = llama.predict_one(text)
     assert output == 'tested'
 
 
@@ -41,5 +41,5 @@ def test_llama_embedding():
     )
 
     text = 'testing prompt'
-    output = llama.predict(text, one=True)
+    output = llama.predict_one(text)
     assert output == [1]

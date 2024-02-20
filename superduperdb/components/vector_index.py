@@ -9,6 +9,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
+from superduperdb.components.model import Mapping, ModelInputType
 from superduperdb.ext.utils import str_shape
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -33,8 +34,8 @@ class VectorIndex(Component):
 
     type_id: t.ClassVar[str] = 'vector_index'
 
-    indexing_listener: t.Union[Listener, str]
-    compatible_listener: t.Union[None, Listener, str] = None
+    indexing_listener: Listener
+    compatible_listener: t.Optional[Listener] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
@@ -93,18 +94,11 @@ class VectorIndex(Component):
                     f'VectorIndex keys: {keys}, with model: {models}'
                 )
 
-        if isinstance(key, str):
-            model_input = document[key]
-        elif isinstance(key, (tuple, list)):
-            model_input = [document[k] for k in list(key)]
-        elif isinstance(key, dict):
-            model_input = [document[k] for k in key.values()]
-        else:
-            model_input = document
-
         model = db.models[model_name]
+        data = Mapping(key, model.signature)(document)
+        args, kwargs = model.handle_input_type(data, model.signature)
         return (
-            model.predict(model_input, one=True),
+            model.predict_one(*args, **kwargs),
             model.identifier,
             key,
         )
@@ -150,7 +144,7 @@ class VectorIndex(Component):
         )
 
     @property
-    def models_keys(self) -> t.Tuple[t.List[str], t.List[KeyType]]:
+    def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
         """
         Return a list of model and keys for each listener
         """
@@ -162,7 +156,7 @@ class VectorIndex(Component):
         else:
             listeners = [self.indexing_listener]
 
-        models = [w.model.identifier for w in listeners]  # type: ignore[union-attr]
+        models = [w.model.identifier for w in listeners]
         keys = [w.key for w in listeners]
         return models, keys
 

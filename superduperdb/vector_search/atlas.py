@@ -52,7 +52,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
     @classmethod
     def from_component(cls, vi: 'VectorIndex'):
         from superduperdb.components.listener import Listener
-        from superduperdb.components.model import Model
+        from superduperdb.components.model import ObjectModel
 
         assert isinstance(vi.indexing_listener, Listener)
         collection = vi.indexing_listener.select.table_or_collection.identifier
@@ -63,7 +63,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         ), 'Only single key is support for atlas search'
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
-        assert isinstance(vi.indexing_listener.model, Model) or isinstance(
+        assert isinstance(vi.indexing_listener.model, ObjectModel) or isinstance(
             vi.indexing_listener.model, APIModel
         )
         assert isinstance(collection, str), 'Collection is required to be a string'

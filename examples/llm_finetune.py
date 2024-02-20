@@ -60,4 +60,4 @@ llm.fit(
 prompt = "### Human: Who are you? ### Assistant: "
 
 # Automatically load lora model for prediction, default use the latest checkpoint
-print(llm.predict(prompt, max_new_tokens=100, do_sample=True))
+print(llm.predict_in_db(prompt, max_new_tokens=100, do_sample=True))

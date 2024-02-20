@@ -9,7 +9,7 @@ from superduperdb import superduper
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import IbisQueryTable, Table
 from superduperdb.base.serializable import Serializable
-from superduperdb.components.model import Model
+from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
 from superduperdb.ext.pillow.encoder import pil_image
@@ -71,12 +71,12 @@ def duckdb(monkeypatch):
             )
         )
 
-        model = Model(
+        model = ObjectModel(
             object=lambda _: numpy.random.randn(32),
             identifier='test',
             datatype=array('float64', shape=(32,)),
         )
-        model.predict('x', select=t, db=db)
+        model.predict_in_db('x', select=t, db=db)
 
         _, s = db.add(
             Table(

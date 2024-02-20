@@ -12,7 +12,7 @@ from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.ibis.utils import get_output_table_name
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.components.model import APIModel, Model
+from superduperdb.components.model import APIModel, ObjectModel
 from superduperdb.components.schema import Schema
 
 BASE64_PREFIX = 'base64:'
@@ -50,7 +50,7 @@ class IbisDataBackend(BaseDataBackend):
         else:
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
 
-    def create_model_table_or_collection(self, model: t.Union[Model, APIModel]):
+    def create_model_table_or_collection(self, model: t.Union[ObjectModel, APIModel]):
         msg = (
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."

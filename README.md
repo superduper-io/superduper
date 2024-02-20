@@ -50,7 +50,7 @@ Build, deploy and manage any AI application without the need for complex pipelin
 - Custom AI use-cases involving specialized models
 - Even the most complex applications/workflows in which different models work together
 
-SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent platform that allows you to leverage the full AI and Python ecosystem. Aa single development and deployment environment for all your AI applications in one place, fully scalable and easy to manage.
+SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent platform that allows you to leverage the full AI and Python ecosystem. A single development and deployment environment for all your AI applications in one place, fully scalable and easy to manage.
 
 
 ## Key Features:

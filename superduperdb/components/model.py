@@ -612,7 +612,6 @@ class _Predictor(Component):
                 f'{Signature.args}, '
                 f'{Signature.singleton}.'
             )
-            raise Exception('Unexpected signature')
 
     def _predict_with_select_and_ids(
         self,
@@ -642,14 +641,13 @@ class _Predictor(Component):
             X=X, db=db, select=select, ids=ids, in_memory=in_memory
         )
         outputs = self.predict(dataset)
-        outputs = self._encode_outputs(outputs)
+        outputs = self.encode_outputs(outputs)
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
             self.version, int
         ), 'Version has not been set, can\'t save outputs...'
-
         select.model_update(
             db=db,
             model=self.identifier,
@@ -661,7 +659,7 @@ class _Predictor(Component):
             **self.model_update_kwargs,
         )
 
-    def _encode_outputs(self, outputs):
+    def encode_outputs(self, outputs):
         if isinstance(self.datatype, DataType):
             if self.flatten:
                 outputs = [
@@ -670,14 +668,19 @@ class _Predictor(Component):
             else:
                 outputs = [self.datatype(x).encode() for x in outputs]
         elif isinstance(self.output_schema, Schema):
-            encoded_outputs = []
-            for output in outputs:
-                if isinstance(output, dict):
-                    encoded_outputs.append(self.output_schema(output))
-                elif self.flatten:
-                    encoded_output = [self.output_schema(x) for x in output]
-                    encoded_outputs.append(encoded_output)
-            outputs = encoded_outputs if encoded_outputs else outputs
+            outputs = self.encode_with_schema(outputs)
+
+        return outputs
+
+    def encode_with_schema(self, outputs):
+        encoded_outputs = []
+        for output in outputs:
+            if isinstance(output, dict):
+                encoded_outputs.append(self.output_schema(output))
+            elif self.flatten:
+                encoded_output = [self.output_schema(x) for x in output]
+                encoded_outputs.append(encoded_output)
+        outputs = encoded_outputs if encoded_outputs else outputs
         return outputs
 
 

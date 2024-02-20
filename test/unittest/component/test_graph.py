@@ -4,7 +4,7 @@ import networkx as nx
 import pytest
 
 from superduperdb.components.graph import Graph
-from superduperdb.components.model import Model
+from superduperdb.components.model import Model, Signature
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def model1(db):
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model2(db):
     def model_object(x):
-        return x + 2
+        return x + 2, x
 
     model = Model(identifier='m2', object=model_object)
     db.add(model)
@@ -52,34 +52,44 @@ def model3(db):
 
 
 def test_simple_graph(model1, model2):
-    g = Graph(identifier='simple-graph')
-    intermediate_node = g.connect(g, model1)
+    g = Graph(
+        identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+    )
     g.connect(model1, model2)
-    assert g.predict(1, one=True) == 4
-    assert intermediate_node.output == 2
+    assert g.predict_one(1) == [(4, 2)]
 
-    g = Graph(identifier='simple-graph')
-    intermediate_node = g.connect(g, model1)
+    g = Graph(
+        identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+    )
+
     g.connect(model1, model2)
-    assert g.predict([1, 2, 3], one=False) == [4, 5, 6]
+    assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)]]
 
 
-def test_complex_graph(model1, model2_multi, model3):
-    g = Graph(identifier='complex-graph')
-    g.connect(g, model1)
-    g.connect(g, model2_multi, on='x')
-    g.connect(model1, model2_multi, on='y')
-    g.connect(model1, model3, on='x')
-    g.connect(model2_multi, model3, on='y')
-    assert g.predict(1, one=True) == 10
-
-    assert g.predict([1, 2, 3], one=False) == [10, 13, 16]
+def test_complex_graph(model1, model2_multi, model3, model2):
+    g = Graph(
+        identifier='complex-graph',
+        input=model1,
+        outputs=[model2, model2_multi],
+        signature=Signature.kwargs,
+    )
+    g.connect(model1, model2_multi, on=(None, 'x'))
+    g.connect(model1, model2)
+    g.connect(model2, model2_multi, on=(0, 'y'))
+    g.connect(model2, model3, on=(1, 'x'))
+    g.connect(model2_multi, model3, on=(None, 'y'))
+    assert g.predict_one(1) == [(4, 2), 8]
+    assert g.predict([{'x': 1}, {'x': 2}, {'x': 3}]) == [
+        [(4, 2), (5, 3), (6, 4)],
+        [8, 10, 12],
+    ]
+    g.signature = Signature.args
+    assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)], [8, 10, 12]]
 
 
 def test_non_dag(model1, model2):
     with pytest.raises(TypeError) as excinfo:
-        g = Graph(identifier='complex-graph')
-        g.connect(g, model1)
+        g = Graph(identifier='complex-graph', input=model1)
         g.connect(model1, model2)
         g.connect(model2, model1)
         assert 'The graph is not DAG' in str(excinfo.value)
@@ -87,32 +97,22 @@ def test_non_dag(model1, model2):
 
 def test_disconnected_edge(model1, model2_multi):
     with pytest.raises(TypeError) as excinfo:
-        g = Graph(identifier='complex-graph')
-        g.connect(g, model1)
-        g.connect(model1, model2_multi, on='x')
-        g.predict(1)
+        g = Graph(identifier='complex-graph', input=model1, outputs=[model2_multi])
+        g.connect(model1, model2_multi, on=(-1, 'x'))
+        g.predict_one(1)
         assert 'Graph disconnected at Node: m2_multi' in str(excinfo.value)
 
 
-def test_no_root(model1, model2_multi):
-    with pytest.raises(TypeError) as excinfo:
-        g = Graph(identifier='complex-graph')
-        g.connect(model1, model2_multi, on='x')
-        g.predict(1)
-        assert 'Root graph node is not present' in str(excinfo.value)
-
-
 def test_complex_graph_with_select(db):
-    g = Graph(identifier='complex-graph')
-    linear_b = db.load('model', 'linear_b')
     linear_a = db.load('model', 'linear_a')
-    g.connect(g, linear_a)
+    linear_b = db.load('model', 'linear_b')
+    g = Graph(identifier='complex-graph', input=linear_a, outputs=[linear_b])
     g.connect(linear_a, linear_b)
 
     from superduperdb.backends.mongodb import Collection
 
     select = Collection('documents').find({})
-    g.predict(X='x', select=select, db=db)
+    g.predict_in_db(X='x', select=select, db=db)
     assert all(
         ['complex-graph' in x['_outputs']['x'] for x in list(db.execute(select))]
     )
@@ -120,8 +120,7 @@ def test_complex_graph_with_select(db):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_serialization(db, model1):
-    g = Graph(identifier='complex-graph')
-    g.connect(g, model1, on='x')
+    g = Graph(identifier='complex-graph', input=model1)
     original_g = g.G
     db.add(g)
     g = db.load('graph', 'complex-graph')

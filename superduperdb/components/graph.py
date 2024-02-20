@@ -1,39 +1,41 @@
 import dataclasses as dc
 import typing as t
-from collections import OrderedDict
 
 import networkx as nx
 
-from superduperdb.components.component import Component
-from superduperdb.components.model import Model, _Predictor
-
-
-class GraphModel:
-    def __init__(self, name):
-        self.identifier = name
-        self.inputs = []
-
-    def predict(self, x):
-        return x
-
-
-class IntermediateGraphNode:
-    def __init__(self, node, graph):
-        self.node = node
-        self.G = graph
-
-    @property
-    def output(self):
-        return self.G.get_output(self.node)
+from superduperdb import Schema
+from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.components.model import Signature, _Predictor
 
 
 @dc.dataclass(kw_only=True)
-class Graph(Component, _Predictor):
-    models: t.List[Model] = dc.field(default_factory=list)
-    edges: t.List[t.Tuple[str, str, t.Union[None, str]]] = dc.field(
-        default_factory=list
-    )
-    _DEFAULT_ARG_WEIGHT: t.ClassVar[str] = '_base'
+class Graph(_Predictor):
+    '''
+    Represents a directed acyclic graph composed of interconnected model nodes.
+
+    This class enables the creation of complex predictive models
+    by defining a computational graph structure where each node
+    represents a predictive model. Models can be connected via edges
+    to define dependencies and flow of data.
+
+    The predict() method executes predictions through the graph, ensuring
+    correct data flow and handling of dependencies
+
+    Example:
+    >>  g = Graph(
+    >>    identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+    >>  )
+    >>  g.connect(model1, model2)
+    >>  assert g.predict_one(1) == [(4, 2)]
+
+    '''
+
+    models: t.List[_Predictor] = dc.field(default_factory=list)
+    edges: t.List[t.Tuple[str, str, t.Tuple[int, str]]] = dc.field(default_factory=list)
+    input: _Predictor
+    outputs: t.List[t.Union[str, _Predictor]] = dc.field(default_factory=list)
+    _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, Signature.singleton)
+    signature: str = Signature.args_kwargs  # type: ignore[misc]
     type_id: t.ClassVar[str] = 'graph'
 
     def __post_init__(self, artifacts):
@@ -43,13 +45,25 @@ class Graph(Component, _Predictor):
         self.version = 0
         self._db = None
 
+        assert all([isinstance(o, _Predictor) for o in self.outputs])
+
+        self.output_schema = Schema(
+            identifier=self.identifier,
+            fields={k.identifier: k.datatype for k in self.outputs},
+        )
+
+        self.outputs = [
+            o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
+        ]
+        self.input.signature = Signature.args
+
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
         if self.edges and models:
             for connection in self.edges:
                 u, v, on = connection
                 self.connect(
-                    models[u] if u != self.identifier else self,
+                    models[u],
                     models[v],
                     on=on,
                     update_edge=False,
@@ -58,22 +72,29 @@ class Graph(Component, _Predictor):
 
     def connect(
         self,
-        u: Component,
-        v: Model,
-        on: t.Optional[str] = None,
+        u: _Predictor,
+        v: _Predictor,
+        on: t.Optional[t.Tuple[int, str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
-        assert isinstance(u, (Model, Graph))
-        assert isinstance(v, Model)
+        '''
+        Connects two nodes `u` and `v` on edge where edge is a tuple with
+        first element describing outputs index (int or None)
+        and second describing input argument (str).
+
+        Note:
+        output index: None means all outputs of node u are connected to node v
+        '''
+        assert isinstance(u, _Predictor)
+        assert isinstance(v, _Predictor)
 
         if u.identifier not in self.nodes:
-            if isinstance(u, Graph):
-                self.nodes[u.identifier] = GraphModel(self.identifier)
-            else:
-                self.nodes[u.identifier] = u
+            u.signature = Signature.args  # type: ignore[misc]
+            self.nodes[u.identifier] = u
             self.G.add_node(u.identifier)
 
         if v.identifier not in self.nodes:
+            v.signature = Signature.args  # type: ignore[misc]
             self.nodes[v.identifier] = v
             self.G.add_node(v.identifier)
 
@@ -88,133 +109,179 @@ class Graph(Component, _Predictor):
             self.edges.append(
                 (u.identifier, v.identifier, on or self._DEFAULT_ARG_WEIGHT)
             )
-            if isinstance(u, Model) and u not in self.models:
+            if isinstance(u, _Predictor) and u not in self.models:
                 self.models.append(u)
             if v not in self.models:
                 self.models.append(v)
-        return IntermediateGraphNode(self.nodes[v.identifier], self)
+        return
 
-    def stash_node_output(self, node, output):
-        self._node_output_cache[node.identifier] = output
+    def fetch_output(self, output, index: t.Optional[int] = None, one: bool = False):
+        if index is not None:
+            assert isinstance(index, int)
+            try:
+                if one:
+                    return output[index]
+                else:
+                    return [[o[index]] for o in output]
 
-    def get_output(self, node):
-        return self._node_output_cache[node.identifier]
+            except KeyError:
+                raise KeyError("Model node does not have sufficient outputs")
+        else:
+            if one:
+                return output
+            return [[o] for o in output]
 
-    def group_nodes_by_degree(self, nodes):
-        grouped_dict = OrderedDict()
-        for item in nodes:
-            key = item[1]
-            value = item[0]
-            if key not in grouped_dict:
-                grouped_dict[key] = []
-            grouped_dict[key].append(value)
-        return grouped_dict
+    def validate(self, node):
+        '''
+        Validates the graph for any disconnection
+        '''
+        # TODO: Create a cache to reduce redundant validation in predict in db
 
-    def level_traversal(self, G, nodes, traversal_path=[]):
-        if len(nodes) == 1:
-            traversal_path.append(nodes[0])
-            return traversal_path
-        G = G.subgraph(nodes)
-
-        # Traverse
-        nodes = sorted(G.in_degree, key=lambda x: x[1], reverse=False)
-        grouped_nodes = self.group_nodes_by_degree(nodes)
-
-        # Find zero in bound degree nodes and add to tranversal_path
-        zero_bound_nodes = grouped_nodes.pop(0)
-        _ = [traversal_path.append(n) for n in zero_bound_nodes]
-
-        for _, nodes in grouped_nodes.items():
-            self.level_traversal(G, nodes, traversal_path)
-        return traversal_path
-
-    def traversal(self, graph, nodes, traversal_path=[]):
-        if not nodes:
-            return traversal_path
-
-        def find_level_neighbors(graph, nodes):
-            neighbors = []
-
-            for node in nodes:
-                neighbor = list(graph.neighbors(node))
-                if neighbor:
-                    _ = [neighbors.append(n) for n in neighbor]
-            if neighbors:
-                neighbors = set(neighbors) - set(nodes)
-                neighbors = list(neighbors)
-            return neighbors
-
-        neighbors = find_level_neighbors(graph, nodes)
-
-        if not neighbors:
-            traversal_path += nodes
-            return traversal_path
-
-        S = graph.subgraph(neighbors)
-        traversal_path = self.level_traversal(S, neighbors, traversal_path)
-
-        neighbors = find_level_neighbors(graph, neighbors)
-        return self.traversal(graph, neighbors, traversal_path)
-
-    def validate(self, path):
-        for node in path:
-            nodes = list(self.G.predecessors(node))
-
-            arg_nodes = list(map(lambda x: self.nodes[x], nodes))
-            node = self.nodes[node]
-
-            if len(node.inputs) != len(arg_nodes):
-                raise TypeError(
-                    f'Graph disconnected at Node: {node.identifier} '
-                    f'and is partially connected with {nodes}\n'
-                    f'Required connected node is {len(node.inputs)} '
-                    f'but got only {len(nodes)}, '
-                    f'Node required params: {node.inputs.params}'
-                )
-
-    def _predict(self, X: t.Any, one: bool = False, **predict_kwargs):
-        if self.identifier not in self.G.nodes:
+        predecessors = list(self.G.predecessors(node))
+        dependencies = [self.validate(node=p) for p in predecessors]
+        model = self.nodes[node]
+        if dependencies and len(model.inputs) != len(dependencies):
             raise TypeError(
-                'Root graph node is not present'
-                ', make sure to add graph node'
-                'with atleast one other node'
+                f'Graph disconnected at Node: {model.identifier} '
+                f'and is partially connected with {dependencies}\n'
+                f'Required connected node is {len(model.inputs)} '
+                f'but got only {len(dependencies)}, '
+                f'Node required params: {model.inputs.params}'
             )
-        path = self.traversal(self.G, [self.identifier], [self.identifier])
-        self.validate(path)
-        output = None
+        return node
 
-        # Update graph datatype and outschema as per output node.
-        output_node = self.nodes[path[-1]]
-        self.datatype = output_node.datatype
-        self.output_schema = output_node.output_schema
+    def _fetch_inputs(self, dataset, edges=[], outputs=[]):
+        arg_inputs = []
 
-        for graph_node in path:
-            node = self.nodes[graph_node]
+        def _length(lst):
+            count = 0
+            for item in lst:
+                if isinstance(item, (list, tuple)):
+                    count += _length(item)
+                else:
+                    count += 1
+            return count
 
-            if graph_node == self.identifier:
-                self.stash_node_output(node, X)
-                continue
+        if not _length(outputs):
+            outputs = dataset
 
-            predecessors = list(self.G.predecessors(graph_node))
+        for ix, edge in enumerate(edges):
+            output_key, input_key = edge['weight']
 
-            arg_nodes = list(map(lambda x: self.nodes[x], predecessors))
-            node_input = {}
+            arg_input_dataset = self.fetch_output(outputs[ix], output_key, one=False)
+            if input_key == Signature.singleton:
+                return arg_input_dataset
 
-            for predecessor, arg in zip(predecessors, arg_nodes):
-                data = self.G.get_edge_data(predecessor, graph_node)
-                key = data['weight']
+            arg_inputs.append(arg_input_dataset)
 
-                node_input[key] = self.get_output(arg)
+        if not arg_inputs:
+            return outputs
+        return self._transpose(arg_inputs, args=True)
 
-            if self._DEFAULT_ARG_WEIGHT in node_input:
-                node_input = node_input['_base']
-            output = node.predict(node_input, one=one)
-            self.stash_node_output(node, output)
+    def _fetch_one_inputs(self, args, kwargs, edges=[], outputs=[]):
+        node_input = {}
+        for ix, edge in enumerate(edges):
+            output_key, input_key = edge['weight']
 
-        return output
+            node_input[input_key] = self.fetch_output(outputs[ix], output_key, one=True)
+            kwargs = node_input
+            args = ()
 
-    def show(self):
-        path = self.traversal(self.G, [self.identifier], [self.identifier])
-        path = ' --> '.join(path)
-        print(path)
-        return path
+        if Signature.singleton in node_input:
+            args = (node_input[Signature.singleton],)
+            kwargs = {}
+        return args, kwargs
+
+    def _predict_on_node(self, *args, node=None, cache={}, one=True, **kwargs):
+        if node not in cache:
+            predecessors = list(self.G.predecessors(node))
+            outputs = [
+                self._predict_on_node(*args, **kwargs, one=one, node=p, cache=cache)
+                for p in predecessors
+            ]
+
+            edges = [self.G.get_edge_data(p, node) for p in predecessors]
+
+            if one is True:
+                args, kwargs = self._fetch_one_inputs(
+                    args, kwargs, edges=edges, outputs=outputs
+                )
+                cache[node] = self.nodes[node].predict_one(*args, **kwargs)
+            else:
+                dataset = self._fetch_inputs(args[0], edges=edges, outputs=outputs)
+                cache[node] = self.nodes[node].predict(dataset=dataset)
+            return cache[node]
+        return cache[node]
+
+    def predict_one(self, *args, **kwargs):
+        '''
+        Single data point prediction passes the args and kwargs to defined node flow
+        in the graph.
+        '''
+        # Validate the node for incompletion
+        list(map(self.validate, self.outputs))
+        cache = {}
+
+        outputs = [
+            self._predict_on_node(*args, node=output, cache=cache, **kwargs)
+            for output in self.outputs
+        ]
+
+        # TODO: check if output schema and datatype required
+        return outputs
+
+    def patch_dataset_to_args(self, dataset):
+        '''
+        Patch the dataset with args type as default, since all
+        corresponding nodes takes args as input type
+        '''
+        args_dataset = []
+        signature = self.signature
+
+        def mapping(x):
+            nonlocal signature
+            if signature == Signature.kwargs:
+                return list(x.values())
+            elif signature == Signature.args_kwargs:
+                return list(x[0]) + list(x[1].values())
+            else:
+                return x
+
+        for data in dataset:
+            data = mapping(data)
+            args_dataset.append(data)
+        return args_dataset
+
+    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        # Validate the node for incompletion
+        list(map(self.validate, self.outputs))
+
+        if isinstance(dataset, QueryDataset):
+            raise TypeError('QueryDataset is not supported in graph mode')
+        cache: t.Dict[str, t.Any] = {}
+        dataset = self.patch_dataset_to_args(dataset)
+
+        outputs = [
+            self._predict_on_node(dataset, node=output, cache=cache, one=False)
+            for output in self.outputs
+        ]
+
+        # TODO: check if output schema and datatype required
+        return outputs
+
+    def encode_outputs(self, outputs):
+        encoded_outputs = []
+        for o, n in zip(outputs, self.outputs):
+            encoded_outputs.append(self.nodes[n].encode_outputs(o))
+        outputs = self._transpose(outputs=encoded_outputs or outputs)
+        return self.encode_with_schema(outputs)
+
+    @staticmethod
+    def _transpose(outputs, args=False):
+        transposed_outputs = []
+        for i in range(len(outputs[0])):
+            batch_outs = []
+            for o in outputs:
+                batch_outs.append(o[i][0] if args else o[i])
+            transposed_outputs.append(batch_outs)
+        return transposed_outputs

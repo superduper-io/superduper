@@ -54,7 +54,7 @@ def torchmodel(cls):
         forward_method: str = '__call__',
         train_forward_method: str = '__call__',
         loader_kwargs: t.Dict = dc.field(default_factory=lambda: {}),
-        signature: str = Signature.singleton,
+        preprocess_signature: str = Signature.singleton,
         forward_signature: str = Signature.singleton,
         postprocess_signature: str = Signature.singleton,
         **kwargs,
@@ -69,7 +69,7 @@ def torchmodel(cls):
             forward_method=forward_method,
             train_forward_method=train_forward_method,
             loader_kwargs=loader_kwargs,
-            signature=signature,
+            preprocess_signature=preprocess_signature,
             forward_signature=forward_signature,
             postprocess_signature=postprocess_signature,
         )
@@ -154,7 +154,7 @@ class TorchModel(_Predictor, _Fittable, _DeviceManaged):
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
     loader_kwargs: t.Dict = dc.field(default_factory=lambda: {})
-    signature: str = Signature.singleton  # type: ignore[misc]
+    preprocess_signature: str = Signature.singleton
     forward_signature: str = Signature.singleton
     postprocess_signature: str = Signature.singleton
 
@@ -165,6 +165,19 @@ class TorchModel(_Predictor, _Fittable, _DeviceManaged):
             self.optimizer.load_state_dict(self.optimizer_state)
 
         self._validation_set_cache = {}
+
+    @property
+    def signature(self):
+        if self.preprocess:
+            return self.preprocess_signature
+        return self.forward_signature
+
+    @signature.setter
+    def signature(self, signature):
+        if self.preprocess:
+            self.preprocess_signature = signature
+        else:
+            self.forward_signature = signature
 
     @property
     def inputs(self) -> CallableInputs:
@@ -251,7 +264,7 @@ class TorchModel(_Predictor, _Fittable, _DeviceManaged):
         with torch.no_grad(), eval(self.object):
             if self.preprocess is not None:
                 out = self.preprocess(*args, **kwargs)
-                args, kwargs = self.handle_input_type(out, self.forward_signature)
+                args, kwargs = self.handle_input_type(out, self.signature)
 
             args, kwargs = to_device((args, kwargs), self.device)
             args, kwargs = create_batch((args, kwargs))
@@ -277,7 +290,7 @@ class TorchModel(_Predictor, _Fittable, _DeviceManaged):
             out = []
             for batch in tqdm(loader, total=len(loader)):
                 batch = to_device(batch, device_of(self.object))
-                args, kwargs = self.handle_input_type(batch, self.forward_signature)
+                args, kwargs = self.handle_input_type(batch, self.signature)
                 method = getattr(self.object, self.forward_method)
                 tmp = method(*args, **kwargs, **self.predict_kwargs)
                 tmp = to_device(tmp, 'cpu')

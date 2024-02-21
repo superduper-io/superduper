@@ -1,4 +1,4 @@
-# Building a Vector-Search on Snowflake
+# Vector-Search on Snowflake
 
 In this use-case we describe how to implement vector-search using `superduperdb` on Snowflake.
 

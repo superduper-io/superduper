@@ -1,5 +1,5 @@
 
-# Building Q&A Assistant Using OpenAI on MongoDB
+# Q&A Assistant Using OpenAI on MongoDB (RAG)
 
 This notebook is designed to demonstrate how to implement a document Question-and-Answer (Q&A) task using SuperDuperDB in conjunction with OpenAI and MongoDB. It provides a step-by-step guide and explanation of each component involved in the process.
 
@@ -138,7 +138,7 @@ A `Model` is a wrapper around a self-built or ecosystem model, such as `torch`, 
 from superduperdb.ext.openai import OpenAIEmbedding
 
 # Create an instance of the OpenAIEmbedding model with the specified identifier ('text-embedding-ada-002')
-model = OpenAIEmbedding(model='text-embedding-ada-002')
+model = OpenAIEmbedding(identifier= 'text-embedding-ada-002', model='text-embedding-ada-002')
 ```
 
 ```python

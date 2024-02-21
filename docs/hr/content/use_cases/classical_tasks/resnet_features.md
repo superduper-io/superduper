@@ -1,5 +1,5 @@
 
-# Building an Image Feature-Store Using Torchvision on MongoDB
+# Image Feature-Store Using Torchvision on MongoDB
 
 ```python
 !pip install superduperdb

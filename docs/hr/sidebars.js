@@ -195,8 +195,8 @@ const sidebars = {
          'use_cases/vector_search/multimodal_image_search_clip',
          'use_cases/vector_search/video_search',
          'use_cases/vector_search/chunked_vector_search',
-         'use_cases/sql_examples/multi-modal-duckdb',
-         'use_cases/sql_examples/snowflake-example',
+         'use_cases/vector_search/multi-modal-duckdb',
+         'use_cases/vector_search/snowflake-example',
        ]
         },
         {

@@ -2,6 +2,7 @@ import base64
 import dataclasses as dc
 import hashlib
 import io
+import os
 import pickle
 import typing as t
 
@@ -31,6 +32,12 @@ def dill_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
     return dill.loads(b)
+
+
+def file_check(path: t.Any, info: t.Optional[t.Dict] = None) -> str:
+    if not (isinstance(path, str) and os.path.exists(path)):
+        raise ValueError(f"Path '{path}' does not exist")
+    return path
 
 
 def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
@@ -105,10 +112,14 @@ dill_serializer = DataType(
 torch_serializer = DataType(
     'torch', encoder=torch_encode, decoder=torch_decode, artifact=True
 )
+file_serializer = DataType(
+    'file', encoder=file_check, decoder=file_check, artifact=True
+)
 serializers = {
     'pickle': pickle_serializer,
     'dill': dill_serializer,
     'torch': torch_serializer,
+    'file': file_serializer,
 }
 
 
@@ -197,24 +208,36 @@ class Encodable(Leaf):
 
         def _encode(x):
             try:
-                bytes_ = self.datatype.encoder(x)
+                x = self.datatype.encoder(x)
             except Exception as e:
-                raise ArtifactSavingError from e
-            sha1 = str(hashlib.sha1(bytes_).hexdigest())
-            if (
-                CFG.bytes_encoding == BytesEncoding.BASE64
-                or bytes_encoding == BytesEncoding.BASE64
-            ):
-                bytes_ = to_base64(bytes_)
-            return bytes_, sha1
+                raise ArtifactSavingError(e) from e
+
+            if isinstance(x, str):
+                sha1 = str(hashlib.sha1(x.encode()).hexdigest())
+            elif isinstance(x, bytes):
+                sha1 = str(hashlib.sha1(x).hexdigest())
+                if (
+                    CFG.bytes_encoding == BytesEncoding.BASE64
+                    or bytes_encoding == BytesEncoding.BASE64
+                ):
+                    # TODO: artifact stores is not compatible with non-bytes types
+                    x = to_base64(x)
+            else:
+                raise ValueError(
+                    'The datatype can only encode data as [bytes, str], ',
+                    f'but now it is encoded as {type(x)}',
+                )
+
+            return x, sha1
 
         if self.datatype.encoder is None:
             return self.x
 
-        bytes_, sha1 = _encode(self.x)
+        x, sha1 = _encode(self.x)
+        # TODO: Use a new class to handle this
         return {
             '_content': {
-                'bytes': bytes_,
+                'bytes': x,
                 'datatype': self.datatype.identifier,
                 'leaf_type': 'encodable',
                 'sha1': sha1,

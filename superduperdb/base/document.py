@@ -209,6 +209,7 @@ def _encode(
         return out
     # ruff: noqa: E501
     if isinstance(r, Leaf) and not isinstance(r, leaf_types_to_keep):  # type: ignore[arg-type]
+        # TODO: (not leaf_types_to_keep or isinstance(r, leaf_types_to_keep)) ?
         return r.encode(
             bytes_encoding=bytes_encoding, leaf_types_to_keep=leaf_types_to_keep
         )

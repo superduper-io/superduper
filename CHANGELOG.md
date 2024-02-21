@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update Menu structure and renamed use-cases
 - Change and simplify the contract for writing new `_Predictor` descendants (`.predict_one`, `.predict`)
 - Create models directly by importing package from auto
+- Add file datatype type to support saving and reading files/folders in artifact_store
 
 #### Bug Fixes
 - LLM CI random errors

@@ -66,7 +66,6 @@ class Component(Serializable, Leaf):
         from superduperdb import Schema
         from superduperdb.components.datatype import dill_serializer
 
-        e = []
         schema = {}
         lookup = dict(self._artifacts)
         if self.artifacts is not None:
@@ -76,7 +75,6 @@ class Component(Serializable, Leaf):
             if a is None:
                 continue
             if f.name in lookup:
-                e.append(f.name)
                 schema[f.name] = lookup[f.name]
             elif callable(getattr(self, f.name)) and not isinstance(
                 getattr(self, f.name), Serializable

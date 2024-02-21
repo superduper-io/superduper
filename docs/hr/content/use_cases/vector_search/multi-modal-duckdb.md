@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Building a Multimodel Vector-Search on DuckDB
+# Multimodel Vector-Search on DuckDB
 
 
 SuperDuperDB offers the flexibility to connect to various SQL databases. Check out range of supported SQL databases [here](../../docs/data_integrations/)

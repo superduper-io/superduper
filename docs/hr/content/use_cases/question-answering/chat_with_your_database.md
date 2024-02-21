@@ -1,4 +1,4 @@
-# Chatting with your SnowFlakes Database Using OpenAI
+# Chat with your Snowflake Database Using OpenAI (RAG)
 
 <!-- ## Chatting instantly with a 10-million-record SQL database using SuperDuperDB and OpenAI. -->
 

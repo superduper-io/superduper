@@ -3,7 +3,7 @@ sidebar_position: 2
 ---
 
 
-# Building a Multimodal Vector-Search Using CLIP on MongoDB
+#  Multimodal Vector-Search Using CLIP on MongoDB
 
 This notebook demonstrates how SuperDuperDB can perform multimodal searches using the `VectorIndex`. It highlights SuperDuperDB's flexibility in integrating different models for vectorizing diverse queries during search and inference. In this example, we utilize the [CLIP multimodal architecture](https://openai.com/research/clip).
 

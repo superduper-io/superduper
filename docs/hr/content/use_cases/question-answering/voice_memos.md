@@ -1,4 +1,4 @@
-# Building Voice-Memo Assistant on MongoDB
+# Voice-Memo Assistant on MongoDB (RAG)
 
 ## Cataloguing voice-memos for a self managed personal assistant
 
@@ -141,7 +141,7 @@ db.add(
     VectorIndex(
         identifier='my-index',  # Set a unique identifier for the VectorIndex
         indexing_listener=Listener(
-            model=OpenAIEmbedding(model='text-embedding-ada-002'),  # Use OpenAIEmbedding for audio transcriptions
+            model=OpenAIEmbedding(identifier= 'text-embedding-ada-002', model='text-embedding-ada-002'),  # Use OpenAIEmbedding for audio transcriptions
             key='_outputs.audio.transcription',  # Specify the key for indexing the transcriptions in the output
             select=voice_collection.find(),  # Select the collection of audio data to index
         ),

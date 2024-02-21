@@ -6,7 +6,7 @@ support for complex data-types and vector-searches.
 
 ## Setup
 
-The first step in working with DuckDB, is to define a table and schema.
+The first step is to connect DuckDB to `superduperdb` , define the table and the schema:
 
 ```python
 from superduperdb.backends.ibis.query import Table
@@ -31,7 +31,7 @@ db.add(t)
 
 ## Inserting data
 
-Table data must correspond to the `Schema` for that table:
+When inserting data to DuckDB, the pandas dataframe or source table must correspond to the defined `Schema` for that database table:
 
 ```python
 import pandas
@@ -57,6 +57,30 @@ results = db.execute(t.filter(t.custom_integer > 3).limit(5))
 results.as_pandas()["custom_text"].values.tolist()
 ```
 
+By leveraging raw SQL code instead,  the first query above is equivalent to:
+
+```python
+from superduperdb.backends.ibis.query import RawSQL
+
+db.execute(RawSQL('SELECT custom_text FROM my_table WHERE custom_integer > 3 LIMIT 5;'))
+```
+
+While the second query will be equivalent to:
+
+```python
+from superduperdb.backends.ibis.query import RawSQL
+
+raw_sql = RawSQL(
+    '''
+    SELECT custom_integer FROM my_table 
+    LIKE text = 'moar'
+    LIMIT 5;
+    '''
+    )
+
+db.execute(raw_sql)
+```
+
 ### Vector-search
 
 Vector-searches are supported via the `like` operator:
@@ -80,35 +104,10 @@ db.execute(
 )
 ```
 
-### Support for raw-sql
-
-... the first query above is equivalent to:
-
-```python
-from superduperdb.backends.ibis.query import RawSQL
-
-db.execute(RawSQL('SELECT custom_text FROM my_table WHERE custom_integer > 3 LIMIT 5;'))
-```
-
-... the second will be equivalent to:
-
-```python
-from superduperdb.backends.ibis.query import RawSQL
-
-raw_sql = RawSQL(
-    '''
-    SELECT custom_integer FROM my_table 
-    LIKE text = 'moar'
-    LIMIT 5;
-    '''
-    )
-
-db.execute(raw_sql)
-```
 
 ## Updating data
 
-Updates are not covered for `superduperdb` SQL integrations.
+Updates are not covered for `superduperdb` SQL integrations at the moment.
 
 ## Deleting data
 

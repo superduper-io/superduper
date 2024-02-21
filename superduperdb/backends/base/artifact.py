@@ -86,6 +86,10 @@ class ArtifactStore(ABC):
     def _save_bytes(self, serialized: bytes, file_id: str):
         pass
 
+    @abstractmethod
+    def _save_file(self, file_path: str, file_id: str):
+        pass
+
     def save_artifact(self, r: t.Dict):
         """
         Save serialized object in the artifact store.
@@ -99,14 +103,17 @@ class ArtifactStore(ABC):
         assert 'datatype' in r, 'no datatype specified!'
         datatype = self.serializers[r['datatype']]
         uri = r.get('uri')
-        file_id = None
         if uri is not None:
             file_id = _construct_file_id_from_uri(uri)
         else:
-            file_id = hashlib.sha1(r['bytes']).hexdigest()
+            file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
         if r.get('directory'):
             file_id = os.path.join(datatype.directory, file_id)
-        self._save_bytes(r['bytes'], file_id=file_id)
+
+        if r['datatype'] == 'file':
+            self._save_file(r['bytes'], file_id)
+        else:
+            self._save_bytes(r['bytes'], file_id=file_id)
         r['file_id'] = file_id
         return r
 
@@ -114,6 +121,15 @@ class ArtifactStore(ABC):
     def _load_bytes(self, file_id: str) -> bytes:
         """
         Load bytes from artifact store.
+
+        :param file_id: Identifier of artifact in the store
+        """
+        pass
+
+    @abstractmethod
+    def _load_file(self, file_id: str) -> str:
+        """
+        Load file from artifact store and return path
 
         :param file_id: Identifier of artifact in the store
         """
@@ -133,8 +149,11 @@ class ArtifactStore(ABC):
         if file_id is None:
             assert uri is not None, '"uri" and "file_id" can\'t both be None'
             file_id = _construct_file_id_from_uri(uri)
-        bytes = self._load_bytes(file_id)
-        return datatype.decoder(bytes)
+        if r['datatype'] == 'file':
+            x = self._load_file(file_id)
+        else:
+            x = self._load_bytes(file_id)
+        return datatype.decoder(x)
 
     def save(self, r: t.Dict) -> t.Dict:
         """

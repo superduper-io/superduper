@@ -1,6 +1,7 @@
 import os
 import shutil
 import typing as t
+from pathlib import Path
 
 import click
 
@@ -68,6 +69,16 @@ class FileSystemArtifactStore(ArtifactStore):
     def _load_bytes(self, file_id: str) -> bytes:
         with open(os.path.join(self.conn, file_id), 'rb') as f:
             return f.read()
+
+    def _save_file(self, file_path: str, file_id: str):
+        path = Path(file_path)
+        if path.is_dir():
+            shutil.copytree(file_path, os.path.join(self.conn, file_id))
+        else:
+            shutil.copy(file_path, os.path.join(self.conn, file_id))
+
+    def _load_file(self, file_id: str) -> str:
+        return os.path.join(self.conn, file_id)
 
     def disconnect(self):
         """

@@ -25,6 +25,13 @@ class _ReprMixin(ABC):
         )
 
 
+def _check_illegal_attribute(name):
+    # Disable Query class objects from using access special methods
+    # Otherwise it will conflict with some python built-in methods, like copy
+    if name.startswith("__") and name.endswith("__"):
+        raise AttributeError(f"Attempt to access illegal attribute '{name}'")
+
+
 @dc.dataclass(repr=False)
 class Select(Serializable, ABC):
     """
@@ -287,6 +294,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         pass
 
     def __getattr__(self, name):
+        _check_illegal_attribute(name)
         assert self.post_like is None
         if self.query_linker is not None:
             query_linker = getattr(self.query_linker, name)
@@ -502,6 +510,7 @@ class QueryLinker(_ReprMixin, Serializable, ABC):
         )
 
     def __getattr__(self, k):
+        _check_illegal_attribute(k)
         return self._get_query_linker(
             self.table_or_collection,
             members=[*self.members, self._get_query_component(k)],
@@ -606,6 +615,7 @@ class TableOrCollection(Serializable, ABC):
         # QueryLinker object, which is a representation of a query chain.
         # Under the hood, this is done by creating a QueryChain object, which
         # is a representation of a query chain.
+        _check_illegal_attribute(k)
         query_linker = self._get_query_linker([self._get_query_component(k)])
         return self._get_query(query_linker=query_linker)
 

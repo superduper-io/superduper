@@ -72,10 +72,17 @@ class FileSystemArtifactStore(ArtifactStore):
 
     def _save_file(self, file_path: str, file_id: str):
         path = Path(file_path)
+        name = path.name
+        file_id_folder = os.path.join(self.conn, file_id)
+        os.makedirs(file_id_folder, exist_ok=True)
+        save_path = os.path.join(file_id_folder, name)
+        logging.info(f"Copying file {file_path} to {save_path}")
         if path.is_dir():
-            shutil.copytree(file_path, os.path.join(self.conn, file_id))
+            shutil.copytree(file_path, save_path)
         else:
-            shutil.copy(file_path, os.path.join(self.conn, file_id))
+            shutil.copy(file_path, save_path)
+        # return the relative path {file_id}/{name}
+        return os.path.join(file_id, name)
 
     def _load_file(self, file_id: str) -> str:
         return os.path.join(self.conn, file_id)

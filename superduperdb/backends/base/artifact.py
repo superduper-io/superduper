@@ -87,7 +87,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _save_file(self, file_path: str, file_id: str):
+    def _save_file(self, file_path: str, file_id: str) -> str:
         pass
 
     def save_artifact(self, r: t.Dict):
@@ -111,7 +111,7 @@ class ArtifactStore(ABC):
             file_id = os.path.join(datatype.directory, file_id)
 
         if r['datatype'] == 'file':
-            self._save_file(r['bytes'], file_id)
+            file_id = self._save_file(r['bytes'], file_id)
         else:
             self._save_bytes(r['bytes'], file_id=file_id)
         r['file_id'] = file_id

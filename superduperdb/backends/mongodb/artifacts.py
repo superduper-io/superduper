@@ -57,22 +57,11 @@ class MongoArtifactStore(ArtifactStore):
         if path.is_dir():
             upload_folder(file_path, file_id, self.filesystem)
         else:
-            self.filesystem.put(
-                open(file_path, 'rb'),
-                filename=file_path,
-                metadata={"file_id": file_id, "type": "file"},
-            )
+            upload_file(file_path, file_id, self.filesystem)
+        return file_id
 
     def _load_file(self, file_id: str) -> str:
-        file = self.filesystem.find_one(
-            {"metadata.file_id": file_id, "metadata.type": "file"}
-        )
-        if file is not None:
-            with open(file.filename, 'wb') as f:
-                f.write(file.read())
-            return file.filename
-
-        return download_folder(file_id, self.filesystem)
+        return download(file_id, self.filesystem)
 
     def _save_bytes(self, serialized: bytes, file_id: str):
         return self.filesystem.put(serialized, filename=file_id)
@@ -85,11 +74,26 @@ class MongoArtifactStore(ArtifactStore):
         # TODO: implement me
 
 
+def upload_file(path, file_id, fs):
+    logging.info(f"Uploading file {path} to GridFS with file_id {file_id}")
+    path = Path(path)
+    with open(path, 'rb') as file_to_upload:
+        fs.put(
+            file_to_upload,
+            filename=path.name,
+            metadata={"file_id": file_id, "type": "file"},
+        )
+
+
 def upload_folder(path, file_id, fs, parent_path=""):
+    path = Path(path)
+    if not parent_path:
+        logging.info(f"Uploading folder {path} to GridFS with file_id {file_id}")
+        parent_path = os.path.basename(path)
     if not os.listdir(path):
         fs.put(
             b'',
-            filename=os.path.join(parent_path, os.path.basename(path) + '/'),
+            filename=os.path.join(parent_path, os.path.basename(path)),
             metadata={"file_id": file_id, "is_empty_dir": True, 'type': 'dir'},
         )
     else:
@@ -106,10 +110,17 @@ def upload_folder(path, file_id, fs, parent_path=""):
                     )
 
 
-def download_folder(file_id, fs):
-    temp_dir = tempfile.mkdtemp()
-    logging.info(f"Downloading files to temporary directory: {temp_dir}")
+def download(file_id, fs):
+    temp_dir = tempfile.mkdtemp(prefix=file_id)
+    file = fs.find_one({"metadata.file_id": file_id, "metadata.type": "file"})
+    if file is not None:
+        save_path = os.path.join(temp_dir, os.path.split(file.filename)[-1])
+        logging.info(f"Downloading file_id {file_id} to {save_path}")
+        with open(save_path, 'wb') as f:
+            f.write(file.read())
+        return save_path
 
+    logging.info(f"Downloading folder with file_id {file_id} to {temp_dir}")
     for grid_out in fs.find({"metadata.file_id": file_id, "metadata.type": "dir"}):
         file_path = os.path.join(temp_dir, grid_out.filename)
         if grid_out.metadata.get("is_empty_dir", False):
@@ -122,4 +133,8 @@ def download_folder(file_id, fs):
             with open(file_path, 'wb') as file_to_write:
                 file_to_write.write(grid_out.read())
 
+    folders = os.listdir(temp_dir)
+    assert len(folders) == 1, f"Expected only one folder, got {folders}"
+    temp_dir = os.path.join(temp_dir, folders[0])
+    logging.info(f"Downloaded folder with file_id {file_id} to {temp_dir}")
     return temp_dir

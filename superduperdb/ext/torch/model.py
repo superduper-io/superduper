@@ -36,6 +36,47 @@ from superduperdb.ext.torch.utils import device_of, eval, to_device
 from superduperdb.jobs.job import Job
 
 
+def torchmodel(cls):
+    """
+    Decorate a `torch.nn.Module` so that when it is invoked,
+    the result is a `TorchModel`.
+
+    :param cls: Class to decorate
+    """
+
+    def factory(
+        identifier: str,
+        *args,
+        preprocess: t.Optional[t.Callable] = None,
+        postprocess: t.Optional[t.Callable] = None,
+        collate_fn: t.Optional[t.Callable] = None,
+        optimizer_state: t.Optional[t.Any] = None,
+        forward_method: str = '__call__',
+        train_forward_method: str = '__call__',
+        loader_kwargs: t.Dict = dc.field(default_factory=lambda: {}),
+        signature: str = Signature.singleton,
+        forward_signature: str = Signature.singleton,
+        postprocess_signature: str = Signature.singleton,
+        **kwargs,
+    ):
+        return TorchModel(
+            identifier=identifier,
+            object=cls(*args, **kwargs),
+            preprocess=preprocess,
+            postprocess=postprocess,
+            collate_fn=collate_fn,
+            optimizer_state=optimizer_state,
+            forward_method=forward_method,
+            train_forward_method=train_forward_method,
+            loader_kwargs=loader_kwargs,
+            signature=signature,
+            forward_signature=forward_signature,
+            postprocess_signature=postprocess_signature,
+        )
+
+    return factory
+
+
 class BasicDataset(data.Dataset):
     """
     Basic database iterating over a list of documents and applying a transformation

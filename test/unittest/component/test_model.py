@@ -154,7 +154,6 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     )
 
 
-# @pytest.mark.parametrize('predict_mixin', [TestModel], indirect=True)
 def test_pm_predict(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)

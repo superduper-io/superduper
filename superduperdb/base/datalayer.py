@@ -25,7 +25,7 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, Encodable, serializers
+from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
@@ -188,7 +188,7 @@ class Datalayer:
                     vi.indexing_listener.model.identifier,
                     version=vi.indexing_listener.model.version,
                 )
-                if isinstance(h, Encodable):
+                if isinstance(h, _BaseEncodable):
                     h = h.x
 
                 items.append(VectorItem.create(id=str(id), vector=h))
@@ -803,7 +803,11 @@ class Datalayer:
         if serialized is None:
             leaves = object.dict().get_leaves()
             leaves = leaves.values()
-            artifacts = [leaf for leaf in leaves if isinstance(leaf, Encodable)]
+            artifacts = [
+                leaf
+                for leaf in leaves
+                if isinstance(leaf, _BaseEncodable) and leaf.artifact
+            ]
             children = [leaf for leaf in leaves if isinstance(leaf, Component)]
 
         for child in children:

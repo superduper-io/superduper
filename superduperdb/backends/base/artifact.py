@@ -84,10 +84,12 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def _save_bytes(self, serialized: bytes, file_id: str):
+        """Save bytes in artifact store""" ""
         pass
 
     @abstractmethod
     def _save_file(self, file_path: str, file_id: str) -> str:
+        """Save file in artifact store and return file_id"""
         pass
 
     def save_artifact(self, r: t.Dict):
@@ -99,21 +101,23 @@ class ArtifactStore(ABC):
                   and optional fields
                   {'file_id', 'uri'}
         """
-        assert 'bytes' in r, 'serialized bytes are missing!'
-        assert 'datatype' in r, 'no datatype specified!'
-        datatype = self.serializers[r['datatype']]
-        uri = r.get('uri')
-        if uri is not None:
-            file_id = _construct_file_id_from_uri(uri)
+        if r.get('type') == 'file':
+            sha1 = hashlib.sha1(str(id(r)).encode()).hexdigest()
+            file_id = self._save_file(r['x'], sha1)
         else:
-            file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
-        if r.get('directory'):
-            file_id = os.path.join(datatype.directory, file_id)
+            assert 'bytes' in r, 'serialized bytes are missing!'
+            assert 'datatype' in r, 'no datatype specified!'
+            datatype = self.serializers[r['datatype']]
+            uri = r.get('uri')
+            if uri is not None:
+                file_id = _construct_file_id_from_uri(uri)
+            else:
+                file_id = hashlib.sha1(r['bytes']).hexdigest()
+            if r.get('directory'):
+                file_id = os.path.join(datatype.directory, file_id)
 
-        if r['datatype'] == 'file':
-            file_id = self._save_file(r['bytes'], file_id)
-        else:
             self._save_bytes(r['bytes'], file_id=file_id)
+            del r['bytes']
         r['file_id'] = file_id
         return r
 
@@ -145,13 +149,13 @@ class ArtifactStore(ABC):
 
         datatype = self.serializers[r['datatype']]
         file_id = r.get('file_id')
-        uri = r.get('uri')
-        if file_id is None:
-            assert uri is not None, '"uri" and "file_id" can\'t both be None'
-            file_id = _construct_file_id_from_uri(uri)
-        if r['datatype'] == 'file':
+        if r.get('type') == 'file':
             x = self._load_file(file_id)
         else:
+            uri = r.get('uri')
+            if file_id is None:
+                assert uri is not None, '"uri" and "file_id" can\'t both be None'
+                file_id = _construct_file_id_from_uri(uri)
             x = self._load_bytes(file_id)
         return datatype.decoder(x)
 
@@ -161,13 +165,8 @@ class ArtifactStore(ABC):
         :param artifacts: List of ``Artifact`` instances
         """
         if isinstance(r, dict):
-            if (
-                '_content' in r
-                and r['_content']['leaf_type'] == 'encodable'
-                and 'bytes' in r['_content']
-            ):
+            if '_content' in r and r['_content'].get('artifact'):
                 self.save_artifact(r['_content'])
-                del r['_content']['bytes']
             else:
                 for k in r:
                     self.save(r[k])

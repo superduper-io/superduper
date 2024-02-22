@@ -53,6 +53,7 @@ class MongoArtifactStore(ArtifactStore):
         return cur.read()
 
     def _save_file(self, file_path: str, file_id: str):
+        """Save file to GridFS"""
         path = Path(file_path)
         if path.is_dir():
             upload_folder(file_path, file_id, self.filesystem)
@@ -61,6 +62,10 @@ class MongoArtifactStore(ArtifactStore):
         return file_id
 
     def _load_file(self, file_id: str) -> str:
+        """
+        Download file from GridFS and return the path
+        The path is a temporary directory, {tmp_prefix}/{file_id}/{filename or folder}
+        """
         return download(file_id, self.filesystem)
 
     def _save_bytes(self, serialized: bytes, file_id: str):
@@ -75,6 +80,7 @@ class MongoArtifactStore(ArtifactStore):
 
 
 def upload_file(path, file_id, fs):
+    """Upload file to GridFS"""
     logging.info(f"Uploading file {path} to GridFS with file_id {file_id}")
     path = Path(path)
     with open(path, 'rb') as file_to_upload:
@@ -86,10 +92,13 @@ def upload_file(path, file_id, fs):
 
 
 def upload_folder(path, file_id, fs, parent_path=""):
+    """Upload folder to GridFS"""
     path = Path(path)
     if not parent_path:
         logging.info(f"Uploading folder {path} to GridFS with file_id {file_id}")
         parent_path = os.path.basename(path)
+
+    # if the folder is empty, create an empty file
     if not os.listdir(path):
         fs.put(
             b'',
@@ -111,7 +120,10 @@ def upload_folder(path, file_id, fs, parent_path=""):
 
 
 def download(file_id, fs):
+    """Download file or folder from GridFS and return the path"""
     temp_dir = tempfile.mkdtemp(prefix=file_id)
+
+    # try to download a file first, if it fails, assume it's a folder
     file = fs.find_one({"metadata.file_id": file_id, "metadata.type": "file"})
     if file is not None:
         save_path = os.path.join(temp_dir, os.path.split(file.filename)[-1])

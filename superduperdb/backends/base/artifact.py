@@ -101,21 +101,21 @@ class ArtifactStore(ABC):
                   and optional fields
                   {'file_id', 'uri'}
         """
-        if r.get('type') == 'file':
+        if r.get('leaf_type') == 'file':
             assert 'file_id' in r, 'file_id is missing!'
-            file_id = self._save_file(r['x'], r['file_id'])
+            file_id = self._save_file(r['uri'], r['file_id'])
         else:
             assert 'bytes' in r, 'serialized bytes are missing!'
             assert 'datatype' in r, 'no datatype specified!'
             datatype = self.serializers[r['datatype']]
             uri = r.get('uri')
+            file_id = r.get('file_id')
             if uri is not None:
                 file_id = _construct_file_id_from_uri(uri)
             else:
                 file_id = hashlib.sha1(r['bytes']).hexdigest()
             if r.get('directory'):
                 file_id = os.path.join(datatype.directory, file_id)
-
             self._save_bytes(r['bytes'], file_id=file_id)
             del r['bytes']
         r['file_id'] = file_id
@@ -149,15 +149,16 @@ class ArtifactStore(ABC):
 
         datatype = self.serializers[r['datatype']]
         file_id = r.get('file_id')
-        if r.get('type') == 'file':
+        if r.get('encodable') == 'file':
             x = self._load_file(file_id)
         else:
+            # We should always have file_id available at load time (because saved)
             uri = r.get('uri')
             if file_id is None:
                 assert uri is not None, '"uri" and "file_id" can\'t both be None'
                 file_id = _construct_file_id_from_uri(uri)
             x = self._load_bytes(file_id)
-        return datatype.decoder(x)
+        return datatype.decode_data(x)
 
     def save(self, r: t.Dict) -> t.Dict:
         """
@@ -165,7 +166,11 @@ class ArtifactStore(ABC):
         :param artifacts: List of ``Artifact`` instances
         """
         if isinstance(r, dict):
-            if '_content' in r and r['_content'].get('artifact'):
+            if '_content' in r and r['_content']['leaf_type'] in {
+                'artifact',
+                'file',
+                'lazy_artifact',
+            }:
                 self.save_artifact(r['_content'])
             else:
                 for k in r:

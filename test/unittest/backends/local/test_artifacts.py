@@ -87,6 +87,7 @@ def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     db.add(test_component)
     test_component_loaded = db.load("TestComponent", "test")
     test_component_loaded.init()
+
     # assert that the paths are different
     assert test_component.path != test_component_loaded.path
     # assert that the file names are the same

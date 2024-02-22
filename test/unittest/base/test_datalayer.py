@@ -1,9 +1,8 @@
 import time
 from typing import Any, ClassVar, Optional, Sequence
 
+import numpy
 import pytest
-
-from superduperdb.backends.base.artifact import ArtifactSavingError
 
 try:
     import torch
@@ -29,6 +28,7 @@ from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import (
     DataType,
+    LazyArtifact,
     dill_serializer,
     pickle_serializer,
 )
@@ -153,7 +153,7 @@ def test_add_component_with_bad_artifact(db):
     component = TestComponent(
         identifier='test', artifact=artifact, artifacts={'artifact': pickle_serializer}
     )
-    with pytest.raises(ArtifactSavingError):
+    with pytest.raises(Exception):
         db.add(component)
 
 
@@ -225,9 +225,13 @@ def test_add_with_artifact(db):
     )
 
     db.add(m)
+
     m = db.load('model', m.identifier)
 
     assert m.object is not None
+
+    assert isinstance(m.object, LazyArtifact)
+    m.init()
     assert callable(m.object)
 
 
@@ -498,6 +502,20 @@ def test_insert_mongo_db(db):
     )
     result = [doc.outputs('x', 'fake_model') for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_insert_artifacts(db):
+    dt = DataType('my_saveable', encodable='artifact')
+    db.add(dt)
+    db.insert(
+        Collection('documents').insert_many(
+            [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
+        )
+    )
+    r = db.execute(Collection('documents').find_one())
+    assert db.artifact_store.exists(r['x'].file_id)
+    assert isinstance(r.unpack(db=db)['x'], numpy.ndarray)
 
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)

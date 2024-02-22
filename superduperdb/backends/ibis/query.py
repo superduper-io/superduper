@@ -254,7 +254,7 @@ class IbisCompoundSelect(CompoundSelect):
                 continue
 
             if isinstance(type, DataType):
-                output[column] = output[column].map(type.decoder)
+                output[column] = output[column].map(type.decode_data)
 
         if scores is not None:
             output['scores'] = output[self.primary_id].map(scores)

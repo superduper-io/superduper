@@ -110,21 +110,20 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
     from superduperdb.base.config import BytesEncoding
     from superduperdb.ext.pillow.encoder import pil_image
 
-    db.add(pil_image)
+    my_pil_image = DataType(
+        'my_pil_image',
+        encoder=pil_image.encoder,
+        decoder=pil_image.decoder,
+        bytes_encoding=BytesEncoding.BASE64,
+    )
+
+    db.add(my_pil_image)
 
     if image_url.startswith('file://'):
         image_url = image_url[7:]
 
     collection = Collection('documents')
-    to_insert = [
-        Document(
-            {
-                'img': pil_image(PIL.Image.open(image_url)).encode(
-                    bytes_encoding=BytesEncoding.BASE64
-                )
-            }
-        )
-    ]
+    to_insert = [Document({'img': my_pil_image(PIL.Image.open(image_url)).encode()})]
 
     db.execute(collection.insert_many(to_insert))
 

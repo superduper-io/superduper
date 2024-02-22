@@ -11,6 +11,7 @@ from transformers import (
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset, query_dataset_factory
+from superduperdb.components.component import ensure_initialized
 from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.model import (
     _Fittable,
@@ -19,7 +20,6 @@ from superduperdb.components.model import (
 )
 from superduperdb.ext.llm import training
 from superduperdb.ext.llm.utils import Prompter
-from superduperdb.ext.utils import ensure_initialized
 
 if typing.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select

@@ -10,9 +10,10 @@ import os
 import re
 import tempfile
 import typing as t
-from functools import cached_property
+from collections import defaultdict
+from functools import cached_property, wraps
 
-from superduperdb.base.config import BytesEncoding
+from superduperdb import logging
 from superduperdb.base.leaf import Leaf
 from superduperdb.base.serializable import Serializable
 from superduperdb.jobs.job import ComponentJob, Job
@@ -44,22 +45,22 @@ class Component(Serializable, Leaf):
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
-    def init(self, db=None):
+    def init(self):
         from superduperdb.base.document import Document
         from superduperdb.components.datatype import _BaseEncodable
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
             if isinstance(item, Component):
-                item.init(db=db)
+                item.init()
             if isinstance(item, dict):
-                setattr(self, f.name, Document(item).unpack(db=self.db or db))
+                setattr(self, f.name, Document(item).unpack(db=self.db))
             if isinstance(item, list):
-                unpacked = Document({'_base': item}).unpack(db=self.db or db)
+                unpacked = Document({'_base': item}).unpack(db=self.db)
                 setattr(self, f.name, unpacked)
             if isinstance(item, _BaseEncodable):
-                item.init(db=db)
-                setattr(self, f.name, item.x)
+                item = item.unpack(db=self.db)
+                setattr(self, f.name, item)
 
     @cached_property
     def artifact_schema(self):
@@ -114,11 +115,19 @@ class Component(Serializable, Leaf):
 
     def dict(self) -> 'Document':
         from superduperdb import Document
+        from superduperdb.components.datatype import Artifact, File
 
         r = Document(super().dict())
         s = self.artifact_schema
         for k in s.fields:
-            r[f'dict.{k}'] = s.fields[k](getattr(self, k))  # artifact
+            attr = getattr(self, k)
+            if isinstance(attr, (Artifact, File)):
+                r[f'dict.{k}'] = attr
+            else:
+                if s.fields[k].encodable == 'file':
+                    r[f'dict.{k}'] = s.fields[k](uri=attr)  # artifact or file
+                else:
+                    r[f'dict.{k}'] = s.fields[k](x=attr)  # artifact or file
         r['type_id'] = self.type_id
         r['identifier'] = self.identifier
         r['version'] = self.version
@@ -128,10 +137,9 @@ class Component(Serializable, Leaf):
 
     def encode(
         self,
-        bytes_encoding: BytesEncoding | None = None,
         leaf_types_to_keep: t.Sequence = (),
     ):
-        r = super().encode(bytes_encoding, leaf_types_to_keep=leaf_types_to_keep)
+        r = super().encode(leaf_types_to_keep=leaf_types_to_keep)
         del r['_content']['dict']
         r['_content']['leaf_type'] = 'component'
         return r
@@ -196,14 +204,14 @@ class Component(Serializable, Leaf):
         extracted_path = from_tarball(path)
         with open(os.path.join(extracted_path, 'compiled.json')) as f:
             references = json.load(f)
-        encodables = list(set(os.listdir(extracted_path)) - {'compiled.json'})
 
-        for e in encodables:
-            with open(os.path.join(extracted_path, e), 'rb') as f:
-                r = references['encodable'][e]
-                references['encodable'][e] = serializers[
-                    r['_content']['datatype']
-                ].decoder(f.read())
+        for at in ['artifact', 'lazy_artifact']:
+            for e in references[at]:
+                with open(os.path.join(extracted_path, e), 'rb') as f:
+                    r = references[at][e]
+                    references[at][e] = serializers[
+                        r['_content']['datatype']
+                    ].decode_data(f.read())
 
         # This may get deprecated in favour of inline definitions (inside components)
         for s in references.get('serializable', {}):
@@ -254,9 +262,8 @@ class Component(Serializable, Leaf):
     def export(self):
         from superduperdb.base.document import _encode_with_references
 
-        references = {}
+        references = defaultdict(dict)
         references['component'] = {self.unique_id: self}
-        references['encodable'] = {}
         while True:
             keys = list(references['component'].keys())
             for k in keys[:]:
@@ -268,12 +275,13 @@ class Component(Serializable, Leaf):
             if all(isinstance(v, dict) for v in references['component'].values()):
                 break
         with tempfile.TemporaryDirectory() as td:
-            for k, v in references['encodable'].items():
-                r = v.encode()
-                with open(f'{td}/{k}', 'wb') as f:
-                    f.write(r['_content']['bytes'])
-                del r['_content']['bytes']
-                references['encodable'][k] = r
+            for at in ['artifact', 'lazy_artifact']:
+                for k, v in references[at].items():
+                    r = v.encode()
+                    with open(f'{td}/{k}', 'wb') as f:
+                        f.write(r['_content']['bytes'])
+                    del r['_content']['bytes']
+                    references[at][k] = r
             with open(f'{td}/compiled.json', 'w') as f:
                 json.dump(references, f)
             to_tarball(td, self.identifier)
@@ -313,3 +321,19 @@ def _replace_references(r, lookup, raises=False):
         for i, x in enumerate(r):
             r[i] = _replace_references(x, lookup)
     return r
+
+
+def ensure_initialized(func):
+    """Decorator to ensure that the model is initialized before calling the function"""
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not hasattr(self, "_is_initialized") or not self._is_initialized:
+            model_message = f"{self.__class__.__name__} : {self.identifier}"
+            logging.info(f"Initializing {model_message}")
+            self.init()
+            self._is_initialized = True
+            logging.info(f"Initialized  {model_message} successfully")
+        return func(self, *args, **kwargs)
+
+    return wrapper

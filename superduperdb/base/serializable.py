@@ -3,16 +3,16 @@ import importlib
 import typing as t
 from copy import deepcopy
 
-from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.serialization import asdict
 
 
 def _from_dict(r: t.Any, db: None = None) -> t.Any:
     from superduperdb.base.document import Document
+    from superduperdb.components.datatype import File, LazyArtifact
 
     if isinstance(r, Document):
-        r = r.unpack(db)
+        r = r.unpack(db, leaves_to_keep=(LazyArtifact, File))
     if isinstance(r, (list, tuple)):
         return [_from_dict(i, db=db) for i in r]
     if not isinstance(r, dict):
@@ -98,7 +98,6 @@ class Serializable(Leaf):
 
     def encode(
         self,
-        bytes_encoding: t.Optional[BytesEncoding] = None,
         leaf_types_to_keep: t.Sequence = (),
     ):
         r = dict(self.dict().encode(leaf_types_to_keep=leaf_types_to_keep))
@@ -106,7 +105,7 @@ class Serializable(Leaf):
         return {'_content': r}
 
     @classmethod
-    def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
+    def decode(cls, r, db: t.Optional[t.Any] = None):
         return _from_dict(r, db=db)
 
     def dict(self):

@@ -229,10 +229,12 @@ class Config(BaseConfig):
         Match the target cfg dict with `self` comparables dict.
         """
         self_cfg = self.comparables
-
         self_hash = hash(json.dumps(self_cfg, sort_keys=True))
         cfg_hash = hash(json.dumps(cfg, sort_keys=True))
         return self_hash == cfg_hash
+
+    def diff(self, cfg: t.Dict):
+        return _diff(self.dict(), cfg)
 
     def force_set(self, name, value):
         """
@@ -250,3 +252,34 @@ class Config(BaseConfig):
             parent.force_set(name, value)
         else:
             return super().force_set(name, value)
+
+
+def _diff(r1, r2):
+    """
+    >>> _diff({'a': 1, 'b': 2}, {'a': 2, 'b': 2})
+    {'a': (1, 2)}
+    >>> _diff({'a': {'c': 3}, 'b': 2}, {'a': 2, 'b': 2})
+    {'a': ({'c': 3}, 2)}
+    """
+    d = _diff_impl(r1, r2)
+    out = {}
+    for path, left, right in d:
+        out['.'.join(path)] = (left, right)
+    return out
+
+
+def _diff_impl(r1, r2):
+    if not isinstance(r1, dict) or not isinstance(r2, dict):
+        if r1 == r2:
+            return []
+        return [([], r1, r2)]
+    out = []
+    for k in list(r1.keys()) + list(r2.keys()):
+        if k not in r1:
+            out.append(([k], None, r2[k]))
+            continue
+        if k not in r2:
+            out.append(([k], r1[k], None))
+            continue
+        out.extend([([k, *x[0]], x[1], x[2]) for x in _diff_impl(r1[k], r2[k])])
+    return out

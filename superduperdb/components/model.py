@@ -18,8 +18,8 @@ from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
-from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, dill_serializer
+from superduperdb.components.component import Component, ensure_initialized
+from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
@@ -144,7 +144,7 @@ class _Fittable:
         if isinstance(self.training_configuration, str):
             self.training_configuration = db.load(
                 'training_configuration', self.training_configuration
-            )  # type: ignore[assignment]
+            )
         # TODO is this necessary - should be handled by `db.add` automatically?
 
     def schedule_jobs(self, db, dependencies=()):
@@ -735,7 +735,7 @@ class ObjectModel(_Predictor):
     __doc__ = __doc__.format(_predictor_params=_Predictor.__doc__)
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_serializer),
+        ('object', dill_lazy),
     )
 
     object: t.Any
@@ -795,9 +795,11 @@ class ObjectModel(_Predictor):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.object(*args, **kwargs)
 
+    @ensure_initialized
     def predict_one(self, *args, **kwargs):
         return self.object(*args, **kwargs)
 
+    @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         outputs = []
         if self.num_workers:

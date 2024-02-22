@@ -1,8 +1,6 @@
 import typing as t
 from abc import ABC, abstractmethod, abstractproperty
 
-from superduperdb.base.config import BytesEncoding
-
 _CLASS_REGISTRY = {}
 
 
@@ -30,14 +28,15 @@ class Leaf(ABC):
     @abstractmethod
     def encode(
         self,
-        bytes_encoding: t.Optional[BytesEncoding] = None,
         leaf_types_to_keep: t.Sequence = (),
     ):
+        """Convert object to a saveable form"""
         pass
 
     @classmethod
     @abstractmethod
-    def decode(cls, r, db, reference: bool = False):
+    def decode(cls, r, db=None):
+        """Decode object from a saveable form"""
         pass
 
     def init(self, db=None):

@@ -25,7 +25,6 @@ class SuperDuperCursor:
     id_field: str
     db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
-    reference: bool = False
 
     _it: int = 0
 
@@ -38,7 +37,6 @@ class SuperDuperCursor:
             id_field=self.id_field,
             db=self.db,
             scores=self.scores,
-            reference=self.reference,
         )
 
     def cursor_next(self):
@@ -57,8 +55,9 @@ class SuperDuperCursor:
         r = self.cursor_next()
         if self.scores is not None:
             r['score'] = self.scores[str(r[self.id_field])]
-        if not self.reference and CFG.hybrid_storage:
+        # TODO handle with lazy loading
+        if CFG.hybrid_storage:
             load_uris(r, datatypes=self.db.datatypes)
-        return Document.decode(r, self.db, reference=self.reference)
+        return Document.decode(r, self.db)
 
     next = __next__

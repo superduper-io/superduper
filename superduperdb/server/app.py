@@ -101,12 +101,15 @@ class SuperDuperApp:
             from superduperdb import CFG
 
             cfg_dict = json.loads(cfg)
-            if CFG.match(cfg_dict):
+            match = CFG.match(cfg_dict)
+            if match:
                 return {'status': 200, 'msg': 'matched'}
+
+            diff = CFG.diff(cfg_dict)
 
             return JSONResponse(
                 status_code=400,
-                content={'error': 'Config doesn\'t match'},
+                content={'error': f'Config doesn\'t match based on this diff: {diff}'},
             )
 
     def print_routes(self):

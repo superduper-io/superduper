@@ -173,7 +173,7 @@ class EncodeArray:
     def __init__(self, dtype):
         self.dtype = dtype
 
-    def __call__(self, x):
+    def __call__(self, x, info: t.Optional[t.Dict] = None):
         x = np.asarray(x)
         if x.dtype != self.dtype:
             raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
@@ -184,7 +184,7 @@ class DecodeArray:
     def __init__(self, dtype):
         self.dtype = dtype
 
-    def __call__(self, bytes):
+    def __call__(self, bytes, info: t.Optional[t.Dict] = None):
         return np.frombuffer(bytes, dtype=self.dtype).tolist()
 
 
@@ -199,6 +199,7 @@ def vector(shape):
         shape=shape,
         encoder=None,
         decoder=None,
+        encodable='native',
     )
 
 

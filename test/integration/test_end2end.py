@@ -176,7 +176,7 @@ def test_advance_setup(distributed_db, image_url):
 
     db.execute(Collection('mixed_input').insert_many(data))
 
-    n = _wait_for_outputs(db=db, n=10)
+    n = _wait_for_outputs(db=db, n=15)
 
     db.add(
         VectorIndex(

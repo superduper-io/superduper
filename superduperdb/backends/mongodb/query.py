@@ -308,7 +308,6 @@ class Aggregate(Select):
             raw_cursor=cursor,
             id_field='_id',
             db=db,
-            reference=reference,
         )
 
 
@@ -375,7 +374,6 @@ class MongoCompoundSelect(CompoundSelect):
                 id_field='_id',
                 scores=scores,
                 db=db,
-                reference=reference,
             )
         elif isinstance(output, dict):
             if reference and CFG.hybrid_storage:

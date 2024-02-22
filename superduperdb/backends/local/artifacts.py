@@ -71,6 +71,10 @@ class FileSystemArtifactStore(ArtifactStore):
             return f.read()
 
     def _save_file(self, file_path: str, file_id: str):
+        """
+        Save file in artifact store and return the relative path
+        return the relative path {file_id}/{name}
+        """
         path = Path(file_path)
         name = path.name
         file_id_folder = os.path.join(self.conn, file_id)
@@ -85,6 +89,7 @@ class FileSystemArtifactStore(ArtifactStore):
         return os.path.join(file_id, name)
 
     def _load_file(self, file_id: str) -> str:
+        """Return the path to the file in the artifact store"""
         return os.path.join(self.conn, file_id)
 
     def disconnect(self):

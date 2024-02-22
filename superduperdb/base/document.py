@@ -7,10 +7,10 @@ from bson.objectid import ObjectId
 from superduperdb import CFG
 from superduperdb.backends.base.artifact import _construct_file_id_from_uri
 from superduperdb.base.config import BytesEncoding
-from superduperdb.base.leaf import Leaf
+from superduperdb.base.leaf import Leaf, find_leaf_cls
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, Encodable
+from superduperdb.components.datatype import DataType, Encodable, _BaseEncodable
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -22,6 +22,7 @@ ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
 _OUTPUTS_KEY: str = '_outputs'
+# TODO: Remove this dict to map leaf types to classes
 _LEAF_TYPES = {
     'component': Component,
     'encodable': Encodable,
@@ -129,7 +130,8 @@ def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False)
             keys.extend([(f'{k}.{i}' if k else f'{i}') for k in sub_keys])
         return keys, leaves
     if leaf_type:
-        if isinstance(r, _LEAF_TYPES[leaf_type]):
+        leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
+        if isinstance(r, leaf_cls):
             return [''], [r]
         else:
             return [], []
@@ -148,9 +150,9 @@ def _decode(
 ) -> t.Any:
     bytes_encoding = bytes_encoding or CFG.bytes_encoding
     if isinstance(r, dict) and '_content' in r:
-        return _LEAF_TYPES[r['_content']['leaf_type']].decode(
-            r, db=db, reference=reference
-        )
+        leaf_type = r['_content']['leaf_type']
+        leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
+        return leaf_cls.decode(r, db=db, reference=reference)
     elif isinstance(r, list):
         return [
             _decode(x, db=db, bytes_encoding=bytes_encoding, reference=reference)
@@ -209,7 +211,6 @@ def _encode(
         return out
     # ruff: noqa: E501
     if isinstance(r, Leaf) and not isinstance(r, leaf_types_to_keep):  # type: ignore[arg-type]
-        # TODO: (not leaf_types_to_keep or isinstance(r, leaf_types_to_keep)) ?
         return r.encode(
             bytes_encoding=bytes_encoding, leaf_types_to_keep=leaf_types_to_keep
         )
@@ -238,7 +239,7 @@ def _encode_with_schema(
 
 
 def _unpack(item: t.Any, db=None) -> t.Any:
-    if isinstance(item, Encodable):
+    if isinstance(item, _BaseEncodable):
         # TODO move logic into Encodable
         if item.reference:
             file_id = _construct_file_id_from_uri(item.uri)

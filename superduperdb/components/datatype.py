@@ -96,31 +96,13 @@ class DataType(Component):
     artifact: bool = False
     reference: bool = False
     directory: t.Optional[str] = None
+    encodable_cls: t.Optional[t.Type['_BaseEncodable']] = None
 
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
-    ) -> 'Encodable':
-        return Encodable(self, x=x, uri=uri)
-
-
-pickle_serializer = DataType(
-    'pickle', encoder=pickle_encode, decoder=pickle_decode, artifact=True
-)
-dill_serializer = DataType(
-    'dill', encoder=dill_encode, decoder=dill_decode, artifact=True
-)
-torch_serializer = DataType(
-    'torch', encoder=torch_encode, decoder=torch_decode, artifact=True
-)
-file_serializer = DataType(
-    'file', encoder=file_check, decoder=file_check, artifact=True
-)
-serializers = {
-    'pickle': pickle_serializer,
-    'dill': dill_serializer,
-    'torch': torch_serializer,
-    'file': file_serializer,
-}
+    ) -> '_BaseEncodable':
+        encodable_cls = self.encodable_cls or Encodable
+        return encodable_cls(self, x=x, uri=uri)
 
 
 def encode_torch_state_dict(module, info):
@@ -155,7 +137,8 @@ def build_torch_state_serializer(module, info):
 
 
 @dc.dataclass
-class Encodable(Leaf):
+class _BaseEncodable(Leaf):
+
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
     to ``Encoder`` instance.
@@ -196,6 +179,9 @@ class Encodable(Leaf):
             self.init()
         return self.x
 
+
+@dc.dataclass
+class Encodable(_BaseEncodable):
     def encode(
         self,
         bytes_encoding: t.Optional[BytesEncoding] = None,
@@ -208,40 +194,32 @@ class Encodable(Leaf):
 
         def _encode(x):
             try:
-                x = self.datatype.encoder(x)
+                bytes_ = self.datatype.encoder(x)
             except Exception as e:
                 raise ArtifactSavingError(e) from e
+            sha1 = str(hashlib.sha1(bytes_).hexdigest())
+            if (
+                CFG.bytes_encoding == BytesEncoding.BASE64
+                or bytes_encoding == BytesEncoding.BASE64
+            ):
+                # TODO: artifact stores is not compatible with non-bytes types
+                bytes_ = to_base64(bytes_)
 
-            if isinstance(x, str):
-                sha1 = str(hashlib.sha1(x.encode()).hexdigest())
-            elif isinstance(x, bytes):
-                sha1 = str(hashlib.sha1(x).hexdigest())
-                if (
-                    CFG.bytes_encoding == BytesEncoding.BASE64
-                    or bytes_encoding == BytesEncoding.BASE64
-                ):
-                    # TODO: artifact stores is not compatible with non-bytes types
-                    x = to_base64(x)
-            else:
-                raise ValueError(
-                    'The datatype can only encode data as [bytes, str], ',
-                    f'but now it is encoded as {type(x)}',
-                )
-
-            return x, sha1
+            return bytes_, sha1
 
         if self.datatype.encoder is None:
             return self.x
 
-        x, sha1 = _encode(self.x)
+        bytes_, sha1 = _encode(self.x)
         # TODO: Use a new class to handle this
         return {
             '_content': {
-                'bytes': x,
+                'bytes': bytes_,
                 'datatype': self.datatype.identifier,
-                'leaf_type': 'encodable',
+                'leaf_type': self.full_import_path,
                 'sha1': sha1,
                 'uri': self.uri,
+                'artifact': self.artifact,
             }
         }
 
@@ -284,4 +262,54 @@ class Encodable(Leaf):
         )
 
 
+class ReferenceEncodable(_BaseEncodable):
+    def encode(
+        self,
+        bytes_encoding: t.Optional[BytesEncoding] = None,
+        leaf_types_to_keep: t.Sequence = (),
+    ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+        return {
+            '_content': {
+                'x': self.x,
+                'type': 'file',
+                'leaf_type': self.full_import_path,
+                'datatype': self.datatype.identifier,
+                'uri': None,
+                'artifact': self.artifact,
+            }
+        }
+
+    @classmethod
+    def decode(cls, r, db=None, reference: bool = False) -> '_BaseEncodable':
+        reference = db.artifact_store.load_artifact(r['_content'])
+        return ReferenceEncodable(
+            x=reference,
+            datatype=file_serializer,
+        )
+
+
 Encoder = DataType
+
+
+pickle_serializer = DataType(
+    'pickle', encoder=pickle_encode, decoder=pickle_decode, artifact=True
+)
+dill_serializer = DataType(
+    'dill', encoder=dill_encode, decoder=dill_decode, artifact=True
+)
+torch_serializer = DataType(
+    'torch', encoder=torch_encode, decoder=torch_decode, artifact=True
+)
+file_serializer = DataType(
+    'file',
+    encoder=file_check,
+    decoder=file_check,
+    artifact=True,
+    encodable_cls=ReferenceEncodable,
+)
+serializers = {
+    'pickle': pickle_serializer,
+    'dill': dill_serializer,
+    'torch': torch_serializer,
+    'file': file_serializer,
+}

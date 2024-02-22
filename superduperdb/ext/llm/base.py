@@ -9,9 +9,9 @@ from typing import Any, Callable, List, Optional, Sequence, Union
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.components.component import ensure_initialized
 from superduperdb.components.model import _Predictor
 from superduperdb.ext.llm.utils import Prompter
-from superduperdb.ext.utils import ensure_initialized
 
 if typing.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer

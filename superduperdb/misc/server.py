@@ -15,8 +15,8 @@ def _handshake(service: str):
     cfg = json.dumps(CFG.comparables)
     try:
         _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
-    except Exception:
-        raise Exception("Incompatible configuration")
+    except Exception as e:
+        raise Exception("Incompatible configuration") from e
 
 
 def _request_server(

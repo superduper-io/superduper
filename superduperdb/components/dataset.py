@@ -10,7 +10,7 @@ from overrides import override
 from superduperdb.backends.mongodb.query import Select
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.components.component import Component
+from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import (
     DataType,
     dill_serializer,
@@ -45,6 +45,19 @@ class Dataset(Component):
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Sequence[t.Any]] = None
 
+    def __post_init__(self, artifacts):
+        self._data = None
+        return super().__post_init__(artifacts)
+
+    @property
+    @ensure_initialized
+    def data(self):
+        return self._data
+
+    def init(self):
+        super().init()
+        self._data = [Document.decode(r, self.db) for r in pickle_decode(self.raw_data)]
+
     @override
     def pre_create(self, db: 'Datalayer') -> None:
         if self.raw_data is None:
@@ -55,15 +68,6 @@ class Dataset(Component):
                 perm = self.random.permutation(len(data)).tolist()
                 data = [data[perm[i]] for i in range(self.sample_size)]
             self.raw_data = pickle_encode([r.encode() for r in data])
-
-    @override
-    def post_create(self, db: 'Datalayer') -> None:
-        return self.on_load(db)
-
-    @override
-    def on_load(self, db: 'Datalayer') -> None:
-        # ruff: noqa: E501
-        self.data = [Document.decode(r, db) for r in pickle_decode(self.raw_data)]  # type: ignore[arg-type]
 
     @cached_property
     def random(self):

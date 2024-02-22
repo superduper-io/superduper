@@ -190,7 +190,7 @@ class Updater:
         self.query = query
 
     def exists(self, uri, key, id, datatype):
-        if self.db.datatypes[datatype].artifact:
+        if self.db.datatypes[datatype].encodable == 'artifact':
             out = self.db.artifact_store.exists(uri=uri, datatype=datatype)
         else:
             table_or_collection = self.query.table_or_collection.identifier
@@ -206,7 +206,7 @@ class Updater:
         datatype,
         bytes_,
     ):
-        if self.db.datatypes[datatype].artifact:
+        if self.db.datatypes[datatype].encodable == 'artifact':
             self.db.artifact_store.save_artifact(
                 {
                     'uri': uri,
@@ -323,6 +323,7 @@ def _gather_uris_for_document(r: Document, id_field: str = '_id'):
     keys = []
     datatypes = []
     leaf_lookup = r.get_leaves('encodable')
+    leaf_lookup.update(r.get_leaves('artifact'))
     for k in leaf_lookup:
         if leaf_lookup[k].uri is None:
             continue
@@ -373,10 +374,11 @@ def download_content(
         pass
     elif isinstance(query, Select):
         if ids is None:
-            documents = list(db.execute(query, reference=True))
+            # TODO deprecate reference since lazy loading in any case
+            documents = list(db.execute(query))
         else:
             select = query.select_using_ids(ids)
-            documents = list(db.execute(select, reference=True))
+            documents = list(db.execute(select))
     else:
         assert isinstance(query, Insert)
         documents = t.cast(t.List[Document], query.documents)
@@ -419,6 +421,6 @@ def download_from_one(r: Document):
     )
     downloader.go()
     for key, uri in zip(keys, uris):
-        r[key].x = r[key].datatype.decoder(downloader.results[uri])
+        r[key].x = r[key].datatype.decode_data(downloader.results[uri])
 
     return

@@ -44,4 +44,5 @@ def test_sklearn(db):
     assert db.show('datatype') == ['torch.float32[32]']
 
     reloaded = db.load(type_id='model', identifier='test')
+    reloaded.init()
     assert isinstance(reloaded.object, SVC)

@@ -73,7 +73,7 @@ class Schema(Component):
             if k in self.encoded_types:
                 field = self.fields[k]
                 assert isinstance(field, DataType)
-                v = field.decoder(v)
+                v = field.decode_data(v)
             decoded[k] = v
         return decoded
 

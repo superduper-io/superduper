@@ -1,11 +1,8 @@
 import base64
 import os
 import typing as t
-from functools import wraps
 
 import numpy as np
-
-from superduperdb import logging
 
 if t.TYPE_CHECKING:
     from superduperdb.components.datatype import DataType
@@ -55,21 +52,5 @@ def superduperdecode(r: t.Any, encoders: t.List['DataType']):
     if isinstance(r, dict):
         encoder = encoders[r['_content']['datatype']]
         b = base64.b64decode(r['_content']['bytes'])
-        return encoder.decoder(b)
+        return encoder.decode_data(b)
     return r
-
-
-def ensure_initialized(func):
-    """Decorator to ensure that the model is initialized before calling the function"""
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if not hasattr(self, "_is_initialized") or not self._is_initialized:
-            model_message = f"{self.__class__.__name__} : {self.identifier}"
-            logging.info(f"Initializing {model_message}")
-            self.init()
-            self._is_initialized = True
-            logging.info(f"Initialized  {model_message} successfully")
-        return func(self, *args, **kwargs)
-
-    return wrapper

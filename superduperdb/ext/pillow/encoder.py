@@ -43,5 +43,5 @@ pil_image_hybrid = DataType(
     'pil_image_hybrid',
     encoder=encode_pil_image,
     decoder=decode_pil_image,
-    artifact=True,
+    encodable='artifact',
 )

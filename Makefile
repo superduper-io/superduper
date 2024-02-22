@@ -109,7 +109,6 @@ fix-and-test: ##  Lint the code before testing
 	mypy superduperdb
 
 
-
 ##@ Image Management
 
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.

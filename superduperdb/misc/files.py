@@ -56,7 +56,7 @@ def load_uris(
                 k == '_content'
                 and 'uri' in v
                 and 'bytes' not in v
-                and not datatypes[v['datatype']].reference
+                and not datatypes[v['datatype']].encodable == 'file'
             ):
                 file = get_file_from_uri(v['uri'])
                 if root:

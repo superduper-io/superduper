@@ -28,6 +28,6 @@ def test_custom_serializer(db):
 
     s_reload = db.load('datatype', s.identifier)
 
-    double_encoded = s_reload.decoder(s_reload.encoder(m, s.info), s.info)
+    double_encoded = s_reload.decode_data(s_reload.encode_data(m, s.info), s.info)
 
     assert isinstance(double_encoded, torch.nn.Linear)

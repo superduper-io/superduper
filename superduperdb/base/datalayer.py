@@ -25,7 +25,13 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
+from superduperdb.components.datatype import (
+    Artifact,
+    DataType,
+    File,
+    _BaseEncodable,
+    serializers,
+)
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
@@ -172,7 +178,7 @@ class Datalayer:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(query, reference=True),
+            self.execute(query),
             s.CFG.cluster.backfill_batch_size,
         ):
             items = []
@@ -356,10 +362,19 @@ class Datalayer:
         """
         for e in datatypes:
             self.add(e)
+
+        # TODO add this logic to a base Insert class
+        artifacts = []
         for r in insert.documents:
             r['_fold'] = 'train'
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
+            artifacts.extend(list(r.get_leaves('artifact').values()))
+
+        for a in artifacts:
+            if a.x is not None:
+                a.save(self.artifact_store)
+
         inserted_ids = insert.execute(self)
 
         if refresh and self.cdc.running:
@@ -803,11 +818,7 @@ class Datalayer:
         if serialized is None:
             leaves = object.dict().get_leaves()
             leaves = leaves.values()
-            artifacts = [
-                leaf
-                for leaf in leaves
-                if isinstance(leaf, _BaseEncodable) and leaf.artifact
-            ]
+            artifacts = [leaf for leaf in leaves if isinstance(leaf, (Artifact, File))]
             children = [leaf for leaf in leaves if isinstance(leaf, Component)]
 
         for child in children:

@@ -1,6 +1,7 @@
 import dataclasses as dc
 import importlib
 import typing as t
+from copy import deepcopy
 
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
@@ -109,7 +110,7 @@ class Serializable(Leaf):
         return Document(asdict(self))
 
     def copy(self):
-        return self.decode(self.encode())
+        return deepcopy(self)
 
 
 @dc.dataclass

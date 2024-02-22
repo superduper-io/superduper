@@ -35,6 +35,54 @@ EncoderArg = t.Union[DataType, FieldType, None]
 ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 
 
+def objectmodel(
+    item,
+    identifier: t.Optional[str] = None,
+    datatype=None,
+    model_update_kwargs: t.Optional[t.Dict] = None,
+    flatten: bool = False,
+    output_schema: t.Optional[Schema] = None,
+):
+    """
+    When a class is wrapped with this decorator,
+    the instantiated class comes out as an `ObjectModel`.
+
+    :param cls: Class to wrap.
+    """
+    if callable(item):
+        return ObjectModel(
+            identifier=identifier or item.__name__,
+            object=item,
+            datatype=datatype,
+            model_update_kwargs=model_update_kwargs or {},
+            flatten=flatten,
+            output_schema=output_schema,
+        )
+
+    else:
+
+        def factory(
+            *args,
+            identifier: t.Optional[str],
+            datatype=None,
+            model_update_kwargs: t.Optional[t.Dict] = None,
+            flatten: bool = False,
+            output_schema: t.Optional[Schema] = None,
+            **kwargs,
+        ):
+            model_update_kwargs = model_update_kwargs or {}
+            return ObjectModel(
+                identifier=identifier or item.__class__.__name__,
+                object=item(*args, **kwargs),
+                datatype=datatype,
+                model_update_kwargs=model_update_kwargs,
+                flatten=flatten,
+                output_schema=output_schema,
+            )
+
+        return factory
+
+
 class Inputs:
     def __init__(self, params):
         self.params = params

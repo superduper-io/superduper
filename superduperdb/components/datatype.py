@@ -18,6 +18,17 @@ Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
 
+def random_sha1():
+    """
+    Generate random sha1 values
+    Can be used to generate file_id and other values
+    """
+    random_data = os.urandom(256)
+    sha1 = hashlib.sha1()
+    sha1.update(random_data)
+    return sha1.hexdigest()
+
+
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
     return pickle.dumps(object)
 
@@ -96,12 +107,13 @@ class DataType(Component):
     artifact: bool = False
     reference: bool = False
     directory: t.Optional[str] = None
-    encodable_cls: t.Optional[t.Type['_BaseEncodable']] = None
+    encodable: t.Optional[str] = None
 
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
     ) -> '_BaseEncodable':
-        encodable_cls = self.encodable_cls or Encodable
+        # get the sub class with name artifact_stroreof _BaseEncodable
+        encodable_cls = _BaseEncodable.get_encodable_cls(self.encodable, Encodable)
         return encodable_cls(self, x=x, uri=uri)
 
 
@@ -185,6 +197,24 @@ class _BaseEncodable(Leaf):
         if self.x is None:
             self.init(db)
         return self.x
+
+    @classmethod
+    def get_encodable_cls(cls, name, default=None):
+        """
+        Get the subclass of the _BaseEncodable with the given name.
+        All the registered subclasses must be subclasses of the _BaseEncodable.
+        """
+        for sub_cls in cls.__subclasses__():
+            if sub_cls.__name__ == name:
+                return sub_cls
+        if default is None:
+            raise ValueError(f'No subclass with name "{name}" found.')
+        elif not issubclass(default, cls):
+            raise ValueError(
+                "The default class must be a subclass of the _BaseEncodable."
+            )
+
+        return default
 
 
 @dc.dataclass
@@ -286,6 +316,7 @@ class ReferenceEncodable(_BaseEncodable):
                 'datatype': self.datatype.identifier,
                 'uri': None,
                 'artifact': self.artifact,
+                'file_id': random_sha1(),
             }
         }
 
@@ -314,7 +345,7 @@ file_serializer = DataType(
     encoder=file_check,
     decoder=file_check,
     artifact=True,
-    encodable_cls=ReferenceEncodable,
+    encodable="ReferenceEncodable",
 )
 serializers = {
     'pickle': pickle_serializer,

@@ -22,7 +22,6 @@ ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
 _OUTPUTS_KEY: str = '_outputs'
-# TODO: Remove this dict to map leaf types to classes
 _LEAF_TYPES = {
     'component': Component,
     'encodable': Encodable,

@@ -26,19 +26,42 @@ class TestComponent(Component):
 
 
 @pytest.fixture
-def artifact_strore(tmpdir) -> FileSystemArtifactStore:
-    artifact_strore = FileSystemArtifactStore(f"{tmpdir}")
+def random_directory(tmpdir):
+    tmpdir_path = os.path.join(tmpdir, "test_data")
+    os.makedirs(tmpdir_path, exist_ok=True)
+    for i in range(10):
+        file_name = f'{i}.txt'
+        file_path = os.path.join(tmpdir_path, file_name)
+
+        with open(file_path, 'w') as file:
+            file.write(str(i))
+
+        for j in range(10):
+            sub_dir = os.path.join(tmpdir_path, f'subdir_{j}')
+            os.makedirs(sub_dir, exist_ok=True)
+            sub_file_path = os.path.join(sub_dir, file_name)
+            with open(sub_file_path, 'w') as file:
+                file.write(f"{i} {j}")
+
+    return tmpdir_path
+
+
+@pytest.fixture
+def artifact_store(tmpdir) -> FileSystemArtifactStore:
+    tmpdir_path = os.path.join(tmpdir, "artifact_store")
+    artifact_strore = FileSystemArtifactStore(f"{tmpdir_path}")
     artifact_strore._serializers = serializers
     return artifact_strore
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_save_and_load_directory(db, artifact_strore: FileSystemArtifactStore):
-    db.artifact_store = artifact_strore
+def test_save_and_load_directory(
+    db, artifact_store: FileSystemArtifactStore, random_directory
+):
+    db.artifact_store = artifact_store
 
     # test save and load directory
-    directory = os.path.join(os.getcwd(), "superduperdb")
-    test_component = TestComponent(path=directory, identifier="test")
+    test_component = TestComponent(path=random_directory, identifier="test")
     db.add(test_component)
     test_component_loaded = db.load("TestComponent", "test")
     test_component_loaded.init()
@@ -56,8 +79,8 @@ def test_save_and_load_directory(db, artifact_strore: FileSystemArtifactStore):
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_save_and_load_file(db, artifact_strore: FileSystemArtifactStore):
-    db.artifact_store = artifact_strore
+def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
+    db.artifact_store = artifact_store
     # test save and load file
     file = os.path.abspath(__file__)
     test_component = TestComponent(path=file, identifier="test")

@@ -4,8 +4,9 @@ from pathlib import Path
 
 import click
 import gridfs
+from tqdm import tqdm
 
-from superduperdb import logging
+from superduperdb import CFG, logging
 from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.misc.colors import Colors
 
@@ -121,20 +122,39 @@ def upload_folder(path, file_id, fs, parent_path=""):
 
 def download(file_id, fs):
     """Download file or folder from GridFS and return the path"""
-    temp_dir = tempfile.mkdtemp(prefix=file_id)
 
-    # try to download a file first, if it fails, assume it's a folder
-    file = fs.find_one({"metadata.file_id": file_id, "metadata.type": "file"})
-    if file is not None:
-        save_path = os.path.join(temp_dir, os.path.split(file.filename)[-1])
+    download_folder = CFG.downloads.folder
+
+    if not download_folder:
+        download_folder = os.path.join(
+            tempfile.gettempdir(), "superduperdb", "ArtifactStore"
+        )
+
+    save_folder = os.path.join(download_folder, file_id)
+    os.makedirs(save_folder, exist_ok=True)
+
+    file = fs.find_one({"metadata.file_id": file_id})
+    if file is None:
+        raise FileNotFoundError(f"File not found in {file_id}")
+
+    type_ = file.metadata.get("type")
+    if type_ not in {"file", "dir"}:
+        raise ValueError(
+            f"Unknown type '{type_}' for file_id {file_id}, expected file or dir"
+        )
+
+    if type_ == 'file':
+        save_path = os.path.join(save_folder, os.path.split(file.filename)[-1])
         logging.info(f"Downloading file_id {file_id} to {save_path}")
         with open(save_path, 'wb') as f:
             f.write(file.read())
         return save_path
 
-    logging.info(f"Downloading folder with file_id {file_id} to {temp_dir}")
-    for grid_out in fs.find({"metadata.file_id": file_id, "metadata.type": "dir"}):
-        file_path = os.path.join(temp_dir, grid_out.filename)
+    logging.info(f"Downloading folder with file_id {file_id} to {save_folder}")
+    for grid_out in tqdm(
+        fs.find({"metadata.file_id": file_id, "metadata.type": "dir"})
+    ):
+        file_path = os.path.join(save_folder, grid_out.filename)
         if grid_out.metadata.get("is_empty_dir", False):
             if not os.path.exists(file_path):
                 os.makedirs(file_path)
@@ -145,8 +165,8 @@ def download(file_id, fs):
             with open(file_path, 'wb') as file_to_write:
                 file_to_write.write(grid_out.read())
 
-    folders = os.listdir(temp_dir)
+    folders = os.listdir(save_folder)
     assert len(folders) == 1, f"Expected only one folder, got {folders}"
-    temp_dir = os.path.join(temp_dir, folders[0])
-    logging.info(f"Downloaded folder with file_id {file_id} to {temp_dir}")
-    return temp_dir
+    save_folder = os.path.join(save_folder, folders[0])
+    logging.info(f"Downloaded folder with file_id {file_id} to {save_folder}")
+    return save_folder

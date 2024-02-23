@@ -102,8 +102,8 @@ class ArtifactStore(ABC):
                   {'file_id', 'uri'}
         """
         if r.get('type') == 'file':
-            sha1 = hashlib.sha1(str(id(r)).encode()).hexdigest()
-            file_id = self._save_file(r['x'], sha1)
+            assert 'file_id' in r, 'file_id is missing!'
+            file_id = self._save_file(r['x'], r['file_id'])
         else:
             assert 'bytes' in r, 'serialized bytes are missing!'
             assert 'datatype' in r, 'no datatype specified!'

@@ -153,6 +153,7 @@ class _BaseEncodable(Leaf):
     x: t.Optional[t.Any] = None
     uri: t.Optional[str] = None
     file_id: t.Optional[str] = None
+    lazy: t.ClassVar[bool] = False
 
     @property
     def unique_id(self):
@@ -167,7 +168,9 @@ class _BaseEncodable(Leaf):
         return self.datatype.reference
 
     def init(self, db):
-        self.x = db.artifact_store.load_artifact(self.file_id)
+        db = db or getattr(self, '_db', None)
+        if db is not None:
+            self.x = db.artifact_store.load_artifact(self.x)
 
     def unpack(self, db):
         """
@@ -175,8 +178,12 @@ class _BaseEncodable(Leaf):
 
         :param db: `Datalayer` instance to assist with
         """
+        if self.lazy:
+            # Record the db instance for later use
+            self._db = db
+            return self
         if self.x is None:
-            self.init()
+            self.init(db)
         return self.x
 
 
@@ -196,7 +203,7 @@ class Encodable(_BaseEncodable):
             try:
                 bytes_ = self.datatype.encoder(x)
             except Exception as e:
-                raise ArtifactSavingError(e) from e
+                raise ArtifactSavingError from e
             sha1 = str(hashlib.sha1(bytes_).hexdigest())
             if (
                 CFG.bytes_encoding == BytesEncoding.BASE64
@@ -216,7 +223,7 @@ class Encodable(_BaseEncodable):
             '_content': {
                 'bytes': bytes_,
                 'datatype': self.datatype.identifier,
-                'leaf_type': self.full_import_path,
+                'leaf_type': 'encodable',
                 'sha1': sha1,
                 'uri': self.uri,
                 'artifact': self.artifact,
@@ -262,7 +269,10 @@ class Encodable(_BaseEncodable):
         )
 
 
+@dc.dataclass
 class ReferenceEncodable(_BaseEncodable):
+    lazy: t.ClassVar[bool] = True
+
     def encode(
         self,
         bytes_encoding: t.Optional[BytesEncoding] = None,
@@ -281,9 +291,8 @@ class ReferenceEncodable(_BaseEncodable):
 
     @classmethod
     def decode(cls, r, db=None, reference: bool = False) -> '_BaseEncodable':
-        reference = db.artifact_store.load_artifact(r['_content'])
         return ReferenceEncodable(
-            x=reference,
+            x=r['_content'],
             datatype=file_serializer,
         )
 

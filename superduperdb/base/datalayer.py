@@ -574,7 +574,7 @@ class Datalayer:
         if info_only:
             return info
 
-        m = serializable.Serializable.decode(info)
+        m = serializable.Serializable.decode(info, db=self)
         m.db = self
         m.on_load(self)
 

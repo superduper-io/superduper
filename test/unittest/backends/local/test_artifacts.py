@@ -41,6 +41,7 @@ def test_save_and_load_directory(db, artifact_strore: FileSystemArtifactStore):
     test_component = TestComponent(path=directory, identifier="test")
     db.add(test_component)
     test_component_loaded = db.load("TestComponent", "test")
+    test_component_loaded.init()
     # assert that the paths are different
     assert test_component.path != test_component_loaded.path
     # assert that the directory names are the same
@@ -62,6 +63,7 @@ def test_save_and_load_file(db, artifact_strore: FileSystemArtifactStore):
     test_component = TestComponent(path=file, identifier="test")
     db.add(test_component)
     test_component_loaded = db.load("TestComponent", "test")
+    test_component_loaded.init()
     # assert that the paths are different
     assert test_component.path != test_component_loaded.path
     # assert that the file names are the same

@@ -46,7 +46,7 @@ class Component(Serializable, Leaf):
 
     def init(self, db=None):
         from superduperdb.base.document import Document
-        from superduperdb.components.datatype import Encodable
+        from superduperdb.components.datatype import _BaseEncodable
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
@@ -57,7 +57,7 @@ class Component(Serializable, Leaf):
             if isinstance(item, list):
                 unpacked = Document({'_base': item}).unpack(db=self.db or db)
                 setattr(self, f.name, unpacked)
-            if isinstance(item, Encodable):
+            if isinstance(item, _BaseEncodable):
                 item.init(db=db)
                 setattr(self, f.name, item.x)
 

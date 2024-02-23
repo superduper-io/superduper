@@ -90,6 +90,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
     def _load_file(self, file_id: str) -> str:
         """Return the path to the file in the artifact store"""
+        logging.info(f"Loading file {file_id} from {self.conn}")
         return os.path.join(self.conn, file_id)
 
     def disconnect(self):

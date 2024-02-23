@@ -12,7 +12,7 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
     from superduperdb.base.document import Document
 
     if isinstance(r, Document):
-        r = r.unpack()
+        r = r.unpack(db)
     if isinstance(r, (list, tuple)):
         return [_from_dict(i, db=db) for i in r]
     if not isinstance(r, dict):
@@ -107,7 +107,7 @@ class Serializable(Leaf):
 
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
-        return _from_dict(r)
+        return _from_dict(r, db=db)
 
     def dict(self):
         from superduperdb import Document

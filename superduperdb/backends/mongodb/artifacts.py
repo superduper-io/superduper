@@ -41,11 +41,13 @@ class MongoArtifactStore(ArtifactStore):
     def _exists(self, file_id):
         return self.filesystem.find_one({'filename': file_id}) is not None
 
-    def _delete_bytes(self, file_id: str):
-        r = self.filesystem.find_one({'filename': file_id})
-        if r is None:
-            raise FileNotFoundError(f'No such file on GridFS {file_id}')
-        return self.filesystem.delete(r._id)
+    def _delete_artifact(self, file_id: str):
+        r = self.filesystem.find({'metadata.file_id': file_id})
+        ids = [x._id for x in r]
+        if not ids:
+            raise FileNotFoundError(f'File not found in {file_id}')
+        for _id in ids:
+            self.filesystem.delete(_id)
 
     def _load_bytes(self, file_id: str):
         cur = self.filesystem.find_one({'filename': file_id})
@@ -70,7 +72,9 @@ class MongoArtifactStore(ArtifactStore):
         return download(file_id, self.filesystem)
 
     def _save_bytes(self, serialized: bytes, file_id: str):
-        return self.filesystem.put(serialized, filename=file_id)
+        return self.filesystem.put(
+            serialized, filename=file_id, metadata={"file_id": file_id}
+        )
 
     def disconnect(self):
         """

@@ -63,8 +63,10 @@ class LLMCallback(TrainerCallback):
 
         # ???
         # self.llm.adapter_id = Artifact(checkpoint_path, serializer="zip")
-        self.llm.adapter_id = checkpoint_path
-        self.db.replace(self.llm, upsert=True)
+        if checkpoint_path is not None:
+            self.llm.adapter_id = checkpoint_path
+            # self.db.add(self.llm)
+            self.db.replace(self.llm)
 
     def check_init(self):
         # Rebuild datalayer for the new process

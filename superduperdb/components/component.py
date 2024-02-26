@@ -62,7 +62,7 @@ class Component(Serializable, Leaf):
                 item = item.unpack(db=self.db)
                 setattr(self, f.name, item)
 
-    @cached_property
+    @property
     def artifact_schema(self):
         from superduperdb import Schema
         from superduperdb.components.datatype import dill_serializer

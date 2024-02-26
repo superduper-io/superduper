@@ -13,6 +13,7 @@ from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset, query_dataset_factory
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.dataset import Dataset as _Dataset
+from superduperdb.components.datatype import DataType, dill_serializer, file_serializer
 from superduperdb.components.model import (
     _Fittable,
     _Predictor,
@@ -20,6 +21,7 @@ from superduperdb.components.model import (
 )
 from superduperdb.ext.llm import training
 from superduperdb.ext.llm.utils import Prompter
+from superduperdb.misc.hash import hash_dict
 
 if typing.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
@@ -72,6 +74,12 @@ class LLM(_Predictor, _Fittable):
     _model_cache: t.ClassVar[dict] = {}
     _tokenizer_cache: t.ClassVar[dict] = {}
 
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
+        ("model_kwargs", dill_serializer),
+        ("tokenizer_kwargs", dill_serializer),
+        ('adapter_id', file_serializer),
+    )
+
     def __post_init__(self, artifacts):
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
@@ -90,19 +98,21 @@ class LLM(_Predictor, _Fittable):
         super().__post_init__(artifacts)
 
     def init_model_and_tokenizer(self):
-        model_key = hash(str(self.model_kwargs))
+        model_key = hash_dict(self.model_kwargs)
         if model_key not in self._model_cache:
             logging.info(f"Loading model from {self.model_name_or_path}")
             logging.info(f"model_kwargs: {self.model_kwargs}")
+            self.model_kwargs.setdefault(
+                "pretrained_model_name_or_path", self.model_name_or_path
+            )
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name_or_path,
                 **self.model_kwargs,
             )
             self._model_cache[model_key] = model
         else:
             logging.info("Reuse model from cache")
 
-        tokenizer_key = hash(str(self.tokenizer_kwargs))
+        tokenizer_key = hash_dict(self.tokenizer_kwargs)
         if tokenizer_key not in self._tokenizer_cache:
             logging.info(f"Loading tokenizer from {self.model_name_or_path}")
             logging.info(f"tokenizer_kwargs: {self.tokenizer_kwargs}")
@@ -120,7 +130,8 @@ class LLM(_Predictor, _Fittable):
             logging.info("Reuse tokenizer from cache")
         return self._model_cache[model_key], self._tokenizer_cache[tokenizer_key]
 
-    def init(self):
+    def init(self, db=None):
+        super().init(db)
         self.prompter = Prompter(self.prompt_template, self.prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
         if self.adapter_id is not None:
@@ -256,7 +267,7 @@ class LLM(_Predictor, _Fittable):
                 self.model, model_id, adapter_name=adapter_name
             )
             # Update cache model
-            self._model_cache[hash(self.model_kwargs)] = self.model
+            self._model_cache[hash_dict(self.model_kwargs)] = self.model
         else:
             # TODO where does this come from?
             self.model.load_adapter(model_id, adapter_name)
@@ -275,13 +286,18 @@ class LLM(_Predictor, _Fittable):
         if y is not None:
             keys.append(y)
 
+        def transform(x):
+            if '_id' in x:
+                x['_id'] = str(x['_id'])
+            return x
+
         train_dataset = query_dataset_factory(
             keys=keys,
             data_prefetch=data_prefetch,
             select=select,
             fold="train",
             db=db,
-            transform=self.preprocess,
+            transform=transform,
             prefetch_size=prefetch_size,
         )
         from datasets import Dataset
@@ -297,7 +313,7 @@ class LLM(_Predictor, _Fittable):
                 select=select,
                 fold="valid",
                 db=db,
-                transform=self.preprocess,
+                transform=transform,
                 prefetch_size=prefetch_size,
             )
             eval_dataset = Dataset.from_list(list(eval_dataset))

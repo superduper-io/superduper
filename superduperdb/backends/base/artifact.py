@@ -42,7 +42,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _delete_bytes(self, file_id: str):
+    def _delete_artifact(self, file_id: str):
         """
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
@@ -50,7 +50,7 @@ class ArtifactStore(ABC):
 
     def delete(self, r: t.Dict):
         if '_content' in r and 'file_id' in r['_content']:
-            return self._delete_bytes(r['_content']['file_id'])
+            return self._delete_artifact(r['_content']['file_id'])
         for v in r.values():
             if isinstance(v, dict):
                 self.delete(v)
@@ -113,7 +113,7 @@ class ArtifactStore(ABC):
             if uri is not None:
                 file_id = _construct_file_id_from_uri(uri)
             else:
-                file_id = hashlib.sha1(r['bytes']).hexdigest()
+                file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
             if r.get('directory'):
                 file_id = os.path.join(datatype.directory, file_id)
             self._save_bytes(r['bytes'], file_id=file_id)

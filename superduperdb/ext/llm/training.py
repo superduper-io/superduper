@@ -217,12 +217,13 @@ def train(
                 for k, v in eval_datasets.items()
             }
         else:
-            eval_datasets = eval_datasets.map(
-                lambda example: tokenize(tokenizer, example, X, y),
-                remove_columns=[
-                    X,
-                ],
-            )
+            if eval_datasets is not None:
+                eval_datasets = eval_datasets.map(
+                    lambda example: tokenize(tokenizer, example, X, y),
+                    remove_columns=[
+                        X,
+                    ],
+                )
 
     on_ray = on_ray or bool(ray_address) or bool(ray_configs)
 

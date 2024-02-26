@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change and simplify the contract for writing new `_Predictor` descendants (`.predict_one`, `.predict`)
 - Add file datatype type to support saving and reading files/folders in artifact_store
 - Create models directly by importing package from auto and with decorator `@objectmodel`, `@torchmodel`
+- Optimize LLM fine-tuning
 
 #### Bug Fixes
 - Fixed the bug where select in listener is modified in schedule_jobs.

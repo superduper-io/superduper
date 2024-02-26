@@ -36,12 +36,16 @@ class FileSystemArtifactStore(ArtifactStore):
     def url(self):
         return self.conn
 
-    def _delete_bytes(self, file_id: str):
+    def _delete_artifact(self, file_id: str):
         """
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
         """
-        os.remove(f'{self.conn}/{file_id}')
+        path = os.path.join(self.conn, file_id)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
 
     def drop(self, force: bool = False):
         """

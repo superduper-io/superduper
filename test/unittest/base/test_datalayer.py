@@ -331,7 +331,7 @@ def test_remove_component_with_artifact(db):
         'test-component', 'test_with_artifact', 0
     )
     artifact_file_id = info_with_artifact['dict']['artifact']['_content']['file_id']
-    with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
+    with patch.object(db.artifact_store, '_delete_artifact') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
         )

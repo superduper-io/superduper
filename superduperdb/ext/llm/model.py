@@ -24,6 +24,8 @@ from superduperdb.ext.llm.utils import Prompter
 from superduperdb.misc.hash import hash_dict
 
 if typing.TYPE_CHECKING:
+    from datasets import Dataset
+
     from superduperdb.backends.base.query import Select
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.metric import Metric
@@ -147,6 +149,8 @@ class LLM(_Predictor, _Fittable):
         metrics: t.Optional[t.Sequence["Metric"]] = None,
         select: t.Optional["Select"] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, "_Dataset"]]] = None,
+        train_dataset: t.Optional['Dataset'] = None,
+        eval_dataset: t.Optional[t.Union["Dataset", t.Dict[str, "Dataset"]]] = None,
         **kwargs,
     ):
         assert configuration is not None, "configuration must be provided"
@@ -154,15 +158,18 @@ class LLM(_Predictor, _Fittable):
         training_config = configuration.kwargs or {}
         training_config["bits"] = training_config.get("bits", self.bits)
 
-        train_dataset, eval_datasets = self.get_datasets(
-            X,
-            y,
-            db,
-            select,
-            db_validation_sets=validation_sets,
-            data_prefetch=data_prefetch,
-            prefetch_size=kwargs.pop("prefetch_size", DEFAULT_FETCH_SIZE),
-        )
+        if not train_dataset:
+            train_dataset, eval_dataset = self.get_datasets(
+                X,
+                y,
+                db,
+                select,
+                db_validation_sets=validation_sets,
+                data_prefetch=data_prefetch,
+                prefetch_size=kwargs.pop("prefetch_size", DEFAULT_FETCH_SIZE),
+            )
+
+        assert train_dataset is not None, "train_dataset must be provided"
 
         model_kwargs = self.model_kwargs
         tokenizer_kwargs = self.tokenizer_kwargs
@@ -172,7 +179,7 @@ class LLM(_Predictor, _Fittable):
         results = training.train(
             training_config=training_config,
             train_dataset=train_dataset,
-            eval_datasets=eval_datasets,
+            eval_datasets=eval_dataset,
             model_kwargs=model_kwargs,
             tokenizer_kwargs=tokenizer_kwargs,
             compute_metrics=self.get_compute_metrics(metrics),
@@ -347,5 +354,4 @@ class LLM(_Predictor, _Fittable):
 
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype("str")
-
         super().post_create(db)

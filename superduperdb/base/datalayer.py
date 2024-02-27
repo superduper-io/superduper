@@ -810,10 +810,11 @@ class Datalayer:
             s.logging.debug(f'{object.unique_id} already exists - doing nothing')
             return []
 
-        if existing_versions:
-            object.version = max(existing_versions) + 1
-        else:
-            object.version = 0
+        if object.version is None:
+            if existing_versions:
+                object.version = max(existing_versions) + 1
+            else:
+                object.version = 0
 
         if serialized is None:
             leaves = object.dict().get_leaves()

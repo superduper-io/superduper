@@ -13,7 +13,7 @@ from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset, query_dataset_factory
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.dataset import Dataset as _Dataset
-from superduperdb.components.datatype import DataType, dill_serializer, file_serializer
+from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.model import (
     _Fittable,
     _Predictor,
@@ -22,6 +22,8 @@ from superduperdb.components.model import (
 from superduperdb.ext.llm import training
 from superduperdb.ext.llm.utils import Prompter
 from superduperdb.misc.hash import hash_dict
+
+from .training import Checkpoint
 
 if typing.TYPE_CHECKING:
     from datasets import Dataset
@@ -59,18 +61,18 @@ class LLM(_Predictor, _Fittable):
     : param prompt_func: prompt function, default is None
     """
 
-    _encodables: t.ClassVar[t.Sequence[str]] = ('model_kwargs', 'tokenizer_kwargs')
+    _encodables: t.ClassVar[t.Sequence[str]] = ("model_kwargs", "tokenizer_kwargs")
 
     identifier: str = ""
     model_name_or_path: str = "facebook/opt-125m"
     bits: t.Optional[int] = None
-    adapter_id: t.Optional[str] = None
+    adapter_id: t.Optional[t.Union[str, Checkpoint]] = None
     object: t.Optional[transformers.Trainer] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
-    signature: str = 'singleton'  # type: ignore[misc]
+    signature: str = "singleton"  # type: ignore[misc]
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}
@@ -79,7 +81,6 @@ class LLM(_Predictor, _Fittable):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ("model_kwargs", dill_serializer),
         ("tokenizer_kwargs", dill_serializer),
-        ('adapter_id', file_serializer),
     )
 
     def __post_init__(self, artifacts):
@@ -97,6 +98,7 @@ class LLM(_Predictor, _Fittable):
                 )
             self.model_kwargs["load_in_4bit"] = self.bits == 4
             self.model_kwargs["load_in_8bit"] = self.bits == 8
+
         super().__post_init__(artifacts)
 
     def init_model_and_tokenizer(self):
@@ -137,7 +139,21 @@ class LLM(_Predictor, _Fittable):
         self.prompter = Prompter(self.prompt_template, self.prompt_func)
         self.model, self.tokenizer = self.init_model_and_tokenizer()
         if self.adapter_id is not None:
-            self.add_adapter(self.adapter_id, self.adapter_id)
+            if isinstance(self.adapter_id, Checkpoint):
+                model_id = self.adapter_id.path
+                self.adapter_id = (
+                    self.adapter_id.identifier + "-" + self.adapter_id.path
+                )
+
+            elif isinstance(self.adapter_id, str):
+                model_id = self.adapter_id
+
+            else:
+                raise ValueError(
+                    "adapter_id must be either a string or Checkpoint object"
+                )
+
+            self.add_adapter(model_id, self.adapter_id)
 
     def _fit(
         self,
@@ -149,7 +165,7 @@ class LLM(_Predictor, _Fittable):
         metrics: t.Optional[t.Sequence["Metric"]] = None,
         select: t.Optional["Select"] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, "_Dataset"]]] = None,
-        train_dataset: t.Optional['Dataset'] = None,
+        train_dataset: t.Optional["Dataset"] = None,
         eval_dataset: t.Optional[t.Union["Dataset", t.Dict[str, "Dataset"]]] = None,
         **kwargs,
     ):
@@ -294,8 +310,8 @@ class LLM(_Predictor, _Fittable):
             keys.append(y)
 
         def transform(x):
-            if '_id' in x:
-                x['_id'] = str(x['_id'])
+            if "_id" in x:
+                x["_id"] = str(x["_id"])
             return x
 
         train_dataset = query_dataset_factory(

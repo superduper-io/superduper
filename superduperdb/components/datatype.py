@@ -21,20 +21,10 @@ from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.misc.annotations import public_api
+from superduperdb.misc.hash import random_sha1
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
-
-
-def random_sha1():
-    """
-    Generate random sha1 values
-    Can be used to generate file_id and other values
-    """
-    random_data = os.urandom(256)
-    sha1 = hashlib.sha1()
-    sha1.update(random_data)
-    return sha1.hexdigest()
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:

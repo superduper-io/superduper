@@ -10,7 +10,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    Trainer,
     TrainerCallback,
     TrainingArguments,
 )
@@ -19,12 +18,29 @@ from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 from superduperdb import logging
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
+from superduperdb.components.component import Component
+from superduperdb.components.datatype import DataType, file_serializer
+from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
     from datasets import Dataset
 
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.ext.llm import LLM
+
+
+@dc.dataclass(kw_only=True)
+class Checkpoint(Component):
+    path: t.Optional[str]
+    step: int
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
+        ("path", file_serializer),
+    )
+    type_id: t.ClassVar[str] = "checkpoint"
+
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        self.version = int(self.step)
 
 
 class LLMCallback(TrainerCallback):
@@ -39,6 +55,7 @@ class LLMCallback(TrainerCallback):
         self.identifier = identifier
         self.db = db
         self.llm = llm
+        self.id = random_sha1()
 
         # If we run training on remote, we need to provide identifier and cfg,
         # then can connect to db and load llm
@@ -54,6 +71,8 @@ class LLMCallback(TrainerCallback):
 
     def on_save(self, args, state, control, **kwargs):
         """Event called after a checkpoint save."""
+        if not state.is_world_process_zero:
+            return
 
         self.check_init()
         checkpoint_path = transformers.trainer.get_last_checkpoint(args.output_dir)
@@ -61,18 +80,41 @@ class LLMCallback(TrainerCallback):
             logging.warn("No checkpoint found, skip saving checkpoint")
             return
 
-        # ???
-        # self.llm.adapter_id = Artifact(checkpoint_path, serializer="zip")
-        if checkpoint_path is not None:
-            self.llm.adapter_id = checkpoint_path
-            # self.db.add(self.llm)
-            self.db.replace(self.llm)
+        checkpoint = Checkpoint(
+            identifier=self.id, path=checkpoint_path, step=state.global_step
+        )
+        self.db.add(checkpoint)
+
+    def on_evaluate(self, args, state, control, **kwargs):
+        """Event called after an evaluation."""
+        if not state.is_world_process_zero:
+            return
+
+        self.check_init()
+        self.llm.append_metrics(state.log_history[-1])
+
+    def on_train_end(self, args, state, control, **kwargs):
+        self.check_init()
+        # update the llm to db after training, will save the adapter_id and metrics
+
+        if state.best_model_checkpoint:
+            step = state.best_model_checkpoint.split("-")[-1]
+            checkpoint = Checkpoint(
+                identifier=self.id, path=state.best_model_checkpoint, step=step
+            )
+            self.db.add(checkpoint)
+
+        checkpoint = self.db.load(Checkpoint.type_id, self.id)
+        self.llm.adapter_id = checkpoint
+        self.db.replace(self.llm)
 
     def check_init(self):
         # Rebuild datalayer for the new process
         if self.db is None:
             self.db = build_datalayer(self.cfg)
             self.llm = self.db.load("model", self.identifier)
+
+        assert self.llm is not None
 
 
 @dc.dataclass
@@ -401,7 +443,6 @@ def ray_train(
     """
     import ray
     from ray import train
-    from ray.train import ScalingConfig
     from ray.train.huggingface.transformers import (
         RayTrainReportCallback,
         prepare_trainer,

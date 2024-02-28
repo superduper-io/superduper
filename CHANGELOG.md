@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create models directly by importing package from auto and with decorator `@objectmodel`, `@torchmodel`
 
 #### Bug Fixes
-- LLM CI random errors
 - Fixed the bug where select in listener is modified in schedule_jobs.
+- LLM CI random errors
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 

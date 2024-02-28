@@ -30,7 +30,7 @@ def mock_lru_cache():
 @pytest.fixture
 def open_ai_with_rhymes(db, monkeypatch):
     with open('test/material/data/rhymes.json') as f:
-        data = json.load(f)
+        data = json.load(f)[:10]
 
     if os.getenv('OPENAI_API_KEY') is None:
         monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')

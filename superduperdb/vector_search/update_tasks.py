@@ -39,12 +39,16 @@ def copy_vectors(
     :param ids: List of ids which were observed as added/updated documents.
     :param db: A ``DB`` instance.
     """
+
     vi = db.vector_indices[vector_index]
     if isinstance(query, dict):
         # ruff: noqa: E501
         query: CompoundSelect = Serializable.decode(query)  # type: ignore[no-redef]
     assert isinstance(query, CompoundSelect)
-    select = query.select_using_ids(ids)
+    if not ids:
+        select = query
+    else:
+        select = query.select_using_ids(ids)
     docs = db.select(select)
     docs = [doc.unpack() for doc in docs]
     key = vi.indexing_listener.key

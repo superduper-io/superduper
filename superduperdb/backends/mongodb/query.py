@@ -115,7 +115,7 @@ class Find(QueryComponent):
 
         :param **kwargs: key=model/version or key=model pairs
         """
-        args = list(self.args[:])
+        args = copy.deepcopy(list(self.args[:]))
         if not args:
             args = [{}]
         if not args[1:]:
@@ -137,7 +137,7 @@ class Find(QueryComponent):
         return Find(
             name=self.name,
             type=self.type,
-            args=self.args,
+            args=args,
             kwargs=self.kwargs,
             output_fields=kwargs,
         )
@@ -534,7 +534,11 @@ class MongoDelete(Delete):
             self.table_or_collection.identifier
         )
         if self.one:
-            return collection.delete_one(*self.args, **self.kwargs)
+            collection.delete_one(*self.args, **self.kwargs)
+            if '_id' in self.kwargs:
+                return [str(self.kwargs['_id'])]
+            for arg in self.args:
+                return [str(arg['_id'])]
         delete_result = collection.delete_many(*self.args, **self.kwargs)
         return delete_result.deleted_ids
 

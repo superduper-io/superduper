@@ -7,7 +7,9 @@ import transformers
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    pipeline,
 )
+from transformers.pipelines.text_generation import ReturnType
 
 from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset, query_dataset_factory
@@ -21,7 +23,6 @@ from superduperdb.components.model import (
 )
 from superduperdb.ext.llm import training
 from superduperdb.ext.llm.utils import Prompter
-from superduperdb.misc.hash import hash_dict
 
 from .training import Checkpoint
 
@@ -64,7 +65,7 @@ class LLM(_Predictor, _Fittable):
     _encodables: t.ClassVar[t.Sequence[str]] = ("model_kwargs", "tokenizer_kwargs")
 
     identifier: str = ""
-    model_name_or_path: str = "facebook/opt-125m"
+    model_name_or_path: t.Optional[str] = None
     bits: t.Optional[int] = None
     adapter_id: t.Optional[t.Union[str, Checkpoint]] = None
     object: t.Optional[transformers.Trainer] = None
@@ -99,61 +100,85 @@ class LLM(_Predictor, _Fittable):
             self.model_kwargs["load_in_4bit"] = self.bits == 4
             self.model_kwargs["load_in_8bit"] = self.bits == 8
 
+        #  TODO: Compatible with the bug of artifact sha1 equality and will be deleted
+        self.tokenizer_kwargs.setdefault(
+            "pretrained_model_name_or_path", self.model_name_or_path
+        )
+
         super().__post_init__(artifacts)
 
-    def init_model_and_tokenizer(self):
-        model_key = hash_dict(self.model_kwargs)
-        if model_key not in self._model_cache:
-            logging.info(f"Loading model from {self.model_name_or_path}")
-            logging.info(f"model_kwargs: {self.model_kwargs}")
-            self.model_kwargs.setdefault(
-                "pretrained_model_name_or_path", self.model_name_or_path
-            )
-            model = AutoModelForCausalLM.from_pretrained(
-                **self.model_kwargs,
-            )
-            self._model_cache[model_key] = model
+    def init_pipeline(self, adapter_id: t.Optional[str] = None):
+        if adapter_id is not None:
+            self.model_kwargs['pretrained_model_name_or_path'] = adapter_id
+            self.tokenizer_kwargs['pretrained_model_name_or_path'] = adapter_id
+            from peft import AutoPeftModelForCausalLM
+
+            AutoModelCls = AutoPeftModelForCausalLM
+
         else:
-            logging.info("Reuse model from cache")
+            self.model_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
+            self.tokenizer_kwargs[
+                "pretrained_model_name_or_path"
+            ] = self.model_name_or_path
+            AutoModelCls = AutoModelForCausalLM
 
-        tokenizer_key = hash_dict(self.tokenizer_kwargs)
-        if tokenizer_key not in self._tokenizer_cache:
-            logging.info(f"Loading tokenizer from {self.model_name_or_path}")
-            logging.info(f"tokenizer_kwargs: {self.tokenizer_kwargs}")
-            self.tokenizer_kwargs.setdefault(
-                "pretrained_model_name_or_path", self.model_name_or_path
-            )
-            tokenizer = AutoTokenizer.from_pretrained(
-                **self.tokenizer_kwargs,
-            )
-            self._tokenizer_cache[tokenizer_key] = tokenizer
+        logging.info(f"Loading model from {self.model_name_or_path}")
+        logging.info(f"model_kwargs: {self.model_kwargs}")
+        model = AutoModelCls.from_pretrained(
+            **self.model_kwargs,
+        )
 
-            if tokenizer.pad_token is None:
-                tokenizer.pad_token = tokenizer.eos_token
-        else:
-            logging.info("Reuse tokenizer from cache")
-        return self._model_cache[model_key], self._tokenizer_cache[tokenizer_key]
+        logging.info(f"Loading tokenizer from {self.model_name_or_path}")
+        logging.info(f"tokenizer_kwargs: {self.tokenizer_kwargs}")
+        tokenizer = AutoTokenizer.from_pretrained(
+            **self.tokenizer_kwargs,
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-    def init(self, db=None):
-        super().init(db)
-        self.prompter = Prompter(self.prompt_template, self.prompt_func)
-        self.model, self.tokenizer = self.init_model_and_tokenizer()
+        return pipeline("text-generation", model=model, tokenizer=tokenizer)
+
+    def init(self):
+        db = self.db
+
+        real_adapter_id = None
         if self.adapter_id is not None:
+            self.handle_chekpoint(db)
             if isinstance(self.adapter_id, Checkpoint):
-                model_id = self.adapter_id.path
-                self.adapter_id = (
-                    self.adapter_id.identifier + "-" + self.adapter_id.path
-                )
+                checkpoint = self.adapter_id
+                self.adapter_id = checkpoint.uri
 
             elif isinstance(self.adapter_id, str):
-                model_id = self.adapter_id
-
+                real_adapter_id = self.adapter_id
+                checkpoint = None
             else:
                 raise ValueError(
-                    "adapter_id must be either a string or Checkpoint object"
+                    "adapter_id must be either a string or Checkpoint object, but got "
+                    f"{type(self.adapter_id)}"
                 )
 
-            self.add_adapter(model_id, self.adapter_id)
+            if checkpoint:
+                db = db or checkpoint.db
+                assert db, "db must be provided when using checkpoint indetiifer"
+                if self.db is None:
+                    self.db = db
+                real_adapter_id = checkpoint.path.unpack(db)
+
+        super().init()
+        self.prompter = Prompter(self.prompt_template, self.prompt_func)
+
+        self.pipeline = self.init_pipeline(real_adapter_id)
+
+    def handle_chekpoint(self, db):
+        if isinstance(self.adapter_id, str):
+            # match checkpoint://<identifier>/<version>
+            if Checkpoint.check_uri(self.adapter_id):
+                assert db, "db must be provided when using checkpoint indetiifer"
+                identifier, version = Checkpoint.parse_uri(self.adapter_id)
+                version = int(version)
+                checkpoint = db.load("checkpoint", identifier, version=version)
+                assert checkpoint, f"Checkpoint {self.adapter_id} not found"
+                self.adapter_id = checkpoint
 
     def _fit(
         self,
@@ -221,79 +246,41 @@ class LLM(_Predictor, _Fittable):
         return compute_metrics
 
     @ensure_initialized
-    def predict_one(self, X):
-        X = self.prompter(X)
-        results = self._generate([X], **self.predict_kwargs)
+    def predict_one(self, X, **kwargs):
+        X = self._process_inputs(X, **kwargs)
+        results = self._generate([X], **kwargs)
         return results[0]
 
     @ensure_initialized
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        X = [self.prompter(dataset[i]) for i in range(len(dataset))]
-        return self._generate(X, **self.predict_kwargs)
+    def predict(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.List:
+        dataset = [
+            self._process_inputs(dataset[i], **kwargs) for i in range(len(dataset))
+        ]
+        return self._generate(dataset, **kwargs)
 
-    def _generate(self, X: t.Any, adapter_name=None, **kwargs):
-        """
-        Private method for `Model.to_call` method.
-        Support inference by multi-lora adapters.
-        """
-        if adapter_name is None and self.adapter_id is not None:
-            adapter_name = self.adapter_id
-        if adapter_name is not None:
-            try:
-                self.model.set_adapter(adapter_name)
-                logging.info(f"Using adapter {adapter_name} for inference")
-            except Exception as e:
-                raise ValueError(
-                    f"Adapter {adapter_name} is not found in the model, "
-                    "please use add_adapter to add it."
-                ) from e
+    def _process_inputs(self, X: t.Any, **kwargs) -> str:
+        if isinstance(X, str):
+            X = self.prompter(X, **kwargs)
+        return X
 
-        elif hasattr(self.model, "disable_adapter"):
-            with self.model.disable_adapter():
-                return self._base_generate(X, **kwargs)
-
-        return self._base_generate(X, **kwargs)
-
-    def _base_generate(self, X: t.Any, **kwargs):
+    def _generate(self, X: list, **kwargs):
         """
         Generate text.
         Can overwrite this method to support more inference methods.
         """
-        model_inputs = self.tokenizer(X, return_tensors="pt", padding=True).to(
-            self.model.device
+        kwargs = kwargs.copy()
+
+        # Set default values, if not will cause bad output
+        kwargs.setdefault("add_special_tokens", True)
+        outputs = self.pipeline(
+            X,
+            return_type=ReturnType.NEW_TEXT,
+            eos_token_id=self.pipeline.tokenizer.eos_token_id,
+            pad_token_id=self.pipeline.tokenizer.eos_token_id,
+            **kwargs,
         )
-        kwargs.setdefault("pad_token_id", self.tokenizer.eos_token_id)
-        outputs = self.model.generate(**model_inputs, **kwargs)
-        texts = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        results = []
-        for text, x in zip(texts, X):
-            text = text[len(x) :]
-            results.append(text)
-        if isinstance(X, str):
-            return results[0]
+        results = [output[0]["generated_text"] for output in outputs]
         return results
-
-    def add_adapter(self, model_id, adapter_name: str):
-        # TODO: Support lora checkpoint from s3
-        try:
-            from peft import PeftModel
-        except Exception as e:
-            raise ImportError("Please install peft to use LoRA training") from e
-
-        logging.info(f"Loading adapter {adapter_name} from {model_id}")
-
-        if not hasattr(self, "model"):
-            self.init()
-
-        if not isinstance(self.model, PeftModel):
-            self.model = PeftModel.from_pretrained(
-                self.model, model_id, adapter_name=adapter_name
-            )
-            # Update cache model
-            self._model_cache[hash_dict(self.model_kwargs)] = self.model
-        else:
-            # TODO where does this come from?
-            self.model.load_adapter(model_id, adapter_name)
 
     def get_datasets(
         self,

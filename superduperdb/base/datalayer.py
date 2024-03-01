@@ -1014,8 +1014,8 @@ class Datalayer:
 
         # If object has no version, update the last version
         object.version = info['version']
-        self.artifact_store.delete(info)
         new_info = self.artifact_store.save(object.dict().encode())
+        self.artifact_store.delete(info)
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,

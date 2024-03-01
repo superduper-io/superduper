@@ -254,22 +254,6 @@ class Encodable(_BaseEncodable):
         sha1 = str(hashlib.sha1(bytes_).hexdigest())
         return bytes_, sha1
 
-        if self.datatype.encoder is None:
-            return self.x
-
-        bytes_, sha1 = _encode(self.x)
-        # TODO: Use a new class to handle this
-        return {
-            '_content': {
-                'bytes': bytes_,
-                'datatype': self.datatype.identifier,
-                'leaf_type': 'encodable',
-                'sha1': sha1,
-                'uri': self.uri,
-                'artifact': self.artifact,
-            }
-        }
-
     @classmethod
     def _get_object(cls, db, r):
         if r.get('bytes') is None:

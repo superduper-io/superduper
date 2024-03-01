@@ -66,7 +66,7 @@ def base_config():
         per_device_eval_batch_size=1,
         gradient_accumulation_steps=4,
         log_to_db=True,
-        max_length=512,
+        max_seq_length=512,
         use_lora=True,
     )
 

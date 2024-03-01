@@ -11,7 +11,7 @@ import re
 import tempfile
 import typing as t
 from collections import defaultdict
-from functools import cached_property, wraps
+from functools import wraps
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf

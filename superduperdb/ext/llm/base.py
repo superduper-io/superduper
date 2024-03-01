@@ -26,13 +26,12 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
     :param prompt_template: The template to use for the prompt.
     :param prompt_func: The function to use for the prompt.
     :param max_batch_size: The maximum batch size to use for batch generation.
-    :param inference_kwargs: Parameters used during inference.
+    :param predict_kwargs: Parameters used during inference.
     """
 
     prompt_template: str = "{input}"
     prompt_func: Optional[Callable] = dc.field(default=None)
     max_batch_size: Optional[int] = 4
-    inference_kwargs: dict = dc.field(default_factory=dict)
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
@@ -53,13 +52,7 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype("str")
 
-        # since then the `.add` clause is not necessary
-        output_component = db.databackend.create_model_table_or_collection(
-            self  # type: ignore[arg-type]
-        )
-
-        if output_component is not None:
-            db.add(output_component)
+        super().post_create(db)
 
     @abc.abstractmethod
     def init(self):
@@ -207,7 +200,7 @@ class BaseOpenAI(BaseLLMAPI):
             model=self.model_name,
             prompt=prompt,
             **self.get_kwargs(
-                self.client.completions.create, kwargs, self.inference_kwargs
+                self.client.completions.create, kwargs, self.predict_kwargs
             ),
         )
         return completion.choices[0].text
@@ -230,7 +223,7 @@ class BaseOpenAI(BaseLLMAPI):
             messages=messages,
             model=self.model_name,
             **self.get_kwargs(
-                self.client.chat.completions.create, kwargs, self.inference_kwargs
+                self.client.chat.completions.create, kwargs, self.predict_kwargs
             ),
         )
         return completion.choices[0].message.content

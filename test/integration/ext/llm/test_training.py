@@ -6,8 +6,7 @@ import transformers
 from superduperdb import superduper
 from superduperdb.backends.mongodb import Collection
 from superduperdb.base.document import Document
-from superduperdb.ext.llm import LLM
-from superduperdb.ext.llm.model import LLMTrainingConfiguration
+from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
 
 try:
     from datasets import load_dataset
@@ -66,7 +65,7 @@ def base_config():
         per_device_eval_batch_size=1,
         gradient_accumulation_steps=4,
         log_to_db=True,
-        max_length=512,
+        max_seq_length=512,
         use_lora=True,
     )
 

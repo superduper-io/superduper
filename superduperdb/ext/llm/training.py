@@ -1,5 +1,6 @@
 import dataclasses as dc
 import os
+import re
 import typing as t
 from copy import deepcopy
 from functools import wraps
@@ -41,6 +42,21 @@ class Checkpoint(Component):
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.version = int(self.step)
+
+    @property
+    def uri(self):
+        return f"checkpoint://{self.identifier}/{self.step}"
+
+    @staticmethod
+    def check_uri(uri):
+        return re.match(r"^checkpoint://.*?/\d+$", uri) is not None
+
+    @staticmethod
+    def parse_uri(uri):
+        if not Checkpoint.check_uri(uri):
+            raise ValueError(f"Invalid uri: {uri}")
+        *_, identifier, step = uri.split("/")
+        return identifier, int(step)
 
 
 class LLMCallback(TrainerCallback):
@@ -156,10 +172,11 @@ class LLMTrainingArguments(TrainingArguments):
     lora_r: int = 8
     lora_alpha: int = 16
     lora_dropout: float = 0.05
-    lora_target_modules: t.Optional[t.List[str]] = None
+    lora_target_modules: t.Union[t.List[str], str] = "all-linear"
     lora_bias: t.Literal["none", "all", "lora_only"] = "none"
     bits: t.Optional[int] = None
     max_seq_length: int = 512
+    setup_chat_format: bool = False
     log_to_db: bool = False
 
     def __post_init__(self):
@@ -233,25 +250,16 @@ def train(
 
     training_args = LLMTrainingArguments(**training_config)
     dataset_text_field = kwargs.get("dataset_text_field", X)
-    kwargs["dataset_text_field"] = dataset_text_field
+    if dataset_text_field is not None:
+        kwargs["dataset_text_field"] = dataset_text_field
 
     on_ray = on_ray or bool(ray_address) or bool(ray_configs)
 
     # Auto detect multi-GPUs and use ray to run data parallel training
     # If not todo this, will run on a bad parallel mode
     if not on_ray and torch.cuda.device_count() > 1:
-        logging.warn("Detected multi-GPUs, will use ray to run training on multi-GPUs")
         on_ray = True
-        from ray.train import ScalingConfig
-
-        ray_configs = {
-            "scaling_config": ScalingConfig(
-                num_workers=torch.cuda.device_count(),
-                use_gpu=True,
-            )
-        }
-        logging.warn(f"Set ray_configs to {ray_configs}")
-        logging.warn("Suggest to set ray_configs manually for better performance")
+        logging.warn("Detected multi-GPUs, will use ray to run training on multi-GPUs")
 
     log_to_db = training_args.log_to_db
 
@@ -388,11 +396,16 @@ def train_func(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    from trl import setup_chat_format
+    from trl.trainer import SFTTrainer
+
+    if training_args.setup_chat_format:
+        logging.info("Setup chat format")
+        model, tokenizer = setup_chat_format(model, tokenizer)
+
     if training_args.use_lora:
         logging.info("Preparing LoRA training")
         model = prepare_lora_training(model, training_args)
-
-    from trl.trainer import SFTTrainer
 
     trainer = SFTTrainer(
         model=model,
@@ -443,6 +456,7 @@ def ray_train(
     """
     import ray
     from ray import train
+    from ray.train import ScalingConfig
     from ray.train.huggingface.transformers import (
         RayTrainReportCallback,
         prepare_trainer,
@@ -461,17 +475,8 @@ def ray_train(
         os.environ["OMP_NUM_THREADS"] = str(
             train.get_context().get_trial_resources().bundles[-1].get("CPU", 1)
         )
-        ray_train_ds = train.get_dataset_shard("train")
-        ray_eval_ds = train.get_dataset_shard("eval")
 
-        from datasets import Dataset
-
-        train_dataset = Dataset.from_generator(ray_train_ds.iter_rows)
-        if ray_eval_ds is not None:
-            eval_dataset = Dataset.from_generator(ray_eval_ds.iter_rows)
-        else:
-            eval_dataset = None
-
+        logging.info(f"Start training on ray, train_dataset: {len(train_dataset)}")
         kwargs["trainer_prepare_func"] = trainer_prepare_func
 
         # Note: Set use_reentrant to False when using ray+lora+gradient_checkpointing
@@ -493,28 +498,34 @@ def ray_train(
         train_loop_args = LLMTrainingArguments(**train_loop_config)
         # Build the training_args on remote machine
         train_loop_args.build()
-        return train_func(train_loop_args, train_dataset, eval_dataset, **kwargs)
+        return train_func(train_loop_args, train_dataset, eval_datasets, **kwargs)
 
     if ray_address is not None:
         ray.init(address=ray_address, ignore_reinit_error=True)
 
-    ray_datasets = {
-        "train": ray.data.from_huggingface(train_dataset),
-    }
-    if eval_datasets:
-        ray_datasets["eval"] = ray.data.from_huggingface(eval_datasets)
-
-    ray_configs = ray_configs or {}
+    if not ray_configs:
+        gpu_count = torch.cuda.device_count()
+        ray_configs = {
+            "scaling_config": ScalingConfig(
+                num_workers=torch.cuda.device_count() or 1,
+                use_gpu=bool(gpu_count),
+            )
+        }
+        logging.warn(f"Set ray_configs to {ray_configs}")
+        logging.warn("Suggest to set ray_configs manually for better performance")
     if "scaling_config" not in ray_configs:
         raise ValueError("Please provide scaling_config")
 
     if "run_config" not in ray_configs:
         logging.warn("No run_config provided")
 
+    logging.info(f"Start training on ray, ray_configs: {ray_configs}")
+
     trainer = TorchTrainer(
         train_loop_per_worker=ray_train_func,
         train_loop_config=training_args.to_dict(),
-        datasets=ray_datasets,
+        # Don't use ray dataset, because it is not compatible with ConstantLengthDataset
+        # when running on multiple GPUs
         **ray_configs,
     )
 
@@ -535,8 +546,7 @@ def prepare_lora_training(model, config: LLMTrainingArguments):
     lora_config = LoraConfig(
         r=config.lora_r,
         lora_alpha=config.lora_alpha,
-        target_modules=config.lora_target_modules
-        or get_lora_target_modules(model, config.bits),
+        target_modules=config.lora_target_modules,
         lora_dropout=config.lora_dropout,
         bias=config.lora_bias,
         task_type="CAUSAL_LM",
@@ -561,30 +571,6 @@ def prepare_lora_training(model, config: LLMTrainingArguments):
     if config.local_rank == 0:
         model.print_trainable_parameters()
     return model
-
-
-def get_lora_target_modules(model, bits):
-    """Find the LoRA target modules in the model."""
-    try:
-        import bitsandbytes as bnb
-    except Exception as e:
-        raise ImportError("Please install bitsandbytes to use LoRA training") from e
-
-    if bits == 4:
-        cls = bnb.nn.Linear4bit
-    elif bits == 8:
-        cls = bnb.nn.Linear8bitLt
-    else:
-        cls = torch.nn.Linear
-
-    lora_module_names = set()
-    for name, module in model.named_modules():
-        if isinstance(module, cls):
-            names = name.split(".")
-            lora_module_names.add(names[0] if len(names) == 1 else names[-1])
-
-    lora_module_names.discard("lm_head")
-    return list(lora_module_names)
 
 
 def create_quantization_config(config: LLMTrainingArguments):

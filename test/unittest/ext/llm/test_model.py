@@ -19,6 +19,8 @@ except ImportError:
     bitsandbytes = None
     peft = None
 
+RUN_LLM_FINETUNE = os.environ.get("RUN_LLM_FINETUNE", "0") == "1"
+
 
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
@@ -38,6 +40,7 @@ def test_model_as_listener_model(db):
     check_llm_as_listener_model(db, model)
 
 
+@pytest.mark.skipif(not RUN_LLM_FINETUNE, reason="RUN_LLM_FINETUNE is not set")
 @pytest.mark.skipif(
     not bitsandbytes or not peft, reason="The peft and bitsandbytes are not installed"
 )
@@ -81,7 +84,7 @@ def test_training(db, tmpdir):
         logging_steps=1,
         gradient_checkpointing=True,
         report_to=[],
-        max_length=64,
+        max_seq_length=64,
     )
 
     def metric(predictions, targets):

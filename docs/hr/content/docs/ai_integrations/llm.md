@@ -86,19 +86,19 @@ model.predict("Hello", lang="Japanese")
 
 Controls the maximum number of concurrent requests when using API-type LLM models.
 
-#### **inference_kwargs**
+#### **predict_kwargs**
 
 All defined inference parameters, which will be sent to the model or API during inference.
 
 ```python
 from superduperdb.ext.llm import OpenAI
-model = OpenAI(model_name='gpt-3.5-turbo', inference_kwargs={'temperature': 0.7})
+model = OpenAI(model_name='gpt-3.5-turbo', predict_kwargs={'temperature': 0.7})
 model.predict("Hello", seed=1)
 ```
 
 `{"temperature": 0.7, "seed": 1}` will be sent to the OpenAI interface.
 
-Parameters defined in `model.predict` will override those in `inference_kwargs`, but `inference_kwargs` will be registered in the Metadata Store.
+Parameters defined in `model.predict` will override those in `predict_kwargs`, but `predict_kwargs` will be registered in the Metadata Store.
 
 
 

@@ -56,7 +56,7 @@ class VllmAPI(BaseLLMAPI):
 
     def build_post_data(self, prompt: str, **kwargs: dict[str, Any]) -> dict[str, Any]:
         total_kwargs = {}
-        for key, value in {**self.inference_kwargs, **kwargs}.items():
+        for key, value in {**self.predict_kwargs, **kwargs}.items():
             if key in VLLM_INFERENCE_PARAMETERS_LIST:
                 total_kwargs[key] = value
         return {"prompt": prompt, **total_kwargs}
@@ -150,7 +150,7 @@ class VllmModel(BaseLLMModel):
 
     def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
         total_kwargs = {}
-        for key, value in {**self.inference_kwargs, **kwargs}.items():
+        for key, value in {**self.predict_kwargs, **kwargs}.items():
             if key in VLLM_INFERENCE_PARAMETERS_LIST:
                 total_kwargs[key] = value
 

@@ -534,11 +534,21 @@ class MongoDelete(Delete):
             self.table_or_collection.identifier
         )
         if self.one:
-            collection.delete_one(*self.args, **self.kwargs)
+            ids = []
             if '_id' in self.kwargs:
-                return [str(self.kwargs['_id'])]
+                ids = [str(self.kwargs['_id'])]
             for arg in self.args:
-                return [str(arg['_id'])]
+                if isinstance(arg, dict) and '_id' in arg:
+                    ids = [str(arg['_id'])]
+            result = collection.delete_one(*self.args, **self.kwargs)
+            if result.deleted_count == 1:
+                if not ids:
+                    deleted_document = collection.find_one(*self.args, **self.kwargs)
+                    return [str(deleted_document['_id'])]
+                return ids
+            else:
+                return []
+
         delete_result = collection.delete_many(*self.args, **self.kwargs)
         return delete_result.deleted_ids
 

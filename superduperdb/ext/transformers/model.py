@@ -1,8 +1,13 @@
+# ruff: noqa: E402
 import dataclasses as dc
 import functools
 import re
 import typing as t
 import warnings
+
+from superduperdb.misc.annotations import requires_packages
+
+requires_packages(['transformers', '4.29.1', None])
 
 from transformers import (
     DataCollatorWithPadding,

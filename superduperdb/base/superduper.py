@@ -118,6 +118,37 @@ class MongoDbTyper(_DuckTyper):
         return build_datalayer(cfg=CFG, databackend=databackend, **kwargs)
 
 
+class AstraDbTyper(_DuckTyper):
+    attrs = ('collection',)
+    count = len(attrs)
+
+    @classmethod
+    def accept(cls, item: t.Any) -> bool:
+        return super().accept(item) and item.__class__.__name__ == 'AstraDB'
+
+    @classmethod
+    def create(cls, item: t.Any, **kwargs) -> t.Any:
+        from astrapy.db import AstraDB
+
+        from superduperdb import logging
+        from superduperdb.backends.astradb.data_backend import AstraDataBackend
+        from superduperdb.base.build import build_datalayer
+
+        if not isinstance(item, (AstraDB,)):
+            raise TypeError(f'Expected Database but got {type(item)}')
+
+        logging.warn(
+            'Note: This is only recommended in development mode, since config\
+             still holds `data_backend` with the default value, services \
+             like vector search and cdc cannot be reached due to configuration\
+             mismatch. Services will be configured with a `data_backend` uri using \
+             config file hence this client config and\
+             services config will be different.'
+        )
+        databackend = AstraDataBackend(conn=item, name=item.namespace)
+        return build_datalayer(cfg=CFG, databackend=databackend, **kwargs)
+
+
 class SklearnTyper(_DuckTyper):
     attrs = '_predict', 'fit', 'score', 'transform'
     count = 2

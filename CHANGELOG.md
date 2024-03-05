@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 - Run Tests from within the container
+- Add model dict output indexing in graph
 
 #### New Features & Functionality
 - Add requires functionality for extension modules

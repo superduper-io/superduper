@@ -31,8 +31,19 @@ def model2(db):
 
 @pytest.fixture
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def model2_multi_dict(db):
+    def model_object(x):
+        return {'x': x + 2}
+
+    model = Model(identifier='m2_multi_dict', object=model_object)
+    db.add(model)
+    yield model
+
+
+@pytest.fixture
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model2_multi(db):
-    def model_object(x, y):
+    def model_object(x, y=1):
         return x + y + 2
 
     model = Model(identifier='m2_multi', object=model_object)
@@ -64,6 +75,18 @@ def test_simple_graph(model1, model2):
 
     g.connect(model1, model2)
     assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)]]
+
+
+def test_graph_output_indexing(model2_multi_dict, model2, model1):
+    g = Graph(
+        identifier='simple-graph',
+        input=model1,
+        outputs=[model2],
+        signature=Signature.kwargs,
+    )
+    g.connect(model1, model2_multi_dict, on=(None, 'x'))
+    g.connect(model2_multi_dict, model2, on=('x', 'x'))
+    assert g.predict_one(1) == [(6, 4)]
 
 
 def test_complex_graph(model1, model2_multi, model3, model2):

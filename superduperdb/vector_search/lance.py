@@ -2,7 +2,7 @@ import os
 import typing as t
 
 import lance
-import numpy
+import numpy as np
 import pyarrow as pa
 
 from superduperdb import CFG
@@ -24,7 +24,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
         self,
         identifier: str,
         dimensions: int,
-        h: t.Optional[numpy.ndarray] = None,
+        h: t.Optional[np.ndarray] = None,
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
@@ -47,11 +47,11 @@ class LanceVectorSearcher(BaseVectorSearcher):
     def _create_or_append_to_dataset(self, vectors, ids, mode: str = 'create'):
         if not self._created:
             if not os.path.exists(self.dataset_path):
-                os.makedirs(self.dataset_path, exist_ok=True)
                 mode = 'create'
+                os.makedirs(self.dataset_path, exist_ok=True)
             else:
                 self._created = True
-                mode = 'append'
+                mode = "append"
         type = pa.list_(
             pa.field('values', pa.float32(), nullable=False), self.dimensions
         )
@@ -91,7 +91,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
 
     def find_nearest_from_array(
         self,
-        h: numpy.typing.ArrayLike,
+        h: np.typing.ArrayLike,
         n: int = 100,
         within_ids: t.Sequence[str] = (),
     ) -> t.Tuple[t.List[str], t.List[float]]:
@@ -115,9 +115,22 @@ class LanceVectorSearcher(BaseVectorSearcher):
         else:
             result = self.dataset.to_table(
                 columns=['id'],
-                nearest={"column": 'vector', "q": h, "k": n},
+                nearest={"column": 'vector', "q": h, "k": n, 'metric': self.measure},
                 offset=0,
             )
         ids = result['id'].to_pylist()
-        scores = result['_distance'].to_pylist()
+        distances = result['_distance'].to_pylist()
+        scores = self._convert_distances_to_scores(distances)
         return ids, scores
+
+    def _convert_distances_to_scores(self, distances: list[float]) -> list[float]:
+        if self.measure == "cosine":
+            scores = [1 - d for d in distances]
+        elif self.measure == "l2":
+            scores = [1 - d for d in distances]
+        elif self.measure == "dot":
+            scores = [-d for d in distances]
+        else:
+            scores = distances
+
+        return scores

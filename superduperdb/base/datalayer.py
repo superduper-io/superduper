@@ -720,13 +720,14 @@ class Datalayer:
                 f'{download_content.__name__}()',
                 f'{model}.predict_in_db({key})',
             )
-            deps = self._get_dependencies_for_listener(identifier)
-            for dep in deps:
-                dep_model, _, dep_key = dep.rpartition('/')
-                G.add_edge(
-                    f'{dep_model}.predict_in_db({dep_key})',
-                    f'{model}.predict_in_db({key})',
-                )
+            if not self.cdc.running:
+                deps = self._get_dependencies_for_listener(identifier)
+                for dep in deps:
+                    dep_model, _, dep_key = dep.rpartition('/')
+                    G.add_edge(
+                        f'{dep_model}.predict_in_db({dep_key})',
+                        f'{model}.predict_in_db({key})',
+                    )
 
         if s.CFG.self_hosted_vector_search:
             return G
@@ -909,7 +910,7 @@ class Datalayer:
             return []
         out = []
         if info['dict']['key'].startswith('_outputs.'):
-            _, key, model = info['dict']['key'].split('.')
+            _, key, model, *version = info['dict']['key'].split('.')
             out.append(f'{model}/{key}')
         return out
 

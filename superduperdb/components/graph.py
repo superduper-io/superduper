@@ -31,7 +31,9 @@ class Graph(_Predictor):
     '''
 
     models: t.List[_Predictor] = dc.field(default_factory=list)
-    edges: t.List[t.Tuple[str, str, t.Tuple[int, str]]] = dc.field(default_factory=list)
+    edges: t.List[t.Tuple[str, str, t.Tuple[t.Union[int, str], str]]] = dc.field(
+        default_factory=list
+    )
     input: _Predictor
     outputs: t.List[t.Union[str, _Predictor]] = dc.field(default_factory=list)
     _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, Signature.singleton)
@@ -74,7 +76,7 @@ class Graph(_Predictor):
         self,
         u: _Predictor,
         v: _Predictor,
-        on: t.Optional[t.Tuple[int, str]] = None,
+        on: t.Optional[t.Tuple[t.Union[int, str], str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
         '''
@@ -100,7 +102,6 @@ class Graph(_Predictor):
 
         G_ = self.G.copy()
         G_.add_edge(u.identifier, v.identifier, weight=on or self._DEFAULT_ARG_WEIGHT)
-
         if not nx.is_directed_acyclic_graph(G_):
             raise TypeError('The graph is not DAG with this edge')
         self.G = G_
@@ -115,9 +116,17 @@ class Graph(_Predictor):
                 self.models.append(v)
         return
 
-    def fetch_output(self, output, index: t.Optional[int] = None, one: bool = False):
+    def fetch_output(
+        self, output, index: t.Optional[t.Union[int, str]] = None, one: bool = False
+    ):
         if index is not None:
-            assert isinstance(index, int)
+            assert isinstance(index, (int, str))
+
+            if isinstance(index, str):
+                assert isinstance(
+                    output, dict
+                ), 'Output should be a dict for indexing with str'
+
             try:
                 if one:
                     return output[index]

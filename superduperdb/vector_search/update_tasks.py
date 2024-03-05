@@ -52,6 +52,8 @@ def copy_vectors(
     docs = db.select(select)
     docs = [doc.unpack() for doc in docs]
     key = vi.indexing_listener.key
+    if '_outputs.' in key:
+        key = key.split('.')[1]
     model = vi.indexing_listener.model.identifier
     version = vi.indexing_listener.model.version
     # TODO: Refactor the below logic

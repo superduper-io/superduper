@@ -603,7 +603,10 @@ class _Predictor(Component):
         elif signature == Signature.kwargs:
             return (), data
         elif signature == Signature.args_kwargs:
-            return data[0], data[1]
+            if isinstance(data, (list, tuple)):
+                return data[0], data[1]
+            else:
+                return (data,), {}
         else:
             raise ValueError(
                 f'Unexpected signature {data}: '
@@ -869,8 +872,10 @@ class QueryModel(_Predictor):
         return Inputs([x.value for x in self.select.variables])
 
     def predict_one(self, X: t.Dict):
+        assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
             X = self.preprocess(X)
+        # TODO: There's something wrong here
         select = self.select.set_variables(db=self.db, **X)
         out = self.db.execute(select)
         if self.postprocess is not None:
@@ -896,6 +901,13 @@ class SequentialModel(_Predictor):
     )
     predictors: t.List[_Predictor]
 
+    signature: t.Optional[str] = Signature.args_kwargs  # type: ignore[misc]
+
+    def __post_init__(self, artifacts):
+        self.signature = self.predictors[0].signature
+        self.datatype = self.predictors[-1].datatype
+        return super().__post_init__(artifacts)
+
     @property
     def inputs(self) -> Inputs:
         return self.predictors[0].inputs
@@ -906,6 +918,8 @@ class SequentialModel(_Predictor):
                 continue
             p.post_create(db)
         self.on_load(db)
+        self.signature = self.predictors[0].signature
+        self.datatype = self.predictors[-1].datatype
 
     def on_load(self, db: Datalayer):
         for i, p in enumerate(self.predictors):
@@ -917,7 +931,7 @@ class SequentialModel(_Predictor):
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         for i, p in enumerate(self.predictors):
-            assert isinstance(p, _Predictor)
+            assert isinstance(p, _Predictor), f'Expected _Predictor, got {type(p)}'
             if i == 0:
                 out = p.predict(dataset)
             else:

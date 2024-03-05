@@ -101,7 +101,7 @@ class Cluster(BaseConfig):
     """
 
     compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
-    vector_search: str = 'in_memory'  # '<in_memory|lance>://localhost:8000'
+    vector_search: str = 'in_memory'  # '<http|in_memory|lance>://localhost:8000'
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     backfill_batch_size: int = 100
 

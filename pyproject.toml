@@ -186,6 +186,7 @@ extend-select = [
     #"N", # pep8-naming
     #"D", # pydocstyle
 ]
+ignore = ["E402"]
 
 [tool.ruff.isort]
 combine-as-imports = true

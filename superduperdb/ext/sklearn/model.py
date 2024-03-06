@@ -1,6 +1,9 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb.misc.annotations import requires_packages
+
+requires_packages(['scikit-learn', '1.2.2', None])
 import numpy
 from sklearn.base import BaseEstimator
 from tqdm import tqdm

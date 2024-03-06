@@ -69,6 +69,17 @@ def requires_packages(*modules):
     '''
     missing_modules = []
     missing_module_versions = []
+
+    def _create_versioned(module):
+        if len(module) == 2:
+            return '=='.join(module)
+        elif module[1] is None:
+            return f'{module[0]}<={module[-1]}'
+        elif module[-1] is None:
+            return f'{module[0]}>={module[1]}'
+        else:
+            return f'{module[0]}>={module[1]},<={module[-1]}'
+
     for module_name in modules:
         pkg = module_name[0]
         if len(module_name) == 1:
@@ -86,21 +97,26 @@ def requires_packages(*modules):
             except ImportError:
                 missing_modules.append(module_name[0])
 
-    if missing_modules:
-        raise RequiredPackageNotFound(
-            f"The following modules are required but "
-            "either not present or installed with wrong "
-            f"version: {', '.join(missing_modules)}"
-        )
+    missing_module_versions += missing_modules
 
     if missing_module_versions:
         msg = []
+        reqs = []
         for v in missing_module_versions:
-            msg.append(f'Module: {v[1]} Required: {v[0]} but got {v[1]}=={v[-1]}')
+            if isinstance(v, str):
+                reqs.append(v)
+                msg.append(f'Module: {v} not installed')
+            else:
+                reqs.append(_create_versioned(v[0]))
+                msg.append(f'Module: {v[1]} Required: {v[0]} but got {v[1]}=={v[-1]}')
+        reqs = '\n'.join(reqs)
 
         raise RequiredPackageNotFound(
-            "The following modules are installed with"
-            f"different versions: {', '.join(msg)}"
+            f"The following modules are required but "
+            "either not present or installed with wrong "
+            f"version: {','.join(msg)}"
+            "\nAdd following lines to requirements.txt:"
+            f"\n{reqs}"
         )
 
 

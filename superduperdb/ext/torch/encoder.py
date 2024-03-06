@@ -1,5 +1,9 @@
 import typing as t
 
+from superduperdb.misc.annotations import requires_packages
+
+# TODO: check logic for != version checks
+requires_packages(['torch', '2.0.0', None])
 import numpy
 import torch
 

@@ -1,6 +1,10 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb.misc.annotations import requires_packages
+
+requires_packages(['cohere', '4.40'])
+
 import cohere
 import tqdm
 from cohere.error import CohereAPIError, CohereConnectionError

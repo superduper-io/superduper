@@ -1,6 +1,10 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb.misc.annotations import requires_packages
+
+requires_packages(['sentence-transformers', '2.2.2', None])
+
 from overrides import override
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 

@@ -1,4 +1,3 @@
-# ruff: noqa: E402
 import dataclasses as dc
 import functools
 import re

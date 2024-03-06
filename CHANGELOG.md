@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add model dict output indexing in graph
 
 #### New Features & Functionality
-- Add requires functionality for extension modules
+- Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
 - Change and simplify the contract for writing new `_Predictor` descendants (`.predict_one`, `.predict`)

@@ -2,6 +2,9 @@ import pickle
 import typing as t
 
 # TODO add initialization code ensuring a version range for this code
+from superduperdb.misc.annotations import requires_packages
+
+requires_packages(['unstructured', '0.12.5', None])
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 from unstructured.partition.html import partition_html

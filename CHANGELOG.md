@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize LLM fine-tuning
 
 #### Bug Fixes
+- Fix a minor bug in copy_vectors for outputs stored as seperate table.
 - Fixed the bug where select in listener is modified in schedule_jobs.
 - LLM CI random errors
 - VectorIndex schedule_jobs missing function.

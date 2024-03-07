@@ -20,6 +20,6 @@ class Prompter:
             return self.prompt_func(x, **new_kwargs)
 
         if isinstance(x, str):
-            return format_prompt(x, self.prompt_template, kwargs.pop("context", None))
+            return format_prompt(x, self.prompt_template, kwargs.get("context", None))
         else:
             return x

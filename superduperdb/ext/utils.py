@@ -29,8 +29,11 @@ def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) 
         prompt += X
 
     if '{context}' in prompt:
+        if isinstance(context, (list, tuple)):
+            context = '\n'.join(context)
+
         if context:
-            format_params['context'] = '\n'.join(context)
+            format_params['context'] = context
         else:
             raise ValueError(f'A context is required for prompt {prompt}')
 

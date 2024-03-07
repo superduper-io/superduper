@@ -37,8 +37,6 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
         super().__post_init__(artifacts)
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
-        self.prompter = Prompter(self.prompt_template, self.prompt_func)
-        assert "{input}" in self.prompt_template, "Template must contain {input}"
 
     def to_call(self, X, *args, **kwargs):
         raise NotImplementedError
@@ -58,11 +56,10 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
     def init(self):
         ...
 
-    @abc.abstractmethod
-    def _generate(self, prompt: str, **kwargs: Any) -> str:
-        ...
+    def _generate(self, prompt: str, **kwargs: Any):
+        raise NotImplementedError
 
-    def _batch_generate(self, prompts: List[str]) -> List[str]:
+    def _batch_generate(self, prompts: List[str], **kwargs) -> List[str]:
         """
         Base method to batch generate text from a list of prompts.
         If the model can run batch generation efficiently, pls override this method.
@@ -71,13 +68,15 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
 
     @ensure_initialized
     def predict_one(self, X: Union[str, dict[str, str]], **kwargs):
-        x = self.prompter(X)
+        x = self.prompter(X, **kwargs)
+        kwargs.pop("context", None)
         return self._generate(x, **kwargs)
 
     @ensure_initialized
-    def predict(self, dataset: Union[List, QueryDataset]) -> Sequence:
-        xs = [self.prompter(dataset[i]) for i in range(len(dataset))]
-        return self._batch_generate(xs)
+    def predict(self, dataset: Union[List, QueryDataset], **kwargs) -> Sequence:
+        xs = [self.prompter(dataset[i], **kwargs) for i in range(len(dataset))]
+        kwargs.pop("context", None)
+        return self._batch_generate(xs, **kwargs)
 
     def get_kwargs(self, func, *kwargs_list):
         """
@@ -93,6 +92,10 @@ class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
             if k in sig.parameters:
                 new_kwargs[k] = v
         return new_kwargs
+
+    @property
+    def prompter(self):
+        return Prompter(self.prompt_template, self.prompt_func)
 
 
 @dc.dataclass
@@ -247,8 +250,8 @@ class BaseLLMModel(_BaseLLM):
     ray_address: Optional[str] = None
     ray_config: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self, artifacts):
         self.identifier = self.identifier or self.model_name
         assert self.model_name, "model_name can not be empty"
         self._is_initialized = False
-        super().__post_init__()
+        super().__post_init__(artifacts)

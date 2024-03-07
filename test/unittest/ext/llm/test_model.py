@@ -13,11 +13,13 @@ from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
-    import bitsandbytes
+    import datasets
     import peft
+    import trl
 except ImportError:
-    bitsandbytes = None
+    datasets = None
     peft = None
+    trl = None
 
 RUN_LLM_FINETUNE = os.environ.get("RUN_LLM_FINETUNE", "0") == "1"
 
@@ -42,7 +44,8 @@ def test_model_as_listener_model(db):
 
 @pytest.mark.skipif(not RUN_LLM_FINETUNE, reason="RUN_LLM_FINETUNE is not set")
 @pytest.mark.skipif(
-    not bitsandbytes or not peft, reason="The peft and bitsandbytes are not installed"
+    not all([datasets, peft, trl]),
+    reason="The peft, datasets and trl are not installed",
 )
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_training(db, tmpdir):

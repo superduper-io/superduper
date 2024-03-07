@@ -18,11 +18,10 @@ from superduperdb.components.dataset import Dataset as _Dataset
 from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.model import (
     _Fittable,
-    _Predictor,
     _TrainingConfiguration,
 )
 from superduperdb.ext.llm import training
-from superduperdb.ext.llm.utils import Prompter
+from superduperdb.ext.llm.base import _BaseLLM
 
 from .training import Checkpoint
 
@@ -43,7 +42,7 @@ def LLMTrainingConfiguration(identifier: str, **kwargs) -> _TrainingConfiguratio
 
 
 @dc.dataclass
-class LLM(_Predictor, _Fittable):
+class LLM(_BaseLLM, _Fittable):
     """
     LLM model based on `transformers` library.
     Parameters:
@@ -184,7 +183,6 @@ class LLM(_Predictor, _Fittable):
                 real_adapter_id = checkpoint.path.unpack(db)
 
         super().init()
-        self.prompter = Prompter(self.prompt_template, self.prompt_func)
 
         self.pipeline = self.init_pipeline(real_adapter_id)
 
@@ -269,7 +267,8 @@ class LLM(_Predictor, _Fittable):
     @ensure_initialized
     def predict_one(self, X, **kwargs):
         X = self._process_inputs(X, **kwargs)
-        results = self._generate([X], **kwargs)
+        kwargs.pop("context", None)
+        results = self._batch_generate([X], **kwargs)
         return results[0]
 
     @ensure_initialized
@@ -277,14 +276,15 @@ class LLM(_Predictor, _Fittable):
         dataset = [
             self._process_inputs(dataset[i], **kwargs) for i in range(len(dataset))
         ]
-        return self._generate(dataset, **kwargs)
+        kwargs.pop("context", None)
+        return self._batch_generate(dataset, **kwargs)
 
     def _process_inputs(self, X: t.Any, **kwargs) -> str:
         if isinstance(X, str):
             X = self.prompter(X, **kwargs)
         return X
 
-    def _generate(self, X: list, **kwargs):
+    def _batch_generate(self, prompts: t.List[str], **kwargs) -> t.List[str]:
         """
         Generate text.
         Can overwrite this method to support more inference methods.
@@ -294,7 +294,7 @@ class LLM(_Predictor, _Fittable):
         # Set default values, if not will cause bad output
         kwargs.setdefault("add_special_tokens", True)
         outputs = self.pipeline(
-            X,
+            prompts,
             return_type=ReturnType.NEW_TEXT,
             eos_token_id=self.pipeline.tokenizer.eos_token_id,
             pad_token_id=self.pipeline.tokenizer.eos_token_id,
@@ -369,13 +369,3 @@ class LLM(_Predictor, _Fittable):
         # If no validation sets provided, use the validation set from db
         validation_sets = validation_sets.get("_DEFAULT", validation_sets)
         return train_dataset, validation_sets
-
-    def post_create(self, db: "Datalayer") -> None:
-        # TODO: Do not make sense to add this logic here,
-        # Need a auto DataType to handle this
-        from superduperdb.backends.ibis.data_backend import IbisDataBackend
-        from superduperdb.backends.ibis.field_types import dtype
-
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype("str")
-        super().post_create(db)

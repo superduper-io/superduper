@@ -23,6 +23,7 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
+from superduperdb.components.schema import Schema
 from superduperdb.misc.files import load_uris
 
 
@@ -304,10 +305,12 @@ class Aggregate(Select):
                 self.vector_index,
             )
         )
+        decode_function = _get_decode_function(db, self.table_or_collection.identifier)
         return SuperDuperCursor(
             raw_cursor=cursor,
             id_field='_id',
             db=db,
+            decode_function=decode_function,
         )
 
 
@@ -368,14 +371,17 @@ class MongoCompoundSelect(CompoundSelect):
 
     def execute(self, db, reference=False):
         output, scores = self._execute(db)
+        decode_function = _get_decode_function(db, self.table_or_collection.identifier)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
                 raw_cursor=output,
                 id_field='_id',
                 scores=scores,
                 db=db,
+                decode_function=decode_function,
             )
         elif isinstance(output, dict):
+            output = decode_function(output)
             if reference and CFG.hybrid_storage:
                 load_uris(output, datatypes=db.datatypes)
             return Document.decode(output, db)
@@ -512,7 +518,13 @@ class MongoInsert(Insert):
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
-        documents = [r.encode() for r in self.documents]
+        try:
+            schema: Schema = db.load(
+                Schema.type_id, self.table_or_collection.identifier
+            )
+        except FileNotFoundError:
+            schema = None
+        documents = [r.encode(schema) for r in self.documents]
         insert_result = collection.insert_many(documents, **self.kwargs)
         return insert_result.inserted_ids
 
@@ -798,3 +810,20 @@ class Collection(TableOrCollection):
             collection_name = f'_outputs.{key}.{model}'
             collection = db.databackend.get_table_or_collection(collection_name)
             collection.bulk_write(bulk_docs)
+
+
+def _get_decode_function(db, schema_identifier: str) -> t.Callable[[t.Any], t.Any]:
+    try:
+        schema = db.load(Schema.type_id, schema_identifier)
+    except FileNotFoundError:
+        schema = None
+    if schema is None:
+        return lambda x: x
+
+    def decode(output):
+        for k in output.keys():
+            if field := schema.fields.get(k):
+                output[k] = field.decode_data(output[k])
+        return output
+
+    return decode

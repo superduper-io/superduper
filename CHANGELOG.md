@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add file datatype type to support saving and reading files/folders in artifact_store
 - Create models directly by importing package from auto and with decorator `@objectmodel`, `@torchmodel`
 - Optimize LLM fine-tuning
+- Support Schema option for MongoDB
 
 #### Bug Fixes
 - Fixed a bug in variable set

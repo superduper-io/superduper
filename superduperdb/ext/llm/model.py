@@ -96,6 +96,31 @@ class LLM(_BaseLLM, _Fittable):
 
         super().__post_init__(artifacts)
 
+    @classmethod
+    def from_pretrained(
+        cls,
+        model_name_or_path,
+        identifier="",
+        prompt_template="{input}",
+        prompt_func=None,
+        **kwargs,
+    ):
+        """
+        A new function to create a LLM model from from_pretrained function.
+        Allow the user to directly replace:
+        AutoModelForCausalLM.from_pretrained -> LLM.from_pretrained
+        """
+        model_kwargs = kwargs.copy()
+        tokenizer_kwargs = {}
+        return cls(
+            model_name_or_path=model_name_or_path,
+            identifier=identifier,
+            model_kwargs=model_kwargs,
+            tokenizer_kwargs=tokenizer_kwargs,
+            prompt_template=prompt_template,
+            prompt_func=prompt_func,
+        )
+
     def init_pipeline(
         self, adapter_id: t.Optional[str] = None, load_adapter_directly: bool = False
     ):

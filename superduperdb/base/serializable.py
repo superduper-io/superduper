@@ -56,7 +56,7 @@ def _replace_variables(x, db, **kwargs):
             for k, v in x.items()
         }
     if isinstance(x, (list, tuple)):
-        return [_replace_variables(v, db) for v in x]
+        return [_replace_variables(v, db, **kwargs) for v in x]
     if isinstance(x, Variable):
         return x.set(db, **kwargs)
     if isinstance(x, Document):

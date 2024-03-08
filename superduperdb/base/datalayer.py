@@ -1,5 +1,4 @@
 import dataclasses as dc
-import math
 import random
 import typing as t
 import warnings
@@ -26,13 +25,10 @@ from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
-    Artifact,
     DataType,
-    File,
     _BaseEncodable,
     serializers,
 )
-from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
@@ -238,31 +234,6 @@ class Datalayer:
         self.metadata.drop(force=True)
         self.artifact_store.drop(force=True)
 
-    def validate(
-        self,
-        identifier: str,
-        type_id: str,
-        validation_set: str,
-        metrics: t.Sequence[str],
-    ):
-        """
-        Evaluate quality of component, using `Component.validate`, if implemented.
-
-        :param identifier: identifier of semantic index
-        :param type_id: type_id of component
-        :param validation_set: validation dataset on which to validate
-        :param metrics: metric functions to compute
-        """
-        # TODO: never called
-        component = self.load(type_id, identifier)
-        metric_list = [self.load('metric', m) for m in metrics]
-        assert isinstance(component, ObjectModel)
-        return component.validate(
-            self,
-            validation_set,
-            metric_list,  # type: ignore[arg-type]
-        )
-
     def show(
         self,
         type_id: str,
@@ -308,9 +279,11 @@ class Datalayer:
         context = sources[:]
         if context_key is not None:
             context = [
-                Document(r[context_key])
-                if isinstance(r[context_key], dict)
-                else Document({'_base': r[context_key]})
+                (
+                    Document(r[context_key])
+                    if isinstance(r[context_key], dict)
+                    else Document({'_base': r[context_key]})
+                )
                 for r in context
             ]
         return context, sources
@@ -770,34 +743,17 @@ class Datalayer:
 
         return G
 
-    # TODO could be handled exclusively by `_Predictor.predict`
-    def _compute_model_outputs(
-        self,
-        model_info,
-        _ids,
-        select: Select,
-        key='_base',
-        model=None,
-        predict_kwargs=None,
+    def _update(
+        self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
     ):
-        s.logging.info('finding documents under filter')
-        model_identifier = model_info['identifier']
-        documents = list(self.execute(select.select_using_ids(_ids)))
-        documents = [x.unpack() for x in documents]
-        if key != '_base':
-            passed_docs = [r[key] for r in documents]
-        else:
-            passed_docs = documents
-        if model is None:
-            model = self.models[model_identifier]
-        return model.predict(passed_docs, **(predict_kwargs or {}))
+        # TODO add update logic here to check changed attributes
+        s.logging.debug(f'{object.unique_id} already exists - doing nothing')
+        return []
 
-    # TODO extra level not necessary
     def _add(
         self,
         object: Component,
         dependencies: t.Sequence[Job] = (),
-        serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
         jobs = list(dependencies)
@@ -807,9 +763,12 @@ class Datalayer:
         assert hasattr(object, 'version')
 
         existing_versions = self.show(object.type_id, object.identifier)
-        if isinstance(object.version, int) and object.version in existing_versions:
-            s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-            return []
+        already_exists = (
+            isinstance(object.version, int) and object.version in existing_versions
+        )
+
+        if already_exists:
+            return self._update(object, dependencies=dependencies, parent=parent)
 
         if object.version is None:
             if existing_versions:
@@ -817,21 +776,18 @@ class Datalayer:
             else:
                 object.version = 0
 
-        if serialized is None:
-            leaves = object.dict().get_leaves()
-            leaves = leaves.values()
-            artifacts = [leaf for leaf in leaves if isinstance(leaf, (Artifact, File))]
-            children = [leaf for leaf in leaves if isinstance(leaf, Component)]
+        leaves = object.dict().get_leaves()
+        leaves = leaves.values()
+        artifacts = [leaf for leaf in leaves if isinstance(leaf, _BaseEncodable)]
+        children = [leaf for leaf in leaves if isinstance(leaf, Component)]
 
         for child in children:
             sub_jobs = self._add(child, parent=object.unique_id)
             jobs.extend(sub_jobs)
 
         # need to do this again to get the versions of the children
-        if serialized is None:
-            serialized = object.dict().encode()  # type: ignore[assignment]
+        serialized = object.dict().encode()
 
-        assert serialized is not None
         if artifacts:
             self.artifact_store.save(serialized)
 
@@ -925,73 +881,6 @@ class Datalayer:
     def _get_object_info(self, identifier, type_id, version=None):
         return self.metadata.get_component(type_id, identifier, version=version)
 
-    # TODO remove
-    def _apply_listener(
-        self,
-        identifier,
-        ids: t.Optional[t.Sequence[str]] = None,
-        verbose: bool = False,
-        max_chunk_size=5000,
-        model=None,
-        recompute: bool = False,
-        listener_info=None,
-        **kwargs,
-    ) -> t.List:
-        # NOTE: this method is never called anywhere except for itself!
-        if listener_info is None:
-            listener_info = self.metadata.get_component('listener', identifier)
-
-        select = serializable.Serializable.from_dict(listener_info['select'])
-        if ids is None:
-            ids = select.get_ids(self)
-        else:
-            ids = select.select_using_ids(ids=ids).get_ids(self)
-            assert ids is not None
-
-        ids = [str(id) for id in ids]
-
-        if max_chunk_size is not None:
-            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                s.logging.info(
-                    'computing chunk '
-                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
-                )
-                self._apply_listener(
-                    identifier,
-                    ids=ids[i : i + max_chunk_size],
-                    verbose=verbose,
-                    max_chunk_size=None,
-                    model=model,
-                    recompute=recompute,
-                    listener_info=listener_info,
-                    **kwargs,
-                )
-            return []
-
-        model_info = self.metadata.get_component('model', listener_info['model'])
-        outputs = self._compute_model_outputs(
-            model_info,
-            ids,
-            select,
-            key=listener_info['key'],
-            model=model,
-            predict_kwargs=listener_info.get('predict_kwargs', {}),
-        )
-        type = model_info.get('type')
-        if type is not None:
-            type = self.datatypes[type]
-            outputs = [type(x).encode() for x in outputs]
-
-        select.model_update(
-            db=self,
-            model=listener_info['model'],
-            key=listener_info['key'],
-            version=listener_info['version'],
-            outputs=outputs,
-            ids=ids,
-        )
-        return outputs
-
     def replace(
         self,
         object: t.Any,
@@ -1041,7 +930,7 @@ class Datalayer:
         if outputs is None:
             outs: t.Dict = {}
         else:
-            outs = outputs.encode()  # type: ignore[assignment]
+            outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
         logging.info(str(outs))

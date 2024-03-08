@@ -3,7 +3,7 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.model import TorchModel, TorchTrainerConfiguration
+    from superduperdb.ext.torch.model import TorchModel, TorchTrainer
 except ImportError:
     torch = None
 
@@ -56,8 +56,8 @@ def model():
     return TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',
-        training_configuration=TorchTrainerConfiguration(
-            identifier='my_configuration',
+        trainer=TorchTrainer(
+            identifier='my_trainer',
             objective=my_loss,
             loader_kwargs={'batch_size': 10},
             max_iterations=100,
@@ -79,8 +79,6 @@ def model():
     indirect=True,
 )
 def test_fit(db, valid_dataset, model):
-    db.add(valid_dataset)
-
     m = model
 
     if isinstance(db.databackend, MongoDataBackend):
@@ -89,16 +87,8 @@ def test_fit(db, valid_dataset, model):
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z', '_fold')
 
-    m.fit(
-        X='x',
-        y='y',
-        db=db,
-        select=select,
-        metrics=[Metric(identifier='acc', object=acc)],
-        validation_sets=['my_valid'],
-    )
-
-
-def test_predict():
-    # Check that the pre-process etc. has been called
-    ...
+    model.train_X = ('X', 'y')
+    model.train_select = select
+    model.metrics = [Metric(identifier='acc', object=acc)]
+    model.validation_sets = [valid_dataset]
+    db.add(m)

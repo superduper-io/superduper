@@ -2,7 +2,8 @@ import dataclasses as dc
 
 from superduperdb.misc.annotations import requires_packages
 
-requires_packages(['openai', '1.1.2', None], ['httpx'])
+requires_packages(['openai', '1.1.2'], ['httpx'])
+
 from httpx import ResponseNotRead
 from openai import (
     APITimeoutError,

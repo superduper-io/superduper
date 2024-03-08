@@ -190,5 +190,6 @@ test/sleep.json
 .vscode
 
 /tmp
-.superduperdb
-output/
+/.superduperdb
+/output/
+/deploy/testenv/requirements.txt

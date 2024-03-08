@@ -44,7 +44,7 @@ class Document(MongoStyleDict):
         self,
         schema: t.Optional['Schema'] = None,
         leaf_types_to_keep: t.Sequence[t.Type] = (),
-    ) -> t.Tuple[dict, t.List[Leaf]]:
+    ) -> t.Dict:
         """Make a copy of the content with all the Leaves encoded"""
         if schema is not None:
             return _encode_with_schema(dict(self), schema)

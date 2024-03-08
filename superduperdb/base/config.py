@@ -178,7 +178,7 @@ class Config(BaseConfig):
 
     """
 
-    data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
+    data_backend: str = 'mongodb://localhost:27017/test_db'
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')
 
     artifact_store: t.Optional[str] = None

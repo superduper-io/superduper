@@ -1,5 +1,4 @@
 import dataclasses as dc
-import random
 from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
@@ -9,6 +8,7 @@ import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
 from superduperdb.backends.base.query import Select
+from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.datalayer import Datalayer
@@ -18,44 +18,24 @@ from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
+    Mapping,
     ObjectModel,
     QueryModel,
     SequentialModel,
-    Signature,
+    Trainer,
     _Fittable,
     _Predictor,
-    _TrainingConfiguration,
+    _Validator,
 )
+from superduperdb.jobs.job import ComponentJob
 
 
 # ------------------------------------------
 # Test the _TrainingConfiguration class (tc)
 # ------------------------------------------
 @dc.dataclass
-class Validator(_Fittable, ObjectModel):
+class Validator(_Fittable, ObjectModel, _Validator):
     ...
-
-
-def test_tc_type_id():
-    config = _TrainingConfiguration('config')
-    assert config.type_id == 'training_configuration'
-
-
-def test_tc_get_method():
-    config = _TrainingConfiguration('config', kwargs={'param1': 'value1'})
-    config.version = 1
-
-    assert config.get('identifier') == 'config'
-    assert config.get('param1') == 'value1'
-    assert config.get('version') == 1
-
-    assert config.get('non_existent') is None
-    assert config.get('non_existent', 'default_value') == 'default_value'
-
-    # First get the properties of the instance
-    config = _TrainingConfiguration('config', kwargs={'version': 2})
-    config.version = 1
-    assert config.get('version') == 1
 
 
 # --------------------------------
@@ -243,24 +223,29 @@ def test_model_append_metrics():
     assert model.metric_values.get('loss') == [0.5, 0.4]
 
 
-@patch.object(Validator, '_validate')
-def test_model_validate(mock_validate):
+@patch.object(Mapping, '__call__')
+def test_model_validate(mock_call):
     # Check the metadadata recieves the correct values
-    mock_validate.return_value = {'acc': 0.5, 'loss': 0.5}
     model = Validator('test', object=object())
-    db = MagicMock(spec=Datalayer)
-    db.metadata = MagicMock()
-    with patch.object(db, 'add') as db_add, patch.object(
-        db.metadata, 'update_object'
-    ) as update_object:
-        model.validate(db, MagicMock(spec=Dataset), [MagicMock(spec=Metric)])
-        db_add.assert_called_once_with(model)
-        _, kwargs = update_object.call_args
-        assert kwargs.get('key') == 'dict.metric_values'
-        assert kwargs.get('value') == {'acc': 0.5, 'loss': 0.5}
+    my_metric = MagicMock(spec=Metric)
+    my_metric.identifier = 'acc'
+    my_metric.return_value = 0.5
+    mock_call.return_value = 1
+    dataset = MagicMock(spec=Dataset)
+    dataset.data = [None for _ in range(4)]
+
+    def acc(x, y):
+        return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)
+
+    with patch.object(model, 'predict') as mock_predict:
+        mock_predict.return_value = [1, 2, 1, 1]
+        returned = model.validate(
+            'y', dataset=dataset, metrics=[Metric('acc', object=acc)]
+        )
+
+    assert returned == {'acc': 0.75}
 
 
-@patch.object(ObjectModel, 'predict')
 @pytest.mark.parametrize(
     "db",
     [
@@ -269,55 +254,61 @@ def test_model_validate(mock_validate):
     ],
     indirect=True,
 )
-def test_model_core_validate(model_predict, valid_dataset, db):
+def test_model_validate_in_db(valid_dataset, db):
     # Check the validation is done correctly
-    db.add(valid_dataset)
-    model = Validator('test', object=object(), train_X='x', train_y='y')
-    model_predict.side_effect = lambda dataset: [
-        random.randint(0, 1) for _ in range(len(dataset))
-    ]
-    metrics = [
-        Metric('f1', object=f1_score),
-        Metric('acc', object=accuracy_score),
-    ]
-    results = model._validate(db, valid_dataset.identifier, metrics)
-    assert len(results) == 2
-    assert isinstance(results.get(f'{valid_dataset.identifier}/f1'), float)
-    assert isinstance(results.get(f'{valid_dataset.identifier}/acc'), float)
 
-    results = model._validate(db, valid_dataset, metrics)
-    assert len(results) == 2
-    assert isinstance(results.get(f'{valid_dataset.identifier}/f1'), float)
-    assert isinstance(results.get(f'{valid_dataset.identifier}/acc'), float)
+    model_predict = ObjectModel('test', object=lambda x: x, datatype=FieldType('str'))
+
+    with patch.object(model_predict, 'validate') as mock_validate:
+        mock_validate.return_value = {'acc': 0.7, 'f1': 0.2}
+
+        model_predict.metrics = [
+            Metric('f1', object=f1_score),
+            Metric('acc', object=accuracy_score),
+        ]
+        model_predict.validation_sets = [valid_dataset]
+        model_predict.validate_in_db(db)
+
+        assert model_predict.metric_values == {'my_valid/0': {'acc': 0.7, 'f1': 0.2}}
 
 
-def test_model_create_fit_job():
+class MyTrainer(Trainer):
+    def fit(self, *args, **kwargs):
+        return
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_model_create_fit_job(db):
     # Check the fit job is created correctly
     model = Validator('test', object=object())
-    job = model.create_fit_job('x')
+    # TODO move these parameters into the `Trainer` (same thing for validation)
+    model.train_X = 'x'
+    model.train_select = Collection('test').find()
+    model.trainer = MyTrainer('test')
+    db.add(model)
+    with patch.object(ComponentJob, '__call__') as mock_call:
+        mock_call.return_value = None
+    job = model.fit_in_db_job(db=db)
     assert job.component_identifier == model.identifier
-    assert job.method_name == 'fit'
-    assert job.args == ['x']
+    assert job.method_name == 'fit_in_db'
 
 
-@patch.object(Validator, '_fit')
-def test_model_fit(valid_dataset):
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_model_fit(db, valid_dataset):
     # Check the logic of the fit method, the mock method was tested above
 
-    Validator._fit.return_value = 'done'
-    model = Validator('test', object=object())
-    model.fit('x')
-    model._fit.assert_called_once()
-
-    db = MagicMock(spec=Datalayer)
-    db.compute = MagicMock(spec=LocalComputeBackend)
-    model.fit(
-        valid_dataset,
-        db=db,
+    model = Validator(
+        'test',
+        object=object(),
+        train_X='x',
+        train_select=Collection('test').find(),
         validation_sets=[valid_dataset],
+        metrics=[MagicMock(spec=Metric)],
     )
-    _, kwargs = model._fit.call_args
-    assert kwargs.get('validation_sets')[0].identifier == valid_dataset.identifier
+
+    with patch.object(model, 'fit'):
+        model.fit_in_db(db)
+        model.fit.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -371,7 +362,7 @@ def test_sequential_model():
             ObjectModel(
                 identifier='test-predictor-2',
                 object=lambda x: x + 1,
-                signature=Signature.singleton,
+                signature='singleton',
             ),
         ],
     )

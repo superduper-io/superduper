@@ -44,6 +44,7 @@ class Component(Serializable, Leaf):
         self._db = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
+        self.changed = set()
 
     def init(self):
         from superduperdb.base.document import Document
@@ -189,6 +190,11 @@ class Component(Serializable, Leaf):
     @classmethod
     def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
         return f'{type_id}/{identifier}/{version}'
+
+    def __setattr__(self, k, v):
+        if k in dc.fields(self):
+            self.changed.add(k)
+        return super().__setattr__(k, v)
 
     @staticmethod
     def import_(path: str):

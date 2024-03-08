@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
 getLogger("httpx").setLevel(WARNING)
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class _BaseLLM(_Predictor, metaclass=abc.ABCMeta):
     """
     :param prompt_template: The template to use for the prompt.

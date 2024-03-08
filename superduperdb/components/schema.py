@@ -27,9 +27,9 @@ class Schema(Component):
     fields: t.Mapping[str, t.Union[DataType, str]]
 
     def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
+        super().__post_init__(artifacts)
 
     @override
     def pre_create(self, db) -> None:

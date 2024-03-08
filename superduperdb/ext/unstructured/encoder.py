@@ -1,10 +1,6 @@
 import pickle
 import typing as t
 
-# TODO add initialization code ensuring a version range for this code
-from superduperdb.misc.annotations import requires_packages
-
-requires_packages(['unstructured', '0.12.5', None])
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 from unstructured.partition.html import partition_html
@@ -50,7 +46,7 @@ def create_decoder():
         except Exception as e:
             # TODO: A compatibility issue with unstructured when using uri
             # When superduperdb download uri and pass the bytes to the decoder,
-            # the file type message is lost, unstructured cannot  automatically parse.
+            # the file type message is lost, unstructured cannot automatically parse.
             raise ValueError(
                 "Cannot parse the bytes from uri data, please use encoder(x=uri)"
             ) from e

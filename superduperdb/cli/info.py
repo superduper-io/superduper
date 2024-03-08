@@ -1,12 +1,15 @@
 import datetime
+import importlib
 import json
 import os
 import platform
 import socket
 import sys
+import typing as t
 from pathlib import Path
 
 from superduperdb import ROOT
+from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
 
 from . import command
 
@@ -18,6 +21,17 @@ def info():
     print('```')
     print(json.dumps(_get_info(), default=str, indent=2))
     print('```')
+
+
+@command(help='Print information about the current machine and installation')
+def requirements(ext: t.List[str]):
+    out = []
+    for e in ext:
+        try:
+            importlib.import_module(f'superduperdb.ext.{e}')
+        except RequiredPackageVersionsNotFound as e:
+            out.extend([x for x in str(e).split('\n') if x])
+    print('\n'.join(out))
 
 
 def _get_info():

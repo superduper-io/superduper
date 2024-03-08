@@ -112,9 +112,13 @@ services:
        - /bin/sh
        - -c
        - |
-         PYTHONPATH=./:. ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
+         PYTHONPATH=/home/superduper/superduperdb:. ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
      deploy:
        replicas: 1
+     volumes:
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
 
   ray-worker:
     image: superduperdb/sandbox
@@ -122,11 +126,19 @@ services:
       - ray-head
     volumes:
         - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
     command:
-       - /bin/sh
+       - /bin/bash
        - -c
        - |
-         PYTHONPATH=./:. ray start --address=ray-head:6379  --block
+         PYTHONPATH=/home/superduper/superduperdb:. ray start --address=ray-head:6379  --block
+         fswatch -o --recursive /home/superduper/superduperdb/superduperdb | while read change; do
+           echo "Detected change in superduperdb, restarting ray worker..."
+           pkill -f 'ray start --address=ray-head:6379 --block'
+           RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=/home/superduper/superduperdb:. ray start --address=ray-head:6379 --block
+         done
     deploy:
       mode: replicated
       replicas: 2
@@ -146,11 +158,15 @@ services:
     env_file: users.env
     volumes:
         - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
     command:
-      - /bin/sh
+      - /bin/bash
       - -c
       - |
-        python -m superduperdb vector-search
+        python -m uvicorn superduperdb.vector_search.server.deployed_app:app.app --host 0.0.0.0 --reload --reload-dir /home/superduper/superduperdb/superduperdb --port 8000
+
     healthcheck:
       test: curl http://localhost:8000/health || exit 1
       interval: 40s
@@ -180,11 +196,14 @@ services:
     env_file: users.env
     volumes:
         - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
     command:
-      - /bin/sh
+      - /bin/bash
       - -c
       - |
-        python -m superduperdb cdc
+        python -m uvicorn superduperdb.cdc.deployed_app:app.app --host 0.0.0.0 --reload --reload-dir /home/superduper/superduperdb/superduperdb --port 8001
     healthcheck:
       test: curl http://localhost:8001/health || exit 1
       interval: 40s
@@ -217,6 +236,9 @@ services:
       - "8888:8888" # HTTP Notebooks
     volumes:
         - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
     env_file: users.env
     command:
       - /bin/sh

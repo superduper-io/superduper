@@ -36,9 +36,9 @@ class Graph(_Predictor):
     )
     input: _Predictor
     outputs: t.List[t.Union[str, _Predictor]] = dc.field(default_factory=list)
-    _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, Signature.singleton)
-    signature: str = Signature.args_kwargs  # type: ignore[misc]
-    type_id: t.ClassVar[str] = 'graph'
+    _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, 'singleton')
+    signature: Signature = '*args,**kwargs'
+    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self, artifacts):
         self.G = nx.DiGraph()
@@ -57,7 +57,7 @@ class Graph(_Predictor):
         self.outputs = [
             o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
         ]
-        self.input.signature = Signature.args
+        self.input.signature = '*args'
 
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
@@ -91,12 +91,12 @@ class Graph(_Predictor):
         assert isinstance(v, _Predictor)
 
         if u.identifier not in self.nodes:
-            u.signature = Signature.args  # type: ignore[misc]
+            u.signature = '*args'
             self.nodes[u.identifier] = u
             self.G.add_node(u.identifier)
 
         if v.identifier not in self.nodes:
-            v.signature = Signature.args  # type: ignore[misc]
+            v.signature = '*args'
             self.nodes[v.identifier] = v
             self.G.add_node(v.identifier)
 
@@ -178,7 +178,7 @@ class Graph(_Predictor):
             output_key, input_key = edge['weight']
 
             arg_input_dataset = self.fetch_output(outputs[ix], output_key, one=False)
-            if input_key == Signature.singleton:
+            if input_key == 'singleton':
                 return arg_input_dataset
 
             arg_inputs.append(arg_input_dataset)
@@ -196,8 +196,8 @@ class Graph(_Predictor):
             kwargs = node_input
             args = ()
 
-        if Signature.singleton in node_input:
-            args = (node_input[Signature.singleton],)
+        if 'singleton' in node_input:
+            args = (node_input['singleton'],)
             kwargs = {}
         return args, kwargs
 
@@ -249,9 +249,9 @@ class Graph(_Predictor):
 
         def mapping(x):
             nonlocal signature
-            if signature == Signature.kwargs:
+            if signature == '**kwargs':
                 return list(x.values())
-            elif signature == Signature.args_kwargs:
+            elif signature == '*args,**kwargs':
                 return list(x[0]) + list(x[1].values())
             else:
                 return x

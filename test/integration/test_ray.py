@@ -94,7 +94,7 @@ def test_dependencies_with_ray(ray_client, distributed_db):
     def test_node_2(*args, **kwargs):
         return 2
 
-    # Set Dask as Compute engine.
+    # Set ray as Compute engine.
     # ------------------------------
     database = distributed_db
 

@@ -17,6 +17,12 @@ def encode_pil_image(x, info: t.Optional[t.Dict] = None):
 
 
 class DecoderPILImage:
+    """
+    Decoder to convert `bytes` back into a `PIL.Image` class
+
+    :param handle_exceptions: return a blank image if failure
+    """
+
     def __init__(self, handle_exceptions: bool = True):
         self.handle_exceptions = handle_exceptions
 

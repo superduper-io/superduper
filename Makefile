@@ -31,7 +31,6 @@ help: ## Display this help
 # Update this value when you upgrade the version of your project.
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
-
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 
 new_release: ## Release a new version of SuperDuperDB
@@ -57,13 +56,12 @@ install-devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	python -m pip install pre-commit
-	#pre-commit autoupdate
 
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser
 
 	@echo "Download Code Quality dependencies"
-	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
+	python -m pip install --user black==23.3 ruff mypy types-PyYAML types-requests interrogate
 
 	@echo "Download Code Testing dependencies"
 	python -m pip install --user pytest pytest-cov "nbval>=0.10.0"
@@ -99,7 +97,7 @@ lint-and-type-check: ##  Perform code linting and type checking
 	# Check for deadcode
 	# vulture ./
 
-fix-and-test: ##  Lint the code before testing
+fix-and-check: ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting
@@ -127,12 +125,13 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 	docker push superduperdb/superduperdb:latest
 
 
-
 testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
-	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	python -m pip install toml
+	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
+	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg SUPERDUPERDB_EXTRAS="dev" \
+		--build-arg REQUIREMENTS_FILE="deploy/testenv/optional_requirements.txt" \
 
 
 ##@ Testing Environment
@@ -156,7 +155,6 @@ testenv_init: ## Initialize a local Testing environment
 	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
 	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
 
-
 	@echo "===> Run TestEnv"
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
@@ -166,7 +164,6 @@ testenv_init: ## Initialize a local Testing environment
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
-
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 

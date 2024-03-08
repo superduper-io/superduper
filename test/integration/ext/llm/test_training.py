@@ -6,7 +6,8 @@ import transformers
 from superduperdb import superduper
 from superduperdb.backends.mongodb import Collection
 from superduperdb.base.document import Document
-from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
+from superduperdb.ext.llm.model import LLM
+from superduperdb.ext.llm.training import LLMTrainer
 
 try:
     from datasets import load_dataset
@@ -51,7 +52,7 @@ def db():
 
 @pytest.fixture
 def base_config():
-    return LLMTrainingConfiguration(
+    return LLMTrainer(
         identifier="llm-finetune-training-config",
         overwrite_output_dir=True,
         num_train_epochs=1,
@@ -83,12 +84,11 @@ def test_full_finetune(db, base_config):
     output_dir = os.path.join(save_folder, "test_full_finetune")
     base_config.kwargs["output_dir"] = output_dir
 
-    llm.fit(
-        X="text",
-        select=Collection("datas").find(),
-        configuration=base_config,
-        db=db,
-    )
+    llm.train_X = 'text'
+    llm.train_select = Collection('datas').find()
+    llm.trainer = base_config
+
+    llm.fit_in_db(db=db)
 
     llm_inference = LLM(
         identifier="llm",
@@ -105,17 +105,15 @@ def test_lora_finetune(db, base_config):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
+        train_X='text',
+        train_select=Collection('datas').find(),
+        trainer=base_config,
     )
 
     output_dir = os.path.join(save_folder, "test_lora_finetune")
     base_config.kwargs["output_dir"] = output_dir
 
-    llm.fit(
-        X="text",
-        select=Collection("datas").find(),
-        configuration=base_config,
-        db=db,
-    )
+    llm.fit_in_db(db=db)
 
     assert os.path.exists(llm.adapter_id)
 
@@ -130,18 +128,16 @@ def test_qlora_finetune(db, base_config):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
+        train_X='text',
+        trainer=base_config,
+        train_select=Collection('datas').find(),
     )
 
     base_config.kwargs["bits"] = 4
     output_dir = os.path.join(save_folder, "test_qlora_finetune")
     base_config.kwargs["output_dir"] = output_dir
 
-    llm.fit(
-        X="text",
-        select=Collection("datas").find(),
-        configuration=base_config,
-        db=db,
-    )
+    llm.fit_in_db(db=db)
 
     assert os.path.exists(llm.adapter_id)
 
@@ -157,6 +153,9 @@ def test_local_ray_lora_finetune(db, base_config):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
+        train_X='text',
+        train_select=Collection('datas').find(),
+        trainer=base_config,
     )
 
     base_config.kwargs["use_lora"] = True
@@ -180,10 +179,7 @@ def test_local_ray_lora_finetune(db, base_config):
         "run_config": run_config,
     }
 
-    llm.fit(
-        X="text",
-        select=Collection("datas").find(),
-        configuration=base_config,
+    llm.fit_in_db(
         db=db,
         on_ray=True,
         ray_configs=ray_configs,
@@ -237,7 +233,7 @@ def test_local_ray_deepspeed_lora_finetune(db, base_config):
         "run_config": run_config,
     }
 
-    llm.fit(
+    llm.fit_in_db(
         X="text",
         select=Collection("datas").find(),
         configuration=base_config,
@@ -285,7 +281,7 @@ def test_remote_ray_lora_finetune(db, base_config):
         "run_config": run_config,
     }
 
-    llm.fit(
+    llm.fit_in_db(
         X="text",
         select=Collection("datas").find(),
         configuration=base_config,
@@ -344,7 +340,7 @@ def test_remote_ray_qlora_deepspeed_finetune(db, base_config):
         "run_config": run_config,
     }
 
-    llm.fit(
+    llm.fit_in_db(
         X="text",
         select=Collection("datas").find(),
         configuration=base_config,

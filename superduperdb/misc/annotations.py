@@ -1,125 +1,98 @@
 import importlib
-import operator
 import sys
 import warnings
+from importlib import metadata
 from typing import Optional
 
 from packaging import version
 
-from superduperdb.base.exceptions import RequiredPackageNotFound
-
-ops = {
-    "<=": operator.le,
-    "==": operator.eq,
-    "!=": operator.ne,
-    ">=": operator.ge,
-    ">": operator.gt,
-    "<": operator.lt,
-}
+from superduperdb import logging
+from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
 
 
-def _compare_versions(op, got_ver, want_ver, requirement, pkg):
-    if not ops[op](version.parse(got_ver), version.parse(want_ver)):
-        raise RequiredPackageNotFound(
-            f"{requirement} is required for a normal"
-            f"functioning of this module, but found {pkg}=={got_ver}"
-        )
+def _normalize_module(import_module, lower_bound, upper_bound, install_module):
+    assert import_module is not None
+    if install_module is None:
+        install_module = import_module
+    if upper_bound is None:
+        upper_bound = f'{sys.maxsize}.0.0'
+    if lower_bound is None:
+        lower_bound = '0.0.0'
+    if install_module is None:
+        install_module = import_module
+    return (
+        import_module,
+        version.parse(lower_bound),
+        version.parse(upper_bound),
+        install_module,
+    )
 
 
-def check_versioned(module_name, pkg, got_ver):
-    if len(module_name) == 3:
-        op = None
-        if module_name[1] is None:
-            # Upper bounded version check
-            want_ver = module_name[-1]
-            op = '<='
-            _compare_versions(op, got_ver, want_ver, f'{pkg}{op}{want_ver}', pkg)
-        elif module_name[-1] is None:
-            # Lower bounded version check
-            want_ver = module_name[1]
-            op = '>='
-            _compare_versions(op, got_ver, want_ver, f'{pkg}{op}{want_ver}', pkg)
-        else:
-            # Lower and upper bounded version check
-            want_ver_lower = module_name[1]
-            want_ver_upper = module_name[-1]
-            _compare_versions(
-                '>=', got_ver, want_ver_lower, f'{pkg}>={want_ver_lower}', pkg
-            )
-            _compare_versions(
-                '<=', got_ver, want_ver_upper, f'{pkg}<={want_ver_upper}', pkg
-            )
-
-    elif len(module_name) == 2:
-        # Exact version check
-        got_ver = importlib.metadata.version(module_name[0])
-        want_ver = module_name[1]
-        _compare_versions('==', got_ver, want_ver, f'{pkg}<={want_ver}', pkg)
-
-    else:
-        raise ValueError(
-            f'Cannot check the package requirement for the module {module_name}'
-        )
+MIN = version.parse('0.0.0')
+MAX = version.parse(f'{sys.maxsize}.0.0')
 
 
-def requires_packages(*modules):
+def _compare_versions(package, lower_bound, upper_bound, install_name):
+    constraint = ''
+    if lower_bound == upper_bound:
+        constraint = f'=={lower_bound}'
+    elif lower_bound > MIN and upper_bound < MAX:
+        constraint = f'>={lower_bound},<={upper_bound}'
+    elif upper_bound < MAX:
+        constraint = f'<={upper_bound}'
+    elif lower_bound > MIN:
+        constraint = f'>={lower_bound}'
+    installation_line = f'{install_name}{constraint}'
+    try:
+        got_version = version.parse(metadata.version(package))
+    except metadata.PackageNotFoundError:
+        try:
+            got_version = version.parse(importlib.import_module(package).__version__)
+        except (metadata.PackageNotFoundError, ModuleNotFoundError):
+            logging.error(f'Could not find package {package}')
+            return False, installation_line + '    # (no such package installed)'
+    if not (lower_bound <= got_version and got_version <= upper_bound):
+        return False, installation_line + f'    # (got {got_version})'
+    return True, ''
+
+
+def requires_packages(*packages):
+    """
+    Require the packages to be installed
+    :param packages: list of tuples of packages
+                     each tuple of the form
+                     (import_name, lower_bound/None,
+                      upper_bound/None, install_name/None)
+
+    E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
+    """
+    out = []
+    for m in packages:
+        satisfactory, install_line = _requires_packages(*m)
+        if not satisfactory:
+            out.append(install_line)
+    if out:
+        raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
+    return out
+
+
+def _requires_packages(
+    import_module, lower_bound=None, upper_bound=None, install_module=None
+):
     '''
-    A utility function to check required packages for a module
-    i.e superduperdb.ext
+    A utility function to check that a required package for a module
+    in superduperdb.ext is installed.
     '''
-    missing_modules = []
-    missing_module_versions = []
-
-    def _create_versioned(module):
-        if len(module) == 2:
-            return '=='.join(module)
-        elif module[1] is None:
-            return f'{module[0]}<={module[-1]}'
-        elif module[-1] is None:
-            return f'{module[0]}>={module[1]}'
-        else:
-            return f'{module[0]}>={module[1]},<={module[-1]}'
-
-    for module_name in modules:
-        pkg = module_name[0]
-        if len(module_name) == 1:
-            try:
-                importlib.import_module(module_name[0])
-            except ImportError:
-                missing_modules.append(module_name[0])
-        else:
-            got_ver = None
-            try:
-                got_ver = importlib.metadata.version(module_name[0])
-                check_versioned(module_name, pkg, got_ver)
-            except RequiredPackageNotFound:
-                missing_module_versions.append((module_name, pkg, got_ver))
-            except ImportError:
-                missing_modules.append(module_name[0])
-
-    missing_module_versions += missing_modules
-
-    if missing_module_versions:
-        msg = []
-        reqs = []
-        for v in missing_module_versions:
-            if isinstance(v, str):
-                reqs.append(v)
-                msg.append(f'Module: {v} not installed')
-            else:
-                reqs.append(_create_versioned(v[0]))
-                msg.append(f'Module: {v[1]} Required: {v[0]} but got {v[1]}=={v[-1]}')
-        reqs = '\n'.join(reqs)
-
-        raise RequiredPackageNotFound(
-            f"The following modules are required but "
-            "either not present or installed with wrong "
-            f"version: {','.join(msg)}"
-            "\nAdd following lines to requirements.txt:"
-            f"\n{reqs}"
-        )
+    import_module, lower_bound, upper_bound, install_module = _normalize_module(
+        import_module,
+        lower_bound,
+        upper_bound,
+        install_module,
+    )
+    return _compare_versions(import_module, lower_bound, upper_bound, install_module)
 
 
+# TODO add deprecated also
 def public_api(stability: str = 'stable'):
     """Annotation for documenting public APIs.
 

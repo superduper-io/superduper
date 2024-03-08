@@ -23,8 +23,7 @@ class BaseException(Exception):
         return self.msg
 
 
-class RequiredPackageNotFound(ImportError):
-
+class RequiredPackageVersionsNotFound(ImportError):
     '''
     Exception raised when one or more required packages are not found.
     '''

@@ -4,7 +4,7 @@ import networkx as nx
 import pytest
 
 from superduperdb.components.graph import Graph
-from superduperdb.components.model import Model, Signature
+from superduperdb.components.model import Model
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def test_graph_output_indexing(model2_multi_dict, model2, model1):
         identifier='simple-graph',
         input=model1,
         outputs=[model2],
-        signature=Signature.kwargs,
+        signature='**kwargs',
     )
     g.connect(model1, model2_multi_dict, on=(None, 'x'))
     g.connect(model2_multi_dict, model2, on=('x', 'x'))
@@ -94,7 +94,7 @@ def test_complex_graph(model1, model2_multi, model3, model2):
         identifier='complex-graph',
         input=model1,
         outputs=[model2, model2_multi],
-        signature=Signature.kwargs,
+        signature='**kwargs',
     )
     g.connect(model1, model2_multi, on=(None, 'x'))
     g.connect(model1, model2)
@@ -106,7 +106,7 @@ def test_complex_graph(model1, model2_multi, model3, model2):
         [(4, 2), (5, 3), (6, 4)],
         [8, 10, 12],
     ]
-    g.signature = Signature.args
+    g.signature = '*args'
     assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)], [8, 10, 12]]
 
 
@@ -146,5 +146,5 @@ def test_serialization(db, model1):
     g = Graph(identifier='complex-graph', input=model1)
     original_g = g.G
     db.add(g)
-    g = db.load('graph', 'complex-graph')
+    g = db.load('model', 'complex-graph')
     assert nx.utils.graphs_equal(original_g, g.G)

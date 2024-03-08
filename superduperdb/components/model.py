@@ -5,17 +5,15 @@ import inspect
 import multiprocessing
 import typing as t
 from abc import abstractmethod
-from functools import wraps
 
 import tqdm
-from sklearn.pipeline import Pipeline
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
-from superduperdb.backends.base.query import CompoundSelect, Select
+from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
-from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component, ensure_initialized
@@ -24,7 +22,6 @@ from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.annotations import public_api
-from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -33,6 +30,7 @@ if t.TYPE_CHECKING:
 
 EncoderArg = t.Union[DataType, FieldType, None]
 ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
+Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
 def objectmodel(
@@ -113,186 +111,196 @@ class CallableInputs(Inputs):
 
 
 @dc.dataclass(kw_only=True)
-class _TrainingConfiguration(Component):
+class Trainer(Component):
     """
     Training configuration object, containing all settings necessary for a particular
     learning-task use-case to be serialized and initiated. The object is ``callable``
     and returns a class which may be invoked to apply training.
-
-    :param **kwargs: Key-values pairs, the variables which configure training.
     """
 
-    kwargs: t.Optional[t.Dict] = None
-    type_id: t.ClassVar[str] = 'training_configuration'
+    type_id: t.ClassVar[str] = 'trainer'
 
-    def get(self, k, default=None):
-        try:
-            return getattr(self, k)
-        except AttributeError:
-            return self.kwargs.get(k, default)
+    @abstractmethod
+    def fit(
+        self,
+        model: _Fittable,
+        db: Datalayer,
+        train_dataset: QueryDataset,
+        valid_dataset: QueryDataset,
+    ):
+        pass
+
+
+@dc.dataclass(kw_only=True)
+class _Validator:
+    metrics: t.Sequence[Metric] = ()
+    valid_X: t.Optional[ModelInputType] = None
+    validation_sets: t.Sequence[Dataset] = ()
+    validation_metrics: t.Optional[t.Dict] = None
+
+    def schedule_jobs(self, db, dependencies: t.Sequence[Job] = ()):
+        if self.validation_sets and self.validation_metrics:
+            return [
+                self.validate_in_db_job(
+                    db=db,
+                    dependencies=dependencies,
+                )
+            ]
+        return []
+
+    def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
+        mapping = Mapping(X, signature='*args')
+        predictions = self.predict(dataset.data)
+        targets = list(map(mapping, dataset.data))
+        results = {}
+        for m in metrics:
+            results[m.identifier] = m(predictions, targets)
+        return results
+
+    def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
+        job = ComponentJob(
+            component_identifier=self.identifier,
+            method_name='validate_in_db',
+            type_id='model',
+            kwargs={},
+        )
+        job(db, dependencies)
+        return job
+
+    def validate_in_db(self, db):
+        self.metric_values = {}
+        for dataset in self.validation_sets:
+            db.add(dataset)
+            logging.info(f'Validating on {dataset.identifier}...')
+            results = self.validate(
+                X=self.valid_X,
+                dataset=dataset,
+                metrics=self.metrics,
+            )
+            self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
+        db.add(self)
 
 
 @dc.dataclass(kw_only=True)
 class _Fittable:
-    training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    trainer: t.Optional[Trainer] = None
     train_X: t.Optional[ModelInputType] = None
-    train_y: t.Optional[str] = None
     train_select: t.Optional[CompoundSelect] = None
+    train_transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
-
-    def post_create(self, db: Datalayer) -> None:
-        if isinstance(self.training_configuration, str):
-            self.training_configuration = db.load(
-                'training_configuration', self.training_configuration
-            )
-        # TODO is this necessary - should be handled by `db.add` automatically?
+    train_signature: Signature = '*args'
+    data_prefetch: bool = False
+    prefetch_factor: int = 100
+    in_memory: bool = True
 
     def schedule_jobs(self, db, dependencies=()):
         jobs = []
         if self.train_X is not None:
-            assert (
-                isinstance(self.training_configuration, _TrainingConfiguration)
-                or self.training_configuration is None
-            )
+            assert isinstance(self.trainer, Trainer)
             assert self.train_select is not None
             jobs.append(
-                self.fit(
-                    X=self.train_X,
-                    y=self.train_y,
-                    configuration=self.training_configuration,
-                    select=self.train_select,
+                self.fit_in_db_job(
                     db=db,
                     dependencies=dependencies,
-                    metrics=self.metrics,
-                    validation_sets=self.validation_sets,
                 )
             )
         return jobs
 
-    def _validate(
+    def fit_in_db_job(
         self,
         db: Datalayer,
-        validation_set: t.Union[Dataset, str],
-        metrics: t.Sequence[Metric],
+        dependencies: t.Sequence[Job] = (),
     ):
-        if isinstance(validation_set, str):
-            from superduperdb.components.dataset import Dataset
-
-            validation_set = t.cast(Dataset, db.load('dataset', validation_set))
-
-        mdicts = [MongoStyleDict(r.unpack()) for r in validation_set.data]
-        assert self.train_X is not None
-        mapping = Mapping(self.train_X, self.signature)
-        dataset = list(map(mapping, mdicts))
-        prediction = self.predict(dataset)
-        assert self.train_y is not None
-        target = [d[self.train_y] for d in mdicts]
-        assert isinstance(prediction, list)
-        assert isinstance(target, list)
-        results = {}
-
-        for m in metrics:
-            out = m(prediction, target)
-            results[f'{validation_set.identifier}/{m.identifier}'] = out
-        return results
-
-    def create_fit_job(
-        self,
-        X: t.Union[str, t.Sequence[str]],
-        select: t.Optional[Select] = None,
-        y: t.Optional[str] = None,
-        **kwargs,
-    ):
-        return ComponentJob(
+        job = ComponentJob(
             component_identifier=self.identifier,
-            method_name='fit',
+            method_name='fit_in_db',
             type_id='model',
-            args=[X],
-            kwargs={
-                'y': y,
-                'select': select.dict().encode() if select else None,
-                **kwargs,
-            },
+            kwargs={},
         )
+        job(db, dependencies)
+        return job
 
-    @abstractmethod
-    def _fit(
-        self,
-        X: t.Any,
-        y: t.Optional[t.Any] = None,
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        data_prefetch: bool = False,
-        db: t.Optional[Datalayer] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
-        select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[Dataset]] = None,
-    ):
-        pass
+    def _create_datasets(self, X, db, select):
+        if self.data_prefetch:
+            train_dataset = CachedQueryDataset(
+                select=select,
+                fold='train',
+                db=db,
+                mapping=Mapping(X, signature=self.train_signature),
+                in_memory=self.in_memory,
+                prefetch_size=self.prefetch_size,
+                transform=(
+                    self.train_transform if self.train_transform is not None else None
+                ),
+            )
+            valid_dataset = CachedQueryDataset(
+                select=select,
+                fold='valid',
+                db=db,
+                mapping=Mapping(X, signature=self.train_signature),
+                in_memory=self.in_memory,
+                prefetch_size=self.prefetch_size,
+                transform=(
+                    self.train_transform if self.train_transform is not None else None
+                ),
+            )
+        else:
+            train_dataset = QueryDataset(
+                select=select,
+                fold='train',
+                db=db,
+                mapping=Mapping(X, signature=self.train_signature),
+                in_memory=self.in_memory,
+                transform=(
+                    self.train_transform if self.train_transform is not None else None
+                ),
+            )
+            valid_dataset = QueryDataset(
+                select=select,
+                fold='valid',
+                db=db,
+                mapping=Mapping(X, signature=self.train_signature),
+                in_memory=self.in_memory,
+                transform=(
+                    self.train_transform if self.train_transform is not None else None
+                ),
+            )
+        return train_dataset, valid_dataset
 
     def fit(
         self,
-        X: t.Any,
-        y: t.Optional[t.Any] = None,
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        data_prefetch: bool = False,
-        db: t.Optional[Datalayer] = None,
-        dependencies: t.Sequence[Job] = (),
-        metrics: t.Optional[t.Sequence[Metric]] = None,
-        select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[Dataset]] = None,
-        **kwargs,
-    ) -> t.Optional[Pipeline]:
+        train_dataset: QueryDataset,
+        valid_dataset: QueryDataset,
+        db: Datalayer,
+    ):
+        assert isinstance(self.trainer, Trainer)
+        return self.trainer.fit(
+            self,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            db=db,
+        )
+
+    def fit_in_db(self, db: Datalayer):
         """
         Fit the model on the given data.
 
-        :param X: The key of the input data to use for training
-        :param y: The key of the target data to use for training
-        :param configuration: The training configuration (optional)
-        :param data_prefetch: Whether to prefetch the data (optional)
         :param db: The datalayer (optional)
-        :param dependencies: The dependencies (optional)
+        :param select: Select query to get data
+        :param trainer: Trainer to use to handle training details
         :param metrics: The metrics to evaluate on (optional)
-        :param select: The select to use for training (optional)
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
-        if isinstance(select, dict):
-            # TODO replace with Document.decode(select)
-            select = Serializable.from_dict(select)
-
-        if validation_sets:
-            from superduperdb.components.dataset import Dataset
-
-            validation_sets = list(validation_sets)
-            for i, vs in enumerate(validation_sets):
-                if isinstance(vs, Dataset):
-                    assert db is not None
-                    db.add(vs)
-                    validation_sets[i] = vs
-
-        self.training_configuration = configuration or self.training_configuration
-
-        if db is not None:
-            db.add(self)
-
-        if db is not None and db.compute.type == 'distributed':
-            return self.create_fit_job(
-                X,
-                select=select,
-                y=y,
-                **kwargs,
-            )(db=db, dependencies=dependencies)
-        else:
-            return self._fit(
-                X,
-                y=y,
-                configuration=configuration,
-                data_prefetch=data_prefetch,
-                db=db,
-                metrics=metrics,
-                select=select,
-                validation_sets=validation_sets,
-                **kwargs,
-            )
+        train_dataset, valid_dataset = self._create_datasets(
+            select=self.train_select,
+            X=self.train_X,
+            db=db,
+        )
+        return self.fit(
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            db=db,
+        )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
         if self.metric_values is not None:
@@ -300,21 +308,8 @@ class _Fittable:
                 self.metric_values.setdefault(k, []).append(v)
 
 
-@wraps(_TrainingConfiguration)
-def TrainingConfiguration(identifier: str, **kwargs):
-    return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
-
-
-@dc.dataclass
-class Signature:
-    singleton: t.ClassVar[str] = 'singleton'
-    args: t.ClassVar[str] = '*args'
-    kwargs: t.ClassVar[str] = '**kwargs'
-    args_kwargs: t.ClassVar[str] = '*args,**kwargs'
-
-
 class Mapping:
-    def __init__(self, mapping: ModelInputType, signature: str):
+    def __init__(self, mapping: ModelInputType, signature: Signature):
         self.mapping = self._map_args_kwargs(mapping)
         self.signature = signature
 
@@ -361,11 +356,11 @@ class Mapping:
         args = Document({'_base': args}).unpack()
         kwargs = Document(kwargs).unpack()
 
-        if self.signature == Signature.kwargs:
+        if self.signature == '**kwargs':
             return kwargs
-        elif self.signature == Signature.args:
+        elif self.signature == '*args':
             return (*args, *list(kwargs.values()))
-        elif self.signature == Signature.singleton:
+        elif self.signature == 'singleton':
             if args:
                 assert not kwargs
                 assert len(args) == 1
@@ -374,12 +369,13 @@ class Mapping:
                 assert kwargs
                 assert len(kwargs) == 1
                 return next(kwargs.values())
+        assert self.signature == '*args,**kwargs'
         return args, kwargs
 
 
 @dc.dataclass(kw_only=True)
 class _Predictor(Component):
-    # Mixin class for components which can predict.
+    # base class for components which can predict.
     """:param datatype: DataType instance
     :param output_schema: Output schema (mapping of encoders)
     :param flatten: Flatten the model outputs
@@ -391,14 +387,12 @@ class _Predictor(Component):
     """
 
     type_id: t.ClassVar[str] = 'model'
-    signature: t.ClassVar[str] = Signature.args_kwargs
+    signature: Signature = '*args,**kwargs'
 
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     flatten: bool = False
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
-    metrics: t.Sequence[Metric] = ()
-    validation_sets: t.Optional[t.Sequence[Dataset]] = None
     predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
     def post_create(self, db):
@@ -536,7 +530,7 @@ class _Predictor(Component):
         if isinstance(select, Table):
             select = select.to_query()
 
-        self._prepare_select_for_predict(select, db)
+        select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
@@ -573,11 +567,8 @@ class _Predictor(Component):
             if db is None:
                 raise ValueError('db cannot be None')
             docs = list(db.execute(select.select_using_ids(ids)))
-            # TODO add signature to Mapping.__call__
             X_data = list(map(lambda x: mapping(x), docs))
         else:
-            # TODO above logic missing in case of not a string
-            # idea: add the concept of tuple and dictionary strings to `Document`
             X_data = QueryDataset(
                 select=select,
                 ids=ids,
@@ -596,24 +587,19 @@ class _Predictor(Component):
 
     @staticmethod
     def handle_input_type(data, signature):
-        if signature == Signature.singleton:
+        if signature == 'singleton':
             return (data,), {}
-        elif signature == Signature.args:
+        elif signature == '*args':
             return data, {}
-        elif signature == Signature.kwargs:
+        elif signature == '**kwargs':
             return (), data
-        elif signature == Signature.args_kwargs:
-            if isinstance(data, (list, tuple)):
-                return data[0], data[1]
-            else:
-                return (data,), {}
+        elif signature == '*args,**kwargs':
+            return data[0], data[1]
         else:
             raise ValueError(
                 f'Unexpected signature {data}: '
-                f'Possible values {Signature.args_kwargs},'
-                f'{Signature.kwargs}, '
-                f'{Signature.args}, '
-                f'{Signature.singleton}.'
+                f'Possible values: \'*args\', \'**kwargs\', '
+                '\'singleton\', \'*args,**kwargs\'.'
             )
 
     def _predict_with_select_and_ids(
@@ -726,7 +712,7 @@ class IndexableNode:
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class ObjectModel(_Predictor):
+class ObjectModel(_Predictor, _Validator):
     """Model component which wraps a model to become serializable
     {_predictor_params}
     :param object: Model object, e.g. sklearn model, etc..
@@ -743,7 +729,7 @@ class ObjectModel(_Predictor):
 
     object: t.Any
     num_workers: int = 0
-    signature: str = Signature.args_kwargs  # type: ignore[misc]
+    signature: Signature = '*args,**kwargs'
 
     @property
     def outputs(self):
@@ -771,28 +757,6 @@ class ObjectModel(_Predictor):
         if self.metric_values is not None:
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
-
-    def validate(
-        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
-    ):
-        """
-        Validate model on `db` and validation set.
-
-        :param db: `db` SuperDuperDB instance
-        :param validation_set: Dataset on which to validate.
-        """
-        db.add(self)
-        out = self._validate(db, validation_set, metrics)
-        if self.metric_values is None:
-            raise ValueError('self.metric_values cannot be None')
-        self.metric_values.update(out)
-        db.metadata.update_object(
-            type_id='model',
-            identifier=self.identifier,
-            version=self.version,
-            key='dict.metric_values',
-            value=self.metric_values,
-        )
 
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
@@ -901,7 +865,7 @@ class SequentialModel(_Predictor):
     )
     predictors: t.List[_Predictor]
 
-    signature: t.Optional[str] = Signature.args_kwargs  # type: ignore[misc]
+    signature: t.Optional[str] = '*args,**kwargs'
 
     def __post_init__(self, artifacts):
         self.signature = self.predictors[0].signature

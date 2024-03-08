@@ -173,7 +173,6 @@ def _find_descendants(cls):
 
 @dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
-
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
     to ``Encoder`` instance.
@@ -197,10 +196,6 @@ class _BaseEncodable(Leaf):
     @property
     def unique_id(self):
         return str(id(self.x))
-
-    @property
-    def artifact(self):
-        return self.datatype.artifact
 
     @property
     def reference(self):

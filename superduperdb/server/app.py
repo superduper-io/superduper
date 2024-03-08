@@ -145,7 +145,6 @@ class SuperDuperApp:
             self._app,
             host=self.app_host,
             port=self.port,
-            reload=False,
         )
 
     def startup(self, function=None, cfg=None):

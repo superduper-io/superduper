@@ -7,6 +7,7 @@ from functools import wraps
 
 import torch
 import transformers
+from datasets import Dataset as NativeDataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -17,16 +18,17 @@ from transformers import (
 from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 
 from superduperdb import logging
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.component import Component
+from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, file_serializer
+from superduperdb.components.model import Trainer as SuperDuperTrainer, _Fittable
 from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
-    from datasets import Dataset
-
-    from superduperdb.base.datalayer import Datalayer
     from superduperdb.ext.llm import LLM
 
 
@@ -133,8 +135,8 @@ class LLMCallback(TrainerCallback):
         assert self.llm is not None
 
 
-@dc.dataclass
-class LLMTrainingArguments(TrainingArguments):
+@dc.dataclass(kw_only=True)
+class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     """
     LLM Training Arguments.
     Inherits from :class:`transformers.TrainingArguments`.
@@ -168,6 +170,7 @@ class LLMTrainingArguments(TrainingArguments):
 
     __doc__ = __doc__.format(training_arguments_doc=TrainingArguments.__doc__)
 
+    output_dir: str = ''
     use_lora: bool = True
     lora_r: int = 8
     lora_alpha: int = 16
@@ -178,14 +181,71 @@ class LLMTrainingArguments(TrainingArguments):
     max_seq_length: int = 512
     setup_chat_format: bool = False
     log_to_db: bool = False
+    ray_configs: t.Optional[t.Dict] = None
+    on_ray: bool = False
 
-    def __post_init__(self):
-        ...
-        # Overwrite __post_init__ for lazy build
-        # Cause we can run on remote ray, that can avoid building error on client side
+    def __post_init__(self, artifacts):
+        assert not self.output_dir
+        self.output_dir = f'{self.identifier}'
+        TrainingArguments.__post_init__(self)
+        return super().__post_init__(artifacts)
 
     def build(self):
-        super().__post_init__()
+        self.__post_init__()
+
+    @staticmethod
+    def get_compute_metrics(metrics):
+        if not metrics:
+            return None
+
+        def compute_metrics(eval_preds):
+            output = {}
+            logits, labels = eval_preds
+            for metric in metrics:
+                output[metric.identifier] = metric(logits, labels)
+            return output
+
+        return compute_metrics
+
+    def fit(
+        self,
+        model: _Fittable,
+        db: Datalayer,
+        train_dataset: t.Union[QueryDataset, NativeDataset],
+        valid_dataset: QueryDataset,
+    ):
+        if isinstance(train_dataset, QueryDataset):
+            train_dataset = NativeDataset.from_list(
+                list(train_dataset)  # type: ignore[call-overload]
+            )
+
+        eval_datasets = {}
+        for vs in model.validation_sets:
+            unpacked = [r.unpack() for r in vs.data]
+            eval_datasets[vs.identifier] = NativeDataset.from_list(unpacked)
+        if not eval_datasets:
+            if isinstance(valid_dataset, QueryDataset):
+                valid_dataset = NativeDataset.from_list(
+                    list(valid_dataset)  # type: ignore[call-overload]
+                )
+            eval_datasets['_DEFAULT'] = valid_dataset
+
+        X, y = model.train_X
+        return train(
+            training_config=self,
+            train_dataset=train_dataset,
+            eval_datasets=eval_datasets,
+            model_kwargs=model.model_kwargs,
+            tokenizer_kwargs=model.tokenizer_kwargs,
+            compute_metrics=self.get_compute_metrics(model.metrics),
+            X=X,  # type: ignore[arg-type]
+            y=y,  # type: ignore[arg-type]
+            db=db,
+            llm=self,
+            **model.training_kwargs,
+            on_ray=self.on_ray,
+            ray_configs=self.ray_configs,
+        )
 
 
 def tokenize(tokenizer, example, X, y):
@@ -248,7 +308,7 @@ def train(
     :param ray_configs: ray configs, must provide if using ray
     """
 
-    training_args = LLMTrainingArguments(**training_config)
+    training_args = LLMTrainer(**training_config)
     dataset_text_field = kwargs.get("dataset_text_field", X)
     if dataset_text_field is not None:
         kwargs["dataset_text_field"] = dataset_text_field
@@ -332,7 +392,7 @@ def handle_ray_results(db, llm, results):
 
 
 def train_func(
-    training_args: LLMTrainingArguments,
+    training_args: LLMTrainer,
     train_dataset: "Dataset",
     eval_datasets: t.Union["Dataset", t.Dict[str, "Dataset"]],
     model_kwargs: dict,
@@ -430,7 +490,7 @@ def train_func(
 
 @wraps(train_func)
 def ray_train(
-    training_args: LLMTrainingArguments,
+    training_args: LLMTrainer,
     train_dataset,
     eval_datasets,
     ray_address: t.Optional[str] = None,
@@ -495,7 +555,7 @@ def ray_train(
             train_loop_config[
                 "gradient_checkpointing_kwargs"
             ] = gradient_checkpointing_kwargs
-        train_loop_args = LLMTrainingArguments(**train_loop_config)
+        train_loop_args = LLMTrainer(**train_loop_config)
         # Build the training_args on remote machine
         train_loop_args.build()
         return train_func(train_loop_args, train_dataset, eval_datasets, **kwargs)
@@ -533,7 +593,7 @@ def ray_train(
     return results
 
 
-def prepare_lora_training(model, config: LLMTrainingArguments):
+def prepare_lora_training(model, config: LLMTrainer):
     """
     Prepare LoRA training for the model.
     Get the LoRA target modules and convert the model to peft model.
@@ -573,7 +633,7 @@ def prepare_lora_training(model, config: LLMTrainingArguments):
     return model
 
 
-def create_quantization_config(config: LLMTrainingArguments):
+def create_quantization_config(config: LLMTrainer):
     """Create quantization config for LLM training."""
     compute_dtype = (
         torch.float16

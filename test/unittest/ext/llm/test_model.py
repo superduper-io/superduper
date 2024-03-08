@@ -9,7 +9,8 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
-from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
+from superduperdb.ext.llm.model import LLM
+from superduperdb.ext.llm.training import LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
@@ -64,7 +65,7 @@ def test_training(db, tmpdir):
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),
     )
-    training_configuration = LLMTrainingConfiguration(
+    training_configuration = LLMTrainer(
         identifier="llm-finetune",
         output_dir=str(tmpdir),
         lora_r=64,
@@ -93,7 +94,7 @@ def test_training(db, tmpdir):
     def metric(predictions, targets):
         return random.random()
 
-    model.fit(
+    model.fit_in_db(
         X="text",
         db=db,
         select=select,

@@ -13,8 +13,8 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document as D
 from superduperdb.components.dataset import Dataset
 from superduperdb.ext.transformers.model import (
-    Pipeline,
-    TransformersTrainerConfiguration,
+    TextClassificationPipeline,
+    TransformersTrainer,
 )
 
 
@@ -23,8 +23,6 @@ from superduperdb.ext.transformers.model import (
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def transformers_model(db):
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
     data = [
         {'text': 'dummy text 1', 'label': 1},
         {'text': 'dummy text 2', 'label': 0},
@@ -32,15 +30,11 @@ def transformers_model(db):
     ]
     data = [D(d) for d in data]
     db.execute(Collection('train_documents').insert_many(data))
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-    model = AutoModelForSequenceClassification.from_pretrained(
-        "distilbert-base-uncased", num_labels=2
-    )
 
-    model = Pipeline(
+    model = TextClassificationPipeline(
         identifier='my-sentiment-analysis',
-        preprocess=tokenizer,
-        object=model,
+        model_name='distilbert-base-uncased',
+        model_kwargs={'num_labels': 2},
         device='cpu',
     )
     yield model
@@ -49,7 +43,7 @@ def transformers_model(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict_one('this is a test')
-    assert isinstance(one_prediction, int)
+    assert isinstance(one_prediction, dict)
     predictions = transformers_model.predict(['this is a test', 'this is another'])
     assert isinstance(predictions, list)
 
@@ -65,9 +59,8 @@ def td():
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_transformer_fit(transformers_model, db, td):
     repo_name = td
-    training_args = TransformersTrainerConfiguration(
+    trainer = TransformersTrainer(
         identifier=repo_name,
-        output_dir=repo_name,
         learning_rate=2e-5,
         per_device_train_batch_size=1,
         per_device_eval_batch_size=1,
@@ -76,16 +69,13 @@ def test_transformer_fit(transformers_model, db, td):
         save_strategy="epoch",
         use_mps_device=False,
     )
-    transformers_model.fit(
-        X='text',
-        y='label',
-        db=db,
-        select=Collection('train_documents').find(),
-        configuration=training_args,
-        validation_sets=[
-            Dataset(
-                identifier='my-eval',
-                select=Collection('train_documents').find({'_fold': 'valid'}),
-            )
-        ],
-    )
+    transformers_model.train_X = {'text': 'text', 'label': 'label'}
+    transformers_model.train_select = Collection('train_documents').find()
+    transformers_model.trainer = trainer
+    transformers_model.validation_sets = [
+        Dataset(
+            identifier='my-eval',
+            select=Collection('train_documents').find({'_fold': 'valid'}),
+        )
+    ]
+    transformers_model.fit_in_db(db)

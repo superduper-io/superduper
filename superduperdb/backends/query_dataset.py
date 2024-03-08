@@ -6,6 +6,7 @@ from superduperdb.backends.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.model import Mapping
 
 
@@ -39,7 +40,7 @@ class QueryDataset:
         ids: t.Optional[t.List[str]] = None,
         fold: t.Union[str, None] = 'train',
         transform: t.Optional[t.Callable] = None,
-        db=None,
+        db: t.Optional['Datalayer'] = None,
         in_memory: bool = True,
     ):
         self._db = db
@@ -84,6 +85,23 @@ class QueryDataset:
         else:
             return len(self._ids)
 
+    def _get_item(self, input):
+        out = input
+        if self.mapping is not None:
+            out = self.mapping(out)
+        if self.transform is not None and self.mapping is not None:
+            if self.mapping.signature == '*args,**kwargs':
+                out = self.transform(*out[0], **out[1])
+            elif self.mapping.signature == '*args':
+                out = self.transform(*out)
+            elif self.mapping.signature == '**kwargs':
+                out = self.transform(**out)
+            elif self.mapping.signature == 'singleton':
+                out = self.transform(out)
+        elif self.transform is not None:
+            out = self.transform(out)
+        return out
+
     def __getitem__(self, item):
         if self.in_memory:
             input = self._documents[item]
@@ -92,26 +110,10 @@ class QueryDataset:
                 self._ids[item], self.db, encoders=self.db.datatypes
             )
         input = MongoStyleDict(input.unpack(db=self.db))
-        from superduperdb.components.model import Signature
-
-        out = input
-        if self.mapping is not None:
-            out = self.mapping(out)
-        if self.transform is not None and self.mapping is not None:
-            if self.mapping.signature == Signature.args_kwargs:
-                out = self.transform(*out[0], **out[1])
-            elif self.mapping.signature == Signature.args:
-                out = self.transform(*out)
-            elif self.mapping.signature == Signature.kwargs:
-                out = self.transform(**out)
-            elif self.mapping.signature == Signature.singleton:
-                out = self.transform(out)
-        elif self.transform is not None:
-            out = self.transform(out)
-        return out
+        return self._get_item(input)
 
 
-class CachedQueryDataset:
+class CachedQueryDataset(QueryDataset):
     """
     This class which fetch the document corresponding to the given ``index``.
     This class prefetches documents from database and stores in the memory.
@@ -125,28 +127,24 @@ class CachedQueryDataset:
     def __init__(
         self,
         select: Select,
-        keys=None,
-        fold='train',
-        suppress=(),
-        transform=None,
-        database=None,
+        mapping: t.Optional['Mapping'] = None,
+        ids: t.Optional[t.List[str]] = None,
+        fold: t.Union[str, None] = 'train',
+        transform: t.Optional[t.Callable] = None,
+        db=None,
+        in_memory: bool = True,
         prefetch_size: int = 100,
     ):
-        self._database = database
-        self.keys = keys
-
-        self.transform = transform if transform else lambda x: x
-        self.select = select.add_fold(fold)
-
-        self.ids = [doc.id for doc in self.database.execute(self.select.select_ids)]
-        self.suppress = suppress
-        self._max_cache_size = prefetch_size
-        self._cache: ExpiryCache = self._fetch_cache()
-        self._total_documents = self.count_documents()
-
-    def count_documents(self) -> int:
-        """Return the number of matching documents"""
-        return self.database.execute(self.select).count()
+        super().__init__(
+            select=select,
+            mapping=mapping,
+            ids=ids,
+            fold=fold,
+            transform=transform,
+            db=db,
+            in_memory=in_memory,
+        )
+        self.prefetch_size = prefetch_size
 
     def _fetch_cache(self):
         cache_ids = random.sample(self.ids, self._max_cache_size)
@@ -162,24 +160,6 @@ class CachedQueryDataset:
             self._database = build_datalayer()
         return self._database
 
-    def _unpack(self, documents):
-        batch = []
-        for document in documents:
-            r = MongoStyleDict(document.unpack())
-            s = MongoStyleDict({})
-
-            if self.keys is not None:
-                for k in self.keys:
-                    if k == '_base':
-                        s[k] = r
-                    else:
-                        s[k] = r[k]
-            else:
-                s = r
-            s = self.transform(s)
-            batch.append(s)
-        return batch
-
     def _get_random_index(self, index):
         return int((index * len(self._cache)) / self._total_documents)
 
@@ -192,20 +172,9 @@ class CachedQueryDataset:
 
     def __getitem__(self, index):
         index = self._get_random_index(index)
-        document = self._cache[index]
         self._backfill_cache()
-        r = MongoStyleDict(document.unpack())
-        s = MongoStyleDict({})
-
-        if self.keys is not None:
-            for k in self.keys:
-                if k == '_base':
-                    s[k] = r
-                else:
-                    s[k] = r[k]
-        else:
-            s = r
-        return self.transform(s)
+        input = self._cache[index]
+        return self._get_item(input)
 
 
 def query_dataset_factory(**kwargs):

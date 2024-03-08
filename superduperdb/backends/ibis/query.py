@@ -951,7 +951,7 @@ class IbisInsert(Insert):
             ]
 
     def _encode_documents(self, table: Table) -> t.List[t.Dict]:
-        return [r.encode(table.schema) for r in self.documents]  # type: ignore[misc]
+        return [r.encode(table.schema) for r in self.documents]
 
     def execute(self, db):
         table = db.load(

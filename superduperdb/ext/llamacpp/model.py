@@ -3,11 +3,6 @@ import os
 import typing as t
 
 import requests
-
-from superduperdb.misc.annotations import requires_packages
-
-requires_packages(['llama_cpp_python', '0.2.39', None])
-
 from llama_cpp import Llama
 
 from superduperdb.ext.llm.base import _BaseLLM
@@ -29,7 +24,7 @@ def download_uri(uri, save_path):
         raise Exception(f"Error while downloading uri {uri}")
 
 
-@dc.dataclass
+@dc.dataclass(kw_only=True)
 class LlamaCpp(_BaseLLM):
     """
     Llama.cpp connector

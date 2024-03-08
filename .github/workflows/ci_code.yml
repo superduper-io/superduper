@@ -61,7 +61,8 @@ jobs:
     - name: Install SuperDuperDB Project
       run: |
         # Install core and testsuite dependencies on the cached python environment.
-        python -m pip install .[testsuite]
+        python -m pip install .
+        python -m pip install -r deploy/testenv/optional_requirements.txt
 
     - name: Install DevKit (docs, testing, etc)
       run: |

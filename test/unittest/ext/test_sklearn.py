@@ -37,6 +37,8 @@ class TestPipeline:
         yield Estimator(
             identifier='my-svc',
             object=Pipeline([('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]),
+            train_X=('X', 'y'),
+            train_select=Collection('documents').find(),
         )
 
     @pytest.fixture()
@@ -56,17 +58,7 @@ class TestPipeline:
     def y(self):
         yield (numpy.random.rand(100) > 0.5).astype(int).tolist()
 
-    def test_fit_predict_classic(self, pipeline, X, y):
-        pipeline.fit(X, y)
-        output = pipeline.predict(X)
-        assert len(output) == len(X)
-
     # TODO: Test the sqldb
     @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
     def test_fit_db(self, pipeline, data_in_db):
-        pipeline.fit(
-            X='X',
-            y='y',
-            db=data_in_db,
-            select=Collection('documents').find(),
-        )
+        _ = data_in_db.add(pipeline)

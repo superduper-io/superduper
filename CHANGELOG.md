@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated MongoDB Atlas vector search as a standalone searcher like lance.
 - Deprecated Demo Image. Now Notebooks run in Colab.
 - Replace dask with ray compute backend
+- All training and validation parameters to be configured in `_Predictor` attributes (`.trainer`, `.train_X`, etc.)
+- Docker build can include optional custom `requirements.txt` path
 
 #### New Features & Functionality
 
@@ -76,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - Chop down large files from the history to reduce the size of the repo.
-
 
 ## [0.0.19](https://github.com/SuperDuperDB/superduperdb/compare/0.0.15...0.0.19])    (2023-Dec-04)  
 

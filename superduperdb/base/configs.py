@@ -23,6 +23,7 @@ PREFIX = 'SUPERDUPERDB_'
 FILES_NAME = 'CONFIG_FILES'
 
 # The base name of the configs file
+# TODO remove this is not used
 CONFIG_FILE = 'configs.json'
 
 _LOCAL_CONFIG = Path(CONFIG_FILE)
@@ -65,6 +66,7 @@ class ConfigSettings:
         env = dict(os.environ if self.environ is None else self.environ)
         env = config_dicts.environ_to_config_dict('SUPERDUPERDB_', parent, env)
 
+        # TODO make configurable
         config_path = '.superduperdb/config.yaml'
         if os.path.exists(config_path):
             with open(config_path) as f:

@@ -1,9 +1,6 @@
 from superduperdb import superduper
 
 db = superduper("mongodb://localhost:30000/llm-finetune")
-# db.drop(force=True)
-
-# Training
 
 from datasets import load_dataset
 dataset = load_dataset("philschmid/dolly-15k-oai-style")
@@ -17,10 +14,8 @@ llm = LLM(
     model_name_or_path="mistralai/Mistral-7B-v0.1",
 )
 
-
-
-from superduperdb.ext.llm.model import LLMTrainingConfiguration
-training_configuration = LLMTrainingConfiguration(
+from superduperdb.ext.llm.training import LLMTrainer
+trainer = LLMTrainer(
     identifier="llm-finetune-training-config",
     output_dir="output/dolly-chatml",
     learning_rate=0.0002,
@@ -41,7 +36,6 @@ training_configuration = LLMTrainingConfiguration(
     use_lora=True,
     log_to_db=True,
     fp16=True,
-    # gradient_checkpointing=True,
     lora_r=8,
     lora_alpha=16,
     lora_dropout=0.0,
@@ -50,18 +44,13 @@ training_configuration = LLMTrainingConfiguration(
 )
 
 
-
-llm.fit(
-    X=None,
+trainer.fit(
     train_dataset=train_dataset,
-    eval_dataset=eval_dataset,
-    configuration=training_configuration,
+    valid_dataset=eval_dataset,
     db=db,
-    packing=True,
+    model=llm,
 )
 
-
-## Inference
 
 from superduperdb.ext.llm.model import LLM
 llm = LLM(

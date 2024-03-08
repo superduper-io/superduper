@@ -5,6 +5,7 @@
 # ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
 ARG BUILD_ENV=release
+ARG REQUIREMENTS_FILE=deploy/testenv/optional_requirements.txt
 
 # ---------------
 # Configure Basic Template
@@ -73,7 +74,6 @@ RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip
 COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
 COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
-
 # Volumes
 # ---------------
 VOLUME /artifacts
@@ -86,20 +86,22 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Set python cache directory
 ENV PYTHONPYCACHEPREFIX "$HOME/.cache/cpython/"
 
-
-
 # ---------------
 # Build Sandbox
 # ---------------
 FROM base AS build_sandbox
 
-ONBUILD ARG SUPERDUPERDB_EXTRAS=''
-ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
+ARG REQUIREMENTS_FILE
+
+ONBUILD USER superduper
+ONBUILD COPY --chown=superduper ./pyproject.toml ${HOME}/superduperdb/pyproject.toml
+ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ${HOME}/superduperdb/requirements.txt
+ONBUILD COPY --chown=superduper ./Makefile ${HOME}/superduperdb/Makefile
+ONBUILD COPY --chown=superduper ./${REQUIREMENTS_FILE} ${HOME}/superduperdb/optional_requirements.txt
 ONBUILD WORKDIR ${HOME}/superduperdb
-# Install project dependencies.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
-# Install user-defined dependencies
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r ./optional_requirements.txt
+ONBUILD RUN make install-devkit
 
 # ---------------
 # Build Release
@@ -109,7 +111,7 @@ FROM base AS build_release
 ONBUILD ARG SUPERDUPERDB_EXTRAS=''
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
 # Drop cache to reduce image size.
-ONBUILD RUN python -m pip install --user superduperdb[${SUPERDUPERDB_EXTRAS}] \
+ONBUILD RUN python -m pip install --user superduperdb \
     # Purge pip cache
     && pip cache purge
 ONBUILD WORKDIR ${HOME}/examples

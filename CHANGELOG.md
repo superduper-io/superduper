@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize LLM fine-tuning
 
 #### Bug Fixes
+- Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.
 - LLM CI random errors
 - VectorIndex schedule_jobs missing function.

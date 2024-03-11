@@ -8,10 +8,28 @@ timo:
   name: Timo Hagenow
   title: CEO & Co-founder of SuperDuperDB
   url: https://www.linkedin.com/in/timohagenow/
-  image_url: https://media.licdn.com/dms/image/D4E03AQGg35RuVoXOYQ/profile-displayphoto-shrink_400_400/0/1682109861734?e=1707350400&v=beta&t=XA8MDWVZRB58IOpc_p-hdX943x6GJ71Xiv-_Ne4N1aw
+  image_url: https://media.licdn.com/dms/image/D4E03AQGg35RuVoXOYQ/profile-displayphoto-shrink_800_800/0/1682109861734?e=1715817600&v=beta&t=ntyPTlLo6a2kXWChTp09eanvWGFaYkQcnxtsBqjkq58
 
 nenb:
   name: Nick Byrne
-  title: Founding Engineer at SuperDuperDB
+  title: Engineer at SuperDuperDB
   url: https://github.com/nenb
   image_url: https://avatars.githubusercontent.com/u/55434794?v=4
+
+fernando:
+  name: Fernando Guerra
+  title: Growth at SuperDuperDB
+  url: https://www.linkedin.com/in/fernando2guerra/
+  image_url: https://avatars.githubusercontent.com/u/9541936?v=4
+
+anita:
+  name: Anita Okoh
+  title: Data Scientist at SuperDuperDB
+  url: https://www.linkedin.com/in/anita-okoh/
+  image_url: https://avatars.githubusercontent.com/u/12241062?v=4
+
+rocky:
+  name: Md Fazlul Karim
+  title: Engineer at SuperDuperDB
+  url: https://www.linkedin.com/in/fazlulkarimweb/
+  image_url: https://media.licdn.com/dms/image/D4D03AQEx0B8iKeYK7A/profile-displayphoto-shrink_800_800/0/1684785144602?e=1715817600&v=beta&t=oKhK5mUPgBVI6w7y9JH0lD3VgwuDRqVjcP_MhadJJe0

@@ -15,12 +15,10 @@ from superduperdb.ext.numpy.encoder import array
 @pytest.fixture
 def schema(request):
     bytes_encoding = request.param if hasattr(request, 'param') else None
-    if bytes_encoding is None:
-        return None
 
     array_tensor = array("float64", shape=(32,), bytes_encoding=bytes_encoding)
     schema = Schema(
-        identifier='documents',
+        identifier=f'documents-{bytes_encoding}',
         fields={
             "x": array_tensor,
             "z": array_tensor,
@@ -93,7 +91,7 @@ def test_mongo_schema(db, schema):
     db.add(schema)
 
     db.execute(
-        Collection(collection_name).insert_many(data),
+        Collection(collection_name).insert_many(data, schema=schema.identifier),
     )
     collection = Collection(collection_name)
     r = collection.find_one().execute(db)

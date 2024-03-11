@@ -63,6 +63,7 @@ class Datalayer:
         'metric': 'metrics',
         'datatype': 'datatypes',
         'vector_index': 'vector_indices',
+        'schema': 'schemas',
     }
 
     def __init__(
@@ -84,6 +85,7 @@ class Datalayer:
         self.models = LoadDict(self, field='model')
         self.datatypes = LoadDict(self, field='datatype')
         self.vector_indices = LoadDict(self, field='vector_index')
+        self.schemas = LoadDict(self, field='schema')
         self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(

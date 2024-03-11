@@ -26,6 +26,8 @@ from superduperdb.base.serializable import Variable
 from superduperdb.components.schema import Schema
 from superduperdb.misc.files import load_uris
 
+SCHEMA_KEY = '_schema'
+
 
 class FindOne(QueryComponent):
     """
@@ -305,7 +307,7 @@ class Aggregate(Select):
                 self.vector_index,
             )
         )
-        decode_function = _get_decode_function(db, self.table_or_collection.identifier)
+        decode_function = _get_decode_function(db)
         return SuperDuperCursor(
             raw_cursor=cursor,
             id_field='_id',
@@ -371,7 +373,7 @@ class MongoCompoundSelect(CompoundSelect):
 
     def execute(self, db, reference=False):
         output, scores = self._execute(db)
-        decode_function = _get_decode_function(db, self.table_or_collection.identifier)
+        decode_function = _get_decode_function(db)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
                 raw_cursor=output,
@@ -518,13 +520,12 @@ class MongoInsert(Insert):
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
-        try:
-            schema: Schema = db.load(
-                Schema.type_id, self.table_or_collection.identifier
-            )
-        except FileNotFoundError:
-            schema = None
+        schema = self.kwargs.pop('schema', None)
+        schema = get_schema(db, schema) if schema else None
         documents = [r.encode(schema) for r in self.documents]
+        if schema:
+            for document in documents:
+                document[SCHEMA_KEY] = schema.identifier
         insert_result = collection.insert_many(documents, **self.kwargs)
         return insert_result.inserted_ids
 
@@ -812,18 +813,31 @@ class Collection(TableOrCollection):
             collection.bulk_write(bulk_docs)
 
 
-def _get_decode_function(db, schema_identifier: str) -> t.Callable[[t.Any], t.Any]:
-    try:
-        schema = db.load(Schema.type_id, schema_identifier)
-    except FileNotFoundError:
-        schema = None
-    if schema is None:
-        return lambda x: x
-
+def _get_decode_function(db) -> t.Callable[[t.Any], t.Any]:
     def decode(output):
+        schema_identifier = output.get(SCHEMA_KEY)
+        if schema_identifier is None:
+            return output
+        schema = get_schema(db, schema_identifier)
         for k in output.keys():
             if field := schema.fields.get(k):
                 output[k] = field.decode_data(output[k])
         return output
 
     return decode
+
+
+def get_schema(db, schema: t.Union[Schema, str]) -> Schema:
+    """Handle schema caching and loading."""
+    if isinstance(schema, Schema):
+        # If the schema is not in the db, it is added to the db.
+        if schema.identifier not in db.show(Schema.type_id):
+            db.add(schema)
+        schema_identifier = schema.identifier
+
+    else:
+        schema_identifier = schema
+
+    assert isinstance(schema_identifier, str)
+
+    return db.schemas[schema_identifier]

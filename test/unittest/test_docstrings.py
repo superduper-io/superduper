@@ -1,6 +1,7 @@
 import ast
 import os
 import re
+
 import pytest
 
 
@@ -14,9 +15,14 @@ class _BaseDocstringException(Exception):
 
     def __str__(self) -> str:
         if self.parent:
-            return f'{self.msg} in {self.filename}:{self.node.lineno} - {self.parent}.{self.node.name}'
+            return (
+                f'{self.msg} in {self.filename}:'
+                f'{self.node.lineno} - {self.parent}.{self.node.name}'
+            )
         else:
-            return f'{self.msg} in {self.filename}:{self.node.lineno} - {self.node.name}'
+            return (
+                f'{self.msg} in {self.filename}:{self.node.lineno} - {self.node.name}'
+            )
 
 
 class MissingDocstring(_BaseDocstringException):
@@ -68,7 +74,7 @@ def get_dataclass_init_params(node):
     for item in node.body:
         if isinstance(item, ast.AnnAssign):
             annotation = ast.unparse(item.annotation)
-            if 'ClassVar' not in annotation: 
+            if 'ClassVar' not in annotation:
                 field_name = item.target.id
                 init_params.append(field_name)
         elif isinstance(item, ast.Assign):
@@ -102,23 +108,20 @@ def check_class_docstring(file_path, node, dataclass=False):
         raise MismatchingDocParameters(
             file_path=file_path,
             node=node,
-            msg=f'Got {len(params)} parameters but doc-string has {len(doc_params)}.'
+            msg=f'Got {len(params)} parameters but doc-string has {len(doc_params)}.',
         )
 
     for i, (p, (dp, expl)) in enumerate(zip(params, doc_params.items())):
         if p != dp:
             raise MismatchingDocParameters(
-                file_path=file_path,
-                node=node,
-                msg=f'At position {i}: {p} != {dp}'
+                file_path=file_path, node=node, msg=f'At position {i}: {p} != {dp}'
             )
         if not expl.strip():
             raise MissingParameterExplanation(
                 file_path=file_path,
                 node=node,
-                msg=f'Missing explanation of parameter {dp}'
+                msg=f'Missing explanation of parameter {dp}',
             )
-
 
 
 def check_method_docstring(file_path, parent_class, node):
@@ -186,12 +189,16 @@ def check_function_doc_string(file_path, node):
             )
 
 
-
 def is_dataclass(node):
     for decorator in node.decorator_list:
-        if isinstance(decorator, ast.Call): 
-            if (isinstance(decorator.func, ast.Name) and decorator.func.id == 'dataclass') or \
-               (isinstance(decorator.func, ast.Attribute) and decorator.func.attr == 'dataclass'):
+        if isinstance(decorator, ast.Call):
+            if (
+                isinstance(decorator.func, ast.Name)
+                and decorator.func.id == 'dataclass'
+            ) or (
+                isinstance(decorator.func, ast.Attribute)
+                and decorator.func.attr == 'dataclass'
+            ):
                 return True
         elif isinstance(decorator, ast.Name) and decorator.id == 'dataclass':
             return True
@@ -204,7 +211,7 @@ def extract_docstrings(directory):
     class_test_cases = []
     method_test_cases = []
     function_test_cases = []
-    
+
     for subdir, _, files in os.walk(directory):
         for filename in files:
             if filename.endswith('.py'):
@@ -214,25 +221,37 @@ def extract_docstrings(directory):
                     try:
                         ast_tree = ast.parse(file_content)
                         for node in ast.iter_child_nodes(ast_tree):
-                            if isinstance(node, ast.ClassDef) and not node.name.startswith('_'):
+                            if isinstance(
+                                node, ast.ClassDef
+                            ) and not node.name.startswith('_'):
                                 class_test_cases.append((file_path, node))
                                 for item in node.body:
-                                    if isinstance(item, ast.FunctionDef) and not item.name.startswith('_'):
+                                    if isinstance(
+                                        item, ast.FunctionDef
+                                    ) and not item.name.startswith('_'):
                                         skip = False
                                         for decorator in item.decorator_list:
-                                            if isinstance(decorator, ast.Name) and decorator.id == 'override':
+                                            if (
+                                                isinstance(decorator, ast.Name)
+                                                and decorator.id == 'override'
+                                            ):
                                                 skip = True
                                         if not skip:
-                                            method_test_cases.append((file_path, node.name, item))
-                            elif isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
+                                            method_test_cases.append(
+                                                (file_path, node.name, item)
+                                            )
+                            elif isinstance(
+                                node, ast.FunctionDef
+                            ) and not node.name.startswith('_'):
                                 function_test_cases.append((file_path, node))
                     except SyntaxError as e:
                         print(f"Syntax error in file {file_path}: {e}")
     return class_test_cases, method_test_cases, function_test_cases
 
 
-
-CLASS_TEST_CASES, METHOD_TEST_CASES, FUNCTION_TEST_CASES = extract_docstrings('./superduperdb')
+CLASS_TEST_CASES, METHOD_TEST_CASES, FUNCTION_TEST_CASES = extract_docstrings(
+    './superduperdb'
+)
 
 
 print(f'Found {len(CLASS_TEST_CASES)} class __init__ documentation test-cases')
@@ -244,16 +263,12 @@ print(f'Found {len(FUNCTION_TEST_CASES)} function documentation test-cases')
 @pytest.mark.parametrize("test_case", CLASS_TEST_CASES)
 def test_class_docstrings(test_case):
     file_path, node = test_case
-    check_class_docstring(
-        file_path=file_path,
-        node=node,
-        dataclass=is_dataclass(node)
-    )
+    check_class_docstring(file_path=file_path, node=node, dataclass=is_dataclass(node))
 
 
 @pytest.mark.skip
 @pytest.mark.parametrize("test_case", METHOD_TEST_CASES)
-def test_function_docstrings(test_case):
+def test_method_docstrings(test_case):
     file_path, node = test_case
     check_function_doc_string(
         file_path=file_path,

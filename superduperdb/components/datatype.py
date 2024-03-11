@@ -104,12 +104,13 @@ class DataType(Component):
     shape: t.Optional[t.Sequence] = None
     directory: t.Optional[str] = None
     encodable: str = 'encodable'
-    bytes_encoding: str = CFG.bytes_encoding
+    bytes_encoding: t.Optional[str] = CFG.bytes_encoding
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.encodable_cls = _ENCODABLES[self.encodable]
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
+        self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
 
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None

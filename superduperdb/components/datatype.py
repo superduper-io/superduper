@@ -122,15 +122,25 @@ class DataType(Component):
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
         info = info or {}
-        try:
-            return self.encoder(item, info)
-        except:
-            raise
+        data = self.encoder(item, info)
+        data = self.bytes_encoding_after_encode(data)
+        return data
 
     @ensure_initialized
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
         info = info or {}
+        item = self.bytes_encoding_before_decode(item)
         return self.decoder(item, info=info)
+
+    def bytes_encoding_after_encode(self, data):
+        if self.bytes_encoding == BytesEncoding.BASE64:
+            return to_base64(data)
+        return data
+
+    def bytes_encoding_before_decode(self, data):
+        if self.bytes_encoding == BytesEncoding.BASE64:
+            return from_base64(data)
+        return data
 
 
 def encode_torch_state_dict(module, info):
@@ -238,6 +248,16 @@ class _BaseEncodable(Leaf):
     def decode(cls, r, db=None) -> '_BaseEncodable':
         pass
 
+    def get_hash(self, data):
+        if isinstance(data, str):
+            bytes_ = data.encode()
+        elif isinstance(data, bytes):
+            bytes_ = data
+        else:
+            raise ValueError(f'Unsupported data type: {type(data)}')
+
+        return hashlib.sha1(bytes_).hexdigest()
+
 
 @dc.dataclass
 class Encodable(_BaseEncodable):
@@ -246,7 +266,7 @@ class Encodable(_BaseEncodable):
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
-        sha1 = str(hashlib.sha1(bytes_).hexdigest())
+        sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
     @classmethod
@@ -271,8 +291,6 @@ class Encodable(_BaseEncodable):
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         bytes_, sha1 = self._encode()
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            bytes_ = to_base64(bytes_)
         return {
             '_content': {
                 'bytes': bytes_,
@@ -335,20 +353,14 @@ class Artifact(_BaseEncodable):
     x: t.Optional[t.Any] = None
     artifact: bool = False
 
-    def __post_init__(self):
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            raise ArtifactSavingError('BASE64 not supported on disk!')
-
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
-        sha1 = str(hashlib.sha1(bytes_).hexdigest())
+        sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         bytes_, sha1 = self._encode()
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            bytes_ = to_base64(bytes_)
         return {
             '_content': {
                 'bytes': bytes_,
@@ -365,13 +377,15 @@ class Artifact(_BaseEncodable):
 
     @classmethod
     def _get_object(cls, db, file_id, datatype, uri):
-        return db.artifact_store.load_artifact(
+        obj = db.artifact_store.load_artifact(
             {
                 'file_id': file_id,
                 'datatype': datatype,
                 'uri': uri,
             }
         )
+        obj = db.datatypes[datatype].bytes_encoding_before_decode(obj)
+        return obj
 
     def unpack(self, db):
         """

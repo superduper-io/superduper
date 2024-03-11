@@ -40,7 +40,7 @@ def test_function_predict_with_document_embedded(data_in_db):
     function.predict_in_db(
         X='X', db=data_in_db, select=Collection(identifier='documents').find()
     )
-    out = data_in_db.execute(Collection(identifier='_outputs.X.test').find({}))
+    out = data_in_db.execute(Collection(identifier='_outputs.X.test.0').find({}))
     assert [o['_outputs']['X']['test']['0'] for o in out] == [1, 2, 3, 4, 5]
 
 
@@ -65,7 +65,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X', db=data_in_db, select=Collection(identifier='documents').find()
     )
-    out = data_in_db.execute(Collection(identifier='_outputs.X.test').find({}))
+    out = data_in_db.execute(Collection(identifier='_outputs.X.test.0').find({}))
     out = [o for o in out]
     input_ids = [
         c['_id'] for c in data_in_db.execute(Collection(identifier='documents').find())
@@ -105,7 +105,7 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X', db=data_in_db, select=Collection(identifier='documents').find()
     )
-    out = data_in_db.execute(Collection(identifier='_outputs.X.test').find({}))
+    out = data_in_db.execute(Collection(identifier='_outputs.X.test.0').find({}))
     out = [o for o in out]
     input_ids = [
         c['_id'] for c in data_in_db.execute(Collection(identifier='documents').find())

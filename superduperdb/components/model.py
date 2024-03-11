@@ -489,6 +489,8 @@ class _Predictor(Component):
         if not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
+            if '_outputs' in X:
+                X = X.split('.')[1]
             query = select.select_ids_of_missing_outputs(
                 key=X,
                 model=self.identifier,
@@ -543,7 +545,6 @@ class _Predictor(Component):
         assert isinstance(
             self.version, int
         ), 'Something has gone wrong setting `self.version`'
-
         predict_ids = self._get_ids_from_select(
             X, select=select, db=db, ids=ids, overwrite=overwrite
         )

@@ -126,9 +126,7 @@ class Listener(Component):
 
     @override
     def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
+        self, db: Datalayer, dependencies: t.Sequence[Job] = (), overwrite: bool = False
     ) -> t.Sequence[t.Any]:
         """
         Schedule jobs for the listener
@@ -147,6 +145,7 @@ class Listener(Component):
                 db=db,
                 select=self.select.copy(),
                 dependencies=dependencies,
+                overwrite=overwrite,
             )
         ]
         return out

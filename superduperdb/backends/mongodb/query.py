@@ -5,9 +5,8 @@ import typing as t
 import mongomock
 import pymongo
 from bson import ObjectId
-from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
 
-from superduperdb import CFG
+from superduperdb import CFG, logging
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Delete,
@@ -19,6 +18,7 @@ from superduperdb.backends.base.query import (
     Select,
     TableOrCollection,
     Update,
+    Write,
 )
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
@@ -516,16 +516,23 @@ class MongoQueryLinker(QueryLinker):
 class MongoInsert(Insert):
     one: bool = False
 
-    def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
-            self.table_or_collection.identifier
-        )
+    def raw_query(self, db):
+        '''
+        Returns a raw mongodb query for mongodb operation.
+        '''
         schema = self.kwargs.pop('schema', None)
         schema = get_schema(db, schema) if schema else None
         documents = [r.encode(schema) for r in self.documents]
         if schema:
             for document in documents:
                 document[SCHEMA_KEY] = schema.identifier
+        return documents
+
+    def execute(self, db):
+        collection = db.databackend.get_table_or_collection(
+            self.table_or_collection.identifier
+        )
+        documents = self.raw_query(db)
         insert_result = collection.insert_many(documents, **self.kwargs)
         return insert_result.inserted_ids
 
@@ -542,17 +549,35 @@ class MongoDelete(Delete):
     def collection(self):
         return self.table_or_collection
 
+    def to_operation(self, collection):
+        '''
+        Returns a mongodb operation i.e `pymongo.InsertOne`
+        '''
+        if self.one:
+            return pymongo.DeleteOne(*self.args, **self.kwargs)
+        return pymongo.DeleteMany(*self.args, **self.kwargs)
+
+    def arg_ids(self, collection):
+        ids = []
+
+        if '_id' in self.kwargs:
+            if self.one:
+                ids = [str(self.kwargs['_id'])]
+        for arg in self.args:
+            if isinstance(arg, dict) and '_id' in arg:
+                if self.one:
+                    ids = [str(arg['_id'])]
+                else:
+                    ids = list(map(str, arg['_id']['$in']))
+        return ids
+
     def execute(self, db):
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
         if self.one:
-            ids = []
-            if '_id' in self.kwargs:
-                ids = [str(self.kwargs['_id'])]
-            for arg in self.args:
-                if isinstance(arg, dict) and '_id' in arg:
-                    ids = [str(arg['_id'])]
+            ids = self.arg_ids(collection)
+
             result = collection.delete_one(*self.args, **self.kwargs)
             if result.deleted_count == 1:
                 if not ids:
@@ -562,8 +587,14 @@ class MongoDelete(Delete):
             else:
                 return []
 
-        delete_result = collection.delete_many(*self.args, **self.kwargs)
-        return delete_result.deleted_ids
+        collection.delete_many(*self.args, **self.kwargs)
+        # TODO: check delete_result for counts
+        deleted_ids = self.arg_ids(collection)
+        if not deleted_ids:
+            # This implies to delete all collections
+            docs = list(collection.find(*self.args, **self.kwargs))
+            return [str(d['_id']) for d in docs]
+        return deleted_ids
 
 
 @dc.dataclass(repr=False)
@@ -578,23 +609,117 @@ class MongoUpdate(Update):
     def select_table(self):
         return self.table_or_collection.find()
 
-    def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
-            self.table_or_collection.identifier
-        )
+    def to_operation(self, collection):
+        '''
+        Returns a mongodb operation i.e `pymongo.InsertOne`
+        '''
+        filter, update = self.raw_query(collection)
+        if self.one:
+            return pymongo.UpdateOne(filter, update)
+        return pymongo.UpdateMany(filter, update)
 
+    def arg_ids(self, collection):
+        filter, _ = self.raw_query(collection)
+        if self.one is True:
+            return [filter['_id']]
+        else:
+            return filter['_id']['$in']
+
+    def raw_query(self, collection):
+        '''
+        Returns a raw mongodb query for mongodb operation.
+        '''
         update = self.update
         if isinstance(self.update, Document):
             update = update.encode()
 
         if self.one:
             id = collection.find_one(self.filter, {'_id': 1})['_id']
-            collection.update_one({'_id': id}, update, *self.args, **self.kwargs)
-            return [id]
+            return {'_id': id}, update
 
         ids = [r['_id'] for r in collection.find(self.filter, {'_id': 1})]
-        collection.update_many({'_id': {'$in': ids}}, update, *self.args, **self.kwargs)
-        return ids
+        return {'_id': {'$in': ids}}, update
+
+    def execute(self, db):
+        collection = db.databackend.get_table_or_collection(
+            self.table_or_collection.identifier
+        )
+
+        mongo_filter, update = self.raw_query(collection)
+        if self.one:
+            collection.update_one(mongo_filter, update, *self.args, **self.kwargs)
+            return [mongo_filter['_id']]
+
+        collection.update_many(mongo_filter, update, *self.args, **self.kwargs)
+        return mongo_filter['_id']['$in']
+
+
+@dc.dataclass(repr=False)
+class MongoBulkWrite(Write):
+    '''
+    MongoBulkWrite will help write multiple mongodb operations
+    to database at once.
+
+    example:
+        MongoBulkWrite(operations= [MongoUpdate(...), MongoDelete(...)])
+    '''
+
+    operations: t.List[t.Union[MongoUpdate, MongoDelete]]
+    args: t.Sequence = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def __post_init__(self):
+        for query in self.operations:
+            assert isinstance(query, (MongoDelete, MongoUpdate))
+            if not query.arg_ids:
+                raise ValueError(
+                    'Please provided update/delete id in args',
+                    'all ids selection e.g `\{\}` is not supported',
+                )
+
+    @property
+    def select_table(self):
+        '''
+        Select collection to be bulk written
+        '''
+        return self.table_or_collection.find()
+
+    def execute(self, db):
+        collection = db.databackend.get_table_or_collection(
+            self.table_or_collection.identifier
+        )
+        bulk_operations = []
+        bulk_update_ids = []
+        bulk_delete_ids = []
+        bulk_result = {'delete': [], 'update': []}
+        for query in self.operations:
+            operation = query.to_operation(collection)
+
+            bulk_operations.append(operation)
+            ids = query.arg_ids(collection)
+            if isinstance(query, MongoDelete):
+                bulk_result['delete'].append({'query': query, 'ids': ids})
+                bulk_delete_ids += ids
+            else:
+                bulk_update_ids += ids
+                bulk_result['update'].append({'query': query, 'ids': ids})
+
+        result = collection.bulk_write(bulk_operations, *self.args, **self.kwargs)
+        if result.deleted_count != bulk_delete_ids:
+            logging.warn(
+                'Some delete ids are not executed',
+                ', hence halting execution',
+                'Please note the partially executed operations',
+                'wont trigger any `model/listeners` unless CDC is active.',
+            )
+        elif (result.modified_count + result.upserted_count) != bulk_update_ids:
+            logging.warn(
+                'Some update ids are not executed',
+                ', hence halting execution',
+                'Please note the partially executed operations',
+                'wont trigger any `model/listeners` unless CDC is active.',
+            )
+        return bulk_result, bulk_update_ids, bulk_delete_ids
 
 
 @dc.dataclass(repr=False)
@@ -685,6 +810,14 @@ class Collection(TableOrCollection):
     def _insert(self, documents, **kwargs):
         return MongoInsert(documents=documents, kwargs=kwargs, table_or_collection=self)
 
+    def _bulk_write(self, operations, *args, **kwargs):
+        return MongoBulkWrite(
+            operations=operations,
+            args=args,
+            kwargs=kwargs,
+            table_or_collection=self,
+        )
+
     def _update(self, filter, update, *args, one: bool = False, **kwargs):
         return MongoUpdate(
             filter=filter,
@@ -708,6 +841,9 @@ class Collection(TableOrCollection):
     def delete_one(self, *args, **kwargs):
         return self._delete(*args, one=True, **kwargs)
 
+    def delete_many(self, *args, **kwargs):
+        return self._delete(*args, one=False, **kwargs)
+
     def replace_one(self, filter, replacement, *args, **kwargs):
         return MongoReplaceOne(
             filter=filter,
@@ -722,6 +858,9 @@ class Collection(TableOrCollection):
 
     def update_many(self, filter, update, *args, **kwargs):
         return self._update(filter, update, *args, one=False, **kwargs)
+
+    def bulk_write(self, operations, *args, **kwargs):
+        return self._bulk_write(operations, *args, **kwargs)
 
     def insert(self, *args, **kwargs):
         return self.insert_many(*args, **kwargs)
@@ -756,61 +895,56 @@ class Collection(TableOrCollection):
                     'Please use `document_embedded = False` option with flatten = True'
                 )
             assert self.collection is not None
-            collection = db.databackend.get_table_or_collection(self.identifier)
-            collection.bulk_write(
-                [
-                    _UpdateOne(
-                        {'_id': ObjectId(id)},
-                        {'$set': {f'_outputs.{key}.{model}.{version}': outputs[i]}},
+            bulk_operations = []
+            for i, id in enumerate(ids):
+                mongo_filter = {'_id': ObjectId(id)}
+                update = Document(
+                    {'$set': {f'_outputs.{key}.{model}.{version}': outputs[i]}}
+                )
+                bulk_operations.append(
+                    MongoUpdate(
+                        filter=mongo_filter,
+                        update=update,
+                        table_or_collection=self,
+                        one=True,
                     )
-                    for i, id in enumerate(ids)
-                ]
-            )
+                )
+
+            db.execute(self.bulk_write(bulk_operations))
+
         else:
+            collection = Collection(f'_outputs.{key}.{model}.{str(version)}')
+            bulk_writes = []
+
             if flatten:
-                bulk_docs = []
                 for i, id in enumerate(ids):
                     _outputs = outputs[i]
                     if isinstance(_outputs, (list, tuple)):
                         for offset, output in enumerate(_outputs):
-                            bulk_docs.append(
-                                _InsertOne(
-                                    {
-                                        '_outputs': {
-                                            key: {model: {str(version): output}}
-                                        },
-                                        '_source': ObjectId(id),
-                                        '_offset': offset,
-                                    }
-                                )
-                            )
-                    else:
-                        bulk_docs.append(
-                            _InsertOne(
+                            bulk_writes.append(
                                 {
-                                    '_outputs': {
-                                        key: {model: {str(version): _outputs}}
-                                    },
+                                    '_outputs': {key: {model: {str(version): output}}},
                                     '_source': ObjectId(id),
-                                    '_offset': 0,
+                                    '_offset': offset,
                                 }
                             )
+                    else:
+                        bulk_writes.append(
+                            {
+                                '_outputs': {key: {model: {str(version): _outputs}}},
+                                '_source': ObjectId(id),
+                                '_offset': 0,
+                            }
                         )
 
             else:
-                bulk_docs = [
-                    _InsertOne(
+                for i, id in enumerate(ids):
+                    bulk_writes.append(
                         {
-                            '_id': ObjectId(id),
                             '_outputs': {key: {model: {str(version): outputs[i]}}},
                         }
                     )
-                    for i, id in enumerate(ids)
-                ]
-
-            collection_name = f'_outputs.{key}.{model}'
-            collection = db.databackend.get_table_or_collection(collection_name)
-            collection.bulk_write(bulk_docs)
+            db.execute(collection.insert_many([Document(**doc) for doc in bulk_writes]))
 
 
 def _get_decode_function(db) -> t.Callable[[t.Any], t.Any]:

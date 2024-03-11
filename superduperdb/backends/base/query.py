@@ -146,6 +146,25 @@ class Update(Serializable, ABC):
 
 
 @dc.dataclass(repr=False)
+class Write(Serializable, ABC):
+    """
+    Base class for all bulk write queries
+
+    :param table_or_collection: The table or collection that this query is linked to
+    """
+
+    table_or_collection: 'TableOrCollection'
+
+    @abstractmethod
+    def select_table(self):
+        pass
+
+    @abstractmethod
+    def execute(self, db):
+        pass
+
+
+@dc.dataclass(repr=False)
 class CompoundSelect(_ReprMixin, Select, ABC):
     """
     A query with multiple parts.

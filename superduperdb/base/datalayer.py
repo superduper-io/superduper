@@ -15,7 +15,14 @@ from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.metadata import MetaDataStore
-from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
+from superduperdb.backends.base.query import (
+    Delete,
+    Insert,
+    RawQuery,
+    Select,
+    Update,
+    Write,
+)
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions, serializable
@@ -307,6 +314,8 @@ class Datalayer:
             return self.select(query.to_query(), *args, **kwargs)
         if isinstance(query, Update):
             return self.update(query, *args, **kwargs)
+        if isinstance(query, Write):
+            return self.write(query, *args, **kwargs)
         if isinstance(query, RawQuery):
             return query.execute(self)
 
@@ -401,6 +410,7 @@ class Datalayer:
         query: t.Union[Insert, Select, Update],
         ids: t.Sequence[str],
         verbose: bool = False,
+        overwrite: bool = False,
     ):
         """
         Trigger computation jobs after data insertion.
@@ -413,9 +423,38 @@ class Datalayer:
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
             verbose=verbose,
+            overwrite=overwrite,
         )
         task_workflow.run_jobs()
         return task_workflow
+
+    def write(self, write: Write, refresh: bool = True) -> UpdateResult:
+        """
+        Bulk write data to database.
+
+        :param write: update query object
+        """
+        write_result, updated_ids, deleted_ids = write.execute(self)
+
+        if refresh and self.cdc.running:
+            raise Exception('cdc cannot be activated and refresh=True')
+        if refresh:
+            jobs = []
+            for u, d in zip(write_result['update'], write_result['delete']):
+                q = u['query']
+                ids = u['ids']
+                job_update = self.refresh_after_update_or_insert(
+                    query=q, ids=ids, verbose=False, overwrite=True
+                )
+                jobs.append(job_update)
+
+                q = d['query']
+                ids = d['ids']
+                job_update = self.refresh_after_delete(query=q, ids=ids, verbose=False)
+                jobs.append(job_update)
+
+            return updated_ids, deleted_ids, jobs
+        return updated_ids, deleted_ids, None
 
     def update(self, update: Update, refresh: bool = True) -> UpdateResult:
         """
@@ -429,7 +468,7 @@ class Datalayer:
             raise Exception('cdc cannot be activated and refresh=True')
         if refresh:
             return updated_ids, self.refresh_after_update_or_insert(
-                query=update, ids=updated_ids, verbose=False
+                query=update, ids=updated_ids, verbose=False, overwrite=True
             )
         return updated_ids, None
 
@@ -624,6 +663,7 @@ class Datalayer:
         ids=None,
         dependencies=(),
         verbose: bool = True,
+        overwrite: bool = False,
     ) -> TaskWorkflow:
         logging.debug(f"Building task workflow graph. Query:{query}")
 
@@ -674,6 +714,7 @@ class Datalayer:
                     kwargs={
                         'ids': ids,
                         'select': listener_query.dict().encode(),
+                        'overwrite': overwrite,
                         **info['dict']['predict_kwargs'],
                     },
                     method_name='predict_in_db',
@@ -699,10 +740,21 @@ class Datalayer:
                 deps = self._get_dependencies_for_listener(identifier)
                 for dep in deps:
                     dep_model, _, dep_key = dep.rpartition('/')
-                    G.add_edge(
-                        f'{dep_model}.predict_in_db({dep_key})',
-                        f'{model}.predict_in_db({key})',
-                    )
+                    dep_node = f'{dep_model}.predict_in_db({dep_key})'
+                    if dep_node in G.nodes:
+                        G.add_edge(
+                            dep_node,
+                            f'{model}.predict_in_db({key})',
+                        )
+                    else:
+                        logging.warn(
+                            f'The dependent model {dep_model} is either',
+                            'not added to database yet or does not exists.',
+                            'Please make sure to do ',
+                            f'`db.add(<listener>|<model> ({dep_model}))`',
+                            'before adding the model or ',
+                            f'listener with model: {model}',
+                        )
 
         if s.CFG.self_hosted_vector_search:
             return G

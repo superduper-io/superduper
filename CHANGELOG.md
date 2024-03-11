@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add model dict output indexing in graph
 
 #### New Features & Functionality
+- Add BulkWrite mongodb query
 - Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support Schema option for MongoDB
 
 #### Bug Fixes
+- Fixed a bug in predict in db for missing ouptuts
 - Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.
 - LLM CI random errors

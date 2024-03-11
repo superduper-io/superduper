@@ -484,23 +484,28 @@ class _Predictor(Component):
         job(db, dependencies=dependencies)
         return job
 
-    def _get_ids_from_select(self, X, select, db, overwrite: bool = False):
-        ids = []
+    def _get_ids_from_select(self, X, select, db, ids, overwrite: bool = False):
+        predict_ids = []
         if not overwrite:
+            if ids:
+                select = select.select_using_ids(ids)
             query = select.select_ids_of_missing_outputs(
                 key=X,
                 model=self.identifier,
                 version=t.cast(int, self.version),
             )
         else:
+            if ids:
+                return ids
             query = select.select_ids
         try:
             id_field = db.databackend.id_field
         except AttributeError:
             id_field = query.table_or_collection.primary_id
         for r in tqdm.tqdm(db.execute(query)):
-            ids.append(str(r[id_field]))
-        return ids
+            predict_ids.append(str(r[id_field]))
+
+        return predict_ids
 
     def predict_in_db(
         self,
@@ -539,15 +544,14 @@ class _Predictor(Component):
             self.version, int
         ), 'Something has gone wrong setting `self.version`'
 
-        if ids is None:
-            ids = self._get_ids_from_select(
-                X, select=select, db=db, overwrite=overwrite
-            )
+        predict_ids = self._get_ids_from_select(
+            X, select=select, db=db, ids=ids, overwrite=overwrite
+        )
 
         return self._predict_with_select_and_ids(
             X=X,
             select=select,
-            ids=ids,
+            ids=predict_ids,
             db=db,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,

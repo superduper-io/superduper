@@ -6,9 +6,27 @@ import pytest
 
 from superduperdb.backends.mongodb import query as q
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.config import BytesEncoding
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
+
+
+@pytest.fixture
+def schema(request):
+    bytes_encoding = request.param if hasattr(request, 'param') else None
+    if bytes_encoding is None:
+        return None
+
+    array_tensor = array("float64", shape=(32,), bytes_encoding=bytes_encoding)
+    schema = Schema(
+        identifier='documents',
+        fields={
+            "x": array_tensor,
+            "z": array_tensor,
+        },
+    )
+    return schema
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
@@ -50,9 +68,11 @@ def test_mongo_without_schema(db):
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_mongo_schema(db):
+@pytest.mark.parametrize(
+    "schema", [BytesEncoding.BASE64, BytesEncoding.BYTES], indirect=True
+)
+def test_mongo_schema(db, schema):
     collection_name = "documents"
-    array_tensor = array("float64", shape=(32,))
     data = []
 
     for id_ in range(5):
@@ -69,13 +89,6 @@ def test_mongo_schema(db):
                 }
             )
         )
-    schema = Schema(
-        identifier=collection_name,
-        fields={
-            "x": array_tensor,
-            "z": array_tensor,
-        },
-    )
 
     db.add(schema)
 

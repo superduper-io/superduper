@@ -1,15 +1,15 @@
 ---
 slug: rag-system-on-duckdb-using-jinaai-and-superduperdb
-title: 'Implementing a RAG System on DuckDB Using JinaAI and SuperDuperDB'
+title: 'Implementing a RAG System on DuckDB Using Jina AI and SuperDuperDB'
 authors: [anita, fernando]
 tags: [Jina AI, DuckDB, LanceDB, RAG]
 ---
 
-# Implementing a RAG System on DuckDB Using JinaAI and SuperDuperDB 
+# Implementing a RAG System on DuckDB Using Jina AI and SuperDuperDB 
 
 ### Querying your SQL database purely in human language
 
-![RAG = DuckDB + SuperDuperDB + JinaAI](https://cdn-images-1.medium.com/max/3840/1*1-DJQuXhJvJpw_zbJNeESA.png)
+![RAG = DuckDB + SuperDuperDB + Jina AI](https://cdn-images-1.medium.com/max/3840/1*1-DJQuXhJvJpw_zbJNeESA.png)
 
 Unless you live under a rock, you must have heard the buzzword **“LLMs”**.
 
@@ -58,12 +58,12 @@ At the moment**, DuckDB** does not have native vector-search support.
 
 
 
-The **JinaAI embedding model** will be used as an embedding model to be used to generate vector embeddings on the existing data.
+The **Jina Embeddings v2** will be used as an embedding model to be used to generate vector embeddings on the existing data.
 
-[**JinaAI**](https://jina.ai/) offers a top-tier embedding model designed to enhance search and retrieval systems with 1 million free tokens for new API keys, facilitating personal and commercial projects without requiring a credit card. This model stands out for its deep integration of cutting-edge academic research and rigorous testing against state-of-the-art (SOTA) models, ensuring exceptional performance. It is the first open-source model to support an 8192-token length, representing entire chapters within a single vector. The model supports multilingual embeddings, including German-English, Chinese-English, and Spanish-English, making it ideal for cross-lingual applications. It also boasts seamless integration capabilities, fully compatible with OpenAI’s API and easily integrating with over ten vector databases and retrieval-augmented generation (RAG) systems, ensuring a smooth and efficient user experience. 
+[**Jina AI**](https://jina.ai/) offers a top-tier embedding model: Jina Embeddings v2, designed to enhance search and retrieval systems with 1 million free tokens for new API keys, facilitating personal and commercial projects without requiring a credit card. This model stands out for its deep integration of cutting-edge academic research and rigorous testing against state-of-the-art (SOTA) models, ensuring exceptional performance. It is the first open-source model to support an 8192-token length, representing entire chapters within a single vector. The model supports multilingual embeddings, including German-English, Chinese-English, and Spanish-English, making it ideal for cross-lingual applications. It also boasts seamless integration capabilities, fully compatible with OpenAI’s API and easily integrating with over ten vector databases and retrieval-augmented generation (RAG) systems, ensuring a smooth and efficient user experience. 
 
 
-JinaAI’s mission is to lead the advancement of multimodal AI through innovative embedding and prompt-based technologies, focusing specifically on areas like natural language processing, image and video analysis, and cross-modal data interaction.
+Jina AI mission is to lead the advancement of multimodal AI through innovative embedding and prompt-based technologies, focusing specifically on areas like natural language processing, image and video analysis, and cross-modal data interaction.
 
 *Find more information about Jina [here](https://jina.ai/).*
 
@@ -71,7 +71,7 @@ In this use case, the  retriever will be our vector search, and our generator wi
 
 The architecture would look something like this.
 
-![RAG with DuckDB, JinaAI and SuperDuperDB](https://cdn-images-1.medium.com/max/41050/1*ixzqM-caGrKmwNICE8lH4A.png)
+![RAG with DuckDB, Jina AI and SuperDuperDB](https://cdn-images-1.medium.com/max/41050/1*ixzqM-caGrKmwNICE8lH4A.png)
 
 The data we will be ingesting into the database will be from [Kaggle](https://www.kaggle.com/datasets/zeesolver/consumer-behavior-and-shopping-habits-dataset?resource=download&select=shopping_behavior_updated.csv), which has 17 columns that consist of customer shopping habit details.
 
@@ -199,9 +199,9 @@ You can view the five rows of the table like this.
 
 
 
-4. **Add the JinaAI embedding model and the vector index to the database**
+4. **Add the Jina AI embedding model and the vector index to the database**
 
-*The **“JinaAI  text embedding model” **would be used to create the vector embedding on the **“Description” **column on the **“shopping_table”.***
+*The **“Jina Embeddings v2” **would be used to create the vector embedding on the **“Description” **column on the **“shopping_table”.***
 ```python
     from superduperdb.ext.jina import JinaEmbedding
      
@@ -295,13 +295,13 @@ To check how many models are in your Database, use the code below
 
 ![JinAI Model and ChatGPT Model in the DuckDB](https://cdn-images-1.medium.com/max/2268/1*pq3wQQFG3bBaGxV3aI-0Qg.png)
 
-The above shows that two models are simultaneously in the database (the JinaAI embedding model and the ChatGPT model).
+The above shows that two models are simultaneously in the database (the Jina Embeddings v2 and the ChatGPT model).
 
 ### Conclusion
 
-Now that you have built and implemented your RAG system, the next step would be to wrap it all in a user interface. And then, you would have a system that helps non-technical chat with your Database purely in human language using JinaAI and SuperDuperDB. 
+Now that you have built and implemented your RAG system, the next step would be to wrap it all in a user interface. And then, you would have a system that helps non-technical chat with your Database purely in human language using Jina AI and SuperDuperDB. 
 
-Check out the JinaAI open-source repo and SuperDuperDB open-source repo to stay updated on more functionalities.
+Check out the Jina AI open-source repo and SuperDuperDB open-source repo to stay updated on more functionalities.
 
 
 

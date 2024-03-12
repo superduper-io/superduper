@@ -56,7 +56,7 @@ class Model2:
         return x
 
 
-def _wait_for_keys(db, collection='_outputs.int.model1', n=10, key=''):
+def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
     retry_left = 5
 
     def check_outputs():
@@ -77,7 +77,7 @@ def _wait_for_keys(db, collection='_outputs.int.model1', n=10, key=''):
         retry_left -= 1
 
 
-def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
+def _wait_for_outputs(db, collection='_outputs.int.model1.0', n=10):
     retry_left = 5
 
     def check_outputs():
@@ -185,7 +185,7 @@ def test_advance_setup(distributed_db, image_url):
             indexing_listener=Listener(
                 model=model2,
                 key='_outputs.int.model1.0.int',
-                select=Collection('_outputs.int.model1').find(),
+                select=Collection('_outputs.int.model1.0').find(),
             ),
             compatible_listener=Listener(
                 model=model2, key='text', select=None, active=False
@@ -195,12 +195,12 @@ def test_advance_setup(distributed_db, image_url):
 
     search_phrase = '4'
     _wait_for_keys(
-        db=db, n=n, collection='_outputs.int.model1', key='_outputs.int.model2'
+        db=db, n=n, collection='_outputs.int.model1.0', key='_outputs.int.model2'
     )
 
     r = next(
         db.execute(
-            Collection('_outputs.int.model1')
+            Collection('_outputs.int.model1.0')
             .like(
                 Document({'text': search_phrase}), vector_index='test_search_index', n=1
             )

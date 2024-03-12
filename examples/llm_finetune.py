@@ -1,20 +1,22 @@
-from superduperdb import superduper
-
-db = superduper("mongodb://localhost:30000/llm-finetune")
-
 from datasets import load_dataset
-dataset = load_dataset("philschmid/dolly-15k-oai-style")
-dataset = dataset['train'].train_test_split(test_size=0.05, seed=42)
-train_dataset = dataset['train']
-eval_dataset = dataset['test']
 
+from superduperdb import superduper
 from superduperdb.ext.llm.model import LLM
+from superduperdb.ext.llm.training import LLMTrainer
+
+db = superduper("mongodb://localhost:27017/llm-finetune")
+
+dataset = load_dataset("philschmid/dolly-15k-oai-style")
+
+dataset = dataset["train"].train_test_split(test_size=0.05, seed=42)
+train_dataset = dataset["train"]
+eval_dataset = dataset["test"]
+
 llm = LLM(
     identifier="llm-finetune",
     model_name_or_path="mistralai/Mistral-7B-v0.1",
 )
 
-from superduperdb.ext.llm.training import LLMTrainer
 trainer = LLMTrainer(
     identifier="llm-finetune-training-config",
     output_dir="output/dolly-chatml",
@@ -24,7 +26,7 @@ trainer = LLMTrainer(
     max_grad_norm=0.3,
     overwrite_output_dir=True,
     num_train_epochs=3,
-    save_total_limit=5,
+    save_total_limit=3,
     logging_steps=10,
     evaluation_strategy="steps",
     save_steps=200,
@@ -39,32 +41,24 @@ trainer = LLMTrainer(
     lora_r=8,
     lora_alpha=16,
     lora_dropout=0.0,
-    setup_chat_format=True,
     bits=4,
 )
 
+llm.trainer = trainer
 
-trainer.fit(
+llm.fit(
     train_dataset=train_dataset,
     valid_dataset=eval_dataset,
     db=db,
-    model=llm,
 )
 
 
-from superduperdb.ext.llm.model import LLM
-llm = LLM(
-    identifier="llm-finetune",
-    model_name_or_path="mistralai/Mistral-7B-v0.1",
-    adapter_id=db.load('checkpoint', "8ac62d6fca46d145b9cd4039428d7078f1e899e6", version=200),
-    model_kwargs=dict(use_cache=True, device_map="auto", load_in_4bit=True),
-)
-
+llm = db.load("model", "llm-finetune")
 
 messages = [
     {
         "role": "user",
-        "content": "What is the capital of Germany? Explain why thats the case and if it was different in the past?"
+        "content": "What is the capital of Germany? Explain why thats the case and if it was different in the past?",
     }
 ]
 print(llm.predict_one(messages, max_new_tokens=200, do_sample=False))

@@ -27,9 +27,6 @@ if typing.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
-DEFAULT_FETCH_SIZE = 10000
-
-
 @dc.dataclass(kw_only=True)
 class LLM(_BaseLLM, _Fittable, _Validator):
     """

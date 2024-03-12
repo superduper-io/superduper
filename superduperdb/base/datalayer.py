@@ -361,17 +361,15 @@ class Datalayer:
 
         inserted_ids = insert.execute(self)
 
-        if refresh and self.cdc.running:
-            raise Exception('cdc cannot be activated and refresh=True')
-
-        if s.CFG.cluster.cdc.uri is not None:
-            logging.info('CDC active, skipping refresh')
-            return inserted_ids, None
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
 
         if refresh:
-            return inserted_ids, self.refresh_after_update_or_insert(
-                insert, ids=inserted_ids, verbose=False
-            )
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                return inserted_ids, self.refresh_after_update_or_insert(
+                    insert, ids=inserted_ids, verbose=False
+                )
         return inserted_ids, None
 
     def select(self, select: Select, reference: bool = True) -> SelectResult:
@@ -436,24 +434,31 @@ class Datalayer:
         """
         write_result, updated_ids, deleted_ids = write.execute(self)
 
-        if refresh and self.cdc.running:
-            raise Exception('cdc cannot be activated and refresh=True')
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
         if refresh:
-            jobs = []
-            for u, d in zip(write_result['update'], write_result['delete']):
-                q = u['query']
-                ids = u['ids']
-                job_update = self.refresh_after_update_or_insert(
-                    query=q, ids=ids, verbose=False, overwrite=True
-                )
-                jobs.append(job_update)
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                jobs = []
+                for u, d in zip(write_result['update'], write_result['delete']):
+                    q = u['query']
+                    ids = u['ids']
+                    # Overwrite should be true for update operation since updates
+                    # could be done on collections with already existing outputs
+                    # We need overwrite ouptuts on those select and recompute predict
+                    job_update = self.refresh_after_update_or_insert(
+                        query=q, ids=ids, verbose=False, overwrite=True
+                    )
+                    jobs.append(job_update)
 
-                q = d['query']
-                ids = d['ids']
-                job_update = self.refresh_after_delete(query=q, ids=ids, verbose=False)
-                jobs.append(job_update)
+                    q = d['query']
+                    ids = d['ids']
+                    job_update = self.refresh_after_delete(
+                        query=q, ids=ids, verbose=False
+                    )
+                    jobs.append(job_update)
 
-            return updated_ids, deleted_ids, jobs
+                return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
 
     def update(self, update: Update, refresh: bool = True) -> UpdateResult:
@@ -464,12 +469,17 @@ class Datalayer:
         """
         updated_ids = update.execute(self)
 
-        if refresh and self.cdc.running:
-            raise Exception('cdc cannot be activated and refresh=True')
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
         if refresh:
-            return updated_ids, self.refresh_after_update_or_insert(
-                query=update, ids=updated_ids, verbose=False, overwrite=True
-            )
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                # Overwrite should be true since updates could be done on collections
+                # with already existing outputs.
+                # We need overwrite ouptuts on those select and recompute predict
+                return updated_ids, self.refresh_after_update_or_insert(
+                    query=update, ids=updated_ids, verbose=False, overwrite=True
+                )
         return updated_ids, None
 
     def add(

@@ -25,11 +25,11 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, file_serializer
-from superduperdb.components.model import Trainer as SuperDuperTrainer, _Fittable
+from superduperdb.components.model import Trainer as SuperDuperTrainer
 from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
-    from superduperdb.ext.llm import LLM
+    from superduperdb.ext.llm.model import LLM
 
 
 @dc.dataclass(kw_only=True)
@@ -68,12 +68,13 @@ class LLMCallback(TrainerCallback):
         identifier: t.Optional[str] = None,
         db: t.Optional["Datalayer"] = None,
         llm: t.Optional["LLM"] = None,
+        experiment_id: t.Optional[str] = None,
     ):
         self.cfg = cfg
         self.identifier = identifier
         self.db = db
         self.llm = llm
-        self.id = random_sha1()
+        self.experiment_id = experiment_id or random_sha1()
 
         # If we run training on remote, we need to provide identifier and cfg,
         # then can connect to db and load llm
@@ -99,7 +100,7 @@ class LLMCallback(TrainerCallback):
             return
 
         checkpoint = Checkpoint(
-            identifier=self.id, path=checkpoint_path, step=state.global_step
+            identifier=self.experiment_id, path=checkpoint_path, step=state.global_step
         )
         self.db.add(checkpoint)
 
@@ -118,11 +119,13 @@ class LLMCallback(TrainerCallback):
         if state.best_model_checkpoint:
             step = state.best_model_checkpoint.split("-")[-1]
             checkpoint = Checkpoint(
-                identifier=self.id, path=state.best_model_checkpoint, step=step
+                identifier=self.experiment_id,
+                path=state.best_model_checkpoint,
+                step=step,
             )
             self.db.add(checkpoint)
 
-        checkpoint = self.db.load(Checkpoint.type_id, self.id)
+        checkpoint = self.db.load(Checkpoint.type_id, self.experiment_id)
         self.llm.adapter_id = checkpoint
         self.db.replace(self.llm)
 
@@ -185,13 +188,20 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     on_ray: bool = False
 
     def __post_init__(self, artifacts):
-        assert not self.output_dir
-        self.output_dir = f'{self.identifier}'
-        TrainingArguments.__post_init__(self)
-        return super().__post_init__(artifacts)
+        self.output_dir = self.output_dir or os.path.join("output", self.identifier)
+        return SuperDuperTrainer.__post_init__(self, artifacts)
 
     def build(self):
-        self.__post_init__()
+        TrainingArguments.__post_init__(self)
+
+    def build_training_args(self):
+        _TRAINING_DEFAULTS = {
+            k: v
+            for k, v in TrainingArguments('_tmp').to_dict().items()
+            if k != 'output_dir'
+        }
+        kwargs = {k: getattr(self, k) for k in _TRAINING_DEFAULTS}
+        return TrainingArguments(output_dir=self.output_dir, **kwargs)
 
     @staticmethod
     def get_compute_metrics(metrics):
@@ -209,10 +219,10 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
     def fit(
         self,
-        model: _Fittable,
+        model: 'LLM',
         db: Datalayer,
         train_dataset: t.Union[QueryDataset, NativeDataset],
-        valid_dataset: QueryDataset,
+        valid_dataset: t.Union[QueryDataset, NativeDataset],
     ):
         if isinstance(train_dataset, QueryDataset):
             train_dataset = NativeDataset.from_list(
@@ -220,32 +230,61 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
             )
 
         eval_datasets = {}
-        for vs in model.validation_sets:
-            unpacked = [r.unpack() for r in vs.data]
-            eval_datasets[vs.identifier] = NativeDataset.from_list(unpacked)
-        if not eval_datasets:
-            if isinstance(valid_dataset, QueryDataset):
-                valid_dataset = NativeDataset.from_list(
-                    list(valid_dataset)  # type: ignore[call-overload]
-                )
-            eval_datasets['_DEFAULT'] = valid_dataset
 
-        X, y = model.train_X
+        for vs in model.validation_sets:
+            qvs = model._create_dataset(model.valid_X, db, select=vs.select)
+            eval_datasets[vs.identifier] = NativeDataset.from_list(list(qvs))
+        if isinstance(valid_dataset, QueryDataset):
+            valid_dataset = NativeDataset.from_list(
+                list(valid_dataset)  # type: ignore[call-overload]
+            )
+
+        if eval_datasets:
+            eval_datasets['_default'] = valid_dataset
+        else:
+            eval_datasets = valid_dataset
+
+        model_kwargs = model.model_kwargs.copy()
+        tokenizer_kwargs = model.tokenizer_kwargs.copy()
+        assert (
+            model.model_name_or_path
+        ), "model_name_or_path must be provided for training"
+        model_kwargs["pretrained_model_name_or_path"] = model.model_name_or_path
+        tokenizer_kwargs["pretrained_model_name_or_path"] = model.model_name_or_path
+
+        if 'field' in model_kwargs:
+            field = model_kwargs.pop('field')
+        elif isinstance(model.train_X, str):
+            # Using dataset directly
+            field = model.train_X
+        elif isinstance(model.train_X, dict) and len(model.train_X) == 1:
+            # Using dataset from db, only one field
+            field = list(model.train_X.values())[0]
+        else:
+            # Using dataset from db, multiple fields, need to specify field
+            field = None
+
+        self._experiment_id = random_sha1()
+        logging.info(f"Start training, experiment_id: {self._experiment_id}")
+
         return train(
-            training_config=self,
+            training_args=self,
             train_dataset=train_dataset,
-            eval_datasets=eval_datasets,
-            model_kwargs=model.model_kwargs,
-            tokenizer_kwargs=model.tokenizer_kwargs,
+            eval_datasets=valid_dataset,
+            model_kwargs=model_kwargs,
+            tokenizer_kwargs=tokenizer_kwargs,
             compute_metrics=self.get_compute_metrics(model.metrics),
-            X=X,  # type: ignore[arg-type]
-            y=y,  # type: ignore[arg-type]
+            field=field,
             db=db,
-            llm=self,
+            llm=model,
             **model.training_kwargs,
             on_ray=self.on_ray,
             ray_configs=self.ray_configs,
         )
+
+    @property
+    def experiment_id(self):
+        return getattr(self, "_experiment_id", None)
 
 
 def tokenize(tokenizer, example, X, y):
@@ -264,13 +303,12 @@ def tokenize(tokenizer, example, X, y):
 
 
 def train(
-    training_config: dict,
-    train_dataset: "Dataset",
-    eval_datasets: t.Union["Dataset", t.Dict[str, "Dataset"]],
+    training_args: LLMTrainer,
+    train_dataset: NativeDataset,
+    eval_datasets: t.Union[NativeDataset, t.Dict[str, NativeDataset]],
     model_kwargs: dict,
     tokenizer_kwargs: dict,
-    X: t.Optional[str] = None,
-    y: t.Optional[str] = None,
+    field: t.Optional[str] = None,
     db: t.Optional["Datalayer"] = None,
     llm: t.Optional["LLM"] = None,
     on_ray: t.Optional[bool] = False,
@@ -308,8 +346,7 @@ def train(
     :param ray_configs: ray configs, must provide if using ray
     """
 
-    training_args = LLMTrainer(**training_config)
-    dataset_text_field = kwargs.get("dataset_text_field", X)
+    dataset_text_field = kwargs.get("dataset_text_field", field)
     if dataset_text_field is not None:
         kwargs["dataset_text_field"] = dataset_text_field
 
@@ -326,7 +363,9 @@ def train(
     if not on_ray:
         # create local LLMCallback
         if db is not None and llm is not None and log_to_db:
-            callbacks = [LLMCallback(db=db, llm=llm)]
+            callbacks = [
+                LLMCallback(db=db, llm=llm, experiment_id=training_args.experiment_id)
+            ]
         else:
             callbacks = None
         # build training_args for local training
@@ -346,7 +385,13 @@ def train(
         if db is not None and llm is not None and log_to_db:
             from superduperdb import CFG
 
-            callbacks = [LLMCallback(cfg=CFG, identifier=llm.identifier)]
+            callbacks = [
+                LLMCallback(
+                    cfg=CFG,
+                    identifier=llm.identifier,
+                    experiment_id=training_args.experiment_id,
+                )
+            ]
         else:
             callbacks = None
         results = ray_train(
@@ -470,7 +515,7 @@ def train_func(
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
-        args=training_args,
+        args=training_args.build_training_args(),
         train_dataset=train_dataset,
         eval_dataset=eval_datasets,
         max_seq_length=training_args.max_seq_length,

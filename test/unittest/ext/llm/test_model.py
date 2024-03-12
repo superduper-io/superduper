@@ -10,7 +10,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
 from superduperdb.ext.llm.model import LLM
-from superduperdb.ext.llm.training import LLMTrainer
+from superduperdb.ext.llm.training import Checkpoint, LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
@@ -21,8 +21,6 @@ except ImportError:
     datasets = None
     peft = None
     trl = None
-
-RUN_LLM_FINETUNE = os.environ.get("RUN_LLM_FINETUNE", "0") == "1"
 
 
 @pytest.mark.parametrize(
@@ -43,7 +41,6 @@ def test_model_as_listener_model(db):
     check_llm_as_listener_model(db, model)
 
 
-@pytest.mark.skipif(not RUN_LLM_FINETUNE, reason="RUN_LLM_FINETUNE is not set")
 @pytest.mark.skipif(
     not all([datasets, peft, trl]),
     reason="The peft, datasets and trl are not installed",
@@ -64,14 +61,15 @@ def test_training(db, tmpdir):
         identifier="llm",
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),
+        train_signature='**kwargs',
     )
-    training_configuration = LLMTrainer(
+    trainer = LLMTrainer(
         identifier="llm-finetune",
         output_dir=str(tmpdir),
         lora_r=64,
         lora_alpha=16,
         lora_dropout=0.05,
-        num_train_epochs=3,
+        num_train_epochs=1,
         per_device_train_batch_size=1,
         per_device_eval_batch_size=1,
         gradient_accumulation_steps=8,
@@ -88,66 +86,70 @@ def test_training(db, tmpdir):
         logging_steps=1,
         gradient_checkpointing=True,
         report_to=[],
+        log_to_db=True,
         max_seq_length=64,
     )
 
     def metric(predictions, targets):
         return random.random()
 
-    model.fit_in_db(
-        X="text",
-        db=db,
-        select=select,
-        configuration=training_configuration,
-        prefetch_size=1000,
-        validation_sets=[
-            Dataset(
-                identifier="dataset_1",
-                select=collection.find({"_fold": "valid"}),
-            ),
-            Dataset(
-                identifier="dataset_2",
-                select=collection.find({"_fold": "valid"}),
-            ),
-        ],
-        metrics=[
-            Metric(
-                identifier="metrics1",
-                object=metric,
-            ),
-            Metric(
-                identifier="metrics2",
-                object=metric,
-            ),
-        ],
-    )
-
-    checkpoints = os.listdir(tmpdir)
-    checkpoints = [
-        checkpoint for checkpoint in checkpoints if checkpoint.startswith("checkpoint")
+    model.trainer = trainer
+    model.train_X = {'text': 'text'}
+    model.valid_X = {'text': 'text'}
+    model.train_select = select
+    model.validation_sets = [
+        Dataset(
+            identifier="dataset_1",
+            select=collection.find({"_fold": "valid"}),
+        ),
+        Dataset(
+            identifier="dataset_2",
+            select=collection.find({"_fold": "valid"}),
+        ),
     ]
-    checkpoints = sorted(checkpoints, key=lambda x: int(x.split("-")[-1]))
+    model.metrics = [
+        Metric(
+            identifier="metrics1",
+            object=metric,
+        ),
+        Metric(
+            identifier="metrics2",
+            object=metric,
+        ),
+    ]
 
-    # Test checkpoints
-    assert len(checkpoints) == 3
+    model.fit_in_db(db=db)
 
-    # Test multi-lora adapters
-    llm_base = LLM(
-        identifier="base",
+    # Load from db directly
+    llm = db.load("model", "llm")
+    assert isinstance(llm.predict_one("1+1="), str)
+
+    # load from checkpoint
+    checkpoint: Checkpoint = db.load("checkpoint", trainer.experiment_id)
+    llm = LLM(
+        identifier="llm_chekpoint",
+        adapter_id=checkpoint.uri,
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),
     )
-    db.add(llm_base)
-    for checkpoint in checkpoints:
-        llm_checkpoint = LLM(
-            identifier=checkpoint,
-            adapter_id=os.path.join(tmpdir, checkpoint),
+    llm.db = db
+    assert isinstance(llm.predict_one("1+1="), str)
+
+    # load from local path
+    checkpoint_paths = os.listdir(tmpdir)
+    checkpoint_paths = [
+        checkpoint
+        for checkpoint in checkpoint_paths
+        if checkpoint.startswith("checkpoint")
+    ]
+    checkpoint_paths = sorted(checkpoint_paths, key=lambda x: int(x.split("-")[-1]))
+    # Test checkpoints
+    assert len(checkpoint_paths) == 3
+    for checkpoint_path in checkpoint_paths:
+        llm = LLM(
+            identifier=checkpoint_path,
+            adapter_id=os.path.join(tmpdir, checkpoint_path),
             model_name_or_path="facebook/opt-125m",
             tokenizer_kwargs=dict(model_max_length=64),
         )
-        db.add(llm_checkpoint)
-
-    db.add(llm_base)
-    db.predict(llm_base.identifier, "1+1=")
-    for checkpoint in checkpoints:
-        db.predict(checkpoint, "1+1=")
+        assert isinstance(llm.predict_one("1+1="), str)

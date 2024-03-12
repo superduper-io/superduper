@@ -54,6 +54,7 @@ def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
             'dict': {
                 f.name: _asdict_inner(getattr(obj, f.name), dict, copy_method)
                 for f in dc.fields(obj)
+                if f.init
             },
         }
     elif dc.is_dataclass(obj):

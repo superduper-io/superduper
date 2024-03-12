@@ -190,6 +190,7 @@ class _Fittable:
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
     train_signature: Signature = '*args'
     data_prefetch: bool = False
+    prefetch_size: int = 1000
     prefetch_factor: int = 100
     in_memory: bool = True
 
@@ -221,51 +222,40 @@ class _Fittable:
         return job
 
     def _create_datasets(self, X, db, select):
-        if self.data_prefetch:
-            train_dataset = CachedQueryDataset(
-                select=select,
-                fold='train',
-                db=db,
-                mapping=Mapping(X, signature=self.train_signature),
-                in_memory=self.in_memory,
-                prefetch_size=self.prefetch_size,
-                transform=(
-                    self.train_transform if self.train_transform is not None else None
-                ),
-            )
-            valid_dataset = CachedQueryDataset(
-                select=select,
-                fold='valid',
-                db=db,
-                mapping=Mapping(X, signature=self.train_signature),
-                in_memory=self.in_memory,
-                prefetch_size=self.prefetch_size,
-                transform=(
-                    self.train_transform if self.train_transform is not None else None
-                ),
-            )
-        else:
-            train_dataset = QueryDataset(
-                select=select,
-                fold='train',
-                db=db,
-                mapping=Mapping(X, signature=self.train_signature),
-                in_memory=self.in_memory,
-                transform=(
-                    self.train_transform if self.train_transform is not None else None
-                ),
-            )
-            valid_dataset = QueryDataset(
-                select=select,
-                fold='valid',
-                db=db,
-                mapping=Mapping(X, signature=self.train_signature),
-                in_memory=self.in_memory,
-                transform=(
-                    self.train_transform if self.train_transform is not None else None
-                ),
-            )
+        train_dataset = self._create_dataset(
+            X=X,
+            db=db,
+            select=select,
+            fold='train',
+        )
+        valid_dataset = self._create_dataset(
+            X=X,
+            db=db,
+            select=select,
+            fold='valid',
+        )
         return train_dataset, valid_dataset
+
+    def _create_dataset(self, X, db, select, fold=None, **kwargs):
+        kwargs = kwargs.copy()
+        if self.data_prefetch:
+            dataset_cls = CachedQueryDataset
+            kwargs['prefetch_size'] = self.prefetch_size
+        else:
+            dataset_cls = QueryDataset
+
+        dataset = dataset_cls(
+            select=select,
+            fold=fold,
+            db=db,
+            mapping=Mapping(X, signature=self.train_signature),
+            in_memory=self.in_memory,
+            transform=(
+                self.train_transform if self.train_transform is not None else None
+            ),
+            **kwargs,
+        )
+        return dataset
 
     def fit(
         self,
@@ -274,6 +264,10 @@ class _Fittable:
         db: Datalayer,
     ):
         assert isinstance(self.trainer, Trainer)
+        if isinstance(self, Component) and self.identifier not in db.show('model'):
+            logging.info(f'Adding model {self.identifier} to db')
+            assert isinstance(self, Component)
+            db.add(self)
         return self.trainer.fit(
             self,
             train_dataset=train_dataset,
@@ -318,7 +312,7 @@ class Mapping:
         out = []
         for arg in self.mapping[0]:
             out.append(arg)
-        for k, v in self.mapping[1]:
+        for k, v in self.mapping[1].items():
             if k.startswith('_outputs.'):
                 k = k.split('.')[1]
             out.append(f'{k}={v}')

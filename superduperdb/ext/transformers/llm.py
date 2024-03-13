@@ -54,7 +54,6 @@ class LLM(BaseLLM, _Fittable, _Validator):
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
-    signature: str = 'singleton'
     training_kwargs: t.Dict = dc.field(default_factory=dict)
 
     # Save models and tokenizers cache for sharing when using multiple models

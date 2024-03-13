@@ -186,6 +186,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     log_to_db: bool = False
     ray_configs: t.Optional[t.Dict] = None
     on_ray: bool = False
+    ray_address: t.Optional[str] = None
 
     def __post_init__(self, artifacts):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
@@ -217,6 +218,10 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
         return compute_metrics
 
+    def prepare_dataset(self, model, dataset: QueryDataset):
+        if isinstance(model.train_X, str):
+            dataset.transform = lambda x: {model.train_X: x}
+
     def fit(
         self,
         model: 'LLM',
@@ -225,6 +230,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         valid_dataset: t.Union[QueryDataset, NativeDataset],
     ):
         if isinstance(train_dataset, QueryDataset):
+            self.prepare_dataset(model, train_dataset)
             train_dataset = NativeDataset.from_list(
                 list(train_dataset)  # type: ignore[call-overload]
             )
@@ -233,8 +239,10 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
         for vs in model.validation_sets:
             qvs = model._create_dataset(model.valid_X, db, select=vs.select)
+            self.prepare_dataset(model, qvs)
             eval_datasets[vs.identifier] = NativeDataset.from_list(list(qvs))
         if isinstance(valid_dataset, QueryDataset):
+            self.prepare_dataset(model, valid_dataset)
             valid_dataset = NativeDataset.from_list(
                 list(valid_dataset)  # type: ignore[call-overload]
             )
@@ -280,6 +288,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
             **model.training_kwargs,
             on_ray=self.on_ray,
             ray_configs=self.ray_configs,
+            ray_address=self.ray_address,
         )
 
     @property

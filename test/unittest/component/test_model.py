@@ -131,6 +131,7 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
             'in_memory': in_memory,
             'overwrite': overwrite,
         },
+        compute_kwargs={},
     )
 
 

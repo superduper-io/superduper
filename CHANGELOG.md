@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add model dict output indexing in graph
 
 #### New Features & Functionality
+- Add compute_kwargs option for model
 - Add BulkWrite mongodb query
 - Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs

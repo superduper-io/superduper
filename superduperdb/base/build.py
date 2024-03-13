@@ -200,7 +200,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
 
     # Build compute
-    compute = _build_compute(cfg.cluster.compute)
+    compute = _build_compute(cfg.cluster.compute.uri)
 
     # Build DataLayer
     # ------------------------------

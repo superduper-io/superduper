@@ -78,6 +78,22 @@ class CDCConfig(BaseConfig):
 
 
 @dc.dataclass
+class ComputeConfig(BaseConfig):
+    '''
+    :param uri: Compute for model predictions
+                i.e 'dask+tcp://local', 'dask+thread',
+                'local', 'ray
+    :param compute_kwargs: Kwargs used for compute
+                           backend job submit.
+                           Example (Ray backend):
+                           compute_kwargs = {'resources':{'CustomResource': 1}}
+    '''
+
+    uri: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
+    compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
+
+
+@dc.dataclass
 class Cluster(BaseConfig):
     """
     Describes a connection to distributed work via Dask
@@ -100,7 +116,7 @@ class Cluster(BaseConfig):
                 "http://<host>:<port>": Connect a remote cdc service
     """
 
-    compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
+    compute: ComputeConfig = dc.field(default_factory=ComputeConfig)
     vector_search: str = 'in_memory'  # '<http|in_memory|lance>://localhost:8000'
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     backfill_batch_size: int = 100

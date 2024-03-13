@@ -35,7 +35,7 @@ def method_job(
 
     if db is None:
         cfg = build_config(cfg)
-        cfg.force_set('cluster.compute', 'local')
+        cfg.force_set('cluster.compute.uri', 'local')
         db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
@@ -97,7 +97,7 @@ def callable_job(
 
     if db is None:
         cfg = build_config(cfg)
-        cfg.force_set('cluster.compute', 'local')
+        cfg.force_set('cluster.compute.uri', 'local')
         db = build_datalayer(cfg)
 
     db.metadata.update_job(job_id, 'status', 'running')

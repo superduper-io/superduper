@@ -36,7 +36,9 @@ class RayComputeBackend(ComputeBackend):
     def name(self) -> str:
         return f"ray://{self.address}"
 
-    def submit(self, function: t.Callable, *args, **kwargs) -> ray.ObjectRef:
+    def submit(
+        self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
+    ) -> ray.ObjectRef:
         """
         Submits a function to the ray server for execution.
 
@@ -53,7 +55,7 @@ class RayComputeBackend(ComputeBackend):
                     ray.wait(dependencies)
             return function(*args, **kwargs)
 
-        remote_function = ray.remote(_dependable_remote_job)
+        remote_function = ray.remote(_dependable_remote_job, **compute_kwargs)
         future = remote_function.remote(function, *args, **kwargs)
         self._futures_collection[future.task_id().hex()] = future
 

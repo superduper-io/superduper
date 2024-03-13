@@ -38,8 +38,8 @@ def local_cluster(db):
 
     # Vector search local service
     CFG.force_set('cluster.vector_search', 'http://localhost:8000')
-    CFG.force_set('cluster.cdc', 'http://localhost:8001')
-    CFG.force_set('cluster.compute', 'dask+thread')
+    CFG.force_set('cluster.cdc.uri', 'http://localhost:8001')
+    CFG.force_set('cluster.compute.uri', 'dask+thread')
 
     from superduperdb.vector_search.server.app import app as vector_search_app
 

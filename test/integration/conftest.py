@@ -115,7 +115,7 @@ def ray_client():
     from superduperdb import CFG
     from superduperdb.backends.ray.compute import RayComputeBackend
 
-    address = CFG.cluster.compute
+    address = CFG.cluster.compute.uri
     import shutil
     import tempfile
 

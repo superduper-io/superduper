@@ -28,7 +28,7 @@ class BaseLLM(_Predictor, metaclass=abc.ABCMeta):
     :param predict_kwargs: Parameters used during inference.
     """
 
-    prompt_template: str = "{input}"
+    prompt: str = "{input}"
     prompt_func: t.Optional[t.Callable] = dc.field(default=None)
     max_batch_size: t.Optional[int] = 4
     signature: t.ClassVar[str] = 'singleton'
@@ -95,7 +95,7 @@ class BaseLLM(_Predictor, metaclass=abc.ABCMeta):
 
     @property
     def prompter(self):
-        return Prompter(self.prompt_template, self.prompt_func)
+        return Prompter(self.prompt, self.prompt_func)
 
 
 @dc.dataclass

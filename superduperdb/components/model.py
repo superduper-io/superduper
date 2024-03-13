@@ -379,6 +379,9 @@ class _Predictor(Component):
     :param metrics: The metrics to evaluate on
     :param validation_sets: The validation ``Dataset`` instances to use
     :param predict_kwargs: Additional arguments to use at prediction time
+    :param compute_kwargs: Kwargs used for compute backend job submit.
+                           Example (Ray backend):
+                           compute_kwargs = {'resources':{'CustomResource': 1}}
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -389,6 +392,7 @@ class _Predictor(Component):
     flatten: bool = False
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
     predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
+    compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
     def post_create(self, db):
         output_component = db.databackend.create_model_table_or_collection(self)
@@ -475,6 +479,7 @@ class _Predictor(Component):
                 'in_memory': in_memory,
                 'overwrite': overwrite,
             },
+            compute_kwargs=self.compute_kwargs,
         )
         job(db, dependencies=dependencies)
         return job

@@ -116,7 +116,7 @@ class Datalayer:
         cfg = cfg or s.CFG
 
         self.databackend = build._build_databackend(cfg)
-        self.compute = build._build_compute(cfg.cluster.compute)
+        self.compute = build._build_compute(cfg.cluster.compute.uri)
 
         self.metadata = build._build_metadata(cfg, self.databackend)
         self.artifact_store = build._build_artifact_store(

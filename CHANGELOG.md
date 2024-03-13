@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create models directly by importing package from auto and with decorator `@objectmodel`, `@torchmodel`
 - Support Schema option for MongoDB
 - Optimize LLM fine-tuning
+- Sort out the llm directory structure
 
 #### Bug Fixes
 - Fixed a bug in predict in db for missing ouptuts

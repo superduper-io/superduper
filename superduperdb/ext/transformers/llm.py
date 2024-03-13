@@ -19,16 +19,15 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.model import _Fittable, _Validator
-from superduperdb.ext.llm.base import _BaseLLM
-
-from .training import Checkpoint
+from superduperdb.ext.llm.base import BaseLLM
+from superduperdb.ext.transformers.llm_training import Checkpoint
 
 if typing.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
 @dc.dataclass(kw_only=True)
-class LLM(_BaseLLM, _Fittable, _Validator):
+class LLM(BaseLLM, _Fittable, _Validator):
     """
     LLM model based on `transformers` library.
 
@@ -232,7 +231,7 @@ class LLM(_BaseLLM, _Fittable, _Validator):
         Generate text.
         Can overwrite this method to support more inference methods.
         """
-        kwargs = kwargs.copy()
+        kwargs = {**self.predict_kwargs, **kwargs}
 
         # Set default values, if not will cause bad output
         kwargs.setdefault("add_special_tokens", True)

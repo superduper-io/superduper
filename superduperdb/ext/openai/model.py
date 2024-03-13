@@ -47,6 +47,8 @@ class _OpenAI(APIModel):
     :param client_kwargs: The kwargs to be passed to OpenAI
     '''
 
+    openai_api_key: t.Optional[str] = None
+    openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
     __doc__ = APIModel.__doc__  # type: ignore[assignment]
 
@@ -54,6 +56,11 @@ class _OpenAI(APIModel):
         super().__post_init__(artifacts)
 
         assert isinstance(self.client_kwargs, dict)
+
+        if self.openai_api_key is not None:
+            self.client_kwargs['api_key'] = self.openai_api_key
+        if self.openai_api_base is not None:
+            self.client_kwargs['base_url'] = self.openai_api_base
 
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if self.model not in (

@@ -1,8 +1,7 @@
 from datasets import load_dataset
 
 from superduperdb import superduper
-from superduperdb.ext.llm.model import LLM
-from superduperdb.ext.llm.training import LLMTrainer
+from superduperdb.ext.transformers import LLM, LLMTrainer
 
 db = superduper("mongodb://localhost:27017/llm-finetune")
 

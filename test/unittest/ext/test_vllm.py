@@ -5,13 +5,11 @@ from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predi
 import pytest
 import vcr
 
-from superduperdb.ext.llm.vllm import VllmAPI
+from superduperdb.ext.vllm import VllmAPI
 
-CASSETTE_DIR = "test/unittest/ext/cassettes/llm/vllm"
+CASSETTE_DIR = "test/unittest/ext/cassettes/vllm"
 
-model_name = "mistralai/Mistral-7B-Instruct-v0.2"
-openai_api_base = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/v1"
-api_url = "http://ec2-54-208-130-192.compute-1.amazonaws.com:8000/generate"
+api_url = "http://localhost:8000/generate"
 
 
 @pytest.fixture
@@ -24,24 +22,27 @@ def openai_mock(monkeypatch):
     f"{CASSETTE_DIR}/test_predict_api.yaml",
     filter_headers=["authorization"],
     record_on_exception=False,
-    ignore_localhost=True,
+    ignore_localhost=False,
 )
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_predict_api(db):
     """Test chat."""
-    check_predict(db, VllmAPI(identifier="llm", api_url=api_url))
+    check_predict(db, VllmAPI(identifier="llm", api_url=api_url, max_batch_size=1))
 
 
 @vcr.use_cassette(
     f"{CASSETTE_DIR}/test_llm_as_listener_model_api.yaml",
     filter_headers=["authorization"],
     record_on_exception=False,
-    ignore_localhost=True,
+    ignore_localhost=False,
 )
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_llm_as_listener_model_api(db):
-    check_llm_as_listener_model(db, VllmAPI(identifier="llm", api_url=api_url))
+    # vcr does not support multiple requests in a single test, set max_batch_size to 1
+    check_llm_as_listener_model(
+        db, VllmAPI(identifier="llm", api_url=api_url, max_batch_size=1)
+    )

@@ -1,11 +1,11 @@
 import asyncio
 import dataclasses as dc
-from typing import Any, List
+import typing as t
 
 import requests
 
 from superduperdb import logging
-from superduperdb.ext.llm.base import BaseLLMAPI, BaseLLMModel
+from superduperdb.ext.llm.base import BaseLLM, BaseLLMAPI
 from superduperdb.misc.annotations import public_api
 
 __all__ = ["VllmAPI", "VllmModel"]
@@ -47,15 +47,21 @@ class VllmAPI(BaseLLMAPI):
 
     __doc__ = __doc__.format(parent_doc=BaseLLMAPI.__doc__)
 
-    def _generate(self, prompt: str, **kwargs) -> str:
+    def _generate(self, prompt: str, **kwargs) -> t.Union[str, t.List[str]]:
         """
         Batch generate text from a prompt.
         """
         post_data = self.build_post_data(prompt, **kwargs)
         response = requests.post(self.api_url, json=post_data)
-        return response.json()["text"][0]
+        results = []
+        for result in response.json()["text"]:
+            results.append(result[len(prompt) :])
+        n = kwargs.get("n", 1)
+        return results[0] if n == 1 else results
 
-    def build_post_data(self, prompt: str, **kwargs: dict[str, Any]) -> dict[str, Any]:
+    def build_post_data(
+        self, prompt: str, **kwargs: dict[str, t.Any]
+    ) -> dict[str, t.Any]:
         total_kwargs = {}
         for key, value in {**self.predict_kwargs, **kwargs}.items():
             if key in VLLM_INFERENCE_PARAMETERS_LIST:
@@ -94,18 +100,18 @@ class _VllmCore:
             return text_outputs[0]
         return text_outputs
 
-    async def abatch_predict(self, prompts: List[str], **kwargs):
+    async def abatch_predict(self, prompts: t.List[str], **kwargs):
         return await asyncio.gather(
             *[self.agenerate(prompt, **kwargs) for prompt in prompts]
         )
 
-    def batch_predict(self, prompts: List[str], **kwargs):
+    def batch_predict(self, prompts: t.List[str], **kwargs):
         return asyncio.run(self.abatch_predict(prompts, **kwargs))
 
 
 @public_api(stability='beta')
-@dc.dataclass
-class VllmModel(BaseLLMModel):
+@dc.dataclass(kw_only=True)
+class VllmModel(BaseLLM):
     """
     Load a large language model from VLLM.
 
@@ -115,11 +121,15 @@ class VllmModel(BaseLLMModel):
     {parent_doc}
     """
 
-    __doc__ = __doc__.format(parent_doc=BaseLLMModel.__doc__)
+    __doc__ = __doc__.format(parent_doc=BaseLLM.__doc__)
 
+    model_name: str = dc.field(default="")
     tensor_parallel_size: int = 1
     trust_remote_code: bool = True
     vllm_kwargs: dict = dc.field(default_factory=dict)
+    on_ray: bool = False
+    ray_address: t.Optional[str] = None
+    ray_config: dict = dc.field(default_factory=dict)
 
     def __post_init__(self, artifacts):
         self.on_ray = self.on_ray or bool(self.ray_address)
@@ -164,10 +174,10 @@ class VllmModel(BaseLLMModel):
 
         self.llm = LLM(**self.vllm_kwargs)
 
-    def _generate(self, prompt: str, **kwargs: Any) -> str:
-        return self.predict([prompt], **kwargs)[0]
+    def _generate(self, prompt: str, **kwargs: t.Any) -> str:
+        return self._batch_generate([prompt], **kwargs)[0]
 
-    def _batch_generate(self, prompts: List[str], **kwargs: Any) -> List[str]:
+    def _batch_generate(self, prompts: t.List[str], **kwargs: t.Any) -> t.List[str]:
         total_kwargs = {}
         for key, value in {**self.predict_kwargs, **kwargs}.items():
             if key in VLLM_INFERENCE_PARAMETERS_LIST:

@@ -29,7 +29,7 @@ from superduperdb.components.model import Trainer as SuperDuperTrainer
 from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
-    from superduperdb.ext.llm.model import LLM
+    from superduperdb.ext.transformers.llm import LLM
 
 
 @dc.dataclass(kw_only=True)

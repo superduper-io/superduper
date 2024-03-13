@@ -1,7 +1,6 @@
 import os
 import random
 from test.db_config import DBConfig
-from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
 import pytest
 
@@ -9,8 +8,8 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
-from superduperdb.ext.llm.model import LLM
-from superduperdb.ext.llm.training import Checkpoint, LLMTrainer
+from superduperdb.ext.transformers import LLM
+from superduperdb.ext.transformers.llm_training import Checkpoint, LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
@@ -21,24 +20,6 @@ except ImportError:
     datasets = None
     peft = None
     trl = None
-
-
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
-def test_predict(db):
-    """Test chat."""
-    model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME)
-
-    check_predict(db, model)
-
-
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
-def test_model_as_listener_model(db):
-    model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME)
-    check_llm_as_listener_model(db, model)
 
 
 @pytest.mark.skipif(

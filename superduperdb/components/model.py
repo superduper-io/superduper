@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import dataclasses as dc
 import inspect
 import multiprocessing
@@ -796,6 +797,7 @@ class APIModel(_Predictor):
     )
 
     model: t.Optional[str] = None
+    max_batch_size: int = 8
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
@@ -812,6 +814,25 @@ class APIModel(_Predictor):
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)
+
+    def _multi_predict(
+        self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
+    ) -> t.List:
+        """
+        Base method to batch generate text from a list of prompts using multi-threading.
+        Handles exceptions in _generate method.
+        """
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_batch_size
+        ) as executor:
+            results = list(
+                executor.map(
+                    lambda x: self.predict_one(x, *args, **kwargs),
+                    dataset,  # type: ignore[arg-type]
+                )
+            )
+
+        return results
 
 
 @public_api(stability='stable')

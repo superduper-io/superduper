@@ -5,12 +5,11 @@ from superduperdb.misc.annotations import requires_packages
 
 requires_packages(['sentence-transformers', '2.2.2', None])
 
-from overrides import override
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.datatype import DataType, dill_serializer
-from superduperdb.components.model import _DeviceManaged, _Predictor
+from superduperdb.components.model import Signature, _DeviceManaged, _Predictor
 
 
 @dc.dataclass(kw_only=True)
@@ -23,6 +22,8 @@ class SentenceTransformer(_Predictor, _DeviceManaged):
     model: t.Optional[str] = None
     device: str = 'cpu'
     preprocess: t.Optional[t.Callable] = None
+    postprocess: t.Optional[t.Callable] = None
+    signature: Signature = 'singleton'
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
@@ -39,19 +40,21 @@ class SentenceTransformer(_Predictor, _DeviceManaged):
         self.object = self.object.to(device)
         self.object._target_device = device
 
-    @override
-    def predict_one(self, X) -> int:
+    def predict_one(self, X, *args, **kwargs):
         if self.preprocess is not None:
             X = self.preprocess(X)
 
         assert self.object is not None
-        return self.object.encode(X, self.predict_kwargs)
+        result = self.object.encode(X, *args, **{**self.predict_kwargs, **kwargs})
+        if self.postprocess is not None:
+            result = self.postprocess(result)
+        return result
 
-    @override
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         if self.preprocess is not None:
             dataset = list(map(self.preprocess, dataset))  # type: ignore[arg-type]
-        return self.object.encode(  # type: ignore[union-attr]
-            dataset,
-            **self.predict_kwargs,
-        )
+        assert self.object is not None
+        results = self.object.encode(dataset, **self.predict_kwargs)
+        if self.postprocess is not None:
+            results = self.postprocess(results)
+        return results

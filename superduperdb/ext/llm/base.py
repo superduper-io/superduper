@@ -67,9 +67,8 @@ class BaseLLM(_Predictor, metaclass=abc.ABCMeta):
         return [self._generate(prompt, **self.predict_kwargs) for prompt in prompts]
 
     @ensure_initialized
-    def predict_one(self, X: t.Union[str, dict[str, str]], **kwargs):
-        x = self.prompter(X, **kwargs)
-        kwargs.pop("context", None)
+    def predict_one(self, X: t.Union[str, dict[str, str]], context=None, **kwargs):
+        x = self.prompter(X, context=context, **kwargs)
         return self._generate(x, **kwargs)
 
     @ensure_initialized

@@ -52,7 +52,6 @@ class LLM(BaseLLM, _Fittable, _Validator):
     object: t.Optional[transformers.Trainer] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
-    prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
     training_kwargs: t.Dict = dc.field(default_factory=dict)
 
@@ -81,7 +80,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
         cls,
         model_name_or_path,
         identifier="",
-        prompt_template="{input}",
+        prompt="{input}",
         prompt_func=None,
         **kwargs,
     ):
@@ -97,7 +96,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
             identifier=identifier,
             model_kwargs=model_kwargs,
             tokenizer_kwargs=tokenizer_kwargs,
-            prompt_template=prompt_template,
+            prompt=prompt,
             prompt_func=prompt_func,
         )
 
@@ -206,9 +205,8 @@ class LLM(BaseLLM, _Fittable, _Validator):
                 self.adapter_id = checkpoint
 
     @ensure_initialized
-    def predict_one(self, X, **kwargs):
-        X = self._process_inputs(X, **kwargs)
-        kwargs.pop("context", None)
+    def predict_one(self, X, context=None, **kwargs):
+        X = self._process_inputs(X, context=context, **kwargs)
         results = self._batch_generate([X], **kwargs)
         return results[0]
 
@@ -234,12 +232,15 @@ class LLM(BaseLLM, _Fittable, _Validator):
 
         # Set default values, if not will cause bad output
         kwargs.setdefault("add_special_tokens", True)
+        kwargs.setdefault(
+            "max_new_tokens", self.predict_kwargs.get("max_new_tokens", 256)
+        )
         outputs = self.pipeline(
             prompts,
             return_type=ReturnType.NEW_TEXT,
             eos_token_id=self.pipeline.tokenizer.eos_token_id,
             pad_token_id=self.pipeline.tokenizer.eos_token_id,
-            **kwargs,
+            **{**self.predict_kwargs, **kwargs},
         )
         results = [output[0]["generated_text"] for output in outputs]
         return results

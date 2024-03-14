@@ -944,7 +944,11 @@ class Collection(TableOrCollection):
                             '_outputs': {key: {model: {str(version): outputs[i]}}},
                         }
                     )
-            db.execute(collection.insert_many([Document(**doc) for doc in bulk_writes]))
+
+            if bulk_writes:
+                db.execute(
+                    collection.insert_many([Document(**doc) for doc in bulk_writes])
+                )
 
 
 def _get_decode_function(db) -> t.Callable[[t.Any], t.Any]:

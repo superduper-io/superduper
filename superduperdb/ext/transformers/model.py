@@ -29,10 +29,6 @@ from superduperdb.components.model import (
     _Predictor,
 )
 
-_TRAINING_DEFAULTS = {
-    k: v for k, v in TrainingArguments('_tmp').to_dict().items() if k != 'output_dir'
-}
-
 
 class _TrainerWithSaving(NativeTrainer):
     def __init__(self, custom_saver=None, **kwargs):
@@ -74,6 +70,11 @@ class TransformersTrainer(TrainingArguments, Trainer):
 
     @property
     def native_arguments(self):
+        _TRAINING_DEFAULTS = {
+            k: v
+            for k, v in TrainingArguments('_tmp').to_dict().items()
+            if k != 'output_dir'
+        }
         kwargs = {k: getattr(self, k) for k in _TRAINING_DEFAULTS}
         return TrainingArguments(output_dir=self.identifier, **kwargs)
 

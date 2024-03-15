@@ -47,21 +47,26 @@ class Component(Serializable, Leaf):
         self.changed = set()
 
     def init(self):
-        from superduperdb.base.document import Document
         from superduperdb.components.datatype import _BaseEncodable
+
+        def _init(item):
+            if isinstance(item, Component):
+                item.init()
+                return item
+            if isinstance(item, dict):
+                return {k: _init(i) for k, i in item.items()}
+
+            if isinstance(item, list):
+                return [_init(i) for i in item]
+
+            if isinstance(item, _BaseEncodable):
+                return item.unpack(db=self.db)
+            return item
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
-            if isinstance(item, Component):
-                item.init()
-            if isinstance(item, dict):
-                setattr(self, f.name, Document(item).unpack(db=self.db))
-            if isinstance(item, list):
-                unpacked = Document({'_base': item}).unpack(db=self.db)
-                setattr(self, f.name, unpacked)
-            if isinstance(item, _BaseEncodable):
-                item = item.unpack(db=self.db)
-                setattr(self, f.name, item)
+            unpacked_item = _init(item)
+            setattr(self, f.name, unpacked_item)
 
     @property
     def artifact_schema(self):

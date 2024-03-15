@@ -43,18 +43,10 @@ class Graph(_Predictor):
     def __post_init__(self, artifacts):
         self.G = nx.DiGraph()
         self.nodes = {}
-        self._node_output_cache = {}
         self.version = 0
         self._db = None
 
-        assert all([isinstance(o, _Predictor) for o in self.outputs])
-
-        self.output_schema = Schema(
-            identifier=self.identifier,
-            fields={k.identifier: k.datatype for k in self.outputs},
-        )
-
-        self.outputs = [
+        self.output_identifiers = [
             o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
         ]
         self.input.signature = '*args'
@@ -228,12 +220,12 @@ class Graph(_Predictor):
         in the graph.
         '''
         # Validate the node for incompletion
-        list(map(self.validate, self.outputs))
+        list(map(self.validate, self.output_identifiers))
         cache = {}
 
         outputs = [
             self._predict_on_node(*args, node=output, cache=cache, **kwargs)
-            for output in self.outputs
+            for output in self.output_identifiers
         ]
 
         # TODO: check if output schema and datatype required
@@ -263,7 +255,7 @@ class Graph(_Predictor):
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         # Validate the node for incompletion
-        list(map(self.validate, self.outputs))
+        list(map(self.validate, self.output_identifiers))
 
         if isinstance(dataset, QueryDataset):
             raise TypeError('QueryDataset is not supported in graph mode')
@@ -272,7 +264,7 @@ class Graph(_Predictor):
 
         outputs = [
             self._predict_on_node(dataset, node=output, cache=cache, one=False)
-            for output in self.outputs
+            for output in self.output_identifiers
         ]
 
         # TODO: check if output schema and datatype required
@@ -280,9 +272,16 @@ class Graph(_Predictor):
 
     def encode_outputs(self, outputs):
         encoded_outputs = []
-        for o, n in zip(outputs, self.outputs):
+        for o, n in zip(outputs, self.output_identifiers):
             encoded_outputs.append(self.nodes[n].encode_outputs(o))
         outputs = self._transpose(outputs=encoded_outputs or outputs)
+
+        # Set the schema in runtime
+        self.output_schema = Schema(
+            identifier=self.identifier,
+            fields={k.identifier: k.datatype for k in self.outputs},
+        )
+
         return self.encode_with_schema(outputs)
 
     @staticmethod

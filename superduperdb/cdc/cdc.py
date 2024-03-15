@@ -36,7 +36,7 @@ from enum import Enum
 
 from pymongo.change_stream import CollectionChangeStream
 
-from superduperdb import logging
+from superduperdb import CFG, logging
 from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
 
@@ -348,7 +348,7 @@ class DatabaseChangeDataCapture:
 
     @property
     def running(self) -> bool:
-        return self._running
+        return self._running or CFG.cluster.cdc.uri is not None
 
     def start(self):
         """

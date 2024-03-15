@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 - Fixed a bug in refresh_after_insert for listeners with select None
+- Fixed a bug in Component init
 - Fixed a bug in predict in db for missing ouptuts
 - Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.

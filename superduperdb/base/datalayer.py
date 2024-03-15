@@ -142,8 +142,9 @@ class Datalayer:
         clt = vi.indexing_listener.select.table_or_collection
 
         if self.cdc.running:
-            msg = 'CDC only supported for vector search via lance format'
-            assert s.CFG.cluster.vector_search_type == 'lance', msg
+            if not s.CFG.cluster.is_remote_vector_search:
+                msg = 'CDC only supported for vector search via lance format'
+                assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
         vector_comparison = vector_search_cls.from_component(vi)

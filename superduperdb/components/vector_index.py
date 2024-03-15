@@ -185,18 +185,19 @@ class VectorIndex(Component):
         :param dependencies: A list of dependencies
         :param verbose: Whether to print verbose output
         """
-
-        job = FunctionJob(
-            callable=copy_vectors,
-            args=[],
-            kwargs={
-                'vector_index': self.identifier,
-                'ids': [],
-                'query': self.indexing_listener.select.dict().encode(),
-            },
-        )
-        job(db, dependencies=dependencies)
-        return [job]
+        if not db.cdc.running:
+            job = FunctionJob(
+                callable=copy_vectors,
+                args=[],
+                kwargs={
+                    'vector_index': self.identifier,
+                    'ids': [],
+                    'query': self.indexing_listener.select.dict().encode(),
+                },
+            )
+            job(db, dependencies=dependencies)
+            return [job]
+        return []
 
 
 class EncodeArray:

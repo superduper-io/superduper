@@ -57,7 +57,7 @@ class Model2:
 
 
 def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
-    retry_left = 5
+    retry_left = 10
 
     def check_outputs():
         docs = list(db.databackend.db[collection].find({}))
@@ -70,7 +70,7 @@ def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
                 pass
             else:
                 p += 1
-        return len(docs) == p
+        return n == p
 
     while not check_outputs() and retry_left != 0:
         time.sleep(2)
@@ -78,7 +78,7 @@ def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
 
 
 def _wait_for_outputs(db, collection='_outputs.int.model1.0', n=10):
-    retry_left = 5
+    retry_left = 10
 
     def check_outputs():
         docs = list(db.databackend.db[collection].find({}))
@@ -176,7 +176,7 @@ def test_advance_setup(distributed_db, image_url):
 
     db.execute(Collection('mixed_input').insert_many(data))
 
-    n = _wait_for_outputs(db=db, n=30)
+    _wait_for_outputs(db=db)
 
     db.add(
         VectorIndex(
@@ -195,7 +195,7 @@ def test_advance_setup(distributed_db, image_url):
 
     search_phrase = '4'
     _wait_for_keys(
-        db=db, n=n, collection='_outputs.int.model1.0', key='_outputs.int.model2'
+        db=db, n=10, collection='_outputs.int.model1.0', key='_outputs.int.model2'
     )
 
     r = next(

@@ -102,12 +102,18 @@ class Inputs:
 class CallableInputs(Inputs):
     def __init__(self, fn, predict_kwargs: t.Dict = {}):
         sig = inspect.signature(fn)
+        full_argspec = inspect.getfullargspec(fn)
+        self.kwonly = full_argspec.kwonlyargs
+        self.args = full_argspec.args
+
         sig_keys = list(sig.parameters.keys())
         params = []
         for k in sig_keys:
             if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
                 continue
+            print(sig.parameters[k].kind)
             params.append(k)
+
         self.params = params
 
 

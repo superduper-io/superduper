@@ -46,10 +46,10 @@ class Graph(_Predictor):
         self.version = 0
         self._db = None
 
+        self.signature = self.input.signature
         self.output_identifiers = [
             o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
         ]
-        self.input.signature = '*args'
 
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
@@ -83,12 +83,10 @@ class Graph(_Predictor):
         assert isinstance(v, _Predictor)
 
         if u.identifier not in self.nodes:
-            u.signature = '*args'
             self.nodes[u.identifier] = u
             self.G.add_node(u.identifier)
 
         if v.identifier not in self.nodes:
-            v.signature = '*args'
             self.nodes[v.identifier] = v
             self.G.add_node(v.identifier)
 
@@ -123,14 +121,12 @@ class Graph(_Predictor):
                 if one:
                     return output[index]
                 else:
-                    return [[o[index]] for o in output]
+                    return [o[index] for o in output]
 
             except KeyError:
                 raise KeyError("Model node does not have sufficient outputs")
-        else:
-            if one:
-                return output
-            return [[o] for o in output]
+        # Index None implies to pass all outputs to dependent node.
+        return output
 
     def validate(self, node):
         '''
@@ -151,8 +147,10 @@ class Graph(_Predictor):
             )
         return node
 
-    def _fetch_inputs(self, dataset, edges=[], outputs=[]):
+    def _fetch_inputs(self, dataset, edges=[], outputs=[], node=None):
         arg_inputs = []
+        kwargs = {}
+        node_signature = self.nodes[node].signature
 
         def _length(lst):
             count = 0
@@ -168,18 +166,36 @@ class Graph(_Predictor):
 
         for ix, edge in enumerate(edges):
             output_key, input_key = edge['weight']
-
             arg_input_dataset = self.fetch_output(outputs[ix], output_key, one=False)
             if input_key == 'singleton':
-                return arg_input_dataset
+                # If singleton we override input_key with actual model
+                # singleton param.
+                input_key = self.nodes[node].inputs.params[0]
 
+            kwargs[input_key] = arg_input_dataset
             arg_inputs.append(arg_input_dataset)
 
         if not arg_inputs:
             return outputs
-        return self._transpose(arg_inputs, args=True)
 
-    def _fetch_one_inputs(self, args, kwargs, edges=[], outputs=[]):
+        batches = self._transpose(arg_inputs)
+        mapped_dataset = []
+        for batch in batches:
+            batch = self._map_dataset_to_model(batch, node_signature, kwargs)
+            mapped_dataset.append(batch)
+        return mapped_dataset
+
+    def _map_dataset_to_model(self, batch, signature, kwargs):
+        if signature == '*args':
+            return [[batch[p]] for p, _ in enumerate(kwargs)]
+        elif signature == 'singleton':
+            return batch[0]
+        elif signature == '*args,**kwargs':
+            return (), {k: batch[i] for i, k in enumerate(kwargs)}
+        elif signature == '**kwargs':
+            return {k: batch[i] for i, k in enumerate(kwargs)}
+
+    def _fetch_input(self, args, kwargs, edges=[], outputs=[]):
         node_input = {}
         for ix, edge in enumerate(edges):
             output_key, input_key = edge['weight']
@@ -204,12 +220,14 @@ class Graph(_Predictor):
             edges = [self.G.get_edge_data(p, node) for p in predecessors]
 
             if one is True:
-                args, kwargs = self._fetch_one_inputs(
+                args, kwargs = self._fetch_input(
                     args, kwargs, edges=edges, outputs=outputs
                 )
                 cache[node] = self.nodes[node].predict_one(*args, **kwargs)
             else:
-                dataset = self._fetch_inputs(args[0], edges=edges, outputs=outputs)
+                dataset = self._fetch_inputs(
+                    args[0], edges=edges, outputs=outputs, node=node
+                )
                 cache[node] = self.nodes[node].predict(dataset=dataset)
             return cache[node]
         return cache[node]
@@ -238,18 +256,20 @@ class Graph(_Predictor):
         '''
         args_dataset = []
         signature = self.signature
+        input_params = self.input.inputs
 
-        def mapping(x):
-            nonlocal signature
-            if signature == '**kwargs':
-                return list(x.values())
+        def mapping(x, signature):
+            if signature == '*args':
+                return {p: d for d, p in zip(x, input_params.params)}
             elif signature == '*args,**kwargs':
-                return list(x[0]) + list(x[1].values())
+                base_kwargs = x[1]
+                kwargs = {a: d for a, d in zip(input_params.args, x[0])}
+                return kwargs.update(base_kwargs)
             else:
                 return x
 
         for data in dataset:
-            data = mapping(data)
+            data = mapping(data, signature)
             args_dataset.append(data)
         return args_dataset
 
@@ -260,7 +280,6 @@ class Graph(_Predictor):
         if isinstance(dataset, QueryDataset):
             raise TypeError('QueryDataset is not supported in graph mode')
         cache: t.Dict[str, t.Any] = {}
-        dataset = self.patch_dataset_to_args(dataset)
 
         outputs = [
             self._predict_on_node(dataset, node=output, cache=cache, one=False)
@@ -285,11 +304,12 @@ class Graph(_Predictor):
         return self.encode_with_schema(outputs)
 
     @staticmethod
-    def _transpose(outputs, args=False):
+    def _transpose(outputs):
         transposed_outputs = []
         for i in range(len(outputs[0])):
             batch_outs = []
             for o in outputs:
-                batch_outs.append(o[i][0] if args else o[i])
+                batch_outs.append(o[i])
             transposed_outputs.append(batch_outs)
+
         return transposed_outputs

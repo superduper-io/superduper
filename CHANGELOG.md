@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sort out the llm directory structure
 
 #### Bug Fixes
+- Fixed a bug in Component init
 - Fixed a bug in predict in db for missing ouptuts
 - Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.

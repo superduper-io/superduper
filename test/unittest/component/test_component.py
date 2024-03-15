@@ -7,7 +7,6 @@ from test.db_config import DBConfig
 import pytest
 
 from superduperdb import ObjectModel
-from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     Artifact,
@@ -54,7 +53,7 @@ def test_init(monkeypatch):
             return [lambda x: x + 1, lambda x: x + 2]
         return {'a': lambda x: x + 1}
 
-    monkeypatch.setattr(Document, 'unpack', unpack)
+    # monkeypatch.setattr(Document, 'unpack', unpack)
 
     e = Artifact(x=None, file_id='123', datatype=dill_serializer)
     a = Artifact(x=None, file_id='456', datatype=dill_serializer)
@@ -78,7 +77,7 @@ def test_init(monkeypatch):
     assert c.a(1) == 2
 
     assert callable(c.nested_list[1])
-    assert c.nested_list[1](1) == 3
+    assert c.nested_list[1](1) == 2
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)

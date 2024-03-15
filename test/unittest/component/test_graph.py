@@ -74,7 +74,13 @@ def test_simple_graph(model1, model2):
     )
 
     g.connect(model1, model2)
-    assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)]]
+    assert g.predict(
+        [
+            ((1,), {}),
+            ((2,), {}),
+            ((3,), {}),
+        ]
+    ) == [[(4, 2), (5, 3), (6, 4)]]
 
 
 def test_graph_output_indexing(model2_multi_dict, model2, model1):
@@ -94,7 +100,6 @@ def test_complex_graph(model1, model2_multi, model3, model2):
         identifier='complex-graph',
         input=model1,
         outputs=[model2, model2_multi],
-        signature='**kwargs',
     )
     g.connect(model1, model2_multi, on=(None, 'x'))
     g.connect(model1, model2)
@@ -102,12 +107,10 @@ def test_complex_graph(model1, model2_multi, model3, model2):
     g.connect(model2, model3, on=(1, 'x'))
     g.connect(model2_multi, model3, on=(None, 'y'))
     assert g.predict_one(1) == [(4, 2), 8]
-    assert g.predict([{'x': 1}, {'x': 2}, {'x': 3}]) == [
+    assert g.predict([((), {'x': 1}), ((), {'x': 2}), ((), {'x': 3})]) == [
         [(4, 2), (5, 3), (6, 4)],
         [8, 10, 12],
     ]
-    g.signature = '*args'
-    assert g.predict([[1], [2], [3]]) == [[(4, 2), (5, 3), (6, 4)], [8, 10, 12]]
 
 
 def test_non_dag(model1, model2):

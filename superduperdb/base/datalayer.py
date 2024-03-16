@@ -704,7 +704,15 @@ class Datalayer:
         for identifier in listeners:
             # TODO reload listener here (with lazy loading)
             info = self.metadata.get_component('listener', identifier)
-            listener_query = Document.decode(info['dict']['select'], None)
+            select = info['dict']['select']
+            if not select:
+                logging.debug(
+                    f'Listener {identifier} was loaded with `None` select, '
+                    f'{identifier} will not be added to refresh jobs.'
+                )
+                continue
+
+            listener_query = Document.decode(select, None)
             listener_select = serializable.Serializable.decode(listener_query)
             listener_selects.update({identifier: listener_select})
             if listener_select is None:
@@ -733,7 +741,7 @@ class Datalayer:
             )
 
         for identifier in listeners:
-            listener_select = listener_selects[identifier]
+            listener_select = listener_selects.get(identifier, None)
             if listener_select is None:
                 continue
             if (

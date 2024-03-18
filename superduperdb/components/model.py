@@ -111,7 +111,6 @@ class CallableInputs(Inputs):
         for k in sig_keys:
             if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
                 continue
-            print(sig.parameters[k].kind)
             params.append(k)
 
         self.params = params

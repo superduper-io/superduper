@@ -3,7 +3,7 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.model import TorchModel, TorchTrainer
+    from superduperdb.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
@@ -13,6 +13,7 @@ from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
+from superduperdb.ext.torch.training import TorchTrainer
 
 
 class ToDict:

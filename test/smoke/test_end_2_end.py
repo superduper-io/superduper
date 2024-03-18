@@ -1,4 +1,3 @@
-import os
 import random
 import time
 
@@ -56,7 +55,7 @@ class Model2:
         return x
 
 
-def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
+def _wait_for_keys(db, collection='_outputs.int::model1::0::0', n=10, key=''):
     retry_left = 10
 
     def check_outputs():
@@ -77,7 +76,7 @@ def _wait_for_keys(db, collection='_outputs.int.model1.0', n=10, key=''):
         retry_left -= 1
 
 
-def _wait_for_outputs(db, collection='_outputs.int.model1.0', n=10):
+def _wait_for_outputs(db, collection='_outputs.int::model1::0::0', n=10):
     retry_left = 10
 
     def check_outputs():
@@ -90,32 +89,17 @@ def _wait_for_outputs(db, collection='_outputs.int.model1.0', n=10):
     return len(check_outputs())
 
 
-@pytest.fixture
-def distributed_db(monkeypatch, test_db, ray_client):
-    from superduperdb import CFG
+def test_advance_setup(test_db, image_url):
+    # TODO - check that CDC listeners are created successfully
+    # TODO - check that ray jobs are created.
+    # check their status codes etc.
+    # check that if a ray job fails, this is logged
+    # to meta-data
+    # TODO check that CDC is not handled in this process
+    # etc..
+    # TODO make database and queries configurable
 
-    cdc = os.environ['SUPERDUPERDB_CLUSTER_CDC_URI']
-    vector_search = os.environ['SUPERDUPERDB_CLUSTER_VECTOR_SEARCH']
-    monkeypatch.setattr(CFG.cluster.cdc, 'uri', cdc)
-    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
-
-    test_db.set_compute(ray_client)
-
-    def update_syspath():
-        import sys
-
-        sys.path.append('./')
-
-    test_db.get_compute().submit(update_syspath)
-
-    yield test_db
-    from superduperdb.base.config import Cluster
-
-    monkeypatch.setattr(CFG, 'cluster', Cluster())
-
-
-def test_advance_setup(distributed_db, image_url):
-    db = distributed_db
+    db = test_db
     # Take empty database
 
     image = [
@@ -184,8 +168,8 @@ def test_advance_setup(distributed_db, image_url):
             measure='l2',
             indexing_listener=Listener(
                 model=model2,
-                key='_outputs.int.model1.0.int',
-                select=Collection('_outputs.int.model1.0').find(),
+                key='_outputs.int::model1::0::0.int',
+                select=Collection('_outputs.int::model1::0::0').find(),
             ),
             compatible_listener=Listener(
                 model=model2, key='text', select=None, active=False
@@ -195,12 +179,15 @@ def test_advance_setup(distributed_db, image_url):
 
     search_phrase = '4'
     _wait_for_keys(
-        db=db, n=10, collection='_outputs.int.model1.0', key='_outputs.int.model2'
+        db=db,
+        n=10,
+        collection='_outputs.int::model1::0::0',
+        key='_outputs.int::model2::0::0',
     )
 
     r = next(
         db.execute(
-            Collection('_outputs.int.model1.0')
+            Collection('_outputs.int::model1::0::0')
             .like(
                 Document({'text': search_phrase}), vector_index='test_search_index', n=1
             )
@@ -211,5 +198,5 @@ def test_advance_setup(distributed_db, image_url):
 
     assert '_outputs' in r
     assert np.allclose(
-        np.asarray([400] * 10), r['_outputs']['int']['model1']['0']['int']
+        np.asarray([400] * 10), r['_outputs']['int::model1::0::0']['int']
     )

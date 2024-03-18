@@ -19,12 +19,12 @@ from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
     Mapping,
+    Model,
     ObjectModel,
     QueryModel,
     SequentialModel,
     Trainer,
     _Fittable,
-    _Predictor,
     _Validator,
 )
 from superduperdb.jobs.job import ComponentJob
@@ -60,14 +60,14 @@ def to_call_multi(x, y):
 
 
 @pytest.fixture
-def predict_mixin() -> _Predictor:
+def predict_mixin() -> Model:
     predict_mixin = ObjectModel('test', object=to_call)
     predict_mixin.version = 0
     return predict_mixin
 
 
 @pytest.fixture
-def predict_mixin_multikey() -> _Predictor:
+def predict_mixin_multikey() -> Model:
     predict_mixin = ObjectModel('test', object=to_call_multi)
     predict_mixin.version = 0
     return predict_mixin
@@ -117,7 +117,12 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     in_memory = True
     overwrite = False
     predict_mixin.predict_in_db_job(
-        X=X, db=mock_db, select=mock_select, ids=ids, max_chunk_size=max_chunk_size
+        X=X,
+        db=mock_db,
+        select=mock_select,
+        ids=ids,
+        max_chunk_size=max_chunk_size,
+        predict_id='test',
     )
     mock_job.assert_called_once_with(
         component_identifier=predict_mixin.identifier,  # Adjust according to your setup
@@ -127,6 +132,7 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
         kwargs={
             'select': b'encoded_select',
             'ids': ids,
+            'predict_id': 'test',
             'max_chunk_size': max_chunk_size,
             'in_memory': in_memory,
             'overwrite': overwrite,
@@ -144,7 +150,7 @@ def test_pm_predict(predict_mixin):
     select.table_or_collection = MagicMock()
 
     with patch.object(predict_mixin, 'predict') as predict_func:
-        predict_mixin.predict_in_db('x', db=db, select=select)
+        predict_mixin.predict_in_db('x', db=db, select=select, predict_id='test')
         predict_func.assert_called_once()
 
 
@@ -167,7 +173,9 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
             select, 'model_update'
         ) as model_update:
-            predict_mixin._predict_with_select_and_ids(X, db, select, ids)
+            predict_mixin._predict_with_select_and_ids(
+                X=X, db=db, select=select, ids=ids, predict_id='test'
+            )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
             #  make sure the outputs are set
@@ -181,7 +189,9 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         my_object.return_value = 2
 
         monkeypatch.setattr(predict_mixin, 'datatype', DataType(identifier='test'))
-        predict_mixin._predict_with_select_and_ids(X, db, select, ids)
+        predict_mixin._predict_with_select_and_ids(
+            X=X, db=db, select=select, ids=ids, predict_id='test'
+        )
         select_using_id.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
         datatype = predict_mixin.datatype
@@ -198,7 +208,9 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
             select, 'model_update'
         ) as model_update:
-            predict_mixin._predict_with_select_and_ids(X, db, select, ids)
+            predict_mixin._predict_with_select_and_ids(
+                X=X, db=db, select=select, ids=ids, predict_id='test'
+            )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
             assert kwargs.get('outputs') == [str({'out': 2}) for _ in range(10)]
@@ -392,7 +404,9 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
         with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
             select, 'model_update'
         ) as model_update:
-            predict_mixin_multikey._predict_with_select_and_ids(X, db, select, ids)
+            predict_mixin_multikey._predict_with_select_and_ids(
+                X=X, predict_id='test', db=db, select=select, ids=ids
+            )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
             #  make sure the outputs are set

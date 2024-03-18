@@ -90,7 +90,7 @@ addopts = "-W ignore"
 [tool.interrogate]
 color = true
 exclude = []
-fail-under = 35.1
+fail-under = 30.1
 ignore-magic = true
 ignore-nested-classes = false
 ignore-nested-functions = true

@@ -1,24 +1,20 @@
 import json
-import os
 
 import pytest
 import requests
+from fastapi.testclient import TestClient
+
+from superduperdb import CFG
 
 
 @pytest.fixture
-def client(monkeypatch, database_with_default_encoders_and_model):
-    from superduperdb import CFG
-
-    vector_search = os.environ['SUPERDUPERDB_CLUSTER_VECTOR_SEARCH']
-    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
-
+def client(database_with_default_encoders_and_model):
     from superduperdb.vector_search.server.app import app
 
     app.app.state.pool = database_with_default_encoders_and_model
-    yield
-    from superduperdb.base.config import Cluster
+    client = TestClient(app.app)
 
-    monkeypatch.setattr(CFG, 'cluster', Cluster())
+    yield client
 
 
 def test_basic_workflow(client):
@@ -27,7 +23,7 @@ def test_basic_workflow(client):
     # Add points to the vector
     # ------------------------------
     data = [{'vector': [100, 100, 100], 'id': '100'}]
-    uri = os.environ['SUPERDUPERDB_CLUSTER_VECTOR_SEARCH']
+    uri = CFG.cluster.vector_search.uri
     response = requests.post(f"{uri}/add/search?vector_index={vector_index}", json=data)
     # Assert HTTP code
     assert response.status_code == 200

@@ -30,11 +30,17 @@ def environ_to_config_dict(
 ):
     env_dict = _environ_dict(prefix, environ)
     good, bad = _env_dict_to_config_dict(env_dict, parent)
+    bad = {k: v for k, v in bad.items() if k != 'SUPERDUPERDB_CONFIG'}
+    try:
+        bad['unknown'] = list(set(bad['unknown']) - {'config'})
+        if not bad['unknown']:
+            del bad['unknown']
+    except KeyError:
+        pass
 
     if bad:
         bad = {k: ', '.join([prefix + i.upper() for i in v]) for k, v in bad.items()}
         msg = '\n'.join(f'{k}: {v}' for k, v in sorted(bad.items()))
-
         s = 's' * (sum(len(v) for v in bad.values()) != 1)
         msg = f'Bad environment variable{s}:\n{msg}'
         if err is not None:

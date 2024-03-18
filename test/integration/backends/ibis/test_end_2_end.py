@@ -6,6 +6,7 @@ import pytest
 import torch.nn
 import torchvision
 
+from superduperdb import CFG
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import RawSQL, Table
@@ -13,10 +14,13 @@ from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document as D
+from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema
 from superduperdb.ext.pillow.encoder import pil_image
 from superduperdb.ext.torch.encoder import tensor
 from superduperdb.ext.torch.model import TorchModel
+
+DO_SKIP = CFG.data_backend.startswith('mongo')
 
 
 @pytest.fixture
@@ -34,7 +38,7 @@ def duckdb_conn():
 
 
 @pytest.fixture
-def ibis_sqllite_db(sqllite_conn):
+def test_db(sqllite_conn):
     connection, tmp_dir = sqllite_conn
     yield make_ibis_db(connection, connection, tmp_dir)
 
@@ -60,8 +64,9 @@ def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
     )
 
 
-def end2end_workflow(ibis_db, memory_table=False):
-    db = ibis_db
+@pytest.mark.skipif(DO_SKIP, reason="skipping ibis tests if mongodb")
+def test_end_2_end(test_db, memory_table=False):
+    db = test_db
     schema = Schema(
         identifier='my_table',
         fields={
@@ -133,13 +138,14 @@ def end2end_workflow(ibis_db, memory_table=False):
     )
 
     # Apply the torchvision model
-    resnet.predict_in_db(
-        X='image',
-        db=db,
+    listener1 = Listener(
+        model=resnet,
+        key='image',
         select=t.select('id', 'image'),
-        max_chunk_size=3000,
-        overwrite=True,
+        predict_kwargs={'max_chunk_size': 3000},
+        identifier='listener1',
     )
+    db.add(listener1)
 
     # also add a vectorizing model
     vectorize = TorchModel(
@@ -149,17 +155,21 @@ def end2end_workflow(ibis_db, memory_table=False):
         datatype=tensor(torch.float, (16,)),
     )
 
+    # create outputs query
+    q = t.select('id', 'image').outputs(listener1.predict_id)
+
     # apply to the table
-    vectorize.predict_in_db(
-        X='image',
-        db=db,
-        select=t.select('id', 'image'),
-        max_chunk_size=3000,
-        overwrite=True,
+    listener2 = Listener(
+        model=vectorize,
+        key=listener1.outputs,
+        select=q,
+        predict_kwargs={'max_chunk_size': 3000},
+        identifier='listener2',
     )
+    db.add(listener2)
 
     # Build query to get the results back
-    q = t.outputs(image='resnet18').select('id', 'image', 'age').filter(t.age > 25)
+    q = t.outputs('listener2::0').select('id', 'image', 'age').filter(t.age > 25)
 
     # Get the results
     result = list(db.execute(q))
@@ -167,15 +177,11 @@ def end2end_workflow(ibis_db, memory_table=False):
     assert 'image' in result[0].unpack()
 
     # Get vector results
-    q = (
-        t.select('id', 'image', 'age')
-        .filter(t.age > 25)
-        .outputs(image='model_linear_a')
-    )
+    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('listener2::0')
 
     # Get the results
     result = list(db.execute(q))
-    assert '_outputs.image.model_linear_a.0' in result[0].unpack()
+    assert '_outputs.listener2::0' in result[0].unpack()
 
     # Raw query
     if not memory_table:
@@ -190,8 +196,8 @@ def end2end_workflow(ibis_db, memory_table=False):
         ]
 
 
-def test_nested_query(ibis_sqllite_db):
-    db = ibis_sqllite_db
+def test_nested_query(test_db):
+    db = test_db
 
     schema = Schema(
         identifier='my_table',
@@ -212,15 +218,3 @@ def test_nested_query(ibis_sqllite_db):
     expr_, _ = q.compile(db)
 
     assert 'SELECT t0.id, t0.health, t0.age, t0.image, t0._fold' in str(expr_.compile())
-
-
-def test_end2end_sql(ibis_sqllite_db):
-    end2end_workflow(ibis_sqllite_db)
-
-
-def test_end2end_duckdb(ibis_duckdb):
-    end2end_workflow(ibis_duckdb)
-
-
-def test_end2end_pandas(ibis_pandas_db):
-    end2end_workflow(ibis_pandas_db, memory_table=True)

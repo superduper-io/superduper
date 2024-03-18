@@ -80,7 +80,11 @@ jobs:
 
     - name: Unit Testing
       run: |
-        make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+        make unit-testing pytest_arguments="--cov=superduperdb --cov-report=xml"
+
+    - name: Ext Testing
+      run: |
+        make ext-testing
 
     - name: Upload code coverage to Codecov
       uses: codecov/codecov-action@v3.1.4
@@ -100,26 +104,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      #---------------------------------------------------
-      # Build Docker Image in Cached Environment
-#      - uses: docker/setup-buildx-action@v3
-#      - uses: docker/build-push-action@v5
-#        with:
-#          file: /home/runner/work/superduperdb/superduperdb/deploy/images/superduperdb/Dockerfile
-#          context: /home/runner/work/superduperdb/superduperdb
-#          load: true # Load output to Docker images
-#          tags: superduperdb/sandbox:latest
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
-#          build-args: |
-#            "BUILD_ENV=sandbox"
-#            "SUPERDUPERDB_EXTRAS=dev"
-      # -------------------------------------------------
-
       - name: Build Docker Image
         run: |
           make testenv_image
-          
 
       - name: Start Testing Environment
         run: |
@@ -128,11 +115,19 @@ jobs:
 
           # Run the integrated testing environment
           make testenv_init
+          # To make sure that pytest etc. are installed in the container
+          docker exec testenv-sandbox-1 sh -c 'make install-devkit'
 
-      - name: Integration Testing
+      - name: Data-backend Testing
         run: |
           # Run the test-suite within the sandbox image from the test environment
-          docker exec testenv-sandbox-1 sh -c 'make install-devkit && make integration-testing'
+          docker exec testenv-sandbox-1 sh -c 'make databackend-testing'
+
+      - name: Smoke Testing
+        run: |
+          # This tests if the tests which run on 
+          # Run the test-suite within the sandbox image from the test environment
+          docker exec testenv-sandbox-1 sh -c 'make smoke-testing'
 
       - name: Shutdown Testing Environment
         run: |

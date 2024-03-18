@@ -1,5 +1,6 @@
 DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
+BACKENDS ?= mongodb_community sqlite duckdb
 
 export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
@@ -154,12 +155,27 @@ testenv_init: ## Initialize a local Testing environment
 
 	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
 	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
 
 	@echo "===> Run TestEnv"
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
 	@echo "===> Waiting for TestEnv to become ready"
 	@cd deploy/testenv/; ./wait_ready.sh
+
+testenv_init_mongodb: ## Initialize a local Testing environment
+	@echo "===> Discover Hostnames"
+	@deploy/testenv/validate_hostnames.sh
+
+	@echo "===> Discover Paths"
+	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
+	echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+
+	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
+	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+
+	@echo "===> Run TestEnv MongoDB"
+	docker compose -f deploy/testenv/docker-compose.yaml up --detach mongodb --remove-orphans &
 
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
@@ -168,19 +184,30 @@ testenv_shutdown: ## Terminate the local Testing environment
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 
 testdb_init: ## Initialize databases in Docker
+	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
 	cd deploy/databases/; docker compose up --remove-orphans &
 
 testdb_shutdown: ## Terminate Databases Containers
 	cd deploy/databases/; docker compose down
-
 
 ##@ CI Testing Functions
 
 unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
-integration-testing: ## Execute integration testing
-	pytest $(PYTEST_ARGUMENTS) ./test/integration
+databackend-testing: ## Execute integration testing
+	@echo "TESTING BACKENDS"
+	@for backend in $(BACKENDS); do \
+		echo "TESTING $$backend"; \
+		SUPERDUPERDB_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
+	done
+	@echo "TODO -- implement more backends integration testing..."
+
+ext-testing: ## Execute integration testing
+	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
+
+smoke-testing: ## Execute smoke testing
+	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke
 
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"

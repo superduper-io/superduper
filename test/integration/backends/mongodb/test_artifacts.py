@@ -5,11 +5,14 @@ import typing as t
 
 import pytest
 
+from superduperdb import CFG
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     DataType,
     file_serializer,
 )
+
+DO_SKIP = not CFG.data_backend.startswith("mongodb")
 
 
 @dc.dataclass(kw_only=True)
@@ -43,6 +46,7 @@ def random_directory(tmpdir):
     return tmpdir_path
 
 
+@pytest.mark.skipif(DO_SKIP, reason="skipping mongodb tests if not mongodb")
 def test_save_and_load_directory(test_db, random_directory):
     # test save and load directory
     test_component = TestComponent(path=random_directory, identifier="test")

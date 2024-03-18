@@ -7,10 +7,6 @@ from threading import Lock
 from typing import Iterator
 
 import pytest
-from dotenv import load_dotenv
-
-if env_file := os.environ.get('SUPERDUPERDB_PYTEST_ENV_FILE', ''):
-    load_dotenv(env_file)
 
 import superduperdb as s
 from superduperdb import CFG, logging
@@ -96,20 +92,16 @@ def patch_mongomock(monkeypatch):
     monkeypatch.setattr(gridfs, 'Database', Database)
     monkeypatch.setattr(superduper, 'Database', Database)
     monkeypatch.setattr(pymongo, 'MongoClient', MongoClient)
-
     monkeypatch.setitem(CONNECTIONS, 'pymongo', MongoClient)
 
 
 @pytest.fixture
-def test_db(monkeypatch, request) -> Iterator[Datalayer]:
+def test_db(request) -> Iterator[Datalayer]:
     from superduperdb import CFG
     from superduperdb.base.build import build_datalayer
 
     # mongodb instead of localhost is required for CFG compatibility with docker-host
     db_name = CFG.data_backend.split('/')[-1]
-    from superduperdb.base.config import Cluster
-
-    monkeypatch.setattr(CFG, 'cluster', Cluster())
 
     db = build_datalayer(CFG)
 
@@ -117,8 +109,9 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
     logging.info("Dropping database ", {db_name})
 
-    db.databackend.conn.drop_database(db_name)
-    db.databackend.conn.drop_database(f'_filesystem:{db_name}')
+    if isinstance(db.databackend, MongoDataBackend):
+        db.databackend.conn.drop_database(db_name)
+        db.databackend.conn.drop_database(f'_filesystem:{db_name}')
 
 
 @pytest.fixture
@@ -313,13 +306,8 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
     else:
         raise ValueError(f'Unsupported param type: {type(param)}')
 
-    # This patch is required for testing sql databases
-    monkeypatch.setattr(CFG, 'data_backend', setup_config['data_backend'])
-
-    from superduperdb.base.config import Cluster
-
-    monkeypatch.setattr(CFG, 'cluster', Cluster())
-    db = create_db(CFG, **setup_config)
+    cfg = CFG(data_backend=setup_config['data_backend'])
+    db = create_db(cfg, **setup_config)
 
     yield db
 

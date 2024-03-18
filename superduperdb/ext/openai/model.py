@@ -3,6 +3,7 @@ import dataclasses as dc
 import json
 import os
 import typing as t
+from typing import Any
 
 import requests
 import tqdm
@@ -21,6 +22,7 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
+from superduperdb.ext.llm.model import BaseLLMAPI
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -415,3 +417,120 @@ class OpenAIAudioTranslation(_OpenAI):
             for file in files
         ]
         return [resp.text for resp in resps]
+
+
+@dc.dataclass
+class BaseOpenAILLM(BaseLLMAPI):
+    """
+    :param openai_api_base: The base URL for the OpenAI API.
+    :param openai_api_key: The API key to use for the OpenAI API.
+    :param model_name: The name of the model to use.
+    :param chat: Whether to use the chat API or the completion API. Defaults to False.
+    :param system_prompt: The prompt to use for the system.
+    :param user_role: The role to use for the user.
+    :param system_role: The role to use for the system.
+    {parent_doc}
+    """
+
+    __doc__ = __doc__.format(parent_doc=BaseLLMAPI.__doc__)
+
+    identifier: str = dc.field(default="")
+    openai_api_base: str = "https://api.openai.com/v1"
+    openai_api_key: t.Optional[str] = None
+    model_name: str = "gpt-3.5-turbo"
+    chat: bool = True
+    system_prompt: t.Optional[str] = None
+    user_role: str = "user"
+    system_role: str = "system"
+
+    def __post_init__(self, artifacts):
+        self.api_url = self.openai_api_base
+        self.identifier = self.identifier or self.model_name
+        super().__post_init__(artifacts)
+
+    def init(self):
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise Exception("You must install openai with command 'pip install openai'")
+
+        params = {
+            "api_key": self.openai_api_key,
+            "base_url": self.openai_api_base,
+        }
+
+        self.client = OpenAI(**params)
+        model_set = self.get_model_set()
+        assert (
+            self.model_name in model_set
+        ), f"model_name {self.model_name} is not in model_set {model_set}"
+
+    def get_model_set(self):
+        model_list = self.client.models.list()
+        return sorted({model.id for model in model_list.data})
+
+    def _generate(self, prompt: str, **kwargs: Any) -> str:
+        if self.chat:
+            return self._chat_generate(prompt, **kwargs)
+        else:
+            return self._prompt_generate(prompt, **kwargs)
+
+    def _prompt_generate(self, prompt: str, **kwargs: Any) -> str:
+        """
+        Generate a completion for a given prompt with prompt format.
+        """
+        completion = self.client.completions.create(
+            model=self.model_name,
+            prompt=prompt,
+            **self.get_kwargs(
+                self.client.completions.create, kwargs, self.predict_kwargs
+            ),
+        )
+        return completion.choices[0].text
+
+    def _chat_generate(self, content: str, **kwargs: Any) -> str:
+        """
+        Generate a completion for a given prompt with chat format.
+        :param prompt: The prompt to generate a completion for.
+        :param kwargs: Any additional arguments to pass to the API.
+        """
+        messages = kwargs.get("messages", [])
+
+        if self.system_prompt:
+            messages = [
+                {"role": self.system_role, "content": self.system_prompt}
+            ] + messages
+
+        messages.append({"role": self.user_role, "content": content})
+        completion = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self.get_kwargs(
+                self.client.chat.completions.create, kwargs, self.predict_kwargs
+            ),
+        )
+        return completion.choices[0].message.content
+
+
+@dc.dataclass
+class OpenAILLM(BaseOpenAILLM):
+    """
+    OpenAI chat completion predictor.
+    {parent_doc}
+    """
+
+    __doc__ = __doc__.format(parent_doc=BaseOpenAILLM.__doc__)
+
+    def __post_init__(self, artifacts):
+        """Set model name."""
+        # only support chat mode
+        self.chat = True
+        super().__post_init__(artifacts)
+
+    @retry
+    def get_model_set(self):
+        return super().get_model_set()
+
+    @retry
+    def _generate(self, *args, **kwargs) -> str:
+        return super()._generate(*args, **kwargs)

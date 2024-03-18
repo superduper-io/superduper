@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 - Fixed a bug in refresh_after_insert for listeners with select None
-- Refactor graph internal with mapping
+- Refactor graph internal with input mapping
 - Fixed a bug in Component init
 - Fixed a bug in predict in db for missing ouptuts
 - Fixed a bug in variable set

@@ -4,13 +4,6 @@ sidebar_position: 2
 
 # Design
 
-## Architecture
-Here is a detailed view of the `superduperdb` architecture:
-
-![architecture_detailed](/img/architecture_detailed.png)
-
-## Schematic
-
 Here is a schematic of the `superduperdb` design.
 
 ![](/img/light.png)

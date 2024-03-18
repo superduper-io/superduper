@@ -10,13 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
+
 - Run Tests from within the container
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
 
 #### New Features & Functionality
-- Add compute_kwargs option for model
-- Add BulkWrite mongodb query
 - Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
@@ -27,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize LLM fine-tuning
 - Sort out the llm directory structure
 - Add cache support in inmemory vector searcher
+- Add compute_kwargs option for model
+- Add BulkWrite mongodb query
+- Rename `_Predictor` to `Model`
+- Allow developers to write `Listeners` and `Graph` in a single formalism
+- Change unittesting framework to pure configuration (no patching configs)
 
 #### Bug Fixes
 - Fixed a bug in refresh_after_insert for listeners with select None

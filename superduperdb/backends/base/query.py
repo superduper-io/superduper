@@ -50,9 +50,7 @@ class Select(Serializable, ABC):
         self,
         db,
         ids: t.List[str],
-        key: str,
-        model: str,
-        version: int,
+        predict_id: str,
         outputs: t.Sequence[t.Any],
         **kwargs,
     ):
@@ -68,10 +66,8 @@ class Select(Serializable, ABC):
         return self.table_or_collection.model_update(
             db=db,
             ids=ids,
-            key=key,
-            model=model,
+            predict_id=predict_id,
             outputs=outputs,
-            version=version,
             **kwargs,
         )
 
@@ -92,9 +88,7 @@ class Select(Serializable, ABC):
         pass
 
     @abstractmethod
-    def select_ids_of_missing_outputs(
-        self, key: str, model: str, version: int
-    ) -> 'Select':
+    def select_ids_of_missing_outputs(self, predict_id: str) -> 'Select':
         pass
 
     @abstractmethod
@@ -220,7 +214,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
             query_linker=self.query_linker.select_ids,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
+    def select_ids_of_missing_outputs(self, predict_id: str):
         """
         Query which selects ids where outputs are missing.
         """
@@ -232,7 +226,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         return self._query_from_parts(
             table_or_collection=self.table_or_collection,
             query_linker=self.query_linker._select_ids_of_missing_outputs(
-                key=key, model=model, version=version
+                predict_id=predict_id
             ),
         )
 
@@ -606,9 +600,7 @@ class TableOrCollection(Serializable, ABC):
         self,
         db,
         ids: t.List[t.Any],
-        key: str,
-        model: str,
-        version: int,
+        predict_id: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
         **kwargs,

@@ -103,8 +103,8 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
         r = list(db.execute(select))
         assert '_outputs' in r[0]
     else:
-        r = db.execute(t.outputs(story='text-embedding-ada-002'))[0]
-        assert '_outputs.story.text-embedding-ada-002.0' in r
+        r = db.execute(t.outputs('story::text-embedding-ada-002::0::0'))[0]
+        assert '_outputs.story::text-embedding-ada-002::0::0' in r
 
     input = 'Is covid a hoax?'
     if isinstance(db.databackend, MongoDataBackend):

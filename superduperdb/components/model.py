@@ -374,7 +374,7 @@ class Mapping:
 
 
 @dc.dataclass(kw_only=True)
-class _Predictor(Component):
+class Model(Component):
     # base class for components which can predict.
     """:param datatype: DataType instance
     :param output_schema: Output schema (mapping of encoders)
@@ -399,10 +399,10 @@ class _Predictor(Component):
     predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
     compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
-    def post_create(self, db):
-        output_component = db.databackend.create_model_table_or_collection(self)
-        if output_component is not None:
-            db.add(output_component)
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        if not self.identifier:
+            raise Exception('_Predictor identifier must be non-empty')
 
     @property
     def inputs(self) -> Inputs:
@@ -452,6 +452,7 @@ class _Predictor(Component):
         self,
         X: ModelInputType,
         db: Datalayer,
+        predict_id: str,
         select: t.Optional[CompoundSelect],
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
@@ -479,6 +480,7 @@ class _Predictor(Component):
             args=[X],
             kwargs={
                 'select': select.dict().encode() if select else None,
+                'predict_id': predict_id,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
                 'in_memory': in_memory,
@@ -489,18 +491,16 @@ class _Predictor(Component):
         job(db, dependencies=dependencies)
         return job
 
-    def _get_ids_from_select(self, X, select, db, ids, overwrite: bool = False):
+    def _get_ids_from_select(
+        self, *, X, select, db, ids, predict_id: str, overwrite: bool = False
+    ):
         predict_ids = []
         if not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
             if '_outputs' in X:
                 X = X.split('.')[1]
-            query = select.select_ids_of_missing_outputs(
-                key=X,
-                model=self.identifier,
-                version=t.cast(int, self.version),
-            )
+            query = select.select_ids_of_missing_outputs(predict_id=predict_id)
         else:
             if ids:
                 return ids
@@ -518,6 +518,7 @@ class _Predictor(Component):
         self,
         X: ModelInputType,
         db: Datalayer,
+        predict_id: str,
         select: CompoundSelect,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
@@ -551,11 +552,17 @@ class _Predictor(Component):
             self.version, int
         ), 'Something has gone wrong setting `self.version`'
         predict_ids = self._get_ids_from_select(
-            X, select=select, db=db, ids=ids, overwrite=overwrite
+            X=X,
+            select=select,
+            db=db,
+            ids=ids,
+            overwrite=overwrite,
+            predict_id=predict_id,
         )
 
         return self._predict_with_select_and_ids(
             X=X,
+            predict_id=predict_id,
             select=select,
             ids=predict_ids,
             db=db,
@@ -587,6 +594,7 @@ class _Predictor(Component):
                 in_memory=False,
                 mapping=mapping,
             )
+
         if len(X_data) > len(ids):
             raise Exception(
                 'You\'ve specified more documents than unique ids;'
@@ -615,6 +623,7 @@ class _Predictor(Component):
     def _predict_with_select_and_ids(
         self,
         X: t.Any,
+        predict_id: str,
         db: Datalayer,
         select: CompoundSelect,
         ids: t.List[str],
@@ -632,12 +641,17 @@ class _Predictor(Component):
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
+                    predict_id=predict_id,
                 )
                 it += 1
             return
 
         dataset, mapping = self._prepare_inputs_from_select(
-            X=X, db=db, select=select, ids=ids, in_memory=in_memory
+            X=X,
+            db=db,
+            select=select,
+            ids=ids,
+            in_memory=in_memory,
         )
         outputs = self.predict(dataset)
         outputs = self.encode_outputs(outputs)
@@ -649,10 +663,8 @@ class _Predictor(Component):
         ), 'Version has not been set, can\'t save outputs...'
         select.model_update(
             db=db,
-            model=self.identifier,
+            predict_id=predict_id,
             outputs=outputs,
-            key=mapping.id_key,
-            version=self.version,
             ids=ids,
             flatten=self.flatten,
             **self.model_update_kwargs,
@@ -681,6 +693,26 @@ class _Predictor(Component):
                 encoded_outputs.append(encoded_output)
         outputs = encoded_outputs if encoded_outputs else outputs
         return outputs
+
+    def __call__(self, outputs: t.Optional[str] = None, **kwargs):
+        from superduperdb.components.graph import IndexableNode
+
+        parent_graph = None
+        parent_models = {}
+        for k, v in kwargs.items():
+            if parent_graph is None:
+                parent_graph = v.parent_graph
+                parent_models.update(v.parent_models)
+            elif parent_graph is not None:
+                assert v.parent_graph == parent_graph, 'Cannot include 2 parent graphs'
+            parent_graph.add_edge(v.model.identifier, self.identifier, key=k)
+            parent_models[v.model.identifier] = v
+        return IndexableNode(
+            model=self,
+            parent_graph=parent_graph,
+            parent_models=parent_models,
+            identifier=outputs,
+        )
 
 
 @dc.dataclass(kw_only=True)
@@ -722,7 +754,7 @@ class IndexableNode:
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class ObjectModel(_Predictor, _Validator):
+class ObjectModel(Model, _Validator):
     """Model component which wraps a model to become serializable
     {_predictor_params}
     :param object: Model object, e.g. sklearn model, etc..
@@ -731,7 +763,7 @@ class ObjectModel(_Predictor, _Validator):
 
     type_id: t.ClassVar[str] = 'model'
 
-    __doc__ = __doc__.format(_predictor_params=_Predictor.__doc__)
+    __doc__ = __doc__.format(_predictor_params=Model.__doc__)
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
@@ -791,19 +823,17 @@ class ObjectModel(_Predictor, _Validator):
         return outputs
 
 
-Model = ObjectModel
-
-
+# TODO no longer necessary
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
-class APIModel(_Predictor):
+class APIModel(Model):
     '''{component_params}
     {predictor_params}
     :param model: The model to use, e.g. ``'text-embedding-ada-002'``'''
 
     __doc__ = __doc__.format(
         component_params=Component.__doc__,
-        predictor_params=_Predictor.__doc__,
+        predictor_params=Model.__doc__,
     )
 
     model: t.Optional[str] = None
@@ -814,16 +844,6 @@ class APIModel(_Predictor):
         if self.model is None:
             assert self.identifier is not None
             self.model = self.identifier
-
-    def post_create(self, db: Datalayer) -> None:
-        # TODO: This not necessary since added as a subcomponent
-        if isinstance(self.output_schema, Schema):
-            db.add(self.output_schema)
-        # TODO add this logic to pre_create,
-        # since then the `.add` clause is not necessary
-        output_component = db.databackend.create_model_table_or_collection(self)
-        if output_component is not None:
-            db.add(output_component)
 
     def _multi_predict(
         self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
@@ -847,7 +867,7 @@ class APIModel(_Predictor):
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class QueryModel(_Predictor):
+class QueryModel(Model):
     """
     Model which can be used to query data and return those
     results as pre-computed queries.
@@ -882,7 +902,7 @@ class QueryModel(_Predictor):
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class SequentialModel(_Predictor):
+class SequentialModel(Model):
     """
     Sequential model component which wraps a model to become serializable
 
@@ -891,9 +911,9 @@ class SequentialModel(_Predictor):
     """
 
     __doc__ = __doc__.format(
-        _predictor_params=_Predictor.__doc__,
+        _predictor_params=Model.__doc__,
     )
-    predictors: t.List[_Predictor]
+    predictors: t.List[Model]
 
     signature: t.Optional[str] = '*args,**kwargs'
 
@@ -925,7 +945,7 @@ class SequentialModel(_Predictor):
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         for i, p in enumerate(self.predictors):
-            assert isinstance(p, _Predictor), f'Expected _Predictor, got {type(p)}'
+            assert isinstance(p, Model), f'Expected _Predictor, got {type(p)}'
             if i == 0:
                 out = p.predict(dataset)
             else:

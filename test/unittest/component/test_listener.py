@@ -57,24 +57,25 @@ def test_listener_chaining(db):
         model=m1,
         select=collection.find({}),
         key='x',
+        identifier='listener1',
     )
 
     listener2 = Listener(
         model=m2,
-        select=Collection('_outputs.x.m1.0').find(),
-        key='_outputs.x.m1.0',
+        select=Collection('_outputs.listener1::0').find(),
+        key='_outputs.listener1::0',
+        identifier='listener2',
     )
 
-    db.add(listener2)
     db.add(listener1)
-    docs = db.execute(Collection('_outputs.x.m1.0').find_one({}))
+    db.add(listener2)
 
-    assert docs['_outputs']['x']['m2']
+    docs = list(db.execute(Collection('_outputs.listener1::0').find({})))
 
-    # TODO: add more data and next test
+    assert all('listener2::0' in r['_outputs'] for r in docs)
 
-    # Insert more data
     insert_random()
-    docs = list(db.execute(Collection('_outputs.x.m1.0').find({})))
 
-    assert all(['m2' in d['_outputs']['x'] for d in docs])
+    docs = list(db.execute(Collection('_outputs.listener1::0').find({})))
+
+    assert all(['listener2::0' in d['_outputs'] for d in docs])

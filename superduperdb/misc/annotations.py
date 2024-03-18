@@ -56,7 +56,7 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
     return True, ''
 
 
-def requires_packages(*packages):
+def requires_packages(*packages, warn=False):
     """
     Require the packages to be installed
     :param packages: list of tuples of packages
@@ -72,7 +72,11 @@ def requires_packages(*packages):
         if not satisfactory:
             out.append(install_line)
     if out:
-        raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
+        if warn:
+            warnings.warn('\n' + '\n'.join(out))
+        else:
+            raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
+
     return out
 
 

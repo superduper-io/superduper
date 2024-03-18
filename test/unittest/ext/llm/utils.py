@@ -27,7 +27,7 @@ def check_llm_as_listener_model(db, llm):
     ]
     if isinstance(db.databackend, MongoDataBackend):
         db.execute(Collection(collection_name).insert_many(datas))
-        output_select = select = Collection(collection_name).find()
+        select = Collection(collection_name).find()
     else:
         schema = Schema(
             identifier=collection_name,
@@ -40,7 +40,6 @@ def check_llm_as_listener_model(db, llm):
         db.add(table)
         db.execute(table.insert(datas))
         select = table.select("id", "question")
-        output_select = table.select("id", "question").outputs(question=llm.identifier)
 
     db.add(
         Listener(
@@ -50,12 +49,16 @@ def check_llm_as_listener_model(db, llm):
         )
     )
 
+    if isinstance(db.databackend, MongoDataBackend):
+        output_select = Collection(collection_name).find()
+    else:
+        output_select = table.select("id", "question").outputs(
+            f'question::{llm.identifier}::0::0'
+        )
+
     results = db.execute(output_select)
     for result in results:
-        try:
-            output = result.outputs("question", llm.identifier)
-        except KeyError:
-            output = result.unpack()[f'_outputs.question.{llm.identifier}.0']
+        output = result[f'_outputs.question::{llm.identifier}::0::0']
         assert isinstance(output, str)
 
 

@@ -130,8 +130,6 @@ class FunctionJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
-            local=self.db.compute.type == 'local',
-            compute_kwargs=self.compute_kwargs,
         )
 
         return
@@ -203,7 +201,6 @@ class ComponentJob(Job):
             dependencies=dependencies,
             compute_kwargs=self.compute_kwargs,
             db=self.db if self.db.compute.type == 'local' else None,
-            local=self.db.compute.type == 'local',
         )
         return
 

@@ -10,11 +10,11 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.datatype import DataType, pickle_serializer
 from superduperdb.components.model import (
+    Model,
     ModelInputType,
     Signature,
     Trainer,
     _Fittable,
-    _Predictor,
     _Validator,
 )
 from superduperdb.jobs.job import Job
@@ -76,7 +76,7 @@ class SklearnTrainer(Trainer):
 
 
 @dc.dataclass(kw_only=True)
-class Estimator(_Predictor, _Fittable, _Validator):
+class Estimator(Model, _Fittable, _Validator):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('object', pickle_serializer),
     )

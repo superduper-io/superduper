@@ -112,13 +112,14 @@ services:
        - /bin/sh
        - -c
        - |
-         PYTHONPATH=/home/superduper/superduperdb:. ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
+         PYTHONPATH=/home/superduper/superduperdb:/home/superduper/superduperdb/test/smoke:. ray start --head --dashboard-host=0.0.0.0 --num-cpus=0 --block
      deploy:
        replicas: 1
      volumes:
         - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
         - ../../test:/home/superduper/superduperdb/test # shared between containers
         - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
 
   ray-worker:
     image: superduperdb/sandbox
@@ -129,6 +130,7 @@ services:
         - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
         - ../../test:/home/superduper/superduperdb/test # shared between containers
         - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
     command:
        - /bin/bash
        - -c
@@ -137,7 +139,7 @@ services:
          fswatch -o --recursive /home/superduper/superduperdb/superduperdb | while read change; do
            echo "Detected change in superduperdb, restarting ray worker..."
            pkill -f 'ray start --address=ray-head:6379 --block'
-           RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=/home/superduper/superduperdb:. ray start --address=ray-head:6379 --block
+           RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=/home/superduper/superduperdb:/home/superduper/superduperdb/test/smoke:. ray start --address=ray-head:6379 --block
          done
     deploy:
       mode: replicated
@@ -161,6 +163,7 @@ services:
         - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
         - ../../test:/home/superduper/superduperdb/test # shared between containers
         - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
     command:
       - /bin/bash
       - -c
@@ -199,6 +202,7 @@ services:
         - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
         - ../../test:/home/superduper/superduperdb/test # shared between containers
         - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
     command:
       - /bin/bash
       - -c
@@ -239,6 +243,7 @@ services:
         - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
         - ../../test:/home/superduper/superduperdb/test # shared between containers
         - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
     env_file: users.env
     command:
       - /bin/sh

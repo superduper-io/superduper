@@ -13,10 +13,7 @@ from superduperdb.ext.utils import superduperencode
 def _handshake(service: str):
     endpoint = 'handshake/config'
     cfg = json.dumps(CFG.comparables)
-    try:
-        _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
-    except Exception as e:
-        raise Exception("Incompatible configuration") from e
+    _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
 
 
 def _request_server(
@@ -24,8 +21,10 @@ def _request_server(
 ):
     if service == 'cdc':
         service_uri = CFG.cluster.cdc.uri
+    elif service == 'vector_search':
+        service_uri = CFG.cluster.vector_search.uri
     else:
-        service_uri = getattr(CFG.cluster, service)
+        raise NotImplementedError(f'Unknown service {service}')
 
     assert isinstance(service_uri, str)
     service_uri = 'http://' + ''.join(service_uri.split('://')[1:])

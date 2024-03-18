@@ -5,7 +5,7 @@ import typing as t
 import requests
 from llama_cpp import Llama
 
-from superduperdb.ext.llm.base import BaseLLM
+from superduperdb.ext.llm.model import BaseLLM
 
 
 # TODO use core downloader already implemented

@@ -5,7 +5,7 @@ import typing as t
 import requests
 
 from superduperdb import logging
-from superduperdb.ext.llm.base import BaseLLM, BaseLLMAPI
+from superduperdb.ext.llm.model import BaseLLM, BaseLLMAPI
 from superduperdb.misc.annotations import public_api
 
 __all__ = ["VllmAPI", "VllmModel"]
@@ -72,6 +72,7 @@ class VllmAPI(BaseLLMAPI):
 class _VllmCore:
     def __init__(self, **kwargs) -> None:
         # Use kwargs to avoid incompatibility after vllm version upgrade
+
         from vllm.engine.arg_utils import AsyncEngineArgs
         from vllm.engine.async_llm_engine import AsyncLLMEngine
 
@@ -81,8 +82,9 @@ class _VllmCore:
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
 
     async def agenerate(self, prompt, **kwargs):
-        from vllm import SamplingParams
         from vllm.utils import random_uuid
+
+        from superduperdb.ext.vllm.model import SamplingParams
 
         sampling_params = SamplingParams(**kwargs)
         request_id = random_uuid()
@@ -146,10 +148,7 @@ class VllmModel(BaseLLM):
 
     def init(self):
         if self.on_ray:
-            try:
-                import ray
-            except ImportError:
-                raise Exception("You must install vllm with command 'pip install ray'")
+            import ray
 
             if not ray.is_initialized():
                 ray.init(address=self.ray_address, ignore_reinit_error=True)

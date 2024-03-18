@@ -1,4 +1,3 @@
-import os
 import random
 
 import numpy as np
@@ -16,21 +15,6 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-
-'''
-All pytest fixtures with _package scope_ are defined in this module.
-Package scope means that the fixture will be executed once per package,
-which in this case means once per `test/integration/` directory.
-
-Fixtures included here can create:
-- a MongoDB client
-- a MongoDB collection with some basic data
-- a local Dask client
-- a local SuperDuperDB server linked to the MongoDB client
-
-When adding new fixtures, please try to avoid building on top of other fixtures
-as much as possible. This will make it easier to understand the test suite.
-'''
 
 # Set the seeds
 random.seed(42)
@@ -107,23 +91,3 @@ def fake_inserts(database_with_default_encoders_and_model):
 def fake_updates(database_with_default_encoders_and_model):
     dt = database_with_default_encoders_and_model.datatypes['torch.float32[32]']
     return fake_tensor_data(dt, update=True)
-
-
-@pytest.fixture(scope='session')
-def ray_client():
-    # Change the default value
-    from superduperdb import CFG
-    from superduperdb.backends.ray.compute import RayComputeBackend
-
-    address = CFG.cluster.compute.uri
-    import shutil
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as working_dir:
-        shutil.copytree('./test', os.path.join(working_dir, 'test'))
-        client = RayComputeBackend(
-            address=address,
-            runtime_env={"working_dir": working_dir, "excludes": ["unittest"]},
-        )
-        yield client
-        client.disconnect()

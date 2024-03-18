@@ -3,7 +3,7 @@ import typing as t
 from ray import serve
 
 from superduperdb import CFG
-from superduperdb.components.model import _Predictor
+from superduperdb.components.model import Model
 from superduperdb.server.app import SuperDuperApp
 
 # TODO: Try to get health endpoints from superduperdb app
@@ -36,7 +36,7 @@ def run(
 
         @app.app.post("/predict")
         def predict(self, args: t.List, kwargs: t.Dict):
-            assert isinstance(self.model, _Predictor)
+            assert isinstance(self.model, Model)
             return self.model.predict_one(*args, **kwargs)
 
     serve.run(

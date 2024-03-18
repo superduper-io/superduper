@@ -8,11 +8,11 @@ from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
 assert (
-    CFG.cluster.is_remote_vector_search
+    CFG.cluster.vector_search.uri is not None
 ), "Set a correct uri for `cluster.vector_search`"
 
 
-port = int(CFG.cluster.vector_search.split(':')[-1])
+port = int(CFG.cluster.vector_search.uri.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 
 

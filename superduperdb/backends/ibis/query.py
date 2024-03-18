@@ -20,9 +20,7 @@ from superduperdb.backends.base.query import (
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisResult
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.utils import get_output_table_name
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
@@ -42,6 +40,34 @@ JOIN_MEMBERS = [
 
 IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
+
+
+def _model_update_impl(
+    db,
+    ids: t.List[t.Any],
+    predict_id: str,
+    outputs: t.Sequence[t.Any],
+    flatten: bool = False,
+):
+    if flatten:
+        raise NotImplementedError('Flatten not yet supported for ibis')
+
+    if not outputs:
+        return
+
+    table_records = []
+    for ix in range(len(outputs)):
+        d = {
+            '_input_id': str(ids[ix]),
+            'output': outputs[ix],
+        }
+        table_records.append(d)
+
+    for r in table_records:
+        if isinstance(r['output'], dict) and '_content' in r['output']:
+            r['output'] = r['output']['_content']['bytes']
+
+    db.databackend.insert(f'_outputs.{predict_id}', table_records)
 
 
 class IbisBackendError(Exception):
@@ -123,7 +149,7 @@ class IbisCompoundSelect(CompoundSelect):
             kwargs = {}
         return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -138,7 +164,7 @@ class IbisCompoundSelect(CompoundSelect):
         return IbisCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker._outputs(query_id=str(hash(self)), **kwargs),
+            query_linker=self.query_linker._outputs(*predict_ids),
             post_like=self.post_like,
         )
 
@@ -172,16 +198,14 @@ class IbisCompoundSelect(CompoundSelect):
         component_tables = []
         for tab in tables:
             component_tables.append(db.load('table', tab))
+
         fields = {}
 
         for tab in component_tables:
             fields_copy = tab.schema.fields.copy()
             if '_outputs' in tab.identifier and self.renamings:
-                match = re.search(r"_outputs_(.*?)_(\d+)", tab.identifier)
-                for k in self.renamings.values():
-                    if match:
-                        fields_copy[k] = fields_copy['output']
-                        del fields_copy['output']
+                fields_copy[tab.identifier] = fields_copy['output']
+                del fields_copy['output']
             else:
                 for k in fields_copy:
                     if k in self.renamings.values():
@@ -267,7 +291,7 @@ class IbisCompoundSelect(CompoundSelect):
             scores=scores,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
+    def select_ids_of_missing_outputs(self, predict_id: str):
         """
         Query which selects ids where outputs are missing.
         """
@@ -275,15 +299,11 @@ class IbisCompoundSelect(CompoundSelect):
         assert self.pre_like is None
         assert self.post_like is None
         assert self.query_linker is not None
-        query_id = str(hash(self))
 
         out = self._query_from_parts(
             table_or_collection=self.table_or_collection,
             query_linker=self.query_linker._select_ids_of_missing_outputs(
-                key=key,
-                model=model,
-                query_id=query_id,
-                version=version,
+                predict_id=predict_id,
             ),
         )
         return out
@@ -292,36 +312,13 @@ class IbisCompoundSelect(CompoundSelect):
         self,
         db,
         ids: t.List[t.Any],
-        key: str,
-        model: str,
-        version: int,
+        predict_id: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
     ):
-        if flatten:
-            raise NotImplementedError('Flatten not yet supported for ibis')
-
-        if key.startswith('_outputs'):
-            key = key.split('.')[1]
-
-        if not outputs:
-            return
-
-        query_id = str(hash(self))
-        table_records = []
-        for ix in range(len(outputs)):
-            d = {
-                '_input_id': str(ids[ix]),
-                'query_id': query_id,
-                'output': outputs[ix],
-                'key': key,
-            }
-            table_records.append(d)
-
-        for r in table_records:
-            if isinstance(r['output'], dict) and '_content' in r['output']:
-                r['output'] = r['output']['_content']['bytes']
-        db.databackend.insert(get_output_table_name(model, version), table_records)
+        return _model_update_impl(
+            db, ids=ids, predict_id=predict_id, outputs=outputs, flatten=flatten
+        )
 
     def add_fold(self, fold: str) -> Select:
         if self.query_linker is not None:
@@ -465,23 +462,17 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     def select_using_ids(self, ids):
         return self.filter(
-            self.table_or_collection.__getattr__(
-                self.table_or_collection.primary_id
-            ).isin(ids)
+            self.__getattr__(self.table_or_collection.primary_id).isin(ids)
         )
 
-    def _select_ids_of_missing_outputs(
-        self, key: str, model: str, query_id: str, version: int
-    ):
+    def _select_ids_of_missing_outputs(self, predict_id: str):
         output_table = IbisQueryTable(
-            identifier=get_output_table_name(model, version),
+            identifier='_outputs.' + predict_id,
             primary_id='output_id',
         )
-        filtered = output_table.filter(
-            output_table.key == key and output_table.query_id == query_id
-        )
         out = self.anti_join(
-            filtered, filtered._input_id == self[self.table_or_collection.primary_id]
+            output_table,
+            output_table._input_id == self[self.table_or_collection.primary_id],
         )
         return out
 
@@ -491,44 +482,15 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             out.extend(member.get_all_tables())
         return list(set(out))
 
-    def _outputs(self, query_id: str, **kwargs):
-        for key, model in kwargs.items():
-            version = None
-            if '/' in model:
-                model, version = model.split('/')
-
+    def _outputs(self, *identifiers):
+        for identifier in identifiers:
             symbol_table = IbisQueryTable(
-                identifier=(
-                    get_output_table_name(model, version)
-                    if version is not None
-                    else Variable(  # type: ignore[call-arg]
-                        get_output_table_name(model, '{version}'),
-                        lambda db, value, kwargs: value.format(
-                            version=db.show('model', model)[-1]
-                        ),
-                    )
-                ),
+                identifier=f'_outputs.{identifier}',
                 primary_id='output_id',
             )
-            symbol_table = symbol_table.relabel(
-                {
-                    'output': (
-                        f'_outputs.{key}.{model}.{version}'
-                        if version is not None
-                        else Variable(  # type: ignore[call-arg]
-                            f'_outputs.{key}.{model}' + '.{version}',
-                            lambda db, value, kwargs: value.format(
-                                version=db.show('model', model)[-1]
-                            ),
-                        )
-                    )
-                }
-            )
-            attr = getattr(  # type: ignore[call-overload]
-                self, self.table_or_collection.primary_id
-            )
+            symbol_table = symbol_table.relabel({'output': f'_outputs.{identifier}'})
+            attr = getattr(self, self.table_or_collection.primary_id)
             other_query = self.join(symbol_table, symbol_table._input_id == attr)
-            other_query = other_query.filter(other_query.key == key)
             return other_query
 
     def __call__(self, *args, **kwargs):
@@ -539,9 +501,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         )
 
         def my_filter(item):
-            return [
-                item.primary_id if isinstance(item.primary_id, str) else item.primary_id
-            ]
+            return (
+                [item.primary_id]
+                if isinstance(item.primary_id, str)
+                else item.primary_id
+            )
 
         for a in args:
             if isinstance(a, IbisQueryLinker) or isinstance(a, IbisQueryTable):
@@ -555,7 +519,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
         primary_id = [p for p in primary_id if p != INPUT_KEY]
         if self.members[-1].name in JOIN_MEMBERS:
-            primary_id = [*primary_id, args[0].primary_id[:]]
+            pid = args[0].primary_id
+            if isinstance(pid, str):
+                primary_id = [*primary_id, pid]
+            else:
+                primary_id = [*primary_id, *pid[:]]
         if self.members[-1].name == 'group_by':
             primary_id = [x for x in primary_id if x != args[0]]
         members = [*self.members[:-1], self.members[-1](*args, **kwargs)]
@@ -666,10 +634,10 @@ class Table(Component):
             identifier=self.identifier, primary_id=self.primary_id
         ).like(r=r, vector_index=vector_index, n=n)
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
-        ).outputs(**kwargs)
+        ).outputs(*predict_ids)
 
     def __getattr__(self, item):
         return getattr(
@@ -718,7 +686,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     def add_fold(self, fold: str) -> Select:
         return self.filter(self.fold == fold)
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         """
         This method returns a query which joins a query with the model outputs.
 
@@ -731,7 +699,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         """
         return IbisCompoundSelect(
             table_or_collection=self, query_linker=self._get_query_linker(members=[])
-        ).outputs(**kwargs)
+        ).outputs(*predict_ids)
 
     @property
     def id_field(self):
@@ -748,18 +716,14 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     def select_using_ids(self, ids: t.Sequence[t.Any]) -> Select:
         return self.filter(self[self.primary_id].isin(ids))
 
-    def select_ids_of_missing_outputs(
-        self, key: str, model: str, version: int
-    ) -> Select:
+    def select_ids_of_missing_outputs(self, predict_id: str) -> Select:
         output_table = IbisQueryTable(
-            identifier=get_output_table_name(model, version),
+            identifier=f'_outputs.{predict_id}',
             primary_id='output_id',
         )
-        query_id = str(hash(self))
-        filtered = output_table.filter(
-            output_table.key == key and output_table.query_id == query_id
+        return self.anti_join(
+            output_table, output_table._input_id == self[self.primary_id]
         )
-        return self.anti_join(filtered, filtered._input_id == self[self.primary_id])
 
     def select_single_id(self, id):
         return self.filter(getattr(self, self.primary_id) == id)
@@ -816,14 +780,14 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         self,
         db,
         ids: t.List[t.Any],
-        key: str,
-        model: str,
-        version: int,
+        predict_id: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
         **kwargs,
     ):
-        raise NotImplementedError
+        return _model_update_impl(
+            db, ids=ids, predict_id=predict_id, outputs=outputs, flatten=flatten
+        )
 
 
 def _compile_item(item, db, tables):

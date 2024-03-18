@@ -22,7 +22,7 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
     if 'cls' in r and 'module' in r and 'dict' in r:
         module = importlib.import_module(r['module'])
         cls_ = getattr(module, r['cls'])
-        kwargs = _from_dict(r['dict'])
+        kwargs = _from_dict(r['dict'], db=db)
         kwargs_init = {k: v for k, v in kwargs.items() if k not in cls_.set_post_init}
         kwargs_post_init = {k: v for k, v in kwargs.items() if k in cls_.set_post_init}
         instance = cls_(**kwargs_init)
@@ -44,6 +44,26 @@ def _find_variables(r):
         return sum([_find_variables(v) for v in r], [])
     elif isinstance(r, Variable):
         return [r]
+    return []
+
+
+def _find_variables_with_path(r):
+    if isinstance(r, dict):
+        out = []
+        for k, v in r.items():
+            tmp = _find_variables_with_path(v)
+            for p in tmp:
+                out.append({'path': [k] + p['path'], 'variable': p['variable']})
+        return out
+    elif isinstance(r, (list, tuple)):
+        out = []
+        for i, v in enumerate(r):
+            tmp = _find_variables_with_path(v)
+            for p in tmp:
+                out.append({'path': [i] + p['path'], 'variable': p['variable']})
+        return out
+    elif isinstance(r, Variable):
+        return [{'path': [], 'variable': r}]
     return []
 
 
@@ -85,6 +105,25 @@ class Serializable(Leaf):
         for var in v:
             out[var.value] = var
         return sorted(list(out.values()), key=lambda x: x.value)
+
+    def getattr_with_path(self, path):
+        assert path
+        item = self
+        for x in path:
+            if isinstance(x, str):
+                item = getattr(item, x)
+            else:
+                assert isinstance(x, int)
+                return item[x]
+        return item
+
+    def setattr_with_path(self, path, value):
+        if len(path) == 1:
+            return setattr(self, path[0], value)
+        else:
+            parent = getattr(self, path[:-1])
+            setattr(parent, path[-1], value)
+        return
 
     def set_variables(self, db, **kwargs) -> 'Serializable':
         """
@@ -146,12 +185,13 @@ class Variable(Serializable):
         """
         Get the intended value from the values of the global variables.
 
-        >>> Variable('number').set(db, number=1.5, other='test')
-        1.5
-
         :param db: The datalayer instance.
         :param kwargs: Variables to be used in the setter_callback
                        or as formatting variables.
+
+        >>> Variable('number').set(db, number=1.5, other='test')
+        1.5
+
         """
         if self.setter_callback is not None:
             try:

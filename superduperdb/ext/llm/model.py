@@ -9,7 +9,7 @@ from logging import WARNING, getLogger
 from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.component import ensure_initialized
-from superduperdb.components.model import _Predictor
+from superduperdb.components.model import Model
 from superduperdb.ext.llm.prompter import Prompter
 
 if t.TYPE_CHECKING:
@@ -20,7 +20,7 @@ getLogger("httpx").setLevel(WARNING)
 
 
 @dc.dataclass(kw_only=True)
-class BaseLLM(_Predictor, metaclass=abc.ABCMeta):
+class BaseLLM(Model, metaclass=abc.ABCMeta):
     """
     :param prompt_template: The template to use for the prompt.
     :param prompt_func: The function to use for the prompt.

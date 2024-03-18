@@ -4,12 +4,164 @@ import typing as t
 import networkx as nx
 
 from superduperdb import Schema
+from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.components.model import Signature, _Predictor
+from superduperdb.components.model import Model, Signature
+
+
+def input_node(*args):
+    return IndexableNode(
+        model=Input(spec=args if len(args) > 1 else args[0]),
+        parent_graph=nx.DiGraph(),
+        parent_models={},
+    )
+
+
+def document_node(*args):
+    return IndexableNode(
+        model=DocumentInput(spec=args), parent_graph=nx.DiGraph(), parent_models={}
+    )
+
+
+class IndexableNode:
+    def __init__(
+        self, *, model, parent_graph, parent_models, index=None, identifier=None
+    ):
+        self.model = model
+        self.parent_graph = parent_graph
+        self.parent_models = parent_models
+        self.index = index
+        self.identifier = identifier
+
+    def __getitem__(self, item):
+        return IndexableNode(
+            model=self.model,
+            parent_graph=self.parent_graph,
+            parent_models=self.parent_models,
+            index=item,
+            identifier=self.identifier,
+        )
+
+    def to_graph(self, identifier: str):
+        from superduperdb.components.graph import DocumentInput, Graph
+
+        input_model = next(
+            v
+            for k, v in self.parent_models.items()
+            if isinstance(self.parent_models[k].model, (Input, DocumentInput))
+        )
+        graph = Graph(
+            identifier=identifier, input=input_model.model, outputs=[self.model]
+        )
+        for u, v, data in self.parent_graph.edges(data=True):
+            u_node = self._get_node(u)
+            v_node = self._get_node(v)
+            graph.connect(u_node.model, v_node.model, on=(u_node.index, data['key']))
+        return graph
+
+    def _get_node(self, u):
+        if u == self.model.identifier:
+            return self
+        return self.parent_models[u]
+
+    def to_listeners(self, select: CompoundSelect, identifier: str):
+        from superduperdb.components.listener import Listener
+        from superduperdb.components.stack import Stack
+
+        nodes = list(nx.topological_sort(self.parent_graph))
+        input_node = next(
+            v
+            for k, v in self.parent_models.items()
+            if isinstance(self.parent_models[k].model, DocumentInput)
+        )
+        assert isinstance(input_node.model, DocumentInput)
+        listener_lookup: t.Dict = {}
+        for node in nodes:
+            in_edges = list(self.parent_graph.in_edges(node, data=True))
+            if not in_edges:
+                continue
+            node = self._get_node(node)
+            key: t.Dict = {}
+            for u, _, data in in_edges:
+                previous_node = self._get_node(u)
+                if isinstance(previous_node.model, DocumentInput):
+                    key[previous_node.index] = data['key']
+                else:
+                    assert previous_node.index is None
+                    upstream_listener = listener_lookup[previous_node.model.identifier]
+                    key[upstream_listener.outputs] = data['key']
+            listener_lookup[node.model.identifier] = Listener(
+                model=node.model,
+                select=select,
+                key=key,  # type: ignore[arg-type]
+                identifier=node.identifier,
+            )
+        return Stack(
+            identifier=identifier,
+            components=list(listener_lookup.values()),
+        )
+
+
+class OutputWrapper:
+    def __init__(self, r, keys):
+        self.keys = keys
+        self.r = r
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.r[self.keys[item]]
+        elif isinstance(item, str):
+            return self.r[item]
+        else:
+            raise TypeError(f'Unsupported type for __getitem__: {type(item)}')
 
 
 @dc.dataclass(kw_only=True)
-class Graph(_Predictor):
+class Input(Model):
+    spec: t.Union[str, t.List[str]]
+    identifier: str = '_input'
+    signature: Signature = '*args'
+
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        if isinstance(self.spec, str):
+            self.signature = 'singleton'
+
+    def predict_one(self, *args):
+        if self.signature == 'singleton':
+            return args[0]
+        return OutputWrapper(
+            {k: arg for k, arg in zip(self.spec, args)}, keys=self.spec
+        )
+
+    def predict(self, dataset):
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+
+
+@dc.dataclass(kw_only=True)
+class DocumentInput(Model):
+    spec: t.Union[str, t.List[str]]
+    identifier: str = '_input'
+    signature: t.ClassVar[Signature] = 'singleton'
+
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+
+    def predict_one(self, r):
+        return {k: r[k] for k in self.spec}
+
+    def predict(self, dataset):
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+
+
+import dataclasses as dc
+import typing as t
+
+from superduperdb.components.model import Model, Signature
+
+
+@dc.dataclass(kw_only=True)
+class Graph(Model):
     '''
     Represents a directed acyclic graph composed of interconnected model nodes.
 
@@ -30,12 +182,12 @@ class Graph(_Predictor):
 
     '''
 
-    models: t.List[_Predictor] = dc.field(default_factory=list)
+    models: t.List[Model] = dc.field(default_factory=list)
     edges: t.List[t.Tuple[str, str, t.Tuple[t.Union[int, str], str]]] = dc.field(
         default_factory=list
     )
-    input: _Predictor
-    outputs: t.List[t.Union[str, _Predictor]] = dc.field(default_factory=list)
+    input: Model
+    outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
     _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, 'singleton')
     signature: Signature = '*args,**kwargs'
     type_id: t.ClassVar[str] = 'model'
@@ -48,7 +200,7 @@ class Graph(_Predictor):
 
         self.signature = self.input.signature
         self.output_identifiers = [
-            o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
+            o.identifier if isinstance(o, Model) else o for o in self.outputs
         ]
 
         # Load the models and edges into a di graph
@@ -66,8 +218,8 @@ class Graph(_Predictor):
 
     def connect(
         self,
-        u: _Predictor,
-        v: _Predictor,
+        u: Model,
+        v: Model,
         on: t.Optional[t.Tuple[t.Union[int, str], str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
@@ -79,8 +231,8 @@ class Graph(_Predictor):
         Note:
         output index: None means all outputs of node u are connected to node v
         '''
-        assert isinstance(u, _Predictor)
-        assert isinstance(v, _Predictor)
+        assert isinstance(u, Model)
+        assert isinstance(v, Model)
 
         if u.identifier not in self.nodes:
             self.nodes[u.identifier] = u
@@ -100,7 +252,7 @@ class Graph(_Predictor):
             self.edges.append(
                 (u.identifier, v.identifier, on or self._DEFAULT_ARG_WEIGHT)
             )
-            if isinstance(u, _Predictor) and u not in self.models:
+            if isinstance(u, Model) and u not in self.models:
                 self.models.append(u)
             if v not in self.models:
                 self.models.append(v)

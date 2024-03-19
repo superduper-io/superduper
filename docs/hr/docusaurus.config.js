@@ -48,7 +48,7 @@ const config = {
         indexDocSidebarParentCategories: 0,
 
         // whether to index blog pages
-        indexBlog: true,
+        indexBlog: false,
 
         // whether to index static pages
         // /404.html is never indexed
@@ -183,13 +183,7 @@ const config = {
           editUrl:
             'https://github.com/SuperDuperDB/superduperdb/blob/main/docs/hr',
         },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/SuperDuperDB/superduperdb/blob/main/docs/hr',
-        },
+        blog: false,
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
@@ -234,7 +228,12 @@ const config = {
             position: 'left',
             label: 'Use Cases',
           },
-          { to: '/blog', label: 'Blog', position: 'left' },
+          {
+            to: 'https://blog.superduperdb.com/',
+            label: 'Blog',
+            position: 'left',
+            target: '_self',
+          },
           {
             href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',
             label: 'API',
@@ -279,7 +278,8 @@ const config = {
               },
               {
                 label: 'Blog',
-                to: '/blog',
+                to: 'https://blog.superduperdb.com/',
+                target: '_self',
               },
             ],
           },

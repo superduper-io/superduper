@@ -11,7 +11,7 @@
 
 <div align="center">
 
-## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong> Live Notebooks</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://blog.superduperdb.com"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong> Live Notebooks</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
 
 </div>
 
@@ -46,7 +46,7 @@
 ***开始使用：***
 - 查看我们已经实现的使用案例[在这里的文档中](https://docs.superduperdb.com/docs/category/use-cases)，以及社区构建的应用，在专门的[superduper-community-apps仓库](https://github.com/SuperDuperDB/superduper-community-apps)中查看，并尝试在[浏览器中的Jupyter上](https://demo.superduperdb.com/)使用所有这些应用！
 
-想了解更多关于SuperDuperDB的信息，以及我们为什么认为它非常需要，请[阅读这篇博客文章](https://docs.superduperdb.com/blog/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)。
+想了解更多关于SuperDuperDB的信息，以及我们为什么认为它非常需要，请[阅读这篇博客文章](https://blog.superduperdb.com/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/)。
 
 ---
 

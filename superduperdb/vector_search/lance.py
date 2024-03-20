@@ -30,28 +30,22 @@ class LanceVectorSearcher(BaseVectorSearcher):
     ):
         self.dataset_path = os.path.join(CFG.lance_home, f'{identifier}.lance')
         self.dimensions = dimensions
-        self._created = False
         self.measure = measure
         if h is not None:
-            self._create_or_append_to_dataset(h, index, mode='create')
+            if not os.path.exists(self.dataset_path):
+                os.makedirs(self.dataset_path, exist_ok=True)
+                self._create_or_append_to_dataset(h, index, mode='create')
 
     @property
     def dataset(self):
         if not os.path.exists(self.dataset_path):
-            self._create_or_append_to_dataset([], [])
+            self._create_or_append_to_dataset([], [], mode='create')
         return lance.dataset(self.dataset_path)
 
     def __len__(self):
         return self.dataset.count_rows()
 
-    def _create_or_append_to_dataset(self, vectors, ids, mode: str = 'create'):
-        if not self._created:
-            if not os.path.exists(self.dataset_path):
-                mode = 'create'
-                os.makedirs(self.dataset_path, exist_ok=True)
-            else:
-                self._created = True
-                mode = "append"
+    def _create_or_append_to_dataset(self, vectors, ids, mode: str = 'upsert'):
         type = pa.list_(
             pa.field('values', pa.float32(), nullable=False), self.dimensions
         )
@@ -59,8 +53,14 @@ class LanceVectorSearcher(BaseVectorSearcher):
         _vecs = pa.array([v for v in vectors], type=type)
         _ids = pa.array(ids, type=pa.string())
         _table = pa.Table.from_arrays([_ids, _vecs], names=['id', 'vector'])
-        lance.write_dataset(_table, self.dataset_path, mode=mode)
-        self._created = True
+
+        if mode == 'upsert':
+            dataset = lance.dataset(self.dataset_path)
+            dataset.merge_insert(
+                "id"
+            ).when_matched_update_all().when_not_matched_insert_all().execute(_table)
+        else:
+            lance.write_dataset(_table, self.dataset_path, mode=mode)
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
         ids = [item.id for item in items]

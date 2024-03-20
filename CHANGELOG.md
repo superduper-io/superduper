@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 - Run Tests from within the container
 - Add model dict output indexing in graph
+- Make lance upsert for added vectors
 
 #### New Features & Functionality
 - Add compute_kwargs option for model

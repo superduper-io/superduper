@@ -112,3 +112,6 @@ class FastVectorSearcher(BaseVectorSearcher):
             return response['ids'], response['scores']
 
         return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)
+
+    def post_create(self):
+        self.searcher.post_create()

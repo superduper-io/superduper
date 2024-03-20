@@ -28,6 +28,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
     ):
         self.identifier = identifier
         self.dimensions = dimensions
+        self._cache: t.Sequence[VectorItem] = []
+        self._CACHE_SIZE = 10000
 
         if h is not None:
             assert index is not None
@@ -71,6 +73,18 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return _ids, scores
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
+        if len(self._cache) < self._CACHE_SIZE:
+            for item in items:
+                self._cache.append(item)
+        else:
+            self._add(self._cache)
+            self._cache = []
+
+    def post_create(self):
+        self._add(self._cache)
+        self._cache = []
+
+    def _add(self, items: t.Sequence[VectorItem]) -> None:
         index = [item.id for item in items]
         h = numpy.stack([item.vector for item in items])
 

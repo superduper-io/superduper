@@ -96,6 +96,12 @@ class BaseVectorSearcher(ABC):
         :param n: number of nearest vectors to return
         """
 
+    def post_create(self):
+        """
+        This method is used for searchers which requires
+        to perform a task after all vectors have been added
+        """
+
 
 class VectorIndexMeasureType(str, enum.Enum):
     cosine = 'cosine'

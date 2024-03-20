@@ -207,6 +207,7 @@ class Datalayer:
 
             searcher.add(items)
             progress.update(len(items))
+        searcher.post_create()
 
     def set_compute(self, new: ComputeBackend):
         """

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support Schema option for MongoDB
 - Optimize LLM fine-tuning
 - Sort out the llm directory structure
+- Add cache support in inmemory vector searcher
 
 #### Bug Fixes
 - Fixed a bug in refresh_after_insert for listeners with select None

@@ -35,6 +35,7 @@ def test_index(index_data, measure, vector_index_cls):
     y = np.array([0.66, 0.66, 0.66])
 
     h.add([VectorItem(id='new', vector=y)])
+    h.post_create()
     res, _ = h.find_nearest_from_array(y, 1)
 
     assert res[0] == 'new'

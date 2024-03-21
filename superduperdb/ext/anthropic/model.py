@@ -39,6 +39,7 @@ class AnthropicCompletions(Anthropic):
     """
 
     prompt: str = ''
+    max_tokens_to_sample: int = 0
 
     def pre_create(self, db: Datalayer) -> None:
         super().pre_create(db)
@@ -52,7 +53,7 @@ class AnthropicCompletions(Anthropic):
         if context is not None:
             prompt = format_prompt(prompt, self.prompt, context=context)
         client = anthropic.Anthropic(api_key=get_key(KEY_NAME), **self.client_kwargs)
-        resp = client.completions.create(prompt=prompt, model=self.identifier, **kwargs)
+        resp = client.completions.create(prompt=prompt, model=self.identifier, max_tokens_to_sample=max_tokens_to_sample, **kwargs)
         return resp.completion
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:

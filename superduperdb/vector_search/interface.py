@@ -114,4 +114,12 @@ class FastVectorSearcher(BaseVectorSearcher):
         return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)
 
     def post_create(self):
+        if CFG.cluster.is_remote_vector_search:
+            request_server(
+                service='vector_search',
+                endpoint='query/post_create',
+                args={'vector_index': self.vector_index},
+                type='get',
+            )
+            return
         self.searcher.post_create()

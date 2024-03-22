@@ -27,6 +27,12 @@ def create_search(vector_index: str, db: Datalayer = DatalayerDependency()):
     return {'message': 'Vector index created successfully'}
 
 
+@app.add("/create/post_create", status_code=200, method='get')
+def post_create(vector_index: str, db: Datalayer = DatalayerDependency()):
+    service.post_create(vector_index=vector_index, db=db)
+    return {'message': 'Post create executed successfully'}
+
+
 @app.add("/query/id/search", method='post')
 def query_search_by_id(
     id: str, vector_index: str, n: int = 100, db: Datalayer = DatalayerDependency()

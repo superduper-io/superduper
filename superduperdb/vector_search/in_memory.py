@@ -54,9 +54,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.lookup = dict(zip(index, range(len(index))))
 
     def find_nearest_from_id(self, _id, n=100):
+        self.post_create()
         return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
+        self.post_create()
         h = self.to_numpy(h)[None, :]
         if within_ids:
             ix = list(map(self.lookup.__getitem__, within_ids))
@@ -81,8 +83,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self._cache = []
 
     def post_create(self):
-        self._add(self._cache)
-        self._cache = []
+        if self._cache:
+            self._add(self._cache)
+            self._cache = []
 
     def _add(self, items: t.Sequence[VectorItem]) -> None:
         index = [item.id for item in items]
@@ -97,6 +100,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return self._setup(h, index)
 
     def delete(self, ids):
+        self.post_create()
         ix = list(map(self.lookup.__getitem__, ids))
         h = numpy.delete(self.h, ix, axis=0)
         index = [_id for _id in self.index if _id not in set(ids)]

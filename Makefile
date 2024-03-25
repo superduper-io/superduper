@@ -33,6 +33,8 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
+CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
+
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -117,7 +119,7 @@ build_superduperdb: ## Build a minimal Docker image for general use
 	--build-arg BUILD_ENV="release"
 
 
-push_superduperdb: ## Push the superduperdb/superduperdb:latest image
+push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
 	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
@@ -133,6 +135,16 @@ testenv_image: ## Build a sandbox image
 	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
 		--build-arg REQUIREMENTS_FILE="deploy/testenv/optional_requirements.txt" \
+
+
+build_nightly: ## Build superduperdb/nightly:<commit> image
+	echo "===> build superduperdb/superduperdb:$(CURRENT_COMMIT)"
+	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/nightly:$(CURRENT_COMMIT) --progress=plain --no-cache \
+	--build-arg BUILD_ENV="nightly"
+
+push_nightly: ## Push the superduperdb/nightly:<commit> image
+	@echo "===> release superduperdb/nightly:$(CURRENT_COMMIT)"
+	docker push superduperdb/nightly:$(CURRENT_COMMIT)
 
 
 ##@ Testing Environment

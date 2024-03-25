@@ -86,35 +86,53 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Set python cache directory
 ENV PYTHONPYCACHEPREFIX "$HOME/.cache/cpython/"
 
-# ---------------
-# Build Sandbox
-# ---------------
+# -------------------------------
+# Build Sandbox (Development)
+# -------------------------------
 FROM base AS build_sandbox
 
-ARG REQUIREMENTS_FILE
-
+# Install the requirements. To be used in conjuction with "make testenv_init" for development.
+ONBUILD ARG REQUIREMENTS_FILE
 ONBUILD USER superduper
 ONBUILD COPY --chown=superduper ./pyproject.toml ${HOME}/superduperdb/pyproject.toml
 ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ${HOME}/superduperdb/requirements.txt
 ONBUILD COPY --chown=superduper ./Makefile ${HOME}/superduperdb/Makefile
 ONBUILD COPY --chown=superduper ./${REQUIREMENTS_FILE} ${HOME}/superduperdb/optional_requirements.txt
 ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install -r requirements.txt
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r ./optional_requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r ./optional_requirements.txt
 ONBUILD RUN make install-devkit
 
-# ---------------
-# Build Release
-# ---------------
+
+# -------------------------------
+# Build Nightly (Pre-Release)
+# -------------------------------
+FROM base AS build_nightly
+
+# Install the latest commit of the main branch in GitHub.
+ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD RUN git clone -b main --single-branch  https://github.com/SuperDuperDB/superduperdb.git .
+ONBUILD RUN python -m pip install --user . \
+    # Install optional dependencies for testing
+    && python -m pip install --user -r deploy/testenv/optional_requirements.txt \
+    # Purge pip cache to reduce image size.
+    && pip cache purge
+
+
+# -------------------------------
+# Build Release (Production)
+# -------------------------------
 FROM base AS build_release
 
-ONBUILD ARG SUPERDUPERDB_EXTRAS=''
+# Install the latest release from pypi, including code from the GitHub branch of the release.
+# TODO: to be updated when we create the release branch.
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-# Drop cache to reduce image size.
 ONBUILD RUN python -m pip install --user superduperdb \
-    # Purge pip cache
+    # Purge pip cache to reduce image size.
     && pip cache purge
 ONBUILD WORKDIR ${HOME}/examples
+
+
 
 # ---------------
 # Select Build

@@ -7,7 +7,7 @@ import gridfs
 from tqdm import tqdm
 
 from superduperdb import CFG, logging
-from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifacts import ArtifactStore
 from superduperdb.misc.colors import Colors
 
 

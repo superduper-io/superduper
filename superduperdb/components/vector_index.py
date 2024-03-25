@@ -34,6 +34,12 @@ class VectorIndex(Component):
     :param metric_values: Metric values for this index
     """
 
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'indexing_listener', 'type': 'component/listener'},
+        {'name': 'compatible_listener', 'type': 'component/listener', 'optional': True},
+        {'name': 'measure', 'type': 'str', 'choices': ['cosine', 'dot', 'l2']},
+    ]
+
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'vector_index'

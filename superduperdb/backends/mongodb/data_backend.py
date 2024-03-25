@@ -96,6 +96,9 @@ class MongoDataBackend(BaseDataBackend):
                 indexes.append(batch['name'])
         return indexes
 
+    def list_tables_or_collections(self):
+        return self.db.list_collection_names()
+
     def delete_vector_index(self, vector_index):
         """
         Delete a vector index in the data backend if an Atlas deployment.

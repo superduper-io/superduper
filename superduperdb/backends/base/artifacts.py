@@ -143,8 +143,7 @@ class ArtifactStore(ABC):
         """
         Load artifact from artifact store, and deserialize.
 
-        :param file_id: Identifier of artifact in the store
-        :param serializer: Serializer to use for deserialization
+        :param r: Mandatory fields {'file_id', 'datatype'}
         """
 
         datatype = self.serializers[r['datatype']]
@@ -163,7 +162,7 @@ class ArtifactStore(ABC):
     def save(self, r: t.Dict) -> t.Dict:
         """
         Save list of artifacts and replace the artifacts with file reference
-        :param artifacts: List of ``Artifact`` instances
+        :param r: `dict` of artifacts
         """
         if isinstance(r, dict):
             if '_content' in r and r['_content']['leaf_type'] in {
@@ -185,6 +184,7 @@ class ArtifactStore(ABC):
         """
         Disconnect the client
         """
+        pass
 
 
 class ArtifactSavingError(Exception):

@@ -80,6 +80,12 @@ class Estimator(Model, _Fittable, _Validator):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('object', pickle_serializer),
     )
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'object', 'type': 'artifact'},
+        {'name': 'preprocess', 'type': 'artifact', 'optional': True},
+        {'name': 'postprocess', 'type': 'artifact', 'optional': True},
+    ]
+
     object: BaseEstimator
     signature: t.ClassVar[Signature] = 'singleton'
     preprocess: t.Optional[t.Callable] = None

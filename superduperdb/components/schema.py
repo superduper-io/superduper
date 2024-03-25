@@ -23,8 +23,7 @@ class Schema(Component):
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'schema'
-
-    fields: t.Mapping[str, t.Union[DataType, str]]
+    fields: t.Mapping[str, DataType]
 
     def __post_init__(self, artifacts):
         assert self.identifier is not None, 'Schema must have an identifier'

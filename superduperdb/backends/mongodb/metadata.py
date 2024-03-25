@@ -124,11 +124,18 @@ class MongoMetaDataStore(MetaDataStore):
             {'identifier': identifier}, {'$set': {key: value}}
         )
 
-    def show_components(self, type_id: str, **kwargs) -> t.List[t.Union[t.Any, str]]:
+    def show_components(self, type_id: t.Optional[str] = None):
         # TODO: Should this be sorted?
-        return self.component_collection.distinct(
-            'identifier', {'type_id': type_id, **kwargs}
-        )
+        if type_id is not None:
+            return self.component_collection.distinct(
+                'identifier', {'type_id': type_id}
+            )
+        else:
+            return list(
+                self.component_collection.find(
+                    {}, {'identifier': 1, '_id': 0, 'type_id': 1}
+                )
+            )
 
     # TODO: Why is this is needed to prevent failures in CI?
     @tenacity.retry(stop=tenacity.stop_after_attempt(10))
@@ -148,11 +155,20 @@ class MongoMetaDataStore(MetaDataStore):
     def show_job(self, job_id: str):
         return self.job_collection.find_one({'identifier': job_id})
 
-    def show_jobs(self, status=None):
-        status = {} if status is None else {'status': status}
+    def show_jobs(
+        self,
+        component_identifier: t.Optional[str] = None,
+        type_id: t.Optional[str] = None,
+    ):
+        filter_ = {}
+        if component_identifier is not None:
+            filter_['component_identifier'] = component_identifier
+        if type_id is not None:
+            filter_['type_id'] = component_identifier
         return list(
             self.job_collection.find(
-                status, {'identifier': 1, '_id': 0, 'method': 1, 'status': 1, 'time': 1}
+                filter_,
+                {'identifier': 1, '_id': 0, 'method': 1, 'status': 1, 'time': 1},
             )
         )
 

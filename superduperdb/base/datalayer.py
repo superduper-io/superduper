@@ -2,7 +2,7 @@ import dataclasses as dc
 import random
 import typing as t
 import warnings
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import click
 import networkx
@@ -10,7 +10,7 @@ import tqdm
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifacts import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
@@ -215,7 +215,7 @@ class Datalayer:
 
     def show(
         self,
-        type_id: str,
+        type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
@@ -231,6 +231,12 @@ class Datalayer:
         """
         if identifier is None and version is not None:
             raise ValueError(f'must specify {identifier} to go with {version}')
+
+        if type_id is None:
+            nt = namedtuple('nt', ('type_id', 'identifier'))
+            out = self.metadata.show_components()
+            out = list(set(nt(**x) for x in out))
+            return [x._asdict() for x in out]
 
         if identifier is None:
             return self.metadata.show_components(type_id=type_id)

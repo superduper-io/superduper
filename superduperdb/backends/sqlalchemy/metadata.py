@@ -3,14 +3,7 @@ import typing as t
 from contextlib import contextmanager
 
 import click
-from sqlalchemy import (
-    Column,
-    MetaData,
-    Table,
-    delete,
-    insert,
-    select,
-)
+from sqlalchemy import Column, MetaData, Table, and_, delete, insert, select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 
@@ -301,15 +294,21 @@ class SQLAlchemyMetadata(MetaDataStore):
             version=version,
         )
 
-    def show_components(self, type_id: t.Optional[str] = None, **kwargs):
+    def show_components(self, type_id: t.Optional[str] = None):
         with self.session_context() as session:
             stmt = select(self.component_table)
             if type_id is not None:
                 stmt = stmt.where(self.component_table.c.type_id == type_id)
             res = self.query_results(self.component_table, stmt, session)
-        identifiers = [data['identifier'] for data in res]
-        identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
-        return identifiers
+        if type_id is not None:
+            identifiers = [data['identifier'] for data in res]
+            identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
+            return identifiers
+        else:
+            return [
+                {'identifier': data['identifier'], 'type_id': data['type_id']}
+                for data in res
+            ]
 
     def show_component_versions(self, type_id: str, identifier: str):
         with self.session_context() as session:
@@ -363,10 +362,28 @@ class SQLAlchemyMetadata(MetaDataStore):
         # Not supported currently
         raise NotImplementedError
 
-    def show_jobs(self):
+    def show_jobs(
+        self,
+        component_identifier: t.Optional[str] = None,
+        type_id: t.Optional[str] = None,
+    ):
         with self.session_context() as session:
+            # Start building the select statement
             stmt = select(self.job_table)
+
+            # If a component_identifier is provided, add a where clause to filter by it
+            if component_identifier is not None:
+                stmt = stmt.where(
+                    and_(
+                        self.job_table.c.component_identifier == component_identifier,
+                        self.job_table.c.type_id == type_id,
+                    )
+                )
+
+            # Execute the query and collect results
             res = self.query_results(self.job_table, stmt, session)
+
+            # Return the list of identifiers
             return [r['identifier'] for r in res]
 
     def update_job(self, job_id: str, key: str, value: t.Any):

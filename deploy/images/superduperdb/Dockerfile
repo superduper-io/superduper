@@ -10,6 +10,7 @@ ARG REQUIREMENTS_FILE=deploy/testenv/optional_requirements.txt
 # ---------------
 # Configure Basic Template
 # ---------------
+# TODO make this configurable
 FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
 
 # Temporarily switch to the root for privileged operations.
@@ -18,6 +19,7 @@ USER root
 
 # Install system packages
 # ---------------
+# TODO make this configurable
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
@@ -29,10 +31,13 @@ RUN apt-get update \
         libglib2.0-0 libgl1-mesa-glx \
         # Required for PostgreSQL \
         libpq-dev \
-	build-essential \
-   # Purge apt cache
-   && apt-get clean \
-   && rm -rf /var/lib/apt/lists/*
+        # Required for rest server \
+        libmagic1 \
+        # Required for Llama.cpp
+        build-essential \
+  # Purge apt cache
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 
 # Replace the default Jupyter user with a SuperDuper user

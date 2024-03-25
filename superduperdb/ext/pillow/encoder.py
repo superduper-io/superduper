@@ -51,3 +51,31 @@ pil_image_hybrid = DataType(
     decoder=decode_pil_image,
     encodable='artifact',
 )
+
+pil_image_hybrid_png = DataType(
+    'pil_image_hybrid_png',
+    encoder=encode_pil_image,
+    decoder=decode_pil_image,
+    encodable='artifact',
+    media_type='image/png',
+)
+
+pil_image_hybrid_jpeg = DataType(
+    'pil_image_hybrid_jpeg',
+    encoder=encode_pil_image,
+    decoder=decode_pil_image,
+    encodable='artifact',
+    media_type='image/jpeg',
+)
+
+
+def image_type(
+    identifier: str, encodable: str = 'lazy_artifact', media_type: str = 'image/png'
+):
+    return DataType(
+        identifier,
+        encoder=encode_pil_image,
+        decoder=decode_pil_image,
+        encodable=encodable,
+        media_type=media_type,
+    )

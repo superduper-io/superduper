@@ -391,7 +391,12 @@ class Model(Component):
 
     type_id: t.ClassVar[str] = 'model'
     signature: Signature = '*args,**kwargs'
+    ui_schema: t.ClassVar[t.Dict] = [
+        {'name': 'datatype', 'type': 'component/datatype'},
+        {'name': 'predict_kwargs', 'type': 'json'},
+    ]
 
+    # TODO combine with Schema
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     flatten: bool = False
@@ -762,6 +767,11 @@ class ObjectModel(Model, _Validator):
     """
 
     type_id: t.ClassVar[str] = 'model'
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'object', 'type': 'component/object'},
+        {'name': 'num_workers', 'type': 'int'},
+        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
+    ]
 
     __doc__ = __doc__.format(_predictor_params=Model.__doc__)
 
@@ -875,6 +885,12 @@ class QueryModel(Model):
     :param select: query used to find data (can include `like`)
     """
 
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'preprocess', 'type': 'artifact'},
+        {'name': 'postprocess', 'type': 'artifact'},
+        {'name': 'select', 'type': 'query'},
+    ]
+
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Callable] = None
     select: CompoundSelect
@@ -913,6 +929,12 @@ class SequentialModel(Model):
     __doc__ = __doc__.format(
         _predictor_params=Model.__doc__,
     )
+
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'predictors', 'type': 'component/model', 'sequence': True},
+        {'name': 'signature', 'type': 'str'},
+    ]
+
     predictors: t.List[Model]
 
     signature: t.Optional[str] = '*args,**kwargs'

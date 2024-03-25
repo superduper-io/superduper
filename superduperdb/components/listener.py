@@ -34,6 +34,15 @@ class Listener(Component):
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'identifier', 'type': 'str', 'default': ''},
+        {'name': 'key', 'type': 'json'},
+        {'name': 'model', 'type': 'component/model'},
+        {'name': 'select', 'type': 'query'},
+        {'name': 'active', 'type': 'bool'},
+        {'name': 'predict_kwargs', 'type': 'json', 'default': {}},
+    ]
+
     key: ModelInputType
     model: Model
     select: CompoundSelect

@@ -95,6 +95,11 @@ class VectorSearch(BaseConfig):
 
 
 @dc.dataclass
+class Rest(BaseConfig):
+    uri: t.Optional[str] = None
+
+
+@dc.dataclass
 class Compute(BaseConfig):
     uri: t.Optional[str] = None  # None implies local mode
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -119,6 +124,7 @@ class Cluster(BaseConfig):
 
     compute: Compute = dc.field(default_factory=Compute)
     vector_search: VectorSearch = dc.field(default_factory=VectorSearch)
+    rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
 
 

@@ -1,4 +1,3 @@
-import dataclasses as dc
 import typing as t
 
 from bson.objectid import ObjectId
@@ -22,12 +21,12 @@ if t.TYPE_CHECKING:
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
-_OUTPUTS_KEY: str = '_outputs'
 _LEAF_TYPES = {
     'component': Component,
     'serializable': Serializable,
 }
 _LEAF_TYPES.update(_ENCODABLES)
+_OUTPUTS_KEY = '_outputs'
 
 
 class Document(MongoStyleDict):
@@ -135,14 +134,6 @@ def _decode(
         return r
 
 
-@dc.dataclass
-class Reference(Serializable):
-    identifier: str
-    leaf_type: str
-    path: t.Optional[str] = None
-    db: t.Optional['Datalayer'] = None
-
-
 def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, dict):
         for k, v in r.items():
@@ -154,8 +145,7 @@ def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, list):
         for i, x in enumerate(r):
             if isinstance(x, Leaf):
-                ref = Reference(x.unique_id, leaf_type=x.leaf_type)
-                r[i] = ref
+                r[i] = f'${x.leaf_type}/{x.unique_id}'
                 references[x.leaf_type][x.unique_id] = x
             else:
                 _encode_with_references(x, references=references)
@@ -187,7 +177,7 @@ def _encode_with_schema(r: t.Any, schema: 'Schema') -> t.Any:
         for k, v in r.items():
             if isinstance(schema.fields.get(k, None), DataType):
                 assert isinstance(schema.fields[k], DataType)
-                out[k] = schema.fields[k].encode_data(v)  # type: ignore[union-attr]
+                out[k] = schema.fields[k].encode_data(v)
             else:
                 tmp = _encode_with_schema(v, schema)
                 out[k] = tmp

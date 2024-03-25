@@ -216,6 +216,8 @@ databackend-testing: ## Execute integration testing
 	@echo "TODO -- implement more backends integration testing..."
 
 ext-testing: ## Execute integration testing
+	find ./test -type d -name __pycache__ -exec rm -r {} +
+	find ./test -type f -name "*.pyc" -delete
 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
 
 smoke-testing: ## Execute smoke testing

@@ -182,6 +182,14 @@ class Graph(Model):
 
     '''
 
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'models', 'type': 'component/model', 'sequence': True},
+        {'name': 'edges', 'type': '$this.models', 'sequence': True},
+        {'name': 'input', 'type': '$this.models'},
+        {'name': 'outputs', 'type': '$this.models', 'sequence': True},
+        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
+    ]
+
     models: t.List[Model] = dc.field(default_factory=list)
     edges: t.List[t.Tuple[str, str, t.Tuple[t.Union[int, str], str]]] = dc.field(
         default_factory=list

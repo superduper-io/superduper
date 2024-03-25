@@ -59,3 +59,9 @@ class BaseDataBackend(ABC):
         """
         Disconnect the client
         """
+
+    @abstractmethod
+    def list_tables_or_collections(self):
+        """
+        List all tables or collections in the database.
+        """

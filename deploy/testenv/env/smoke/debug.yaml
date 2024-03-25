@@ -10,6 +10,8 @@ cluster:
   vector_search:
     uri: http://localhost:8000
     backfill_batch_size: 100
+  rest:
+    uri: http://localhost:8002
 data_backend: mongodb://localhost:27017/test_db
 downloads:
   folder: null

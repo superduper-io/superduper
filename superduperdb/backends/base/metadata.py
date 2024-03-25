@@ -121,14 +121,18 @@ class MetaDataStore(ABC):
             print(r['msg'])
 
     @abstractmethod
-    def show_jobs(self):
+    def show_jobs(
+        self,
+        component_identifier: t.Optional[str],
+        type_id: t.Optional[str],
+    ):
         """
         Show all jobs in the metadata store.
         """
         pass
 
     @abstractmethod
-    def show_components(self, type_id: str, **kwargs):
+    def show_components(self, type_id: t.Optional[str] = None):
         """
         Show all components in the metadata store.
 

@@ -42,3 +42,10 @@ def ray_serve(
         ray_actor_options=json.loads(ray_actor_options),
         num_replicas=num_replicas,
     )
+
+
+@command(help='Start FastAPI REST server')
+def rest():
+    from superduperdb.rest.app import app
+
+    app.start()

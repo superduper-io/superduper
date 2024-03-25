@@ -221,6 +221,40 @@ services:
       cdc:
         condition: service_healthy
 
+   # Change Data Capture Service
+   # ------------------------------
+  rest:
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    image: superduperdb/sandbox
+    hostname: rest
+    ports:
+      - "8002:8002"
+    env_file: users.env
+    volumes:
+        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
+        - ../../test:/home/superduper/superduperdb/test # shared between containers
+        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
+        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python -m uvicorn superduperdb.rest.deployed_app:app.app --host 0.0.0.0 --reload --reload-dir /home/superduper/superduperdb/superduperdb --port 8002
+    healthcheck:
+      test: curl http://localhost:8002/health || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  rest-init:
+    image: busybox
+    depends_on:
+      rest:
+        condition: service_healthy
 
   #  Demo SuperDuperDB Notebooks
   #  ------------------------------
@@ -233,6 +267,8 @@ services:
       vector-search-init:
         condition: service_completed_successfully
       cdc-init:
+        condition: service_completed_successfully
+      rest-init:
         condition: service_completed_successfully
       ray-head:
         condition: service_started

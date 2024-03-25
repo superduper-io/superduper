@@ -53,7 +53,7 @@ class SuperDuperApp:
     fastapi application in the realm of superduperdb.
     """
 
-    def __init__(self, service='vector_search', port=8000):
+    def __init__(self, service='vector_search', port=8000, db: Datalayer = None):
         self.service = service
         self.port = port
 
@@ -65,6 +65,7 @@ class SuperDuperApp:
         self._user_shutdown = False
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
+        self._db = db
 
     @cached_property
     def app(self):
@@ -133,19 +134,20 @@ class SuperDuperApp:
             self.shutdown()
         assert self.app
 
-    def start(self):
-        """
-        This method is used to start the application server
-        """
-        self.pre_start()
-
-        self.print_routes()
-
+    def run(self):
         uvicorn.run(
             self._app,
             host=self.app_host,
             port=self.port,
         )
+
+    def start(self):
+        """
+        This method is used to start the application server
+        """
+        self.pre_start()
+        self.print_routes()
+        self.run()
 
     def startup(self, function=None, cfg=None):
         """
@@ -156,7 +158,10 @@ class SuperDuperApp:
         @self._app.on_event('startup')
         def startup_db_client():
             sys.path.append('./')
-            db = build_datalayer(cfg)
+            if self._db is None:
+                db = build_datalayer(cfg)
+            else:
+                db = self._db
             db.server_mode = True
             if function:
                 function(db=db)

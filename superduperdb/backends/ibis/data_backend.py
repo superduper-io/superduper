@@ -100,3 +100,6 @@ class IbisDataBackend(BaseDataBackend):
         """
 
         # TODO: implement me
+
+    def list_tables_or_collections(self):
+        return self.conn.list_tables()

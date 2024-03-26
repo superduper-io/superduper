@@ -733,7 +733,7 @@ class Datalayer:
                     args=[key],
                     kwargs={
                         'ids': ids,
-                        'select': listener_query.dict().encode(),
+                        'select': listener_select.dict().encode(),
                         'overwrite': overwrite,
                         **info['dict']['predict_kwargs'],
                     },

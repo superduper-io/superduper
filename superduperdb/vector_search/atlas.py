@@ -195,10 +195,28 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
             ],
         }
         logging.info(json.dumps(index_definition, indent=2))
+        # from pymongo.operations import SearchIndexModel
+        # # client = pymongo.MongoClient(CFG.cluster.vector_search)
+        # # print(client)
+        
+
+        # # Define the search index model
+        # search_index_model = SearchIndexModel(
+        #     definition=index_definition,
+        #     name=self.identifier
+        # )
+
+        # # Create the vector search index
+        # self.index.create_search_index(model=search_index_model)
+        # self.index.create_search_index(self.identifier, index_definition)
         self.database.command(index_definition)
 
     def _check_if_exists(self, index: str):
-        indexes = self.index.list_search_indexes()
-        return len(
-            [i for i in indexes if i['name'] == index and i['status'] == 'READY']
-        )
+        try:
+            indexes = self.index.list_search_indexes()
+            return len(
+                [i for i in indexes if i['name'] == index and i['status'] == 'READY']
+            )
+        except pymongo.errors.OperationFailure as e:
+            print(e)
+            return False

@@ -392,6 +392,28 @@ class _Predictor(Component):
     type_id: t.ClassVar[str] = 'model'
     signature: Signature = '*args,**kwargs'
 
+    ## TODO : currently accepting this variables to avoid errors
+    ## later on will implement this later 
+    encoder: t.Optional[Schema] = None
+    preprocess: t.Optional[Schema] = None
+    postprocess: t.Optional[Schema] = None
+    collate_fn: t.Optional[Schema] = None
+    batch_predict: t.Optional[Schema] = None
+    takes_context: t.Optional[Schema] = None
+    predict_X : t.Optional[Schema] = None
+    predict_select : t.Optional[Schema] = None
+    predict_max_chunk_size : t.Optional[Schema] = None
+    model_to_device_method : t.Optional[Schema] = None
+    metric_values : t.Optional[Schema] = None
+    predict_method : t.Optional[Schema] = None
+    serializer: t.Optional[Schema] = None
+    device: t.Optional[Schema] = None
+    preferred_devices: t.Optional[Schema] = None
+    train_X: t.Optional[Schema] = None
+    train_y:  t.Optional[Schema] = None
+    train_select: t.Optional[Schema] = None
+    training_configuration: t.Optional[Schema] = None
+
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     flatten: bool = False
@@ -399,7 +421,13 @@ class _Predictor(Component):
     predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
     compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
-    def post_create(self, db):
+    
+    def post_create(self, db: Datalayer) -> None:
+        # TODO: This not necessary since added as a subcomponent
+        if isinstance(self.output_schema, Schema):
+            db.add(self.output_schema)
+        # TODO add this logic to pre_create,
+        # since then the `.add` clause is not necessary
         output_component = db.databackend.create_model_table_or_collection(self)
         if output_component is not None:
             db.add(output_component)
@@ -640,7 +668,8 @@ class _Predictor(Component):
             X=X, db=db, select=select, ids=ids, in_memory=in_memory
         )
         outputs = self.predict(dataset)
-        outputs = self.encode_outputs(outputs)
+        # outputs = self.encode_outputs(outputs)
+        outputs = list(map(lambda x: x.tolist(), outputs))
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
@@ -770,11 +799,11 @@ class ObjectModel(_Predictor, _Validator):
 
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
-        return self.object(*args, **kwargs)
+        return self.object.encode(*args, **kwargs)
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        return self.object(*args, **kwargs)
+        return self.object.encode(*args, **kwargs)
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:

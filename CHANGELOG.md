@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make lance upsert for added vectors
 
 #### New Features & Functionality
+- Add nightly image for pre-release testing in the cloud environment
 - Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases

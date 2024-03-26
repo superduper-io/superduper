@@ -198,7 +198,11 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         self.database.command(index_definition)
 
     def _check_if_exists(self, index: str):
-        indexes = self.index.list_search_indexes()
-        return len(
-            [i for i in indexes if i['name'] == index and i['status'] == 'READY']
-        )
+        try:
+            indexes = self.index.list_search_indexes()
+            return len(
+                [i for i in indexes if i['name'] == index and i['status'] == 'READY']
+            )
+        except pymongo.errors.OperationFailure as e:
+            print(e)
+            return False

@@ -654,7 +654,9 @@ class Model(Component):
             in_memory=in_memory,
         )
         outputs = self.predict(dataset)
-        outputs = self.encode_outputs(outputs)
+        # outputs = self.encode_outputs(outputs)
+        # post processing numpy array to list
+        outputs = list(map(lambda x: x.tolist(), outputs))
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
@@ -773,6 +775,28 @@ class ObjectModel(Model, _Validator):
     num_workers: int = 0
     signature: Signature = '*args,**kwargs'
 
+    ## TODO : currently accepting this variables to avoid errors
+    ## later on will implement this later 
+    encoder: t.Optional[Schema] = None
+    preprocess: t.Optional[Schema] = None
+    postprocess: t.Optional[Schema] = None
+    collate_fn: t.Optional[Schema] = None
+    batch_predict: t.Optional[Schema] = None
+    takes_context: t.Optional[Schema] = None
+    predict_X : t.Optional[Schema] = None
+    predict_select : t.Optional[Schema] = None
+    predict_max_chunk_size : t.Optional[Schema] = None
+    model_to_device_method : t.Optional[Schema] = None
+    metric_values : t.Optional[Schema] = None
+    predict_method : t.Optional[Schema] = None
+    serializer: t.Optional[Schema] = None
+    device: t.Optional[Schema] = None
+    preferred_devices: t.Optional[Schema] = None
+    train_X: t.Optional[Schema] = None
+    train_y:  t.Optional[Schema] = None
+    train_select: t.Optional[Schema] = None
+    training_configuration: t.Optional[Schema] = None
+
     @property
     def outputs(self):
         return IndexableNode([int])
@@ -802,11 +826,11 @@ class ObjectModel(Model, _Validator):
 
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
-        return self.object(*args, **kwargs)
+        return self.object.encode(*args, **kwargs)
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        return self.object(*args, **kwargs)
+        return self.object.encode(*args, **kwargs)
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
@@ -822,6 +846,7 @@ class ObjectModel(Model, _Validator):
                 outputs.append(self._wrapper(dataset[i]))
         return outputs
 
+Model = ObjectModel
 
 # TODO no longer necessary
 @public_api(stability='beta')

@@ -1,0 +1,28 @@
+artifact_store: filesystem:///artifacts
+bytes_encoding: Bytes
+cluster:
+  cdc:
+    strategy: null
+    uri: http://cdc:8001
+  compute:
+    uri: ray://ray-head:10001
+  vector_search:
+    uri: http://vector-search:8000
+    backfill_batch_size: 100
+data_backend: mongodb://superduper:superduper@mongodb:27017/test_db
+downloads:
+  folder: null
+  headers:
+    User-Agent: me
+  n_workers: 0
+  timeout: null
+fold_probability: 0.05
+lance_home: .superduperdb/vector_indices
+log_level: INFO
+logging_type: SYSTEM
+metadata_store: null
+retries:
+  stop_after_attempt: 2
+  wait_max: 10.0
+  wait_min: 4.0
+  wait_multiplier: 1.0

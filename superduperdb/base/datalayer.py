@@ -91,6 +91,7 @@ class Datalayer:
         self.metrics = LoadDict(self, field='metric')
         self.models = LoadDict(self, field='model')
         self.datatypes = LoadDict(self, field='datatype')
+        self.listeners = LoadDict(self, field='listener')
         self.vector_indices = LoadDict(self, field='vector_index')
         self.schemas = LoadDict(self, field='schema')
         self.datatypes.update(serializers)
@@ -110,20 +111,6 @@ class Datalayer:
         self.compute = compute
         self._server_mode = False
 
-    def rebuild(self, cfg=None):
-        from superduperdb.base import build
-
-        cfg = cfg or s.CFG
-
-        self.databackend = build._build_databackend(cfg)
-        self.compute = build._build_compute(cfg.cluster.compute.uri)
-
-        self.metadata = build._build_metadata(cfg, self.databackend)
-        self.artifact_store = build._build_artifact_store(
-            cfg.artifact_store, self.databackend
-        )
-        self.artifact_store.serializers = self.serializers
-
     @property
     def server_mode(self):
         return self._server_mode
@@ -136,15 +123,10 @@ class Datalayer:
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> t.Optional[BaseVectorSearcher]:
-        searcher_type = searcher_type or s.CFG.cluster.vector_search_type
+        searcher_type = searcher_type or s.CFG.cluster.vector_search.type
         vi = self.vector_indices[identifier]
 
         clt = vi.indexing_listener.select.table_or_collection
-
-        if self.cdc.running:
-            if not s.CFG.cluster.is_remote_vector_search:
-                msg = 'CDC only supported for vector search via lance format'
-                assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
         vector_comparison = vector_search_cls.from_component(vi)
@@ -156,10 +138,10 @@ class Datalayer:
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
-        if s.CFG.self_hosted_vector_search:
+        if s.CFG.cluster.vector_search.type == 'native':
             return
 
-        if s.CFG.cluster.is_remote_vector_search and not self.server_mode:
+        if s.CFG.cluster.vector_search.uri and not self.server_mode:
             return
 
         logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")
@@ -171,12 +153,7 @@ class Datalayer:
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
 
-        model_id = vi.indexing_listener.model.identifier
-        model_version = vi.indexing_listener.model.version
-
-        query = vi.indexing_listener.select.outputs(
-            **{key: f'{model_id}/{model_version}'}
-        )
+        query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
 
         logging.info(str(query))
 
@@ -185,24 +162,15 @@ class Datalayer:
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             self.execute(query),
-            s.CFG.cluster.backfill_batch_size,
+            s.CFG.cluster.vector_search.backfill_batch_size,
         ):
             items = []
             for record in record_batch:
-                key = vi.indexing_listener.key
-                if key.startswith('_outputs.'):
-                    key = key.split('.')[1]
-
                 id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
-                h = record.outputs(
-                    key,
-                    vi.indexing_listener.model.identifier,
-                    version=vi.indexing_listener.model.version,
-                )
+                h = record[f'_outputs.{vi.indexing_listener.predict_id}']
                 if isinstance(h, _BaseEncodable):
-                    h = h.x
-
+                    h = h.unpack(db=self)
                 items.append(VectorItem.create(id=str(id), vector=h))
 
             searcher.add(items)
@@ -650,7 +618,7 @@ class Datalayer:
                 continue
 
             if (
-                s.CFG.cluster.vector_search_type == 'in_memory'
+                s.CFG.cluster.vector_search.type == 'in_memory'
                 and vi.identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -701,41 +669,34 @@ class Datalayer:
         listeners = self.show('listener')
         if not listeners:
             return G
-        listener_selects = {}
 
         for identifier in listeners:
             # TODO reload listener here (with lazy loading)
-            info = self.metadata.get_component('listener', identifier)
-            select = info['dict']['select']
-            if not select:
+            listener = self.listeners[identifier]
+            if not listener.select:
                 logging.debug(
                     f'Listener {identifier} was loaded with `None` select, '
                     f'{identifier} will not be added to refresh jobs.'
                 )
                 continue
 
-            listener_query = Document.decode(select, None)
-            listener_select = serializable.Serializable.decode(listener_query)
-            listener_selects.update({identifier: listener_select})
-            if listener_select is None:
-                continue
             if (
-                listener_select.table_or_collection.identifier
+                listener.select.table_or_collection.identifier
                 != query.table_or_collection.identifier
             ):
                 continue
 
-            model, _, key = identifier.rpartition('/')
             G.add_node(
-                f'{model}.predict_in_db({key})',
+                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
                 job=ComponentJob(
-                    component_identifier=model,
-                    args=[key],
+                    component_identifier=listener.model.identifier,
                     kwargs={
+                        'X': listener.key,
                         'ids': ids,
                         'select': listener_select.dict().encode(),
                         'overwrite': overwrite,
-                        **info['dict']['predict_kwargs'],
+                        'predict_id': listener.predict_id,
+                        **listener.predict_kwargs,
                     },
                     method_name='predict_in_db',
                     type_id='model',
@@ -743,40 +704,39 @@ class Datalayer:
             )
 
         for identifier in listeners:
-            listener_select = listener_selects.get(identifier, None)
-            if listener_select is None:
+            listener = self.listeners[identifier]
+            if listener.select is None:
                 continue
             if (
-                listener_select.table_or_collection.identifier
+                listener.select.table_or_collection.identifier
                 != query.table_or_collection.identifier
             ):
                 continue
-            model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',
-                f'{model}.predict_in_db({key})',
+                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
             )
             if not self.cdc.running:
-                deps = self._get_dependencies_for_listener(identifier)
-                for dep in deps:
-                    dep_model, _, dep_key = dep.rpartition('/')
-                    dep_node = f'{dep_model}.predict_in_db({dep_key})'
+                deps = self.listeners[identifier].dependencies
+                for _, dep, _ in deps:
+                    upstream = self.listeners[dep]
+                    dep_node = (
+                        f'{upstream.model.identifier}.predict_in_db({upstream.id_key})'
+                    )
                     if dep_node in G.nodes:
                         G.add_edge(
                             dep_node,
-                            f'{model}.predict_in_db({key})',
+                            f'{listener.model.identifier}.predict_in_db({listener.id_key})',
                         )
                     else:
                         logging.warn(
-                            f'The dependent model {dep_model} is either',
-                            'not added to database yet or does not exists.',
-                            'Please make sure to do ',
-                            f'`db.add(<listener>|<model> ({dep_model}))`',
-                            'before adding the model or ',
-                            f'listener with model: {model}',
+                            f'The dependent listener {upstream.identifier} is either'
+                            ' does not exist.'
+                            'Please make sure to add this listener'
+                            f'`db.add(...)`'
                         )
 
-        if s.CFG.self_hosted_vector_search:
+        if s.CFG.cluster.vector_search.type == 'native':
             return G
 
         for identifier in self.show('vector_index'):
@@ -785,7 +745,7 @@ class Datalayer:
             # program is standalone
 
             if (
-                s.CFG.cluster.vector_search_type == 'in_memory'
+                s.CFG.cluster.vector_search.uri is None
                 and identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -810,7 +770,7 @@ class Datalayer:
                 ),
             )
             model = vi.indexing_listener.model.identifier
-            key = vi.indexing_listener.key
+            key = vi.indexing_listener.id_key
             G.add_edge(
                 f'{model}.predict_in_db({key})', f'{identifier}.{copy_vectors.__name__}'
             )
@@ -824,6 +784,32 @@ class Datalayer:
         s.logging.debug(f'{object.unique_id} already exists - doing nothing')
         return []
 
+    def _add_child_components(self, components, parent):
+        # TODO this is a bit of a mess
+        # it handles the situation in `Stack` when
+        # the components should be added in a certain order
+        G = networkx.DiGraph()
+        lookup = {(c.type_id, c.identifier): c for c in components}
+        for k in lookup:
+            G.add_node(k)
+            for d in lookup[k].dependencies:
+                if d[:2] in lookup:
+                    G.add_edge(d, lookup[k].id_tuple)
+
+        nodes = networkx.topological_sort(G)
+        jobs = {}
+        for n in nodes:
+            component = lookup[n]
+            dependencies = sum(
+                [jobs.get(d[:2], []) for d in component.dependencies], []
+            )
+            tmp = self._add(
+                component, parent=parent.unique_id, dependencies=dependencies
+            )
+            jobs[n] = tmp
+
+        return sum(list(jobs.values()), [])
+
     def _add(
         self,
         object: Component,
@@ -836,7 +822,10 @@ class Datalayer:
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
-        existing_versions = self.show(object.type_id, object.identifier)
+        if not isinstance(object.identifier, serializable.Variable):
+            existing_versions = self.show(object.type_id, object.identifier)
+        else:
+            existing_versions = []
         already_exists = (
             isinstance(object.version, int) and object.version in existing_versions
         )
@@ -854,12 +843,10 @@ class Datalayer:
         leaves = leaves.values()
         artifacts = [leaf for leaf in leaves if isinstance(leaf, _BaseEncodable)]
         children = [leaf for leaf in leaves if isinstance(leaf, Component)]
-
-        for child in children:
-            sub_jobs = self._add(child, parent=object.unique_id)
-            jobs.extend(sub_jobs)
+        jobs.extend(self._add_child_components(children, parent=object))
 
         # need to do this again to get the versions of the children
+        object.set_variables(self)
         serialized = object.dict().encode()
 
         if artifacts:
@@ -874,19 +861,6 @@ class Datalayer:
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
         return jobs
-
-    # TODO doesn't seem to be used anywhere
-    def _create_plan(self):
-        G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('listener', active=True):
-            G.add_node('listener', job=identifier)
-        for identifier in self.metadata.show_components('listener'):
-            deps = self._get_dependencies_for_listener(identifier)
-            for dep in deps:
-                G.add_edge(('listener', dep), ('listener', identifier))
-        if not networkx.is_directed_acyclic_graph(G):
-            raise ValueError('G is not a directed, acyclic graph')
-        return G
 
     def _delete(self, delete: Delete):
         delete.execute(self)
@@ -933,16 +907,6 @@ class Datalayer:
         if not filter['_id']:
             del filter['_id']
         return filter
-
-    def _get_dependencies_for_listener(self, identifier):
-        info = self.metadata.get_component('listener', identifier)
-        if info is None:
-            return []
-        out = []
-        if info['dict']['key'].startswith('_outputs.'):
-            _, key, model, *version = info['dict']['key'].split('.')
-            out.append(f'{model}/{key}')
-        return out
 
     # TODO should create file handler separately
     def _get_file_content(self, r):

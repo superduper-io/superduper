@@ -9,7 +9,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
 from superduperdb.ext.transformers import LLM
-from superduperdb.ext.transformers.llm_training import Checkpoint, LLMTrainer
+from superduperdb.ext.transformers.training import Checkpoint, LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:

@@ -144,8 +144,8 @@ def test_update_many(db):
     assert all(r['x'].x == to_update)
     assert all(s['x'].x == to_update)
     assert (
-        r['_outputs']['x']['linear_a']['0'].x.tolist()
-        == s['_outputs']['x']['linear_a']['0'].x.tolist()
+        r['_outputs']['x::linear_a::0::0'].x.tolist()
+        == s['_outputs']['x::linear_a::0::0'].x.tolist()
     )
 
 
@@ -155,7 +155,7 @@ def test_insert_many(db):
     an_update = get_new_data(db.datatypes['torch.float32[32]'], 10, update=True)
     db.execute(collection.insert_many(an_update))
     r = next(db.execute(collection.find({'update': True})))
-    assert 'linear_a' in r['_outputs']['x']
+    assert 'x::linear_a::0::0' in r['_outputs']
     assert len(list(db.execute(collection.find()))) == 5 + 10
 
 

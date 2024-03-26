@@ -5,8 +5,7 @@ requires_packages(
     ['datasets', '2.18.0'],
 )
 
-from .llm import LLM
-from .llm_training import LLMTrainer
-from .model import TextClassificationPipeline
+from .model import LLM, TextClassificationPipeline
+from .training import LLMTrainer
 
 __all__ = ('TextClassificationPipeline', 'LLM', 'LLMTrainer')

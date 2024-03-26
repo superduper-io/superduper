@@ -22,7 +22,6 @@ from superduperdb.backends.base.query import (
 )
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Variable
 from superduperdb.components.schema import Schema
 from superduperdb.misc.files import load_uris
 
@@ -88,9 +87,7 @@ class Find(QueryComponent):
 
         if self.output_fields is not None:
             # if outputs are specified, then project to those outputs
-            self.args[1].update(
-                {f'_outputs.{k}.{v}': 1 for k, v in self.output_fields.items()}
-            )
+            self.args[1].update({f'_outputs.{x}': 1 for x in self.output_fields})
             if '_id' not in self.args[1]:
                 self.args[1]['_id'] = 1
 
@@ -112,7 +109,7 @@ class Find(QueryComponent):
             kwargs=self.kwargs,
         )
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         """
         Join the query with the outputs for a table.
 
@@ -124,25 +121,14 @@ class Find(QueryComponent):
         if not args[1:]:
             args.append({})
 
-        for k, v in kwargs.items():
-            if '/' in v:
-                model, version = v.split('/')
-                args[1][f'_outputs.{k}.{model}.{version}'] = 1
-            else:
-                args[1][
-                    Variable(
-                        f'_outputs.{k}.{v}' + '.{version}',
-                        lambda db, value, kwargs: value.format(
-                            version=db.show('model', model)[-1]
-                        ),
-                    )
-                ] = 1
+        for identifier in predict_ids:
+            args[1][f'_outputs.{identifier}'] = 1
         return Find(
             name=self.name,
             type=self.type,
             args=args,
             kwargs=self.kwargs,
-            output_fields=kwargs,
+            output_fields=predict_ids,
         )
 
     def select_using_ids(self, ids):
@@ -158,20 +144,20 @@ class Find(QueryComponent):
             kwargs=self.kwargs,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
+    def select_ids_of_missing_outputs(self, predict_id: str):
         assert self.type == QueryType.QUERY
         if self.args:
             args = [
                 {
                     '$and': [
                         self.args[0],
-                        {f'_outputs.{key}.{model}.{version}': {'$exists': 0}},
+                        {f'_outputs.{predict_id}': {'$exists': 0}},
                     ]
                 },
                 *self.args[1:],
             ]
         else:
-            args = [{f'_outputs.{key}.{model}': {'$exists': 0}}]
+            args = [{f'_outputs.{predict_id}': {'$exists': 0}}]
 
         if len(args) == 1:
             args.append({})
@@ -327,7 +313,7 @@ class MongoCompoundSelect(CompoundSelect):
     def output_fields(self):
         return self.query_linker.output_fields
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -341,7 +327,7 @@ class MongoCompoundSelect(CompoundSelect):
         return MongoCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker.outputs(**kwargs),
+            query_linker=self.query_linker.outputs(*predict_ids),
             post_like=self.post_like,
         )
 
@@ -440,11 +426,11 @@ class MongoQueryLinker(QueryLinker):
             members=new_members,
         )
 
-    def outputs(self, **kwargs):
+    def outputs(self, *predict_ids):
         new_members = []
         for member in self.members:
             if hasattr(member, 'outputs'):
-                new_members.append(member.outputs(**kwargs))
+                new_members.append(member.outputs(*predict_ids))
             else:
                 new_members.append(member)
 
@@ -480,12 +466,12 @@ class MongoQueryLinker(QueryLinker):
             members=new_members,
         )
 
-    def _select_ids_of_missing_outputs(self, key: str, model: str, version: int):
+    def _select_ids_of_missing_outputs(self, predict_id: str):
         new_members = []
         for member in self.members:
             if hasattr(member, 'select_ids_of_missing_outputs'):
                 new_members.append(
-                    member.select_ids_of_missing_outputs(key, model, version=version)
+                    member.select_ids_of_missing_outputs(predict_id=predict_id)
                 )
         return MongoQueryLinker(
             table_or_collection=self.table_or_collection,
@@ -875,17 +861,13 @@ class Collection(TableOrCollection):
         self,
         db,
         ids: t.List[t.Any],
-        key: str,
-        model: str,
-        version: int,
+        predict_id: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
         **kwargs,
     ):
         document_embedded = kwargs.get('document_embedded', True)
 
-        if key.startswith('_outputs'):
-            key = key.split('.')[1]
         if not outputs:
             return
         if document_embedded:
@@ -898,9 +880,7 @@ class Collection(TableOrCollection):
             bulk_operations = []
             for i, id in enumerate(ids):
                 mongo_filter = {'_id': ObjectId(id)}
-                update = Document(
-                    {'$set': {f'_outputs.{key}.{model}.{version}': outputs[i]}}
-                )
+                update = Document({'$set': {f'_outputs.{predict_id}': outputs[i]}})
                 bulk_operations.append(
                     MongoUpdate(
                         filter=mongo_filter,
@@ -913,7 +893,7 @@ class Collection(TableOrCollection):
             db.execute(self.bulk_write(bulk_operations))
 
         else:
-            collection = Collection(f'_outputs.{key}.{model}.{str(version)}')
+            collection = Collection(f'_outputs.{predict_id}')
             bulk_writes = []
 
             if flatten:
@@ -923,7 +903,7 @@ class Collection(TableOrCollection):
                         for offset, output in enumerate(_outputs):
                             bulk_writes.append(
                                 {
-                                    '_outputs': {key: {model: {str(version): output}}},
+                                    '_outputs': {predict_id: output},
                                     '_source': ObjectId(id),
                                     '_offset': offset,
                                 }
@@ -931,7 +911,7 @@ class Collection(TableOrCollection):
                     else:
                         bulk_writes.append(
                             {
-                                '_outputs': {key: {model: {str(version): _outputs}}},
+                                '_outputs': {predict_id: _outputs},
                                 '_source': ObjectId(id),
                                 '_offset': 0,
                             }
@@ -940,9 +920,7 @@ class Collection(TableOrCollection):
             else:
                 for i, id in enumerate(ids):
                     bulk_writes.append(
-                        {
-                            '_outputs': {key: {model: {str(version): outputs[i]}}},
-                        }
+                        {'_id': ObjectId(id), '_outputs': {predict_id: outputs[i]}}
                     )
 
             if bulk_writes:

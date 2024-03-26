@@ -37,7 +37,9 @@ class LocalComputeBackend(ComputeBackend):
         future_key = str(uuid.uuid4())
         self.__outputs[future_key] = future
 
-        logging.success(f"Job submitted.  function:{function} future:{future_key}")
+        logging.success(
+            f"Job submitted on {self}.  function:{function} future:{future_key}"
+        )
         return future_key
 
     @property

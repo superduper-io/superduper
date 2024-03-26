@@ -9,10 +9,9 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
-from superduperdb.backends.ibis.utils import get_output_table_name
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.components.model import APIModel, ObjectModel
+from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
 
 BASE64_PREFIX = 'base64:'
@@ -50,27 +49,25 @@ class IbisDataBackend(BaseDataBackend):
         else:
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
 
-    def create_model_table_or_collection(self, model: t.Union[ObjectModel, APIModel]):
+    def create_output_dest(
+        self, predict_id: str, datatype: t.Union[FieldType, DataType]
+    ):
         msg = (
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."
         )
-        assert model.datatype is not None, msg
-        if isinstance(model.datatype, FieldType):
-            output_type = dtype(model.datatype.identifier)
+        assert datatype is not None, msg
+        if isinstance(datatype, FieldType):
+            output_type = dtype(datatype.identifier)
         else:
-            output_type = model.datatype
+            output_type = datatype
         fields = {
             INPUT_KEY: dtype('string'),
-            'query_id': dtype('string'),
             'output': output_type,
-            'key': dtype('string'),
         }
         return Table(
-            identifier=get_output_table_name(model.identifier, model.version),
-            schema=Schema(
-                identifier=f'_schema/{model.identifier}/{model.version}', fields=fields
-            ),
+            identifier=f'_outputs.{predict_id}',
+            schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
         )
 
     def create_table_and_schema(self, identifier: str, mapping: dict):

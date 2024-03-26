@@ -10,28 +10,38 @@ import os
 import typing as t
 from enum import Enum
 
-_CONFIG_IMMUTABLE = True
+
+def _dataclass_from_dict(data_class: t.Any, data: dict):
+    field_types = {f.name: f.type for f in data_class.__dataclass_fields__.values()}
+    params = {}
+    for f in data:
+        if (
+            f in field_types
+            and hasattr(field_types[f], '__dataclass_fields__')
+            and not isinstance(data[f], field_types[f])
+        ):
+            params[f] = _dataclass_from_dict(field_types[f], data[f])
+        else:
+            params[f] = data[f]
+    return data_class(**params)
 
 
 @dc.dataclass
 class BaseConfig:
-    _lock: t.ClassVar[bool] = False
+    def __call__(self, **kwargs):
+        parameters = self.dict()
+        for k, v in kwargs.items():
+            if '__' in k:
+                parts = k.split('__')
+                parent = parts[0]
+                child = '__'.join(parts[1:])
+                parameters[parent] = getattr(self, parent)(**{child: v})
+            else:
+                parameters[k] = v
+        return _dataclass_from_dict(type(self), parameters)
 
-    def force_set(self, name, value):
-        """
-        Forcefully setattr of BaseConfigJSONable instance
-        """
-        super().__setattr__(name, value)
-
-    def __setattr__(self, name, value):
-        if not _CONFIG_IMMUTABLE or self._lock is False:
-            super().__setattr__(name, value)
-            return
-
-        raise AttributeError(
-            f'Process attempted to set "{name}" attribute of immutable configuration '
-            f'object {self}.'
-        )
+    def dict(self):
+        return dc.asdict(self)
 
 
 @dc.dataclass
@@ -78,19 +88,16 @@ class CDCConfig(BaseConfig):
 
 
 @dc.dataclass
-class ComputeConfig(BaseConfig):
-    '''
-    :param uri: Compute for model predictions
-                i.e 'dask+tcp://local', 'dask+thread',
-                'local', 'ray
-    :param compute_kwargs: Kwargs used for compute
-                           backend job submit.
-                           Example (Ray backend):
-                           compute_kwargs = {'resources':{'CustomResource': 1}}
-    '''
+class VectorSearch(BaseConfig):
+    uri: t.Optional[str] = None  # None implies local mode
+    type: str = 'in_memory'  # in_memory|lance
+    backfill_batch_size: int = 100
 
-    uri: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local', 'ray
-    compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
+
+@dc.dataclass
+class Compute(BaseConfig):
+    uri: t.Optional[str] = None  # None implies local mode
+    compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
 
 @dc.dataclass
@@ -98,42 +105,21 @@ class Cluster(BaseConfig):
     """
     Describes a connection to distributed work via Dask
 
-    :param backfill_batch_size: The number of rows to backfill at a time
-                                for vector-search loading
-    :param compute: The URI for compute i.e 'local', 'dask+tcp://localhost:8786'
-                    "None": Run all jobs in local mode i.e simple function call
-                    "local": same as above
-                    "dask+thread": Run all jobs on a local threaded dask cluster
-                    "dask+tcp://<host>:<port>": Run all jobs on a remote dask cluster
-                    "ray://<host>:<port>": Run all jobs on a remote ray cluster
-
+    :param compute: The URI for compute
+                    - None: run all jobs in local mode i.e. simple function call
+                    - "ray://<host>:<port>": Run all jobs on a remote ray cluster
     :param vector_search: The URI for the vector search service
-                          "None": Run vector search on local
+                          None: Run vector search on local
                           "http://<host>:<port>": Connect a remote vector search service
     :param cdc: The URI for the change data capture service (if "None"
                 then no cdc assumed)
-                "None": Run cdc on local as a thread.
+                None: Run cdc on local as a thread.
                 "http://<host>:<port>": Connect a remote cdc service
     """
 
-    compute: ComputeConfig = dc.field(default_factory=ComputeConfig)
-    vector_search: str = 'in_memory'  # '<http|in_memory|lance>://localhost:8000'
+    compute: Compute = dc.field(default_factory=Compute)
+    vector_search: VectorSearch = dc.field(default_factory=VectorSearch)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
-    backfill_batch_size: int = 100
-
-    @property
-    def vector_search_type(self):
-        search_type = self.vector_search.split('://')[0]
-        if search_type == 'http':
-            # Return default vector_search
-            return 'in_memory'
-        return search_type
-
-    @property
-    def is_remote_vector_search(self):
-        split = self.vector_search.split('://')
-        dialect = split[0]
-        return dialect != 'mongodb+srv' and len(split) > 1
 
 
 class LogLevel(str, Enum):
@@ -209,20 +195,7 @@ class Config(BaseConfig):
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
 
-    dot_env: t.Optional[str] = None
-
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
-
-    def __post_init__(self):
-        if self.dot_env:
-            import dotenv
-
-            dotenv.load_dotenv(self.dot_env)
-        self._lock = True
-
-    @property
-    def self_hosted_vector_search(self) -> bool:
-        return self.data_backend == self.cluster.vector_search
 
     @property
     def hybrid_storage(self):
@@ -237,9 +210,6 @@ class Config(BaseConfig):
         list(map(_dict.pop, ('cluster', 'retries', 'downloads')))
         return _dict
 
-    def dict(self):
-        return dc.asdict(self)
-
     def match(self, cfg: t.Dict):
         """
         Match the target cfg dict with `self` comparables dict.
@@ -252,22 +222,17 @@ class Config(BaseConfig):
     def diff(self, cfg: t.Dict):
         return _diff(self.dict(), cfg)
 
-    def force_set(self, name, value):
-        """
-        Brings immutable behaviour to `CFG` instance.
+    def to_yaml(self):
+        import yaml
 
-        CAUTION: Only use it in development mode with caution,
-        as this can bring unexpected behaviour.
-        """
-        parent = self
-        names = name.split('.')
-        if len(names) > 1:
-            name = names[-1]
-            for n in names[:-1]:
-                parent = getattr(parent, n)
-            parent.force_set(name, value)
-        else:
-            return super().force_set(name, value)
+        def enum_representer(dumper, data):
+            return dumper.represent_scalar('tag:yaml.org,2002:str', str(data.value))
+
+        yaml.SafeDumper.add_representer(BytesEncoding, enum_representer)
+        yaml.SafeDumper.add_representer(LogLevel, enum_representer)
+        yaml.SafeDumper.add_representer(LogType, enum_representer)
+
+        return yaml.dump(self.dict(), Dumper=yaml.SafeDumper)
 
 
 def _diff(r1, r2):

@@ -1,19 +1,39 @@
-import os
 import random
+import warnings
 
 import lorem
 import pymongo
 import pytest
 
 import superduperdb as s
-from superduperdb import superduper
+from superduperdb import CFG, superduper
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.vector_index import VectorIndex, vector
 
-ATLAS_VECTOR_URI = os.environ.get('ATLAS_VECTOR_URI')
+try:
+    client = pymongo.MongoClient(CFG.data_backend)
+    build_info = client.admin.command('buildInfo')
+
+    if 'modules' in build_info and 'enterprise' in build_info['modules']:
+        DO_SKIP = False
+    else:
+        DO_SKIP = True
+
+    if CFG.cluster.vector_search.type != 'native':
+        DO_SKIP = True
+
+    if CFG.cluster.data_backend.type == 'native':
+        DO_SKIP = False
+
+except Exception as e:
+    warnings.warn(
+        f'Could not connect to MongoDB: {e} on {CFG.data_backend}; '
+        'skipping Atlas tests.'
+    )
+    DO_SKIP = True
 
 
 def random_vector_model(x):
@@ -28,16 +48,15 @@ def atlas_search_config():
     s.CFG.vector_search = previous
 
 
-@pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')
+@pytest.mark.skipif(DO_SKIP, reason='Only atlas deployments relevant.')
 def test_setup_atlas_vector_search(atlas_search_config):
     model = ObjectModel(
         identifier='test-model', object=random_vector_model, encoder=vector(shape=(16,))
     )
-    client = pymongo.MongoClient(ATLAS_VECTOR_URI)
-    db = superduper(client.test_atlas_vector_search)
+    db = superduper()
     collection = Collection('docs')
 
-    vector_indexes = db.databackend.list_vector_indexes()
+    vector_indexes = db.data_backend.list_vector_indexes()
 
     assert not vector_indexes
 
@@ -61,10 +80,9 @@ def test_setup_atlas_vector_search(atlas_search_config):
     assert 'test-vector-index' in db.databackend.list_vector_indexes()
 
 
-@pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')
+@pytest.mark.skipif(DO_SKIP, reason='Only atlas deployments relevant.')
 def test_use_atlas_vector_search(atlas_search_config):
-    client = pymongo.MongoClient(ATLAS_VECTOR_URI)
-    db = superduper(client.test_atlas_vector_search)
+    db = superduper()
     collection = Collection('docs')
 
     query = collection.like(

@@ -29,6 +29,12 @@ class RequiredPackageVersionsNotFound(ImportError):
     '''
 
 
+class RequiredPackageVersionsWarning(ImportWarning):
+    '''
+    Exception raised when one or more required packages are not found.
+    '''
+
+
 class ServiceRequestException(BaseException):
     '''
     ServiceRequestException

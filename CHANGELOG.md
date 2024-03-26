@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow developers to write `Listeners` and `Graph` in a single formalism
 - Change unittesting framework to pure configuration (no patching configs)
 - Add simple REST server implementation
+- Add reusable snippets that are reused across the docs
 
 #### Bug Fixes
 - Separate nightly release from sandbox

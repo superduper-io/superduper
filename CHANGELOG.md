@@ -25,12 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support Schema option for MongoDB
 - Optimize LLM fine-tuning
 - Sort out the llm directory structure
-- Add cache support in inmemory vector searcher
-- Add compute_kwargs option for model
-- Add BulkWrite mongodb query
-- Rename `_Predictor` to `Model`
-- Allow developers to write `Listeners` and `Graph` in a single formalism
-- Change unittesting framework to pure configuration (no patching configs)
 - Add reusable snippets that are reused across the docs
 
 #### Bug Fixes

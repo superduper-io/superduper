@@ -8,7 +8,7 @@ from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.model import Trainer
+from superduperdb.components.model import Trainer, _Fittable
 from superduperdb.ext.torch.model import TorchModel
 
 
@@ -82,13 +82,22 @@ class TorchTrainer(Trainer):
             outputs = model.train_forward(**batch)
         elif model.train_signature == '*args,**kwargs':
             outputs = model.train_forward(*batch[0], **batch[1])
-        objective_value = self.training_configuration.objective(*outputs)
+        objective_value = self.objective(*outputs)
         for opt in optimizers:
             opt.zero_grad()
         objective_value.backward()
         for opt in optimizers:
             opt.step()
         return objective_value
+
+    def compute_validation_objective(self, model, valid_dataloader):
+        objective_values = []
+        with model.evaluating(), torch.no_grad():
+            for batch in valid_dataloader:
+                objective_values.append(
+                    self.objective(*model.train_forward(*batch)).item()
+                )
+            return sum(objective_values) / len(objective_values)
 
     def _fit_with_dataloaders(
         self,
@@ -100,8 +109,7 @@ class TorchTrainer(Trainer):
     ):
         if validation_sets is None:
             validation_sets = []
-
-        self.model.train()
+        model.train()
         iteration = 0
 
         optimizers = self.get_optimizers(model)
@@ -112,18 +120,20 @@ class TorchTrainer(Trainer):
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.validation_interval == 0:
-                    valid_loss = self.compute_validation_objective(valid_dataloader)
+                    valid_loss = self.compute_validation_objective(
+                        model, valid_dataloader
+                    )
                     all_metrics = {}
                     for vs in validation_sets:
                         m = model.validate(vs)
                         all_metrics.update(m)
                     all_metrics.update({'objective': valid_loss})
-                    self.append_metrics(all_metrics)
+                    _Fittable.append_metrics(model, all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion(model):
-                        model.changed.append('object')
+                        model.changed.add('object')
                         db.replace(model, upsert=True)
-                        self.changed.extend(['all_metrics', 'optimizer_state'])
+                        list(map(model.changed.add, ['all_metrics', 'optimizer_state']))
                     stop = self.stopping_criterion(iteration, model)
                     if stop:
                         return

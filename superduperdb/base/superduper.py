@@ -35,6 +35,9 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
     elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
         kwargs['data_backend'] = item
 
+    elif item.startswith('postgres://') or item.startswith('postgresql://'):
+        kwargs['data_backend'] = item
+
     elif item.endswith('.csv'):
         kwargs['data_backend'] = item
 

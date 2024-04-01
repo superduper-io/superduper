@@ -6,7 +6,11 @@ import numpy as np
 import pyarrow as pa
 
 from superduperdb import CFG
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+from superduperdb.vector_search.base import (
+    BaseVectorSearcher,
+    VectorIndexMeasureType,
+    VectorItem,
+)
 
 
 class LanceVectorSearcher(BaseVectorSearcher):
@@ -30,7 +34,9 @@ class LanceVectorSearcher(BaseVectorSearcher):
     ):
         self.dataset_path = os.path.join(CFG.lance_home, f'{identifier}.lance')
         self.dimensions = dimensions
-        self.measure = measure
+        self.measure = (
+            measure.name if isinstance(measure, VectorIndexMeasureType) else measure
+        )
         if h is not None:
             if not os.path.exists(self.dataset_path):
                 os.makedirs(self.dataset_path, exist_ok=True)
@@ -98,9 +104,11 @@ class LanceVectorSearcher(BaseVectorSearcher):
         # NOTE: filter is currently applied AFTER vector-search
         # See https://lancedb.github.io/lance/api/python/lance.html#lance.dataset.LanceDataset.scanner
         if within_ids:
+            if isinstance(within_ids, (list, set)):
+                within_ids = tuple(within_ids)
             assert (
                 type(within_ids) == tuple
-            ), 'within_ids must be a tuple for lance sql parser'
+            ), 'within_ids must be a [tuple | list | set] for lance sql parser'
             result = self.dataset.to_table(
                 columns=['id'],
                 nearest={
@@ -110,6 +118,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
                     'metric': self.measure,
                 },
                 filter=f"id in {within_ids}",
+                prefilter=True,
                 offset=0,
             )
         else:

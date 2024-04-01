@@ -68,8 +68,13 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         similarities = similarities[0, :]
         logging.debug(similarities)
         scores = -numpy.sort(-similarities)
-        ix = numpy.argsort(-similarities)[:n]
-        ix = ix.tolist()
+        ## different ways of handling
+        if within_ids:
+            top_n_idxs = numpy.argsort(-similarities)[:n]
+            ix = [ix[i] for i in top_n_idxs]
+        else:
+            ix = numpy.argsort(-similarities)[:n]
+            ix = ix.tolist()
         scores = scores.tolist()
         _ids = [self.index[i] for i in ix]
         return _ids, scores

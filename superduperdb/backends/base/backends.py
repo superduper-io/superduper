@@ -11,6 +11,8 @@ from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.vector_search.atlas import MongoAtlasVectorSearcher
 from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
 from superduperdb.vector_search.lance import LanceVectorSearcher
+from superduperdb.vector_search.postgres import PostgresVectorSearcher
+
 
 data_backends = {
     'mongodb': MongoDataBackend,
@@ -32,6 +34,7 @@ vector_searcher_implementations = {
     'lance': LanceVectorSearcher,
     'in_memory': InMemoryVectorSearcher,
     'mongodb+srv': MongoAtlasVectorSearcher,
+    'postgres': PostgresVectorSearcher
 }
 
 CONNECTIONS = {

@@ -2,7 +2,8 @@ import json
 import typing as t
 
 import magic
-from fastapi import File, Response
+from fastapi import File, Response, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from superduperdb import CFG, logging
 from superduperdb.base.document import Document
@@ -22,8 +23,25 @@ assert isinstance(
     CFG.cluster.rest.uri, str
 ), "cluster.rest.uri should be set with a valid uri"
 port = int(CFG.cluster.rest.uri.split(':')[-1])
-app = superduperapp.SuperDuperApp('rest', port=port)
 
+# Create a FastAPI instance
+app = FastAPI()
+
+# Add CORS middleware to allow requests from all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can specify a list of allowed origins here
+    allow_credentials=True,
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+    ],  # You can adjust these as per your needs
+    allow_headers=["*"],  # You can specify allowed headers here
+)
+
+app = superduperapp.SuperDuperApp('rest', port=port)
 
 CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
     'model': {

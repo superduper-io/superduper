@@ -34,3 +34,10 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: "Superduper#1"
+
+  # Clickhouse
+  # ------------------------------
+  clickhouse:
+    image:  clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"

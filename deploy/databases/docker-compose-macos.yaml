@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+
+  # PostgreSQL
+  # ------------------------------
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${SDDB_USER}
+      - POSTGRES_PASSWORD=${SDDB_PASS}
+      - POSTGRES_DB=${SDDB_DATABASE}
+
+  # MySQL
+  # ------------------------------
+  mysql:
+    image: mysql:8.2
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_USER: ${SDDB_USER}
+      MYSQL_PASSWORD: ${SDDB_PASS}
+      MYSQL_DATABASE: ${SDDB_DATABASE}
+      MYSQL_ROOT_PASSWORD: 'root'
+
+
+  # Microsoft SQL Server
+  # ------------------------------
+  mssql:
+    image: mcr.microsoft.com/azure-sql-edge
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Superduper#1"
+
+  # Clickhouse
+  # ------------------------------
+  clickhouse:
+    image:  clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"

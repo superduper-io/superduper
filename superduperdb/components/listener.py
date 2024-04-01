@@ -181,6 +181,7 @@ class Listener(Component):
                 select=self.select.copy(),
                 dependencies=dependencies,
                 overwrite=overwrite,
+                **(self.predict_kwargs or {}),
             )
         ]
         return out

@@ -2,7 +2,7 @@ import json
 import typing as t
 
 import magic
-from fastapi import File, Response, FastAPI
+from fastapi import FastAPI, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from superduperdb import CFG, logging

@@ -367,7 +367,7 @@ def test_query_model(db):
 def test_sequential_model():
     m = SequentialModel(
         identifier='test-sequential-model',
-        predictors=[
+        models=[
             ObjectModel(
                 identifier='test-predictor-1',
                 object=lambda x: x + 2,

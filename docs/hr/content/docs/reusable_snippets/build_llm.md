@@ -11,8 +11,6 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
-        %pip install openai
-        
         from superduperdb.ext.openai import OpenAIChatCompletion
         
         llm = OpenAIChatCompletion(identifier='llm', model='gpt-3.5-turbo')        
@@ -20,7 +18,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Anthropic" label="Anthropic" default>
         ```python
-        %pip install anthropic
         
         from superduperdb.ext.anthropic import AnthropicCompletions
         llm = AnthropicCompletions(identifier='llm', model='claude-2')        
@@ -28,8 +25,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="vLLM" label="vLLM" default>
         ```python
-        %pip install vllm
-        
         from superduperdb.ext.vllm import VllmModel
         
         predict_kwargs = {
@@ -53,7 +48,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        %pip install transformers datasets torch
         
         from superduperdb.ext.transformers import LLM
         
@@ -62,9 +56,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Llama.cpp" label="Llama.cpp" default>
         ```python
-        %pip install llama-cpp-python
-        
-        # !huggingface-cli download Qwen/Qwen1.5-0.5B-Chat-GGUF qwen1_5-0_5b-chat-q8_0.gguf --local-dir . --local-dir-use-symlinks False
+        !huggingface-cli download Qwen/Qwen1.5-0.5B-Chat-GGUF qwen1_5-0_5b-chat-q8_0.gguf --local-dir . --local-dir-use-symlinks False
         
         from superduperdb.ext.llamacpp.model import LlamaCpp
         llm = LlamaCpp(identifier="llm", model_name_or_path="./qwen1_5-0_5b-chat-q8_0.gguf")        

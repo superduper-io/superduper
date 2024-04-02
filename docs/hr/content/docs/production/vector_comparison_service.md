@@ -1,7 +1,3 @@
----
-sidebar_position: 5
----
-
 # Vector-searcher service
 
 The vector-comparison service is a standalone, 

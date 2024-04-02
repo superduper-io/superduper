@@ -111,6 +111,7 @@ class Listener(Component):
         output_table = db.databackend.create_output_dest(
             f'{self.identifier}::{self.version}',
             self.model.datatype,
+            flatten=self.model.flatten,
         )
         if output_table is not None:
             db.add(output_table)

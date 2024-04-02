@@ -1,5 +1,4 @@
-# Query API
-
+# Execute API
 
 SuperDuperDB implements 2 main classes of `db.databackend`:
 

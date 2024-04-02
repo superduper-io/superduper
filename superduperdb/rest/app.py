@@ -258,7 +258,11 @@ def build_app(app: superduperapp.SuperDuperApp):
         return {'status': 'ok'}
 
     @app.add('/db/show', method='get')
-    def db_show(type_id: t.Optional[str] = None, identifier: t.Optional[str] = None):
+    def db_show(
+        type_id: t.Optional[str] = None,
+        identifier: t.Optional[str] = None,
+        version: t.Optional[int] = None,
+    ):
         # route: /db/show
         # response:
         #     [
@@ -273,7 +277,10 @@ def build_app(app: superduperapp.SuperDuperApp):
         # route: /db/show?type_id=model&identifier=test
         # response:
         #     [0, 1 ,2]
-        return app.db.show(type_id=type_id, identifier=identifier)
+        out = app.db.show(type_id=type_id, identifier=identifier, version=version)
+        if isinstance(out, dict) and '_id' in out:
+            del out['_id']
+        return out
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):

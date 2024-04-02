@@ -3,95 +3,17 @@ import json
 import os
 import pytest
 
-from superduperdb import superduper
+from superduperdb import superduper, CFG
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.rest.utils import _parse_query_part
-
-
-def insert(data):
-    data = {
-        "documents": data,
-        "query": [
-            f"documents.insert_many($documents)"
-        ],
-        "artifacts": [],
-    }
-
-    data = json.dumps(data)
-
-    print(data)
-
-    request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/execute' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -s \
-        -d '{data}'"""
-
-    print(request)
-
-    result = os.popen(request).read()
-
-    print(result)
-
-
-def apply(component):
-    data = json.dumps({'component': {component['dict']['identifier']: component}})
-    print(data)
-    request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/apply' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d '{data}'"""
-    result = os.popen(request).read()
-    print(result)
-
-
-def delete():
-    data = {
-        "documents": [],
-        "query": [
-            "documents.delete_many({})"
-        ],
-        "artifacts": [],
-    }
-
-    data = json.dumps(data)
-
-    print(data)
-
-    request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/execute' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -s \
-        -d '{data}'"""
-
-    print(request)
-
-    result = os.popen(request).read()
-
-    print(result)
+from .mock_client import curl_post, setup as _setup, teardown
 
 
 @pytest.fixture
 def setup():
-    data = [
-        {"x": [1, 2, 3, 4, 5], "y": 'test'},
-        {"x": [6, 7, 8, 9, 10], "y": 'test'},
-    ]
-    insert(data)
-    apply({
-        'cls': 'image_type',
-        'module': 'superduperdb.ext.pillow.encoder',
-        'dict': {
-            'identifier': 'image',
-            'media_type': 'image/png'
-        }
-    })
-    yield
-    delete()
+    yield _setup()
+    teardown()
 
 
 def test_select_data(setup):
@@ -102,25 +24,14 @@ def test_select_data(setup):
         ],
         "artifacts": [],
     }
-    form = json.dumps(form)
-
-    request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/execute' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -s \
-        -d '{form}'"""
-
-    result = json.loads(os.popen(request).read())
+    result = curl_post('/db/execute', form)
     print(result)
-
     assert len(result) == 2
 
 
 def test_insert_image(setup):
-
     request = f"""curl -X 'PUT' \
-        'http://localhost:8002/db/artifact_store/save_artifact?datatype=image' \
+        'http://{CFG.cluster.rest.uri}/db/artifact_store/save_artifact?datatype=image' \
         -H 'accept: application/json' \
         -H 'Content-Type: multipart/form-data' \
         -s \
@@ -151,7 +62,7 @@ def test_insert_image(setup):
     form = json.dumps(form)
 
     request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/execute' \
+        'http://{CFG.cluster.rest.uri}/db/execute' \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -s \
@@ -169,7 +80,7 @@ def test_insert_image(setup):
     })
 
     request = f"""curl -X 'POST' \
-        'http://localhost:8002/db/execute' \
+        'http://{CFG.cluster.rest.uri}/db/execute' \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -s \

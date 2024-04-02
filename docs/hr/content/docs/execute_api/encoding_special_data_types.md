@@ -2,51 +2,67 @@
 sidebar_position: 14
 ---
 
-# Inserting images, audio, video and other special data
+# Inserting difficult datatypes with `DataType` and/ or `Schema`
 
-An initial step in working with `superduperdb`
-is to establish the data-types one wishes to work with, create `Encoder` instances for
-those data-types, and potentially `Schema` objects for SQL tables. See [here](./data_encodings_and_schemas.md) for 
-this information.
-
-If these have been created, data may be inserted which use these data-types, including previously defined `Encoder` instances.
+In order to insert data not supported by the `db.databackend`, developers
+may use `DataType` and/ or `Schema` instances to convert their data 
+to encoded `bytes` in the `db.databackend`. When data is selected, 
+`superduperdb` reinterprets this data in its original form (native Python images, audio, etc..).
 
 ## MongoDB
 
+### Direct encoding with `DataType`
+
+In MongoDB, one wraps the item to be encoded with the `DataType`.
+For example, continuing the example from [here](./data_encodings_and_schemas.md#datatype-abstraction), 
+we do the following:
+
 ```python
-from superduperdb import Document
+from superduperdb.backends.mongodb import Collection
+import librosa 
+from superduperdb.ext.pillow import pil_image
 
-my_array = db.load('encoder', 'my_array')
+my_images = [
+    PIL.Image.open(path)
+    for path in os.listdir('./') if path.endswith('.jpeg')
+]
+my_audio = [
+    librosa.load(path)
+    for path in os.listdir('./') if path.endswith('.wav')
+]
+with open('text.json') as f:
+    my_text = json.load(f)
 
-files = ... # list of paths to audio files
+data = [
+    Document({
+        'img': pil_image(x),
+        'audio': audio(y),
+        'txt': z
+    })
+    for x, y, z in zip(my_images, my_audio, my_text)
+]
 
 db.execute(
-    Collection('my-coll').insert_many([
-        Document({
-            'array': my_array(numpy.random.randn(3, 224, 224)),
-            'audio': audio(librosa.load(files[i]))
-        })
-        for _ in range(100)
-    ])
+    Collection('docs').insert_many(data)
 )
 ```
 
-## SQL
+### Use with `Schema`
 
-With SQL tables, it's important to acknowledge
+First developers should [create a `Schema`](./data_encodings_and_schemas).
+Then they may refer to the `Schema` in the data insert:
 
 ```python
-files = ... # list of paths to audio files
+data = [
+    Document({
+        'img': pil_image(x),
+        'audio': audio(y),
+        'txt': z
+    })
+    for x, y, z in zip(my_images, my_audio, my_text)
+]
 
-table = db.load('table', 'my-table')
-
-df = pandas.DataFrame([
-    {
-        'array': numpy.random.randn(3, 224, 224),
-        'audio': librosa.load(files[i])
-    } 
-    for _ in range(100)
-])
-
-db.execute(table.insert(df))
+db.execute(
+    Collection('docs').insert_many(data, schema='my-schema')
+)
 ```

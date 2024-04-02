@@ -18,11 +18,12 @@ class EncodeTensor:
 
 
 class DecodeTensor:
-    def __init__(self, dtype):
+    def __init__(self, dtype, shape):
         self.dtype = torch.randn(1).type(dtype).numpy().dtype
+        self.shape = shape
 
     def __call__(self, bytes, info: t.Optional[t.Dict] = None):
-        array = numpy.frombuffer(bytes, dtype=self.dtype)
+        array = numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
         return torch.from_numpy(array)
 
 
@@ -36,7 +37,7 @@ def tensor(dtype, shape: t.Sequence, bytes_encoding: t.Optional[str] = None):
     return DataType(
         identifier=f'{str(dtype)}[{str_shape(shape)}]',
         encoder=EncodeTensor(dtype),
-        decoder=DecodeTensor(dtype),
+        decoder=DecodeTensor(dtype, shape),
         shape=shape,
         bytes_encoding=bytes_encoding,
     )

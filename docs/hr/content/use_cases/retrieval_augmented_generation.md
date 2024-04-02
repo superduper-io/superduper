@@ -34,82 +34,38 @@ Once you have done that you are ready to define your datatype(s) which you would
 <!-- TABS -->
 ## Insert data
 
-In order to create data, we need create a `Schema` for encoding our special `Datatype` column(s) in the databackend.
-
-Here's some sample data to work with:
-
-
-<Tabs>
-    <TabItem value="Text" label="Text" default>
-        ```python
-        !curl -O https://jupyter-sessions.s3.us-east-2.amazonaws.com/text.json
-        
-        import json
-        with open('text.json') as f:
-            data = json.load(f)        
-        ```
-    </TabItem>
-    <TabItem value="Images" label="Images" default>
-        ```python
-        !curl -O https://jupyter-sessions.s3.us-east-2.amazonaws.com/images.zip
-        !unzip images.zip
-        
-        import os
-        data = [{'image': f'file://image/{file}'} for file in os.listdir('./images')]        
-        ```
-    </TabItem>
-    <TabItem value="Audio" label="Audio" default>
-        ```python
-        !curl -O https://jupyter-sessions.s3.us-east-2.amazonaws.com/audio.zip
-        !unzip audio.zip
-        
-        import os
-        data = [{'audio': f'file://audio/{file}'} for file in os.listdir('./audio')]        
-        ```
-    </TabItem>
-</Tabs>
-The next code-block is only necessary if you're working with a custom `DataType`:
+In order to create data, we need to create a `Schema` for encoding our special `Datatype` column(s) in the databackend.
 
 ```python
-from superduperdb import Schema, Document
-
-schema = Schema(
-    'my_schema',
-    fields={
-        'my_key': dt
-    }
-)
-
-data = [
-    Document({'my_key': item}) for item in data
-]
+N_DATA = round(len(data) - len(data) // 4)
 ```
 
 
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb.backends.mongodb import Collection
+        from superduperdb import Document
         
-        collection = Collection('documents')
-        
-        db.execute(collection.insert_many(data))        
+        if schema is None:
+            data = Document([{'x': datatype(x)} for x in data])    
+            db.execute(collection.insert_many(data[:N_DATA]))
+        else:
+            data = Document([{'x': x} for x in data])    
+            db.execute(collection.insert_many(data[:N_DATA], schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        from superduperdb.backends.ibis import Table
+        from superduperdb import Document
         
-        table = Table(
-            'my_table',
-            schema=schema,
-        )
-        
-        db.add(table)
-        db.execute(table.insert(data))        
+        db.execute(table.insert([Document({'x': x}) for x in data[:N_DATA]]))        
         ```
     </TabItem>
 </Tabs>
+```python
+sample_datapoint = data[-1]
+```
+
 <!-- TABS -->
 ## Build text embedding model
 
@@ -117,35 +73,89 @@ data = [
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
-        ...        
+        %pip install openai
+        
+        from superduperdb.ext.openai import OpenAIEmbedding
+        model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
         ```python
-        ...        
+        %pip install jina
+        
+        from superduperdb.ext.jina import JinaEmbedding
+         
+        # define the model
+        model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
         ```
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
         ```python
-        ...        
+        %pip install sentence-transformers
+        
+        from superduperdb import vector
+        import sentence_transformers
+        from superduperdb.ext.sentence_transformers import SentenceTransformer
+        
+        model = SentenceTransformer(
+            identifier="embedding",
+            object=sentence_transformers.SentenceTransformer("BAAI/bge-small-en"),
+            datatype=vector(shape=(1024,)),
+            postprocess=lambda x: x.tolist(),
+            predict_kwargs={"show_progress_bar": True},
+        )        
         ```
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        ...        
+        %pip install transformers torch
+        
+        import dataclasses as dc
+        from superduperdb.components.model import _Predictor, ensure_initialized
+        from transformers import AutoTokenizer, AutoModel
+        import torch
+        
+        @dc.dataclass(kw_only=True)
+        class TransformerEmbedding(_Predictor):
+            pretrained_model_name_or_path : str
+        
+            def init(self):
+                self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
+                self.model = AutoModel.from_pretrained(self.pretrained_model_name_or_path)
+                self.model.eval()
+        
+            @ensure_initialized
+            def predict_one(self, x):
+                return self.predict([x])[0]
+                
+            @ensure_initialized
+            def predict(self, dataset):
+                encoded_input = self.tokenizer(dataset, padding=True, truncation=True, return_tensors='pt')
+                # Compute token embeddings
+                with torch.no_grad():
+                    model_output = self.model(**encoded_input)
+                    # Perform pooling. In this case, cls pooling.
+                    sentence_embeddings = model_output[0][:, 0]
+                # normalize embeddings
+                sentence_embeddings = torch.nn.functional.normalize(sentence_embeddings, p=2, dim=1)
+                return sentence_embeddings.tolist()
+        
+        
+        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en")        
         ```
     </TabItem>
 </Tabs>
+```python
+model.predict_one("What is SuperDuperDB")
+```
+
 <!-- TABS -->
 ## Perform a vector search
-
-- `item` is the item which is to be encoded
-- `dt` is the `DataType` instance to apply
 
 ```python
 from superduperdb import Document
 
-item = Document({'my_key': dt(item)})
+item = Document({'x': datatype(sample_datapoint)})
 ```
 
 Once we have this search target, we can execute a search as follows:
@@ -154,19 +164,11 @@ Once we have this search target, we can execute a search as follows:
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb.backends.mongodb import Collection
-        
-        collection = Collection('documents')
-        
-        select = collection.find().like(item)        
+        select = collection.find().like(sample_datapoint)        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        
-        # Table was created earlier, before preparing vector-search
-        table = db.load('table', 'documents')
-        
         select = table.like(item)        
         ```
     </TabItem>
@@ -182,83 +184,78 @@ results = db.execute(select)
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
+        from superduperdb.ext.openai import OpenAIChatCompletion
         
-        ...        
+        llm = OpenAIChatCompletion(identifier='llm', model='gpt-3.5-turbo')        
         ```
     </TabItem>
     <TabItem value="Anthropic" label="Anthropic" default>
         ```python
         
-        ...        
+        from superduperdb.ext.anthropic import AnthropicCompletions
+        llm = AnthropicCompletions(identifier='llm', model='claude-2')        
         ```
     </TabItem>
     <TabItem value="vLLM" label="vLLM" default>
         ```python
+        from superduperdb.ext.vllm import VllmModel
         
-        ...        
+        predict_kwargs = {
+            "max_tokens": 1024,
+            "temperature": 0.8,
+        }
+        
+        
+        llm = VllmModel(
+            identifier="llm",
+            model_name="TheBloke/Mistral-7B-Instruct-v0.2-AWQ",
+            vllm_kwargs={
+                "gpu_memory_utilization": 0.7,
+                "max_model_len": 10240,
+                "quantization": "awq",
+            },
+            predict_kwargs=predict_kwargs,
+        )
+        
         ```
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
         
-        ...        
+        from superduperdb.ext.transformers import LLM
+        
+        llm = LLM.from_pretrained("facebook/opt-125m", identifier="llm")        
         ```
     </TabItem>
     <TabItem value="Llama.cpp" label="Llama.cpp" default>
         ```python
+        !huggingface-cli download Qwen/Qwen1.5-0.5B-Chat-GGUF qwen1_5-0_5b-chat-q8_0.gguf --local-dir . --local-dir-use-symlinks False
         
-        ...        
+        from superduperdb.ext.llamacpp.model import LlamaCpp
+        llm = LlamaCpp(identifier="llm", model_name_or_path="./qwen1_5-0_5b-chat-q8_0.gguf")        
         ```
     </TabItem>
 </Tabs>
+### Using LLM for text generation
+
 ```python
-llm.predict_one(X='Tell me about SuperDuperDB')
+llm.predict_one('Tell me about the SuperDuperDB', temperature=0.7)
 ```
 
+### Use in combination with Prompt
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        from superduperdb.components.model import QueryModel
-        from superduperdb import Variable, Document
-        
-        query_model = QueryModel(
-            select=collection.find().like(Document({'my_key': Variable('item')}))
-        )        
-        ```
-    </TabItem>
-</Tabs>
 ```python
-from superduperdb.components.graph import Graph, Input
-from superduperdb import superduper
+from superduperdb.components.model import SequentialModel, Model
 
-
-@superduper
-class PromptBuilder:
-    def __init__(self, initial_prompt, post_prompt, key):
-        self.inital_prompt = initial_prompt
-        self.post_prompt = post_prompt
-        self.key = key
-
-    def __call__(self, X, context):
-        return (
-            self.initial_prompt + '\n\n'
-            + [r[self.key] for r in context]
-            + self.post_prompt + '\n\n'
-            + X
-        )
-
-
-prompt_builder = PromptBuilder(
-    initial_prompt='Answer the following question based on the following facts:',
-    post_prompt='Here\'s the question:',
-    key='my_key',
+prompt_model = Model(
+    identifier="prompt", object=lambda text: f"The German version of sentence '{text}' is: "
 )
 
-with Graph() as G:
-    input = Input('X')
-    query_results = query_model(item=input)
-    prompt = prompt_builder(X=input, context=query_results)
-    output = llm(X=prompt)
+model = SequentialModel(identifier="The translator", predictors=[prompt_model, llm])
+
+```
+
+```python
+model.predict_one('Tell me about SuperDuperDB')
 ```
 

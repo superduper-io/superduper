@@ -53,7 +53,7 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
             return False, installation_line + '    # (no such package installed)'
     if not (lower_bound <= got_version and got_version <= upper_bound):
         return False, installation_line + f'    # (got {got_version})'
-    return True, ''
+    return True, installation_line
 
 
 def requires_packages(*packages, warn=False):
@@ -67,17 +67,18 @@ def requires_packages(*packages, warn=False):
     E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
     """
     out = []
+    all = []
     for m in packages:
         satisfactory, install_line = _requires_packages(*m)
         if not satisfactory:
             out.append(install_line)
+        all.append(install_line)
     if out:
         if warn:
             warnings.warn('\n' + '\n'.join(out))
         else:
             raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
-
-    return out
+    return out, all
 
 
 def _requires_packages(

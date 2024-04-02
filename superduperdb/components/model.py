@@ -4,9 +4,12 @@ import concurrent.futures
 import dataclasses as dc
 import inspect
 import multiprocessing
+import os
+import re
 import typing as t
 from abc import abstractmethod
 
+import requests
 import tqdm
 
 from superduperdb import logging
@@ -59,7 +62,6 @@ def objectmodel(
         )
 
     else:
-
         def factory(
             *args,
             identifier: t.Optional[str],
@@ -97,6 +99,10 @@ class Inputs:
         for k, arg in zip(self.params, args):
             kwargs[k] = arg
         return kwargs
+
+    def __call__(self, *args, **kwargs):
+        tmp = self.get_kwargs(args)
+        return {**tmp, **kwargs}
 
 
 class CallableInputs(Inputs):
@@ -863,7 +869,7 @@ class ObjectModel(Model, _Validator):
 # TODO no longer necessary
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
-class APIModel(Model):
+class APIBaseModel(Model):
     '''{component_params}
     {predictor_params}
     :param model: The model to use, e.g. ``'text-embedding-ada-002'``'''
@@ -882,6 +888,7 @@ class APIModel(Model):
             assert self.identifier is not None
             self.model = self.identifier
 
+    @ensure_initialized
     def _multi_predict(
         self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
     ) -> t.List:
@@ -898,8 +905,48 @@ class APIModel(Model):
                     dataset,  # type: ignore[arg-type]
                 )
             )
-
         return results
+
+
+@dc.dataclass(kw_only=True)
+class APIModel(APIBaseModel):
+    '''{component_params}
+    {predictor_params}
+    {api_base_model_params}
+    :param url: The url to use for the API request
+    :param postprocess: Postprocess function to use on the output of the API request'''
+
+    __doc__ = __doc__.format(
+        component_params=Component.__doc__,
+        predictor_params=Model.__doc__,
+        api_base_model_params=APIBaseModel.__doc__,
+    )
+
+    url: str
+    postprocess: t.Optional[t.Callable] = None
+
+    @property
+    def inputs(self):
+        return Inputs(self.runtime_params)
+    
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        self.params['model'] = self.model
+        env_variables = re.findall('{([A-Z0-9\_]+)}', self.url)
+        runtime_variables = re.findall('{([a-z0-9\_]+)}', self.url)
+        runtime_variables = [x for x in runtime_variables if x != 'model']
+        self.envs = env_variables
+        self.runtime_params = runtime_variables
+
+    def build_url(self, params):
+        return self.url.format(**params, **{k: os.environ[k] for k in self.envs})
+
+    def predict_one(self, *args, **kwargs):
+        runtime_params = self.inputs(*args, **kwargs)
+        out = requests.get(self.build_url(params=runtime_params)).json()
+        if self.postprocess is not None:
+            out = self.postprocess(out) 
+        return out
 
 
 @public_api(stability='stable')
@@ -962,39 +1009,30 @@ class SequentialModel(Model):
         {'name': 'signature', 'type': 'str'},
     ]
 
-    predictors: t.List[Model]
-
-    signature: t.Optional[str] = '*args,**kwargs'
+    models: t.List[Model]
 
     def __post_init__(self, artifacts):
-        self.signature = self.predictors[0].signature
-        self.datatype = self.predictors[-1].datatype
+        self.signature = self.models[0].signature
+        self.datatype = self.models[-1].datatype
         return super().__post_init__(artifacts)
 
     @property
     def inputs(self) -> Inputs:
-        return self.predictors[0].inputs
+        return self.models[0].inputs
 
     def post_create(self, db: Datalayer):
-        for p in self.predictors:
+        for p in self.models:
             if isinstance(p, str):
                 continue
             p.post_create(db)
         self.on_load(db)
-        self.signature = self.predictors[0].signature
-        self.datatype = self.predictors[-1].datatype
-
-    def on_load(self, db: Datalayer):
-        for i, p in enumerate(self.predictors):
-            if isinstance(p, str):
-                self.predictors[i] = db.load('model', p)
 
     def predict_one(self, *args, **kwargs):
         return self.predict([(args, kwargs)])[0]
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        for i, p in enumerate(self.predictors):
-            assert isinstance(p, Model), f'Expected _Predictor, got {type(p)}'
+        for i, p in enumerate(self.models):
+            assert isinstance(p, Model), f'Expected `Model`, got {type(p)}'
             if i == 0:
                 out = p.predict(dataset)
             else:

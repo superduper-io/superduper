@@ -7,6 +7,13 @@ import TabItem from '@theme/TabItem';
 <!-- TABS -->
 # Build multimodal embedding models
 
+Some embedding models such as [CLIP](https://github.com/openai/CLIP) come in pairs of `model` and `compatible_model`.
+Otherwise:
+
+```python
+compatible_model = None
+```
+
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
@@ -14,7 +21,7 @@ import TabItem from '@theme/TabItem';
         from superduperdb.ext.sentence_transformers import SentenceTransformer
         
         # Load the pre-trained sentence transformer model
-        superdupermodel = SentenceTransformer(identifier='all-MiniLM-L6-v2')        
+        model = SentenceTransformer(identifier='all-MiniLM-L6-v2')        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
@@ -36,10 +43,10 @@ import TabItem from '@theme/TabItem';
                 return image
                 
         model = CLIPVisionEmbedding()
-        superdupermodel = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
+        model = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
         ```
     </TabItem>
-    <TabItem value="Text-2-Image" label="Text-2-Image" default>
+    <TabItem value="Text+Image" label="Text+Image" default>
         ```python
         
         import torch
@@ -72,8 +79,8 @@ import TabItem from '@theme/TabItem';
                 image = self.preprocess(image).unsqueeze(0).to(self.device)
                 return image
                 
-        model = CLIPVisionEmbedding()
-        superdupermodel_image = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
+        model = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')
+        compatible_model = CLIPVisionEmbedding()        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -88,46 +95,8 @@ import TabItem from '@theme/TabItem';
             y, sr = librosa.load(audio_file)
             mfccs = librosa.feature.mfcc(y=y, sr=sr)
             return mfccs
-        superdupermodel = Model(identifier='my-model-audio', object=audio_embedding)        
+        
+        model= Model(identifier='my-model-audio', object=audio_embedding)        
         ```
     </TabItem>
 </Tabs>
-```python
-# <testing:>
-import wave
-import struct
-
-sample_rate = 44100 
-duration = 1 
-frequency = 440
-amplitude = 0.5
-
-# Generate the sine wave
-num_samples = int(sample_rate * duration)
-t = np.linspace(0, duration, num_samples, False)
-signal = amplitude * np.sin(2 * np.pi * frequency * t)
-
-# Open a new WAV file
-output_file = 'dummy_audio.wav'
-wav_file = wave.open(output_file, 'w')
-
-# Set the parameters for the WAV file
-nchannels = 1  # Mono audio
-sampwidth = 2  # Sample width in bytes (2 for 16-bit audio)
-framerate = sample_rate
-nframes = num_samples
-
-# Set the parameters for the WAV file
-wav_file.setparams((nchannels, sampwidth, framerate, nframes, 'NONE', 'not compressed'))
-
-# Write the audio data to the WAV file
-for sample in signal:
-    wav_file.writeframes(struct.pack('h', int(sample * (2 ** 15 - 1))))
-
-# Close the WAV file
-wav_file.close()
-
-# Test
-superdupermodel.predict_one(output_file)
-```
-

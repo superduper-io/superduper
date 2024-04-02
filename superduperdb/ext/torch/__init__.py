@@ -2,7 +2,7 @@ from superduperdb.misc.annotations import requires_packages
 
 from .training import TorchTrainer
 
-requires_packages(['torch', '2.0.0'])
+_, requirements = requires_packages(['torch', '2.0.0'])
 
 from .encoder import tensor
 from .model import TorchModel, torchmodel

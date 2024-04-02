@@ -7,7 +7,7 @@ from functools import cached_property
 import pymongo
 
 from superduperdb import CFG, logging
-from superduperdb.components.model import APIModel
+from superduperdb.components.model import APIBaseModel
 from superduperdb.vector_search.base import BaseVectorSearcher
 
 if t.TYPE_CHECKING:
@@ -64,7 +64,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
         assert isinstance(vi.indexing_listener.model, ObjectModel) or isinstance(
-            vi.indexing_listener.model, APIModel
+            vi.indexing_listener.model, APIBaseModel
         )
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier

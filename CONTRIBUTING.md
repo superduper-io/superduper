@@ -60,6 +60,43 @@ make testenv_image
 
 We follow something called a "fork and pull request" workflow for collaborating on our project. See [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for a great overview on what some of these mysterious terms mean! 
 
+## Running the tests
+
+### Unittests
+
+These tests check that there are no basic programming errors in how 
+classes and functions work internally.
+
+```shell
+make unit-testing
+```
+
+### Extension integration tests
+
+These tests that package integrations, such as `sklearn` or `openai`
+work properly.
+
+```shell
+make ext-testing
+```
+
+### Databackend integration tests
+
+These tests check that data-backend integrations such as MongoDB or SQLite 
+work as expected.
+
+```shell
+make databackend-testing
+```
+
+### Smoke tests of cluster mode
+
+These tests check that cluster mode works as expected (`ray`, `vector-search`, `cdc`, `rest`):
+
+```shell
+make smoke-testing
+```
+
 ## Getting Help 🙋
 
 [![Slack](https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack)](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)

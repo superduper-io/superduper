@@ -18,7 +18,6 @@ and is subclassed by:
 | `superduperdb.ext.openai.OpenAI` | [OpenAI](https://api.openai.com) |
 | `superduperdb.ext.cohere.Cohere` | [Cohere](https://cohere.com) |
 | `superduperdb.ext.anthropic.Anthropic` | [Anthropic](https://anthropic.com) |
-| `superduperdb.ext.jina.Jina` | [Jina](https://jina.ai/embeddings) |
 
 The `Model` class is subclassed by:
 

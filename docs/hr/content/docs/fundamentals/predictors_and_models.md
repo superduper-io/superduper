@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Predictors and Models
+# Predictors and models
 
 ## Predictors
 

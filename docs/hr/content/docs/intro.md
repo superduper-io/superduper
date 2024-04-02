@@ -4,40 +4,23 @@ sidebar_position: 1
 
 # Welcome to SuperDuperDB!
 
-Testing
-
 ## What is SuperDuperDB?
 
-SuperDuperDB is an open-source framework for integrating your database with AI models, APIs, and vector search engines, providing streaming inference and scalable training/fine-tuning.
+SuperDuperDB is an open-source framework with the mission to **bring AI to the database**. With SuperDuperDB, you can integrate any ML model (i.e. from PyTorch, Sklearn, HuggingFace) and AI API (like OpenAI, Anthrophic, Cohere) directly with your existing databases, including streaming inference, scalable model training and vector search.
 
-SuperDuperDB is **not** a database. SuperDuperDB is an open platform unifying data infrastructure and AI. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent system that leverages the full power of the AI, open-source, and Python ecosystems. It is a single scalable environment for all your AI that can be deployed anywhere, in the cloud, on-prem, or on your machine.
-
-By integrating AI at the data's source, we aim to make building AI applications easier and more flexible: Not just for use in standard machine learning use-cases like classification, segmentation, recommendation, etc., but also generative AI & LLM-chat, vector search as well as highly custom AI applications and workflows involving ultra-specialized models.
-
-For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://blog.superduperdb.com/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
+:::tip TRANSFORM your database into a SUPER-DUPER AI tool
+SuperDuperDB makes your existing preferred ***database super duper*** by ***transforming*** it into an AI development and deployment environment, eliminating the need for complex MLOps pipelines, specialized vector databases - and the need to migrate and duplicate data. It's not a database; it transforms your database into an AI powerhouse!
+:::
 
 
 ![](/img/superduperdb.gif)
 
+It is designed for ***Python developers, data scientists, ML engineers, and infrastructure engineers*** to build and manage AI applications with their own data more easily, directly on top of their databases in a single scalable deployment.
 
+By integrating AI at the data's source, we aim to make building AI applications more easily and flexibly: Not just for use in standard machine learning use-cases like classification, segmentation, recommendation etc., but also generative AI & LLM-chat, vector search as well as highly custom AI applications and workflows involving ultra specialized models.
 
-### Key Features:
-- **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment without the need for additional pre-processing steps, ETL, or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
-- **[Model Chaining](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: Easily set up complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Add and leverage any function, program, script, or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down to any layer of implementation, including the inner workings of your models, while operating SuperDuperDB with simple Python commands.
-- **[Difficult Data Types](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: Work directly in your database with images, video, audio, and any type that can be encoded as `bytes` in Python.
-- **[Feature Storing](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+SuperDuperDB provides a simple Python interface, but allows experts to drill down to any level of implementation detail such as models weights or training details. Also it allows you to add any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications - and to combine it with your favorite tooling like FastAPI.
 
+For a high-level introduction to SuperDuperDB refer to the [`README.md` of the open-source code-base of on GitHub](https://github.com/SuperDuperDB/superduperdb).
 
-**To get started:**
-This documentation serves as your comprehensive guide to kickstarting your `superduperdb` journey 🚀
-
-Additionally, you can check the use-cases [here in the docs](https://docs.superduperdb.com/docs/category/use-cases) as well as the apps built by the [superduper community](https://github.com/SuperDuperDB/superduper-community-apps) and try all of them with [live on your browser](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/)! 
-
-
-
-
-`Remember, SuperDuperDB is open-source: Please leave a star to support the project! ⭐`
+This documentation will help you getting started, and with detailed explanations and usage of `superduperdb`. Let's get started. 🚀

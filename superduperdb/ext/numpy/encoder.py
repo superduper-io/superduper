@@ -17,11 +17,12 @@ class EncodeArray:
 
 
 class DecodeArray:
-    def __init__(self, dtype):
+    def __init__(self, dtype, shape):
         self.dtype = dtype
+        self.shape = shape
 
     def __call__(self, bytes, info: t.Optional[t.Dict] = None):
-        return numpy.frombuffer(bytes, dtype=self.dtype)
+        return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
 
 
 def array(dtype: str, shape: t.Sequence, bytes_encoding: t.Optional[str] = None):
@@ -34,7 +35,7 @@ def array(dtype: str, shape: t.Sequence, bytes_encoding: t.Optional[str] = None)
     return DataType(
         identifier=f'numpy.{dtype}[{str_shape(shape)}]',
         encoder=EncodeArray(dtype),
-        decoder=DecodeArray(dtype),
+        decoder=DecodeArray(dtype, shape),
         shape=shape,
         bytes_encoding=bytes_encoding,
     )

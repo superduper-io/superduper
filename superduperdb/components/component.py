@@ -48,6 +48,7 @@ class Component(Serializable, Leaf):
     ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'identifier', 'type': 'str'}]
     identifier: str
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
+    changed: t.ClassVar[set] = set([])
 
     @property
     def id_tuple(self):

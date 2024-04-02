@@ -6,9 +6,11 @@ import pymongo
 
 from superduperdb import logging
 from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
 from superduperdb.base.serializable import Serializable
+from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -124,3 +126,8 @@ class MongoDataBackend(BaseDataBackend):
         """
 
         # TODO: implement me
+
+    def create_output_dest(
+        self, identifier: str, datatype: t.Union[None, DataType, FieldType], flatten: bool = False
+    ):
+        pass

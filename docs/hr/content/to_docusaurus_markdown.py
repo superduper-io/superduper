@@ -67,7 +67,7 @@ def render_notebook_as_chunks(nb):
                 }
             )
         else:
-            raise Exception(f'Unknown source type {cell["cell_type"]}')
+            raise Exception(f'Unknown source type {cell["cell_type"]}, {cell}')
 
     return chunks
 
@@ -85,6 +85,7 @@ if __name__ == '__main__':
             continue
         with open(f'{directory}/{file}') as f:
             content = json.load(f)
+        print(file)
         head = content['cells'][0]['source'][0].strip()
         if head == '<!-- TABS -->':
             title = content['cells'][0]['source'][1].strip().replace('# ', '')

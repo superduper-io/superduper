@@ -20,7 +20,7 @@ from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.components.model import APIModel, Inputs
+from superduperdb.components.model import APIBaseModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.llm.model import BaseLLMAPI
 from superduperdb.misc.compat import cache
@@ -44,7 +44,7 @@ def _available_models(skwargs):
 
 
 @dc.dataclass(kw_only=True)
-class _OpenAI(APIModel):
+class _OpenAI(APIBaseModel):
     '''
     :param client_kwargs: The kwargs to be passed to OpenAI
     '''
@@ -52,7 +52,7 @@ class _OpenAI(APIModel):
     openai_api_key: t.Optional[str] = None
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
-    __doc__ = APIModel.__doc__  # type: ignore[assignment]
+    __doc__ = APIBaseModel.__doc__  # type: ignore[assignment]
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)

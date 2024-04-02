@@ -3,6 +3,7 @@ import enum
 import re
 import types
 import typing as t
+import uuid
 
 import pandas
 
@@ -41,6 +42,32 @@ JOIN_MEMBERS = [
 IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
 
+def _model_update_impl_flatten(
+    db,
+    ids: t.List[t.Any],
+    predict_id: str,
+    outputs: t.Sequence[t.Any],
+):
+    table_records = []
+
+    def random_id():
+        return str(uuid.uuid4().hex)
+
+    for ix in range(len(outputs)):
+        for r in outputs[ix]:
+            d = {
+                '_input_id': str(ids[ix]),
+                '_source': random_id(),
+                'output': outputs[ix],
+            }
+            table_records.append(d)
+
+    for r in table_records:
+        if isinstance(r['output'], dict) and '_content' in r['output']:
+            r['output'] = r['output']['_content']['bytes']
+
+    db.databackend.insert(f'_outputs.{predict_id}', table_records)
+
 
 def _model_update_impl(
     db,
@@ -49,11 +76,12 @@ def _model_update_impl(
     outputs: t.Sequence[t.Any],
     flatten: bool = False,
 ):
-    if flatten:
-        raise NotImplementedError('Flatten not yet supported for ibis')
 
     if not outputs:
         return
+
+    if flatten:
+        return _model_update_impl_flatten(db, ids=ids, predict_id=predict_id, outputs=outputs)
 
     table_records = []
     for ix in range(len(outputs)):

@@ -2,10 +2,10 @@
 sidebar_position: 3
 ---
 
-# Running non-blocking dask computations in the background
+# Running non-blocking Ray computations in the background
 
-`superduperdb` offers the possiblity to run all long running blocking jobs in the background via `dask`.
-Read about the `dask` project [here](https://www.dask.org/).
+`superduperdb` offers the possiblity to run all long running blocking jobs in the background via `ray`.
+Read about the `ray` project [here](https://www.ray.io/).
 
 To configure this feature, configure:
 
@@ -23,7 +23,7 @@ When this is so-configured the following functions push their computations to th
 - `Model.predict`
 - `Model.fit`
 
-When `dask` is configured, these functions returns either a `superduperdb.job.Job` object, or an iterable thereof.
+When `ray` is configured, these functions returns either a `superduperdb.job.Job` object, or an iterable thereof.
 
 ```python
 job = m.predict(     # a `superduper.job.ComponentJob` object

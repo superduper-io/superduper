@@ -123,8 +123,8 @@ class DataType(Component):
     ]
 
     type_id: t.ClassVar[str] = 'datatype'
-    encoder: t.Callable = dill_encode
-    decoder: t.Callable = dill_decode
+    encoder: t.Optional[t.Callable] = None   # not necessary if encodable is file
+    decoder: t.Optional[t.Callable] = None
     info: t.Optional[t.Dict] = None
     shape: t.Optional[t.Sequence] = None
     directory: t.Optional[str] = None
@@ -599,4 +599,6 @@ serializers = {
     'dill': dill_serializer,
     'torch': torch_serializer,
     'file': file_serializer,
+    'pickle_lazy': pickle_lazy,
+    'dill_lazy': dill_lazy,
 }

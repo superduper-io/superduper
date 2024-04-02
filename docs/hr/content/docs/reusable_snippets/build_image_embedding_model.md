@@ -9,12 +9,18 @@ import TabItem from '@theme/TabItem';
 Construct a neural network architecture to project high-dimensional image data into a lower-dimensional, dense vector representation
 (embedding) that preserves relevant semantic and visual information within a learned latent space.
 
+```python
+!wget https://raw.githubusercontent.com/openai/CLIP/main/CLIP.png
+```
+
+```python
+image_path = "CLIP.png"
+```
+
 
 <Tabs>
-    <TabItem value="torchvision" label="torchvision" default>
+    <TabItem value="TorchVision" label="TorchVision" default>
         ```python
-        # !pip install torch
-        # !pip install torchvision
         
         import torch
         import torchvision.models as models
@@ -46,9 +52,6 @@ Construct a neural network architecture to project high-dimensional image data i
     </TabItem>
     <TabItem value="CLIP-multimodal" label="CLIP-multimodal" default>
         ```python
-        # !pip install torch
-        # !pip install torchvision
-        # !pip install git+https://github.com/openai/CLIP.git
         import torch
         import clip
         from torchvision import transforms
@@ -71,9 +74,6 @@ Construct a neural network architecture to project high-dimensional image data i
     </TabItem>
     <TabItem value="HuggingFace (ViT)" label="HuggingFace (ViT)" default>
         ```python
-        # !pip install transformers
-        # !pip install torch
-        # !pip install torchvision
         import torch
         from transformers import AutoImageProcessor, AutoModel, AutoFeatureExtractor
         import torchvision.transforms as T
@@ -108,10 +108,13 @@ Construct a neural network architecture to project high-dimensional image data i
             def __call__(self, image):
                 return self.transformation_chain(image).to(self.device)
         
-        
             
         model = HuggingFaceEmbeddings()
         superdupermodel = TorchModel(identifier='my-vision-model-huggingface', object=model, preprocess=Preprocessor(model.extractor))        
         ```
     </TabItem>
 </Tabs>
+```python
+model.predict_one(Image.open(image_path))
+```
+

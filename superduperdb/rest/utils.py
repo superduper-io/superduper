@@ -1,10 +1,15 @@
 import re
+import typing as t
+
+from superduperdb.base.document import Document
 
 
-def _parse_query_part(part, documents, artifacts, query):
+def _parse_query_part(part, documents, artifacts, query, db: t.Optional[t.Any] = None):
+    documents = [Document.decode(r, db=db) for r in documents]
     from superduperdb.backends.mongodb.query import Collection
 
     part = part.replace(' ', '').replace('\n', '')
+    part = part.replace('$documents', 'documents')
     part = part.split('.')
     for i, comp in enumerate(part):
         if i == 0:
@@ -25,20 +30,16 @@ def _parse_query_part(part, documents, artifacts, query):
             for x in args_kwargs:
                 if '=' in x:
                     k, v = x.split('=')
-                    # if v.startswith('$documents'):
-                    #     v = _get_item(v, documents)
-                    # elif v.startswith('$artifacts'):
-                    #     v = _get_item(v, artifacts)
-                    kwargs[k] = eval(v)
+                    kwargs[k] = eval(v, {'documents': documents})
                 else:
-                    args.append(eval(x))
+                    args.append(eval(x, {'documents': documents}))
             current = comp(*args, **kwargs)
     return current
 
 
-def parse_query(query, documents, artifacts):
+def parse_query(query, documents, artifacts, db: t.Optional[t.Any] = None):
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, artifacts, query[:i])
+        query[i] = _parse_query_part(q, documents, artifacts, query[:i], db=db)
     return query[-1]
 
 

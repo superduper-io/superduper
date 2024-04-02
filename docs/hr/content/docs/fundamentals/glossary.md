@@ -2,9 +2,7 @@
 sidebar_position: 1
 ---
 
-# Fundamentals
-
-## Glossary
+# Glossary
 
 | Concept | Description |
 | - | - |
@@ -18,11 +16,3 @@ sidebar_position: 1
 | [**`Schema`**](./document_encoder_abstraction.md#schema) | the `Component` type used to work with columnar data including special data-types |
 | [**`Listener`**](../walkthrough/daemonizing_models_with_listeners.md) | `Component` to "listen" and `.predict` on incoming data |
 | [**`VectorIndex`**](../walkthrough/vector_search.md) | `Component` to perform vector-search - builds on `Model` and `Listener` |
-
-## Dive into our Fundamentals
-
-```mdx-code-block
-import DocCardList from '@theme/DocCardList';
-
-<DocCardList />
-```

@@ -60,19 +60,3 @@ from superduperdb.ext.anthropic import Anthropic<ModelType> as ModelCls
 
 db.add(Modelcls(identifier='my-model', **kwargs))
 ```
-
-## Jina
-
-**Supported**
-
-| Description | Class-name |
-| --- | --- |
-| Embeddings | `JinaEmbedding` |
-
-**Usage**
-
-```python
-from superduperdb.ext.jina import JinaEmbedding
-
-db.add(JinaEmbedding(identifier='jina-embeddings-v2-base-en', api_key='JINA_API_KEY')) # You can also set JINA_API_KEY as environment variable
-```

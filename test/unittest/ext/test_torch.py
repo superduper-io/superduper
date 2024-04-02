@@ -88,7 +88,7 @@ def test_fit(db, valid_dataset, model):
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z', '_fold')
 
-    model.train_X = ('X', 'y')
+    model.train_X = ('x', 'y')
     model.train_select = select
     model.metrics = [Metric(identifier='acc', object=acc)]
     model.validation_sets = [valid_dataset]

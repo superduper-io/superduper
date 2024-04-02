@@ -11,83 +11,86 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
+        %pip install openai
         
-        ...        
+        from superduperdb.ext.openai import OpenAIChatCompletion
+        
+        llm = OpenAIChatCompletion(identifier='llm', model='gpt-3.5-turbo')        
         ```
     </TabItem>
     <TabItem value="Anthropic" label="Anthropic" default>
         ```python
+        %pip install anthropic
         
-        ...        
+        from superduperdb.ext.anthropic import AnthropicCompletions
+        llm = AnthropicCompletions(identifier='llm', model='claude-2')        
         ```
     </TabItem>
     <TabItem value="vLLM" label="vLLM" default>
         ```python
+        %pip install vllm
         
-        ...        
+        from superduperdb.ext.vllm import VllmModel
+        
+        predict_kwargs = {
+            "max_tokens": 1024,
+            "temperature": 0.8,
+        }
+        
+        
+        llm = VllmModel(
+            identifier="llm",
+            model_name="TheBloke/Mistral-7B-Instruct-v0.2-AWQ",
+            vllm_kwargs={
+                "gpu_memory_utilization": 0.7,
+                "max_model_len": 10240,
+                "quantization": "awq",
+            },
+            predict_kwargs=predict_kwargs,
+        )
+        
         ```
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
+        %pip install transformers datasets torch
         
-        ...        
+        from superduperdb.ext.transformers import LLM
+        
+        llm = LLM.from_pretrained("facebook/opt-125m", identifier="llm")        
         ```
     </TabItem>
     <TabItem value="Llama.cpp" label="Llama.cpp" default>
         ```python
+        %pip install llama-cpp-python
         
-        ...        
+        # !huggingface-cli download Qwen/Qwen1.5-0.5B-Chat-GGUF qwen1_5-0_5b-chat-q8_0.gguf --local-dir . --local-dir-use-symlinks False
+        
+        from superduperdb.ext.llamacpp.model import LlamaCpp
+        llm = LlamaCpp(identifier="llm", model_name_or_path="./qwen1_5-0_5b-chat-q8_0.gguf")        
         ```
     </TabItem>
 </Tabs>
+## Using LLM for text generation
+
 ```python
-llm.predict_one(X='Tell me about SuperDuperDB')
+llm.predict_one('Tell me about the SuperDuperDB', temperature=0.7)
 ```
 
+## Use in combination with Prompt
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        from superduperdb.components.model import QueryModel
-        from superduperdb import Variable, Document
-        
-        query_model = QueryModel(
-            select=collection.find().like(Document({'my_key': Variable('item')}))
-        )        
-        ```
-    </TabItem>
-</Tabs>
 ```python
-from superduperdb.components.graph import Graph, Input
-from superduperdb import superduper
+from superduperdb.components.model import SequentialModel, Model
 
-
-@superduper
-class PromptBuilder:
-    def __init__(self, initial_prompt, post_prompt, key):
-        self.inital_prompt = initial_prompt
-        self.post_prompt = post_prompt
-        self.key = key
-
-    def __call__(self, X, context):
-        return (
-            self.initial_prompt + '\n\n'
-            + [r[self.key] for r in context]
-            + self.post_prompt + '\n\n'
-            + X
-        )
-
-
-prompt_builder = PromptBuilder(
-    initial_prompt='Answer the following question based on the following facts:',
-    post_prompt='Here\'s the question:',
-    key='my_key',
+prompt_model = Model(
+    identifier="prompt", object=lambda text: f"The German version of sentence '{text}' is: "
 )
 
-with Graph() as G:
-    input = Input('X')
-    query_results = query_model(item=input)
-    prompt = prompt_builder(X=input, context=query_results)
-    output = llm(X=prompt)
+model = SequentialModel(identifier="The translator", predictors=[prompt_model, llm])
+
+```
+
+```python
+model.predict_one('Tell me about SuperDuperDB')
 ```
 

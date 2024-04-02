@@ -4,7 +4,39 @@ sidebar_position: 1
 
 # Welcome to SuperDuperDB!
 
-Testing
+AI development consists of multiple phases, tooling universes, stakeholders:
+
+***Phases***
+
+- Data injestion & preparation
+- Model development and training
+- Production computation, inference and fine-tuning
+
+***Tooling***
+
+- Database, lake, warehouse, object storage
+- IDES, notebooks, software packages
+- ETL jobs, cloud compute
+
+***Stakeholders***
+
+| Phase                               | Tooling                                                    | Stakeholder                                                 |
+| ---                                 | ---                                                        | ---                                                         |
+| ***PREPARATION*** | ***PREPARATION*** | ***PREPARATION*** |
+| Data import & storage               | Cold, object storage, data-base,-lake,-warehouse           |  Data-engineer, MLOps engineer                              |
+| Data exploration and analysis       | Data-base,-lake,-warehouse, dataframes                     |  Data-analyst, scientist, statistician                      |
+| Data cleaning                       | Jupyter notebooks, interactive scripting                   |  Data-scientist                                             |  
+| Feature extraction                  | Feature store, object storage, cloud compute, data-center  |  Data-scientist, data-engineer, MLOps engineer              |
+| ***TRAINING*** | ***TRAINING*** | ***TRAINING*** |
+| Model design                        | IDE, Jupyter notebooks, AI frameworks                      |  AI researcher, software developer, data-scientist          |
+| Model training                      | GPU training jobs, cloud compute, data-center              |  AI researcher, engineer, data-scientist                    |
+| Model configuration                 | Prompt engineering, hyperparameter tuning                  |  AI researcher, data-scientist                              |
+| ***PRODUCTION*** | ***PRODUCTION*** | ***PRODUCTION*** |
+| Batch output computations           | GPU/ CPU inference jobs, cloud compute, ETL                |  Data-engineer, MLOps engineer                              | 
+| Real-time inference                 | Serving frameworks, vector-database, Kubernetes            |  Data-engineer, MLOps engineer, cloud engineer              |
+| Model evaluation                    | Evaluation libraries, model registry, metric visualization |  AI researcher, data-scientist, statistician                | 
+| Retraining fine-tuning              | Data-base, ETL, task schedulers                            |  Data-engineer, MLOps engineer                              |
+
 
 ## What is SuperDuperDB?
 

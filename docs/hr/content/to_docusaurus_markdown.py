@@ -34,7 +34,6 @@ def render_chunks_as_md(chunks):
                 )
                 tabs.append(tab)
             output += TABS_WRAPPER.format(body='\n'.join(tabs))
-    print(output)
     return PREAMBLE + output
 
 
@@ -47,15 +46,21 @@ def render_notebook_as_chunks(nb):
             })
 
         elif cell['cell_type'] == 'code':
-            match = re.match('^#[ ]+<tab: ([^\>]+)>', cell['source'][0])
-            if match:
-                title = match.groups()[0]
+            if not cell['source']:
+                continue
+
+            match = re.match('^#[ ]+<([a-z]+):([^\>]+)>', cell['source'][0])
+
+            if match and match.groups()[0] == 'tab':
+                title = match.groups()[1].strip()
                 if 'tabs' not in chunks[-1]:
                     chunks.append({'tabs': []})
                 chunks[-1]['tabs'].append({
                     'content': [CODE_BLOCK[0], *cell['source'][1:], CODE_BLOCK[-1]],
                     'title': title,
                 })
+            elif match:  # testing not handled yet
+                continue
             else:
                 chunks.append({
                     'content': [CODE_BLOCK[0], *cell['source'], CODE_BLOCK[-1].replace(' ', '') + '\n\n']
@@ -71,7 +76,9 @@ def render_notebook_as_chunks(nb):
 if __name__ == '__main__':
     directory = sys.argv[1]
 
-    for file in os.listdir(directory):
+    FILES = os.listdir(directory)
+
+    for file in FILES:
         if file.startswith('_'):
             continue
         if not file.endswith('.ipynb'):

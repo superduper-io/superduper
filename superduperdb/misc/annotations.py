@@ -1,8 +1,10 @@
+import functools
 import importlib
 import sys
 import warnings
 from importlib import metadata
 from typing import Optional
+import typing as t
 
 from packaging import version
 
@@ -53,7 +55,7 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
             return False, installation_line + '    # (no such package installed)'
     if not (lower_bound <= got_version and got_version <= upper_bound):
         return False, installation_line + f'    # (got {got_version})'
-    return True, ''
+    return True, installation_line
 
 
 def requires_packages(*packages, warn=False):
@@ -67,17 +69,18 @@ def requires_packages(*packages, warn=False):
     E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
     """
     out = []
+    all = []
     for m in packages:
         satisfactory, install_line = _requires_packages(*m)
         if not satisfactory:
             out.append(install_line)
+        all.append(install_line)
     if out:
         if warn:
             warnings.warn('\n' + '\n'.join(out))
         else:
             raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
-
-    return out
+    return out, all
 
 
 def _requires_packages(
@@ -94,6 +97,16 @@ def _requires_packages(
         install_module,
     )
     return _compare_versions(import_module, lower_bound, upper_bound, install_module)
+
+
+def deprecated(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        logging.warn(
+            f"{f.__name__} is deprecated and will be removed in a future release.",
+        )
+        return f(*args, **kwargs)
+    return decorated
 
 
 # TODO add deprecated also
@@ -163,3 +176,10 @@ def _get_indent(docstring: str) -> int:
         return 0
 
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
+
+
+def ui(*schema: t.Sequence[t.Dict]):
+    def decorated(f):
+        f.get_ui_schema = lambda: schema
+        return f
+    return decorated

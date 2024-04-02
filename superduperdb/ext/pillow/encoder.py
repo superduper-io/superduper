@@ -6,6 +6,7 @@ import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 
 from superduperdb.components.datatype import DataType
+from superduperdb.misc.annotations import ui
 
 BLANK_IMAGE = PIL.Image.new('RGB', (600, 600), (255, 255, 255))
 
@@ -69,6 +70,10 @@ pil_image_hybrid_jpeg = DataType(
 )
 
 
+@ui(
+    {'name': 'identifier', 'type': 'str'},
+    {'name': 'media_type', 'type': 'str', 'default': 'image/png'},
+)
 def image_type(
     identifier: str, encodable: str = 'lazy_artifact', media_type: str = 'image/png'
 ):

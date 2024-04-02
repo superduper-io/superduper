@@ -19,7 +19,7 @@ sidebar_position: 1
 | [**`Listener`**](../walkthrough/daemonizing_models_with_listeners.md) | `Component` to "listen" and `.predict` on incoming data |
 | [**`VectorIndex`**](../walkthrough/vector_search.md) | `Component` to perform vector-search - builds on `Model` and `Listener` |
 
-## Dive into our Fundamentals
+## Read more
 
 ```mdx-code-block
 import DocCardList from '@theme/DocCardList';

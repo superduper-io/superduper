@@ -42,22 +42,19 @@ To install `superduperdb` on your system using `pip`, open your terminal and run
 pip install superduperdb
 ```
 
-This command will install `superduperdb` along with a minimal set of  common dependencies required for running the framework. Some larger  dependencies, like `pytorch`, are not included to keep the image size small. You can install such dependencies using the following syntax:
+This command will install `superduperdb` along with a minimal set of common dependencies required for running the framework.
+If you would like to use the `superduperdb.ext` subpackages (e.g. `superduperdb.ext.openai`), you may build a requirements file
+with this command:
 
 ```bash
-pip install superduperdb[<category>]
+python3 -m superduperdb requirements <list-of-extensions> > requirements.txt
 ```
 
-Here are the available categories you can use:
+For example, this builds a `requirements.txt` file for `openai` and `torch`:
 
-- `api`: Installs clients for third-party services like OpenAI, Cohere, and Anthropic.
-- `torch`: Installs PyTorch dependencies.
-- `docs`: Installs tools for rendering Markdown files into websites.
-- `quality`: Installs tools for aiding in the development of high-quality code.
-- `testing`: Installs tools for testing the SuperDuperDB ecosystem.
-- `dev`: Installs all the above categories.
-
-You can find more details on these categories in the [pyproject.toml](https://github.com/SuperDuperDB/superduperdb/blob/main/pyproject.toml) file.
+```bash
+python3 -m superduperdb requirements openai torch > requirements.txt
+```
 
 ## Docker Image
 
@@ -74,8 +71,26 @@ This command installs the base `superduperdb` image. If you want to run the read
 
 #### Building the image yourself
 
-For more control, you can build the Docker images yourself using the following commands:
+For more control, you can build the Docker images yourself from the latest GitHub version as follows:
+
+Clone the code:
 
 ```bash
+git clone --branch main --single-branch --depth 1 https://github.com/SuperDuperDB/superduperdb.git
 make build_superduperdb
+```
+
+#### Developer's docker image and environment
+
+If you wish to use your local copy of code with a docker build, execute the following command:
+
+```bash
+make testenv_image
+```
+
+You will see something like these lines in `docker images`:
+
+```bash
+REPOSITORY                    TAG             IMAGE ID       CREATED        SIZE
+superduperdb/sandbox          latest          88ddab334d17   5 days ago     2.69GB
 ```

@@ -11,16 +11,12 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
-        %pip install openai
-        
         from superduperdb.ext.openai import OpenAIEmbedding
         model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
         ```python
-        %pip install jina
-        
         from superduperdb.ext.jina import JinaEmbedding
          
         # define the model
@@ -29,8 +25,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
         ```python
-        %pip install sentence-transformers
-        
         from superduperdb import vector
         import sentence_transformers
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -46,8 +40,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        %pip install transformers torch
-        
         import dataclasses as dc
         from superduperdb.components.model import _Predictor, ensure_initialized
         from transformers import AutoTokenizer, AutoModel

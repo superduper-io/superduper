@@ -7,73 +7,104 @@ import TabItem from '@theme/TabItem';
 <!-- TABS -->
 # Build multimodal embedding models
 
+Some embedding models such as [CLIP](https://github.com/openai/CLIP) come in pairs of `model` and `compatible_model`.
+Otherwise:
+
+```python
+compatible_model = None
+```
+
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
         from superduperdb.ext.sentence_transformers import SentenceTransformer
+        from superduperdb import vector
         
         # Load the pre-trained sentence transformer model
-        superdupermodel = SentenceTransformer(identifier='all-MiniLM-L6-v2')        
+        model = SentenceTransformer(
+            identifier='all-MiniLM-L6-v2',
+            postprocess=lambda x: x.tolist(),
+            datatype=vector(shape=(784,)),
+        )        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        import torch
-        import clip
         from torchvision import transforms
-        from superduperdb.ext.torch import TorchModel
+        import torch
+        import torch.nn as nn
+        import torchvision.models as models
         
-        class CLIPVisionEmbedding:
-            def __init__(self):
-                # Load the CLIP model
-                self.device = "cuda" if torch.cuda.is_available() else "cpu"
-                self.model, self.preprocess = clip.load("RN50", device=self.device)
-                
-            def preprocess(self, image):
-                # Load and preprocess the image
-                image = self.preprocess(image).unsqueeze(0).to(self.device)
-                return image
-                
-        model = CLIPVisionEmbedding()
-        superdupermodel = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
+        import warnings
+        
+        # Import custom modules
+        from superduperdb.ext.torch import TorchModel, tensor
+        
+        # Define a series of image transformations using torchvision.transforms.Compose
+        t = transforms.Compose([
+            transforms.Resize((224, 224)),   # Resize the input image to 224x224 pixels (must same as here)
+            transforms.CenterCrop((224, 224)),  # Perform a center crop on the resized image
+            transforms.ToTensor(),  # Convert the image to a PyTorch tensor
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # Normalize the tensor with specified mean and standard deviation
+        ])
+        
+        # Define a preprocess function that applies the defined transformations to an input image
+        def preprocess(x):
+            try:
+                return t(x)
+            except Exception as e:
+                # If an exception occurs during preprocessing, issue a warning and return a tensor of zeros
+                warnings.warn(str(e))
+                return torch.zeros(3, 224, 224)
+        
+        # Load the pre-trained ResNet-50 model from torchvision
+        resnet50 = models.resnet50(pretrained=True)
+        
+        # Extract all layers of the ResNet-50 model except the last one
+        modules = list(resnet50.children())[:-1]
+        resnet50 = nn.Sequential(*modules)
+        
+        # Create a TorchModel instance with the ResNet-50 model, preprocessing function, and postprocessing lambda
+        model = TorchModel(
+            identifier='resnet50',
+            preprocess=preprocess,
+            object=resnet50,
+            postprocess=lambda x: x[:, 0, 0],  # Postprocess by extracting the top-left element of the output tensor
+            encoder=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
+        )        
         ```
     </TabItem>
-    <TabItem value="Text-2-Image" label="Text-2-Image" default>
+    <TabItem value="Text+Image" label="Text+Image" default>
         ```python
-        
-        import torch
         import clip
-        from torchvision import transforms
-        from superduperdb import Model
+        from superduperdb import vector
         from superduperdb.ext.torch import TorchModel
         
-        class CLIPTextEmbedding:
-            def __init__(self):
-                # Load the CLIP model
-                self.device = "cuda" if torch.cuda.is_available() else "cpu"
-                self.model, _ = clip.load("RN50", device=self.device)
-                
-            def __call__(self, text):
-                features = clip.tokenize([text])
-                return self.model.encode_text(features)
-                
-        model = CLIPTextEmbedding()
-        superdupermodel_text = Model(identifier='clip-text', object=model)
+        # Load the CLIP model and obtain the preprocessing function
+        model, preprocess = clip.load("RN50", device='cpu')
         
-        class CLIPVisionEmbedding:
-            def __init__(self):
-                # Load the CLIP model
-                self.device = "cuda" if torch.cuda.is_available() else "cpu"
-                self.model, self.preprocess = clip.load("RN50", device=self.device)
-                
-            def preprocess(self, image):
-                # Load and preprocess the image
-                image = self.preprocess(image).unsqueeze(0).to(self.device)
-                return image
-                
-        model = CLIPVisionEmbedding()
-        superdupermodel_image = TorchModel(identifier='clip-vision', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
+        # Define a vector with shape (1024,)
+        e = vector(shape=(1024,))
+        
+        # Create a TorchModel for text encoding
+        compatible_model = TorchModel(
+            identifier='clip_text', # Unique identifier for the model
+            object=model, # CLIP model
+            preprocess=lambda x: clip.tokenize(x)[0],  # Model input preprocessing using CLIP 
+            postprocess=lambda x: x.tolist(), # Convert the model output to a list
+            encoder=e,  # Vector encoder with shape (1024,)
+            forward_method='encode_text', # Use the 'encode_text' method for forward pass 
+        )
+        
+        # Create a TorchModel for visual encoding
+        model = TorchModel(
+            identifier='clip_image',  # Unique identifier for the model
+            object=model.visual,  # Visual part of the CLIP model    
+            preprocess=preprocess, # Visual preprocessing using CLIP
+            postprocess=lambda x: x.tolist(), # Convert the output to a list 
+            encoder=e, # Vector encoder with shape (1024,)
+        )        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -88,46 +119,8 @@ import TabItem from '@theme/TabItem';
             y, sr = librosa.load(audio_file)
             mfccs = librosa.feature.mfcc(y=y, sr=sr)
             return mfccs
-        superdupermodel = Model(identifier='my-model-audio', object=audio_embedding)        
+        
+        model= Model(identifier='my-model-audio', object=audio_embedding, datatype=vector(shape=(1000,)))        
         ```
     </TabItem>
 </Tabs>
-```python
-# <testing:>
-import wave
-import struct
-
-sample_rate = 44100 
-duration = 1 
-frequency = 440
-amplitude = 0.5
-
-# Generate the sine wave
-num_samples = int(sample_rate * duration)
-t = np.linspace(0, duration, num_samples, False)
-signal = amplitude * np.sin(2 * np.pi * frequency * t)
-
-# Open a new WAV file
-output_file = 'dummy_audio.wav'
-wav_file = wave.open(output_file, 'w')
-
-# Set the parameters for the WAV file
-nchannels = 1  # Mono audio
-sampwidth = 2  # Sample width in bytes (2 for 16-bit audio)
-framerate = sample_rate
-nframes = num_samples
-
-# Set the parameters for the WAV file
-wav_file.setparams((nchannels, sampwidth, framerate, nframes, 'NONE', 'not compressed'))
-
-# Write the audio data to the WAV file
-for sample in signal:
-    wav_file.writeframes(struct.pack('h', int(sample * (2 ** 15 - 1))))
-
-# Close the WAV file
-wav_file.close()
-
-# Test
-superdupermodel.predict_one(output_file)
-```
-

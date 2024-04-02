@@ -7,6 +7,11 @@ import TabItem from '@theme/TabItem';
 <!-- TABS -->
 # Connect to SuperDuperDB
 
+:::note
+Note that this is only relevant if you are running SuperDuperDB in development mode.
+Otherwise refer to "Configuring your production system".
+:::
+
 
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
@@ -16,13 +21,6 @@ import TabItem from '@theme/TabItem';
         db = superduper('mongodb://localhost:27017/documents')        
         ```
     </TabItem>
-    <TabItem value="MongoMock" label="MongoMock" default>
-        ```python
-        from superduperdb import superduper
-        
-        db = superduper('mongomock:///test_db')        
-        ```
-    </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
@@ -30,18 +28,92 @@ import TabItem from '@theme/TabItem';
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
-    <TabItem value="SQLite-InMemory" label="SQLite-InMemory" default>
+    <TabItem value="MySQL" label="MySQL" default>
         ```python
         from superduperdb import superduper
         
-        db = superduper('sqlite://')        
+        user = 'superduper'
+        password = 'superduper'
+        port = 3306
+        host = 'localhost'
+        database = 'test_db'
+        
+        db = superduper(f"mysql://{user}:{password}@{host}:{port}/{database}")        
+        ```
+    </TabItem>
+    <TabItem value="Oracle" label="Oracle" default>
+        ```python
+        from superduperdb import superduper
+        
+        user = 'sa'
+        password = 'Superduper#1'
+        port = 1433
+        host = 'localhost'
+        
+        db = superduper(f"mssql://{user}:{password}@{host}:{port}")        
         ```
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
         from superduperdb import superduper
         
-        db = superduper('postgres://localhost:1234')        
+        user = 'superduper'
+        password = 'superduper'
+        port = 5432
+        host = 'localhost'
+        database = 'test_db'
+        
+        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        ```
+    </TabItem>
+    <TabItem value="Snowflake" label="Snowflake" default>
+        ```python
+        from superduperdb import superduper
+        
+        user = "superduperuser"
+        password = "superduperpassword"
+        account = "XXXX-XXXX"  # ORGANIZATIONID-USERID
+        database = "FREE_COMPANY_DATASET/PUBLIC"
+        
+        snowflake_uri = f"snowflake://{user}:{password}@{account}/{database}"
+        
+        db = superduper(
+            snowflake_uri, 
+            metadata_store='sqlite:///your_database_name.db',
+        )        
+        ```
+    </TabItem>
+    <TabItem value="Clickhouse" label="Clickhouse" default>
+        ```python
+        from superduperdb import superduper
+        
+        user = 'default'
+        password = ''
+        port = 8123
+        host = 'localhost'
+        
+        db = superduper(f"clickhouse://{user}:{password}@{host}:{port}", metadata_store=f'mongomock://meta')        
+        ```
+    </TabItem>
+    <TabItem value="DuckDB" label="DuckDB" default>
+        ```python
+        from superduperdb import superduper
+        
+        db = superduper('duckdb://mydb.duckdb')        
+        ```
+    </TabItem>
+    <TabItem value="Pandas" label="Pandas" default>
+        ```python
+        from superduperdb import superduper
+        
+        db = superduper(['my.csv'], metadata_store=f'mongomock://meta')        
+        ```
+    </TabItem>
+    <TabItem value="MongoMock" label="MongoMock" default>
+        ```python
+        from superduperdb import superduper
+        
+        db = superduper('mongomock:///test_db')        
         ```
     </TabItem>
 </Tabs>

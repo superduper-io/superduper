@@ -50,7 +50,10 @@ class IbisDataBackend(BaseDataBackend):
             self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
 
     def create_output_dest(
-        self, predict_id: str, datatype: t.Union[FieldType, DataType]
+        self,
+        predict_id: str,
+        datatype: t.Union[FieldType, DataType],
+        flatten: bool = False,
     ):
         msg = (
             "Model must have an encoder to create with the"
@@ -61,14 +64,27 @@ class IbisDataBackend(BaseDataBackend):
             output_type = dtype(datatype.identifier)
         else:
             output_type = datatype
-        fields = {
-            INPUT_KEY: dtype('string'),
-            'output': output_type,
-        }
-        return Table(
-            identifier=f'_outputs.{predict_id}',
-            schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
-        )
+
+        if flatten:
+            fields = {
+                INPUT_KEY: dtype('string'),
+                '_source': dtype('string'),
+                'output': output_type,
+            }
+            return Table(
+                primary_id='_source',
+                identifier=f'_outputs.{predict_id}',
+                schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
+            )
+        else:
+            fields = {
+                INPUT_KEY: dtype('string'),
+                'output': output_type,
+            }
+            return Table(
+                identifier=f'_outputs.{predict_id}',
+                schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
+            )
 
     def create_table_and_schema(self, identifier: str, mapping: dict):
         """

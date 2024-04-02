@@ -43,13 +43,15 @@ def build_use_case(path):
             with open(f'docs/reusable_snippets/{snippet}.ipynb') as f:
                 snippet_nb = json.load(f)
             snippet_nb = process_snippet(snippet_nb, tabs)
-            built_nb['cells'].extend(snippet_nb['cells'])
+            for cell in snippet_nb['cells']:
+                if '<testing:' in '\n'.join(cell['source']):
+                    continue
+                built_nb['cells'].append(cell)
         else:
             built_nb['cells'].append(cell)
     return built_nb
 
 file = '_multimodal_vector_search.ipynb'
-
 
 for file in os.listdir('./use_cases'):
     if not file.startswith('_'):

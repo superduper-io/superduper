@@ -28,7 +28,8 @@ def requirements(ext: t.List[str]):
     out = []
     for e in ext:
         try:
-            importlib.import_module(f'superduperdb.ext.{e}')
+            m = importlib.import_module(f'superduperdb.ext.{e}')
+            out.extend(m.requirements)
         except RequiredPackageVersionsNotFound as e:
             out.extend([x for x in str(e).split('\n') if x])
     print('\n'.join(out))

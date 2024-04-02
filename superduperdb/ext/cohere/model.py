@@ -9,7 +9,7 @@ from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.components.model import APIModel
+from superduperdb.components.model import APIBaseModel
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.utils import format_prompt, get_key
 from superduperdb.misc.retry import Retry
@@ -20,7 +20,7 @@ KEY_NAME = 'COHERE_API_KEY'
 
 
 @dc.dataclass(kw_only=True)
-class Cohere(APIModel):
+class Cohere(APIBaseModel):
     """Cohere predictor"""
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)

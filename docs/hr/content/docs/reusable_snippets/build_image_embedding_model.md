@@ -9,6 +9,14 @@ import TabItem from '@theme/TabItem';
 Construct a neural network architecture to project high-dimensional image data into a lower-dimensional, dense vector representation
 (embedding) that preserves relevant semantic and visual information within a learned latent space.
 
+```python
+!wget https://raw.githubusercontent.com/openai/CLIP/main/CLIP.png
+```
+
+```python
+image_path = "CLIP.png"
+```
+
 
 <Tabs>
     <TabItem value="torchvision" label="torchvision" default>
@@ -115,3 +123,7 @@ Construct a neural network architecture to project high-dimensional image data i
         ```
     </TabItem>
 </Tabs>
+```python
+model.predict_one(Image.open(image_path))
+```
+

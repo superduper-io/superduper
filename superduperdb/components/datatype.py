@@ -599,4 +599,6 @@ serializers = {
     'dill': dill_serializer,
     'torch': torch_serializer,
     'file': file_serializer,
+    'pickle_lazy': pickle_lazy,
+    'dill_lazy': dill_lazy,
 }

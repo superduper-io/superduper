@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 
 <Tabs>
-    <TabItem value="sklearn" label="sklearn" default>
+    <TabItem value="Scikit-Learn" label="Scikit-Learn" default>
         ```python
         
         from sklearn.linear_model import LogisticRegression

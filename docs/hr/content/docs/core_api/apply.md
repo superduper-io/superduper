@@ -2,13 +2,13 @@
 
 In SuperDuperDB there are three fundamental base components which you'll use for almost all functionality:
 
-- `Model`
-- `Listener`
-- `VectorIndex`
+- [`Model`](../apply_api/model)
+- [`Listener`](../apply_api/listener)
+- [`VectorIndex`](../apply_api/vector_index)
 
 In addition there is an overarching component:
 
-- `Stack`
+- [`Stack`](../apply_api/stack)
 
 which in some sense "rules them all"
 
@@ -49,7 +49,7 @@ Read more about `VectorIndex` [here](../components/vector_index).
 ## Connecting component: `Stack`
 
 A `Stack` of AI functionality is a combination of multiple `Model`, `Listener`, and `VectorIndex` components which may be "applied" in 
-one go to your data via SuperDuperDB. 
+one pass to your data via SuperDuperDB. 
 
 On `db.add(stack)` SuperDuperDB performs the heavy lifting of deciding which components need to be applied 
 first, which need to be modified on incoming data, and which outputs need to be made searchable.

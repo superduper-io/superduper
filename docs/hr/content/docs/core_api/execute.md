@@ -34,6 +34,8 @@ q = base_object.method_1(*args_1, **kwargs_1).method_2(*args_2, **kwargs_2)....
 
 ### Selects
 
+***MongoDB***
+
 A MongoDB `find` query can be built like this:
 
 ```python
@@ -43,7 +45,9 @@ collection = Collection('documents')
 q = collection.find().limit(5).skip(2)
 ```
 
-A query with an SQL table can be built with `ibis` syntax like this:
+***SQL***
+
+A query with on an SQL data-backend can be built with `ibis` syntax like this:
 
 ```python
 from superduperdb.backends.ibis import Table
@@ -57,15 +61,21 @@ q = t.filter(t.brand == 'Nike').limit(5)
 
 ### Inserts
 
+***MongoDB***
+
 Typically insert queries wrap `Document` instances and call the `insert` method on a table or collection:
 
 ```python
+from superduperdb import Document
 q = collection.insert_many([Document(r) for r in data])
 ```
+
+***SQL***
 
 The `ibis` insert is slightly different:
 
 ```python
+from superduperdb import Document
 q = t.insert([Document(r) for r in data])
 ```
 
@@ -73,5 +83,15 @@ q = t.insert([Document(r) for r in data])
 
 
 ```python
-db.execute(q)
+results = db.execute(q)
 ```
+
+***Multiple results***
+
+Iterables of results are sent wrapped in a cursor
+
+***Indiviudal results***
+
+Individual results are sent wrapped in a `Document`
+
+Read more about `db.execute` [here](../execute_api/overview).

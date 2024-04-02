@@ -16,6 +16,10 @@ SuperDuperDB may be run in 2 modes:
 By default, `SuperDuperDB` runs in development mode. This makes it super easy for developers to 
 test the code-snippets and use-cases.
 
+In development mode, all computations and configurations take place in a single process. Computations
+block the process in the foreground, and developers can easily set breakpoints during computation 
+for debugging purposes.
+
 In this mode, connecting to `superduperdb` is as simple as this:
 
 ```python
@@ -38,6 +42,9 @@ db = superduper()
 ```
 
 ### Services
+
+In cluster mode, multiple individual services are set up which are responsible for various
+parts of the work flow:
 
 #### Ray cluster
 

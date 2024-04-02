@@ -1,0 +1,117 @@
+---
+sidebar_label: Build image embedding model
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<!-- TABS -->
+# Build image embedding model
+Construct a neural network architecture to project high-dimensional image data into a lower-dimensional, dense vector representation
+(embedding) that preserves relevant semantic and visual information within a learned latent space.
+
+
+<Tabs>
+    <TabItem value="torchvision" label="torchvision" default>
+        ```python
+        # !pip install torch
+        # !pip install torchvision
+        
+        import torch
+        import torchvision.models as models
+        from torchvision import transforms
+        from superduperdb.ext.torch import TorchModel
+        
+        class TorchVisionEmbedding:
+            def __init__(self):
+                # Load the pre-trained ResNet-18 model
+                self.resnet = models.resnet18(pretrained=True)
+                
+                # Set the model to evaluation mode
+                self.resnet.eval()
+                
+            def preprocess(self, image):
+                # Preprocess the image
+                preprocess = preprocess = transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ])
+                tensor_image = preprocess(image)
+                return tensor_image
+                
+        model = TorchVisionEmbedding()
+        superdupermodel = TorchModel(identifier='my-vision-model-torch', object=model.resnet, preprocess=model.preprocess)        
+        ```
+    </TabItem>
+    <TabItem value="CLIP-multimodal" label="CLIP-multimodal" default>
+        ```python
+        # !pip install torch
+        # !pip install torchvision
+        # !pip install git+https://github.com/openai/CLIP.git
+        import torch
+        import clip
+        from torchvision import transforms
+        from superduperdb.ext.torch import TorchModel
+        
+        class CLIPVisionEmbedding:
+            def __init__(self):
+                # Load the CLIP model
+                self.device = "cuda" if torch.cuda.is_available() else "cpu"
+                self.model, self.preprocess = clip.load("RN50", device=self.device)
+                
+            def preprocess(self, image):
+                # Load and preprocess the image
+                image = self.preprocess(image).unsqueeze(0).to(self.device)
+                return image
+                
+        model = CLIPVisionEmbedding()
+        superdupermodel = TorchModel(identifier='my-vision-model-clip', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
+        ```
+    </TabItem>
+    <TabItem value="HuggingFace (ViT)" label="HuggingFace (ViT)" default>
+        ```python
+        # !pip install transformers
+        # !pip install torch
+        # !pip install torchvision
+        import torch
+        from transformers import AutoImageProcessor, AutoModel, AutoFeatureExtractor
+        import torchvision.transforms as T
+        from superduperdb.ext.torch import TorchModel
+        
+        
+        class HuggingFaceEmbeddings(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                model_ckpt = "nateraw/vit-base-beans"
+                processor = AutoImageProcessor.from_pretrained(model_ckpt)
+                self.extractor = AutoFeatureExtractor.from_pretrained(model_ckpt)
+                self.model = AutoModel.from_pretrained(model_ckpt)
+        
+            def forward(self, x):
+                return self.model(pixel_values=x).last_hidden_state[:, 0].cpu()
+                
+                
+        class Preprocessor:
+            def __init__(self, extractor):
+                self.device = 'cpu'
+                # Data transformation chain.
+                self.transformation_chain = T.Compose(
+                    [
+                        # We first resize the input image to 256x256 and then we take center crop.
+                        T.Resize(int((256 / 224) * extractor.size["height"])),
+                        T.CenterCrop(extractor.size["height"]),
+                        T.ToTensor(),
+                        T.Normalize(mean=extractor.image_mean, std=extractor.image_std),
+                    ]
+                )
+            def __call__(self, image):
+                return self.transformation_chain(image).to(self.device)
+        
+        
+            
+        model = HuggingFaceEmbeddings()
+        superdupermodel = TorchModel(identifier='my-vision-model-huggingface', object=model, preprocess=Preprocessor(model.extractor))        
+        ```
+    </TabItem>
+</Tabs>

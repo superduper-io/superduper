@@ -45,7 +45,6 @@ def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
 
     if metadata is None:
         try:
-            print(metadata_stores)
             # try to connect to the data backend uri.
             logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
             return _build_databackend_impl(
@@ -123,7 +122,6 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
         name = uri.split('//')[0]
         if type == 'data_backend':
             ibis_conn = ibis.connect(uri)
-            print(mapping['postgres'])
             return mapping['postgres'](ibis_conn, name)
         else:
             assert type == 'metadata'
@@ -149,7 +147,6 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
         name = uri.split('//')[0]
         if type == 'data_backend':
             ibis_conn = ibis.connect(uri)
-            print(mapping['ibis'])
             return mapping['ibis'](ibis_conn, name)
         else:
             assert type == 'metadata'

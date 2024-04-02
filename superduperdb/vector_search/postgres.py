@@ -4,7 +4,7 @@ import numpy
 from pgvector.psycopg import psycopg, register_vector
 
 
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem, VectorIndexMeasureType
 
 
 class PostgresVectorSearcher(BaseVectorSearcher):
@@ -30,14 +30,9 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         self.connection = psycopg.connect(conninfo=conninfo)
         self.dimensions = dimensions
         self.identifier = identifier
-        if measure == "l2" or not measure:
-            self.measure_query = "embedding <-> '%s'"
-        elif measure == "dot":
-            self.measure_query = "(embedding <#> '%s') * -1"
-        elif measure == "cosine":
-            self.measure_query = "1 - (embedding <=> '%s')"
-        else:
-            raise NotImplementedError("Unrecognized measure format")
+        self.measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
+        self.measure_query = self.get_measure_query()
+
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
             cursor.execute(
@@ -55,6 +50,16 @@ class PostgresVectorSearcher(BaseVectorSearcher):
                 'SELECT COUNT(*) FROM %s' % self.identifier
             ).fetchone()[0]
         return length
+    
+    def get_measure_query(self):
+        if self.measure.value == "l2":
+            return "embedding <-> '%s'"
+        elif self.measure.value == "dot":
+            return "(embedding <#> '%s') * -1"
+        elif self.measure.value == "cosine":
+            return "1 - (embedding <=> '%s')"
+        else:
+            raise NotImplementedError("Unrecognized measure format")
 
 
     def _create_or_append_to_dataset(self, vectors, ids):

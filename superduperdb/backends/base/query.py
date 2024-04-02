@@ -33,6 +33,25 @@ def _check_illegal_attribute(name):
 
 
 @dc.dataclass(repr=False)
+class Models(Serializable):
+    def predict_one(self, *args, **kwargs):
+        pass
+
+    def predict(self, *args, **kwargs):
+        pass
+
+
+@dc.dataclass(repr=False)
+class PredictOne(Serializable, ABC):
+    model: str
+    args: t.Sequence = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def execute(self, db):
+        return db.models[self.model].predict_one(*self.args, **self.kwargs)
+
+
+@dc.dataclass(repr=False)
 class Select(Serializable, ABC):
     """
     Base class for all select queries.

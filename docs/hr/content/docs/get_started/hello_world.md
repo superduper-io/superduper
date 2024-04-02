@@ -1,10 +1,10 @@
 ---
-sidebar_position: 3
+sidebar_position: 5
 tags:
   - quickstart
 ---
 
-# Minimum working example
+# Hello world 
 
 To check that everything is working correctly cut and paste this code into a Jupyter notebook.
 

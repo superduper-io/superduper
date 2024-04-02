@@ -75,7 +75,6 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-
             assert not isinstance(self.indexing_listener, str)
         available_keys = list(document.keys())
 
@@ -85,7 +84,6 @@ class VectorIndex(Component):
             if isinstance(k, str):
                 if k in available_keys:
                     model_name, key = m, k
-
             elif isinstance(k, (tuple, list)):
                 if all([i in available_keys for i in list(k)]):
                     model_name, key = m, k

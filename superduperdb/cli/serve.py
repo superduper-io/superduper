@@ -45,5 +45,4 @@ def ray_serve(
 @command(help='Start FastAPI REST server')
 def rest():
     from superduperdb.rest.app import app
-
     app.start()

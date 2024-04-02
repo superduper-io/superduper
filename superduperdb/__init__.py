@@ -17,7 +17,7 @@ from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
 from .components.metric import Metric
-from .components.model import Model, ObjectModel
+from .components.model import Model, ObjectModel, objectmodel
 from .components.schema import Schema
 from .components.vector_index import VectorIndex, vector
 
@@ -33,6 +33,7 @@ __all__ = (
     'Document',
     'ObjectModel',
     'Model',
+    'objectmodel',
     'Listener',
     'VectorIndex',
     'vector',

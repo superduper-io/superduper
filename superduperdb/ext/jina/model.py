@@ -5,13 +5,13 @@ import tqdm
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.components.model import APIModel
+from superduperdb.components.model import APIBaseModel
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.jina.client import JinaAPIClient
 
 
 @dc.dataclass(kw_only=True)
-class Jina(APIModel):
+class Jina(APIBaseModel):
     """Cohere predictor"""
 
     api_key: t.Optional[str] = None

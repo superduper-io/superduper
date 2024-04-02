@@ -5,12 +5,14 @@ import magic
 from fastapi import File, Response
 
 from superduperdb import CFG, logging
+from superduperdb.backends.base.query import Delete, Insert
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.vector_index import VectorIndex
+from superduperdb.ext.pillow.encoder import image_type
 from superduperdb.ext.sklearn.model import Estimator
 from superduperdb.ext.torch.model import TorchModel
 
@@ -30,27 +32,12 @@ CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
         'ObjectModel': ObjectModel,
         'TorchModel': TorchModel,
         'SklearnEstimator': Estimator,
-        # 'TransformersTextClassifier': TextClassificationPipeline,
-        # 'SentenceTransformer': SentenceTransformer,
-        # 'OpenAILLM': OpenAILLM,
-        # 'TransformersLLM': LLM,
-        # 'VllmLLM': VllmAPI,
     },
     'datatype': {
-        # 'numpy-array': array,
-        # 'torch-tensor': tensor,
-        # 'image': image_type,
+        'image': image_type,
         'DataType': DataType,
     },
-    # 'trainer': {
-    #     'TorchTrainer': TorchTrainer,
-    #     'SklearnTrainer': SklearnTrainer,
-    #     'TransformersTrainer': TransformersTrainer,
-    # },
     'vector-index': {'VectorIndex': VectorIndex},
-    # 'schema': {'Schema': Schema},
-    # 'table': {'Table': Table},
-    'metric': {'Metric': Metric},
 }
 
 
@@ -73,7 +60,7 @@ def build_app(app: superduperapp.SuperDuperApp):
     """
 
     @app.add('/spec/show', method='get')
-    def show_spec():
+    def spec_show():
         # Get the schemas for all components.
         # route: /spec/show
         # response:
@@ -98,31 +85,8 @@ def build_app(app: superduperapp.SuperDuperApp):
         #     }
         return API_SCHEMAS
 
-    @app.add('/spec/model', method='get')
-    def model_spec(identifier):
-        # route: /spec/model?identifier=test
-        # response:
-        # [
-        #    {"a": {"type": "int", "optional": true, "default": 1}},
-        #    {"a": {"type": "json", "default": {"this": "is", "a": "test"}}},
-        # ]
-        model = app.db.models[identifier]
-        return model.predict_schema
-
-    @app.add('/model/predict_one', method='get')
-    def predict_one(identifier: str, input: t.Dict):
-        # route: /model/predict_one?identifier=test
-        # data:
-        #     {"a": 1, "b": 2}
-        # response:
-        #     {"_base": "The capital of France is Paris."}
-        input = Document(input).unpack()
-        model = app.db.models[identifier]
-        output = model.predict_one(**input)
-        return Document({'_base': output}).encode()
-
     @app.add('/db/artifact_store/save_artifact', method='put')
-    def create_artifact(datatype: str, raw: bytes = File(...)):
+    def db_artifact_store_save_artifact(datatype: str, raw: bytes = File(...)):
         # route: /db/artifact_store/create_artifact?datatype=image
         # data:
         #     b'...'  (image data)
@@ -132,7 +96,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         return {'file_id': r['file_id']}
 
     @app.add('/db/artifact_store/get_artifact', method='get')
-    def get_artifact(file_id: str, datatype: t.Optional[str] = None):
+    def db_artifact_store_get_artifact(file_id: str, datatype: t.Optional[str] = None):
         # route: db/artifact_store/get_artifact?
         #        file_id=0123456789abcdef126784a&datatype=image
         # response:
@@ -147,8 +111,8 @@ def build_app(app: superduperapp.SuperDuperApp):
             media_type = datatype.media_type
         return Response(content=bytes, media_type=media_type)
 
-    @app.add('/db/add', method='post')
-    def add(info: t.Dict):
+    @app.add('/db/apply', method='post')
+    def db_apply(info: t.Dict):
         # route: /db/add
         # data:
         #     {
@@ -282,7 +246,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         # response:
         #     {"status": "ok"}
         component = Component.import_from_references(info, db=app.db)
-        app.db.add(component)
+        app.db.apply(component)
         return {'status': 'ok'}
 
     @app.add('/db/remove', method='post')
@@ -292,10 +256,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         #     {"status": "ok"}
         app.db.remove(type_id=type_id, identifier=identifier)
         return {'status': 'ok'}
-
-    @app.add('/db/databackend/list_tables_or_collections', method='get')
-    def db_databackend_list_tables_or_collections():
-        return app.db.databackend.list_tables_or_collections()
 
     @app.add('/db/show', method='get')
     def db_show(type_id: t.Optional[str] = None, identifier: t.Optional[str] = None):
@@ -316,26 +276,32 @@ def build_app(app: superduperapp.SuperDuperApp):
         return app.db.show(type_id=type_id, identifier=identifier)
 
     @app.add('/db/metadata/show_jobs', method='get')
-    def get_jobs(type_id: str, identifier: t.Optional[str] = None):
+    def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
         # route: /db/metadata/show_jobs?type_id=model&identifier=test
         # response:
         #     ['012060eef', '012060eef', '012060eef', '012060eef']
         return app.db.metadata.show_jobs(type_id=type_id, identifier=identifier)
 
     @app.add('/db/execute', method='post')
-    def execute(
+    def db_execute(
         query: t.List[str],
         documents: t.Optional[t.List[t.Dict]] = None,
         artifacts: t.Optional[t.List[str]] = None,
-        skip: int = 0,
-        limit: int = 10,
     ):
         # route: /db/execute?query=["docs.find({},{})"]&documents=[]
         # .      &artifacts=[]&skip=0&limit=10
         # response:
         #     [{"a": "Moscow."}, {"a": "Paris."}, {"a": "London."}]
-        query = parse_query(query, documents, artifacts)
+        query = parse_query(query, documents, artifacts, db=app.db)
+
+        logging.info('processing this query:')
+        logging.info(query)
+
         result = app.db.execute(query)
+
+        if isinstance(query, Insert) or isinstance(query, Delete):
+            return {'_base': [str(x) for x in result[0]]}
+
         logging.warn(str(query))
         if isinstance(result, Document):
             result = [result]
@@ -348,6 +314,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         for r in out:
             del r['_id']
         return out
-
+    
 
 build_app(app)

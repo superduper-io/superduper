@@ -1,5 +1,6 @@
 import dataclasses as dc
 import importlib
+import inspect
 import typing as t
 from copy import deepcopy
 
@@ -22,6 +23,8 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
     if 'cls' in r and 'module' in r and 'dict' in r:
         module = importlib.import_module(r['module'])
         cls_ = getattr(module, r['cls'])
+        if inspect.isfunction(cls_):
+            return cls_(**r['dict'])
         kwargs = _from_dict(r['dict'], db=db)
         kwargs_init = {k: v for k, v in kwargs.items() if k not in cls_.set_post_init}
         kwargs_post_init = {k: v for k, v in kwargs.items() if k in cls_.set_post_init}

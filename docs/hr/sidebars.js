@@ -74,7 +74,6 @@ const sidebars = {
         id: 'docs/execute_api/overview',
       },
       items: [
-        'docs/execute_api/overview',
         {
           type: 'category',
           label: 'Inserting data',
@@ -84,6 +83,7 @@ const sidebars = {
           },
           items: [
             'docs/execute_api/data_encodings_and_schemas',
+            'docs/execute_api/basic_insertion',
             'docs/execute_api/encoding_special_data_types',
             'docs/execute_api/using_hybrid_storage_to_handle_large_data_blobs',
             'docs/execute_api/referring_to_data_from_diverse_sources',

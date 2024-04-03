@@ -719,6 +719,33 @@ class Model(Component):
             identifier=outputs,
         )
 
+    def to_listener(
+        self,
+        key: ModelInputType,
+        select: CompoundSelect,
+        identifier='',
+        predict_kwargs: t.Optional[dict] = None,
+        **kwargs,
+    ):
+        """
+        Convert the model to a listener.
+        :param key: Key to be bound to model
+        :param select: Object for selecting which data is processed
+        :param identifier: A string used to identify the model.
+        :param predict_kwargs: Keyword arguments to self.model.predict
+        """
+        from superduperdb.components.listener import Listener
+
+        listener = Listener(
+            key=key,
+            select=select,
+            model=self,
+            identifier=identifier,
+            predict_kwargs=predict_kwargs or {},
+            **kwargs,
+        )
+        return listener
+
 
 @dc.dataclass(kw_only=True)
 class _DeviceManaged:

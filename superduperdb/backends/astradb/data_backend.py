@@ -53,6 +53,7 @@ class AstraDataBackend(BaseDataBackend):
         return FileSystemArtifactStore(conn='.superduperdb/artifacts/', name='astra')
 
     def get_table_or_collection(self, identifier):
+        self.db.create_collection(collection_name=identifier)
         return self.db.collection(identifier)
 
     def drop(self, force: bool = False):
@@ -103,3 +104,6 @@ class AstraDataBackend(BaseDataBackend):
         Disconnect the client
         """
         pass
+
+    def list_tables_or_collections(self):
+        return self.db.get_collections().get('status')['collections']

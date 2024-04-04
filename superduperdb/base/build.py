@@ -7,6 +7,7 @@ import ibis
 import mongomock
 import pandas
 import pymongo
+from astrapy.db import AstraDB
 
 import superduperdb as s
 from superduperdb import logging
@@ -117,6 +118,19 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
         name = uri.split('/')[-1]
         conn = mongomock.MongoClient()
         return mapping['mongodb'](conn, name)
+    
+    elif "astra.datastax.com" in uri:
+        api_endpoint = '/'.join(uri.split('/')[:-2])
+        token= uri.split('/')[-1]
+        if not token:
+            raise ValueError('ASTRA_DB_TOKEN not found in uri')
+        name = uri.split('/')[-2]
+        conn = AstraDB(
+            token=token,
+            api_endpoint=api_endpoint,
+            namespace=name,
+        )
+        return mapping['astradb'](conn, name)
 
     elif uri.endswith('.csv'):
         if type == 'metadata':

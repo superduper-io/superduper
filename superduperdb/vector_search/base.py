@@ -176,10 +176,9 @@ def cosine(x, y):
     '''
     Cosine similarity function for vector search
     '''
-    x = x.astype(float)
-    y = y.astype(float)
     x = x / numpy.linalg.norm(x, axis=1)[:, None]
-    y = y / numpy.linalg.norm(y, axis=1)[:, None]
+    # y which implies all vectors in vectordatabase
+    # has normalized vectors.
     return dot(x, y)
 
 

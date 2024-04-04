@@ -18,37 +18,6 @@ No, SuperDuperDB is not a vector-database. It is a versatile Python framework th
 </details>
 
 <details>
-<summary>What's the difference between SuperDuperDB and MindsDB?</summary>
-
-The main differences between SuperDuperDB and MindsDB are outlined below:
-
-1. **Developer Experience:**
-   - **MindsDB:** Requires learning a new language created by MindsDB.
-   - **SuperDuperDB:** Only requires proficiency in Python and familiar database query languages/operators.
-
-2. **Integration with Python Ecosystem:**
-   - **MindsDB:** Utilizes a cloaked connection between data sources and Python models.
-   - **SuperDuperDB:** Offers full transparency in the notebook, allowing for granular output inspection, debugging, and visualization within known Python environments and tools.
-
-3. **Vector Search:**
-   - **MindsDB:** Does not support native vector embedding, resulting in no natively supported vector search capability.
-   - **SuperDuperDB:** Supports vectors in any format, including raw, and integrates various vector search solutions; this includes images and videos.
-
-4. **Support for Flexible Data Types:**
-   - **MindsDB:** Limited to handling text and numbers only.
-   - **SuperDuperDB:** Supports any datatype, providing flexibility in managing diverse data types.
-
-5. **Multi-Tenant (Multi Data Store):**
-   - **MindsDB:** Does not separate data source, model registry, and metadata.
-   - **SuperDuperDB:** Allows different locations for data stores, models, and metadata, facilitating multi-data store setups that can share the same models.
-
-6. **Bringing Your Own Models:**
-   - **MindsDB:** Requires rewriting and reorganization of your model when bringing your own models.
-   - **SuperDuperDB:** Enables the use of your framework natively without requiring any adaptation when bringing your own models.
-</details>
-
-
-<details>
 <summary>Is plugging `superduperdb` directly into a database secure? What precautions are in place, and can I restrict access to specific tables, such as a users table?</summary>
 
 To adhere to the principle of least privilege, SuperDuperDB requires read-only access to the tables you intend to `index`.

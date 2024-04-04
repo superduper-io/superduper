@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Run Tests from within the container
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
+- Make vectors normalized in inmemory vector database for cosine measure.
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment

@@ -11,7 +11,7 @@
 
 <div align="center">
 
-## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://blog.superduperdb.com/"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://demo.superduperdb.com"><strong> Live Notebooks</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://blog.superduperdb.com"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://docs.superduperdb.com/docs/docs/get_started/installation"><strong> Installation</strong></a> | <a href="https://github.com/SuperDuperDB/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
 
 </div>
 
@@ -51,7 +51,7 @@ SuperDuperDB は複雑な MLOps パイプラインや特殊なベクターデー
 - 超特殊モデルを含む高度にカスタム化された AI ユースケース
 
 **はじめに:**
-私たちがすでに実装したユースケースを[ドキュメント](https://docs.superduperdb.com/docs/category/use-cases)で、またコミュニティによって専用の [superduper-community-apps リポジトリ](https://github.com/SuperDuperDB/superduper-community-apps) で構築されたアプリをチェックし、[ブラウザで Jupyter](https://demo.superduperdb.com/) でそれらすべてを試してみてください！
+私たちがすでに実装したユースケースを[ドキュメント](https://docs.superduperdb.com/docs/category/use-cases)で、またコミュニティによって専用の [superduper-community-apps リポジトリ](https://github.com/SuperDuperDB/superduper-community-apps)
 
 `SuperDuperDB はオープンソースです: プロジェクトをサポートするために star してください！ ⭐`
 
@@ -244,70 +244,20 @@ m = db.add(
 
 ## 機能例
 
-すぐに使える notebook [ブラウザでライブ](https://demo.superduperdb.com)をお試しください。
 
-また、[superduper-community-apps リポジトリ](https://github.com/SuperDuperDB/superduper-community-apps)で、コミュニティによって構築されたユースケースやアプリも見つけることができます。
-
-
-<table>
-  <tr>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/multimodal_image_search_clip.ipynb">Text-To-Image 検索</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/video_search.ipynb">Text-To-Video 検索</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/question_the_docs.ipynb">ドキュメントに質問する</a>
-    </th>
-  </tr>
-  <tr>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
-      </a>
-    </td>
-    <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">
-        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/vector_search.ipynb">セマンティック検索エンジン</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/mnist_torch.ipynb">古典的な機械学習</a>
-    </th>
-    <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/transfer_learning.ipynb">フレームワーク横断的学習</a>
-    </th>
-  </tr>
-</table>
-
+| 名前                                                      | リンク                                                                                                                                                                                                                                               |
+|---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ChatGPTを使ってSnowflakeとチャットする                             | <a href="https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
+| MnistとMongoDBを使用したストリーミング推論                          | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| SQLデータベースを使ったマルチモーダルベクトル検索                     | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sql-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| CLIPモデルを使ってテキストと画像を繋げる                            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/multimodal_image_search_clip.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
+| ChatGTPを使ってあなたの文書に質問する                              | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| Vllmを使ってあなたの文書に質問する                                 | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| DaskとMiniLMモデルを使用した高スループットの埋め込み                   | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sandbox-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>               |
+| TransformersとScikitの間の転移学習                                | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
+| 宣言型モデルチェーン                                             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning_declarative.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| CLIPモデルを使用してビデオを検索                                 | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/video_search.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                  |
+| LibriSpeechとチャット補完を使ったボイスアシスタント                    | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/voice_memos.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
 
 
 ## インストール

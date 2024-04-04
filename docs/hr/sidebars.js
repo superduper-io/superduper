@@ -221,22 +221,14 @@ const sidebars = {
         'docs/fundamentals/glossary',
         'docs/fundamentals/design',
         'docs/fundamentals/datalayer_overview',
-        {
-          type: 'category',
-          label: 'Components',
-          link: {
-            type: 'doc',
-            id: 'docs/fundamentals/component_abstraction',
-          },
-          items: [
-            'docs/fundamentals/document_encoder_abstraction',
-            'docs/fundamentals/predictors_and_models',
-            'docs/fundamentals/procedural_vs_declarative_api',
-            'docs/fundamentals/component_versioning',
-          ]
-           },
-           'docs/fundamentals/vector_search_algorithm',
-        ]
+        'docs/fundamentals/document_encoder_abstraction',
+        'docs/fundamentals/serializables',
+        'docs/fundamentals/component_abstraction',
+        'docs/fundamentals/component_versioning',
+        'docs/fundamentals/declarative_api',
+        'docs/fundamentals/predictors_and_models',
+        'docs/fundamentals/vector_search_algorithm',
+      ]
     },
     // {
     //   type: 'category',

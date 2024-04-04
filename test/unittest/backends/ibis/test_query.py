@@ -76,7 +76,9 @@ def duckdb(monkeypatch):
             identifier='test',
             datatype=array('float64', shape=(32,)),
         )
-        model.predict_in_db('x', select=t, db=db)
+        output_table = db.databackend.create_output_dest('test::0', model.datatype)
+        db.add(output_table)
+        model.predict_in_db('x', select=t, db=db, predict_id='test::0')
 
         _, s = db.add(
             Table(
@@ -118,10 +120,10 @@ def test_auto_inference_primary_id():
 
 def test_renamings(duckdb):
     t = duckdb.load('table', 'test')
-    q = t.outputs(x='test')
+    q = t.outputs('test::0')
     print(q)
-    data = duckdb.execute(t.outputs(x='test'))
-    assert isinstance(data[0]['_outputs.x.test.0'], numpy.ndarray)
+    data = duckdb.execute(t.outputs('test::0'))
+    assert isinstance(data[0]['_outputs.test::0'], numpy.ndarray)
 
 
 def test_serialize_deserialize():

@@ -1,12 +1,10 @@
-# Chat with your Snowflake Database Using OpenAI (RAG)
+# Chat with your Database
 
-<!-- ## Chatting instantly with a 10-million-record SQL database using SuperDuperDB and OpenAI. -->
+## Chatting instantly with a 10-million-record SQL database using SuperDuperDB and OpenAI.
 
 Imagine chatting with your database using just a few lines of code. Sounds unbelievable, right? Well, believe it! We'll show you how you can effortlessly chat with a huge database containing 10 million business records—all with just a few lines of SuperDuperDB code. 
 
 Here is the behemoth 10M dataset: [FREE COMPANY DATASET](https://app.snowflake.com/marketplace/listing/GZSTZRRVYL2/people-data-labs-free-company-dataset)
-
-Here is the [Google Colab Notebook](https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp) for you to quickstart!
 
 Chatting with this type of massive dataset using the standard RAG pipeline is next to impossible due to the cost and scale. However, with SuperDuperDB, you can achieve the same functionality with just a few lines of code.
 
@@ -27,7 +25,7 @@ Let's bring AI into your database! 🚀
 
 ```python
 # Only one dependency
-# !pip install superduperdb openai
+# %pip install superduperdb
 
 # Import SuperDuperDB and connect your database
 from superduperdb import superduper

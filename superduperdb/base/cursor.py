@@ -25,6 +25,7 @@ class SuperDuperCursor:
     id_field: str
     db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
+    decode_function: t.Optional[t.Callable] = None
 
     _it: int = 0
 
@@ -37,6 +38,7 @@ class SuperDuperCursor:
             id_field=self.id_field,
             db=self.db,
             scores=self.scores,
+            decode_function=self.decode_function,
         )
 
     def cursor_next(self):
@@ -53,6 +55,8 @@ class SuperDuperCursor:
 
     def __next__(self):
         r = self.cursor_next()
+        if self.decode_function is not None:
+            r = self.decode_function(r)
         if self.scores is not None:
             r['score'] = self.scores[str(r[self.id_field])]
         # TODO handle with lazy loading

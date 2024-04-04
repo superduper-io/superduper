@@ -2,7 +2,7 @@
 sidebar_position: 21
 ---
 
-# Applying the models 
+# Applying models and predictors to data
 
 `Model` and `Predictor` instances may be applied directly to data in the database without first fetching the data client-side.
 
@@ -211,7 +211,7 @@ Using `db.predict`, model predictions may be augmented with data from the databa
 I.e. the following are equivalent:
 
 ```python
-db.predict('my-model', input=<input_data>, context_select=<query>)
+db.predict('my-model, input=<input_data>, context_select=<query>)
 ```
 
 ... and

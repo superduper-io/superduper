@@ -7,6 +7,7 @@ from traceback import format_exc
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prettytable import PrettyTable
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -53,7 +54,7 @@ class SuperDuperApp:
     fastapi application in the realm of superduperdb.
     """
 
-    def __init__(self, service='vector_search', port=8000):
+    def __init__(self, service='vector_search', port=8000, db: Datalayer = None):
         self.service = service
         self.port = port
 
@@ -65,6 +66,19 @@ class SuperDuperApp:
         self._user_shutdown = False
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
+        self._app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # You can specify a list of allowed origins here
+            allow_credentials=True,
+            allow_methods=[
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+            ],  # You can adjust these as per your needs
+            allow_headers=["*"],  # You can specify allowed headers here
+        )
+        self._db = db
 
     @cached_property
     def app(self):
@@ -133,20 +147,20 @@ class SuperDuperApp:
             self.shutdown()
         assert self.app
 
+    def run(self):
+        uvicorn.run(
+            self._app,
+            host=self.app_host,
+            port=self.port,
+        )
+
     def start(self):
         """
         This method is used to start the application server
         """
         self.pre_start()
-
         self.print_routes()
-
-        uvicorn.run(
-            self._app,
-            host=self.app_host,
-            port=self.port,
-            reload=False,
-        )
+        self.run()
 
     def startup(self, function=None, cfg=None):
         """
@@ -157,7 +171,10 @@ class SuperDuperApp:
         @self._app.on_event('startup')
         def startup_db_client():
             sys.path.append('./')
-            db = build_datalayer(cfg)
+            if self._db is None:
+                db = build_datalayer(cfg)
+            else:
+                db = self._db
             db.server_mode = True
             if function:
                 function(db=db)

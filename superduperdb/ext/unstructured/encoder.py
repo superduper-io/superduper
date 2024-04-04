@@ -1,8 +1,6 @@
-import dataclasses as dc
 import pickle
 import typing as t
 
-# TODO add initialization code ensuring a version range for this code
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 from unstructured.partition.html import partition_html
@@ -29,7 +27,7 @@ def link2elements(link, unstructure_kwargs):
 
 
 def create_encoder(unstructure_kwargs):
-    def encoder(x: t.Union[str, t.List[Element]]):
+    def encoder(x: t.Union[str, t.List[Element]], info: t.Optional[t.Dict] = None):
         if isinstance(x, str):
             elements = link2elements(x, unstructure_kwargs)
         elif isinstance(x, list) and isinstance(x[0], Element):
@@ -42,13 +40,13 @@ def create_encoder(unstructure_kwargs):
 
 
 def create_decoder():
-    def decoder(b: bytes):
+    def decoder(b: bytes, info: t.Optional[t.Dict] = None):
         try:
             return pickle.loads(b)
         except Exception as e:
             # TODO: A compatibility issue with unstructured when using uri
             # When superduperdb download uri and pass the bytes to the decoder,
-            # the file type message is lost, unstructured cannot  automatically parse.
+            # the file type message is lost, unstructured cannot automatically parse.
             raise ValueError(
                 "Cannot parse the bytes from uri data, please use encoder(x=uri)"
             ) from e
@@ -56,16 +54,19 @@ def create_decoder():
     return decoder
 
 
-@dc.dataclass
-class UnstructuredEncoder(DataType):
-    unstructure_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
-
-    def __post_init__(self):
-        self.encoder = create_encoder(self.unstructure_kwargs)
-        self.decoder = create_decoder()
-        super().__post_init__()
-
-
-unstructured_encoder = UnstructuredEncoder(
+unstructured_encoder = DataType(
     identifier="unstructured",
+    encoder=create_encoder({}),
+    decoder=create_decoder(),
 )
+
+
+def create_unstructured_encoder(identifier, **unstructure_kwargs):
+    assert (
+        isinstance(identifier, str) and identifier != "unstructured"
+    ), 'identifier must be a string and not "unstructured"'
+    return DataType(
+        identifier=identifier,
+        encoder=create_encoder(unstructure_kwargs),
+        decoder=create_decoder(),
+    )

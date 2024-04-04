@@ -1,8 +1,9 @@
 ---
 sidebar_position: 4
 ---
+# Chunked
 
-# Vector-Search Using Chunked Data on MongoDB
+## Implementing Chunked Vector Search with Multiple Inputs per Document
 
 Let's find specific text within documents using vector-search. In this
 example, we show how to do vector-search. But here, we want to go one
@@ -159,7 +160,7 @@ from superduperdb import VectorIndex, Listener
 from superduperdb.ext.openai import OpenAIEmbedding
 
 # Create an instance of the OpenAIEmbedding model with 'text-embedding-ada-002'
-model = OpenAIEmbedding(identifier= 'text-embedding-ada-002', model='text-embedding-ada-002')
+model = OpenAIEmbedding(model='text-embedding-ada-002')
 
 
 # Add a VectorIndex to the database

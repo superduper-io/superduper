@@ -8,11 +8,11 @@ from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
 assert (
-    CFG.cluster.is_remote_vector_search
+    CFG.cluster.vector_search.uri is not None
 ), "Set a correct uri for `cluster.vector_search`"
 
 
-port = int(CFG.cluster.vector_search.split(':')[-1])
+port = int(CFG.cluster.vector_search.uri.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 
 
@@ -25,6 +25,12 @@ class VectorItem(BaseModel):
 def create_search(vector_index: str, db: Datalayer = DatalayerDependency()):
     service.create_search(vector_index=vector_index, db=db)
     return {'message': 'Vector index created successfully'}
+
+
+@app.add("/create/post_create", status_code=200, method='get')
+def post_create(vector_index: str, db: Datalayer = DatalayerDependency()):
+    service.post_create(vector_index=vector_index, db=db)
+    return {'message': 'Post create executed successfully'}
 
 
 @app.add("/query/id/search", method='post')

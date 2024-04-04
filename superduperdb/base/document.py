@@ -1,4 +1,3 @@
-import dataclasses as dc
 import typing as t
 
 from bson.objectid import ObjectId
@@ -22,12 +21,12 @@ if t.TYPE_CHECKING:
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
-_OUTPUTS_KEY: str = '_outputs'
 _LEAF_TYPES = {
     'component': Component,
     'serializable': Serializable,
 }
 _LEAF_TYPES.update(_ENCODABLES)
+_OUTPUTS_KEY = '_outputs'
 
 
 class Document(MongoStyleDict):
@@ -44,7 +43,7 @@ class Document(MongoStyleDict):
         self,
         schema: t.Optional['Schema'] = None,
         leaf_types_to_keep: t.Sequence[t.Type] = (),
-    ) -> t.Tuple[dict, t.List[Leaf]]:
+    ) -> t.Dict:
         """Make a copy of the content with all the Leaves encoded"""
         if schema is not None:
             return _encode_with_schema(dict(self), schema)
@@ -67,22 +66,6 @@ class Document(MongoStyleDict):
             self, db, **kwargs
         )  # replace variables with values
         return Document(**content)
-
-    def outputs(self, key: str, model: str, version: t.Optional[int] = None) -> t.Any:
-        """
-        Get document ouputs on ``key`` from ``model``
-
-        :param key: Document key to get outputs from.
-        :param model: Model name to get outputs from.
-        """
-        r = MongoStyleDict(self.unpack())
-        if version is not None:
-            document = r[f'{_OUTPUTS_KEY}.{key}.{model}.{version}']
-        else:
-            tmp = r[f'{_OUTPUTS_KEY}.{key}.{model}']
-            version = max(list(tmp.keys()))
-            return tmp[version]
-        return document
 
     @staticmethod
     def decode(
@@ -151,14 +134,6 @@ def _decode(
         return r
 
 
-@dc.dataclass
-class Reference(Serializable):
-    identifier: str
-    leaf_type: str
-    path: t.Optional[str] = None
-    db: t.Optional['Datalayer'] = None
-
-
 def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, dict):
         for k, v in r.items():
@@ -170,8 +145,7 @@ def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, list):
         for i, x in enumerate(r):
             if isinstance(x, Leaf):
-                ref = Reference(x.unique_id, leaf_type=x.leaf_type)
-                r[i] = ref
+                r[i] = f'${x.leaf_type}/{x.unique_id}'
                 references[x.leaf_type][x.unique_id] = x
             else:
                 _encode_with_references(x, references=references)
@@ -203,7 +177,7 @@ def _encode_with_schema(r: t.Any, schema: 'Schema') -> t.Any:
         for k, v in r.items():
             if isinstance(schema.fields.get(k, None), DataType):
                 assert isinstance(schema.fields[k], DataType)
-                out[k] = schema.fields[k].encode_data(v)  # type: ignore[union-attr]
+                out[k] = schema.fields[k].encode_data(v)
             else:
                 tmp = _encode_with_schema(v, schema)
                 out[k] = tmp

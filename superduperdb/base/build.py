@@ -147,24 +147,10 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
 def _build_compute(compute):
     logging.info("Connecting to compute client:", compute)
 
-    if compute == 'local' or compute is None:
+    if compute is None:
         return LocalComputeBackend()
 
-    if compute == 'dask+thread':
-        from superduperdb.backends.dask.compute import DaskComputeBackend
-
-        return DaskComputeBackend('local', local=True)
-
-    if compute.split('://')[0] == 'dask+tcp':
-        from superduperdb.backends.dask.compute import DaskComputeBackend
-
-        uri = compute.split('+')[-1]
-        return DaskComputeBackend(uri)
-
-    if compute.split('://')[0] == 'ray':
-        return RayComputeBackend(compute)
-
-    raise ValueError('Compute {compute} is not a valid compute configuration.')
+    return RayComputeBackend(compute)
 
 
 def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
@@ -180,35 +166,19 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     # Configuration
     # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
-    cfg = cfg or s.CFG
+    cfg = (cfg or s.CFG)(**kwargs)
 
-    # Update configuration with keyword arguments.
-    for k, v in kwargs.items():
-        if '__' in k:
-            getattr(cfg, k.split('__')[0]).force_set(k.split('__')[1], v)
-        else:
-            cfg.force_set(k, v)
-
-    # Build databackend
     databackend = _build_databackend(cfg, databackend)
 
-    # Build metadata store
     metadata = _build_metadata(cfg, databackend)
     assert metadata
 
-    # Build artifact store
     artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
+    compute = _build_compute(cfg.cluster.compute.uri)
 
-    # Build compute
-    compute = _build_compute(cfg.cluster.compute)
-
-    # Build DataLayer
-    # ------------------------------
-    db = Datalayer(
+    return Datalayer(
         databackend=databackend,
         metadata=metadata,
         artifact_store=artifact_store,
         compute=compute,
     )
-
-    return db

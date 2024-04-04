@@ -1,3 +1,11 @@
-from .model import Pipeline  # , TransformersTrainerConfiguration
+from superduperdb.misc.annotations import requires_packages
 
-__all__ = ('Pipeline',)  #'TransformersTrainerConfiguration'
+requires_packages(
+    ['transformers', '4.29.1'],
+    ['datasets', '2.18.0'],
+)
+
+from .model import LLM, TextClassificationPipeline
+from .training import LLMTrainer
+
+__all__ = ('TextClassificationPipeline', 'LLM', 'LLMTrainer')

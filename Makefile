@@ -1,5 +1,6 @@
 DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
+BACKENDS ?= mongodb_community sqlite duckdb
 
 export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
@@ -31,8 +32,9 @@ help: ## Display this help
 # Update this value when you upgrade the version of your project.
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
-
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
+CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
+
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -57,13 +59,12 @@ install-devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	python -m pip install pre-commit
-	#pre-commit autoupdate
 
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser
 
 	@echo "Download Code Quality dependencies"
-	python -m pip install --user black ruff mypy types-PyYAML types-requests interrogate
+	python -m pip install --user black==23.3 ruff mypy types-PyYAML types-requests interrogate
 
 	@echo "Download Code Testing dependencies"
 	python -m pip install --user pytest pytest-cov "nbval>=0.10.0"
@@ -99,7 +100,7 @@ lint-and-type-check: ##  Perform code linting and type checking
 	# Check for deadcode
 	# vulture ./
 
-fix-and-test: ##  Lint the code before testing
+fix-and-check: ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting
@@ -118,7 +119,7 @@ build_superduperdb: ## Build a minimal Docker image for general use
 	--build-arg BUILD_ENV="release"
 
 
-push_superduperdb: ## Push the superduperdb/superduperdb:latest image
+push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
 	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
@@ -127,12 +128,23 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 	docker push superduperdb/superduperdb:latest
 
 
-
 testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
-	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	python -m pip install toml
+	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
+	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg SUPERDUPERDB_EXTRAS="dev" \
+		--build-arg REQUIREMENTS_FILE="deploy/testenv/optional_requirements.txt" \
+
+
+build_nightly: ## Build superduperdb/nightly:<commit> image
+	echo "===> build superduperdb/superduperdb:$(CURRENT_COMMIT)"
+	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/nightly:$(CURRENT_COMMIT) --progress=plain --no-cache \
+	--build-arg BUILD_ENV="nightly"
+
+push_nightly: ## Push the superduperdb/nightly:<commit> image
+	@echo "===> release superduperdb/nightly:$(CURRENT_COMMIT)"
+	docker push superduperdb/nightly:$(CURRENT_COMMIT)
 
 
 ##@ Testing Environment
@@ -155,7 +167,7 @@ testenv_init: ## Initialize a local Testing environment
 
 	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
 	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
-
+	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
 
 	@echo "===> Run TestEnv"
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
@@ -163,27 +175,53 @@ testenv_init: ## Initialize a local Testing environment
 	@echo "===> Waiting for TestEnv to become ready"
 	@cd deploy/testenv/; ./wait_ready.sh
 
+testenv_init_mongodb: ## Initialize a local Testing environment
+	@echo "===> Discover Hostnames"
+	@deploy/testenv/validate_hostnames.sh
+
+	@echo "===> Discover Paths"
+	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
+	echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+
+	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
+	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+
+	@echo "===> Run TestEnv MongoDB"
+	docker compose -f deploy/testenv/docker-compose.yaml up --detach mongodb --remove-orphans &
+
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
 
-
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 
 testdb_init: ## Initialize databases in Docker
+	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
 	cd deploy/databases/; docker compose up --remove-orphans &
 
 testdb_shutdown: ## Terminate Databases Containers
 	cd deploy/databases/; docker compose down
-
 
 ##@ CI Testing Functions
 
 unit-testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
-integration-testing: ## Execute integration testing
-	pytest $(PYTEST_ARGUMENTS) ./test/integration
+databackend-testing: ## Execute integration testing
+	@echo "TESTING BACKENDS"
+	@for backend in $(BACKENDS); do \
+		echo "TESTING $$backend"; \
+		SUPERDUPERDB_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
+	done
+	@echo "TODO -- implement more backends integration testing..."
+
+ext-testing: ## Execute integration testing
+	find ./test -type d -name __pycache__ -exec rm -r {} +
+	find ./test -type f -name "*.pyc" -delete
+	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
+
+smoke-testing: ## Execute smoke testing
+	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke
 
 test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"

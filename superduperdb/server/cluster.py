@@ -13,49 +13,52 @@ def _superduper_local_service(name, app, cfg=None):
     return Server(config=config)
 
 
-class _Client:
-    def __init__(self, db, services=()):
-        self.db = db
-        self.services = services
-        for service in services:
-            service.run_in_thread()
+# class _Client:
+#     def __init__(self, db, services=()):
+#         self.db = db
+#         self.services = services
+#         for service in services:
+#             service.run_in_thread()
 
-    def close(self):
-        self.db.compute.shutdown()
-        for service in self.services:
-            service.stop()
+#     def close(self):
+#         self.db.compute.shutdown()
+#         for service in self.services:
+#             service.stop()
 
 
-def local_cluster(db):
-    """
-    This method is used to create a local cluster consisting of
-    Vector search service, cdc service and dask setup.
+# def local_cluster(db):
+#     """
+#     This method is used to create a local cluster consisting of
+#     Vector search service, cdc service and dask setup.
 
-    Once this cluster is up, user can offload vector search,
-    cdc on these services.
-    """
-    from superduperdb import CFG
+#     Once this cluster is up, user can offload vector search,
+#     cdc on these services.
+#     """
+#     from superduperdb import CFG
 
-    # Vector search local service
-    CFG.force_set('cluster.vector_search', 'http://localhost:8000')
-    CFG.force_set('cluster.cdc', 'http://localhost:8001')
-    CFG.force_set('cluster.compute', 'dask+thread')
+#     # TODO do this immutably
+#     # Vector search local service
+#     CFG.force_set('cluster.vector_search', 'http://localhost:8000')
+#     CFG.force_set('cluster.cdc.uri', 'http://localhost:8001')
+#     CFG.force_set('cluster.compute.uri', 'dask+thread')
+#     cfg = CFG(
+#         cluster__vector_search='http://localhost:8000')
 
-    from superduperdb.vector_search.server.app import app as vector_search_app
+#     from superduperdb.vector_search.server.app import app as vector_search_app
 
-    vector_search_server = _superduper_local_service(
-        'vector_search', vector_search_app, CFG
-    )
+#     vector_search_server = _superduper_local_service(
+#         'vector_search', vector_search_app, CFG
+#     )
 
-    # Cdc local service
-    from superduperdb.cdc.app import app as cdc_app
+#     # Cdc local service
+#     from superduperdb.cdc.app import app as cdc_app
 
-    cdc_server = _superduper_local_service('cdc', cdc_app, CFG)
+#     cdc_server = _superduper_local_service('cdc', cdc_app, CFG)
 
-    # Local compute
-    from superduperdb.backends.dask.compute import DaskComputeBackend
+#     # Local compute
+#     from superduperdb.backends.dask.compute import DaskComputeBackend
 
-    local_compute = DaskComputeBackend('', local=True)
-    db.set_compute(local_compute)
+#     local_compute = DaskComputeBackend('', local=True)
+#     db.set_compute(local_compute)
 
-    return _Client(db=db, services=(cdc_server, vector_search_server))
+#     return _Client(db=db, services=(cdc_server, vector_search_server))

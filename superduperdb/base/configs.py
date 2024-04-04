@@ -1,4 +1,3 @@
-import dataclasses as dc
 import os
 import typing as t
 from dataclasses import dataclass
@@ -8,30 +7,19 @@ from pathlib import Path
 import yaml
 
 from . import config_dicts
-from .config import Config
+from .config import Config, _dataclass_from_dict
 
 File = t.Union[Path, str]
 
-# The top-level directory of the project
+PREFIX = 'SUPERDUPERDB_'
+CONFIG_FILE = os.environ.get('SUPERDUPERDB_CONFIG')
+USER_CONFIG = Path(CONFIG_FILE).expanduser() if CONFIG_FILE else None
+PREFIX = 'SUPERDUPERDB_'
 ROOT = Path(__file__).parents[2]
 
-# The default prefix used for config environment variables
-PREFIX = 'SUPERDUPERDB_'
 
-# The name of the environment variable used to read the config files.
-# This value needs to be read before all the other config values are.
-FILES_NAME = 'CONFIG_FILES'
-
-# The base name of the configs file
-CONFIG_FILE = 'configs.json'
-
-_LOCAL_CONFIG = Path(CONFIG_FILE)
-_PROJECT_CONFIG = ROOT / CONFIG_FILE
-_USER_CONFIG = Path(f'~/.superduperdb/{CONFIG_FILE}').expanduser()
-
-_ALL_CONFIGS = _PROJECT_CONFIG, _LOCAL_CONFIG, _USER_CONFIG
-
-FILE_SEP = ','
+class ConfigError(Exception):
+    """An exception raised when there is an error in the configuration."""
 
 
 @dataclass(frozen=True)
@@ -46,50 +34,27 @@ class ConfigSettings:
     """
 
     cls: t.Type
-    default_files: t.Union[t.Sequence[Path], str]
-    prefix: str
     environ: t.Optional[t.Dict] = None
-    base_config: t.Optional[Config] = None
 
     @cached_property
     def config(self) -> t.Any:
-        """Read a Pydantic class"""
+        """Read a configuration using defaults as basis"""
 
-        if isinstance(self.base_config, dict):
-            parent = self.base_config
-        elif isinstance(self.base_config, Config):
-            parent = self.base_config.dict()
-        else:
-            parent = self.cls().dict()
-
+        parent = self.cls().dict()
         env = dict(os.environ if self.environ is None else self.environ)
-        env = config_dicts.environ_to_config_dict('SUPERDUPERDB_', parent, env)
+        env = config_dicts.environ_to_config_dict(PREFIX, parent, env)
 
-        config_path = '.superduperdb/config.yaml'
-        if os.path.exists(config_path):
-            with open(config_path) as f:
-                kwargs = yaml.safe_load(f)
-        else:
-            kwargs = {}
+        kwargs = {}
+        if USER_CONFIG is not None:
+            try:
+                with open(USER_CONFIG) as f:
+                    kwargs = yaml.safe_load(f)
+            except FileNotFoundError as e:
+                raise ConfigError(f'Could not find config file: {USER_CONFIG}') from e
 
         kwargs = config_dicts.combine_configs((parent, kwargs, env))
-
-        def _dataclass_from_dict(cls, d):
-            try:
-                fieldtypes = {f.name: f.type for f in dc.fields(cls)}
-                return cls(**{f: _dataclass_from_dict(fieldtypes[f], d[f]) for f in d})
-            except Exception:
-                return d
 
         return _dataclass_from_dict(self.cls, kwargs)
 
 
-def build_config(cfg: t.Optional[Config] = None) -> Config:
-    """
-    Build the config object from the environment variables and config files.
-    """
-    CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX, base_config=cfg)
-    return CONFIG.config
-
-
-CFG = build_config()
+CFG = ConfigSettings(Config).config

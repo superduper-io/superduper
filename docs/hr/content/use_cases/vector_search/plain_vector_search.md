@@ -1,8 +1,9 @@
 ---
 sidebar_position: 1
 ---
+# Text
 
-# Vanilla Text Vector-Search on MongoDB
+# Vector-Search with SuperDuperDB
 
 This guide shows how to use SuperDuperDB for vector search, a powerful technique to find similar documents. We'll cover the setup and demonstrate searching a dataset of documents. Vector search with SuperDuperDB is a useful tool in various situations:
 
@@ -114,7 +115,7 @@ For OpenAI vectors:
 from superduperdb.ext.openai.model import OpenAIEmbedding
 
 # Initialize an instance of the OpenAIEmbedding model with the 'text-embedding-ada-002' model
-model = OpenAIEmbedding(identifier= 'text-embedding-ada-002', model='text-embedding-ada-002')
+model = OpenAIEmbedding(model='text-embedding-ada-002')
 ```
 
 For Sentence-Transformers vectors, uncomment the following section:

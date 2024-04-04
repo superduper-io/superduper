@@ -28,6 +28,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
     ):
         self.identifier = identifier
         self.dimensions = dimensions
+        self._cache: t.Sequence[VectorItem] = []
+        self._CACHE_SIZE = 10000
 
         if h is not None:
             assert index is not None
@@ -52,9 +54,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.lookup = dict(zip(index, range(len(index))))
 
     def find_nearest_from_id(self, _id, n=100):
+        self.post_create()
         return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
+        self.post_create()
         h = self.to_numpy(h)[None, :]
         if within_ids:
             ix = list(map(self.lookup.__getitem__, within_ids))
@@ -64,13 +68,31 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         similarities = similarities[0, :]
         logging.debug(similarities)
         scores = -numpy.sort(-similarities)
-        ix = numpy.argsort(-similarities)[:n]
-        ix = ix.tolist()
+        ## different ways of handling
+        if within_ids:
+            top_n_idxs = numpy.argsort(-similarities)[:n]
+            ix = [ix[i] for i in top_n_idxs]
+        else:
+            ix = numpy.argsort(-similarities)[:n]
+            ix = ix.tolist()
         scores = scores.tolist()
         _ids = [self.index[i] for i in ix]
         return _ids, scores
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
+        if len(self._cache) < self._CACHE_SIZE:
+            for item in items:
+                self._cache.append(item)
+        else:
+            self._add(self._cache)
+            self._cache = []
+
+    def post_create(self):
+        if self._cache:
+            self._add(self._cache)
+            self._cache = []
+
+    def _add(self, items: t.Sequence[VectorItem]) -> None:
         index = [item.id for item in items]
         h = numpy.stack([item.vector for item in items])
 
@@ -83,6 +105,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return self._setup(h, index)
 
     def delete(self, ids):
+        self.post_create()
         ix = list(map(self.lookup.__getitem__, ids))
         h = numpy.delete(self.h, ix, axis=0)
         index = [_id for _id in self.index if _id not in set(ids)]

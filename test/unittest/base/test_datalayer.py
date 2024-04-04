@@ -500,7 +500,8 @@ def test_insert_mongo_db(db):
     new_docs = list(
         db.execute(Collection('documents').find().select_using_ids(inserted_ids))
     )
-    result = [doc.outputs('x', 'fake_model') for doc in new_docs]
+    key = '_outputs.x::fake_model::0::0'
+    result = [doc[key].unpack(db) for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
@@ -527,12 +528,11 @@ def test_insert_sql_db(db):
     )
     assert len(inserted_ids) == 5
 
-    q = table.select('id', 'x').outputs(x='fake_model/0')
+    q = table.select('id', 'x').outputs('x::fake_model::0::0')
     new_docs = db.execute(q)
     new_docs = list(new_docs)
-    # new_docs = list(db.execute(table.outputs(x='fake_model/0')))
 
-    result = [doc.unpack()['_outputs.x.fake_model.0'] for doc in new_docs]
+    result = [doc.unpack()['_outputs.x::fake_model::0::0'] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
@@ -552,7 +552,7 @@ def test_update_db(db):
     new_docs = list(
         db.execute(Collection('documents').find().select_using_ids(updated_ids))
     )
-    result = [doc.outputs('x', 'fake_model') for doc in new_docs]
+    result = [doc['_outputs.x::fake_model::0::0'].unpack(db) for doc in new_docs]
     assert result == ['100'] * 5
 
 

@@ -13,7 +13,7 @@ import dill
 from overrides import override
 
 from superduperdb import CFG
-from superduperdb.backends.base.artifact import (
+from superduperdb.backends.base.artifacts import (
     ArtifactSavingError,
     _construct_file_id_from_uri,
 )
@@ -97,6 +97,31 @@ class DataType(Component):
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {
+            'name': 'serializer',
+            'type': 'string',
+            'choices': ['pickle', 'dill', 'torch'],
+            'default': 'dill',
+        },
+        {'name': 'info', 'type': 'json', 'optional': True},
+        {'name': 'shape', 'type': 'json', 'optional': True},
+        {'name': 'directory', 'type': 'str', 'optional': True},
+        {
+            'name': 'encodable',
+            'type': 'str',
+            'choices': ['encodable', 'lazy_artifact', 'file'],
+            'default': 'lazy_artifact',
+        },
+        {
+            'name': 'bytes_encoding',
+            'type': 'str',
+            'choices': ['base64', 'bytes'],
+            'default': 'bytes',
+        },
+        {'name': 'media_type', 'type': 'str', 'optional': True},
+    ]
+
     type_id: t.ClassVar[str] = 'datatype'
     encoder: t.Callable = dill_encode
     decoder: t.Callable = dill_decode
@@ -104,12 +129,14 @@ class DataType(Component):
     shape: t.Optional[t.Sequence] = None
     directory: t.Optional[str] = None
     encodable: str = 'encodable'
-    bytes_encoding: str = CFG.bytes_encoding
+    bytes_encoding: t.Optional[str] = CFG.bytes_encoding
+    media_type: t.Optional[str] = None
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.encodable_cls = _ENCODABLES[self.encodable]
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
+        self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
 
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
@@ -122,15 +149,25 @@ class DataType(Component):
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
         info = info or {}
-        try:
-            return self.encoder(item, info)
-        except:
-            raise
+        data = self.encoder(item, info)
+        data = self.bytes_encoding_after_encode(data)
+        return data
 
     @ensure_initialized
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
         info = info or {}
+        item = self.bytes_encoding_before_decode(item)
         return self.decoder(item, info=info)
+
+    def bytes_encoding_after_encode(self, data):
+        if self.bytes_encoding == BytesEncoding.BASE64:
+            return to_base64(data)
+        return data
+
+    def bytes_encoding_before_decode(self, data):
+        if self.bytes_encoding == BytesEncoding.BASE64:
+            return from_base64(data)
+        return data
 
 
 def encode_torch_state_dict(module, info):
@@ -173,7 +210,6 @@ def _find_descendants(cls):
 
 @dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
-
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
     to ``Encoder`` instance.
@@ -186,6 +222,7 @@ class _BaseEncodable(Leaf):
     file_id: t.Optional[str] = None
     datatype: DataType
     uri: t.Optional[str] = None
+    sha1: t.Optional[str] = None
 
     def __post_init__(self):
         if self.uri is not None and self.file_id is None:
@@ -197,10 +234,6 @@ class _BaseEncodable(Leaf):
     @property
     def unique_id(self):
         return str(id(self.x))
-
-    @property
-    def artifact(self):
-        return self.datatype.artifact
 
     @property
     def reference(self):
@@ -243,15 +276,30 @@ class _BaseEncodable(Leaf):
     def decode(cls, r, db=None) -> '_BaseEncodable':
         pass
 
+    def get_hash(self, data):
+        if isinstance(data, str):
+            bytes_ = data.encode()
+        elif isinstance(data, bytes):
+            bytes_ = data
+        else:
+            raise ValueError(f'Unsupported data type: {type(data)}')
+
+        return hashlib.sha1(bytes_).hexdigest()
+
+
+class Empty:
+    def __repr__(self):
+        return '<EMPTY>'
+
 
 @dc.dataclass
 class Encodable(_BaseEncodable):
-    x: t.Optional[t.Any] = None
+    x: t.Any = Empty()
     leaf_type: t.ClassVar[str] = 'encodable'
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
-        sha1 = str(hashlib.sha1(bytes_).hexdigest())
+        sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
     @classmethod
@@ -276,8 +324,6 @@ class Encodable(_BaseEncodable):
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         bytes_, sha1 = self._encode()
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            bytes_ = to_base64(bytes_)
         return {
             '_content': {
                 'bytes': bytes_,
@@ -301,11 +347,6 @@ class Encodable(_BaseEncodable):
             uri=r['_content']['uri'],
             file_id=r['_content'].get('file_id'),
         )
-
-
-class Empty:
-    def __repr__(self):
-        return '<EMPTY>'
 
 
 @dc.dataclass
@@ -337,23 +378,20 @@ class Artifact(_BaseEncodable):
     """
 
     leaf_type: t.ClassVar[str] = 'artifact'
-    x: t.Optional[t.Any] = None
+    x: t.Any = Empty()
     artifact: bool = False
-
-    def __post_init__(self):
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            raise ArtifactSavingError('BASE64 not supported on disk!')
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
-        sha1 = str(hashlib.sha1(bytes_).hexdigest())
+        sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        bytes_, sha1 = self._encode()
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            bytes_ = to_base64(bytes_)
+        if self.x is not None and not isinstance(self.x, Empty):
+            bytes_, sha1 = self._encode()
+        else:
+            bytes_, sha1 = None, None
         return {
             '_content': {
                 'bytes': bytes_,
@@ -370,13 +408,15 @@ class Artifact(_BaseEncodable):
 
     @classmethod
     def _get_object(cls, db, file_id, datatype, uri):
-        return db.artifact_store.load_artifact(
+        obj = db.artifact_store.load_artifact(
             {
                 'file_id': file_id,
                 'datatype': datatype,
                 'uri': uri,
             }
         )
+        obj = db.datatypes[datatype].bytes_encoding_before_decode(obj)
+        return obj
 
     def unpack(self, db):
         """
@@ -403,6 +443,7 @@ class Artifact(_BaseEncodable):
             datatype=db.datatypes[r['datatype']],
             uri=r['uri'],
             file_id=r.get('file_id'),
+            sha1=r.get('sha1'),
         )
 
 

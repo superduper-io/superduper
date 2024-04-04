@@ -52,25 +52,27 @@ def copy_vectors(
     docs = db.select(select)
     docs = [doc.unpack() for doc in docs]
     key = vi.indexing_listener.key
-    model = vi.indexing_listener.model.identifier
-    version = vi.indexing_listener.model.version
+    if '_outputs.' in key:
+        key = key.split('.')[1]
     # TODO: Refactor the below logic
     vectors = []
     if isinstance(db.databackend, MongoDataBackend):
         vectors = [
             {
-                'vector': MongoStyleDict(doc)[f'_outputs.{key}.{model}.{version}'],
+                'vector': MongoStyleDict(doc)[
+                    f'_outputs.{vi.indexing_listener.predict_id}'
+                ],
                 'id': str(doc['_id']),
             }
             for doc in docs
         ]
     elif isinstance(db.databackend, IbisDataBackend):
-        docs = db.execute(select.outputs(**{key: model}))
+        docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
         from superduperdb.backends.ibis.data_backend import INPUT_KEY
 
         vectors = [
             {
-                'vector': doc[f'_outputs.{key}.{model}.{version}'],
+                'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
                 'id': str(doc[INPUT_KEY]),
             }
             for doc in docs

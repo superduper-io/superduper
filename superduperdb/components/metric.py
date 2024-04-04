@@ -18,6 +18,8 @@ class Metric(Component):
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'metric'
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'object', 'type': 'artifact'}]
+
     object: t.Callable
 
     def __call__(self, x: t.Sequence[int], y: t.Sequence[int]) -> bool:

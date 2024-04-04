@@ -4,12 +4,164 @@ import typing as t
 import networkx as nx
 
 from superduperdb import Schema
+from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.components.model import Signature, _Predictor
+from superduperdb.components.model import Model, Signature
+
+
+def input_node(*args):
+    return IndexableNode(
+        model=Input(spec=args if len(args) > 1 else args[0]),
+        parent_graph=nx.DiGraph(),
+        parent_models={},
+    )
+
+
+def document_node(*args):
+    return IndexableNode(
+        model=DocumentInput(spec=args), parent_graph=nx.DiGraph(), parent_models={}
+    )
+
+
+class IndexableNode:
+    def __init__(
+        self, *, model, parent_graph, parent_models, index=None, identifier=None
+    ):
+        self.model = model
+        self.parent_graph = parent_graph
+        self.parent_models = parent_models
+        self.index = index
+        self.identifier = identifier
+
+    def __getitem__(self, item):
+        return IndexableNode(
+            model=self.model,
+            parent_graph=self.parent_graph,
+            parent_models=self.parent_models,
+            index=item,
+            identifier=self.identifier,
+        )
+
+    def to_graph(self, identifier: str):
+        from superduperdb.components.graph import DocumentInput, Graph
+
+        input_model = next(
+            v
+            for k, v in self.parent_models.items()
+            if isinstance(self.parent_models[k].model, (Input, DocumentInput))
+        )
+        graph = Graph(
+            identifier=identifier, input=input_model.model, outputs=[self.model]
+        )
+        for u, v, data in self.parent_graph.edges(data=True):
+            u_node = self._get_node(u)
+            v_node = self._get_node(v)
+            graph.connect(u_node.model, v_node.model, on=(u_node.index, data['key']))
+        return graph
+
+    def _get_node(self, u):
+        if u == self.model.identifier:
+            return self
+        return self.parent_models[u]
+
+    def to_listeners(self, select: CompoundSelect, identifier: str):
+        from superduperdb.components.listener import Listener
+        from superduperdb.components.stack import Stack
+
+        nodes = list(nx.topological_sort(self.parent_graph))
+        input_node = next(
+            v
+            for k, v in self.parent_models.items()
+            if isinstance(self.parent_models[k].model, DocumentInput)
+        )
+        assert isinstance(input_node.model, DocumentInput)
+        listener_lookup: t.Dict = {}
+        for node in nodes:
+            in_edges = list(self.parent_graph.in_edges(node, data=True))
+            if not in_edges:
+                continue
+            node = self._get_node(node)
+            key: t.Dict = {}
+            for u, _, data in in_edges:
+                previous_node = self._get_node(u)
+                if isinstance(previous_node.model, DocumentInput):
+                    key[previous_node.index] = data['key']
+                else:
+                    assert previous_node.index is None
+                    upstream_listener = listener_lookup[previous_node.model.identifier]
+                    key[upstream_listener.outputs] = data['key']
+            listener_lookup[node.model.identifier] = Listener(
+                model=node.model,
+                select=select,
+                key=key,  # type: ignore[arg-type]
+                identifier=node.identifier,
+            )
+        return Stack(
+            identifier=identifier,
+            components=list(listener_lookup.values()),
+        )
+
+
+class OutputWrapper:
+    def __init__(self, r, keys):
+        self.keys = keys
+        self.r = r
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self.r[self.keys[item]]
+        elif isinstance(item, str):
+            return self.r[item]
+        else:
+            raise TypeError(f'Unsupported type for __getitem__: {type(item)}')
 
 
 @dc.dataclass(kw_only=True)
-class Graph(_Predictor):
+class Input(Model):
+    spec: t.Union[str, t.List[str]]
+    identifier: str = '_input'
+    signature: Signature = '*args'
+
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+        if isinstance(self.spec, str):
+            self.signature = 'singleton'
+
+    def predict_one(self, *args):
+        if self.signature == 'singleton':
+            return args[0]
+        return OutputWrapper(
+            {k: arg for k, arg in zip(self.spec, args)}, keys=self.spec
+        )
+
+    def predict(self, dataset):
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+
+
+@dc.dataclass(kw_only=True)
+class DocumentInput(Model):
+    spec: t.Union[str, t.List[str]]
+    identifier: str = '_input'
+    signature: t.ClassVar[Signature] = 'singleton'
+
+    def __post_init__(self, artifacts):
+        super().__post_init__(artifacts)
+
+    def predict_one(self, r):
+        return {k: r[k] for k in self.spec}
+
+    def predict(self, dataset):
+        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+
+
+import dataclasses as dc
+import typing as t
+
+from superduperdb.components.model import Model, Signature
+
+
+@dc.dataclass(kw_only=True)
+class Graph(Model):
     '''
     Represents a directed acyclic graph composed of interconnected model nodes.
 
@@ -30,32 +182,34 @@ class Graph(_Predictor):
 
     '''
 
-    models: t.List[_Predictor] = dc.field(default_factory=list)
-    edges: t.List[t.Tuple[str, str, t.Tuple[int, str]]] = dc.field(default_factory=list)
-    input: _Predictor
-    outputs: t.List[t.Union[str, _Predictor]] = dc.field(default_factory=list)
-    _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, Signature.singleton)
-    signature: str = Signature.args_kwargs  # type: ignore[misc]
-    type_id: t.ClassVar[str] = 'graph'
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'models', 'type': 'component/model', 'sequence': True},
+        {'name': 'edges', 'type': '$this.models', 'sequence': True},
+        {'name': 'input', 'type': '$this.models'},
+        {'name': 'outputs', 'type': '$this.models', 'sequence': True},
+        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
+    ]
+
+    models: t.List[Model] = dc.field(default_factory=list)
+    edges: t.List[t.Tuple[str, str, t.Tuple[t.Union[int, str], str]]] = dc.field(
+        default_factory=list
+    )
+    input: Model
+    outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
+    _DEFAULT_ARG_WEIGHT: t.ClassVar[tuple] = (None, 'singleton')
+    signature: Signature = '*args,**kwargs'
+    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self, artifacts):
         self.G = nx.DiGraph()
         self.nodes = {}
-        self._node_output_cache = {}
         self.version = 0
         self._db = None
 
-        assert all([isinstance(o, _Predictor) for o in self.outputs])
-
-        self.output_schema = Schema(
-            identifier=self.identifier,
-            fields={k.identifier: k.datatype for k in self.outputs},
-        )
-
-        self.outputs = [
-            o.identifier if isinstance(o, _Predictor) else o for o in self.outputs
+        self.signature = self.input.signature
+        self.output_identifiers = [
+            o.identifier if isinstance(o, Model) else o for o in self.outputs
         ]
-        self.input.signature = Signature.args
 
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
@@ -72,9 +226,9 @@ class Graph(_Predictor):
 
     def connect(
         self,
-        u: _Predictor,
-        v: _Predictor,
-        on: t.Optional[t.Tuple[int, str]] = None,
+        u: Model,
+        v: Model,
+        on: t.Optional[t.Tuple[t.Union[int, str], str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
         '''
@@ -85,22 +239,19 @@ class Graph(_Predictor):
         Note:
         output index: None means all outputs of node u are connected to node v
         '''
-        assert isinstance(u, _Predictor)
-        assert isinstance(v, _Predictor)
+        assert isinstance(u, Model)
+        assert isinstance(v, Model)
 
         if u.identifier not in self.nodes:
-            u.signature = Signature.args  # type: ignore[misc]
             self.nodes[u.identifier] = u
             self.G.add_node(u.identifier)
 
         if v.identifier not in self.nodes:
-            v.signature = Signature.args  # type: ignore[misc]
             self.nodes[v.identifier] = v
             self.G.add_node(v.identifier)
 
         G_ = self.G.copy()
         G_.add_edge(u.identifier, v.identifier, weight=on or self._DEFAULT_ARG_WEIGHT)
-
         if not nx.is_directed_acyclic_graph(G_):
             raise TypeError('The graph is not DAG with this edge')
         self.G = G_
@@ -109,27 +260,33 @@ class Graph(_Predictor):
             self.edges.append(
                 (u.identifier, v.identifier, on or self._DEFAULT_ARG_WEIGHT)
             )
-            if isinstance(u, _Predictor) and u not in self.models:
+            if isinstance(u, Model) and u not in self.models:
                 self.models.append(u)
             if v not in self.models:
                 self.models.append(v)
         return
 
-    def fetch_output(self, output, index: t.Optional[int] = None, one: bool = False):
+    def fetch_output(
+        self, output, index: t.Optional[t.Union[int, str]] = None, one: bool = False
+    ):
         if index is not None:
-            assert isinstance(index, int)
+            assert isinstance(index, (int, str))
+
+            if isinstance(index, str):
+                assert isinstance(
+                    output, dict
+                ), 'Output should be a dict for indexing with str'
+
             try:
                 if one:
                     return output[index]
                 else:
-                    return [[o[index]] for o in output]
+                    return [o[index] for o in output]
 
             except KeyError:
                 raise KeyError("Model node does not have sufficient outputs")
-        else:
-            if one:
-                return output
-            return [[o] for o in output]
+        # Index None implies to pass all outputs to dependent node.
+        return output
 
     def validate(self, node):
         '''
@@ -150,8 +307,10 @@ class Graph(_Predictor):
             )
         return node
 
-    def _fetch_inputs(self, dataset, edges=[], outputs=[]):
+    def _fetch_inputs(self, dataset, edges=[], outputs=[], node=None):
         arg_inputs = []
+        kwargs = {}
+        node_signature = self.nodes[node].signature
 
         def _length(lst):
             count = 0
@@ -167,18 +326,36 @@ class Graph(_Predictor):
 
         for ix, edge in enumerate(edges):
             output_key, input_key = edge['weight']
-
             arg_input_dataset = self.fetch_output(outputs[ix], output_key, one=False)
-            if input_key == Signature.singleton:
-                return arg_input_dataset
+            if input_key == 'singleton':
+                # If singleton we override input_key with actual model
+                # singleton param.
+                input_key = self.nodes[node].inputs.params[0]
 
+            kwargs[input_key] = arg_input_dataset
             arg_inputs.append(arg_input_dataset)
 
         if not arg_inputs:
             return outputs
-        return self._transpose(arg_inputs, args=True)
 
-    def _fetch_one_inputs(self, args, kwargs, edges=[], outputs=[]):
+        batches = self._transpose(arg_inputs)
+        mapped_dataset = []
+        for batch in batches:
+            batch = self._map_dataset_to_model(batch, node_signature, kwargs)
+            mapped_dataset.append(batch)
+        return mapped_dataset
+
+    def _map_dataset_to_model(self, batch, signature, kwargs):
+        if signature == '*args':
+            return [[batch[p]] for p, _ in enumerate(kwargs)]
+        elif signature == 'singleton':
+            return batch[0]
+        elif signature == '*args,**kwargs':
+            return (), {k: batch[i] for i, k in enumerate(kwargs)}
+        elif signature == '**kwargs':
+            return {k: batch[i] for i, k in enumerate(kwargs)}
+
+    def _fetch_input(self, args, kwargs, edges=[], outputs=[]):
         node_input = {}
         for ix, edge in enumerate(edges):
             output_key, input_key = edge['weight']
@@ -187,8 +364,8 @@ class Graph(_Predictor):
             kwargs = node_input
             args = ()
 
-        if Signature.singleton in node_input:
-            args = (node_input[Signature.singleton],)
+        if 'singleton' in node_input:
+            args = (node_input['singleton'],)
             kwargs = {}
         return args, kwargs
 
@@ -203,12 +380,14 @@ class Graph(_Predictor):
             edges = [self.G.get_edge_data(p, node) for p in predecessors]
 
             if one is True:
-                args, kwargs = self._fetch_one_inputs(
+                args, kwargs = self._fetch_input(
                     args, kwargs, edges=edges, outputs=outputs
                 )
                 cache[node] = self.nodes[node].predict_one(*args, **kwargs)
             else:
-                dataset = self._fetch_inputs(args[0], edges=edges, outputs=outputs)
+                dataset = self._fetch_inputs(
+                    args[0], edges=edges, outputs=outputs, node=node
+                )
                 cache[node] = self.nodes[node].predict(dataset=dataset)
             return cache[node]
         return cache[node]
@@ -219,12 +398,12 @@ class Graph(_Predictor):
         in the graph.
         '''
         # Validate the node for incompletion
-        list(map(self.validate, self.outputs))
+        list(map(self.validate, self.output_identifiers))
         cache = {}
 
         outputs = [
             self._predict_on_node(*args, node=output, cache=cache, **kwargs)
-            for output in self.outputs
+            for output in self.output_identifiers
         ]
 
         # TODO: check if output schema and datatype required
@@ -237,33 +416,34 @@ class Graph(_Predictor):
         '''
         args_dataset = []
         signature = self.signature
+        input_params = self.input.inputs
 
-        def mapping(x):
-            nonlocal signature
-            if signature == Signature.kwargs:
-                return list(x.values())
-            elif signature == Signature.args_kwargs:
-                return list(x[0]) + list(x[1].values())
+        def mapping(x, signature):
+            if signature == '*args':
+                return {p: d for d, p in zip(x, input_params.params)}
+            elif signature == '*args,**kwargs':
+                base_kwargs = x[1]
+                kwargs = {a: d for a, d in zip(input_params.args, x[0])}
+                return kwargs.update(base_kwargs)
             else:
                 return x
 
         for data in dataset:
-            data = mapping(data)
+            data = mapping(data, signature)
             args_dataset.append(data)
         return args_dataset
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         # Validate the node for incompletion
-        list(map(self.validate, self.outputs))
+        list(map(self.validate, self.output_identifiers))
 
         if isinstance(dataset, QueryDataset):
             raise TypeError('QueryDataset is not supported in graph mode')
         cache: t.Dict[str, t.Any] = {}
-        dataset = self.patch_dataset_to_args(dataset)
 
         outputs = [
             self._predict_on_node(dataset, node=output, cache=cache, one=False)
-            for output in self.outputs
+            for output in self.output_identifiers
         ]
 
         # TODO: check if output schema and datatype required
@@ -271,17 +451,25 @@ class Graph(_Predictor):
 
     def encode_outputs(self, outputs):
         encoded_outputs = []
-        for o, n in zip(outputs, self.outputs):
+        for o, n in zip(outputs, self.output_identifiers):
             encoded_outputs.append(self.nodes[n].encode_outputs(o))
         outputs = self._transpose(outputs=encoded_outputs or outputs)
+
+        # Set the schema in runtime
+        self.output_schema = Schema(
+            identifier=self.identifier,
+            fields={k.identifier: k.datatype for k in self.outputs},
+        )
+
         return self.encode_with_schema(outputs)
 
     @staticmethod
-    def _transpose(outputs, args=False):
+    def _transpose(outputs):
         transposed_outputs = []
         for i in range(len(outputs[0])):
             batch_outs = []
             for o in outputs:
-                batch_outs.append(o[i][0] if args else o[i])
+                batch_outs.append(o[i])
             transposed_outputs.append(batch_outs)
+
         return transposed_outputs

@@ -1,7 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.components.model import APIModel, ObjectModel
+from superduperdb.backends.ibis.field_types import FieldType
+from superduperdb.components.datatype import DataType
 
 
 class BaseDataBackend(ABC):
@@ -35,7 +36,9 @@ class BaseDataBackend(ABC):
         """
         pass
 
-    def create_model_table_or_collection(self, model: t.Union[ObjectModel, APIModel]):
+    def create_output_dest(
+        self, identifier: str, datatype: t.Union[None, DataType, FieldType]
+    ):
         pass
 
     @abstractmethod
@@ -55,4 +58,10 @@ class BaseDataBackend(ABC):
     def disconnect(self):
         """
         Disconnect the client
+        """
+
+    @abstractmethod
+    def list_tables_or_collections(self):
+        """
+        List all tables or collections in the database.
         """

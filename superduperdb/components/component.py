@@ -7,15 +7,16 @@ from __future__ import annotations
 import dataclasses as dc
 import json
 import os
+import pprint
 import re
 import tempfile
 import typing as t
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from functools import wraps
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.serializable import Serializable, _find_variables_with_path
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.archives import from_tarball, to_tarball
 
@@ -24,6 +25,15 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
     from superduperdb.components.datatype import DataType
+
+
+def getdeepattr(obj, attr):
+    for a in attr.split('.'):
+        obj = getattr(obj, a)
+    return obj
+
+
+ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
 
 
 @dc.dataclass
@@ -35,8 +45,14 @@ class Component(Serializable, Leaf):
     leaf_type: t.ClassVar[str] = 'component'
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'identifier', 'type': 'str'}]
     identifier: str
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
+    changed: t.ClassVar[set] = set([])
+
+    @property
+    def id_tuple(self):
+        return ComponentTuple(self.type_id, self.identifier, self.version)
 
     def __post_init__(self, artifacts):
         self.artifacts = artifacts
@@ -45,22 +61,55 @@ class Component(Serializable, Leaf):
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
+    @classmethod
+    def get_ui_schema(cls):
+        out = {}
+        ancestors = cls.mro()[::-1]
+        for a in ancestors:
+            if hasattr(a, 'ui_schema'):
+                out.update({x['name']: x for x in a.ui_schema})
+        return list(out.values())
+
+    def set_variables(self, db, **kwargs):
+        """
+        Set free variables of self.
+
+        :param db:
+        """
+
+        r = self.dict()
+        variables = _find_variables_with_path(r['dict'])
+        for r in variables:
+            v = r['variable']
+            value = v.set(db=db, **kwargs)
+            self.setattr_with_path(r['path'], value)
+
+    @property
+    def dependencies(self):
+        return ()
+
     def init(self):
-        from superduperdb.base.document import Document
         from superduperdb.components.datatype import _BaseEncodable
+
+        def _init(item):
+            if isinstance(item, Component):
+                item.init()
+                return item
+            if isinstance(item, dict):
+                return {k: _init(i) for k, i in item.items()}
+
+            if isinstance(item, list):
+                return [_init(i) for i in item]
+
+            if isinstance(item, _BaseEncodable):
+                item.init(db=self.db)
+                return item.unpack(db=self.db)
+            return item
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
-            if isinstance(item, Component):
-                item.init()
-            if isinstance(item, dict):
-                setattr(self, f.name, Document(item).unpack(db=self.db))
-            if isinstance(item, list):
-                unpacked = Document({'_base': item}).unpack(db=self.db)
-                setattr(self, f.name, unpacked)
-            if isinstance(item, _BaseEncodable):
-                item = item.unpack(db=self.db)
-                setattr(self, f.name, item)
+            unpacked_item = _init(item)
+            setattr(self, f.name, unpacked_item)
 
     @property
     def artifact_schema(self):
@@ -155,7 +204,7 @@ class Component(Serializable, Leaf):
     def unique_id(self) -> str:
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
-        return f'{self.type_id}/' f'{self.identifier}/' f'{self.version}'
+        return f'{self.type_id}/{self.identifier}/{self.version}'
 
     def create_validation_job(
         self,
@@ -190,15 +239,108 @@ class Component(Serializable, Leaf):
     def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
         return f'{type_id}/{identifier}/{version}'
 
+    def __setattr__(self, k, v):
+        if k in dc.fields(self):
+            self.changed.add(k)
+        return super().__setattr__(k, v)
+
     @staticmethod
-    def import_(path: str):
+    def _import_from_references(references, db: t.Optional[Datalayer] = None):
+        if db is not None:
+            all_references = _find_references(references['component'])
+            for k in all_references:
+                # E.g. `$component/<type_id>/<identifier>/<version>`
+                split = k.split('/')
+                if split[0][1:] != 'component':
+                    continue
+                if len(split) == 4:
+                    type_id, identifier, version = split[1:]
+                    version = int(version)
+                elif len(split) == 3:
+                    type_id, identifier = split[1:]
+                    version = None
+                else:
+                    raise Exception(f'Unexpected reference {k}')
+                try:
+                    references['component'][k] = db.load(type_id, identifier, version)
+                    logging.info(f'Loaded {k} from db')
+                except Exception as e:
+                    logging.warn(f'Failed to load {k} from db: {e}')
+
+        while True:
+            # extract and replace the references inside the component defitions
+            for c in references['component']:
+                references['component'][c] = _replace_references(
+                    references['component'][c], references
+                )
+
+            # Find the component definitions which don't refer to anything else
+            # (leaf nodes)
+            identifiers = [
+                c
+                for c in references['component']
+                if not _find_references(references['component'][c])
+                and isinstance(references['component'][c], dict)
+            ]
+
+            if not identifiers:
+                raise Exception(
+                    f'Decompile failed due to unspecified references {_find_references}'
+                )
+
+            for c in identifiers:
+                r = references['component'][c]
+                references['component'][c] = Serializable.decode(r)
+
+            previous_identifiers = identifiers[:]
+
+            # Stop when all components have been converted
+            if not [
+                c
+                for c in references['component']
+                if isinstance(references['component'][c], dict)
+            ]:
+                break
+
+        if len(previous_identifiers) == 1:
+            return references['component'][previous_identifiers[0]]
+
+        from superduperdb.components.stack import Stack
+
+        return Stack(
+            'stack',
+            components=[references['component'][c] for c in previous_identifiers],
+        )
+
+    @staticmethod
+    def import_from_references(definition: t.Dict, db: Datalayer):
+        from superduperdb import Document
+        from superduperdb.components.datatype import LazyArtifact
+
+        if definition.get('lazy_artifact'):
+            for a in definition['lazy_artifact']:
+                definition['lazy_artifact'][a] = LazyArtifact(
+                    **definition['lazy_artifact'][a]['_content']
+                )
+            definition['lazy_artifact'] = dict(
+                Document.decode(definition['lazy_artifact'], db=db)
+            )
+        if definition.get('artifact'):
+            definition['artifact'] = dict(
+                Document.decode(definition['artifact'], db=db)
+            )
+        return Component._import_from_references(definition, db=db)
+
+    @staticmethod
+    def import_from_path(
+        path: str,
+    ):
         # Structure of directory is e.g:
         # extracted_archive
         # |_ compiled.json      // the recursive definitions of components
         # |_ 92392932839289     // the encododables as bytes (one file each)
         # |_ 22390232392832
         # |_ 23232932932832
-
         from superduperdb.components.datatype import serializers
 
         extracted_path = from_tarball(path)
@@ -219,61 +361,42 @@ class Component(Serializable, Leaf):
                 references['serializable'][s]
             )
 
-        while True:
-            # extract and replace the references inside the component defitions
-            for c in references['component']:
-                references['component'][c] = _replace_references(
-                    references['component'][c], references
-                )
+        return Component._import_from_references(references)
 
-            # Find the component definitions which don't refer to anything else
-            # (leaf nodes)
-            identifiers = [
-                c
-                for c in references['component']
-                if not _find_references(references['component'][c])
-                and isinstance(references['component'][c], dict)
-            ]
-
-            if not identifiers:
-                raise Exception(
-                    'Decompile due to unspecified references {_find_references}'
-                )
-
-            for c in identifiers:
-                r = references['component'][c]
-                references['component'][c] = Serializable.decode(r)
-
-            previous_identifiers = identifiers[:]
-
-            # Stop when all components have been converted
-            if not [
-                c
-                for c in references['component']
-                if isinstance(references['component'][c], dict)
-            ]:
-                break
-
-        if len(previous_identifiers) == 1:
-            return references['component'][previous_identifiers[0]]
-
-        return [references['component'][c] for c in previous_identifiers]
-
-    def export(self):
+    def export_to_references(self):
         from superduperdb.base.document import _encode_with_references
 
+        def process_subpart(r, references):
+            if isinstance(r, dict):
+                for k in list(r.keys())[:]:
+                    r[k] = process_subpart(r[k], references)
+            if isinstance(r, Component):
+                r = dict(r.dict())
+                _encode_with_references(r, references)
+                return process_subpart(r, references)
+            if isinstance(r, list):
+                for i, x in enumerate(r):
+                    r[i] = process_subpart(x, references)
+            return r
+
         references = defaultdict(dict)
-        references['component'] = {self.unique_id: self}
+        try:
+            references['component'] = {self.unique_id: self}
+        except Exception:
+            references['component'] = {f'{self.type_id}/{self.identifier}': self}
         while True:
-            keys = list(references['component'].keys())
-            for k in keys[:]:
-                v = references['component'][k]
-                if isinstance(v, Component):
-                    r = v.dict()
-                    _encode_with_references(r, references)
-                    references['component'][k] = dict(r)
+            keys = list(references['component'].keys())[:]
+            for k in keys:
+                if isinstance(references['component'][k], Component):
+                    references['component'][k] = process_subpart(
+                        references['component'][k], references
+                    )
             if all(isinstance(v, dict) for v in references['component'].values()):
                 break
+        return references
+
+    def export_to_path(self):
+        references = self.export_to_references()
         with tempfile.TemporaryDirectory() as td:
             for at in ['artifact', 'lazy_artifact']:
                 for k, v in references[at].items():
@@ -337,3 +460,50 @@ def ensure_initialized(func):
         return func(self, *args, **kwargs)
 
     return wrapper
+
+
+if __name__ == '__main__':
+    from superduperdb import ObjectModel, superduper
+    from superduperdb.components.stack import Stack
+    from superduperdb.ext.numpy import array
+
+    db = superduper('mongomock://test', artifact_store='filesystem:///tmp/artifacts')
+
+    m = Stack(
+        'test_stack',
+        components=[
+            ObjectModel(
+                'test',
+                object=lambda x: x + 2,
+                datatype=array('float32', shape=(32,)),
+            ),
+            ObjectModel(
+                'test2',
+                object=lambda x: x + 3,
+                datatype=array('float32', shape=(16,)),
+            ),
+        ],
+    )
+
+    db.add(m)
+
+    r = m.export_to_path()
+
+    for k in r['lazy_artifact']:
+        r['lazy_artifact'][k] = {
+            '_content': {
+                'file_id': r['lazy_artifact'][k]['_content']['file_id'],
+                'datatype': db.datatypes[r['lazy_artifact'][k]['_content']['datatype']],
+            }
+        }
+
+    pprint.pprint(r)
+
+    component = m.import_from_references(r, db)
+    component.db = db
+
+    pprint.pprint(component)
+
+    component.init()
+
+    pprint.pprint(component)

@@ -5,19 +5,23 @@ from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predi
 
 import pytest
 
+from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
-from superduperdb.ext.llm.model import LLM, LLMTrainingConfiguration
+from superduperdb.ext.transformers.model import LLM
+from superduperdb.ext.transformers.training import LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
-    import bitsandbytes
+    import datasets
     import peft
+    import trl
 except ImportError:
-    bitsandbytes = None
+    datasets = None
     peft = None
+    trl = None
 
 RUN_LLM_FINETUNE = os.environ.get("RUN_LLM_FINETUNE", "0") == "1"
 
@@ -36,13 +40,18 @@ def test_predict(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_model_as_listener_model(db):
-    model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME)
+    model = LLM(
+        identifier="llm",
+        model_name_or_path=TEST_MODEL_NAME,
+        datatype=FieldType('str'),
+    )
     check_llm_as_listener_model(db, model)
 
 
 @pytest.mark.skipif(not RUN_LLM_FINETUNE, reason="RUN_LLM_FINETUNE is not set")
 @pytest.mark.skipif(
-    not bitsandbytes or not peft, reason="The peft and bitsandbytes are not installed"
+    not all([datasets, peft, trl]),
+    reason="The peft, datasets and trl are not installed",
 )
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_training(db, tmpdir):
@@ -61,7 +70,7 @@ def test_training(db, tmpdir):
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),
     )
-    training_configuration = LLMTrainingConfiguration(
+    training_configuration = LLMTrainer(
         identifier="llm-finetune",
         output_dir=str(tmpdir),
         lora_r=64,
@@ -90,7 +99,7 @@ def test_training(db, tmpdir):
     def metric(predictions, targets):
         return random.random()
 
-    model.fit(
+    model.fit_in_db(
         X="text",
         db=db,
         select=select,

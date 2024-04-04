@@ -4,6 +4,7 @@ import uuid
 from abc import abstractmethod
 
 import superduperdb as s
+from superduperdb import CFG
 from superduperdb.jobs.tasks import callable_job, method_job
 
 
@@ -30,6 +31,7 @@ class Job:
     :param callable: function or method to be called
     :param db: DB instance to be used
     :param future: future object returned by dask
+    :param compute_kwargs: Arguments to use for model predict computation
     """
 
     callable: t.Optional[t.Callable]
@@ -38,6 +40,7 @@ class Job:
         self,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
+        compute_kwargs: t.Dict = {},
     ):
         self.args = args or ()
         self.kwargs = kwargs or {}
@@ -46,6 +49,8 @@ class Job:
         self.callable = None
         self.db = None
         self.future = None
+        # Use compute kwargs from either the model  or global config
+        self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
     def watch(self):
         """
@@ -92,6 +97,7 @@ class FunctionJob(Job):
     :param callable: function to be called
     :param args: positional arguments to be passed to the function
     :param kwargs: keyword arguments to be passed to the function
+    :param compute_kwargs: Arguments to use for model predict computation
     """
 
     def __init__(
@@ -99,8 +105,9 @@ class FunctionJob(Job):
         callable: t.Callable,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
+        compute_kwargs: t.Dict = {},
     ):
-        super().__init__(args=args, kwargs=kwargs)
+        super().__init__(args=args, kwargs=kwargs, compute_kwargs=compute_kwargs)
         self.callable = callable
 
     def dict(self):
@@ -123,7 +130,6 @@ class FunctionJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
-            local=self.db.compute.type == 'local',
         )
 
         return
@@ -150,6 +156,7 @@ class ComponentJob(Job):
     :param method_name: name of the method to be called
     :param args: positional arguments to be passed to the method
     :param kwargs: keyword arguments to be passed to the method
+    :param compute_kwargs: Arguments to use for model predict computation
     """
 
     def __init__(
@@ -159,8 +166,9 @@ class ComponentJob(Job):
         method_name: str,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
+        compute_kwargs: t.Dict = {},
     ):
-        super().__init__(args=args, kwargs=kwargs)
+        super().__init__(args=args, kwargs=kwargs, compute_kwargs=compute_kwargs)
 
         self.component_identifier = component_identifier
         self.method_name = method_name
@@ -191,8 +199,8 @@ class ComponentJob(Job):
             args=self.args,
             kwargs=self.kwargs,
             dependencies=dependencies,
+            compute_kwargs=self.compute_kwargs,
             db=self.db if self.db.compute.type == 'local' else None,
-            local=self.db.compute.type == 'local',
         )
         return
 

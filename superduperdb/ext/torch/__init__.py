@@ -1,4 +1,10 @@
-from .encoder import tensor
-from .model import TorchModel, TorchTrainerConfiguration, torchmodel
+from superduperdb.misc.annotations import requires_packages
 
-__all__ = ('TorchModel', 'TorchTrainerConfiguration', 'tensor', 'torchmodel')
+from .training import TorchTrainer
+
+requires_packages(['torch', '2.0.0'])
+
+from .encoder import tensor
+from .model import TorchModel, torchmodel
+
+__all__ = ('TorchModel', 'TorchTrainer', 'tensor', 'torchmodel')

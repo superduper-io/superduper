@@ -5,10 +5,12 @@
 # ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
 ARG BUILD_ENV=release
+ARG REQUIREMENTS_FILE=deploy/testenv/optional_requirements.txt
 
 # ---------------
 # Configure Basic Template
 # ---------------
+# TODO make this configurable
 FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
 
 # Temporarily switch to the root for privileged operations.
@@ -17,6 +19,7 @@ USER root
 
 # Install system packages
 # ---------------
+# TODO make this configurable
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
@@ -28,10 +31,13 @@ RUN apt-get update \
         libglib2.0-0 libgl1-mesa-glx \
         # Required for PostgreSQL \
         libpq-dev \
-	build-essential \
-   # Purge apt cache
-   && apt-get clean \
-   && rm -rf /var/lib/apt/lists/*
+        # Required for rest server \
+        libmagic1 \
+        # Required for Llama.cpp
+        build-essential \
+  # Purge apt cache
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 
 # Replace the default Jupyter user with a SuperDuper user
@@ -73,7 +79,6 @@ RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip
 COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
 COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
-
 # Volumes
 # ---------------
 VOLUME /artifacts
@@ -86,33 +91,53 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Set python cache directory
 ENV PYTHONPYCACHEPREFIX "$HOME/.cache/cpython/"
 
-
-
-# ---------------
-# Build Sandbox
-# ---------------
+# -------------------------------
+# Build Sandbox (Development)
+# -------------------------------
 FROM base AS build_sandbox
 
-ONBUILD ARG SUPERDUPERDB_EXTRAS=''
-ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
+# Install the requirements. To be used in conjuction with "make testenv_init" for development.
+ONBUILD ARG REQUIREMENTS_FILE
+ONBUILD USER superduper
+ONBUILD COPY --chown=superduper ./pyproject.toml ${HOME}/superduperdb/pyproject.toml
+ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ${HOME}/superduperdb/requirements.txt
+ONBUILD COPY --chown=superduper ./Makefile ${HOME}/superduperdb/Makefile
+ONBUILD COPY --chown=superduper ./${REQUIREMENTS_FILE} ${HOME}/superduperdb/optional_requirements.txt
 ONBUILD WORKDIR ${HOME}/superduperdb
-# Install project dependencies.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user --editable .[${SUPERDUPERDB_EXTRAS}]
-# Install user-defined dependencies
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user  -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r ./optional_requirements.txt
+ONBUILD RUN make install-devkit
 
-# ---------------
-# Build Release
-# ---------------
+
+# -------------------------------
+# Build Nightly (Pre-Release)
+# -------------------------------
+FROM base AS build_nightly
+
+# Install the latest commit of the main branch in GitHub.
+ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD RUN git clone -b main --single-branch  https://github.com/SuperDuperDB/superduperdb.git .
+ONBUILD RUN python -m pip install --user . \
+    # Install optional dependencies for testing
+    && python -m pip install --user -r deploy/testenv/optional_requirements.txt \
+    # Purge pip cache to reduce image size.
+    && pip cache purge
+
+
+# -------------------------------
+# Build Release (Production)
+# -------------------------------
 FROM base AS build_release
 
-ONBUILD ARG SUPERDUPERDB_EXTRAS=''
+# Install the latest release from pypi, including code from the GitHub branch of the release.
+# TODO: to be updated when we create the release branch.
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-# Drop cache to reduce image size.
-ONBUILD RUN python -m pip install --user superduperdb[${SUPERDUPERDB_EXTRAS}] \
-    # Purge pip cache
+ONBUILD RUN python -m pip install --user superduperdb \
+    # Purge pip cache to reduce image size.
     && pip cache purge
 ONBUILD WORKDIR ${HOME}/examples
+
+
 
 # ---------------
 # Select Build

@@ -27,22 +27,21 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
     from superduperdb.base.build import build_datalayer
 
     if item.startswith('mongomock://'):
-        CFG.force_set('data_backend', item)
+        kwargs['data_backend'] = item
 
     elif item.startswith('mongodb://'):
-        CFG.force_set('data_backend', item)
+        kwargs['data_backend'] = item
 
     elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
-        CFG.force_set('data_backend', item)
-        CFG.force_set('cluster.vector_search', item)
+        kwargs['data_backend'] = item
 
     elif item.endswith('.csv'):
-        CFG.force_set('data_backend', item)
+        kwargs['data_backend'] = item
 
     else:
         if re.match(r'^[a-zA-Z0-9]+://', item) is None:
             raise ValueError(f'{item} is not a valid connection string')
-        CFG.force_set('data_backend', item)
+        kwargs['data_backend'] = item
     return build_datalayer(CFG, **kwargs)
 
 

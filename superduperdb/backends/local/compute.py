@@ -23,7 +23,9 @@ class LocalComputeBackend(ComputeBackend):
     def name(self) -> str:
         return "local"
 
-    def submit(self, function: t.Callable, *args, **kwargs) -> str:
+    def submit(
+        self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
+    ) -> str:
         """
         Submits a function for local execution.
 
@@ -35,7 +37,9 @@ class LocalComputeBackend(ComputeBackend):
         future_key = str(uuid.uuid4())
         self.__outputs[future_key] = future
 
-        logging.success(f"Job submitted.  function:{function} future:{future_key}")
+        logging.success(
+            f"Job submitted on {self}.  function:{function} future:{future_key}"
+        )
         return future_key
 
     @property

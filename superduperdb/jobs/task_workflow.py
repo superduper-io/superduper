@@ -30,6 +30,10 @@ class TaskWorkflow:
     def add_edge(self, node1: str, node2: str) -> None:
         self.G.add_edge(node1, node2)
 
+    @property
+    def nodes(self):
+        return self.G.nodes()
+
     @wraps(DiGraph.add_node)
     def add_node(self, node: str, job: t.Union[FunctionJob, ComponentJob]) -> None:
         self.G.add_node(node, job=job)

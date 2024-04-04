@@ -20,4 +20,14 @@ class Stack(Component):
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'stack'
-    components: t.Sequence[Component] = ()
+    components: t.Sequence[Component]
+
+    @property
+    def db(self):
+        return self._db
+
+    @db.setter
+    def db(self, value):
+        self._db = value
+        for component in self.components:
+            component.db = value

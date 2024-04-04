@@ -5,7 +5,6 @@ on:
       - main
     paths:  # run this action only when the docs folder is changed
       - 'docs/hr/content/**'
-      - 'docs/hr/blog/**'
       - 'docs/hr/*.js'
   workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
 

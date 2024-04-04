@@ -1,7 +1,9 @@
-# Sentiment Analysis Using transformers on MongoDB
+# Sentiment analysis
+
+## Sentiment analysis with transformers and SuperDuperDB
 
 ```python
-!pip install superduperdb
+!pip install superduperdb==0.0.12
 !pip install datasets
 ```
 

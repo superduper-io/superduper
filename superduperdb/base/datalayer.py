@@ -1,9 +1,8 @@
 import dataclasses as dc
-import math
 import random
 import typing as t
 import warnings
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import click
 import networkx
@@ -11,12 +10,19 @@ import tqdm
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifacts import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.metadata import MetaDataStore
-from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
+from superduperdb.backends.base.query import (
+    Delete,
+    Insert,
+    RawQuery,
+    Select,
+    Update,
+    Write,
+)
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions, serializable
@@ -26,13 +32,10 @@ from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
-    Artifact,
     DataType,
-    File,
     _BaseEncodable,
     serializers,
 )
-from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
@@ -67,6 +70,7 @@ class Datalayer:
         'metric': 'metrics',
         'datatype': 'datatypes',
         'vector_index': 'vector_indices',
+        'schema': 'schemas',
     }
 
     def __init__(
@@ -87,7 +91,9 @@ class Datalayer:
         self.metrics = LoadDict(self, field='metric')
         self.models = LoadDict(self, field='model')
         self.datatypes = LoadDict(self, field='datatype')
+        self.listeners = LoadDict(self, field='listener')
         self.vector_indices = LoadDict(self, field='vector_index')
+        self.schemas = LoadDict(self, field='schema')
         self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(
@@ -105,20 +111,6 @@ class Datalayer:
         self.compute = compute
         self._server_mode = False
 
-    def rebuild(self, cfg=None):
-        from superduperdb.base import build
-
-        cfg = cfg or s.CFG
-
-        self.databackend = build._build_databackend(cfg)
-        self.compute = build._build_compute(cfg.cluster.compute)
-
-        self.metadata = build._build_metadata(cfg, self.databackend)
-        self.artifact_store = build._build_artifact_store(
-            cfg.artifact_store, self.databackend
-        )
-        self.artifact_store.serializers = self.serializers
-
     @property
     def server_mode(self):
         return self._server_mode
@@ -131,14 +123,10 @@ class Datalayer:
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> t.Optional[BaseVectorSearcher]:
-        searcher_type = searcher_type or s.CFG.cluster.vector_search_type
+        searcher_type = searcher_type or s.CFG.cluster.vector_search.type
         vi = self.vector_indices[identifier]
 
         clt = vi.indexing_listener.select.table_or_collection
-
-        if self.cdc.running:
-            msg = 'CDC only supported for vector search via lance format'
-            assert s.CFG.cluster.vector_search_type == 'lance', msg
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
         vector_comparison = vector_search_cls.from_component(vi)
@@ -150,10 +138,10 @@ class Datalayer:
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
-        if s.CFG.self_hosted_vector_search:
+        if s.CFG.cluster.vector_search.type == 'native':
             return
 
-        if s.CFG.cluster.is_remote_vector_search and not self.server_mode:
+        if s.CFG.cluster.vector_search.uri and not self.server_mode:
             return
 
         logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")
@@ -165,12 +153,7 @@ class Datalayer:
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
 
-        model_id = vi.indexing_listener.model.identifier
-        model_version = vi.indexing_listener.model.version
-
-        query = vi.indexing_listener.select.outputs(
-            **{key: f'{model_id}/{model_version}'}
-        )
+        query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
 
         logging.info(str(query))
 
@@ -179,28 +162,20 @@ class Datalayer:
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             self.execute(query),
-            s.CFG.cluster.backfill_batch_size,
+            s.CFG.cluster.vector_search.backfill_batch_size,
         ):
             items = []
             for record in record_batch:
-                key = vi.indexing_listener.key
-                if key.startswith('_outputs.'):
-                    key = key.split('.')[1]
-
                 id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
-                h = record.outputs(
-                    key,
-                    vi.indexing_listener.model.identifier,
-                    version=vi.indexing_listener.model.version,
-                )
+                h = record[f'_outputs.{vi.indexing_listener.predict_id}']
                 if isinstance(h, _BaseEncodable):
-                    h = h.x
-
+                    h = h.unpack(db=self)
                 items.append(VectorItem.create(id=str(id), vector=h))
 
             searcher.add(items)
             progress.update(len(items))
+        searcher.post_create()
 
     def set_compute(self, new: ComputeBackend):
         """
@@ -238,34 +213,9 @@ class Datalayer:
         self.metadata.drop(force=True)
         self.artifact_store.drop(force=True)
 
-    def validate(
-        self,
-        identifier: str,
-        type_id: str,
-        validation_set: str,
-        metrics: t.Sequence[str],
-    ):
-        """
-        Evaluate quality of component, using `Component.validate`, if implemented.
-
-        :param identifier: identifier of semantic index
-        :param type_id: type_id of component
-        :param validation_set: validation dataset on which to validate
-        :param metrics: metric functions to compute
-        """
-        # TODO: never called
-        component = self.load(type_id, identifier)
-        metric_list = [self.load('metric', m) for m in metrics]
-        assert isinstance(component, ObjectModel)
-        return component.validate(
-            self,
-            validation_set,
-            metric_list,  # type: ignore[arg-type]
-        )
-
     def show(
         self,
-        type_id: str,
+        type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
@@ -281,6 +231,12 @@ class Datalayer:
         """
         if identifier is None and version is not None:
             raise ValueError(f'must specify {identifier} to go with {version}')
+
+        if type_id is None:
+            nt = namedtuple('nt', ('type_id', 'identifier'))
+            out = self.metadata.show_components()
+            out = list(set(nt(**x) for x in out))
+            return [x._asdict() for x in out]
 
         if identifier is None:
             return self.metadata.show_components(type_id=type_id)
@@ -308,9 +264,11 @@ class Datalayer:
         context = sources[:]
         if context_key is not None:
             context = [
-                Document(r[context_key])
-                if isinstance(r[context_key], dict)
-                else Document({'_base': r[context_key]})
+                (
+                    Document(r[context_key])
+                    if isinstance(r[context_key], dict)
+                    else Document({'_base': r[context_key]})
+                )
                 for r in context
             ]
         return context, sources
@@ -332,6 +290,8 @@ class Datalayer:
             return self.select(query.to_query(), *args, **kwargs)
         if isinstance(query, Update):
             return self.update(query, *args, **kwargs)
+        if isinstance(query, Write):
+            return self.write(query, *args, **kwargs)
         if isinstance(query, RawQuery):
             return query.execute(self)
 
@@ -377,17 +337,15 @@ class Datalayer:
 
         inserted_ids = insert.execute(self)
 
-        if refresh and self.cdc.running:
-            raise Exception('cdc cannot be activated and refresh=True')
-
-        if s.CFG.cluster.cdc.uri is not None:
-            logging.info('CDC active, skipping refresh')
-            return inserted_ids, None
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
 
         if refresh:
-            return inserted_ids, self.refresh_after_update_or_insert(
-                insert, ids=inserted_ids, verbose=False
-            )
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                return inserted_ids, self.refresh_after_update_or_insert(
+                    insert, ids=inserted_ids, verbose=False
+                )
         return inserted_ids, None
 
     def select(self, select: Select, reference: bool = True) -> SelectResult:
@@ -426,6 +384,7 @@ class Datalayer:
         query: t.Union[Insert, Select, Update],
         ids: t.Sequence[str],
         verbose: bool = False,
+        overwrite: bool = False,
     ):
         """
         Trigger computation jobs after data insertion.
@@ -438,9 +397,45 @@ class Datalayer:
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
             verbose=verbose,
+            overwrite=overwrite,
         )
         task_workflow.run_jobs()
         return task_workflow
+
+    def write(self, write: Write, refresh: bool = True) -> UpdateResult:
+        """
+        Bulk write data to database.
+
+        :param write: update query object
+        """
+        write_result, updated_ids, deleted_ids = write.execute(self)
+
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
+        if refresh:
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                jobs = []
+                for u, d in zip(write_result['update'], write_result['delete']):
+                    q = u['query']
+                    ids = u['ids']
+                    # Overwrite should be true for update operation since updates
+                    # could be done on collections with already existing outputs
+                    # We need overwrite ouptuts on those select and recompute predict
+                    job_update = self.refresh_after_update_or_insert(
+                        query=q, ids=ids, verbose=False, overwrite=True
+                    )
+                    jobs.append(job_update)
+
+                    q = d['query']
+                    ids = d['ids']
+                    job_update = self.refresh_after_delete(
+                        query=q, ids=ids, verbose=False
+                    )
+                    jobs.append(job_update)
+
+                return updated_ids, deleted_ids, jobs
+        return updated_ids, deleted_ids, None
 
     def update(self, update: Update, refresh: bool = True) -> UpdateResult:
         """
@@ -450,12 +445,17 @@ class Datalayer:
         """
         updated_ids = update.execute(self)
 
-        if refresh and self.cdc.running:
-            raise Exception('cdc cannot be activated and refresh=True')
+        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
         if refresh:
-            return updated_ids, self.refresh_after_update_or_insert(
-                query=update, ids=updated_ids, verbose=False
-            )
+            if cdc_status:
+                logging.warn('CDC service is active, skipping model/listener refresh')
+            else:
+                # Overwrite should be true since updates could be done on collections
+                # with already existing outputs.
+                # We need overwrite ouptuts on those select and recompute predict
+                return updated_ids, self.refresh_after_update_or_insert(
+                    query=update, ids=updated_ids, verbose=False, overwrite=True
+                )
         return updated_ids, None
 
     def add(
@@ -624,7 +624,7 @@ class Datalayer:
                 continue
 
             if (
-                s.CFG.cluster.vector_search_type == 'in_memory'
+                s.CFG.cluster.vector_search.type == 'in_memory'
                 and vi.identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -649,6 +649,7 @@ class Datalayer:
         ids=None,
         dependencies=(),
         verbose: bool = True,
+        overwrite: bool = False,
     ) -> TaskWorkflow:
         logging.debug(f"Building task workflow graph. Query:{query}")
 
@@ -674,32 +675,34 @@ class Datalayer:
         listeners = self.show('listener')
         if not listeners:
             return G
-        listener_selects = {}
 
         for identifier in listeners:
             # TODO reload listener here (with lazy loading)
-            info = self.metadata.get_component('listener', identifier)
-            listener_query = Document.decode(info['dict']['select'], None)
-            listener_select = serializable.Serializable.decode(listener_query)
-            listener_selects.update({identifier: listener_select})
-            if listener_select is None:
+            listener = self.listeners[identifier]
+            if not listener.select:
+                logging.debug(
+                    f'Listener {identifier} was loaded with `None` select, '
+                    f'{identifier} will not be added to refresh jobs.'
+                )
                 continue
+
             if (
-                listener_select.table_or_collection.identifier
+                listener.select.table_or_collection.identifier
                 != query.table_or_collection.identifier
             ):
                 continue
 
-            model, _, key = identifier.rpartition('/')
             G.add_node(
-                f'{model}.predict_in_db({key})',
+                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
                 job=ComponentJob(
-                    component_identifier=model,
-                    args=[key],
+                    component_identifier=listener.model.identifier,
                     kwargs={
+                        'X': listener.key,
                         'ids': ids,
-                        'select': listener_query.dict().encode(),
-                        **info['dict']['predict_kwargs'],
+                        'select': query.dict().encode(),
+                        'overwrite': overwrite,
+                        'predict_id': listener.predict_id,
+                        **listener.predict_kwargs,
                     },
                     method_name='predict_in_db',
                     type_id='model',
@@ -707,28 +710,39 @@ class Datalayer:
             )
 
         for identifier in listeners:
-            listener_select = listener_selects[identifier]
-            if listener_select is None:
+            listener = self.listeners[identifier]
+            if listener.select is None:
                 continue
             if (
-                listener_select.table_or_collection.identifier
+                listener.select.table_or_collection.identifier
                 != query.table_or_collection.identifier
             ):
                 continue
-            model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',
-                f'{model}.predict_in_db({key})',
+                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
             )
-            deps = self._get_dependencies_for_listener(identifier)
-            for dep in deps:
-                dep_model, _, dep_key = dep.rpartition('/')
-                G.add_edge(
-                    f'{dep_model}.predict_in_db({dep_key})',
-                    f'{model}.predict_in_db({key})',
-                )
+            if not self.cdc.running:
+                deps = self.listeners[identifier].dependencies
+                for _, dep, _ in deps:
+                    upstream = self.listeners[dep]
+                    dep_node = (
+                        f'{upstream.model.identifier}.predict_in_db({upstream.id_key})'
+                    )
+                    if dep_node in G.nodes:
+                        G.add_edge(
+                            dep_node,
+                            f'{listener.model.identifier}.predict_in_db({listener.id_key})',
+                        )
+                    else:
+                        logging.warn(
+                            f'The dependent listener {upstream.identifier} is either'
+                            ' does not exist.'
+                            'Please make sure to add this listener'
+                            f'`db.add(...)`'
+                        )
 
-        if s.CFG.self_hosted_vector_search:
+        if s.CFG.cluster.vector_search.type == 'native':
             return G
 
         for identifier in self.show('vector_index'):
@@ -737,7 +751,7 @@ class Datalayer:
             # program is standalone
 
             if (
-                s.CFG.cluster.vector_search_type == 'in_memory'
+                s.CFG.cluster.vector_search.uri is None
                 and identifier not in self.fast_vector_searchers
             ):
                 continue
@@ -762,41 +776,50 @@ class Datalayer:
                 ),
             )
             model = vi.indexing_listener.model.identifier
-            key = vi.indexing_listener.key
+            key = vi.indexing_listener.id_key
             G.add_edge(
                 f'{model}.predict_in_db({key})', f'{identifier}.{copy_vectors.__name__}'
             )
 
         return G
 
-    # TODO could be handled exclusively by `_Predictor.predict`
-    def _compute_model_outputs(
-        self,
-        model_info,
-        _ids,
-        select: Select,
-        key='_base',
-        model=None,
-        predict_kwargs=None,
+    def _update(
+        self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
     ):
-        s.logging.info('finding documents under filter')
-        model_identifier = model_info['identifier']
-        documents = list(self.execute(select.select_using_ids(_ids)))
-        documents = [x.unpack() for x in documents]
-        if key != '_base':
-            passed_docs = [r[key] for r in documents]
-        else:
-            passed_docs = documents
-        if model is None:
-            model = self.models[model_identifier]
-        return model.predict(passed_docs, **(predict_kwargs or {}))
+        # TODO add update logic here to check changed attributes
+        s.logging.debug(f'{object.unique_id} already exists - doing nothing')
+        return []
 
-    # TODO extra level not necessary
+    def _add_child_components(self, components, parent):
+        # TODO this is a bit of a mess
+        # it handles the situation in `Stack` when
+        # the components should be added in a certain order
+        G = networkx.DiGraph()
+        lookup = {(c.type_id, c.identifier): c for c in components}
+        for k in lookup:
+            G.add_node(k)
+            for d in lookup[k].dependencies:
+                if d[:2] in lookup:
+                    G.add_edge(d, lookup[k].id_tuple)
+
+        nodes = networkx.topological_sort(G)
+        jobs = {}
+        for n in nodes:
+            component = lookup[n]
+            dependencies = sum(
+                [jobs.get(d[:2], []) for d in component.dependencies], []
+            )
+            tmp = self._add(
+                component, parent=parent.unique_id, dependencies=dependencies
+            )
+            jobs[n] = tmp
+
+        return sum(list(jobs.values()), [])
+
     def _add(
         self,
         object: Component,
         dependencies: t.Sequence[Job] = (),
-        serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
         jobs = list(dependencies)
@@ -805,10 +828,16 @@ class Datalayer:
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
-        existing_versions = self.show(object.type_id, object.identifier)
-        if isinstance(object.version, int) and object.version in existing_versions:
-            s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-            return []
+        if not isinstance(object.identifier, serializable.Variable):
+            existing_versions = self.show(object.type_id, object.identifier)
+        else:
+            existing_versions = []
+        already_exists = (
+            isinstance(object.version, int) and object.version in existing_versions
+        )
+
+        if already_exists:
+            return self._update(object, dependencies=dependencies, parent=parent)
 
         if object.version is None:
             if existing_versions:
@@ -816,21 +845,16 @@ class Datalayer:
             else:
                 object.version = 0
 
-        if serialized is None:
-            leaves = object.dict().get_leaves()
-            leaves = leaves.values()
-            artifacts = [leaf for leaf in leaves if isinstance(leaf, (Artifact, File))]
-            children = [leaf for leaf in leaves if isinstance(leaf, Component)]
-
-        for child in children:
-            sub_jobs = self._add(child, parent=object.unique_id)
-            jobs.extend(sub_jobs)
+        leaves = object.dict().get_leaves()
+        leaves = leaves.values()
+        artifacts = [leaf for leaf in leaves if isinstance(leaf, _BaseEncodable)]
+        children = [leaf for leaf in leaves if isinstance(leaf, Component)]
+        jobs.extend(self._add_child_components(children, parent=object))
 
         # need to do this again to get the versions of the children
-        if serialized is None:
-            serialized = object.dict().encode()  # type: ignore[assignment]
+        object.set_variables(self)
+        serialized = object.dict().encode()
 
-        assert serialized is not None
         if artifacts:
             self.artifact_store.save(serialized)
 
@@ -843,19 +867,6 @@ class Datalayer:
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
         return jobs
-
-    # TODO doesn't seem to be used anywhere
-    def _create_plan(self):
-        G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('listener', active=True):
-            G.add_node('listener', job=identifier)
-        for identifier in self.metadata.show_components('listener'):
-            deps = self._get_dependencies_for_listener(identifier)
-            for dep in deps:
-                G.add_edge(('listener', dep), ('listener', identifier))
-        if not networkx.is_directed_acyclic_graph(G):
-            raise ValueError('G is not a directed, acyclic graph')
-        return G
 
     def _delete(self, delete: Delete):
         delete.execute(self)
@@ -903,16 +914,6 @@ class Datalayer:
             del filter['_id']
         return filter
 
-    def _get_dependencies_for_listener(self, identifier):
-        info = self.metadata.get_component('listener', identifier)
-        if info is None:
-            return []
-        out = []
-        if info['dict']['key'].startswith('_outputs.'):
-            _, key, model = info['dict']['key'].split('.')
-            out.append(f'{model}/{key}')
-        return out
-
     # TODO should create file handler separately
     def _get_file_content(self, r):
         for k in r:
@@ -923,73 +924,6 @@ class Datalayer:
     # TODO should be confined to metadata implementation
     def _get_object_info(self, identifier, type_id, version=None):
         return self.metadata.get_component(type_id, identifier, version=version)
-
-    # TODO remove
-    def _apply_listener(
-        self,
-        identifier,
-        ids: t.Optional[t.Sequence[str]] = None,
-        verbose: bool = False,
-        max_chunk_size=5000,
-        model=None,
-        recompute: bool = False,
-        listener_info=None,
-        **kwargs,
-    ) -> t.List:
-        # NOTE: this method is never called anywhere except for itself!
-        if listener_info is None:
-            listener_info = self.metadata.get_component('listener', identifier)
-
-        select = serializable.Serializable.from_dict(listener_info['select'])
-        if ids is None:
-            ids = select.get_ids(self)
-        else:
-            ids = select.select_using_ids(ids=ids).get_ids(self)
-            assert ids is not None
-
-        ids = [str(id) for id in ids]
-
-        if max_chunk_size is not None:
-            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                s.logging.info(
-                    'computing chunk '
-                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
-                )
-                self._apply_listener(
-                    identifier,
-                    ids=ids[i : i + max_chunk_size],
-                    verbose=verbose,
-                    max_chunk_size=None,
-                    model=model,
-                    recompute=recompute,
-                    listener_info=listener_info,
-                    **kwargs,
-                )
-            return []
-
-        model_info = self.metadata.get_component('model', listener_info['model'])
-        outputs = self._compute_model_outputs(
-            model_info,
-            ids,
-            select,
-            key=listener_info['key'],
-            model=model,
-            predict_kwargs=listener_info.get('predict_kwargs', {}),
-        )
-        type = model_info.get('type')
-        if type is not None:
-            type = self.datatypes[type]
-            outputs = [type(x).encode() for x in outputs]
-
-        select.model_update(
-            db=self,
-            model=listener_info['model'],
-            key=listener_info['key'],
-            version=listener_info['version'],
-            outputs=outputs,
-            ids=ids,
-        )
-        return outputs
 
     def replace(
         self,
@@ -1040,7 +974,7 @@ class Datalayer:
         if outputs is None:
             outs: t.Dict = {}
         else:
-            outs = outputs.encode()  # type: ignore[assignment]
+            outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
         logging.info(str(outs))

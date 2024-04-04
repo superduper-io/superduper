@@ -1,8 +1,102 @@
+import importlib
 import sys
 import warnings
+from importlib import metadata
 from typing import Optional
 
+from packaging import version
 
+from superduperdb import logging
+from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
+
+
+def _normalize_module(import_module, lower_bound, upper_bound, install_module):
+    assert import_module is not None
+    if install_module is None:
+        install_module = import_module
+    if upper_bound is None:
+        upper_bound = f'{sys.maxsize}.0.0'
+    if lower_bound is None:
+        lower_bound = '0.0.0'
+    if install_module is None:
+        install_module = import_module
+    return (
+        import_module,
+        version.parse(lower_bound),
+        version.parse(upper_bound),
+        install_module,
+    )
+
+
+MIN = version.parse('0.0.0')
+MAX = version.parse(f'{sys.maxsize}.0.0')
+
+
+def _compare_versions(package, lower_bound, upper_bound, install_name):
+    constraint = ''
+    if lower_bound == upper_bound:
+        constraint = f'=={lower_bound}'
+    elif lower_bound > MIN and upper_bound < MAX:
+        constraint = f'>={lower_bound},<={upper_bound}'
+    elif upper_bound < MAX:
+        constraint = f'<={upper_bound}'
+    elif lower_bound > MIN:
+        constraint = f'>={lower_bound}'
+    installation_line = f'{install_name}{constraint}'
+    try:
+        got_version = version.parse(metadata.version(package))
+    except metadata.PackageNotFoundError:
+        try:
+            got_version = version.parse(importlib.import_module(package).__version__)
+        except (metadata.PackageNotFoundError, ModuleNotFoundError):
+            logging.error(f'Could not find package {package}')
+            return False, installation_line + '    # (no such package installed)'
+    if not (lower_bound <= got_version and got_version <= upper_bound):
+        return False, installation_line + f'    # (got {got_version})'
+    return True, ''
+
+
+def requires_packages(*packages, warn=False):
+    """
+    Require the packages to be installed
+    :param packages: list of tuples of packages
+                     each tuple of the form
+                     (import_name, lower_bound/None,
+                      upper_bound/None, install_name/None)
+
+    E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
+    """
+    out = []
+    for m in packages:
+        satisfactory, install_line = _requires_packages(*m)
+        if not satisfactory:
+            out.append(install_line)
+    if out:
+        if warn:
+            warnings.warn('\n' + '\n'.join(out))
+        else:
+            raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
+
+    return out
+
+
+def _requires_packages(
+    import_module, lower_bound=None, upper_bound=None, install_module=None
+):
+    '''
+    A utility function to check that a required package for a module
+    in superduperdb.ext is installed.
+    '''
+    import_module, lower_bound, upper_bound, install_module = _normalize_module(
+        import_module,
+        lower_bound,
+        upper_bound,
+        install_module,
+    )
+    return _compare_versions(import_module, lower_bound, upper_bound, install_module)
+
+
+# TODO add deprecated also
 def public_api(stability: str = 'stable'):
     """Annotation for documenting public APIs.
 

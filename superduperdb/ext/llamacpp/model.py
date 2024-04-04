@@ -5,7 +5,7 @@ import typing as t
 import requests
 from llama_cpp import Llama
 
-from superduperdb.ext.llm.base import _BaseLLM
+from superduperdb.ext.llm.model import BaseLLM
 
 
 # TODO use core downloader already implemented
@@ -24,8 +24,8 @@ def download_uri(uri, save_path):
         raise Exception(f"Error while downloading uri {uri}")
 
 
-@dc.dataclass
-class LlamaCpp(_BaseLLM):
+@dc.dataclass(kw_only=True)
+class LlamaCpp(BaseLLM):
     """
     Llama.cpp connector
 

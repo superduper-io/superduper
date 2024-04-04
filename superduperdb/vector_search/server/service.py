@@ -41,6 +41,17 @@ def list_search(db: Datalayer):
     return db.show('vector_index')
 
 
+def post_create(vector_index: str, db=None):
+    '''
+    Performs post create method of vector searcher to
+    incorporate remaining vectors to be added in cache.
+    :param vector_index: Vector class to initiate
+    :param db: Datalayer instance
+    '''
+    vi = db.fast_vector_searchers[vector_index]
+    vi.post_create()
+
+
 def create_search(vector_index: str, db=None):
     '''
     Initiates a vector search class corresponding to `vector_index`

@@ -10,20 +10,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes Since Last Release
 
 #### Changed defaults / behaviours
+
 - Run Tests from within the container
+- Add model dict output indexing in graph
+- Make lance upsert for added vectors
 
 #### New Features & Functionality
+- Add nightly image for pre-release testing in the cloud environment
+- Fix  torch model fit and make schedule_jobs at db add
+- Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
 - Change and simplify the contract for writing new `_Predictor` descendants (`.predict_one`, `.predict`)
 - Add file datatype type to support saving and reading files/folders in artifact_store
 - Create models directly by importing package from auto and with decorator `@objectmodel`, `@torchmodel`
+- Support Schema option for MongoDB
 - Optimize LLM fine-tuning
+- Sort out the llm directory structure
+- Add cache support in inmemory vector searcher
+- Add compute_kwargs option for model
+- Add BulkWrite mongodb query
+- Rename `_Predictor` to `Model`
+- Allow developers to write `Listeners` and `Graph` in a single formalism
+- Change unittesting framework to pure configuration (no patching configs)
+- Add simple REST server implementation
 
 #### Bug Fixes
+- Fixed a bug in refresh_after_insert for listeners with select None
+- Refactor graph internal with input mapping
+- Fixed a bug in Component init
+- Fixed a bug in predict in db for missing ouptuts
+- Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.
 - LLM CI random errors
 - VectorIndex schedule_jobs missing function.
+- Fixed some bugs of the cdc RAG application
+- Fixed open source RAG Pipeline
+- Fixed vllm real-time task concurrency bug
+- Fixed Post-Like feature
+- Added CORS Policy regarding REST server implementation
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 
@@ -38,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated MongoDB Atlas vector search as a standalone searcher like lance.
 - Deprecated Demo Image. Now Notebooks run in Colab.
 - Replace dask with ray compute backend
+- All training and validation parameters to be configured in `_Predictor` attributes (`.trainer`, `.train_X`, etc.)
+- Docker build can include optional custom `requirements.txt` path
 
 #### New Features & Functionality
 
@@ -72,7 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - Chop down large files from the history to reduce the size of the repo.
-
 
 ## [0.0.19](https://github.com/SuperDuperDB/superduperdb/compare/0.0.15...0.0.19])    (2023-Dec-04)  
 

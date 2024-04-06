@@ -6,6 +6,40 @@ from pgvector.psycopg import psycopg, register_vector
 
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem, VectorIndexMeasureType
 
+class PostgresIndexing:
+    cosine = "vector_cosine_ops"
+    l2 = "vector_l2_ops"
+    inner_product = "vector_ip_ops"
+
+    
+class IVFFlat(PostgresIndexing):
+    """
+    An IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector. 
+    It has faster build times and uses less memory than HNSW, but has lower query performance (in terms of speed-recall tradeoff).
+
+    :param lists 
+    :param probes
+    """
+    def __init__(self, lists: t.Optional[int] = 100, probes: t.Optional[int] = 1):
+        self.name = "ivfflat"
+        self.lists = lists
+        self.probes = probes
+
+class HNSW(PostgresIndexing):
+    """
+    An HNSW index creates a multilayer graph. It has better query performance than IVFFlat (in terms of speed-recall tradeoff), 
+    but has slower build times and uses more memory. Also, an index can be created without any data in the table 
+    since there isn’t a training step like IVFFlat.
+
+    :param m: the max number of connections per layer 
+    :param ef_construction: the size of the dynamic candidate list for constructing the graph
+    """
+    def __init__(self, m: t.Optional[int] = 16, ef_construction: t.Optional[int] = 64, ef_search: t.Optional[int] = 40):
+        self.name = "hnsw"
+        self.m = m
+        self.ef_construction = ef_construction
+        self.ef_search: ef_search = ef_search
+
 
 class PostgresVectorSearcher(BaseVectorSearcher):
     """
@@ -22,16 +56,20 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         self,
         identifier: str,
         dimensions: int,
-        conninfo: str,
+        uri: str,
         h: t.Optional[numpy.ndarray] = None,
         index: t.Optional[t.List[str]] = None,
-        measure: t.Optional[str] = None,
+        measure: t.Optional[str] = VectorIndexMeasureType.cosine,
+        indexing : t.Optional[HNSW | IVFFlat] = None,
+        indexing_measure : t.Optional[PostgresIndexing] = PostgresIndexing.cosine
     ):
-        self.connection = psycopg.connect(conninfo=conninfo)
+        self.connection = psycopg.connect(uri)
         self.dimensions = dimensions
         self.identifier = identifier
-        self.measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
+        self.measure = measure 
         self.measure_query = self.get_measure_query()
+        self.indexing = indexing
+        self.indexing_measure = indexing_measure
 
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
@@ -63,12 +101,31 @@ class PostgresVectorSearcher(BaseVectorSearcher):
 
 
     def _create_or_append_to_dataset(self, vectors, ids):
-        with self.connection.cursor().copy(
-            'COPY %s (id, embedding) FROM STDIN WITH (FORMAT BINARY)' % self.identifier
-        ) as copy:
-            copy.set_types(['varchar', 'vector'])
-            for id_vector, vector in zip(ids, vectors):
-                copy.write_row([id_vector, vector])
+        with self.connection.cursor() as cursor:
+            for id_, vector in zip(ids, vectors):
+                try:
+                    cursor.execute(
+                        "INSERT INTO %s (id, embedding) VALUES (%s, '%s');" % (self.identifier, id_, vector)
+                    )
+                except Exception as e:
+                    pass
+        self.connection.commit()
+
+    def _create_index(self):
+        with self.connection.cursor() as cursor:
+            if self.indexing.name == 'hnsw':
+                cursor.execute("""CREATE INDEX ON %s
+                                USING %s (embedding %s)
+                                WITH (m = %s, ef_construction = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.m, self.indexing.ef_construction))
+                
+                cursor.execute("""SET %s.ef_search = %s;""" % (self.indexing.name, self.indexing.ef_search))
+            elif self.indexing.name == 'ivfflat':
+                cursor.execute("""CREATE INDEX ON %s
+                                USING %s (embedding %s)
+                                WITH (lists = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.lists))
+                
+                cursor.execute("""SET %s.probes = %s;""" % (self.indexing.name, self.indexing.probes))
+
         self.connection.commit()
 
 
@@ -80,6 +137,9 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         ids = [item.id for item in items]
         vectors = [item.vector for item in items]
         self._create_or_append_to_dataset(vectors, ids)
+
+        if self.indexing:
+            self._create_index()
 
 
     def delete(self, ids: t.Sequence[str]) -> None:
@@ -128,7 +188,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         :param h: vector
         :param n: number of nearest vectors to return
         """
-        h = self.to_numpy(h)[None, :]
+        # h = self.to_numpy(h)[None, :]
         if len(within_ids) == 0:
             condition = "1=1"
         else:

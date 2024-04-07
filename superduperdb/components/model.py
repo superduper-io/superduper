@@ -27,6 +27,7 @@ from superduperdb.misc.annotations import public_api
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
+    from superduperdb.vector_search.base import VectorIndexMeasureType
 
 
 EncoderArg = t.Union[DataType, FieldType, None]
@@ -745,6 +746,38 @@ class Model(Component):
             **kwargs,
         )
         return listener
+
+    def to_vector_index(
+        self,
+        key: ModelInputType,
+        select: CompoundSelect,
+        identifier,
+        listener_identifier='',
+        predict_kwargs: t.Optional[dict] = None,
+        measure: t.Optional["VectorIndexMeasureType"] = None,
+    ):
+        """
+        Convert the model to vector index.
+        :param key: Key to be bound to model
+        :param select: Object for selecting which data is processed
+        :param identifier: A string used to identify the model.
+        :param listener_identifier: A string used to identify the listener
+        :param predict_kwargs: Keyword arguments to self.model.predict
+        """
+        from superduperdb.components.vector_index import VectorIndex
+        from superduperdb.vector_search.base import VectorIndexMeasureType
+        listener = self.to_listener(
+            key=key,
+            select=select,
+            identifier=listener_identifier,
+            predict_kwargs=predict_kwargs,
+        )
+        vector_index = VectorIndex(
+            identifier=identifier,
+            indexing_listener=listener,
+            measure=measure or VectorIndexMeasureType.cosine,
+        )
+        return vector_index
 
 
 @dc.dataclass(kw_only=True)

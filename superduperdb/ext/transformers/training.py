@@ -183,13 +183,16 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     bits: t.Optional[int] = None
     max_seq_length: int = 512
     setup_chat_format: bool = False
-    log_to_db: bool = False
+    log_to_db: bool = True
     ray_configs: t.Optional[t.Dict] = None
     on_ray: bool = False
     ray_address: t.Optional[str] = None
+    num_gpus: t.Optional[int] = None
 
     def __post_init__(self, artifacts):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
+        if self.deepspeed:
+            self.on_ray = True
         return SuperDuperTrainer.__post_init__(self, artifacts)
 
     def build(self):
@@ -618,10 +621,10 @@ def ray_train(
         ray.init(address=ray_address, ignore_reinit_error=True)
 
     if not ray_configs:
-        gpu_count = torch.cuda.device_count()
+        gpu_count = training_args.num_gpus or torch.cuda.device_count()
         ray_configs = {
             "scaling_config": ScalingConfig(
-                num_workers=torch.cuda.device_count() or 1,
+                num_workers=gpu_count or 1,
                 use_gpu=bool(gpu_count),
             )
         }

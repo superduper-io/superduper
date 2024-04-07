@@ -147,6 +147,7 @@ const sidebars = {
         'docs/reusable_snippets/build_image_embedding_model',
         'docs/reusable_snippets/build_multimodal_embedding_models',
         'docs/reusable_snippets/build_llm',
+        'docs/reusable_snippets/finetune_llm',
         'docs/reusable_snippets/create_vector_index',
         'docs/reusable_snippets/perform_a_vector_search',
         'docs/reusable_snippets/connecting_listeners',

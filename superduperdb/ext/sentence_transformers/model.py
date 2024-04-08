@@ -1,8 +1,6 @@
 import dataclasses as dc
 import typing as t
 
-from superduperdb.misc.annotations import requires_packages
-
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
 from superduperdb.backends.query_dataset import QueryDataset

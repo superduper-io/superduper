@@ -57,6 +57,7 @@ def objectmodel(
             object=item,
         )
     else:
+
         def decorated_function(item):
             assert callable(item)
             return ObjectModel(
@@ -67,6 +68,7 @@ def objectmodel(
                 flatten=flatten,
                 output_schema=output_schema,
             )
+
         return decorated_function
 
 
@@ -914,7 +916,7 @@ class APIModel(APIBaseModel):
     @property
     def inputs(self):
         return Inputs(self.runtime_params)
-    
+
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.params['model'] = self.model
@@ -931,7 +933,7 @@ class APIModel(APIBaseModel):
         runtime_params = self.inputs(*args, **kwargs)
         out = requests.get(self.build_url(params=runtime_params)).json()
         if self.postprocess is not None:
-            out = self.postprocess(out) 
+            out = self.postprocess(out)
         return out
 
 

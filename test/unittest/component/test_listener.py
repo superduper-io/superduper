@@ -79,3 +79,58 @@ def test_listener_chaining(db):
     docs = list(db.execute(Collection('_outputs.listener1::0').find({})))
 
     assert all(['listener2::0' in d['_outputs'] for d in docs])
+
+
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+def test_listener_flatten_sql(db):
+    from superduperdb import Schema
+    from superduperdb.backends.ibis import Table
+    from superduperdb.backends.ibis.field_types import dtype
+
+    t = Table(
+        'test',
+        primary_id='id',
+        schema=Schema(
+            'schema',
+            fields={'id': dtype(str), 'x': dtype(int), 'y': dtype(int)},
+        ),
+    )
+
+    db.add(t)
+    data = []
+    import random
+
+    from superduperdb import Document
+
+    def insert_random():
+        for i in range(5):
+            y = int(random.random() > 0.5)
+            x = int(random.random() > 0.5)
+            data.append(
+                Document(
+                    {
+                        'id': i,
+                        'x': x,
+                        'y': y,
+                    }
+                )
+            )
+
+        db.execute(t.insert(data))
+
+    # Insert data
+    insert_random()
+
+    m1 = ObjectModel(
+        'm1', object=lambda x: [x + 1, x + 2], flatten=True, datatype=dtype(int)
+    )
+
+    listener1 = Listener(
+        model=m1,
+        select=t.select('id', 'x', 'y'),
+        key='x',
+        identifier='listener1',
+    )
+    db.add(listener1)
+    data = list(db.execute(t.outputs('listener1::0')))
+    assert len(data) == 10

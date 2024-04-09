@@ -1,64 +1,57 @@
-import uvicorn
+import subprocess
+import time
 
 
-def _superduper_local_service(name, app, cfg=None):
-    from superduperdb.server.app import Server
-
-    service = getattr(cfg.cluster, name)
-    assert isinstance(service, str)
-    port = int(service.split(':')[-1])
-
-    app.pre_start(cfg)
-    config = uvicorn.Config(app.app, port=port, log_level="info")
-    return Server(config=config)
+def subprocess_run(cmds):
+    print(' '.join(cmds))
+    subprocess.run(cmds)
 
 
-# class _Client:
-#     def __init__(self, db, services=()):
-#         self.db = db
-#         self.services = services
-#         for service in services:
-#             service.run_in_thread()
+def create_tmux_session(session_name, commands):
+    '''
+    Create a tmux local cluster
+    '''
 
-#     def close(self):
-#         self.db.compute.shutdown()
-#         for service in self.services:
-#             service.stop()
+    window_name = f'{session_name}:0'
+    for ix, cmd in enumerate(commands, start=1):
+        if ix == 1:
+            subprocess_run(
+                [
+                    'tmux',
+                    'new-session',
+                    '-d',
+                    '-s',
+                    session_name,
+                    '-n',
+                    'shell0',
+                    '-d',
+                    cmd,
+                ]
+            )
+        else:
+            subprocess_run(['tmux', 'split-window', '-t', window_name, cmd])
+
+        if ix % 4 == 0:
+            subprocess_run(['tmux', 'select-layout', '-t', window_name, 'tiled'])
+
+        time.sleep(2)
+    subprocess_run(['tmux', 'attach-session', '-t', session_name])
 
 
-# def local_cluster(db):
-#     """
-#     This method is used to create a local cluster consisting of
-#     Vector search service, cdc service and dask setup.
+def local_cluster():
+    print('Starting the local cluster...')
+    session_name = 'superduperdb-localcluster-session'
 
-#     Once this cluster is up, user can offload vector search,
-#     cdc on these services.
-#     """
-#     from superduperdb import CFG
+    CFG = 'deploy/testenv/env/smoke/debug.yaml'
+    services = [
+        f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. "
+        "ray start --head --dashboard-host=0.0.0.0 --disable-usage-stats --block",
+        f"SUPERDUPERDB_CONFIG={CFG} RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 "
+        "PYTHONPATH=$(pwd):. ray start --address=localhost:6379  --block",
+        f"SUPERDUPERDB_CONFIG={CFG} python -m superduperdb vector-search",
+        f"SUPERDUPERDB_CONFIG={CFG} python -m superduperdb cdc",
+    ]
 
-#     # TODO do this immutably
-#     # Vector search local service
-#     CFG.force_set('cluster.vector_search', 'http://localhost:8000')
-#     CFG.force_set('cluster.cdc.uri', 'http://localhost:8001')
-#     CFG.force_set('cluster.compute.uri', 'dask+thread')
-#     cfg = CFG(
-#         cluster__vector_search='http://localhost:8000')
+    create_tmux_session(session_name, services)
 
-#     from superduperdb.vector_search.server.app import app as vector_search_app
-
-#     vector_search_server = _superduper_local_service(
-#         'vector_search', vector_search_app, CFG
-#     )
-
-#     # Cdc local service
-#     from superduperdb.cdc.app import app as cdc_app
-
-#     cdc_server = _superduper_local_service('cdc', cdc_app, CFG)
-
-#     # Local compute
-#     from superduperdb.backends.dask.compute import DaskComputeBackend
-
-#     local_compute = DaskComputeBackend('', local=True)
-#     db.set_compute(local_compute)
-
-#     return _Client(db=db, services=(cdc_server, vector_search_server))
+    print(f'local cluster started with tmux session {session_name}')

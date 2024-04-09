@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Run Tests from within the container
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
+- Make vectors normalized in inmemory vector database for cosine measure.
+- Add local cluster as tmux sessions
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed open source RAG Pipeline
 - Fixed vllm real-time task concurrency bug
 - Fixed Post-Like feature
+- Added CORS Policy regarding REST server implementation
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 

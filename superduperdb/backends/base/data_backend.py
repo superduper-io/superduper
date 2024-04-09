@@ -38,7 +38,10 @@ class BaseDataBackend(ABC):
 
     @abstractmethod
     def create_output_dest(
-        self, identifier: str, datatype: t.Union[None, DataType, FieldType], flatten: bool = False
+        self,
+        identifier: str,
+        datatype: t.Union[None, DataType, FieldType],
+        flatten: bool = False,
     ):
         pass
 

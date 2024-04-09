@@ -128,6 +128,9 @@ class MongoDataBackend(BaseDataBackend):
         # TODO: implement me
 
     def create_output_dest(
-        self, identifier: str, datatype: t.Union[None, DataType, FieldType], flatten: bool = False
+        self,
+        identifier: str,
+        datatype: t.Union[None, DataType, FieldType],
+        flatten: bool = False,
     ):
         pass

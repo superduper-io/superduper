@@ -151,10 +151,6 @@ class OpenAIChatCompletion(_OpenAI):
     batch_size: int = 1
     prompt: str = ''
 
-    @property
-    def inputs(self):
-        return Inputs(['content', 'context'])
-
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.takes_context = True

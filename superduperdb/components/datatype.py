@@ -123,7 +123,7 @@ class DataType(Component):
     ]
 
     type_id: t.ClassVar[str] = 'datatype'
-    encoder: t.Optional[t.Callable] = None   # not necessary if encodable is file
+    encoder: t.Optional[t.Callable] = None  # not necessary if encodable is file
     decoder: t.Optional[t.Callable] = None
     info: t.Optional[t.Dict] = None
     shape: t.Optional[t.Sequence] = None

@@ -57,6 +57,7 @@ def objectmodel(
             object=item,
         )
     else:
+
         def decorated_function(item):
             assert callable(item)
             return ObjectModel(
@@ -67,6 +68,7 @@ def objectmodel(
                 flatten=flatten,
                 output_schema=output_schema,
             )
+
         return decorated_function
 
 
@@ -691,8 +693,14 @@ class Model(Component):
         outputs = encoded_outputs if encoded_outputs else outputs
         return outputs
 
-    def __call__(self, outputs: t.Optional[str] = None, **kwargs):
+    def __call__(self, *args, outputs: t.Optional[str] = None, **kwargs):
         from superduperdb.components.graph import IndexableNode
+
+        if args:
+            predict_params = self.inputs
+            assert len(args) <= len(predict_params), 'Too many arguments'
+            for i, arg in enumerate(args):
+                kwargs[predict_params.params[i]] = arg
 
         parent_graph = None
         parent_models = {}
@@ -914,7 +922,7 @@ class APIModel(APIBaseModel):
     @property
     def inputs(self):
         return Inputs(self.runtime_params)
-    
+
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
         self.params['model'] = self.model
@@ -931,7 +939,7 @@ class APIModel(APIBaseModel):
         runtime_params = self.inputs(*args, **kwargs)
         out = requests.get(self.build_url(params=runtime_params)).json()
         if self.postprocess is not None:
-            out = self.postprocess(out) 
+            out = self.postprocess(out)
         return out
 
 
@@ -961,19 +969,19 @@ class QueryModel(Model):
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
-    def predict_one(self, X: t.Dict):
+    def predict_one(self, **kwargs):
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
             X = self.preprocess(X)
         # TODO: There's something wrong here
-        select = self.select.set_variables(db=self.db, **X)
+        select = self.select.set_variables(db=self.db, **kwargs)
         out = self.db.execute(select)
         if self.postprocess is not None:
             return self.postprocess(out)
         return out
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+        return [self.predict_one(**dataset[i]) for i in range(len(dataset))]
 
 
 @public_api(stability='stable')

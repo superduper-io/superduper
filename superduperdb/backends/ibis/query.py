@@ -42,6 +42,7 @@ JOIN_MEMBERS = [
 IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
 
+
 def _model_update_impl_flatten(
     db,
     ids: t.List[t.Any],
@@ -76,12 +77,13 @@ def _model_update_impl(
     outputs: t.Sequence[t.Any],
     flatten: bool = False,
 ):
-
     if not outputs:
         return
 
     if flatten:
-        return _model_update_impl_flatten(db, ids=ids, predict_id=predict_id, outputs=outputs)
+        return _model_update_impl_flatten(
+            db, ids=ids, predict_id=predict_id, outputs=outputs
+        )
 
     table_records = []
     for ix in range(len(outputs)):

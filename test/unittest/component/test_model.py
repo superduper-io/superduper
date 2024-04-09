@@ -350,7 +350,7 @@ def test_query_model(db):
 
     import torch
 
-    out = m.predict_one({'X': torch.randn(32)})
+    out = m.predict_one(X=torch.randn(32))
 
     assert isinstance(out, bson.ObjectId)
 

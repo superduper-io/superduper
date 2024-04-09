@@ -7,6 +7,7 @@ from traceback import format_exc
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prettytable import PrettyTable
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -65,6 +66,18 @@ class SuperDuperApp:
         self._user_shutdown = False
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
+        self._app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # You can specify a list of allowed origins here
+            allow_credentials=True,
+            allow_methods=[
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+            ],  # You can adjust these as per your needs
+            allow_headers=["*"],  # You can specify allowed headers here
+        )
         self._db = db
 
     @cached_property

@@ -398,7 +398,8 @@ class Graph(Model):
         in the graph.
         '''
         # Validate the node for incompletion
-        list(map(self.validate, self.output_identifiers))
+        # TODO: Move to to_graph method and validate the graph
+        # list(map(self.validate, self.output_identifiers))
         cache = {}
 
         outputs = [

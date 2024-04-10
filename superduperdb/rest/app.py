@@ -254,7 +254,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         # route: /db/remove?type_id=model&identifier=test
         # response:
         #     {"status": "ok"}
-        app.db.remove(type_id=type_id, identifier=identifier)
+        app.db.remove(type_id=type_id, identifier=identifier, force=True)
         return {'status': 'ok'}
 
     @app.add('/db/show', method='get')

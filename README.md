@@ -40,6 +40,14 @@
 </div>
 
 
+---
+
+### ***📣 On May 1st we will release v0.2 including proper versioning of the docs (the docs are currently outdated). Find all major updates and fixes [here in the Changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)!***
+
+---
+
+
+
 ## What is SuperDuperDB? 🔮 
 
 SuperDuperDB is a Python framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**, including hosting of your own models, streaming inference and scalable model training/fine-tuning.

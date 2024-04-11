@@ -76,7 +76,6 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         self.measure_query = self.get_measure_query()
         self.indexing = indexing
         self.indexing_measure = indexing_measure
-        print('creation started')
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
             cursor.execute(
@@ -84,7 +83,6 @@ class PostgresVectorSearcher(BaseVectorSearcher):
                 % (self.identifier, self.dimensions)
             )
         self.connection.commit()
-        print("table created")
         if h:
             self._create_or_append_to_dataset(h, index)
 
@@ -225,11 +223,9 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         assert isinstance(vi.indexing_listener, Listener)
         collection = vi.indexing_listener.select.table_or_collection.identifier
 
-        print(collection)
 
         indexing_key = vi.indexing_listener.key
 
-        print(indexing_key)
         assert isinstance(
             indexing_key, str
         ), 'Only single key is support for atlas search'
@@ -241,12 +237,9 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier
 
-        print(indexing_model)
         indexing_version = vi.indexing_listener.model.version
 
-        print(indexing_version)
         output_path = f'_outputs.{vi.indexing_listener.predict_id}'
-        print(output_path)
 
         return PostgresVectorSearcher(
             uri="postgresql://postgres:test@localhost:8000/qa",

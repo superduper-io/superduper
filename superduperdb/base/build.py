@@ -122,7 +122,7 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
         name = uri.split('//')[0]
         if type == 'data_backend':
             ibis_conn = ibis.connect(uri)
-            return mapping['postgres'](ibis_conn, name)
+            return mapping['ibis'](ibis_conn, name)
         else:
             assert type == 'metadata'
             from sqlalchemy import create_engine

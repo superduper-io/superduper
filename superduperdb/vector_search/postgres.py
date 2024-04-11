@@ -1,7 +1,13 @@
 import json
 import typing as t
 import numpy
-from pgvector.psycopg import psycopg, register_vector
+import psycopg2
+
+from superduperdb import CFG, logging
+if t.TYPE_CHECKING:
+    from superduperdb.components.vector_index import VectorIndex
+from superduperdb.components.model import APIModel, Model
+
 
 
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem, VectorIndexMeasureType
@@ -63,21 +69,22 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         indexing : t.Optional[HNSW | IVFFlat] = None,
         indexing_measure : t.Optional[PostgresIndexing] = PostgresIndexing.cosine
     ):
-        self.connection = psycopg.connect(uri)
+        self.connection = psycopg2.connect(uri)
         self.dimensions = dimensions
         self.identifier = identifier
         self.measure = measure 
         self.measure_query = self.get_measure_query()
         self.indexing = indexing
         self.indexing_measure = indexing_measure
-
+        print('creation started')
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS %s (id varchar, embedding vector(%d))'
+                'CREATE TABLE IF NOT EXISTS "%s" (id varchar, embedding vector(%d))'
                 % (self.identifier, self.dimensions)
             )
-        register_vector(self.connection)
+        self.connection.commit()
+        print("table created")
         if h:
             self._create_or_append_to_dataset(h, index)
 
@@ -209,3 +216,41 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         ids = [row[0] for row in nearest_items]
         scores = [row[1] for row in nearest_items]
         return ids, scores
+
+    @classmethod
+    def from_component(cls, vi: 'VectorIndex'):
+        from superduperdb.components.listener import Listener
+        from superduperdb.components.model import ObjectModel
+
+        assert isinstance(vi.indexing_listener, Listener)
+        collection = vi.indexing_listener.select.table_or_collection.identifier
+
+        print(collection)
+
+        indexing_key = vi.indexing_listener.key
+
+        print(indexing_key)
+        assert isinstance(
+            indexing_key, str
+        ), 'Only single key is support for atlas search'
+        if indexing_key.startswith('_outputs'):
+            indexing_key = indexing_key.split('.')[1]
+        assert isinstance(vi.indexing_listener.model, Model) or isinstance(
+            vi.indexing_listener.model, APIModel
+        )
+        assert isinstance(collection, str), 'Collection is required to be a string'
+        indexing_model = vi.indexing_listener.model.identifier
+
+        print(indexing_model)
+        indexing_version = vi.indexing_listener.model.version
+
+        print(indexing_version)
+        output_path = f'_outputs.{vi.indexing_listener.predict_id}'
+        print(output_path)
+
+        return PostgresVectorSearcher(
+            uri="postgresql://postgres:test@localhost:8000/qa",
+            identifier=output_path,
+            dimensions=vi.dimensions,
+            measure=VectorIndexMeasureType.cosine,
+        )

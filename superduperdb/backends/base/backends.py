@@ -2,7 +2,6 @@ from ibis.backends.base import BaseBackend
 from pymongo import MongoClient
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
-from superduperdb.backends.postgres.data_backend import PostgresDataBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
@@ -17,7 +16,6 @@ from superduperdb.vector_search.postgres import PostgresVectorSearcher
 data_backends = {
     'mongodb': MongoDataBackend,
     'ibis': IbisDataBackend,
-    'postgres' : PostgresDataBackend
 }
 
 artifact_stores = {

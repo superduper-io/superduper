@@ -2,30 +2,29 @@
 sidebar_position: 18
 ---
 
-# AI Models via `Model` and Descendants
+# Applying `Model` instances to `db`
 
-AI models may be wrapped and used in `superduperdb` with the `Model` class and descendants.
+There are 4 key AI `Model` sub classes, see [here](../apply_api/model) for detailed usage:
 
-### Creating AI Models in a Range of Frameworks
+| Path | Description |
+| --- | ---
+| `superduperdb.components.model.ObjectModel` | Wraps a Python object to compute outputs |
+| `superduperdb.components.model.APIModel` | Wraps a model hosted behind an API to compute outputs |
+| `superduperdb.components.model.QueryModel` | Maps a Database select query with a free variable over inputs |
+| `superduperdb.components.model.SequentialModel` | Computes outputs sequentially for a sequence of `Model` instances |
 
-Model instances may be saved to `superduperdb` using `db.add`.
+As well as these key sub-classes, we have classes in the `superduperdb.ext.*` subpackages:
+See [here](../ai_integrations/) for more information.
 
-### Vanilla
+Whenever one of these `Model` descendants is instantiated, and `db.apply(model)` is called, 
+several things can (do) happen:
 
-By default, the `Model` component supports arbitrary callables to be used to perform model predictions and transformations:
+1. The `Model`'s metadata is saved in the `db.metadata_store`.
+2. It's associated data (e.g.) model is saved in the `db.artifact_store`.
+3. (Optional) if the `Model` has a `Trainer` attached, then the `Model` is trained/ fit on the specified data.
+4. (Optional) if the `Model` has an `Evaluation` method attached, then the `Model` is evaluated on the specified data.
 
-```python
-from superduperdb import Model
-
-def chunk_text(x):
-    return x.split('\n\n')
-
-db.add(
-    Model(identifier='my-chunker', object=chunk_text)
-)
-```
-
-### Scikit-Learn
+<!-- ### Scikit-Learn
 
 ```python
 from superduperdb.ext.sklearn import Estimator
@@ -36,7 +35,7 @@ db.add(Estimator(SVC()))
 
 ### Transformers
 
-```python
+```pytho
 from superduperdb.ext.transformers import Pipeline
 from superduperdb import superduper
 
@@ -92,3 +91,79 @@ db.add(model)
 | `postprocess` | `Callable` applied to individual rows/items or output |
 | `encoder` | An `Encoder` instance applied to the model output to save that output in the database |
 | `schema` | A `Schema` instance applied to a model's output, whose rows are dictionaries |
+
+
+## Using AI APIs 
+
+In SuperDuperDB, developers are able to interact with popular AI API providers, in a way very similar to 
+[integrating with AI open-source or home-grown models](./ai_models.md). Instantiating a model from 
+these providers is similar to instantiating a `Model`:
+
+### OpenAI
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `OpenAIEmbedding` |
+| Chat models | `OpenAIChatCompletion` |
+| Image generation models | `OpenAIImageCreation` |
+| Image edit models | `OpenAIImageEdit` |
+| Audio transcription models | `OpenAIAudioTranscription` |
+
+**Usage**
+
+```python
+from superduperdb.ext.openai import OpenAI<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Cohere
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `CohereEmbedding` |
+| Chat models | `CohereChatCompletion` |
+
+**Usage**
+
+```python
+from superduperdb.ext.cohere import Cohere<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Anthropic
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Chat models | `AnthropicCompletions` |
+
+**Usage**
+
+```python
+from superduperdb.ext.anthropic import Anthropic<ModelType> as ModelCls
+
+db.add(Modelcls(identifier='my-model', **kwargs))
+```
+
+### Jina
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `JinaEmbedding` |
+
+**Usage**
+
+```python
+from superduperdb.ext.jina import JinaEmbedding
+
+db.add(JinaEmbedding(identifier='jina-embeddings-v2-base-en', api_key='JINA_API_KEY')) # You can also set JINA_API_KEY as environment variable
+``` -->

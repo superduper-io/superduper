@@ -1,1 +1,0 @@
-# SQL native queries

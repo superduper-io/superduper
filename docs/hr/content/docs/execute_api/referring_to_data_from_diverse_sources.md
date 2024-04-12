@@ -4,11 +4,7 @@ sidebar_position: 15
 
 # Working with external data sources
 
-:::warning
-This functionality is currently supported for MongoDB only
-:::
-
-Using the MongoDB query API, `superduperdb` supports data added from external data-sources.
+SuperDuperDB supports data added from external data-sources.
 When doing this, `superduperdb` supports:
 
 - web URLs

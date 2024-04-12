@@ -17,7 +17,7 @@ from superduperdb.ext.sklearn.model import Estimator
 from superduperdb.ext.torch.model import TorchModel
 
 # from superduperdb.ext.vllm.model import VllmAPI
-from superduperdb.rest.utils import parse_query
+from superduperdb.rest.utils import parse_query, strip_artifacts
 from superduperdb.server import app as superduperapp
 
 assert isinstance(
@@ -255,6 +255,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         # response:
         #     {"status": "ok"}
         app.db.remove(type_id=type_id, identifier=identifier, force=True)
+
         return {'status': 'ok'}
 
     @app.add('/db/show', method='get')
@@ -293,12 +294,16 @@ def build_app(app: superduperapp.SuperDuperApp):
     def db_execute(
         query: t.List[str],
         documents: t.Optional[t.List[t.Dict]] = None,
-        artifacts: t.Optional[t.List[str]] = None,
+        artifacts: t.Optional[t.List[t.Dict]] = None,
     ):
         # route: /db/execute?query=["docs.find({},{})"]&documents=[]
         # .      &artifacts=[]&skip=0&limit=10
         # response:
         #     [{"a": "Moscow."}, {"a": "Paris."}, {"a": "London."}]
+        if artifacts is not None:
+            for r in documents:
+                r['_artifacts'] = artifacts
+
         query = parse_query(query, documents, artifacts, db=app.db)
 
         logging.info('processing this query:')
@@ -307,7 +312,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         result = app.db.execute(query)
 
         if isinstance(query, Insert) or isinstance(query, Delete):
-            return {'_base': [str(x) for x in result[0]]}
+            return {'_base': [str(x) for x in result[0]]}, []
 
         logging.warn(str(query))
         if isinstance(result, Document):
@@ -316,11 +321,13 @@ def build_app(app: superduperapp.SuperDuperApp):
             result = []
         else:
             result = list(result)
-        out = [r.encode() for r in result]
+        out, result_artifacts = strip_artifacts(
+            [r.encode() for r in result]
+        )
         logging.warn(str(out))
         for r in out:
             del r['_id']
-        return out
+        return out, result_artifacts
     
 
 build_app(app)

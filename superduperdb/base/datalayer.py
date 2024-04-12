@@ -903,8 +903,8 @@ class Datalayer:
             f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
-            component = self.load(type_id, identifier, version=version)
-            info = self.metadata.get_component(type_id, identifier, version=version)
+            component = self.load(type_id, identifier, version=version, allow_hidden=force)
+            info = self.metadata.get_component(type_id, identifier, version=version, allow_hidden=force)
             if hasattr(component, 'cleanup'):
                 # TODO - is there an abstract method thingy for this?
                 component.cleanup(self)

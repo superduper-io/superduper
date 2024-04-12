@@ -57,14 +57,14 @@ class RayComputeBackend(ComputeBackend):
 
         remote_function = ray.remote(_dependable_remote_job, **compute_kwargs)
         future = remote_function.remote(function, *args, **kwargs)
-        task_id = future.task_id().hex()
+        task_id = str(future.task_id().hex())
         self._futures_collection[task_id] = future
 
         logging.success(
             f"Job submitted on {self}.  function: {function}; "
-            f"task: {task_id}; job_id: {future.job_id()}"
+            f"task: {task_id}; job_id: {str(future.job_id())}"
         )
-        return future
+        return future, task_id
 
     @property
     def tasks(self) -> t.Dict[str, ray.ObjectRef]:

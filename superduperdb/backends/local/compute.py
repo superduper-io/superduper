@@ -40,7 +40,7 @@ class LocalComputeBackend(ComputeBackend):
         logging.success(
             f"Job submitted on {self}.  function:{function} future:{future_key}"
         )
-        return future_key
+        return future_key, future_key
 
     @property
     def tasks(self) -> t.Dict[str, t.Any]:

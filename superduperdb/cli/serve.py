@@ -5,12 +5,12 @@ from . import command
 
 
 @command(help='Start local cluster: server, ray and change data capture')
-def local_cluster(action: str):
+def local_cluster(action: str, notebook_token: t.Optional[str] = None):
     from superduperdb.server.cluster import attach_cluster, down_cluster, up_cluster
     action = action.lower()
 
     if action == 'up':
-        up_cluster()
+        up_cluster(notebook_token=notebook_token)
     elif action == 'down':
         down_cluster()
     elif action == 'attach':

@@ -8,7 +8,7 @@ from superduperdb import logging
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.model import Trainer, _Fittable
+from superduperdb.components.model import Trainer
 from superduperdb.ext.torch.model import TorchModel
 
 
@@ -74,30 +74,21 @@ class TorchTrainer(Trainer):
         )
 
     def take_step(self, model, batch, optimizers):
-        if model.train_signature == '*args':
+        if self.signature == '*args':
             outputs = model.train_forward(*batch)
-        elif model.train_signature == 'singleton':
+        elif self.signature == 'singleton':
             outputs = model.train_forward(batch)
-        elif model.train_signature == '**kwargs':
+        elif self.signature == '**kwargs':
             outputs = model.train_forward(**batch)
-        elif model.train_signature == '*args,**kwargs':
+        elif self.signature == '*args,**kwargs':
             outputs = model.train_forward(*batch[0], **batch[1])
-        objective_value = self.objective(*outputs)
+        objective_value = self.training_configuration.objective(*outputs)
         for opt in optimizers:
             opt.zero_grad()
         objective_value.backward()
         for opt in optimizers:
             opt.step()
         return objective_value
-
-    def compute_validation_objective(self, model, valid_dataloader):
-        objective_values = []
-        with model.evaluating(), torch.no_grad():
-            for batch in valid_dataloader:
-                objective_values.append(
-                    self.objective(*model.train_forward(*batch)).item()
-                )
-            return sum(objective_values) / len(objective_values)
 
     def _fit_with_dataloaders(
         self,
@@ -109,7 +100,8 @@ class TorchTrainer(Trainer):
     ):
         if validation_sets is None:
             validation_sets = []
-        model.train()
+
+        self.model.train()
         iteration = 0
 
         optimizers = self.get_optimizers(model)
@@ -120,46 +112,43 @@ class TorchTrainer(Trainer):
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.validation_interval == 0:
-                    valid_loss = self.compute_validation_objective(
-                        model, valid_dataloader
-                    )
+                    valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
                         m = model.validate(vs)
                         all_metrics.update(m)
                     all_metrics.update({'objective': valid_loss})
-                    _Fittable.append_metrics(model, all_metrics)
+                    self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
-                    if self.saving_criterion(model):
-                        model.changed.add('object')
+                    if self.saving_criterion():
+                        model.changed.append('object')
                         db.replace(model, upsert=True)
-                        list(map(model.changed.add, ['all_metrics', 'optimizer_state']))
+                        self.changed.extend(['all_metrics', 'optimizer_state'])
                     stop = self.stopping_criterion(iteration, model)
                     if stop:
                         return
                 iteration += 1
 
-    def stopping_criterion(self, iteration, model):
+    def stopping_criterion(self, iteration):
         max_iterations = self.max_iterations
         no_improve_then_stop = self.no_improve_then_stop
         if isinstance(max_iterations, int) and iteration >= max_iterations:
             return True
         if isinstance(no_improve_then_stop, int):
             if self.listen == 'objective':
-                to_listen = [-x for x in model.metric_values['objective']]
+                to_listen = [-x for x in self.metric_values['objective']]
             else:
-                to_listen = model.metric_values[self.listen]
-
+                to_listen = self.metric_values[self.listen]
             if max(to_listen[-no_improve_then_stop:]) < max(to_listen):
                 logging.info('early stopping triggered!')
                 return True
         return False
 
-    def saving_criterion(self, model):
+    def saving_criterion(self):
         if self.listen == 'objective':
-            to_listen = [-x for x in model.metric_values['objective']]
+            to_listen = [-x for x in self.metric_values['objective']]
         else:
-            to_listen = model.metric_values[self.listen]
+            to_listen = self.metric_values[self.listen]
         if all([to_listen[-1] >= x for x in to_listen[:-1]]):
             return True
         return False

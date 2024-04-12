@@ -64,17 +64,16 @@ def model3(db):
 
 def test_simple_graph(model1, model2):
     g = Graph(
-        identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+        identifier='simple-graph', input=model1, outputs=model2, signature='*args'
     )
     g.connect(model1, model2)
-    assert g.predict_one(1) == [(4, 2)]
+    assert g.predict_one(1) == (4, 2)
 
     g = Graph(
-        identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+        identifier='simple-graph', input=model1, outputs=model2, signature='*args'
     )
-
     g.connect(model1, model2)
-    assert g.predict([1, 2, 3]) == [[(4, 2), (5, 3), (6, 4)]]
+    assert g.predict([1, 2, 3]) == [(4, 2), (5, 3), (6, 4)]
 
 
 def test_graph_output_indexing(model2_multi_dict, model2, model1):

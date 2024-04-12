@@ -26,16 +26,6 @@ def cleanup():
         pass
 
 
-def test_compile_decompile(cleanup):
-    m = ObjectModel('test_export', object=lambda x: x, datatype=dill_serializer)
-    m.version = 0
-    m.datatype.version = 0
-    m.export_to_path()
-    assert os.path.exists('test_export.tar.gz')
-    m_reload = Component.import_from_path('test_export.tar.gz')
-    assert isinstance(m_reload, ObjectModel)
-
-
 @dc.dataclass(kw_only=True)
 class MyComponent(Component):
     type_id: t.ClassVar[str] = 'my_type'

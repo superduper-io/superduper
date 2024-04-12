@@ -1,8 +1,4 @@
----
-sidebar_position: 2
----
-
-# Design
+# Architecture
 
 ## Schematic
 

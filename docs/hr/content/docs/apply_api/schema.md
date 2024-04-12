@@ -28,7 +28,7 @@ schema = Schema(
     }
 )
 
-db.add(schema)
+db.apply(schema)
 ```
 
 *Usage with SQL*
@@ -48,7 +48,7 @@ schema = Schema(
     }
 )
 
-db.add(schema)
+db.apply(schema)
 ```
 
 *Usage with MongoDB*
@@ -70,7 +70,7 @@ m = Model(
     output_schema=schema
 )
 
-db.add(m)    # adds model and schema
+db.apply(m)    # adds model and schema
 ```
 
 ***See also***

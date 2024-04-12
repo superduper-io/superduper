@@ -17,7 +17,7 @@ m = Metric(
     object=example_comparison,
 )
 
-db.add(m)
+db.apply(m)
 ```
 
 ***See also***

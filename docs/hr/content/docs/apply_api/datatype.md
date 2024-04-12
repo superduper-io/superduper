@@ -26,7 +26,7 @@ dt = DataType(
     encodable='encodable',
 )
 
-db.add(dt)
+db.apply(dt)
 ```
 
 :::info

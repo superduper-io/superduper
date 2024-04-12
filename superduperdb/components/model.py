@@ -7,7 +7,7 @@ import multiprocessing
 import os
 import re
 import typing as t
-from abc import abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 import requests
 import tqdm
@@ -18,6 +18,7 @@ from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
+from superduperdb.base.code import Code
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component, ensure_initialized
@@ -46,18 +47,18 @@ def objectmodel(
     output_schema: t.Optional[Schema] = None,
 ):
     """
-    When a class is wrapped with this decorator,
-    the instantiated class comes out as an `ObjectModel`.
-
-    :param cls: Class to wrap.
+    When a function is wrapped with this decorator,
+    the function comes out as an `ObjectModel`.
     """
-    if item is not None:
+    if item is not None and callable(item):
         return ObjectModel(
             identifier=item.__name__,
             object=item,
         )
+    elif item is not None and inspect.isclass(item):
+        # TODO
+        raise NotImplementedError
     else:
-
         def decorated_function(item):
             assert callable(item)
             return ObjectModel(
@@ -69,6 +70,39 @@ def objectmodel(
                 output_schema=output_schema,
             )
 
+        return decorated_function
+
+
+def codemodel(
+    item: t.Optional[t.Callable] = None,
+    identifier: t.Optional[str] = None,
+    datatype=None,
+    model_update_kwargs: t.Optional[t.Dict] = None,
+    flatten: bool = False,
+    output_schema: t.Optional[Schema] = None,
+):
+    """
+    When a function is wrapped with this decorator,
+    the function comes out as a `CodeModel`.
+    """
+    if item is not None and callable(item):
+        return CodeModel(
+            identifier=item.__name__,
+            object=Code.from_object(item),
+        )
+    elif item is not None and inspect.isclass(item):
+        raise NotImplementedError
+    else:
+        def decorated_function(item):
+            assert callable(item)
+            return CodeModel(
+                identifier=identifier or item.__name__,
+                object=Code.from_object(item),
+                datatype=datatype,
+                model_update_kwargs=model_update_kwargs or {},
+                flatten=flatten,
+                output_schema=output_schema,
+            )
         return decorated_function
 
 
@@ -119,6 +153,15 @@ class Trainer(Component):
     """
 
     type_id: t.ClassVar[str] = 'trainer'
+    key: ModelInputType
+    select: CompoundSelect
+    transform: t.Optional[t.Callable] = None
+    metric_values: t.Dict = dc.field(default_factory=lambda: {})
+    signature: Signature = '*args'
+    data_prefetch: bool = False
+    prefetch_size: int = 1000
+    prefetch_factor: int = 100
+    in_memory: bool = True
 
     @abstractmethod
     def fit(
@@ -132,73 +175,22 @@ class Trainer(Component):
 
 
 @dc.dataclass(kw_only=True)
-class _Validator:
+class Validation(Component):
+    type_id: t.ClassVar[str] = 'validation'
     metrics: t.Sequence[Metric] = ()
-    valid_X: t.Optional[ModelInputType] = None
-    validation_sets: t.Sequence[Dataset] = ()
-    validation_metrics: t.Optional[t.Dict] = None
-
-    def schedule_jobs(self, db, dependencies: t.Sequence[Job] = ()):
-        if self.validation_sets and self.validation_metrics:
-            return [
-                self.validate_in_db_job(
-                    db=db,
-                    dependencies=dependencies,
-                )
-            ]
-        return []
-
-    def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
-        mapping = Mapping(X, signature='*args')
-        predictions = self.predict(dataset.data)
-        targets = list(map(mapping, dataset.data))
-        results = {}
-        for m in metrics:
-            results[m.identifier] = m(predictions, targets)
-        return results
-
-    def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
-        job = ComponentJob(
-            component_identifier=self.identifier,
-            method_name='validate_in_db',
-            type_id='model',
-            kwargs={},
-        )
-        job(db, dependencies)
-        return job
-
-    def validate_in_db(self, db):
-        self.metric_values = {}
-        for dataset in self.validation_sets:
-            db.add(dataset)
-            logging.info(f'Validating on {dataset.identifier}...')
-            results = self.validate(
-                X=self.valid_X,
-                dataset=dataset,
-                metrics=self.metrics,
-            )
-            self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
-        db.add(self)
+    key: t.Optional[ModelInputType] = None
+    datasets: t.Sequence[Dataset] = ()
 
 
 @dc.dataclass(kw_only=True)
 class _Fittable:
     trainer: t.Optional[Trainer] = None
-    train_X: t.Optional[ModelInputType] = None
-    train_select: t.Optional[CompoundSelect] = None
-    train_transform: t.Optional[t.Callable] = None
-    metric_values: t.Dict = dc.field(default_factory=lambda: {})
-    train_signature: Signature = '*args'
-    data_prefetch: bool = False
-    prefetch_size: int = 1000
-    prefetch_factor: int = 100
-    in_memory: bool = True
 
     def schedule_jobs(self, db, dependencies=()):
         jobs = []
-        if self.train_X is not None:
+        if self.trainer is not None:
             assert isinstance(self.trainer, Trainer)
-            assert self.train_select is not None
+            assert self.trainer.select is not None
             jobs.append(
                 self.fit_in_db_job(
                     db=db,
@@ -238,7 +230,7 @@ class _Fittable:
 
     def _create_dataset(self, X, db, select, fold=None, **kwargs):
         kwargs = kwargs.copy()
-        if self.data_prefetch:
+        if self.trainer.data_prefetch:
             dataset_cls = CachedQueryDataset
             kwargs['prefetch_size'] = self.prefetch_size
         else:
@@ -248,10 +240,10 @@ class _Fittable:
             select=select,
             fold=fold,
             db=db,
-            mapping=Mapping(X, signature=self.train_signature),
-            in_memory=self.in_memory,
+            mapping=Mapping(X, signature=self.trainer.signature),
+            in_memory=self.trainer.in_memory,
             transform=(
-                self.train_transform if self.train_transform is not None else None
+                self.trainer.transform if self.trainer.transform is not None else None
             ),
             **kwargs,
         )
@@ -286,8 +278,8 @@ class _Fittable:
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
         train_dataset, valid_dataset = self._create_datasets(
-            select=self.train_select,
-            X=self.train_X,
+            select=self.trainer.select,
+            X=self.trainer.key,
             db=db,
         )
         return self.fit(
@@ -297,9 +289,9 @@ class _Fittable:
         )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
-        if self.metric_values is not None:
+        if self.trainer.metric_values is not None:
             for k, v in d.items():
-                self.metric_values.setdefault(k, []).append(v)
+                self.trainer.metric_values.setdefault(k, []).append(v)
 
 
 class Mapping:
@@ -380,23 +372,25 @@ class Model(Component):
     :param predict_kwargs: Additional arguments to use at prediction time
     :param compute_kwargs: Kwargs used for compute backend job submit.
                            Example (Ray backend):
-                           compute_kwargs = {'resources':{'CustomResource': 1}}
+                           compute_kwargs = dict(resources=...)
     """
 
     type_id: t.ClassVar[str] = 'model'
     signature: Signature = '*args,**kwargs'
     ui_schema: t.ClassVar[t.Dict] = [
-        {'name': 'datatype', 'type': 'component/datatype'},
-        {'name': 'predict_kwargs', 'type': 'json'},
+        {'name': 'datatype', 'type': 'component/datatype', 'optional': True},
+        {'name': 'predict_kwargs', 'type': 'json', 'default': {}},
+        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
     ]
 
-    # TODO combine with Schema
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     flatten: bool = False
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
-    predict_kwargs: t.Dict = dc.field(default_factory=lambda: {})
-    compute_kwargs: t.Dict = dc.field(default_factory=lambda: {})
+    predict_kwargs: t.Dict = dc.field(default_factory=dict)
+    compute_kwargs: t.Dict = dc.field(default_factory=dict)
+    validation: t.Optional[Validation] = None
+    metric_values: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
@@ -746,6 +740,38 @@ class Model(Component):
         )
         return listener
 
+    def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
+        mapping = Mapping(X, signature='*args')
+        predictions = self.predict(dataset.data)
+        targets = list(map(mapping, dataset.data))
+        results = {}
+        for m in metrics:
+            results[m.identifier] = m(predictions, targets)
+        return results
+
+    def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
+        job = ComponentJob(
+            component_identifier=self.identifier,
+            method_name='validate_in_db',
+            type_id='model',
+            kwargs={},
+        )
+        job(db, dependencies)
+        return job
+
+    def validate_in_db(self, db):
+        for dataset in self.validation.datasets:
+            logging.info(f'Validating on {dataset.identifier}...')
+            db.apply(dataset)
+            results = self.validate(
+                X=self.validation.key,
+                dataset=dataset,
+                metrics=self.validation.metrics,
+            )
+            self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
+        # should update the new values
+        db.apply(self)
+
 
 @dc.dataclass(kw_only=True)
 class _DeviceManaged:
@@ -786,29 +812,16 @@ class IndexableNode:
 
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
-class ObjectModel(Model, _Validator):
-    """Model component which wraps a model to become serializable
-    {_predictor_params}
-    :param object: Model object, e.g. sklearn model, etc..
-    :param num_workers: Number of workers
-    """
+class _ObjectModel(Model, ABC):
+    __doc__ = Model.__doc__
+    __doc__ = __doc__.format(_model=Model.__doc__)
+    num_workers: int = 0
+    object: t.Any
 
-    type_id: t.ClassVar[str] = 'model'
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'object', 'type': 'component/object'},
-        {'name': 'num_workers', 'type': 'int'},
+        {'name': 'num_workers', 'type': 'int', 'default': '0'},
         {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
     ]
-
-    __doc__ = __doc__.format(_predictor_params=Model.__doc__)
-
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_lazy),
-    )
-
-    object: t.Any
-    num_workers: int = 0
-    signature: Signature = '*args,**kwargs'
 
     @property
     def outputs(self):
@@ -831,11 +844,6 @@ class ObjectModel(Model, _Validator):
             else:
                 out.append(self.train_y)
         return out
-
-    def append_metrics(self, d: t.Dict[str, float]) -> None:
-        if self.metric_values is not None:
-            for k, v in d.items():
-                self.metric_values.setdefault(k, []).append(v)
 
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
@@ -860,7 +868,45 @@ class ObjectModel(Model, _Validator):
         return outputs
 
 
-# TODO no longer necessary
+@public_api(stability='stable')
+@dc.dataclass(kw_only=True)
+class ObjectModel(_ObjectModel):
+    """Model component which wraps a model to become serializable
+    {_object_model_params}
+    :param object: Model object, e.g. sklearn model, etc.."""
+    __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
+
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'object', 'type': 'artifact'}
+    ]
+
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
+        ('object', dill_lazy),
+    )
+
+
+@public_api(stability='stable')
+@dc.dataclass(kw_only=True)
+class CodeModel(_ObjectModel):
+    """Model component which wraps a model to become serializable
+    {_object_model_params}
+    :param code: Code object, wrapping some foreign code"""
+    __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
+
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'object', 'type': 'code', 'default': Code.default}
+    ]
+    object: Code
+
+    @classmethod
+    def handle_integration(cls, kwargs):
+        if isinstance(kwargs['object'], str):
+            kwargs['object'] = Code(kwargs['object'])
+        else:
+            assert isinstance(kwargs['object'], Code)
+        return kwargs
+
+
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
@@ -990,16 +1036,16 @@ class SequentialModel(Model):
     """
     Sequential model component which wraps a model to become serializable
 
-    {_predictor_params}
-    :param predictors: A list of predictors to use
+    {_model_params}
+    :param models: A list of models to use
     """
 
     __doc__ = __doc__.format(
-        _predictor_params=Model.__doc__,
+        _model_params=Model.__doc__,
     )
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'predictors', 'type': 'component/model', 'sequence': True},
+        {'name': 'models', 'type': 'component/model', 'sequence': True},
         {'name': 'signature', 'type': 'str'},
     ]
 

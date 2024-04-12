@@ -3,7 +3,7 @@ from superduperdb.ext.llamacpp.model import LlamaCpp, LlamaCppEmbedding
 
 class _MockedLlama:
     def create_completion(self, *args, **kwargs):
-        return 'tested'
+        return {'choices': [{'text': 'tested'}]}
 
     def create_embedding(self, *args, **kwargs):
         return [1]

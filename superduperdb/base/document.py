@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 
 from superduperdb.base.leaf import Leaf, find_leaf_cls
 from superduperdb.base.serializable import Serializable
+from superduperdb.base.code import Code
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
@@ -25,6 +26,7 @@ ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 _LEAF_TYPES = {
     'component': Component,
     'serializable': Serializable,
+    'remote_code': Code,
 }
 _LEAF_TYPES.update(_ENCODABLES)
 _OUTPUTS_KEY = '_outputs'
@@ -153,15 +155,15 @@ def _encode_with_references(r: t.Any, references: t.Dict):
     if isinstance(r, dict):
         for k, v in r.items():
             if isinstance(v, Leaf):
-                r[k] = f'${v.leaf_type}/{v.unique_id}'
-                references[v.leaf_type][v.unique_id] = v
+                r[k] = f'$_{v.leaf_type}s/{v.unique_id}'
+                references[f'_{v.leaf_type}s'][v.unique_id] = v
             else:
                 _encode_with_references(r[k], references=references)
     if isinstance(r, list):
         for i, x in enumerate(r):
             if isinstance(x, Leaf):
-                r[i] = f'${x.leaf_type}/{x.unique_id}'
-                references[x.leaf_type][x.unique_id] = x
+                r[i] = f'$_{x.leaf_type}s/{x.unique_id}'
+                references[f'_{x.leaf_type}'][x.unique_id] = x
             else:
                 _encode_with_references(x, references=references)
 

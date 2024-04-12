@@ -29,7 +29,7 @@ vi = VectorIndex(
     compatible_listener=listener_2 # this listener can have `listener_2.active = False`
 )
 
-db.add(vi)
+db.apply(vi)
 ```
 
 ***See also***

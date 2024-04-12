@@ -60,6 +60,8 @@ def td():
 def test_transformer_fit(transformers_model, db, td):
     repo_name = td
     trainer = TransformersTrainer(
+        key={'text': 'text', 'label': 'label'},
+        select=Collection('train_documents').find(),
         identifier=repo_name,
         learning_rate=2e-5,
         per_device_train_batch_size=1,
@@ -69,8 +71,6 @@ def test_transformer_fit(transformers_model, db, td):
         save_strategy="epoch",
         use_mps_device=False,
     )
-    transformers_model.train_X = {'text': 'text', 'label': 'label'}
-    transformers_model.train_select = Collection('train_documents').find()
     transformers_model.trainer = trainer
     transformers_model.validation_sets = [
         Dataset(

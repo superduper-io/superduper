@@ -13,6 +13,7 @@ __version__ = '0.1.1'
 from superduperdb.backends import ibis, mongodb
 
 from .base.document import Document
+from .base.decorators import code
 from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
@@ -31,6 +32,7 @@ __all__ = (
     'DataType',
     'Encoder',
     'Document',
+    'code',
     'ObjectModel',
     'Model',
     'objectmodel',

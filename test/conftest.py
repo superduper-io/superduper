@@ -110,8 +110,13 @@ def test_db(request) -> Iterator[Datalayer]:
     logging.info("Dropping database ", {db_name})
 
     if isinstance(db.databackend, MongoDataBackend):
-        db.databackend.conn.drop_database(db_name)
-        db.databackend.conn.drop_database(f'_filesystem:{db_name}')
+        try:
+            db.databackend.conn.drop_database(db_name)
+            db.databackend.conn.drop_database(f'_filesystem:{db_name}')
+        except Exception as e:
+            logging.warning(f"Error dropping databases: {e}")
+            for c in db.databackend.db.list_collections():
+                getattr(db.databackend.db, c).delete_many({})
 
 
 @pytest.fixture

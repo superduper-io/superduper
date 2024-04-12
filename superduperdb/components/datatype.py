@@ -233,6 +233,8 @@ class _BaseEncodable(Leaf):
 
     @property
     def unique_id(self):
+        if self.file_id is not None:
+            return self.file_id
         return str(id(self.x))
 
     @property

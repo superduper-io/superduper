@@ -9,8 +9,10 @@ from superduperdb.backends.base.query import Delete, Insert
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
+from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
-from superduperdb.components.model import ObjectModel
+from superduperdb.components.model import ObjectModel, SequentialModel, CodeModel
+from superduperdb.components.stack import Stack
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import image_type
 from superduperdb.ext.sklearn.model import Estimator
@@ -30,8 +32,13 @@ app = superduperapp.SuperDuperApp('rest', port=port)
 CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
     'model': {
         'ObjectModel': ObjectModel,
+        'SequentialModel': SequentialModel,
+        'CodeModel': CodeModel,
         'TorchModel': TorchModel,
         'SklearnEstimator': Estimator,
+    },
+    'listener': {
+        'Listener': Listener,
     },
     'datatype': {
         'image': image_type,
@@ -41,12 +48,15 @@ CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
 }
 
 
+MODULE_LOOKUP: t.Dict[str, t.Dict[str, t.Any]] = {}
 API_SCHEMAS: t.Dict[str, t.Dict[str, t.Any]] = {}
 for type_id in CLASSES:
     API_SCHEMAS[type_id] = {}
+    MODULE_LOOKUP[type_id] = {}
     for cls_name in CLASSES[type_id]:
         cls = CLASSES[type_id][cls_name]
         API_SCHEMAS[type_id][cls_name] = cls.get_ui_schema()
+        MODULE_LOOKUP[type_id][cls_name] = cls.__module__
 
 
 logging.info(json.dumps(API_SCHEMAS, indent=2))
@@ -84,6 +94,21 @@ def build_app(app: superduperapp.SuperDuperApp):
         #         }
         #     }
         return API_SCHEMAS
+
+    @app.add('/spec/lookup', method='get')
+    def spec_lookup():
+        # Get the import path for all components.
+        # route: /spec/lookup
+        # response:
+        #     {
+        #         "model": {
+        #             "ObjectModel": "superduperdb.components.model"
+        #         },
+        #         "datatype": {
+        #             "array": "superduperdb.ext.numpy.encoder"
+        #         }
+        #     }
+        return MODULE_LOOKUP
 
     @app.add('/db/artifact_store/save_artifact', method='put')
     def db_artifact_store_save_artifact(datatype: str, raw: bytes = File(...)):
@@ -245,7 +270,9 @@ def build_app(app: superduperapp.SuperDuperApp):
         #     }
         # response:
         #     {"status": "ok"}
-        component = Component.import_from_references(info, db=app.db)
+        component = Component.import_from_references(info, db=app.db, identifier=info['identifier'])
+        if not isinstance(component, Stack):
+            component = Stack(components=[component], identifier=info['identifier'])
         app.db.apply(component)
         return {'status': 'ok'}
 

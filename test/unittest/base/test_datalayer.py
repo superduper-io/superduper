@@ -30,6 +30,8 @@ from superduperdb.components.datatype import (
     DataType,
     LazyArtifact,
     dill_serializer,
+    pickle_decode,
+    pickle_encode,
     pickle_serializer,
 )
 from superduperdb.components.listener import Listener
@@ -78,9 +80,9 @@ def add_fake_model(db: Datalayer):
     model = ObjectModel(
         object=lambda x: str(x),
         identifier='fake_model',
-        datatype=DataType(identifier='base'),
+        datatype=DataType(identifier='base', encoder=pickle_encode, decoder=pickle_decode),
     )
-    db.add(model)
+    db.apply(model)
     if isinstance(db.databackend, MongoDataBackend):
         select = Collection('documents').find()
     else:
@@ -92,9 +94,9 @@ def add_fake_model(db: Datalayer):
             },
         )
         t = Table(identifier='documents', schema=schema)
-        db.add(t)
+        db.apply(t)
         select = db.load('table', 'documents').to_query().select('id', 'x')
-    db.add(
+    db.apply(
         Listener(
             model=model,
             select=select,
@@ -109,7 +111,7 @@ def add_fake_model(db: Datalayer):
 def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
-    db.add(component)
+    db.apply(component)
     assert component.is_on_create is True
     assert component.is_after_create is True
     assert component.is_schedule_jobs is True
@@ -128,19 +130,19 @@ def test_add_version(db: Datalayer):
     assert original_serialized['identifier'] == saved_serialized['identifier']
 
     # Check duplicate components are not added
-    db.add(component)
+    db.apply(component)
     component_loaded = db.load('test-component', 'test')
     assert component_loaded.version == 0
     assert db.show('test-component', 'test') == [0]
 
     # Check the version is incremented
     component = TestComponent(identifier='test')
-    db.add(component)
+    db.apply(component)
     assert component.version == 1
     assert db.show('test-component', 'test') == [0, 1]
 
     component = TestComponent(identifier='test')
-    db.add(component)
+    db.apply(component)
     assert component.version == 2
     assert db.show('test-component', 'test') == [0, 1, 2]
 
@@ -154,7 +156,7 @@ def test_add_component_with_bad_artifact(db):
         identifier='test', artifact=artifact, artifacts={'artifact': pickle_serializer}
     )
     with pytest.raises(Exception):
-        db.add(component)
+        db.apply(component)
 
 
 @pytest.mark.parametrize(
@@ -165,7 +167,7 @@ def test_add_artifact_auto_replace(db):
     artifact = {'data': 1}
     component = TestComponent(identifier='test', artifact=artifact)
     with patch.object(db.metadata, 'create_component') as create_component:
-        db.add(component)
+        db.apply(component)
         serialized = create_component.call_args[0][0]
         print(serialized)
         assert 'sha1' in serialized['dict']['artifact']['_content']
@@ -178,7 +180,7 @@ def test_add_child(db):
     child_component = TestComponent(identifier='child')
     component = TestComponent(identifier='test', child=child_component)
 
-    db.add(component)
+    db.apply(component)
     assert db.show('test-component', 'test') == [0]
     assert db.show('test-component', 'child') == [0]
 
@@ -187,7 +189,7 @@ def test_add_child(db):
 
     child_component_2 = TestComponent(identifier='child-2')
     component_3 = TestComponent(identifier='test-3', child=child_component_2)
-    db.add(component_3)
+    db.apply(component_3)
     assert db.show('test-component', 'test-3') == [0]
     assert db.show('test-component', 'child-2') == [0]
 
@@ -200,10 +202,10 @@ def test_add_child(db):
 )
 def test_add(db):
     component = TestComponent(identifier='test')
-    db.add(component)
+    db.apply(component)
     assert db.show('test-component', 'test') == [0]
 
-    db.add(
+    db.apply(
         [
             TestComponent(identifier='test_list_1'),
             TestComponent(identifier='test_list_2'),
@@ -213,7 +215,7 @@ def test_add(db):
     assert db.show('test-component', 'test_list_2') == [0]
 
     with pytest.raises(ValueError):
-        db.add('test')
+        db.apply('test')
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
@@ -224,7 +226,7 @@ def test_add_with_artifact(db):
         datatype=dill_serializer,
     )
 
-    db.add(m)
+    db.apply(m)
 
     m = db.load('model', m.identifier)
 
@@ -238,14 +240,14 @@ def test_add_with_artifact(db):
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_add_table(db):
     component = Table('test', schema=Schema('test-s', fields={'field': dtype('str')}))
-    db.add(component)
+    db.apply(component)
 
 
 @pytest.mark.parametrize(
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_version(db):
-    db.add(
+    db.apply(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
@@ -277,7 +279,7 @@ def test_remove_component_version(db):
 )
 def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
-    db.add(
+    db.apply(
         TestComponent(
             identifier='test_3_parent',
             version=0,
@@ -298,7 +300,7 @@ def test_remove_component_with_clean_up(db):
     component_clean_up = TestComponent(
         identifier='test_clean_up', version=0, check_clean_up=True
     )
-    db.add(component_clean_up)
+    db.apply(component_clean_up)
     with pytest.raises(Exception) as e:
         db._remove_component_version('test-component', 'test_clean_up', 0, force=True)
     assert 'cleanup' in str(e)
@@ -310,7 +312,7 @@ def test_remove_component_with_clean_up(db):
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
     test_datatype = DataType(identifier='test_datatype')
-    db.add(test_datatype)
+    db.apply(test_datatype)
     db._remove_component_version('datatype', 'test_datatype', 0, force=True)
     with pytest.raises(FileNotFoundError):
         db.datatypes['test_datatype']
@@ -326,7 +328,7 @@ def test_remove_component_with_artifact(db):
         version=0,
         artifact={'test': 'test'},
     )
-    db.add(component_with_artifact)
+    db.apply(component_with_artifact)
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
@@ -342,7 +344,7 @@ def test_remove_component_with_artifact(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_one_version(db):
-    db.add(
+    db.apply(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
@@ -360,7 +362,7 @@ def test_remove_one_version(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_multi_version(db):
-    db.add(
+    db.apply(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
@@ -389,7 +391,7 @@ def test_remove_not_exist_component(db):
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_show(db):
-    db.add(
+    db.apply(
         [
             TestComponent(identifier='a1'),
             TestComponent(identifier='a2'),
@@ -459,7 +461,7 @@ def test_get_context(db):
 )
 def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
-    db.add(
+    db.apply(
         [
             DataType(identifier='e1'),
             DataType(identifier='e2'),
@@ -507,8 +509,13 @@ def test_insert_mongo_db(db):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert_artifacts(db):
-    dt = DataType('my_saveable', encodable='artifact')
-    db.add(dt)
+    dt = DataType(
+        'my_saveable',
+        encodable='artifact',
+        encoder=pickle_encode,     
+        decoder=pickle_decode,
+    )
+    db.apply(dt)
     db.insert(
         Collection('documents').insert_many(
             [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
@@ -616,16 +623,16 @@ def test_compound_component(db):
         datatype=tensor(torch.float, shape=(32,)),
     )
 
-    db.add(m)
+    db.apply(m)
     assert 'torch.float32[32]' in db.show('datatype')
     assert 'my-test-module' in db.show('model')
     assert db.show('model', 'my-test-module') == [0]
 
-    db.add(m)
+    db.apply(m)
     assert db.show('model', 'my-test-module') == [0]
     assert db.show('datatype', 'torch.float32[32]') == [0]
 
-    db.add(
+    db.apply(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
@@ -663,7 +670,7 @@ def test_reload_dataset(db):
         select=select,
         sample_size=100,
     )
-    db.add(d)
+    db.apply(d)
     new_d = db.load('dataset', 'my_valid')
     assert new_d.sample_size == 100
 
@@ -688,7 +695,7 @@ def test_dataset(db):
         identifier='test_dataset',
         select=select,
     )
-    db.add(d)
+    db.apply(d)
     assert db.show('dataset') == ['test_dataset']
     dataset = db.load('dataset', 'test_dataset')
     assert len(dataset.data) == len(list(db.execute(dataset.select)))

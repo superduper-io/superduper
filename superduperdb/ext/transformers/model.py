@@ -31,7 +31,6 @@ from superduperdb.components.model import (
     Trainer,
     _DeviceManaged,
     _Fittable,
-    _Validator,
 )
 from superduperdb.ext.llm.model import BaseLLM
 from superduperdb.ext.transformers.training import Checkpoint
@@ -58,6 +57,7 @@ class TransformersTrainer(TrainingArguments, Trainer):
         ('preprocess_logits_for_metrics', dill_serializer),
     )
 
+    signature: Signature = '**kwargs'
     output_dir: str = ''
     data_collator: t.Optional[transformers.data.data_collator.DataCollator] = None
     callbacks: t.Optional[t.List[transformers.trainer_callback.TrainerCallback]] = None
@@ -97,13 +97,11 @@ class TransformersTrainer(TrainingArguments, Trainer):
                 examples['text'], padding="max_length", truncation=True
             )
 
-        train_dataset = NativeDataset.from_list(
-            [train_dataset[i] for i in range(len(train_dataset))]
-        )
+        train_dataset = [train_dataset[i] for i in range(len(train_dataset))]
+        train_dataset = NativeDataset.from_list(train_dataset)
         train_dataset = train_dataset.map(preprocess_function)
-        valid_dataset = NativeDataset.from_list(
-            [valid_dataset[i] for i in range(len(valid_dataset))]
-        )
+        valid_dataset = [valid_dataset[i] for i in range(len(valid_dataset))]
+        valid_dataset = NativeDataset.from_list(valid_dataset)
         valid_dataset = valid_dataset.map(preprocess_function)
 
         def compute_metrics(eval_pred):
@@ -162,7 +160,6 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         ('object', pickle_serializer),
     )
     signature: t.ClassVar[Signature] = 'singleton'
-    train_signature: t.ClassVar[Signature] = '**kwargs'
     tokenizer_name: t.Optional[str] = None
     tokenizer_cls: object = AutoTokenizer
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -195,7 +192,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
 
 
 @dc.dataclass(kw_only=True)
-class LLM(BaseLLM, _Fittable, _Validator):
+class LLM(BaseLLM, _Fittable):
     """
     LLM model based on `transformers` library.
 

@@ -59,9 +59,8 @@ class LlamaCpp(BaseLLM):
         """
         Generate text from a prompt.
         """
-        return self._model.create_completion(prompt, **self.predict_kwargs, **kwargs)[
-            "choices"
-        ][0]["text"]
+        out = self._model.create_completion(prompt, **self.predict_kwargs, **kwargs)
+        return out['choices'][0]['text']
 
 
 @dc.dataclass

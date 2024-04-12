@@ -41,6 +41,17 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Connect API',
+      link: {
+        type: 'doc',
+        id: 'docs/connect_api/overview',
+      },
+      items: [
+      ]
+      
+    },
+    {
+      type: 'category',
       label: 'Apply API',
       link: {
         type: 'doc',
@@ -123,14 +134,13 @@ const sidebars = {
         id: 'docs/models/overview',
       },
       items: [
-        'docs/models/overview',
-        'docs/models/apply_models',
-        'docs/models/daemonizing_models_with_listeners',
         'docs/models/key_methods',
+        'docs/models/daemonizing_models_with_listeners',
         'docs/models/linking_interdependent_models',
         'docs/models/training_models',
         'docs/models/evaluating_models',
         'docs/models/llms',
+        'docs/models/embeddings',
         'docs/models/bring_your_own_models',
       ]
     },
@@ -215,20 +225,15 @@ const sidebars = {
       label: 'Fundamentals',
       link: {
         type: 'doc',
-        id: 'docs/fundamentals/glossary',
+        id: 'docs/fundamentals/overview',
       },
       items: [
-        'docs/fundamentals/glossary',
+        'docs/fundamentals/class_hierarchy',
         'docs/fundamentals/design',
-        'docs/fundamentals/datalayer_overview',
-        'docs/fundamentals/document_encoder_abstraction',
-        'docs/fundamentals/serializables',
-        'docs/fundamentals/encodables',
-        'docs/fundamentals/document',
         'docs/fundamentals/component_abstraction',
-        'docs/fundamentals/component_versioning',
-        'docs/fundamentals/declarative_api',
-        'docs/fundamentals/predictors_and_models',
+        'docs/fundamentals/datalayer_overview',
+        'docs/fundamentals/data_transmision',
+        'docs/fundamentals/models',
         'docs/fundamentals/vector_search_algorithm',
       ]
     },

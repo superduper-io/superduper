@@ -207,9 +207,12 @@ class Graph(Model):
         self._db = None
 
         self.signature = self.input.signature
-        self.output_identifiers = [
-            o.identifier if isinstance(o, Model) else o for o in self.outputs
-        ]
+        if isinstance(self.outputs, list):
+            self.output_identifiers = [
+                o.identifier if isinstance(o, Model) else o for o in self.outputs
+            ]
+        else:
+            self.output_identifiers = self.outputs.identifier if isinstance(self.outputs, Model) else self.outputs
 
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
@@ -253,7 +256,7 @@ class Graph(Model):
         G_ = self.G.copy()
         G_.add_edge(u.identifier, v.identifier, weight=on or self._DEFAULT_ARG_WEIGHT)
         if not nx.is_directed_acyclic_graph(G_):
-            raise TypeError('The graph is not DAG with this edge')
+            raise TypeError(f'The graph is not DAG with this edge: {u.identifier} -> {v.identifier}')
         self.G = G_
 
         if update_edge:
@@ -402,13 +405,14 @@ class Graph(Model):
         # list(map(self.validate, self.output_identifiers))
         cache = {}
 
-        outputs = [
-            self._predict_on_node(*args, node=output, cache=cache, **kwargs)
-            for output in self.output_identifiers
-        ]
-
-        # TODO: check if output schema and datatype required
-        return outputs
+        if isinstance(self.output_identifiers, list):
+            outputs = [
+                self._predict_on_node(*args, node=output, cache=cache, **kwargs)
+                for output in self.output_identifiers
+            ]
+            return outputs
+        else:
+            return self._predict_on_node(*args, node=self.output_identifiers, cache=cache, **kwargs)
 
     def patch_dataset_to_args(self, dataset):
         '''
@@ -436,17 +440,22 @@ class Graph(Model):
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         # Validate the node for incompletion
-        list(map(self.validate, self.output_identifiers))
+        if isinstance(self.output_identifiers, list):
+            list(map(self.validate, self.output_identifiers))
+        else:
+            self.validate(self.output_identifiers)
 
         if isinstance(dataset, QueryDataset):
             raise TypeError('QueryDataset is not supported in graph mode')
         cache: t.Dict[str, t.Any] = {}
 
-        outputs = [
-            self._predict_on_node(dataset, node=output, cache=cache, one=False)
-            for output in self.output_identifiers
-        ]
-
+        if isinstance(self.output_identifiers, list):
+            outputs = [
+                self._predict_on_node(dataset, node=output, cache=cache, one=False)
+                for output in self.output_identifiers
+            ]
+        else:
+            outputs = self._predict_on_node(dataset, node=self.output_identifiers, cache=cache, one=False)
         # TODO: check if output schema and datatype required
         return outputs
 

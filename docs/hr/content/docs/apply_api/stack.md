@@ -20,7 +20,7 @@ stack = Stack(
     ]
 )
 
-db.add(m)
+db.apply(m)
 ```
 
 
@@ -63,7 +63,7 @@ my_listener=Listener(
     select=collection.find({'_fold': 'train'})
 )
 
-db.add(
+db.apply(
     Stack(
         'my-stack',
         [

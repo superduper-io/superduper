@@ -11,10 +11,18 @@ from superduperdb.base.serializable import Variable
 from superduperdb.components.model import Mapping
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.server import request_server
+from superduperdb.rest.utils import parse_query
 
 from ..jobs.job import Job
 from .component import Component, ComponentTuple
 from .model import Model, ModelInputType
+
+SELECT_TEMPLATE = {
+    'documents': [],
+    'query': [
+        '<>.find()'
+    ]
+}
 
 
 @public_api(stability='stable')
@@ -38,8 +46,8 @@ class Listener(Component):
         {'name': 'identifier', 'type': 'str', 'default': ''},
         {'name': 'key', 'type': 'json'},
         {'name': 'model', 'type': 'component/model'},
-        {'name': 'select', 'type': 'query'},
-        {'name': 'active', 'type': 'bool'},
+        {'name': 'select', 'type': 'json', 'default': SELECT_TEMPLATE},
+        {'name': 'active', 'type': 'bool', 'default': True},
         {'name': 'predict_kwargs', 'type': 'json', 'default': {}},
     ]
 
@@ -51,6 +59,16 @@ class Listener(Component):
     identifier: str = ''
 
     type_id: t.ClassVar[str] = 'listener'
+
+    @classmethod
+    def handle_integration(cls, kwargs):
+        if 'select' in kwargs and isinstance(kwargs['select'], dict):
+            kwargs['select'] = parse_query(
+                query=kwargs['select']['query'],
+                documents=kwargs['select']['documents'],
+                artifacts=[],
+            )
+        return kwargs
 
     def __post_init__(self, artifacts):
         if self.identifier == '':

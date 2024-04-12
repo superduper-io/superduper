@@ -15,7 +15,6 @@ from superduperdb.components.model import (
     Signature,
     Trainer,
     _Fittable,
-    _Validator,
 )
 from superduperdb.jobs.job import Job
 
@@ -66,7 +65,7 @@ class SklearnTrainer(Trainer):
         valid_dataset: QueryDataset,
     ):
         train_X, train_y = self._get_data_from_dataset(
-            dataset=train_dataset, X=model.train_X  # type: ignore[arg-type]
+            dataset=train_dataset, X=self.key  # type: ignore[arg-type]
         )
         if train_y:
             model.object.fit(train_X, train_y, **self.fit_params)
@@ -76,7 +75,7 @@ class SklearnTrainer(Trainer):
 
 
 @dc.dataclass(kw_only=True)
-class Estimator(Model, _Fittable, _Validator):
+class Estimator(Model, _Fittable):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('object', pickle_serializer),
     )
@@ -87,12 +86,10 @@ class Estimator(Model, _Fittable, _Validator):
     ]
 
     object: BaseEstimator
+    trainer: t.Optional[SklearnTrainer] = None
     signature: t.ClassVar[Signature] = 'singleton'
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Callable] = None
-    trainer: SklearnTrainer = dc.field(
-        default_factory=lambda: SklearnTrainer('sklearn-default-trainer')
-    )
 
     def schedule_jobs(
         self,
@@ -100,7 +97,8 @@ class Estimator(Model, _Fittable, _Validator):
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
-        jobs = _Validator.schedule_jobs(self, db, dependencies=[*dependencies, *jobs])
+        if self.validation is not None:
+            jobs = self.validation.schedule_jobs(self, db, dependencies=[*dependencies, *jobs])
         return jobs
 
     def predict_one(self, X):

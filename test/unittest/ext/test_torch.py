@@ -7,6 +7,7 @@ try:
 except ImportError:
     torch = None
 
+from superduperdb.components.model import Validation
 from test.db_config import DBConfig
 
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
@@ -57,13 +58,6 @@ def model():
     return TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',
-        trainer=TorchTrainer(
-            identifier='my_trainer',
-            objective=my_loss,
-            loader_kwargs={'batch_size': 10},
-            max_iterations=100,
-            validation_interval=10,
-        ),
         preferred_devices=('cpu',),
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
         datatype=DataType(identifier='base'),
@@ -88,8 +82,20 @@ def test_fit(db, valid_dataset, model):
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z', '_fold')
 
-    model.train_X = ('x', 'y')
-    model.train_select = select
-    model.metrics = [Metric(identifier='acc', object=acc)]
-    model.validation_sets = [valid_dataset]
-    db.add(m)
+    trainer = TorchTrainer(
+        key='X',
+        select = select,
+        identifier='my_trainer',
+        objective=my_loss,
+        loader_kwargs={'batch_size': 10},
+        max_iterations=100,
+        validation_interval=10,
+    )
+
+    model.trainer = trainer
+    model.validation = Validation(
+        'my_valid',
+        metrics = [Metric(identifier='acc', object=acc)],
+        datasets=[valid_dataset],
+    )
+    db.apply(m)

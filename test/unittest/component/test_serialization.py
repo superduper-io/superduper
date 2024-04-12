@@ -11,7 +11,7 @@ from test.db_config import DBConfig
 from sklearn.svm import SVC
 
 from superduperdb.components.model import ObjectModel
-from superduperdb.ext.sklearn.model import Estimator
+from superduperdb.ext.sklearn.model import Estimator, SklearnTrainer
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -32,6 +32,7 @@ def test_model():
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_sklearn(db):
+
     m = Estimator(
         identifier='test',
         object=SVC(),
@@ -39,7 +40,7 @@ def test_sklearn(db):
     )
     assert 'object' in m.artifact_schema.fields
 
-    db.add(m)
+    db.apply(m)
     assert db.show('model') == ['test']
     assert db.show('datatype') == ['torch.float32[32]']
 

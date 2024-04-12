@@ -20,7 +20,7 @@ table = Table(
     schema=my_schema
 )
 
-db.add(table)
+db.apply(table)
 ```
 
 ***See also***

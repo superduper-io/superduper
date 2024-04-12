@@ -1,16 +1,18 @@
 # Training models directly on your datastore
 
-Similarly to [applying models to create predictions](./apply_models.md), training models is possible both procedurally and declaratively in `superduperdb`.
-
-When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.g. `dask://localhost:8786`), then `superduperdb` deploys [a job on the configured `dask` cluster](../production/non_blocking_dask_jobs.md)
+`Model` instances may be trained if a `trainer` is set on the `Model` when `db.apply` is called.
+When models are trained, if `CFG.cluster.compute` has been configured with a `ray` scheduler, then `superduperdb` deploys [a job on the connected `ray` cluster](../production_features/non_blocking_ray_jobs).
 
 ## Basic pattern
 
 ```python
-db.add(
+from superduperdb.ext.<framework> import <Framework>Trainer
+from superduperdb.ext.<framework> import <ModelCls>
+
+db.apply(
     <ModelCls>(
         *args, 
-        trainer=Trainer(),
+        trainer=<Framework>Trainer(**trainer_kwargs),
         **kwargs,
     )
 )
@@ -18,9 +20,9 @@ db.add(
 
 ## Fitting/ training models by framework
 
-See the following links:
+Not all `Model` types are trainable. We support training for the following frameworks:
 
-| Framework | Link |
+| Framework | Training Link |
 | --- | --- |
 | Scikit-Learn | [link](../ai_integrations/sklearn#training) |
 | PyTorch | [link](../ai_integrations/pytorch#training) |

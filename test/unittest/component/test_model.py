@@ -15,7 +15,7 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Variable
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.datatype import DataType
+from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import (
     Mapping,
@@ -25,7 +25,7 @@ from superduperdb.components.model import (
     SequentialModel,
     Trainer,
     _Fittable,
-    _Validator,
+    Validation,
 )
 from superduperdb.jobs.job import ComponentJob
 
@@ -34,7 +34,7 @@ from superduperdb.jobs.job import ComponentJob
 # Test the _TrainingConfiguration class (tc)
 # ------------------------------------------
 @dc.dataclass
-class Validator(_Fittable, ObjectModel, _Validator):
+class Validator(_Fittable, ObjectModel):
     ...
 
 
@@ -188,7 +188,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
     ):
         my_object.return_value = 2
 
-        monkeypatch.setattr(predict_mixin, 'datatype', DataType(identifier='test'))
+        monkeypatch.setattr(predict_mixin, 'datatype', DataType(identifier='test', encoder=pickle_encode, decoder=pickle_decode))
         predict_mixin._predict_with_select_and_ids(
             X=X, db=db, select=select, ids=ids, predict_id='test'
         )
@@ -221,19 +221,27 @@ def test_model_append_metrics():
     class _Tmp(ObjectModel, _Fittable):
         ...
 
-    model = _Tmp('test', object=object())
+    class MyTrainer(Trainer):
+        def fit(self, *args, **kwargs):
+            ...
+
+    model = _Tmp(
+        'test', object=object(),
+        validation=Validation('test'),
+        trainer=MyTrainer('test', key='x', select='1')
+    )
 
     metric_values = {'acc': 0.5, 'loss': 0.5}
 
     model.append_metrics(metric_values)
 
-    assert model.metric_values.get('acc') == [0.5]
-    assert model.metric_values.get('loss') == [0.5]
+    assert model.trainer.metric_values.get('acc') == [0.5]
+    assert model.trainer.metric_values.get('loss') == [0.5]
 
     metric_values = {'acc': 0.6, 'loss': 0.4}
     model.append_metrics(metric_values)
-    assert model.metric_values.get('acc') == [0.5, 0.6]
-    assert model.metric_values.get('loss') == [0.5, 0.4]
+    assert model.trainer.metric_values.get('acc') == [0.5, 0.6]
+    assert model.trainer.metric_values.get('loss') == [0.5, 0.4]
 
 
 @patch.object(Mapping, '__call__')
@@ -270,18 +278,22 @@ def test_model_validate(mock_call):
 def test_model_validate_in_db(valid_dataset, db):
     # Check the validation is done correctly
 
-    model_predict = ObjectModel('test', object=lambda x: x, datatype=FieldType('str'))
+    model_predict = ObjectModel(
+        'test',
+        object=lambda x: x, datatype=FieldType('str'),
+        validation=Validation(
+            'my-valid',
+            metrics=[
+                Metric('f1', object=f1_score),
+                Metric('acc', object=accuracy_score),
+            ],
+            datasets = [valid_dataset],
+        )
+    )
 
     with patch.object(model_predict, 'validate') as mock_validate:
         mock_validate.return_value = {'acc': 0.7, 'f1': 0.2}
-
-        model_predict.metrics = [
-            Metric('f1', object=f1_score),
-            Metric('acc', object=accuracy_score),
-        ]
-        model_predict.validation_sets = [valid_dataset]
         model_predict.validate_in_db(db)
-
         assert model_predict.metric_values == {'my_valid/0': {'acc': 0.7, 'f1': 0.2}}
 
 
@@ -295,10 +307,8 @@ def test_model_create_fit_job(db):
     # Check the fit job is created correctly
     model = Validator('test', object=object())
     # TODO move these parameters into the `Trainer` (same thing for validation)
-    model.train_X = 'x'
-    model.train_select = Collection('test').find()
-    model.trainer = MyTrainer('test')
-    db.add(model)
+    model.trainer = MyTrainer('test', select=Collection('test').find(), key='x')
+    db.apply(model)
     with patch.object(ComponentJob, '__call__') as mock_call:
         mock_call.return_value = None
     job = model.fit_in_db_job(db=db)
@@ -310,13 +320,15 @@ def test_model_create_fit_job(db):
 def test_model_fit(db, valid_dataset):
     # Check the logic of the fit method, the mock method was tested above
 
+    class MyTrainer(Trainer):
+        def fit(self, *args, **kwargs):
+            return
+
     model = Validator(
         'test',
         object=object(),
-        train_X='x',
-        train_select=Collection('test').find(),
-        validation_sets=[valid_dataset],
-        metrics=[MagicMock(spec=Metric)],
+        trainer=MyTrainer('my-trainer', key='x', select=Collection('test').find()),
+        validation=Validation('my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]),
     )
 
     with patch.object(model, 'fit'):
@@ -358,7 +370,7 @@ def test_query_model(db):
 
     assert len(out) == 4
 
-    db.add(m)
+    db.apply(m)
 
     n = db.load('model', m.identifier)
     assert set(x.value for x in n.select.variables) == set(x.value for x in q.variables)

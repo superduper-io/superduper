@@ -1,5 +1,53 @@
 # Bring your own models
 
+There are two ways to bring your own computations
+and models to SuperDuperDB.
+
+1. Wrap your own Python functions
+2. Write your own `Model` sub-classes
+
+## Wrap your own Python functions
+
+This serializes a Python object or class:
+
+```python
+from superduperdb import objectmodel
+
+@objectmodel
+def my_model(x, y):
+    return x + y
+```
+
+Additional arguments may be provided to the decorator from `superduperdb.components.model.ObjectModel`:
+
+```python
+@objectmodel(num_workers=4)
+def my_model(x, y):
+    return x + y
+```
+
+Similarly the following snippet saves the source code of a python object instead of serializing the object:
+
+```python
+from superduperdb import codemodel
+
+@codemodel
+def my_other_model(x, y):
+    return x * y
+```
+
+These decorators may also be applied to `callable` classes.
+If your class has important state which should be serialized with the class, 
+then use `objectmodel` otherwise you can use `codemodel`:
+
+```python
+@objectmodel
+class MyClass:
+    ...
+
+    def __call__(self, x):
+        ...
+```
 
 ## Serialization
 

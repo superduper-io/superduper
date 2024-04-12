@@ -2,33 +2,9 @@
 sidebar_position: 22
 ---
 
-# Daemonizing `.predict` with listeners
-
-In many AI applications, it's important that a catalogue of predictions is maintained for 
-all data in the database, updated as soon after data-updates and streaming inserts as possible.
-
-In order to allow developers to implement this functionality, `superduperdb` offers
-the `Listener` abstraction.
-
-## Creating listeners in-line with `.predict`
-
-### Procedural API
-
-To create a `Listener`, when applying a `Predictor` instance to `db`, the following 
-procedural pattern applies:
-
-```python
-my_model.predict(
-    X='<input-field>',
-    db=db,
-    select=query,
-    listen=True,
-)
-```
+# Computing model outputs with listeners
 
 ### Declarative API
-
-This is equivalent to:
 
 ```python
 db.add(

@@ -13,7 +13,7 @@ data = [Document(r) for r in data]
 ## MongoDB
 
 ```python
-db.execute(
+ids, jobs = db.execute(
     my_collection.insert_many(data)
 )
 ```
@@ -21,7 +21,21 @@ db.execute(
 ## SQL
 
 ```python
-db.execute(
+ids, jobs = db.execute(
     my_table.insert(data)
 )
+```
+
+## Monitoring jobs
+
+The second output of this command gives a reference to the job computations 
+which are triggered by the `Component` instances already applied with `db.apply(...)`.
+
+If users have configured a `ray` cluster, the jobs may be monitored at the 
+following uri:
+
+```python
+from superduperdb import CFG
+
+print(CFG.cluster.compute.uri)
 ```

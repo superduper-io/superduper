@@ -1,3 +1,4 @@
+import re
 import typing as t
 
 from bson.objectid import ObjectId
@@ -72,7 +73,15 @@ class Document(MongoStyleDict):
         r: t.Dict,
         db: t.Optional['Datalayer'] = None,
     ) -> t.Any:
-        decoded = _decode(dict(r), db=db)
+        cache = {}
+        if '_artifacts' in r:
+            decoded_artifacts = dict(
+                Document.decode({'_base': r['_artifacts']}, db=db)
+            )['_base']
+            for x in decoded_artifacts:
+                cache[x.file_id] = x
+            del r['_artifacts']
+        decoded = _decode(dict(r), db=db, artifact_cache=cache)
         if isinstance(decoded, dict):
             return Document(decoded)
         return decoded
@@ -119,17 +128,23 @@ def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False)
 
 
 def _decode(
-    r: t.Dict,
+    r: t.Any,
     db: t.Optional[t.Any] = None,
+    artifact_cache: t.Optional[t.Dict] = None,
 ) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         leaf_type = r['_content']['leaf_type']
         leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
         return leaf_cls.decode(r, db=db)
+    elif isinstance(r, str) and \
+       re.match('^\$(artifacts|lazy_artifacts|blobs|encodables)\/', r):
+        type_, id = r[1:].split('/')
+        return artifact_cache[id]
     elif isinstance(r, list):
-        return [_decode(x, db=db) for x in r]
+        return [_decode(x, db=db, artifact_cache=artifact_cache) for x in r]
     elif isinstance(r, dict):
-        return {k: _decode(v, db=db) for k, v in r.items()}
+        return {k: _decode(v, db=db, artifact_cache=artifact_cache)
+                for k, v in r.items()}
     else:
         return r
 

@@ -1,13 +1,9 @@
-import base64
 import json
 import os
 import pytest
 
-from superduperdb import superduper, CFG
-from superduperdb.base.document import Document
-from superduperdb.components.component import Component
-from superduperdb.rest.utils import _parse_query_part
 from .mock_client import curl_post, setup as _setup, teardown
+from superduperdb import CFG
 
 
 @pytest.fixture
@@ -31,7 +27,7 @@ def test_select_data(setup):
 
 def test_insert_image(setup):
     request = f"""curl -X 'PUT' \
-        'http://{CFG.cluster.rest.uri}/db/artifact_store/save_artifact?datatype=image' \
+        '{CFG.cluster.rest.uri}/db/artifact_store/save_artifact?datatype=image' \
         -H 'accept: application/json' \
         -H 'Content-Type: multipart/form-data' \
         -s \
@@ -45,7 +41,7 @@ def test_insert_image(setup):
     form = {
         "documents": [
             {
-                "img":{
+                "img": {
                     "_content": {
                         "file_id": result["file_id"], 
                         "datatype": "image",
@@ -62,14 +58,16 @@ def test_insert_image(setup):
     form = json.dumps(form)
 
     request = f"""curl -X 'POST' \
-        'http://{CFG.cluster.rest.uri}/db/execute' \
+        '{CFG.cluster.rest.uri}/db/execute' \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -s \
         -d '{form}'"""
 
     print('making request')
-    result = os.popen(request).read()
+    result = json.loads(os.popen(request).read())
+    if 'error' in result:
+        raise Exception(result['messages'])
     print(result)
 
     form = json.dumps({
@@ -80,7 +78,7 @@ def test_insert_image(setup):
     })
 
     request = f"""curl -X 'POST' \
-        'http://{CFG.cluster.rest.uri}/db/execute' \
+        '{CFG.cluster.rest.uri}/db/execute' \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -s \

@@ -66,12 +66,7 @@ def delete():
 
 
 def remove(type_id, identifier):
-    data = {
-        'type_id': type_id,
-        'identifier': identifier,
-    }
-    return curl_post('/db/remove', data)
-
+    return curl_post('/db/remove?type_id={type_id}&identifier={identifier}', {})
 
 
 def setup():
@@ -92,7 +87,7 @@ def setup():
 
 def teardown():
     delete()
-    remove('data_type', 'image')
+    remove('datatype', 'image')
 
 
 if __name__ == '__main__':

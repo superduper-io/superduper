@@ -1,1 +1,0 @@
-# Lance index integration

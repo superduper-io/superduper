@@ -104,10 +104,7 @@ For SQL databases, one needs to have already created a schemas to work with tabl
 ```python
 from superduperdb.backends.ibis import Table
 
-db.add(
-    Table(
-        'my-table',
-        schema=my_schema,
-    )
-)
+t = Table('my-table', schema=my_schema)
+
+db.apply(t)
 ```

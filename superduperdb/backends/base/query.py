@@ -7,6 +7,7 @@ from typing import Any
 from superduperdb import logging
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable, Variable
+from superduperdb.components.datatype import DataType
 
 GREEN = '\033[92m'
 BOLD = '\033[1m'
@@ -33,23 +34,36 @@ def _check_illegal_attribute(name):
 
 
 @dc.dataclass(repr=False)
-class Models(Serializable):
+class model(Serializable):
+    identifier: str
+
     def predict_one(self, *args, **kwargs):
-        pass
+        return PredictOne(model=self.identifier, args=args, kwargs=kwargs)
 
     def predict(self, *args, **kwargs):
-        pass
+        raise NotImplementedError
+
+
+class Predict:
+    ...
 
 
 @dc.dataclass(repr=False)
-class PredictOne(Serializable, ABC):
+class PredictOne(Predict, Serializable, ABC):
     model: str
     args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def execute(self, db):
-        return db.models[self.model].predict_one(*self.args, **self.kwargs)
-
+        m = db.models[self.model]
+        out = m.predict_one(*self.args, **self.kwargs)
+        if isinstance(m.datatype, DataType):
+            out = m.datatype(out)
+        if isinstance(out, dict):
+            out = Document(out)
+        else:
+            out = Document({'_base': out})
+        return out
 
 @dc.dataclass(repr=False)
 class Select(Serializable, ABC):

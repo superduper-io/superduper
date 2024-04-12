@@ -1,3 +1,4 @@
+import importlib
 import re
 import typing as t
 
@@ -215,3 +216,62 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
         return [_unpack(x, db=db, leaves_to_keep=leaves_to_keep) for x in item]
     else:
         return item
+
+
+class NotBuiltError(Exception):
+    def __init__(self, key):
+        super().__init__()
+        self.key = key
+
+
+def _fetch_cache_keys(r, cache, used):
+    if isinstance(r, str) and r.startswith('_'):
+        try:
+            out = cache[r]
+            used.append(r)
+            return out
+        except KeyError:
+            raise NotBuiltError(f"Cache key {r} not found in cache: available: {cache.keys()}")
+    elif isinstance(r, dict):
+        return {k: _fetch_cache_keys(v, cache, used) for k, v in r.items()}
+    elif isinstance(r, list):
+        return [_fetch_cache_keys(x, cache, used) for x in r]
+    return r
+
+
+def _build_leaf(leaf_record, cache):
+    module = importlib.import_module(leaf_record['module'])
+    cls = getattr(module, leaf_record['cls'])
+    r = cls.handle_integration(leaf_record['dict'])
+    built = cls.build(r)
+    cache[built.id] = built
+    return built
+
+
+def _build_leaves(leaf_records, db=None):
+    cache = {}
+    if db is not None:
+        cache.update({f'_component/datatype/{c}': db.datatypes[c] for c in db.datatypes})
+    if db is not None:
+        default_keys = [f'_component/datatype/{c}' for c in db.datatypes]
+    used = []
+    while True:
+        missing_keys = []
+        built = []
+        for i, r in enumerate(leaf_records):
+            try:
+                r = _fetch_cache_keys(r, cache, used)
+            except NotBuiltError as e:
+                missing_keys.append(e.key)
+                continue
+            built.append(i)
+            _build_leaf(r, cache)
+        assert built, f"Infinite loop in leaf building; missing keys: {missing_keys}"
+        leaf_records = [r for i, r in enumerate(leaf_records) if i not in built]
+        if not leaf_records:
+            break
+    exit_leaves = [
+        k for k in cache.keys() if k not in used
+        and k not in default_keys
+    ]
+    return {k: v for k, v in cache.items() if k not in default_keys}, exit_leaves

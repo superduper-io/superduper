@@ -39,6 +39,10 @@ class Leaf(ABC):
         """Decode object from a saveable form"""
         pass
 
+    @classmethod
+    def build(cls, r):
+        return cls(**r)
+
     def init(self, db=None):
         pass
 

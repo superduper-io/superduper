@@ -12,7 +12,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.model import Mapping, ModelInputType
 from superduperdb.ext.utils import str_shape
 from superduperdb.jobs.job import FunctionJob
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import public_api, ui
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 from superduperdb.vector_search.update_tasks import copy_vectors
@@ -223,14 +223,22 @@ class DecodeArray:
         return np.frombuffer(bytes, dtype=self.dtype).tolist()
 
 
-def vector(shape):
+@ui(
+    {'name': 'shape', 'type': 'int'},
+    {'name': 'identifier', 'type': 'str'},
+)
+def vector(shape, identifier: t.Optional[str] = None):
     """
     Create an encoder for a vector (list of ints/ floats) of a given shape
 
     :param shape: The shape of the vector
     """
+    if isinstance(shape, int):
+        shape = (shape,)
+
+    identifier = identifier or f'vector[{str_shape(shape)}]'
     return DataType(
-        identifier=f'vector[{str_shape(shape)}]',
+        identifier=identifier,
         shape=shape,
         encoder=None,
         decoder=None,

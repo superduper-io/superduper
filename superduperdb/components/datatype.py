@@ -224,6 +224,11 @@ class _BaseEncodable(Leaf):
     uri: t.Optional[str] = None
     sha1: t.Optional[str] = None
 
+    @property
+    def id(self):
+        assert self.file_id is not None
+        return f'_{self.leaf_type}/{self.file_id}'
+
     def __post_init__(self):
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
@@ -336,6 +341,10 @@ class Encodable(_BaseEncodable):
                 'file_id': sha1 if self.file_id is None else self.file_id,
             }
         }
+
+    @classmethod
+    def build(cls, r):
+        return cls(**r)
 
     def init(self, db):
         pass

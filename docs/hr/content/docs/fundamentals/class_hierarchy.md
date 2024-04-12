@@ -1,5 +1,7 @@
 # Class hierarchy of user-facing classes
 
+![](/img/class-hierarchy.png)
+
 ## Datalayer
 
 The `Datalayer` class, an instance of which we refer to throughout this 
@@ -29,6 +31,10 @@ See [here](../core_api/execute).
 ***`.load`***
 
 `.load` reloads components applied with `.apply`.
+
+## `Component`
+
+...
 
 ## `Document`
 

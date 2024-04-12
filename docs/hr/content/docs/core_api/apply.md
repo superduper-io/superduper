@@ -63,25 +63,25 @@ Use `db.show` to view components.
 View all components:
 
 ```python
-db.show()
-# [
-#   {'type_id': 'model', 'identifier': 'my-model'},
-#   {'type_id': 'model', 'identifier': 'my-other-model'}
-# ]
+>>> db.show()
+[
+  {'type_id': 'model', 'identifier': 'my-model'},
+  {'type_id': 'model', 'identifier': 'my-other-model'}
+]
 ```
 
 View all components of a certain type:
 
 ```python
-db.show('<type_id>')
-# ['my-model', 'my-other-model']
+>>> db.show('<type_id>')
+['my-model', 'my-other-model']
 ```
 
 View all versions of a particular component:
 
 ```python
-db.show('<type_id>', '<component_identifier>')
-# [0, 1, 2, 3]
+>>> db.show('<type_id>', '<component_identifier>')
+[0, 1, 2, 3]
 ```
 
 ## Reloading applied components

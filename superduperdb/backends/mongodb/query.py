@@ -870,7 +870,7 @@ class Collection(TableOrCollection):
     ):
         document_embedded = kwargs.get('document_embedded', True)
 
-        if not outputs:
+        if not len(outputs):
             return
         if document_embedded:
             if flatten:

@@ -4,12 +4,12 @@ import typing as t
 from superduperdb.base.document import Document
 
 
-def _parse_query_part(part, documents, artifacts, query, db: t.Optional[t.Any] = None):
+def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     documents = [Document.decode(r, db=db) for r in documents]
     from superduperdb.backends.mongodb.query import Collection
 
     part = part.replace(' ', '').replace('\n', '')
-    part = part.replace('$documents', 'documents')
+    part = part.replace('_documents', 'documents')
     part = part.split('.')
     for i, comp in enumerate(part):
         if i == 0:
@@ -30,23 +30,23 @@ def _parse_query_part(part, documents, artifacts, query, db: t.Optional[t.Any] =
             for x in args_kwargs:
                 if '=' in x:
                     k, v = x.split('=')
-                    kwargs[k] = eval(v, {'documents': documents})
+                    kwargs[k] = eval(v, {'documents': documents, 'query': query})
                 else:
-                    args.append(eval(x, {'documents': documents}))
+                    args.append(eval(x, {'documents': documents, 'query': query}))
             current = comp(*args, **kwargs)
     return current
 
 
-def parse_query(query, documents, artifacts, db: t.Optional[t.Any] = None):
+def parse_query(query, documents, db: t.Optional[t.Any] = None):
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, artifacts, query[:i], db=db)
+        query[i] = _parse_query_part(q, documents, query[:i], db=db)
     return query[-1]
 
 
 def strip_artifacts(r: t.Any):
     if isinstance(r, dict):
         if '_content' in r:
-            return f'$artifacts/{r["_content"]["file_id"]}', [r["_content"]["file_id"]]
+            return f'_artifact/{r["_content"]["file_id"]}', [r["_content"]["file_id"]]
         else:
             out = {}
             a_out = []

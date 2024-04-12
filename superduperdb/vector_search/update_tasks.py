@@ -49,7 +49,7 @@ def copy_vectors(
         select = query
     else:
         select = query.select_using_ids(ids)
-    docs = db.select(select)
+    docs = db._select(select)
     docs = [doc.unpack() for doc in docs]
     key = vi.indexing_listener.key
     if '_outputs.' in key:

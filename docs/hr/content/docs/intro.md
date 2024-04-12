@@ -1,15 +1,4 @@
----
-sidebar_position: 1
----
-
 # Welcome to SuperDuperDB!
-
-### SuperDuperDB's mission
-
-:::tip
-SuperDuperDB aims to become ***a single environment*** for stakeholders and tooling across the AI development process to 
-collaborate and interface. 
-:::
 
 ### What is SuperDuperDB?
 
@@ -149,23 +138,3 @@ Developers may:
 - **[Difficult Data Types](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types/)**: Work directly in your database with images, video, audio, and any type that can be encoded as `bytes` in Python.
 - **[Feature Storing](https://docs.superduperdb.com/docs/docs/walkthrough/encoding_special_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
-
-<!-- 
-***Stakeholders***
-
-| Phase                               | Tooling                                                    | Stakeholder                                                 |
-| ---                                 | ---                                                        | ---                                                         |
-| ***PREPARATION*** | ***PREPARATION*** | ***PREPARATION*** |
-| Data import & storage               | Cold, object storage, data-base,-lake,-warehouse           |  Data-engineer, MLOps engineer                              |
-| Data exploration and analysis       | Data-base,-lake,-warehouse, dataframes                     |  Data-analyst, scientist, statistician                      |
-| Data cleaning                       | Jupyter notebooks, interactive scripting                   |  Data-scientist                                             |  
-| Feature extraction                  | Feature store, object storage, cloud compute, data-center  |  Data-scientist, data-engineer, MLOps engineer              |
-| ***TRAINING*** | ***TRAINING*** | ***TRAINING*** |
-| Model design                        | IDE, Jupyter notebooks, AI frameworks                      |  AI researcher, software developer, data-scientist          |
-| Model training                      | GPU training jobs, cloud compute, data-center              |  AI researcher, engineer, data-scientist                    |
-| Model configuration                 | Prompt engineering, hyperparameter tuning                  |  AI researcher, data-scientist                              |
-| ***PRODUCTION*** | ***PRODUCTION*** | ***PRODUCTION*** |
-| Batch output computations           | GPU/ CPU inference jobs, cloud compute, ETL                |  Data-engineer, MLOps engineer                              | 
-| Real-time inference                 | Serving frameworks, vector-database, Kubernetes            |  Data-engineer, MLOps engineer, cloud engineer              |
-| Model evaluation                    | Evaluation libraries, model registry, metric visualization |  AI researcher, data-scientist, statistician                | 
-| Retraining fine-tuning              | Data-base, ETL, task schedulers                            |  Data-engineer, MLOps engineer                              | -->

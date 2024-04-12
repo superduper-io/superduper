@@ -16,10 +16,24 @@ superduperdb cdc
 superduperdb vector-searcher
 ```
 
-**Start a local cluster**
+**Operate a local cluster**
+
+Start the cluster:
 
 ```bash
-superduperdb local-cluster
+superduperdb local-cluster up
+```
+
+Attach to the cluster session:
+
+```bash
+superduperdb local-cluster attach
+```
+
+Stop the cluster:
+
+```bash
+superduperdb local-cluster down
 ```
 
 **Print important information about your installation**

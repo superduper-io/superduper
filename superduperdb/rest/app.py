@@ -13,12 +13,13 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import ObjectModel, SequentialModel, CodeModel
 from superduperdb.components.stack import Stack
-from superduperdb.components.vector_index import VectorIndex
+from superduperdb.components.vector_index import VectorIndex, vector
 from superduperdb.ext.pillow.encoder import image_type
 from superduperdb.ext.sklearn.model import Estimator
 from superduperdb.ext.torch.model import TorchModel
+from superduperdb.ext import openai
+from superduperdb.ext import sentence_transformers
 
-# from superduperdb.ext.vllm.model import VllmAPI
 from superduperdb.rest.utils import parse_query, strip_artifacts
 from superduperdb.server import app as superduperapp
 
@@ -36,12 +37,16 @@ CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
         'CodeModel': CodeModel,
         'TorchModel': TorchModel,
         'SklearnEstimator': Estimator,
+        'OpenAIEmbedding': openai.OpenAIEmbedding,
+        'OpenAIChatCompletion': openai.OpenAIChatCompletion,
+        'SentenceTransformer': sentence_transformers.SentenceTransformer,
     },
     'listener': {
         'Listener': Listener,
     },
     'datatype': {
         'image': image_type,
+        'vector': vector,
         'DataType': DataType,
     },
     'vector-index': {'VectorIndex': VectorIndex},
@@ -71,61 +76,19 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/spec/show', method='get')
     def spec_show():
-        # Get the schemas for all components.
-        # route: /spec/show
-        # response:
-        #     {
-        #         "model": {
-        #             "ObjectModel": {
-        #                 "a": {
-        #                     "type": "int",
-        #                     "required": true,
-        #                     "default": 0
-        #                 }
-        #             }
-        #         },
-        #         "datatype": {
-        #             "array": {
-        #                 "shape": {
-        #                     "type": "int",
-        #                     "sequence": true,
-        #                 }
-        #             }
-        #         }
-        #     }
         return API_SCHEMAS
 
     @app.add('/spec/lookup', method='get')
     def spec_lookup():
-        # Get the import path for all components.
-        # route: /spec/lookup
-        # response:
-        #     {
-        #         "model": {
-        #             "ObjectModel": "superduperdb.components.model"
-        #         },
-        #         "datatype": {
-        #             "array": "superduperdb.ext.numpy.encoder"
-        #         }
-        #     }
         return MODULE_LOOKUP
 
     @app.add('/db/artifact_store/save_artifact', method='put')
     def db_artifact_store_save_artifact(datatype: str, raw: bytes = File(...)):
-        # route: /db/artifact_store/create_artifact?datatype=image
-        # data:
-        #     b'...'  (image data)
-        # response:
-        #     {"file_id": "0123456789abcdef126784a"}
         r = app.db.artifact_store.save_artifact({'bytes': raw, 'datatype': datatype})
         return {'file_id': r['file_id']}
 
     @app.add('/db/artifact_store/get_artifact', method='get')
     def db_artifact_store_get_artifact(file_id: str, datatype: t.Optional[str] = None):
-        # route: db/artifact_store/get_artifact?
-        #        file_id=0123456789abcdef126784a&datatype=image
-        # response:
-        #     b'...'
         bytes = app.db.artifact_store._load_bytes(file_id=file_id)
 
         if datatype is not None:
@@ -138,149 +101,16 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/apply', method='post')
     def db_apply(info: t.Dict):
-        # route: /db/add
-        # data:
-        #     {
-        #       "component": {
-        #         "stack/test_stack/0": {
-        #           "cls": "Stack",
-        #           "module": "superduperdb.components.stack",
-        #           "dict": {
-        #             "identifier": "test_stack",
-        #             "components": [
-        #               "$component/model/test/0",
-        #               "$component/model/test2/0"
-        #             ],
-        #             "version": 0
-        #           },
-        #           "type_id": "stack",
-        #           "identifier": "test_stack",
-        #           "version": 0,
-        #           "hidden": false
-        #         },
-        #         "model/test/0": {
-        #           "cls": "ObjectModel",
-        #           "module": "superduperdb.components.model",
-        #           "dict": {
-        #             "metrics": [],
-        #             "valid_X": null,
-        #             "validation_sets": [],
-        #             "validation_metrics": null,
-        #             "identifier": "test",
-        #             "signature": "*args,**kwargs",
-        #             "datatype": "$component/datatype/numpy.float32[32]/0",
-        #             "output_schema": null,
-        #             "flatten": false,
-        #             "model_update_kwargs": {},
-        #             "predict_kwargs": {},
-        #             "compute_kwargs": {},
-        #             "object": "$lazy_artifact/6376415584",
-        #             "num_workers": 0,
-        #             "version": 0
-        #           },
-        #           "type_id": "model",
-        #           "identifier": "test",
-        #           "version": 0,
-        #           "hidden": false
-        #         },
-        #         "model/test2/0": {
-        #           "cls": "ObjectModel",
-        #           "module": "superduperdb.components.model",
-        #           "dict": {
-        #             "metrics": [],
-        #             "valid_X": null,
-        #             "validation_sets": [],
-        #             "validation_metrics": null,
-        #             "identifier": "test2",
-        #             "signature": "*args,**kwargs",
-        #             "datatype": "$component/datatype/numpy.float32[16]/0",
-        #             "output_schema": null,
-        #             "flatten": false,
-        #             "model_update_kwargs": {},
-        #             "predict_kwargs": {},
-        #             "compute_kwargs": {},
-        #             "object": "$lazy_artifact/6376842048",
-        #             "num_workers": 0,
-        #             "version": 0
-        #           },
-        #           "type_id": "model",
-        #           "identifier": "test2",
-        #           "version": 0,
-        #           "hidden": false
-        #         },
-        #         "datatype/numpy.float32[32]/0": {
-        #           "cls": "DataType",
-        #           "module": "superduperdb.components.datatype",
-        #           "dict": {
-        #             "identifier": "numpy.float32[32]",
-        #             "encoder": "$artifact/6363018640",
-        #             "decoder": "$artifact/6363018704",
-        #             "info": null,
-        #             "shape": [
-        #               32
-        #             ],
-        #             "directory": null,
-        #             "encodable": "encodable",
-        #             "bytes_encoding": "Bytes",
-        #             "media_type": null,
-        #             "version": 0
-        #           },
-        #           "type_id": "datatype",
-        #           "identifier": "numpy.float32[32]",
-        #           "version": 0,
-        #           "hidden": false
-        #         },
-        #         "datatype/numpy.float32[16]/0": {
-        #           "cls": "DataType",
-        #           "module": "superduperdb.components.datatype",
-        #           "dict": {
-        #             "identifier": "numpy.float32[16]",
-        #             "encoder": "$artifact/6351650896",
-        #             "decoder": "$artifact/6363015312",
-        #             "info": null,
-        #             "shape": [
-        #               16
-        #             ],
-        #             "directory": null,
-        #             "encodable": "encodable",
-        #             "bytes_encoding": "Bytes",
-        #             "media_type": null,
-        #             "version": 0
-        #           },
-        #           "type_id": "datatype",
-        #           "identifier": "numpy.float32[16]",
-        #           "version": 0,
-        #           "hidden": false
-        #         }
-        #       },
-        #       "lazy_artifact": {
-        #         "6376415584": {
-        #           "_content": {
-        #             "datatype": "dill",
-        #             "file_id": "0fd4db08625b17a589a37b38309f66aacba58855"
-        #           }
-        #         },
-        #         "6376842048": {
-        #           "_content": {
-        #             "datatype": "dill",
-        #             "file_id": "40df513ee73c7cefefa2b80ebfd91bc20b3188a0"
-        #           }
-        #         }
-        #       }
-        #     }
-        # response:
-        #     {"status": "ok"}
-        component = Component.import_from_references(info, db=app.db, identifier=info['identifier'])
-        if not isinstance(component, Stack):
-            component = Stack(components=[component], identifier=info['identifier'])
+        for r in info['_leaves']:
+            cls = CLASSES[r['type_id']][r['cls']]
+            r['cls'] = cls.__name__
+            r['module'] = cls.__module__
+        component = Stack.from_list(content=info['_leaves'], db=app.db, identifier=info['identifier'])
         app.db.apply(component)
         return {'status': 'ok'}
 
     @app.add('/db/remove', method='post')
     def db_remove(type_id: str, identifier: str):
-        # route: /db/remove?type_id=model&identifier=test
-        # response:
-        #     {"status": "ok"}
         app.db.remove(type_id=type_id, identifier=identifier, force=True)
         return {'status': 'ok'}
 
@@ -290,20 +120,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
-        # route: /db/show
-        # response:
-        #     [
-        #         {"type_id": "model": "identifier": "test"},
-        #         {"type_id": "model": "identifier": "test2"},
-        #         {"type_id": "vector-index": "identifier": "my-index"},
-        #         {"type_id": "vector-index": "identifier": "my-other-index"},
-        #     ]
-        # route: /db/show?type_id=model
-        # response:
-        #     ["test", "test2"]
-        # route: /db/show?type_id=model&identifier=test
-        # response:
-        #     [0, 1 ,2]
         out = app.db.show(type_id=type_id, identifier=identifier, version=version)
         if isinstance(out, dict) and '_id' in out:
             del out['_id']
@@ -311,26 +127,15 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
-        # route: /db/metadata/show_jobs?type_id=model&identifier=test
-        # response:
-        #     ['012060eef', '012060eef', '012060eef', '012060eef']
         return app.db.metadata.show_jobs(type_id=type_id, identifier=identifier)
 
     @app.add('/db/execute', method='post')
     def db_execute(
-        query: t.List[str],
-        documents: t.Optional[t.List[t.Dict]] = None,
-        artifacts: t.Optional[t.List[t.Dict]] = None,
+        query: str = "<collection>.<method>(*args, **kwargs)",
+        documents: t.List[t.Dict] = [],
     ):
-        # route: /db/execute?query=["docs.find({},{})"]&documents=[]
-        # .      &artifacts=[]&skip=0&limit=10
-        # response:
-        #     [{"a": "Moscow."}, {"a": "Paris."}, {"a": "London."}]
-        if artifacts is not None:
-            for r in documents:
-                r['_artifacts'] = artifacts
-
-        query = parse_query(query, documents, artifacts, db=app.db)
+        query = [x for x in query.split('\n') if x.strip()]
+        query = parse_query(query, documents, db=app.db)
 
         logging.info('processing this query:')
         logging.info(query)
@@ -347,13 +152,12 @@ def build_app(app: superduperapp.SuperDuperApp):
             result = []
         else:
             result = list(result)
-        out, result_artifacts = strip_artifacts(
-            [r.encode() for r in result]
-        )
-        logging.warn(str(out))
-        for r in out:
-            del r['_id']
-        return out, result_artifacts
+        for r in result:
+            if '_id' in r:
+                del r['_id']
+        result = [strip_artifacts(r.encode()) for r in result]
+        logging.warn(str(result))
+        return result
     
 
 build_app(app)

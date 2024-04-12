@@ -1,3 +1,4 @@
+from superduperdb.backends.base.query import Predict
 from test.db_config import DBConfig
 
 import pytest
@@ -128,3 +129,26 @@ def test_execute_like_queries_sqldb(db):
     result = list(q.execute(db))
     assert len(result) == 3
     assert result[0]['id'] == r['id']
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
+def test_model(db):
+    import torch
+
+    m = db.load('model', 'linear_a')
+
+    result = m.predict_one(torch.randn(32))
+
+    from superduperdb.backends.base.query import model
+
+    t = torch.randn(32)
+
+    result1 = m.predict_one(t)
+
+    q = model('linear_a').predict_one(t)
+
+    issubclass = isinstance(q, Predict)
+
+    result2 = db.execute(q)
+    
+    import pdb; pdb.set_trace()

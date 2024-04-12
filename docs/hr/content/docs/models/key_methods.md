@@ -1,0 +1,3 @@
+# Key methods of `Model`
+
+...

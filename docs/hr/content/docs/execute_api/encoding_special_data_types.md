@@ -66,3 +66,19 @@ db.execute(
     Collection('docs').insert_many(data, schema='my-schema')
 )
 ```
+
+## SQL
+
+With SQL it's necessary to first [set up a `Table` with a `Schema`](./data_encodings_and_schemas#table-schemas-in-sql).
+With this table `t`, one directly inserts the data:
+
+```python 
+t.insert([
+    Document({
+        'img': pil_image(x),
+        'audio': audio(y),
+        'txt': z
+    })
+    for x, y, z in zip(my_images, my_audio, my_text)
+])
+```

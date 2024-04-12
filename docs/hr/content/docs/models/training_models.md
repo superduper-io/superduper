@@ -1,7 +1,3 @@
----
-sidebar_position: 23
----
-
 # Training models directly on your datastore
 
 Similarly to [applying models to create predictions](./apply_models.md), training models is possible both procedurally and declaratively in `superduperdb`.
@@ -10,27 +6,11 @@ When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.
 
 ## Basic pattern
 
-### Procedural API
-
-```python
-model.fit(
-    X='<input-col>',
-    y='<target-col>',      # Optional, depending on whether supervised/ unsupervised,
-    select=<query>,       # query which loads the training data
-    db=db,
-)
-```
-
-### Declarative API
-
 ```python
 db.add(
-    Model(
+    <ModelCls>(
         *args, 
-        training_select=<query>,   # to be passed as `Model.fit(..., select=...)`
-        train_X='<input-col>',   # to be passed as `Model.fit(X=...)`
-        train_y='<target-col>',   # to be passed as `Model.fit(..., y=...)`
-        fit_kwargs={**...},   # kwargs to be passed to `Model.fit`
+        trainer=Trainer(),
         **kwargs,
     )
 )
@@ -38,7 +18,17 @@ db.add(
 
 ## Fitting/ training models by framework
 
-### Scikit-learn
+See the following links:
+
+| Framework | Link |
+| --- | --- |
+| Scikit-Learn | [link](../ai_integrations/sklearn#training) |
+| PyTorch | [link](../ai_integrations/pytorch#training) |
+| Transformers | [link](../ai_integrations/transformers#training) |
+
+<!-- ### Scikit-learn
+
+See [here]
 
 ```python
 from superduperdb.ext.sklearn import Estimator
@@ -91,4 +81,4 @@ model.fit(
     batch_size=100,  # any **kwargs supported by `superduperdb.ext.torch.TorchTrainerConfiguration`
     num_workers=4,
 )
-```
+``` -->

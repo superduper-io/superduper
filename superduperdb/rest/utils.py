@@ -43,6 +43,30 @@ def parse_query(query, documents, artifacts, db: t.Optional[t.Any] = None):
     return query[-1]
 
 
+def strip_artifacts(r: t.Any):
+    if isinstance(r, dict):
+        if '_content' in r:
+            return f'$artifacts/{r["_content"]["file_id"]}', [r["_content"]["file_id"]]
+        else:
+            out = {}
+            a_out = []
+            for k, v in r.items():
+                vv, tmp = strip_artifacts(v)
+                a_out.extend(tmp)
+                out[k] = vv
+            return out, a_out
+    elif isinstance(r, list):
+        out = []
+        a_out = []
+        for x in r:
+            xx, tmp = strip_artifacts(x)
+            out.append(xx)
+            a_out.extend(tmp)
+        return out, a_out
+    else:
+        return r, []
+
+
 if __name__ == '__main__':
     q = parse_query(
         [

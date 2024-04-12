@@ -282,7 +282,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         # response:
         #     {"status": "ok"}
         app.db.remove(type_id=type_id, identifier=identifier, force=True)
-
         return {'status': 'ok'}
 
     @app.add('/db/show', method='get')

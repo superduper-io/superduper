@@ -49,6 +49,7 @@ class Job:
         self.callable = None
         self.db = None
         self.future = None
+        self.job_id = None
         # Use compute kwargs from either the model  or global config
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
@@ -77,6 +78,7 @@ class Job:
             'kwargs': self.kwargs,
             'stdout': [],
             'stderr': [],
+            'job_id': self.job_id,
         }
 
     def __call__(self, db: t.Any = None, dependencies=()):
@@ -189,7 +191,7 @@ class ComponentJob(Job):
         Submit job for execution
         :param dependencies: list of dependencies
         """
-        self.future = self.db.compute.submit(
+        self.future, self.job_id = self.db.compute.submit(
             method_job,
             cfg=s.CFG.dict(),
             type_id=self.type_id,
@@ -202,7 +204,7 @@ class ComponentJob(Job):
             compute_kwargs=self.compute_kwargs,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-        return
+        return self
 
     def __call__(self, db: t.Any = None, dependencies=()):
         if db is None:
@@ -211,7 +213,6 @@ class ComponentJob(Job):
             db = build_datalayer()
 
         self.db = db
-
         db.metadata.create_job(self.dict())
         if self.component is None:
             self.component = db.load(self.type_id, self.component_identifier)

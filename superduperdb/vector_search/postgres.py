@@ -79,7 +79,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS "%s" (id varchar, embedding vector(%d))'
+                'CREATE TABLE IF NOT EXISTS "%s" (id varchar, txt VARCHAR, embedding vector(%d))'
                 % (self.identifier, self.dimensions)
             )
         self.connection.commit()
@@ -242,7 +242,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         output_path = f'_outputs.{vi.indexing_listener.predict_id}'
 
         return PostgresVectorSearcher(
-            uri="postgresql://postgres:test@localhost:8000/qa",
+            uri=CFG.data_backend,
             identifier=output_path,
             dimensions=vi.dimensions,
             measure=VectorIndexMeasureType.cosine,

@@ -28,12 +28,12 @@ export default function Layout(props) {
   return (
     <LayoutProvider>
       <PageMetadata title={title} description={description} />
-      <Overlay />
       <SkipToContent />
 
       <AnnouncementBar />
 
       <Navbar />
+      <Overlay />
 
       <div
         id={SkipToContentFallbackId}

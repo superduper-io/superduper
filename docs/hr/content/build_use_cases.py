@@ -101,13 +101,16 @@ def build_notebook_from_tabs(path, selected_tabs):
                     if not snippet_tab_cell:
                         if snippet_tab == "":
                             built_nb['cells'].append(cell)
+                            snippet_tab_cell = True
                         else:
                             if matches[0] == snippet_tab:
                                 built_nb['cells'].append(cell)
-                        snippet_tab_cell = True
-
+                                snippet_tab_cell = True
                 else:
                     built_nb['cells'].append(cell)
+
+        else:
+            built_nb['cells'].append(cell)
 
     exported_path = f'./built-notebook-{os.path.basename(path)}'
     with open(exported_path, 'w') as f:

@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add simple REST server implementation
 
 #### Bug Fixes
+- Separate nightly release from sandbox
 - Fixed a bug in refresh_after_insert for listeners with select None
 - Refactor graph internal with input mapping
 - Fixed a bug in Component init

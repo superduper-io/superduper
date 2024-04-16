@@ -85,6 +85,17 @@ class Listener(Component):
                 setter_callback=_callback,
             )
 
+    @property
+    def outputs_select(self):
+        return self.select.table_or_collection.outputs(self.predict_id)
+
+    @property
+    def outputs_key(self):
+        if self.select.DB_TYPE == "SQL":
+            return 'output'
+        else:
+            return self.outputs
+
     @override
     def pre_create(self, db: Datalayer) -> None:
         if self.select is not None and self.select.variables:

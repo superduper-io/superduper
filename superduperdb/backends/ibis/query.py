@@ -59,7 +59,7 @@ def _model_update_impl_flatten(
             d = {
                 '_input_id': str(ids[ix]),
                 '_source': random_id(),
-                'output': outputs[ix],
+                'output': r,
             }
             table_records.append(d)
 
@@ -113,6 +113,8 @@ class IbisCompoundSelect(CompoundSelect):
     """
     A query incorporating vector-search and a standard ``ibis`` query
     """
+
+    DB_TYPE: t.ClassVar[str] = 'SQL'
 
     __doc__ = __doc__ + CompoundSelect.__doc__  # type: ignore[operator]
 
@@ -345,7 +347,14 @@ class IbisCompoundSelect(CompoundSelect):
         predict_id: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
+        document_embedded: t.Optional[bool] = None,
     ):
+        if document_embedded is True:
+            logging.warn(
+                "Ibis backend does not support document embedded parameter.",
+                "All outputs will save in the output table.",
+            )
+
         return _model_update_impl(
             db, ids=ids, predict_id=predict_id, outputs=outputs, flatten=flatten
         )
@@ -500,6 +509,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             identifier='_outputs.' + predict_id,
             primary_id='output_id',
         )
+        output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         out = self.anti_join(
             output_table,
             output_table._input_id == self[self.table_or_collection.primary_id],
@@ -518,7 +528,9 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
                 identifier=f'_outputs.{identifier}',
                 primary_id='output_id',
             )
-            symbol_table = symbol_table.relabel({'output': f'_outputs.{identifier}'})
+            symbol_table = symbol_table.relabel(
+                {'output': f'_outputs.{identifier}', '_fold': f'fold.{identifier}'}
+            )
             attr = getattr(self, self.table_or_collection.primary_id)
             other_query = self.join(symbol_table, symbol_table._input_id == attr)
             return other_query

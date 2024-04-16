@@ -252,6 +252,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
         identifier="",
         prompt_template="{input}",
         prompt_func=None,
+        predict_kwargs=None,
         **kwargs,
     ):
         """
@@ -261,6 +262,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
         """
         model_kwargs = kwargs.copy()
         tokenizer_kwargs = {}
+        predict_kwargs = predict_kwargs or {}
         return cls(
             model_name_or_path=model_name_or_path,
             identifier=identifier,
@@ -268,6 +270,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
             tokenizer_kwargs=tokenizer_kwargs,
             prompt_template=prompt_template,
             prompt_func=prompt_func,
+            predict_kwargs=predict_kwargs,
         )
 
     def init_pipeline(
@@ -399,7 +402,7 @@ class LLM(BaseLLM, _Fittable, _Validator):
         Generate text.
         Can overwrite this method to support more inference methods.
         """
-        kwargs = kwargs.copy()
+        kwargs = {**self.predict_kwargs, **kwargs.copy()}
 
         # Set default values, if not will cause bad output
         kwargs.setdefault("add_special_tokens", True)

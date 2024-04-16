@@ -304,6 +304,8 @@ class Aggregate(Select):
 
 @dc.dataclass(repr=False)
 class MongoCompoundSelect(CompoundSelect):
+    DB_TYPE: t.ClassVar[str] = 'MONGODB'
+
     def _get_query_linker(self, table_or_collection, members) -> 'QueryLinker':
         return MongoQueryLinker(
             table_or_collection=table_or_collection, members=members

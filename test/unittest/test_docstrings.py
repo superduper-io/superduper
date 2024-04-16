@@ -35,10 +35,12 @@ class MissingDocstring(_BaseDocstringException):
         )
 
 
-class MismatchingDocParameters(_BaseDocstringException): ...
+class MismatchingDocParameters(_BaseDocstringException):
+    ...
 
 
-class MissingParameterExplanation(_BaseDocstringException): ...
+class MissingParameterExplanation(_BaseDocstringException):
+    ...
 
 
 def get_class_init_params(node):

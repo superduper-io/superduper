@@ -392,7 +392,8 @@ class MongoCompoundSelect(CompoundSelect):
         )
         return collection.update_one({'_id': id}, update)
 
-    def check_exists(self, db): ...
+    def check_exists(self, db):
+        ...
 
     @property
     def select_table(self):

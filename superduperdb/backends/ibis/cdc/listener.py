@@ -57,7 +57,8 @@ class PollingStrategyIbisByIncrement(PollingStrategyIbis):
         return ids
 
 
-class PollingStrategyIbisByID(PollingStrategyIbis): ...
+class PollingStrategyIbisByID(PollingStrategyIbis):
+    ...
 
 
 class IbisDatabaseListener(cdc.BaseDatabaseListener):

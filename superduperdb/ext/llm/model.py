@@ -53,8 +53,7 @@ class BaseLLM(Model, metaclass=abc.ABCMeta):
         super().post_create(db)
 
     @abc.abstractmethod
-    def init(self):
-        ...
+    def init(self): ...
 
     def _generate(self, prompt: str, **kwargs: t.Any):
         raise NotImplementedError

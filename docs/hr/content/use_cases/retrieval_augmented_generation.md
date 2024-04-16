@@ -10,6 +10,179 @@ import TabItem from '@theme/TabItem';
 The first step in any SuperDuperDB application is to connect to your data-backend with SuperDuperDB:
 
 <!-- TABS -->
+## Configure your production system
+
+:::note
+If you would like to use the production features 
+of SuperDuperDB, then you should set the relevant 
+connections and configurations in a configuration 
+file. Otherwise you are welcome to use "development" mode 
+to get going with SuperDuperDB quickly.
+:::
+
+```python
+import os
+
+os.mkdirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
+```
+
+
+<Tabs>
+    <TabItem value="MongoDB Community" label="MongoDB Community" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+                type: lance
+        databackend: mongodb://<mongo-host>:27017/documents
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="MongoDB Atlas" label="MongoDB Atlas" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+                type: native
+        databackend: mongodb+srv://<user>:<password>@<mongo-host>:27017/documents
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="SQLite" label="SQLite" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: sqlite://<path-to-db>.db
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="MySQL" label="MySQL" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: mysql://<user>:<password>@<host>:<port>/database
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Oracle" label="Oracle" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: mssql://<user>:<password>@<host>:<port>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="PostgreSQL" label="PostgreSQL" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: postgres://<user>:<password>@<host>:<port</<database>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Snowflake" label="Snowflake" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        metadata_store: sqlite://<path-to-sqlite-db>.db
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: snowflake://<user>:<password>@<account>/<database>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Clickhouse" label="Clickhouse" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        metadata_store: sqlite://<path-to-sqlite-db>.db
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: clickhouse://<user>:<password>@<host>:<port>
+        '''        
+        ```
+    </TabItem>
+</Tabs>
+```python
+with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
+    f.write(CFG)
+```
+
+<!-- TABS -->
+## Start your cluster
+
+:::note
+Starting a SuperDuperDB cluster is useful in production and model development
+if you want to enable scalable compute, access to the models by multiple users for collaboration, 
+monitoring.
+
+If you don't need this, then it is simpler to start in development mode.
+:::
+
+
+<Tabs>
+    <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
+        ```python
+        !python -m superduperdb local_cluster        
+        ```
+    </TabItem>
+    <TabItem value="Docker-Compose" label="Docker-Compose" default>
+        ```python
+        !make testenv_image
+        !make testenv_init        
+        ```
+    </TabItem>
+</Tabs>
+```python
+from superduperdb import superduper
+
+db = superduper()
+```
+
+<!-- TABS -->
 ## Connect to SuperDuperDB
 
 :::note
@@ -23,7 +196,8 @@ Otherwise refer to "Configuring your production system".
         ```python
         from superduperdb import superduper
         
-        db = superduper('mongodb://localhost:27017/documents')        
+        db = superduper('mongodb://localhost:27017/documents')
+        db.drop(True)        
         ```
     </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
@@ -139,7 +313,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip pdfs.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
         import os
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
@@ -175,7 +349,7 @@ Otherwise refer to "Configuring your production system".
         from superduperdb import Schema, DataType
         from superduperdb.backends.ibis.field_types import dtype
         
-        datatype = "text"
+        datatype = "str"
         
         if isinstance(datatype, DataType):
             schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
@@ -247,23 +421,6 @@ do_insert(data[:-len(data) // 4])
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Create Model Output Type
-
-
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        model_output_dtype = None        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb.backends.ibis.field_types import dtype
-        model_output_dtype = dtype(str)        
-        ```
-    </TabItem>
-</Tabs>
-<!-- TABS -->
 ## Apply a chunker for search
 
 :::note
@@ -290,22 +447,16 @@ won't be necessary.
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !pip install PyPDF2
+        !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
+        from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
         @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(pdf_file):
-            reader = PyPDF2.PdfReader(pdf_file)
-            num_pages = len(reader.pages)
-            print(f'Number of pages {num_pages}')
-            text = []    
-            for i in range(num_pages):
-                page = reader.pages[i]        
-                page_text = page.extract_text()
-                text.append(page_text)
-            text = '\n\n'.join(text)
+            elements = partition_pdf(pdf_file)
+            text = '\n'.join([e.text for e in elements])
             chunks = [text[i:i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
             return chunks        
         ```
@@ -388,12 +539,14 @@ operate on those outputs.
     <TabItem value="Transformers" label="Transformers" default>
         ```python
         import dataclasses as dc
-        from superduperdb.components.model import _Predictor, ensure_initialized
+        from superduperdb import vector
+        from superduperdb.components.model import Model, ensure_initialized, Signature
         from transformers import AutoTokenizer, AutoModel
         import torch
         
         @dc.dataclass(kw_only=True)
-        class TransformerEmbedding(_Predictor):
+        class TransformerEmbedding(Model):
+            signature: Signature = 'singleton'
             pretrained_model_name_or_path : str
         
             def init(self):
@@ -418,7 +571,7 @@ operate on those outputs.
                 return sentence_embeddings.tolist()
         
         
-        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en")        
+        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
         ```
     </TabItem>
 </Tabs>
@@ -580,7 +733,7 @@ vector_search_model.predict_one(query=query)
         
         from superduperdb.ext.transformers import LLM
         
-        llm = LLM.from_pretrained("facebook/opt-125m", identifier="llm")        
+        llm = LLM.from_pretrained("facebook/opt-125m", identifier="llm", predict_kwargs=dict(max_new_tokens=128))        
         ```
     </TabItem>
     <TabItem value="Llama.cpp" label="Llama.cpp" default>

@@ -6,8 +6,7 @@ if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
 
 
-class NonExistentMetadataError(Exception):
-    ...
+class NonExistentMetadataError(Exception): ...
 
 
 class MetaDataStore(ABC):

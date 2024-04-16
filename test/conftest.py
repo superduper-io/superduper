@@ -118,6 +118,7 @@ def test_db(request) -> Iterator[Datalayer]:
             for c in db.databackend.db.list_collection_names():
                 db.databackend.db.drop_collection(c)
 
+
 @pytest.fixture
 def valid_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):

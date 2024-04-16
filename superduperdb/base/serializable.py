@@ -33,8 +33,7 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
         return {k: _from_dict(v, db=db) for k, v in r.items()}
 
 
-class VariableError(Exception):
-    ...
+class VariableError(Exception): ...
 
 
 def _find_variables(r):

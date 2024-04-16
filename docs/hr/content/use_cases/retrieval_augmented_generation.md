@@ -10,179 +10,6 @@ import TabItem from '@theme/TabItem';
 The first step in any SuperDuperDB application is to connect to your data-backend with SuperDuperDB:
 
 <!-- TABS -->
-## Configure your production system
-
-:::note
-If you would like to use the production features 
-of SuperDuperDB, then you should set the relevant 
-connections and configurations in a configuration 
-file. Otherwise you are welcome to use "development" mode 
-to get going with SuperDuperDB quickly.
-:::
-
-```python
-import os
-
-os.mkdirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
-```
-
-
-<Tabs>
-    <TabItem value="MongoDB Community" label="MongoDB Community" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: lance
-        databackend: mongodb://<mongo-host>:27017/documents
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="MongoDB Atlas" label="MongoDB Atlas" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: native
-        databackend: mongodb+srv://<user>:<password>@<mongo-host>:27017/documents
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="SQLite" label="SQLite" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: sqlite://<path-to-db>.db
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="MySQL" label="MySQL" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: mysql://<user>:<password>@<host>:<port>/database
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="Oracle" label="Oracle" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: mssql://<user>:<password>@<host>:<port>
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="PostgreSQL" label="PostgreSQL" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: postgres://<user>:<password>@<host>:<port</<database>
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="Snowflake" label="Snowflake" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        metadata_store: sqlite://<path-to-sqlite-db>.db
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: snowflake://<user>:<password>@<account>/<database>
-        '''        
-        ```
-    </TabItem>
-    <TabItem value="Clickhouse" label="Clickhouse" default>
-        ```python
-        CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        metadata_store: sqlite://<path-to-sqlite-db>.db
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-        databackend: clickhouse://<user>:<password>@<host>:<port>
-        '''        
-        ```
-    </TabItem>
-</Tabs>
-```python
-with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
-    f.write(CFG)
-```
-
-<!-- TABS -->
-## Start your cluster
-
-:::note
-Starting a SuperDuperDB cluster is useful in production and model development
-if you want to enable scalable compute, access to the models by multiple users for collaboration, 
-monitoring.
-
-If you don't need this, then it is simpler to start in development mode.
-:::
-
-
-<Tabs>
-    <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
-        ```python
-        !python -m superduperdb local_cluster        
-        ```
-    </TabItem>
-    <TabItem value="Docker-Compose" label="Docker-Compose" default>
-        ```python
-        !make testenv_image
-        !make testenv_init        
-        ```
-    </TabItem>
-</Tabs>
-```python
-from superduperdb import superduper
-
-db = superduper()
-```
-
-<!-- TABS -->
 ## Connect to SuperDuperDB
 
 :::note
@@ -202,7 +29,6 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
-        
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
@@ -233,15 +59,17 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
+        !pip install psycopg2
         from superduperdb import superduper
         
-        user = 'superduper'
-        password = 'superduper'
+        user = 'postgres'
+        password = 'postgres'
         port = 5432
         host = 'localhost'
         database = 'test_db'
+        db_uri = f"postgres://{user}:{password}@{host}:{port}/{database}"
         
-        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        db = superduper(db_uri, metadata_store=db_uri.replace('postgres://', 'postgresql://'))        
         ```
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
@@ -334,6 +162,7 @@ Otherwise refer to "Configuring your production system".
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
+        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -343,12 +172,17 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis import Table
-        from superduperdb.backends.ibis.field_types import FieldType
+        from superduperdb import Schema, DataType
+        from superduperdb.backends.ibis.field_types import dtype
+        
+        datatype = "text"
         
         if isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
+            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
         else:
-            schema = Schema(fields={'x': FieldType(datatype)})
+            schema = Schema(
+                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
+            )
         
         table_or_collection = Table('documents', schema=schema)
         
@@ -372,13 +206,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
             
             if schema is None and datatype is None:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None:
                 data = [Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             else:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA], schema='my_schema'))        
+                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -386,7 +220,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'x': x}) for x in data))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
         ```
     </TabItem>
 </Tabs>
@@ -408,7 +242,24 @@ do_insert(data[:-len(data) // 4])
     <TabItem value="SQL" label="SQL" default>
         ```python
         
-        select = table_or_collection        
+        select = table_or_collection.to_query()        
+        ```
+    </TabItem>
+</Tabs>
+<!-- TABS -->
+## Create Model Output Type
+
+
+<Tabs>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        model_output_dtype = None        
+        ```
+    </TabItem>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        from superduperdb.backends.ibis.field_types import dtype
+        model_output_dtype = dtype(str)        
         ```
     </TabItem>
 </Tabs>
@@ -430,7 +281,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -444,7 +295,7 @@ won't be necessary.
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(pdf_file):
             reader = PyPDF2.PdfReader(pdf_file)
             num_pages = len(reader.pages)
@@ -488,12 +339,14 @@ operate on those outputs.
         ```python
         from superduperdb.backends.mongodb import Collection
         
+        indexing_key = upstream_listener.outputs_key
         select = Collection(upstream_listener.outputs).find()        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = db.load('table', upstream_listener.outputs)        
+        indexing_key = upstream_listener.outputs_key
+        select = db.load("table", upstream_listener.outputs).to_query()        
         ```
     </TabItem>
 </Tabs>
@@ -504,6 +357,7 @@ operate on those outputs.
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
+        !pip install openai
         from superduperdb.ext.openai import OpenAIEmbedding
         model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
@@ -569,7 +423,7 @@ operate on those outputs.
     </TabItem>
 </Tabs>
 ```python
-model.predict_one("What is SuperDuperDB")
+print(len(model.predict_one("What is SuperDuperDB")))
 ```
 
 ## Create vector-index
@@ -623,16 +477,18 @@ vector_index_name = 'my-vector-index'
 query_table_or_collection = select.table_or_collection
 ```
 
+```python
+sample_datapoint = data[0]
+query = "Tell me about the SuperDuperDb"
+```
+
 <!-- TABS -->
 ## Perform a vector search
 
 ```python
 from superduperdb import Document
 
-if datatype is None:
-    item = Document({indexing_key: sample_datapoint})
-else:
-    item = Document({indexing_key: datatype(sample_datapoint)})
+item = Document({indexing_key: sample_datapoint})
 ```
 
 Once we have this search target, we can execute a search as follows:
@@ -646,12 +502,35 @@ Once we have this search target, we can execute a search as follows:
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = query_table_or_collection.like(item)        
+        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).select('_source', indexing_key)        
         ```
     </TabItem>
 </Tabs>
 ```python
 results = db.execute(select)
+```
+
+<!-- TABS -->
+## Create Vector Search Model
+
+```python
+from superduperdb.base.serializable import Variable
+item = {indexing_key: Variable('query')}
+```
+
+```python
+from superduperdb.components.model import QueryModel
+
+vector_search_model = QueryModel(
+    identifier="VectorSearch",
+    select=select,
+    postprocess=lambda docs: [{"text": doc[indexing_key], "_source": doc["_source"]} for doc in docs]
+)
+vector_search_model.db = db
+```
+
+```python
+vector_search_model.predict_one(query=query)
 ```
 
 <!-- TABS -->
@@ -713,29 +592,6 @@ results = db.execute(select)
         ```
     </TabItem>
 </Tabs>
-### Using LLM for text generation
-
-```python
-llm.predict_one('Tell me about the SuperDuperDB', temperature=0.7)
-```
-
-### Use in combination with Prompt
-
-```python
-from superduperdb.components.model import SequentialModel, Model
-
-prompt_model = Model(
-    identifier="prompt", object=lambda text: f"The German version of sentence '{text}' is: "
-)
-
-model = SequentialModel(identifier="The translator", predictors=[prompt_model, llm])
-
-```
-
-```python
-model.predict_one('Tell me about SuperDuperDB')
-```
-
 <!-- TABS -->
 ## Answer question with LLM
 
@@ -744,14 +600,51 @@ model.predict_one('Tell me about SuperDuperDB')
     <TabItem value="No-context" label="No-context" default>
         ```python
         
-        ...        
+        llm.predict_one(query)        
+        ```
+    </TabItem>
+    <TabItem value="Prompt" label="Prompt" default>
+        ```python
+        from superduperdb import objectmodel
+        from superduperdb.components.graph import Graph, input_node
+        
+        @objectmodel
+        def build_prompt(query):
+            return f"Translate the sentence into German: {query}"
+        
+        in_ = input_node('query')
+        prompt = build_prompt(query=in_)
+        answer = llm(X=prompt)
+        prompt_llm = answer.to_graph("prompt_llm")
+        prompt_llm.predict_one(query)[0]        
         ```
     </TabItem>
     <TabItem value="Context" label="Context" default>
         ```python
-        from superduperdb import Graph
+        from superduperdb import objectmodel
+        from superduperdb.components.graph import Graph, input_node
         
-        ...        
+        prompt_template = (
+            "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n"
+            "{context}\n\n"
+            "Here's the question: {query}"
+        )
+        
+        
+        @objectmodel
+        def build_prompt(query, docs):
+            chunks = [doc["text"] for doc in docs]
+            context = "\n\n".join(chunks)
+            prompt = prompt_template.format(context=context, query=query)
+            return prompt
+            
+        
+        in_ = input_node('query')
+        vector_search_results = vector_search_model(query=in_)
+        prompt = build_prompt(query=in_, docs=vector_search_results)
+        answer = llm(X=prompt)
+        context_llm = answer.to_graph("context_llm")
+        context_llm.predict_one(query)        
         ```
     </TabItem>
 </Tabs>

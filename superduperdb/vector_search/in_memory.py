@@ -59,6 +59,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
         self.post_create()
+        if self.h is None:
+            return [], []
         h = self.to_numpy(h)[None, :]
         if within_ids:
             ix = list(map(self.lookup.__getitem__, within_ids))

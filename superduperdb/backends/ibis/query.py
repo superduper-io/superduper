@@ -3,6 +3,8 @@ import enum
 import re
 import types
 import typing as t
+from superduperdb import CFG
+import psycopg2
 
 import pandas
 
@@ -49,25 +51,55 @@ def _model_update_impl(
     outputs: t.Sequence[t.Any],
     flatten: bool = False,
 ):
-    if flatten:
-        raise NotImplementedError('Flatten not yet supported for ibis')
+    if CFG.cluster.vector_search.type == 'in_memory':
+        if flatten:
+            raise NotImplementedError('Flatten not yet supported for ibis')
 
-    if not outputs:
-        return
+        if not outputs:
+            return
 
-    table_records = []
-    for ix in range(len(outputs)):
-        d = {
-            '_input_id': str(ids[ix]),
-            'output': outputs[ix],
-        }
-        table_records.append(d)
+        table_records = []
+        for ix in range(len(outputs)):
+            d = {
+                '_input_id': str(ids[ix]),
+                'output': outputs[ix],
+            }
+            table_records.append(d)
 
-    for r in table_records:
-        if isinstance(r['output'], dict) and '_content' in r['output']:
-            r['output'] = r['output']['_content']['bytes']
+        for r in table_records:
+            if isinstance(r['output'], dict) and '_content' in r['output']:
+                r['output'] = r['output']['_content']['bytes']
 
-    db.databackend.insert(f'_outputs.{predict_id}', table_records)
+        db.databackend.insert(f'_outputs.{predict_id}', table_records)
+
+    elif CFG.cluster.vector_search.type == 'pg_vector':
+        # Connect to your PostgreSQL database
+        conn = psycopg2.connect(CFG.cluster.vector_search.uri)
+        table_name = f'_outputs.{predict_id}'
+        with conn.cursor() as cursor:
+            cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
+            cursor.execute(f"""DROP TABLE IF EXISTS "{table_name}";""")
+            cursor.execute(
+                f"""CREATE TABLE "{table_name}" (
+                    _input_id VARCHAR PRIMARY KEY,
+                    output vector(1024),
+                    _fold VARCHAR
+                );
+                """
+            )
+            for ix in range(len(outputs)):
+                try:
+                    cursor.execute(
+                        f"""INSERT INTO "{table_name}" (_input_id, output) VALUES (%s, %s);""",
+                        [str(ids[ix]), outputs[ix]]
+                    )
+                except:
+                    pass
+
+        # Commit the transaction
+        conn.commit()
+        # Close the connection
+        conn.close()
 
 
 class IbisBackendError(Exception):
@@ -183,7 +215,7 @@ class IbisCompoundSelect(CompoundSelect):
         if tables is None:
             tables = {}
         if table_id not in tables:
-            tables[table_id] = db.databackend.conn.table(table_id)
+            tables[table_id] = db.databackend.conn.tables.get(table_id)
         return self.query_linker.compile(db, tables=tables)
 
     def get_all_tables(self):

@@ -6,6 +6,7 @@ from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorItem
+from superduperdb import CFG
 
 
 def delete_vectors(
@@ -40,48 +41,49 @@ def copy_vectors(
     :param db: A ``DB`` instance.
     """
 
-    vi = db.vector_indices[vector_index]
-    if isinstance(query, dict):
-        # ruff: noqa: E501
-        query: CompoundSelect = Serializable.decode(query)  # type: ignore[no-redef]
-    assert isinstance(query, CompoundSelect)
-    if not ids:
-        select = query
-    else:
-        select = query.select_using_ids(ids)
-    docs = db.select(select)
-    docs = [doc.unpack() for doc in docs]
-    key = vi.indexing_listener.key
-    if '_outputs.' in key:
-        key = key.split('.')[1]
-    # TODO: Refactor the below logic
-    vectors = []
-    if isinstance(db.databackend, MongoDataBackend):
-        vectors = [
-            {
-                'vector': MongoStyleDict(doc)[
-                    f'_outputs.{vi.indexing_listener.predict_id}'
-                ],
-                'id': str(doc['_id']),
-            }
-            for doc in docs
-        ]
-    elif isinstance(db.databackend, IbisDataBackend):
-        docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
-        from superduperdb.backends.ibis.data_backend import INPUT_KEY
+    if CFG.cluster.vector_search.type != 'pg_vector':
+        vi = db.vector_indices[vector_index]
+        if isinstance(query, dict):
+            # ruff: noqa: E501
+            query: CompoundSelect = Serializable.decode(query)  # type: ignore[no-redef]
+        assert isinstance(query, CompoundSelect)
+        if not ids:
+            select = query
+        else:
+            select = query.select_using_ids(ids)
+        docs = db.select(select)
+        docs = [doc.unpack() for doc in docs]
+        key = vi.indexing_listener.key
+        if '_outputs.' in key:
+            key = key.split('.')[1]
+        # TODO: Refactor the below logic
+        vectors = []
+        if isinstance(db.databackend, MongoDataBackend):
+            vectors = [
+                {
+                    'vector': MongoStyleDict(doc)[
+                        f'_outputs.{vi.indexing_listener.predict_id}'
+                    ],
+                    'id': str(doc['_id']),
+                }
+                for doc in docs
+            ]
+        elif isinstance(db.databackend, IbisDataBackend):
+            docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
+            from superduperdb.backends.ibis.data_backend import INPUT_KEY
 
-        vectors = [
-            {
-                'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
-                'id': str(doc[INPUT_KEY]),
-            }
-            for doc in docs
-        ]
-    for r in vectors:
-        if hasattr(r['vector'], 'numpy'):
-            r['vector'] = r['vector'].numpy()
+            vectors = [
+                {
+                    'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
+                    'id': str(doc[INPUT_KEY]),
+                }
+                for doc in docs
+            ]
+        for r in vectors:
+            if hasattr(r['vector'], 'numpy'):
+                r['vector'] = r['vector'].numpy()
 
-    if vectors:
-        db.fast_vector_searchers[vi.identifier].add(
-            [VectorItem(**vector) for vector in vectors]
-        )
+        if vectors:
+            db.fast_vector_searchers[vi.identifier].add(
+                [VectorItem(**vector) for vector in vectors]
+            )

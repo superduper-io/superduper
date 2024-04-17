@@ -16,15 +16,16 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.vector_index = vector_index
 
         if CFG.cluster.vector_search.uri is not None:
-            if not db.server_mode:
-                request_server(
-                    service='vector_search',
-                    endpoint='create/search',
-                    args={
-                        'vector_index': self.vector_index,
-                    },
-                    type='get',
-                )
+            if CFG.cluster.vector_search.type != 'pg_vector':
+                if not db.server_mode:
+                    request_server(
+                        service='vector_search',
+                        endpoint='create/search',
+                        args={
+                            'vector_index': self.vector_index,
+                        },
+                        type='get',
+                    )
 
     def __len__(self):
         return len(self.searcher)
@@ -103,13 +104,14 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         """
         if CFG.cluster.vector_search.uri is not None:
-            response = request_server(
-                service='vector_search',
-                data=h,
-                endpoint='query/search',
-                args={'vector_index': self.vector_index, 'n': n},
-            )
-            return response['ids'], response['scores']
+            if CFG.cluster.vector_search.type != 'pg_vector':
+                response = request_server(
+                    service='vector_search',
+                    data=h,
+                    endpoint='query/search',
+                    args={'vector_index': self.vector_index, 'n': n},
+                )
+                return response['ids'], response['scores']
 
         return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)
 

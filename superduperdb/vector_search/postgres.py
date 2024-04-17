@@ -79,7 +79,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         with self.connection.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS "%s" (id varchar, txt VARCHAR, embedding vector(%d))'
+                'CREATE TABLE IF NOT EXISTS "%s" (id varchar, txt VARCHAR, output vector(%d))'
                 % (self.identifier, self.dimensions)
             )
         self.connection.commit()
@@ -96,11 +96,11 @@ class PostgresVectorSearcher(BaseVectorSearcher):
     
     def get_measure_query(self):
         if self.measure.value == "l2":
-            return "embedding <-> '%s'"
+            return "output <-> '%s'"
         elif self.measure.value == "dot":
-            return "(embedding <#> '%s') * -1"
+            return "(output <#> '%s') * -1"
         elif self.measure.value == "cosine":
-            return "1 - (embedding <=> '%s')"
+            return "(output <=> '%s')"
         else:
             raise NotImplementedError("Unrecognized measure format")
 
@@ -110,7 +110,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
             for id_, vector in zip(ids, vectors):
                 try:
                     cursor.execute(
-                        "INSERT INTO %s (id, embedding) VALUES (%s, '%s');" % (self.identifier, id_, vector)
+                        "INSERT INTO %s (id, output) VALUES (%s, '%s');" % (self.identifier, id_, vector)
                     )
                 except Exception as e:
                     pass
@@ -120,13 +120,13 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         with self.connection.cursor() as cursor:
             if self.indexing.name == 'hnsw':
                 cursor.execute("""CREATE INDEX ON %s
-                                USING %s (embedding %s)
+                                USING %s (output %s)
                                 WITH (m = %s, ef_construction = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.m, self.indexing.ef_construction))
                 
                 cursor.execute("""SET %s.ef_search = %s;""" % (self.indexing.name, self.indexing.ef_search))
             elif self.indexing.name == 'ivfflat':
                 cursor.execute("""CREATE INDEX ON %s
-                                USING %s (embedding %s)
+                                USING %s (output %s)
                                 WITH (lists = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.lists))
                 
                 cursor.execute("""SET %s.probes = %s;""" % (self.indexing.name, self.indexing.probes))
@@ -174,7 +174,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         with self.connection.cursor() as curr:
             curr.execute(
                 """
-                SELECT embedding 
+                SELECT output 
                 FROM %s 
                 WHERE id = '%s'"""
                 % (self.identifier, _id)
@@ -200,15 +200,16 @@ class PostgresVectorSearcher(BaseVectorSearcher):
             within_ids_str = ', '.join([f"'{i}'" for i in within_ids])
             condition = f"id in ({within_ids_str})"
         query_search_nearest = f"""
-        SELECT id, {self.measure_query} as distance
-                FROM %s
+            SELECT _input_id, {self.measure_query} as distance
+                FROM "%s"
                 WHERE %s
-                ORDER BY distance
+                ORDER BY distance ASC
                 LIMIT %d
             """
+        
         with self.connection.cursor() as curr:
             curr.execute(
-                query_search_nearest % (json.dumps(h), self.identifier, condition, n)
+                query_search_nearest % (list(h), self.identifier, condition, n)
             )
             nearest_items = curr.fetchall()
         ids = [row[0] for row in nearest_items]
@@ -240,9 +241,10 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         indexing_version = vi.indexing_listener.model.version
 
         output_path = f'_outputs.{vi.indexing_listener.predict_id}'
+        print(output_path)
 
         return PostgresVectorSearcher(
-            uri=CFG.data_backend,
+            uri=CFG.cluster.vector_search.uri,
             identifier=output_path,
             dimensions=vi.dimensions,
             measure=VectorIndexMeasureType.cosine,

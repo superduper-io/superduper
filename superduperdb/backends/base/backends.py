@@ -32,7 +32,7 @@ vector_searcher_implementations = {
     'lance': LanceVectorSearcher,
     'in_memory': InMemoryVectorSearcher,
     'mongodb+srv': MongoAtlasVectorSearcher,
-    'postgres': PostgresVectorSearcher
+    'pg_vector': PostgresVectorSearcher
 }
 
 CONNECTIONS = {

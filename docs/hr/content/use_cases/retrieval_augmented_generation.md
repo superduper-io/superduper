@@ -23,8 +23,8 @@ to get going with SuperDuperDB quickly.
 ```python
 import os
 
-os.mkdirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
+os.makedirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
 ```
 
 
@@ -32,15 +32,18 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     <TabItem value="MongoDB Community" label="MongoDB Community" default>
         ```python
         CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: lance
-        databackend: mongodb://<mongo-host>:27017/documents
+        data_backend: mongodb://127.0.0.1:27017/documents
+        artifact_store: filesystem://./artifact_store
+        cluster:
+          cdc:
+            strategy: null
+            uri: ray://127.0.0.1:20000
+          compute:
+            uri: ray://127.0.0.1:10001
+          vector_search:
+            backfill_batch_size: 100
+            type: in_memory
+            uri: http://127.0.0.1:21000
         '''        
         ```
     </TabItem>
@@ -147,7 +150,7 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
+with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -166,7 +169,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local_cluster        
+        !python -m superduperdb local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -196,8 +199,7 @@ Otherwise refer to "Configuring your production system".
         ```python
         from superduperdb import superduper
         
-        db = superduper('mongodb://localhost:27017/documents')
-        db.drop(True)        
+        db = superduper('mongodb://localhost:27017/documents')        
         ```
     </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
@@ -421,6 +423,23 @@ do_insert(data[:-len(data) // 4])
     </TabItem>
 </Tabs>
 <!-- TABS -->
+## Create Model Output Type
+
+
+<Tabs>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        model_output_dtype = None        
+        ```
+    </TabItem>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        from superduperdb.backends.ibis.field_types import dtype
+        model_output_dtype = dtype('str')        
+        ```
+    </TabItem>
+</Tabs>
+<!-- TABS -->
 ## Apply a chunker for search
 
 :::note
@@ -523,6 +542,7 @@ operate on those outputs.
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
         ```python
+        !pip install sentence-transformers
         from superduperdb import vector
         import sentence_transformers
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -591,7 +611,7 @@ vector_index_name = 'my-vector-index'
         ```python
         from superduperdb import VectorIndex, Listener
         
-        jobs, _ = db.apply(
+        jobs, _ = db.add(
             VectorIndex(
                 vector_index_name,
                 indexing_listener=Listener(
@@ -607,7 +627,7 @@ vector_index_name = 'my-vector-index'
         ```python
         from superduperdb import VectorIndex, Listener
         
-        jobs, _ = db.apply(
+        jobs, _ = db.add(
             VectorIndex(
                 vector_index_name,
                 indexing_listener=Listener(
@@ -655,7 +675,7 @@ Once we have this search target, we can execute a search as follows:
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).select('_source', indexing_key)        
+        select = query_table_or_collection.like(item)        
         ```
     </TabItem>
 </Tabs>
@@ -693,6 +713,7 @@ vector_search_model.predict_one(query=query)
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
+        !pip install openai
         from superduperdb.ext.openai import OpenAIChatCompletion
         
         llm = OpenAIChatCompletion(identifier='llm', model='gpt-3.5-turbo')        
@@ -707,6 +728,7 @@ vector_search_model.predict_one(query=query)
     </TabItem>
     <TabItem value="vLLM" label="vLLM" default>
         ```python
+        !pip install vllm
         from superduperdb.ext.vllm import VllmModel
         
         predict_kwargs = {
@@ -720,28 +742,28 @@ vector_search_model.predict_one(query=query)
             model_name="TheBloke/Mistral-7B-Instruct-v0.2-AWQ",
             vllm_kwargs={
                 "gpu_memory_utilization": 0.7,
-                "max_model_len": 10240,
+                "max_model_len": 1024,
                 "quantization": "awq",
             },
             predict_kwargs=predict_kwargs,
-        )
-        
+        )        
         ```
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        
+        !pip install transformers datasets bitsandbytes accelerate
         from superduperdb.ext.transformers import LLM
         
-        llm = LLM.from_pretrained("facebook/opt-125m", identifier="llm", predict_kwargs=dict(max_new_tokens=128))        
+        llm = LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", load_in_8bit=True, device_map="cuda", identifier="llm", predict_kwargs=dict(max_new_tokens=128))        
         ```
     </TabItem>
     <TabItem value="Llama.cpp" label="Llama.cpp" default>
         ```python
-        !huggingface-cli download Qwen/Qwen1.5-0.5B-Chat-GGUF qwen1_5-0_5b-chat-q8_0.gguf --local-dir . --local-dir-use-symlinks False
+        !pip install llama_cpp_python
+        # !huggingface-cli download TheBloke/Mistral-7B-Instruct-v0.2-GGUF mistral-7b-instruct-v0.2.Q4_K_M.gguf --local-dir . --local-dir-use-symlinks False
         
         from superduperdb.ext.llamacpp.model import LlamaCpp
-        llm = LlamaCpp(identifier="llm", model_name_or_path="./qwen1_5-0_5b-chat-q8_0.gguf")        
+        llm = LlamaCpp(identifier="llm", model_name_or_path="mistral-7b-instruct-v0.2.Q4_K_M.gguf")        
         ```
     </TabItem>
 </Tabs>

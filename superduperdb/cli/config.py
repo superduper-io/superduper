@@ -1,5 +1,6 @@
 import json
 
+import yaml
 from typer import Option
 
 from superduperdb import CFG
@@ -13,5 +14,8 @@ def config(
         False, '--schema', '-s', help='If set, print the JSON schema for the model'
     ),
 ):
-    d = CFG.schema() if schema else CFG.dict()
-    print(json.dumps(d, indent=2))
+    d = CFG.to_yaml() if schema else CFG.dict()
+    if schema:
+        print(CFG.to_yaml())
+    else:
+        print(json.dumps(d, indent=2))

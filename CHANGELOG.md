@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make vectors normalized in inmemory vector database for cosine measure.
 - Add local cluster as tmux session 
 - At the end of the test, drop the collection instead of the database
+- Force load vector indices during backfill
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment

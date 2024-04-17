@@ -7,6 +7,7 @@ from traceback import format_exc
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prettytable import PrettyTable
@@ -84,6 +85,9 @@ class SuperDuperApp:
     def app(self):
         self._app.include_router(self.router)
         return self._app
+
+    def raise_error(self, msg: str, code: int):
+        raise HTTPException(code, detail=msg)
 
     @cached_property
     def db(self):

@@ -149,9 +149,9 @@ class VectorIndex(Component):
             outputs=outputs,
         )[0]
 
-        return db.fast_vector_searchers[self.identifier].find_nearest_from_array(
-            h, within_ids=within_ids, n=n
-        )
+        searcher = db.fast_vector_searchers[self.identifier]
+
+        return searcher.find_nearest_from_array(h, within_ids=within_ids, n=n)
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:

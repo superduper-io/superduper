@@ -40,6 +40,12 @@ def query_search_by_id(
     ids, scores = service.query_search_from_id(
         id, vector_index=vector_index, n=n, db=db
     )
+    if len(ids) == 0:
+        msg = (
+            'Vectors are not yet loaded in vector database.'
+            '\nPlease check if model outputs are ready.'
+        )
+        return app.raise_error(msg, 404)
     return {'ids': ids, 'scores': scores}
 
 
@@ -53,6 +59,13 @@ def query_search_by_array(
     ids, scores = service.query_search_from_array(
         vector, vector_index=vector_index, n=n, db=db
     )
+    if len(ids) == 0:
+        msg = (
+            'Vectors are not yet loaded in vector database.'
+            '\nPlease check if model outputs are ready.'
+        )
+        return app.raise_error(msg, 404)
+
     return {'ids': ids, 'scores': scores}
 
 

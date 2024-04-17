@@ -46,7 +46,10 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.identifier = identifier
 
     def __len__(self):
-        return self.h.shape[0]
+        if self.h:
+            return self.h.shape[0]
+        else:
+            return 0
 
     def _setup(self, h, index):
         h = numpy.array(h) if not isinstance(h, numpy.ndarray) else h
@@ -64,6 +67,14 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
+        if self.h is None:
+            logging.error(
+                'Tried to search on an empty vector database',
+                'Vectors are not yet loaded in vector database.',
+                '\nPlease check if model outputs are ready.',
+            )
+            return [], []
+
         self.post_create()
         h = self.to_numpy(h)[None, :]
         if within_ids:

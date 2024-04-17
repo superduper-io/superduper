@@ -72,43 +72,25 @@ class VllmAPI(BaseLLMAPI):
 class _VllmCore:
     def __init__(self, **kwargs) -> None:
         # Use kwargs to avoid incompatibility after vllm version upgrade
+        from vllm import LLM
 
-        from vllm.engine.arg_utils import AsyncEngineArgs
-        from vllm.engine.async_llm_engine import AsyncLLMEngine
-
-        kwargs.setdefault("disable_log_stats", True)
-        kwargs.setdefault("disable_log_requests", True)
-        engine_args = AsyncEngineArgs(**kwargs)
-        self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-
-    async def agenerate(self, prompt, **kwargs):
-        from vllm.utils import random_uuid
-
-        from superduperdb.ext.vllm.model import SamplingParams
-
-        sampling_params = SamplingParams(**kwargs)
-        request_id = random_uuid()
-        results_generator = self.engine.generate(prompt, sampling_params, request_id)
-
-        final_output = None
-        async for request_output in results_generator:
-            final_output = request_output
-
-        assert final_output is not None
-        prompt = final_output.prompt
-        text_outputs = [output.text for output in final_output.outputs]
-        n = sampling_params.n
-        if n == 1:
-            return text_outputs[0]
-        return text_outputs
-
-    async def abatch_predict(self, prompts: t.List[str], **kwargs):
-        return await asyncio.gather(
-            *[self.agenerate(prompt, **kwargs) for prompt in prompts]
-        )
+        # Roll back to using the sync engine, otherwise it will no longer be available on Jupyter notebooks
+        self.engine = LLM(**kwargs)
 
     def batch_predict(self, prompts: t.List[str], **kwargs):
-        return asyncio.run(self.abatch_predict(prompts, **kwargs))
+        from vllm.sampling_params import SamplingParams
+
+        sampling_params = SamplingParams(**kwargs)
+        results = self.engine.generate(prompts, sampling_params)
+        n = sampling_params.n
+        texts_outputs = []
+        for result in results:
+            text_outputs = [output.text for output in result.outputs]
+            if n == 1:
+                texts_outputs.append(text_outputs[0])
+            else:
+                texts_outputs.append(text_outputs)
+        return texts_outputs
 
 
 @public_api(stability='beta')
@@ -186,7 +168,7 @@ class VllmModel(BaseLLM):
             import ray
 
             # https://docs.ray.io/en/latest/ray-core/actors/async_api.html#asyncio-for-actors
-            results = ray.get(self.llm.abatch_predict.remote(prompts, **total_kwargs))
+            results = ray.get(self.llm.batch_predict.remote(prompts, **total_kwargs))
         else:
             results = self.llm.batch_predict(prompts, **total_kwargs)
 

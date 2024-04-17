@@ -124,7 +124,11 @@ class Datalayer:
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> t.Optional[BaseVectorSearcher]:
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
-        vi = self.vector_indices[identifier]
+
+        vi = self.vector_indices.force_load(identifier)
+        from superduperdb import VectorIndex
+
+        assert isinstance(vi, VectorIndex)
 
         clt = vi.indexing_listener.select.table_or_collection
 
@@ -1072,3 +1076,6 @@ class LoadDict(dict):
             assert self.callable is not None, msg
             value = self[key] = self.callable(key)
         return value
+
+    def force_load(self, key: str):
+        return self.__missing__(key)

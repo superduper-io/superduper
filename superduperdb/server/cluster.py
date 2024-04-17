@@ -1,57 +1,66 @@
+import os
 import subprocess
+import sys
 import time
 
-
-def subprocess_run(cmds):
-    print(' '.join(cmds))
-    subprocess.run(cmds)
-
+session_name = 'superduperdb-local-cluster-session'
 
 def create_tmux_session(session_name, commands):
     '''
     Create a tmux local cluster
     '''
 
-    window_name = f'{session_name}:0'
-    for ix, cmd in enumerate(commands, start=1):
-        if ix == 1:
-            subprocess_run(
-                [
-                    'tmux',
-                    'new-session',
-                    '-d',
-                    '-s',
-                    session_name,
-                    '-n',
-                    'shell0',
-                    '-d',
-                    cmd,
-                ]
-            )
-        else:
-            subprocess_run(['tmux', 'split-window', '-t', window_name, cmd])
+    for ix, cmd in enumerate(commands, start=0):
+        window_name = f'{session_name}:0.{ix}'
+        run_tmux_command(['send-keys', '-t', window_name, cmd, 'C-m'])
+        time.sleep(1)
 
-        if ix % 4 == 0:
-            subprocess_run(['tmux', 'select-layout', '-t', window_name, 'tiled'])
-
-        time.sleep(2)
-    subprocess_run(['tmux', 'attach-session', '-t', session_name])
+    print('You can attach to the tmux session with:')
+    print(f'tmux attach-session -t {session_name}')
 
 
-def local_cluster():
+def run_tmux_command(command):
+    print('tmux ' + ' '.join(command))
+    subprocess.run(["tmux"] + command, check=True)
+
+
+def up_cluster():
     print('Starting the local cluster...')
-    session_name = 'superduperdb-localcluster-session'
 
-    CFG = 'deploy/testenv/env/smoke/debug.yaml'
+    CFG = os.environ.get('SUPERDUPERDB_CONFIG')
+    assert CFG, 'Please set SUPERDUPERDB_CONFIG environment variable'
+    python_executable = sys.executable
+    ray_executable = os.path.join(os.path.dirname(python_executable), 'ray')
+    run_tmux_command(
+        [
+            'new-session',
+            '-d',
+            '-s',
+            session_name,
+        ]
+    )
+
+    run_tmux_command(["split-window", "-h", "-t", f"{session_name}:0.0"])
+    run_tmux_command(["split-window", "-v", "-t", f"{session_name}:0.0"])
+    run_tmux_command(["split-window", "-v", "-t", f"{session_name}:0.0"])
+
     services = [
         f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. "
-        "ray start --head --dashboard-host=0.0.0.0 --disable-usage-stats --block",
+        f"{ray_executable} start --head --dashboard-host=0.0.0.0 --disable-usage-stats --block",
         f"SUPERDUPERDB_CONFIG={CFG} RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 "
-        "PYTHONPATH=$(pwd):. ray start --address=localhost:6379  --block",
-        f"SUPERDUPERDB_CONFIG={CFG} python -m superduperdb vector-search",
-        f"SUPERDUPERDB_CONFIG={CFG} python -m superduperdb cdc",
+        f"PYTHONPATH=$(pwd):. {ray_executable} start --address=localhost:6379  --block",
+        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb vector-search",
+        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb cdc",
     ]
 
     create_tmux_session(session_name, services)
 
     print(f'local cluster started with tmux session {session_name}')
+
+def down_cluster():
+    print('Stopping the local cluster...')
+    run_tmux_command(['kill-session', '-t', session_name])
+    print('local cluster stopped')
+
+def attach_cluster():
+    run_tmux_command(['attach-session', '-t', session_name])

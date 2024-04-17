@@ -5,10 +5,16 @@ from . import command
 
 
 @command(help='Start local cluster: server, ray and change data capture')
-def local_cluster():
-    from superduperdb.server.cluster import local_cluster
+def local_cluster(action: str):
+    from superduperdb.server.cluster import attach_cluster, down_cluster, up_cluster
+    action = action.lower()
 
-    local_cluster()
+    if action == 'up':
+        up_cluster()
+    elif action == 'down':
+        down_cluster()
+    elif action == 'attach':
+        attach_cluster()
 
 
 @command(help='Start vector search server')

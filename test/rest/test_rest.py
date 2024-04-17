@@ -1,9 +1,11 @@
 import json
 import os
+
 import pytest
 
-from .mock_client import curl_post, setup as _setup, teardown
 from superduperdb import CFG
+
+from .mock_client import curl_post, setup as _setup, teardown
 
 
 @pytest.fixture
@@ -52,7 +54,7 @@ def test_insert_image(setup):
             },
         ],
         "query": [
-            f"documents.insert_one($documents[0])"
+            "documents.insert_one($documents[0])"
         ],
     }
     form = json.dumps(form)

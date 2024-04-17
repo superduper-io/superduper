@@ -161,7 +161,7 @@ class BytesEncoding(str, Enum):
 
 @dc.dataclass
 class Downloads(BaseConfig):
-    folder: t.Optional[str] = '/tmp/' #None
+    folder: t.Optional[str] = None
     n_workers: int = 0
     headers: t.Dict = dc.field(default_factory=lambda: {'User-Agent': 'me'})
     timeout: t.Optional[int] = None

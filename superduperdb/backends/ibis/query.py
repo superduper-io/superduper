@@ -58,7 +58,7 @@ def _model_update_impl_flatten(
         for r in outputs[ix]:
             d = {
                 '_input_id': str(ids[ix]),
-                '_source': random_id(),
+                '_source': str(ids[ix]),
                 'output': r,
             }
             table_records.append(d)

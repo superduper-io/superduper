@@ -1,6 +1,6 @@
 from superduperdb.misc.annotations import requires_packages
 
-_, requirements = requires_packages(['anthropic', '0.12.0'])
+_, requirements = requires_packages(['anthropic', '0.25.0'])
 
 from .model import AnthropicCompletions
 

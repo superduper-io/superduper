@@ -12,8 +12,8 @@ CASSETTE_DIR = 'test/integration/ext/anthropic/cassettes'
     filter_headers=['authorization'],
 )
 def test_completions():
-    e = AnthropicCompletions(model='claude-2', prompt='Hello, {context}')
-    resp = e.predict_one('')
+    e = AnthropicCompletions(identifier='claude-2.1', predict_kwargs={'max_tokens': 64})
+    resp = e.predict_one('Hello')
     assert isinstance(resp, str)
 
 
@@ -23,7 +23,7 @@ def test_completions():
     filter_headers=['authorization'],
 )
 def test_batch_completions():
-    e = AnthropicCompletions(model='claude-2')
+    e = AnthropicCompletions(identifier='claude-2.1', predict_kwargs={'max_tokens': 64})
     resp = e.predict(['Hello, world!'])
 
     assert isinstance(resp, list)

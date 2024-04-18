@@ -11,13 +11,17 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
+        !pip install openai
         from superduperdb.ext.openai import OpenAIEmbedding
         model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
         ```python
+        import os
         from superduperdb.ext.jina import JinaEmbedding
+        
+        os.environ["JINA_API_KEY"] = "jina_xxxx"
          
         # define the model
         model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
@@ -25,6 +29,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
         ```python
+        !pip install sentence-transformers
         from superduperdb import vector
         import sentence_transformers
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -41,12 +46,14 @@ import TabItem from '@theme/TabItem';
     <TabItem value="Transformers" label="Transformers" default>
         ```python
         import dataclasses as dc
-        from superduperdb.components.model import _Predictor, ensure_initialized
+        from superduperdb import vector
+        from superduperdb.components.model import Model, ensure_initialized, Signature
         from transformers import AutoTokenizer, AutoModel
         import torch
         
         @dc.dataclass(kw_only=True)
-        class TransformerEmbedding(_Predictor):
+        class TransformerEmbedding(Model):
+            signature: Signature = 'singleton'
             pretrained_model_name_or_path : str
         
             def init(self):
@@ -71,11 +78,11 @@ import TabItem from '@theme/TabItem';
                 return sentence_embeddings.tolist()
         
         
-        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en")        
+        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
         ```
     </TabItem>
 </Tabs>
 ```python
-model.predict_one("What is SuperDuperDB")
+print(len(model.predict_one("What is SuperDuperDB")))
 ```
 

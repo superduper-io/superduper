@@ -534,7 +534,10 @@ operate on those outputs.
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
         ```python
+        import os
         from superduperdb.ext.jina import JinaEmbedding
+        
+        os.environ["JINA_API_KEY"] = "jina_xxxx"
          
         # define the model
         model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
@@ -721,9 +724,18 @@ vector_search_model.predict_one(query=query)
     </TabItem>
     <TabItem value="Anthropic" label="Anthropic" default>
         ```python
-        
+        !pip install anthropic
         from superduperdb.ext.anthropic import AnthropicCompletions
-        llm = AnthropicCompletions(identifier='llm', model='claude-2')        
+        import os
+        
+        os.environ["ANTHROPIC_API_KEY"] = "sk-xxx"
+        
+        predict_kwargs = {
+            "max_tokens": 1024,
+            "temperature": 0.8,
+        }
+        
+        llm = AnthropicCompletions(identifier='llm', model='claude-2.1', predict_kwargs=predict_kwargs)        
         ```
     </TabItem>
     <TabItem value="vLLM" label="vLLM" default>
@@ -767,6 +779,11 @@ vector_search_model.predict_one(query=query)
         ```
     </TabItem>
 </Tabs>
+```python
+# test the llm model
+llm.predict_one("Hello")
+```
+
 <!-- TABS -->
 ## Answer question with LLM
 
@@ -789,7 +806,7 @@ vector_search_model.predict_one(query=query)
         
         in_ = input_node('query')
         prompt = build_prompt(query=in_)
-        answer = llm(X=prompt)
+        answer = llm(prompt)
         prompt_llm = answer.to_graph("prompt_llm")
         prompt_llm.predict_one(query)[0]        
         ```
@@ -817,7 +834,7 @@ vector_search_model.predict_one(query=query)
         in_ = input_node('query')
         vector_search_results = vector_search_model(query=in_)
         prompt = build_prompt(query=in_, docs=vector_search_results)
-        answer = llm(X=prompt)
+        answer = llm(prompt)
         context_llm = answer.to_graph("context_llm")
         context_llm.predict_one(query)        
         ```

@@ -26,8 +26,11 @@ class Anthropic(APIBaseModel):
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
     def __post_init__(self, artifacts):
+        self.model = self.model or self.identifier
         super().__post_init__(artifacts)
-        self.identifier = self.identifier or self.model
+        self.client = anthropic.Anthropic(
+            api_key=get_key(KEY_NAME), **self.client_kwargs
+        )
 
 
 @dc.dataclass(kw_only=True)
@@ -47,13 +50,29 @@ class AnthropicCompletions(Anthropic):
 
     @retry
     def predict_one(
-        self, prompt: str, context: t.Optional[t.List[str]] = None, **kwargs
+        self,
+        X: t.Union[str, list[dict]],
+        context: t.Optional[t.List[str]] = None,
+        **kwargs,
     ):
-        if context is not None:
-            prompt = format_prompt(prompt, self.prompt, context=context)
-        client = anthropic.Anthropic(api_key=get_key(KEY_NAME), **self.client_kwargs)
-        resp = client.completions.create(prompt=prompt, model=self.identifier, **kwargs)
-        return resp.completion
+        if isinstance(X, str):
+            if context is not None:
+                X = format_prompt(X, self.prompt, context=context)
+            messages = [{'role': 'user', 'content': X}]
+
+        elif isinstance(X, list) and all(isinstance(p, dict) for p in X):
+            messages = X
+
+        else:
+            raise ValueError(
+                f'Invalid input: {X}, only support str or messages format data'
+            )
+        message = self.client.messages.create(
+            messages=messages,
+            model=self.model,
+            **{**self.predict_kwargs, **kwargs},
+        )
+        return message.content[0].text
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]

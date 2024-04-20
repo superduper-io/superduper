@@ -4,6 +4,7 @@ import re
 import types
 import typing as t
 from superduperdb import CFG
+from pgvector.psycopg2 import register_vector
 import psycopg2
 
 import pandas
@@ -75,6 +76,7 @@ def _model_update_impl(
     elif CFG.cluster.vector_search.type == 'pg_vector':
         # Connect to your PostgreSQL database
         conn = psycopg2.connect(CFG.cluster.vector_search.uri)
+        register_vector(conn)
         table_name = f'_outputs.{predict_id}'
         with conn.cursor() as cursor:
             cursor.execute('CREATE EXTENSION IF NOT EXISTS vector')

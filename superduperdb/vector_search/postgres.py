@@ -1,7 +1,10 @@
 import json
 import typing as t
 import numpy
+import dataclasses as dc
+from pgvector.psycopg2 import register_vector
 import psycopg2
+
 
 from superduperdb import CFG, logging
 if t.TYPE_CHECKING:
@@ -12,12 +15,13 @@ from superduperdb.components.model import APIModel, Model
 
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem, VectorIndexMeasureType
 
+@dc.dataclass(kw_only=True)
 class PostgresIndexing:
     cosine = "vector_cosine_ops"
     l2 = "vector_l2_ops"
     inner_product = "vector_ip_ops"
 
-    
+@dc.dataclass(kw_only=True)
 class IVFFlat(PostgresIndexing):
     """
     An IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector. 
@@ -31,6 +35,7 @@ class IVFFlat(PostgresIndexing):
         self.lists = lists
         self.probes = probes
 
+@dc.dataclass(kw_only=True)
 class HNSW(PostgresIndexing):
     """
     An HNSW index creates a multilayer graph. It has better query performance than IVFFlat (in terms of speed-recall tradeoff), 
@@ -117,8 +122,10 @@ class PostgresVectorSearcher(BaseVectorSearcher):
         self.connection.commit()
 
     def _create_index(self):
+        print("_create_index")
         with self.connection.cursor() as cursor:
             if self.indexing.name == 'hnsw':
+                print("hnsw")
                 cursor.execute("""CREATE INDEX ON %s
                                 USING %s (output %s)
                                 WITH (m = %s, ef_construction = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.m, self.indexing.ef_construction))
@@ -130,7 +137,7 @@ class PostgresVectorSearcher(BaseVectorSearcher):
                                 WITH (lists = %s);""" % (self.identifier, self.indexing.name, self.indexing_measure, self.indexing.lists))
                 
                 cursor.execute("""SET %s.probes = %s;""" % (self.indexing.name, self.indexing.probes))
-
+        print("_create_index")
         self.connection.commit()
 
 

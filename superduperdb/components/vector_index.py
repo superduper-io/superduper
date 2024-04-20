@@ -4,6 +4,10 @@ import typing as t
 import numpy as np
 from overrides import override
 
+from superduperdb import CFG
+import psycopg2
+from pgvector.psycopg2 import register_vector
+
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
@@ -16,6 +20,7 @@ from superduperdb.misc.annotations import public_api
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 from superduperdb.vector_search.update_tasks import copy_vectors
+from superduperdb.vector_search.postgres import PostgresIndexing, HNSW, IVFFlat
 
 KeyType = t.Union[str, t.List, t.Dict]
 if t.TYPE_CHECKING:
@@ -42,6 +47,8 @@ class VectorIndex(Component):
     compatible_listener: t.Optional[Listener] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    indexing : t.Optional[HNSW | IVFFlat] = None,
+    indexing_measure : t.Optional[PostgresIndexing] = PostgresIndexing.cosine
 
     @override
     def on_load(self, db: Datalayer) -> None:
@@ -54,6 +61,26 @@ class VectorIndex(Component):
             self.compatible_listener = t.cast(
                 Listener, db.load('listener', self.compatible_listener)
             )
+        if CFG.cluster.vector_search.type == "pg_vector":
+            conn = psycopg2.connect(CFG.cluster.vector_search.uri)
+            table_name = f"_outputs.{self.indexing_listener.predict_id}"
+            with conn.cursor() as cursor:
+                if self.indexing.name == 'hnsw':
+                    
+                    cursor.execute(f"""CREATE INDEX ON "{table_name}"
+                                    USING {self.indexing.name} (output {self.indexing_measure})
+                                    WITH (m = {self.indexing.m}, ef_construction = {self.indexing.ef_construction});""")
+
+                    cursor.execute("""SET %s.ef_search = %s;""" % (self.indexing.name, self.indexing.ef_search))
+                elif self.indexing.name == 'ivfflat':
+                    cursor.execute(f"""CREATE INDEX ON "{table_name}"
+                                    USING %s (output %s)
+                                    WITH (lists = %s);""" % (self.indexing.name, self.indexing_measure, self.indexing.lists))
+
+                    cursor.execute("""SET %s.probes = %s;""" % (self.indexing.name, self.indexing.probes))
+            conn.commit()
+            conn.close()
+
 
     def get_vector(
         self,

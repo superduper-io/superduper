@@ -13,7 +13,8 @@ support for complex data-types and vector-searches.
 The first step in working with an SQL table, is to define a table and schema
 
 ```python
-from superduperdb.backends.ibis import dtype, Table
+from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.ibis.field_types import dtype
 from superduperdb import Encoder, Schema
 
 my_enc = Encoder('my-enc')
@@ -83,22 +84,26 @@ db.execute(
 ... the first query above is equivalent to:
 
 ```python
-db.execute(
-    'SELECT img FROM my-table WHERE rating > 3 LIMIT 5;'
-)
+from superduperdb.backends.ibis.query import RawSQL
+
+db.execute(RawSQL('SELECT img FROM my-table WHERE rating > 3 LIMIT 5;'))
 ```
 
 ... the second will be equivalent to:
 
 ```python
-db.execute(
+from superduperdb.backends.ibis.query import RawSQL
+
+raw_sql = RawSQL(
     '''
     SELECT img FROM my-table 
     LIKE text = 'something like this'
     WHERE rating > 3
     LIMIT 5;
     '''
-)
+    )
+
+db.execute(raw_sql)
 ```
 
 ## Updating data

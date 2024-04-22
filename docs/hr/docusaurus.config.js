@@ -340,7 +340,7 @@ const config = {
       ],
       announcementBar: {
         id: 'support_us',
-        content: '🔮 Documentation under maintenance: stay tuned for upcoming updates! ✨',
+        content: '🔮 We officially released v0.1 on Github! 🔮',
         backgroundColor: '#7628f8',
         textColor: '#fff',
         isCloseable: true,

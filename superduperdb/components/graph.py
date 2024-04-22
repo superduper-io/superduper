@@ -184,9 +184,7 @@ class Graph(Model):
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'models', 'type': 'component/model', 'sequence': True},
-        {'name': 'edges', 'type': '$this.models', 'sequence': True},
-        {'name': 'input', 'type': '$this.models'},
-        {'name': 'outputs', 'type': '$this.models', 'sequence': True},
+        {'name': 'edges', 'type': 'json'},
         {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
     ]
 
@@ -212,7 +210,11 @@ class Graph(Model):
                 o.identifier if isinstance(o, Model) else o for o in self.outputs
             ]
         else:
-            self.output_identifiers = self.outputs.identifier if isinstance(self.outputs, Model) else self.outputs
+            self.output_identifiers = (
+                self.outputs.identifier
+                if isinstance(self.outputs, Model)
+                else self.outputs
+            )
 
         # Load the models and edges into a di graph
         models = {m.identifier: m for m in self.models}
@@ -256,7 +258,9 @@ class Graph(Model):
         G_ = self.G.copy()
         G_.add_edge(u.identifier, v.identifier, weight=on or self._DEFAULT_ARG_WEIGHT)
         if not nx.is_directed_acyclic_graph(G_):
-            raise TypeError(f'The graph is not DAG with this edge: {u.identifier} -> {v.identifier}')
+            raise TypeError(
+                f'The graph is not DAG with this edge: {u.identifier} -> {v.identifier}'
+            )
         self.G = G_
 
         if update_edge:
@@ -412,7 +416,9 @@ class Graph(Model):
             ]
             return outputs
         else:
-            return self._predict_on_node(*args, node=self.output_identifiers, cache=cache, **kwargs)
+            return self._predict_on_node(
+                *args, node=self.output_identifiers, cache=cache, **kwargs
+            )
 
     def patch_dataset_to_args(self, dataset):
         '''
@@ -455,7 +461,9 @@ class Graph(Model):
                 for output in self.output_identifiers
             ]
         else:
-            outputs = self._predict_on_node(dataset, node=self.output_identifiers, cache=cache, one=False)
+            outputs = self._predict_on_node(
+                dataset, node=self.output_identifiers, cache=cache, one=False
+            )
         # TODO: check if output schema and datatype required
         return outputs
 

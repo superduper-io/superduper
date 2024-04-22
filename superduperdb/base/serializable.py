@@ -43,10 +43,12 @@ class VariableError(Exception):
 def _find_variables(r):
     if isinstance(r, dict):
         return sum([_find_variables(v) for v in r.values()], [])
-    elif isinstance(r, (list, tuple)):
+    if isinstance(r, (list, tuple)):
         return sum([_find_variables(v) for v in r], [])
-    elif isinstance(r, Variable):
+    if isinstance(r, Variable):
         return [r]
+    if isinstance(r, Serializable):
+        return r.variables
     return []
 
 
@@ -98,16 +100,11 @@ class Serializable(Leaf):
 
     @property
     def unique_id(self):
-        return str(hash(self.dict().encode()))
+        return hash(str(self.dict().encode()))
 
     @property
     def variables(self) -> t.List['Variable']:
-        out = {}
-        r = self.encode(leaf_types_to_keep=(Variable,))
-        v = _find_variables(r)
-        for var in v:
-            out[var.value] = var
-        return sorted(list(out.values()), key=lambda x: x.value)
+        return sorted(list(set(self.dict().variables)), key=lambda x: x.value)
 
     def getattr_with_path(self, path):
         assert path

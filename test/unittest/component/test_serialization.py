@@ -32,7 +32,6 @@ def test_model():
     "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_sklearn(db):
-
     m = Estimator(
         identifier='test',
         object=SVC(),

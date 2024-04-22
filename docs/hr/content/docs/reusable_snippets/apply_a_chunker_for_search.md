@@ -22,7 +22,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -34,10 +34,11 @@ won't be necessary.
         !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
         from unstructured.partition.pdf import partition_pdf
+        import PyPDF2
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -52,7 +53,7 @@ won't be necessary.
         import tqdm
         from PIL import Image
         from superduperdb.ext.pillow import pil_image
-        from superduperdb import ObjectModel, Schema
+        from superduperdb import objectmodel, Schema
         
         
         @objectmodel(

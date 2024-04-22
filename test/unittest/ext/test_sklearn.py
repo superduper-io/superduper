@@ -41,7 +41,7 @@ class TestPipeline:
                 'my-trainer',
                 key=('X', 'y'),
                 select=Collection('documents').find(),
-            )
+            ),
         )
 
     @pytest.fixture()

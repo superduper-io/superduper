@@ -7,7 +7,7 @@ import multiprocessing
 import os
 import re
 import typing as t
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 import requests
 import tqdm
@@ -20,13 +20,14 @@ from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.serializable import Serializable, Variable
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.annotations import public_api
+from superduperdb.rest.utils import parse_query
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -52,12 +53,14 @@ def objectmodel(
     """
     if item is not None and inspect.isclass(item):
         if inspect.isclass(item):
+
             def object_model_factory(*args, **kwargs):
                 object_ = item(*args, **kwargs)
                 return ObjectModel(
                     object=object_,
                     identifier=identifier or object_.__class__.__name__,
                 )
+
             return object_model_factory
         else:
             assert callable(item)
@@ -66,8 +69,10 @@ def objectmodel(
                 object=item,
             )
     else:
+
         def decorated_function(item):
             if inspect.isclass(item):
+
                 def object_model_factory(*args, **kwargs):
                     object_ = item(*args, **kwargs)
                     return ObjectModel(
@@ -78,6 +83,7 @@ def objectmodel(
                         flatten=flatten,
                         output_schema=output_schema,
                     )
+
                 return object_model_factory
             else:
                 assert callable(item)
@@ -113,6 +119,7 @@ def codemodel(
     elif item is not None and inspect.isclass(item):
         raise NotImplementedError
     else:
+
         def decorated_function(item):
             assert callable(item)
             return CodeModel(
@@ -123,6 +130,7 @@ def codemodel(
                 flatten=flatten,
                 output_schema=output_schema,
             )
+
         return decorated_function
 
 
@@ -297,6 +305,7 @@ class _Fittable:
         :param metrics: The metrics to evaluate on (optional)
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
+        assert isinstance(self.trainer, Trainer)
         train_dataset, valid_dataset = self._create_datasets(
             select=self.trainer.select,
             X=self.trainer.key,
@@ -309,6 +318,7 @@ class _Fittable:
         )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
+        assert self.trainer is not None
         if self.trainer.metric_values is not None:
             for k, v in d.items():
                 self.trainer.metric_values.setdefault(k, []).append(v)
@@ -834,7 +844,7 @@ class IndexableNode:
 @dc.dataclass(kw_only=True)
 class _ObjectModel(Model, ABC):
     __doc__ = Model.__doc__
-    __doc__ = __doc__.format(_model=Model.__doc__)
+    __doc__ = __doc__.format(_model=Model.__doc__)  # type: ignore[union-attr]
     num_workers: int = 0
     object: t.Any
 
@@ -894,11 +904,10 @@ class ObjectModel(_ObjectModel):
     """Model component which wraps a model to become serializable
     {_object_model_params}
     :param object: Model object, e.g. sklearn model, etc.."""
+
     __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'object', 'type': 'artifact'}
-    ]
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'object', 'type': 'artifact'}]
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
@@ -911,6 +920,7 @@ class CodeModel(_ObjectModel):
     """Model component which wraps a model to become serializable
     {_object_model_params}
     :param code: Code object, wrapping some foreign code"""
+
     __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
@@ -1009,6 +1019,20 @@ class APIModel(APIBaseModel):
         return out
 
 
+LIKE_TEMPLATE = {
+    'documents': [
+        {"<key-1>": "$my_value"},
+        {"_outputs": 0, "_id": 0},
+    ],
+    'query': (
+        "<collection_name>"
+        ".like(_documents[0], vector_index='<index_id>')"
+        ".find({}, _documents[1])"
+        ".limit(10)"
+    ),
+}
+
+
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class QueryModel(Model):
@@ -1020,14 +1044,39 @@ class QueryModel(Model):
     """
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'preprocess', 'type': 'artifact'},
-        {'name': 'postprocess', 'type': 'artifact'},
-        {'name': 'select', 'type': 'query'},
+        {'name': 'postprocess', 'type': 'code', 'default': Code.default},
+        {'name': 'select', 'type': 'json', 'default': LIKE_TEMPLATE},
     ]
 
     preprocess: t.Optional[t.Callable] = None
-    postprocess: t.Optional[t.Callable] = None
+    postprocess: t.Optional[t.Union[t.Callable, Code]] = None
     select: CompoundSelect
+
+    @staticmethod
+    def _replace_variables(r):
+        for k, v in r.items():
+            if isinstance(v, dict):
+                r[k] = QueryModel._replace_variables(v)
+            elif isinstance(v, list):
+                r[k] = [QueryModel._replace_variables(x) for x in v]
+            elif isinstance(v, str) and v.startswith('$'):
+                r[k] = Variable(v[1:])
+        return r
+
+    @classmethod
+    def handle_integration(cls, kwargs):
+        if 'select' in kwargs and isinstance(kwargs['select'], dict):
+            for i, r in enumerate(kwargs['select']['documents']):
+                kwargs['select']['documents'][i] = cls._replace_variables(r)
+            kwargs['select'] = parse_query(
+                query=kwargs['select']['query'],
+                documents=kwargs['select']['documents'],
+            )
+        if isinstance(kwargs.get('preprocess'), str):
+            kwargs['preprocess'] = Code(kwargs['preprocess'])
+        if isinstance(kwargs.get('postprocess'), str):
+            kwargs['postprocess'] = Code(kwargs['postprocess'])
+        return kwargs
 
     @property
     def inputs(self) -> Inputs:
@@ -1035,11 +1084,11 @@ class QueryModel(Model):
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
+    @ensure_initialized
     def predict_one(self, **kwargs):
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
-            X = self.preprocess(X)
-        # TODO: There's something wrong here
+            kwargs = self.preprocess(**kwargs)
         select = self.select.set_variables(db=self.db, **kwargs)
         out = self.db.execute(select)
         if self.postprocess is not None:
@@ -1066,7 +1115,7 @@ class SequentialModel(Model):
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'models', 'type': 'component/model', 'sequence': True},
-        {'name': 'signature', 'type': 'str'},
+        {'name': 'signature', 'type': 'str', 'optional': True, 'default': None},
     ]
 
     models: t.List[Model]

@@ -49,12 +49,23 @@ Otherwise do one of the following:
         datatype = DataType('pdf', encodable='file')        
         ```
     </TabItem>
+    <TabItem value="Text" label="Text" default>
+        ```python
+        datatype = 'str'        
+        ```
+    </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
         from superduperdb.ext.pillow import pil_image
         import PIL.Image
         
         datatype = pil_image        
+        ```
+    </TabItem>
+    <TabItem value="URI" label="URI" default>
+        ```python
+        
+        datatype = None        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -139,3 +150,9 @@ Otherwise do one of the following:
         ```
     </TabItem>
 </Tabs>
+```python
+from superduperdb import DataType
+if datatype and isinstance(datatype, DataType):
+    db.apply(datatype)
+```
+

@@ -17,9 +17,7 @@ def setup():
 def test_select_data(setup):
     form = {
         "documents": [],
-        "query": [
-            "documents.find()"
-        ],
+        "query": "documents.find()",
         "artifacts": [],
     }
     result = curl_post('/db/execute', form)
@@ -45,7 +43,7 @@ def test_insert_image(setup):
             {
                 "img": {
                     "_content": {
-                        "file_id": result["file_id"], 
+                        "file_id": result["file_id"],
                         "datatype": "image",
                         "leaf_type": "lazy_artifact",
                         "uri": None,
@@ -53,9 +51,7 @@ def test_insert_image(setup):
                 }
             },
         ],
-        "query": [
-            "documents.insert_one($documents[0])"
-        ],
+        "query": ["documents.insert_one(_documents[0])"],
     }
     form = json.dumps(form)
 
@@ -72,12 +68,12 @@ def test_insert_image(setup):
         raise Exception(result['messages'])
     print(result)
 
-    form = json.dumps({
-        "documents": [],
-        "query": [
-            "documents.find()"
-        ],
-    })
+    form = json.dumps(
+        {
+            "documents": [],
+            "query": "documents.find()",
+        }
+    )
 
     request = f"""curl -X 'POST' \
         '{CFG.cluster.rest.uri}/db/execute' \

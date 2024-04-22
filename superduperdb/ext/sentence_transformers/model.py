@@ -1,16 +1,13 @@
 import dataclasses as dc
 import typing as t
 
-from superduperdb.base.code import Code
-from superduperdb.components.component import ensure_initialized
-from superduperdb.misc.annotations import requires_packages
-
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base.code import Code
+from superduperdb.components.component import ensure_initialized
 from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.model import Model, Signature, _DeviceManaged
-
 
 DEFAULT_PREDICT_KWARGS = {
     'show_progress_bar': True,
@@ -78,5 +75,5 @@ class SentenceTransformer(Model, _DeviceManaged):
         assert self.object is not None
         results = self.object.encode(dataset, **self.predict_kwargs)
         if self.postprocess is not None:
-            results = self.postprocess(results)
+            results = self.postprocess(results)  # type: ignore[operator]
         return results

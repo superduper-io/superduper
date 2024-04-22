@@ -17,12 +17,7 @@ from ..jobs.job import Job
 from .component import Component, ComponentTuple
 from .model import Model, ModelInputType
 
-SELECT_TEMPLATE = {
-    'documents': [],
-    'query': [
-        '<>.find()'
-    ]
-}
+SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 
 
 @public_api(stability='stable')

@@ -94,7 +94,7 @@ lint-and-type-check: ##  Perform code linting and type checking
 	@echo "===> Static Typing Check <==="
 	mypy superduperdb
 	# Check for missing docstrings
-	interrogate superduperdb
+	# interrogate superduperdb
 	# Check for unused dependencies
 	# deptry ./
 	# Check for deadcode

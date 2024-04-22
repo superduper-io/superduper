@@ -41,6 +41,7 @@ class TorchTrainer(Trainer):
     optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
     optimizer_state: t.Optional[t.Dict] = None
     collate_fn: t.Optional[t.Callable] = None
+    metric_values: t.Dict = dc.field(default_factory=dict)
 
     def get_optimizers(self, model):
         cls_ = getattr(torch.optim, self.optimizer_cls)
@@ -82,13 +83,22 @@ class TorchTrainer(Trainer):
             outputs = model.train_forward(**batch)
         elif self.signature == '*args,**kwargs':
             outputs = model.train_forward(*batch[0], **batch[1])
-        objective_value = self.training_configuration.objective(*outputs)
+        objective_value = self.objective(*outputs)
         for opt in optimizers:
             opt.zero_grad()
         objective_value.backward()
         for opt in optimizers:
             opt.step()
         return objective_value
+
+    def compute_validation_objective(self, model, valid_dataloader):
+        objective_values = []
+        with model.evaluating(), torch.no_grad():
+            for batch in valid_dataloader:
+                objective_values.append(
+                    self.objective(*model.train_forward(*batch)).item()
+                )
+            return sum(objective_values) / len(objective_values)
 
     def _fit_with_dataloaders(
         self,
@@ -101,7 +111,7 @@ class TorchTrainer(Trainer):
         if validation_sets is None:
             validation_sets = []
 
-        self.model.train()
+        model.train()
         iteration = 0
 
         optimizers = self.get_optimizers(model)
@@ -112,7 +122,9 @@ class TorchTrainer(Trainer):
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.validation_interval == 0:
-                    valid_loss = self.compute_validation_objective(valid_dataloader)
+                    valid_loss = self.compute_validation_objective(
+                        model, valid_dataloader
+                    )
                     all_metrics = {}
                     for vs in validation_sets:
                         m = model.validate(vs)
@@ -121,13 +133,18 @@ class TorchTrainer(Trainer):
                     self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        model.changed.append('object')
+                        model.changed.add('object')
                         db.replace(model, upsert=True)
-                        self.changed.extend(['all_metrics', 'optimizer_state'])
-                    stop = self.stopping_criterion(iteration, model)
+                        self.changed.update({'all_metrics', 'optimizer_state'})
+                    stop = self.stopping_criterion(iteration)
                     if stop:
                         return
                 iteration += 1
+
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
+        if self.metric_values is not None:
+            for k, v in d.items():
+                self.metric_values.setdefault(k, []).append(v)
 
     def stopping_criterion(self, iteration):
         max_iterations = self.max_iterations

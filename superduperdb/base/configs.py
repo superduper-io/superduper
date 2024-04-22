@@ -25,7 +25,8 @@ class ConfigError(Exception):
 @dataclass(frozen=True)
 class ConfigSettings:
     """
-    A class that reads a Pydantic class from config files and environment variables.
+    A class that reads a dataclass class from a configuration file and
+      environment variables.
 
     :param cls: The Pydantic class to read.
     :param default_files: The default config files to read.

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses as dc
 import typing as t
-from functools import wraps
 
 import networkx
 from networkx import DiGraph, ancestors
@@ -26,7 +25,6 @@ class TaskWorkflow:
     database: Datalayer
     G: DiGraph = dc.field(default_factory=DiGraph)
 
-    @wraps(DiGraph.add_edge)
     def add_edge(self, node1: str, node2: str) -> None:
         self.G.add_edge(node1, node2)
 
@@ -34,7 +32,6 @@ class TaskWorkflow:
     def nodes(self):
         return self.G.nodes()
 
-    @wraps(DiGraph.add_node)
     def add_node(self, node: str, job: t.Union[FunctionJob, ComponentJob]) -> None:
         self.G.add_node(node, job=job)
 

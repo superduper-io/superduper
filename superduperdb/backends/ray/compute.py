@@ -38,7 +38,7 @@ class RayComputeBackend(ComputeBackend):
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
-    ) -> ray.ObjectRef:
+    ) -> t.Tuple[ray.ObjectRef, str]:
         """
         Submits a function to the ray server for execution.
 

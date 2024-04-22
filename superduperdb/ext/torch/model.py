@@ -18,7 +18,6 @@ from superduperdb.components.datatype import (
 )
 from superduperdb.components.model import (
     CallableInputs,
-    Mapping,
     Model,
     Signature,
     _DeviceManaged,
@@ -269,48 +268,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
                 return (method(X),)
             else:
                 return [method(X), y]
-
-    def _get_data(self, db: t.Optional[Datalayer]):
-        if self.training_select is None:
-            raise ValueError('self.training_select cannot be None')
-        preprocess = self.preprocess or (lambda x: x)
-        train_data = QueryDataset(
-            select=self.training_select,
-            mapping=Mapping(
-                (
-                    [self.train_X, self.train_y]  # type: ignore[list-item,arg-type]
-                    if self.train_y
-                    else self.train_X
-                ),
-                signature='*args',
-            ),
-            fold='train',
-            transform=(
-                preprocess
-                if not self.train_y
-                else lambda x, y: (preprocess(x), y)  # type: ignore[misc]
-            ),
-            db=db,
-        )
-        valid_data = QueryDataset(
-            select=self.training_select,
-            mapping=Mapping(
-                (
-                    [self.train_X, self.train_y]  # type: ignore[list-item,arg-type]
-                    if self.train_y
-                    else self.train_X
-                ),
-                signature='*args',
-            ),
-            fold='valid',
-            transform=(
-                preprocess
-                if not self.train_y
-                else lambda x, y: (preprocess(x), y)  # type: ignore[misc]
-            ),
-            db=db,
-        )
-        return train_data, valid_data
 
 
 def unpack_batch(args):

@@ -11,7 +11,7 @@ operate on those outputs.
 # <tab: MongoDB>
 from superduperdb.backends.mongodb import Collection
 
-indexing_key = upstream_listener.outputs_key
+indexing_key = upstream_listener.outputs
 select = Collection(upstream_listener.outputs).find()
 ```
 

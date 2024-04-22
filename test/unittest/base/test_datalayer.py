@@ -80,7 +80,9 @@ def add_fake_model(db: Datalayer):
     model = ObjectModel(
         object=lambda x: str(x),
         identifier='fake_model',
-        datatype=DataType(identifier='base', encoder=pickle_encode, decoder=pickle_decode),
+        datatype=DataType(
+            identifier='base', encoder=pickle_encode, decoder=pickle_decode
+        ),
     )
     db.apply(model)
     if isinstance(db.databackend, MongoDataBackend):
@@ -492,7 +494,7 @@ def test_load(db):
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert_mongo_db(db):
     add_fake_model(db)
-    inserted_ids, _ = db.insert(
+    inserted_ids, _ = db._insert(
         Collection('documents').insert_many(
             [Document({'x': i, 'update': True}) for i in range(5)]
         )
@@ -512,11 +514,11 @@ def test_insert_artifacts(db):
     dt = DataType(
         'my_saveable',
         encodable='artifact',
-        encoder=pickle_encode,     
+        encoder=pickle_encode,
         decoder=pickle_decode,
     )
     db.apply(dt)
-    db.insert(
+    db._insert(
         Collection('documents').insert_many(
             [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
         )
@@ -530,7 +532,7 @@ def test_insert_artifacts(db):
 def test_insert_sql_db(db):
     add_fake_model(db)
     table = db.load('table', 'documents')
-    inserted_ids, _ = db.insert(
+    inserted_ids, _ = db._insert(
         table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
     )
     assert len(inserted_ids) == 5
@@ -547,12 +549,12 @@ def test_insert_sql_db(db):
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    db.insert(
+    db._insert(
         Collection('documents').insert_many(
             [Document({'x': i, 'update': True}) for i in range(5)]
         )
     )
-    updated_ids, _ = db.update(
+    updated_ids, _ = db._update(
         Collection('documents').update_many({}, Document({'$set': {'x': 100}}))
     )
     assert len(updated_ids) == 5
@@ -572,7 +574,7 @@ def test_update_db(db):
 )
 def test_delete(db):
     # TODO: add sqldb test after the delete method is implemented
-    db.delete(Collection('documents').delete_one({}))
+    db._delete(Collection('documents').delete_one({}))
     new_docs = list(db.execute(Collection('documents').find()))
     assert len(new_docs) == 5
 

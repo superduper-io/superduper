@@ -65,7 +65,7 @@ class SklearnTrainer(Trainer):
         valid_dataset: QueryDataset,
     ):
         train_X, train_y = self._get_data_from_dataset(
-            dataset=train_dataset, X=self.key  # type: ignore[arg-type]
+            dataset=train_dataset, X=self.key
         )
         if train_y:
             model.object.fit(train_X, train_y, **self.fit_params)
@@ -98,7 +98,9 @@ class Estimator(Model, _Fittable):
     ) -> t.Sequence[t.Any]:
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
         if self.validation is not None:
-            jobs = self.validation.schedule_jobs(self, db, dependencies=[*dependencies, *jobs])
+            jobs = self.validation.schedule_jobs(
+                db, dependencies=[*dependencies, *jobs]
+            )
         return jobs
 
     def predict_one(self, X):

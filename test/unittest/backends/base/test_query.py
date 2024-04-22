@@ -149,6 +149,6 @@ def test_model(db):
 
     isinstance(q, Predict)
 
-    db.execute(q)
-    
-    import pdb; pdb.set_trace()
+    out = db.execute(q).unpack()
+
+    assert isinstance(out, torch.Tensor)

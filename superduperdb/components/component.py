@@ -5,20 +5,14 @@ The component module provides the base class for all components in SuperDuperDB.
 from __future__ import annotations
 
 import dataclasses as dc
-import json
-import os
-import pprint
-import re
-import tempfile
 import typing as t
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from functools import wraps
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
 from superduperdb.base.serializable import Serializable, _find_variables_with_path
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.misc.archives import from_tarball, to_tarball
 
 if t.TYPE_CHECKING:
     from superduperdb import Document
@@ -61,10 +55,6 @@ class Component(Serializable, Leaf):
         else:
             return f'_component/{self.type_id}/{self.identifier}/{self.version}'
 
-    @classmethod
-    def handle_integration(cls, kwargs):
-        return kwargs
-
     @property
     def id_tuple(self):
         return ComponentTuple(self.type_id, self.identifier, self.version)
@@ -104,8 +94,6 @@ class Component(Serializable, Leaf):
         return ()
 
     def init(self):
-        from superduperdb.components.datatype import _BaseEncodable
-
         def _init(item):
             if isinstance(item, Component):
                 item.init()
@@ -216,8 +204,6 @@ class Component(Serializable, Leaf):
         r = r['_content']
         assert r['version'] is not None
         return db.load(r['type_id'], r['identifier'], r['version'], allow_hidden=True)
-
-
 
     @property
     def unique_id(self) -> str:

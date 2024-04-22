@@ -1,3 +1,4 @@
+import dataclasses as dc
 import json
 import typing as t
 
@@ -10,16 +11,19 @@ from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
-from superduperdb.components.metric import Metric
-from superduperdb.components.model import ObjectModel, SequentialModel, CodeModel
+from superduperdb.components.model import (
+    CodeModel,
+    ObjectModel,
+    QueryModel,
+    SequentialModel,
+)
 from superduperdb.components.stack import Stack
 from superduperdb.components.vector_index import VectorIndex, vector
+from superduperdb.ext import openai, sentence_transformers
+from superduperdb.ext.llm.prompter import RetrievalPrompt
 from superduperdb.ext.pillow.encoder import image_type
 from superduperdb.ext.sklearn.model import Estimator
 from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext import openai
-from superduperdb.ext import sentence_transformers
-
 from superduperdb.rest.utils import parse_query, strip_artifacts
 from superduperdb.server import app as superduperapp
 
@@ -30,11 +34,32 @@ port = int(CFG.cluster.rest.uri.split(':')[-1])
 
 app = superduperapp.SuperDuperApp('rest', port=port)
 
+
+@dc.dataclass(kw_only=True)
+class MyBoolean(Component):
+    type_id: t.ClassVar[str] = 'bool'
+    my_bool: bool
+
+    ui_schema: t.ClassVar[t.List[t.Dict]] = [
+        {'name': 'my_bool', 'type': 'bool'},
+        {'name': 'my_artifact', 'type': 'artifact', 'sequence': True},
+        {
+            'name': 'my_choice',
+            'type': 'str',
+            'sequence': True,
+            'choices': ['a', 'b', 'c'],
+        },
+    ]
+
+
 CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
+    'bool': {'MyBoolean': MyBoolean},
     'model': {
         'ObjectModel': ObjectModel,
         'SequentialModel': SequentialModel,
+        'QueryModel': QueryModel,
         'CodeModel': CodeModel,
+        'RetrievalPrompt': RetrievalPrompt,
         'TorchModel': TorchModel,
         'SklearnEstimator': Estimator,
         'OpenAIEmbedding': openai.OpenAIEmbedding,
@@ -105,7 +130,9 @@ def build_app(app: superduperapp.SuperDuperApp):
             cls = CLASSES[r['type_id']][r['cls']]
             r['cls'] = cls.__name__
             r['module'] = cls.__module__
-        component = Stack.from_list(content=info['_leaves'], db=app.db, identifier=info['identifier'])
+        component = Stack.from_list(
+            content=info['_leaves'], db=app.db, identifier=info['identifier']
+        )
         app.db.apply(component)
         return {'status': 'ok'}
 
@@ -127,7 +154,13 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
-        return [r['job_id'] for r in app.db.metadata.show_jobs(type_id=type_id, component_identifier=identifier) if 'job_id' in r]
+        return [
+            r['job_id']
+            for r in app.db.metadata.show_jobs(
+                type_id=type_id, component_identifier=identifier
+            )
+            if 'job_id' in r
+        ]
 
     @app.add('/db/execute', method='post')
     def db_execute(
@@ -158,6 +191,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         result = [strip_artifacts(r.encode()) for r in result]
         logging.warn(str(result))
         return result
-    
+
 
 build_app(app)

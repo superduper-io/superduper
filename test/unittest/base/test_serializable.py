@@ -122,3 +122,28 @@ def test_compound_select_serialize():
     s = Serializable.decode(r)
 
     print(s)
+
+
+def test_find_variables():
+    from superduperdb import Document
+    from superduperdb.backends.mongodb import Collection
+    from superduperdb.base.serializable import Variable
+
+    r = Document({'txt': Variable('test')})
+
+    assert [str(x) for x in r.variables] == ['$test']
+
+    q = Collection('test').find_one(Document({'txt': Variable('test')}))
+
+    assert [str(x) for x in q.variables] == ['$test']
+
+    q = (
+        Collection('test')
+        .like(Document({'txt': Variable('test')}), vector_index='test')
+        .find()
+        .limit(5)
+    )
+
+    q_set = q.set_variables(None, test='my-value')
+
+    assert q_set.variables == []

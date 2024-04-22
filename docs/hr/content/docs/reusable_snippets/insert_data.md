@@ -18,10 +18,11 @@ In order to create data, we need to create a `Schema` for encoding our special `
         def do_insert(data):
             schema = None
             
-            if schema is None and datatype is None:
+            
+            if schema is None and (datatype is None  or isinstance(datatype, str)) :
                 data = [Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None:
+            elif schema is None and datatype is not None and isintance():
                 data = [Document({'x': datatype(x)}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:

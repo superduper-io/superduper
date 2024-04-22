@@ -1,8 +1,0 @@
-# Ignore everything
-*
-*/
-
-# Except for notebook files
-!*.ipynb
-!*.md
-!*.py

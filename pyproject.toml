@@ -58,7 +58,6 @@ dependencies = [
     "ray[default]>=2.8.1",
     "uvicorn>=0.24.0",
     "fastapi>=0.103.2",
-    "ibis>=3.3.0",
     "ibis-framework>=5.1.0",
     "sqlalchemy>=2.0.28",
     "python-magic"

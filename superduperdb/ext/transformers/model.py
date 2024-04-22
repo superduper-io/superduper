@@ -421,7 +421,7 @@ class LLM(BaseLLM, _Fittable):
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
         if self.validation is not None:
             jobs = self.validation.schedule_jobs(
-                self, db, dependencies=[*dependencies, *jobs]
+                db, dependencies=[*dependencies, *jobs]
             )
         return jobs
 

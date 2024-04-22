@@ -177,12 +177,6 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
-```python
-from superduperdb import superduper
-
-db = superduper()
-```
-
 <!-- TABS -->
 ## Connect to SuperDuperDB
 
@@ -300,6 +294,11 @@ Otherwise refer to "Configuring your production system".
 <!-- TABS -->
 ## Get useful sample data
 
+```python
+from superduperdb import dtype
+
+```
+
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
@@ -308,7 +307,10 @@ Otherwise refer to "Configuring your production system".
         import json
         
         with open('text.json', 'r') as f:
-            data = json.load(f)        
+            data = json.load(f)
+        sample_datapoint = "What is mongodb?"
+        
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -317,15 +319,23 @@ Otherwise refer to "Configuring your production system".
         import os
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
-        data        
+        
+        sample_datapoint = data[-1]
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
         !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
         import os
+        from PIL import Image
         
-        data = [f'images/{x}' for x in os.listdir('./images')]        
+        data = [f'images/{x}' for x in os.listdir('./images')]
+        data = [ Image.open(path) for path in data]
+        sample_datapoint = data[-1]
+        
+        from superduperdb.ext.pillow import pil_image
+        chunked_model_datatype = pil_image        
         ```
     </TabItem>
     <TabItem value="Video" label="Video" default>
@@ -333,7 +343,11 @@ Otherwise refer to "Configuring your production system".
         !curl -O s3://superduperdb-public-demo/videos.zip && unzip videos.zip
         import os
         
-        data = [f'videos/{x}' for x in os.listdir('./videos')]        
+        data = [f'videos/{x}' for x in os.listdir('./videos')]
+        sample_datapoint = data[-1]
+        
+        from superduperdb.ext.pillow import pil_image
+        chunked_model_datatype = pil_image        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -341,7 +355,9 @@ Otherwise refer to "Configuring your production system".
         !curl -O s3://superduperdb-public-demo/audio.zip && unzip audio.zip
         import os
         
-        data = [f'audios/{x}' for x in os.listdir('./audios')]        
+        data = [f'audios/{x}' for x in os.listdir('./audios')]
+        sample_datapoint = data[-1]
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
 </Tabs>
@@ -365,6 +381,11 @@ Otherwise do one of the following:
         from superduperdb.components.datatype import File
         
         datatype = DataType('pdf', encodable='file')        
+        ```
+    </TabItem>
+    <TabItem value="Text" label="Text" default>
+        ```python
+        datatype = 'str'        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
@@ -417,6 +438,12 @@ Otherwise do one of the following:
         ```
     </TabItem>
 </Tabs>
+```python
+from superduperdb import DataType
+if datatype and isinstance(datatype, DataType):
+    db.apply(datatype)
+```
+
 <!-- TABS -->
 ## Setup tables or collections
 
@@ -432,7 +459,6 @@ Otherwise do one of the following:
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
-        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -474,10 +500,11 @@ In order to create data, we need to create a `Schema` for encoding our special `
         def do_insert(data):
             schema = None
             
-            if schema is None and datatype is None:
+            
+            if schema is None and (datatype is None  or isinstance(datatype, str)) :
                 data = [Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None:
+            elif schema is None and datatype is not None and isintance():
                 data = [Document({'x': datatype(x)}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
@@ -498,6 +525,23 @@ In order to create data, we need to create a `Schema` for encoding our special `
 do_insert(data[:-len(data) // 4])
 ```
 
+#### Define the embedding model datatype
+
+
+<Tabs>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        from superduperdb.components.vector_index import sqlvector
+        get_chunking_datatype = lambda shape: sqlvector(shape=(shape,))        
+        ```
+    </TabItem>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        from superduperdb.components.vector_index import vector
+        get_chunking_datatype = lambda shape: vector(shape=(shape,))        
+        ```
+    </TabItem>
+</Tabs>
 <!-- TABS -->
 ## Build simple select queries
 
@@ -513,6 +557,23 @@ do_insert(data[:-len(data) // 4])
         ```python
         
         select = table_or_collection.to_query()        
+        ```
+    </TabItem>
+</Tabs>
+<!-- TABS -->
+## Create Model Output Type
+
+
+<Tabs>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        chunked_model_datatype = None        
+        ```
+    </TabItem>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        from superduperdb.backends.ibis.field_types import dtype
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
 </Tabs>
@@ -534,7 +595,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -546,10 +607,11 @@ won't be necessary.
         !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
         from unstructured.partition.pdf import partition_pdf
+        import PyPDF2
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -564,7 +626,7 @@ won't be necessary.
         import tqdm
         from PIL import Image
         from superduperdb.ext.pillow import pil_image
-        from superduperdb import ObjectModel, Schema
+        from superduperdb import objectmodel, Schema
         
         
         @objectmodel(
@@ -659,13 +721,17 @@ compatible_model = None
     <TabItem value="Text" label="Text" default>
         ```python
         from superduperdb.ext.sentence_transformers import SentenceTransformer
-        from superduperdb import vector
+        
+        if not get_chunking_datatype:
+            model_dtype =  vector(shape=(384,))
+        else:
+            model_dtype = get_chunking_datatype(384)
         
         # Load the pre-trained sentence transformer model
         model = SentenceTransformer(
             identifier='all-MiniLM-L6-v2',
             postprocess=lambda x: x.tolist(),
-            datatype=vector(shape=(784,)),
+            datatype=model_dtype,
         )        
         ```
     </TabItem>
@@ -711,7 +777,7 @@ compatible_model = None
             preprocess=preprocess,
             object=resnet50,
             postprocess=lambda x: x[:, 0, 0],  # Postprocess by extracting the top-left element of the output tensor
-            encoder=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
+            datatype=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
         )        
         ```
     </TabItem>
@@ -725,7 +791,12 @@ compatible_model = None
         model, preprocess = clip.load("RN50", device='cpu')
         
         # Define a vector with shape (1024,)
-        e = vector(shape=(1024,))
+        
+        if not get_chunking_datatype:
+            e =  vector(shape=(1024,))
+        else:
+            e = get_chunking_datatype(1024)
+        
         
         # Create a TorchModel for text encoding
         compatible_model = TorchModel(
@@ -733,7 +804,7 @@ compatible_model = None
             object=model, # CLIP model
             preprocess=lambda x: clip.tokenize(x)[0],  # Model input preprocessing using CLIP 
             postprocess=lambda x: x.tolist(), # Convert the model output to a list
-            encoder=e,  # Vector encoder with shape (1024,)
+            datatype=e,  # Vector encoder with shape (1024,)
             forward_method='encode_text', # Use the 'encode_text' method for forward pass 
         )
         
@@ -743,7 +814,7 @@ compatible_model = None
             object=model.visual,  # Visual part of the CLIP model    
             preprocess=preprocess, # Visual preprocessing using CLIP
             postprocess=lambda x: x.tolist(), # Convert the output to a list 
-            encoder=e, # Vector encoder with shape (1024,)
+            datatype=e, # Vector encoder with shape (1024,)
         )        
         ```
     </TabItem>
@@ -752,15 +823,24 @@ compatible_model = None
         !pip install librosa
         import librosa
         import numpy as np
-        from superduperdb import Model
+        from superduperdb import ObjectModel
+        from superduperdb import vector
         
         def audio_embedding(audio_file):
             # Load the audio file
+            MAX_SIZE= 10000
             y, sr = librosa.load(audio_file)
-            mfccs = librosa.feature.mfcc(y=y, sr=sr)
+            y = y[:MAX_SIZE]
+            mfccs = librosa.feature.mfcc(y=y, sr=44000, n_mfcc=1)
+            mfccs =  mfccs.squeeze().tolist()
             return mfccs
         
-        model= Model(identifier='my-model-audio', object=audio_embedding, datatype=vector(shape=(1000,)))        
+        if not get_chunking_datatype:
+            e =  vector(shape=(1000,))
+        else:
+            e = get_chunking_datatype(1000)
+        
+        model= ObjectModel(identifier='my-model-audio', object=audio_embedding, datatype=e)        
         ```
     </TabItem>
 </Tabs>
@@ -778,7 +858,7 @@ operate on those outputs.
         ```python
         from superduperdb.backends.mongodb import Collection
         
-        indexing_key = upstream_listener.outputs_key
+        indexing_key = upstream_listener.outputs
         select = Collection(upstream_listener.outputs).find()        
         ```
     </TabItem>
@@ -796,14 +876,17 @@ the indexing key will be different:
 <Tabs>
     <TabItem value="Chunked Search" label="Chunked Search" default>
         ```python
-        indexing_key = upstream_listener.outputs
-        compatible_key = 'y'        
+        compatible_key = None
+        if compatible_model:
+            compatible_key = 'y'        
         ```
     </TabItem>
     <TabItem value="Un-chunked Search" label="Un-chunked Search" default>
         ```python
         indexing_key = 'x'
-        compatible_key = 'y'        
+        compatible_key = None
+        if compatible_model:
+            compatible_key = 'y'        
         ```
     </TabItem>
 </Tabs>
@@ -864,7 +947,18 @@ query_table_or_collection = select.table_or_collection
 ```python
 from superduperdb import Document
 
-item = Document({indexing_key: sample_datapoint})
+def get_sample_item(key, sample_datapoint, datatype=None):
+    if not isinstance(datatype, DataType):
+        item = Document({key: sample_datapoint})
+    else:
+        item = Document({key: datatype(sample_datapoint)})
+
+    return item
+
+if compatible_key:
+    item = get_sample_item(compatible_key, sample_datapoint, None)
+else:
+    item = get_sample_item(indexing_key, sample_datapoint, datatype=datatype)
 ```
 
 Once we have this search target, we can execute a search as follows:
@@ -878,7 +972,7 @@ Once we have this search target, we can execute a search as follows:
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = query_table_or_collection.like(item)        
+        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).limit(10)        
         ```
     </TabItem>
 </Tabs>
@@ -896,7 +990,15 @@ results = db.execute(select)
         from IPython.display import Markdown, display
         
         def visualize(item, source):
-            display(Markdown(item))        
+            display(Markdown(item))
+            
+        def show(results, output_key, get_original_callable=None):
+            for result in results:
+                source = None
+                if '_source' in result:
+                    
+                    source = get_original_callable(result['_source'])
+                visualize(result[output_key], source)        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
@@ -904,7 +1006,14 @@ results = db.execute(select)
         from IPython.display import display
         
         def visualize(item, source):
-            display(item)        # item is a PIL.Image        
+            display(item)        # item is a PIL.Image
+        
+        def show(results, output_key, get_original_callable=None):
+            for result in results:
+                source = None
+                if '_source' in result:
+                    source = get_original_callable(result['_source'])
+                visualize(result[output_key], source)        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -912,7 +1021,15 @@ results = db.execute(select)
         from IPython.display import Audio, display
         
         def visualize(item, source):
-            display(Audio(item[1], fs=item[0]))        
+            display(Audio(item[1], fs=item[0]))
+        
+        def show(results, output_key, get_original_callable=None):
+            for result in results:
+                source = None
+                if '_source' in result:
+                    
+                    source = get_original_callable(result['_source'])
+                visualize(result[output_key], source)        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -920,33 +1037,54 @@ results = db.execute(select)
         from IPython.display import IFrame, display
         
         def visualize(item, source):
-            display(IFrame(item))        
+            display(item)
+        
+        
+        def show(results, output_key, get_original_callable=None):
+            for result in results:
+                source = None
+                if '_source' in result:
+                    
+                    source = get_original_callable(result['_source'])
+                visualize(result[output_key], source)        
         ```
     </TabItem>
     <TabItem value="Video" label="Video" default>
         ```python
         from IPython.display import display, HTML
         
-        timestamp = 0     # increment to the frame you want to start at
-        
-        # Create HTML code for the video player with a specified source and controls
-        video_html = f"""
-        <video width="640" height="480" controls>
-            <source src="{video['video'].uri}" type="video/mp4">
-        </video>
-        <script>
-            // Get the video element
-            var video = document.querySelector('video');
+        def visualize(uri, source):
+            timestamp = source    # increment to the frame you want to start at
             
-            // Set the current time of the video to the specified timestamp
-            video.currentTime = {timestamp};
+            # Create HTML code for the video player with a specified source and controls
+            video_html = f"""
+            <video width="640" height="480" controls>
+                <source src="{uri}" type="video/mp4">
+            </video>
+            <script>
+                // Get the video element
+                var video = document.querySelector('video');
+                
+                // Set the current time of the video to the specified timestamp
+                video.currentTime = {timestamp};
+                
+                // Play the video automatically
+                video.play();
+            </script>
+            """
             
-            // Play the video automatically
-            video.play();
-        </script>
-        """
+            display(HTML(video_html))
         
-        display(HTML(video_html))        
+        
+        def show(results, output_key, get_original_callable=None):
+            # show only the first video
+            for result in results:
+                result = result[output_key]
+                timestamp = result['current_timestamp']
+                source = result['_source']
+                uri = get_original_callable(source)['x']
+                visualize(uri, timestamp)
+                break        
         ```
     </TabItem>
 </Tabs>
@@ -958,23 +1096,22 @@ after getting the result of a vector-search:
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
         def get_original(_source):
-            return db.execute(table_or_collection.find_one({'_id': source}))        
+            return db.execute(table_or_collection.find_one({'_id': _source}))
+            
+        visualization_key = upstream_listener.outputs        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
         def get_original(_source):
-            return next(db.execute(table_or_collection.filter(table_or_collection.id == source).limit(1)))        
+            return next(db.execute(table_or_collection.select_using_ids([_source])))
+            
+        visualization_key = indexing_key        
         ```
     </TabItem>
 </Tabs>
 ```python
-for result in results:
-    source = None
-    if '_source' in result:
-        source = result['_source']
-        result = get_original(source)
-    visualize(result['x'], source=source)
+show(results, visualization_key, get_original)
 ```
 
 ## Check the system stays updated

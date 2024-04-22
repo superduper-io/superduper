@@ -83,8 +83,8 @@ def test_fit(db, valid_dataset, model):
         select = table.select('id', 'x', 'y', 'z', '_fold')
 
     trainer = TorchTrainer(
-        key='X',
-        select = select,
+        key=('x', 'y'),
+        select=select,
         identifier='my_trainer',
         objective=my_loss,
         loader_kwargs={'batch_size': 10},
@@ -95,7 +95,7 @@ def test_fit(db, valid_dataset, model):
     model.trainer = trainer
     model.validation = Validation(
         'my_valid',
-        metrics = [Metric(identifier='acc', object=acc)],
+        metrics=[Metric(identifier='acc', object=acc)],
         datasets=[valid_dataset],
     )
     db.apply(m)

@@ -186,6 +186,8 @@ class Config(BaseConfig):
 
     """
 
+    envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
+
     data_backend: str = 'mongodb://localhost:27017/test_db'
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')
 
@@ -202,6 +204,11 @@ class Config(BaseConfig):
     logging_type: LogType = LogType.SYSTEM
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
+
+    def __post_init__(self, envs):
+        if envs is not None:
+            for k, v in envs.items():
+                os.environ[k.upper()] = v
 
     @property
     def hybrid_storage(self):

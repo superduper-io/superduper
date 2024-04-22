@@ -4,9 +4,9 @@ import typing as t
 
 from bson.objectid import ObjectId
 
+from superduperdb.base.code import Code
 from superduperdb.base.leaf import Leaf, find_leaf_cls
 from superduperdb.base.serializable import Serializable
-from superduperdb.base.code import Code
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
@@ -139,15 +139,18 @@ def _decode(
         leaf_type = r['_content']['leaf_type']
         leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
         return leaf_cls.decode(r, db=db)
-    elif isinstance(r, str) and \
-       re.match('^\$(artifacts|lazy_artifacts|blobs|encodables)\/', r):
+    elif isinstance(r, str) and re.match(
+        '^\$(artifacts|lazy_artifacts|blobs|encodables)\/', r
+    ):
         type_, id = r[1:].split('/')
+        assert artifact_cache is not None
         return artifact_cache[id]
     elif isinstance(r, list):
         return [_decode(x, db=db, artifact_cache=artifact_cache) for x in r]
     elif isinstance(r, dict):
-        return {k: _decode(v, db=db, artifact_cache=artifact_cache)
-                for k, v in r.items()}
+        return {
+            k: _decode(v, db=db, artifact_cache=artifact_cache) for k, v in r.items()
+        }
     else:
         return r
 
@@ -231,7 +234,9 @@ def _fetch_cache_keys(r, cache, used):
             used.append(r)
             return out
         except KeyError:
-            raise NotBuiltError(f"Cache key {r} not found in cache: available: {cache.keys()}")
+            raise NotBuiltError(
+                f"Cache key {r} not found in cache: available: {cache.keys()}"
+            )
     elif isinstance(r, dict):
         return {k: _fetch_cache_keys(v, cache, used) for k, v in r.items()}
     elif isinstance(r, list):
@@ -251,7 +256,10 @@ def _build_leaf(leaf_record, cache):
 def _build_leaves(leaf_records, db=None):
     cache = {}
     if db is not None:
-        cache.update({f'_component/datatype/{c}': db.datatypes[c] for c in db.datatypes})
+        cache.update(
+            {f'_component/datatype/{c}': db.datatypes[c] for c in db.datatypes}
+        )
+    default_keys = []
     if db is not None:
         default_keys = [f'_component/datatype/{c}' for c in db.datatypes]
     used = []
@@ -270,8 +278,5 @@ def _build_leaves(leaf_records, db=None):
         leaf_records = [r for i, r in enumerate(leaf_records) if i not in built]
         if not leaf_records:
             break
-    exit_leaves = [
-        k for k in cache.keys() if k not in used
-        and k not in default_keys
-    ]
+    exit_leaves = [k for k in cache.keys() if k not in used and k not in default_keys]
     return {k: v for k, v in cache.items() if k not in default_keys}, exit_leaves

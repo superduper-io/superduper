@@ -188,7 +188,11 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
     ):
         my_object.return_value = 2
 
-        monkeypatch.setattr(predict_mixin, 'datatype', DataType(identifier='test', encoder=pickle_encode, decoder=pickle_decode))
+        monkeypatch.setattr(
+            predict_mixin,
+            'datatype',
+            DataType(identifier='test', encoder=pickle_encode, decoder=pickle_decode),
+        )
         predict_mixin._predict_with_select_and_ids(
             X=X, db=db, select=select, ids=ids, predict_id='test'
         )
@@ -226,9 +230,10 @@ def test_model_append_metrics():
             ...
 
     model = _Tmp(
-        'test', object=object(),
+        'test',
+        object=object(),
         validation=Validation('test'),
-        trainer=MyTrainer('test', key='x', select='1')
+        trainer=MyTrainer('test', key='x', select='1'),
     )
 
     metric_values = {'acc': 0.5, 'loss': 0.5}
@@ -280,15 +285,16 @@ def test_model_validate_in_db(valid_dataset, db):
 
     model_predict = ObjectModel(
         'test',
-        object=lambda x: x, datatype=FieldType('str'),
+        object=lambda x: x,
+        datatype=FieldType('str'),
         validation=Validation(
             'my-valid',
             metrics=[
                 Metric('f1', object=f1_score),
                 Metric('acc', object=accuracy_score),
             ],
-            datasets = [valid_dataset],
-        )
+            datasets=[valid_dataset],
+        ),
     )
 
     with patch.object(model_predict, 'validate') as mock_validate:
@@ -328,7 +334,9 @@ def test_model_fit(db, valid_dataset):
         'test',
         object=object(),
         trainer=MyTrainer('my-trainer', key='x', select=Collection('test').find()),
-        validation=Validation('my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]),
+        validation=Validation(
+            'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
+        ),
     )
 
     with patch.object(model, 'fit'):

@@ -35,65 +35,68 @@ def test_document_encoding(document):
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty], indirect=True
-)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_underscore_artifacts(db):
     with open('test/material/data/test.png', 'rb') as f:
         bytes = f.read()
 
     db.apply(pil_image_hybrid_png)
 
-    info = db.artifact_store.save_artifact({
-        'datatype': pil_image_hybrid_png.identifier,
-        'bytes': bytes,
-        'leaf_type': pil_image_hybrid_png.encodable
-    })
+    info = db.artifact_store.save_artifact(
+        {
+            'datatype': pil_image_hybrid_png.identifier,
+            'bytes': bytes,
+            'leaf_type': pil_image_hybrid_png.encodable,
+        }
+    )
 
-    r = Document.decode({
-        '_artifacts': [
-            {'_content': info}
-        ],
-        'x': f'$artifacts/{info["file_id"]}'
-    }, db=db).unpack()
+    r = Document.decode(
+        {'_artifacts': [{'_content': info}], 'x': f'$artifacts/{info["file_id"]}'},
+        db=db,
+    ).unpack()
 
     import PIL.PngImagePlugin
+
     assert isinstance(r['x'], PIL.PngImagePlugin.PngImageFile)
 
 
 def my_function(x):
     return x + 2
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty], indirect=True
-)
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_build_leaves(db):
     # TODO - this is how we encode data going forward
 
     raw = db.datatypes['dill'].encoder(my_function)
-    file_id = db.artifact_store.save_artifact({'bytes': raw, 'datatype': 'dill'})['file_id']
+    file_id = db.artifact_store.save_artifact({'bytes': raw, 'datatype': 'dill'})[
+        'file_id'
+    ]
 
     leaf_records = [
         {
-            'leaf_type': 'artifact', 
-            'cls': 'Artifact', 
-            'module': 'superduperdb.components.datatype', 
+            'leaf_type': 'artifact',
+            'cls': 'Artifact',
+            'module': 'superduperdb.components.datatype',
             'dict': {
                 'file_id': file_id,
                 'datatype': 'dill',
-            }
+            },
         },
         {
-            'leaf_type': 'component', 
-            'cls': 'ObjectModel', 
-            'module': 'superduperdb.components.model', 
-            'dict': {'identifier': 'test', 'object': f'_artifact/{file_id}'}
+            'leaf_type': 'component',
+            'cls': 'ObjectModel',
+            'module': 'superduperdb.components.model',
+            'dict': {'identifier': 'test', 'object': f'_artifact/{file_id}'},
         },
         {
-            'leaf_type': 'component', 
-            'cls': 'Stack', 
-            'module': 'superduperdb.components.stack', 
-            'dict': {'identifier': 'test_stack', 'components': ['_component/model/test_']}
+            'leaf_type': 'component',
+            'cls': 'Stack',
+            'module': 'superduperdb.components.stack',
+            'dict': {
+                'identifier': 'test_stack',
+                'components': ['_component/model/test'],
+            },
         },
     ]
     out = _build_leaves(leaf_records)

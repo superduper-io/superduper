@@ -34,16 +34,16 @@ def curl_put(endpoint, file, media_type, params=None):
     print('CURL REQUEST:')
     print(request)
     result = os.popen(request).read()
-    assert result, f'PUT request to {endpoint} with {params} and {file} returned empty response'
+    assert (
+        result
+    ), f'PUT request to {endpoint} with {params} and {file} returned empty response'
     return result
-    
+
 
 def insert(data):
     data = {
         "documents": data,
-        "query": [
-            "documents.insert_many($documents)"
-        ],
+        "query": ["documents.insert_many($documents)"],
         "artifacts": [],
     }
     return curl_post('/db/execute', data)
@@ -57,9 +57,7 @@ def apply(component):
 def delete():
     data = {
         "documents": [],
-        "query": [
-            "documents.delete_many({})"
-        ],
+        "query": ["documents.delete_many({})"],
         "artifacts": [],
     }
     return curl_post('/db/execute', data)
@@ -75,14 +73,13 @@ def setup():
         {"x": [6, 7, 8, 9, 10], "y": 'test'},
     ]
     insert(data)
-    apply({
-        'cls': 'image_type',
-        'module': 'superduperdb.ext.pillow.encoder',
-        'dict': {
-            'identifier': 'image',
-            'media_type': 'image/png'
+    apply(
+        {
+            'cls': 'image_type',
+            'module': 'superduperdb.ext.pillow.encoder',
+            'dict': {'identifier': 'image', 'media_type': 'image/png'},
         }
-    })
+    )
 
 
 def teardown():
@@ -92,6 +89,7 @@ def teardown():
 
 if __name__ == '__main__':
     import sys
+
     if sys.argv[1] == 'setup':
         setup()
     elif sys.argv[1] == 'teardown':

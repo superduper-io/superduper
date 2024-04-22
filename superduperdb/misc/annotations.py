@@ -1,10 +1,10 @@
 import functools
 import importlib
 import sys
+import typing as t
 import warnings
 from importlib import metadata
 from typing import Optional
-import typing as t
 
 from packaging import version
 
@@ -106,6 +106,7 @@ def deprecated(f):
             f"{f.__name__} is deprecated and will be removed in a future release.",
         )
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -178,10 +179,11 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
-def ui(*schema: t.Sequence[t.Dict], handle_integration: t.Callable = lambda x: x):
+def ui(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     def decorated(f):
         f.get_ui_schema = lambda: schema
         f.build = lambda r: f(**r)
         f.handle_integration = handle_integration
         return f
+
     return decorated

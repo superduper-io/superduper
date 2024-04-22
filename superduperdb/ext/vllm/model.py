@@ -1,4 +1,3 @@
-import asyncio
 import dataclasses as dc
 import typing as t
 
@@ -74,7 +73,8 @@ class _VllmCore:
         # Use kwargs to avoid incompatibility after vllm version upgrade
         from vllm import LLM
 
-        # Roll back to using the sync engine, otherwise it will no longer be available on Jupyter notebooks
+        # Roll back to using the sync engine, otherwise it will no
+        # longer be available on Jupyter notebooks
         self.engine = LLM(**kwargs)
 
     def batch_predict(self, prompts: t.List[str], **kwargs):

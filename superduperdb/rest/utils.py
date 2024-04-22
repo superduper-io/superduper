@@ -1,6 +1,7 @@
 import re
 import typing as t
 
+from superduperdb.backends.base.query import model
 from superduperdb.base.document import Document
 
 
@@ -10,34 +11,41 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
 
     part = part.replace(' ', '').replace('\n', '')
     part = part.replace('_documents', 'documents')
-    part = part.split('.')
-    for i, comp in enumerate(part):
-        if i == 0:
-            current = Collection(comp)
-        else:
-            match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
-            if match is None:
-                current = getattr(current, comp)
-                continue
-            if not match.groups()[1].strip():
-                current = getattr(current, match.groups()[0])()
-                continue
+    model_match = re.match('^model\([\'"]([A-Za-z0-9\.\-_])+[\'"]\)\.(.*)$', part)
+    model_match = re.match('^model\([\'"]([^)]+)+[\'"]\)\.(.*)$', part)
 
-            comp = getattr(current, match.groups()[0])
-            args_kwargs = [x.strip() for x in match.groups()[1].split(',')]
-            args = []
-            kwargs = {}
-            for x in args_kwargs:
-                if '=' in x:
-                    k, v = x.split('=')
-                    kwargs[k] = eval(v, {'documents': documents, 'query': query})
-                else:
-                    args.append(eval(x, {'documents': documents, 'query': query}))
-            current = comp(*args, **kwargs)
+    if model_match:
+        current = model(model_match.groups()[0])
+        part = model_match.groups()[1].split('.')
+    else:
+        current = Collection(part.split('.')[0])
+        part = part.split('.')[1:]
+    for comp in part:
+        match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
+        if match is None:
+            current = getattr(current, comp)
+            continue
+        if not match.groups()[1].strip():
+            current = getattr(current, match.groups()[0])()
+            continue
+
+        comp = getattr(current, match.groups()[0])
+        args_kwargs = [x.strip() for x in match.groups()[1].split(',')]
+        args = []
+        kwargs = {}
+        for x in args_kwargs:
+            if '=' in x:
+                k, v = x.split('=')
+                kwargs[k] = eval(v, {'documents': documents, 'query': query})
+            else:
+                args.append(eval(x, {'documents': documents, 'query': query}))
+        current = comp(*args, **kwargs)
     return current
 
 
 def parse_query(query, documents, db: t.Optional[t.Any] = None):
+    if isinstance(query, str):
+        query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
         query[i] = _parse_query_part(q, documents, query[:i], db=db)
     return query[-1]

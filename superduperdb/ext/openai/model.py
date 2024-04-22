@@ -54,6 +54,12 @@ class _OpenAI(APIBaseModel):
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
     __doc__ = APIBaseModel.__doc__  # type: ignore[assignment]
 
+    @classmethod
+    def handle_integration(cls, kwargs):
+        if 'signature' in kwargs:
+            del kwargs['signature']
+        return kwargs
+
     def __post_init__(self, artifacts):
         super().__post_init__(artifacts)
 

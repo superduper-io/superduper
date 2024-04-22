@@ -12,15 +12,15 @@ __version__ = '0.1.1'
 
 from superduperdb.backends import ibis, mongodb
 
-from .base.document import Document
 from .base.decorators import code
+from .base.document import Document
 from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
 from .components.metric import Metric
-from .components.stack import Stack
-from .components.model import Model, ObjectModel, objectmodel
+from .components.model import CodeModel, Model, ObjectModel, QueryModel, objectmodel
 from .components.schema import Schema
+from .components.stack import Stack
 from .components.vector_index import VectorIndex, vector
 
 __all__ = (
@@ -35,6 +35,8 @@ __all__ = (
     'Document',
     'code',
     'ObjectModel',
+    'CodeModel',
+    'QueryModel',
     'Model',
     'objectmodel',
     'Listener',

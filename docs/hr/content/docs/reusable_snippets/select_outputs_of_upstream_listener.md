@@ -11,11 +11,13 @@ operate on those outputs.
 # <tab: MongoDB>
 from superduperdb.backends.mongodb import Collection
 
+indexing_key = upstream_listener.outputs_key
 select = Collection(upstream_listener.outputs).find()
 ```
 
 
 ```python
 # <tab: SQL>
-select = db.load('table', upstream_listener.outputs)
+indexing_key = upstream_listener.outputs_key
+select = db.load("table", upstream_listener.outputs).to_query()
 ```

@@ -125,7 +125,7 @@ Apart from directly loading and using the model at the end of the script, you ca
 ```python
 llm = db.load("model", "llm-finetune")
 prompt = "### Human: Who are you? ### Assistant: "
-print(llm.predict(prompt, max_new_tokens=100, do_sample=True))
+print(llm.predict_one(prompt, max_new_tokens=100, do_sample=True))
 ```
 ### Supported Features
 
@@ -178,35 +178,6 @@ The configuration inherits from Huggingface `transformers.TrainingArguments`, wh
 
 Additionally, some extra parameters are provided to support LLM fine-tuning scenarios.
 
-```
-use_lora (`bool`, *optional*, defaults to True):
-    Whether to use LoRA training.
-    
-lora_r (`int`, *optional*, defaults to 8):
-    Lora R dimension.
-
-lora_alpha (`int`, *optional*, defaults to 16):
-    Lora alpha.
-
-lora_dropout (`float`, *optional*, defaults to 0.05):
-    Lora dropout.
-
-lora_target_modules (`List[str]`, *optional*, defaults to None):
-    Lora target modules. If None, will be automatically inferred.
-
-lora_bias (`str`, *optional*, defaults to "none"):
-    Lora bias.
-
-max_length (`int`, *optional*, defaults to 512):
-    Maximum source sequence length during training.
-    
-log_to_db (`bool`, *optional*, defaults to True):
-    Log training to db.
-    If True, will log checkpoint to superduperdb,
-        but need ray cluster can access to db.
-    If can't access to db, please set it to False.
-```
-
 #### Execute Training
 
 ```python
@@ -222,28 +193,27 @@ By default, training will execute directly. However, if multiple GPUs are detect
 
 Additionally, you can manually configure Ray for training, either locally or on a remote Ray cluster.
 
-Provide three Ray-related parameters for configuration:
+Provide three `ray`-related parameters for configuration:
 
-##### on_ray (str)
+##### `on_ray`
 
 Whether to perform training on Ray.
 
-##### ray_address (str)
+##### `ray_address`
 
 The address of the Ray cluster to connect to. If not provided, a Ray service will be started locally by default.
 
-##### ray_configs (dict)
+##### `ray_configs`
 
-All ray_configs will be passed to [TorchTrainer](https://docs.ray.io/en/latest/train/api/doc/ray.train.torch.TorchTrainer.html).
+All ray_configs will be passed to [ray's `TorchTrainer`](https://docs.ray.io/en/latest/train/api/doc/ray.train.torch.TorchTrainer.html).
 
 Except for the following three fields, which are automatically built by SuperDuperDB:
 
-- train_loop_per_worker
-- train_loop_config
-- datasets
+- `train_loop_per_worker`
+- `train_loop_config`
+- `datasets`
 
 For example, you can provide a configuration like this:
-
 
 ```python
 from ray.train import RunConfig, ScalingConfig
@@ -263,14 +233,17 @@ ray_configs = {
     "run_config": run_config,
 }
 
-llm.fit(
-    X="text",
-    select=Collection("datas").find(),
-    configuration=base_config,
-    db=db,
-    on_ray=True,
-    ray_address="ray://ray_cluster_ip:10001",
+trainer = LLMTrainer(
+    ...,
     ray_configs=ray_configs,
+    on_ray=True
+)
+
+db.apply(
+    LLM(
+        ...,
+        trainer=trainer,
+    )
 )
 ```
 

@@ -21,8 +21,8 @@ to get going with SuperDuperDB quickly.
 ```python
 import os
 
-os.mkdirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
+os.makedirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
 ```
 
 
@@ -30,15 +30,18 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     <TabItem value="MongoDB Community" label="MongoDB Community" default>
         ```python
         CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: lance
-        databackend: mongodb://<mongo-host>:27017/documents
+        data_backend: mongodb://127.0.0.1:27017/documents
+        artifact_store: filesystem://./artifact_store
+        cluster:
+          cdc:
+            strategy: null
+            uri: ray://127.0.0.1:20000
+          compute:
+            uri: ray://127.0.0.1:10001
+          vector_search:
+            backfill_batch_size: 100
+            type: in_memory
+            uri: http://127.0.0.1:21000
         '''        
         ```
     </TabItem>
@@ -145,7 +148,7 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
+with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -164,7 +167,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local_cluster        
+        !python -m superduperdb local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -200,7 +203,6 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
-        
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
@@ -231,15 +233,17 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
+        !pip install psycopg2
         from superduperdb import superduper
         
-        user = 'superduper'
-        password = 'superduper'
+        user = 'postgres'
+        password = 'postgres'
         port = 5432
         host = 'localhost'
         database = 'test_db'
+        db_uri = f"postgres://{user}:{password}@{host}:{port}/{database}"
         
-        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        db = superduper(db_uri, metadata_store=db_uri.replace('postgres://', 'postgresql://'))        
         ```
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
@@ -315,14 +319,6 @@ Otherwise refer to "Configuring your production system".
         data = [f'images/{x}' for x in os.listdir('./images')]        
         ```
     </TabItem>
-    <TabItem value="Audio" label="Audio" default>
-        ```python
-        !curl -O s3://superduperdb-public-demo/audio.zip && unzip audio.zip
-        import os
-        
-        data = [f'audios/{x}' for x in os.listdir('./audios')]        
-        ```
-    </TabItem>
 </Tabs>
 <!-- TABS -->
 ## Setup tables or collections
@@ -339,6 +335,7 @@ Otherwise refer to "Configuring your production system".
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
+        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -348,12 +345,17 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis import Table
-        from superduperdb.backends.ibis.field_types import FieldType
+        from superduperdb import Schema, DataType
+        from superduperdb.backends.ibis.field_types import dtype
+        
+        datatype = "str"
         
         if isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
+            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
         else:
-            schema = Schema(fields={'x': FieldType(datatype)})
+            schema = Schema(
+                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
+            )
         
         table_or_collection = Table('documents', schema=schema)
         
@@ -377,13 +379,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
             
             if schema is None and datatype is None:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None:
                 data = [Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             else:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA], schema='my_schema'))        
+                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -391,12 +393,96 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'x': x}) for x in data))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
         ```
     </TabItem>
 </Tabs>
 ```python
 do_insert(data[:-len(data) // 4])
+```
+
+<!-- TABS -->
+## Compute features
+
+
+<Tabs>
+    <TabItem value="Text" label="Text" default>
+        ```python
+        
+        key = 'txt'
+        
+        import sentence_transformers
+        from superduperdb import vector, Listener
+        from superduperdb.ext.sentence_transformers import SentenceTransformer
+        
+        superdupermodel = SentenceTransformer(
+            identifier="embedding",
+            object=sentence_transformers.SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2"),
+            datatype=vector(shape=(384,)),
+            postprocess=lambda x: x.tolist(),
+        )
+        
+        jobs, listener = db.apply(
+            Listener(
+                model=superdupermodel,
+                select=select,
+                key=key,
+                identifier="features"
+            )
+        )        
+        ```
+    </TabItem>
+    <TabItem value="Image" label="Image" default>
+        ```python
+        
+        key = 'image'
+        
+        import torchvision.models as models
+        from torchvision import transforms
+        from superduperdb.ext.torch import TorchModel
+        from superduperdb import Listener
+        from PIL import Image
+        
+        class TorchVisionEmbedding:
+            def __init__(self):
+                # Load the pre-trained ResNet-18 model
+                self.resnet = models.resnet18(pretrained=True)
+                
+                # Set the model to evaluation mode
+                self.resnet.eval()
+                
+            def preprocess(self, image_array):
+                # Preprocess the image
+                image = Image.fromarray(image_array.astype(np.uint8))
+                preprocess = preprocess = transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                ])
+                tensor_image = preprocess(image)
+                return tensor_image
+                
+        model = TorchVisionEmbedding()
+        superdupermodel = TorchModel(identifier='my-vision-model-torch', object=model.resnet, preprocess=model.preprocess, postprocess=lambda x: x.numpy().tolist())
+        
+        jobs, listener = db.apply(
+            Listener(
+                model=superdupermodel,
+                select=select,
+                key=key,
+                identifier="features"
+            )
+        )        
+        ```
+    </TabItem>
+</Tabs>
+## Choose input key
+
+The input key to the fine-tuning model is the output of the previous listener:
+
+```python
+input_key = listener.outputs
 ```
 
 <!-- TABS -->
@@ -414,8 +500,10 @@ do_insert(data[:-len(data) // 4])
         model = Estimator(
             object=model,
             identifier='my-model',
-            train_X=('X', 'y'),
-            train_select=Collection('clt').find(),
+            trainer=SklearnTrainer(
+                key=(input_key, 'y'),
+                select=Collection('clt').find(),
+            )
         )        
         ```
     </TabItem>
@@ -452,14 +540,14 @@ do_insert(data[:-len(data) // 4])
             identifier='my-model',
             object=model,         
             trainer=TorchTrainer(
+                key=(input_key, 'y'),
                 identifier='my_trainer',
                 objective=my_loss,
                 loader_kwargs={'batch_size': 10},
                 max_iterations=100,
                 validation_interval=10,
+                select=Collection('clt').find(),
             ),
-            train_X=('X', 'y'),
-            train_select=Collection('clt').find(),
         )        
         ```
     </TabItem>

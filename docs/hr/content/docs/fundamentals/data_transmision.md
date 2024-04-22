@@ -23,23 +23,23 @@ data is exchanged with your database. That means inputs, and queries, wrap dicti
 used with `Document` and also results are returned wrapped with `Document`.
 
 Whenever the `Document` contains data which is in need of specialized serialization,
-then the `Document` instance contains calls to `Encoder` instances.
+then the `Document` instance contains calls to `DataType` instances.
 
-### `Encoder`
+### `DataType`
 
-The `Encoder` class, allows users to create and encoder custom datatypes, by providing 
-their own serializers.
+The [`DataType` class](../apply_api/datatype), allows users to create and encoder custom datatypes, by providing 
+their own encoder/decoder pairs.
 
-Here is an example of applying an `Encoder` to add an image to a `Document`:
+Here is an example of applying an `DataType` to add an image to a `Document`:
 
 ```python
 import pickle
 import PIL.Image
-from superduperdb import Encoder, Document
+from superduperdb import DataType, Document
 
 image = PIL.Image.open('my_image.jpg')
 
-my_image_encoder = Encoder(
+my_image_encoder = DataType(
     identifier='my-pil',
     encoder=lambda x: pickle.dumps(x),
     decoder=lambda x: pickle.loads(x),
@@ -55,10 +55,29 @@ The bare-bones dictionary may be exposed with `.unpack()`:
 {'img': <PIL.PngImagePlugin.PngImageFile image mode=P size=400x300>}
 ```
 
+By default, data encoded with `DataType` is saved in the database, but developers 
+may alternatively save data in the `db.artifact_store` instead. 
+
+This may be achiever by specifying the `encodable=...` parameter:
+
+```python
+my_image_encoder = DataType(
+    identifier='my-pil',
+    encoder=lambda x: pickle.dumps(x),
+    decoder=lambda x: pickle.loads(x),
+    encodable='artifact',    # saves to disk/ db.artifact_store
+    # encodable='lazy_artifact', # Just in time loading
+)
+```
+
+The `encodable` specifies the type of the output of the `__call__` method, 
+which will be a subclass of `superduperdb.components.datatype._BaseEncodable`.
+These encodables become leaves in the tree defines by a `Document`.
+
 ### `Schema`
 
 A `Schema` allows developers to connect named fields of dictionaries 
-or columns of `pandas.DataFrame` objects with `Encoders`. 
+or columns of `pandas.DataFrame` objects with `DataType` instances.
 
 A `Schema` is used, in particular, for SQL databases/ tables, and for 
 models that return multiple outputs.

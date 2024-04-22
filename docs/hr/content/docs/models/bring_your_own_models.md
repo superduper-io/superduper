@@ -49,70 +49,86 @@ class MyClass:
         ...
 ```
 
-## Serialization
+## Create your own `Model` subclasses
 
-TODO this is all old hat.
+Developers may create their own `Model` sub-classes, and deploy these directly to `superduperdb`.
+The key methods the developers need to create are:
 
-### Serializing components with SuperDuperDB
+- `predict_one`
+- `predict`
+- Optionally `fit`
 
-When adding a component to `SuperDuperDB`, 
-objects which cannot be serialized to `JSON` 
-are serialized to `bytes` using one of the inbuilt
-serializers:
+### Minimal example with `prediction`
 
-- `pickle`
-- `dill`
-- `torch`
-
-Users also have the choice to create their own serializer, 
-by providing a pair of functions to the `Component` descendant
-`superduperdb.Serializer`.
-
-Here is an example of how to do that, with an example `tensorflow.keras` model, 
-which isn't yet natively supported by `superduperdb`, but 
-may nevertheless be supported using a custom serializer:
+Here is a simple sub-class of `Model`:
 
 ```python
-from superduperdb import Serializer
+import dataclasses as dc
+from superduperdb.components.model import Model
+import typing as t
 
-from tensorflow.keras import Sequential, load
-from tensorflow.keras.layers import Dense
+@dc.dataclass(kw_only=True)
+class CustomModel(Model):
+    signature: t.ClassVar[str] = '**kwargs'
+    my_argument: int = 1
 
-model = Sequential([Dense(1, input_dim=1, activation='linear')])
+    def predict_one(self, x, y):
+        return x + y + self.my_argument
+
+    def predict(self, dataset):
+        return [self.predict_one(**r) for r in dataset]
+        return x + y
+```
+
+The addition of `signature = **kwargs` controls how the individual datapoints in the dataset 
+are emitted, for consumption by the internal workings of the model
+
+### Including datablobs which can't be converted to JSON
+
+If your model contains large data-artifacts or non-JSON-able content, then 
+these items should be labelled with [a `DataType`](../apply_api/datatype).
+
+On saving, this will allow `superduperdb` to encode their values and save the result
+in `db.artifact_store`.
+
+Here is an example which includes a `numpy.array`:
+
+```python
+import numpy as np
+from superduperdb.ext.numpy import array
 
 
-def encode(x):
-    id = uuid.uuid4()
-    x.save(f'/tmp/{id}')
-    with open(f'/tmp/{id}', 'rb') as f:
-        b = f.read()
-    os.remove(f'/tmp/{id}')
-    return b
+@dc.dataclass(kw_only=True)
+class AnotherModel(Model):
+    _artifacts: t.ClassVar[t.Any] = [
+        ('my_array', array)
+    ]
+    signature: t.ClassVar[str] = '**kwargs'
+    my_argument: int = 1
+    my_array: np.ndarray
 
+    @ensure_initialized
+    def predict_one(self, x, y):
+        return x + y + self.my_argument + self.my_array
 
-def decode(x)
-    id = uuid.uuid4()
-    with open(f'/tmp/{id}', 'wb') as f:
-        f.write(x)
-    model = load(f'/tmp/{id}')
-    os.remove(f'/tmp/{id}')
-    return model
+    def predict(self, dataset):
+        return [self.predict_one(**r) for r in dataset]
 
+my_array = numpy.random.randn(100000, 20)
+my_array_type = array('my_array', shape=my_array.shape, encodable='lazy_artifact')
+db.apply(my_array_type)
 
-db.add(
-    Serializer(
-        'keras-serializer',
-        encoder=encoder,
-        decoder=decoder,
-    )
-)
-
-db.add(
-    Model(
-        'my-keras-model',
-        object=model,
-        predict_method='predict',
-        serializer='keras-serializer',
-    )
+m = AnotherModel(
+    my_argument=2,
+    my_array=my_array,
+    artifacts={'my_array': my_array_type},
 )
 ```
+
+When `db.apply` is called, `m.my_array` will be converted to `bytes` with `numpy` functionality
+and a reference to these `bytes` will be saved in the `db.metadata_store`.
+
+Notice that the `.predict_one` method is decorated with `@ensure_initialized`.
+This allows `superduperdb` to load `my_array` only when needed.
+
+In principle any `DataType` can be used to encode such an object.

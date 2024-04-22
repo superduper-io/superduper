@@ -12,7 +12,7 @@ from enum import Enum
 
 
 def _dataclass_from_dict(data_class: t.Any, data: dict):
-    field_types = {f.nclass-hierarchyme: f.type for f in data_class.__dataclass_fields__.values()}
+    field_types = {f.name: f.type for f in data_class.__dataclass_fields__.values()}
     params = {}
     for f in data:
         if (

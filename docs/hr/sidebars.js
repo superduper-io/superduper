@@ -68,7 +68,6 @@ const sidebars = {
         'docs/apply_api/dataset',
         'docs/apply_api/metric',
         'docs/apply_api/validation',
-        'docs/apply_api/checkpoint',
         'docs/apply_api/trainer',
       ]
     },
@@ -213,8 +212,10 @@ const sidebars = {
         'docs/ai_integrations/cohere',
         'docs/ai_integrations/custom',
         'docs/ai_integrations/jina',
+        'docs/ai_integrations/llama_cpp',
         'docs/ai_integrations/openai',
         'docs/ai_integrations/pytorch',
+        'docs/ai_integrations/sentence_transformers',
         'docs/ai_integrations/sklearn',
         'docs/ai_integrations/transformers',
       ]
@@ -233,7 +234,6 @@ const sidebars = {
         'docs/fundamentals/component_abstraction',
         'docs/fundamentals/datalayer_overview',
         'docs/fundamentals/data_transmision',
-        'docs/fundamentals/models',
         'docs/fundamentals/vector_search_algorithm',
       ]
     },

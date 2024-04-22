@@ -20,13 +20,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
             
             if schema is None and datatype is None:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None:
                 data = [Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             else:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA], schema='my_schema'))        
+                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -34,7 +34,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'x': x}) for x in data))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
         ```
     </TabItem>
 </Tabs>

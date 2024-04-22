@@ -11,12 +11,9 @@ defn = {
             "leaf_type": "component",
             "cls": "image_type",
             "module": "superduperdb.ext.pillow.encoder",
-            "dict": {
-                "identifier": "my_image",
-                "media_type": "image/png"
-            }
+            "dict": {"identifier": "my_image", "media_type": "image/png"},
         }
-    ]
+    ],
 }
 
 out, exit = _build_leaves(defn["_leaves"], db)

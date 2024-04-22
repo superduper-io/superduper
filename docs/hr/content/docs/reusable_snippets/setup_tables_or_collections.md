@@ -19,7 +19,6 @@ import TabItem from '@theme/TabItem';
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
-        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})

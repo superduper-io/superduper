@@ -37,7 +37,6 @@ from superduperdb.components.datatype import (
     _BaseEncodable,
     serializers,
 )
-from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.annotations import deprecated
@@ -294,9 +293,9 @@ class Datalayer:
         if isinstance(query, Table):
             return self._select(query.to_query(), *args, **kwargs)
         if isinstance(query, Update):
-            return self.update(query, *args, **kwargs)
+            return self._update(query, *args, **kwargs)
         if isinstance(query, Write):
-            return self.write(query, *args, **kwargs)
+            return self._write(query, *args, **kwargs)
         if isinstance(query, Predict):
             return self._predict(query, *args, **kwargs)
         if isinstance(query, RawQuery):
@@ -304,7 +303,8 @@ class Datalayer:
 
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {t.Union[Select, Delete, Update, Insert, Predict, str]}; '
+            f'Expected object of type '
+            f'{t.Union[Select, Delete, Update, Insert, Predict, str]}; '
             f'Got {type(query)};'
         )
 
@@ -412,7 +412,7 @@ class Datalayer:
         task_workflow.run_jobs()
         return task_workflow
 
-    def write(self, write: Write, refresh: bool = True) -> UpdateResult:
+    def _write(self, write: Write, refresh: bool = True) -> UpdateResult:
         """
         Bulk write data to database.
 
@@ -447,7 +447,7 @@ class Datalayer:
                 return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
 
-    def update(self, update: Update, refresh: bool = True) -> UpdateResult:
+    def _update(self, update: Update, refresh: bool = True) -> UpdateResult:
         """
         Update data.
 
@@ -472,7 +472,7 @@ class Datalayer:
     def add(self, object: t.Any, dependencies: t.Sequence[Job] = ()):
         """
         Note use of `add` is deprecated, use `apply` instead.
-    
+
         :param object: Object to be stored
         :param dependencies: list of jobs which should execute before component
                              init begins
@@ -805,13 +805,6 @@ class Datalayer:
 
         return G
 
-    def _update(
-        self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
-    ):
-        # TODO add update logic here to check changed attributes
-        s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-        return []
-
     def _add_child_components(self, components, parent):
         # TODO this is a bit of a mess
         # it handles the situation in `Stack` when
@@ -838,6 +831,13 @@ class Datalayer:
 
         return sum(list(jobs.values()), [])
 
+    def _update_component(
+        self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
+    ):
+        # TODO add update logic here to check changed attributes
+        s.logging.debug(f'{object.unique_id} already exists - doing nothing')
+        return []
+
     def _add(
         self,
         object: Component,
@@ -859,7 +859,9 @@ class Datalayer:
         )
 
         if already_exists:
-            return self._update(object, dependencies=dependencies, parent=parent)
+            return self._update_component(
+                object, dependencies=dependencies, parent=parent
+            )
 
         if object.version is None:
             if existing_versions:
@@ -871,6 +873,7 @@ class Datalayer:
         leaves = leaves.values()
         artifacts = [leaf for leaf in leaves if isinstance(leaf, _BaseEncodable)]
         children = [leaf for leaf in leaves if isinstance(leaf, Component)]
+
         jobs.extend(self._add_child_components(children, parent=object))
 
         # need to do this again to get the versions of the children
@@ -890,9 +893,6 @@ class Datalayer:
         jobs.extend(these_jobs)
         return jobs
 
-    def _delete(self, delete: Delete):
-        delete.execute(self)
-
     def _remove_component_version(
         self,
         type_id: str,
@@ -909,8 +909,12 @@ class Datalayer:
             f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
-            component = self.load(type_id, identifier, version=version, allow_hidden=force)
-            info = self.metadata.get_component(type_id, identifier, version=version, allow_hidden=force)
+            component = self.load(
+                type_id, identifier, version=version, allow_hidden=force
+            )
+            info = self.metadata.get_component(
+                type_id, identifier, version=version, allow_hidden=force
+            )
             if hasattr(component, 'cleanup'):
                 # TODO - is there an abstract method thingy for this?
                 component.cleanup(self)

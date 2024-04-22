@@ -25,8 +25,12 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
 
 
-def array(dtype: str, shape: t.Sequence, bytes_encoding: t.Optional[str] = None,
-          encodable: str = 'encodable'):
+def array(
+    dtype: str,
+    shape: t.Sequence,
+    bytes_encoding: t.Optional[str] = None,
+    encodable: str = 'encodable',
+):
     """
     Create an encoder of numpy arrays.
 

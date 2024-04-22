@@ -11,13 +11,13 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        model_output_dtype = None        
+        chunked_model_datatype = None        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis.field_types import dtype
-        model_output_dtype = dtype('str')        
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
 </Tabs>

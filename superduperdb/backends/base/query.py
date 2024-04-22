@@ -65,6 +65,7 @@ class PredictOne(Predict, Serializable, ABC):
             out = Document({'_base': out})
         return out
 
+
 @dc.dataclass(repr=False)
 class Select(Serializable, ABC):
     """

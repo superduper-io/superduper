@@ -447,10 +447,7 @@ class Artifact(_BaseEncodable):
     def decode(cls, r, db=None) -> 'Artifact':
         r = r['_content']
         x = cls._get_object(
-            db,
-            file_id=r['file_id'],
-            datatype=r['datatype'],
-            uri=r.get('uri')
+            db, file_id=r['file_id'], datatype=r['datatype'], uri=r.get('uri')
         )
         return cls(
             x=x,

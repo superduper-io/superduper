@@ -29,9 +29,3 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
-```python
-from superduperdb import superduper
-
-db = superduper()
-```
-

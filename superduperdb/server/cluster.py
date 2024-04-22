@@ -6,6 +6,7 @@ import typing as t
 
 SESSION_NAME = 'superduperdb-local-cluster-session'
 
+
 def create_tmux_session(session_name, commands):
     '''
     Create a tmux local cluster
@@ -49,12 +50,17 @@ def up_cluster(notebook_token: t.Optional[str] = None):
     run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:4', '-n', 'rest'])
     run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:5', '-n', 'jupyter'])
 
-
-
-    cmd = f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. {ray_executable} start --head --dashboard-host=0.0.0.0 --disable-usage-stats --block"
+    cmd = (
+        f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. {ray_executable} start"
+        " --head --dashboard-host=0.0.0.0 --disable-usage-stats --block"
+    )
     run_tmux_command(['send-keys', '-t', 'ray-head', cmd, 'C-m'])
     time.sleep(10)
-    cmd = f"SUPERDUPERDB_CONFIG={CFG} RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=$(pwd):. {ray_executable} start --address=localhost:6379  --block"
+    cmd = (
+        f"SUPERDUPERDB_CONFIG={CFG} "
+        "RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=$(pwd)"
+        ":. {ray_executable} start --address=localhost:6379  --block"
+    )
     run_tmux_command(['send-keys', '-t', 'ray-worker', cmd, 'C-m'])
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb vector-search"
     run_tmux_command(['send-keys', '-t', 'vector-search', cmd, 'C-m'])
@@ -63,9 +69,13 @@ def up_cluster(notebook_token: t.Optional[str] = None):
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb rest"
     run_tmux_command(['send-keys', '-t', 'rest', cmd, 'C-m'])
     cmd = (
-        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook --no-browser --ip=0.0.0.0 --NotebookApp.token={notebook_token} --allow-root"
+        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook "
+        f"--no-browser --ip=0.0.0.0 --NotebookApp.token={notebook_token} --allow-root"
         if notebook_token
-        else f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook --no-browser --ip=0.0.0.0"
+        else (
+            f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m "
+            "jupyter notebook --no-browser --ip=0.0.0.0"
+        )
     )
     run_tmux_command(['send-keys', '-t', 'jupyter', cmd, 'C-m'])
 
@@ -78,6 +88,7 @@ def down_cluster():
     print('Stopping the local cluster...')
     run_tmux_command(['kill-session', '-t', SESSION_NAME])
     print('local cluster stopped')
+
 
 def attach_cluster():
     run_tmux_command(['attach-session', '-t', SESSION_NAME])

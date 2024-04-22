@@ -171,10 +171,3 @@ import TabItem from '@theme/TabItem';
         ```
     </TabItem>
 </Tabs>
-```python
-# <testing>
-datas = list(db.execute(select.outputs("features::0")))
-for data in datas:
-    print(len(data["_outputs.features::0"]))
-```
-

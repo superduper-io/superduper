@@ -25,7 +25,7 @@ class LocalComputeBackend(ComputeBackend):
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
-    ) -> str:
+    ) -> t.Tuple[str, str]:
         """
         Submits a function for local execution.
 

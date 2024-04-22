@@ -10,6 +10,10 @@ class Leaf(ABC):
         cls._register_class()
 
     @classmethod
+    def handle_integration(cls, r):
+        return r
+
+    @classmethod
     def _register_class(cls):
         """
         Register class in the class registry and set the full import path

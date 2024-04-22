@@ -19,13 +19,17 @@ compatible_model = None
     <TabItem value="Text" label="Text" default>
         ```python
         from superduperdb.ext.sentence_transformers import SentenceTransformer
-        from superduperdb import vector
+        
+        if not get_chunking_datatype:
+            model_dtype =  vector(shape=(384,))
+        else:
+            model_dtype = get_chunking_datatype(384)
         
         # Load the pre-trained sentence transformer model
         model = SentenceTransformer(
             identifier='all-MiniLM-L6-v2',
             postprocess=lambda x: x.tolist(),
-            datatype=vector(shape=(784,)),
+            datatype=model_dtype,
         )        
         ```
     </TabItem>
@@ -71,7 +75,7 @@ compatible_model = None
             preprocess=preprocess,
             object=resnet50,
             postprocess=lambda x: x[:, 0, 0],  # Postprocess by extracting the top-left element of the output tensor
-            encoder=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
+            datatype=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
         )        
         ```
     </TabItem>
@@ -85,7 +89,12 @@ compatible_model = None
         model, preprocess = clip.load("RN50", device='cpu')
         
         # Define a vector with shape (1024,)
-        e = vector(shape=(1024,))
+        
+        if not get_chunking_datatype:
+            e =  vector(shape=(1024,))
+        else:
+            e = get_chunking_datatype(1024)
+        
         
         # Create a TorchModel for text encoding
         compatible_model = TorchModel(
@@ -93,7 +102,7 @@ compatible_model = None
             object=model, # CLIP model
             preprocess=lambda x: clip.tokenize(x)[0],  # Model input preprocessing using CLIP 
             postprocess=lambda x: x.tolist(), # Convert the model output to a list
-            encoder=e,  # Vector encoder with shape (1024,)
+            datatype=e,  # Vector encoder with shape (1024,)
             forward_method='encode_text', # Use the 'encode_text' method for forward pass 
         )
         
@@ -103,7 +112,7 @@ compatible_model = None
             object=model.visual,  # Visual part of the CLIP model    
             preprocess=preprocess, # Visual preprocessing using CLIP
             postprocess=lambda x: x.tolist(), # Convert the output to a list 
-            encoder=e, # Vector encoder with shape (1024,)
+            datatype=e, # Vector encoder with shape (1024,)
         )        
         ```
     </TabItem>
@@ -112,15 +121,24 @@ compatible_model = None
         !pip install librosa
         import librosa
         import numpy as np
-        from superduperdb import Model
+        from superduperdb import ObjectModel
+        from superduperdb import vector
         
         def audio_embedding(audio_file):
             # Load the audio file
+            MAX_SIZE= 10000
             y, sr = librosa.load(audio_file)
-            mfccs = librosa.feature.mfcc(y=y, sr=sr)
+            y = y[:MAX_SIZE]
+            mfccs = librosa.feature.mfcc(y=y, sr=44000, n_mfcc=1)
+            mfccs =  mfccs.squeeze().tolist()
             return mfccs
         
-        model= Model(identifier='my-model-audio', object=audio_embedding, datatype=vector(shape=(1000,)))        
+        if not get_chunking_datatype:
+            e =  vector(shape=(1000,))
+        else:
+            e = get_chunking_datatype(1000)
+        
+        model= ObjectModel(identifier='my-model-audio', object=audio_embedding, datatype=e)        
         ```
     </TabItem>
 </Tabs>

@@ -15,7 +15,7 @@ class DBConfig:
         'add_models': True,
         'add_vector_index': True,
         'n_data': N_DATA_POINTS,
-        'add_query': True
+        'add_query': True,
     }
 
     # Base configuration for MongoDB and SQL databases

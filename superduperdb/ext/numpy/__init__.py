@@ -1,5 +1,7 @@
+import typing as t
+
 from .encoder import array
 
-requirements = []
+requirements: t.List = []
 
 __all__ = ['array']

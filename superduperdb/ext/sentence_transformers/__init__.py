@@ -1,4 +1,5 @@
 from superduperdb.misc.annotations import requires_packages
+
 from .model import SentenceTransformer
 
 __all__ = ('SentenceTransformer',)

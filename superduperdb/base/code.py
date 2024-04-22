@@ -4,8 +4,7 @@ import typing as t
 
 from superduperdb.base.serializable import Serializable
 
-template = \
-"""from superduperdb import code
+template = """from superduperdb import code
 
 @code
 {definition}"""

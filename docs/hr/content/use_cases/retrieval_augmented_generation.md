@@ -179,12 +179,6 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
-```python
-from superduperdb import superduper
-
-db = superduper()
-```
-
 <!-- TABS -->
 ## Connect to SuperDuperDB
 
@@ -302,6 +296,11 @@ Otherwise refer to "Configuring your production system".
 <!-- TABS -->
 ## Get useful sample data
 
+```python
+from superduperdb import dtype
+
+```
+
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
@@ -310,7 +309,10 @@ Otherwise refer to "Configuring your production system".
         import json
         
         with open('text.json', 'r') as f:
-            data = json.load(f)        
+            data = json.load(f)
+        sample_datapoint = "What is mongodb?"
+        
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -319,7 +321,9 @@ Otherwise refer to "Configuring your production system".
         import os
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
-        data        
+        
+        sample_datapoint = data[-1]
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
 </Tabs>
@@ -338,7 +342,6 @@ Otherwise refer to "Configuring your production system".
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
-        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -380,10 +383,11 @@ In order to create data, we need to create a `Schema` for encoding our special `
         def do_insert(data):
             schema = None
             
-            if schema is None and datatype is None:
+            
+            if schema is None and (datatype is None  or isinstance(datatype, str)) :
                 data = [Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None:
+            elif schema is None and datatype is not None and isintance():
                 data = [Document({'x': datatype(x)}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
@@ -429,13 +433,13 @@ do_insert(data[:-len(data) // 4])
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        model_output_dtype = None        
+        chunked_model_datatype = None        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis.field_types import dtype
-        model_output_dtype = dtype('str')        
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
 </Tabs>
@@ -457,7 +461,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -469,10 +473,11 @@ won't be necessary.
         !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
         from unstructured.partition.pdf import partition_pdf
+        import PyPDF2
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -509,7 +514,7 @@ operate on those outputs.
         ```python
         from superduperdb.backends.mongodb import Collection
         
-        indexing_key = upstream_listener.outputs_key
+        indexing_key = upstream_listener.outputs
         select = Collection(upstream_listener.outputs).find()        
         ```
     </TabItem>
@@ -664,7 +669,18 @@ query = "Tell me about the SuperDuperDb"
 ```python
 from superduperdb import Document
 
-item = Document({indexing_key: sample_datapoint})
+def get_sample_item(key, sample_datapoint, datatype=None):
+    if not isinstance(datatype, DataType):
+        item = Document({key: sample_datapoint})
+    else:
+        item = Document({key: datatype(sample_datapoint)})
+
+    return item
+
+if compatible_key:
+    item = get_sample_item(compatible_key, sample_datapoint, None)
+else:
+    item = get_sample_item(indexing_key, sample_datapoint, datatype=datatype)
 ```
 
 Once we have this search target, we can execute a search as follows:
@@ -678,7 +694,7 @@ Once we have this search target, we can execute a search as follows:
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = query_table_or_collection.like(item)        
+        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).limit(10)        
         ```
     </TabItem>
 </Tabs>

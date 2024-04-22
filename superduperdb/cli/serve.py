@@ -7,6 +7,7 @@ from . import command
 @command(help='Start local cluster: server, ray and change data capture')
 def local_cluster(action: str, notebook_token: t.Optional[str] = None):
     from superduperdb.server.cluster import attach_cluster, down_cluster, up_cluster
+
     action = action.lower()
 
     if action == 'up':
@@ -51,4 +52,5 @@ def ray_serve(
 @command(help='Start FastAPI REST server')
 def rest():
     from superduperdb.rest.app import app
+
     app.start()

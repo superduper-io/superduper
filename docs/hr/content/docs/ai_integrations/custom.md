@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Custom
+# Custom Models
 
 `superduperdb` provides fully flexible support for AI models from across the 
 open-source ecosystem.

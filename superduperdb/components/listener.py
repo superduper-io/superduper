@@ -66,7 +66,6 @@ class Listener(Component):
             kwargs['select'] = parse_query(
                 query=kwargs['select']['query'],
                 documents=kwargs['select']['documents'],
-                artifacts=[],
             )
         return kwargs
 

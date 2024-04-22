@@ -217,6 +217,7 @@ class ComponentJob(Job):
         if self.component is None:
             self.component = db.load(self.type_id, self.component_identifier)
         self.submit(dependencies=dependencies)
+        db.metadata.update_job(self.identifier, 'job_id', self.job_id)
         return self
 
     def dict(self):

@@ -164,12 +164,9 @@ class MongoMetaDataStore(MetaDataStore):
         if component_identifier is not None:
             filter_['component_identifier'] = component_identifier
         if type_id is not None:
-            filter_['type_id'] = component_identifier
+            filter_['type_id'] = type_id
         return list(
-            self.job_collection.find(
-                filter_,
-                {'identifier': 1, '_id': 0, 'method': 1, 'status': 1, 'time': 1},
-            )
+            self.job_collection.find(filter_)
         )
 
     def _component_used(

@@ -41,12 +41,42 @@ If your class has important state which should be serialized with the class,
 then use `objectmodel` otherwise you can use `codemodel`:
 
 ```python
+from superduperdb import ObjectModel
+
 @objectmodel
 class MyClass:
-    ...
-
     def __call__(self, x):
-        ...
+        return x + 2
+
+m = MyClass()
+
+assert isinstance(m, ObjectModel)
+assert m.predict_one(2) == 4
+```
+
+As before, additional arguments can be supplied to the decorator:
+
+```python
+from superduperdb import vector, DataType
+
+@objectmodel(datatype=vector(32))
+class MyClass:
+    def __call__(self, x):
+        return [x + 2] * 32
+
+m = MyClass()
+
+assert isinstance(m.datatype, DataType)
+```
+
+## Import classes and functions directly
+
+This may be more intuitive to some developers, 
+and allows functionality to be invoked "directly" 
+from third-party packages:
+
+```python
+from superduperdb.ext.auto.sklearn.svm import SVC
 ```
 
 ## Create your own `Model` subclasses

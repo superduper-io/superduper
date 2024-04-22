@@ -231,7 +231,6 @@ const sidebars = {
       items: [
         'docs/fundamentals/class_hierarchy',
         'docs/fundamentals/design',
-        'docs/fundamentals/component_abstraction',
         'docs/fundamentals/datalayer_overview',
         'docs/fundamentals/data_transmision',
         'docs/fundamentals/vector_search_algorithm',

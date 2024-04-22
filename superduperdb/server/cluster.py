@@ -63,7 +63,7 @@ def up_cluster(notebook_token: t.Optional[str] = None):
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb rest"
     run_tmux_command(['send-keys', '-t', 'rest', cmd, 'C-m'])
     cmd = (
-        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook --no-browser --ip=0.0.0.0 --token={notebook_token} --allow-root"
+        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook --no-browser --ip=0.0.0.0 --NotebookApp.token={notebook_token} --allow-root"
         if notebook_token
         else f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook --no-browser --ip=0.0.0.0"
     )

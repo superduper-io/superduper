@@ -35,12 +35,20 @@ class Logging:
             }
         )
 
+        # fmt = (
+        #     "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
+        #     "| <level>{level: <8}</level> "
+        #     "| <cyan>{extra[hostname]: <8}</cyan>"
+        #     "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
+        #     "| <level>{message}</level>"
+        # )
+
         fmt = (
-            "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
-            "| <level>{level: <8}</level> "
-            "| <cyan>{extra[hostname]: <8}</cyan>"
-            "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
-            "| <level>{message}</level>"
+            "{time:YYYY-MMM-DD HH:mm:ss.SS}"
+            "| {level: <8} "
+            "| {extra[hostname]: <8}"
+            "| {name}:{line: <4} "
+            "| {message}"
         )
 
         # DEBUG until WARNING are sent to stdout.
@@ -49,7 +57,8 @@ class Logging:
             format=fmt,
             level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
-            colorize=True,
+            # colorize=True,
+            colorize=False,
         )
 
         # ERROR and above sent to stderr
@@ -58,7 +67,8 @@ class Logging:
             stderr,
             format=fmt,
             level=LogLevel.ERROR,
-            colorize=True,
+            # colorize=True,
+            colorize=False,
         )
 
     # Set Multi-Key loggers

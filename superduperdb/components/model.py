@@ -50,25 +50,45 @@ def objectmodel(
     When a function is wrapped with this decorator,
     the function comes out as an `ObjectModel`.
     """
-    if item is not None and callable(item):
-        return ObjectModel(
-            identifier=item.__name__,
-            object=item,
-        )
-    elif item is not None and inspect.isclass(item):
-        # TODO
-        raise NotImplementedError
-    else:
-        def decorated_function(item):
+    if item is not None and inspect.isclass(item):
+        if inspect.isclass(item):
+            def object_model_factory(*args, **kwargs):
+                object_ = item(*args, **kwargs)
+                return ObjectModel(
+                    object=object_,
+                    identifier=identifier or object_.__class__.__name__,
+                )
+            return object_model_factory
+        else:
             assert callable(item)
             return ObjectModel(
-                identifier=identifier or item.__name__,
+                identifier=item.__name__,
                 object=item,
-                datatype=datatype,
-                model_update_kwargs=model_update_kwargs or {},
-                flatten=flatten,
-                output_schema=output_schema,
             )
+    else:
+        def decorated_function(item):
+            if inspect.isclass(item):
+                def object_model_factory(*args, **kwargs):
+                    object_ = item(*args, **kwargs)
+                    return ObjectModel(
+                        identifier=identifier or item.__name__,
+                        object=object_,
+                        datatype=datatype,
+                        model_update_kwargs=model_update_kwargs or {},
+                        flatten=flatten,
+                        output_schema=output_schema,
+                    )
+                return object_model_factory
+            else:
+                assert callable(item)
+                return ObjectModel(
+                    identifier=identifier or item.__name__,
+                    object=item,
+                    datatype=datatype,
+                    model_update_kwargs=model_update_kwargs or {},
+                    flatten=flatten,
+                    output_schema=output_schema,
+                )
 
         return decorated_function
 

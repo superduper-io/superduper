@@ -4,40 +4,89 @@ tags:
   - quickstart
 ---
 
-# Hello world 
+# Your first `superduperdb` program
 
-To check that everything is working correctly cut and paste this code into a Jupyter notebook.
+:::note
+Since vector-search is all-the-rage right now, 
+here is the simplest possible iteration of semantic 
+text-search with a `sentence_transformers` model, 
+as an entrypoint to `superduperdb`.
+
+Note that `superduperdb` is much-much more than vector-search
+on text. Explore the docs to read about classical machine learning, 
+computer vision, LLMs, fine-tuning and much much more!
+:::
+
+To check that everything is working correctly cut and paste this code into a Jupyter notebook,
+script or IPython session.
 
 ```python
-import numpy as np
-from mongomock import MongoClient
-from superduperdb.base.document import Document as D
-from superduperdb.components.model import Model
-from superduperdb.ext.numpy import array
-from superduperdb.backends.mongodb.query import Collection
-import superduperdb as s
+import json
+import requests 
 
-db = s.superduper(MongoClient().documents)
-collection = Collection('docs')
+from superduperdb import Stack, Document, VectorIndex, Listener, vector, superduper
+from superduperdb.ext.sentence_transformers.model import SentenceTransformer
+from superduperdb.backends.mongodb import Collection
 
-a = array('float64', shape=(32,))
+r = requests.get('https://superduperdb-public-demo.s3.amazonaws.com/text.json')
+
+with open('text.json', 'wb') as f:
+    f.write(r.content)
+
+with open('text.json', 'r') as f:
+    data = json.load(f)        
+
+db = superduper('mongomock://test')
 
 db.execute(
-    collection.insert_many([
-        D({'x': a(np.random.randn(32))})
-        for _ in range(100)
-    ]), encoders = (a,)
+    Collection('documents').insert_many([Document({'txt': r}) for r in data])
 )
 
-model = Model(
-    identifier='test-model',
-    object=lambda x: x + 1,
-    encoder=a,
+datatype = vector(shape=384, identifier="my-vec")
+
+model = SentenceTransformer(
+    identifier="test",
+    datatype=datatype,
+    predict_kwargs={"show_progress_bar": True},
+    signature="*args,**kwargs",
+    model="all-MiniLM-L6-v2",
+    device="cpu",
+    postprocess=lambda x: x.tolist(),
 )
 
-model.predict(X='x', db=db, select=collection.find())
+listener = Listener(
+    identifier="my-listener",
+    key="txt",
+    model=model,
+    select=Collection('documents').find(),
+    active=True,
+    predict_kwargs={}
+)
 
-print(db.execute(collection.find_one()))
+vector_index = VectorIndex(
+    identifier="my-index",
+    indexing_listener=listener,
+    measure="cosine"
+)
+
+db.apply(vector_index)
+
+print(db.execute(
+    Collection('documents')
+        .like({'txt': 'Tell me about vector-indexes'}, vector_index='my-index')
+        .find_one()
+))
 ```
 
+:::warning
 If this doesn't work then something is wrong 🙉 - please report [an issue on GitHub](https://github.com/SuperDuperDB/superduperdb/issues).
+:::
+
+:::tip
+This example deploys a vector-index with a model we have chosen and self-hosted,
+on some text-data (`superduperdb` documentation). The single execution
+`db.apply` sets everything up, and the `db.execute` call, executes a vector-search 
+query-by-meaning. All of the parts `model`, `listener`, `data`, `vector_index`
+are fully configurable and adaptable to your application's needs.
+Read more in the main documentation!
+:::

@@ -2,20 +2,23 @@
 
 ![](/img/class-hierarchy.png)
 
-## Datalayer
+## `superduper`
+
+`superduper` is the entry point to connect and 
+be able to use key functionality. It returns a built `Datalayer`.
+
+## `Datalayer`
 
 The `Datalayer` class, an instance of which we refer to throughout this 
 documentation as `db`, is the key entrypoint via which developers
 may connect to their data-infrastructure and additional connect
 AI functionality to their data-infrastructure:
 
-### Connect with `superduper`
-
 The `Datalayer` connects to data, with the [`superduper` function](../core_api/connect).
 
 ***`.apply`***
 
-AI components may be applied to the built `Datalayer` [with `.apply`](../core_api/apply).
+AI `Component` instances may be applied to the built `Datalayer` [with `.apply`](../core_api/apply).
 
 ***`.execute`***
 
@@ -24,17 +27,10 @@ using the `.execute` method. This can include standard database queries,
 vector-search queries (which include model inference) and pure model computations.
 See [here](../core_api/execute).
 
-***`.show`***
-
-`.show` provides information about components applied with `.apply`.
-
-***`.load`***
-
-`.load` reloads components applied with `.apply`.
-
 ## `Component`
 
-...
+AI functionality is packaged as a `Component`. Key implementations 
+are `Model`, `Listener` and `VectorIndex`.
 
 ## `Document`
 
@@ -47,50 +43,19 @@ Since most databases can handle this type of information, this makes
 `Document` a crucial piece in connecting AI (which operates over a range of information)
 and the database.
 
-***`.encode`***
+## `_BaseEncodable`
 
-Convert the `Document` instance to a dictionary of JSON-able information 
-and `bytes`.
+This is the base class, which allows `superduperdb` to decide how to save "special" data.
 
-***`.decode`***
-
-Convert a dictionary of JSON-able information 
-and `bytes` to a `Document` contained the full range of Python objects.
-
-## `Leaf`
-
-A `Leaf` is the wrapper around a Python object, which carries with 
-it the mechanism via which it converts the object to a mixture 
-of JSON and `bytes`.
-
-Here are the key `Leaf` types:
-
-### `Serializable`
+## `Serializable`
 
 An extension of Python `dataclasses`, but easier to get the original class back 
-from the serialized dictionary form.
+from the serialized dictionary form. This is the base class underlying 
+all `superduperdb` queries and predictions as well as mixing into `Component`.
 
-### `Component`
+## `Job`
 
-Builds on top of `Serializable` but also allows the additional presence of non-JSON-able content via `_BaseEncodable`:
+`Component` instances applied with `Datalayer.apply` create compute-jobs 
+in response to incoming data, and on initialization via the `Job` class.
 
-| Class | Description |
-| --- | --- |
-| `Encodable` |  |
-| `Artifact` |  |
-| `LazyArtifact` |  |
-| `File` |  |
-
-
-### `_BaseEncodable`
-
-| Class | Description |
-| --- | --- |
-| `Encodable` |   |
-| `Artifact` |   |
-| `LazyArtifact` |   |
-| `File` |   |
-
-### Code
-
-...
+The interface on `Component` is `Component.schedule_jobs`.

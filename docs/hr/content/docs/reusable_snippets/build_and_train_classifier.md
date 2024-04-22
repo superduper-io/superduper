@@ -19,8 +19,10 @@ import TabItem from '@theme/TabItem';
         model = Estimator(
             object=model,
             identifier='my-model',
-            train_X=('X', 'y'),
-            train_select=Collection('clt').find(),
+            trainer=SklearnTrainer(
+                key=(input_key, 'y'),
+                select=Collection('clt').find(),
+            )
         )        
         ```
     </TabItem>
@@ -57,14 +59,14 @@ import TabItem from '@theme/TabItem';
             identifier='my-model',
             object=model,         
             trainer=TorchTrainer(
+                key=(input_key, 'y'),
                 identifier='my_trainer',
                 objective=my_loss,
                 loader_kwargs={'batch_size': 10},
                 max_iterations=100,
                 validation_interval=10,
+                select=Collection('clt').find(),
             ),
-            train_X=('X', 'y'),
-            train_select=Collection('clt').find(),
         )        
         ```
     </TabItem>

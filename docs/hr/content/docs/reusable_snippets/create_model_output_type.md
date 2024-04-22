@@ -1,24 +1,23 @@
 ---
-sidebar_label: Build simple select queries
+sidebar_label: Create Model Output Type
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 <!-- TABS -->
-# Build simple select queries
+# Create Model Output Type
 
 
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        
-        select = table_or_collection.find({})        
+        model_output_dtype = None        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        
-        select = table_or_collection.to_query()        
+        from superduperdb.backends.ibis.field_types import dtype
+        model_output_dtype = dtype('str')        
         ```
     </TabItem>
 </Tabs>

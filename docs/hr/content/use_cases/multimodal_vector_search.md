@@ -21,8 +21,8 @@ to get going with SuperDuperDB quickly.
 ```python
 import os
 
-os.mkdirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
+os.makedirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
 ```
 
 
@@ -30,15 +30,18 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     <TabItem value="MongoDB Community" label="MongoDB Community" default>
         ```python
         CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: lance
-        databackend: mongodb://<mongo-host>:27017/documents
+        data_backend: mongodb://127.0.0.1:27017/documents
+        artifact_store: filesystem://./artifact_store
+        cluster:
+          cdc:
+            strategy: null
+            uri: ray://127.0.0.1:20000
+          compute:
+            uri: ray://127.0.0.1:10001
+          vector_search:
+            backfill_batch_size: 100
+            type: in_memory
+            uri: http://127.0.0.1:21000
         '''        
         ```
     </TabItem>
@@ -145,7 +148,7 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
+with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -164,7 +167,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local_cluster        
+        !python -m superduperdb local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -200,7 +203,6 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
-        
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
@@ -231,15 +233,17 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
+        !pip install psycopg2
         from superduperdb import superduper
         
-        user = 'superduper'
-        password = 'superduper'
+        user = 'postgres'
+        password = 'postgres'
         port = 5432
         host = 'localhost'
         database = 'test_db'
+        db_uri = f"postgres://{user}:{password}@{host}:{port}/{database}"
         
-        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        db = superduper(db_uri, metadata_store=db_uri.replace('postgres://', 'postgresql://'))        
         ```
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
@@ -309,7 +313,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip pdfs.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
         import os
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
@@ -428,6 +432,7 @@ Otherwise do one of the following:
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
+        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -437,12 +442,17 @@ Otherwise do one of the following:
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis import Table
-        from superduperdb.backends.ibis.field_types import FieldType
+        from superduperdb import Schema, DataType
+        from superduperdb.backends.ibis.field_types import dtype
+        
+        datatype = "str"
         
         if isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
+            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
         else:
-            schema = Schema(fields={'x': FieldType(datatype)})
+            schema = Schema(
+                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
+            )
         
         table_or_collection = Table('documents', schema=schema)
         
@@ -466,13 +476,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
             
             if schema is None and datatype is None:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None:
                 data = [Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             else:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA], schema='my_schema'))        
+                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -480,7 +490,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'x': x}) for x in data))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
         ```
     </TabItem>
 </Tabs>
@@ -502,7 +512,7 @@ do_insert(data[:-len(data) // 4])
     <TabItem value="SQL" label="SQL" default>
         ```python
         
-        select = table_or_collection        
+        select = table_or_collection.to_query()        
         ```
     </TabItem>
 </Tabs>
@@ -524,7 +534,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -533,22 +543,16 @@ won't be necessary.
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !pip install PyPDF2
+        !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
+        from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(pdf_file):
-            reader = PyPDF2.PdfReader(pdf_file)
-            num_pages = len(reader.pages)
-            print(f'Number of pages {num_pages}')
-            text = []    
-            for i in range(num_pages):
-                page = reader.pages[i]        
-                page_text = page.extract_text()
-                text.append(page_text)
-            text = '\n\n'.join(text)
+            elements = partition_pdf(pdf_file)
+            text = '\n'.join([e.text for e in elements])
             chunks = [text[i:i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
             return chunks        
         ```
@@ -774,12 +778,14 @@ operate on those outputs.
         ```python
         from superduperdb.backends.mongodb import Collection
         
+        indexing_key = upstream_listener.outputs_key
         select = Collection(upstream_listener.outputs).find()        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        select = db.load('table', upstream_listener.outputs)        
+        indexing_key = upstream_listener.outputs_key
+        select = db.load("table", upstream_listener.outputs).to_query()        
         ```
     </TabItem>
 </Tabs>
@@ -813,7 +819,7 @@ vector_index_name = 'my-vector-index'
         ```python
         from superduperdb import VectorIndex, Listener
         
-        jobs, _ = db.apply(
+        jobs, _ = db.add(
             VectorIndex(
                 vector_index_name,
                 indexing_listener=Listener(
@@ -829,7 +835,7 @@ vector_index_name = 'my-vector-index'
         ```python
         from superduperdb import VectorIndex, Listener
         
-        jobs, _ = db.apply(
+        jobs, _ = db.add(
             VectorIndex(
                 vector_index_name,
                 indexing_listener=Listener(
@@ -858,10 +864,7 @@ query_table_or_collection = select.table_or_collection
 ```python
 from superduperdb import Document
 
-if datatype is None:
-    item = Document({indexing_key: sample_datapoint})
-else:
-    item = Document({indexing_key: datatype(sample_datapoint)})
+item = Document({indexing_key: sample_datapoint})
 ```
 
 Once we have this search target, we can execute a search as follows:

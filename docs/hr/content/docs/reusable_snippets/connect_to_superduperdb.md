@@ -24,7 +24,6 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
-        
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
@@ -55,15 +54,17 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
+        !pip install psycopg2
         from superduperdb import superduper
         
-        user = 'superduper'
-        password = 'superduper'
+        user = 'postgres'
+        password = 'postgres'
         port = 5432
         host = 'localhost'
         database = 'test_db'
+        db_uri = f"postgres://{user}:{password}@{host}:{port}/{database}"
         
-        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        db = superduper(db_uri, metadata_store=db_uri.replace('postgres://', 'postgresql://'))        
         ```
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>

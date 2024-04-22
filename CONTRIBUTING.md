@@ -8,13 +8,13 @@ Thank you for considering contributing to `superduperdb`. There are many ways to
 - bug reports
 - documentation improvements
 - enhancement suggestions
-- expanding the tutorials and examples
+- expanding the reusable-snippets and use-cases
 
 This project is intended to be a community effort, and it won't be possible without your support and enthusiasm.
 
 ## Where to Start? 
 
-If you're new to open-source development, we recommend going through the GitHub “issues” tab to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
+If you're new to open-source development, we recommend going through the [GitHub “issues” tab](https://github.com/SuperDuperDB/superduperdb/issues) to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
 
 ## Installation and setup
 

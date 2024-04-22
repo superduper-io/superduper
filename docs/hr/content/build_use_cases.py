@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import typing as t
 import re
 
@@ -55,14 +56,16 @@ def build_use_case(path):
             built_nb['cells'].append(cell)
     return built_nb
 
-file = '_multimodal_vector_search.ipynb'
 
-for file in os.listdir('./use_cases'):
-    if not file.startswith('_'):
-        continue
-    built = build_use_case(f'./use_cases/{file}')
-    with open(f'./use_cases/{file[1:]}', 'w') as f:
-        json.dump(built, f)
+def build_use_cases():
+    for file in os.listdir('./use_cases'):
+        if not file.startswith('_'):
+            continue
+        print(file)
+        built = build_use_case(f'./use_cases/{file}')
+        with open(f'./use_cases/{file[1:]}', 'w') as f:
+            json.dump(built, f)
+        
 
 def build_notebook_from_tabs(path, selected_tabs):
     with open(path) as f:
@@ -122,4 +125,8 @@ def serve_notebook_builder():
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
 if __name__ == '__main__':
-    serve_notebook_builder()
+    if not sys.argv[1:] or sys.argv[1] == 'build':
+        build_use_cases()
+    elif sys.argv[1] == 'serve':
+        serve_notebook_builder()
+

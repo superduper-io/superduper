@@ -10,10 +10,7 @@ import TabItem from '@theme/TabItem';
 ```python
 from superduperdb import Document
 
-if datatype is None:
-    item = Document({indexing_key: sample_datapoint})
-else:
-    item = Document({indexing_key: datatype(sample_datapoint)})
+item = Document({indexing_key: sample_datapoint})
 ```
 
 Once we have this search target, we can execute a search as follows:

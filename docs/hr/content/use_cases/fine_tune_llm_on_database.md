@@ -21,8 +21,8 @@ to get going with SuperDuperDB quickly.
 ```python
 import os
 
-os.mkdirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
+os.makedirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
 ```
 
 
@@ -30,15 +30,18 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     <TabItem value="MongoDB Community" label="MongoDB Community" default>
         ```python
         CFG = '''
-        artifact_store: filesystem://<path-to-artifact-store>
-        cluster: 
-            compute: ray://<ray-host>
-            cdc:    
-                uri: http://<cdc-host>:<cdc-port>
-            vector_search:
-                uri: http://<vector-search-host>:<vector-search-port>
-                type: lance
-        databackend: mongodb://<mongo-host>:27017/documents
+        data_backend: mongodb://127.0.0.1:27017/documents
+        artifact_store: filesystem://./artifact_store
+        cluster:
+          cdc:
+            strategy: null
+            uri: ray://127.0.0.1:20000
+          compute:
+            uri: ray://127.0.0.1:10001
+          vector_search:
+            backfill_batch_size: 100
+            type: in_memory
+            uri: http://127.0.0.1:21000
         '''        
         ```
     </TabItem>
@@ -145,7 +148,7 @@ os.environ['SUPERDUPERDB_CONFIG_FILE'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG_FILE'], 'w') as f:
+with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -164,7 +167,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local_cluster        
+        !python -m superduperdb local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -200,7 +203,6 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQLite" label="SQLite" default>
         ```python
         from superduperdb import superduper
-        
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
@@ -231,15 +233,17 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
+        !pip install psycopg2
         from superduperdb import superduper
         
-        user = 'superduper'
-        password = 'superduper'
+        user = 'postgres'
+        password = 'postgres'
         port = 5432
         host = 'localhost'
         database = 'test_db'
+        db_uri = f"postgres://{user}:{password}@{host}:{port}/{database}"
         
-        db = superduper(f"postgres://{user}:{password}@{host}:{port}/{database}")        
+        db = superduper(db_uri, metadata_store=db_uri.replace('postgres://', 'postgresql://'))        
         ```
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
@@ -323,6 +327,7 @@ Otherwise refer to "Configuring your production system".
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
+        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -332,12 +337,17 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis import Table
-        from superduperdb.backends.ibis.field_types import FieldType
+        from superduperdb import Schema, DataType
+        from superduperdb.backends.ibis.field_types import dtype
+        
+        datatype = "str"
         
         if isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
+            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
         else:
-            schema = Schema(fields={'x': FieldType(datatype)})
+            schema = Schema(
+                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
+            )
         
         table_or_collection = Table('documents', schema=schema)
         
@@ -361,13 +371,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
             
             if schema is None and datatype is None:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None:
                 data = [Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA]))
+                db.execute(table_or_collection.insert_many(data))
             else:
                 data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data[:N_DATA], schema='my_schema'))        
+                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -375,7 +385,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'x': x}) for x in data))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
         ```
     </TabItem>
 </Tabs>

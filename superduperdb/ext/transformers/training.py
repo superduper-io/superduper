@@ -29,7 +29,7 @@ from superduperdb.components.model import Trainer as SuperDuperTrainer
 from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
-    from superduperdb.ext.transformers.llm import LLM
+    from superduperdb.ext.transformers.model import LLM
 
 
 @dc.dataclass(kw_only=True)
@@ -102,7 +102,9 @@ class LLMCallback(TrainerCallback):
         checkpoint = Checkpoint(
             identifier=self.experiment_id, path=checkpoint_path, step=state.global_step
         )
-        self.db.add(checkpoint)
+        self.db.apply(checkpoint)
+        self.llm.adapter_id = checkpoint
+        self.db.replace(self.llm)
 
     def on_evaluate(self, args, state, control, **kwargs):
         """Event called after an evaluation."""
@@ -123,11 +125,9 @@ class LLMCallback(TrainerCallback):
                 path=state.best_model_checkpoint,
                 step=step,
             )
-            self.db.add(checkpoint)
-
-        checkpoint = self.db.load(Checkpoint.type_id, self.experiment_id)
-        self.llm.adapter_id = checkpoint
-        self.db.replace(self.llm)
+            self.db.apply(checkpoint)
+            self.llm.adapter_id = checkpoint
+            self.db.replace(self.llm)
 
     def check_init(self):
         # Rebuild datalayer for the new process
@@ -183,17 +183,19 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     bits: t.Optional[int] = None
     max_seq_length: int = 512
     setup_chat_format: bool = False
-    log_to_db: bool = False
+    log_to_db: bool = True
     ray_configs: t.Optional[t.Dict] = None
     on_ray: bool = False
     ray_address: t.Optional[str] = None
+    training_kwargs: t.Dict = dc.field(default_factory=dict)
+    num_gpus: t.Optional[int] = None
 
     def __post_init__(self, artifacts):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
         return SuperDuperTrainer.__post_init__(self, artifacts)
 
     def build(self):
-        TrainingArguments.__post_init__(self)
+        super().__post_init__()
 
     def build_training_args(self):
         _TRAINING_DEFAULTS = {
@@ -219,8 +221,8 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         return compute_metrics
 
     def prepare_dataset(self, model, dataset: QueryDataset):
-        if isinstance(model.train_X, str):
-            dataset.transform = lambda x: {model.train_X: x}
+        if isinstance(self.key, str):
+            dataset.transform = lambda x: {self.key: x}
 
     def fit(
         self,
@@ -237,10 +239,11 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
         eval_datasets = {}
 
-        for vs in model.validation_sets:
-            qvs = model._create_dataset(model.valid_X, db, select=vs.select)
-            self.prepare_dataset(model, qvs)
-            eval_datasets[vs.identifier] = NativeDataset.from_list(list(qvs))
+        if model.validation:
+            for vs in model.validation.datasets:
+                qvs = model._create_dataset(model.validation.key, db, select=vs.select)
+                self.prepare_dataset(model, qvs)
+                eval_datasets[vs.identifier] = NativeDataset.from_list(list(qvs))
         if isinstance(valid_dataset, QueryDataset):
             self.prepare_dataset(model, valid_dataset)
             valid_dataset = NativeDataset.from_list(
@@ -260,18 +263,6 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         model_kwargs["pretrained_model_name_or_path"] = model.model_name_or_path
         tokenizer_kwargs["pretrained_model_name_or_path"] = model.model_name_or_path
 
-        if 'field' in model_kwargs:
-            field = model_kwargs.pop('field')
-        elif isinstance(model.train_X, str):
-            # Using dataset directly
-            field = model.train_X
-        elif isinstance(model.train_X, dict) and len(model.train_X) == 1:
-            # Using dataset from db, only one field
-            field = list(model.train_X.values())[0]
-        else:
-            # Using dataset from db, multiple fields, need to specify field
-            field = None
-
         self._experiment_id = random_sha1()
         logging.info(f"Start training, experiment_id: {self._experiment_id}")
 
@@ -281,14 +272,15 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
             eval_datasets=valid_dataset,
             model_kwargs=model_kwargs,
             tokenizer_kwargs=tokenizer_kwargs,
-            compute_metrics=self.get_compute_metrics(model.metrics),
-            field=field,
+            compute_metrics=self.get_compute_metrics(
+                model.validation.metrics if model.validation else None
+            ),
             db=db,
             llm=model,
-            **model.training_kwargs,
             on_ray=self.on_ray,
             ray_configs=self.ray_configs,
             ray_address=self.ray_address,
+            **(self.training_kwargs or {}).copy(),
         )
 
     @property
@@ -317,7 +309,6 @@ def train(
     eval_datasets: t.Union[NativeDataset, t.Dict[str, NativeDataset]],
     model_kwargs: dict,
     tokenizer_kwargs: dict,
-    field: t.Optional[str] = None,
     db: t.Optional["Datalayer"] = None,
     llm: t.Optional["LLM"] = None,
     on_ray: t.Optional[bool] = False,
@@ -355,10 +346,6 @@ def train(
     :param ray_configs: ray configs, must provide if using ray
     """
 
-    dataset_text_field = kwargs.get("dataset_text_field", field)
-    if dataset_text_field is not None:
-        kwargs["dataset_text_field"] = dataset_text_field
-
     on_ray = on_ray or bool(ray_address) or bool(ray_configs)
 
     # Auto detect multi-GPUs and use ray to run data parallel training
@@ -366,6 +353,10 @@ def train(
     if not on_ray and torch.cuda.device_count() > 1:
         on_ray = True
         logging.warn("Detected multi-GPUs, will use ray to run training on multi-GPUs")
+
+    if training_args.deepspeed:
+        on_ray = True
+        logging.warn("Detected deepspeed, will use ray to run training on deepspeed")
 
     log_to_db = training_args.log_to_db
 
@@ -394,9 +385,10 @@ def train(
         if db is not None and llm is not None and log_to_db:
             from superduperdb import CFG
 
+            cfg = getattr(db, "cfg", deepcopy(CFG))
             callbacks = [
                 LLMCallback(
-                    cfg=CFG,
+                    cfg=cfg,
                     identifier=llm.identifier,
                     experiment_id=training_args.experiment_id,
                 )
@@ -416,7 +408,8 @@ def train(
         )
         logging.info(f"Training finished, results: {results}")
 
-        handle_ray_results(db, llm, results)
+        if not log_to_db:
+            handle_ray_results(db, llm, results)
         return results
 
 
@@ -439,8 +432,10 @@ def handle_ray_results(db, llm, results):
     # Pad the path to the checkpoint
     path = os.path.join(path, "checkpoint")
     if llm is not None:
-        # llm.adapter_id = Artifact(path, serializer="zip")
-        llm.adapter_id = path
+        llm.adapter_id = Checkpoint(
+            identifier=llm.identifier, path=path, step=int(path.split("-")[-1])
+        )
+        db.apply(llm.adapter_id)
         if db is not None:
             db.replace(llm, upsert=True)
 
@@ -618,10 +613,10 @@ def ray_train(
         ray.init(address=ray_address, ignore_reinit_error=True)
 
     if not ray_configs:
-        gpu_count = torch.cuda.device_count()
+        gpu_count = training_args.num_gpus or torch.cuda.device_count()
         ray_configs = {
             "scaling_config": ScalingConfig(
-                num_workers=torch.cuda.device_count() or 1,
+                num_workers=gpu_count or 1,
                 use_gpu=bool(gpu_count),
             )
         }

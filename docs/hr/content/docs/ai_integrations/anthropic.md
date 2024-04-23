@@ -1,5 +1,8 @@
 # Anthropic
 
-`superduperdb` allows users to work with `anthropic` API models.
+`superduperdb` allows users to work with `anthropic` API models. The key integration is the integration 
+of high-quality API-hosted LLM services.
 
-Read more about this [here](/docs/docs/walkthrough/ai_models#anthropic).
+| Class | Description | GitHub | API-docs |
+| --- | --- | --- | --- |
+| `superduperdb.ext.anthropic.AnthropicCompletions` | Completes a prompt with natural language (LLM) | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/anthropic/model.py) | ... |

@@ -19,6 +19,7 @@ import TabItem from '@theme/TabItem';
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
+        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -28,12 +29,17 @@ import TabItem from '@theme/TabItem';
     <TabItem value="SQL" label="SQL" default>
         ```python
         from superduperdb.backends.ibis import Table
-        from superduperdb.backends.ibis.field_types import FieldType
+        from superduperdb import Schema, DataType
+        from superduperdb.backends.ibis.field_types import dtype
+        
+        datatype = "str"
         
         if isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
+            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
         else:
-            schema = Schema(fields={'x': FieldType(datatype)})
+            schema = Schema(
+                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
+            )
         
         table_or_collection = Table('documents', schema=schema)
         

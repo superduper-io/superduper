@@ -31,6 +31,10 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self._cache: t.Sequence[VectorItem] = []
         self._CACHE_SIZE = 10000
 
+        self.measure = measure
+        if isinstance(measure, str):
+            self.measure = measures[measure]
+
         if h is not None:
             assert index is not None
             self._setup(h, index)
@@ -39,17 +43,22 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self.index = None
             self.lookup = None
 
-        self.measure = measure
-        if isinstance(measure, str):
-            self.measure = measures[measure]
-
         self.identifier = identifier
 
     def __len__(self):
-        return self.h.shape[0]
+        if self.h is not None:
+            return self.h.shape[0]
+        else:
+            return 0
 
     def _setup(self, h, index):
-        self.h = numpy.array(h) if not isinstance(h, numpy.ndarray) else h
+        h = numpy.array(h) if not isinstance(h, numpy.ndarray) else h
+
+        if self.measure == 'cosine':
+            # Normalization is required for cosine, hence preparing
+            # all vectors in advance.
+            h = h / numpy.linalg.norm(h, axis=1)[:, None]
+        self.h = h
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))
 
@@ -59,8 +68,15 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
         self.post_create()
+
         if self.h is None:
+            logging.error(
+                'Tried to search on an empty vector database',
+                'Vectors are not yet loaded in vector database.',
+                '\nPlease check if model outputs are ready.',
+            )
             return [], []
+
         h = self.to_numpy(h)[None, :]
         if within_ids:
             ix = list(map(self.lookup.__getitem__, within_ids))

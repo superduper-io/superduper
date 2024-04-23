@@ -9,28 +9,19 @@ Read about the `ray` project [here](https://www.ray.io/).
 
 To configure this feature, configure:
 
-```python
-from superduperdb import CFG
-
-CFG.mode = 'production'
+```yaml
+cluster:
+  compute:
+    uri: ray://<ray_host>:<ray_port>
 ```
 
-When this is so-configured the following functions push their computations to the `dask` cluster:
+When this is so-configured the following functions push their computations to the `ray` cluster:
 
-- `db.add`
-- `db.insert`
-- `db.update`
-- `Model.predict`
-- `Model.fit`
+- `db.apply`
+- `db.execute` (if data is inserted, deleted, updated)
 
 When `ray` is configured, these functions returns either a `superduperdb.job.Job` object, or an iterable thereof.
 
 ```python
-job = m.predict(     # a `superduper.job.ComponentJob` object
-    X='x',
-    db=db,
-    select=Collection('localcluster').find(),
-)
-
-job.watch()          # watch the `stdout` of the `Job`
+jobs = db.apply(<component>)[0]
 ```

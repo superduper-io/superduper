@@ -22,7 +22,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -31,22 +31,16 @@ won't be necessary.
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !pip install PyPDF2
+        !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
+        from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=model_output_dtype)
         def chunker(pdf_file):
-            reader = PyPDF2.PdfReader(pdf_file)
-            num_pages = len(reader.pages)
-            print(f'Number of pages {num_pages}')
-            text = []    
-            for i in range(num_pages):
-                page = reader.pages[i]        
-                page_text = page.extract_text()
-                text.append(page_text)
-            text = '\n\n'.join(text)
+            elements = partition_pdf(pdf_file)
+            text = '\n'.join([e.text for e in elements])
             chunks = [text[i:i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
             return chunks        
         ```

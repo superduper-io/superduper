@@ -10,7 +10,7 @@ vector_index_name = 'my-vector-index'
 # <tab: 1-Modality>
 from superduperdb import VectorIndex, Listener
 
-jobs, _ = db.apply(
+jobs, _ = db.add(
     VectorIndex(
         vector_index_name,
         indexing_listener=Listener(
@@ -27,7 +27,7 @@ jobs, _ = db.apply(
 # <tab: 2-Modalities>
 from superduperdb import VectorIndex, Listener
 
-jobs, _ = db.apply(
+jobs, _ = db.add(
     VectorIndex(
         vector_index_name,
         indexing_listener=Listener(

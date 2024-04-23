@@ -1,7 +1,3 @@
----
-sidebar_position: 1
----
-
 # Developer vs. production mode
 
 Please refer to the [architecture](../fundamentals/architecture.md) page for a detailed description of the `superduperdb` architecture.
@@ -15,6 +11,7 @@ own micro-services and containers:
   - scheduler
   - workers
 - vector-searcher service
+- REST-ful server service
 
 ## Development mode
 
@@ -33,8 +30,9 @@ There are several gradations of a more productionized deployment.
 In the most distributed case we have:
 
 - A `jupyter` environment running in its own process
-- A [distributed **Dask** cluster](non_blocking_dask_jobs.md), with scheduler and workers configured to work with `superduperdb`
-- A [**change-data-capture** service](change_data_capture.md)
-- A [**vector-search** service](vector_comparison_service.md), which finds similar vectors, given an input vector
+- A [distributed **Ray** cluster](non_blocking_ray_jobs), with scheduler and workers configured to work with `superduperdb`
+- A [**change-data-capture** service](change_data_capture)
+- A [**vector-search** service](vector_comparison_service), which finds similar vectors, given an input vector
+- A [**REST** server](./rest_api)
 
 In the remainder of this section we describe the use of each of these services

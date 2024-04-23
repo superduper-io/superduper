@@ -1,9 +1,13 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb.base.document import _build_leaves
 from superduperdb.misc.annotations import public_api
 
 from .component import Component
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 @public_api(stability='alpha')
@@ -31,3 +35,9 @@ class Stack(Component):
         self._db = value
         for component in self.components:
             component.db = value
+
+    @staticmethod
+    def from_list(identifier, content, db: t.Optional['Datalayer'] = None):
+        out, exit = _build_leaves(content, db=db)
+        out = [out[k] for k in exit]
+        return Stack(identifier, components=out)

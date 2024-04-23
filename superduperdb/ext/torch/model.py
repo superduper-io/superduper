@@ -26,6 +26,9 @@ from superduperdb.components.model import (
 )
 from superduperdb.ext.torch.utils import device_of, eval, to_device
 
+if t.TYPE_CHECKING:
+    from superduperdb.jobs.job import Job
+
 
 def torchmodel(cls):
     """
@@ -137,6 +140,14 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
         else:
             self.forward_signature = signature
 
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence['Job'] = (),
+    ) -> t.Sequence[t.Any]:
+        jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
+        return jobs
+
     @property
     def inputs(self) -> CallableInputs:
         return CallableInputs(
@@ -195,15 +206,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
                 state.__dict__['object'] = torch.jit.load(
                     io.BytesIO(state.pop('object_bytes'))
                 )
-
-    def compute_validation_objective(self, model, valid_dataloader):
-        objective_values = []
-        with self.evaluating(), torch.no_grad():
-            for batch in valid_dataloader:
-                objective_values.append(
-                    self.objective(*model.train_forward(*batch)).item()
-                )
-            return sum(objective_values) / len(objective_values)
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):

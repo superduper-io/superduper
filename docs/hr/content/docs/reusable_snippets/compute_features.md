@@ -11,7 +11,9 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        # !pip install sentence-transformers
+        
+        key = 'txt'
+        
         import sentence_transformers
         from superduperdb import vector, Listener
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -23,11 +25,11 @@ import TabItem from '@theme/TabItem';
             postprocess=lambda x: x.tolist(),
         )
         
-        db.add(
+        jobs, listener = db.apply(
             Listener(
                 model=superdupermodel,
                 select=select,
-                key="text",
+                key=key,
                 identifier="features"
             )
         )        
@@ -35,10 +37,9 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        # !pip install torch
-        # !pip install torchvision
         
-        import torch
+        key = 'image'
+        
         import torchvision.models as models
         from torchvision import transforms
         from superduperdb.ext.torch import TorchModel
@@ -68,11 +69,11 @@ import TabItem from '@theme/TabItem';
         model = TorchVisionEmbedding()
         superdupermodel = TorchModel(identifier='my-vision-model-torch', object=model.resnet, preprocess=model.preprocess, postprocess=lambda x: x.numpy().tolist())
         
-        db.apply(
+        jobs, listener = db.apply(
             Listener(
                 model=superdupermodel,
                 select=select,
-                key="image",
+                key=key,
                 identifier="features"
             )
         )        
@@ -80,9 +81,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Text-And-Image" label="Text-And-Image" default>
         ```python
-        # !pip install torch
-        # !pip install torchvision
-        # !pip install git+https://github.com/openai/CLIP.git
         import torch
         import clip
         from torchvision import transforms
@@ -92,6 +90,8 @@ import TabItem from '@theme/TabItem';
         import torch
         import clip
         from PIL import Image
+        
+        key={'txt': 'txt', 'image': 'image'}
         
         class CLIPModel:
             def __init__(self):
@@ -111,11 +111,11 @@ import TabItem from '@theme/TabItem';
         
         superdupermodel = ObjectModel(identifier="clip", object=model, signature="**kwargs", flatten=True, model_update_kwargs={"document_embedded": False})
         
-        db.add(
+        jobs, listener = db.apply(
             Listener(
                 model=superdupermodel,
                 select=select,
-                key={"text": "text", "image": "image"},
+                key=key
                 identifier="features"
             )
         )
@@ -124,6 +124,9 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Random" label="Random" default>
         ```python
+        
+        key = 'random'
+        
         import numpy as np
         from superduperdb import superduper, ObjectModel, Listener
         
@@ -132,11 +135,11 @@ import TabItem from '@theme/TabItem';
         
         superdupermodel = ObjectModel(identifier="random", object=random)
         
-        db.apply(
+        jobs, listener = db.apply(
             Listener(
                 model=superdupermodel,
                 select=select,
-                key="text",
+                key=key,
                 identifier="features"
             )
         )        
@@ -147,6 +150,7 @@ import TabItem from '@theme/TabItem';
         import numpy as np
         from superduperdb import superduper, ObjectModel, Listener
         
+        key = 'custom'
         
         # Define any feature calculation function
         def calc_fake_feature(input_data):
@@ -155,12 +159,12 @@ import TabItem from '@theme/TabItem';
         
         superdupermodel = ObjectModel(identifier="fake_feature", object=calc_fake_feature)
         
-        db.apply(
+        jobs, listener = db.apply(
             Listener(
                 model=superdupermodel,
                 select=select,
                 # key of input_data
-                key="input_data",
+                key=key,
                 identifier="features"
             )
         )        

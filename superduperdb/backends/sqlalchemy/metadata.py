@@ -83,6 +83,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('stdout', type_json_as_string),
             Column('stderr', type_json_as_string),
             Column('cls', type_string),
+            Column('job_id', type_string),
             *job_table_args,
         )
 

@@ -18,6 +18,7 @@ from superduperdb.backends.base.metadata import MetaDataStore
 from superduperdb.backends.base.query import (
     Delete,
     Insert,
+    Predict,
     RawQuery,
     Select,
     Update,
@@ -54,7 +55,7 @@ DeleteResult = DBResult
 InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = SuperDuperCursor
 UpdateResult = t.Any
-
+PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteQuery = t.Union[Select, Delete, Update, Insert, str]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
@@ -105,7 +106,6 @@ class Datalayer:
         self.artifact_store.serializers = self.datatypes
 
         self.databackend = databackend
-        # TODO: force set config stores connection url
 
         self.cdc = DatabaseChangeDataCapture(self)
 
@@ -125,7 +125,11 @@ class Datalayer:
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> t.Optional[BaseVectorSearcher]:
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
-        vi = self.vector_indices[identifier]
+
+        vi = self.vector_indices.force_load(identifier)
+        from superduperdb import VectorIndex
+
+        assert isinstance(vi, VectorIndex)
 
         clt = vi.indexing_listener.select.table_or_collection
 
@@ -282,27 +286,32 @@ class Datalayer:
         """
 
         if isinstance(query, Delete):
-            return self.delete(query, *args, **kwargs)
+            return self._delete(query, *args, **kwargs)
         if isinstance(query, Insert):
-            return self.insert(query, *args, **kwargs)
+            return self._insert(query, *args, **kwargs)
         if isinstance(query, Select):
-            return self.select(query, *args, **kwargs)
+            return self._select(query, *args, **kwargs)
         if isinstance(query, Table):
-            return self.select(query.to_query(), *args, **kwargs)
+            return self._select(query.to_query(), *args, **kwargs)
         if isinstance(query, Update):
             return self.update(query, *args, **kwargs)
         if isinstance(query, Write):
             return self.write(query, *args, **kwargs)
+        if isinstance(query, Predict):
+            return self._predict(query, *args, **kwargs)
         if isinstance(query, RawQuery):
             return query.execute(self)
 
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {t.Union[Select, Delete, Update, Insert, str]}; '
+            f'Expected object of type {t.Union[Select, Delete, Update, Insert, Predict, str]}; '
             f'Got {type(query)};'
         )
 
-    def delete(self, delete: Delete, refresh: bool = True) -> DeleteResult:
+    def _predict(self, prediction: Predict) -> PredictResult:
+        return prediction.execute(self)
+
+    def _delete(self, delete: Delete, refresh: bool = True) -> DeleteResult:
         """
         Delete data.
 
@@ -313,7 +322,7 @@ class Datalayer:
             return result, self.refresh_after_delete(delete, ids=result)
         return result, None
 
-    def insert(
+    def _insert(
         self, insert: Insert, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
     ) -> InsertResult:
         """
@@ -349,7 +358,7 @@ class Datalayer:
                 )
         return inserted_ids, None
 
-    def select(self, select: Select, reference: bool = True) -> SelectResult:
+    def _select(self, select: Select, reference: bool = True) -> SelectResult:
         """
         Select data.
 
@@ -563,6 +572,7 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         info_only: bool = False,
+        on_ray: bool = False,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load component using uniquely identifying information.
@@ -992,54 +1002,6 @@ class Datalayer:
         logging.info(str(outs))
         return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
-    # TODO deprecate in favour of remote model calls
-    def predict(
-        self,
-        model_name: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[t.Union[str, Select]] = None,
-        context_key: t.Optional[str] = None,
-    ) -> t.Tuple[Document, t.List[Document]]:
-        """
-        Apply model to input.
-
-        :param model_name: model identifier
-        :param input: input to be passed to the model.
-                      Must be possible to encode with registered datatypes
-        :param context_select: select query object to provide context
-        :param context_key: key to use to extract context from context_select
-        """
-        model = self.models[model_name]
-        context = None
-        sources: t.List[Document] = []
-
-        if context_select is not None:
-            assert 'context' in model.inputs.params
-            if isinstance(context_select, Select):
-                context, sources = self._get_context(model, context_select, context_key)
-            elif isinstance(context_select, str):
-                context = context_select
-            else:
-                raise TypeError("context_select should be either Select or str")
-            context = [r.unpack() for r in context]
-        else:
-            sources = []
-
-        if 'context' in model.inputs.params:
-            out = model.predict_one(input, context=context)
-        else:
-            out = model.predict_one(input)
-
-        if isinstance(model.datatype, DataType):
-            out = model.datatype(out)
-        elif isinstance(model.output_schema, Schema):
-            # TODO make Schema callable
-            out = model.output_schema.encode(out)
-
-        if not isinstance(out, dict):
-            out = {'_base': out}
-        return Document(out), sources
-
     def close(self):
         """
         Gracefully shutdown the Datalayer
@@ -1084,3 +1046,6 @@ class LoadDict(dict):
             assert self.callable is not None, msg
             value = self[key] = self.callable(key)
         return value
+
+    def force_load(self, key: str):
+        return self.__missing__(key)

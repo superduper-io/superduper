@@ -16,9 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make lance upsert for added vectors
 - Make vectors normalized in inmemory vector database for cosine measure.
 - Add local cluster as tmux session 
+- At the end of the test, drop the collection instead of the database
+- Force load vector indices during backfill
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment
+- Fix  torch model fit and make schedule_jobs at db add
 - Add requires functionality for all extension modules
 - CI fails if CHANGELOG.md is not updated on PRs
 - Update Menu structure and renamed use-cases
@@ -39,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added snippet for connecting to superduperdb in docs
 
 #### Bug Fixes
+- Separate nightly release from sandbox
 - Fixed a bug in refresh_after_insert for listeners with select None
 - Refactor graph internal with input mapping
 - Fixed a bug in Component init
@@ -52,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed vllm real-time task concurrency bug
 - Fixed Post-Like feature
 - Added CORS Policy regarding REST server implementation
+
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 

@@ -176,9 +176,13 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
     compute = _build_compute(cfg.cluster.compute.uri)
 
-    return Datalayer(
+    datalayer = Datalayer(
         databackend=databackend,
         metadata=metadata,
         artifact_store=artifact_store,
         compute=compute,
     )
+    # Keep the real configuration in the datalayer object.
+    datalayer.cfg = cfg
+
+    return datalayer

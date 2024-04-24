@@ -7,13 +7,13 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.components.model import Validation
 from test.db_config import DBConfig
 
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
+from superduperdb.components.model import Validation
 from superduperdb.ext.torch.training import TorchTrainer
 
 

@@ -42,7 +42,7 @@ def insert(data):
     data = {
         "documents": data,
         "query": [
-            f"documents.insert_many($documents)"
+            "documents.insert_many($documents)"
         ],
         "artifacts": [],
     }

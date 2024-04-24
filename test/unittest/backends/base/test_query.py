@@ -1,8 +1,8 @@
-from superduperdb.backends.base.query import Predict
 from test.db_config import DBConfig
 
 import pytest
 
+from superduperdb.backends.base.query import Predict
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.query import Collection
@@ -137,18 +137,18 @@ def test_model(db):
 
     m = db.load('model', 'linear_a')
 
-    result = m.predict_one(torch.randn(32))
+    m.predict_one(torch.randn(32))
 
     from superduperdb.backends.base.query import model
 
     t = torch.randn(32)
 
-    result1 = m.predict_one(t)
+    m.predict_one(t)
 
     q = model('linear_a').predict_one(t)
 
-    issubclass = isinstance(q, Predict)
+    isinstance(q, Predict)
 
-    result2 = db.execute(q)
+    db.execute(q)
     
     import pdb; pdb.set_trace()

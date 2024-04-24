@@ -1,10 +1,10 @@
 import dataclasses as dc
 import typing as t
+from test.db_config import DBConfig
 
 import pytest
-from superduperdb.ext.pillow.encoder import pil_image_hybrid_png
 
-from test.db_config import DBConfig
+from superduperdb.ext.pillow.encoder import pil_image_hybrid_png
 
 try:
     import torch

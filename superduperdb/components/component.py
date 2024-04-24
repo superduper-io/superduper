@@ -61,6 +61,10 @@ class Component(Serializable, Leaf):
         else:
             return f'_component/{self.type_id}/{self.identifier}/{self.version}'
 
+    @classmethod
+    def handle_integration(cls, kwargs):
+        return kwargs
+
     @property
     def id_tuple(self):
         return ComponentTuple(self.type_id, self.identifier, self.version)

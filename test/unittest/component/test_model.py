@@ -24,8 +24,8 @@ from superduperdb.components.model import (
     QueryModel,
     SequentialModel,
     Trainer,
-    _Fittable,
     Validation,
+    _Fittable,
 )
 from superduperdb.jobs.job import ComponentJob
 

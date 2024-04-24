@@ -34,6 +34,7 @@ from superduperdb.components.model import (
 )
 from superduperdb.ext.llm.model import BaseLLM
 from superduperdb.ext.transformers.training import Checkpoint
+from superduperdb.jobs.job import Job
 
 
 class _TrainerWithSaving(NativeTrainer):
@@ -220,7 +221,6 @@ class LLM(BaseLLM, _Fittable):
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
     signature: str = 'singleton'
-    training_kwargs: t.Dict = dc.field(default_factory=dict)
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}
@@ -412,6 +412,18 @@ class LLM(BaseLLM, _Fittable):
         )
         results = [output[0]["generated_text"] for output in outputs]
         return results
+
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+    ) -> t.Sequence[t.Any]:
+        jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
+        if self.validation is not None:
+            jobs = self.validation.schedule_jobs(
+                self, db, dependencies=[*dependencies, *jobs]
+            )
+        return jobs
 
     def add_adapter(self, model_id, adapter_name: str):
         # TODO: Support lora checkpoint from s3

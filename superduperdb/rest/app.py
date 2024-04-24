@@ -127,7 +127,7 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
-        return app.db.metadata.show_jobs(type_id=type_id, identifier=identifier)
+        return [r['job_id'] for r in app.db.metadata.show_jobs(type_id=type_id, component_identifier=identifier) if 'job_id' in r]
 
     @app.add('/db/execute', method='post')
     def db_execute(

@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import sys
@@ -122,15 +123,20 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
         if type == 'metadata':
             raise ValueError('Cannot build metadata from a CSV file.')
 
-        import glob
+        uri = uri.split('://')[-1]
 
         csv_files = glob.glob(uri)
+        dir_name = os.path.dirname(uri)
         tables = {}
         for csv_file in csv_files:
             filename = os.path.basename(csv_file)
-            tables[filename] = pandas.read_csv(csv_file)
+            if os.path.getsize(csv_file) == 0:
+                df = pandas.DataFrame()
+            else:
+                df = pandas.read_csv(csv_file)
+            tables[filename.split('.')[0]] = df
         ibis_conn = ibis.pandas.connect(tables)
-        return mapping['ibis'](ibis_conn, uri.split('/')[0])
+        return mapping['ibis'](ibis_conn, dir_name, in_memory=True)
     else:
         name = uri.split('//')[0]
         if type == 'data_backend':

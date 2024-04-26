@@ -1,6 +1,6 @@
 DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
-BACKENDS ?= mongodb_community sqlite duckdb
+BACKENDS ?= mongodb_community sqlite duckdb pandas
 
 export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 

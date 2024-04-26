@@ -1,9 +1,11 @@
+import os
 import typing as t
 from warnings import warn
 
 import ibis
 import pandas
 from ibis.backends.base import BaseBackend
+from pandas.core.frame import DataFrame
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
@@ -47,7 +49,17 @@ class IbisDataBackend(BaseDataBackend):
         if not self.in_memory:
             self.conn.insert(table_name, raw_documents)
         else:
-            self.conn.create_table(table_name, pandas.DataFrame(raw_documents))
+            # CAUTION: The following is only tested with pandas.
+            if table_name in self.conn.tables:
+                t = self.conn.tables[table_name]
+                df = pandas.concat([t.to_pandas(), raw_documents])
+                self.conn.create_table(table_name, df, overwrite=True)
+            else:
+                df = pandas.DataFrame(raw_documents)
+                self.conn.create_table(table_name, df)
+
+            if self.conn.backend_table_type == DataFrame:
+                df.to_csv(os.path.join(self.name, table_name + '.csv'), index=False)
 
     def create_output_dest(
         self,
@@ -95,7 +107,7 @@ class IbisDataBackend(BaseDataBackend):
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
         except Exception as e:
-            if 'exists' in str(e):
+            if 'exists' in str(e) or 'override' in str(e):
                 warn("Table already exists, skipping...")
                 t = self.conn.table(identifier)
             else:

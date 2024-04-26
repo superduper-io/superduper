@@ -1,0 +1,62 @@
+{
+    "_leaves": [
+        {
+            "cls": "DataType",
+            "module": "superduperdb.components.datatype",
+            "dict": {
+                "identifier": "vector[384]",
+                "encoder": null,
+                "decoder": null,
+                "info": null,
+                "shape": [
+                    384
+                ],
+                "directory": null,
+                "encodable": "native",
+                "bytes_encoding": "Bytes",
+                "media_type": null,
+                "version": null
+            },
+            "type_id": "datatype",
+            "identifier": "vector[384]",
+            "version": null,
+            "hidden": false,
+            "id": "_component/datatype/vector[384]"
+        },
+        {
+            "cls": "LazyArtifact",
+            "module": "superduperdb.components.datatype",
+            "dict": {
+                "file_id": "ced9a58e56532d8316bdbb0261f5418e7b8050d1",
+                "uri": null,
+                "datatype": "_component/datatype/dill_lazy"
+            },
+            "id": "_lazy_artifact/ced9a58e56532d8316bdbb0261f5418e7b8050d1"
+        },
+        {
+            "cls": "ObjectModel",
+            "module": "superduperdb.components.model",
+            "dict": {
+                "identifier": "test",
+                "signature": "*args,**kwargs",
+                "datatype": "_component/datatype/vector[384]",
+                "output_schema": null,
+                "flatten": false,
+                "model_update_kwargs": {},
+                "predict_kwargs": {},
+                "compute_kwargs": {},
+                "validation": null,
+                "metric_values": {},
+                "num_workers": 0,
+                "object": "_lazy_artifact/ced9a58e56532d8316bdbb0261f5418e7b8050d1",
+                "version": null
+            },
+            "type_id": "model",
+            "identifier": "test",
+            "version": null,
+            "hidden": false,
+            "id": "_component/model/test"
+        }
+    ],
+    "_base": "_component/model/test"
+}

@@ -438,6 +438,53 @@ class QueryType(str, enum.Enum):
     ATTR = 'attr'
 
 
+def _deep_flat_encode_impl(self, cache):
+    import json
+    import uuid
+
+    out_str = []
+    documents = {}
+    for k in dc.fields(self):
+        if k.name in {'name', 'type'}:
+            continue
+        if k.name == 'args':
+            for arg in self.args:
+                if isinstance(arg, Document):
+                    id = uuid.uuid4().hex[:5].upper()
+                    out_str.append(f'_documents[{id}]')
+                    documents[id] = arg
+                    continue
+                out_str.append(json.dumps(arg).replace('"', "'"))
+            continue
+        if k.name == 'kwargs':
+            for k, v in self.kwargs.items():
+                if v is None:
+                    continue
+                if isinstance(v, Document):
+                    id = uuid.uuid4().hex[:5].upper()
+                    out_str.append(f'{k}=_documents[{id}]')
+                    documents[id] = v
+                else:
+                    v = json.dumps(v).replace('"', "'")
+                    out_str.append(f'{k}={v}')
+            continue
+        v = getattr(self, k.name)
+        if v is None:
+            continue
+        if isinstance(v, Document):
+            id = uuid.uuid4().hex[:5].upper()
+            out_str.append(f'{k.name}=_documents[{id}]')
+            documents[id] = v
+        else:
+            v = json.dumps(v).replace('"', "'")
+            out_str.append(f'{k.name}={str(v)}')
+    out_str = ', '.join(out_str)
+    if hasattr(self, 'name'):
+        return f'{self.name}({out_str})', documents
+    else:
+        return f'{self.__class__.__name__.lower()}({out_str})', documents
+
+
 @dc.dataclass(repr=False)
 class QueryComponent(Serializable):
     """
@@ -461,6 +508,8 @@ class QueryComponent(Serializable):
     type: str = QueryType.ATTR
     args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
+
+    _deep_flat_encode = _deep_flat_encode_impl
 
     def repr_(self) -> str:
         if self.type == QueryType.ATTR:
@@ -598,6 +647,8 @@ class Like(Serializable):
     r: t.Union[t.Dict, Document]
     vector_index: str
     n: int = 10
+
+    _deep_flat_encode = _deep_flat_encode_impl
 
     def execute(self, db, ids: t.Optional[t.Sequence[str]] = None):
         return db.select_nearest(

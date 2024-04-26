@@ -5,9 +5,13 @@ The component module provides the base class for all components in SuperDuperDB.
 from __future__ import annotations
 
 import dataclasses as dc
+import json
+import os
 import typing as t
 from collections import namedtuple
 from functools import wraps
+
+import yaml
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
@@ -19,6 +23,25 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
     from superduperdb.components.datatype import DataType
+
+
+def import_(r=None, path=None, db=None):
+    from superduperdb.base.document import _build_leaves
+
+    if r is None:
+        try:
+            with open(f'{path}/component.json') as f:
+                r = json.load(f)
+        except FileNotFoundError:
+            with open(f'{path}/component.yaml') as f:
+                r = yaml.safe_load(f)
+        for id_ in os.listdir(path):
+            if id_ == 'component.json' or id_ == 'component.yaml':
+                continue
+            with open(f'{path}/{id_}', 'rb') as f:
+                bytes[id_] = f.read()
+    r['_leaves'] = _build_leaves(r['_leaves'], db=db)[0]
+    return r['_leaves'][r['_base']]
 
 
 def getdeepattr(obj, attr):
@@ -50,10 +73,7 @@ class Component(Serializable, Leaf):
 
     @property
     def id(self):
-        if self.version is None:
-            return f'_component/{self.type_id}/{self.identifier}'
-        else:
-            return f'_component/{self.type_id}/{self.identifier}/{self.version}'
+        return f'_component/{self.type_id}/{self.identifier}'
 
     @property
     def id_tuple(self):
@@ -167,6 +187,58 @@ class Component(Serializable, Leaf):
         """
         assert db
 
+    def _deep_flat_encode(self, cache):
+        from superduperdb.base.document import _deep_flat_encode
+
+        r = dict(self.dict())
+        r['dict'] = _deep_flat_encode(r['dict'], cache)
+        r['id'] = self.id
+        cache[self.id] = r
+        return self.id
+
+    def deep_flat_encode(self):
+        cache = {}
+        id = self._deep_flat_encode(cache)
+        return {'_leaves': list(cache.values()), '_base': id}
+
+    def _to_dict_and_bytes(self):
+        r = self.deep_flat_encode()
+        bytes = {}
+        for leaf in r['_leaves']:
+            if 'bytes' in leaf['dict']:
+                bytes[leaf['dict']['file_id']] = leaf['dict']['bytes']
+                del leaf['dict']['bytes']
+        return r, bytes
+
+    def export(self, format=None):
+        r, bytes = self._to_dict_and_bytes()
+
+        if format is None:
+            return r, bytes
+
+        if self.version is None:
+            path = f'_component.{self.type_id}.{self.identifier}'
+        else:
+            path = f'_component.{self.type_id}.{self.identifier}.{self.version}'
+
+        os.makedirs(path, exist_ok=True)
+
+        for file_id in bytes:
+            with open(f'{path}/{file_id}', 'wb') as f:
+                f.write(bytes[file_id])
+
+        if format == 'json':
+            with open(f'{path}/component.json', 'w') as f:
+                f.write(json.dumps(r, indent=4))
+            return r, bytes
+
+        if format == 'yaml':
+            with open(f'{path}/component.yaml', 'w') as f:
+                f.write(yaml.safe_dump(r))
+            return r, bytes
+
+        raise NotImplementedError(f'Format {format} not supported')
+
     def dict(self) -> 'Document':
         from superduperdb import Document
         from superduperdb.components.datatype import Artifact, File
@@ -196,6 +268,7 @@ class Component(Serializable, Leaf):
         r = super().encode(leaf_types_to_keep=leaf_types_to_keep)
         del r['_content']['dict']
         r['_content']['leaf_type'] = 'component'
+        r['_content']['id'] = self.id
         return r
 
     @classmethod

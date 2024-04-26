@@ -1,3 +1,4 @@
+import inspect
 import typing as t
 from abc import ABC, abstractmethod, abstractproperty
 
@@ -45,7 +46,12 @@ class Leaf(ABC):
 
     @classmethod
     def build(cls, r):
-        return cls(**r)
+        modified = {
+            k: v
+            for k, v in r.items()
+            if k in inspect.signature(cls.__init__).parameters
+        }
+        return cls(**modified)
 
     def init(self, db=None):
         pass

@@ -8,7 +8,7 @@ from fastapi import File, Response
 from superduperdb import CFG, logging
 from superduperdb.backends.base.query import Delete, Insert
 from superduperdb.base.document import Document
-from superduperdb.components.component import Component
+from superduperdb.components.component import Component, import_
 from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import (
@@ -77,6 +77,11 @@ CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
     'vector-index': {'VectorIndex': VectorIndex},
 }
 
+FLAT_CLASSES = {}
+for k in CLASSES:
+    for sub in CLASSES[k]:
+        FLAT_CLASSES[sub] = CLASSES[k][sub]
+
 
 MODULE_LOOKUP: t.Dict[str, t.Dict[str, t.Any]] = {}
 API_SCHEMAS: t.Dict[str, t.Dict[str, t.Any]] = {}
@@ -126,13 +131,12 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/apply', method='post')
     def db_apply(info: t.Dict):
-        for r in info['_leaves']:
-            cls = CLASSES[r['type_id']][r['cls']]
-            r['cls'] = cls.__name__
-            r['module'] = cls.__module__
-        component = Stack.from_list(
-            content=info['_leaves'], db=app.db, identifier=info['identifier']
-        )
+        if 'identifier' in info:
+            component = Stack.from_list(
+                content=info['_leaves'], db=app.db, identifier=info['identifier']
+            )
+        else:
+            component = import_(r=info, db=app.db)
         app.db.apply(component)
         return {'status': 'ok'}
 
@@ -150,6 +154,8 @@ def build_app(app: superduperapp.SuperDuperApp):
         out = app.db.show(type_id=type_id, identifier=identifier, version=version)
         if isinstance(out, dict) and '_id' in out:
             del out['_id']
+        if type_id == 'datatype':
+            out.extend(list(app.db.datatypes.keys()))
         return out
 
     @app.add('/db/metadata/show_jobs', method='get')

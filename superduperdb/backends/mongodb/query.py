@@ -306,6 +306,32 @@ class Aggregate(Select):
 class MongoCompoundSelect(CompoundSelect):
     DB_TYPE: t.ClassVar[str] = 'MONGODB'
 
+    def _deep_flat_encode(self, cache):
+        documents = {}
+        query_chain = []
+
+        if self.pre_like is not None:
+            query, sub_docs = self.pre_like._deep_flat_encode(cache)
+            query_chain.append(query)
+            documents.update(sub_docs)
+
+        for member in self.query_linker.members:
+            query, sub_docs = member._deep_flat_encode(cache)
+            query_chain.append(query)
+            documents.update(sub_docs)
+
+        if self.post_like is not None:
+            query, sub_docs = self.pre_like._deep_flat_encode(cache)
+            query_chain.append(query)
+            documents.update(sub_docs)
+
+        query = f'{self.table_or_collection.identifier}.' + '.'.join(query_chain)
+        for i, k in enumerate(documents):
+            query = query.replace(k, f'{i}')
+
+        documents = list(documents.values())
+        return {'query': query, 'documents': [r.encode() for r in documents]}
+
     def _get_query_linker(self, table_or_collection, members) -> 'QueryLinker':
         return MongoQueryLinker(
             table_or_collection=table_or_collection, members=members

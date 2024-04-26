@@ -101,6 +101,8 @@ class ArtifactStore(ABC):
                   and optional fields
                   {'file_id', 'uri'}
         """
+        if r.get('leaf_type') != 'file' and 'file_id' in r and r.get('bytes') is None:
+            return
         if r.get('leaf_type') == 'file':
             assert 'file_id' in r, 'file_id is missing!'
             file_id = self._save_file(r['uri'], r['file_id'])

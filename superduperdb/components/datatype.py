@@ -224,6 +224,22 @@ class _BaseEncodable(Leaf):
     uri: t.Optional[str] = None
     sha1: t.Optional[str] = None
 
+    def _deep_flat_encode(self, cache):
+        r = self.encode()
+        out = {
+            'cls': self.__class__.__name__,
+            'module': self.__class__.__module__,
+            'dict': {
+                'file_id': r['_content']['file_id'],
+                'bytes': r['_content']['bytes'],
+                'uri': r['_content']['uri'],
+                'datatype': f'_component/datatype/{r["_content"]["datatype"]}',
+            },
+            'id': f'_{self.leaf_type}/{r["_content"]["file_id"]}',
+        }
+        cache[out['id']] = out
+        return out['id']
+
     @property
     def id(self):
         assert self.file_id is not None
@@ -339,6 +355,10 @@ class Encodable(_BaseEncodable):
                 'sha1': sha1,
                 'uri': self.uri,
                 'file_id': sha1 if self.file_id is None else self.file_id,
+                'id': (
+                    f'_{self.leaf_type}/'
+                    f'{sha1 if self.file_id is None else self.file_id}',
+                ),
             }
         }
 
@@ -397,6 +417,15 @@ class Artifact(_BaseEncodable):
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
+    def init(self, db):
+        if isinstance(self.x, Empty):
+            self.x = self._get_object(
+                db,
+                file_id=self.file_id,
+                datatype=self.datatype.identifier,
+                uri=self.uri,
+            )
+
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         if self.x is not None and not isinstance(self.x, Empty):
@@ -411,11 +440,12 @@ class Artifact(_BaseEncodable):
                 'sha1': sha1,
                 'uri': self.uri,
                 'file_id': sha1 if self.file_id is None else self.file_id,
+                'id': (
+                    f'_{self.leaf_type}/'
+                    f'{sha1 if self.file_id is None else self.file_id}',
+                ),
             }
         }
-
-    def init(self, db):
-        pass
 
     @classmethod
     def _get_object(cls, db, file_id, datatype, uri):
@@ -471,15 +501,6 @@ class LazyArtifact(Artifact):
     def __post_init__(self):
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
             raise ArtifactSavingError('BASE64 not supported on disk!')
-
-    def init(self, db):
-        if isinstance(self.x, Empty):
-            self.x = self._get_object(
-                db,
-                file_id=self.file_id,
-                datatype=self.datatype.identifier,
-                uri=self.uri,
-            )
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
@@ -545,6 +566,7 @@ class File(_BaseEncodable):
                 'leaf_type': self.leaf_type,
                 'uri': self.uri,
                 'file_id': self.file_id,
+                'id': f'_{self.leaf_type}/{self.file_id}',
             }
         }
 
@@ -576,7 +598,7 @@ pickle_serializer = DataType(
     encodable='artifact',
 )
 pickle_lazy = DataType(
-    'pickle',
+    'pickle_lazy',
     encoder=pickle_encode,
     decoder=pickle_decode,
     encodable='lazy_artifact',
@@ -588,7 +610,7 @@ dill_serializer = DataType(
     encodable='artifact',
 )
 dill_lazy = DataType(
-    'dill',
+    'dill_lazy',
     encoder=dill_encode,
     decoder=dill_decode,
     encodable='lazy_artifact',

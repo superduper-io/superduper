@@ -1,10 +1,13 @@
 import dataclasses as dc
+import pprint
 import typing as t
 from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.ext.pillow.encoder import pil_image_hybrid_png
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.components.model import ObjectModel
+from superduperdb.components.vector_index import vector
 
 try:
     import torch
@@ -35,44 +38,33 @@ def test_document_encoding(document):
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_underscore_artifacts(db):
-    with open('test/material/data/test.png', 'rb') as f:
-        bytes = f.read()
-
-    db.apply(pil_image_hybrid_png)
-
-    info = db.artifact_store.save_artifact(
-        {
-            'datatype': pil_image_hybrid_png.identifier,
-            'bytes': bytes,
-            'leaf_type': pil_image_hybrid_png.encodable,
-        }
-    )
-
-    r = Document.decode(
-        {'_artifacts': [{'_content': info}], 'x': f'$artifacts/{info["file_id"]}'},
-        db=db,
-    ).unpack()
-
-    import PIL.PngImagePlugin
-
-    assert isinstance(r['x'], PIL.PngImagePlugin.PngImageFile)
-
-
 def my_function(x):
     return x + 2
 
 
+def test_encode_decode_flattened(db):
+    m = ObjectModel(
+        identifier='test',
+        object=lambda x: x,
+        datatype=vector(384),
+    )
+
+    r, bytes = m.export(format='json')
+    pprint.pprint(r)
+
+    for file_id in bytes:
+        db.artifact_store.save_artifact({'bytes': bytes[file_id], 'datatype': 'dill'})
+
+    r['_leaves'] = _build_leaves(r['_leaves'], db)[0]
+    pprint.pprint(r['_leaves'][r['_base']])
+
+
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_build_leaves(db):
-    # TODO - this is how we encode data going forward
-
     raw = db.datatypes['dill'].encoder(my_function)
     file_id = db.artifact_store.save_artifact({'bytes': raw, 'datatype': 'dill'})[
         'file_id'
     ]
-
     leaf_records = [
         {
             'leaf_type': 'artifact',
@@ -101,3 +93,17 @@ def test_build_leaves(db):
     ]
     out = _build_leaves(leaf_records)
     print(out)
+
+
+def test_flat_query_encoding():
+    q = Collection('docs').find({'a': 1}).limit(2)
+
+    r = q._deep_flat_encode(None)
+
+    doc = Document({'x': 1})
+
+    q = Collection('docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
+
+    r = q._deep_flat_encode(None)
+
+    print(r)

@@ -2,7 +2,7 @@
 
 - apply a `model` to compute outputs on a query
 - outputs are refreshed every-time new data are added
-- outputs are saved to the `data_backend`
+- outputs are saved to the `db.databackend`
 
 ***dependencies***
 
@@ -13,12 +13,12 @@
 (learn how to build a model [here](model))
 
 ```python
-from superduperdb import listener
+from superduperdb import Listener
 m = ...  # build a model
 q = ... # build a select query
 
 # either...
-listener = listener(
+listener = Listener(
     mode=m,
     select=q,
     key='x',

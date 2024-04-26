@@ -4,6 +4,7 @@ import typing as t
 
 from bson.objectid import ObjectId
 
+from superduperdb import logging
 from superduperdb.base.code import Code
 from superduperdb.base.leaf import Leaf, find_leaf_cls
 from superduperdb.base.serializable import Serializable
@@ -77,14 +78,10 @@ class Document(MongoStyleDict):
         db: t.Optional['Datalayer'] = None,
     ) -> t.Any:
         cache = {}
-        if '_artifacts' in r:
-            decoded_artifacts = dict(
-                Document.decode({'_base': r['_artifacts']}, db=db)
-            )['_base']
-            for x in decoded_artifacts:
-                cache[x.file_id] = x
-            del r['_artifacts']
-        decoded = _decode(dict(r), db=db, artifact_cache=cache)
+        if '_leaves' in r:
+            r['_leaves'] = _build_leaves(r['_leaves'], db=db)
+            cache = {sub['id']: sub for sub in r['_leaves']}
+        decoded = _decode(dict(r), db=db, leaf_cache=cache)
         if isinstance(decoded, dict):
             return Document(decoded)
         return decoded
@@ -133,24 +130,21 @@ def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False)
 def _decode(
     r: t.Any,
     db: t.Optional[t.Any] = None,
-    artifact_cache: t.Optional[t.Dict] = None,
+    leaf_cache: t.Optional[t.Dict] = None,
 ) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         leaf_type = r['_content']['leaf_type']
         leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
         return leaf_cls.decode(r, db=db)
     elif isinstance(r, str) and re.match(
-        '^\$(artifacts|lazy_artifacts|blobs|encodables)\/', r
+        '^_(artifact|lazy_artifact|component|encodable)\/', r
     ):
-        type_, id = r[1:].split('/')
-        assert artifact_cache is not None
-        return artifact_cache[id]
+        assert leaf_cache is not None, 'Leaf cache must be provided to decode'
+        return leaf_cache[r]
     elif isinstance(r, list):
-        return [_decode(x, db=db, artifact_cache=artifact_cache) for x in r]
+        return [_decode(x, db=db, leaf_cache=leaf_cache) for x in r]
     elif isinstance(r, dict):
-        return {
-            k: _decode(v, db=db, artifact_cache=artifact_cache) for k, v in r.items()
-        }
+        return {k: _decode(v, db=db, leaf_cache=leaf_cache) for k, v in r.items()}
     else:
         return r
 
@@ -222,9 +216,24 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
 
 
 class NotBuiltError(Exception):
-    def __init__(self, key):
-        super().__init__()
+    def __init__(self, *args, key, **kwargs):
+        super().__init__(*args, **kwargs)
         self.key = key
+
+
+def _encode_flattened(r, leaf_types_to_keep, leaf_cache):
+    if isinstance(r, Leaf):
+        encoded = r.encode()['_content']
+        leaf_cache[encoded['id']] = encoded
+        return encoded['id']
+    if isinstance(r, (list, tuple)):
+        return [_encode_flattened(x, leaf_types_to_keep, leaf_cache) for x in r]
+    if isinstance(r, dict):
+        return {
+            k: _encode_flattened(v, leaf_types_to_keep, leaf_cache)
+            for k, v in r.items()
+        }
+    return r
 
 
 def _fetch_cache_keys(r, cache, used):
@@ -235,10 +244,11 @@ def _fetch_cache_keys(r, cache, used):
             return out
         except KeyError:
             raise NotBuiltError(
-                f"Cache key {r} not found in cache: available: {cache.keys()}"
+                f"Cache key {r} not found in cache: available: {cache.keys()}",
+                key=r,
             )
     elif isinstance(r, dict):
-        return {k: _fetch_cache_keys(v, cache, used) for k, v in r.items()}
+        return {k: _fetch_cache_keys(v, cache, used) for k, v in r.items() if k != 'id'}
     elif isinstance(r, list):
         return [_fetch_cache_keys(x, cache, used) for x in r]
     return r
@@ -270,6 +280,7 @@ def _build_leaves(leaf_records, db=None):
             try:
                 r = _fetch_cache_keys(r, cache, used)
             except NotBuiltError as e:
+                logging.warn(str(e))
                 missing_keys.append(e.key)
                 continue
             built.append(i)
@@ -280,3 +291,13 @@ def _build_leaves(leaf_records, db=None):
             break
     exit_leaves = [k for k in cache.keys() if k not in used and k not in default_keys]
     return {k: v for k, v in cache.items() if k not in default_keys}, exit_leaves
+
+
+def _deep_flat_encode(r, cache):
+    if isinstance(r, dict):
+        return {k: _deep_flat_encode(v, cache) for k, v in r.items()}
+    if isinstance(r, list):
+        return [_deep_flat_encode(x, cache) for x in r]
+    if isinstance(r, Leaf):
+        return r._deep_flat_encode(cache)
+    return r

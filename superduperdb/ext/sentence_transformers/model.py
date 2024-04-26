@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer as _SentenceTransformer
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.components.component import ensure_initialized
-from superduperdb.components.datatype import DataType, dill_serializer
+from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.model import Model, Signature, _DeviceManaged
 
 DEFAULT_PREDICT_KWARGS = {
@@ -17,7 +17,7 @@ DEFAULT_PREDICT_KWARGS = {
 @dc.dataclass(kw_only=True)
 class SentenceTransformer(Model, _DeviceManaged):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_serializer),
+        ('object', dill_lazy),
     )
 
     object: t.Optional[_SentenceTransformer] = None
@@ -51,11 +51,25 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.object is None:
             self.object = _SentenceTransformer(self.model, device=self.device)
 
+    def init(self):
+        super().init()
         self.to(self.device)
 
     def to(self, device):
         self.object = self.object.to(device)
         self.object._target_device = device
+
+    def _deep_flat_encode(self, cache):
+        from superduperdb.base.document import _deep_flat_encode
+
+        r = dict(self.dict())
+        r['dict'] = _deep_flat_encode(r['dict'], cache)
+        r['id'] = self.id
+        cache[self.id] = r
+        del cache[r['dict']['object']]
+        del r['dict']['object']
+        assert 'object' not in r['dict']
+        return self.id
 
     @ensure_initialized
     def predict_one(self, X, *args, **kwargs):

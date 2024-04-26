@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `_Predictor` to `Model`
 - Allow developers to write `Listeners` and `Graph` in a single formalism
 - Change unittesting framework to pure configuration (no patching configs)
-- Add simple REST server implementation
+- Add a simple REST server implementation
 - Add reusable snippets that are reused across the docs
 - Added snippet for connecting to superduperdb in docs
 - Added support to serialize documents in a flat way "_leaves"

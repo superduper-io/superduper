@@ -138,6 +138,12 @@ class DataType(Component):
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
         self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
 
+    def dict(self):
+        r = super().dict()
+        if hasattr(self.bytes_encoding, 'value'):
+            r['dict']['bytes_encoding'] = str(self.bytes_encoding.value)
+        return r
+
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
     ) -> '_BaseEncodable':

@@ -192,6 +192,9 @@ def build_notebook_from_tabs(path, selected_tabs):
             with open(f'docs/reusable_snippets/{snippet}.ipynb') as f:
                 snippet_nb = json.load(f)
             snippet_nb = process_snippet(snippet_nb, tabs)
+            if tabs != '*':
+                if len(tabs.split(',')) == 1:
+                    continue
             snippets_group.append(snippet_nb['cells'])
 
         elif cell['cell_type'] == 'code' and '<tab:' in '\n'.join(cell['source']):
@@ -222,13 +225,7 @@ def build_notebook_from_tabs(path, selected_tabs):
             ix += 1
 
 
-    exported_path = f'./built-notebook-{os.path.basename(path)}'
-    with open(exported_path, 'w') as f:
-        json.dump(built_nb, f)
-
-    with open(exported_path, "rb") as file:
-        notebook_bytes = file.read()
-
+    notebook_bytes  = json.dumps(built_nb).encode('utf-8')
     return Response(content=notebook_bytes, media_type="application/octet-stream")
 
 

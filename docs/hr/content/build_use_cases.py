@@ -4,7 +4,7 @@ import sys
 import typing as t
 import re
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 import uvicorn
 
 
@@ -225,7 +225,11 @@ def build_notebook_from_tabs(path, selected_tabs):
     exported_path = f'./built-notebook-{os.path.basename(path)}'
     with open(exported_path, 'w') as f:
         json.dump(built_nb, f)
-    return exported_path
+
+    with open(exported_path, "rb") as file:
+        notebook_bytes = file.read()
+
+    return Response(content=notebook_bytes, media_type="application/octet-stream")
 
 
 

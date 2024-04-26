@@ -36,6 +36,8 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
         kwargs['data_backend'] = item
 
     elif item.endswith('.csv'):
+        if CFG.cluster.cdc.uri is not None:
+            raise TypeError('Pandas is not supported in cluster mode!')
         kwargs['data_backend'] = item
 
     else:

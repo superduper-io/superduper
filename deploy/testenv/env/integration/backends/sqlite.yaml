@@ -6,7 +6,7 @@ cluster:
     uri: null
   compute:
     uri: null
-data_backend: sqlite:///deploy/testenv/cache/test_sql.db
+data_backend: sqlite://
 downloads:
   folder: null
   headers:

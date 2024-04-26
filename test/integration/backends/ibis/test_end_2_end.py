@@ -1,18 +1,13 @@
-import tempfile
+import os
 
-import ibis
 import PIL.Image
 import pytest
 import torch.nn
 import torchvision
 
 from superduperdb import CFG
-from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import RawSQL, Table
-from superduperdb.backends.local.artifacts import FileSystemArtifactStore
-from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document as D
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema
@@ -23,50 +18,28 @@ from superduperdb.ext.torch.model import TorchModel
 DO_SKIP = CFG.data_backend.startswith('mongo')
 
 
-@pytest.fixture
-def sqllite_conn():
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_db = f'{tmp_dir}/mydb.sqlite'
-        yield ibis.connect('sqlite://' + str(tmp_db)), tmp_dir
+from superduperdb import superduper
 
 
 @pytest.fixture
-def duckdb_conn():
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_db = f'{tmp_dir}/mydb.ddb'
-        yield ibis.connect('duckdb://' + str(tmp_db)), tmp_dir
+def clean_cache():
+    directory = './deploy/testenv/cache'
 
-
-@pytest.fixture
-def test_db(sqllite_conn):
-    connection, tmp_dir = sqllite_conn
-    yield make_ibis_db(connection, connection, tmp_dir)
-
-
-@pytest.fixture
-def ibis_duckdb(duckdb_conn):
-    connection, tmp_dir = duckdb_conn
-    yield make_ibis_db(connection, connection, tmp_dir)
-
-
-@pytest.fixture
-def ibis_pandas_db(sqllite_conn):
-    metadata_connection, tmp_dir = sqllite_conn
-    connection = ibis.pandas.connect({})
-    yield make_ibis_db(connection, metadata_connection, tmp_dir, in_memory=True)
-
-
-def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
-    return Datalayer(
-        databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
-        metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
-        artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
-    )
+    for file in os.listdir(directory):
+        file_path = os.path.join(directory, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 
 @pytest.mark.skipif(DO_SKIP, reason="skipping ibis tests if mongodb")
-def test_end_2_end(test_db, memory_table=False):
-    db = test_db
+def test_end_2_end(clean_cache):
+    memory_table = False
+    if CFG.data_backend.startswith('duckdb') or CFG.data_backend.endswith('csv'):
+        memory_table = True
+    _end_2_end(superduper(), memory_table=memory_table)
+
+
+def _end_2_end(db, memory_table=False):
     schema = Schema(
         identifier='my_table',
         fields={
@@ -196,9 +169,13 @@ def test_end_2_end(test_db, memory_table=False):
         ]
 
 
-def test_nested_query(test_db):
-    db = test_db
+@pytest.mark.skipif(DO_SKIP, reason="skipping ibis tests if mongodb")
+def test_nested_query(clean_cache):
+    db = superduper()
 
+    memory_table = False
+    if CFG.data_backend.endswith('csv'):
+        memory_table = True
     schema = Schema(
         identifier='my_table',
         fields={
@@ -217,4 +194,13 @@ def test_nested_query(test_db):
 
     expr_, _ = q.compile(db)
 
-    assert 'SELECT t0.id, t0.health, t0.age, t0.image, t0._fold' in str(expr_.compile())
+    if not memory_table:
+        assert 'SELECT t0.id, t0.health, t0.age, t0.image, t0._fold' in str(
+            expr_.compile()
+        )
+    else:
+        assert 'Selection[r0]\n  predicates:\n    r0.age > 10' in str(expr_.compile())
+        assert (
+            'my_table\n  id     int64\n  health int32\n  age    '
+            'int32\n  image  binary\n  _fold  string' in str(expr_.compile())
+        )

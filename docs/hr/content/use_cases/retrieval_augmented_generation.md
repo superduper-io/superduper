@@ -1,8 +1,11 @@
 ---
 sidebar_label: Retrieval augmented generation
+filename: retrieval_augmented_generation.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../DownloadButton';
+
 
 <!-- TABS -->
 # Retrieval augmented generation
@@ -856,3 +859,4 @@ llm.predict_one("Hello")
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="retrieval_augmented_generation.md" />

@@ -5,6 +5,7 @@ import typing as t
 import re
 
 from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 
@@ -96,81 +97,6 @@ def build_notebook_from_tabs(path, selected_tabs):
     built_nb = {k: v for k, v in nb.items() if k != 'cells'}
     built_nb['cells'] = []
     ix = 0
-
-    non_snippet_group = []
-
-
-    for cell in nb['cells']:
-        snippet_tab = selected_tabs[ix]
-        if (
-            cell['cell_type'] == 'raw' 
-            and cell['source'] 
-            and cell['source'][0].startswith('<snippet:')
-        ):
-
-            snippet_cells = get_snippet(non_snippet_group, snippet_tab)
-            for scell in snippet_cells:
-                built_nb['cells'].append(scell)
-            if snippet_cells:
-                ix +=1
-                snippet_tab = selected_tabs[ix]
-
-            snippet, tabs = re.match(
-                '^<snippet: ([a-z0-9_\-]+): ([a-zA-Z0-9_\-\,\*]+)>$',
-                cell['source'][0].strip(),
-            ).groups()
-
-
-            ix += 1
-            with open(f'docs/reusable_snippets/{snippet}.ipynb') as f:
-                snippet_nb = json.load(f)
-            snippet_nb = process_snippet(snippet_nb, tabs)
-
-            snippet_cells = get_snippet(snippet_nb['cells'], snippet_tab)
-            for cell in snippet_cells:
-                built_nb['cells'].append(cell)
-
-        else:
-            if cell['cell_type'] == 'markdown':
-                built_nb['cells'].append(cell)
-                snippet_cells = get_snippet(non_snippet_group, snippet_tab)
-                if snippet_cells:
-                    ix += 1
-                for cell in snippet_cells:
-                    built_nb['cells'].append(cell)
-            else:
-                if cell['cell_type'] == 'code' and '<tab:' in '\n'.join(cell['source']):
-                    non_snippet_group.append(cell)
-                else:
-                    built_nb['cells'].append(cell)
-
-    if non_snippet_group:
-        snippet_cells = get_snippet(non_snippet_group, snippet_tab)
-        if snippet_cells:
-            ix += 1
-        for cell in snippet_cells:
-            built_nb['cells'].append(cell)
-
-
-    exported_path = f'./built-notebook-{os.path.basename(path)}'
-    with open(exported_path, 'w') as f:
-        json.dump(built_nb, f)
-    return exported_path
-
-
-
-
-
-
-
-
-def build_notebook_from_tabs(path, selected_tabs):
-    with open(path) as f:
-        nb = json.load(f)
-
-    built_nb = {k: v for k, v in nb.items() if k != 'cells'}
-    built_nb['cells'] = []
-    ix = 0
     snippets_group = []
     non_snippet_group = []
 
@@ -233,7 +159,14 @@ def build_notebook_from_tabs(path, selected_tabs):
 
 def serve_notebook_builder():
     app = FastAPI()
-
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allows all origins
+        allow_credentials=True,
+        allow_methods=["*"],  # Allows all methods
+        allow_headers=["*"],  # Allows all headers
+    )
     @app.post("/build_notebook")
     def build(usecase_path: str, tabs: t.List[str]):
         return build_notebook_from_tabs(usecase_path, tabs)

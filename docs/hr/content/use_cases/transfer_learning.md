@@ -1,8 +1,11 @@
 ---
 sidebar_label: Transfer learning
+filename: transfer_learning.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../DownloadButton';
+
 
 <!-- TABS -->
 # Transfer learning
@@ -177,12 +180,6 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
-```python
-from superduperdb import superduper
-
-db = superduper()
-```
-
 <!-- TABS -->
 ## Connect to SuperDuperDB
 
@@ -300,6 +297,11 @@ Otherwise refer to "Configuring your production system".
 <!-- TABS -->
 ## Get useful sample data
 
+```python
+from superduperdb import dtype
+
+```
+
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
@@ -308,15 +310,24 @@ Otherwise refer to "Configuring your production system".
         import json
         
         with open('text.json', 'r') as f:
-            data = json.load(f)        
+            data = json.load(f)
+        sample_datapoint = "What is mongodb?"
+        
+        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
         !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
         import os
+        from PIL import Image
         
-        data = [f'images/{x}' for x in os.listdir('./images')]        
+        data = [f'images/{x}' for x in os.listdir('./images')]
+        data = [ Image.open(path) for path in data]
+        sample_datapoint = data[-1]
+        
+        from superduperdb.ext.pillow import pil_image
+        chunked_model_datatype = pil_image        
         ```
     </TabItem>
 </Tabs>
@@ -335,7 +346,6 @@ Otherwise refer to "Configuring your production system".
         
         table_or_collection = Collection('documents')
         USE_SCHEMA = False
-        datatype = None
         
         if USE_SCHEMA and isinstance(datatype, DataType):
             schema = Schema(fields={'x': datatype})
@@ -377,10 +387,11 @@ In order to create data, we need to create a `Schema` for encoding our special `
         def do_insert(data):
             schema = None
             
-            if schema is None and datatype is None:
+            
+            if schema is None and (datatype is None  or isinstance(datatype, str)) :
                 data = [Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None:
+            elif schema is None and datatype is not None and isintance():
                 data = [Document({'x': datatype(x)}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
@@ -558,3 +569,4 @@ The following command adds the model to the system and trains the model in one c
 db.apply(model)
 ```
 
+<DownloadButton filename="transfer_learning.md" />

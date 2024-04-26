@@ -1,8 +1,11 @@
 ---
 sidebar_label: Multimodal vector search
+filename: multimodal_vector_search.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../DownloadButton';
+
 
 <!-- TABS -->
 # Multimodal vector search
@@ -1135,3 +1138,4 @@ show(results, visualization_key, get_original)
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="multimodal_vector_search.md" />

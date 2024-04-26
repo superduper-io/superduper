@@ -1,8 +1,11 @@
 ---
 sidebar_label: Fine tune LLM on database
+filename: fine_tune_llm_on_database.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../DownloadButton';
+
 
 <!-- TABS -->
 # Fine tune LLM on database
@@ -625,3 +628,4 @@ There are two methods to load a trained model:
 llm.predict_one(input_text, max_new_tokens=200)
 ```
 
+<DownloadButton filename="fine_tune_llm_on_database.md" />

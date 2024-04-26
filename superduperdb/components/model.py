@@ -1051,6 +1051,7 @@ class QueryModel(Model):
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Union[t.Callable, Code]] = None
     select: CompoundSelect
+    signature: t.ClassVar[Signature] = '**kwargs'
 
     @staticmethod
     def _replace_variables(r):
@@ -1085,7 +1086,7 @@ class QueryModel(Model):
         return Inputs([x.value for x in self.select.variables])
 
     @ensure_initialized
-    def predict_one(self, **kwargs):
+    def predict_one(self, *args, **kwargs):
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
             kwargs = self.preprocess(**kwargs)
@@ -1096,7 +1097,15 @@ class QueryModel(Model):
         return out
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        return [self.predict_one(**dataset[i]) for i in range(len(dataset))]
+        if isinstance(dataset[0], tuple):
+            return [
+                self.predict_one(*dataset[i][0], **dataset[i][1])
+                for i in range(len(dataset))
+            ]
+        elif isinstance(dataset[0], dict):
+            return [self.predict_one(**dataset[i]) for i in range(len(dataset))]
+        else:
+            raise NotImplementedError
 
 
 @public_api(stability='stable')

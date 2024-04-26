@@ -98,6 +98,13 @@ class Serializable(Leaf):
 
     set_post_init: t.ClassVar[t.Sequence] = ()
 
+    def _deep_flat_encode(self, cache):
+        r = dict(self.dict())
+        for k, v in r['dict'].items():
+            if isinstance(v, Leaf):
+                r['dict'][k] = v._deep_flat_encode(cache)
+        return r
+
     @property
     def unique_id(self):
         return hash(str(self.dict().encode()))

@@ -7,8 +7,10 @@ import sys
 CODE_BLOCK = ['```python\n', '\n        ```']
 PREAMBLE = """import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../DownloadButton';\n
 
 """
+
 TABS_WRAPPER = """
 <Tabs>
 {body}
@@ -21,6 +23,7 @@ TABS_ITEM = """    <TabItem value="{title}" label="{title}" default>
 
 
 def render_chunks_as_md(chunks):
+    target_filename = '_'.join(title.lower().split()) + '.md'
     output = ''
     for chunk in chunks:
         if 'content' in chunk:
@@ -28,13 +31,12 @@ def render_chunks_as_md(chunks):
         elif 'tabs' in chunk:
             tabs = []
             for tab in chunk['tabs']:
-                tab = TABS_ITEM.format(
-                    content='        '.join(tab['content']),
-                    title=tab['title']
-                )
+                tab_content = '        '.join(tab['content'])
+                tab = TABS_ITEM.format(content=tab_content, title=tab['title'])
                 tabs.append(tab)
             output += TABS_WRAPPER.format(body='\n'.join(tabs))
-    return PREAMBLE + output
+    button_html = f'<DownloadButton filename="{target_filename}" />\n'
+    return PREAMBLE + output + button_html
 
 
 def render_notebook_as_chunks(nb):
@@ -92,13 +94,14 @@ if __name__ == '__main__':
             print(f'processing {file} with tabs...')
             chunks = render_notebook_as_chunks(content)
             md = render_chunks_as_md(chunks)
+                       
+             # Prepare the filename based on the title
+            target_filename = '_'.join(title.lower().split()) + '.md'
+            md = f'---\nsidebar_label: {title}\nfilename: {target_filename}\n---\n' + md
 
-            md = f'---\nsidebar_label: {title}\n---\n' + md
-
-            file = file.split('.')[0]
-            target = '_'.join(title.lower().strip().split())
-            assert file == target, f'{file} != {target}'
-            with open(f'{directory}/{file}.md', 'w') as f:
+            assert file.replace('.ipynb', '.md') == target_filename, f'{file.replace(".ipynb", ".md")} != {target_filename}'
+            
+            with open(f'{directory}/{target_filename}', 'w') as f:
                 f.write(md)
         else:
             print(f'processing {directory}/{file} with Jupyter convert...')

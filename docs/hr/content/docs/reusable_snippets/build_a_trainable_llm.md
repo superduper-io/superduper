@@ -7,7 +7,8 @@ import TabItem from '@theme/TabItem';
 <!-- TABS -->
 # Build A Trainable LLM
 
-## Create an LLM Trainer for training
+**Create an LLM Trainer for training**
+
 The parameters of this LLM Trainer are basically the same as `transformers.TrainingArguments`, but some additional parameters have been added for easier training setup.
 
 ```python
@@ -16,8 +17,7 @@ trainer = LLMTrainer(
     identifier="llm-finetune-trainer",
     output_dir="output/finetune",
     overwrite_output_dir=True,
-    max_steps=50,
-    # num_train_epochs=3,
+    num_train_epochs=3,
     save_total_limit=3,
     logging_steps=10,
     evaluation_strategy="steps",
@@ -45,13 +45,6 @@ trainer = LLMTrainer(
         ```python
         trainer.use_lora = True
         trainer.bits = 4        
-        ```
-    </TabItem>
-    <TabItem value="Ray" label="Ray" default>
-        ```python
-        trainer.use_lora = True
-        trainer.bits = 4
-        trainer.ray_address = "ray://localhost:10001"        
         ```
     </TabItem>
     <TabItem value="Deepspeed" label="Deepspeed" default>
@@ -110,7 +103,7 @@ There are two methods to load a trained model:
         from superduperdb.ext.transformers import LLM, LLMTrainer
         experiment_id = db.show("checkpoint")[-1]
         version = None # None means the last checkpoint
-        checkpoint = db.load("checkpoint", experiment_id, version=None)
+        checkpoint = db.load("checkpoint", experiment_id, version=version)
         llm = LLM(
             identifier="llm",
             model_name_or_path=model_name,

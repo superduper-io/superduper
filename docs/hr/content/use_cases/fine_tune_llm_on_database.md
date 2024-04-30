@@ -320,11 +320,11 @@ The following are examples of training data in different formats.
         train_documents = [
             Document({**example, "_fold": "train"})
             for example in train_dataset
-        ][:500]
+        ]
         eval_documents = [
             Document({**example, "_fold": "valid"})
             for example in eval_dataset
-        ][:10]
+        ]
         
         datas = train_documents + eval_documents        
         ```
@@ -413,7 +413,7 @@ Example input_text and output_text
     <TabItem value="Text" label="Text" default>
         ```python
         data = datas[0]
-        input_data, output_text = data["text"].rsplit("### Assistant: ", maxsplit=1)
+        input_text, output_text = data["text"].rsplit("### Assistant: ", maxsplit=1)
         input_text += "### Assistant: "
         output_text = output_text.rsplit("### Human:")[0]
         print("Input: --------------")
@@ -504,14 +504,25 @@ In order to create data, we need to create a `Schema` for encoding our special `
         ```
     </TabItem>
 </Tabs>
+## Select a Model
+
 ```python
 model_name = "facebook/opt-125m"
+model_kwargs = dict()
+tokenizer_kwargs = dict()
+
+# or 
+# model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+# token = "hf_xxxx"
+# model_kwargs = dict(token=token)
+# tokenizer_kwargs = dict(token=token)
 ```
 
 <!-- TABS -->
 ## Build A Trainable LLM
 
-### Create an LLM Trainer for training
+**Create an LLM Trainer for training**
+
 The parameters of this LLM Trainer are basically the same as `transformers.TrainingArguments`, but some additional parameters have been added for easier training setup.
 
 ```python
@@ -520,8 +531,7 @@ trainer = LLMTrainer(
     identifier="llm-finetune-trainer",
     output_dir="output/finetune",
     overwrite_output_dir=True,
-    max_steps=50,
-    # num_train_epochs=3,
+    num_train_epochs=3,
     save_total_limit=3,
     logging_steps=10,
     evaluation_strategy="steps",
@@ -549,13 +559,6 @@ trainer = LLMTrainer(
         ```python
         trainer.use_lora = True
         trainer.bits = 4        
-        ```
-    </TabItem>
-    <TabItem value="Ray" label="Ray" default>
-        ```python
-        trainer.use_lora = True
-        trainer.bits = 4
-        trainer.ray_address = "ray://localhost:10001"        
         ```
     </TabItem>
     <TabItem value="Deepspeed" label="Deepspeed" default>
@@ -614,7 +617,7 @@ There are two methods to load a trained model:
         from superduperdb.ext.transformers import LLM, LLMTrainer
         experiment_id = db.show("checkpoint")[-1]
         version = None # None means the last checkpoint
-        checkpoint = db.load("checkpoint", experiment_id, version=None)
+        checkpoint = db.load("checkpoint", experiment_id, version=version)
         llm = LLM(
             identifier="llm",
             model_name_or_path=model_name,

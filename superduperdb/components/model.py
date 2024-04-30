@@ -190,6 +190,7 @@ class Trainer(Component):
     prefetch_size: int = 1000
     prefetch_factor: int = 100
     in_memory: bool = True
+    compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
     @abstractmethod
     def fit(
@@ -232,11 +233,15 @@ class _Fittable:
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ):
+        if self.trainer:
+            compute_kwargs = self.trainer.compute_kwargs or {}
+        else:
+            compute_kwargs = {}
         job = ComponentJob(
             component_identifier=self.identifier,
             method_name='fit_in_db',
             type_id='model',
-            kwargs={},
+            compute_kwargs=compute_kwargs,
         )
         job(db, dependencies)
         return job

@@ -128,6 +128,7 @@ class LLMCallback(TrainerCallback):
             self.db.replace(self.llm)
 
     def check_init(self):
+        # Only check this in the world_rank 0 process
         # Rebuild datalayer for the new process
         if self.db is None:
             self.db = build_datalayer(self.cfg)
@@ -182,14 +183,14 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     max_seq_length: int = 512
     setup_chat_format: bool = False
     log_to_db: bool = True
-    ray_configs: t.Optional[t.Dict] = None
-    on_ray: bool = False
-    ray_address: t.Optional[str] = None
     training_kwargs: t.Dict = dc.field(default_factory=dict)
     num_gpus: t.Optional[int] = None
+    ray_configs: t.Optional[dict] = None
 
     def __post_init__(self, artifacts):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
+        if self.num_gpus and 'num_gpus' not in self.compute_kwargs:
+            self.compute_kwargs['num_gpus'] = self.num_gpus
         return SuperDuperTrainer.__post_init__(self, artifacts)
 
     def build(self):
@@ -275,9 +276,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
             ),
             db=db,
             llm=model,
-            on_ray=self.on_ray,
             ray_configs=self.ray_configs,
-            ray_address=self.ray_address,
             **(self.training_kwargs or {}).copy(),
         )
 
@@ -309,8 +308,6 @@ def train(
     tokenizer_kwargs: dict,
     db: t.Optional["Datalayer"] = None,
     llm: t.Optional["LLM"] = None,
-    on_ray: t.Optional[bool] = False,
-    ray_address: t.Optional[str] = None,
     ray_configs: t.Optional[dict] = None,
     **kwargs,
 ):
@@ -344,11 +341,11 @@ def train(
     :param ray_configs: ray configs, must provide if using ray
     """
 
-    on_ray = on_ray or bool(ray_address) or bool(ray_configs)
+    on_ray = bool(ray_configs)
 
     # Auto detect multi-GPUs and use ray to run data parallel training
     # If not todo this, will run on a bad parallel mode
-    if not on_ray and torch.cuda.device_count() > 1:
+    if not on_ray and torch.cuda.device_count() > 1 and training_args.num_gpus != 1:
         on_ray = True
         logging.warn("Detected multi-GPUs, will use ray to run training on multi-GPUs")
 
@@ -400,7 +397,6 @@ def train(
             model_kwargs=model_kwargs,
             tokenizer_kwargs=tokenizer_kwargs,
             callbacks=callbacks,
-            ray_address=ray_address,
             ray_configs=ray_configs,
             **kwargs,
         )
@@ -540,7 +536,6 @@ def ray_train(
     training_args: LLMTrainer,
     train_dataset,
     eval_datasets,
-    ray_address: t.Optional[str] = None,
     ray_configs: t.Optional[t.Dict[str, t.Any]] = None,
     **kwargs,
 ):
@@ -607,8 +602,8 @@ def ray_train(
         train_loop_args.build()
         return train_func(train_loop_args, train_dataset, eval_datasets, **kwargs)
 
-    if ray_address is not None:
-        ray.init(address=ray_address, ignore_reinit_error=True)
+    if not ray.is_initialized():
+        ray.init(ignore_reinit_error=True)
 
     if not ray_configs:
         gpu_count = training_args.num_gpus or torch.cuda.device_count()

@@ -50,7 +50,7 @@ def random_directory(tmpdir):
 def test_save_and_load_directory(test_db, random_directory):
     # test save and load directory
     test_component = TestComponent(path=random_directory, identifier="test")
-    test_db.add(test_component)
+    test_db.apply(test_component)
     test_component_loaded = test_db.load("TestComponent", "test")
     test_component_loaded.init()
     # assert that the paths are different
@@ -71,7 +71,7 @@ def test_save_and_load_file(test_db):
     # test save and load file
     file = os.path.abspath(__file__)
     test_component = TestComponent(path=file, identifier="test")
-    test_db.add(test_component)
+    test_db.apply(test_component)
     test_component_loaded = test_db.load("TestComponent", "test")
     test_component_loaded.init()
     # assert that the paths are different

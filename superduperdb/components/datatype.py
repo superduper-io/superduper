@@ -402,8 +402,15 @@ class Native(_BaseEncodable):
         return r
 
 
+class _ArtifactSaveMixin:
+    def save(self, artifact_store):
+        r = artifact_store.save_artifact(self.encode()['_content'])
+        self.x = None
+        self.file_id = r['file_id']
+
+
 @dc.dataclass
-class Artifact(_BaseEncodable):
+class Artifact(_BaseEncodable, _ArtifactSaveMixin):
     """
     Data to be saved on disk/ in the artifact-store
     """
@@ -444,6 +451,7 @@ class Artifact(_BaseEncodable):
                     f'_{self.leaf_type}/'
                     f'{sha1 if self.file_id is None else self.file_id}',
                 ),
+                'artifact_type': 'bytes',
             }
         }
 
@@ -531,27 +539,23 @@ class LazyArtifact(Artifact):
 
 
 @dc.dataclass
-class File(_BaseEncodable):
+class File(_BaseEncodable, _ArtifactSaveMixin):
     """
     Data to be saved on disk and passed
     as a file reference
     """
 
     leaf_type: t.ClassVar[str] = 'file'
-
-    def __post_init__(self):
-        if self.file_id is None:
-            self.file_id = random_sha1()
+    x: t.Any = Empty()
 
     def init(self, db):
-        file = db.artifact_store._load_file(self.file_id)
-        self.uri = f'file://{file}'
+        if isinstance(self.x, Empty):
+            file = db.artifact_store._load_file(self.file_id)
+            self.x = file
 
     def unpack(self, db):
         self.init(db)
-        uri = self.uri.split('file://')[-1]
-        assert not re.match('^[a-z]{0,5}://', uri)
-        return uri
+        return self.x
 
     @classmethod
     def _get_object(cls, db, r):
@@ -560,23 +564,40 @@ class File(_BaseEncodable):
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         dc.asdict(self)
+        file_id = self.file_id or random_sha1()
         return {
             '_content': {
                 'datatype': self.datatype.identifier,
                 'leaf_type': self.leaf_type,
-                'uri': self.uri,
-                'file_id': self.file_id,
-                'id': f'_{self.leaf_type}/{self.file_id}',
+                'uri': self.x,
+                'file_id': file_id,
+                'id': f'_{self.leaf_type}/{file_id}',
+                'artifact_type': 'file',
             }
         }
 
     @classmethod
     def decode(cls, r, db=None) -> 'File':
-        return cls(
+        file = cls(
+            x=Empty(),
             datatype=db.datatypes[r['_content']['datatype']],
-            uri=r['_content']['uri'],
             file_id=r['_content']['file_id'],
         )
+        file.init(db)
+        return file
+
+
+class LazyFile(File):
+    leaf_type: t.ClassVar[str] = 'lazy_file'
+
+    @classmethod
+    def decode(cls, r, db=None) -> 'LazyFile':
+        file = cls(
+            x=Empty(),
+            datatype=db.datatypes[r['_content']['datatype']],
+            file_id=r['_content']['file_id'],
+        )
+        return file
 
 
 Encoder = DataType
@@ -588,6 +609,7 @@ _ENCODABLES = {
     'file': File,
     'native': Native,
     'lazy_artifact': LazyArtifact,
+    'lazy_file': LazyFile,
 }
 
 
@@ -627,6 +649,12 @@ file_serializer = DataType(
     decoder=file_check,
     encodable="file",
 )
+file_lazy = DataType(
+    'file_lazy',
+    encoder=file_check,
+    decoder=file_check,
+    encodable="lazy_file",
+)
 serializers = {
     'pickle': pickle_serializer,
     'dill': dill_serializer,
@@ -634,4 +662,5 @@ serializers = {
     'file': file_serializer,
     'pickle_lazy': pickle_lazy,
     'dill_lazy': dill_lazy,
+    'file_lazy': file_lazy,
 }

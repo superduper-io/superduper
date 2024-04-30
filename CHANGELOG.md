@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reusable snippets that are reused across the docs
 - Added snippet for connecting to superduperdb in docs
 - Added support to serialize documents in a flat way "_leaves"
+- Added `lazy_file` datatype
 
 #### Bug Fixes
 - Separate nightly release from sandbox
@@ -58,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Post-Like feature
 - Added CORS Policy regarding REST server implementation
 - Fixed some bugs in multimodal usecase
+- Fixed File datatype
 
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)

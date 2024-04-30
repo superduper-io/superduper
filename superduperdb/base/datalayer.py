@@ -32,11 +32,7 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import (
-    DataType,
-    _BaseEncodable,
-    serializers,
-)
+from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.annotations import deprecated
@@ -339,7 +335,7 @@ class Datalayer:
             r['_fold'] = 'train'
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
-            artifacts.extend(list(r.get_leaves('artifact').values()))
+            artifacts.extend(list(r.get_leaves('artifact', 'file').values()))
 
         for a in artifacts:
             if a.x is not None and a.file_id is None:

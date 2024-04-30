@@ -7,7 +7,7 @@ import sys
 CODE_BLOCK = ['```python\n', '\n        ```']
 PREAMBLE = """import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import DownloadButton from '../DownloadButton';\n
+import DownloadButton from '../downloadButton.js';\n
 
 """
 

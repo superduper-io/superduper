@@ -4,7 +4,7 @@ filename: fine_tune_llm_on_database.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import DownloadButton from '../DownloadButton';
+import DownloadButton from '../downloadButton.js';
 
 
 <!-- TABS -->

@@ -39,7 +39,7 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip        
         import os
         from PIL import Image
         
@@ -53,7 +53,7 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Video" label="Video" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/videos.zip && unzip videos.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
         import os
         
         data = [f'videos/{x}' for x in os.listdir('./videos')]
@@ -65,12 +65,37 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/audio.zip && unzip audio.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/audio.zip && unzip audio.zip
         import os
         
         data = [f'audios/{x}' for x in os.listdir('./audios')]
         sample_datapoint = data[-1]
         chunked_model_datatype = dtype('str')        
+        ```
+    </TabItem>
+    <TabItem value="Text (Labeled)" label="Text (Labeled)" default>
+        ```python
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_labeled.json
+        import json
+
+        with open("text_labeled.json", "r") as f:
+            data = json.load(f)
+
+        sample_datapoint = data[0]
+        ```
+    </TabItem>
+    <TabItem value="Image (Labeled)" label="Image (Labeled)" default>
+        ```python
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_labeled.zip && unzip images_labeled.zip
+        import json
+        from PIL import Image
+
+        with open('images_labeled/images_labeled.json', 'r') as f:
+            data = json.load(f)
+
+        data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
+
+        sample_datapoint = data[0]
         ```
     </TabItem>
 </Tabs>

@@ -28,8 +28,6 @@
 [**中文**](README_zh.md) |
 [**日本語**](README_ja.md)
 
-
-
 </div>
 
 
@@ -42,17 +40,16 @@
 
 ---
 
-### ***📣 On May 1st we will release v0.2 including proper versioning of the docs (the docs are currently outdated). Find all major updates and fixes [here in the Changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)!***
+### ***📣 On May 1st we will release v0.2. Find all major updates and fixes [here in the Changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)!***
 
 ---
-
 
 
 ## What is SuperDuperDB? 🔮 
 
 SuperDuperDB is a Python framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
 
-Build, deploy and manage any AI application without the need for complex pipelines, infrastructure as well as specialized vector databases, and moving our data there, by integrating AI at your data's source: 
+Build, deploy and manage any AI application without the need for complex pipelines, infrastructure as well as specialized vector databases, and migrating data, by integrating AI at your data's source: 
 - Generative AI, LLMs, RAG, vector search
 - Standard machine learning use-cases (classification, segmentation, regression, forecasting recommendation etc.)
 - Custom AI use-cases involving specialized models
@@ -63,7 +60,7 @@ SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB tr
 
 ## Key Features:
 - **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/walkthrough/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
+- **[Inference via change-data-capture](https://docs.superduperdb.com/docs/docs/walkthrough/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/walkthrough/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/walkthrough/linking_interdependent_models/)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
 - **[Simple Python Interface](https://docs.superduperdb.com/docs/docs/fundamentals/procedural_vs_declarative_api)**: Replace writing thousand of lines of glue code with simple Python commands, while being able to drill down to any layer of implementation detail, like the inner workings of your models or your training details.
@@ -89,21 +86,12 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 | Name                                                   | Link                                                                                                                                                                                                                                               |
 |--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Use ChatGPT to chat with Snowflake | <a href="https://colab.research.google.com/drive/1YXzAuuQdqkWEQKchglxUuAMzNTKLu5rC#scrollTo=0Zf4Unc_fNBp" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
-| Streaming Inference using Mnist and MongoDB             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/mnist_torch.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
-| Multimodal Vector Search with your SQL database        | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sql-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
-| Connecting text and images using CLIP model            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/multimodal_image_search_clip.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
-| Question your docs using ChatGTP                       | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
-| Question your docs using Vllm                          | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/question_the_docs.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
-| High-throughput Embeddings using Dask and MiniLM model | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/sandbox-example.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>               |
-| Transfer Learning between Transformers and Scikit      | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>             |
-| Declarative Model Chaining                             | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/transfer_learning_declarative.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
-| Search your videos using CLIP model                    | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/video_search.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                  |
-| Voice Assistant using LibriSpeech and Chat-Completion  | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/examples/voice_memos.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Multimodal vector-search with a range of models and datatypes | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/hr/content/use_cases/multimodal_vector_search.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>       |
+| RAG with self-hosted LLM            | <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/hr/content/use_cases/retrieval_augmented_generation.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Fine-tune an LLM on your database | <a href="https://github.com/SuperDuperDB/superduperdb/blob/main/docs/hr/content/use_cases/fine_tune_llm_on_database.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>                   |
+| Featurization and fransfer learning           | <a href="https://github.com/SuperDuperDB/superduperdb/blob/main/docs/hr/content/use_cases/transfer_learning.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>  |
 
 </table >
-
-
 
 
 ## Why opt for SuperDuperDB?
@@ -213,32 +201,6 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
 
 **Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
 
-- Install and deploy model:
-
-```
-m = db.add(
-    <sklearn_model>|<torch_module>|<transformers_pipeline>|<arbitrary_callable>,
-    preprocess=<your_preprocess_callable>,
-    postprocess=<your_postprocess_callable>,
-    encoder=<your_datatype>
-)
-```
-
-- Predict:
-
-```
-m.predict(X='<input_column>', db=db, select=<mongodb_query>, listen=False|True, create_vector_index=False|True)
-```
-
-- Train model:
-
-```
-m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mongodb_query>|<ibis_query>)
-```
-
-
-
-
 
 ## Pre-Integrated AI APIs (*more coming soon*):
 
@@ -261,22 +223,11 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 **Integrate externally hosted models accessible via API to work together with your other models with a simple Python command:**
 
-```
-m = db.add(
-    OpenAI<Task>|Cohere<Task>|Anthropic<Task>|JinaAI<Task>(*args, **kwargs),   # <Task> - Embedding,ChatCompletion,...
-)
-```
-
-
-
-
 ## Infrastructure Diagram
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
 </p>
-
-
 
 
 ## Installation
@@ -301,138 +252,10 @@ make testenv_image
 make testenv_init
 ```
 
-
 ## Preview
 
-Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use. You can visit the <a href="https://docs.superduperdb.com">docs</a> to learn more.
-
-
-#### - Deploy ML/AI models to your database:
-Automatically compute outputs (inference) with your database in a single environment.
-
-```python
-import pymongo
-from sklearn.svm import SVC
-
-from superduperdb import superduper
-
-# Make your db superduper!
-db = superduper(pymongo.MongoClient().my_db)
-
-# Models client can be converted to SuperDuperDB objects with a simple wrapper.
-model = superduper(SVC())
-
-# Add the model into the database
-db.add(model)
-
-# Predict on the selected data.
-model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
-```
-
-
-#### - Train models directly from your database.
-Simply by querying your database, without additional ingestion and pre-processing:
-
-```python
-import pymongo
-from sklearn.svm import SVC
-
-from superduperdb import superduper
-
-# Make your db superduper!
-db = superduper(pymongo.MongoClient().my_db)
-
-# Models client can be converted to SuperDuperDB objects with a simple wrapper.
-model = superduper(SVC())
-
-# Fit model on the training data.
-model.fit(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({}))
-```
-
-#### - Vector-Search your data:
-Use your existing favorite database as a vector search database, including model management and serving. 
-
-```python
-# First a "Listener" makes sure vectors stay up-to-date
-indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
-
-# This "Listener" is linked with a "VectorIndex"
-db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
-
-# The "VectorIndex" may be used to search data. Items to be searched against are passed
-# to the registered model and vectorized. No additional app layer is required.
-db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
-```
-
-#### - Integrate AI APIs to work together with other models. 
-Use OpenAI, Jina AI, PyTorch or Hugging face model as an embedding model for vector search.
-
-```python
-# Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
-db.add(
-    VectorIndex(
-        identifier='my-index',
-        indexing_listener=Listener(
-            model=OpenAIEmbedding(identifier='text-embedding-ada-002'),
-            key='abstract',
-            select=Collection(name='wikipedia').find(),
-        ),
-    )
-)
-# The above also executes the embedding model (openai) with the select query on the key.
-
-# Now we can use the vector-index to search via meaning through the wikipedia abstracts
-cur = db.execute(
-    Collection(name='wikipedia')
-        .like({'abstract': 'philosophers'}, n=10, vector_index='my-index')
-)
-```
-
-
-#### - Add a Llama 2 model to SuperDuperDB!:
-```python
-model_id = "meta-llama/Llama-2-7b-chat-hf"
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-pipeline = transformers.pipeline(
-    "text-generation",
-    model=model_id,
-    torch_dtype=torch.float16,
-    device_map="auto",
-)
-
-model = Pipeline(
-    identifier='my-sentiment-analysis',
-    task='text-generation',
-    preprocess=tokenizer,
-    object=pipeline,
-    torch_dtype=torch.float16,
-    device_map="auto",
-)
-
-# You can easily predict on your collection documents.
-model.predict(
-    X=Collection(name='test_documents').find(),
-    db=db,
-    do_sample=True,
-    top_k=10,
-    num_return_sequences=1,
-    eos_token_id=tokenizer.eos_token_id,
-    max_length=200
-)
-```
-
-#### - Use models outputs as inputs to downstream models:
-
-```python
-model.predict(
-    X='input_col',
-    db=db,
-    select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
-    listen=True,
-)
-```
-
-
+[Browse the re-usable snippets](https://docs.superduperdb.com/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality
+with few lines of code using SuperDuperDB.
 
 ## Community & Getting Help 
 

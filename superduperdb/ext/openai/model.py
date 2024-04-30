@@ -171,14 +171,14 @@ class OpenAIChatCompletion(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(self, X: str, context: t.Optional[str] = None):
+    def predict_one(self, X: str, context: t.Optional[str] = None, **kwargs):
         if context is not None:
             X = self._format_prompt(context, X)
         return (
             self.syncClient.chat.completions.create(
                 messages=[{'role': 'user', 'content': X}],
                 model=self.model,
-                **self.predict_kwargs,
+                **{**self.predict_kwargs, **kwargs},
             )
             .choices[0]
             .message.content

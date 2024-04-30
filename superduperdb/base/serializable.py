@@ -10,10 +10,10 @@ from superduperdb.misc.serialization import asdict
 
 def _from_dict(r: t.Any, db: None = None) -> t.Any:
     from superduperdb.base.document import Document
-    from superduperdb.components.datatype import File, LazyArtifact
+    from superduperdb.components.datatype import LazyArtifact, LazyFile
 
     if isinstance(r, Document):
-        r = r.unpack(db, leaves_to_keep=(LazyArtifact, File))
+        r = r.unpack(db, leaves_to_keep=(LazyArtifact, LazyFile))
     if isinstance(r, (list, tuple)):
         return [_from_dict(i, db=db) for i in r]
     if not isinstance(r, dict):

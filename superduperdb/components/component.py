@@ -250,10 +250,7 @@ class Component(Serializable, Leaf):
             if isinstance(attr, (Artifact, File)):
                 r[f'dict.{k}'] = attr
             else:
-                if s.fields[k].encodable == 'file':
-                    r[f'dict.{k}'] = s.fields[k](uri=attr)  # artifact or file
-                else:
-                    r[f'dict.{k}'] = s.fields[k](x=attr)  # artifact or file
+                r[f'dict.{k}'] = s.fields[k](x=attr)  # artifact or file
         r['type_id'] = self.type_id
         r['identifier'] = self.identifier
         r['version'] = self.version

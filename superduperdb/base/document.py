@@ -54,8 +54,8 @@ class Document(MongoStyleDict):
             return _encode_with_schema(dict(self), schema)
         return _encode(dict(self), leaf_types_to_keep)
 
-    def get_leaves(self, leaf_type: t.Optional[str] = None):
-        keys, leaves = _find_leaves(self, leaf_type)
+    def get_leaves(self, *leaf_types: str):
+        keys, leaves = _find_leaves(self, *leaf_types)
         return dict(zip(keys, leaves))
 
     @property
@@ -97,12 +97,12 @@ class Document(MongoStyleDict):
         return out
 
 
-def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False):
+def _find_leaves(r: t.Any, *leaf_types: str, pop: bool = False):
     if isinstance(r, dict):
         keys = []
         leaves = []
         for k, v in r.items():
-            sub_keys, sub_leaves = _find_leaves(v, leaf_type)
+            sub_keys, sub_leaves = _find_leaves(v, *leaf_types)
             leaves.extend(sub_leaves)
             keys.extend([(f'{k}.{sub_key}' if sub_key else k) for sub_key in sub_keys])
         return keys, leaves
@@ -110,13 +110,16 @@ def _find_leaves(r: t.Any, leaf_type: t.Optional[str] = None, pop: bool = False)
         keys = []
         leaves = []
         for i, x in enumerate(r):
-            sub_keys, sub_leaves = _find_leaves(x, leaf_type)
+            sub_keys, sub_leaves = _find_leaves(x, *leaf_types)
             leaves.extend(sub_leaves)
             keys.extend([(f'{k}.{i}' if k else f'{i}') for k in sub_keys])
         return keys, leaves
-    if leaf_type:
-        leaf_cls = _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
-        if isinstance(r, leaf_cls):
+    if leaf_types:
+        leaf_clses = [
+            _LEAF_TYPES.get(leaf_type) or find_leaf_cls(leaf_type)
+            for leaf_type in leaf_types
+        ]
+        if isinstance(r, tuple(leaf_clses)):
             return [''], [r]
         else:
             return [], []

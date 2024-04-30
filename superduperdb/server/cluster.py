@@ -54,30 +54,30 @@ def up_cluster(notebook_token: t.Optional[str] = None):
         f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. {ray_executable} start"
         " --head --dashboard-host=0.0.0.0 --disable-usage-stats --block"
     )
-    run_tmux_command(['send-keys', '-t', 'ray-head', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:ray-head', cmd, 'C-m'])
     time.sleep(10)
     cmd = (
         f"SUPERDUPERDB_CONFIG={CFG} "
         "RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=$(pwd)"
-        ":. {ray_executable} start --address=localhost:6379  --block"
+        f":. {ray_executable} start --address=localhost:6379  --block"
     )
-    run_tmux_command(['send-keys', '-t', 'ray-worker', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:ray-worker', cmd, 'C-m'])
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb vector-search"
-    run_tmux_command(['send-keys', '-t', 'vector-search', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:vector-search', cmd, 'C-m'])
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb cdc"
-    run_tmux_command(['send-keys', '-t', 'cdc', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:cdc', cmd, 'C-m'])
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb rest"
-    run_tmux_command(['send-keys', '-t', 'rest', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:rest', cmd, 'C-m'])
     cmd = (
-        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter notebook "
+        f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m jupyter lab "
         f"--no-browser --ip=0.0.0.0 --NotebookApp.token={notebook_token} --allow-root"
         if notebook_token
         else (
             f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m "
-            "jupyter notebook --no-browser --ip=0.0.0.0"
+            "jupyter lab --no-browser --ip=0.0.0.0"
         )
     )
-    run_tmux_command(['send-keys', '-t', 'jupyter', cmd, 'C-m'])
+    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:jupyter', cmd, 'C-m'])
 
     print('You can attach to the tmux session with:')
     print(f'tmux a -t {SESSION_NAME}')

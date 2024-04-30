@@ -67,7 +67,10 @@ class FileSystemArtifactStore(ArtifactStore):
         serialized: bytes,
         file_id: str,
     ) -> t.Any:
-        with open(os.path.join(self.conn, file_id), 'wb') as f:
+        path = os.path.join(self.conn, file_id)
+        if os.path.exists(path):
+            raise FileExistsError
+        with open(path, 'wb') as f:
             f.write(serialized)
 
     def _load_bytes(self, file_id: str) -> bytes:

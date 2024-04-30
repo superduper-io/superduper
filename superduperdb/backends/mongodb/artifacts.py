@@ -72,6 +72,9 @@ class MongoArtifactStore(ArtifactStore):
         return download(file_id, self.filesystem)
 
     def _save_bytes(self, serialized: bytes, file_id: str):
+        cur = self.filesystem.find_one({'filename': file_id})
+        if cur is not None:
+            raise FileExistsError
         return self.filesystem.put(
             serialized, filename=file_id, metadata={"file_id": file_id}
         )

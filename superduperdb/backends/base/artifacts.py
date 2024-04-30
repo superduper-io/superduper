@@ -3,6 +3,8 @@ import os
 import typing as t
 from abc import ABC, abstractmethod
 
+from superduperdb import logging
+
 
 def _construct_file_id_from_uri(uri):
     return str(hashlib.sha1(uri.encode()).hexdigest())
@@ -122,7 +124,13 @@ class ArtifactStore(ABC):
                 file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
             if r.get('directory'):
                 file_id = os.path.join(datatype.directory, file_id)
-            self._save_bytes(r['bytes'], file_id=file_id)
+            try:
+                self._save_bytes(r['bytes'], file_id=file_id)
+            except FileExistsError:
+                logging.warn(
+                    f'Artifact with file_id {file_id} already exists, skipping...'
+                )
+
             del r['bytes']
         r['file_id'] = file_id
         return r

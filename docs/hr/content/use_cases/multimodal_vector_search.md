@@ -298,7 +298,7 @@ Otherwise refer to "Configuring your production system".
 ## Get useful sample data
 
 ```python
-from superduperdb import dtype
+from superduperdb.backends.ibis import dtype
 
 ```
 
@@ -309,9 +309,9 @@ from superduperdb import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open('text.json', 'r') as f:
+        with open("text.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = "What is mongodb?"
+        sample_datapoint = data[0]
         
         chunked_model_datatype = dtype('str')        
         ```
@@ -329,12 +329,14 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
-        import os
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
+        import json
         from PIL import Image
         
-        data = [f'images/{x}' for x in os.listdir('./images')]
-        data = [ Image.open(path) for path in data]
+        with open('images/images.json', 'r') as f:
+            data = json.load(f)
+        
+        data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
         sample_datapoint = data[-1]
         
         from superduperdb.ext.pillow import pil_image
@@ -343,7 +345,7 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Video" label="Video" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/videos.zip && unzip videos.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
         import os
         
         data = [f'videos/{x}' for x in os.listdir('./videos')]
@@ -355,7 +357,7 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/audio.zip && unzip audio.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/audio.zip && unzip audio.zip
         import os
         
         data = [f'audios/{x}' for x in os.listdir('./audios')]
@@ -498,21 +500,20 @@ In order to create data, we need to create a `Schema` for encoding our special `
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import Document
+        from superduperdb import Document, DataType
         
-        def do_insert(data):
-            schema = None
+        def do_insert(data, schema = None):
             
-            
-            if schema is None and (datatype is None  or isinstance(datatype, str)) :
-                data = [Document({'x': x}) for x in data]
+            if schema is None and (datatype is None or isinstance(datatype, str)):
+                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None and isintance():
-                data = [Document({'x': datatype(x)}) for x in data]
+            elif schema is None and datatype is not None and isinstance(datatype, DataType):
+                data = [Document({'x': datatype(x['x']), 'y': x['y']}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
-                data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
+                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
+                db.execute(table_or_collection.insert_many(data, schema=schema))
+        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -520,11 +521,14 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) for idx, x in enumerate(data)]))
+        
         ```
     </TabItem>
 </Tabs>
 ```python
+upstream_listener = None
+chunker = None
 do_insert(data[:-len(data) // 4])
 ```
 
@@ -700,13 +704,14 @@ Now we apply this chunker to the data by wrapping the chunker in `Listener`:
 ```python
 from superduperdb import Listener
 
-upstream_listener = Listener(
-    model=chunker,
-    select=select,
-    key='x',
-)
-
-db.apply(upstream_listener)
+if chunker:
+    upstream_listener = Listener(
+        model=chunker,
+        select=select,
+        key='x',
+    )
+    
+    db.apply(upstream_listener)
 ```
 
 <!-- TABS -->
@@ -818,7 +823,8 @@ compatible_model = None
             preprocess=preprocess, # Visual preprocessing using CLIP
             postprocess=lambda x: x.tolist(), # Convert the output to a list 
             datatype=e, # Vector encoder with shape (1024,)
-        )        
+        )
+        sample_datapoint = 'images with dark colors'        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -1016,7 +1022,7 @@ results = db.execute(select)
                 source = None
                 if '_source' in result:
                     source = get_original_callable(result['_source'])
-                visualize(result[output_key], source)        
+                visualize(result[output_key].x, source)        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -1082,10 +1088,11 @@ results = db.execute(select)
         def show(results, output_key, get_original_callable=None):
             # show only the first video
             for result in results:
+                source = result['_source']
                 result = result[output_key]
                 timestamp = result['current_timestamp']
-                source = result['_source']
                 uri = get_original_callable(source)['x']
+                print(uri, timestamp)
                 visualize(uri, timestamp)
                 break        
         ```
@@ -1100,8 +1107,11 @@ after getting the result of a vector-search:
         ```python
         def get_original(_source):
             return db.execute(table_or_collection.find_one({'_id': _source}))
-            
-        visualization_key = upstream_listener.outputs        
+        
+        if upstream_listener:
+            visualization_key = upstream_listener.outputs
+        else:
+            visualization_key = indexing_key        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>

@@ -300,7 +300,7 @@ Otherwise refer to "Configuring your production system".
 ## Get useful sample data
 
 ```python
-from superduperdb import dtype
+from superduperdb.backends.ibis import dtype
 
 ```
 
@@ -311,9 +311,9 @@ from superduperdb import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open('text.json', 'r') as f:
+        with open("text.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = "What is mongodb?"
+        sample_datapoint = data[0]
         
         chunked_model_datatype = dtype('str')        
         ```
@@ -381,21 +381,20 @@ In order to create data, we need to create a `Schema` for encoding our special `
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import Document
+        from superduperdb import Document, DataType
         
-        def do_insert(data):
-            schema = None
+        def do_insert(data, schema = None):
             
-            
-            if schema is None and (datatype is None  or isinstance(datatype, str)) :
-                data = [Document({'x': x}) for x in data]
+            if schema is None and (datatype is None or isinstance(datatype, str)):
+                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None and isintance():
-                data = [Document({'x': datatype(x)}) for x in data]
+            elif schema is None and datatype is not None and isinstance(datatype, DataType):
+                data = [Document({'x': datatype(x['x']), 'y': x['y']}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
-                data = [Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data, schema='my_schema'))        
+                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
+                db.execute(table_or_collection.insert_many(data, schema=schema))
+        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
@@ -403,7 +402,8 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))        
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) for idx, x in enumerate(data)]))
+        
         ```
     </TabItem>
 </Tabs>
@@ -494,13 +494,14 @@ Now we apply this chunker to the data by wrapping the chunker in `Listener`:
 ```python
 from superduperdb import Listener
 
-upstream_listener = Listener(
-    model=chunker,
-    select=select,
-    key='x',
-)
-
-db.apply(upstream_listener)
+if chunker:
+    upstream_listener = Listener(
+        model=chunker,
+        select=select,
+        key='x',
+    )
+    
+    db.apply(upstream_listener)
 ```
 
 ## Select outputs of upstream listener

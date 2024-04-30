@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 # Get useful sample data
 
 ```python
-from superduperdb import dtype
+from superduperdb.backends.ibis import dtype
 
 ```
 
@@ -19,9 +19,9 @@ from superduperdb import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open('text.json', 'r') as f:
+        with open("text.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = "What is mongodb?"
+        sample_datapoint = data[0]
         
         chunked_model_datatype = dtype('str')        
         ```
@@ -39,12 +39,14 @@ from superduperdb import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip        
-        import os
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
+        import json
         from PIL import Image
         
-        data = [f'images/{x}' for x in os.listdir('./images')]
-        data = [ Image.open(path) for path in data]
+        with open('images/images.json', 'r') as f:
+            data = json.load(f)
+        
+        data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
         sample_datapoint = data[-1]
         
         from superduperdb.ext.pillow import pil_image
@@ -71,31 +73,6 @@ from superduperdb import dtype
         data = [f'audios/{x}' for x in os.listdir('./audios')]
         sample_datapoint = data[-1]
         chunked_model_datatype = dtype('str')        
-        ```
-    </TabItem>
-    <TabItem value="Text (Labeled)" label="Text (Labeled)" default>
-        ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_labeled.json
-        import json
-
-        with open("text_labeled.json", "r") as f:
-            data = json.load(f)
-
-        sample_datapoint = data[0]
-        ```
-    </TabItem>
-    <TabItem value="Image (Labeled)" label="Image (Labeled)" default>
-        ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_labeled.zip && unzip images_labeled.zip
-        import json
-        from PIL import Image
-
-        with open('images_labeled/images_labeled.json', 'r') as f:
-            data = json.load(f)
-
-        data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
-
-        sample_datapoint = data[0]
         ```
     </TabItem>
 </Tabs>

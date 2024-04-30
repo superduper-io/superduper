@@ -25,6 +25,16 @@ class TestComponent(Component):
     )
 
 
+@dc.dataclass(kw_only=True)
+class TestComponentBytes(Component):
+    function: callable
+    type_id: t.ClassVar[str] = "TestComponent"
+
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, "DataType"]]] = (
+        ("path", file_lazy),
+    )
+
+
 @pytest.fixture
 def random_directory(tmpdir):
     tmpdir_path = os.path.join(tmpdir, "test_data")
@@ -97,3 +107,24 @@ def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     )
     # assert that the file sizes are the same
     assert filecmp.cmp(test_component.path, test_component_loaded.path)
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_duplicate_artifact(capfd, db, artifact_store: FileSystemArtifactStore):
+    db.artifact_store = artifact_store
+
+    def my_func(x):
+        return x
+
+    test_component = TestComponentBytes(function=my_func, identifier="test")
+    db.add(test_component)
+    test_component_loaded = db.load("TestComponent", "test")
+    test_component_loaded.init()
+
+    # This should use skip the artifact since it exists
+    test_component = TestComponentBytes(function=my_func, identifier="test")
+    db.add(test_component)
+    out, _ = capfd.readouterr()
+
+    assert "Artifact with file_id" in out
+    assert "already exists, skipping" in out

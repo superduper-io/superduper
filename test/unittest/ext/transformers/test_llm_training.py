@@ -9,7 +9,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
 from superduperdb.ext.transformers import LLM
-from superduperdb.ext.transformers.training import Checkpoint, LLMTrainer
+from superduperdb.ext.transformers.training import LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
@@ -38,47 +38,37 @@ def test_training(db, tmpdir):
     db.execute(collection.insert_many(list(map(Document, datas))))
     select = collection.find()
 
-    model = LLM(
-        identifier="llm",
-        model_name_or_path="facebook/opt-125m",
-        tokenizer_kwargs=dict(model_max_length=64),
-        train_signature='**kwargs',
-    )
+    transform = None
+    key = "text"
+    training_kwargs = dict(dataset_text_field="text")
+
     trainer = LLMTrainer(
         identifier="llm-finetune",
         output_dir=str(tmpdir),
-        lora_r=64,
-        lora_alpha=16,
-        lora_dropout=0.05,
         num_train_epochs=1,
+        save_total_limit=3,
+        logging_steps=1,
+        eval_steps=1,
+        save_strategy="steps",
+        evaluation_strategy="steps",
+        save_steps=1,
         per_device_train_batch_size=1,
         per_device_eval_batch_size=1,
         gradient_accumulation_steps=8,
-        evaluation_strategy="steps",
-        eval_steps=1,
-        save_strategy="steps",
-        save_steps=1,
-        save_total_limit=3,
-        learning_rate=2e-5,
-        weight_decay=0.0,
-        warmup_ratio=0.03,
-        lr_scheduler_type="cosine",
-        logging_strategy="steps",
-        logging_steps=1,
-        gradient_checkpointing=True,
-        report_to=[],
-        log_to_db=True,
         max_seq_length=64,
+        use_lora=True,
+        gradient_checkpointing=True,
+        key=key,
+        select=select,
+        transform=transform,
+        training_kwargs=training_kwargs,
+        report_to=[],
     )
 
     def metric(predictions, targets):
         return random.random()
 
-    model.trainer = trainer
-    model.train_X = {'text': 'text'}
-    model.valid_X = {'text': 'text'}
-    model.train_select = select
-    model.validation_sets = [
+    validation_sets = [
         Dataset(
             identifier="dataset_1",
             select=collection.find({"_fold": "valid"}),
@@ -88,7 +78,7 @@ def test_training(db, tmpdir):
             select=collection.find({"_fold": "valid"}),
         ),
     ]
-    model.metrics = [
+    metrics = [
         Metric(
             identifier="metrics1",
             object=metric,
@@ -99,14 +89,32 @@ def test_training(db, tmpdir):
         ),
     ]
 
-    model.fit_in_db(db=db)
+    from superduperdb import Validation
+
+    validation = Validation(
+        identifier="validation",
+        datasets=validation_sets,
+        metrics=metrics,
+        key="text",
+    )
+
+    model = LLM(
+        identifier="llm",
+        model_name_or_path="facebook/opt-125m",
+        tokenizer_kwargs=dict(model_max_length=64),
+        trainer=trainer,
+        validation=validation,
+    )
+
+    db.apply(model)
 
     # Load from db directly
     llm = db.load("model", "llm")
     assert isinstance(llm.predict_one("1+1="), str)
 
     # load from checkpoint
-    checkpoint: Checkpoint = db.load("checkpoint", trainer.experiment_id)
+    experiment_id = db.show("checkpoint")[-1]
+    checkpoint = db.load("checkpoint", experiment_id)
     llm = LLM(
         identifier="llm_chekpoint",
         adapter_id=checkpoint.uri,

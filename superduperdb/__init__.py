@@ -18,7 +18,14 @@ from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
 from .components.metric import Metric
-from .components.model import CodeModel, Model, ObjectModel, QueryModel, objectmodel
+from .components.model import (
+    CodeModel,
+    Model,
+    ObjectModel,
+    QueryModel,
+    Validation,
+    objectmodel,
+)
 from .components.schema import Schema
 from .components.stack import Stack
 from .components.vector_index import VectorIndex, vector
@@ -37,6 +44,7 @@ __all__ = (
     'ObjectModel',
     'CodeModel',
     'QueryModel',
+    'Validation',
     'Model',
     'objectmodel',
     'Listener',

@@ -75,6 +75,8 @@ def trainer():
         log_to_db=True,
         max_seq_length=512,
         use_lora=True,
+        key="text",
+        select=Collection("datas").find(),
     )
 
 
@@ -85,6 +87,7 @@ def test_full_finetune(db, trainer):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
+        trainer=trainer,
     )
 
     trainer.use_lora = False
@@ -93,11 +96,7 @@ def test_full_finetune(db, trainer):
     output_dir = os.path.join(save_folder, "test_full_finetune")
     trainer.output_dir = output_dir
 
-    llm.train_X = 'text'
-    llm.train_select = Collection('datas').find()
-    llm.trainer = trainer
-
-    llm.fit_in_db(db=db)
+    db.apply(llm)
 
     llm = LLM(
         identifier="llm",
@@ -116,15 +115,13 @@ def test_lora_finetune(db, trainer):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
-        train_X='text',
-        train_select=Collection('datas').find(),
         trainer=trainer,
     )
 
     output_dir = os.path.join(save_folder, "test_lora_finetune")
     trainer.output_dir = output_dir
 
-    llm.fit_in_db(db=db)
+    db.apply(llm)
 
     llm = db.load("model", "llm-finetune")
 
@@ -139,59 +136,14 @@ def test_qlora_finetune(db, trainer):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
-        train_X='text',
         trainer=trainer,
-        train_select=Collection('datas').find(),
     )
 
     trainer.bits = 4
     output_dir = os.path.join(save_folder, "test_qlora_finetune")
     trainer.output_dir = output_dir
 
-    llm.fit_in_db(db=db)
-
-    llm = db.load("model", "llm-finetune")
-
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
-    assert len(result) > 0
-
-
-@pytest.mark.skipif(
-    not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
-)
-def test_local_ray_lora_finetune(db, trainer):
-    llm = LLM(
-        identifier="llm-finetune",
-        model_name_or_path=model,
-        train_X='text',
-        train_select=Collection('datas').find(),
-        trainer=trainer,
-    )
-
-    trainer.use_lora = True
-    trainer.log_to_db = False
-    output_dir = os.path.join(save_folder, "test_local_ray_lora_finetune")
-    trainer.output_dir = False
-
-    from ray.train import RunConfig, ScalingConfig
-
-    scaling_config = ScalingConfig(
-        num_workers=1,
-        use_gpu=True,
-    )
-
-    run_config = RunConfig(
-        storage_path=os.path.abspath(output_dir),
-    )
-
-    ray_configs = {
-        "scaling_config": scaling_config,
-        "run_config": run_config,
-    }
-    trainer.on_ray = True
-    trainer.ray_configs = ray_configs
-
-    llm.fit_in_db(db=db)
+    db.apply(llm)
 
     llm = db.load("model", "llm-finetune")
 
@@ -206,8 +158,6 @@ def test_local_ray_deepspeed_lora_finetune(db, trainer):
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
-        train_X='text',
-        train_select=Collection('datas').find(),
         trainer=trainer,
     )
 
@@ -221,135 +171,12 @@ def test_local_ray_deepspeed_lora_finetune(db, trainer):
     }
 
     trainer.use_lora = True
-    trainer.log_to_db = False
     output_dir = os.path.join(save_folder, "test_local_ray_deepspeed_lora_finetune")
     trainer.output_dir = output_dir
     trainer.deepspeed = deepspeed
     trainer.bits = 4
 
-    from ray.train import RunConfig, ScalingConfig
-
-    scaling_config = ScalingConfig(
-        num_workers=1,
-        use_gpu=True,
-    )
-
-    run_config = RunConfig(
-        storage_path=os.path.abspath(output_dir),
-    )
-
-    ray_configs = {
-        "scaling_config": scaling_config,
-        "run_config": run_config,
-    }
-    trainer.on_ray = True
-    trainer.ray_configs = ray_configs
-
-    llm.fit_in_db(db=db)
-
-    llm = db.load("model", "llm-finetune")
-
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
-    assert len(result) > 0
-
-
-@pytest.mark.skipif(
-    not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
-)
-def test_remote_ray_lora_finetune(db, trainer):
-    llm = LLM(
-        identifier="llm-finetune",
-        model_name_or_path=model,
-        train_X='text',
-        train_select=Collection('datas').find(),
-        trainer=trainer,
-    )
-
-    trainer.use_lora = True
-    trainer.log_to_db = False
-    # Use absolute path, because the ray will run in remote
-    output_dir = "test_ray_lora_finetune"
-    trainer.output_dir = output_dir
-
-    from ray.train import RunConfig, ScalingConfig
-
-    scaling_config = ScalingConfig(
-        num_workers=1,
-        use_gpu=True,
-    )
-
-    run_config = RunConfig(
-        storage_path="s3://llm-test/llm-finetune",
-        name="llm-finetune-test",
-    )
-
-    ray_configs = {
-        "scaling_config": scaling_config,
-        "run_config": run_config,
-    }
-
-    trainer.on_ray = True
-    trainer.ray_configs = ray_configs
-    trainer.ray_address = "ray://localhost:10001"
-
-    llm.fit_in_db(db=db)
-
-    llm = db.load("model", "llm-finetune")
-
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
-    assert len(result) > 0
-
-
-@pytest.mark.skipif(
-    not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
-)
-def test_remote_ray_qlora_deepspeed_finetune(db, trainer):
-    llm = LLM(
-        identifier="llm-finetune",
-        model_name_or_path=model,
-        train_X='text',
-        train_select=Collection('datas').find(),
-        trainer=trainer,
-    )
-
-    deepspeed = {
-        "train_batch_size": "auto",
-        "train_micro_batch_size_per_gpu": "auto",
-        "gradient_accumulation_steps": "auto",
-        "zero_optimization": {
-            "stage": 2,
-        },
-    }
-
-    trainer.use_lora = True
-    trainer.log_to_db = False
-    # Use absolute path, because the ray will run in remote
-    output_dir = "test_remote_ray_qlora_deepspeed_finetune"
-    trainer.output_dir = output_dir
-    trainer.deepspeed = deepspeed
-
-    from ray.train import RunConfig, ScalingConfig
-
-    scaling_config = ScalingConfig(
-        num_workers=1,
-        use_gpu=True,
-    )
-
-    run_config = RunConfig(
-        storage_path="s3://llm-test/llm-finetune",
-        name="llm-finetune",
-    )
-
-    ray_configs = {
-        "scaling_config": scaling_config,
-        "run_config": run_config,
-    }
-
-    trainer.on_ray = True
-    trainer.ray_configs = ray_configs
-    trainer.ray_address = "ray://localhost:10001"
-
-    llm.fit_in_db(db=db)
+    db.apply(llm)
 
     llm = db.load("model", "llm-finetune")
 

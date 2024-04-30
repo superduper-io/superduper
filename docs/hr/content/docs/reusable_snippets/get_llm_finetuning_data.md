@@ -24,11 +24,11 @@ The following are examples of training data in different formats.
         train_documents = [
             Document({**example, "_fold": "train"})
             for example in train_dataset
-        ][:500]
+        ]
         eval_documents = [
             Document({**example, "_fold": "valid"})
             for example in eval_dataset
-        ][:10]
+        ]
         
         datas = train_documents + eval_documents        
         ```
@@ -117,7 +117,7 @@ Example input_text and output_text
     <TabItem value="Text" label="Text" default>
         ```python
         data = datas[0]
-        input_data, output_text = data["text"].rsplit("### Assistant: ", maxsplit=1)
+        input_text, output_text = data["text"].rsplit("### Assistant: ", maxsplit=1)
         input_text += "### Assistant: "
         output_text = output_text.rsplit("### Human:")[0]
         print("Input: --------------")

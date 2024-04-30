@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added snippet for connecting to superduperdb in docs
 - Added support to serialize documents in a flat way "_leaves"
 - Added `lazy_file` datatype
+- Optimized LLM finetuning usage experience
 
 #### Bug Fixes
 - Separate nightly release from sandbox

@@ -5,7 +5,6 @@ import typing as t
 from copy import deepcopy
 
 from superduperdb.base.leaf import Leaf
-from superduperdb.misc.serialization import asdict
 
 
 def _from_dict(r: t.Any, db: None = None) -> t.Any:
@@ -175,12 +174,6 @@ class Serializable(Leaf):
         :param db: Datalayer instance.
         """
         return _from_dict(r, db=db)
-
-    def dict(self):
-        """Return a dictionary representation of the object."""
-        from superduperdb import Document
-
-        return Document(asdict(self))
 
     def copy(self):
         """Return a deep copy of the object."""

@@ -1,6 +1,8 @@
 import dataclasses as dc
 import pprint
 import typing as t
+from superduperdb.components.datatype import LazyArtifact
+from superduperdb.components.schema import Schema
 from test.db_config import DBConfig
 
 import pytest
@@ -38,63 +40,6 @@ def test_document_encoding(document):
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
-def my_function(x):
-    return x + 2
-
-
-def test_encode_decode_flattened(db):
-    m = ObjectModel(
-        identifier='test',
-        object=lambda x: x,
-        datatype=vector(384),
-    )
-
-    r, bytes = m.export(format='json')
-    pprint.pprint(r)
-
-    for file_id in bytes:
-        db.artifact_store.save_artifact({'bytes': bytes[file_id], 'datatype': 'dill'})
-
-    r['_leaves'] = _build_leaves(r['_leaves'], db)[0]
-    pprint.pprint(r['_leaves'][r['_base']])
-
-
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_build_leaves(db):
-    raw = db.datatypes['dill'].encoder(my_function)
-    file_id = db.artifact_store.save_artifact({'bytes': raw, 'datatype': 'dill'})[
-        'file_id'
-    ]
-    leaf_records = [
-        {
-            'leaf_type': 'artifact',
-            'cls': 'Artifact',
-            'module': 'superduperdb.components.datatype',
-            'dict': {
-                'file_id': file_id,
-                'datatype': 'dill',
-            },
-        },
-        {
-            'leaf_type': 'component',
-            'cls': 'ObjectModel',
-            'module': 'superduperdb.components.model',
-            'dict': {'identifier': 'test', 'object': f'_artifact/{file_id}'},
-        },
-        {
-            'leaf_type': 'component',
-            'cls': 'Stack',
-            'module': 'superduperdb.components.stack',
-            'dict': {
-                'identifier': 'test_stack',
-                'components': ['_component/model/test'],
-            },
-        },
-    ]
-    out = _build_leaves(leaf_records)
-    print(out)
-
-
 def test_flat_query_encoding():
     q = Collection('docs').find({'a': 1}).limit(2)
 
@@ -107,3 +52,66 @@ def test_flat_query_encoding():
     r = q._deep_flat_encode(None)
 
     print(r)
+
+
+def test_encode_decode_flattened_document():
+    from superduperdb.ext.pillow.encoder import image_type
+    import PIL.Image
+
+    schema = Schema('my-schema', fields={'img': image_type(identifier='png', encodable='artifact')})
+
+    img = PIL.Image.open('test/material/data/test.png')
+
+    r = Document(
+        {
+            'x': 2,
+            'img': img,
+        },
+        schema=schema,
+    )
+
+    encoded_r = r.deep_flat_encode()
+
+    import yaml
+    print(yaml.dump({k: v for k, v in encoded_r.items() if k != '_blobs'}))
+
+    assert not isinstance(encoded_r, Document)
+    assert isinstance(encoded_r, dict)
+    assert '_leaves' in encoded_r
+    assert '_blobs' in encoded_r
+    assert isinstance(encoded_r['img'], str)
+    assert encoded_r['img'].startswith('?artifact')
+    assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
+
+    decoded_r = Document.deep_flat_decode(encoded_r).unpack()
+
+    pprint.pprint(decoded_r)
+
+    m = ObjectModel(
+        'test',
+        object=lambda x: x + 2,
+    )
+
+    encoded_r = m.deep_flat_encode()
+
+    pprint.pprint(encoded_r)
+
+    decoded_r = Document.deep_flat_decode(encoded_r)
+
+    print(decoded_r)
+
+    m = decoded_r.unpack()
+
+    assert isinstance(m, ObjectModel)
+    assert isinstance(m.object, LazyArtifact)
+
+    pprint.pprint(m)
+
+    r = m.dict()
+
+    assert isinstance(r, Document)
+    assert {'version', 'hidden', 'type_id', 'cls', 'module', 'dict'}.issubset(set(r.keys()))
+
+    print(r)
+
+    pprint.pprint(m.dict().deep_flat_encode())

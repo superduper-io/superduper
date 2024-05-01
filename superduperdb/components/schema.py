@@ -51,6 +51,13 @@ class Schema(Component):
             for k, v in self.fields.items()
         }
 
+    def deep_flat_encode_data(self, r, cache, blobs, files):
+        for k in self.fields:
+            if isinstance(self.fields[k], DataType):
+                encodable = self.fields[k](r[k])
+                r[k] = encodable._deep_flat_encode(cache, blobs, files)
+        return r
+
     @cached_property
     def encoded_types(self):
         """List of fields of type DataType."""

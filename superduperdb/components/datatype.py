@@ -21,12 +21,16 @@ from superduperdb.backends.base.artifacts import (
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import component, public_api
 from superduperdb.misc.hash import random_sha1
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
+
+class Empty:
+    def __repr__(self):
+        return '<EMPTY>'
 
 class IntermidiaType:
     """Intermidia data type."""
@@ -51,6 +55,7 @@ def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
     :param info: Optional information
     """
     return json.loads(b)
+
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
@@ -404,35 +409,24 @@ class _BaseEncodable(Leaf):
     datatype: DataType
     uri: t.Optional[str] = None
     sha1: t.Optional[str] = None
-
-    def _deep_flat_encode(self, cache):
-        """Deep flat encode the encodable item.
-
-        :param cache: Cache to store encoded items.
-        """
-        r = self.encode()
-        out = {
-            'cls': self.__class__.__name__,
-            'module': self.__class__.__module__,
-            'dict': {
-                'file_id': r['_content']['file_id'],
-                'bytes': r['_content']['bytes'],
-                'uri': r['_content']['uri'],
-                'datatype': f'_component/datatype/{r["_content"]["datatype"]}',
-            },
-            'id': f'_{self.leaf_type}/{r["_content"]["file_id"]}',
-        }
-        cache[out['id']] = out
-        return out['id']
+    blob: dc.InitVar[t.Optional[bytearray]] = None
+    x: t.Optional[t.Any] = None
 
     @property
     def id(self):
         """Get the ID of the encodable item."""
         assert self.file_id is not None
-        return f'_{self.leaf_type}/{self.file_id}'
+        return f'{self.leaf_type}/{self.file_id}'
 
-    def __post_init__(self):
-        """Post-initialization hook."""
+    def __post_init__(self, blob):
+        """Post-initialization hook.
+
+        :param blob: List of blob
+        """
+        if isinstance(blob, bytes):
+            assert isinstance(self.x, Empty)
+            self.x = self.datatype.decoder(blob)
+
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
 
@@ -513,16 +507,7 @@ class _BaseEncodable(Leaf):
             bytes_ = data
         else:
             raise ValueError(f'Unsupported data type: {type(data)}')
-
         return hashlib.sha1(bytes_).hexdigest()
-
-
-class Empty:
-    """Sentinel class."""
-
-    def __repr__(self):
-        """Get the string representation of the Empty object."""
-        return '<EMPTY>'
 
 
 @dc.dataclass
@@ -539,6 +524,15 @@ class Encodable(_BaseEncodable):
         bytes_ = self.datatype.encode_data(self.x)
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
+
+    def _deep_flat_encode(self, cache, blobs, files):
+        maybe_bytes, file_id = self._encode()
+        self.file_id = file_id
+        r = super()._deep_flat_encode(cache, blobs, files)
+        del r['x']
+        r['blob'] = maybe_bytes
+        cache[self.id] = r
+        return f'?{self.id}'
 
     @classmethod
     def _get_object(cls, db, r):
@@ -656,6 +650,11 @@ class Native(_BaseEncodable):
         """
         return r
 
+    def _deep_flat_encode(self, cache, blobs, files):
+        r = super()._deep_flat_encode(cache, blobs, files)
+        cache[self.id] = r
+        return f'?{self.id}'
+
 
 class _ArtifactSaveMixin:
     def save(self, artifact_store):
@@ -675,6 +674,21 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
     leaf_type: t.ClassVar[str] = 'artifact'
     x: t.Any = Empty()
     artifact: bool = False
+
+    def __post_init__(self, blob):
+        super().__post_init__(blob)
+        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
+            raise ArtifactSavingError('BASE64 not supported on disk!')
+
+    def _deep_flat_encode(self, cache, blobs, files):
+        maybe_bytes, file_id = self._encode()
+        self.file_id = file_id
+        r = super()._deep_flat_encode(cache, blobs, files)
+        del r['dict']['x']
+        blobs[self.file_id] = maybe_bytes
+        r['dict']['blob'] = f'&{self.file_id}'
+        cache[self.id] = r
+        return f'?{self.id}'
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
@@ -782,10 +796,6 @@ class LazyArtifact(Artifact):
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
     artifact: bool = False
 
-    def __post_init__(self):
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            raise ArtifactSavingError('BASE64 is not supported on disk!')
-
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
         """Encode `x` in dictionary format for the artifact store.
@@ -800,7 +810,8 @@ class LazyArtifact(Artifact):
 
         :param db: `Datalayer` instance to assist with
         """
-        self.init(db=db)
+        if isinstance(self.x, Empty):
+            return self
         return self.x
 
     def save(self, artifact_store):
@@ -837,6 +848,12 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
+
+    def _deep_flat_encode(self, cache, blobs, files):
+        self.file_id = self.file_id or random_sha1()
+        if self.x not in files:
+            files.append(self.x)
+        return f'?{self.id}'
 
     def init(self, db):
         """Initialize to load `x` with the actual file from the artifact store.
@@ -936,46 +953,71 @@ json_serializer = DataType(
     intermidia_type=IntermidiaType.STRING,
 )
 
-pickle_serializer = DataType(
-    'pickle',
-    encoder=pickle_encode,
-    decoder=pickle_decode,
+methods = {
+    'pickle': {'encoder': pickle_encode, 'decoder': pickle_decode},
+    'dill': {'encoder': dill_encode, 'decoder': dill_decode},
+    'torch': {'encoder': torch_encode, 'decoder': torch_decode},
+    'file': {'encoder': file_check, 'decoder': file_check},
+}
+
+
+@component()
+def get_serializer(identifier: str, method: str, encodable: str):
+    return DataType(
+        identifier,
+        encodable=encodable,
+        **methods[method],
+    )
+
+
+pickle_serializer = get_serializer(
+    identifier='pickle',
+    method='pickle',
     encodable='artifact',
 )
-pickle_lazy = DataType(
-    'pickle_lazy',
-    encoder=pickle_encode,
-    decoder=pickle_decode,
+
+pickle_lazy = get_serializer(
+    identifier='pickle_lazy',
+    method='pickle',
     encodable='lazy_artifact',
 )
-dill_serializer = DataType(
-    'dill',
-    encoder=dill_encode,
-    decoder=dill_decode,
+
+dill_serializer = get_serializer(
+    identifier='dill',
+    method='dill',
     encodable='artifact',
 )
-dill_lazy = DataType(
-    'dill_lazy',
-    encoder=dill_encode,
-    decoder=dill_decode,
+
+dill_lazy = get_serializer(
+    identifier='dill_lazy',
+    method='dill',
     encodable='lazy_artifact',
 )
-torch_serializer = DataType(
-    'torch',
-    encoder=torch_encode,
-    decoder=torch_decode,
+
+torch_serializer = get_serializer(
+    identifier='torch',
+    method='torch',
     encodable='lazy_artifact',
 )
-file_serializer = DataType(
-    'file',
-    encoder=file_check,
-    decoder=file_check,
-    encodable="file",
+
+file_serializer = get_serializer(
+    identifier='file',
+    method='file',
+    encodable='file',
 )
-file_lazy = DataType(
-    'file_lazy',
-    encoder=file_check,
-    decoder=file_check,
-    encodable="lazy_file",
+
+file_lazy = get_serializer(
+    identifier='file_lazy',
+    method='file',
+    encodable='lazy_file',
 )
-serializers = DataType.registered_types
+
+serializers = {
+    'pickle': pickle_serializer,
+    'dill': dill_serializer,
+    'torch': torch_serializer,
+    'file': file_serializer,
+    'pickle_lazy': pickle_lazy,
+    'dill_lazy': dill_lazy,
+    'file_lazy': file_lazy,
+}

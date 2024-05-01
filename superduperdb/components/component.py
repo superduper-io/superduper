@@ -73,7 +73,7 @@ class Component(Serializable, Leaf):
 
     @property
     def id(self):
-        return f'_component/{self.type_id}/{self.identifier}'
+        return f'component/{self.type_id}/{self.identifier}'
 
     @property
     def id_tuple(self):
@@ -101,7 +101,6 @@ class Component(Serializable, Leaf):
 
         :param db:
         """
-
         r = self.dict()
         variables = _find_variables_with_path(r['dict'])
         for r in variables:
@@ -187,19 +186,19 @@ class Component(Serializable, Leaf):
         """
         assert db
 
-    def _deep_flat_encode(self, cache):
+    def _deep_flat_encode(self, cache, blobs, files):
         from superduperdb.base.document import _deep_flat_encode
-
         r = dict(self.dict())
-        r['dict'] = _deep_flat_encode(r['dict'], cache)
-        r['id'] = self.id
+        r = _deep_flat_encode(r, cache, blobs, files)
         cache[self.id] = r
-        return self.id
+        return f'?{self.id}'
 
     def deep_flat_encode(self):
         cache = {}
-        id = self._deep_flat_encode(cache)
-        return {'_leaves': list(cache.values()), '_base': id}
+        blobs = {}
+        files = []
+        id = self._deep_flat_encode(cache, blobs, files)
+        return {'_leaves': cache, '_blobs': blobs, '_files': files, '_base': id}
 
     def _to_dict_and_bytes(self):
         r = self.deep_flat_encode()
@@ -243,20 +242,21 @@ class Component(Serializable, Leaf):
         from superduperdb import Document
         from superduperdb.components.datatype import Artifact, File
 
-        r = Document(super().dict())
+        r = super().dict()
         s = self.artifact_schema
         for k in s.fields:
             attr = getattr(self, k)
             if isinstance(attr, (Artifact, File)):
-                r[f'dict.{k}'] = attr
+                r['dict'][k] = attr
             else:
-                r[f'dict.{k}'] = s.fields[k](x=attr)  # artifact or file
+                r['dict'][k] = s.fields[k](x=attr)  # artifact or file
+
         r['type_id'] = self.type_id
-        r['identifier'] = self.identifier
         r['version'] = self.version
         r['dict.version'] = self.version
+        r['identifier'] = self.identifier
         r['hidden'] = False
-        return r
+        return Document(r)
 
     def encode(
         self,

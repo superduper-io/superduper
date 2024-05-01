@@ -1,3 +1,4 @@
+import copy
 import importlib
 import re
 import typing as t
@@ -6,7 +7,7 @@ from bson.objectid import ObjectId
 
 from superduperdb import logging
 from superduperdb.base.code import Code
-from superduperdb.base.leaf import Leaf, find_leaf_cls
+from superduperdb.base.leaf import Leaf, _import_item, find_leaf_cls
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
@@ -43,6 +44,36 @@ class Document(MongoStyleDict):
     """
 
     _DEFAULT_ID_KEY: str = '_id'
+
+    def __init__(self, *args, schema: t.Optional['Schema'] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.schema = schema
+
+    def deep_flat_encode(self):
+        cache = {}
+        blobs = {}
+        files = []
+        out = copy.deepcopy(dict(self))
+        if self.schema is not None:
+            out = self.schema.deep_flat_encode_data(self, cache, blobs, files)
+        out = _deep_flat_encode(out, cache, blobs, files)
+        out['_leaves'] = cache
+        out['_files'] = files
+        out['_blobs'] = blobs
+        return out
+
+    @classmethod
+    def deep_flat_decode(cls, r):
+        cache = {}
+        blobs = {}
+        if '_leaves' in r:
+            cache = r['_leaves']
+            del r['_leaves']
+        if '_blobs' in r:
+            blobs = r['_blobs']
+            del r['_blobs']
+        r = _deep_flat_decode(r, cache, blobs)
+        return Document(r, schema=r.get('_schema'))
 
     def encode(
         self,
@@ -81,7 +112,7 @@ class Document(MongoStyleDict):
         if '_leaves' in r:
             r['_leaves'] = _build_leaves(r['_leaves'], db=db)
             cache = {sub['id']: sub for sub in r['_leaves']}
-        decoded = _decode(dict(r), db=db, leaf_cache=cache)
+        decoded = _decode(dict(r), db=db, cache=cache)
         if isinstance(decoded, dict):
             return Document(decoded)
         return decoded
@@ -133,7 +164,7 @@ def _find_leaves(r: t.Any, *leaf_types: str, pop: bool = False):
 def _decode(
     r: t.Any,
     db: t.Optional[t.Any] = None,
-    leaf_cache: t.Optional[t.Dict] = None,
+    cache: t.Optional[t.Dict] = None,
 ) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         leaf_type = r['_content']['leaf_type']
@@ -142,12 +173,12 @@ def _decode(
     elif isinstance(r, str) and re.match(
         '^_(artifact|lazy_artifact|component|encodable)\/', r
     ):
-        assert leaf_cache is not None, 'Leaf cache must be provided to decode'
-        return leaf_cache[r]
+        assert cache is not None, 'Cache must be provided to decode'
+        return cache[r]
     elif isinstance(r, list):
-        return [_decode(x, db=db, leaf_cache=leaf_cache) for x in r]
+        return [_decode(x, db=db, cache=cache) for x in r]
     elif isinstance(r, dict):
-        return {k: _decode(v, db=db, leaf_cache=leaf_cache) for k, v in r.items()}
+        return {k: _decode(v, db=db, cache=cache) for k, v in r.items()}
     else:
         return r
 
@@ -296,11 +327,38 @@ def _build_leaves(leaf_records, db=None):
     return {k: v for k, v in cache.items() if k not in default_keys}, exit_leaves
 
 
-def _deep_flat_encode(r, cache):
+def _deep_flat_encode(r, cache, blobs, files):
     if isinstance(r, dict):
-        return {k: _deep_flat_encode(v, cache) for k, v in r.items()}
+        return {k: _deep_flat_encode(v, cache, blobs, files) for k, v in r.items()}
     if isinstance(r, list):
-        return [_deep_flat_encode(x, cache) for x in r]
+        return [_deep_flat_encode(x, cache, blobs, files) for x in r]
     if isinstance(r, Leaf):
-        return r._deep_flat_encode(cache)
+        return r._deep_flat_encode(cache, blobs, files)
+    return r
+
+
+def _get_leaf_from_cache(k, cache, blobs):
+    if isinstance(cache[k], Leaf):
+        return cache[k]
+    leaf = _deep_flat_decode(cache[k], cache, blobs)
+    cache[k] = leaf
+    return leaf
+
+
+def _deep_flat_decode(r, cache, blobs):
+    if isinstance(r, Leaf):
+        return r
+    if isinstance(r, list):
+        return [_deep_flat_decode(x, cache, blobs) for x in r]
+    if isinstance(r, dict) and 'cls' in r:
+        cls = r['cls']
+        module = r['module']
+        dict_ = _deep_flat_decode(r['dict'], cache, blobs)
+        return _import_item(cls=cls, module=module, dict=dict_)
+    if isinstance(r, dict):
+        return {k: _deep_flat_decode(v, cache, blobs) for k, v in r.items()}
+    if isinstance(r, str) and r.startswith('?'):
+        return _get_leaf_from_cache(r[1:], cache, blobs)
+    if isinstance(r, str) and r.startswith('&'):
+        return blobs[r[1:]]
     return r

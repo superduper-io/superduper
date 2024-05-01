@@ -12,7 +12,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.model import Mapping, ModelInputType
 from superduperdb.ext.utils import str_shape
 from superduperdb.jobs.job import FunctionJob
-from superduperdb.misc.annotations import public_api, ui
+from superduperdb.misc.annotations import public_api, component
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 from superduperdb.vector_search.update_tasks import copy_vectors
@@ -223,7 +223,7 @@ class DecodeArray:
         return np.frombuffer(bytes, dtype=self.dtype).tolist()
 
 
-@ui(
+@component(
     {'name': 'shape', 'type': 'int'},
     {'name': 'identifier', 'type': 'str'},
 )

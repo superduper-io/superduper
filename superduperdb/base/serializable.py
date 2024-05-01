@@ -5,7 +5,6 @@ import typing as t
 from copy import deepcopy
 
 from superduperdb.base.leaf import Leaf
-from superduperdb.misc.serialization import asdict
 
 
 def _from_dict(r: t.Any, db: None = None) -> t.Any:
@@ -153,11 +152,6 @@ class Serializable(Leaf):
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None):
         return _from_dict(r, db=db)
-
-    def dict(self):
-        from superduperdb import Document
-
-        return Document(asdict(self))
 
     def copy(self):
         return deepcopy(self)

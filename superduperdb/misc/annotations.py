@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import importlib
 import sys
 import typing as t
@@ -10,6 +11,7 @@ from packaging import version
 
 from superduperdb import logging
 from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
+from superduperdb.components.component import Component
 
 
 def _normalize_module(import_module, lower_bound, upper_bound, install_module):
@@ -179,11 +181,29 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
-def ui(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
-    def decorated(f):
-        f.get_ui_schema = lambda: schema
-        f.build = lambda r: f(**r)
-        f.handle_integration = handle_integration
-        return f
+def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
+    def decorator(f):
 
-    return decorated
+        @functools.wraps(f)
+        def decorated(*args, **kwargs):
+            assert not args, 'Can\'t use *args here'
+            out = f(**kwargs)
+            assert isinstance(out, Component)
+            def _deep_flat_encode(cache, blobs, files):
+                h = hashlib.sha1(str(kwargs).encode()).hexdigest()
+                path = f'{f.__module__}.{f.__name__}'
+                id = f'{path}/{h}'
+                cache[id] = {
+                    'cls': f.__name__,
+                    'module': f.__module__,
+                    'dict': kwargs,
+                }
+                return f'?{id}'
+            out._deep_flat_encode = _deep_flat_encode
+            return out
+        
+        decorated.get_ui_schema = lambda: schema
+        decorated.build = lambda r: f(**r)
+        decorated.handle_integration = handle_integration
+        return decorated
+    return decorator

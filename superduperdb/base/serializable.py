@@ -19,20 +19,29 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
         return r
     if '_content' in r:
         r = r['_content']
-    if 'cls' in r and 'module' in r and 'dict' in r:
-        module = importlib.import_module(r['module'])
-        cls_ = getattr(module, r['cls'])
+    if '_path' in r:
+        parts = r['_path'].split('.')
+        module = '.'.join(parts[:-1])
+        cls_ = parts[-1] 
+        module = importlib.import_module(module)
+        cls_ = getattr(module, cls_)
         if inspect.isfunction(cls_):
-            return cls_(**r['dict'])
-        kwargs = _from_dict(r['dict'], db=db)
-        kwargs_init = {k: v for k, v in kwargs.items() if k not in cls_.set_post_init}
+            dict_ = {k: v for k, v in r.items() if k in inspect.signature(cls_).parameters}
+            return cls_(**dict_)
+        kwargs = _from_dict({k: v for k, v in r.items() if k != '_path'}, db=db)
+        kwargs_init = {k: v for k, v in kwargs.items() if k in inspect.signature(cls_.__init__).parameters}
         kwargs_post_init = {k: v for k, v in kwargs.items() if k in cls_.set_post_init}
-        instance = cls_(**kwargs_init)
-        for k, v in kwargs_post_init.items():
-            setattr(instance, k, v)
-        return instance
-    else:
-        return {k: _from_dict(v, db=db) for k, v in r.items()}
+        try:
+            instance = cls_(**kwargs_init)
+            for k, v in kwargs_post_init.items():
+                setattr(instance, k, v)
+            return instance
+        except TypeError as e:
+            if 'missing' in str(e):
+                pass
+            else:
+                raise e
+    return {k: _from_dict(v, db=db) for k, v in r.items()}
 
 
 class VariableError(Exception):

@@ -25,8 +25,7 @@ def test(metadata):
             'identifier': 'my-model',
             'type_id': 'model',
             'version': 0,
-            'cls': 'Model',
-            'module': 'superduperdb.container.model',
+            '_path': 'superduperdb.container.model.Model',
         }
     )
 
@@ -38,8 +37,7 @@ def test(metadata):
             'identifier': 'other-model',
             'type_id': 'model',
             'version': 0,
-            'cls': 'Model',
-            'module': 'superduperdb.container.model',
+            '_path': 'superduperdb.container.model.Model',
         }
     )
 

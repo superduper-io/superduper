@@ -87,6 +87,9 @@ def test_encode_decode_flattened_document():
 
     pprint.pprint(decoded_r)
 
+
+def test_encode_model():
+
     m = ObjectModel(
         'test',
         object=lambda x: x + 2,
@@ -110,8 +113,31 @@ def test_encode_decode_flattened_document():
     r = m.dict()
 
     assert isinstance(r, Document)
-    assert {'version', 'hidden', 'type_id', 'cls', 'module', 'dict'}.issubset(set(r.keys()))
+    assert {'version', 'hidden', 'type_id', '_path'}.issubset(set(r.keys()))
 
     print(r)
 
     pprint.pprint(m.dict().deep_flat_encode())
+
+
+def test_decode_inline_data():
+    from superduperdb.ext.pillow.encoder import image_type
+    import PIL.Image
+
+    it = image_type(identifier='png', encodable='artifact')
+
+    schema = Schema('my-schema', fields={'img': it})
+
+    img = PIL.Image.open('test/material/data/test.png')
+
+    r = {
+        'x': 2,
+        'img': it.encoder(img),
+    }
+
+    r = Document.deep_flat_decode(r, schema=schema).unpack()
+    print(r)
+
+
+def test_refer_to_applied_item():
+    ...

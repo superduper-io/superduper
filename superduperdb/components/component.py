@@ -5,6 +5,7 @@ The component module provides the base class for all components in SuperDuperDB.
 from __future__ import annotations
 
 import dataclasses as dc
+import inspect
 import json
 import os
 import typing as t
@@ -135,11 +136,11 @@ class Component(Serializable, Leaf):
         :param db: Datalayer instance.
         """
         r = self.dict()
-        variables = _find_variables_with_path(r['dict'])
-        for r in variables:
-            v = r['variable']
+        variables = _find_variables_with_path(r)
+        for item in variables:
+            v = item['variable']
             value = v.set(db=db, **kwargs)
-            self.setattr_with_path(r['path'], value)
+            self.setattr_with_path(item['path'], value)
 
     @property
     def dependencies(self):
@@ -311,13 +312,12 @@ class Component(Serializable, Leaf):
         for k in s.fields:
             attr = getattr(self, k)
             if isinstance(attr, (Artifact, File)):
-                r['dict'][k] = attr
+                r[k] = attr
             else:
-                r['dict'][k] = s.fields[k](x=attr)  # artifact or file
+                r[k] = s.fields[k](x=attr)  # artifact or file
 
         r['type_id'] = self.type_id
         r['version'] = self.version
-        r['dict.version'] = self.version
         r['identifier'] = self.identifier
         r['hidden'] = False
         return Document(r)
@@ -332,9 +332,13 @@ class Component(Serializable, Leaf):
         :param leaf_types_to_keep: Leaf types to be excluded from encoding.
         """
         r = super().encode(leaf_types_to_keep=leaf_types_to_keep)
-        del r['_content']['dict']
+        r['_content'] = {
+            k: v for k, v in r['_content'].items() 
+            if k not in inspect.signature(self.__init__).parameters
+        }
         r['_content']['leaf_type'] = 'component'
         r['_content']['id'] = self.id
+        r['_content']['identifier'] = self.identifier
         return r
 
     @classmethod

@@ -21,7 +21,7 @@ def test_model():
         datatype=tensor(torch.float, shape=(32,)),
         object=torch.nn.Linear(13, 18),
     )
-    m_dict = m.dict()['dict']
+    m_dict = m.dict()
     assert m_dict['identifier'] == m.identifier
     assert m_dict['object'].x == m.object
     assert m_dict['datatype'].identifier == 'torch.float32[32]'

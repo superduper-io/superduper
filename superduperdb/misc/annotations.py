@@ -203,11 +203,7 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
                 h = hashlib.sha1(str(kwargs).encode()).hexdigest()
                 path = f'{f.__module__}.{f.__name__}'
                 id = f'{path}/{h}'
-                cache[id] = {
-                    'cls': f.__name__,
-                    'module': f.__module__,
-                    'dict': kwargs,
-                }
+                cache[id] = {'_path': path, **kwargs}
                 return f'?{id}'
             out._deep_flat_encode = _deep_flat_encode
             return out

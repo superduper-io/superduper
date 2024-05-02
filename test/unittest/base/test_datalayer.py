@@ -126,8 +126,7 @@ def test_add_version(db: Datalayer):
     original_serialized = component.dict().encode()
     saved_serialized = component_loaded.dict().encode()
 
-    assert original_serialized['cls'] == saved_serialized['cls']
-    assert original_serialized['module'] == saved_serialized['module']
+    assert original_serialized['_path'] == saved_serialized['_path']
     assert original_serialized['type_id'] == saved_serialized['type_id']
     assert original_serialized['identifier'] == saved_serialized['identifier']
 
@@ -172,7 +171,7 @@ def test_add_artifact_auto_replace(db):
         db.apply(component)
         serialized = create_component.call_args[0][0]
         print(serialized)
-        assert 'sha1' in serialized['dict']['artifact']['_content']
+        assert 'sha1' in serialized['artifact']['_content']
 
 
 @pytest.mark.parametrize(
@@ -334,7 +333,7 @@ def test_remove_component_with_artifact(db):
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
-    artifact_file_id = info_with_artifact['dict']['artifact']['_content']['file_id']
+    artifact_file_id = info_with_artifact['artifact']['_content']['file_id']
     with patch.object(db.artifact_store, '_delete_artifact') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
@@ -420,8 +419,8 @@ def test_show(db):
     info = db.show('test-component', 'b', 1)
     assert isinstance(info, dict)
     assert info['version'] == 1
-    assert info['dict']['identifier'] == 'b'
-    assert info['cls'] == 'TestComponent'
+    assert info['identifier'] == 'b'
+    assert info['_path'].split('.')[-1] == 'TestComponent'
 
     # Test get last version
     assert db.show('test-component', 'b', -1)['version'] == 2

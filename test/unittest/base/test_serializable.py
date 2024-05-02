@@ -43,10 +43,11 @@ def test_serializable_variables_1():
     r = Test(a=1, b='test/1', c=1.5)
     assert r.encode() == {
         '_content': {
-            'cls': 'Test',
-            'dict': {'a': 1, 'b': 'test/1', 'c': 1.5},
+            '_path': 'test.unittest.base.test_serializable.Test',
+            'a': 1,
+            'b': 'test/1',
+            'c': 1.5,
             'leaf_type': 'serializable',
-            'module': 'test.unittest.base.test_serializable',
         }
     }
     s = Test(

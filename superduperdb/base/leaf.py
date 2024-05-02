@@ -37,11 +37,11 @@ class Leaf(ABC):
     def dict(self):
         from superduperdb import Document
         r = asdict(self)
-        return Document({
-            'module': self.__class__.__module__,
-            'cls': self.__class__.__name__,
-            'dict': r
-        })
+        path = (
+            f'{self.__class__.__module__}.'
+            f'{self.__class__.__name__}'
+        )
+        return Document({'_path': path, **r})
 
     @classmethod
     def handle_integration(cls, r):

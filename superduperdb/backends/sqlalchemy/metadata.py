@@ -103,8 +103,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('version', type_integer),
             Column('hidden', type_boolean),
             Column('type_id', type_string),
-            Column('cls', type_string),
-            Column('module', type_string),
+            Column('_path', type_string),
             Column('dict', type_json_as_text),
             *component_table_args,
         )
@@ -179,15 +178,9 @@ class SQLAlchemyMetadata(MetaDataStore):
             return len(res) > 0
 
     def create_component(self, info: t.Dict):
-        """Create a component in the metadata store.
-
-        :param info: the information to create
-        """
-        if 'hidden' not in info:
-            info['hidden'] = False
-        info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
+        new_info = self._refactor_component_info(info)
         with self.session_context() as session:
-            stmt = insert(self.component_table).values(**info)
+            stmt = insert(self.component_table).values(**new_info)
             session.execute(stmt)
 
     def create_parent_child(self, parent_id: str, child_id: str):
@@ -251,7 +244,12 @@ class SQLAlchemyMetadata(MetaDataStore):
                 stmt = stmt.where(self.component_table.c.hidden == allow_hidden)
 
             res = self.query_results(self.component_table, stmt, session)
-            return res[0] if res else None
+            if res:
+                res = res[0]
+                dict_ = res['dict']
+                del res['dict']
+                res = {**res, **dict_}
+                return res
 
     def get_component_version_parents(self, unique_id: str):
         """Get the parents of a component version.
@@ -265,6 +263,19 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.parent_child_association_table, stmt, session)
             parents = [r['parent_id'] for r in res]
             return parents
+
+    @staticmethod
+    def _refactor_component_info(info):
+        if 'hidden' not in info:
+            info['hidden'] = False
+        info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
+        component_fields = ['id', 'identifier', 'version', 'hidden', 'type_id', '_path']
+        new_info = {
+            k: info[k]
+            for k in component_fields
+        }
+        new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
+        return new_info
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
@@ -315,6 +326,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.execute(stmt)
 
     def _replace_object(self, info, identifier, type_id, version):
+        info = self._refactor_component_info(info)
         with self.session_context() as session:
             stmt = (
                 self.component_table.update()

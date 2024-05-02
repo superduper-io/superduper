@@ -254,7 +254,7 @@ class DataType(Component):
         """Get the dictionary representation of the object."""
         r = super().dict()
         if hasattr(self.bytes_encoding, 'value'):
-            r['dict']['bytes_encoding'] = str(self.bytes_encoding.value)
+            r['bytes_encoding'] = str(self.bytes_encoding.value)
         return r
 
     def __call__(
@@ -684,9 +684,9 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
         r = super()._deep_flat_encode(cache, blobs, files)
-        del r['dict']['x']
+        del r['x']
         blobs[self.file_id] = maybe_bytes
-        r['dict']['blob'] = f'&{self.file_id}'
+        r['blob'] = f'&{self.file_id}'
         cache[self.id] = r
         return f'?{self.id}'
 
@@ -731,7 +731,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
                 'file_id': sha1 if self.file_id is None else self.file_id,
                 'id': (
                     f'_{self.leaf_type}/'
-                    f'{sha1 if self.file_id is None else self.file_id}',
+                    f'{sha1 if self.file_id is None else self.file_id}'
                 ),
                 'artifact_type': 'bytes',
             }

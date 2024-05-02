@@ -62,7 +62,7 @@ class Document(MongoStyleDict):
         return out
 
     @classmethod
-    def deep_flat_decode(cls, r):
+    def deep_flat_decode(cls, r, schema: t.Optional['Schema'] = None):
         cache = {}
         blobs = {}
         if '_leaves' in r:
@@ -71,8 +71,11 @@ class Document(MongoStyleDict):
         if '_blobs' in r:
             blobs = r['_blobs']
             del r['_blobs']
+
+        if schema is not None:
+            r = schema.decode_data(r)
         r = _deep_flat_decode(r, cache, blobs)
-        return Document(r, schema=r.get('_schema'))
+        return Document(r, schema=schema)
 
     def encode(
         self,
@@ -373,10 +376,12 @@ def _deep_flat_decode(r, cache, blobs):
         return r
     if isinstance(r, list):
         return [_deep_flat_decode(x, cache, blobs) for x in r]
-    if isinstance(r, dict) and 'cls' in r:
-        cls = r['cls']
-        module = r['module']
-        dict_ = _deep_flat_decode(r['dict'], cache, blobs)
+    if isinstance(r, dict) and '_path' in r:
+        parts = r['_path'].split('.')
+        cls = parts[-1]
+        module = '.'.join(parts[:-1])
+        dict_ = {k: v for k, v in r.items() if k != '_path'}
+        dict_ = _deep_flat_decode(dict_, cache, blobs)
         return _import_item(cls=cls, module=module, dict=dict_)
     if isinstance(r, dict):
         return {k: _deep_flat_decode(v, cache, blobs) for k, v in r.items()}

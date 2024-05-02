@@ -527,8 +527,6 @@ In order to create data, we need to create a `Schema` for encoding our special `
     </TabItem>
 </Tabs>
 ```python
-upstream_listener = None
-chunker = None
 do_insert(data[:-len(data) // 4])
 ```
 
@@ -704,14 +702,13 @@ Now we apply this chunker to the data by wrapping the chunker in `Listener`:
 ```python
 from superduperdb import Listener
 
-if chunker:
-    upstream_listener = Listener(
-        model=chunker,
-        select=select,
-        key='x',
-    )
-    
-    db.apply(upstream_listener)
+upstream_listener = Listener(
+    model=chunker,
+    select=select,
+    key='x',
+)
+
+db.apply(upstream_listener)
 ```
 
 <!-- TABS -->
@@ -823,8 +820,7 @@ compatible_model = None
             preprocess=preprocess, # Visual preprocessing using CLIP
             postprocess=lambda x: x.tolist(), # Convert the output to a list 
             datatype=e, # Vector encoder with shape (1024,)
-        )
-        sample_datapoint = 'images with dark colors'        
+        )        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -1022,7 +1018,7 @@ results = db.execute(select)
                 source = None
                 if '_source' in result:
                     source = get_original_callable(result['_source'])
-                visualize(result[output_key].x, source)        
+                visualize(result[output_key], source)        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -1088,11 +1084,10 @@ results = db.execute(select)
         def show(results, output_key, get_original_callable=None):
             # show only the first video
             for result in results:
-                source = result['_source']
                 result = result[output_key]
                 timestamp = result['current_timestamp']
+                source = result['_source']
                 uri = get_original_callable(source)['x']
-                print(uri, timestamp)
                 visualize(uri, timestamp)
                 break        
         ```
@@ -1107,11 +1102,8 @@ after getting the result of a vector-search:
         ```python
         def get_original(_source):
             return db.execute(table_or_collection.find_one({'_id': _source}))
-        
-        if upstream_listener:
-            visualization_key = upstream_listener.outputs
-        else:
-            visualization_key = indexing_key        
+            
+        visualization_key = upstream_listener.outputs        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>

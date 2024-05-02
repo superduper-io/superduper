@@ -490,14 +490,30 @@ do_insert(data[:-len(data) // 4])
         ```
     </TabItem>
 </Tabs>
-## Choose input key
+## Choose input key from listener outputs
 
-The input key to the fine-tuning model is the output of the previous listener:
+:::note
+This is useful if you have performed a first step, such as pre-computing 
+features, or chunking your data. You can use this query to 
+choose the input key for further models such as classification models.
+:::
 
-```python
-input_key = listener.outputs
-```
 
+<Tabs>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        input_key = listener.outputs
+        select = table_or_collection.find()        
+        ```
+    </TabItem>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        input_key = listener.outputs
+        select = table_or_collection.outputs(listener.predict_id).select('y', input_key)
+        
+        ```
+    </TabItem>
+</Tabs>
 <!-- TABS -->
 ## Build and train classifier
 
@@ -515,7 +531,7 @@ input_key = listener.outputs
             identifier='my-model',
             trainer=SklearnTrainer(
                 key=(input_key, 'y'),
-                select=Collection('clt').find(),
+                select=select,
             )
         )        
         ```
@@ -559,7 +575,7 @@ input_key = listener.outputs
                 loader_kwargs={'batch_size': 10},
                 max_iterations=100,
                 validation_interval=10,
-                select=Collection('clt').find(),
+                select=select,
             ),
         )        
         ```

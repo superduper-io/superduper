@@ -672,7 +672,7 @@ class Model(Component):
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
-            db.add(self)
+            db.apply(self)
         assert isinstance(
             self.version, int
         ), 'Something has gone wrong setting `self.version`'

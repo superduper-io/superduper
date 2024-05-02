@@ -21,7 +21,7 @@ import TabItem from '@theme/TabItem';
             identifier='my-model',
             trainer=SklearnTrainer(
                 key=(input_key, 'y'),
-                select=Collection('clt').find(),
+                select=select,
             )
         )        
         ```
@@ -65,7 +65,7 @@ import TabItem from '@theme/TabItem';
                 loader_kwargs={'batch_size': 10},
                 max_iterations=100,
                 validation_interval=10,
-                select=Collection('clt').find(),
+                select=select,
             ),
         )        
         ```

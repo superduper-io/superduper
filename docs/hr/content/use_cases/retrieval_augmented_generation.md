@@ -494,14 +494,13 @@ Now we apply this chunker to the data by wrapping the chunker in `Listener`:
 ```python
 from superduperdb import Listener
 
-if chunker:
-    upstream_listener = Listener(
-        model=chunker,
-        select=select,
-        key='x',
-    )
-    
-    db.apply(upstream_listener)
+upstream_listener = Listener(
+    model=chunker,
+    select=select,
+    key='x',
+)
+
+db.apply(upstream_listener)
 ```
 
 ## Select outputs of upstream listener

@@ -117,8 +117,13 @@ class Datalayer:
         self._server_mode = is_server
 
     def initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None, backfill=False
+        self, identifier, searcher_type: t.Optional[str] = None
     ) -> t.Optional[BaseVectorSearcher]:
+        '''
+        A helper function to initialize vector searcher
+        :param identifier: identifying string to component
+        :param searcher_type: Searcher type (in_memory|native)
+        '''
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
 
         vi = self.vector_indices.force_load(identifier)
@@ -138,6 +143,13 @@ class Datalayer:
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
+        '''
+        Helper function to backfill vector search from model outputs of
+        a given vector index.
+        :param vi: Identifier of vector index
+        :param searcher: FastVectorSearch instance to
+                         load model outputs as vectors
+        '''
         if s.CFG.cluster.vector_search.type == 'native':
             return
 
@@ -181,6 +193,7 @@ class Datalayer:
         """
         Set a new compute engine at runtime. Use it only if you know what you do.
         The standard procedure is to set compute engine during initialization.
+        :param new: New compute backend
         """
         logging.warn(
             f"Change compute engine from '{self.compute.name}' to '{new.name}'"
@@ -200,6 +213,7 @@ class Datalayer:
     def drop(self, force: bool = False):
         """
         Drop all data, artifacts and metadata
+        :param force: Force drop
         """
         if not force and not click.confirm(
             f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
@@ -325,6 +339,8 @@ class Datalayer:
         Insert data.
 
         :param insert: insert query object
+        :param refresh: refresh task group on insert
+        :param datatypes: list of datatypes in insert documents
         """
         for e in datatypes:
             self.add(e)
@@ -398,6 +414,7 @@ class Datalayer:
         :param query: Select or Update which reduces scope of computations
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
+        :param overwrite: Cascade the value to `predict_in_db` job.
         """
         task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,  # TODO can be replaced by select_using_ids
@@ -413,6 +430,7 @@ class Datalayer:
         Bulk write data to database.
 
         :param write: update query object
+        :param refresh: refresh task group on write
         """
         write_result, updated_ids, deleted_ids = write.execute(self)
 
@@ -448,6 +466,7 @@ class Datalayer:
         Update data.
 
         :param update: update query object
+        :param refresh: refresh task group on update
         """
         updated_ids = update.execute(self)
 
@@ -568,7 +587,6 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         info_only: bool = False,
-        on_ray: bool = False,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load component using uniquely identifying information.
@@ -669,6 +687,10 @@ class Datalayer:
         verbose: bool = True,
         overwrite: bool = False,
     ) -> TaskWorkflow:
+        '''
+        A helper function to build taskworkflow for query with
+        dependencies.
+        '''
         logging.debug(f"Building task workflow graph. Query:{query}")
 
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
@@ -987,6 +1009,14 @@ class Datalayer:
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        '''
+        Performs a vector search query on given vector index
+        :param like: vector search document to search.
+        :param vector_index: vector index to search.
+        :param ids: (optional) ids to search within
+        :param outputs: (optional) seed outputs dict.
+        :param n: Get top k results from vector search.
+        '''
         # TODO - make this un-ambiguous
         if not isinstance(like, Document):
             assert isinstance(like, dict)
@@ -1034,6 +1064,12 @@ class Datalayer:
 
 @dc.dataclass
 class LoadDict(dict):
+    '''
+    Helpder class to load component identifiers with
+    on demand loading from database..
+
+    '''
+
     database: Datalayer
     field: t.Optional[str] = None
     callable: t.Optional[t.Callable] = None
@@ -1048,4 +1084,7 @@ class LoadDict(dict):
         return value
 
     def force_load(self, key: str):
+        '''
+        Force load the component from database.
+        '''
         return self.__missing__(key)

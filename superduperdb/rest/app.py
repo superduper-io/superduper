@@ -136,9 +136,7 @@ def build_app(app: superduperapp.SuperDuperApp):
                 content=info['_leaves'], db=app.db, identifier=info['identifier']
             )
         else:
-            id = f'_component/{info["type_id"]}/{info["identifier"]}'
-            r = {'_leaves': [{**info, 'id': id}], '_base': id}
-            component = import_(r=r, db=app.db)
+            component = import_(r=info, db=app.db)
         app.db.apply(component)
         return {'status': 'ok'}
 

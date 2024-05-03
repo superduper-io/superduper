@@ -1,7 +1,6 @@
 import datetime
 import importlib
 import json
-import os
 import platform
 import socket
 import sys
@@ -41,7 +40,7 @@ def _get_info():
         'cwd': Path.cwd(),
         'freeze': _freeze(),
         'hostname': socket.gethostname(),
-        'os_uname': list(os.uname()),
+        'os_uname': list(platform.uname()),
         'package_versions': _package_versions(),
         'platform': _platform(),
         'startup_time': datetime.datetime.now(),

@@ -56,7 +56,17 @@ ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version
 @dc.dataclass
 class Component(Serializable, Leaf):
     """
-    :param identifier: A unique identifier for the component"""
+    Class to represent superduperdb serializable entities which can be saved into
+    a database.
+
+    :param identifier: A unique identifier for the component
+    :param leaf_type: Type of leaf component, encodable, etc
+    :param set_post_init: Set of fields to set post init
+    :param ui_schema: Schema for UI
+    :param artifacts: List of artifacts which represents entities whom are
+                      not serializable by default.
+    :param changed: Set which holds changed fields after post init
+    """
 
     type_id: t.ClassVar[str] = 'component'
     leaf_type: t.ClassVar[str] = 'component'
@@ -73,10 +83,16 @@ class Component(Serializable, Leaf):
 
     @property
     def id(self):
+        '''
+        Returns component identifier
+        '''
         return f'_component/{self.type_id}/{self.identifier}'
 
     @property
     def id_tuple(self):
+        '''
+        Returns an object if `ComponentTuple`
+        '''
         return ComponentTuple(self.type_id, self.identifier, self.version)
 
     def __post_init__(self, artifacts):
@@ -88,6 +104,9 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def get_ui_schema(cls):
+        '''
+        Helper method to get UI schema
+        '''
         out = {}
         ancestors = cls.mro()[::-1]
         for a in ancestors:
@@ -111,9 +130,16 @@ class Component(Serializable, Leaf):
 
     @property
     def dependencies(self):
+        '''
+        Get dependencies on the component
+        '''
         return ()
 
     def init(self):
+        '''
+        Method to help initiate component field dependencies
+        '''
+
         def _init(item):
             if isinstance(item, Component):
                 item.init()
@@ -138,6 +164,10 @@ class Component(Serializable, Leaf):
 
     @property
     def artifact_schema(self):
+        '''
+        Returns `Schema` representation for the serializers
+        in the component
+        '''
         from superduperdb import Schema
         from superduperdb.components.datatype import dill_serializer
 
@@ -211,6 +241,12 @@ class Component(Serializable, Leaf):
         return r, bytes
 
     def export(self, format=None):
+        '''
+        Method to export the component in the provided format.
+        if format is None, method exports component in dictionary
+
+        :param format: `json` and `yaml`
+        '''
         r, bytes = self._to_dict_and_bytes()
 
         if format is None:
@@ -240,6 +276,9 @@ class Component(Serializable, Leaf):
         raise NotImplementedError(f'Format {format} not supported')
 
     def dict(self) -> 'Document':
+        '''
+        A dictionary representation of the component
+        '''
         from superduperdb import Document
         from superduperdb.components.datatype import Artifact, File
 
@@ -262,6 +301,9 @@ class Component(Serializable, Leaf):
         self,
         leaf_types_to_keep: t.Sequence = (),
     ):
+        '''
+        Method to encode the component into dictionary.
+        '''
         r = super().encode(leaf_types_to_keep=leaf_types_to_keep)
         del r['_content']['dict']
         r['_content']['leaf_type'] = 'component'
@@ -270,6 +312,9 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
+        '''
+        Decodes a dictionary component into `Component` instance.
+        '''
         assert db is not None
         r = r['_content']
         assert r['version'] is not None
@@ -277,6 +322,9 @@ class Component(Serializable, Leaf):
 
     @property
     def unique_id(self) -> str:
+        '''
+        Method to get unique identifier for the component
+        '''
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.type_id}/{self.identifier}/{self.version}'
@@ -286,6 +334,12 @@ class Component(Serializable, Leaf):
         validation_set: t.Union[str, Dataset],
         metrics: t.Sequence[str],
     ) -> ComponentJob:
+        '''
+        Method to create validation job with `validation_set` and `metrics`
+        :param validation_set: Kwargs for the `predict` method of `Model`
+        :param metrics: Kwargs for the `predict` method of `Model` to set
+                        metrics for the validation job.
+        '''
         assert self.identifier is not None
         return ComponentJob(
             component_identifier=self.identifier,
@@ -304,9 +358,8 @@ class Component(Serializable, Leaf):
     ) -> t.Sequence[t.Any]:
         """Run the job for this listener
 
-        :param database: The db to process
+        :param db: The db to process
         :param dependencies: A sequence of dependencies,
-        :param verbose: If true, print more information
         """
         return []
 

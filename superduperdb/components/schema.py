@@ -32,6 +32,9 @@ class Schema(Component):
 
     @override
     def pre_create(self, db) -> None:
+        '''
+        Database pre create hook to add datatype to db.
+        '''
         for v in self.fields.values():
             if isinstance(v, DataType):
                 db.add(v)
@@ -39,6 +42,10 @@ class Schema(Component):
 
     @property
     def raw(self):
+        '''
+        Get a dictionary of fields as key and datatype as value, This is used
+        to create ibis tables.
+        '''
         return {
             k: (v.identifier if not isinstance(v, DataType) else CFG.bytes_encoding)
             for k, v in self.fields.items()
@@ -46,14 +53,23 @@ class Schema(Component):
 
     @cached_property
     def encoded_types(self):
+        '''
+        List of fields of type `DataType`
+        '''
         return [k for k, v in self.fields.items() if isinstance(v, DataType)]
 
     @cached_property
     def trivial(self):
+        '''
+        List of trivial fields
+        '''
         return not any([isinstance(v, DataType) for v in self.fields.values()])
 
     @property
     def encoders(self):
+        '''
+        An iterable to list `Datatype` fields
+        '''
         for v in self.fields.values():
             if isinstance(v, DataType):
                 yield v

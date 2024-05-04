@@ -28,28 +28,65 @@ Encode = t.Callable[[t.Any], bytes]
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
+    """
+    Encode an object using pickle.
+
+    :param object: Object to encode.
+    :param info: Optional information.
+    """
     return pickle.dumps(object)
 
 
 def pickle_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
+    """
+    Decode bytes using pickle.
+
+    :param b: Bytes to decode.
+    :param info: Optional information.
+    """
     return pickle.loads(b)
 
 
 def dill_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
+    """
+    Encode an object using dill.
+
+    :param object: Object to encode.
+    :param info: Optional information.
+    """
     return dill.dumps(object, recurse=True)
 
 
 def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
+    """
+    Decode bytes using dill.
+
+    :param b: Bytes to decode.
+    :param info: Optional information.
+    """
     return dill.loads(b)
 
 
 def file_check(path: t.Any, info: t.Optional[t.Dict] = None) -> str:
+    """
+    Check if a file path exists.
+
+    :param path: File path to check.
+    :param info: Optional information.
+    :raises ValueError: If the path does not exist.
+    """
     if not (isinstance(path, str) and os.path.exists(path)):
         raise ValueError(f"Path '{path}' does not exist")
     return path
 
 
 def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
+    """
+    Save an object in torch format.
+
+    :param object: Object to encode.
+    :param info: Optional information.
+    """
     import torch
 
     from superduperdb.ext.torch.utils import device_of
@@ -67,16 +104,32 @@ def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 
 def torch_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
+    """
+    Decode bytes to torch model.
+
+    :param b: Bytes to decode.
+    :param info: Optional information.
+    """
     import torch
 
     return torch.load(io.BytesIO(b))
 
 
 def to_base64(bytes):
+    """
+    Convert bytes to base64.
+
+    :param bytes: Bytes to convert.
+    """
     return base64.b64encode(bytes).decode('utf-8')
 
 
 def from_base64(encoded):
+    """
+    Decode base64 encoded string.
+
+    :param encoded: Base64 encoded string.
+    """
     return base64.b64decode(encoded)
 
 
@@ -85,14 +138,15 @@ def from_base64(encoded):
 class DataType(Component):
     """
     {component_parameters}
-    :param identifier: Unique identifier
-    :param decoder: callable converting a ``bytes`` string to a ``Encodable``
-                    of this ``Encoder``
+
+    :param identifier: Unique identifier.
+    :param decoder: Callable converting a ``bytes`` string to a ``Encodable``
+                    of this ``Encoder``.
     :param encoder: Callable converting an ``Encodable`` of this ``Encoder``
-                    to ``bytes``
-    :param shape: Shape of the data
-    :param load_hybrid: Whether to load the data from the URI or return the URI in
-                        `CFG.hybrid` mode
+                    to ``bytes``.
+    :param shape: Shape of the data.
+    :param load_hybrid: Whether to load the data from the URI or return
+                        the URI in `CFG.hybrid` mode.
     """
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
@@ -133,12 +187,21 @@ class DataType(Component):
     media_type: t.Optional[str] = None
 
     def __post_init__(self, artifacts):
+        """
+        Post-initialization hook.
+
+        :param artifacts: Artifacts.
+        """
         super().__post_init__(artifacts)
         self.encodable_cls = _ENCODABLES[self.encodable]
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
         self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
 
     def dict(self):
+        """
+        Get dictionary representation.
+
+        """
         r = super().dict()
         if hasattr(self.bytes_encoding, 'value'):
             r['dict']['bytes_encoding'] = str(self.bytes_encoding.value)
@@ -147,6 +210,12 @@ class DataType(Component):
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
     ) -> '_BaseEncodable':
+        """
+        Call method.
+
+        :param x: Optional content.
+        :param uri: Optional URI.
+        """
         if self._takes_x:
             return self.encodable_cls(datatype=self, x=x, uri=uri)
         else:
@@ -154,6 +223,12 @@ class DataType(Component):
 
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
+        """
+        Encode item in bytes.
+
+        :param item: Item to encode.
+        :param info: Optional information.
+        """
         info = info or {}
         data = self.encoder(item, info)
         data = self.bytes_encoding_after_encode(data)
@@ -161,22 +236,44 @@ class DataType(Component):
 
     @ensure_initialized
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
+        """
+        Decode item.
+
+        :param item: Item to decode.
+        :param info: Optional information.
+        """
         info = info or {}
         item = self.bytes_encoding_before_decode(item)
         return self.decoder(item, info=info)
 
     def bytes_encoding_after_encode(self, data):
+        """
+        Convert data to bytes formart
+
+        :param data: Data to encode.
+        """
         if self.bytes_encoding == BytesEncoding.BASE64:
             return to_base64(data)
         return data
 
     def bytes_encoding_before_decode(self, data):
+        """
+        Perform bytes encoding before decoding.
+
+        :param data: Data to decode.
+        """
         if self.bytes_encoding == BytesEncoding.BASE64:
             return from_base64(data)
         return data
 
 
 def encode_torch_state_dict(module, info):
+    """
+    Encode torch state dictionary.
+
+    :param module: Module.
+    :param info: Information.
+    """
     import torch
 
     buffer = io.BytesIO()
@@ -199,6 +296,12 @@ class DecodeTorchStateDict:
 
 
 def build_torch_state_serializer(module, info):
+    """
+    Datatype for serializing torch state dict.
+
+    :param module: Module.
+    :param info: Information.
+    """
     return DataType(
         identifier=module.__name__,
         info=info,
@@ -208,6 +311,11 @@ def build_torch_state_serializer(module, info):
 
 
 def _find_descendants(cls):
+    """
+    Find descendants.
+
+    :param cls: Class.
+    """
     descendants = cls.__subclasses__()
     for subclass in descendants:
         descendants.extend(_find_descendants(subclass))
@@ -217,12 +325,12 @@ def _find_descendants(cls):
 @dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
     """
-    Data variable wrapping encode-able item. Encoding is controlled by the referred
-    to ``Encoder`` instance.
+        Data variable wrapping encode-able item. Encoding is controlled by the referred
+    -    to ``Encoder`` instance.
 
-    :param encoder: Instance of ``Encoder`` controlling encoding
-    :param x: Wrapped content
-    :param uri: URI of the content, if any
+        :param encoder: Instance of ``Encoder`` controlling encoding.
+        :param x: Wrapped content.
+        :param uri: URI of the content, if any.
     """
 
     file_id: t.Optional[str] = None
@@ -231,6 +339,11 @@ class _BaseEncodable(Leaf):
     sha1: t.Optional[str] = None
 
     def _deep_flat_encode(self, cache):
+        """
+        Deep flat encode.
+
+        :param cache: Cache.
+        """
         r = self.encode()
         out = {
             'cls': self.__class__.__name__,
@@ -248,10 +361,17 @@ class _BaseEncodable(Leaf):
 
     @property
     def id(self):
+        """
+        Get ID.
+
+        """
         assert self.file_id is not None
         return f'_{self.leaf_type}/{self.file_id}'
 
     def __post_init__(self):
+        """
+        Post-initialization hook.
+        """
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
 
@@ -260,19 +380,25 @@ class _BaseEncodable(Leaf):
 
     @property
     def unique_id(self):
+        """
+        Get unique ID.
+        """
         if self.file_id is not None:
             return self.file_id
         return str(id(self.x))
 
     @property
     def reference(self):
+        """
+        Get reference to datatype.
+        """
         return self.datatype.reference
 
     def unpack(self, db):
         """
         Unpack the content of the `Encodable`
 
-        :param db: `Datalayer` instance to assist with
+        :param db: Datalayer instance.
         """
         return self.x
 
@@ -281,6 +407,10 @@ class _BaseEncodable(Leaf):
         """
         Get the subclass of the _BaseEncodable with the given name.
         All the registered subclasses must be subclasses of the _BaseEncodable.
+
+        :param name: Name.
+        :param default: Default class.
+        :raises ValueError: If no subclass with the name is found.
         """
         for sub_cls in _find_descendants(cls):
             if sub_cls.__name__.lower() == name.lower().replace('_', '').replace(
@@ -298,14 +428,31 @@ class _BaseEncodable(Leaf):
     @classmethod
     @abstractmethod
     def _get_object(cls, db, r):
+        """
+        Get object.
+
+        :param db: Datalayer instance.
+        :param r: Representation.
+        """
         pass
 
     @classmethod
     @abstractmethod
     def decode(cls, r, db=None) -> '_BaseEncodable':
+        """
+        Decode method.
+
+        :param r: Representation.
+        :param db: Datalayer instance.
+        """
         pass
 
     def get_hash(self, data):
+        """
+        Get hash.
+
+        :param data: Data.
+        """
         if isinstance(data, str):
             bytes_ = data.encode()
         elif isinstance(data, bytes):
@@ -318,6 +465,10 @@ class _BaseEncodable(Leaf):
 
 class Empty:
     def __repr__(self):
+        """
+        Get representation.
+
+        """
         return '<EMPTY>'
 
 
@@ -352,6 +503,10 @@ class Encodable(_BaseEncodable):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
+        '''
+        Encode `self.x` to dictionary format which could be serialized
+        to a database.
+        '''
         bytes_, sha1 = self._encode()
         return {
             '_content': {
@@ -370,6 +525,9 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def build(cls, r):
+        '''
+        Build ``Encodable`` with `r`
+        '''
         return cls(**r)
 
     def init(self, db):
@@ -377,6 +535,9 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def decode(cls, r, db=None) -> 'Encodable':
+        '''
+        Decode dictionary to `Encodable` instance
+        '''
         object = cls._get_object(db, r['_content'])
         return cls(
             x=object,
@@ -431,6 +592,11 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return bytes_, sha1
 
     def init(self, db):
+        '''
+        Initialization to seed `x` with actual object from
+        artifact store.
+        :param db: A Datalayer instance
+        '''
         if isinstance(self.x, Empty):
             self.x = self._get_object(
                 db,
@@ -441,6 +607,10 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
+        '''
+        Encode `self.x` to dictionary format which later is saved
+        in an artifact store.
+        '''
         if self.x is not None and not isinstance(self.x, Empty):
             bytes_, sha1 = self._encode()
         else:
@@ -483,12 +653,18 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return self.x
 
     def save(self, artifact_store):
+        '''
+        Save the encoded data into an artifact store.
+        '''
         r = artifact_store.save_artifact(self.encode()['_content'])
         self.x = None
         self.file_id = r['file_id']
 
     @classmethod
     def decode(cls, r, db=None) -> 'Artifact':
+        '''
+        Decode dictionary into instance of `Artifact`
+        '''
         r = r['_content']
         x = cls._get_object(
             db, file_id=r['file_id'], datatype=r['datatype'], uri=r.get('uri')
@@ -518,6 +694,9 @@ class LazyArtifact(Artifact):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
+        '''
+        Encode `x` in dictionary format for artifact store.
+        '''
         return super().encode(leaf_types_to_keep)
 
     def unpack(self, db):
@@ -530,12 +709,18 @@ class LazyArtifact(Artifact):
         return self.x
 
     def save(self, artifact_store):
+        '''
+        Save encoded data into artifact store
+        '''
         r = artifact_store.save_artifact(self.encode()['_content'])
         self.x = None
         self.file_id = r['file_id']
 
     @classmethod
     def decode(cls, r, db=None) -> 'LazyArtifact':
+        '''
+        Decode data into `LazyArtifact` instance.
+        '''
         return cls(
             x=Empty(),  # this is to enable lazy loading
             datatype=db.datatypes[r['_content']['datatype']],
@@ -555,11 +740,20 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     x: t.Any = Empty()
 
     def init(self, db):
+        '''
+        Initialization to laod `x` with actual file from
+        artifact store.
+        :param db: A Datalayer instance
+        '''
         if isinstance(self.x, Empty):
             file = db.artifact_store._load_file(self.file_id)
             self.x = file
 
     def unpack(self, db):
+        '''
+        Unpack and get original data.
+        :param db: Datalayer instance.
+        '''
         self.init(db)
         return self.x
 
@@ -569,6 +763,10 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
+        '''
+        Encode `x` to dictionary which is saved to
+        artifact store later.
+        '''
         dc.asdict(self)
         file_id = self.file_id or random_sha1()
         return {
@@ -584,6 +782,9 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     @classmethod
     def decode(cls, r, db=None) -> 'File':
+        '''
+        Decode data to `File` instance.
+        '''
         file = cls(
             x=Empty(),
             datatype=db.datatypes[r['_content']['datatype']],
@@ -594,6 +795,10 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
 
 class LazyFile(File):
+    '''
+    Class is used to load a file only when needed.
+    '''
+
     leaf_type: t.ClassVar[str] = 'lazy_file'
 
     @classmethod

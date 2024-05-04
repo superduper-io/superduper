@@ -51,6 +51,11 @@ class VectorIndex(Component):
 
     @override
     def on_load(self, db: Datalayer) -> None:
+        '''
+        On load hook to perform indexing and compatible listener
+        loading on loading of vector index from database.
+        :param db: A DataLayer instance
+        '''
         if isinstance(self.indexing_listener, str):
             self.indexing_listener = t.cast(
                 Listener, db.load('listener', self.indexing_listener)
@@ -69,6 +74,18 @@ class VectorIndex(Component):
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
     ):
+        '''
+        Perform vector search with query `like` from outputs in db
+        on `self.identifier` vectori index.
+
+        :param like: The document to compare against
+        :param outputs: (optional) seed outputs dict.
+        :param models: List of models to retrieve outputs
+        :param db: A datalayer instance.
+        :param keys: Keys available to retrieve outputs of model
+        :param outputs: (optional) update `like` with outputs
+
+        '''
         document = MongoStyleDict(like.unpack())
         if outputs is not None:
             outputs = outputs or {}
@@ -120,11 +137,12 @@ class VectorIndex(Component):
         ids: t.Optional[t.Sequence[str]] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
-        """Given a document, find the nearest results in this vector index, returned as
+        """
+        Given a document, find the nearest results in this vector index, returned as
         two parallel lists of result IDs and scores
 
         :param like: The document to compare against
-        :param db: The datastore to use
+        :param db: The datalayer to use
         :param outputs: An optional dictionary
         :param ids: A list of ids to match
         :param n: Number of items to return
@@ -170,6 +188,10 @@ class VectorIndex(Component):
 
     @property
     def dimensions(self) -> int:
+        '''
+        Get dimension for vector database. This dimension will be used to prepare
+        vectors in the vector database.
+        '''
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.indexing_listener.model, str)
         if shape := getattr(self.indexing_listener.model.datatype, 'shape', None):
@@ -185,9 +207,8 @@ class VectorIndex(Component):
         """
         Schedule jobs for the listener
 
-        :param database: The DB instance to process
+        :param db: The DB instance to process
         :param dependencies: A list of dependencies
-        :param verbose: Whether to print verbose output
         """
         if not db.cdc.running:
             job = FunctionJob(
@@ -232,6 +253,7 @@ def vector(shape, identifier: t.Optional[str] = None):
     Create an encoder for a vector (list of ints/ floats) of a given shape
 
     :param shape: The shape of the vector
+    :param identifier: The identifier of the vector
     """
     if isinstance(shape, int):
         shape = (shape,)

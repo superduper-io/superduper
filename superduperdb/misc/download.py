@@ -14,9 +14,10 @@ import requests
 from tqdm import tqdm
 
 from superduperdb import CFG, logging
-from superduperdb.backends.base.query import Insert, Select
+from superduperdb.backends.base.query import Query
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.leaf import Leaf
+from superduperdb.components.datatype import _BaseEncodable
 
 
 class TimeoutException(Exception):
@@ -352,8 +353,7 @@ def _gather_uris_for_document(r: Document, id_field: str = '_id'):
     uris = []
     keys = []
     datatypes = []
-    leaf_lookup = r.get_leaves('encodable')
-    leaf_lookup.update(r.get_leaves('artifact'))
+    leaf_lookup = r.encode(leaves_to_keep=_BaseEncodable)['_leaves']
     for k in leaf_lookup:
         if leaf_lookup[k].uri is None:
             continue
@@ -365,7 +365,7 @@ def _gather_uris_for_document(r: Document, id_field: str = '_id'):
 
 def download_content(
     db,
-    query: t.Union[Select, Insert, t.Dict],
+    query: t.Union[Query, t.Dict],
     ids: t.Optional[t.Sequence[str]] = None,
     documents: t.Optional[t.List[Document]] = None,
     raises: bool = True,
@@ -394,12 +394,13 @@ def download_content(
     logging.debug(str(query))
     logging.debug(str(ids))
 
+    # TODO handle this in the job runner
     if isinstance(query, dict):
-        query = Serializable.decode(query)
+        query = Document.decode(query).unpack()
 
     if documents is not None:
         pass
-    elif isinstance(query, Select):
+    elif isinstance(query, Query) and query.type == 'select':
         if ids is None:
             # TODO deprecate reference since lazy loading in any case
             documents = list(db.execute(query))
@@ -407,7 +408,7 @@ def download_content(
             select = query.select_using_ids(ids)
             documents = list(db.execute(select))
     else:
-        assert isinstance(query, Insert)
+        assert query.type == 'insert'
         documents = t.cast(t.List[Document], query.documents)
 
     uris, keys, datatypes, place_ids = gather_uris(documents)

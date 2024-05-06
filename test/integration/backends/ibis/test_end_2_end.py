@@ -7,7 +7,14 @@ import torchvision
 
 from superduperdb import CFG
 from superduperdb.backends.ibis.field_types import dtype
+<<<<<<< HEAD
 from superduperdb.backends.ibis.query import RawSQL, Table
+=======
+from superduperdb.backends.ibis.query import RawSQL, IbisQuery
+from superduperdb.backends.local.artifacts import FileSystemArtifactStore
+from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base.datalayer import Datalayer
+>>>>>>> 9d83d21ec (Deprecate Serializable)
 from superduperdb.base.document import Document as D
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema
@@ -58,7 +65,7 @@ def _end_2_end(db, memory_table=False):
         {'id': '4', 'health': 1, 'age': 28, 'image': im},
     ]
 
-    t = Table(identifier='my_table', schema=schema)
+    t = IbisQuery(identifier='my_table', schema=schema)
 
     db.add(t)
 
@@ -186,7 +193,7 @@ def test_nested_query(clean_cache):
         },
     )
 
-    t = Table(identifier='my_table', schema=schema)
+    t = IbisQuery(identifier='my_table', schema=schema)
 
     db.add(t)
 

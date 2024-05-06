@@ -1,17 +1,19 @@
+import lorem
 from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.base.query import Predict
+from superduperdb.backends.base.query import Query
+
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Table
-from superduperdb.backends.mongodb.query import Collection
+# from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
 
 
 @pytest.fixture
-def table() -> Table:
+def table():
     schema = Schema('schema', fields={'id': dtype('str'), 'this': dtype('str')})
     table = Table('documents', schema=schema)
     return table
@@ -19,7 +21,7 @@ def table() -> Table:
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_insert_and_find_mongodb(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     collection.insert_many([Document({'this': 'is a test'})]).execute(db)
     r = collection.find_one().execute(db)
     assert r['this'] == 'is a test'
@@ -35,7 +37,7 @@ def test_execute_insert_and_find_sqldb(db, table):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_complex_query_mongodb(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     collection.insert_many(
         [Document({'this': f'is a test {i}'}) for i in range(100)]
     ).execute(db)
@@ -62,7 +64,7 @@ def test_execute_complex_query_sqldb(db, table):
 
 
 def test_execute_like_queries_mongodb(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     # get a data point for testing
     r = collection.find_one().execute(db)
 
@@ -139,16 +141,94 @@ def test_model(db):
 
     m.predict_one(torch.randn(32))
 
-    from superduperdb.backends.base.query import model
+    from superduperdb.backends.base.query import Model
 
     t = torch.randn(32)
 
     m.predict_one(t)
 
-    q = model('linear_a').predict_one(t)
+    q = Model('linear_a').predict_one(t)
 
-    isinstance(q, Predict)
+    # isinstance(q, Predict)
 
     out = db.execute(q).unpack()
 
     assert isinstance(out, torch.Tensor)
+
+
+def test_builder():
+    q = Query(identifier='table', parts=()).select('id').where(2, 3, 4, a=5)
+    assert str(q) == 'table.select("id").where(2, 3, 4, a=5)'
+
+
+multi_query = """something.find().limit(5)
+other_thing.join(query[0]).filter(documents[0])"""
+
+
+def test_parse_and_dump():
+    from superduperdb.backends.base.query import parse_query
+    q = parse_query(documents=[], query='collection.find().limit(5)',
+                    builder_cls=Query)
+    print('\n')
+    print(q)
+
+    q = parse_query(documents=[{'txt': 'test'}], query=multi_query,
+                    builder_cls=Query)
+
+    print('\n')
+    print(q)
+
+    out, docs = q._dump_query()
+
+    assert out == multi_query
+
+    assert set(docs[0].keys()) == {'txt'}
+
+    r = q.encode()
+
+    import pprint
+    pprint.pprint(r)
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_execute(db):
+
+    q = db.test_coll.insert_many([
+        {'txt': lorem.sentence()} for _ in range(20)
+    ])
+
+    q.execute()
+
+    r = db.test_coll.find_one().execute()
+
+    assert 'txt' in r
+
+    q = db.test_coll.find_one()
+
+    print(q)
+
+    r = q.execute()
+
+
+def test_serialize_with_image():
+
+    import PIL.Image
+    from superduperdb.ext.pillow import pil_image
+    from superduperdb.backends.mongodb import MongoQuery
+
+    img = PIL.Image.open('test/material/data/test.png')
+    img = img.resize((2, 2))
+
+    r = Document({'img': pil_image(img)})
+
+    q = MongoQuery(identifier='test_coll').like(r).find()
+    print(q)
+
+    s = q.encode()
+
+    import pprint
+    pprint.pprint(s)
+
+    decode_q = Document.decode(s).unpack()
+
+    print(decode_q)

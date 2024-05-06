@@ -23,10 +23,10 @@ class Schema(Component):
     type_id: t.ClassVar[str] = 'schema'
     fields: t.Mapping[str, DataType]
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
-        super().__post_init__(artifacts)
+        super().__post_init__(db, artifacts)
 
     @override
     def pre_create(self, db) -> None:
@@ -51,10 +51,12 @@ class Schema(Component):
             for k, v in self.fields.items()
         }
 
-    def deep_flat_encode_data(self, r, cache, blobs, files):
+    def deep_flat_encode_data(self, r, cache, blobs, files, leaves_to_keep=None):
         for k in self.fields:
             if isinstance(self.fields[k], DataType):
                 encodable = self.fields[k](r[k])
+                if isinstance(encodable, leaves_to_keep):
+                    continue
                 r[k] = encodable._deep_flat_encode(cache, blobs, files)
         return r
 

@@ -3,21 +3,22 @@ import typing as t
 from pprint import pprint
 
 from superduperdb import ObjectModel
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Serializable, Variable
+from superduperdb.base.variables import Variable
+from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component
 
 
 @dc.dataclass
-class Test(Serializable):
+class Test(Leaf):
     a: int
     b: t.Union[str, Variable]
     c: t.Union[float, Variable]
 
 
 @dc.dataclass
-class OtherSer(Serializable):
+class OtherSer(Leaf):
     d: str
 
 
@@ -33,22 +34,19 @@ class TestSubModel(Component):
 
 
 @dc.dataclass
-class MySer(Serializable):
+class MySer(Leaf):
     a: int
     b: str
-    c: Serializable
+    c: Leaf
 
 
-def test_serializable_variables_1():
+def test_serialize_variables_1():
     r = Test(a=1, b='test/1', c=1.5)
-    assert r.encode() == {
-        '_content': {
-            '_path': 'test.unittest.base.test_serializable.Test',
-            'a': 1,
-            'b': 'test/1',
-            'c': 1.5,
-            'leaf_type': 'serializable',
-        }
+    assert r.dict().encode() == {
+        '_path': 'test.unittest.base.test_leaf.Test',
+        'a': 1,
+        'b': 'test/1',
+        'c': 1.5,
     }
     s = Test(
         a=1,
@@ -68,20 +66,20 @@ def test_serializable_variables_1():
     assert s.set_variables(db=Tmp(version=1)).encode() == r.encode()
 
 
-def test_serializable_variables_2():
+def test_save_variables_2():
     query = (
-        Collection(Variable('Collection'))
+        MongoQuery(Variable('Collection'))
         .like({'x': Variable('X')}, vector_index='test')
         .find({'x': {'$regex': '^test/1'}})
     )
 
     assert [x.value for x in query.variables] == ['Collection', 'X']
 
-    q = Collection(Variable('Collection')).find({'x': Variable('X')})
-    print(pprint(q.serialize()))
+    q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
+    print(pprint(q.dict()))
 
 
-def test_serializable():
+def test_saveable():
     s = MySer(a=1, b='test', c=OtherSer(d='test'))
     r = Document(s.dict()).encode()
     print(r)
@@ -115,31 +113,21 @@ def test_component_with_document():
         print(type(leaf))
 
 
-def test_compound_select_serialize():
-    q = Collection('test').find({}).limit(5)
-
-    r = q.dict().encode()
-
-    s = Serializable.decode(r)
-
-    print(s)
-
-
 def test_find_variables():
     from superduperdb import Document
-    from superduperdb.backends.mongodb import Collection
-    from superduperdb.base.serializable import Variable
+    from superduperdb.backends.mongodb import MongoQuery
+    from superduperdb.base.variables import Variable
 
     r = Document({'txt': Variable('test')})
 
     assert [str(x) for x in r.variables] == ['$test']
 
-    q = Collection('test').find_one(Document({'txt': Variable('test')}))
+    q = MongoQuery('test').find_one(Document({'txt': Variable('test')}))
 
     assert [str(x) for x in q.variables] == ['$test']
 
     q = (
-        Collection('test')
+        MongoQuery('test')
         .like(Document({'txt': Variable('test')}), vector_index='test')
         .find()
         .limit(5)

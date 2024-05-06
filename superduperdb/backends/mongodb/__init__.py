@@ -1,3 +1,3 @@
-from .query import Collection
+from .query import MongoQuery
 
-__all__ = ['Collection']
+__all__ = ['MongoQuery']

@@ -179,6 +179,10 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
+    def _get_component_uuid(self, type_id: str, identifier: str, version: int):
+        pass
+
+    @abstractmethod
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
     ):
@@ -222,6 +226,10 @@ class MetaDataStore(ABC):
         version: int,
         allow_hidden: bool = False,
     ):
+        pass
+
+    @abstractmethod
+    def _get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
         pass
 
     def get_component(
@@ -332,7 +340,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def get_component_version_parents(self, unique_id: str):
+    def get_component_version_parents(self, uuid: str):
         """
         Get the parents of a component version.
 

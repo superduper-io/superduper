@@ -18,12 +18,24 @@ class BaseDataBackend(ABC):
         self.conn = conn
         self.name = name
         self.in_memory: bool = False
+<<<<<<< HEAD
         self.in_memory_tables: t.Dict = {}
+=======
+        self._datalayer = None
+>>>>>>> 9d83d21ec (Deprecate Serializable)
 
     @property
     def db(self):
         """Return the datalayer."""
         raise NotImplementedError
+
+    @property
+    def datalayer(self):
+        return self._datalayer
+
+    @datalayer.setter
+    def datalayer(self, value):
+        self._datalayer = value
 
     @abstractmethod
     def url(self):
@@ -61,6 +73,10 @@ class BaseDataBackend(ABC):
 
         :param predict_id: The identifier of the output destination.
         """
+        pass
+
+    @abstractmethod
+    def get_query_builder(self, key):
         pass
 
     @abstractmethod

@@ -48,7 +48,7 @@ class MongoArtifactStore(ArtifactStore):
     def _exists(self, file_id):
         return self.filesystem.find_one({'filename': file_id}) is not None
 
-    def _delete_artifact(self, file_id: str):
+    def _delete_bytes(self, file_id: str):
         r = self.filesystem.find({'metadata.file_id': file_id})
         ids = [x._id for x in r]
         if not ids:

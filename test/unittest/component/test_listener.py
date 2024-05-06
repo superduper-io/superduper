@@ -4,6 +4,7 @@ from test.db_config import DBConfig
 import numpy as np
 import pytest
 
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb import Document
 from superduperdb.backends.ibis.query import Table, dtype
 from superduperdb.backends.mongodb.query import Collection
@@ -13,7 +14,7 @@ from superduperdb.components.schema import Schema
 
 
 def test_listener_serializes_properly():
-    q = Collection("test").find({}, {})
+    q = MongoQuery('test').find({}, {})
     listener = Listener(
         model=ObjectModel("test", object=lambda x: x),
         select=q,
@@ -29,7 +30,7 @@ def test_listener_serializes_properly():
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_listener_chaining(db):
-    collection = Collection("test")
+    collection = MongoQuery('test')
     data = []
 
     def insert_random():
@@ -64,21 +65,21 @@ def test_listener_chaining(db):
 
     listener2 = Listener(
         model=m2,
-        select=Collection("_outputs.listener1::0").find(),
-        key="_outputs.listener1::0",
-        identifier="listener2",
+        select=MongoQuery('_outputs.listener1::0').find(),
+        key='_outputs.listener1::0',
+        identifier='listener2',
     )
 
     db.add(listener1)
     db.add(listener2)
 
-    docs = list(db.execute(Collection("_outputs.listener1::0").find({})))
+    docs = list(db.execute(MongoQuery('_outputs.listener1::0').find({})))
 
     assert all("listener2::0" in r["_outputs"] for r in docs)
 
     insert_random()
 
-    docs = list(db.execute(Collection("_outputs.listener1::0").find({})))
+    docs = list(db.execute(MongoQuery("_outputs.listener1::0").find({})))
 
     assert all(["listener2::0" in d["_outputs"] for d in docs])
 

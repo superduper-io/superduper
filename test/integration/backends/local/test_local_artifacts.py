@@ -3,7 +3,7 @@ import PIL.PngImagePlugin
 import pytest
 
 from superduperdb import CFG
-from superduperdb.backends.mongodb import Collection
+from superduperdb.backends.mongodb import MongoQuery
 from superduperdb.base.document import Document
 
 DO_SKIP = not CFG.data_backend.startswith("mongodb")
@@ -16,7 +16,7 @@ def image(test_db):
 
     _, i = test_db.add(image_type('image'))
 
-    insert = Collection('images').insert_one(Document({'img': i(img)}))
+    insert = MongoQuery('images').insert_one(Document({'img': i(img)}))
 
     test_db.execute(insert)
 
@@ -29,7 +29,7 @@ def image(test_db):
 
 @pytest.mark.skipif(DO_SKIP, reason="skipping test if not mongodb")
 def test_save_artifact(image):
-    r = image.execute(Collection('images').find_one())
+    r = image.execute(MongoQuery('images').find_one())
 
     r = r.unpack(db=image)
 

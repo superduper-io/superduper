@@ -1,4 +1,5 @@
 import tempfile
+from superduperdb.base.document import Document
 from test.db_config import DBConfig
 
 import numpy
@@ -7,8 +8,6 @@ import pytest
 
 from superduperdb import superduper
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import IbisQueryTable, Table
-from superduperdb.base.serializable import Serializable
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
@@ -33,14 +32,14 @@ def test_serialize_table():
 
     s = schema.encode()
     print(s)
-    ds = Serializable.decode(s)
+    ds = Document.decode(s).unpack()
 
     print(ds)
 
     t = Table(identifier='my_table', schema=schema)
 
     s = t.encode()
-    ds = Serializable.decode(s)
+    ds = Document.decode(s).unpack()
 
     print(ds)
 
@@ -127,15 +126,15 @@ def test_renamings(duckdb):
 
 
 def test_serialize_deserialize():
-    from superduperdb.backends.ibis.query import Table
+    from superduperdb.backends.ibis.query import IbisQuery
 
-    t = Table(
+    t = IbisQuery(
         'test', primary_id='id', schema=Schema('my-schema', fields={'x': dtype(str)})
     )
 
     q = t.filter(t.id == 1).select(t.id, t.x)
 
-    print(Serializable.decode(q.serialize()))
+    print(Document.decode(q.encode()).unpack())
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -154,3 +153,16 @@ def test_add_fold(db):
     select_valid = table.select('id', 'x', '_fold').add_fold('valid')
     result_vaild = db.execute(select_valid)
     assert len(result_train) + len(result_vaild) == 500
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 500}),
+    ],
+    indirect=True,
+)
+def test_get_data(db):
+    q = db['documents'].limit(2)
+    r = db.metadata.get_component('table', 'documents')

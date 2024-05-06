@@ -37,9 +37,9 @@ class FileSystemArtifactStore(ArtifactStore):
         """Return the URL of the artifact store."""
         return self.conn
 
-    def _delete_artifact(self, file_id: str):
-        """Delete artifact from artifact store.
-
+    def _delete_bytes(self, file_id: str):
+        """
+        Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
         """
         path = os.path.join(self.conn, file_id)
@@ -73,7 +73,7 @@ class FileSystemArtifactStore(ArtifactStore):
     ) -> t.Any:
         path = os.path.join(self.conn, file_id)
         if os.path.exists(path):
-            raise FileExistsError
+            logging.warn(f"File {path} already exists")
         with open(path, 'wb') as f:
             f.write(serialized)
 

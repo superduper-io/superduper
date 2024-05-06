@@ -4,9 +4,9 @@ All the llm model can use the check_xxx func to test the intergration with db.
 """
 
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Schema, Table
+from superduperdb.backends.ibis.query import Schema, IbisQuery
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 
@@ -26,8 +26,8 @@ def check_llm_as_listener_model(db, llm):
         for i in range(10)
     ]
     if isinstance(db.databackend, MongoDataBackend):
-        db.execute(Collection(collection_name).insert_many(datas))
-        select = Collection(collection_name).find()
+        db.execute(MongoQuery(collection_name).insert_many(datas))
+        select = MongoQuery(collection_name).find()
     else:
         schema = Schema(
             identifier=collection_name,
@@ -36,7 +36,7 @@ def check_llm_as_listener_model(db, llm):
                 "question": dtype("str"),
             },
         )
-        table = Table(identifier=collection_name, schema=schema)
+        table = IbisQuery(identifier=collection_name, schema=schema)
         db.add(table)
         db.execute(table.insert(datas))
         select = table.select("id", "question")
@@ -50,7 +50,7 @@ def check_llm_as_listener_model(db, llm):
     )
 
     if isinstance(db.databackend, MongoDataBackend):
-        output_select = Collection(collection_name).find()
+        output_select = MongoQuery(collection_name).find()
     else:
         output_select = table.select("id", "question").outputs(
             f'question::{llm.identifier}::0::0'

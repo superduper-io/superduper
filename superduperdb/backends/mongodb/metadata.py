@@ -89,12 +89,12 @@ class MongoMetaDataStore(MetaDataStore):
         c = self.parent_child_mappings.find()
         return [(r['parent'], r['child']) for r in c]
 
-    def get_component_version_children(self, unique_id: str):
+    def get_component_version_children(self, uuid: str):
         """Get the children of a component version.
 
-        :param unique_id: unique identifier of component
+        :param uuid: unique identifier of component
         """
-        return self.parent_child_mappings.distinct('child', {'parent': unique_id})
+        return self.parent_child_mappings.distinct('child', {'parent': uuid})
 
     def get_job(self, identifier: str):
         """Get a job from the metadata store.
@@ -195,8 +195,6 @@ class MongoMetaDataStore(MetaDataStore):
                 )
             )
 
-    # TODO: Why is this is needed to prevent failures in CI?
-    @tenacity.retry(stop=tenacity.stop_after_attempt(10))
     def show_component_versions(
         self, type_id: str, identifier: str
     ) -> t.List[t.Union[t.Any, int]]:
@@ -243,21 +241,11 @@ class MongoMetaDataStore(MetaDataStore):
             filter_['type_id'] = type_id
         return list(self.job_collection.find(filter_))
 
-    def _component_used(
-        self, type_id: str, identifier: str, version: t.Optional[int] = None
-    ) -> bool:
-        """Check if a component is used in other components.
-
-        :param type_id: type of component
-        :param identifier: identifier of component
-        :param version: version of component
-        """
-        if version is None:
-            members: t.Union[t.Dict, str] = {'$regex': f'^{identifier}/{type_id}'}
-        else:
-            members = Component.make_unique_id(type_id, identifier, version)
-
-        return bool(self.component_collection.count_documents({'members': members}))
+    def _get_component_uuid(self, type_id: str, identifier: str, version: int) -> str:
+        return self.component_collection.find_one(
+            {'type_id': type_id, 'identifier': identifier, 'version': version},
+            {'uuid': 1},
+        )['uuid']
 
     def component_has_parents(self, type_id: str, identifier: str) -> int:
         """Check if a component has parents.
@@ -277,7 +265,11 @@ class MongoMetaDataStore(MetaDataStore):
         :param identifier: identifier of component
         :param version: version of component
         """
-        doc = {'child': Component.make_unique_id(type_id, identifier, version)}
+        uuid = self.component_collection.find_one(
+            {'type_id': type_id, 'identifier': identifier, 'version': version},
+            {'uuid': 1, 'id': 1}
+        )['uuid']
+        doc = {'child': uuid}
         return self.parent_child_mappings.count_documents(doc)
 
     def delete_component_version(
@@ -289,11 +281,11 @@ class MongoMetaDataStore(MetaDataStore):
         :param identifier: identifier of component
         :param version: version of component
         """
-        if self._component_used(type_id, identifier, version=version):
-            raise Exception('Component version already in use in other components!')
+
+        uuid = self._get_component_uuid(type_id, identifier, version)
 
         self.parent_child_mappings.delete_many(
-            {'parent': Component.make_unique_id(type_id, identifier, version)}
+            {'parent': uuid}
         )
 
         return self.component_collection.delete_many(
@@ -302,6 +294,15 @@ class MongoMetaDataStore(MetaDataStore):
                 'type_id': type_id,
                 'version': version,
             }
+        )
+
+    def _get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+        r = self.component_collection.find_one({'uuid': uuid})
+        return self._get_component(
+            type_id=r['type_id'],
+            identifier=r['identifier'],
+            version=r['version'],
+            allow_hidden=allow_hidden,
         )
 
     def _get_component(
@@ -340,13 +341,13 @@ class MongoMetaDataStore(MetaDataStore):
             )
         return r
 
-    def get_component_version_parents(self, unique_id: str) -> t.List[str]:
+    def get_component_version_parents(self, uuid: str) -> t.List[str]:
         """Get the parents of a component version.
 
-        :param unique_id: unique identifier of component
+        :param uuid: unique identifier of component
         """
         return [
-            r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
+            r['parent'] for r in self.parent_child_mappings.find({'child': uuid})
         ]
 
     def _replace_object(

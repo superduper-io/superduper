@@ -7,7 +7,7 @@ import pytest
 
 import superduperdb as s
 from superduperdb import CFG, superduper
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
@@ -54,7 +54,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
         identifier='test-model', object=random_vector_model, encoder=vector(shape=(16,))
     )
     db = superduper()
-    collection = Collection('docs')
+    collection = MongoQuery('docs')
 
     vector_indexes = db.data_backend.list_vector_indexes()
 
@@ -83,7 +83,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
 @pytest.mark.skipif(DO_SKIP, reason='Only atlas deployments relevant.')
 def test_use_atlas_vector_search(atlas_search_config):
     db = superduper()
-    collection = Collection('docs')
+    collection = MongoQuery('docs')
 
     query = collection.like(
         Document({'text': 'This is a test'}), n=5, vector_index='test-vector-index'

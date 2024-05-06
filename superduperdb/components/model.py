@@ -14,15 +14,15 @@ import tqdm
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
-from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
-from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
+# from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
-from superduperdb.base.serializable import Serializable, Variable
+from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
@@ -229,7 +229,7 @@ class Trainer(Component):
 
     type_id: t.ClassVar[str] = 'trainer'
     key: ModelInputType
-    select: CompoundSelect
+    select: Query
     transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
     signature: Signature = '*args'
@@ -508,8 +508,8 @@ class Model(Component):
     validation: t.Optional[Validation] = None
     metric_values: t.Dict = dc.field(default_factory=dict)
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
@@ -535,22 +535,10 @@ class Model(Component):
         """
         pass
 
+    # TODO handle in job creation
     def _prepare_select_for_predict(self, select, db):
         if isinstance(select, dict):
-            select = Serializable.decode(select)
-        # TODO logic in the wrong place
-        if isinstance(select, Table):
-            select = select.to_query()
-        if isinstance(select, IbisCompoundSelect):
-            from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-
-            assert isinstance(db.metadata, SQLAlchemyMetadata)
-            try:
-                _ = db.metadata.get_query(str(hash(select)))
-            except NonExistentMetadataError:
-                logging.info(f'Query {select} not found in metadata, adding...')
-                db.metadata.add_query(select, self.identifier)
-                logging.info('Done')
+            select = Document.decode(select).unpack()
         return select
 
     def predict_in_db_job(
@@ -558,7 +546,7 @@ class Model(Component):
         X: ModelInputType,
         db: Datalayer,
         predict_id: str,
-        select: t.Optional[CompoundSelect],
+        select: t.Optional[Query],
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
@@ -643,7 +631,7 @@ class Model(Component):
         X: ModelInputType,
         db: Datalayer,
         predict_id: str,
-        select: CompoundSelect,
+        select: Query,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
@@ -664,9 +652,7 @@ class Model(Component):
         :param overwrite: Overwrite all documents or only new documents
         """
         if isinstance(select, dict):
-            select = Serializable.decode(select)
-        if isinstance(select, Table):
-            select = select.to_query()
+            select = Document.decode(select).unpack()
 
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
@@ -699,7 +685,7 @@ class Model(Component):
         self,
         X: ModelInputType,
         db: Datalayer,
-        select: CompoundSelect,
+        select: Query,
         ids,
         in_memory: bool = True,
     ):
@@ -755,11 +741,14 @@ class Model(Component):
         X: t.Any,
         predict_id: str,
         db: Datalayer,
-        select: CompoundSelect,
+        select: Query,
         ids: t.List[str],
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
     ):
+        if not ids:
+            return
+
         if max_chunk_size is not None:
             it = 0
             for i in range(0, len(ids), max_chunk_size):
@@ -783,6 +772,7 @@ class Model(Component):
             ids=ids,
             in_memory=in_memory,
         )
+
         outputs = self.predict(dataset)
         self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
@@ -792,7 +782,7 @@ class Model(Component):
         assert isinstance(
             self.version, int
         ), 'Version has not been set, can\'t save outputs...'
-        select.model_update(
+        update = select.model_update(
             db=db,
             predict_id=predict_id,
             outputs=outputs,
@@ -800,6 +790,7 @@ class Model(Component):
             flatten=self.flatten,
             **self.model_update_kwargs,
         )
+        update.execute(db=db)
 
     def encode_outputs(self, outputs):
         """Method that encodes outputs of a model for saving in the database.
@@ -908,7 +899,7 @@ class Model(Component):
     def to_listener(
         self,
         key: ModelInputType,
-        select: CompoundSelect,
+        select: Query,
         identifier='',
         predict_kwargs: t.Optional[dict] = None,
         **kwargs,
@@ -1269,7 +1260,7 @@ class QueryModel(Model):
 
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Union[t.Callable, Code]] = None
-    select: CompoundSelect
+    select: Query
     signature: t.ClassVar[Signature] = '**kwargs'
 
     @staticmethod

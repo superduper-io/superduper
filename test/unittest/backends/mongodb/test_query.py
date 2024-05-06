@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from superduperdb.backends.mongodb import query as q
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
@@ -50,9 +50,9 @@ def test_mongo_without_schema(db):
         )
 
     db.execute(
-        Collection(collection_name).insert_many(data),
+        MongoQuery(collection_name).insert_many(data),
     )
-    collection = Collection(collection_name)
+    collection = MongoQuery(collection_name)
     r = collection.find_one().execute(db)
     rs = list(collection.find().execute(db))
 
@@ -91,9 +91,9 @@ def test_mongo_schema(db, schema):
     db.add(schema)
 
     db.execute(
-        Collection(collection_name).insert_many(data, schema=schema.identifier),
+        MongoQuery(collection_name).insert_many(data, schema=schema.identifier),
     )
-    collection = Collection(collection_name)
+    collection = MongoQuery(collection_name)
     r = collection.find_one().execute(db)
     rs = list(collection.find().execute(db))
 
@@ -107,15 +107,15 @@ def test_mongo_schema(db, schema):
 
 
 def test_select_missing_outputs(db):
-    docs = list(db.execute(q.Collection('documents').find({}, {'_id': 1})))
+    docs = list(db.execute(q.MongoQuery('documents').find({}, {'_id': 1})))
     ids = [r['_id'] for r in docs[: len(docs) // 2]]
     db.execute(
-        q.Collection('documents').update_many(
+        q.MongoQuery('documents').update_many(
             {'_id': {'$in': ids}},
             Document({'$set': {'_outputs.x::test_model_output::0::0': 'test'}}),
         )
     )
-    select = q.Collection('documents').find({}, {'_id': 1})
+    select = q.MongoQuery('documents').find({}, {'_id': 1})
     modified_select = select.select_ids_of_missing_outputs('x::test_model_output::0::0')
     out = list(db.execute(modified_select))
     assert len(out) == (len(docs) - len(ids))

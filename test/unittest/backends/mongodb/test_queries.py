@@ -8,7 +8,7 @@ except ImportError:
 import random
 from test.db_config import DBConfig
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.datatype import DataType
 
@@ -34,7 +34,7 @@ def get_new_data(encoder: DataType, n=10, update=False):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_many(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     old_ids = {r['_id'] for r in db.execute(collection.find({}, {'_id': 1}))}
     deleted_ids = list(old_ids)[:2]
     db.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
@@ -46,7 +46,7 @@ def test_delete_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     r = next(db.execute(collection.find()))
     x = torch.randn(32)
     t = db.datatypes['torch.float32[32]']
@@ -71,7 +71,7 @@ def test_insert_from_uris(db, image_url):
     from superduperdb.ext.pillow.encoder import pil_image
 
     db.add(pil_image)
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     to_insert = [
         Document(
             {
@@ -122,7 +122,7 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
     if image_url.startswith('file://'):
         image_url = image_url[7:]
 
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     to_insert = [Document({'img': my_pil_image(PIL.Image.open(image_url)).encode()})]
 
     db.execute(collection.insert_many(to_insert))
@@ -133,7 +133,7 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update_many(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     to_update = torch.randn(32)
     t = db.datatypes['torch.float32[32]']
     db.execute(collection.update_many({}, Document({'$set': {'x': t(to_update)}})))
@@ -151,7 +151,7 @@ def test_update_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_many(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     an_update = get_new_data(db.datatypes['torch.float32[32]'], 10, update=True)
     db.execute(collection.insert_many(an_update))
     r = next(db.execute(collection.find({'update': True})))
@@ -161,7 +161,7 @@ def test_insert_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_like(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     r = db.execute(collection.find_one())
     query = collection.like(
         r=Document({'x': r['x']}),
@@ -174,7 +174,7 @@ def test_like(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_one(db):
     # MARK: empty Collection + a_single_insert
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     a_single_insert = get_new_data(db.datatypes['torch.float32[32]'], 1, update=False)[
         0
     ]
@@ -187,16 +187,16 @@ def test_insert_one(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_one(db):
     # MARK: random data (change)
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     r = db.execute(collection.find_one())
     db.execute(collection.delete_one({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(db.execute(Collection('documents').find({'_id': r['_id']})))
+        next(db.execute(MongoQuery('documents').find({'_id': r['_id']})))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     r = db.execute(collection.find().limit(1))
     assert len(list(r)) == 1
     r = db.execute(collection.find().limit(5))
@@ -205,19 +205,19 @@ def test_find(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find_one(db):
-    r = db.execute(Collection('documents').find_one())
+    r = db.execute(MongoQuery('documents').find_one())
     assert isinstance(r, Document)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_aggregate(db):
-    r = db.execute(Collection('documents').aggregate([{'$sample': {'size': 2}}]))
+    r = db.execute(MongoQuery('documents').aggregate([{'$sample': {'size': 2}}]))
     assert len(list(r)) == 2
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace_one(db):
-    collection = Collection('documents')
+    collection = MongoQuery('documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
     t = db.datatypes['torch.float32[32]']

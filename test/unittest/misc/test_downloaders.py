@@ -6,7 +6,7 @@ from test.db_config import DBConfig
 import pytest
 
 from superduperdb import CFG
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.ext.pillow.encoder import pil_image_hybrid
 from superduperdb.misc.download import Fetcher
@@ -55,9 +55,9 @@ def test_file_blobs(db, patch_cfg_downloads, image_url):
     ]
 
     db.execute(
-        Collection('documents').insert_many(to_insert), datatypes=(pil_image_hybrid,)
+        MongoQuery('documents').insert_many(to_insert), datatypes=(pil_image_hybrid,)
     )
-    r = db.execute(Collection('documents').find_one())
+    r = db.execute(MongoQuery('documents').find_one())
 
     import PIL.PngImagePlugin
 

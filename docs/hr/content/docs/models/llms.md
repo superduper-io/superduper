@@ -12,6 +12,8 @@ Here is a table of LLMs supported in `superduperdb`:
 | `superduperdb.ext.openai.OpenAIChatCompletion` | Useful for getting started quickly |
 | `superduperdb.ext.anthropic.AnthropicCompletion` | Useful alternative for getting started quickly |
 
+You can find the snippets [here](../reusable_snippets/build_llm)
+
 :::tip
 Connect your LLM to data and vector-search using `SequentialModel` or `GraphModel`.
 :::

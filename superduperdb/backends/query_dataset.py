@@ -2,7 +2,7 @@ import inspect
 import random
 import typing as t
 
-from superduperdb.backends.base.query import Select
+from superduperdb.backends.base.query import Query
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -37,7 +37,7 @@ class QueryDataset:
 
     def __init__(
         self,
-        select: Select,
+        select: Query,
         mapping: t.Optional['Mapping'] = None,
         ids: t.Optional[t.List[str]] = None,
         fold: t.Union[str, None] = 'train',
@@ -139,7 +139,7 @@ class CachedQueryDataset(QueryDataset):
 
     def __init__(
         self,
-        select: Select,
+        select: Query,
         mapping: t.Optional['Mapping'] = None,
         ids: t.Optional[t.List[str]] = None,
         fold: t.Union[str, None] = 'train',

@@ -7,6 +7,7 @@ from superduperdb.misc.files import load_uris
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.schema import Schema
 
 
 @dc.dataclass
@@ -30,6 +31,7 @@ class SuperDuperCursor:
     db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
     decode_function: t.Optional[t.Callable] = None
+    schema: t.Optional['Schema'] = None
 
     _it: int = 0
 
@@ -40,7 +42,7 @@ class SuperDuperCursor:
             id_field=self.id_field,
             db=self.db,
             scores=self.scores,
-            decode_function=self.decode_function,
+            schema=self.schema,
         )
 
     def cursor_next(self):
@@ -58,16 +60,11 @@ class SuperDuperCursor:
 
     def __next__(self):
         r = self.cursor_next()
-        if self.decode_function is not None:
-            r = self.decode_function(r)
         if self.scores is not None:
             try:
                 r['score'] = self.scores[str(r[self.id_field])]
             except KeyError:
                 logging.warn(f"No document id found for {r}")
-        # TODO handle with lazy loading
-        if CFG.hybrid_storage:
-            load_uris(r, datatypes=self.db.datatypes)
-        return Document.decode(r, self.db)
+        return Document.decode(r, db=self.db, schema=self.schema)
 
     next = __next__

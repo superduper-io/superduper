@@ -15,18 +15,9 @@ from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.metadata import MetaDataStore
-from superduperdb.backends.base.query import (
-    Delete,
-    Insert,
-    Predict,
-    RawQuery,
-    Select,
-    Update,
-    Write,
-)
-from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.base.query import Query
 from superduperdb.backends.local.compute import LocalComputeBackend
-from superduperdb.base import exceptions, serializable
+from superduperdb.base import exceptions, variables
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
@@ -52,10 +43,7 @@ InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = SuperDuperCursor
 UpdateResult = t.Any
 PredictResult = t.Union[Document, t.Sequence[Document]]
-ExecuteQuery = t.Union[Select, Delete, Update, Insert, str]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
-
-ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 
 
 class Datalayer:
@@ -99,6 +87,7 @@ class Datalayer:
         self.listeners = LoadDict(self, field='listener')
         self.vector_indices = LoadDict(self, field='vector_index')
         self.schemas = LoadDict(self, field='schema')
+        self.tables = LoadDict(self, field='table')
         self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(
@@ -109,11 +98,15 @@ class Datalayer:
         self.artifact_store.serializers = self.datatypes
 
         self.databackend = databackend
+        self.databackend.datalayer = self
 
         self.cdc = DatabaseChangeDataCapture(self)
 
         self.compute = compute
         self._server_mode = False
+
+    def __getitem__(self, item):
+        return self.databackend.get_query_builder(item)
 
     @property
     def server_mode(self):
@@ -201,8 +194,10 @@ class Datalayer:
 
             searcher.add(items)
             progress.update(len(items))
+
         searcher.post_create()
 
+    # TODO - needed?
     def set_compute(self, new: ComputeBackend):
         """
         Set a new compute engine at runtime.
@@ -289,59 +284,35 @@ class Datalayer:
             type_id=type_id, identifier=identifier, version=version
         )
 
-    def _get_context(
-        self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
-    ):
-        assert 'context' in model.inputs.params, 'model does not take context'
-        assert context_select is not None
-        sources = list(self.execute(context_select))
-        context = sources[:]
-        if context_key is not None:
-            context = [
-                (
-                    Document(r[context_key])
-                    if isinstance(r[context_key], dict)
-                    else Document({'_base': r[context_key]})
-                )
-                for r in context
-            ]
-        return context, sources
-
-    def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
+    def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
         """
         Execute a query on the database.
 
         :param query: The SQL query to execute, such as select, insert,
                       delete, or update.
         """
-        if isinstance(query, Delete):
+
+        if query.type == 'delete':
             return self._delete(query, *args, **kwargs)
-        if isinstance(query, Insert):
+        if query.type == 'insert':
             return self._insert(query, *args, **kwargs)
-        if isinstance(query, Select):
+        if query.type == 'select':
             return self._select(query, *args, **kwargs)
-        if isinstance(query, Table):
-            return self._select(query.to_query(), *args, **kwargs)
-        if isinstance(query, Update):
-            return self._update(query, *args, **kwargs)
-        if isinstance(query, Write):
+        if query.type == 'write':
             return self._write(query, *args, **kwargs)
-        if isinstance(query, Predict):
-            return self._predict(query, *args, **kwargs)
-        if isinstance(query, RawQuery):
-            return query.execute(self)
+        if query.type == 'update':
+            return self._update(query, *args, **kwargs)
 
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type '
-            f'{t.Union[Select, Delete, Update, Insert, Predict, str]}; '
+            f'Expected object of type "delete", "insert", "select", "update"'
             f'Got {type(query)};'
         )
 
-    def _predict(self, prediction: Predict) -> PredictResult:
+    def _predict(self, prediction: t.Any) -> PredictResult:
         return prediction.execute(self)
 
-    def _delete(self, delete: Delete, refresh: bool = True) -> DeleteResult:
+    def _delete(self, delete: Query, refresh: bool = True) -> DeleteResult:
         """
         Delete data from the database.
 
@@ -353,7 +324,7 @@ class Datalayer:
         return result, None
 
     def _insert(
-        self, insert: Insert, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
+        self, insert: Query, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
     ) -> InsertResult:
         """
         Insert data into the database.
@@ -365,17 +336,20 @@ class Datalayer:
         for e in datatypes:
             self.add(e)
 
-        # TODO add this logic to a base Insert class
-        artifacts = []
         for r in insert.documents:
             r['_fold'] = 'train'
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
-            artifacts.extend(list(r.get_leaves('artifact', 'file').values()))
 
-        for a in artifacts:
-            if a.x is not None and a.file_id is None:
-                a.save(self.artifact_store)
+        r = insert.encode()
+        artifacts = r['_blobs']
+        files = r.get('_files', {})
+
+        for file_id, a in artifacts.items():
+            self.artifact_store._save_bytes(a, file_id=file_id)
+
+        for file_id, file in files.items():
+            self.artifact_store._save_file(file, file_id=file_id)
 
         inserted_ids = insert.execute(self)
 
@@ -390,19 +364,17 @@ class Datalayer:
                 )
         return inserted_ids, None
 
-    def _select(self, select: Select, reference: bool = True) -> SelectResult:
+    def _select(self, select: Query, reference: bool = True) -> SelectResult:
         """
         Select data from the database.
 
         :param select: The select query object specifying the data to be retrieved.
         """
-        if select.variables:
-            select = select.set_variables(self)  # type: ignore[assignment]
-        return select.execute(self, reference=reference)
+        return select.execute(db=self)
 
     def refresh_after_delete(
         self,
-        query: Delete,
+        query: Query,
         ids: t.Sequence[str],
         verbose: bool = False,
     ):
@@ -424,7 +396,7 @@ class Datalayer:
 
     def refresh_after_update_or_insert(
         self,
-        query: t.Union[Insert, Select, Update],
+        query: Query,
         ids: t.Sequence[str],
         verbose: bool = False,
         overwrite: bool = False,
@@ -447,7 +419,7 @@ class Datalayer:
         task_workflow.run_jobs()
         return task_workflow
 
-    def _write(self, write: Write, refresh: bool = True) -> UpdateResult:
+    def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
         Bulk write data to the database.
 
@@ -483,7 +455,7 @@ class Datalayer:
                 return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
 
-    def _update(self, update: Update, refresh: bool = True) -> UpdateResult:
+    def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
         """
         Update data in the database.
 
@@ -571,6 +543,7 @@ class Datalayer:
             return self._remove_component_version(
                 type_id, identifier, version=version, force=force
             )
+
         versions = self.metadata.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
@@ -580,10 +553,10 @@ class Datalayer:
         if versions_in_use:
             component_versions_in_use = []
             for v in versions_in_use:
-                unique_id = Component.make_unique_id(type_id, identifier, v)
+                uuid = self.metadata._get_component_uuid(type_id, identifier, v)
                 component_versions_in_use.append(
-                    f"{unique_id} -> "
-                    f"{self.metadata.get_component_version_parents(unique_id)}",
+                    f"{uuid} -> "
+                    f"{self.metadata.get_component_version_parents(uuid)}",
                 )
             if not force:
                 raise exceptions.ComponentInUseError(
@@ -611,11 +584,11 @@ class Datalayer:
 
     def load(
         self,
-        type_id: str,
-        identifier: str,
+        type_id: t.Optional[str] = None,
+        identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
-        info_only: bool = False,
+        uuid: t.Optional[str] = None,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load a component using uniquely identifying information.
@@ -627,7 +600,6 @@ class Datalayer:
         :param version: [Optional] Numerical version.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
-        :param info_only: Toggle to ``True`` to return metadata only.
         """
         if type_id == 'encoder':
             logging.warn(
@@ -636,25 +608,20 @@ class Datalayer:
             )
             type_id = 'datatype'
 
-        info = self.metadata.get_component(
-            type_id=type_id,
-            identifier=identifier,
-            version=version,
-            allow_hidden=allow_hidden,
-        )
-
-        info = Document.decode(info, db=self)
-
-        if info is None:
-            raise exceptions.MetadataException(
-                f'No such object of type "{type_id}", '
-                f'"{identifier}" has been registered.'
+        if uuid is None:
+            info = self.metadata.get_component(
+                type_id=type_id,
+                identifier=identifier,
+                version=version,
+                allow_hidden=allow_hidden,
+            )
+        else:
+            info = self.metadata._get_component_by_uuid(
+                uuid=uuid,
+                allow_hidden=allow_hidden,
             )
 
-        if info_only:
-            return info
-
-        m = serializable.Serializable.decode(info, db=self)
+        m = Document.decode(info, db=self)
         m.db = self
         m.on_load(self)
 
@@ -667,7 +634,7 @@ class Datalayer:
 
     def _build_delete_task_workflow(
         self,
-        query: Delete,
+        query: Query,
         ids: t.Sequence[str],
         verbose: bool = False,
     ):
@@ -733,7 +700,7 @@ class Datalayer:
                 args=[],
                 kwargs=dict(
                     ids=ids,
-                    query=query.dict().encode(),
+                    query=query.encode(),
                 ),
             ),
         )
@@ -759,15 +726,15 @@ class Datalayer:
                 continue
 
             G.add_node(
-                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
+                f'{listener.model.identifier}.predict_in_db({listener.uuid})',
                 job=ComponentJob(
                     component_identifier=listener.model.identifier,
                     kwargs={
                         'X': listener.key,
                         'ids': ids,
-                        'select': query.dict().encode(),
+                        'select': query.encode(),
                         'overwrite': overwrite,
-                        'predict_id': listener.predict_id,
+                        'predict_id': listener.uuid,
                         **listener.predict_kwargs,
                     },
                     method_name='predict_in_db',
@@ -786,23 +753,23 @@ class Datalayer:
                 continue
             G.add_edge(
                 f'{download_content.__name__}()',
-                f'{listener.model.identifier}.predict_in_db({listener.id_key})',
+                f'{listener.model.identifier}.predict_in_db({listener.uuid})',
             )
             if not self.cdc.running:
                 deps = self.listeners[identifier].dependencies
                 for _, dep, _ in deps:
                     upstream = self.listeners[dep]
                     dep_node = (
-                        f'{upstream.model.identifier}.predict_in_db({upstream.id_key})'
+                        f'{upstream.model.identifier}.predict_in_db({upstream.uuid})'
                     )
                     if dep_node in G.nodes:
                         G.add_edge(
                             dep_node,
-                            f'{listener.model.identifier}.predict_in_db({listener.id_key})',
+                            f'{listener.model.identifier}.predict_in_db({listener.uuid})',
                         )
                     else:
-                        logging.warn(
-                            f'The dependent listener {upstream.identifier} is either'
+                        raise Exception(
+                            f'The dependent listener {upstream.uuid}'
                             ' does not exist.'
                             'Please make sure to add this listener'
                             f'`db.add(...)`'
@@ -837,14 +804,14 @@ class Datalayer:
                     kwargs={
                         'vector_index': identifier,
                         'ids': ids,
-                        'query': vi.indexing_listener.select.dict().encode(),
+                        'query': vi.indexing_listener.select.encode(),
                     },
                 ),
             )
             model = vi.indexing_listener.model.identifier
-            key = vi.indexing_listener.id_key
+            uuid = vi.indexing_listener.uuid
             G.add_edge(
-                f'{model}.predict_in_db({key})', f'{identifier}.{copy_vectors.__name__}'
+                f'{model}.predict_in_db({uuid})', f'{identifier}.{copy_vectors.__name__}'
             )
 
         return G
@@ -869,7 +836,7 @@ class Datalayer:
                 [jobs.get(d[:2], []) for d in component.dependencies], []
             )
             tmp = self._add(
-                component, parent=parent.unique_id, dependencies=dependencies
+                component, parent=parent.uuid, dependencies=dependencies
             )
             jobs[n] = tmp
 
@@ -879,7 +846,7 @@ class Datalayer:
         self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
     ):
         # TODO add update logic here to check changed attributes
-        s.logging.debug(f'{object.unique_id} already exists - doing nothing')
+        s.logging.debug(f'{object.id} already exists - doing nothing')
         return []
 
     def _add(
@@ -894,7 +861,7 @@ class Datalayer:
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
-        if not isinstance(object.identifier, serializable.Variable):
+        if not isinstance(object.identifier, variables.Variable):
             existing_versions = self.show(object.type_id, object.identifier)
         else:
             existing_versions = []
@@ -913,24 +880,32 @@ class Datalayer:
             else:
                 object.version = 0
 
-        leaves = object.dict().get_leaves()
-        leaves = leaves.values()
-        artifacts = [leaf for leaf in leaves if isinstance(leaf, _BaseEncodable)]
-        children = [leaf for leaf in leaves if isinstance(leaf, Component)]
+        serialized = object.dict().encode(leaves_to_keep=(Component,))
+
+        children = [
+            v for k, v in serialized['_leaves'].items()
+            if isinstance(v, Component)
+        ]
 
         jobs.extend(self._add_child_components(children, parent=object))
 
-        # need to do this again to get the versions of the children
-        object.set_variables(self)
-        serialized = object.dict().encode()
+        for k, v in serialized['_leaves'].items():
+            if isinstance(v, Component):
+                serialized['_leaves'][k] = f'%{v.id}'
 
-        if artifacts:
-            self.artifact_store.save(serialized)
+        for file_id, blob in serialized['_blobs'].items():
+            try:
+                self.artifact_store._save_bytes(blob, file_id=file_id)
+            except FileExistsError:
+                continue
+
+        serialized['_blobs'] = list(serialized['_blobs'].keys())
 
         self.metadata.create_component(serialized)
 
         if parent is not None:
-            self.metadata.create_parent_child(parent, object.unique_id)
+            self.metadata.create_parent_child(parent, object.uuid)
+
         object.post_create(self)
         self._add_component_to_cache(object)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
@@ -944,13 +919,13 @@ class Datalayer:
         version: int,
         force: bool = False,
     ):
-        unique_id = Component.make_unique_id(type_id, identifier, version)
+        r = self.metadata.get_component(type_id, identifier, version=version)
         if self.metadata.component_version_has_parents(type_id, identifier, version):
-            parents = self.metadata.get_component_version_parents(unique_id)
-            raise Exception(f'{unique_id} is involved in other components: {parents}')
+            parents = self.metadata.get_component_version_parents(r['uuid'])
+            raise Exception(f'{r["uuid"]} is involved in other components: {parents}')
 
         if force or click.confirm(
-            f'You are about to delete {unique_id}, are you sure?',
+            f'You are about to delete {type_id}/{identifier}{version}, are you sure?',
             default=False,
         ):
             component = self.load(
@@ -971,7 +946,9 @@ class Datalayer:
                 except KeyError:
                     pass
 
-            self.artifact_store.delete(info)
+            # TODO handle files
+            for blob in info['_blobs']:
+                self.artifact_store._delete_bytes(blob)
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _get_content_for_filter(self, filter) -> Document:
@@ -984,12 +961,12 @@ class Datalayer:
             del filter['_id']
         return filter
 
-    # TODO should create file handler separately
-    def _get_file_content(self, r):
-        for k in r:
-            if isinstance(r[k], dict):
-                r[k] = self._get_file_content(r[k])
-        return r
+    # # TODO should create file handler separately
+    # def _get_file_content(self, r):
+    #     for k in r:
+    #         if isinstance(r[k], dict):
+    #             r[k] = self._get_file_content(r[k])
+    #     return r
 
     # TODO should be confined to metadata implementation
     def _get_object_info(self, identifier, type_id, version=None):
@@ -1015,15 +992,19 @@ class Datalayer:
             )
         except FileNotFoundError:
             if upsert:
-                return self.add(
+                return self.apply(
                     object,
                 )
             raise FileNotFoundError
 
         # If object has no version, update the last version
         object.version = info['version']
-        self.artifact_store.delete(info)
-        new_info = self.artifact_store.save(object.dict().encode())
+        for blob in info['_blobs']:
+            self.artifact_store._delete_bytes(blob)
+        new_info = object.dict().encode()
+        for file_id, blob in new_info['_blobs'].items():
+            self.artifact_store._save_bytes(blob, file_id=file_id)
+        new_info['_blobs'] = list(new_info['_blobs'].keys())
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,

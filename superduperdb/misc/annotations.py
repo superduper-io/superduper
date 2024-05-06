@@ -195,13 +195,12 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     def decorator(f):
 
         @functools.wraps(f)
-        def decorated(*args, **kwargs):
-            assert not args, 'Can\'t use *args here'
-            out = f(**kwargs)
+        def decorated(*, db=None, **kwargs):
+            out = f(**kwargs, db=db)
             assert isinstance(out, Component)
-            def _deep_flat_encode(cache, blobs, files):
+            def _deep_flat_encode(cache, blobs, files, leaves_to_keep=()):
                 h = hashlib.sha1(str(kwargs).encode()).hexdigest()
-                path = f'{f.__module__}.{f.__name__}'
+                path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
                 id = f'{path}/{h}'
                 cache[id] = {'_path': path, **kwargs}
                 return f'?{id}'

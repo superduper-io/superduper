@@ -6,7 +6,7 @@ from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predi
 import pytest
 
 from superduperdb.backends.ibis.field_types import FieldType
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
@@ -61,7 +61,7 @@ def test_training(db, tmpdir):
         fold = "train" if i < 32 else "valid"
         datas.append({"text": text, "id": str(i), "fold": fold})
 
-    collection = Collection("doc")
+    collection = MongoQuery("doc")
     db.execute(collection.insert_many(list(map(Document, datas))))
     select = collection.find()
 

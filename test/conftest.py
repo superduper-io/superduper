@@ -11,9 +11,9 @@ import pytest
 import superduperdb as s
 from superduperdb import CFG, logging
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Table
+from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 
 # ruff: noqa: E402
 from superduperdb.base import config as _config, superduper
@@ -122,7 +122,7 @@ def test_db(request) -> Iterator[Datalayer]:
 @pytest.fixture
 def valid_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
-        select = Collection('documents').find({'_fold': 'valid'})
+        select = MongoQuery('documents').find({'_fold': 'valid'})
     else:
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
@@ -139,7 +139,7 @@ def add_random_data_to_sql_db(
     table_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_tensor = db.datatypes['torch.float32[32]']
+    float_tensor = tensor(dtype='float', shape=(32,))
     data = []
 
     schema = Schema(
@@ -154,24 +154,21 @@ def add_random_data_to_sql_db(
     t = Table(identifier=table_name, schema=schema)
     db.add(t)
 
-    for i in range(number_data_points):
-        x = torch.randn(32)
-        y = int(random.random() > 0.5)
-        z = torch.randn(32)
-        data.append(
-            Document(
-                {
-                    'id': str(i),
-                    'x': x,
-                    'y': y,
-                    'z': z,
-                }
-            )
-        )
-    db.execute(
-        t.insert(data),
-        refresh=False,
-    )
+    # for i in range(number_data_points):
+    #     x = torch.randn(32)
+    #     y = int(random.random() > 0.5)
+    #     z = torch.randn(32)
+    #     data.append(
+    #         Document(
+    #             {
+    #                 'id': str(i),
+    #                 'x': x,
+    #                 'y': y,
+    #                 'z': z,
+    #             }
+    #         )
+    #     )
+    # db[table_name].insert(data).execute()
 
 
 def add_random_data_to_mongo_db(
@@ -179,9 +176,9 @@ def add_random_data_to_mongo_db(
     collection_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_tensor = db.datatypes['torch.float32[32]']
     data = []
 
+    float_tensor = tensor(dtype='float', shape=(32,))
     for i in range(number_data_points):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
@@ -197,22 +194,22 @@ def add_random_data_to_mongo_db(
         )
 
     db.execute(
-        Collection(collection_name).insert_many(data),
+        MongoQuery(identifier=collection_name).insert_many(data),
         refresh=False,
     )
 
 
 def add_datatypes(db: Datalayer):
     for n in [8, 16, 32]:
-        db.add(tensor(torch.float, shape=(n,)))
-    db.add(pil_image)
+        db.apply(tensor(dtype='float', shape=(n,)))
+    db.apply(pil_image)
 
 
 def add_models(db: Datalayer):
     # identifier, weight_shape, encoder
     params = [
-        ['linear_a', (32, 16), db.load('datatype', 'torch.float32[16]')],
-        ['linear_b', (16, 8), db.load('datatype', 'torch.float32[8]')],
+        ['linear_a', (32, 16), tensor(dtype='float', shape=(16,))],
+        ['linear_b', (16, 8), tensor(dtype='float', shape=(8,))],
     ]
     for identifier, weight_shape, datatype in params:
         m = TorchModel(
@@ -230,8 +227,8 @@ def add_vector_index(
     # TODO: Support configurable key and mode
     is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
     if is_mongodb_backend:
-        select_x = Collection(collection_name).find()
-        select_z = Collection(collection_name).find()
+        select_x = MongoQuery(collection_name).find()
+        select_z = MongoQuery(collection_name).find()
     else:
         table = db.load('table', collection_name).to_query()
         select_x = table.select('id', 'x')

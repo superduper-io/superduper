@@ -7,7 +7,7 @@ from functools import cached_property
 import numpy
 from overrides import override
 
-from superduperdb.backends.mongodb.query import Select
+from superduperdb.backends.base.query import Query
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component, ensure_initialized
@@ -41,7 +41,7 @@ class Dataset(Component):
         ('raw_data', dill_serializer),
     )
 
-    select: t.Optional[Select] = None
+    select: t.Optional[Query] = None
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None
@@ -53,7 +53,7 @@ class Dataset(Component):
         :param artifacts: Optional additional artifacts for initialization.
         """
         self._data = None
-        return super().__post_init__(artifacts)
+        return super().__post_init__(db, artifacts)
 
     @property
     @ensure_initialized
@@ -64,7 +64,7 @@ class Dataset(Component):
     def init(self):
         """Initialization method."""
         super().init()
-        self._data = [Document.decode(r, self.db) for r in pickle_decode(self.raw_data)]
+        self._data = [Document.decode(r, db=self.db) for r in pickle_decode(self.raw_data)]
 
     @override
     def pre_create(self, db: 'Datalayer') -> None:

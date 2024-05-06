@@ -10,7 +10,7 @@ from superduperdb.cdc import cdc
 from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
-    from superduperdb.backends.ibis.query import Table
+    from superduperdb.backends.ibis.query import IbisQuery
     from superduperdb.base.datalayer import Datalayer
 
 
@@ -26,7 +26,7 @@ class PollingStrategyIbis:
     """
 
     def __init__(
-        self, db: 'Datalayer', table: 'Table', strategy, primary_id: str = 'id'
+        self, db: 'Datalayer', table: 'IbisQuery', strategy, primary_id: str = 'id'
     ):
         self.db = db
         self.table = table
@@ -113,7 +113,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
     def __init__(
         self,
         db: 'Datalayer',
-        on: query.Table,
+        on: query.IbisQuery,
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
@@ -147,7 +147,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
             db=db, on=on, stop_event=stop_event, identifier=identifier, timeout=timeout
         )
 
-    def on_update(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
+    def on_update(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
         """on_update.
 
         :param ids: Changed row ids.
@@ -156,7 +156,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         raise NotImplementedError
 
-    def on_delete(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
+    def on_delete(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
         """on_delete.
 
         :param ids: Changed row ids.
@@ -165,7 +165,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         raise NotImplementedError
 
-    def on_create(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
+    def on_create(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
         """on_create.
 
         A helper on create event handler which handles inserted document in the

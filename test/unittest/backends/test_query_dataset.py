@@ -1,6 +1,6 @@
 import pytest
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import Mapping
 
@@ -15,7 +15,7 @@ def test_query_dataset(db):
     train_data = QueryDataset(
         db=db,
         mapping=Mapping('_base', signature='singleton'),
-        select=Collection('documents').find(
+        select=MongoQuery('documents').find(
             {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1}
         ),
         fold='train',
@@ -30,7 +30,7 @@ def test_query_dataset(db):
 
     train_data = QueryDataset(
         db=db,
-        select=Collection('documents').find(),
+        select=MongoQuery('documents').find(),
         mapping=Mapping({'x': 'x', 'y': 'y'}, signature='**kwargs'),
         fold='train',
     )
@@ -44,7 +44,7 @@ def test_query_dataset(db):
 def test_query_dataset_base(db):
     train_data = QueryDataset(
         db=db,
-        select=Collection('documents').find({}, {'_id': 0}),
+        select=MongoQuery('documents').find({}, {'_id': 0}),
         mapping=Mapping(['_base', 'y'], signature='*args'),
         fold='train',
     )

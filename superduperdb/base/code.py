@@ -2,7 +2,7 @@ import dataclasses as dc
 import inspect
 import typing as t
 
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.leaf import Leaf
 
 template = """from superduperdb import code
 
@@ -12,8 +12,8 @@ template = """from superduperdb import code
 default = template.format(definition='def my_code(x):\n    return x\n')
 
 
-@dc.dataclass
-class Code(Serializable):
+@dc.dataclass(kw_only=True)
+class Code(Leaf):
     """A class to store remote code.
 
     This class stores remote code that can be executed on a remote server.

@@ -4,7 +4,7 @@ import lorem
 import PIL.Image
 
 from superduperdb import ObjectModel
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.superduper import superduper
 from superduperdb.components.stack import Stack
 from superduperdb.ext.numpy import array
@@ -30,7 +30,7 @@ m = Stack(
 
 from superduperdb.base.document import Document
 
-collection = Collection('documents')
+collection = MongoQuery('documents')
 data = [
     Document({'x': random.randrange(100), 'y': lorem.sentence()}) for _ in range(100)
 ]
@@ -58,7 +58,7 @@ os.system(f"echo '{str_}' | pbcopy")
 img = PIL.Image.open('test/material/data/rickroll.png')
 
 _, i = db.add(image_type('image'))
-insert = Collection('images').insert_one(Document({'img': i(img)}))
+insert = MongoQuery('images').insert_one(Document({'img': i(img)}))
 
 db.execute(insert)
 

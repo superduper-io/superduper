@@ -104,6 +104,17 @@ class LLMCallback(TrainerCallback):
         self.llm.adapter_id = checkpoint
         self.db.replace(self.llm)
 
+        if not args.save_total_limit:
+            return
+
+        try:
+            versions = self.db.show("checkpoint", self.experiment_id) or []
+        except Exception:
+            versions = []
+        if len(versions) > args.save_total_limit:
+            for version in versions[: -args.save_total_limit]:
+                self.db.remove("checkpoint", self.experiment_id, version, force=True)
+
     def on_evaluate(self, args, state, control, **kwargs):
         """Event called after an evaluation."""
         if not state.is_world_process_zero:
@@ -497,7 +508,7 @@ def train_func(
         **tokenizer_kwargs,
     )
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
     from trl import setup_chat_format
     from trl.trainer import SFTTrainer

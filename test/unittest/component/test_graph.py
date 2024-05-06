@@ -128,9 +128,9 @@ def test_complex_graph_with_select(db):
     g = Graph(identifier='complex-graph', input=linear_a, outputs=[linear_b])
     g.connect(linear_a, linear_b)
 
-    from superduperdb.backends.mongodb import Collection
+    from superduperdb.backends.mongodb import MongoQuery
 
-    select = Collection('documents').find({})
+    select = MongoQuery('documents').find({})
     g.predict_in_db(X='x', select=select, db=db, predict_id='test')
     assert all(['test' in x['_outputs'] for x in list(db.execute(select))])
 

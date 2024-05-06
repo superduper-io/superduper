@@ -10,7 +10,6 @@ import typing as t
 from abc import abstractmethod
 
 import dill
-from overrides import override
 
 from superduperdb import CFG
 from superduperdb.backends.base.artifacts import (
@@ -25,6 +24,9 @@ from superduperdb.misc.hash import random_sha1
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 class Empty:
@@ -137,10 +139,9 @@ class DataType(Component):
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
     media_type: t.Optional[str] = None
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
-        self.encodable_cls = _ENCODABLES[self.encodable]
-        self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
+    def __post_init__(self, db, artifacts):
+        self._encodable_cls = _ENCODABLES[self.encodable]
+        super().__post_init__(db, artifacts)
         self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
 
     def dict(self):
@@ -152,10 +153,7 @@ class DataType(Component):
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
     ) -> '_BaseEncodable':
-        if self._takes_x:
-            return self.encodable_cls(datatype=self, x=x, uri=uri)
-        else:
-            return self.encodable_cls(datatype=self, uri=uri)
+        return self._encodable_cls(datatype=self, x=x, uri=uri)
 
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
@@ -230,23 +228,15 @@ class _BaseEncodable(Leaf):
     :param uri: URI of the content, if any
     """
 
+    identifier: str = ''
     file_id: t.Optional[str] = None
     datatype: DataType
     uri: t.Optional[str] = None
     sha1: t.Optional[str] = None
-    blob: dc.InitVar[t.Optional[bytearray]] = None
     x: t.Optional[t.Any] = None
 
-    @property
-    def id(self):
-        assert self.file_id is not None
-        return f'{self.leaf_type}/{self.file_id}'
-
-    def __post_init__(self, blob):
-        if isinstance(blob, bytes):
-            assert isinstance(self.x, Empty)
-            self.x = self.datatype.decoder(blob)
-
+    def __post_init__(self, db):
+        super().__post_init__(db)
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
 
@@ -254,16 +244,15 @@ class _BaseEncodable(Leaf):
             self.uri = f'file://{self.uri}'
 
     @property
-    def unique_id(self):
-        if self.file_id is not None:
-            return self.file_id
-        return str(id(self.x))
+    def id(self):
+        assert self.file_id is not None
+        return f'{self.leaf_type}/{self.file_id}'
 
     @property
     def reference(self):
         return self.datatype.reference
 
-    def unpack(self, db):
+    def unpack(self):
         """
         Unpack the content of the `Encodable`
 
@@ -290,16 +279,6 @@ class _BaseEncodable(Leaf):
             )
         return default
 
-    @classmethod
-    @abstractmethod
-    def _get_object(cls, db, r):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def decode(cls, r, db=None) -> '_BaseEncodable':
-        pass
-
     def get_hash(self, data):
         if isinstance(data, str):
             bytes_ = data.encode()
@@ -313,14 +292,25 @@ class _BaseEncodable(Leaf):
 @dc.dataclass
 class Encodable(_BaseEncodable):
     x: t.Any = Empty()
+    blob: dc.InitVar[t.Optional[bytearray]] = None
     leaf_type: t.ClassVar[str] = 'encodable'
+
+    def __post_init__(self, db, blob):
+        super().__post_init__(db)
+        if isinstance(self.x, Empty):
+            self.datatype.init()
+            self.x = self.datatype.decoder(blob)
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
-    def _deep_flat_encode(self, cache, blobs, files):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        if isinstance(self, leaves_to_keep):
+            cache[self.id] = self
+            return f'?{self.id}'
+
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
         r = super()._deep_flat_encode(cache, blobs, files)
@@ -348,40 +338,12 @@ class Encodable(_BaseEncodable):
         object = datatype.decode_data(r['bytes'], info=datatype.info)
         return object
 
-    @override
-    def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        bytes_, sha1 = self._encode()
-        return {
-            '_content': {
-                'bytes': bytes_,
-                'datatype': self.datatype.identifier,
-                'leaf_type': self.leaf_type,
-                'sha1': sha1,
-                'uri': self.uri,
-                'file_id': sha1 if self.file_id is None else self.file_id,
-                'id': (
-                    f'_{self.leaf_type}/'
-                    f'{sha1 if self.file_id is None else self.file_id}',
-                ),
-            }
-        }
-
     @classmethod
     def build(cls, r):
         return cls(**r)
 
     def init(self, db):
         pass
-
-    @classmethod
-    def decode(cls, r, db=None) -> 'Encodable':
-        object = cls._get_object(db, r['_content'])
-        return cls(
-            x=object,
-            datatype=db.datatypes[r['_content']['datatype']],
-            uri=r['_content']['uri'],
-            file_id=r['_content'].get('file_id'),
-        )
 
 
 @dc.dataclass
@@ -397,15 +359,11 @@ class Native(_BaseEncodable):
     def _get_object(cls, db, r):
         raise NotImplementedError
 
-    @override
-    def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        return self.x
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        if isinstance(self, leaves_to_keep):
+            cache[self.id] = self
+            return f'?{self.id}'
 
-    @classmethod
-    def decode(cls, r, db=None):
-        return r
-
-    def _deep_flat_encode(self, cache, blobs, files):
         r = super()._deep_flat_encode(cache, blobs, files)
         cache[self.id] = r
         return f'?{self.id}'
@@ -426,20 +384,34 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
     leaf_type: t.ClassVar[str] = 'artifact'
     x: t.Any = Empty()
-    artifact: bool = False
+    lazy: t.ClassVar[bool] = False
 
-    def __post_init__(self, blob):
-        super().__post_init__(blob)
+    def __post_init__(self, db):
+        super().__post_init__(db)
+
+        if not self.lazy and isinstance(self.x, Empty):
+            self.init()
+
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
             raise ArtifactSavingError('BASE64 not supported on disk!')
 
-    def _deep_flat_encode(self, cache, blobs, files):
+    def init(self):
+        assert self.file_id is not None
+        if isinstance(self.x, Empty):
+            blob = self.db.artifact_store._load_bytes(self.file_id)
+            self.datatype.init()
+            self.x = self.datatype.decoder(blob)
+
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        if isinstance(self, leaves_to_keep):
+            cache[self.id] = self
+            return f'?{self.id}'
+
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
-        r = super()._deep_flat_encode(cache, blobs, files)
+        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
         del r['x']
         blobs[self.file_id] = maybe_bytes
-        r['blob'] = f'&{self.file_id}'
         cache[self.id] = r
         return f'?{self.id}'
 
@@ -448,115 +420,24 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
-    def init(self, db):
-        if isinstance(self.x, Empty):
-            self.x = self._get_object(
-                db,
-                file_id=self.file_id,
-                datatype=self.datatype.identifier,
-                uri=self.uri,
-            )
-
-    @override
-    def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        if self.x is not None and not isinstance(self.x, Empty):
-            bytes_, sha1 = self._encode()
-        else:
-            bytes_, sha1 = None, None
-        return {
-            '_content': {
-                'bytes': bytes_,
-                'datatype': self.datatype.identifier,
-                'leaf_type': self.leaf_type,
-                'sha1': sha1,
-                'uri': self.uri,
-                'file_id': sha1 if self.file_id is None else self.file_id,
-                'id': (
-                    f'_{self.leaf_type}/'
-                    f'{sha1 if self.file_id is None else self.file_id}'
-                ),
-                'artifact_type': 'bytes',
-            }
-        }
-
-    @classmethod
-    def _get_object(cls, db, file_id, datatype, uri):
-        obj = db.artifact_store.load_artifact(
-            {
-                'file_id': file_id,
-                'datatype': datatype,
-                'uri': uri,
-            }
-        )
-        obj = db.datatypes[datatype].bytes_encoding_before_decode(obj)
-        return obj
-
-    def unpack(self, db):
+    def unpack(self):
         """
         Unpack the content
 
         :param db: `Datalayer` instance to assist with
         """
-        self.init(db=db)
+        self.init()
         return self.x
-
-    def save(self, artifact_store):
-        r = artifact_store.save_artifact(self.encode()['_content'])
-        self.x = None
-        self.file_id = r['file_id']
-
-    @classmethod
-    def decode(cls, r, db=None) -> 'Artifact':
-        r = r['_content']
-        x = cls._get_object(
-            db, file_id=r['file_id'], datatype=r['datatype'], uri=r.get('uri')
-        )
-        return cls(
-            x=x,
-            datatype=db.datatypes[r['datatype']],
-            uri=r.get('uri'),
-            file_id=r.get('file_id'),
-            sha1=r.get('sha1'),
-        )
 
 
 @dc.dataclass
 class LazyArtifact(Artifact):
     """
     Data to be saved on disk/ in the artifact-store
-    and loaded only when needed
     """
 
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
-    artifact: bool = False
-
-    @override
-    def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        return super().encode(leaf_types_to_keep)
-
-    def unpack(self, db):
-        """
-        Unpack the content of the `Encodable`
-
-        :param db: `Datalayer` instance to assist with
-        """
-        if isinstance(self.x, Empty):
-            return self
-        return self.x
-
-    def save(self, artifact_store):
-        r = artifact_store.save_artifact(self.encode()['_content'])
-        self.x = None
-        self.file_id = r['file_id']
-
-    @classmethod
-    def decode(cls, r, db=None) -> 'LazyArtifact':
-        return cls(
-            x=Empty(),  # this is to enable lazy loading
-            datatype=db.datatypes[r['_content']['datatype']],
-            uri=r['_content']['uri'],
-            file_id=r['_content'].get('file_id'),
-        )
+    lazy: t.ClassVar[bool] = True
 
 
 @dc.dataclass
@@ -569,7 +450,11 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
 
-    def _deep_flat_encode(self, cache, blobs, files):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        if isinstance(self, leaves_to_keep):
+            cache[self.id] = self
+            return f'?{self.id}'
+
         self.file_id = self.file_id or random_sha1()
         if self.x not in files:
             files.append(self.x)
@@ -580,28 +465,13 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
             file = db.artifact_store._load_file(self.file_id)
             self.x = file
 
-    def unpack(self, db):
-        self.init(db)
+    def unpack(self):
+        self.init()
         return self.x
 
     @classmethod
     def _get_object(cls, db, r):
         return r['x']
-
-    @override
-    def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        dc.asdict(self)
-        file_id = self.file_id or random_sha1()
-        return {
-            '_content': {
-                'datatype': self.datatype.identifier,
-                'leaf_type': self.leaf_type,
-                'uri': self.x,
-                'file_id': file_id,
-                'id': f'_{self.leaf_type}/{file_id}',
-                'artifact_type': 'file',
-            }
-        }
 
     @classmethod
     def decode(cls, r, db=None) -> 'File':
@@ -633,9 +503,9 @@ Encoder = DataType
 _ENCODABLES = {
     'encodable': Encodable,
     'artifact': Artifact,
+    'lazy_artifact': LazyArtifact,
     'file': File,
     'native': Native,
-    'lazy_artifact': LazyArtifact,
     'lazy_file': LazyFile,
 }
 
@@ -649,12 +519,20 @@ methods = {
 
 
 @component()
-def get_serializer(identifier: str, method: str, encodable: str):
+def get_serializer(identifier: str, method: str, encodable: str, db: t.Optional['Datalayer'] = None):
     return DataType(
-        identifier,
+        identifier=identifier,
         encodable=encodable,
         **methods[method],
+        db=db,
     )
+
+
+pickle_encoder = get_serializer(
+    identifier='pickle',
+    method='pickle',
+    encodable='encodable',
+)
 
 
 pickle_serializer = get_serializer(

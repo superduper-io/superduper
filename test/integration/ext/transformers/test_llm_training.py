@@ -4,7 +4,7 @@ import pytest
 import transformers
 
 from superduperdb import superduper
-from superduperdb.backends.mongodb import Collection
+from superduperdb.backends.mongodb import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.ext.transformers.model import LLM
 from superduperdb.ext.transformers.training import LLMTrainer
@@ -48,8 +48,8 @@ def db():
         for example in eval_dataset
     ]
 
-    db_.execute(Collection("datas").insert_many(train_documents[:100]))
-    db_.execute(Collection("datas").insert_many(eval_documents[:4]))
+    db_.execute(MongoQuery("datas").insert_many(train_documents[:100]))
+    db_.execute(MongoQuery("datas").insert_many(eval_documents[:4]))
 
     yield db_
 
@@ -94,7 +94,7 @@ def test_full_finetune(db, trainer):
     trainer.output_dir = output_dir
 
     llm.train_X = 'text'
-    llm.train_select = Collection('datas').find()
+    llm.train_select = MongoQuery('datas').find()
     llm.trainer = trainer
 
     llm.fit_in_db(db=db)
@@ -117,7 +117,7 @@ def test_lora_finetune(db, trainer):
         identifier="llm-finetune",
         model_name_or_path=model,
         train_X='text',
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
         trainer=trainer,
     )
 
@@ -141,7 +141,7 @@ def test_qlora_finetune(db, trainer):
         model_name_or_path=model,
         train_X='text',
         trainer=trainer,
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
     )
 
     trainer.bits = 4
@@ -164,7 +164,7 @@ def test_local_ray_lora_finetune(db, trainer):
         identifier="llm-finetune",
         model_name_or_path=model,
         train_X='text',
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
         trainer=trainer,
     )
 
@@ -207,7 +207,7 @@ def test_local_ray_deepspeed_lora_finetune(db, trainer):
         identifier="llm-finetune",
         model_name_or_path=model,
         train_X='text',
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
         trainer=trainer,
     )
 
@@ -261,7 +261,7 @@ def test_remote_ray_lora_finetune(db, trainer):
         identifier="llm-finetune",
         model_name_or_path=model,
         train_X='text',
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
         trainer=trainer,
     )
 
@@ -308,7 +308,7 @@ def test_remote_ray_qlora_deepspeed_finetune(db, trainer):
         identifier="llm-finetune",
         model_name_or_path=model,
         train_X='text',
-        train_select=Collection('datas').find(),
+        train_select=MongoQuery('datas').find(),
         trainer=trainer,
     )
 

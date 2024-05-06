@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduperdb.backends.sqlalchemy.db_helper import get_db_config
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.document import Document
 from superduperdb.components.component import Component as _Component
 from superduperdb.misc.colors import Colors
 
@@ -99,6 +99,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             'component',
             metadata,
             Column('id', type_string, primary_key=True),
+            Column('uuid', type_string),
             Column('identifier', type_string),
             Column('version', type_integer),
             Column('hidden', type_boolean),
@@ -153,6 +154,20 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     # --------------- COMPONENTS -----------------
 
+    def _get_component_uuid(self, type_id: str, identifier: str, version: int):
+        with self.session_context() as session:
+            stmt = (
+                select(self.component_table)
+                .where(
+                    self.component_table.c.type_id == type_id,
+                    self.component_table.c.identifier == identifier,
+                    self.component_table.c.version == version,
+                )
+                .limit(1)
+            )
+            res = self.query_results(self.component_table, stmt, session)
+            return res[0]['uuid'] if res else None
+
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
     ):
@@ -200,6 +215,24 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 session.execute(stmt_delete)
 
+    def _get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+        with self.session_context() as session:
+            stmt = (
+                select(self.component_table)
+                .where(
+                    self.component_table.c.uuid == uuid,
+                )
+                .limit(1)
+            )
+            res = self.query_results(self.component_table, stmt, session)
+            r = res[0]
+        return self._get_component(
+            type_id=r['type_id'],
+            identifier=r['identifier'],
+            version=r['version'],
+            allow_hidden=allow_hidden,
+        )
+
     def _get_component(
         self,
         type_id: str,
@@ -224,10 +257,10 @@ class SQLAlchemyMetadata(MetaDataStore):
                 res = {**res, **dict_}
                 return res
 
-    def get_component_version_parents(self, unique_id: str):
+    def get_component_version_parents(self, uuid: str):
         with self.session_context() as session:
             stmt = select(self.parent_child_association_table).where(
-                self.parent_child_association_table.c.child_id == unique_id,
+                self.parent_child_association_table.c.child_id == uuid,
             )
             res = self.query_results(self.parent_child_association_table, stmt, session)
             parents = [r['parent_id'] for r in res]
@@ -492,7 +525,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             for row in queries:
                 id = row['query_id']
                 serialized = row['query']
-                query = Serializable.from_dict(serialized)
+                query = Document.decode(serialized)
                 unpacked_queries.append(
                     {'query_id': id, 'query': query, 'sql': query.repr_()}
                 )

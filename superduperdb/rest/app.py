@@ -35,25 +35,8 @@ port = int(CFG.cluster.rest.uri.split(':')[-1])
 app = superduperapp.SuperDuperApp('rest', port=port)
 
 
-@dc.dataclass(kw_only=True)
-class MyBoolean(Component):
-    type_id: t.ClassVar[str] = 'bool'
-    my_bool: bool
-
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'my_bool', 'type': 'bool'},
-        {'name': 'my_artifact', 'type': 'artifact', 'sequence': True},
-        {
-            'name': 'my_choice',
-            'type': 'str',
-            'sequence': True,
-            'choices': ['a', 'b', 'c'],
-        },
-    ]
-
-
+# TODO - should be a configuration
 CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
-    'bool': {'MyBoolean': MyBoolean},
     'model': {
         'ObjectModel': ObjectModel,
         'SequentialModel': SequentialModel,
@@ -129,27 +112,9 @@ def build_app(app: superduperapp.SuperDuperApp):
             media_type = datatype.media_type
         return Response(content=bytes, media_type=media_type)
 
-    @app.add('/db/apply/stack', method='post')
-    def db_apply_stack(info: t.Dict):
-        if 'identifier' in info:
-            component = Stack.from_list(
-                content=info['_leaves'], db=app.db, identifier=info['identifier']
-            )
-        else:
-            id = f'_component/{info["type_id"]}/{info["identifier"]}'
-            r = {'_leaves': [{**info, 'id': id}], '_base': id}
-            component = import_(r=r, db=app.db)
-        app.db.apply(component)
-        return {'status': 'ok'}
-
-    @app.add('/db/apply/component', method='post')
-    def db_apply_component(info: t.Dict):
-        if '_leaves' in info:
-            component = import_(r=info, db=app.db)
-        else:
-            id = f'_component/{info["type_id"]}/{info["dict"]["identifier"]}'
-            r = {'_leaves': [{**info, 'id': id}], '_base': id}
-            component = import_(r=r, db=app.db)
+    @app.add('/db/apply', method='post')
+    def db_apply(info: t.Dict):
+        component = Document.decode(info)
         app.db.apply(component)
         return {'status': 'ok'}
 

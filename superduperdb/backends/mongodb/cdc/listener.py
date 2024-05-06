@@ -84,7 +84,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
     def __init__(
         self,
         db: 'Datalayer',
-        on: query.Collection,
+        on: query.MongoQuery,
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
@@ -118,7 +118,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_create(
-        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.MongoQuery
     ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
@@ -137,7 +137,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_update(
-        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.MongoQuery
     ) -> None:
         """on_update.
 
@@ -156,7 +156,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_delete(
-        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.MongoQuery
     ) -> None:
         """on_delete.
 

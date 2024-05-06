@@ -10,10 +10,19 @@ class BaseDataBackend(ABC):
         self.conn = conn
         self.name = name
         self.in_memory: bool = False
+        self._datalayer = None
 
     @property
     def db(self):
         raise NotImplementedError
+
+    @property
+    def datalayer(self):
+        return self._datalayer
+
+    @datalayer.setter
+    def datalayer(self, value):
+        self._datalayer = value
 
     @abstractmethod
     def url(self):
@@ -43,6 +52,10 @@ class BaseDataBackend(ABC):
         datatype: t.Union[None, DataType, FieldType],
         flatten: bool = False,
     ):
+        pass
+
+    @abstractmethod
+    def get_query_builder(self, key):
         pass
 
     @abstractmethod

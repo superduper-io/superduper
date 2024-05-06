@@ -42,9 +42,8 @@ from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import TableOrCollection
-    from superduperdb.backends.ibis.query import Table
+    from superduperdb.backends.ibis.query import IbisQuery
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.base.serializable import Serializable
     from superduperdb.components.listener import Listener
 
 
@@ -59,7 +58,7 @@ class DBEvent(str, Enum):
 @dc.dataclass
 class Packet:
     ids: t.Any
-    query: t.Optional['Serializable']
+    query: t.Optional[t.Any] = None
     event_type: DBEvent = DBEvent.insert
 
     @property
@@ -98,7 +97,7 @@ class BaseDatabaseListener(ABC):
     def __init__(
         self,
         db: 'Datalayer',
-        on: t.Union['Table', 'TableOrCollection'],
+        on: t.Union['IbisQuery', 'TableOrCollection'],
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
@@ -173,7 +172,7 @@ class BaseDatabaseListener(ABC):
         self,
         ids: t.Sequence,
         db: 'Datalayer',
-        table_or_collection: t.Union['Table', 'TableOrCollection'],
+        table_or_collection: t.Union['IbisQuery', 'TableOrCollection'],
         event: DBEvent,
     ):
         """
@@ -334,7 +333,7 @@ class DatabaseChangeDataCapture:
         self._CDC_LISTENERS: t.Dict[str, BaseDatabaseListener] = {}
         self._running: bool = False
         self._cdc_existing_collections: t.MutableSequence[
-            t.Union['TableOrCollection', 'Table']
+            t.Union['TableOrCollection', 'IbisQuery']
         ] = []
 
         listeners = self.db.show('listeners')
@@ -362,7 +361,7 @@ class DatabaseChangeDataCapture:
 
     def listen(
         self,
-        on: t.Union['Table', 'TableOrCollection'],
+        on: t.Union['IbisQuery', 'TableOrCollection'],
         identifier: str = '',
         *args,
         **kwargs,

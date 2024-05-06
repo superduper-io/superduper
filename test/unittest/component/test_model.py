@@ -10,10 +10,10 @@ from sklearn.metrics import accuracy_score, f1_score
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.local.compute import LocalComputeBackend
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Variable
+from superduperdb.base.variables import Variable
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode
 from superduperdb.components.metric import Metric
@@ -313,7 +313,7 @@ def test_model_create_fit_job(db):
     # Check the fit job is created correctly
     model = Validator('test', object=object())
     # TODO move these parameters into the `Trainer` (same thing for validation)
-    model.trainer = MyTrainer('test', select=Collection('test').find(), key='x')
+    model.trainer = MyTrainer('test', select=MongoQuery('test').find(), key='x')
     db.apply(model)
     with patch.object(ComponentJob, '__call__') as mock_call:
         mock_call.return_value = None
@@ -333,7 +333,7 @@ def test_model_fit(db, valid_dataset):
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer('my-trainer', key='x', select=Collection('test').find()),
+        trainer=MyTrainer('my-trainer', key='x', select=MongoQuery('test').find()),
         validation=Validation(
             'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
         ),
@@ -353,7 +353,7 @@ def test_model_fit(db, valid_dataset):
 )
 def test_query_model(db):
     q = (
-        Collection(identifier='documents')
+        MongoQuery(identifier='documents')
         .like({'x': Variable('X')}, vector_index='test_vector_search', n=3)
         .find_one({}, {'_id': 1})
     )

@@ -1,3 +1,4 @@
+import logging
 import typing as t
 from warnings import warn
 
@@ -8,7 +9,7 @@ from ibis.backends.base import BaseBackend
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
-from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.ibis.query import IbisQuery
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.components.datatype import DataType
@@ -25,6 +26,9 @@ class IbisDataBackend(BaseDataBackend):
         self.dialect = getattr(conn, 'name', 'base')
         self.db_helper = get_db_helper(self.dialect)
 
+    def get_query_builder(self, item):
+        return IbisQuery(identifier=item, db=self.datalayer)
+
     def url(self):
         return self.conn.con.url + self.name
 
@@ -34,6 +38,7 @@ class IbisDataBackend(BaseDataBackend):
     def build_metadata(self):
         return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
 
+    # TODO this duplicates the method create_table_and_schema 
     def create_ibis_table(self, identifier: str, schema: Schema):
         self.conn.create_table(identifier, schema=schema)
 
@@ -71,7 +76,7 @@ class IbisDataBackend(BaseDataBackend):
                 '_source': dtype('string'),
                 'output': output_type,
             }
-            return Table(
+            return IbisQuery(
                 primary_id='_source',
                 identifier=f'_outputs.{predict_id}',
                 schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
@@ -81,7 +86,7 @@ class IbisDataBackend(BaseDataBackend):
                 INPUT_KEY: dtype('string'),
                 'output': output_type,
             }
-            return Table(
+            return IbisQuery(
                 identifier=f'_outputs.{predict_id}',
                 schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
             )
@@ -90,7 +95,10 @@ class IbisDataBackend(BaseDataBackend):
         """
         Create a schema in the data-backend.
         """
-
+        if self.in_memory:
+            logging.info('Using in-memory tables so doing nothing'
+                         f' on create_table_and_schema for {identifier}')
+            return
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))

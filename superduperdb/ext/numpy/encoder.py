@@ -4,6 +4,7 @@ import numpy
 
 from superduperdb.components.datatype import DataType
 from superduperdb.ext.utils import str_shape
+from superduperdb.misc.annotations import component
 
 
 class EncodeArray:
@@ -25,6 +26,7 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
 
 
+@component()
 def array(
     dtype: str,
     shape: t.Sequence,

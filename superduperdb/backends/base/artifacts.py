@@ -44,7 +44,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _delete_artifact(self, file_id: str):
+    def _delete_bytes(self, file_id: str):
         """
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
@@ -52,7 +52,7 @@ class ArtifactStore(ABC):
 
     def delete(self, r: t.Dict):
         if '_content' in r and 'file_id' in r['_content']:
-            return self._delete_artifact(r['_content']['file_id'])
+            return self._delete_bytes(r['_content']['file_id'])
         for v in r.values():
             if isinstance(v, dict):
                 self.delete(v)

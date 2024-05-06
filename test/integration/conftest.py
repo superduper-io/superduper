@@ -11,7 +11,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
@@ -34,14 +34,14 @@ def add_models_encoders(test_db):
     )
     _, indexing_listener = test_db.add(
         Listener(
-            select=Collection(identifier='documents').find(),
+            select=MongoQuery(identifier='documents').find(),
             key='x',
             model=model,
         )
     )
     _, compatible_listener = test_db.add(
         Listener(
-            select=Collection(identifier='documents').find(),
+            select=MongoQuery(identifier='documents').find(),
             key='z',
             model=model,
         )

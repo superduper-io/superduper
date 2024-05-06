@@ -10,7 +10,7 @@ except ImportError:
 from test.db_config import DBConfig
 
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.components.datatype import DataType
 from superduperdb.components.metric import Metric
 from superduperdb.components.model import Validation
@@ -77,7 +77,7 @@ def test_fit(db, valid_dataset, model):
     m = model
 
     if isinstance(db.databackend, MongoDataBackend):
-        select = Collection('documents').find()
+        select = MongoQuery('documents').find()
     else:
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z', '_fold')

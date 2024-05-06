@@ -2,7 +2,7 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 
 try:
@@ -24,7 +24,7 @@ def test_encoder_auto(db):
 
     db.add(unstructured_encoder)
 
-    collection = Collection("documents")
+    collection = MongoQuery("documents")
     to_insert = [Document({"elements": unstructured_encoder(TEST_FILE)})]
     db.execute(collection.insert_many(to_insert))
 
@@ -42,7 +42,7 @@ def test_encoder_url(db):
 
     db.add(unstructured_encoder)
 
-    collection = Collection("documents")
+    collection = MongoQuery("documents")
     to_insert = [Document({"elements": unstructured_encoder(TEST_URL)})]
     db.execute(collection.insert_many(to_insert))
 

@@ -2,7 +2,7 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.model import ObjectModel
 
@@ -12,7 +12,7 @@ def data_in_db(db):
     X = [1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5]
     db.execute(
-        Collection(identifier='documents').insert_many(
+        MongoQuery(identifier='documents').insert_many(
             [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
         )
     )
@@ -40,10 +40,10 @@ def test_function_predict_with_document_embedded(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=Collection(identifier='documents').find(),
+        select=MongoQuery(identifier='documents').find(),
         predict_id='test',
     )
-    out = data_in_db.execute(Collection(identifier='_outputs.test').find({}))
+    out = data_in_db.execute(MongoQuery(identifier='_outputs.test').find({}))
     assert [o['_outputs']['test'] for o in out] == [1, 2, 3, 4, 5]
 
 
@@ -53,10 +53,10 @@ def test_function_predict_without_document_embedded(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=Collection(identifier='documents').find(),
+        select=MongoQuery(identifier='documents').find(),
         predict_id='test',
     )
-    out = data_in_db.execute(Collection(identifier='documents').find({}))
+    out = data_in_db.execute(MongoQuery(identifier='documents').find({}))
     assert [o['_outputs']['test'] for o in out] == [1, 2, 3, 4, 5]
 
 
@@ -71,12 +71,12 @@ def test_function_predict_with_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=Collection(identifier='documents').find(),
+        select=MongoQuery(identifier='documents').find(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(Collection(identifier='_outputs.test').find({})))
+    out = list(data_in_db.execute(MongoQuery(identifier='_outputs.test').find({})))
     input_ids = [
-        c['_id'] for c in data_in_db.execute(Collection(identifier='documents').find())
+        c['_id'] for c in data_in_db.execute(MongoQuery(identifier='documents').find())
     ]
     source_ids = []
     for i, id in enumerate(input_ids):
@@ -113,12 +113,12 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=Collection(identifier='documents').find(),
+        select=MongoQuery(identifier='documents').find(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(Collection(identifier='_outputs.test').find({})))
+    out = list(data_in_db.execute(MongoQuery(identifier='_outputs.test').find({})))
     input_ids = [
-        c['_id'] for c in data_in_db.execute(Collection(identifier='documents').find())
+        c['_id'] for c in data_in_db.execute(MongoQuery(identifier='documents').find())
     ]
     source_ids = []
     for i, id in enumerate(input_ids):

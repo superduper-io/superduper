@@ -4,10 +4,9 @@ import typing as t
 from overrides import override
 
 from superduperdb import CFG
-from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.backends.base.query import Query
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import _OUTPUTS_KEY
-from superduperdb.base.serializable import Variable
 from superduperdb.components.model import Mapping
 from superduperdb.misc.annotations import public_api
 from superduperdb.misc.server import request_server
@@ -48,7 +47,7 @@ class Listener(Component):
 
     key: ModelInputType
     model: Model
-    select: CompoundSelect
+    select: Query 
     active: bool = True
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     identifier: str = ''
@@ -69,20 +68,14 @@ class Listener(Component):
             )
         return kwargs
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         if self.identifier == '':
-            if self.model.version is not None:
-                self.identifier = (
-                    f'{self.id_key}::{self.model.identifier}::{self.model.version}'
-                )
-            else:
-                self.identifier = Variable(
-                    f'{self.id_key}::{self.model.identifier}::{"{model_version}"}',
-                    setter_callback=lambda db, value, kwargs: value.format(
-                        model_version=self.model.version,
-                    ),
-                )
-        super().__post_init__(artifacts)
+            self.identifier = self.id
+        super().__post_init__(db, artifacts)
+
+    @property
+    def id(self):
+        return f'component/{self.type_id}/{self.model.identifier}/{self.uuid}'
 
     @property
     def mapping(self):
@@ -96,24 +89,11 @@ class Listener(Component):
         """
         Get reference to outputs of listener model.
         """
-        if self.model.version is not None:
-            return f'{_OUTPUTS_KEY}.{self.identifier}::{self.version}'
-        else:
-
-            def _callback(db, value, kwargs):
-                return value.format(version=self.version)
-
-            return Variable(
-                f'{_OUTPUTS_KEY}.{self.identifier}::{"{version}"}',
-                setter_callback=_callback,
-            )
+        return f'{_OUTPUTS_KEY}.{self.uuid}'
 
     @property
     def outputs_select(self):
-        """
-        Get query reference to model outputs.
-        """
-        return self.select.table_or_collection.outputs(self.predict_id)
+        return self.select.table_or_collection.outputs(self.id)
 
     @property
     def outputs_key(self):
@@ -126,32 +106,6 @@ class Listener(Component):
             return self.outputs
 
     @override
-    def pre_create(self, db: Datalayer) -> None:
-        """
-        Pre-create hook.
-
-        :param db: Data layer instance.
-        """
-        if self.select is not None and self.select.variables:
-            self.select = t.cast(CompoundSelect, self.select.set_variables(db))
-
-        # This logic intended to format the version of upstream `Listener`
-        # instances into `self.key`, so that the `Listener` knows exactly where
-        # to find the `_outputs` subfield: `_outputs.<identifier>.<version>`
-        # of a `Listener`.
-        self.key = self._set_key(db, self.key)
-
-    @staticmethod
-    def _set_key(db, key, **kwargs):
-        if isinstance(key, Variable):
-            return key.set(db, **kwargs)
-        elif isinstance(key, (list, tuple)):
-            return [Listener._set_key(db, x, **kwargs) for x in key]
-        elif isinstance(key, dict):
-            return {k: Listener._set_key(db, v, **kwargs) for k, v in key.items()}
-        return key
-
-    @override
     def post_create(self, db: Datalayer) -> None:
         """
         Post-create hook.
@@ -159,7 +113,7 @@ class Listener(Component):
         :param db: Data layer instance.
         """
         output_table = db.databackend.create_output_dest(
-            f'{self.identifier}::{self.version}',
+            self.uuid,
             self.model.datatype,
             flatten=self.model.flatten,
         )
@@ -186,38 +140,9 @@ class Listener(Component):
         out = []
         for x in all_:
             if x.startswith('_outputs.'):
-                parts = x.split('.')[1].split('::')
-                listener_id, version = '::'.join(parts[:-1]), int(parts[-1])
-                out.append(ComponentTuple('listener', listener_id, version))
+                listener_id = x.split('.')[1]
+                out.append(listener_id)
         return out
-
-    @property
-    def predict_id(self):
-        """
-        Get predict ID.
-        """
-        return f'{self.identifier}::{self.version}'
-
-    @property
-    def id_key(self) -> str:
-        """
-        Get identifier key.
-        """
-
-        def _id_key(key) -> str:
-            if isinstance(key, str):
-                if key.startswith('_outputs.'):
-                    return key.split('.')[1]
-                else:
-                    return key
-            elif isinstance(key, (tuple, list)):
-                return ','.join([_id_key(k) for k in key])
-            elif isinstance(key, dict):
-                return ','.join([_id_key(k) for k in key.values()])
-            else:
-                raise TypeError('Type of key is not valid')
-
-        return _id_key(self.key)
 
     def depends_on(self, other: Component):
         """
@@ -231,7 +156,7 @@ class Listener(Component):
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
 
-        return any([x.startswith(f'_outputs.{other.identifier}') for x in all_])
+        return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
 
     @override
     def schedule_jobs(
@@ -251,8 +176,8 @@ class Listener(Component):
             self.model.predict_in_db_job(
                 X=self.key,
                 db=db,
-                predict_id=f'{self.identifier}::{self.version}',
-                select=self.select.copy(),
+                predict_id=self.uuid,
+                select=self.select,
                 dependencies=dependencies,
                 overwrite=overwrite,
                 **(self.predict_kwargs or {}),

@@ -1,689 +1,240 @@
+from abc import ABC, abstractmethod
+from collections import defaultdict
 import dataclasses as dc
-import enum
+from functools import wraps
+import json
+import re
 import typing as t
-from abc import ABC, abstractmethod, abstractproperty
-from typing import Any
+import uuid
 
-from superduperdb import logging
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Serializable, Variable
-from superduperdb.components.datatype import DataType
-
-GREEN = '\033[92m'
-BOLD = '\033[1m'
-END = '\033[0m'
-
-
-class _ReprMixin(ABC):
-    @abstractmethod
-    def repr_(self) -> str:
-        pass
-
-    def __repr__(self) -> str:
-        return (
-            f'<{self.__class__.__module__}.{self.__class__.__name__}'
-            f'[\n    {GREEN + BOLD}{self.repr_()}{END}\n] object at {hex(id(self))}>'
-        )
-
-
-def _check_illegal_attribute(name):
-    # Disable Query class objects from using access special methods
-    # Otherwise it will conflict with some python built-in methods, like copy
-    if name.startswith("__") and name.endswith("__"):
-        raise AttributeError(f"Attempt to access illegal attribute '{name}'")
-
-
-@dc.dataclass(repr=False)
-class model(Serializable):
-    identifier: str
-
-    def predict_one(self, *args, **kwargs):
-        return PredictOne(model=self.identifier, args=args, kwargs=kwargs)
-
-    def predict(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-class Predict:
-    ...
-
-
-@dc.dataclass(repr=False)
-class PredictOne(Predict, Serializable, ABC):
-    model: str
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    def execute(self, db):
-        m = db.models[self.model]
-        out = m.predict_one(*self.args, **self.kwargs)
-        if isinstance(m.datatype, DataType):
-            out = m.datatype(out)
-        if isinstance(out, dict):
-            out = Document(out)
-        else:
-            out = Document({'_base': out})
-        return out
-
-
-@dc.dataclass(repr=False)
-class Select(Serializable, ABC):
-    """
-    Base class for all select queries.
-    """
-
-    @abstractproperty
-    def id_field(self):
-        pass
-
-    @property
-    def query_components(self):
-        return self.table_or_collection.query_components
-
-    def model_update(
-        self,
-        db,
-        ids: t.List[str],
-        predict_id: str,
-        outputs: t.Sequence[t.Any],
-        **kwargs,
-    ):
-        """
-        Update model outputs for a set of ids.
-
-        :param db: The DB instance to use
-        :param ids: The ids to update
-        :param key: The key to update
-        :param model: The model to update
-        :param outputs: The outputs to update
-        """
-        return self.table_or_collection.model_update(
-            db=db,
-            ids=ids,
-            predict_id=predict_id,
-            outputs=outputs,
-            **kwargs,
-        )
-
-    @abstractproperty
-    def select_table(self):
-        pass
-
-    @abstractmethod
-    def add_fold(self, fold: str) -> 'Select':
-        pass
-
-    @abstractmethod
-    def select_using_ids(self, ids: t.Sequence[str]) -> 'Select':
-        pass
-
-    @abstractproperty
-    def select_ids(self) -> 'Select':
-        pass
-
-    @abstractmethod
-    def select_ids_of_missing_outputs(self, predict_id: str) -> 'Select':
-        pass
-
-    @abstractmethod
-    def select_single_id(self, id: str) -> 'Select':
-        pass
-
-    @abstractmethod
-    def execute(self, db, reference: bool = True):
-        """
-        Execute the query on the DB instance.
-        """
-        pass
-
-
-@dc.dataclass(repr=False)
-class Delete(Serializable, ABC):
-    """
-    Base class for all deletion queries
-
-    :param table_or_collection: The table or collection that this query is linked to
-    """
-
-    table_or_collection: 'TableOrCollection'
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    @abstractmethod
-    def execute(self, db):
-        pass
-
-
-@dc.dataclass(repr=False)
-class Update(Serializable, ABC):
-    """
-    Base class for all update queries
-
-    :param table_or_collection: The table or collection that this query is linked to
-    """
-
-    table_or_collection: 'TableOrCollection'
-
-    @abstractmethod
-    def select_table(self):
-        pass
-
-    @abstractmethod
-    def execute(self, db):
-        pass
-
-
-@dc.dataclass(repr=False)
-class Write(Serializable, ABC):
-    """
-    Base class for all bulk write queries
-
-    :param table_or_collection: The table or collection that this query is linked to
-    """
-
-    table_or_collection: 'TableOrCollection'
-
-    @abstractmethod
-    def select_table(self):
-        pass
-
-    @abstractmethod
-    def execute(self, db):
-        pass
-
-
-@dc.dataclass(repr=False)
-class CompoundSelect(_ReprMixin, Select, ABC):
-    """
-    A query with multiple parts.
-
-    like ----> select ----> like
-
-    :param table_or_collection: The table or collection that this query is linked to
-    :param pre_like: The pre_like part of the query (e.g. ``table.like(...)...``)
-    :param post_like: The post_like part of the query
-                      (e.g. ``table.filter(...)....like(...)``)
-    :param query_linker: The query linker that is responsible for linking the
-                         query chain. E.g. ``table.filter(...).select(...)``.
-    :param i: The index of the query in the query chain
-    """
-
-    table_or_collection: 'TableOrCollection'
-    pre_like: t.Optional['Like'] = None
-    post_like: t.Optional['Like'] = None
-    query_linker: t.Optional['QueryLinker'] = None
-
-    @abstractproperty
-    def output_fields(self):
-        pass
-
-    @property
-    def id_field(self):
-        return self.primary_id
-
-    @property
-    def primary_id(self):
-        return self.table_or_collection.primary_id
-
-    def add_fold(self, fold: str):
-        assert self.pre_like is None
-        assert self.post_like is None
-        assert self.query_linker is not None
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker.add_fold(fold),
-        )
-
-    @property
-    def select_ids(self):
-        """
-        Query which selects the same documents/ rows but only ids.
-        """
-
-        assert self.pre_like is None
-        assert self.post_like is None
-
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker.select_ids,
-        )
-
-    def select_ids_of_missing_outputs(self, predict_id: str):
-        """
-        Query which selects ids where outputs are missing.
-        """
-
-        assert self.pre_like is None
-        assert self.post_like is None
-        assert self.query_linker is not None
-
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker._select_ids_of_missing_outputs(
-                predict_id=predict_id
-            ),
-        )
-
-    def select_single_id(self, id: str):
-        """
-        Query which selects a single id.
-
-        :param id: The id to select.
-        """
-        assert self.pre_like is None
-        assert self.post_like is None
-        assert self.query_linker is not None
-
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker.select_single_id(id),
-        )
-
-    def select_using_ids(self, ids):
-        """
-        Subset a query to only these ids.
-
-        :param ids: The ids to subset to.
-        """
-
-        assert self.pre_like is None
-        assert self.post_like is None
-
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker.select_using_ids(ids),
-        )
-
-    def repr_(self):
-        """
-        String representation of the query.
-        """
-
-        components = []
-        components.append(str(self.table_or_collection.identifier))
-        if self.pre_like:
-            components.append(str(self.pre_like))
-        if self.query_linker:
-            components.extend(self.query_linker.repr_().split('.')[1:])
-        if self.post_like:
-            components.append(str(self.post_like))
-        return '.'.join(components)
-
-    @classmethod
-    def _query_from_parts(
-        cls,
-        table_or_collection,
-        pre_like=None,
-        post_like=None,
-        query_linker=None,
-    ):
-        return cls(
-            table_or_collection=table_or_collection,
-            pre_like=pre_like,
-            post_like=post_like,
-            query_linker=query_linker,
-        )
-
-    def _get_query_component(
-        self,
-        name: str,
-        type: str,
-        args: t.Optional[t.Sequence] = None,
-        kwargs: t.Optional[t.Dict] = None,
-    ):
-        query_component_cls = self.table_or_collection.query_components.get(
-            name, QueryComponent
-        )
-        return query_component_cls(name, type=type, args=args, kwargs=kwargs)
-
-    @abstractmethod
-    def _get_query_linker(cls, table_or_collection, members) -> 'QueryLinker':
-        pass
-
-    def __getattr__(self, name):
-        _check_illegal_attribute(name)
-        assert self.post_like is None
-        if self.query_linker is not None:
-            query_linker = getattr(self.query_linker, name)
-        else:
-            query_linker = self._get_query_linker(
-                self.table_or_collection,
-                members=[self._get_query_component(name, type=QueryType.ATTR)],
+from superduperdb.base.leaf import Leaf
+from superduperdb.misc.hash import hash_string
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
+
+def applies_to(*flavours):
+    def decorator(f):
+        @wraps(f)
+        def decorated(self, *args, **kwargs):
+            assert self.flavour in flavours, (
+                f'Query {self} does not match any of accepted patterns {flavours},'
+                f' for the {f.__name__} method to which this method applies.'
             )
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            pre_like=self.pre_like,
-            query_linker=query_linker,
-        )
+            return f(self, *args, **kwargs)
+        return decorated
+    return decorator
+    
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        assert self.post_like is None
-        assert self.query_linker is not None
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            pre_like=self.pre_like,
-            query_linker=self.query_linker(*args, **kwargs),
-        )
+@dc.dataclass(kw_only=True, repr=False)
+class Query(Leaf, ABC):
+    flavours: t.ClassVar[t.Dict[str, str]] = {}
+    parts: t.Sequence[t.Union[t.Tuple, str]] = ()
 
+    def __getitem__(self, item):
+        if not isinstance(item, slice):
+            return super().__getitem__(item)
+        assert isinstance(item, slice)
+        parts = self.parts[item]
+        return type(self)(db=self.db, identifier=self.identifier, parts=parts)
+
+    def _get_flavour(self):
+        repr_ = self._to_str()[0]
+        return next(k for k, v in self.flavours.items() if re.match(v, repr_))
+
+    def _get_parent(self):
+        return self.db.databackend.get_table_or_collection(self.identifier)
+
+    @property
+    def flavour(self):
+        return self._get_flavour()
+
+    @property
     @abstractmethod
-    def execute(self, db, load_hybrid: bool = True):
-        """
-        Execute the compound query on the DB instance.
-
-        :param db: The DB instance to use
-        """
-
-    def like(self, r: Document, vector_index: str, n: int = 10):
-        assert self.query_linker is not None
-        assert self.pre_like is None
-        return self._query_from_parts(
-            table_or_collection=self.table_or_collection,
-            pre_like=None,
-            query_linker=self.query_linker,
-            post_like=Like(r=r, n=n, vector_index=vector_index),
-        )
-
-
-@dc.dataclass(repr=False)
-class Insert(_ReprMixin, Serializable, ABC):
-    """
-    Base class for all insert queries.
-
-    :param table_or_collection: The table or collection that this query is linked to
-    :param documents: The documents to insert
-    :param refresh: Whether to refresh the task-graph after inserting
-    :param verbose: Whether to print the progress of the insert
-    :param kwargs: Any additional keyword arguments to pass to the insert method
-    :param encoders: The encoders to use to encode the documents
-    """
-
-    table_or_collection: 'TableOrCollection'
-    documents: t.Sequence['Document'] = dc.field(default_factory=list)
-    verbose: bool = True
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    def repr_(self):
-        documents_str = (
-            str(self.documents)[:25] + '...'
-            if len(self.documents) > 25
-            else str(self.documents)
-        )
-        return f'{self.table_or_collection.identifier}.insert_many({documents_str})'
-
-    @abstractmethod
-    def select_table(self):
+    def documents(self):
         pass
 
+    @property
     @abstractmethod
-    def execute(self, parent: t.Any):
-        """
-        Insert the data.
-
-        :param parent: The parent instance to use for insertion
-        """
+    def type(self):
         pass
 
-    def to_select(self, ids=None):
-        if ids is None:
-            ids = [r['_id'] for r in self.documents]
-        return self.table.find({'_id': ids})
+    @property
+    def id(self):
+        return f'query/{hash_string(str(self))}'
 
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        query, documents = self._dump_query()
+        documents = [Document(r) for r in documents]
+        for i, doc in enumerate(documents):
+            documents[i] = doc._deep_flat_encode(cache, blobs, files, leaves_to_keep)
+        cache[self.id] = {
+            '_path': 'superduperdb/backends/base/new_query/parse_query',
+            'documents': documents,
+            'query': query,
+        }
+        return f'?{self.id}'
 
-class QueryType(str, enum.Enum):
-    """
-    The type of a query. Either `query` or `attr`.
-    """
-
-    QUERY = 'query'
-    ATTR = 'attr'
-
-
-def _deep_flat_encode_impl(self, cache):
-    import json
-    import uuid
-
-    out_str = []
-    documents = {}
-    for k in dc.fields(self):
-        if k.name in {'name', 'type'}:
-            continue
-        if k.name == 'args':
-            for arg in self.args:
-                if isinstance(arg, Document):
-                    id = uuid.uuid4().hex[:5].upper()
-                    out_str.append(f'_documents[{id}]')
-                    documents[id] = arg
-                    continue
-                out_str.append(json.dumps(arg).replace('"', "'"))
-            continue
-        if k.name == 'kwargs':
-            for k, v in self.kwargs.items():
-                if v is None:
-                    continue
-                if isinstance(v, Document):
-                    id = uuid.uuid4().hex[:5].upper()
-                    out_str.append(f'{k}=_documents[{id}]')
-                    documents[id] = v
-                else:
-                    v = json.dumps(v).replace('"', "'")
-                    out_str.append(f'{k}={v}')
-            continue
-        v = getattr(self, k.name)
-        if v is None:
-            continue
-        if isinstance(v, Document):
-            id = uuid.uuid4().hex[:5].upper()
-            out_str.append(f'{k.name}=_documents[{id}]')
-            documents[id] = v
+    @staticmethod
+    def _update_item(a, documents, queries):
+        if isinstance(a, Query):
+            a, sub_documents, sub_queries = a._to_str()
+            documents.update(sub_documents)
+            queries.update(sub_queries)
+            id_ = uuid.uuid4().hex[:5].upper()
+            queries[id_] = a
+            arg = f'query[{id_}]'
         else:
-            v = json.dumps(v).replace('"', "'")
-            out_str.append(f'{k.name}={str(v)}')
-    out_str = ', '.join(out_str)
-    if hasattr(self, 'name'):
-        return f'{self.name}({out_str})', documents
-    else:
-        return f'{self.__class__.__name__.lower()}({out_str})', documents
-
-
-@dc.dataclass(repr=False)
-class QueryComponent(Serializable):
-    """
-    This is a representation of a single query object in ibis query chain.
-    This is used to build a query chain that can be executed on a database.
-    Query will be executed in the order they are added to the chain.
-
-    If we have a query chain like this:
-        query = t.select(['id', 'name']).limit(10)
-    here we have 2 query objects, `select` and `limit`.
-
-    `select` will be wrapped with this class and added to the chain.
-
-    :param name: The name of the query
-    :param type: The type of the query, either `query` or `attr`
-    :param args: The arguments to pass to the query
-    :param kwargs: The keyword arguments to pass to the query
-    """
-
-    name: str
-    type: str = QueryType.ATTR
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    _deep_flat_encode = _deep_flat_encode_impl
-
-    def repr_(self) -> str:
-        if self.type == QueryType.ATTR:
-            return self.name
-
-        def to_str(x):
-            if isinstance(x, str):
-                return f"'{x}'"
-            elif isinstance(x, list):
-                return f'[{", ".join([to_str(a) for a in x])}]'
-            elif isinstance(x, dict):
-                return str({k: to_str(v) for k, v in x.items()})
-            elif isinstance(x, _ReprMixin):
-                return x.repr_()
+            id_ = uuid.uuid4().hex[:5].upper()
+            if isinstance(a, dict):
+                documents[id_] = a
+                arg = f'documents[{id_}]'
+            elif isinstance(a, list):
+                documents[id_] = {'_base': a}
+                arg = f'documents[{id_}]'
             else:
-                return str(x)
+                try:
+                    arg = json.dumps(a)
+                except Exception:
+                    documents[id_] = {'_base': a}
+                    arg = id_
+        return arg
 
-        args_as_strs = [to_str(a) for a in self.args]
-        args_as_strs += [f'{k}={to_str(v)}' for k, v in self.kwargs.items()]
-        joined = ', '.join(args_as_strs)
-        return f'{self.name}({joined})'
+    def _to_str(self):
+        documents = {}
+        queries = {}
+        out = self.identifier[:]
+        for part in self.parts:
+            if isinstance(part, str):
+                out += f'.{part}'
+                continue
+            args = []
+            for a in part[1]:
+                args.append(self._update_item(a, documents, queries))
+            args = ', '.join(args)
+            kwargs = {}
+            for k, v in kwargs.items():
+                kwargs[k] = self._update_item(v, documents, queries)
+            kwargs = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
+            if part[1] and part[2]:
+                out += f'.{part[0]}({args}, {kwargs})'
+            if not part[1] and part[2]:
+                out += f'.{part[0]}({kwargs})'
+            if part[1] and not part[2]:
+                out += f'.{part[0]}({args})'
+            if not part[1] and not part[2]:
+                out += f'.{part[0]}()'
+        return out, documents, queries
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        try:
-            assert (
-                self.type == QueryType.ATTR
-            ), '__call__ method must be called on an attribute query'
-        except AssertionError as e:
-            logging.warn('QUERY_COMPONENT: ' + self.name)
-            raise e
+    def _dump_query(self):
+        output, documents, queries = self._to_str()
+        if queries:
+            output = (
+                '\n'.join(list(queries.values()))
+                + '\n' + output
+            )
+        for i, k in enumerate(queries):
+            output = output.replace(k, str(i))
+        for i, k in enumerate(documents):
+            output = output.replace(k, str(i))
+        documents = list(documents.values())
+        return output, documents
+
+    def __repr__(self):
+        output, docs = self._dump_query()
+        for i, doc in enumerate(docs):
+            doc_string = str(doc)
+            if isinstance(doc, Document):
+                doc_string = str(doc.unpack())
+            output = output.replace(f'documents[{i}]', doc_string)
+        return output
+
+    def __eq__(self, other):
         return type(self)(
-            name=self.name,
-            type=QueryType.QUERY,
-            args=args,
-            kwargs=kwargs,
+            db=self.db,
+            identifier=self.identifier,
+            parts=self.parts + [('__eq__', other)],
         )
 
-    def execute(self, parent: t.Any):
-        if self.type == QueryType.ATTR:
-            return getattr(parent, self.name)
-        assert self.type == QueryType.QUERY
-        parent = getattr(parent, self.name)(*self.args, **self.kwargs)
-        return parent
-
-
-@dc.dataclass(repr=False)
-class QueryLinker(_ReprMixin, Serializable, ABC):
-    """
-    This class is responsible for linking together a query using
-    `getattr` and `__call__`.
-
-    This allows ``superduperdb`` to serialize queries from a range of APIs.
-    Intuitively this allows us to do something like this:
-
-    >>> collection.find({}).limit(10).sort('name')
-    -->
-    [
-        ('<NAME>', <ARGS>, <KWARGS>),
-        ('find', {}, None),
-        ('limit', 10, None),
-        ('sort', 'name', None),
-    ]
-
-    table.filter(t.select('id') == '1')
-
-    :param table_or_collection: The table or collection that this query is linked to.
-    :param members: The members of the query chain.
-    """
-
-    table_or_collection: 'TableOrCollection'
-    members: t.List = dc.field(default_factory=list)
-
-    @property
-    def query_components(self):
-        return self.table_or_collection.query_components
-
-    def repr_(self) -> str:
-        return (
-            f'{self.table_or_collection.identifier}'
-            + '.'
-            + '.'.join([m.repr_() for m in self.members])
+    def __leq__(self, other):
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=self.parts + [('__leq__', other)],
         )
 
-    def _get_query_component(self, k):
-        if k in self.query_components:
-            return self.query_components[k](name=k, type=QueryType.ATTR)
-        return QueryComponent(name=k, type=QueryType.ATTR)
-
-    @classmethod
-    def _get_query_linker(cls, table_or_collection, members):
-        return cls(
-            table_or_collection=table_or_collection,
-            members=members,
+    def __geq__(self, other):
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=self.parts + [('__geq__', other)],
         )
 
-    def __getattr__(self, k):
-        _check_illegal_attribute(k)
-        return self._get_query_linker(
-            self.table_or_collection,
-            members=[*self.members, self._get_query_component(k)],
+    def __getattr__(self, item):
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[*self.parts, item],
         )
-
-    @property
-    @abstractmethod
-    def select_ids(self):
-        pass
-
-    @abstractmethod
-    def select_single_id(self, id):
-        pass
-
-    @abstractmethod
-    def select_using_ids(self, ids):
-        pass
 
     def __call__(self, *args, **kwargs):
-        members = [*self.members[:-1], self.members[-1](*args, **kwargs)]
-        return type(self)(table_or_collection=self.table_or_collection, members=members)
-
-    @abstractmethod
-    def execute(self, db):
-        pass
-
-
-@dc.dataclass
-class Like(Serializable):
-    """
-    Base class for all like (vector-search) queries.
-
-    :param r: The item to be converted to a vector, to search with.
-    :param vector_index: The vector index to use
-    :param n: The number of results to return
-    """
-
-    r: t.Union[t.Dict, Document]
-    vector_index: str
-    n: int = 10
-
-    _deep_flat_encode = _deep_flat_encode_impl
-
-    def execute(self, db, ids: t.Optional[t.Sequence[str]] = None):
-        return db.select_nearest(
-            like=self.r,
-            vector_index=self.vector_index,
-            ids=ids,
-            n=self.n,
+        assert isinstance(self.parts[-1], str)
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
         )
 
+    @staticmethod
+    def _encode_or_unpack_args(r, db, method='encode'):
+        if isinstance(r, Document):
+            return getattr(r, method)()
+        if isinstance(r, (tuple, list)):
+            out = [Query._encode_or_unpack_args(x, db, method=method) for x in r]
+            if isinstance(r, tuple):
+                return tuple(out)
+            return out
+        if isinstance(r, dict):
+            return {k: Query._encode_or_unpack_args(v, db, method=method) for k, v in r.items()}
+        return r
 
-@dc.dataclass
-class TableOrCollection(Serializable, ABC):
-    """
-    This is a representation of an SQL table in ibis.
-
-    :param identifier: The name of the table
-    """
-
-    query_components: t.ClassVar[t.Dict] = {}
-    type_id: t.ClassVar[str] = 'table_or_collection'
-    identifier: t.Union[str, Variable]
+    def _execute(self, parent, method='encode'):
+        for part in self.parts:
+            if isinstance(part, str):
+                parent = getattr(parent, part)
+                continue
+            args = self._encode_or_unpack_args(part[1], self.db, method=method)
+            kwargs = self._encode_or_unpack_args(part[2], self.db, method=method)
+            parent = getattr(parent, part[0])(*args, **kwargs)
+        return parent
 
     @abstractmethod
-    def _get_query_linker(self, members) -> QueryLinker:
+    def _create_table_if_not_exists(self):
         pass
 
-    def _get_query_component(self, name: str) -> QueryComponent:
-        return self.query_components.get(name, QueryComponent)(
-            name=name, type=QueryType.ATTR
-        )
+    def execute(self, db=None):
+        self.db = db or self.db
+        assert self.db is not None, 'No datalayer (db) provided'
+        self._create_table_if_not_exists()
+        parent = self._get_parent()
+        try:
+            flavour = self._get_flavour()
+            handler = getattr(self, f'_execute_{flavour}')
+            assert not isinstance(handler, Query), f'No method "{type(self)}._execute_{flavour}" found.'
+            return handler(parent=parent)
+        except StopIteration:
+            return self._execute(parent=parent)
+
+    @property
+    @abstractmethod
+    def primary_id(self):
+        pass
 
     @abstractmethod
     def model_update(
         self,
-        db,
         ids: t.List[t.Any],
         predict_id: str,
         outputs: t.Sequence[t.Any],
@@ -693,69 +244,66 @@ class TableOrCollection(Serializable, ABC):
         pass
 
     @abstractmethod
-    def insert(self, documents: t.Sequence[Document], **kwargs) -> Insert:
+    def add_fold(self, fold: str):
         pass
 
     @abstractmethod
-    def _get_query(
-        self,
-        pre_like: t.Optional[Like] = None,
-        query_linker: t.Optional[QueryLinker] = None,
-        post_like: t.Optional[Like] = None,
-    ) -> CompoundSelect:
+    def select_using_ids(self, ids: t.Sequence[str]):
         pass
 
-    def __getattr__(self, k: str) -> 'CompoundSelect':
-        # This method is responsible for dynamically creating a query chain,
-        # which can be executed on a database. This is done by creating a
-        # QueryLinker object, which is a representation of a query chain.
-        # Under the hood, this is done by creating a QueryChain object, which
-        # is a representation of a query chain.
-        _check_illegal_attribute(k)
-        query_linker = self._get_query_linker([self._get_query_component(k)])
-        return self._get_query(query_linker=query_linker)
-
-    def like(
-        self,
-        r: Document,
-        vector_index: str,
-        n: int = 10,
-    ):
-        """
-        This method appends a query to the query chain where the query is repsonsible
-        for performing a vector search on the parent query chain inputs.
-
-        :param r: The vector to search for
-        :param vector_index: The vector index to use
-        :param n: The number of results to return
-        """
-        return self._get_query(
-            pre_like=Like(
-                r=r,
-                n=n,
-                vector_index=vector_index,
-            ),
-        )
+    @property
+    @abstractmethod
+    def select_ids(self, ids: t.Sequence[str]):
+        pass
 
     @abstractmethod
-    def _insert(
-        self,
-        documents: t.Sequence[Document],
-        *,
-        refresh: bool = False,
-        encoders: t.Sequence = (),
-        verbose: bool = True,
-        **kwargs,
-    ):
+    def select_ids_of_missing_outputs(self, predict_id: str):
+        pass
+
+    @abstractmethod
+    def select_single_id(self, id: str):
+        pass
+
+    @property
+    @abstractmethod
+    def select_table(self):
         pass
 
 
-@dc.dataclass
-class RawQuery:
-    query: t.Any
+def _parse_query_part(part, documents, query, builder_cls):
+    current = builder_cls(identifier=part.split('.')[0], parts=())
+    part = part.split('.')[1:]
+    for comp in part:
+        match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
+        if match is None:
+            current = getattr(current, comp)
+            continue
+        if not match.groups()[1].strip():
+            current = getattr(current, match.groups()[0])()
+            continue
 
-    @abstractmethod
-    def execute(self, db):
-        '''
-        A raw query method which executes the query and returns the result
-        '''
+        comp = getattr(current, match.groups()[0])
+        args_kwargs = [x.strip() for x in match.groups()[1].split(',')]
+        args = []
+        kwargs = {}
+        for x in args_kwargs:
+            if '=' in x:
+                k, v = x.split('=')
+                kwargs[k] = eval(v, {'documents': documents, 'query': query})
+            else:
+                args.append(eval(x, {'documents': documents, 'query': query}))
+        current = comp(*args, **kwargs)
+    return current
+
+
+def parse_query(query: t.Union[str, list], documents, builder_cls, db: t.Optional['Datalayer'] = None):
+    documents = [Document(r) for r in documents]
+    if isinstance(query, str):
+        query = [x.strip() for x in query.split('\n') if x.strip()]
+    for i, q in enumerate(query):
+        query[i] = _parse_query_part(q, documents, query[:i], builder_cls)
+    return query[-1]
+
+
+class Model(Query):
+    ...

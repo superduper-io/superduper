@@ -16,7 +16,7 @@ import yaml
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
-from superduperdb.base.serializable import Serializable, _find_variables_with_path
+from superduperdb.base.variables import _find_variables_with_path
 from superduperdb.jobs.job import ComponentJob, Job
 
 if t.TYPE_CHECKING:
@@ -67,8 +67,8 @@ def getdeepattr(obj, attr):
 ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
 
 
-@dc.dataclass
-class Component(Serializable, Leaf):
+@dc.dataclass(kw_only=True)
+class Component(Leaf):
     """
     Class to represent SuperDuperDB serializable entities that can be saved
     into a database.
@@ -83,9 +83,21 @@ class Component(Serializable, Leaf):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'identifier', 'type': 'str'}]
-    identifier: str
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     changed: t.ClassVar[set] = set([])
+
+    @property
+    def id(self):
+        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
+
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db)
+
+        self.artifacts = artifacts
+        self.version: t.Optional[int] = None
+        self._db = None
+        if not self.identifier:
+            raise ValueError('identifier cannot be empty or None')
 
     @classmethod
     def handle_integration(cls, kwargs):
@@ -101,21 +113,15 @@ class Component(Serializable, Leaf):
         """
         Returns the component identifier.
         """
-        return f'component/{self.type_id}/{self.identifier}'
+        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
 
+    # TODO remove
     @property
     def id_tuple(self):
         """
         Returns an object as `ComponentTuple`.
         """
         return ComponentTuple(self.type_id, self.identifier, self.version)
-
-    def __post_init__(self, artifacts):
-        self.artifacts = artifacts
-        self.version: t.Optional[int] = None
-        self._db = None
-        if not self.identifier:
-            raise ValueError('Identifier cannot be empty or None')
 
     @classmethod
     def get_ui_schema(cls):
@@ -166,8 +172,8 @@ class Component(Serializable, Leaf):
                 return [_init(i) for i in item]
 
             if isinstance(item, Leaf):
-                item.init(db=self.db)
-                return item.unpack(db=self.db)
+                item.init()
+                return item.unpack()
 
             return item
 
@@ -194,11 +200,14 @@ class Component(Serializable, Leaf):
                 continue
             if f.name in lookup:
                 schema[f.name] = lookup[f.name]
-            elif callable(getattr(self, f.name)) and not isinstance(
-                getattr(self, f.name), Serializable
+                continue
+            if isinstance(getattr(self, f.name), Component):
+                continue
+            if callable(getattr(self, f.name)) and not isinstance(
+                getattr(self, f.name), Leaf
             ):
                 schema[f.name] = dill_serializer
-        return Schema(f'serializer/{self.identifier}', fields=schema)
+        return Schema(identifier=f'serializer/{self.identifier}', fields=schema)
 
     @property
     def db(self):
@@ -239,22 +248,15 @@ class Component(Serializable, Leaf):
         """
         assert db
 
-    def _deep_flat_encode(self, cache, blobs, files):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+        if isinstance(self, leaves_to_keep):
+            cache[self.id] = self
+            return f'?{self.id}'
         from superduperdb.base.document import _deep_flat_encode
         r = dict(self.dict())
         r = _deep_flat_encode(r, cache, blobs, files)
         cache[self.id] = r
         return f'?{self.id}'
-
-    def deep_flat_encode(self):
-        """
-        Encode cache with deep flattened structure.
-        """
-        cache = {}
-        blobs = {}
-        files = []
-        id = self._deep_flat_encode(cache, blobs, files)
-        return {'_leaves': cache, '_blobs': blobs, '_files': files, '_base': id}
 
     def _to_dict_and_bytes(self):
         r = self.deep_flat_encode()
@@ -322,25 +324,6 @@ class Component(Serializable, Leaf):
         r['hidden'] = False
         return Document(r)
 
-    def encode(
-        self,
-        leaf_types_to_keep: t.Sequence = (),
-    ):
-        """
-        Method to encode the component into a dictionary.
-
-        :param leaf_types_to_keep: Leaf types to be excluded from encoding.
-        """
-        r = super().encode(leaf_types_to_keep=leaf_types_to_keep)
-        r['_content'] = {
-            k: v for k, v in r['_content'].items() 
-            if k not in inspect.signature(self.__init__).parameters
-        }
-        r['_content']['leaf_type'] = 'component'
-        r['_content']['id'] = self.id
-        r['_content']['identifier'] = self.identifier
-        return r
-
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
         """
@@ -354,15 +337,6 @@ class Component(Serializable, Leaf):
         r = r['_content']
         assert r['version'] is not None
         return db.load(r['type_id'], r['identifier'], r['version'], allow_hidden=True)
-
-    @property
-    def unique_id(self) -> str:
-        """
-        Method to get a unique identifier for the component.
-        """
-        if getattr(self, 'version', None) is None:
-            raise Exception('Version not yet set for component uniqueness')
-        return f'{self.type_id}/{self.identifier}/{self.version}'
 
     def create_validation_job(
         self,
@@ -399,17 +373,6 @@ class Component(Serializable, Leaf):
         :param dependencies: A sequence of dependencies.
         """
         return []
-
-    @classmethod
-    def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
-        """
-        Class method to create a unique identifier.
-
-        :param type_id: Component type id.
-        :param identifier: Unique identifier.
-        :param version: Component version.
-        """
-        return f'{type_id}/{identifier}/{version}'
 
     def __setattr__(self, k, v):
         if k in dc.fields(self):

@@ -8,6 +8,9 @@ import PIL.PngImagePlugin
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.annotations import component
 
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
 BLANK_IMAGE = PIL.Image.new('RGB', (600, 600), (255, 255, 255))
 
 
@@ -40,47 +43,32 @@ class DecoderPILImage:
 decode_pil_image = DecoderPILImage()
 
 
-pil_image = DataType(
-    'pil_image',
-    encoder=encode_pil_image,
-    decoder=decode_pil_image,
-)
-
-pil_image_hybrid = DataType(
-    'pil_image_hybrid',
-    encoder=encode_pil_image,
-    decoder=decode_pil_image,
-    encodable='artifact',
-)
-
-pil_image_hybrid_png = DataType(
-    'pil_image_hybrid_png',
-    encoder=encode_pil_image,
-    decoder=decode_pil_image,
-    encodable='artifact',
-    media_type='image/png',
-)
-
-pil_image_hybrid_jpeg = DataType(
-    'pil_image_hybrid_jpeg',
-    encoder=encode_pil_image,
-    decoder=decode_pil_image,
-    encodable='artifact',
-    media_type='image/jpeg',
-)
-
 
 @component(
     {'name': 'identifier', 'type': 'str'},
     {'name': 'media_type', 'type': 'str', 'default': 'image/png'},
 )
 def image_type(
-    identifier: str, encodable: str = 'lazy_artifact', media_type: str = 'image/png'
+    identifier: str,
+    encodable: str = 'lazy_artifact',
+    media_type: str = 'image/png',
+    db: t.Optional['Datalayer'] = None,
 ):
     return DataType(
-        identifier,
+        identifier=identifier,
         encoder=encode_pil_image,
         decoder=decode_pil_image,
         encodable=encodable,
         media_type=media_type,
     )
+
+
+pil_image = image_type(
+    identifier='pil_image',
+    encodable='encodable',
+)
+
+pil_image_hybrid = image_type(
+    identifier='pil_image_hybrid',
+    encodable='artifact',
+)

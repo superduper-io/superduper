@@ -15,7 +15,7 @@ except ImportError:
 
 from PIL import Image
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
@@ -126,7 +126,7 @@ def test_advance_setup(test_db, image_url):
         for i in range(5)
     ]
 
-    mixed_input = Collection('mixed_input')
+    mixed_input = MongoQuery('mixed_input')
     db.add(pil_image)
 
     from superduperdb.ext.numpy import array
@@ -158,7 +158,7 @@ def test_advance_setup(test_db, image_url):
     )
     db.add(listener1)
 
-    db.execute(Collection('mixed_input').insert_many(data))
+    db.execute(MongoQuery('mixed_input').insert_many(data))
 
     _wait_for_outputs(db=db)
 
@@ -169,7 +169,7 @@ def test_advance_setup(test_db, image_url):
             indexing_listener=Listener(
                 model=model2,
                 key='_outputs.int::model1::0::0.int',
-                select=Collection('_outputs.int::model1::0::0').find(),
+                select=MongoQuery('_outputs.int::model1::0::0').find(),
             ),
             compatible_listener=Listener(
                 model=model2, key='text', select=None, active=False
@@ -187,7 +187,7 @@ def test_advance_setup(test_db, image_url):
 
     r = next(
         db.execute(
-            Collection('_outputs.int::model1::0::0')
+            MongoQuery('_outputs.int::model1::0::0')
             .like(
                 Document({'text': search_phrase}), vector_index='test_search_index', n=1
             )

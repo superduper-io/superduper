@@ -7,7 +7,7 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.ext.sklearn.model import Estimator, SklearnTrainer
 
@@ -40,7 +40,7 @@ class TestPipeline:
             trainer=SklearnTrainer(
                 'my-trainer',
                 key=('X', 'y'),
-                select=Collection('documents').find(),
+                select=MongoQuery('documents').find(),
             ),
         )
 
@@ -51,7 +51,7 @@ class TestPipeline:
     @pytest.fixture()
     def data_in_db(self, db, X, y):
         db.execute(
-            Collection('documents').insert_many(
+            MongoQuery('documents').insert_many(
                 [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )

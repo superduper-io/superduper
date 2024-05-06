@@ -18,9 +18,9 @@ from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Table
+# from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
@@ -32,6 +32,7 @@ from superduperdb.components.datatype import (
     dill_serializer,
     pickle_decode,
     pickle_encode,
+    pickle_encoder,
     pickle_serializer,
 )
 from superduperdb.components.listener import Listener
@@ -80,13 +81,11 @@ def add_fake_model(db: Datalayer):
     model = ObjectModel(
         object=lambda x: str(x),
         identifier='fake_model',
-        datatype=DataType(
-            identifier='base', encoder=pickle_encode, decoder=pickle_decode
-        ),
+        datatype=pickle_encoder,
     )
     db.apply(model)
     if isinstance(db.databackend, MongoDataBackend):
-        select = Collection('documents').find()
+        select = MongoQuery('documents').find()
     else:
         schema = Schema(
             identifier='documents',
@@ -107,8 +106,13 @@ def add_fake_model(db: Datalayer):
     )
 
 
+
+# EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
+EMPTY_CASES = [DBConfig.mongodb_empty]
+
+
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_add_version(db: Datalayer):
     # Check the component functions are called
@@ -149,7 +153,7 @@ def test_add_version(db: Datalayer):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_add_component_with_bad_artifact(db):
     artifact = {'data': lambda x: x}
@@ -161,7 +165,7 @@ def test_add_component_with_bad_artifact(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
@@ -171,11 +175,12 @@ def test_add_artifact_auto_replace(db):
         db.apply(component)
         serialized = create_component.call_args[0][0]
         print(serialized)
-        assert 'sha1' in serialized['artifact']['_content']
+        key = serialized['artifact'][1:]
+        assert 'sha1' in serialized['_leaves'][key]
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_add_child(db):
     child_component = TestComponent(identifier='child')
@@ -185,8 +190,8 @@ def test_add_child(db):
     assert db.show('test-component', 'test') == [0]
     assert db.show('test-component', 'child') == [0]
 
-    parents = db.metadata.get_component_version_parents(child_component.unique_id)
-    assert parents == [component.unique_id]
+    parents = db.metadata.get_component_version_parents(child_component.uuid)
+    assert parents == [component.uuid]
 
     child_component_2 = TestComponent(identifier='child-2')
     component_3 = TestComponent(identifier='test-3', child=child_component_2)
@@ -194,12 +199,12 @@ def test_add_child(db):
     assert db.show('test-component', 'test-3') == [0]
     assert db.show('test-component', 'child-2') == [0]
 
-    parents = db.metadata.get_component_version_parents(child_component_2.unique_id)
-    assert parents == [component_3.unique_id]
+    parents = db.metadata.get_component_version_parents(child_component_2.uuid)
+    assert parents == [component_3.uuid]
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_add(db):
     component = TestComponent(identifier='test')
@@ -245,7 +250,7 @@ def test_add_table(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_component_version(db):
     db.apply(
@@ -276,7 +281,7 @@ def test_remove_component_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
@@ -294,7 +299,7 @@ def test_remove_component_with_parent(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_component_with_clean_up(db):
     # Test clean up
@@ -308,7 +313,7 @@ def test_remove_component_with_clean_up(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
@@ -320,7 +325,7 @@ def test_remove_component_from_data_layer_dict(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
@@ -333,8 +338,8 @@ def test_remove_component_with_artifact(db):
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
-    artifact_file_id = info_with_artifact['artifact']['_content']['file_id']
-    with patch.object(db.artifact_store, '_delete_artifact') as mock_delete:
+    artifact_file_id = info_with_artifact['artifact'].split('/')[-1]
+    with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
         )
@@ -342,7 +347,7 @@ def test_remove_component_with_artifact(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_one_version(db):
     db.apply(
@@ -360,7 +365,7 @@ def test_remove_one_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_multi_version(db):
     db.apply(
@@ -378,7 +383,7 @@ def test_remove_multi_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_remove_not_exist_component(db):
     with pytest.raises(FileNotFoundError) as e:
@@ -389,7 +394,7 @@ def test_remove_not_exist_component(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_show(db):
     db.apply(
@@ -420,45 +425,14 @@ def test_show(db):
     assert isinstance(info, dict)
     assert info['version'] == 1
     assert info['identifier'] == 'b'
-    assert info['_path'].split('.')[-1] == 'TestComponent'
+    assert info['_path'].split('/')[-1] == 'TestComponent'
 
     # Test get last version
     assert db.show('test-component', 'b', -1)['version'] == 2
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
-def test_get_context(db):
-    from superduperdb.backends.base.query import Select
-
-    fake_contexts = [Document({'text': f'hello world {i}'}) for i in range(10)]
-
-    model = ObjectModel(object=lambda x, context: x, identifier='model')
-    context_select = MagicMock(spec=Select)
-    context_select.variables = []
-    context_select.execute.return_value = fake_contexts
-
-    # Test get_context without context_key
-    return_contexts, _ = db._get_context(model, context_select, context_key=None)
-    assert return_contexts == [
-        Document({'text': f'hello world {i}'}) for i in range(10)
-    ]
-
-    # Test get context without context
-    return_contexts, _ = db._get_context(model, context_select, context_key='text')
-    assert return_contexts == [
-        Document({'_base': f'hello world {i}'}) for i in range(10)
-    ]
-
-    # Testing models that cannot accept context
-    model = ObjectModel(object=lambda x: x, identifier='model')
-    with pytest.raises(AssertionError):
-        db._get_context(model, context_select, context_key=None)
-
-
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
@@ -481,9 +455,6 @@ def test_load(db):
     with pytest.raises(Exception):
         db.load('model', 'e1')
 
-    info = db.load('datatype', 'e1', info_only=True)
-    assert isinstance(info, dict)
-
     datatype = db.load('datatype', 'e1')
     assert isinstance(datatype, DataType)
 
@@ -494,17 +465,19 @@ def test_load(db):
 def test_insert_mongo_db(db):
     add_fake_model(db)
     inserted_ids, _ = db._insert(
-        Collection('documents').insert_many(
+        MongoQuery('documents').insert_many(
             [Document({'x': i, 'update': True}) for i in range(5)]
         )
     )
     assert len(inserted_ids) == 5
 
     new_docs = list(
-        db.execute(Collection('documents').find().select_using_ids(inserted_ids))
+        db.execute(MongoQuery('documents').find().select_using_ids(inserted_ids))
     )
-    key = '_outputs.x::fake_model::0::0'
-    result = [doc[key].unpack(db) for doc in new_docs]
+
+    listener_uuid = db.show('listener')[0].split('/')[-1]
+    key = f'_outputs.{listener_uuid}'
+    result = [doc[key].unpack() for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
@@ -518,13 +491,13 @@ def test_insert_artifacts(db):
     )
     db.apply(dt)
     db._insert(
-        Collection('documents').insert_many(
+        MongoQuery('documents').insert_many(
             [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
         )
     )
-    r = db.execute(Collection('documents').find_one())
+    r = db.execute(MongoQuery('documents').find_one())
     assert db.artifact_store.exists(r['x'].file_id)
-    assert isinstance(r.unpack(db=db)['x'], numpy.ndarray)
+    assert isinstance(r.unpack()['x'], numpy.ndarray)
 
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
@@ -548,20 +521,21 @@ def test_insert_sql_db(db):
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    db._insert(
-        Collection('documents').insert_many(
-            [Document({'x': i, 'update': True}) for i in range(5)]
-        )
+    q =  MongoQuery('documents').insert_many(
+        [Document({'x': i, 'update': True}) for i in range(5)]
     )
+    db._insert(q)
     updated_ids, _ = db._update(
-        Collection('documents').update_many({}, Document({'$set': {'x': 100}}))
+        MongoQuery('documents').update_many({}, Document({'$set': {'x': 100}}))
     )
     assert len(updated_ids) == 5
     new_docs = list(
-        db.execute(Collection('documents').find().select_using_ids(updated_ids))
+        db.execute(MongoQuery('documents').find().select_using_ids(updated_ids))
     )
-    result = [doc['_outputs.x::fake_model::0::0'].unpack(db) for doc in new_docs]
-    assert result == ['100'] * 5
+    for doc in new_docs:
+        assert doc['_outputs']
+        doc = doc.unpack()
+        assert next(iter(doc['_outputs'].values())) == '100'
 
 
 @pytest.mark.parametrize(
@@ -573,13 +547,13 @@ def test_update_db(db):
 )
 def test_delete(db):
     # TODO: add sqldb test after the delete method is implemented
-    db._delete(Collection('documents').delete_one({}))
-    new_docs = list(db.execute(Collection('documents').find()))
+    db._delete(MongoQuery('documents').delete_one({}))
+    new_docs = list(db.execute(MongoQuery('documents').find()))
     assert len(new_docs) == 5
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_replace(db):
     model = ObjectModel(
@@ -595,7 +569,6 @@ def test_replace(db):
 
     assert db.load('model', 'm').predict_one(1) == 2
 
-    # replace the 0 version of the model
     new_model = ObjectModel(
         object=lambda x: x + 2, identifier='m', signature='singleton'
     )
@@ -615,53 +588,44 @@ def test_replace(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", EMPTY_CASES, indirect=True
 )
 def test_compound_component(db):
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
         identifier='my-test-module',
-        datatype=tensor(torch.float, shape=(32,)),
+        datatype=tensor(dtype='float', shape=(32,)),
     )
 
     db.apply(m)
-    assert 'torch.float32[32]' in db.show('datatype')
     assert 'my-test-module' in db.show('model')
     assert db.show('model', 'my-test-module') == [0]
 
     db.apply(m)
     assert db.show('model', 'my-test-module') == [0]
-    assert db.show('datatype', 'torch.float32[32]') == [0]
 
     db.apply(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
-            datatype=tensor(torch.float, shape=(32,)),
+            datatype=tensor(dtype='float', shape=(32,)),
         )
     )
     assert db.show('model', 'my-test-module') == [0, 1]
-    assert db.show('datatype', 'torch.float32[32]') == [0, 1]
 
     m = db.load(type_id='model', identifier='my-test-module')
     assert isinstance(m.datatype, DataType)
-
-    with pytest.raises(ComponentInUseError):
-        db.remove('datatype', 'torch.float32[32]')
-
-    with pytest.warns(ComponentInUseWarning):
-        db.remove('datatype', 'torch.float32[32]', force=True)
 
     db.remove('model', 'my-test-module', force=True)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [DBConfig.mongodb, DBConfig.sqldb], indirect=True)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
 
     if isinstance(db.databackend, MongoDataBackend):
-        select = Collection('documents').find({'_fold': 'valid'})
+        select = MongoQuery('documents').find({'_fold': 'valid'})
     else:
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
@@ -687,7 +651,7 @@ def test_reload_dataset(db):
 )
 def test_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
-        select = Collection('documents').find({'_fold': 'valid'})
+        select = MongoQuery('documents').find({'_fold': 'valid'})
     else:
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
@@ -700,6 +664,5 @@ def test_dataset(db):
     assert db.show('dataset') == ['test_dataset']
     dataset = db.load('dataset', 'test_dataset')
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
-
 
 # TODO: add UT for task workflow

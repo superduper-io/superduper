@@ -5,7 +5,6 @@ import typing as t
 
 from bson import objectid
 
-from superduperdb.base.serializable import Serializable
 from superduperdb.cdc.cdc import DBEvent, Packet
 
 TokenType = t.Dict[str, str]
@@ -52,5 +51,5 @@ class MongoDBPacket(Packet):
     """
 
     ids: t.List[t.Union[ObjectId, str]]
-    query: t.Optional[Serializable] = None
+    query: t.Optional[t.Any] = None
     event_type: DBEvent = DBEvent.insert

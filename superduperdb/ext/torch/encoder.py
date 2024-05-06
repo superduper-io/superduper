@@ -5,6 +5,10 @@ import torch
 
 from superduperdb.components.datatype import DataType, DataTypeFactory
 from superduperdb.ext.utils import str_shape
+from superduperdb.misc.annotations import component
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 class EncodeTensor:
@@ -27,13 +31,15 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-def tensor(dtype, shape: t.Sequence, bytes_encoding: t.Optional[str] = None):
+@component()
+def tensor(dtype, shape: t.Sequence, bytes_encoding: t.Optional[str] = None, db: t.Optional['Datalayer'] = None):
     """
     Create an encoder for a tensor of a given dtype and shape.
 
     :param dtype: The dtype of the tensor.
     :param shape: The shape of the tensor.
     """
+    dtype = getattr(torch, dtype)
     return DataType(
         identifier=f"{str(dtype)}[{str_shape(shape)}]",
         encoder=EncodeTensor(dtype),

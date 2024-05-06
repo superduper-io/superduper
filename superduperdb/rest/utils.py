@@ -1,13 +1,13 @@
 import re
 import typing as t
 
-from superduperdb.backends.base.query import model
+from superduperdb.backends.base.query import Model
 from superduperdb.base.document import Document
 
 
 def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     documents = [Document.decode(r, db=db) for r in documents]
-    from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import MongoQuery
 
     part = part.replace(' ', '').replace('\n', '')
     part = part.replace('_documents', 'documents')
@@ -15,10 +15,10 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     model_match = re.match('^model\([\'"]([^)]+)+[\'"]\)\.(.*)$', part)
 
     if model_match:
-        current = model(model_match.groups()[0])
+        current = Model(model_match.groups()[0])
         part = model_match.groups()[1].split('.')
     else:
-        current = Collection(part.split('.')[0])
+        current = MongoQuery(part.split('.')[0])
         part = part.split('.')[1:]
     for comp in part:
         match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
@@ -43,11 +43,11 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     return current
 
 
-def parse_query(query, documents, db: t.Optional[t.Any] = None):
+def parse_query(query, documents, builder):
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, query[:i], db=db)
+        query[i] = _parse_query_part(q, documents, query[:i], builder=builder)
     return query[-1]
 
 

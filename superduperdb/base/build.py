@@ -8,6 +8,7 @@ import ibis
 import mongomock
 import pandas
 import pymongo
+from prettytable import PrettyTable
 
 import superduperdb as s
 from superduperdb import logging
@@ -18,6 +19,7 @@ from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
+from superduperdb.misc.anonymize import anonymize_url
 
 
 def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
@@ -191,4 +193,30 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     # Keep the real configuration in the datalayer object.
     datalayer.cfg = cfg
 
+    show_configuration(cfg)
     return datalayer
+
+
+def show_configuration(cfg):
+    """
+    Show the configuration.
+    Only show the important configuration values and anonymize the URLs.
+
+    : param cfg: The configuration object.
+    """
+    table = PrettyTable()
+    table.field_names = ["Configuration", "Value"]
+    # Only show the important configuration values.
+    key_values = [
+        ('Data Backend', anonymize_url(cfg.data_backend)),
+        ('Metadata Store', anonymize_url(cfg.metadata_store)),
+        ('Artifact Store', anonymize_url(cfg.artifact_store)),
+        ('Compute', cfg.cluster.compute.uri),
+        ('CDC', cfg.cluster.cdc.uri),
+        ('Vector Search', cfg.cluster.vector_search.uri),
+    ]
+    for key, value in key_values:
+        if value:
+            table.add_row([key, value])
+
+    logging.info(f"Configuration: \n {table}")

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add local cluster as tmux session 
 - At the end of the test, drop the collection instead of the database
 - Force load vector indices during backfill
+- Fix pandas database (in-memory)
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added snippet for connecting to superduperdb in docs
 - Added support to serialize documents in a flat way "_leaves"
 - Added `lazy_file` datatype
+- Show the DataLayer configuration
 - Optimized LLM finetuning usage experience
 
 #### Bug Fixes

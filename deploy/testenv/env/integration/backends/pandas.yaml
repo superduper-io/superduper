@@ -6,7 +6,7 @@ cluster:
     uri: null
   compute:
     uri: null
-data_backend: duckdb://deploy/testenv/cache/test_duckdb.ddb
+data_backend: pandas://./deploy/testenv/cache/*.csv
 downloads:
   folder: null
   headers:
@@ -17,7 +17,7 @@ fold_probability: 0.05
 lance_home: .superduperdb/vector_indices
 log_level: INFO
 logging_type: SYSTEM
-metadata_store: null
+metadata_store: sqlite://
 retries:
   stop_after_attempt: 2
   wait_max: 10.0

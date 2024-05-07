@@ -218,6 +218,7 @@ const sidebars = {
         'docs/ai_integrations/sentence_transformers',
         'docs/ai_integrations/sklearn',
         'docs/ai_integrations/transformers',
+        'docs/ai_integrations/vllm',
       ]
       
     },

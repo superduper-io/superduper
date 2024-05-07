@@ -10,6 +10,7 @@ class BaseDataBackend(ABC):
         self.conn = conn
         self.name = name
         self.in_memory: bool = False
+        self.in_memory_tables: t.Dict = {}
 
     @property
     def db(self):

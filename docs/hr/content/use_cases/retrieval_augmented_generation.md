@@ -311,9 +311,9 @@ from superduperdb.backends.ibis import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open("text.json", "r") as f:
+        with open('text.json', 'r') as f:
             data = json.load(f)
-        sample_datapoint = data[0]
+        sample_datapoint = "What is mongodb?"
         
         chunked_model_datatype = dtype('str')        
         ```

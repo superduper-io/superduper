@@ -31,8 +31,10 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         **kwargs,
     ):
         self.identifier = identifier
-        db_name = CFG.cluster.vector_search.split('/')[-1]
-        self.database = getattr(pymongo.MongoClient(CFG.cluster.vector_search), db_name)
+        vector_search_uri = CFG.cluster.vector_search.uri
+        assert vector_search_uri, 'Vector search URI is required'
+        db_name = vector_search_uri.split('/')[-1]
+        self.database = getattr(pymongo.MongoClient(vector_search_uri), db_name)
         assert output_path
         self.output_path = output_path
         self.collection = collection

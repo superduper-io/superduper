@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized LLM finetuning usage experience
 
 #### Bug Fixes
+- Fixed cross platfrom issue in cli command
 - Separate nightly release from sandbox
 - Fixed a bug in refresh_after_insert for listeners with select None
 - Refactor graph internal with input mapping

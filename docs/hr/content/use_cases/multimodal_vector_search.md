@@ -309,9 +309,9 @@ from superduperdb.backends.ibis import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open("text.json", "r") as f:
+        with open('text.json', 'r') as f:
             data = json.load(f)
-        sample_datapoint = data[0]
+        sample_datapoint = "What is mongodb?"
         
         chunked_model_datatype = dtype('str')        
         ```
@@ -329,14 +329,12 @@ from superduperdb.backends.ibis import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
-        import json
+        !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
+        import os
         from PIL import Image
         
-        with open('images/images.json', 'r') as f:
-            data = json.load(f)
-        
-        data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
+        data = [f'images/{x}' for x in os.listdir('./images')]
+        data = [ Image.open(path) for path in data]
         sample_datapoint = data[-1]
         
         from superduperdb.ext.pillow import pil_image

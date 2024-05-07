@@ -180,6 +180,7 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
+
 <!-- TABS -->
 ## Connect to SuperDuperDB
 
@@ -294,6 +295,7 @@ Otherwise refer to "Configuring your production system".
         ```
     </TabItem>
 </Tabs>
+
 <!-- TABS -->
 ## Get useful sample data
 
@@ -304,21 +306,19 @@ from superduperdb.backends.ibis import dtype
 
 
 <Tabs>
-    <TabItem value="Text" label="Text" default>
+    <TabItem value="labeled_text" label="Text (Labeled)" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
         
-        with open("text.json", "r") as f:
+        with open("text_classification.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = data[0]
-        
-        chunked_model_datatype = dtype('str')        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
-    <TabItem value="Image" label="Image" default>
+    <TabItem value="labeled_image" label="Image (Labeled)" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
         import json
         from PIL import Image
         
@@ -326,10 +326,7 @@ from superduperdb.backends.ibis import dtype
             data = json.load(f)
         
         data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
-        sample_datapoint = data[-1]
-        
-        from superduperdb.ext.pillow import pil_image
-        chunked_model_datatype = pil_image        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
 </Tabs>
@@ -375,6 +372,7 @@ from superduperdb.backends.ibis import dtype
         ```
     </TabItem>
 </Tabs>
+
 <!-- TABS -->
 ## Insert data
 

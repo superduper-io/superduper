@@ -1,5 +1,6 @@
 ---
 sidebar_label: Get useful sample data
+filename: get_useful_sample_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -19,11 +20,21 @@ from superduperdb.backends.ibis import dtype
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
         import json
         
-        with open("text.json", "r") as f:
+        with open('text.json', 'r') as f:
             data = json.load(f)
-        sample_datapoint = data[0]
+        sample_datapoint = "What is mongodb?"
         
         chunked_model_datatype = dtype('str')        
+        ```
+    </TabItem>
+    <TabItem value="labeled_text" label="Text (labeled)" default>
+        ```python
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
+        import json
+        
+        with open("text_classification.json", "r") as f:
+            data = json.load(f)
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -39,7 +50,21 @@ from superduperdb.backends.ibis import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
+        !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
+        import os
+        from PIL import Image
+        
+        data = [f'images/{x}' for x in os.listdir('./images')]
+        data = [ Image.open(path) for path in data]
+        sample_datapoint = data[-1]
+        
+        from superduperdb.ext.pillow import pil_image
+        chunked_model_datatype = pil_image        
+        ```
+    </TabItem>
+    <TabItem value="labeled_image" label="Image (labeled)" default>
+        ```python
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
         import json
         from PIL import Image
         
@@ -47,10 +72,7 @@ from superduperdb.backends.ibis import dtype
             data = json.load(f)
         
         data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
-        sample_datapoint = data[-1]
-        
-        from superduperdb.ext.pillow import pil_image
-        chunked_model_datatype = pil_image        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
     <TabItem value="Video" label="Video" default>

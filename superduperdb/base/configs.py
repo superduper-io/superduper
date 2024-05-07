@@ -58,4 +58,4 @@ class ConfigSettings:
         return _dataclass_from_dict(self.cls, kwargs)
 
 
-CFG = ConfigSettings(Config).config
+CFG: Config = ConfigSettings(Config).config

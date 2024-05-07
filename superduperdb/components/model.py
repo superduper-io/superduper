@@ -150,10 +150,11 @@ def codemodel(
 
 
 class Inputs:
-    '''
+    """
     Base class to represents the model args and kwargs.
+
     :param params: List of parameters of the Model object
-    '''
+    """
 
     def __init__(self, params):
         self.params = params
@@ -165,6 +166,11 @@ class Inputs:
         return self.params[attr]
 
     def get_kwargs(self, args):
+        """
+        Get kwargs from args.
+
+        :param args: Params to be converted
+        """
         kwargs = {}
         for k, arg in zip(self.params, args):
             kwargs[k] = arg
@@ -176,12 +182,13 @@ class Inputs:
 
 
 class CallableInputs(Inputs):
-    '''
+    """
     Class represents the model callable args and kwargs.
+
     :param fn: Callable function
     :param predict_kwargs: (optional) predict_kwargs if provide in Model
                            initiation
-    '''
+    """
 
     def __init__(self, fn, predict_kwargs: t.Dict = {}):
         sig = inspect.signature(fn)
@@ -205,6 +212,17 @@ class Trainer(Component):
     Training configuration object, containing all settings necessary for a particular
     learning-task use-case to be serialized and initiated. The object is ``callable``
     and returns a class which may be invoked to apply training.
+
+    :param key: Model input type key
+    :param select: Model select query for training
+    :param transform: (optional) transform callable
+    :param metric_values: Dictionary for metric defaults
+    :param signature: Model signature.
+    :param data_prefetch: Boolean for prefetching data before forward pass
+    :param prefetch_size: Prefetch batch size
+    :param prefetch_factor: Prefetch factor for data prefetching.
+    :param in_memory: If training in memory
+    :param compute_kwargs: Kwargs for compute backend.
     """
 
     type_id: t.ClassVar[str] = 'trainer'
@@ -227,14 +245,26 @@ class Trainer(Component):
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
     ):
+        """
+        Fit on the model on training dataset with `valid_dataset` for validation.
+
+        :param model: Model to be fit
+        :param db: The datalayer
+        :param train_dataset: The training ``Dataset`` instances to use
+        :param valid_dataset: The validation ``Dataset`` instances to use
+        """
         pass
 
 
 @dc.dataclass(kw_only=True)
 class Validation(Component):
-    '''
+    """
     Component which represents Validation defination.
-    '''
+
+    :param metrics: List of metrics for validation
+    :param key: Model input type key
+    :param datasets: Sequence of datasets.
+    """
 
     type_id: t.ClassVar[str] = 'validation'
     metrics: t.Sequence[Metric] = ()
@@ -247,6 +277,12 @@ class _Fittable:
     trainer: t.Optional[Trainer] = None
 
     def schedule_jobs(self, db, dependencies=()):
+        """
+        Database hook for scheduling jobs.
+
+        :param db: Datalayer instance
+        :param dependencies: List of dependency
+        """
         jobs = []
         if self.trainer is not None:
             assert isinstance(self.trainer, Trainer)
@@ -264,6 +300,12 @@ class _Fittable:
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ):
+        """
+        Model fit job in database.
+
+        :param db: Datalayer instance.
+        :param dependencies: List of dependent jobs
+        """
         if self.trainer:
             compute_kwargs = self.trainer.compute_kwargs or {}
         else:
@@ -319,6 +361,13 @@ class _Fittable:
         valid_dataset: QueryDataset,
         db: Datalayer,
     ):
+        """
+        Fit on the model on training dataset with `valid_dataset` for validation.
+
+        :param train_dataset:The training ``Dataset`` instances to use
+        :param validation_sets: The validation ``Dataset`` instances to use
+        :param db: The datalayer
+        """
         assert isinstance(self.trainer, Trainer)
         if isinstance(self, Component) and self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')
@@ -335,11 +384,7 @@ class _Fittable:
         """
         Fit the model on the given data.
 
-        :param db: The datalayer (optional)
-        :param select: Select query to get data
-        :param trainer: Trainer to use to handle training details
-        :param metrics: The metrics to evaluate on (optional)
-        :param validation_sets: The validation ``Dataset`` instances to use (optional)
+        :param db: The datalayer
         """
         assert isinstance(self.trainer, Trainer)
         train_dataset, valid_dataset = self._create_datasets(
@@ -361,11 +406,12 @@ class _Fittable:
 
 
 class Mapping:
-    '''
+    """
     Class to represent model inputs to database collection or table mapping.
+
     :param mapping: Mapping which presents collection or table map.
     :param signature: Signature for the model.
-    '''
+    """
 
     def __init__(self, mapping: ModelInputType, signature: Signature):
         self.mapping = self._map_args_kwargs(mapping)
@@ -373,9 +419,9 @@ class Mapping:
 
     @property
     def id_key(self):
-        '''
-        Extract output key for model outputs
-        '''
+        """
+        Extract output key for model outputs.
+        """
         out = []
         for arg in self.mapping[0]:
             out.append(arg)
@@ -436,19 +482,20 @@ class Mapping:
 
 @dc.dataclass(kw_only=True)
 class Model(Component):
-    # base class for components which can predict.
     """
+    Base class for components which can predict.
+
+    :param signature: Model signature.
     :param datatype: DataType instance
     :param output_schema: Output schema (mapping of encoders)
     :param flatten: Flatten the model outputs
-    :param collate_fn: Collate function
     :param model_update_kwargs: The kwargs to use for model update
-    :param metric_values: The metrics to evaluate on
-    :param validation: The validation ``Dataset`` instances to use
     :param predict_kwargs: Additional arguments to use at prediction time
     :param compute_kwargs: Kwargs used for compute backend job submit.
                            Example (Ray backend):
                            compute_kwargs = dict(resources=...)
+    :param validation: The validation ``Dataset`` instances to use
+    :param metric_values: The metrics to evaluate on
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -475,9 +522,9 @@ class Model(Component):
 
     @property
     def inputs(self) -> Inputs:
-        '''
-        Instance of `Inputs` to represent model params
-        '''
+        """
+        Instance of `Inputs` to represent model params.
+        """
         return Inputs(list(inspect.signature(self.predict_one).parameters.keys()))
 
     @abstractmethod
@@ -485,16 +532,13 @@ class Model(Component):
         """
         Execute a single prediction on a datapoint
         given by positional and keyword arguments.
-
-        :param args: arguments handled by model
-        :param kwargs: key-word arguments handled by model
         """
         pass
 
     @abstractmethod
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """
-        Execute on series of datapoint defined in dataset
+        Execute on series of datapoint defined in dataset.
 
         :param dataset: Series of datapoint to predict on.
         """
@@ -536,6 +580,7 @@ class Model(Component):
 
         :param X: combination of input keys to be mapped to the model
         :param db: SuperDuperDB instance
+        :param predict_id: Model outputs identifier
         :param select: CompoundSelect query
         :param ids: Iterable of ids
         :param max_chunk_size: Chunks of data
@@ -608,10 +653,10 @@ class Model(Component):
 
         :param X: combination of input keys to be mapped to the model
         :param db: SuperDuperDB instance
+        :param predict_id: Identifier for saving outputs.
         :param select: CompoundSelect query
         :param ids: Iterable of ids
         :param max_chunk_size: Chunks of data
-        :param dependencies: List of dependencies (jobs)
         :param in_memory: Load data into memory or not
         :param overwrite: Overwrite all documents or only new documents
         """
@@ -682,9 +727,12 @@ class Model(Component):
 
     @staticmethod
     def handle_input_type(data, signature):
-        '''
+        """
         Method to transform data w.r.t signature.
-        '''
+
+        :param data: Data to be transformed
+        :param signature: Data signature for transforming
+        """
         if signature == 'singleton':
             return (data,), {}
         elif signature == '*args':
@@ -751,9 +799,11 @@ class Model(Component):
         )
 
     def encode_outputs(self, outputs):
-        '''
+        """
         Method to encode outputs of a model for saving in database
-        '''
+
+        :param outputs: outputs to encode.
+        """
         if isinstance(self.datatype, DataType):
             if self.flatten:
                 outputs = [
@@ -767,9 +817,11 @@ class Model(Component):
         return outputs
 
     def encode_with_schema(self, outputs):
-        '''
-        Encode model outputs corresponding to the provided `output_schema`
-        '''
+        """
+        Encode model outputs corresponding to the provided `output_schema`.
+
+        :param outputs: Encode the outputs with given schema.
+        """
         encoded_outputs = []
         for output in outputs:
             if isinstance(output, dict):
@@ -816,6 +868,7 @@ class Model(Component):
     ):
         """
         Convert the model to a listener.
+
         :param key: Key to be bound to model
         :param select: Object for selecting which data is processed
         :param identifier: A string used to identify the model.
@@ -834,12 +887,13 @@ class Model(Component):
         return listener
 
     def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
-        '''
-        Validate `dataset` on metrics
+        """
+        Validate `dataset` on metrics.
+
         :param X: Define input map
         :param dataset: Dataset to run validation on.
         :param metrics: Metrics for performing validation
-        '''
+        """
         mapping = Mapping(X, signature='*args')
         predictions = self.predict(dataset.data)
         targets = list(map(mapping, dataset.data))
@@ -849,11 +903,12 @@ class Model(Component):
         return results
 
     def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
-        '''
-        Perform a validation job
+        """
+        Perform a validation job.
+
         :param db: DataLayer instance
         :param dependencies: dependencies on the job
-        '''
+        """
         job = ComponentJob(
             component_identifier=self.identifier,
             method_name='validate_in_db',
@@ -864,10 +919,11 @@ class Model(Component):
         return job
 
     def validate_in_db(self, db):
-        '''
-        Validation job in database
+        """
+        Validation job in database.
+
         :param db: DataLayer instance.
-        '''
+        """
         for dataset in self.validation.datasets:
             logging.info(f'Validating on {dataset.identifier}...')
             db.apply(dataset)
@@ -903,19 +959,23 @@ class _DeviceManaged:
         pass
 
 
-class Node:
+class _Node:
     def __init__(self, position):
         self.position = position
 
 
 @dc.dataclass
 class IndexableNode:
+    """
+    Base indexable node for `ObjectModel`.
+    """
+
     def __init__(self, types):
         self.types = types
 
     def __getitem__(self, item):
         assert type(item) in self.types
-        return Node(item)
+        return _Node(item)
 
 
 @public_api(stability='stable')
@@ -933,24 +993,24 @@ class _ObjectModel(Model, ABC):
 
     @property
     def outputs(self):
-        '''
-        Get an instance of ``IndexableNode`` to index outputs
-        '''
+        """
+        Get an instance of ``IndexableNode`` to index outputs.
+        """
         return IndexableNode([int])
 
     @property
     def inputs(self):
-        '''
-        A method to get model callable inputs
-        '''
+        """
+        A method to get model callable inputs.
+        """
         kwargs = self.predict_kwargs if self.predict_kwargs else {}
         return CallableInputs(self.object, kwargs)
 
     @property
     def training_keys(self) -> t.List:
-        '''
-        Retrieve training keys
-        '''
+        """
+        Retrieve training keys.
+        """
         if isinstance(self.train_X, list):
             out = list(self.train_X)
         elif self.train_X is not None:
@@ -968,17 +1028,19 @@ class _ObjectModel(Model, ABC):
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        '''
+        """
         Method to execute ``object`` on args and kwargs.
         This method is also used for debugging the model.
-        '''
+        """
         return self.object(*args, **kwargs)
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        '''
-        Run the predict on series of model inputs (dataset)
-        '''
+        """
+        Run the predict on series of model inputs (dataset).
+
+        :param dataset: series of datapoints.
+        """
         outputs = []
         if self.num_workers:
             pool = multiprocessing.Pool(processes=self.num_workers)
@@ -995,9 +1057,11 @@ class _ObjectModel(Model, ABC):
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class ObjectModel(_ObjectModel):
-    """Model component which wraps a model to become serializable
+    """
+    Model component which wraps a model to become serializable.
+
     {_object_model_params}
-    :param object: Model object, e.g. sklearn model, etc.."""
+    """
 
     __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
 
@@ -1011,9 +1075,11 @@ class ObjectModel(_ObjectModel):
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class CodeModel(_ObjectModel):
-    """Model component which wraps a model to become serializable
+    """Model component which wraps a model to become serializable.
+
     {_object_model_params}
-    :param code: Code object, wrapping some foreign code"""
+    :param object: Code object
+    """
 
     __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
 
@@ -1024,6 +1090,11 @@ class CodeModel(_ObjectModel):
 
     @classmethod
     def handle_integration(cls, kwargs):
+        """
+        Handler integration from ui
+
+        :param kwargs: integration kwargs
+        """
         if isinstance(kwargs['object'], str):
             kwargs['object'] = Code(kwargs['object'])
         else:
@@ -1034,9 +1105,12 @@ class CodeModel(_ObjectModel):
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
-    '''{component_params}
+    """{component_params}
     {predictor_params}
-    :param model: The model to use, e.g. ``'text-embedding-ada-002'``'''
+    :param model: The model to use, e.g. ``'text-embedding-ada-002'``
+    :param max_batch_size: Maximum  batch size.
+
+    """
 
     __doc__ = __doc__.format(
         component_params=Component.__doc__,
@@ -1059,6 +1133,8 @@ class APIBaseModel(Model):
         """
         Base method to batch generate text from a list of prompts using multi-threading.
         Handles exceptions in _generate method.
+
+        :param dataset: Series of datapoints.
         """
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_batch_size
@@ -1074,11 +1150,11 @@ class APIBaseModel(Model):
 
 @dc.dataclass(kw_only=True)
 class APIModel(APIBaseModel):
-    '''{component_params}
+    """{component_params}
     {predictor_params}
     {api_base_model_params}
     :param url: The url to use for the API request
-    :param postprocess: Postprocess function to use on the output of the API request'''
+    :param postprocess: Postprocess function to use on the output of the API request"""
 
     __doc__ = __doc__.format(
         component_params=Component.__doc__,
@@ -1091,9 +1167,9 @@ class APIModel(APIBaseModel):
 
     @property
     def inputs(self):
-        '''
-        Method to get ``Inputs`` instance for model inputs
-        '''
+        """
+        Method to get ``Inputs`` instance for model inputs.
+        """
         return Inputs(self.runtime_params)
 
     def __post_init__(self, artifacts):
@@ -1106,16 +1182,18 @@ class APIModel(APIBaseModel):
         self.runtime_params = runtime_variables
 
     def build_url(self, params):
-        '''
-        Get url for the ``APIModel``
-        '''
+        """
+        Get url for the ``APIModel``.
+
+        :param params: url params.
+        """
         return self.url.format(**params, **{k: os.environ[k] for k in self.envs})
 
     def predict_one(self, *args, **kwargs):
-        '''
+        """
         Method to requests to `url` on args and kwargs.
         This method is also used for debugging the model.
-        '''
+        """
         runtime_params = self.inputs(*args, **kwargs)
         out = requests.get(self.build_url(params=runtime_params)).json()
         if self.postprocess is not None:
@@ -1144,6 +1222,8 @@ class QueryModel(Model):
     Model which can be used to query data and return those
     results as pre-computed queries.
 
+    :param preprocess: Preprocess callable
+    :param postprocess: Postprocess callable
     :param select: query used to find data (can include `like`)
     """
 
@@ -1170,6 +1250,11 @@ class QueryModel(Model):
 
     @classmethod
     def handle_integration(cls, kwargs):
+        """
+        Handler integration from ui.
+
+        :param kwargs: integration kwargs
+        """
         if 'select' in kwargs and isinstance(kwargs['select'], dict):
             for i, r in enumerate(kwargs['select']['documents']):
                 kwargs['select']['documents'][i] = cls._replace_variables(r)
@@ -1185,19 +1270,19 @@ class QueryModel(Model):
 
     @property
     def inputs(self) -> Inputs:
-        '''
-        Instance of `Inputs` to represent model params
-        '''
+        """
+        Instance of `Inputs` to represent model params.
+        """
         if self.preprocess is not None:
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        '''
+        """
         Method to do single prediction on args and kwargs.
         This method is also used for debugging the model.
-        '''
+        """
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
             kwargs = self.preprocess(**kwargs)
@@ -1209,7 +1294,7 @@ class QueryModel(Model):
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """
-        Execute on series of datapoint defined in dataset
+        Execute on series of datapoint defined in dataset.
 
         :param dataset: Series of datapoint to predict on.
         """
@@ -1228,7 +1313,7 @@ class QueryModel(Model):
 @dc.dataclass(kw_only=True)
 class SequentialModel(Model):
     """
-    Sequential model component which wraps a model to become serializable
+    Sequential model component which wraps a model to become serializable.
 
     {_model_params}
     :param models: A list of models to use
@@ -1252,12 +1337,17 @@ class SequentialModel(Model):
 
     @property
     def inputs(self) -> Inputs:
-        '''
-        Instance of `Inputs` to represent model params
-        '''
+        """
+        Instance of `Inputs` to represent model params.
+        """
         return self.models[0].inputs
 
     def post_create(self, db: Datalayer):
+        """
+        Post create hook.
+
+        :param db: Datalayer instance.
+        """
         for p in self.models:
             if isinstance(p, str):
                 continue
@@ -1265,15 +1355,15 @@ class SequentialModel(Model):
         self.on_load(db)
 
     def predict_one(self, *args, **kwargs):
-        '''
+        """
         Method to do single prediction on args and kwargs.
         This method is also used for debugging the model.
-        '''
+        """
         return self.predict([(args, kwargs)])[0]
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """
-        Execute on series of datapoint defined in dataset
+        Execute on series of datapoint defined in dataset.
 
         :param dataset: Series of datapoint to predict on.
         """

@@ -11,6 +11,7 @@ class Metric(Component):
     """
     Metric base object with which to evaluate performance on a data-set.
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
+
     {component_parameters}
     :param object: callable or ``Artifact`` to be applied to the data
     """

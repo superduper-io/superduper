@@ -27,12 +27,13 @@ class Listener(Component):
     Listener object which is used to process a column/ key of a collection or table,
     and store the outputs.
     {component_parameters}
+
     :param key: Key to be bound to model
     :param model: Model for processing data
     :param select: Object for selecting which data is processed
-    :param identifier: A string used to identify the model.
     :param active: Toggle to ``False`` to deactivate change data triggering
     :param predict_kwargs: Keyword arguments to self.model.predict
+    :param identifier: A string used to identify the model.
     """
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
@@ -57,6 +58,11 @@ class Listener(Component):
 
     @classmethod
     def handle_integration(cls, kwargs):
+        """
+        Method to handler integration.
+
+        :param kwargs: integration kwargs
+        """
         if 'select' in kwargs and isinstance(kwargs['select'], dict):
             kwargs['select'] = parse_query(
                 query=kwargs['select']['query'],
@@ -81,10 +87,16 @@ class Listener(Component):
 
     @property
     def mapping(self):
+        """
+        Mapping property.
+        """
         return Mapping(self.key, signature=self.model.signature)
 
     @property
     def outputs(self):
+        """
+        Get reference to outputs of listener model.
+        """
         if self.model.version is not None:
             return f'{_OUTPUTS_KEY}.{self.identifier}::{self.version}'
         else:
@@ -99,10 +111,16 @@ class Listener(Component):
 
     @property
     def outputs_select(self):
+        """
+        Get query reference to model outputs.
+        """
         return self.select.table_or_collection.outputs(self.predict_id)
 
     @property
     def outputs_key(self):
+        """
+        Model outputs key.
+        """
         if self.select.DB_TYPE == "SQL":
             return 'output'
         else:
@@ -110,6 +128,11 @@ class Listener(Component):
 
     @override
     def pre_create(self, db: Datalayer) -> None:
+        """
+        Pre create hook.
+
+        :param db: Datalayer instance.
+        """
         if self.select is not None and self.select.variables:
             self.select = t.cast(CompoundSelect, self.select.set_variables(db))
 
@@ -131,6 +154,11 @@ class Listener(Component):
 
     @override
     def post_create(self, db: Datalayer) -> None:
+        """
+        Post create hook.
+
+        :param db: Datalayer instance.
+        """
         output_table = db.databackend.create_output_dest(
             f'{self.identifier}::{self.version}',
             self.model.datatype,
@@ -151,6 +179,9 @@ class Listener(Component):
 
     @property
     def dependencies(self) -> t.List[ComponentTuple]:
+        """
+        Listener model dependencies.
+        """
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
         out = []
@@ -163,10 +194,17 @@ class Listener(Component):
 
     @property
     def predict_id(self):
+        """
+        Get predict id.
+        """
         return f'{self.identifier}::{self.version}'
 
     @property
     def id_key(self) -> str:
+        """
+        Get identifier key.
+        """
+
         def _id_key(key) -> str:
             if isinstance(key, str):
                 if key.startswith('_outputs.'):
@@ -183,6 +221,11 @@ class Listener(Component):
         return _id_key(self.key)
 
     def depends_on(self, other: Component):
+        """
+        Check if listener depends on `other` component.
+
+        :param other: Other component.
+        """
         if not isinstance(other, Listener):
             return False
 
@@ -196,11 +239,10 @@ class Listener(Component):
         self, db: Datalayer, dependencies: t.Sequence[Job] = (), overwrite: bool = False
     ) -> t.Sequence[t.Any]:
         """
-        Schedule jobs for the listener
+        Schedule jobs for the listener.
 
-        :param database: The DB instance to process
+        :param db: The Datalayer instance to process
         :param dependencies: A list of dependencies
-        :param verbose: Whether to print verbose output
         """
         if not self.active:
             return []
@@ -220,9 +262,9 @@ class Listener(Component):
         return out
 
     def cleanup(self, database: Datalayer) -> None:
-        """Clean up when the listener is deleted
+        """Clean up when the listener is deleted.
 
-        :param database: The DB instance to process
+        :param database: The datalayer instance to process
         """
         # TODO - this doesn't seem to do anything
         if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:

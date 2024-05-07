@@ -212,7 +212,7 @@ def is_dataclass(node):
     return False
 
 
-def extract_docstrings(directory):
+def extract_docstrings(*directory):
     class_test_cases = []
     method_test_cases = []
     function_test_cases = []
@@ -247,19 +247,20 @@ def extract_docstrings(directory):
             except SyntaxError as e:
                 print(f"Syntax error in file {file_path}: {e}")
 
-    if os.path.isdir(directory):
-        for subdir, _, files in os.walk(directory):
-            for filename in files:
-                if filename.endswith('.py'):
-                    file_path = os.path.join(subdir, filename)
-                    _extract(file_path)
-    else:
-        _extract(directory)
+    for path in directory:
+        if os.path.isdir(path):
+            for subdir, _, files in os.walk(path):
+                for filename in files:
+                    if filename.endswith('.py'):
+                        file_path = os.path.join(subdir, filename)
+                        _extract(file_path)
+        else:
+            _extract(path)
     return class_test_cases, method_test_cases, function_test_cases
 
 
 CLASS_TEST_CASES, METHOD_TEST_CASES, FUNCTION_TEST_CASES = extract_docstrings(
-    './superduperdb/components/'
+    './superduperdb/components/', './superduperdb/base/datalayer.py'
 )
 
 

@@ -25,6 +25,7 @@ from superduperdb.misc.annotations import public_api
 class Dataset(Component):
     """A dataset is an immutable collection of documents.
     {component_params}
+
     :param select: A query to select the documents for the dataset
     :param sample_size: The number of documents to sample from the query
     :param random_seed: The random seed to use for sampling
@@ -52,14 +53,24 @@ class Dataset(Component):
     @property
     @ensure_initialized
     def data(self):
+        """
+        Dataset property.
+        """
         return self._data
 
     def init(self):
+        """
+        Intialization method.
+        """
         super().init()
         self._data = [Document.decode(r, self.db) for r in pickle_decode(self.raw_data)]
 
     @override
     def pre_create(self, db: 'Datalayer') -> None:
+        """
+        Pre create database hook.
+        :param db: Datalayer instance
+        """
         if self.raw_data is None:
             if self.select is None:
                 raise ValueError('select cannot be None')
@@ -71,4 +82,7 @@ class Dataset(Component):
 
     @cached_property
     def random(self):
+        """
+        Cached property for random.
+        """
         return numpy.random.default_rng(seed=self.random_seed)

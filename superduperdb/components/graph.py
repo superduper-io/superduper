@@ -10,6 +10,9 @@ from superduperdb.components.model import Model, Signature
 
 
 def input_node(*args):
+    """
+    Create IndexableNode for input.
+    """
     return IndexableNode(
         model=Input(spec=args if len(args) > 1 else args[0]),
         parent_graph=nx.DiGraph(),
@@ -18,12 +21,26 @@ def input_node(*args):
 
 
 def document_node(*args):
+    """
+    Create IndexableNode for document input.
+    """
     return IndexableNode(
         model=DocumentInput(spec=args), parent_graph=nx.DiGraph(), parent_models={}
     )
 
 
 class IndexableNode:
+    """
+    Create model IndexableNode, which can be used to
+    index model while creating graph links.
+
+    :param model: Model to IndexableNode
+    :param parent_graph: Parent graph
+    :param parent_models: Parent models
+    :param index: Index for args
+    :param identifier: Identifier for class
+    """
+
     def __init__(
         self, *, model, parent_graph, parent_models, index=None, identifier=None
     ):
@@ -34,6 +51,11 @@ class IndexableNode:
         self.identifier = identifier
 
     def __getitem__(self, item):
+        """
+        Method for indexing model.
+
+        :param item: index
+        """
         return IndexableNode(
             model=self.model,
             parent_graph=self.parent_graph,
@@ -43,6 +65,11 @@ class IndexableNode:
         )
 
     def to_graph(self, identifier: str):
+        """
+        Helper method to get graph form.
+
+        :param identifier: Unique identifier
+        """
         from superduperdb.components.graph import DocumentInput, Graph
 
         input_model = next(
@@ -65,6 +92,12 @@ class IndexableNode:
         return self.parent_models[u]
 
     def to_listeners(self, select: CompoundSelect, identifier: str):
+        """
+        Create listeners from parent graph and models.
+
+        :param select: CompoundSelect query
+        :param identifier: Unique identifier
+        """
         from superduperdb.components.listener import Listener
         from superduperdb.components.stack import Stack
 
@@ -103,6 +136,13 @@ class IndexableNode:
 
 
 class OutputWrapper:
+    """
+    OutputWrapper class for wrapping model outputs.
+
+    :param r: Output
+    :param keys: output keys
+    """
+
     def __init__(self, r, keys):
         self.keys = keys
         self.r = r
@@ -118,6 +158,14 @@ class OutputWrapper:
 
 @dc.dataclass(kw_only=True)
 class Input(Model):
+    """
+    Root model of a graph.
+
+    :param spec: Model specs from `inspect`
+    :param identifier: Unique identifer
+    :param signature: Model signature
+    """
+
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
     signature: Signature = '*args'
@@ -128,6 +176,9 @@ class Input(Model):
             self.signature = 'singleton'
 
     def predict_one(self, *args):
+        """
+        Single prediction.
+        """
         if self.signature == 'singleton':
             return args[0]
         return OutputWrapper(
@@ -135,11 +186,23 @@ class Input(Model):
         )
 
     def predict(self, dataset):
+        """
+        Predict on dataset.
+
+        :param dataset: series of datapoint
+        """
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
 @dc.dataclass(kw_only=True)
 class DocumentInput(Model):
+    """
+    Document Input node of graph.
+
+    :param spec: Model specs from `inspect`
+    :param identifier: Unique identifer
+    """
+
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
     signature: t.ClassVar[Signature] = 'singleton'
@@ -148,9 +211,19 @@ class DocumentInput(Model):
         super().__post_init__(artifacts)
 
     def predict_one(self, r):
+        """
+        Single prediction.
+
+        :param r: model input.
+        """
         return {k: r[k] for k in self.spec}
 
     def predict(self, dataset):
+        """
+        Predict on dataset.
+
+        :param dataset: series of datapoint
+        """
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
@@ -162,7 +235,7 @@ from superduperdb.components.model import Model, Signature
 
 @dc.dataclass(kw_only=True)
 class Graph(Model):
-    '''
+    """
     Represents a directed acyclic graph composed of interconnected model nodes.
 
     This class enables the creation of complex predictive models
@@ -173,6 +246,12 @@ class Graph(Model):
     The predict() method executes predictions through the graph, ensuring
     correct data flow and handling of dependencies
 
+    :param models: Graph model list
+    :param edges: Graph edges list
+    :param input: Graph root node
+    :param outputs: Graph output nodes
+    :param signature: Graph signature.
+
     Example:
     >>  g = Graph(
     >>    identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
@@ -180,7 +259,7 @@ class Graph(Model):
     >>  g.connect(model1, model2)
     >>  assert g.predict_one(1) == [(4, 2)]
 
-    '''
+    """
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'models', 'type': 'component/model', 'sequence': True},
@@ -236,14 +315,20 @@ class Graph(Model):
         on: t.Optional[t.Tuple[t.Union[int, str], str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
-        '''
+        """
         Connects two nodes `u` and `v` on edge where edge is a tuple with
         first element describing outputs index (int or None)
         and second describing input argument (str).
 
+        :param u: First node for connection
+        :param v: Second node for connection
+        :param on: Define incoming model output and connecting
+                   model input connection
+        :param update_edge: Bool to update egde
+
         Note:
         output index: None means all outputs of node u are connected to node v
-        '''
+        """
         assert isinstance(u, Model)
         assert isinstance(v, Model)
 
@@ -276,6 +361,13 @@ class Graph(Model):
     def fetch_output(
         self, output, index: t.Optional[t.Union[int, str]] = None, one: bool = False
     ):
+        """
+        Get corresponding output from model outputs w.r.t link weight.
+
+        :param output: model output
+        :param index: index to select output
+        :param one: if single prediction
+        """
         if index is not None:
             assert isinstance(index, (int, str))
 
@@ -296,9 +388,11 @@ class Graph(Model):
         return output
 
     def validate(self, node):
-        '''
-        Validates the graph for any disconnection
-        '''
+        """
+        Validates the graph for any disconnection.
+
+        :param node: Graph node.
+        """
         # TODO: Create a cache to reduce redundant validation in predict in db
 
         predecessors = list(self.G.predecessors(node))
@@ -400,10 +494,10 @@ class Graph(Model):
         return cache[node]
 
     def predict_one(self, *args, **kwargs):
-        '''
+        """
         Single data point prediction passes the args and kwargs to defined node flow
         in the graph.
-        '''
+        """
         # Validate the node for incompletion
         # TODO: Move to to_graph method and validate the graph
         # list(map(self.validate, self.output_identifiers))
@@ -421,10 +515,12 @@ class Graph(Model):
             )
 
     def patch_dataset_to_args(self, dataset):
-        '''
+        """
         Patch the dataset with args type as default, since all
-        corresponding nodes takes args as input type
-        '''
+        corresponding nodes takes args as input type.
+
+        :param dataset: series of datapoint.
+        """
         args_dataset = []
         signature = self.signature
         input_params = self.input.inputs
@@ -445,6 +541,11 @@ class Graph(Model):
         return args_dataset
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """
+        Predict on dataset i.e series of datapoints.
+
+        :param dataset: Series of datapoints
+        """
         # Validate the node for incompletion
         if isinstance(self.output_identifiers, list):
             list(map(self.validate, self.output_identifiers))
@@ -468,6 +569,11 @@ class Graph(Model):
         return outputs
 
     def encode_outputs(self, outputs):
+        """
+        Encode outputs for serializing in database.
+
+        :param outputs: model outputs
+        """
         encoded_outputs = []
         for o, n in zip(outputs, self.output_identifiers):
             encoded_outputs.append(self.nodes[n].encode_outputs(o))

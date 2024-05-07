@@ -26,7 +26,8 @@ if t.TYPE_CHECKING:
 @dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
-    A component carrying the information to apply a vector index to a ``DB`` instance
+    A component carrying the information to apply a vector index to a ``DB`` instance.
+
     {component_parameters}
     :param indexing_listener: Listener which is applied to created vectors
     :param compatible_listener: Listener which is applied to vectors to be compared
@@ -51,11 +52,12 @@ class VectorIndex(Component):
 
     @override
     def on_load(self, db: Datalayer) -> None:
-        '''
+        """
         On load hook to perform indexing and compatible listener
         loading on loading of vector index from database.
+
         :param db: A DataLayer instance
-        '''
+        """
         if isinstance(self.indexing_listener, str):
             self.indexing_listener = t.cast(
                 Listener, db.load('listener', self.indexing_listener)
@@ -74,18 +76,17 @@ class VectorIndex(Component):
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
     ):
-        '''
+        """
         Perform vector search with query `like` from outputs in db
         on `self.identifier` vectori index.
 
         :param like: The document to compare against
-        :param outputs: (optional) seed outputs dict.
         :param models: List of models to retrieve outputs
-        :param db: A datalayer instance.
         :param keys: Keys available to retrieve outputs of model
+        :param db: A datalayer instance.
         :param outputs: (optional) update `like` with outputs
 
-        '''
+        """
         document = MongoStyleDict(like.unpack())
         if outputs is not None:
             outputs = outputs or {}
@@ -139,10 +140,11 @@ class VectorIndex(Component):
     ) -> t.Tuple[t.List[str], t.List[float]]:
         """
         Given a document, find the nearest results in this vector index, returned as
-        two parallel lists of result IDs and scores
+        two parallel lists of result IDs and scores.
 
         :param like: The document to compare against
         :param db: The datalayer to use
+        :param id_field: Identifier field
         :param outputs: An optional dictionary
         :param ids: A list of ids to match
         :param n: Number of items to return
@@ -172,7 +174,7 @@ class VectorIndex(Component):
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
         """
-        Return a list of model and keys for each listener
+        Return a list of model and keys for each listener.
         """
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.compatible_listener, str)
@@ -188,10 +190,10 @@ class VectorIndex(Component):
 
     @property
     def dimensions(self) -> int:
-        '''
+        """
         Get dimension for vector database. This dimension will be used to prepare
         vectors in the vector database.
-        '''
+        """
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.indexing_listener.model, str)
         if shape := getattr(self.indexing_listener.model.datatype, 'shape', None):
@@ -205,7 +207,7 @@ class VectorIndex(Component):
         dependencies: t.Sequence['Job'] = (),
     ) -> t.Sequence[t.Any]:
         """
-        Schedule jobs for the listener
+        Schedule jobs for the listener.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
@@ -226,6 +228,12 @@ class VectorIndex(Component):
 
 
 class EncodeArray:
+    """
+    Class to encode an array.
+
+    :param dtype: Datatype of array
+    """
+
     def __init__(self, dtype):
         self.dtype = dtype
 
@@ -237,6 +245,12 @@ class EncodeArray:
 
 
 class DecodeArray:
+    """
+    Class to decode an array.
+
+    :param dtype: Datatype of array
+    """
+
     def __init__(self, dtype):
         self.dtype = dtype
 
@@ -250,7 +264,7 @@ class DecodeArray:
 )
 def vector(shape, identifier: t.Optional[str] = None):
     """
-    Create an encoder for a vector (list of ints/ floats) of a given shape
+    Create an encoder for a vector (list of ints/ floats) of a given shape.
 
     :param shape: The shape of the vector
     :param identifier: The identifier of the vector

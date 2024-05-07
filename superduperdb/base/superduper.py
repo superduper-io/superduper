@@ -1,5 +1,5 @@
-import re
 import typing as t
+from re import match as re_match
 
 from superduperdb.base.configs import CFG
 
@@ -24,26 +24,16 @@ def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
 
 
 def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
+    if re_match(r'^[a-zA-Z0-9]+://', item) is None:
+        raise ValueError(f'{item} is not a valid connection string')
+
+    if item.endswith('.csv') and CFG.cluster.cdc.uri is not None:
+        raise TypeError('Pandas is not supported in cluster mode!')
+
+    kwargs['data_backend'] = item
+
     from superduperdb.base.build import build_datalayer
 
-    if item.startswith('mongomock://'):
-        kwargs['data_backend'] = item
-
-    elif item.startswith('mongodb://'):
-        kwargs['data_backend'] = item
-
-    elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
-        kwargs['data_backend'] = item
-
-    elif item.endswith('.csv'):
-        if CFG.cluster.cdc.uri is not None:
-            raise TypeError('Pandas is not supported in cluster mode!')
-        kwargs['data_backend'] = item
-
-    else:
-        if re.match(r'^[a-zA-Z0-9]+://', item) is None:
-            raise ValueError(f'{item} is not a valid connection string')
-        kwargs['data_backend'] = item
     return build_datalayer(CFG, **kwargs)
 
 

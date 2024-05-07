@@ -60,6 +60,11 @@ ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 class Datalayer:
     """
     Base database connector for SuperDuperDB
+
+    :param databackend: object containing connection to Datastore
+    :param metadata: object containing connection to Metadatastore
+    :param artifact_store: object containing connection to Artifactstore
+    :param compute: object containing connection to ComputeBackend
     """
 
     type_id_to_cache_mapping = {
@@ -77,12 +82,6 @@ class Datalayer:
         artifact_store: ArtifactStore,
         compute: ComputeBackend = LocalComputeBackend(),
     ):
-        """
-        :param databackend: object containing connection to Datastore
-        :param metadata: object containing connection to Metadatastore
-        :param artifact_store: object containing connection to Artifactstore
-        :param compute: object containing connection to ComputeBackend
-        """
         logging.info("Building Data Layer")
 
         self.metrics = LoadDict(self, field='metric')
@@ -109,21 +108,30 @@ class Datalayer:
 
     @property
     def server_mode(self):
+        """
+        Proptery server mode.
+        """
         return self._server_mode
 
     @server_mode.setter
     def server_mode(self, is_server: bool):
+        """
+        Set server mode property.
+
+        :param is_server: new boolean property
+        """
         assert isinstance(is_server, bool)
         self._server_mode = is_server
 
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None
     ) -> t.Optional[BaseVectorSearcher]:
-        '''
-        A helper function to initialize vector searcher
+        """
+        A helper function to initialize vector searcher.
+
         :param identifier: identifying string to component
         :param searcher_type: Searcher type (in_memory|native)
-        '''
+        """
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
 
         vi = self.vector_indices.force_load(identifier)
@@ -143,13 +151,14 @@ class Datalayer:
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     def backfill_vector_search(self, vi, searcher):
-        '''
+        """
         Helper function to backfill vector search from model outputs of
         a given vector index.
+
         :param vi: Identifier of vector index
         :param searcher: FastVectorSearch instance to
                          load model outputs as vectors
-        '''
+        """
         if s.CFG.cluster.vector_search.type == 'native':
             return
 
@@ -193,6 +202,7 @@ class Datalayer:
         """
         Set a new compute engine at runtime. Use it only if you know what you do.
         The standard procedure is to set compute engine during initialization.
+
         :param new: New compute backend
         """
         logging.warn(
@@ -208,11 +218,15 @@ class Datalayer:
         self.compute = new
 
     def get_compute(self):
+        """
+        Get compute.
+        """
         return self.compute
 
     def drop(self, force: bool = False):
         """
-        Drop all data, artifacts and metadata
+        Drop all data, artifacts and metadata.
+
         :param force: Force drop
         """
         if not force and not click.confirm(
@@ -529,7 +543,7 @@ class Datalayer:
         force: bool = False,
     ):
         """
-        Remove component (version: optional)
+        Remove component (version: optional).
 
         :param type_id: type_id of component to remove ['datatype', 'model', 'listener',
                         'training_configuration', 'vector_index']
@@ -687,10 +701,10 @@ class Datalayer:
         verbose: bool = True,
         overwrite: bool = False,
     ) -> TaskWorkflow:
-        '''
+        """
         A helper function to build taskworkflow for query with
         dependencies.
-        '''
+        """
         logging.debug(f"Building task workflow graph. Query:{query}")
 
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
@@ -976,6 +990,7 @@ class Datalayer:
     ):
         """
         (Use-with caution!!) Replace a model in artifact store with updated object.
+
         :param object: object to replace
         :param upsert: toggle to ``True`` to enable even if object doesn't exist yet
         """
@@ -1009,14 +1024,15 @@ class Datalayer:
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
-        '''
-        Performs a vector search query on given vector index
+        """
+        Performs a vector search query on given vector index.
+
         :param like: vector search document to search.
         :param vector_index: vector index to search.
         :param ids: (optional) ids to search within
         :param outputs: (optional) seed outputs dict.
         :param n: Get top k results from vector search.
-        '''
+        """
         # TODO - make this un-ambiguous
         if not isinstance(like, Document):
             assert isinstance(like, dict)
@@ -1034,7 +1050,7 @@ class Datalayer:
 
     def close(self):
         """
-        Gracefully shutdown the Datalayer
+        Gracefully shutdown the Datalayer.
         """
         logging.info("Disconnect from Data Store")
         self.databackend.disconnect()
@@ -1064,11 +1080,14 @@ class Datalayer:
 
 @dc.dataclass
 class LoadDict(dict):
-    '''
-    Helpder class to load component identifiers with
-    on demand loading from database..
+    """
+    Helper class to load component identifiers with
+    on demand loading from database.
 
-    '''
+    :param database: Datalayer instance
+    :param field: (optional) Component type id
+    :param callable: (optional) callable on key
+    """
 
     database: Datalayer
     field: t.Optional[str] = None
@@ -1084,7 +1103,9 @@ class LoadDict(dict):
         return value
 
     def force_load(self, key: str):
-        '''
+        """
         Force load the component from database.
-        '''
+
+        :param key: Force load key
+        """
         return self.__missing__(key)

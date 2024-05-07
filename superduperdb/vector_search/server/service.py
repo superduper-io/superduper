@@ -59,7 +59,7 @@ def create_search(vector_index: str, db=None):
     :param db: Datalayer instance
     '''
     db.fast_vector_searchers.update(
-        {vector_index: db.initialize_vector_searcher(vector_index, backfill=True)}
+        {vector_index: db.initialize_vector_searcher(vector_index)}
     )
 
 

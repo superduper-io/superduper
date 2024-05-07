@@ -47,6 +47,8 @@ def get_class_init_params(node):
     init_params = []
     for node in node.body:
         if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+            args = node.args.args
+            args += node.args.kwonlyargs or []
             for arg in node.args.args:
                 if arg.arg != 'self':
                     init_params.append(arg.arg)
@@ -56,8 +58,11 @@ def get_class_init_params(node):
 
 def get_function_params(node):
     params = []
-    for arg in node.args.args:
-        params.append(arg.arg)
+    args = node.args.args
+    args += node.args.kwonlyargs or []
+    for arg in args:
+        if arg.arg not in ['self', 'cls']:
+            params.append(arg.arg)
     return params
 
 
@@ -212,45 +217,49 @@ def extract_docstrings(directory):
     method_test_cases = []
     function_test_cases = []
 
-    for subdir, _, files in os.walk(directory):
-        for filename in files:
-            if filename.endswith('.py'):
-                file_path = os.path.join(subdir, filename)
-                with open(file_path, 'r') as file:
-                    file_content = file.read()
-                    try:
-                        ast_tree = ast.parse(file_content)
-                        for node in ast.iter_child_nodes(ast_tree):
+    def _extract(file_path):
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+            try:
+                ast_tree = ast.parse(file_content)
+                for node in ast.iter_child_nodes(ast_tree):
+                    if isinstance(node, ast.ClassDef) and not node.name.startswith('_'):
+                        class_test_cases.append((file_path, node))
+                        for item in node.body:
                             if isinstance(
-                                node, ast.ClassDef
-                            ) and not node.name.startswith('_'):
-                                class_test_cases.append((file_path, node))
-                                for item in node.body:
-                                    if isinstance(
-                                        item, ast.FunctionDef
-                                    ) and not item.name.startswith('_'):
-                                        skip = False
-                                        for decorator in item.decorator_list:
-                                            if (
-                                                isinstance(decorator, ast.Name)
-                                                and decorator.id == 'override'
-                                            ):
-                                                skip = True
-                                        if not skip:
-                                            method_test_cases.append(
-                                                (file_path, node.name, item)
-                                            )
-                            elif isinstance(
-                                node, ast.FunctionDef
-                            ) and not node.name.startswith('_'):
-                                function_test_cases.append((file_path, node))
-                    except SyntaxError as e:
-                        print(f"Syntax error in file {file_path}: {e}")
+                                item, ast.FunctionDef
+                            ) and not item.name.startswith('_'):
+                                skip = False
+                                for decorator in item.decorator_list:
+                                    if (
+                                        isinstance(decorator, ast.Name)
+                                        and decorator.id == 'override'
+                                    ):
+                                        skip = True
+                                if not skip:
+                                    method_test_cases.append(
+                                        (file_path, node.name, item)
+                                    )
+                    elif isinstance(node, ast.FunctionDef) and not node.name.startswith(
+                        '_'
+                    ):
+                        function_test_cases.append((file_path, node))
+            except SyntaxError as e:
+                print(f"Syntax error in file {file_path}: {e}")
+
+    if os.path.isdir(directory):
+        for subdir, _, files in os.walk(directory):
+            for filename in files:
+                if filename.endswith('.py'):
+                    file_path = os.path.join(subdir, filename)
+                    _extract(file_path)
+    else:
+        _extract(directory)
     return class_test_cases, method_test_cases, function_test_cases
 
 
 CLASS_TEST_CASES, METHOD_TEST_CASES, FUNCTION_TEST_CASES = extract_docstrings(
-    './superduperdb'
+    './superduperdb/components/'
 )
 
 
@@ -259,24 +268,21 @@ print(f'Found {len(METHOD_TEST_CASES)} method documentation test-cases')
 print(f'Found {len(FUNCTION_TEST_CASES)} function documentation test-cases')
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("test_case", CLASS_TEST_CASES)
 def test_class_docstrings(test_case):
     file_path, node = test_case
     check_class_docstring(file_path=file_path, node=node, dataclass=is_dataclass(node))
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("test_case", METHOD_TEST_CASES)
 def test_method_docstrings(test_case):
-    file_path, node = test_case
+    file_path, _, node = test_case
     check_function_doc_string(
         file_path=file_path,
         node=node,
     )
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("test_case", FUNCTION_TEST_CASES)
 def test_function_docstrings(test_case):
     file_path, node = test_case

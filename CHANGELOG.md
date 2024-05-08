@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `lazy_file` datatype
 - Show the DataLayer configuration
 - Optimized LLM finetuning usage experience
+- Auto-infer Schema from data
 
 #### Bug Fixes
 - Fixed cross platfrom issue in cli command

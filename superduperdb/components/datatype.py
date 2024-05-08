@@ -3,6 +3,7 @@ import dataclasses as dc
 import hashlib
 import inspect
 import io
+import json
 import os
 import pickle
 import re
@@ -25,6 +26,19 @@ from superduperdb.misc.hash import random_sha1
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
+
+
+class IntermidiaType:
+    BYTES = 'bytes'
+    STRING = 'string'
+
+
+def json_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> str:
+    return json.dumps(object)
+
+
+def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
+    return json.loads(b)
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
@@ -116,7 +130,7 @@ def torch_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
     return torch.load(io.BytesIO(b))
 
 
-def to_base64(bytes):
+def bytes_to_base64(bytes):
     """
     Converts bytes to base64.
 
@@ -125,7 +139,7 @@ def to_base64(bytes):
     return base64.b64encode(bytes).decode('utf-8')
 
 
-def from_base64(encoded):
+def base64_to_bytes(encoded):
     """
     Decodes a base64 encoded string.
 
@@ -190,6 +204,7 @@ class DataType(Component):
     directory: t.Optional[str] = None
     encodable: str = 'encodable'
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
+    intermidia_type: t.Optional[str] = IntermidiaType.BYTES
     media_type: t.Optional[str] = None
 
     def __post_init__(self, artifacts):
@@ -252,24 +267,21 @@ class DataType(Component):
         return self.decoder(item, info=info)
 
     def bytes_encoding_after_encode(self, data):
-        """
-        Convert the encoded data to the specified bytes encoding format.
-
-        :param data: The encoded data.
-        """
-        if self.bytes_encoding == BytesEncoding.BASE64:
-            return to_base64(data)
+        # Only encode to base64 if the data is bytes and the intermidia type is bytes
+        if (
+            self.bytes_encoding == BytesEncoding.BASE64
+            and self.intermidia_type == IntermidiaType.BYTES
+        ):
+            return bytes_to_base64(data)
         return data
 
     def bytes_encoding_before_decode(self, data):
-        """
-        Convert the encoded data from the specified bytes encoding format
-        before decoding.
-
-        :param data: The encoded data in the specified bytes encoding format.
-        """
-        if self.bytes_encoding == BytesEncoding.BASE64:
-            return from_base64(data)
+        # Only decode from base64 if the data is bytes and the intermidia type is bytes
+        if (
+            self.bytes_encoding == BytesEncoding.BASE64
+            and self.intermidia_type == IntermidiaType.BYTES
+        ):
+            return base64_to_bytes(data)
         return data
 
 
@@ -507,18 +519,7 @@ class Encodable(_BaseEncodable):
     def _get_object(cls, db, r):
         if r.get('bytes') is None:
             return None
-        if db is None:
-            try:
-                from superduperdb.components.datatype import serializers
-
-                datatype = serializers[r['datatype']]
-            except KeyError:
-                raise Exception(
-                    f'You specified a serializer which doesn\'t have a'
-                    f' default value: {r["datatype"]}'
-                )
-        else:
-            datatype = db.datatypes[r['datatype']]
+        datatype = cls.get_datatype(db, r)
         object = datatype.decode_data(r['bytes'], info=datatype.info)
         return object
 
@@ -574,10 +575,26 @@ class Encodable(_BaseEncodable):
         object = cls._get_object(db, r['_content'])
         return cls(
             x=object,
-            datatype=db.datatypes[r['_content']['datatype']],
+            datatype=cls.get_datatype(db, r['_content']),
             uri=r['_content']['uri'],
             file_id=r['_content'].get('file_id'),
         )
+
+    @classmethod
+    def get_datatype(cls, db, r):
+        if db is None:
+            try:
+                from superduperdb.components.datatype import serializers
+
+                datatype = serializers[r['datatype']]
+            except KeyError:
+                raise Exception(
+                    f'You specified a serializer which doesn\'t have a'
+                    f' default value: {r["datatype"]}'
+                )
+        else:
+            datatype = db.datatypes[r['datatype']]
+        return datatype
 
 
 @dc.dataclass
@@ -907,6 +924,14 @@ _ENCODABLES = {
     'lazy_file': LazyFile,
 }
 
+json_serializer = DataType(
+    'json',
+    encoder=json_encode,
+    decoder=json_decode,
+    encodable='encodable',
+    bytes_encoding=BytesEncoding.BASE64,
+    intermidia_type=IntermidiaType.STRING,
+)
 
 pickle_serializer = DataType(
     'pickle',
@@ -919,6 +944,12 @@ pickle_lazy = DataType(
     encoder=pickle_encode,
     decoder=pickle_decode,
     encodable='lazy_artifact',
+)
+dill_base = DataType(
+    'dill_base',
+    encoder=dill_encode,
+    decoder=dill_decode,
+    encodable='encodable',
 )
 dill_serializer = DataType(
     'dill',
@@ -953,6 +984,7 @@ file_lazy = DataType(
 serializers = {
     'pickle': pickle_serializer,
     'dill': dill_serializer,
+    'dill_base': dill_base,
     'torch': torch_serializer,
     'file': file_serializer,
     'pickle_lazy': pickle_lazy,

@@ -4,7 +4,6 @@ from functools import cached_property
 
 from overrides import override
 
-from superduperdb.base.configs import CFG
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.annotations import public_api
@@ -49,7 +48,7 @@ class Schema(Component):
         This is used to create ibis tables.
         """
         return {
-            k: (v.identifier if not isinstance(v, DataType) else CFG.bytes_encoding)
+            k: (v.identifier if not isinstance(v, DataType) else v.bytes_encoding)
             for k, v in self.fields.items()
         }
 
@@ -76,7 +75,7 @@ class Schema(Component):
             if isinstance(v, DataType):
                 yield v
 
-    def decode_data(self, data: t.Mapping[str, t.Any]) -> t.Mapping[str, t.Any]:
+    def decode_data(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """
         Decode data using the schema's encoders.
 
@@ -85,16 +84,16 @@ class Schema(Component):
 
         if self.trivial:
             return data
+
         decoded = {}
-        for k, v in data.items():
-            if k in self.encoded_types:
-                field = self.fields[k]
-                assert isinstance(field, DataType)
-                v = field.decode_data(v)
-            decoded[k] = v
+        for k in data.keys():
+            if isinstance(field := self.fields.get(k), DataType):
+                decoded[k] = field.encodable_cls.decode(data[k])
+            else:
+                decoded[k] = data[k]
         return decoded
 
-    def __call__(self, data: t.Mapping[str, t.Any]):
+    def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """
         Encode data using the schema's encoders.
 
@@ -102,6 +101,7 @@ class Schema(Component):
         """
         if self.trivial:
             return data
+
         encoded_data = {}
         for k, v in data.items():
             if k in self.fields and isinstance(self.fields[k], DataType):

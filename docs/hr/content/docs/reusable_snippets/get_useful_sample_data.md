@@ -50,7 +50,7 @@ from superduperdb.backends.ibis import dtype
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        !curl -O s3://superduperdb-public-demo/images.zip && unzip images.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
         import os
         from PIL import Image
         

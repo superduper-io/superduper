@@ -304,7 +304,7 @@ from superduperdb.backends.ibis import dtype
 
 
 <Tabs>
-    <TabItem value="labeled_text" label="labeled_text" default>
+    <TabItem value="labeled_text" label="Text (Labeled)" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
@@ -314,7 +314,7 @@ from superduperdb.backends.ibis import dtype
         sample_datapoint = data[-1]        
         ```
     </TabItem>
-    <TabItem value="labeled_image" label="labeled_image" default>
+    <TabItem value="labeled_image" label="Image (Labeled)" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
         import json

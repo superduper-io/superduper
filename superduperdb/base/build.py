@@ -17,6 +17,7 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
+from superduperdb.backends.mongodb.utils import get_avaliable_conn
 from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc.anonymize import anonymize_url
@@ -100,12 +101,10 @@ def _build_artifact_store(
 def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
     logging.debug(f"Parsing data connection URI:{uri}")
 
+    # TODO: Should we move the following code to the DataBackend classes?
     if re.match('^mongodb:\/\/', uri) is not None:
         name = uri.split('/')[-1]
-        conn: pymongo.MongoClient = pymongo.MongoClient(
-            uri,
-            serverSelectionTimeoutMS=5000,
-        )
+        conn = get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)
         return mapping['mongodb'](conn, name)
 
     elif re.match('^mongodb\+srv:\/\/', uri):

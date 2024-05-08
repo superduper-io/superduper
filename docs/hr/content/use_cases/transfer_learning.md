@@ -180,7 +180,6 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
-
 <!-- TABS -->
 ## Connect to SuperDuperDB
 
@@ -295,7 +294,6 @@ Otherwise refer to "Configuring your production system".
         ```
     </TabItem>
 </Tabs>
-
 <!-- TABS -->
 ## Get useful sample data
 
@@ -306,7 +304,7 @@ from superduperdb.backends.ibis import dtype
 
 
 <Tabs>
-    <TabItem value="labeled_text" label="Text (Labeled)" default>
+    <TabItem value="labeled_text" label="labeled_text" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
@@ -316,7 +314,7 @@ from superduperdb.backends.ibis import dtype
         sample_datapoint = data[-1]        
         ```
     </TabItem>
-    <TabItem value="labeled_image" label="Image (Labeled)" default>
+    <TabItem value="labeled_image" label="labeled_image" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
         import json
@@ -372,7 +370,6 @@ from superduperdb.backends.ibis import dtype
         ```
     </TabItem>
 </Tabs>
-
 <!-- TABS -->
 ## Insert data
 
@@ -387,13 +384,13 @@ In order to create data, we need to create a `Schema` for encoding our special `
         def do_insert(data, schema = None):
             
             if schema is None and (datatype is None or isinstance(datatype, str)):
-                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
+                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             elif schema is None and datatype is not None and isinstance(datatype, DataType):
-                data = [Document({'x': datatype(x['x']), 'y': x['y']}) for x in data]
+                data = [Document({'x': datatype(x['x']), 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': datatype(x)}) for x in data]
                 db.execute(table_or_collection.insert_many(data))
             else:
-                data = [Document({'x': x['x'], 'y': x['y']}) for x in data]
+                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
                 db.execute(table_or_collection.insert_many(data, schema=schema))
         
         ```
@@ -403,7 +400,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
         from superduperdb import Document
         
         def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) for idx, x in enumerate(data)]))
+            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))
         
         ```
     </TabItem>

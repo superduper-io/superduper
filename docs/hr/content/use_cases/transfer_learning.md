@@ -504,7 +504,7 @@ choose the input key for further models such as classification models.
     <TabItem value="SQL" label="SQL" default>
         ```python
         input_key = listener.outputs
-        select = table_or_collection.outputs(listener.predict_id).select('y', input_key)
+        select = table_or_collection.outputs(listener.predict_id).select(target_key, input_key)
         
         ```
     </TabItem>

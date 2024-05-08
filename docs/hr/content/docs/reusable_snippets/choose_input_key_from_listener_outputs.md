@@ -17,5 +17,5 @@ select = table_or_collection.find()
 ```python
 # <tab: SQL>
 input_key = listener.outputs
-select = table_or_collection.outputs(listener.predict_id).select('y', input_key)
+select = table_or_collection.outputs(listener.predict_id).select(target_key, input_key)
 ```

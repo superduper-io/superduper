@@ -79,7 +79,7 @@ def infer_datatype(data: t.Any, ibis=False) -> t.Optional[DataType]:
             else:
                 datatype = None
         except Exception:
-            pass
+            logging.info(f"Could not serialize data: {data}")
 
     if datatype is not None:
         logging.info(f"Inferred datatype: {datatype} for data: {data}")
@@ -110,8 +110,6 @@ def infer_schema(
 
     if identifier is None:
         key_value_pairs = sorted(schema_data.items())
-        id_ = "&".join([f"{k}={v.identifier}" for k, v in key_value_pairs])
-
-        identifier = f"schema_{id_}"
+        identifier = "&".join([f"{k}={v.identifier}" for k, v in key_value_pairs])
 
     return Schema(identifier=identifier, fields=schema_data)

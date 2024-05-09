@@ -34,10 +34,20 @@ class IntermidiaType:
 
 
 def json_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> str:
+    """
+    Encode the dict to a JSON string
+
+    :param object: The object to encode
+    """
     return json.dumps(object)
 
 
 def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
+    """
+    Decode the JSON string to an dict
+
+    :param b: The JSON string to decode
+    """
     return json.loads(b)
 
 
@@ -166,6 +176,8 @@ class DataType(Component):
     :param encodable: The type of encodable object ('encodable',
                       'lazy_artifact', or 'file').
     :param bytes_encoding: The encoding type for bytes ('base64' or 'bytes').
+    :param intermidia_type: Type of the intermidia data
+           [IntermidiaType.BYTES, IntermidiaType.STRING]
     :param media_type: The media type.
     """
 
@@ -267,7 +279,12 @@ class DataType(Component):
         return self.decoder(item, info=info)
 
     def bytes_encoding_after_encode(self, data):
-        # Only encode to base64 if the data is bytes and the intermidia type is bytes
+        """
+        Encode the data to base64,
+        if the bytes_encoding is BASE64 and the intermidia_type is BYTES
+
+        :param data: Encoded data
+        """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
             and self.intermidia_type == IntermidiaType.BYTES
@@ -276,7 +293,12 @@ class DataType(Component):
         return data
 
     def bytes_encoding_before_decode(self, data):
-        # Only decode from base64 if the data is bytes and the intermidia type is bytes
+        """
+        Encode the data to base64,
+        if the bytes_encoding is BASE64 and the intermidia_type is BYTES
+
+        :param data: Decoded data
+        """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
             and self.intermidia_type == IntermidiaType.BYTES
@@ -319,6 +341,7 @@ class DecodeTorchStateDict:
         return module
 
 
+# TODO: Remove this because this function is only used in test cases.
 def build_torch_state_serializer(module, info):
     """
     Datatype for serializing torch state dict.
@@ -582,13 +605,19 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def get_datatype(cls, db, r):
+        """
+        Get the datatype of the object
+
+        :param db: `Datalayer` instance to assist with
+        :param r: The object to get the datatype from
+        """
         if db is None:
             try:
                 from superduperdb.components.datatype import serializers
 
                 datatype = serializers[r['datatype']]
             except KeyError:
-                raise Exception(
+                raise ValueError(
                     f'You specified a serializer which doesn\'t have a'
                     f' default value: {r["datatype"]}'
                 )

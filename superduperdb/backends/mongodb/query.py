@@ -23,7 +23,6 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
-from superduperdb.misc.auto_schema import infer_schema
 from superduperdb.misc.files import load_uris
 
 SCHEMA_KEY = '_schema'
@@ -966,6 +965,8 @@ class Collection(TableOrCollection):
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
+        from superduperdb.misc.auto_schema import infer_schema
+
         return infer_schema(data, identifier)
 
 

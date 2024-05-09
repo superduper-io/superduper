@@ -29,23 +29,22 @@ def data():
 
 
 def test_infer_datatype():
-    assert infer_datatype(1) is None
-    assert infer_datatype(1.0) is None
-    assert infer_datatype("1") is None
-    assert infer_datatype(True) is None
-    assert infer_datatype(b"1") is None
+    assert infer_datatype(1) is int
+    assert infer_datatype(1.0) is float
+    assert infer_datatype("1") is str
+    assert infer_datatype(True) is bool
+    assert infer_datatype(b"1") is bytes
 
     assert infer_datatype(np.array([1, 2, 3])).identifier == "numpy.int64[3]"
     assert infer_datatype(torch.tensor([1, 2, 3])).identifier == "torch.int64[3]"
 
-    assert infer_datatype({"a": 1}) is None
-    assert infer_datatype({"a": 1}, ibis=True).identifier == "json"
+    assert infer_datatype({"a": 1}).identifier == "json"
 
-    assert infer_datatype({"a": np.array([1, 2, 3])}).identifier == "dill_base"
+    assert infer_datatype({"a": np.array([1, 2, 3])}).identifier == "DEFAULT"
 
     assert (
         infer_datatype(pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})).identifier
-        == "dill_base"
+        == "DEFAULT"
     )
 
 

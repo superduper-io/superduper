@@ -26,7 +26,6 @@ from superduperdb.base.exceptions import DatabackendException
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
-from superduperdb.misc.auto_schema import infer_schema
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -678,6 +677,8 @@ class Table(Component):
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
+        from superduperdb.misc.auto_schema import infer_schema
+
         return infer_schema(data, identifier=identifier, ibis=True)
 
     @property

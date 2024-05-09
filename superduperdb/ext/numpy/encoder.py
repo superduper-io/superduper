@@ -2,7 +2,7 @@ import typing as t
 
 import numpy
 
-from superduperdb.components.datatype import DataType
+from superduperdb.components.datatype import DataType, DataTypeFactory
 from superduperdb.ext.utils import str_shape
 
 
@@ -45,3 +45,21 @@ def array(
         bytes_encoding=bytes_encoding,
         encodable=encodable,
     )
+
+
+class NumpyDataTypeFactory(DataTypeFactory):
+    @staticmethod
+    def check(data: t.Any) -> bool:
+        """
+        Check if the data is a numpy array.
+        It's used for registering the auto schema.
+        """
+        return isinstance(data, numpy.ndarray)
+
+    @staticmethod
+    def create(data: t.Any) -> DataType:
+        """
+        Create a numpy array datatype.
+        It's used for registering the auto schema.
+        """
+        return array(data.dtype, data.shape)

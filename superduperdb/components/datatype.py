@@ -8,7 +8,7 @@ import os
 import pickle
 import re
 import typing as t
-from abc import abstractmethod
+from abc import abstractmethod, abstractstaticmethod
 
 import dill
 from overrides import override
@@ -29,6 +29,10 @@ Encode = t.Callable[[t.Any], bytes]
 
 
 class IntermidiaType:
+    """
+    Intermidia data type
+    """
+
     BYTES = 'bytes'
     STRING = 'string'
 
@@ -38,6 +42,7 @@ def json_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> str:
     Encode the dict to a JSON string
 
     :param object: The object to encode
+    :param info: Optional information
     """
     return json.dumps(object)
 
@@ -47,6 +52,7 @@ def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
     Decode the JSON string to an dict
 
     :param b: The JSON string to decode
+    :param info: Optional information
     """
     return json.loads(b)
 
@@ -158,6 +164,31 @@ def base64_to_bytes(encoded):
     return base64.b64decode(encoded)
 
 
+class DataTypeFactory:
+    """
+    Abstract class for creating a DataType
+    """
+
+    @abstractstaticmethod
+    def check(data: t.Any) -> bool:
+        """
+        Check if the data can be encoded by the DataType
+        If the data can be encoded, return True, otherwise False
+
+        :param data: The data to check
+        """
+        raise NotImplementedError
+
+    @abstractstaticmethod
+    def create(data: t.Any) -> "DataType":
+        """
+        Create a DataType for the data
+
+        :param data: The data to create the DataType for
+        """
+        raise NotImplementedError
+
+
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class DataType(Component):
@@ -218,6 +249,7 @@ class DataType(Component):
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
     intermidia_type: t.Optional[str] = IntermidiaType.BYTES
     media_type: t.Optional[str] = None
+    registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
 
     def __post_init__(self, artifacts):
         """
@@ -229,6 +261,7 @@ class DataType(Component):
         self.encodable_cls = _ENCODABLES[self.encodable]
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
         self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
+        self.register_datatype(self)
 
     def dict(self):
         """
@@ -305,6 +338,15 @@ class DataType(Component):
         ):
             return base64_to_bytes(data)
         return data
+
+    @classmethod
+    def register_datatype(cls, instance):
+        """
+        Register a datatype.
+
+        :param instance: The datatype instance to register.
+        """
+        cls.registered_types[instance.identifier] = instance
 
 
 def encode_torch_state_dict(module, info):
@@ -974,12 +1016,6 @@ pickle_lazy = DataType(
     decoder=pickle_decode,
     encodable='lazy_artifact',
 )
-dill_base = DataType(
-    'dill_base',
-    encoder=dill_encode,
-    decoder=dill_decode,
-    encodable='encodable',
-)
 dill_serializer = DataType(
     'dill',
     encoder=dill_encode,
@@ -1010,13 +1046,4 @@ file_lazy = DataType(
     decoder=file_check,
     encodable="lazy_file",
 )
-serializers = {
-    'pickle': pickle_serializer,
-    'dill': dill_serializer,
-    'dill_base': dill_base,
-    'torch': torch_serializer,
-    'file': file_serializer,
-    'pickle_lazy': pickle_lazy,
-    'dill_lazy': dill_lazy,
-    'file_lazy': file_lazy,
-}
+serializers = DataType.registered_types

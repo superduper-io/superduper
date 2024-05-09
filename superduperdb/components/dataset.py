@@ -24,13 +24,14 @@ from superduperdb.misc.annotations import public_api
 @dc.dataclass(kw_only=True)
 class Dataset(Component):
     """A dataset is an immutable collection of documents.
+
     {component_params}
 
-    :param select: A query to select the documents for the dataset
-    :param sample_size: The number of documents to sample from the query
-    :param random_seed: The random seed to use for sampling
-    :param creation_date: The date the dataset was created
-    :param raw_data: The raw data for the dataset
+    :param select: A query to select the documents for the dataset.
+    :param sample_size: The number of documents to sample from the query.
+    :param random_seed: The random seed to use for sampling.
+    :param creation_date: The date the dataset was created.
+    :param raw_data: The raw data for the dataset.
     """
 
     __doc__ = __doc__.format(component_params=Component.__doc__)
@@ -47,6 +48,11 @@ class Dataset(Component):
     raw_data: t.Optional[t.Sequence[t.Any]] = None
 
     def __post_init__(self, artifacts):
+        """Post-initialization method.
+
+        Args:
+            artifacts: Optional additional artifacts for initialization.
+        """
         self._data = None
         return super().__post_init__(artifacts)
 
@@ -54,13 +60,13 @@ class Dataset(Component):
     @ensure_initialized
     def data(self):
         """
-        Dataset property.
+        Property representing the dataset's data.
         """
         return self._data
 
     def init(self):
         """
-        Intialization method.
+        Initialization method.
         """
         super().init()
         self._data = [Document.decode(r, self.db) for r in pickle_decode(self.raw_data)]
@@ -68,12 +74,14 @@ class Dataset(Component):
     @override
     def pre_create(self, db: 'Datalayer') -> None:
         """
-        Pre create database hook.
-        :param db: Datalayer instance
+        Pre-create hook for database operations.
+
+        Args:
+            db: The Datalayer instance.
         """
         if self.raw_data is None:
             if self.select is None:
-                raise ValueError('select cannot be None')
+                raise ValueError('Select cannot be None')
             data = list(db.execute(self.select))
             if self.sample_size is not None and self.sample_size < len(data):
                 perm = self.random.permutation(len(data)).tolist()
@@ -83,6 +91,6 @@ class Dataset(Component):
     @cached_property
     def random(self):
         """
-        Cached property for random.
+        Cached property representing the random number generator.
         """
         return numpy.random.default_rng(seed=self.random_seed)

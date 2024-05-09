@@ -14,11 +14,10 @@ from superduperdb.misc.annotations import public_api
 @dc.dataclass(kw_only=True)
 class Schema(Component):
     """
-    A component carrying the information
-    about the types or `Encoders` of a `Table`.
+    A component containing information about the types or encoders of a table.
 
     {component_parameters}
-    :param fields: A mapping of field names to types or `Encoders`
+    :param fields: A mapping of field names to types or encoders.
     """
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)
@@ -34,9 +33,9 @@ class Schema(Component):
     @override
     def pre_create(self, db) -> None:
         """
-        Database pre create hook to add datatype to db.
+        Database pre-create hook to add datatype to the database.
 
-        :param db: Datalayer instance
+        :param db: Datalayer instance.
         """
         for v in self.fields.values():
             if isinstance(v, DataType):
@@ -46,8 +45,8 @@ class Schema(Component):
     @property
     def raw(self):
         """
-        Get a dictionary of fields as key and datatype as value, This is used
-        to create ibis tables.
+        Get a dictionary of fields as keys and datatypes as values.
+        This is used to create ibis tables.
         """
         return {
             k: (v.identifier if not isinstance(v, DataType) else CFG.bytes_encoding)
@@ -57,21 +56,21 @@ class Schema(Component):
     @cached_property
     def encoded_types(self):
         """
-        List of fields of type `DataType`.
+        List of fields of type DataType.
         """
         return [k for k, v in self.fields.items() if isinstance(v, DataType)]
 
     @cached_property
     def trivial(self):
         """
-        List of trivial fields.
+        Determine if the schema contains only trivial fields.
         """
         return not any([isinstance(v, DataType) for v in self.fields.values()])
 
     @property
     def encoders(self):
         """
-        An iterable to list `Datatype` fields.
+        An iterable to list DataType fields.
         """
         for v in self.fields.values():
             if isinstance(v, DataType):
@@ -81,7 +80,7 @@ class Schema(Component):
         """
         Decode data using the schema's encoders.
 
-        :param data: data to decode
+        :param data: Data to decode.
         """
 
         if self.trivial:
@@ -99,7 +98,7 @@ class Schema(Component):
         """
         Encode data using the schema's encoders.
 
-        :param data: data to encode
+        :param data: Data to encode.
         """
         if self.trivial:
             return data

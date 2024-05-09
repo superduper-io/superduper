@@ -24,15 +24,14 @@ SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 @dc.dataclass(kw_only=True)
 class Listener(Component):
     """
-    Listener object which is used to process a column/ key of a collection or table,
+    Listener object which is used to process a column/key of a collection or table,
     and store the outputs.
-    {component_parameters}
 
-    :param key: Key to be bound to model
-    :param model: Model for processing data
-    :param select: Object for selecting which data is processed
-    :param active: Toggle to ``False`` to deactivate change data triggering
-    :param predict_kwargs: Keyword arguments to self.model.predict
+    :param key: Key to be bound to the model.
+    :param model: Model for processing data.
+    :param select: Object for selecting which data is processed.
+    :param active: Toggle to ``False`` to deactivate change data triggering.
+    :param predict_kwargs: Keyword arguments to self.model.predict().
     :param identifier: A string used to identify the model.
     """
 
@@ -59,9 +58,9 @@ class Listener(Component):
     @classmethod
     def handle_integration(cls, kwargs):
         """
-        Method to handler integration.
+        Method to handle integration.
 
-        :param kwargs: integration kwargs
+        :param kwargs: Integration keyword arguments.
         """
         if 'select' in kwargs and isinstance(kwargs['select'], dict):
             kwargs['select'] = parse_query(
@@ -129,9 +128,9 @@ class Listener(Component):
     @override
     def pre_create(self, db: Datalayer) -> None:
         """
-        Pre create hook.
+        Pre-create hook.
 
-        :param db: Datalayer instance.
+        :param db: Data layer instance.
         """
         if self.select is not None and self.select.variables:
             self.select = t.cast(CompoundSelect, self.select.set_variables(db))
@@ -155,9 +154,9 @@ class Listener(Component):
     @override
     def post_create(self, db: Datalayer) -> None:
         """
-        Post create hook.
+        Post-create hook.
 
-        :param db: Datalayer instance.
+        :param db: Data layer instance.
         """
         output_table = db.databackend.create_output_dest(
             f'{self.identifier}::{self.version}',
@@ -195,7 +194,7 @@ class Listener(Component):
     @property
     def predict_id(self):
         """
-        Get predict id.
+        Get predict ID.
         """
         return f'{self.identifier}::{self.version}'
 
@@ -222,9 +221,9 @@ class Listener(Component):
 
     def depends_on(self, other: Component):
         """
-        Check if listener depends on `other` component.
+        Check if the listener depends on another component.
 
-        :param other: Other component.
+        :param other: Another component.
         """
         if not isinstance(other, Listener):
             return False
@@ -241,8 +240,8 @@ class Listener(Component):
         """
         Schedule jobs for the listener.
 
-        :param db: The Datalayer instance to process
-        :param dependencies: A list of dependencies
+        :param db: Data layer instance to process.
+        :param dependencies: A list of dependencies.
         """
         if not self.active:
             return []
@@ -264,7 +263,7 @@ class Listener(Component):
     def cleanup(self, database: Datalayer) -> None:
         """Clean up when the listener is deleted.
 
-        :param database: The datalayer instance to process
+        :param database: Data layer instance to process.
         """
         # TODO - this doesn't seem to do anything
         if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:

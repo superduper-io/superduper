@@ -9,11 +9,11 @@ from superduperdb.misc.annotations import public_api
 @dc.dataclass(kw_only=True)
 class Metric(Component):
     """
-    Metric base object with which to evaluate performance on a data-set.
-    These objects are ``callable`` and are applied row-wise to the data, and averaged.
+    Metric base object used to evaluate performance on a dataset.
+    These objects are callable and are applied row-wise to the data, and averaged.
 
     {component_parameters}
-    :param object: callable or ``Artifact`` to be applied to the data
+    :param object: Callable or an Artifact to be applied to the data.
     """
 
     __doc__ = __doc__.format(component_parameters=Component.__doc__)

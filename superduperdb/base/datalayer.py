@@ -59,12 +59,12 @@ ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 
 class Datalayer:
     """
-    Base database connector for SuperDuperDB
+    Base database connector for SuperDuperDB.
 
-    :param databackend: object containing connection to Datastore
-    :param metadata: object containing connection to Metadatastore
-    :param artifact_store: object containing connection to Artifactstore
-    :param compute: object containing connection to ComputeBackend
+    :param databackend: Object containing connection to Datastore.
+    :param metadata: Object containing connection to Metadatastore.
+    :param artifact_store: Object containing connection to Artifactstore.
+    :param compute: Object containing connection to ComputeBackend.
     """
 
     type_id_to_cache_mapping = {
@@ -82,6 +82,14 @@ class Datalayer:
         artifact_store: ArtifactStore,
         compute: ComputeBackend = LocalComputeBackend(),
     ):
+        """
+        Initialize Data Layer.
+
+        :param databackend: Object containing connection to Datastore.
+        :param metadata: Object containing connection to Metadatastore.
+        :param artifact_store: Object containing connection to Artifactstore.
+        :param compute: Object containing connection to ComputeBackend.
+        """
         logging.info("Building Data Layer")
 
         self.metrics = LoadDict(self, field='metric')
@@ -109,7 +117,7 @@ class Datalayer:
     @property
     def server_mode(self):
         """
-        Proptery server mode.
+        Property for server mode.
         """
         return self._server_mode
 
@@ -118,7 +126,7 @@ class Datalayer:
         """
         Set server mode property.
 
-        :param is_server: new boolean property
+        :param is_server: New boolean property.
         """
         assert isinstance(is_server, bool)
         self._server_mode = is_server
@@ -127,10 +135,10 @@ class Datalayer:
         self, identifier, searcher_type: t.Optional[str] = None
     ) -> t.Optional[BaseVectorSearcher]:
         """
-        A helper function to initialize vector searcher.
+        Initialize vector searcher.
 
-        :param identifier: identifying string to component
-        :param searcher_type: Searcher type (in_memory|native)
+        :param identifier: Identifying string to component.
+        :param searcher_type: Searcher type (in_memory|native).
         """
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
 
@@ -152,12 +160,10 @@ class Datalayer:
 
     def backfill_vector_search(self, vi, searcher):
         """
-        Helper function to backfill vector search from model outputs of
-        a given vector index.
+        Backfill vector search from model outputs of a given vector index.
 
-        :param vi: Identifier of vector index
-        :param searcher: FastVectorSearch instance to
-                         load model outputs as vectors
+        :param vi: Identifier of vector index.
+        :param searcher: FastVectorSearch instance to load model outputs as vectors.
         """
         if s.CFG.cluster.vector_search.type == 'native':
             return
@@ -165,7 +171,7 @@ class Datalayer:
         if s.CFG.cluster.vector_search.uri and not self.server_mode:
             return
 
-        logging.info(f"loading of vectors of vector-index: '{vi.identifier}'")
+        logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
 
         if vi.indexing_listener.select is None:
             raise ValueError('.select must be set')
@@ -200,18 +206,18 @@ class Datalayer:
 
     def set_compute(self, new: ComputeBackend):
         """
-        Set a new compute engine at runtime. Use it only if you know what you do.
-        The standard procedure is to set compute engine during initialization.
+        Set a new compute engine at runtime. Use it only if you know what you are doing.
+        The standard procedure is to set the compute engine during initialization.
 
-        :param new: New compute backend
+        :param new: New compute backend.
         """
         logging.warn(
-            f"Change compute engine from '{self.compute.name}' to '{new.name}'"
+            f"Changing compute engine from '{self.compute.name}' to '{new.name}'"
         )
 
         self.compute.disconnect()
         logging.success(
-            f"Succesfully disconnected from compute engine: '{self.compute.name}'"
+            f"Successfully disconnected from compute engine: '{self.compute.name}'"
         )
 
         logging.info(f"Connecting to compute engine: {new.name}")
@@ -225,17 +231,17 @@ class Datalayer:
 
     def drop(self, force: bool = False):
         """
-        Drop all data, artifacts and metadata.
+        Drop all data, artifacts, and metadata.
 
-        :param force: Force drop
+        :param force: Force drop.
         """
         if not force and not click.confirm(
-            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-            'Are you sure you want to drop the database? ',
+            f"{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU WILL"
+            f"LOSE ALL DATA!!!]{Colors.RESET} "
+            "Are you sure you want to drop the database? ",
             default=False,
         ):
-            logging.warn('Aborting...')
+            logging.warn("Aborting...")
 
         self.databackend.drop(force=True)
         self.metadata.drop(force=True)
@@ -249,16 +255,16 @@ class Datalayer:
     ):
         """
         Show available functionality which has been added using ``self.add``.
-        If version is specified, then print full metadata
+        If the version is specified, then print full metadata.
 
-        :param type_id: type_id of component to show ['datatype', 'model', 'listener',
+        :param type_id: Type_id of component to show ['datatype', 'model', 'listener',
                        'learning_task', 'training_configuration', 'metric',
-                       'vector_index', 'job']
-        :param identifier: identifying string to component
-        :param version: (optional) numerical version - specify for full metadata
+                       'vector_index', 'job'].
+        :param identifier: Identifying string to component.
+        :param version: (Optional) Numerical version - specify for full metadata.
         """
         if identifier is None and version is not None:
-            raise ValueError(f'must specify {identifier} to go with {version}')
+            raise ValueError(f"Must specify {identifier} to go with {version}")
 
         if type_id is None:
             nt = namedtuple('nt', ('type_id', 'identifier'))
@@ -303,9 +309,10 @@ class Datalayer:
 
     def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
         """
-        Execute a query on the db.
+        Execute a query on the database.
 
-        :param query: select, insert, delete, update,
+        :param query: The SQL query to execute, such as select, insert,
+                      delete, or update.
         """
 
         if isinstance(query, Delete):
@@ -337,10 +344,11 @@ class Datalayer:
 
     def _delete(self, delete: Delete, refresh: bool = True) -> DeleteResult:
         """
-        Delete data.
+        Delete data from the database.
 
-        :param delete: delete query object
+        :param delete: The delete query object specifying the data to be deleted.
         """
+
         result = delete.execute(self)
         if refresh and not self.cdc.running:
             return result, self.refresh_after_delete(delete, ids=result)
@@ -350,12 +358,13 @@ class Datalayer:
         self, insert: Insert, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
     ) -> InsertResult:
         """
-        Insert data.
+        Insert data into the database.
 
-        :param insert: insert query object
-        :param refresh: refresh task group on insert
-        :param datatypes: list of datatypes in insert documents
+        :param insert: The insert query object specifying the data to be inserted.
+        :param refresh: Boolean indicating whether to refresh the task group on insert.
+        :param datatypes: List of datatypes in the insert documents.
         """
+
         for e in datatypes:
             self.add(e)
 
@@ -386,10 +395,11 @@ class Datalayer:
 
     def _select(self, select: Select, reference: bool = True) -> SelectResult:
         """
-        Select data.
+        Select data from the database.
 
-        :param select: select query object
+        :param select: The select query object specifying the data to be retrieved.
         """
+
         if select.variables:
             select = select.set_variables(self)  # type: ignore[assignment]
         return select.execute(self, reference=reference)
@@ -403,10 +413,12 @@ class Datalayer:
         """
         Trigger cleanup jobs after data deletion.
 
-        :param query: Select or Update which reduces scope of computations
-        :param ids: ids which reduce scopy of computations
-        :param verbose: Toggle to ``True`` to get more output
+        :param query: The select or update query object that reduces
+                      the scope of computations.
+        :param ids: IDs that further reduce the scope of computations.
+        :param verbose: Set to ``True`` to enable more detailed output.
         """
+
         task_workflow: TaskWorkflow = self._build_delete_task_workflow(
             query,
             ids=ids,
@@ -425,11 +437,13 @@ class Datalayer:
         """
         Trigger computation jobs after data insertion.
 
-        :param query: Select or Update which reduces scope of computations
-        :param ids: ids which reduce scopy of computations
-        :param verbose: Toggle to ``True`` to get more output
-        :param overwrite: Cascade the value to `predict_in_db` job.
+        :param query: The select or update query object that reduces
+                      the scope of computations.
+        :param ids: IDs that further reduce the scope of computations.
+        :param verbose: Set to ``True`` to enable more detailed output.
+        :param overwrite: If True, cascade the value to the 'predict_in_db' job.
         """
+
         task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
@@ -441,11 +455,12 @@ class Datalayer:
 
     def _write(self, write: Write, refresh: bool = True) -> UpdateResult:
         """
-        Bulk write data to database.
+        Bulk write data to the database.
 
-        :param write: update query object
-        :param refresh: refresh task group on write
+        :param write: The update query object specifying the data to be written.
+        :param refresh: Boolean indicating whether to refresh the task group on write.
         """
+
         write_result, updated_ids, deleted_ids = write.execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
@@ -477,10 +492,13 @@ class Datalayer:
 
     def _update(self, update: Update, refresh: bool = True) -> UpdateResult:
         """
-        Update data.
+        Update data in the database.
 
-        :param update: update query object
-        :param refresh: refresh task group on update
+        :param update: The update query object specifying the data to be updated.
+        :param refresh: Boolean indicating whether to refresh the task group
+                        after update.
+        :return: Tuple containing the updated IDs and the refresh result if
+                 performed.
         """
         updated_ids = update.execute(self)
 
@@ -491,7 +509,7 @@ class Datalayer:
             else:
                 # Overwrite should be true since updates could be done on collections
                 # with already existing outputs.
-                # We need overwrite ouptuts on those select and recompute predict
+                # We need overwrite outputs on those select and recompute predict
                 return updated_ids, self.refresh_after_update_or_insert(
                     query=update, ids=updated_ids, verbose=False, overwrite=True
                 )
@@ -500,11 +518,11 @@ class Datalayer:
     @deprecated
     def add(self, object: t.Any, dependencies: t.Sequence[Job] = ()):
         """
-        Note use of `add` is deprecated, use `apply` instead.
+        Note: The use of `add` is deprecated, use `apply` instead.
 
-        :param object: Object to be stored
-        :param dependencies: list of jobs which should execute before component
-                             init begins
+        :param object: Object to be stored.
+        :param dependencies: List of jobs which should execute before component
+                             initialization begins.
         """
         return self.apply(object, dependencies=dependencies)
 
@@ -515,12 +533,12 @@ class Datalayer:
     ):
         """
         Add functionality in the form of components. Components are stored in the
-        configured artifact store, and linked to the primary db through
-        the metadata.
+        configured artifact store and linked to the primary database through metadata.
 
-        :param object: Object to be stored
-        :param dependencies: list of jobs which should execute before component
-                             init begins
+        :param object: Object to be stored.
+        :param dependencies: List of jobs which should execute before component
+                             initialization begins.
+        :return: Tuple containing the added object(s) and the original object(s).
         """
         if isinstance(object, (list, tuple)):
             return type(object)(
@@ -543,14 +561,17 @@ class Datalayer:
         force: bool = False,
     ):
         """
-        Remove component (version: optional).
+        Remove a component (version optional).
 
-        :param type_id: type_id of component to remove ['datatype', 'model', 'listener',
-                        'training_configuration', 'vector_index']
-        :param identifier: identifier of component (see `container.base.Component`)
-        :param version: [optional] numerical version to remove
-        :param force: force skip confirmation (use with caution)
+        :param type_id: Type ID of the component to remove ('datatype',
+                        'model', 'listener', 'training_configuration',
+                        'vector_index').
+        :param identifier: Identifier of the component (refer to
+                            `container.base.Component`).
+        :param version: [Optional] Numerical version to remove.
+        :param force: Force skip confirmation (use with caution).
         """
+
         # TODO: versions = [version] if version is not None else ...
         if version is not None:
             return self._remove_component_version(
@@ -603,15 +624,16 @@ class Datalayer:
         info_only: bool = False,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
-        Load component using uniquely identifying information.
+        Load a component using uniquely identifying information.
 
-        :param type_id: type_id of component to remove
-                        ['datatype', 'model', 'listener', ...]
-        :param identifier: identifier of component (see `container.base.Component`)
-        :param version: [optional] numerical version
-        :param allow_hidden: toggle to ``True`` to allow loading of deprecated
-                             components
-        :param info_only: toggle to ``True`` to return metadata only
+        :param type_id: Type ID of the component to load
+                         ('datatype', 'model', 'listener', ...).
+        :param identifier: Identifier of the component
+                           (see `container.base.Component`).
+        :param version: [Optional] Numerical version.
+        :param allow_hidden: Toggle to ``True`` to allow loading
+                             of deprecated components.
+        :param info_only: Toggle to ``True`` to return metadata only.
         """
 
         if type_id == 'encoder':
@@ -702,9 +724,9 @@ class Datalayer:
         overwrite: bool = False,
     ) -> TaskWorkflow:
         """
-        A helper function to build taskworkflow for query with
-        dependencies.
+        A helper function to build a task workflow for a query with dependencies.
         """
+
         logging.debug(f"Building task workflow graph. Query:{query}")
 
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
@@ -989,11 +1011,14 @@ class Datalayer:
         upsert: bool = False,
     ):
         """
-        (Use-with caution!!) Replace a model in artifact store with updated object.
+        (Use with caution!) Replace a model in the artifact store with
+        an updated object.
 
-        :param object: object to replace
-        :param upsert: toggle to ``True`` to enable even if object doesn't exist yet
+        :param object: The object to replace.
+        :param upsert: Toggle to ``True`` to enable replacement even if
+                       the object doesn't exist yet.
         """
+
         try:
             info = self.metadata.get_component(
                 object.type_id, object.identifier, version=object.version
@@ -1025,14 +1050,15 @@ class Datalayer:
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         """
-        Performs a vector search query on given vector index.
+        Performs a vector search query on the given vector index.
 
-        :param like: vector search document to search.
-        :param vector_index: vector index to search.
-        :param ids: (optional) ids to search within
-        :param outputs: (optional) seed outputs dict.
+        :param like: Vector search document to search.
+        :param vector_index: Vector index to search.
+        :param ids: (Optional) IDs to search within.
+        :param outputs: (Optional) Seed outputs dictionary.
         :param n: Get top k results from vector search.
         """
+
         # TODO - make this un-ambiguous
         if not isinstance(like, Document):
             assert isinstance(like, dict)
@@ -1081,12 +1107,12 @@ class Datalayer:
 @dc.dataclass
 class LoadDict(dict):
     """
-    Helper class to load component identifiers with
-    on demand loading from database.
+    Helper class to load component identifiers with on-demand
+    loading from the database.
 
-    :param database: Datalayer instance
-    :param field: (optional) Component type id
-    :param callable: (optional) callable on key
+    :param database: Instance of Datalayer.
+    :param field: (optional) Component type identifier.
+    :param callable: (optional) Callable function on key.
     """
 
     database: Datalayer

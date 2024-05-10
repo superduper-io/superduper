@@ -16,7 +16,7 @@ from superduperdb.ext.numpy.encoder import array
 def schema(request):
     bytes_encoding = request.param if hasattr(request, 'param') else None
 
-    array_tensor = array("float64", shape=(32,), bytes_encoding=bytes_encoding)
+    array_tensor = array(dtype="float64", shape=(32,), bytes_encoding=bytes_encoding)
     schema = Schema(
         identifier=f'documents-{bytes_encoding}',
         fields={
@@ -30,7 +30,7 @@ def schema(request):
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_mongo_without_schema(db):
     collection_name = "documents"
-    array_tensor = array("float64", shape=(32,))
+    array_tensor = array(dtype="float64", shape=(32,))
     db.add(array_tensor)
     data = []
 
@@ -89,6 +89,8 @@ def test_mongo_schema(db, schema):
         )
 
     db.add(schema)
+    import copy
+    gt = copy.deepcopy(data[0])
 
     db.execute(
         MongoQuery(collection_name).insert_many(data, schema=schema.identifier),
@@ -99,7 +101,8 @@ def test_mongo_schema(db, schema):
 
     rs = sorted(rs, key=lambda x: x['id'])
 
-    assert np.array_equal(r['x'], data[0]['x'])
+    assert np.array_equal(r['x'], gt['x'])
+    breakpoint()
     assert np.array_equal(r['z'], data[0]['z'])
 
     assert np.array_equal(rs[0]['x'], data[0]['x'])

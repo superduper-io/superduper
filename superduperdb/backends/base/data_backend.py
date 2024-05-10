@@ -18,11 +18,8 @@ class BaseDataBackend(ABC):
         self.conn = conn
         self.name = name
         self.in_memory: bool = False
-<<<<<<< HEAD
         self.in_memory_tables: t.Dict = {}
-=======
         self._datalayer = None
->>>>>>> 9d83d21ec (Deprecate Serializable)
 
     @property
     def db(self):

@@ -2,7 +2,7 @@ import dataclasses as dc
 import importlib
 import inspect
 import typing as t
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC
 import uuid
 from superduperdb.misc.serialization import asdict
 

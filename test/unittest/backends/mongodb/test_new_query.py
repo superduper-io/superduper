@@ -1,18 +1,12 @@
-from superduperdb.backends.mongodb.new_query import Collection
+import pytest
+from test.db_config import DBConfig
+from superduperdb import Document
 
-
-def test_add_fold():
-
-    coll = Collection(identifier='test_coll')
-
-    q = coll.find().limit(5)
-
-    new_q = q.add_fold('valid')
-
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_add_fold(db):
+    breakpoint()
+    new_q = db['documents'].like(Document({'text': 'some like'})).limit(n=5)
     print(new_q)
 
-    assert str(new_q) == "test_coll.find({'_fold': 'valid'}).limit(5)"
+    assert str(new_q) == "documents.find({'_fold': 'valid'}).limit(5)"
 
-
-def test_add():
-    ...

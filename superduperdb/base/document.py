@@ -2,13 +2,11 @@ import typing as t
 
 from bson.objectid import ObjectId
 
-from superduperdb import logging
 from superduperdb.base.code import Code
 from superduperdb.base.leaf import Leaf, _import_item
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
-    DataType,
     Encodable,
     _BaseEncodable,
 )
@@ -47,13 +45,12 @@ class Document(MongoStyleDict):
                  db: t.Optional['Datalayer'] = None,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self.schema = schema
         self.db = db
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep: t.Sequence = ()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep: t.Sequence = (), schema: t.Optional['Schema']=None):
         out = dict(self)
-        if self.schema is not None:
-            out = self.schema.deep_flat_encode_data(
+        if schema is not None:
+            out = schema.deep_flat_encode_data(
                 self, cache, blobs, files,
                 leaves_to_keep=leaves_to_keep,
             )
@@ -62,11 +59,11 @@ class Document(MongoStyleDict):
             leaves_to_keep=leaves_to_keep,
         )
 
-    def encode(self, leaves_to_keep: t.Sequence = ()) -> t.Dict:
+    def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep: t.Sequence = ()) -> t.Dict:
         cache = {}
         blobs = {}
         files = []
-        out = self._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
+        out = self._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
         out['_leaves'] = cache
         out['_files'] = files
         out['_blobs'] = blobs

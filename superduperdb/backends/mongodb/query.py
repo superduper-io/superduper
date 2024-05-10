@@ -185,7 +185,10 @@ class MongoQuery(Query):
         documents = self.parts[0][1][0]
         trailing_args = self.parts[0][1][1:]
         kwargs = self.parts[0][2]
-        documents = [r.encode() for r in documents]
+        schema = kwargs.pop('schema', None)
+
+        schema = get_schema(self.db, schema) if schema else None
+        documents = [r.encode(schema) for r in self.documents]
         for r in documents:
             if '_blobs' in r:
                 for file_id, bytes in r['_blobs'].items():
@@ -418,3 +421,18 @@ class BulkOp(Leaf):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)
 
+from superduperdb.components.schema import Schema
+def get_schema(db, schema: t.Union[Schema, str]) -> Schema:
+    """Handle schema caching and loading."""
+    if isinstance(schema, Schema):
+        # If the schema is not in the db, it is added to the db.
+        if schema.identifier not in db.show(Schema.type_id):
+            db.add(schema)
+        schema_identifier = schema.identifier
+
+    else:
+        schema_identifier = schema
+
+    assert isinstance(schema_identifier, str)
+
+    return db.schemas[schema_identifier]

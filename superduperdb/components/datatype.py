@@ -258,14 +258,14 @@ class DataType(Component):
     media_type: t.Optional[str] = None
     registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         """
         Post-initialization hook.
 
         :param artifacts: The artifacts.
         """
         self.encodable_cls = _ENCODABLES[self.encodable]
-        super().__post_init__(artifacts)
+        super().__post_init__(db, artifacts)
         self._takes_x = 'x' in inspect.signature(self.encodable_cls.__init__).parameters
         self.bytes_encoding = self.bytes_encoding or CFG.bytes_encoding
         self.register_datatype(self)
@@ -524,7 +524,7 @@ class Encodable(_BaseEncodable):
         super().__post_init__(db)
         if isinstance(self.x, Empty):
             self.datatype.init()
-            self.x = self.datatype.decoder(blob)
+            self.x = self.datatype.decode_data(blob)
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)

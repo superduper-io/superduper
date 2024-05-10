@@ -115,7 +115,7 @@ class Query(Leaf, ABC):
                 args.append(self._update_item(a, documents, queries))
             args = ', '.join(args)
             kwargs = {}
-            for k, v in kwargs.items():
+            for k, v in part[2].items():
                 kwargs[k] = self._update_item(v, documents, queries)
             kwargs = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
             if part[1] and part[2]:

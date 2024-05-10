@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import os
-=======
 import logging
->>>>>>> 9d83d21ec (Deprecate Serializable)
 import typing as t
 from warnings import warn
 

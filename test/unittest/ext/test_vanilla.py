@@ -105,7 +105,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function = ObjectModel(
-        object=lambda x: x if x < 2 else [x, x, x],
+        object=lambda x: [x] if x < 2 else [x, x, x],
         identifier='test',
         flatten=True,
         model_update_kwargs={'document_embedded': False},

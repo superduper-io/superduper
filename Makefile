@@ -92,6 +92,8 @@ lint-and-type-check: ##  Perform code linting and type checking
 	ruff check $(DIRECTORIES)
 
 	@echo "===> Static Typing Check <==="
+
+	@if [ -d .mypy_cache ]; then rm -rf .mypy_cache; fi
 	mypy superduperdb
 	# Check for missing docstrings
 	# interrogate superduperdb
@@ -106,7 +108,8 @@ fix-and-check: ##  Lint the code before testing
 	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
 	# Linting
-	rm -rf .mypy_cache/
+
+	@if [ -d .mypy_cache ]; then rm -rf .mypy_cache; fi
 	mypy superduperdb
 
 

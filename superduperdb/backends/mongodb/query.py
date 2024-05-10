@@ -956,19 +956,6 @@ class Collection(TableOrCollection):
                     collection.insert_many([Document(**doc) for doc in bulk_writes])
                 )
 
-    @staticmethod
-    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """
-        Infer a schema from a given data object
-
-        :param data: The data object
-        :param identifier: The identifier for the schema, if None, it will be generated
-        :return: The inferred schema
-        """
-        from superduperdb.misc.auto_schema import infer_schema
-
-        return infer_schema(data, identifier)
-
 
 def _get_decode_function(db) -> t.Callable[[t.Any], t.Any]:
     def decode(output):

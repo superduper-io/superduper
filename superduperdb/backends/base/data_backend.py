@@ -6,6 +6,8 @@ from superduperdb.components.datatype import DataType
 
 
 class BaseDataBackend(ABC):
+    db_type = None
+
     def __init__(self, conn: t.Any, name: str):
         self.conn = conn
         self.name = name
@@ -40,10 +42,14 @@ class BaseDataBackend(ABC):
     @abstractmethod
     def create_output_dest(
         self,
-        identifier: str,
+        predict_id: str,
         datatype: t.Union[None, DataType, FieldType],
         flatten: bool = False,
     ):
+        pass
+
+    @abstractmethod
+    def check_output_dest(self, predict_id) -> bool:
         pass
 
     @abstractmethod
@@ -69,4 +75,14 @@ class BaseDataBackend(ABC):
     def list_tables_or_collections(self):
         """
         List all tables or collections in the database.
+        """
+
+    @staticmethod
+    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
+        """
+        Infer a schema from a given data object
+
+        :param data: The data object
+        :param identifier: The identifier for the schema, if None, it will be generated
+        :return: The inferred schema
         """

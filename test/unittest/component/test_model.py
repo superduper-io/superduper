@@ -7,9 +7,9 @@ import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
+from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.ibis.field_types import FieldType
-from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
@@ -144,10 +144,10 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
 def test_pm_predict(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
-    db.compute = MagicMock(spec=LocalComputeBackend)
-    db.metadata = MagicMock()
+    db.databackend = MagicMock(spec=BaseDataBackend)
     select = MagicMock(spec=Select)
     select.table_or_collection = MagicMock()
+    predict_mixin.db = db
 
     with patch.object(predict_mixin, 'predict') as predict_func:
         predict_mixin.predict_in_db('x', db=db, select=select, predict_id='test')
@@ -164,7 +164,9 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
 
     select = MagicMock(spec=Select)
     db = MagicMock(spec=Datalayer)
+    db.databackend = MagicMock(spec=BaseDataBackend)
     db.execute.return_value = docs
+    predict_mixin.db = db
 
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = 2
@@ -417,6 +419,7 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
 
         select = MagicMock(spec=Select)
         db = MagicMock(spec=Datalayer)
+        db.databackend = MagicMock(spec=BaseDataBackend)
         db.execute.return_value = docs
 
         # Check the base predict function

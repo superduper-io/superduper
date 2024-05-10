@@ -20,6 +20,7 @@ from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.base.document import Document
+from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.base.serializable import Serializable, Variable
 from superduperdb.components.component import Component, ensure_initialized
@@ -607,10 +608,19 @@ class Model(Component):
         return job
 
     def _get_ids_from_select(
-        self, *, X, select, db, ids, predict_id: str, overwrite: bool = False
+        self,
+        *,
+        X,
+        select,
+        db: 'Datalayer',
+        ids,
+        predict_id: str,
+        overwrite: bool = False,
     ):
-        predict_ids = []
-        if not overwrite:
+        if not db.databackend.check_output_dest(predict_id):
+            query = select.select_ids
+
+        elif not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
             if '_outputs' in X:
@@ -632,6 +642,7 @@ class Model(Component):
         except DatabackendException:
             id_curr = db.execute(select.select(id_field))
 
+        predict_ids = []
         for r in tqdm.tqdm(id_curr):
             predict_ids.append(str(r[id_field]))
         return predict_ids
@@ -782,6 +793,7 @@ class Model(Component):
             in_memory=in_memory,
         )
         outputs = self.predict(dataset)
+        self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
@@ -815,6 +827,44 @@ class Model(Component):
             outputs = self.encode_with_schema(outputs)
 
         return outputs
+
+    def _infer_auto_schema(self, outputs, predict_id):
+        """
+        Infer datatype from outputs of the model.
+
+        :param outputs: Outputs to infer datatype from.
+        """
+        if self.datatype is not None or self.output_schema is not None:
+            return
+
+        output = outputs[0]
+
+        if self.flatten:
+            assert isinstance(output, list), 'Flatten is set but output is not list'
+            output = output[0]
+
+        # Output schema only for mongodb
+        if isinstance(output, dict) and self.db.databackend.db_type == DBType.MONGODB:
+            output_schema = self.db.infer_schema(output)
+            if output_schema.fields:
+                self.output_schema = output_schema
+                self.db.apply(self.output_schema)
+        else:
+            self.datatype = self.db.infer_schema({"data": output}).fields.get(
+                "data", None
+            )
+            if isinstance(self.datatype, DataType):
+                self.db.apply(self.datatype)
+
+        if self.datatype is not None and not self.db.databackend.check_output_dest(
+            predict_id
+        ):
+            from superduperdb.components.listener import Listener
+
+            Listener.create_output_dest(self.db, predict_id, self)
+
+        if self.datatype is not None and self.output_schema is not None:
+            self.db.replace(self)
 
     def encode_with_schema(self, outputs):
         """

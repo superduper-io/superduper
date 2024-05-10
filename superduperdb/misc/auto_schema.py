@@ -102,13 +102,19 @@ def infer_schema(
         schema_data = updated_schema_data_for_mongodb(schema_data)
 
     if identifier is None:
-        key_value_pairs = []
-        for k, v in sorted(schema_data.items()):
-            if hasattr(v, "identifier"):
-                key_value_pairs.append(f"{k}={v.identifier}")
-            else:
-                key_value_pairs.append(f"{k}={str(v)}")
-        identifier = "&".join(key_value_pairs)
+        if not schema_data:
+            identifier = "empty"
+        else:
+            key_value_pairs = []
+            for k, v in sorted(schema_data.items()):
+                if hasattr(v, "identifier"):
+                    key_value_pairs.append(f"{k}={v.identifier}")
+                else:
+                    key_value_pairs.append(f"{k}={str(v)}")
+            identifier = "&".join(key_value_pairs)
+
+    if identifier is None:
+        raise ValueError("Could not infer schema identifier")
 
     return Schema(identifier=identifier, fields=schema_data)  # type: ignore
 

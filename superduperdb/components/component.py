@@ -201,7 +201,7 @@ class Component(Serializable, Leaf):
         return Schema(f'serializer/{self.identifier}', fields=schema)
 
     @property
-    def db(self):
+    def db(self) -> Datalayer:
         """
         Datalayer instance.
         """

@@ -5,7 +5,6 @@ from overrides import override
 
 from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import _OUTPUTS_KEY
 from superduperdb.base.serializable import Variable
 from superduperdb.components.model import Mapping
@@ -16,6 +15,10 @@ from superduperdb.rest.utils import parse_query
 from ..jobs.job import Job
 from .component import Component, ComponentTuple
 from .model import Model, ModelInputType
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
 
 SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 
@@ -113,7 +116,19 @@ class Listener(Component):
         """
         Get query reference to model outputs.
         """
-        return self.select.table_or_collection.outputs(self.predict_id)
+        if self.select.DB_TYPE == "SQL":
+            return self.select.table_or_collection.outputs(self.predict_id)
+
+        else:
+            from superduperdb.backends.mongodb.query import Collection
+
+            model_update_kwargs = self.model.model_update_kwargs or {}
+            if model_update_kwargs.get('document_embedded', True):
+                collection_name = self.select.table_or_collection.identifier
+            else:
+                collection_name = self.outputs
+
+            return Collection(collection_name).find()
 
     @property
     def outputs_key(self):
@@ -126,7 +141,7 @@ class Listener(Component):
             return self.outputs
 
     @override
-    def pre_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: "Datalayer") -> None:
         """
         Pre-create hook.
 
@@ -152,19 +167,13 @@ class Listener(Component):
         return key
 
     @override
-    def post_create(self, db: Datalayer) -> None:
+    def post_create(self, db: "Datalayer") -> None:
         """
         Post-create hook.
 
         :param db: Data layer instance.
         """
-        output_table = db.databackend.create_output_dest(
-            f'{self.identifier}::{self.version}',
-            self.model.datatype,
-            flatten=self.model.flatten,
-        )
-        if output_table is not None:
-            db.add(output_table)
+        self.create_output_dest(db, self.predict_id, self.model)
         if self.select is not None and self.active and not db.server_mode:
             if CFG.cluster.cdc.uri:
                 request_server(
@@ -175,6 +184,25 @@ class Listener(Component):
                 )
             else:
                 db.cdc.add(self)
+
+    @classmethod
+    def create_output_dest(cls, db: "Datalayer", predict_id, model: Model):
+        """
+        Create output destination.
+
+        :param db: Data layer instance.
+        :param predict_id: Predict ID.
+        :param model: Model instance.
+        """
+        if model.datatype is None:
+            return
+        output_table = db.databackend.create_output_dest(
+            predict_id,
+            model.datatype,
+            flatten=model.flatten,
+        )
+        if output_table is not None:
+            db.add(output_table)
 
     @property
     def dependencies(self) -> t.List[ComponentTuple]:
@@ -197,6 +225,18 @@ class Listener(Component):
         Get predict ID.
         """
         return f'{self.identifier}::{self.version}'
+
+    @classmethod
+    def from_predict_id(cls, db: "Datalayer", predict_id) -> 'Listener':
+        """
+        Split predict ID.
+
+        :param db: Data layer instance.
+        :param predict_id: Predict ID.
+        """
+
+        identifier, version = predict_id.rsplit('::', 1)
+        return t.cast(Listener, db.load('listener', identifier, version=int(version)))
 
     @property
     def id_key(self) -> str:
@@ -235,7 +275,10 @@ class Listener(Component):
 
     @override
     def schedule_jobs(
-        self, db: Datalayer, dependencies: t.Sequence[Job] = (), overwrite: bool = False
+        self,
+        db: "Datalayer",
+        dependencies: t.Sequence[Job] = (),
+        overwrite: bool = False,
     ) -> t.Sequence[t.Any]:
         """
         Schedule jobs for the listener.
@@ -251,7 +294,7 @@ class Listener(Component):
             self.model.predict_in_db_job(
                 X=self.key,
                 db=db,
-                predict_id=f'{self.identifier}::{self.version}',
+                predict_id=self.predict_id,
                 select=self.select.copy(),
                 dependencies=dependencies,
                 overwrite=overwrite,
@@ -260,7 +303,7 @@ class Listener(Component):
         ]
         return out
 
-    def cleanup(self, database: Datalayer) -> None:
+    def cleanup(self, database: "Datalayer") -> None:
         """Clean up when the listener is deleted.
 
         :param database: Data layer instance to process.

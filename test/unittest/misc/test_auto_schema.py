@@ -94,7 +94,7 @@ def test_infer_schema_ibis(data):
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_mongo_schema(db, data):
     collection_name = "documents"
-    schema = Collection.infer_schema(data)
+    schema = db.infer_schema(data)
 
     db.apply(schema)
 
@@ -113,7 +113,7 @@ def test_mongo_schema(db, data):
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_ibis_schema(db, data):
     data["id"] = str("1")
-    schema = Table.infer_schema(data)
+    schema = db.infer_schema(data)
 
     t = Table(identifier="my_table", schema=schema)
 

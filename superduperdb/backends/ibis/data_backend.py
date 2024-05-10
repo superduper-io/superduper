@@ -6,6 +6,7 @@ import ibis
 import pandas
 from ibis.backends.base import BaseBackend
 from pandas.core.frame import DataFrame
+from sqlalchemy.exc import NoSuchTableError
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
@@ -13,6 +14,7 @@ from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base.enums import DBType
 from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
 
@@ -21,6 +23,8 @@ INPUT_KEY = '_input_id'
 
 
 class IbisDataBackend(BaseDataBackend):
+    db_type = DBType.SQL
+
     def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
         super().__init__(conn=conn, name=name)
         self.in_memory = in_memory
@@ -98,6 +102,13 @@ class IbisDataBackend(BaseDataBackend):
                 schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
             )
 
+    def check_output_dest(self, predict_id) -> bool:
+        try:
+            self.conn.table(f'_outputs.{predict_id}')
+            return True
+        except NoSuchTableError:
+            return False
+
     def create_table_and_schema(self, identifier: str, mapping: dict):
         """
         Create a schema in the data-backend.
@@ -131,3 +142,16 @@ class IbisDataBackend(BaseDataBackend):
 
     def list_tables_or_collections(self):
         return self.conn.list_tables()
+
+    @staticmethod
+    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
+        """
+        Infer a schema from a given data object
+
+        :param data: The data object
+        :param identifier: The identifier for the schema, if None, it will be generated
+        :return: The inferred schema
+        """
+        from superduperdb.misc.auto_schema import infer_schema
+
+        return infer_schema(data, identifier=identifier, ibis=True)

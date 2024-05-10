@@ -33,6 +33,7 @@ from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
+from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.annotations import deprecated
@@ -1102,6 +1103,18 @@ class Datalayer:
         if cm := self.type_id_to_cache_mapping.get(type_id):
             getattr(self, cm)[component.identifier] = component
         component.on_load(self)
+
+    def infer_schema(
+        self, data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None
+    ) -> Schema:
+        """
+        Infer a schema from a given data object
+
+        :param data: The data object
+        :param identifier: The identifier for the schema, if None, it will be generated
+        :return: The inferred schema
+        """
+        return self.databackend.infer_schema(data, identifier)
 
 
 @dc.dataclass

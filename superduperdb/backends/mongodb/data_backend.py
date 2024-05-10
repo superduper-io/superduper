@@ -9,6 +9,7 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
+from superduperdb.base.enums import DBType
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
@@ -22,6 +23,8 @@ class MongoDataBackend(BaseDataBackend):
     :param conn: MongoDB client connection
     :param name: Name of database to host filesystem
     """
+
+    db_type = DBType.MONGODB
 
     id_field = '_id'
 
@@ -129,8 +132,24 @@ class MongoDataBackend(BaseDataBackend):
 
     def create_output_dest(
         self,
-        identifier: str,
+        predict_id: str,
         datatype: t.Union[None, DataType, FieldType],
         flatten: bool = False,
     ):
         pass
+
+    def check_output_dest(self, predict_id) -> bool:
+        return True
+
+    @staticmethod
+    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
+        """
+        Infer a schema from a given data object
+
+        :param data: The data object
+        :param identifier: The identifier for the schema, if None, it will be generated
+        :return: The inferred schema
+        """
+        from superduperdb.misc.auto_schema import infer_schema
+
+        return infer_schema(data, identifier)

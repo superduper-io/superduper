@@ -12,7 +12,7 @@ def device_of(module: Module) -> t.Union[_device, str]:
     """
     Get device of a model.
 
-    :param model: PyTorch model
+    :param module: PyTorch model
     """
     try:
         return next(iter(module.state_dict().values())).device

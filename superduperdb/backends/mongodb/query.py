@@ -29,14 +29,17 @@ SCHEMA_KEY = '_schema'
 
 
 class FindOne(QueryComponent):
-    """
-    Wrapper around ``pymongo.Collection.find_one``
+    """Wrapper around ``pymongo.Collection.find_one``.
 
     :param args: Positional arguments to ``pymongo.Collection.find_one``
     :param kwargs: Named arguments to ``pymongo.Collection.find_one``
     """
 
     def select_using_ids(self, ids):
+        """Select documents using ids.
+
+        :param ids: The ids to select
+        """
         ids = [ObjectId(id) for id in ids]
         args = list(self.args)[:]
         if not args:
@@ -50,12 +53,10 @@ class FindOne(QueryComponent):
         )
 
     def add_fold(self, fold: str):
-        """
-        Modify the query to add a fold to filter {'_fold': fold}
+        """Modify the query to add a fold to filter {'_fold': fold}.
 
         :param fold: The fold to add
         """
-
         args = self.args or [{}]
         args[0]['_fold'] = fold
         return FindOne(
@@ -68,11 +69,9 @@ class FindOne(QueryComponent):
 
 @dc.dataclass
 class Find(QueryComponent):
-    """
-    Wrapper around ``pymongo.Collection.find``
+    """Wrapper around ``pymongo.Collection.find``.
 
-    :param args: Positional arguments to ``pymongo.Collection.find``
-    :param kwargs: Named arguments to ``pymongo.Collection.find``
+    :param output_fields: The output fields to project to
     """
 
     output_fields: t.Optional[t.Dict[str, str]] = None
@@ -93,6 +92,7 @@ class Find(QueryComponent):
 
     @property
     def select_ids(self):
+        """Select ids."""
         args = list(self.args)[:]
         if not args:
             args = [{}]
@@ -113,7 +113,7 @@ class Find(QueryComponent):
         """
         Join the query with the outputs for a table.
 
-        :param **kwargs: key=model/version or key=model pairs
+        :param *predict_ids: The ids to predict
         """
         args = copy.deepcopy(list(self.args[:]))
         if not args:
@@ -132,6 +132,10 @@ class Find(QueryComponent):
         )
 
     def select_using_ids(self, ids):
+        """Select documents using ids.
+
+        :param ids: The ids to select
+        """
         ids = [ObjectId(id) for id in ids]
         args = list(self.args)[:]
         if not args:
@@ -145,6 +149,10 @@ class Find(QueryComponent):
         )
 
     def select_ids_of_missing_outputs(self, predict_id: str):
+        """Select ids of missing outputs.
+
+        :param predict_id: The predict id to select
+        """
         assert self.type == QueryType.QUERY
         if self.args:
             args = [
@@ -172,6 +180,10 @@ class Find(QueryComponent):
         )
 
     def select_single_id(self, id):
+        """Select a single document by id.
+
+        :param id: The id of the document to select
+        """
         assert self.type == QueryType.QUERY
         args = list(self.args)[:]
         if not args:
@@ -185,6 +197,10 @@ class Find(QueryComponent):
         )
 
     def add_fold(self, fold: str):
+        """Add a fold to the query.
+
+        :param fold: The fold to add
+        """
         args = self.args
         if not self.args:
             args = [{}]
@@ -199,8 +215,7 @@ class Find(QueryComponent):
 
 @dc.dataclass
 class Aggregate(Select):
-    """
-    Wrapper around ``pymongo.Collection.aggregate``
+    """Wrapper around ``pymongo.Collection.aggregate``.
 
     :param table_or_collection: The table or collection to perform the query on
     :param vector_index: The vector index to use
@@ -215,26 +230,41 @@ class Aggregate(Select):
 
     @property
     def id_field(self):
+        """Return the id field."""
         return self.table_or_collection.primary_id
 
     @property
     def select_table(self):
+        """Select the table to perform the query on."""
         raise NotImplementedError
 
     def add_fold(self):
+        """Add a fold to the query."""
         raise NotImplementedError
 
     def select_single_id(self, id: str):
+        """Select a single document by id.
+
+        :param id: The id of the document to select
+        """
         raise NotImplementedError
 
     @property
     def select_ids(self):
+        """Select ids."""
         raise NotImplementedError
 
     def select_using_ids(self):
+        """Select documents using ids."""
         raise NotImplementedError
 
     def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
+        """Select ids of missing outputs.
+
+        :param key: The key to select
+        :param model: The model to select
+        :param version: The version to select
+        """
         raise NotImplementedError
 
     @staticmethod
@@ -283,6 +313,11 @@ class Aggregate(Select):
         return pipeline
 
     def execute(self, db, reference=False):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        :param reference: Not used
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -304,6 +339,8 @@ class Aggregate(Select):
 
 @dc.dataclass(repr=False)
 class MongoCompoundSelect(CompoundSelect):
+    """CompoundSelect class to perform compound queries on a collection."""
+
     DB_TYPE: t.ClassVar[str] = 'MONGODB'
 
     def _deep_flat_encode(self, cache):
@@ -339,14 +376,13 @@ class MongoCompoundSelect(CompoundSelect):
 
     @property
     def output_fields(self):
+        """Return the output fields."""
         return self.query_linker.output_fields
 
     def outputs(self, *predict_ids):
-        """
-        This method returns a query which joins a query with the outputs
-        for a table.
+        """Returns a query which joins a query with the outputs for a table.
 
-        :param model: The model identifier for which to get the outputs
+        :param *predict_ids: The ids to predict
 
         >>> q = Collection(...).find(...).outputs('key', 'model_name')
 
@@ -360,6 +396,7 @@ class MongoCompoundSelect(CompoundSelect):
         )
 
     def change_stream(self, *args, **kwargs):
+        """Change stream for the query."""
         return self.table_or_collection.change_stream(*args, **kwargs)
 
     def _execute(self, db):
@@ -386,6 +423,11 @@ class MongoCompoundSelect(CompoundSelect):
         return post_query_linker.execute(db), similar_scores
 
     def execute(self, db, reference=False):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        :param reference: If True, load the references
+        """
         output, scores = self._execute(db)
         decode_function = _get_decode_function(db)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
@@ -409,7 +451,7 @@ class MongoCompoundSelect(CompoundSelect):
 
         :param db: The db to query
         :param id: The id to filter on
-        :param key:
+        :param key: The key to update
         :param bytes: The bytes to update
         """
         if self.collection is None:
@@ -421,21 +463,30 @@ class MongoCompoundSelect(CompoundSelect):
         return collection.update_one({'_id': id}, update)
 
     def check_exists(self, db):
+        """Check if the query exists in the database.
+
+        :param db: The datalayer instance
+        """
         ...
 
     @property
     def select_table(self):
+        """Select the table to perform the query on."""
         return self.table_or_collection.find()
 
 
 @dc.dataclass(repr=False)
 class MongoQueryLinker(QueryLinker):
+    """QueryLinker class to link queries together."""
+
     @property
     def query_components(self):
+        """Return the query components."""
         return self.table_or_collection.query_components
 
     @property
     def output_fields(self):
+        """Return the output fields."""
         out = {}
         for member in self.members:
             if hasattr(member, 'output_fields'):
@@ -443,6 +494,10 @@ class MongoQueryLinker(QueryLinker):
         return out
 
     def add_fold(self, fold):
+        """Add a fold to the query.
+
+        :param fold: The fold to add
+        """
         new_members = []
         for member in self.members:
             if hasattr(member, 'add_fold'):
@@ -455,6 +510,7 @@ class MongoQueryLinker(QueryLinker):
         )
 
     def outputs(self, *predict_ids):
+        """Join the query with the outputs for a table."""
         new_members = []
         for member in self.members:
             if hasattr(member, 'outputs'):
@@ -469,6 +525,7 @@ class MongoQueryLinker(QueryLinker):
 
     @property
     def select_ids(self):
+        """Select ids."""
         new_members = []
         for member in self.members:
             if hasattr(member, 'select_ids'):
@@ -482,6 +539,10 @@ class MongoQueryLinker(QueryLinker):
         )
 
     def select_using_ids(self, ids):
+        """Select documents using ids.
+
+        :param ids: The ids to select
+        """
         new_members = []
         for member in self.members:
             if hasattr(member, 'select_using_ids'):
@@ -507,6 +568,10 @@ class MongoQueryLinker(QueryLinker):
         )
 
     def select_single_id(self, id):
+        """Select a single document by id.
+
+        :param id: The id of the document to select
+        """
         assert (
             len(self.members) == 1
             and self.members[0].type == QueryType.QUERY
@@ -518,6 +583,10 @@ class MongoQueryLinker(QueryLinker):
         )
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         parent = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -528,12 +597,18 @@ class MongoQueryLinker(QueryLinker):
 
 @dc.dataclass(repr=False)
 class MongoInsert(Insert):
+    """Insert class to insert a single document in the database.
+
+    :param one: If True, only one document will be inserted
+    """
+
     one: bool = False
 
     def raw_query(self, db):
-        '''
-        Returns a raw mongodb query for mongodb operation.
-        '''
+        """Returns a raw mongodb query for mongodb operation.
+
+        :param db: The datalayer instance
+        """
         schema = self.kwargs.pop('schema', None)
         schema = get_schema(db, schema) if schema else None
         documents = [r.encode(schema) for r in self.documents]
@@ -543,6 +618,10 @@ class MongoInsert(Insert):
         return documents
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -552,26 +631,38 @@ class MongoInsert(Insert):
 
     @property
     def select_table(self):
+        """Select collection to be inserted."""
         return self.table_or_collection.find()
 
 
 @dc.dataclass(repr=False)
 class MongoDelete(Delete):
+    """Delete class to delete a single document in the database.
+
+    :param one: If True, only one document will be deleted
+    """
+
     one: bool = False
 
     @property
     def collection(self):
+        """Return the collection from the database."""
         return self.table_or_collection
 
     def to_operation(self, collection):
-        '''
-        Returns a mongodb operation i.e `pymongo.InsertOne`
-        '''
+        """Returns a mongodb operation i.e `pymongo.InsertOne`.
+
+        :param collection: The collection to perform the operation on
+        """
         if self.one:
             return pymongo.DeleteOne(*self.args, **self.kwargs)
         return pymongo.DeleteMany(*self.args, **self.kwargs)
 
     def arg_ids(self, collection):
+        """Returns the ids of the documents to be deleted.
+
+        :param collection: The collection to be deleted from
+        """
         ids = []
 
         if '_id' in self.kwargs:
@@ -586,6 +677,10 @@ class MongoDelete(Delete):
         return ids
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -613,6 +708,15 @@ class MongoDelete(Delete):
 
 @dc.dataclass(repr=False)
 class MongoUpdate(Update):
+    """Update class to update a single document in the database.
+
+    :param update: The update document
+    :param filter: The filter to apply
+    :param one: If True, only one document will be updated
+    :param args: Positional arguments to ``pymongo.Collection.update_one``
+    :param kwargs: Named arguments to ``pymongo.Collection.update_one``
+    """
+
     update: Document
     filter: t.Dict
     one: bool = False
@@ -621,18 +725,24 @@ class MongoUpdate(Update):
 
     @property
     def select_table(self):
+        """Select collection to be updated."""
         return self.table_or_collection.find()
 
     def to_operation(self, collection):
-        '''
-        Returns a mongodb operation i.e `pymongo.InsertOne`
-        '''
+        """Returns a mongodb operation i.e `pymongo.InsertOne`.
+
+        :param collection: The collection to perform the operation on
+        """
         filter, update = self.raw_query(collection)
         if self.one:
             return pymongo.UpdateOne(filter, update)
         return pymongo.UpdateMany(filter, update)
 
     def arg_ids(self, collection):
+        """Returns the ids of the documents to be updated.
+
+        :param collection: The collection to be updated from
+        """
         filter, _ = self.raw_query(collection)
         if self.one is True:
             return [filter['_id']]
@@ -640,9 +750,10 @@ class MongoUpdate(Update):
             return filter['_id']['$in']
 
     def raw_query(self, collection):
-        '''
-        Returns a raw mongodb query for mongodb operation.
-        '''
+        """Returns a raw mongodb query for mongodb operation.
+
+        :param collection: The collection to perform the operation on
+        """
         update = self.update
         if isinstance(self.update, Document):
             update = update.encode()
@@ -655,6 +766,10 @@ class MongoUpdate(Update):
         return {'_id': {'$in': ids}}, update
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -670,13 +785,17 @@ class MongoUpdate(Update):
 
 @dc.dataclass(repr=False)
 class MongoBulkWrite(Write):
-    '''
-    MongoBulkWrite will help write multiple mongodb operations
-    to database at once.
+    """MongoBulkWrite will help write multiple mongodb operations to database at once.
 
-    example:
+    Example:
+    -------
         MongoBulkWrite(operations= [MongoUpdate(...), MongoDelete(...)])
-    '''
+
+    :param operations: List of operations to be performed
+    :param args: Positional arguments to ``pymongo.Collection.bulk_write``
+    :param kwargs: Named arguments to ``pymongo.Collection.bulk_write``
+
+    """
 
     operations: t.List[t.Union[MongoUpdate, MongoDelete]]
     args: t.Sequence = dc.field(default_factory=list)
@@ -693,12 +812,14 @@ class MongoBulkWrite(Write):
 
     @property
     def select_table(self):
-        '''
-        Select collection to be bulk written
-        '''
+        """Select collection to be bulk written."""
         return self.table_or_collection.find()
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -738,6 +859,14 @@ class MongoBulkWrite(Write):
 
 @dc.dataclass(repr=False)
 class MongoReplaceOne(Update):
+    """Replace class to replace a single document in the database.
+
+    :param replacement: The replacement document
+    :param filter: The filter to apply
+    :param args: Positional arguments to ``pymongo.Collection.replace_one``
+    :param kwargs: Named arguments to ``pymongo.Collection.replace_one``
+    """
+
     replacement: Document
     filter: t.Dict
     args: t.Sequence = dc.field(default_factory=list)
@@ -745,13 +874,19 @@ class MongoReplaceOne(Update):
 
     @property
     def collection(self):
+        """Return the collection from the database."""
         return self.table_or_collection
 
     @property
     def select_table(self):
+        """Return the table from the database."""
         return self.table_or_collection.find()
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
         )
@@ -767,7 +902,7 @@ class MongoReplaceOne(Update):
 
 @dc.dataclass
 class ChangeStream:
-    """Request a stream of changes from a db
+    """Change stream class to watch for changes in specified collection.
 
     :param collection: The collection to perform the query on
     :param args: Positional query arguments to ``pymongo.Collection.watch``
@@ -779,22 +914,33 @@ class ChangeStream:
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
+        """Watch for changes in the database in specified collection.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(self.collection)
         return collection.watch(**self.kwargs)
 
 
 @dc.dataclass(repr=False)
 class Collection(TableOrCollection):
+    """Collection class to perform queries on a collection."""
+
     query_components: t.ClassVar[t.Dict] = {'find': Find, 'find_one': FindOne}
     type_id: t.ClassVar[str] = 'collection'
 
     primary_id: t.ClassVar[str] = '_id'
 
     def get_table(self, db):
+        """Return the table from the database.
+
+        :param db: The datalayer instance
+        """
         collection = db.databackend.get_table_or_collection(self.collection.identifier)
         return collection
 
     def change_stream(self, *args, **kwargs):
+        """Request a stream of changes from the collection."""
         return ChangeStream(
             collection=self.identifier,
             args=args,
@@ -845,6 +991,10 @@ class Collection(TableOrCollection):
     def aggregate(
         self, *args, vector_index: t.Optional[str] = None, **kwargs
     ) -> Aggregate:
+        """Perform an aggregation on the collection.
+
+        :param vector_index: The vector index to use
+        """
         return Aggregate(
             args=args,
             kwargs=kwargs,
@@ -853,12 +1003,19 @@ class Collection(TableOrCollection):
         )
 
     def delete_one(self, *args, **kwargs):
+        """Delete a single document in the database."""
         return self._delete(*args, one=True, **kwargs)
 
     def delete_many(self, *args, **kwargs):
+        """Delete multiple documents in the database."""
         return self._delete(*args, one=False, **kwargs)
 
     def replace_one(self, filter, replacement, *args, **kwargs):
+        """Replace a single document in the database.
+
+        :param filter: The filter to apply
+        :param replacement: The replacement to apply
+        """
         return MongoReplaceOne(
             filter=filter,
             replacement=replacement,
@@ -868,21 +1025,47 @@ class Collection(TableOrCollection):
         )
 
     def update_one(self, filter, update, *args, **kwargs):
+        """Update a single document in the database.
+
+        :param filter: The filter to apply
+        :param update: The update to apply
+        """
         return self._update(filter, update, *args, one=True, **kwargs)
 
     def update_many(self, filter, update, *args, **kwargs):
+        """Update multiple documents in the database.
+
+        :param filter: The filter to apply
+        :param update: The update to apply
+        """
         return self._update(filter, update, *args, one=False, **kwargs)
 
     def bulk_write(self, operations, *args, **kwargs):
+        """Bulk write multiple operations into the database.
+
+        :param operations: The operations to perform
+        """
         return self._bulk_write(operations, *args, **kwargs)
 
     def insert(self, *args, **kwargs):
+        """Insert multiple documents into the database.
+
+        :param args: The documents to insert
+        """
         return self.insert_many(*args, **kwargs)
 
     def insert_many(self, *args, **kwargs):
+        """Insert multiple documents into the database.
+
+        :param args: The documents to insert
+        """
         return self._insert(*args, **kwargs)
 
     def insert_one(self, document, *args, **kwargs):
+        """Insert a single document into the database.
+
+        :param document: The document to insert
+        """
         return self._insert([document], *args, **kwargs)
 
     def model_update(
@@ -894,6 +1077,15 @@ class Collection(TableOrCollection):
         flatten: bool = False,
         **kwargs,
     ):
+        """Update the outputs of a model in the database.
+
+        :param db: The datalaer instance
+        :param ids: The ids of the documents to update
+        :param predict_id: The predict_id of outputs to store
+        :param outputs: The outputs to store
+        :param flatten: Whether to flatten the outputs
+        :param kwargs: Additional arguments
+        """
         document_embedded = kwargs.get('document_embedded', True)
 
         if not len(outputs):
@@ -972,7 +1164,11 @@ def _get_decode_function(db) -> t.Callable[[t.Any], t.Any]:
 
 
 def get_schema(db, schema: t.Union[Schema, str]) -> Schema:
-    """Handle schema caching and loading."""
+    """Handle schema caching and loading.
+
+    :param db: the Datalayer instance
+    :param schema: the schema to be loaded
+    """
     if isinstance(schema, Schema):
         # If the schema is not in the db, it is added to the db.
         if schema.identifier not in db.show(Schema.type_id):

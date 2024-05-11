@@ -44,6 +44,12 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
 
 
 def parse_query(query, documents, db: t.Optional[t.Any] = None):
+    """Parse a query string into a query object.
+
+    :param query: query string to parse
+    :param documents: documents to use in the query
+    :param db: datalayer instance
+    """
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
@@ -52,6 +58,10 @@ def parse_query(query, documents, db: t.Optional[t.Any] = None):
 
 
 def strip_artifacts(r: t.Any):
+    """Strip artifacts for the data.
+
+    :param r: the data to strip artifacts from
+    """
     if isinstance(r, dict):
         if '_content' in r:
             return f'_artifact/{r["_content"]["file_id"]}', [r["_content"]["file_id"]]

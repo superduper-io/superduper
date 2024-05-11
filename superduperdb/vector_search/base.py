@@ -13,11 +13,14 @@ if t.TYPE_CHECKING:
 
 
 class BaseVectorSearcher(ABC):
-    @classmethod
-    def from_component(cls, vi: 'VectorIndex'):
-        return cls(
-            identifier=vi.identifier, dimensions=vi.dimensions, measure=vi.measure
-        )
+    """Base class for vector searchers.
+
+    :param identifier: Unique string identifier of index
+    :param dimensions: Dimension of the vector embeddings
+    :param h: Seed vectors ``numpy.ndarray``
+    :param index: list of IDs
+    :param measure: measure to assess similarity
+    """
 
     @abstractmethod
     def __init__(
@@ -30,12 +33,26 @@ class BaseVectorSearcher(ABC):
     ):
         pass
 
+    @classmethod
+    def from_component(cls, vi: 'VectorIndex'):
+        """Create a vector searcher from a vector index.
+
+        :param vi: VectorIndex instance
+        """
+        return cls(
+            identifier=vi.identifier, dimensions=vi.dimensions, measure=vi.measure
+        )
+
     @abstractmethod
     def __len__(self):
         pass
 
     @staticmethod
     def to_numpy(h):
+        """Converts a vector to a numpy array.
+
+        :param h: vector, numpy.ndarray, or list
+        """
         if isinstance(h, numpy.ndarray):
             return h
         if hasattr(h, 'numpy'):
@@ -46,6 +63,10 @@ class BaseVectorSearcher(ABC):
 
     @staticmethod
     def to_list(h):
+        """Converts a vector to a list.
+
+        :param h: vector
+        """
         if hasattr(h, 'tolist'):
             return h.tolist()
         if isinstance(h, list):
@@ -62,8 +83,7 @@ class BaseVectorSearcher(ABC):
 
     @abstractmethod
     def delete(self, ids: t.Sequence[str]) -> None:
-        """
-        Remove items from the index
+        """Remove items from the index.
 
         :param ids: t.Sequence of ids of vectors.
         """
@@ -80,6 +100,7 @@ class BaseVectorSearcher(ABC):
 
         :param _id: id of the vector
         :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
         """
 
     @abstractmethod
@@ -94,16 +115,20 @@ class BaseVectorSearcher(ABC):
 
         :param h: vector
         :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
         """
 
     def post_create(self):
-        """
+        """Post create method.
+
         This method is used for searchers which requires
         to perform a task after all vectors have been added
         """
 
 
 class VectorIndexMeasureType(str, enum.Enum):
+    """Enum for vector index measure types."""
+
     cosine = 'cosine'
     css = 'css'
     dot = 'dot'
@@ -112,10 +137,13 @@ class VectorIndexMeasureType(str, enum.Enum):
 
 @dataclass(frozen=True)
 class VectorSearchConfig:
-    '''
-    Represents search config which helps initiate a vector
-    searcher class.
-    '''
+    """Represents search config which helps initiate a vector searcher class.
+
+    :param id: Identifier for the vector index
+    :param dimensions: Dimensions of the vector
+    :param measure: Measure for vector search
+    :param parameters: Additional parameters for vector search
+    """
 
     id: str
     dimensions: int
@@ -125,11 +153,11 @@ class VectorSearchConfig:
 
 @dataclass(frozen=True)
 class VectorItem:
-    '''
-    Class for representing a vector in vector search with
-    id and vector.
+    """Class for representing a vector in vector search with id and vector.
 
-    '''
+    :param id: ID of the vector
+    :param vector: Vector of the item
+    """
 
     id: str
     vector: numpy.ndarray
@@ -141,41 +169,54 @@ class VectorItem:
         id: str,
         vector: numpy.typing.ArrayLike,
     ) -> VectorItem:
+        """Creates a vector item from id and vector.
+
+        :param id: ID of the vector
+        :param vector: Vector of the item
+        """
         return VectorItem(id=id, vector=BaseVectorSearcher.to_numpy(vector))
 
     def to_dict(self) -> t.Dict:
+        """Converts the vector item to a dictionary."""
         return {'id': self.id, 'vector': self.vector}
 
 
 @dataclass(frozen=True)
 class VectorSearchResult:
-    '''
-    Dataclass for representing vector search results with
-    `id` and `score`.
-    '''
+    """Dataclass for representing vector search results with `id` and `score`.
+
+    :param id: ID of the vector
+    :param score: Similarity score of the vector
+    """
 
     id: str
     score: float
 
 
 def l2(x, y):
-    '''
-    L2 function for vector similarity search
-    '''
+    """L2 function for vector similarity search.
+
+    :param x: numpy.ndarray
+    :param y: numpy.ndarray
+    """
     return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
 
 
 def dot(x, y):
-    '''
-    Dot function for vector similarity search
-    '''
+    """Dot function for vector similarity search.
+
+    :param x: numpy.ndarray
+    :param y: numpy.ndarray
+    """
     return numpy.dot(x, y.T)
 
 
 def cosine(x, y):
-    '''
-    Cosine similarity function for vector search
-    '''
+    """Cosine similarity function for vector search.
+
+    :param x: numpy.ndarray
+    :param y: numpy.ndarray, y should be normalized!
+    """
     x = x / numpy.linalg.norm(x, axis=1)[:, None]
     # y which implies all vectors in vectordatabase
     # has normalized vectors.

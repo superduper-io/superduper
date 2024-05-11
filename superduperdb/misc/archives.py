@@ -2,11 +2,12 @@ import os
 import tarfile
 
 
+# TODO: Remove the unused functions
 def to_tarball(folder_path: str, output_path: str):
-    """
-    Create a tarball (compressed archive) from a folder.
+    """Create a tarball (compressed archive) from a folder.
 
     :param folder_path: Path to the folder to be archived.
+    :param output_path: Path to the output tarball file.
     """
     try:
         with tarfile.open(output_path + '.tar.gz', "w:gz") as tar:
@@ -18,8 +19,7 @@ def to_tarball(folder_path: str, output_path: str):
 
 
 def from_tarball(tarball_path: str):
-    """
-    Extract the contents of stack tarball
+    """Extract the contents of stack tarball.
 
     :param tarball_path: Path to the tarball file.
     """

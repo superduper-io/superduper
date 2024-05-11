@@ -17,6 +17,7 @@ PYPROJECT = ROOT / 'pyproject.toml'
 
 @command(help='Print information about the current machine and installation')
 def info():
+    """Print information about the current machine and installation."""
     print('```')
     print(json.dumps(_get_info(), default=str, indent=2))
     print('```')
@@ -24,6 +25,10 @@ def info():
 
 @command(help='Print information about the current machine and installation')
 def requirements(ext: t.List[str]):
+    """Print information about the current machine and installation.
+
+    :param ext: Extensions to check.
+    """
     out = []
     for e in ext:
         try:

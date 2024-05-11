@@ -58,6 +58,14 @@ def _request_server(
 def request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):
+    """Request server with data.
+
+    :param service: Service name
+    :param data: Data to send
+    :param endpoint: Endpoint to hit
+    :param args: Arguments to pass
+    :param type: Type of request
+    """
     _handshake(service)
     return _request_server(
         service=service, data=data, endpoint=endpoint, args=args, type=type

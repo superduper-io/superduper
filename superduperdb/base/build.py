@@ -169,7 +169,6 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
                         If None, use ``superduperdb.CFG.data_backend``.
     :pararm kwargs: keyword arguments to be adopted by the `CFG`
     """
-
     # Configuration
     # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
@@ -197,11 +196,11 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
 
 
 def show_configuration(cfg):
-    """
-    Show the configuration.
+    """Show the configuration.
+
     Only show the important configuration values and anonymize the URLs.
 
-    : param cfg: The configuration object.
+    :param cfg: The configuration object.
     """
     table = PrettyTable()
     table.field_names = ["Configuration", "Value"]

@@ -1,4 +1,5 @@
-"""
+"""Utility functions for combining and converting dictionaries.
+
 Operations on dictionaries used to fill and combine config files
 and environment variables
 """
@@ -15,6 +16,10 @@ _NONE = object()
 
 
 def combine_configs(dicts: t.Sequence[Dict]) -> Dict:
+    """Combine a sequence of dictionaries into a single dictionary.
+
+    :param dicts: The dictionaries to combine.
+    """
     result: Dict = {}
     for d in dicts:
         _combine_one(result, d)
@@ -28,6 +33,15 @@ def environ_to_config_dict(
     err: t.Optional[t.TextIO] = sys.stderr,
     fail: bool = False,
 ):
+    """Convert environment variables to a configuration dictionary.
+
+    :param prefix: The prefix to use for environment variables.
+    :param parent: The parent dictionary to use as a basis.
+    :param environ: The environment variables to read from.
+    :param err: The file to write errors to.
+    :param fail: Whether to raise an exception on error.
+    :return: The configuration dictionary.
+    """
     env_dict = _environ_dict(prefix, environ)
     good, bad = _env_dict_to_config_dict(env_dict, parent)
     bad = {k: v for k, v in bad.items() if k != 'SUPERDUPERDB_CONFIG'}

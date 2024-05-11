@@ -34,6 +34,12 @@ if t.TYPE_CHECKING:
 
 @dc.dataclass(kw_only=True)
 class Checkpoint(Component):
+    """Checkpoint component for saving the model checkpoint.
+
+    :param path: The path to the checkpoint.
+    :param step: The step of the checkpoint.
+    """
+
     path: t.Optional[str]
     step: int
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (("path", file_lazy),)
@@ -45,14 +51,23 @@ class Checkpoint(Component):
 
     @property
     def uri(self):
+        """Get the uri of the checkpoint."""
         return f"checkpoint://{self.identifier}/{self.step}"
 
     @staticmethod
     def check_uri(uri):
+        """Check if the uri is a valid checkpoint uri.
+
+        :param uri: The uri to check.
+        """
         return re.match(r"^checkpoint://.*?/\d+$", uri) is not None
 
     @staticmethod
     def parse_uri(uri):
+        """Parse the uri to get the identifier and step.
+
+        :param uri: The uri to parse.
+        """
         if not Checkpoint.check_uri(uri):
             raise ValueError(f"Invalid uri: {uri}")
         *_, identifier, step = uri.split("/")
@@ -60,6 +75,18 @@ class Checkpoint(Component):
 
 
 class LLMCallback(TrainerCallback):
+    """LLM Callback for logging training process to db.
+
+    This callback will save the checkpoint to db after each epoch.
+    If the save_total_limit is set, will remove the oldest checkpoint.
+
+    :param cfg: The configuration to use.
+    :param identifier: The identifier to use.
+    :param db: The datalayer to use.
+    :param llm: The LLM model to use.
+    :param experiment_id: The experiment id to use.
+    """
+
     def __init__(
         self,
         cfg: t.Optional["Config"] = None,
@@ -87,7 +114,13 @@ class LLMCallback(TrainerCallback):
             )
 
     def on_save(self, args, state, control, **kwargs):
-        """Event called after a checkpoint save."""
+        """Event called after a checkpoint save.
+
+        :param args: The training arguments from transformers.
+        :param state: The training state from transformers.
+        :param control: The training control from transformers.
+        :param kwargs: Other keyword arguments from transformers.
+        """
         if not state.is_world_process_zero:
             return
 
@@ -116,7 +149,13 @@ class LLMCallback(TrainerCallback):
                 self.db.remove("checkpoint", self.experiment_id, version, force=True)
 
     def on_evaluate(self, args, state, control, **kwargs):
-        """Event called after an evaluation."""
+        """Event called after an evaluation.
+
+        :param args: The training arguments from transformers.
+        :param state: The training state from transformers.
+        :param control: The training control from transformers.
+        :param kwargs: Other keyword arguments from transformers.
+        """
         if not state.is_world_process_zero:
             return
 
@@ -124,6 +163,13 @@ class LLMCallback(TrainerCallback):
         self.llm.append_metrics(state.log_history[-1])
 
     def on_train_end(self, args, state, control, **kwargs):
+        """Event called after training ends.
+
+        :param args: The training arguments from transformers.
+        :param state: The training state from transformers.
+        :param control: The training control from transformers.
+        :param kwargs: Other keyword arguments from transformers.
+        """
         self.check_init()
         # update the llm to db after training, will save the adapter_id and metrics
 
@@ -139,6 +185,7 @@ class LLMCallback(TrainerCallback):
             self.db.replace(self.llm)
 
     def check_init(self):
+        """Check the initialization of the callback."""
         # Only check this in the world_rank 0 process
         # Rebuild datalayer for the new process
         if self.db is None:
@@ -150,35 +197,25 @@ class LLMCallback(TrainerCallback):
 
 @dc.dataclass(kw_only=True)
 class LLMTrainer(TrainingArguments, SuperDuperTrainer):
-    """
-    LLM Training Arguments.
+    """LLM Training Arguments.
+
     Inherits from :class:`transformers.TrainingArguments`.
 
     {training_arguments_doc}
-        use_lora (`bool`, *optional*, defaults to True):
-            Whether to use LoRA training.
-        lora_r (`int`, *optional*, defaults to 8):
-            Lora R dimension.
-
-        lora_alpha (`int`, *optional*, defaults to 16):
-            Lora alpha.
-
-        lora_dropout (`float`, *optional*, defaults to 0.05):
-            Lora dropout.
-
-        lora_target_modules (`List[str]`, *optional*, defaults to None):
-            Lora target modules. If None, will be automatically inferred.
-
-        lora_bias (`str`, *optional*, defaults to "none"):
-            Lora bias.
-
-        max_seq_length (`int`, *optional*, defaults to 512):
-            Maximum source sequence length during training.
-        log_to_db (`bool`, *optional*, defaults to True):
-            Log training to db.
-            If True, will log checkpoint to superduperdb,
-                but need ray cluster can access to db.
-            If can't access to db, please set it to False.
+    :param output_dir: The output directory to use.
+    :param use_lora: Whether to use LoRA training.
+    :param lora_r: Lora R dimension.
+    :param lora_alpha: Lora alpha.
+    :param lora_dropout: Lora dropout.
+    :param lora_target_modules: Lora target modules.
+    :param lora_bias: Lora bias.
+    :param bits: The bits to use.
+    :param max_seq_length: Maximum source sequence length during training.
+    :param setup_chat_format: Whether to setup chat format.
+    :param log_to_db: Whether to log training to db.
+    :param training_kwargs: The training kwargs to use, will be passed to Trainer.
+    :param num_gpus: The number of GPUs to use, if None, will use all GPUs.
+    :param ray_configs: The ray configs to use.
     """
 
     __doc__ = __doc__.format(training_arguments_doc=TrainingArguments.__doc__)
@@ -205,9 +242,11 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         return SuperDuperTrainer.__post_init__(self, artifacts)
 
     def build(self):
+        """Build the training arguments."""
         super().__post_init__()
 
     def build_training_args(self):
+        """Build the training arguments."""
         _TRAINING_DEFAULTS = {
             k: v
             for k, v in TrainingArguments('_tmp').to_dict().items()
@@ -218,6 +257,13 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
     @staticmethod
     def get_compute_metrics(metrics):
+        """Get the compute metrics function.
+
+        :param metrics: List of callable metric functions.
+                        Each function should take logits and labels as input
+                        and return a metric value.
+
+        """
         if not metrics:
             return None
 
@@ -231,6 +277,11 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         return compute_metrics
 
     def prepare_dataset(self, model, dataset: QueryDataset):
+        """Prepare the dataset for training.
+
+        :param model: The model to use.
+        :param dataset: The dataset to prepare.
+        """
         if isinstance(self.key, str):
             dataset.transform = lambda x: {self.key: x}
 
@@ -241,6 +292,13 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         train_dataset: t.Union[QueryDataset, NativeDataset],
         valid_dataset: t.Union[QueryDataset, NativeDataset],
     ):
+        """Fit the model on the training dataset.
+
+        :param model: The model to fit.
+        :param db: The datalayer to use.
+        :param train_dataset: The training dataset to use.
+        :param valid_dataset: The validation dataset to use.
+        """
         if isinstance(train_dataset, QueryDataset):
             self.prepare_dataset(model, train_dataset)
             train_dataset = NativeDataset.from_list(
@@ -293,11 +351,18 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
 
     @property
     def experiment_id(self):
+        """Get the experiment id."""
         return getattr(self, "_experiment_id", None)
 
 
 def tokenize(tokenizer, example, X, y):
-    """Function to tokenize the example."""
+    """Function to tokenize the example.
+
+    :param tokenizer: The tokenizer to use.
+    :param example: The example to tokenize.
+    :param X: The input key.
+    :param y: The output key.
+    """
     prompt = example[X]
 
     prompt = prompt + tokenizer.eos_token
@@ -322,8 +387,8 @@ def train(
     ray_configs: t.Optional[dict] = None,
     **kwargs,
 ):
-    """
-    Train LLM model on specified dataset.
+    """Train LLM model on specified dataset.
+
     The training process can be run on these following modes:
     - Local node without ray, but only support single GPU
     - Local node with ray, support multi-nodes and multi-GPUs
@@ -337,21 +402,17 @@ def train(
         Will rebuild the db and llm for the new process that can access to db.
         The ray cluster must can access to db.
 
-    Parameters:
-    :param training_config: training config for LLMTrainingArguments
+    :param training_args: training Arguments, see LLMTrainingArguments
     :param train_dataset: training dataset
     :param eval_datasets: evaluation dataset, can be a dict of datasets
     :param model_kwargs: model kwargs for AutoModelForCausalLM
     :param tokenizer_kwargs: tokenizer kwargs for AutoTokenizer
-    :param X: column name for input
-    :param y: column name for output
     :param db: datalayer, used for creating LLMCallback
     :param llm: llm model, used for creating LLMCallback
-    :param on_ray: whether to use ray, if True, will use ray_train
-    :param ray_address: ray address, if not None, will run on ray cluster
     :param ray_configs: ray configs, must provide if using ray
-    """
+    :param **kwargs: other kwargs for Trainer
 
+    """
     on_ray = bool(ray_configs)
 
     # Auto detect multi-GPUs and use ray to run data parallel training
@@ -419,9 +480,13 @@ def train(
 
 
 def handle_ray_results(db, llm, results):
-    """
-    Handle the ray results.
+    """Handle the ray results.
+
     Will save the checkpoint to db if db and llm provided.
+
+    :param db: datalayer, used for saving the checkpoint
+    :param llm: llm model, used for saving the checkpoint
+    :param results: the ray training results, contains the checkpoint
     """
     checkpoint = results.checkpoint
     if checkpoint is None:
@@ -455,8 +520,8 @@ def train_func(
     callbacks=None,
     **kwargs,
 ):
-    """
-    Base training function for LLM model.
+    """Base training function for LLM model.
+
     :param training_args: training Arguments, see LLMTrainingArguments
     :param train_dataset: training dataset,
         can be huggingface datasets.Dataset or ray.data.Dataset
@@ -550,8 +615,8 @@ def ray_train(
     ray_configs: t.Optional[t.Dict[str, t.Any]] = None,
     **kwargs,
 ):
-    """
-    Ray training function for LLM model.
+    """Ray training function for LLM model.
+
     The ray train function will handle the following logic:
     - Prepare the datasets for ray
     - Build the training_loop_func for ray
@@ -563,7 +628,6 @@ def ray_train(
         can be huggingface datasets.Dataset
     :param eval_datasets: evaluation dataset,
         Must be a Huggingface datasets.Dataset
-    :param ray_address: ray address, if not None, will run on ray cluster
     :param ray_configs: ray configs, must provide if using ray_configs
     :param **kwargs: other kwargs for Trainer
     """
@@ -647,9 +711,12 @@ def ray_train(
 
 
 def prepare_lora_training(model, config: LLMTrainer):
-    """
-    Prepare LoRA training for the model.
+    """Prepare LoRA training for the model.
+
     Get the LoRA target modules and convert the model to peft model.
+
+    :param model: The model to prepare for LoRA training.
+    :param config: The configuration to use.
     """
     try:
         from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
@@ -687,7 +754,10 @@ def prepare_lora_training(model, config: LLMTrainer):
 
 
 def create_quantization_config(config: LLMTrainer):
-    """Create quantization config for LLM training."""
+    """Create quantization config for LLM training.
+
+    :param config: The configuration to use.
+    """
     compute_dtype = (
         torch.float16
         if config.fp16

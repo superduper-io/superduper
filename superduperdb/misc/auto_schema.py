@@ -13,10 +13,10 @@ from superduperdb.components.schema import Schema
 
 
 def register_module(module_name):
-    """
-    Register a module for datatype inference.
-    Only modules with a check and create function will be registered
+    """Register a module for datatype inference.
 
+    Only modules with a check and create function will be registered
+    :param module_name: The module name, e.g. "superduperdb.ext.numpy.encoder"
     """
     try:
         importlib.import_module(module_name)
@@ -46,14 +46,13 @@ BASE_TYPES = (
 
 
 def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
-    """
-    Infer the datatype of a given data object
+    """Infer the datatype of a given data object.
+
     If the data object is a base type, return None,
     Otherwise, return the inferred datatype
 
     :param data: The data object
     """
-
     datatype = None
 
     if isinstance(data, BASE_TYPES):
@@ -80,14 +79,14 @@ def infer_schema(
     identifier: t.Optional[str] = None,
     ibis=False,
 ) -> Schema:
-    """
-    Infer a schema from a given data object
+    """Infer a schema from a given data object.
 
     :param data: The data object
     :param identifier: The identifier for the schema, if None, it will be generated
+    :param ibis: If True, the schema will be updated for the Ibis backend,
+                 otherwise for MongoDB
     :return: The inferred schema
     """
-
     assert isinstance(data, dict), "Data must be a dictionary"
 
     schema_data = {}
@@ -122,6 +121,12 @@ def infer_schema(
 def updated_schema_data_for_ibis(
     schema_data,
 ) -> t.Dict[str, DataType]:
+    """Update the schema data for Ibis backend.
+
+    Convert the basic data types to Ibis data types.
+
+    :param schema_data: The schema data
+    """
     from superduperdb.backends.ibis.field_types import dtype
 
     for k, v in schema_data.items():
@@ -132,6 +137,12 @@ def updated_schema_data_for_ibis(
 
 
 def updated_schema_data_for_mongodb(schema_data) -> t.Dict[str, DataType]:
+    """Update the schema data for MongoDB backend.
+
+    Only keep the data types that can be stored directly in MongoDB.
+
+    :param schema_data: The schema data
+    """
     schema_data = {k: v for k, v in schema_data.items() if isinstance(v, DataType)}
 
     # MongoDB can store dict directly, so we don't need to serialize it.
@@ -141,8 +152,14 @@ def updated_schema_data_for_mongodb(schema_data) -> t.Dict[str, DataType]:
 
 
 class JsonDataTypeFactory(DataTypeFactory):
+    """A factory for JSON datatypes."""
+
     @staticmethod
     def check(data: t.Any) -> bool:
+        """Check if the data is able to be encoded by the JSON serializer.
+
+        :param data: The data object
+        """
         try:
             json_serializer.encode_data(data)
             return True
@@ -151,4 +168,8 @@ class JsonDataTypeFactory(DataTypeFactory):
 
     @staticmethod
     def create(data: t.Any) -> DataType:
+        """Create a JSON datatype.
+
+        :param data: The data object
+        """
         return json_serializer

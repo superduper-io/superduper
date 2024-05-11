@@ -7,19 +7,20 @@ from superduperdb.base.serializable import Serializable
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorItem
 
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
 
 def delete_vectors(
     vector_index: str,
     ids: t.Sequence[str],
-    db=None,
+    db=t.Optional['Datalayer'],
 ):
-    """
-    A helper fxn to delete vectors of a ``VectorIndex`` component
-    in the fast_vector_search backend.
+    """Delete vectors of a ``VectorIndex`` component in the fast_vector_search backend.
 
     :param vector_index: A identifier of vector-index.
     :param ids: List of ids which were observed as deleted documents.
-    :param db: A ``DB`` instance.
+    :param db: Datalayer instance.
     """
     return db.fast_vector_searchers[vector_index].delete(ids)
 
@@ -28,18 +29,15 @@ def copy_vectors(
     vector_index: str,
     query: t.Union[t.Dict, CompoundSelect],
     ids: t.Sequence[str],
-    db=None,
+    db=t.Optional['Datalayer'],
 ):
-    """
-    A helper fxn to copy vectors of a ``VectorIndex`` component
-    from the databackend to the fast_vector_search backend.
+    """Copy vectors of a ``VectorIndex`` component from the databackend to the fast_vector_search backend.
 
-    :param vector-index: A identifier of the vector-index.
+    :param vector_index: A identifier of the vector-index.
     :param query: A query which was used by `db._build_task_workflow` method
     :param ids: List of ids which were observed as added/updated documents.
-    :param db: A ``DB`` instance.
+    :param db: Datalayer instance.
     """
-
     vi = db.vector_indices[vector_index]
     if isinstance(query, dict):
         # ruff: noqa: E501

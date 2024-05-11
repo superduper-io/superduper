@@ -49,7 +49,8 @@ def objectmodel(
     flatten: bool = False,
     output_schema: t.Optional[Schema] = None,
 ):
-    """
+    """Decorator to wrap a function with `ObjectModel`.
+
     When a function is wrapped with this decorator,
     the function comes out as an `ObjectModel`.
 
@@ -116,7 +117,8 @@ def codemodel(
     flatten: bool = False,
     output_schema: t.Optional[Schema] = None,
 ):
-    """
+    """Decorator to wrap a function with `CodeModel`.
+
     When a function is wrapped with this decorator,
     the function comes out as a `CodeModel`.
 
@@ -151,8 +153,7 @@ def codemodel(
 
 
 class Inputs:
-    """
-    Base class to represent the model args and kwargs.
+    """Base class to represent the model args and kwargs.
 
     :param params: List of parameters of the Model object
     """
@@ -167,8 +168,7 @@ class Inputs:
         return self.params[attr]
 
     def get_kwargs(self, args):
-        """
-        Get keyword arguments from positional arguments.
+        """Get keyword arguments from positional arguments.
 
         :param args: Parameters to be converted
         """
@@ -178,13 +178,13 @@ class Inputs:
         return kwargs
 
     def __call__(self, *args, **kwargs):
+        """Get the model args and kwargs."""
         tmp = self.get_kwargs(args)
         return {**tmp, **kwargs}
 
 
 class CallableInputs(Inputs):
-    """
-    Class represents the model callable args and kwargs.
+    """Class represents the model callable args and kwargs.
 
     :param fn: Callable function
     :param predict_kwargs: (optional) predict_kwargs if provided in Model
@@ -209,7 +209,8 @@ class CallableInputs(Inputs):
 
 @dc.dataclass(kw_only=True)
 class Trainer(Component):
-    """
+    """Trainer component to train a model.
+
     Training configuration object, containing all settings necessary for a particular
     learning task use-case to be serialized and initiated. The object is ``callable``
     and returns a class which may be invoked to apply training.
@@ -246,8 +247,7 @@ class Trainer(Component):
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
     ):
-        """
-        Fit on the model on training dataset with `valid_dataset` for validation.
+        """Fit on the model on training dataset with `valid_dataset` for validation.
 
         :param model: Model to be fit
         :param db: The datalayer
@@ -259,8 +259,7 @@ class Trainer(Component):
 
 @dc.dataclass(kw_only=True)
 class Validation(Component):
-    """
-    component which represents Validation definition.
+    """component which represents Validation definition.
 
     :param metrics: List of metrics for validation
     :param key: Model input type key
@@ -278,8 +277,7 @@ class _Fittable:
     trainer: t.Optional[Trainer] = None
 
     def schedule_jobs(self, db, dependencies=()):
-        """
-        Database hook for scheduling jobs.
+        """Database hook for scheduling jobs.
 
         :param db: Datalayer instance.
         :param dependencies: List of dependencies.
@@ -301,8 +299,7 @@ class _Fittable:
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ):
-        """
-        Model fit job in database.
+        """Model fit job in database.
 
         :param db: Datalayer instance.
         :param dependencies: List of dependent jobs
@@ -362,8 +359,7 @@ class _Fittable:
         valid_dataset: QueryDataset,
         db: Datalayer,
     ):
-        """
-        Fit the model on the training dataset with `valid_dataset` for validation.
+        """Fit the model on the training dataset with `valid_dataset` for validation.
 
         :param train_dataset: The training ``Dataset`` instances to use.
         :param valid_dataset: The validation ``Dataset`` instances to use.
@@ -382,8 +378,7 @@ class _Fittable:
         )
 
     def fit_in_db(self, db: Datalayer):
-        """
-        Fit the model on the given data.
+        """Fit the model on the given data.
 
         :param db: The datalayer
         """
@@ -407,8 +402,7 @@ class _Fittable:
 
 
 class Mapping:
-    """
-    Class to represent model inputs for mapping database collections or tables.
+    """Class to represent model inputs for mapping database collections or tables.
 
     :param mapping: Mapping that represents a collection or table map.
     :param signature: Signature for the model.
@@ -420,9 +414,7 @@ class Mapping:
 
     @property
     def id_key(self):
-        """
-        Extract the output key for model outputs.
-        """
+        """Extract the output key for model outputs."""
         outputs = []
         for arg in self.mapping[0]:
             outputs.append(arg)
@@ -446,7 +438,8 @@ class Mapping:
             return mapping
 
     def __call__(self, r):
-        """
+        """Get the model inputs from the mapping.
+
         >>> r = {'a': 1, 'b': 2}
         >>> self.mapping = [('a', 'b'), {}]
         >>> _Predictor._data_from_input_type(docs)
@@ -483,8 +476,7 @@ class Mapping:
 
 @dc.dataclass(kw_only=True)
 class Model(Component):
-    """
-    Base class for components which can predict.
+    """Base class for components which can predict.
 
     :param signature: Model signature.
     :param datatype: DataType instance.
@@ -523,14 +515,13 @@ class Model(Component):
 
     @property
     def inputs(self) -> Inputs:
-        """
-        Instance of `Inputs` to represent model params.
-        """
+        """Instance of `Inputs` to represent model params."""
         return Inputs(list(inspect.signature(self.predict_one).parameters.keys()))
 
     @abstractmethod
     def predict_one(self, *args, **kwargs) -> int:
-        """
+        """Predict on a single data point.
+
         Execute a single prediction on a data point
         given by positional and keyword arguments.
         """
@@ -538,8 +529,7 @@ class Model(Component):
 
     @abstractmethod
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """
-        Execute on a series of data points defined in the dataset.
+        """Execute on a series of data points defined in the dataset.
 
         :param dataset: Series of data points to predict on.
         """
@@ -575,8 +565,9 @@ class Model(Component):
         in_memory: bool = True,
         overwrite: bool = False,
     ):
-        """
-        Execute a single prediction on a data point
+        """Run a prediction job in the database.
+
+        Execute a single prediction on the data points
         given by positional and keyword arguments as a job.
 
         :param X: combination of input keys to be mapped to the model
@@ -658,7 +649,8 @@ class Model(Component):
         in_memory: bool = True,
         overwrite: bool = False,
     ) -> t.Any:
-        """
+        """Predict on the data points in the database.
+
         Execute a single prediction on a data point
         given by positional and keyword arguments as a job.
 
@@ -738,8 +730,7 @@ class Model(Component):
 
     @staticmethod
     def handle_input_type(data, signature):
-        """
-        Method to transform data with respect to signature.
+        """Method to transform data with respect to signature.
 
         :param data: Data to be transformed
         :param signature: Data signature for transforming
@@ -811,8 +802,7 @@ class Model(Component):
         )
 
     def encode_outputs(self, outputs):
-        """
-        Method that encodes outputs of a model for saving in the database.
+        """Method that encodes outputs of a model for saving in the database.
 
         :param outputs: outputs to encode.
         """
@@ -867,8 +857,7 @@ class Model(Component):
             self.db.replace(self)
 
     def encode_with_schema(self, outputs):
-        """
-        Encode model outputs corresponding to the provided `output_schema`.
+        """Encode model outputs corresponding to the provided `output_schema`.
 
         :param outputs: Encode the outputs with the given schema.
         """
@@ -883,6 +872,12 @@ class Model(Component):
         return outputs
 
     def __call__(self, *args, outputs: t.Optional[str] = None, **kwargs):
+        """Connect the models to build a graph.
+
+        :param args: Arguments to be passed to the model.
+        :param outputs: Identifier for the model outputs.
+        :param kwargs: Keyword arguments to be passed to the model.
+        """
         from superduperdb.components.graph import IndexableNode
 
         if args:
@@ -918,8 +913,7 @@ class Model(Component):
         predict_kwargs: t.Optional[dict] = None,
         **kwargs,
     ):
-        """
-        Convert the model to a listener.
+        """Convert the model to a listener.
 
         :param key: Key to be bound to the model
         :param select: Object for selecting which data is processed
@@ -939,8 +933,7 @@ class Model(Component):
         return listener
 
     def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
-        """
-        Validate `dataset` on metrics.
+        """Validate `dataset` on metrics.
 
         :param X: Define input map
         :param dataset: Dataset to run validation on.
@@ -955,8 +948,7 @@ class Model(Component):
         return results
 
     def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
-        """
-        Perform a validation job.
+        """Perform a validation job.
 
         :param db: DataLayer instance
         :param dependencies: dependencies on the job
@@ -971,8 +963,7 @@ class Model(Component):
         return job
 
     def validate_in_db(self, db):
-        """
-        Validation job in database.
+        """Validation job in database.
 
         :param db: DataLayer instance.
         """
@@ -1018,9 +1009,7 @@ class _Node:
 
 @dc.dataclass
 class IndexableNode:
-    """
-    Base indexable node for `ObjectModel`.
-    """
+    """Base indexable node for `ObjectModel`."""
 
     def __init__(self, types):
         self.types = types
@@ -1045,24 +1034,18 @@ class _ObjectModel(Model, ABC):
 
     @property
     def outputs(self):
-        """
-        Get an instance of ``IndexableNode`` to index outputs.
-        """
+        """Get an instance of ``IndexableNode`` to index outputs."""
         return IndexableNode([int])
 
     @property
     def inputs(self):
-        """
-        A method to get Model callable inputs.
-        """
+        """A method to get Model callable inputs."""
         kwargs = self.predict_kwargs if self.predict_kwargs else {}
         return CallableInputs(self.object, kwargs)
 
     @property
     def training_keys(self) -> t.List:
-        """
-        Retrieve training keys.
-        """
+        """Retrieve training keys."""
         if isinstance(self.train_X, list):
             out = list(self.train_X)
         elif self.train_X is not None:
@@ -1080,7 +1063,8 @@ class _ObjectModel(Model, ABC):
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        """
+        """Predict on a single data point.
+
         Method to execute ``Object`` on args and kwargs.
         This method is also used for debugging the Model.
         """
@@ -1088,8 +1072,7 @@ class _ObjectModel(Model, ABC):
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """
-        Run the predict on series of Model inputs (dataset).
+        """Run the predict on series of Model inputs (dataset).
 
         :param dataset: series of data points.
         """
@@ -1109,8 +1092,7 @@ class _ObjectModel(Model, ABC):
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class ObjectModel(_ObjectModel):
-    """
-    Model component which wraps a Model to become serializable.
+    """Model component which wraps a Model to become serializable.
 
     {_object_model_params}
     """
@@ -1142,8 +1124,7 @@ class CodeModel(_ObjectModel):
 
     @classmethod
     def handle_integration(cls, kwargs):
-        """
-        Handler integration from ui
+        """Handler integration from ui.
 
         :param kwargs: integration kwargs
         """
@@ -1157,7 +1138,9 @@ class CodeModel(_ObjectModel):
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
-    """{component_params}
+    """APIBaseModel component which is used to make the type of API request.
+
+    {component_params}
     {predictor_params}
     :param model: The Model to use, e.g. ``'text-embedding-ada-002'``
     :param max_batch_size: Maximum  batch size.
@@ -1182,9 +1165,7 @@ class APIBaseModel(Model):
     def _multi_predict(
         self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
     ) -> t.List:
-        """
-        Base method to batch generate text from a list of prompts using multithreading.
-        Handles exceptions in _generate method.
+        """Use multi-threading to predict on a series of data points.
 
         :param dataset: Series of data points.
         """
@@ -1202,11 +1183,14 @@ class APIBaseModel(Model):
 
 @dc.dataclass(kw_only=True)
 class APIModel(APIBaseModel):
-    """{component_params}
+    """APIModel component which is used to make the type of API request.
+
+    {component_params}
     {predictor_params}
     {api_base_model_params}
     :param url: The url to use for the API request
-    :param postprocess: Postprocess function to use on the output of the API request"""
+    :param postprocess: Postprocess function to use on the output of the API request
+    """
 
     __doc__ = __doc__.format(
         component_params=Component.__doc__,
@@ -1219,9 +1203,7 @@ class APIModel(APIBaseModel):
 
     @property
     def inputs(self):
-        """
-        Method to get ``Inputs`` instance for model inputs.
-        """
+        """Method to get ``Inputs`` instance for model inputs."""
         return Inputs(self.runtime_params)
 
     def __post_init__(self, artifacts):
@@ -1234,15 +1216,15 @@ class APIModel(APIBaseModel):
         self.runtime_params = runtime_variables
 
     def build_url(self, params):
-        """
-        Get url for the ``APIModel``.
+        """Get url for the ``APIModel``.
 
         :param params: url params.
         """
         return self.url.format(**params, **{k: os.environ[k] for k in self.envs})
 
     def predict_one(self, *args, **kwargs):
-        """
+        """Predict on a single data point.
+
         Method to requests to `url` on args and kwargs.
         This method is also used for debugging the model.
         """
@@ -1270,7 +1252,8 @@ LIKE_TEMPLATE = {
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class QueryModel(Model):
-    """
+    """QueryModel component.
+
     Model which can be used to query data and return those
     precomputed queries as Results.
 
@@ -1302,8 +1285,7 @@ class QueryModel(Model):
 
     @classmethod
     def handle_integration(cls, kwargs):
-        """
-        Handle integration from UI.
+        """Handle integration from UI.
 
         :param kwargs: Integration kwargs.
         """
@@ -1322,16 +1304,15 @@ class QueryModel(Model):
 
     @property
     def inputs(self) -> Inputs:
-        """
-        Instance of `Inputs` to represent model params.
-        """
+        """Instance of `Inputs` to represent model params."""
         if self.preprocess is not None:
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
-        """
+        """Predict on a single data point.
+
         Method to perform a single prediction on args and kwargs.
         This method is also used for debugging the model.
         """
@@ -1345,8 +1326,7 @@ class QueryModel(Model):
         return out
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """
-        Execute on a series of data points defined in the dataset.
+        """Execute on a series of data points defined in the dataset.
 
         :param dataset: Series of data points to predict on.
         """
@@ -1364,8 +1344,7 @@ class QueryModel(Model):
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class SequentialModel(Model):
-    """
-    Sequential model component which wraps a model to become serializable.
+    """Sequential model component which wraps a model to become serializable.
 
     {_model_params}
     :param models: A list of models to use
@@ -1389,14 +1368,11 @@ class SequentialModel(Model):
 
     @property
     def inputs(self) -> Inputs:
-        """
-        Instance of `Inputs` to represent model params.
-        """
+        """Instance of `Inputs` to represent model params."""
         return self.models[0].inputs
 
     def post_create(self, db: Datalayer):
-        """
-        Post create hook.
+        """Post create hook.
 
         :param db: Datalayer instance.
         """
@@ -1407,15 +1383,15 @@ class SequentialModel(Model):
         self.on_load(db)
 
     def predict_one(self, *args, **kwargs):
-        """
+        """Predict on a single data point.
+
         Method to do single prediction on args and kwargs.
         This method is also used for debugging the model.
         """
         return self.predict([(args, kwargs)])[0]
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """
-        Execute on series of data point defined in dataset.
+        """Execute on series of data point defined in dataset.
 
         :param dataset: Series of data point to predict on.
         """

@@ -12,7 +12,10 @@ from superduperdb.ext.jina.client import JinaAPIClient
 
 @dc.dataclass(kw_only=True)
 class Jina(APIBaseModel):
-    """Cohere predictor"""
+    """Cohere predictor.
+
+    :param api_key: The API key to use for the predicto
+    """
 
     api_key: t.Optional[str] = None
 
@@ -24,8 +27,9 @@ class Jina(APIBaseModel):
 
 @dc.dataclass(kw_only=True)
 class JinaEmbedding(Jina):
-    """Jina embedding predictor
+    """Jina embedding predictor.
 
+    :param batch_size: The batch size to use for the predictor.
     :param shape: The shape of the embedding as ``tuple``.
         If not provided, it will be obtained by sending a simple query to the API
     """
@@ -41,6 +45,13 @@ class JinaEmbedding(Jina):
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 
     def pre_create(self, db):
+        """Pre create method for the model.
+
+        If the datalayer is Ibis, the datatype will be set to the appropriate
+        SQL datatype.
+
+        :param db: The datalayer to use for the model.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
             if self.datatype is None:
@@ -49,12 +60,20 @@ class JinaEmbedding(Jina):
             self.datatype = vector(self.shape)
 
     def predict_one(self, X: str):
+        """Predict the embedding of a single text.
+
+        :param X: The text to predict the embedding of.
+        """
         return self.client.encode_batch([X])[0]
 
     def _predict_a_batch(self, texts: t.List[str]):
         return self.client.encode_batch(texts)
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict the embeddings of a dataset.
+
+        :param dataset: The dataset to predict the embeddings of.
+        """
         out = []
         for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
             batch = [

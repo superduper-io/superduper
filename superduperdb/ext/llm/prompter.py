@@ -8,10 +8,25 @@ from superduperdb.ext.utils import format_prompt
 
 @dc.dataclass
 class Prompter:
+    """Prompt the user for input.
+
+    This function prompts the user for input based on a
+    template string and a function which formats the
+    prompt.
+
+    :param prompt_template: The template string for the prompt.
+    :param prompt_func: The function which formats the prompt.
+    """
+
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = dc.field(default=None)
 
     def __call__(self, x: t.Any, **kwargs):
+        """Format the prompt.
+
+        :param x: The input to format the prompt.
+        :param kwargs: The keyword arguments to pass to the prompt function.
+        """
         if self.prompt_func is not None:
             sig = inspect.signature(self.prompt_func)
             new_kwargs = {}
@@ -38,10 +53,15 @@ PROMPT_INTRODUCTION = (
 
 @dc.dataclass(kw_only=True)
 class RetrievalPrompt(QueryModel):
-    """
+    """Retrieve a prompt based on data recalled from the database.
+
     This function creates a prompt based on data
     recalled from the database and a pre-specified
     question:
+
+    :param prompt_explanation: The explanation of the prompt.
+    :param prompt_introduction: The introduction of the prompt.
+    :param join: The string to join the facts.
     """
 
     prompt_explanation: str = PROMPT_EXPLANATION
@@ -60,9 +80,14 @@ class RetrievalPrompt(QueryModel):
 
     @property
     def inputs(self):
+        """The inputs of the model."""
         return super().inputs
 
     def predict_one(self, prompt):
+        """Predict the answer to the question based on the prompt.
+
+        :param prompt: The prompt to answer the question.
+        """
         out = super().predict_one(prompt=prompt)
         prompt = (
             self.prompt_explanation

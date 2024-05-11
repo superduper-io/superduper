@@ -44,6 +44,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
 
     @property
     def dataset(self):
+        """Return the Lance dataset."""
         if not os.path.exists(self.dataset_path):
             self._create_or_append_to_dataset([], [], mode='create')
         return lance.dataset(self.dataset_path)
@@ -69,11 +70,19 @@ class LanceVectorSearcher(BaseVectorSearcher):
             lance.write_dataset(_table, self.dataset_path, mode=mode)
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
+        """Add vectors to the index.
+
+        :param items: List of vectors to add
+        """
         ids = [item.id for item in items]
         vectors = [item.vector for item in items]
         self._create_or_append_to_dataset(vectors, ids, mode='append')
 
     def delete(self, ids: t.Sequence[str]) -> None:
+        """Delete vectors from the index.
+
+        :param ids: List of IDs to delete
+        """
         to_remove = ", ".join(f"'{str(id)}'" for id in ids)
         self.dataset.delete(f"id IN ({to_remove})")
 
@@ -83,6 +92,12 @@ class LanceVectorSearcher(BaseVectorSearcher):
         n: int = 100,
         within_ids: t.Sequence[str] = (),
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        """Find the nearest vectors to a given ID.
+
+        :param _id: ID to search
+        :param n: Number of results to return
+        :param within_ids: List of IDs to search within
+        """
         # The ``lance`` file format has been specifically designed for fast
         # random access. The logic to take advantage of this is implemented
         # by the ``.take`` method.
@@ -101,6 +116,12 @@ class LanceVectorSearcher(BaseVectorSearcher):
         n: int = 100,
         within_ids: t.Sequence[str] = (),
     ) -> t.Tuple[t.List[str], t.List[float]]:
+        """Find the nearest vectors to a given vector.
+
+        :param h: Vector to search
+        :param n: Number of results to return
+        :param within_ids: List of IDs to search within
+        """
         # NOTE: filter is currently applied AFTER vector-search
         # See https://lancedb.github.io/lance/api/python/lance.html#lance.dataset.LanceDataset.scanner
         if within_ids:

@@ -11,6 +11,13 @@ if t.TYPE_CHECKING:
 
 
 class FastVectorSearcher(BaseVectorSearcher):
+    """Fast vector searcher implementation using the server.
+
+    :param db: Datalayer instance
+    :param vector_searcher: Vector searcher instance
+    :param vector_index: Vector index name
+    """
+
     def __init__(self, db: 'Datalayer', vector_searcher, vector_index: str):
         self.searcher = vector_searcher
         self.vector_index = vector_index
@@ -50,8 +57,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         return self.searcher.add(items)
 
     def delete(self, ids: t.Sequence[str]) -> None:
-        """
-        Remove items from the index
+        """Remove items from the index.
 
         :param ids: t.Sequence of ids of vectors.
         """
@@ -79,6 +85,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param _id: id of the vector
         :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
         """
         if CFG.cluster.vector_search.uri is not None:
             response = request_server(
@@ -101,6 +108,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param h: vector
         :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
         """
         if CFG.cluster.vector_search.uri is not None:
             response = request_server(
@@ -114,6 +122,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)
 
     def post_create(self):
+        """Post create method for vector searcher."""
         if CFG.cluster.is_remote_vector_search:
             request_server(
                 service='vector_search',

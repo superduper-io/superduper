@@ -38,8 +38,8 @@ VLLM_INFERENCE_PARAMETERS_LIST = [
 @public_api(stability='beta')
 @dc.dataclass
 class VllmAPI(BaseLLMAPI):
-    """
-    Wrapper for requesting the vLLM API service
+    """Wrapper for requesting the vLLM API service.
+
     (API Server format, started by vllm.entrypoints.api_server)
     {parent_doc}
     """
@@ -47,9 +47,7 @@ class VllmAPI(BaseLLMAPI):
     __doc__ = __doc__.format(parent_doc=BaseLLMAPI.__doc__)
 
     def _generate(self, prompt: str, **kwargs) -> t.Union[str, t.List[str]]:
-        """
-        Batch generate text from a prompt.
-        """
+        """Batch generate text from a prompt."""
         post_data = self.build_post_data(prompt, **kwargs)
         response = requests.post(self.api_url, json=post_data)
         results = []
@@ -61,6 +59,11 @@ class VllmAPI(BaseLLMAPI):
     def build_post_data(
         self, prompt: str, **kwargs: dict[str, t.Any]
     ) -> dict[str, t.Any]:
+        """Build the post data for the API request.
+
+        :param prompt: The prompt to use.
+        :param kwargs: The keyword arguments to use.
+        """
         total_kwargs = {}
         for key, value in {**self.predict_kwargs, **kwargs}.items():
             if key in VLLM_INFERENCE_PARAMETERS_LIST:
@@ -100,8 +103,12 @@ class VllmModel(BaseLLM):
     Load a large language model from VLLM.
 
     :param model_name: The name of the model to use.
+    :param tensor_parallel_size: The number of tensor parallelism.
     :param trust_remote_code: Whether to trust remote code.
-    :param dtype: The data type to use.
+    :param vllm_kwargs: Additional arguments to pass to the VLLM
+    :param on_ray: Whether to use Ray for parallelism.
+    :param ray_address: The address of the Ray cluster.
+    :param ray_config: The configuration for Ray.
     {parent_doc}
     """
 
@@ -129,6 +136,7 @@ class VllmModel(BaseLLM):
         super().__post_init__(artifacts)
 
     def init(self):
+        """Initialize the model."""
         if self.on_ray:
             import ray
 

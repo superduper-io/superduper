@@ -10,6 +10,10 @@ from .runnable import Callback, Runnable
 
 
 def none(x):
+    """No-op function.
+
+    :param x: Any
+    """
     pass
 
 
@@ -51,10 +55,12 @@ class ThreadBase(Runnable):
 
     @_debug
     def pre_run(self):
+        """Pre-run the thread."""
         pass
 
     @_debug(after=True)
     def run(self):
+        """Run the thread."""
         self.pre_run()
         self.running.set()
 
@@ -76,15 +82,17 @@ class ThreadBase(Runnable):
 
     @_debug
     def stop(self):
+        """Stop the thread."""
         self.running.clear()
 
     @_debug
     def finish(self):
+        """Finish the thread."""
         pass
 
 
 class IsThread(ThreadBase, Thread):
-    """This ThreadBase inherits from threading.Thread.
+    """IsThread is a thread that inherits from threading.Thread.
 
     To use IsThread, derive from it and override either or both of
     self.callback() and self.pre_run()
@@ -95,23 +103,40 @@ class IsThread(ThreadBase, Thread):
         Thread.__init__(self, daemon=self.daemon)
 
     def callback(self):
+        """The callback to run in the thread."""
         pass
 
     def error(self, item: Exception) -> None:
+        """Handle an error.
+
+        :param item: Exception
+        """
         pass
 
     @_debug(after=True)
     def join(self, timeout: t.Optional[float] = None):
+        """Join the thread.
+
+        :param timeout: Timeout in seconds
+        """
         Thread.join(self, timeout)
 
     @_debug
     def start(self):
+        """Start the thread."""
         Thread.start(self)
 
 
 @dc.dataclass
 class HasThread(ThreadBase):
-    """This ThreadBase contains a thread, and is constructed with a callback"""
+    """HasThread contains a thread, and is constructed with a callback.
+
+    :param callback: The callback to run in the thread.
+    :param daemon: Whether the thread is a daemon.
+    :param error: The error callback.
+    :param looping: Whether the thread should loop.
+    :param name: The name of the thread.
+    """
 
     callback: Callback = print
     daemon: bool = False
@@ -124,15 +149,22 @@ class HasThread(ThreadBase):
 
     @_debug(after=True)
     def join(self, timeout: t.Optional[float] = None):
+        """Join the thread.
+
+        :param timeout: Timeout in seconds
+        """
         self.thread.join(timeout)
 
     @_debug
     def start(self):
+        """Start the thread."""
         self.thread.start()
 
     def new_thread(self) -> Thread:
+        """Return a new thread."""
         return Thread(target=self.run, daemon=self.daemon)
 
     @cached_property
     def thread(self) -> Thread:
+        """Return the thread."""
         return self.new_thread()

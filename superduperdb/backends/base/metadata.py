@@ -7,6 +7,8 @@ if t.TYPE_CHECKING:
 
 
 class NonExistentMetadataError(Exception):
+    """NonExistentMetadataError."""
+
     ...
 
 
@@ -28,9 +30,7 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def url(self):
-        """
-        Metadata store connection url
-        """
+        """Metadata store connection url."""
         pass
 
     @abstractmethod
@@ -44,8 +44,8 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def create_job(self, info: t.Dict):
-        """
-        Create a job in the metadata store.
+        """Create a job in the metadata store.
+
         :param info: dictionary containing information about the job.
         """
         pass
@@ -126,8 +126,10 @@ class MetaDataStore(ABC):
         component_identifier: t.Optional[str],
         type_id: t.Optional[str],
     ):
-        """
-        Show all jobs in the metadata store.
+        """Show all jobs in the metadata store.
+
+        :param component_identifier: identifier of component
+        :param type_id: type of component
         """
         pass
 
@@ -154,6 +156,11 @@ class MetaDataStore(ABC):
     def get_indexing_listener_of_vector_index(
         self, identifier: str, version: t.Optional[int] = None
     ):
+        """Get the indexing listener of a vector index.
+
+        :param identifier: identifier of vector index
+        :param version: version of vector index
+        """
         info = self.get_component(
             'vector_index', identifier=identifier, version=version
         )
@@ -355,19 +362,19 @@ class MetaDataStore(ABC):
         pass
 
     def add_query(self, query: 'Select', model: str):
-        """
-        Add query id to query table
+        """Add query id to query table.
+
+        :param query: query object
+        :param model: model identifier
         """
         raise NotImplementedError
 
     def get_queries(self, model: str):
-        """
-        Get all queries from query table corresponding
-        to the model.
+        """Get all queries from query table corresponding to the model.
+
+        :param model: model identifier
         """
 
     @abstractmethod
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""

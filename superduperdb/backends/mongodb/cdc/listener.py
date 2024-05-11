@@ -21,9 +21,7 @@ MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 
 
 class CDCKeys(str, Enum):
-    """
-    A enum to represent mongo change document keys.
-    """
+    """A enum to represent mongo change document keys."""
 
     operation_type = 'operationType'
     document_key = 'documentKey'
@@ -42,20 +40,21 @@ _CDCKEY_MAP = {
 
 @dc.dataclass
 class MongoChangePipeline:
-    """`MongoChangePipeline` is a class to represent listen pipeline
-    in mongodb watch api.
+    """MongoChangePipeline.
+
+    `MongoChangePipeline` is a class to represent listen pipeline in mongodb watch api.
+
+    :param matching_operations: A list of operations to match.
     """
 
     matching_operations: t.Sequence[str] = dc.field(default_factory=list)
 
     def validate(self):
+        """Validate."""
         raise NotImplementedError
 
     def build_matching(self) -> t.Sequence[t.Dict]:
-        """A helper fxn to build a listen pipeline for mongo watch api.
-
-        :param matching_operations: A list of operations to watch.
-        """
+        """A helper fxn to build a listen pipeline for mongo watch api."""
         if bad := [op for op in self.matching_operations if op not in cdc.DBEvent]:
             raise ValueError(f'Unknown operations: {bad}')
 
@@ -63,7 +62,8 @@ class MongoChangePipeline:
 
 
 class MongoDatabaseListener(cdc.BaseDatabaseListener):
-    """
+    """A class handling change stream in mongodb.
+
     It is a class which helps capture data from mongodb database and handle it
     accordingly.
 
@@ -72,6 +72,12 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
 
     This class builds a workflow graph on each change observed.
 
+    :param db: It is a datalayer instance.
+    :param on: It is used to define a Collection on which CDC would be performed.
+    :param stop_event: A threading event flag to notify for stoppage.
+    :param identifier: A identifier to represent the listener service.
+    :param timeout: A timeout to stop the listener service.
+    :param resume_token: A resume token is a token used to resume
     """
 
     DEFAULT_ID: str = '_id'
@@ -99,7 +105,6 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         :param resume_token: A resume token is a token used to resume
         the change stream in mongo.
         """
-
         self.tokens = CachedTokens()
         self.resume_token = None
 
@@ -121,6 +126,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
     ) -> None:
         """on_create.
+
         A helper on create event handler which handles inserted document in the
         change stream.
         It basically extracts the change document and build the taskflow graph to
@@ -199,17 +205,18 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
 
     def dump_token(self, change: t.Dict) -> None:
         """dump_token.
+
         A helper utility to dump resume token from the changed document.
 
-        :param change:
+        :param change: A change document.
         """
         token = change[self.DEFAULT_ID]
         self.tokens.append(token)
 
     def check_if_taskgraph_change(self, change: t.Dict) -> bool:
-        """
-        A helper method to check if the cdc change is done
-        by taskgraph nodes.
+        """A helper method to check if the cdc change is done by taskgraph nodes.
+
+        :param change: A change document.
         """
         if change[CDCKeys.operation_type] == cdc.DBEvent.update:
             updates = change[CDCKeys.update_descriptions_key]
@@ -220,9 +227,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         return False
 
     def setup_cdc(self) -> CollectionChangeStream:
-        """
-        Setup cdc change stream from user provided
-        """
+        """Setup cdc change stream from user provided."""
         if isinstance(self._change_pipeline, str):
             pipeline = self._get_stream_pipeline(self._change_pipeline)
 
@@ -245,10 +250,10 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         return stream_iterator
 
     def next_cdc(self, stream: CollectionChangeStream) -> None:
-        """
-        Get the next stream of change observed on the given `Collection`.
-        """
+        """Get the next stream of change observed on the given `Collection`.
 
+        :param stream: A change stream object.
+        """
         change = stream.try_next()
         if change is not None:
             logging.debug(f'Database change encountered at {datetime.datetime.now()}')
@@ -268,8 +273,9 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
     def set_change_pipeline(
         self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
     ) -> None:
-        """
-        Set the change pipeline for the listener.
+        """Set the change pipeline for the listener.
+
+        :param change_pipeline: Change pipeline to listen to.
         """
         if change_pipeline is None:
             change_pipeline = MongoChangePipelines.get('generic')
@@ -280,7 +286,9 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         self,
         change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None,
     ) -> None:
-        """Primary fxn to initiate listening of a database on the collection
+        """Listen to the database changes.
+
+        Primary fxn to initiate listening of a database on the collection
         with defined `change_pipeline` by the user.
 
         :param change_pipeline: A mongo listen pipeline defined by the user
@@ -310,14 +318,12 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
             raise
 
     def resume_tokens(self) -> t.Sequence[TokenType]:
-        """
-        Get the resume tokens from the change stream.
-        """
+        """Get the resume tokens from the change stream."""
         return self.tokens.load()
 
     def stop(self) -> None:
-        """
-        Stop listening cdc changes.
+        """Stop listening cdc changes.
+
         This stops the corresponding services as well.
         """
         self._stop_event.set()
@@ -325,4 +331,5 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
             self._scheduler.join()
 
     def running(self) -> bool:
+        """Check if the listener is running or not."""
         return not self._stop_event.is_set()

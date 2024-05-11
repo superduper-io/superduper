@@ -9,11 +9,11 @@ from superduperdb.components.datatype import DataType
 
 
 def link2elements(link, unstructure_kwargs):
-    """
-    Convert a link to a list of elements
+    """Convert a link to a list of elements.
+
     Use unstructured to parse the link
-    param link: str, file path or url
-    param unstructure_kwargs: kwargs for unstructured
+    :param link: str, file path or url
+    :param unstructure_kwargs: kwargs for unstructured
     """
     if link.startswith("file://"):
         link = link[7:]
@@ -27,6 +27,11 @@ def link2elements(link, unstructure_kwargs):
 
 
 def create_encoder(unstructure_kwargs):
+    """Create an encoder for unstructured data.
+
+    :param unstructure_kwargs: kwargs for unstructured
+    """
+
     def encoder(x: t.Union[str, t.List[Element]], info: t.Optional[t.Dict] = None):
         if isinstance(x, str):
             elements = link2elements(x, unstructure_kwargs)
@@ -40,6 +45,8 @@ def create_encoder(unstructure_kwargs):
 
 
 def create_decoder():
+    """Create a decoder for unstructured data."""
+
     def decoder(b: bytes, info: t.Optional[t.Dict] = None):
         try:
             return pickle.loads(b)
@@ -62,6 +69,11 @@ unstructured_encoder = DataType(
 
 
 def create_unstructured_encoder(identifier, **unstructure_kwargs):
+    """Create an unstructured encoder with the given identifier and unstructure kwargs.
+
+    :param identifier: The identifier to use.
+    :param *unstructure_kwargs: The unstructure kwargs to use.
+    """
     assert (
         isinstance(identifier, str) and identifier != "unstructured"
     ), 'identifier must be a string and not "unstructured"'

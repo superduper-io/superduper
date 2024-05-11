@@ -28,6 +28,8 @@ class TorchTrainer(Trainer):
     :param optimizer_cls: Optimizer class
     :param optimizer_kwargs: Kwargs for the optimizer
     :param optimizer_state: Latest state of the optimizer for contined training
+    :param collate_fn: Collate function for the dataloader
+    :param metric_values: Metric values
     """
 
     objective: t.Callable
@@ -44,6 +46,10 @@ class TorchTrainer(Trainer):
     metric_values: t.Dict = dc.field(default_factory=dict)
 
     def get_optimizers(self, model):
+        """Get the optimizers for the model.
+
+        :param model: Model
+        """
         cls_ = getattr(torch.optim, self.optimizer_cls)
         optimizer = cls_(model.parameters(), **self.optimizer_kwargs)
         if self.optimizer_state is not None:
@@ -65,6 +71,13 @@ class TorchTrainer(Trainer):
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
     ):
+        """Fit the model.
+
+        :param model: Model
+        :param db: Datalayer
+        :param train_dataset: Training dataset
+        :param valid_dataset: Validation dataset
+        """
         train_dataloader = self._create_loader(train_dataset)
         valid_dataloader = self._create_loader(valid_dataset)
         return self._fit_with_dataloaders(
@@ -75,6 +88,12 @@ class TorchTrainer(Trainer):
         )
 
     def take_step(self, model, batch, optimizers):
+        """Take a step in the optimization.
+
+        :param model: Model
+        :param batch: Batch of data
+        :param optimizers: Optimizers
+        """
         if self.signature == '*args':
             outputs = model.train_forward(*batch)
         elif self.signature == 'singleton':
@@ -92,6 +111,11 @@ class TorchTrainer(Trainer):
         return objective_value
 
     def compute_validation_objective(self, model, valid_dataloader):
+        """Compute the validation objective.
+
+        :param model: Model
+        :param valid_dataloader: Validation dataloader to use
+        """
         objective_values = []
         with model.evaluating(), torch.no_grad():
             for batch in valid_dataloader:
@@ -142,11 +166,19 @@ class TorchTrainer(Trainer):
                 iteration += 1
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
+        """Append metrics to the metric_values dict.
+
+        :param d: Metrics to append
+        """
         if self.metric_values is not None:
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
 
     def stopping_criterion(self, iteration):
+        """Check if the training should stop.
+
+        :param iteration: Current iteration
+        """
         max_iterations = self.max_iterations
         no_improve_then_stop = self.no_improve_then_stop
         if isinstance(max_iterations, int) and iteration >= max_iterations:
@@ -162,6 +194,7 @@ class TorchTrainer(Trainer):
         return False
 
     def saving_criterion(self):
+        """Check if the model should be saved."""
         if self.listen == 'objective':
             to_listen = [-x for x in self.metric_values['objective']]
         else:
@@ -171,6 +204,10 @@ class TorchTrainer(Trainer):
         return False
 
     def log(self, **kwargs):
+        """Log the training progress.
+
+        :param kwargs: Key-value pairs to log
+        """
         out = ''
         for k, v in kwargs.items():
             if isinstance(v, dict):

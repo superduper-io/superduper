@@ -1,6 +1,4 @@
-"""
-The component module provides the base class for all components in SuperDuperDB.
-"""
+"""The component module provides the base class for all components in SuperDuperDB."""
 
 from __future__ import annotations
 
@@ -26,8 +24,7 @@ if t.TYPE_CHECKING:
 
 
 def import_(r=None, path=None, db=None):
-    """
-    Helper function for importing component JSONs, YAMLs, etc.
+    """Helper function for importing component JSONs, YAMLs, etc.
 
     :param r: Object to be imported.
     :param path: Components directory.
@@ -52,8 +49,7 @@ def import_(r=None, path=None, db=None):
 
 
 def getdeepattr(obj, attr):
-    """
-    Get nested attribute with dot notation.
+    """Get nested attribute with dot notation.
 
     :param obj: Object.
     :param attr: Attribute.
@@ -68,9 +64,10 @@ ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version
 
 @dc.dataclass
 class Component(Serializable, Leaf):
-    """
-    Class to represent SuperDuperDB serializable entities that can be saved
-    into a database.
+    """Base class for all components in SuperDuperDB.
+
+    Class to represent SuperDuperDB serializable entities
+    that can be saved into a database.
 
     :param identifier: A unique identifier for the component.
     :param artifacts: List of artifacts which represent entities that are
@@ -88,8 +85,7 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def handle_integration(cls, kwargs):
-        """
-        Abstract method for handling integration.
+        """Abstract method for handling integration.
 
         :param kwargs: Integration kwargs.
         """
@@ -97,16 +93,12 @@ class Component(Serializable, Leaf):
 
     @property
     def id(self):
-        """
-        Returns the component identifier.
-        """
+        """Returns the component identifier."""
         return f'_component/{self.type_id}/{self.identifier}'
 
     @property
     def id_tuple(self):
-        """
-        Returns an object as `ComponentTuple`.
-        """
+        """Returns an object as `ComponentTuple`."""
         return ComponentTuple(self.type_id, self.identifier, self.version)
 
     def __post_init__(self, artifacts):
@@ -118,9 +110,7 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def get_ui_schema(cls):
-        """
-        Helper method to get the UI schema.
-        """
+        """Helper method to get the UI schema."""
         out = {}
         ancestors = cls.mro()[::-1]
         for a in ancestors:
@@ -129,12 +119,10 @@ class Component(Serializable, Leaf):
         return list(out.values())
 
     def set_variables(self, db, **kwargs):
-        """
-        Set free variables of self.
+        """Set free variables of self.
 
         :param db: Datalayer instance.
         """
-
         r = self.dict()
         variables = _find_variables_with_path(r['dict'])
         for r in variables:
@@ -144,15 +132,11 @@ class Component(Serializable, Leaf):
 
     @property
     def dependencies(self):
-        """
-        Get dependencies on the component.
-        """
+        """Get dependencies on the component."""
         return ()
 
     def init(self):
-        """
-        Method to help initiate component field dependencies.
-        """
+        """Method to help initiate component field dependencies."""
 
         def _init(item):
             if isinstance(item, Component):
@@ -178,9 +162,7 @@ class Component(Serializable, Leaf):
 
     @property
     def artifact_schema(self):
-        """
-        Returns `Schema` representation for the serializers in the component.
-        """
+        """Returns `Schema` representation for the serializers in the component."""
         from superduperdb import Schema
         from superduperdb.components.datatype import dill_serializer
 
@@ -202,15 +184,12 @@ class Component(Serializable, Leaf):
 
     @property
     def db(self) -> Datalayer:
-        """
-        Datalayer instance.
-        """
+        """Datalayer instance."""
         return self._db
 
     @db.setter
     def db(self, value: Datalayer):
-        """
-        Datalayer instance property setter.
+        """Datalayer instance property setter.
 
         :param value: Datalayer instance to set.
 
@@ -226,6 +205,7 @@ class Component(Serializable, Leaf):
 
     def post_create(self, db: Datalayer) -> None:
         """Called after the first time this component is created.
+
         Generally used if ``self.version`` is important in this logic.
 
         :param db: the db that creates the component.
@@ -249,9 +229,7 @@ class Component(Serializable, Leaf):
         return self.id
 
     def deep_flat_encode(self):
-        """
-        Encode cache with deep flattened structure.
-        """
+        """Encode cache with deep flattened structure."""
         cache = {}
         id = self._deep_flat_encode(cache)
         return {'_leaves': list(cache.values()), '_base': id}
@@ -266,8 +244,8 @@ class Component(Serializable, Leaf):
         return r, bytes
 
     def export(self, format=None):
-        """
-        Method to export the component in the provided format.
+        """Method to export the component in the provided format.
+
         If format is None, the method exports the component in a dictionary.
 
         :param format: `json` and `yaml`.
@@ -301,9 +279,7 @@ class Component(Serializable, Leaf):
         raise NotImplementedError(f'Format {format} not supported')
 
     def dict(self) -> 'Document':
-        """
-        A dictionary representation of the component.
-        """
+        """A dictionary representation of the component."""
         from superduperdb import Document
         from superduperdb.components.datatype import Artifact, File
 
@@ -326,8 +302,7 @@ class Component(Serializable, Leaf):
         self,
         leaf_types_to_keep: t.Sequence = (),
     ):
-        """
-        Method to encode the component into a dictionary.
+        """Method to encode the component into a dictionary.
 
         :param leaf_types_to_keep: Leaf types to be excluded from encoding.
         """
@@ -339,8 +314,7 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
-        """
-        Decodes a dictionary component into a `Component` instance.
+        """Decodes a dictionary component into a `Component` instance.
 
         :param r: Object to be decoded.
         :param db: Datalayer instance.
@@ -353,9 +327,7 @@ class Component(Serializable, Leaf):
 
     @property
     def unique_id(self) -> str:
-        """
-        Method to get a unique identifier for the component.
-        """
+        """Method to get a unique identifier for the component."""
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.type_id}/{self.identifier}/{self.version}'
@@ -365,8 +337,7 @@ class Component(Serializable, Leaf):
         validation_set: t.Union[str, Dataset],
         metrics: t.Sequence[str],
     ) -> ComponentJob:
-        """
-        Method to create a validation job with `validation_set` and `metrics`.
+        """Method to create a validation job with `validation_set` and `metrics`.
 
         :param validation_set: Kwargs for the `predict` method of `Model`.
         :param metrics: Kwargs for the `predict` method of `Model` to set
@@ -388,8 +359,7 @@ class Component(Serializable, Leaf):
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
-        """
-        Run the job for this listener.
+        """Run the job for this listener.
 
         :param db: The db to process.
         :param dependencies: A sequence of dependencies.
@@ -398,8 +368,7 @@ class Component(Serializable, Leaf):
 
     @classmethod
     def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
-        """
-        Class method to create a unique identifier.
+        """Class method to create a unique identifier.
 
         :param type_id: Component type id.
         :param identifier: Unique identifier.
@@ -414,8 +383,7 @@ class Component(Serializable, Leaf):
 
 
 def ensure_initialized(func):
-    """
-    Decorator to ensure that the model is initialized before calling the function.
+    """Decorator to ensure that the model is initialized before calling the function.
 
     :param func: Decorator function.
     """

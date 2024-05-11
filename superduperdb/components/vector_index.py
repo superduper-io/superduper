@@ -53,8 +53,9 @@ class VectorIndex(Component):
     @override
     def on_load(self, db: Datalayer) -> None:
         """
-        On load hook to perform indexing and compatible listener
-        loading on loading of vector index from database.
+        On load hook to perform indexing and compatible listenernd compatible listener.
+
+        Automatically loads the listeners if they are not already loaded.
 
         :param db: A DataLayer instance
         """
@@ -76,9 +77,10 @@ class VectorIndex(Component):
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
     ):
-        """
+        """Peform vector search.
+
         Perform vector search with query `like` from outputs in db
-        on `self.identifier` vectori index.
+        on `self.identifier` vector index.
 
         :param like: The document to compare against
         :param models: List of models to retrieve outputs
@@ -138,7 +140,8 @@ class VectorIndex(Component):
         ids: t.Optional[t.Sequence[str]] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
-        """
+        """Get nearest results in this vector index.
+
         Given a document, find the nearest results in this vector index, returned as
         two parallel lists of result IDs and scores.
 
@@ -149,7 +152,6 @@ class VectorIndex(Component):
         :param ids: A list of ids to match
         :param n: Number of items to return
         """
-
         models, keys = self.models_keys
         if len(models) != len(keys):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
@@ -173,9 +175,7 @@ class VectorIndex(Component):
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
-        """
-        Return a list of model and keys for each listener.
-        """
+        """Return a list of model and keys for each listener."""
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.compatible_listener, str)
 
@@ -190,9 +190,9 @@ class VectorIndex(Component):
 
     @property
     def dimensions(self) -> int:
-        """
-        Get dimension for vector database. This dimension will be used to prepare
-        vectors in the vector database.
+        """Get dimension for vector database.
+
+        This dimension will be used to prepare vectors in the vector database.
         """
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.indexing_listener.model, str)
@@ -206,8 +206,7 @@ class VectorIndex(Component):
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
     ) -> t.Sequence[t.Any]:
-        """
-        Schedule jobs for the listener.
+        """Schedule jobs for the listener.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
@@ -228,8 +227,7 @@ class VectorIndex(Component):
 
 
 class EncodeArray:
-    """
-    Class to encode an array.
+    """Class to encode an array.
 
     :param dtype: Datatype of array
     """
@@ -238,6 +236,11 @@ class EncodeArray:
         self.dtype = dtype
 
     def __call__(self, x, info: t.Optional[t.Dict] = None):
+        """Encode an array.
+
+        :param x: The array to encode
+        :param info: Optional info
+        """
         x = np.asarray(x)
         if x.dtype != self.dtype:
             raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
@@ -245,8 +248,7 @@ class EncodeArray:
 
 
 class DecodeArray:
-    """
-    Class to decode an array.
+    """Class to decode an array.
 
     :param dtype: Datatype of array
     """
@@ -255,6 +257,11 @@ class DecodeArray:
         self.dtype = dtype
 
     def __call__(self, bytes, info: t.Optional[t.Dict] = None):
+        """Decode an array.
+
+        :param bytes: The bytes to decode
+        :param info: Optional info
+        """
         return np.frombuffer(bytes, dtype=self.dtype).tolist()
 
 
@@ -263,8 +270,7 @@ class DecodeArray:
     {'name': 'identifier', 'type': 'str'},
 )
 def vector(shape, identifier: t.Optional[str] = None):
-    """
-    Create an encoder for a vector (list of ints/ floats) of a given shape.
+    """Create an encoder for a vector (list of ints/ floats) of a given shape.
 
     :param shape: The shape of the vector
     :param identifier: The identifier of the vector
@@ -283,9 +289,9 @@ def vector(shape, identifier: t.Optional[str] = None):
 
 
 def sqlvector(shape):
-    """
-    Create an encoder for a vector (list of ints/ floats) of a given shape
-    compatible with sql databases.
+    """Create an encoder for a vector (list of ints/ floats) of a given shape.
+
+    This is used for compatibility with SQL databases, as the default vector
 
     :param shape: The shape of the vector
     """

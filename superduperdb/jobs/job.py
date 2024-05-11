@@ -7,8 +7,17 @@ import superduperdb as s
 from superduperdb import CFG
 from superduperdb.jobs.tasks import callable_job, method_job
 
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
 
 def job(f):
+    """
+    Decorator to create a job from a function.
+
+    :param f: function to be decorated
+    """
+
     def wrapper(
         *args,
         db: t.Any = None,
@@ -27,10 +36,6 @@ class Job:
 
     :param args: positional arguments to be passed to the function or method
     :param kwargs: keyword arguments to be passed to the function or method
-    :param identifier: unique identifier
-    :param callable: function or method to be called
-    :param db: DB instance to be used
-    :param future: future object returned by dask
     :param compute_kwargs: Arguments to use for model predict computation
     """
 
@@ -54,15 +59,12 @@ class Job:
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
     def watch(self):
-        """
-        Watch the stdout of the job.
-        """
+        """Watch the stdout of the job."""
         return self.db.metadata.watch_job(identifier=self.identifier)
 
     @abstractmethod
     def submit(self, compute, dependencies=()):
-        """
-        Submit job for execution
+        """Submit job for execution.
 
         :param compute: compute engine
         :param dependencies: list of dependencies
@@ -70,6 +72,7 @@ class Job:
         raise NotImplementedError
 
     def dict(self):
+        """Return a dictionary representation of the job."""
         return {
             'identifier': self.identifier,
             'time': self.time,
@@ -92,9 +95,7 @@ class Job:
 
 
 class FunctionJob(Job):
-    """
-    Job for running a function.
-    on a dask cluster.
+    """Job for running a function.
 
     :param callable: function to be called
     :param args: positional arguments to be passed to the function
@@ -113,13 +114,13 @@ class FunctionJob(Job):
         self.callable = callable
 
     def dict(self):
+        """Return a dictionary representation of the job."""
         d = super().dict()
         d['cls'] = 'FunctionJob'
         return d
 
     def submit(self, dependencies=()):
-        """
-        Submit job for execution
+        """Submit job for execution.
 
         :param dependencies: list of dependencies
         """
@@ -136,7 +137,12 @@ class FunctionJob(Job):
 
         return
 
-    def __call__(self, db: t.Any = None, dependencies=()):
+    def __call__(self, db: t.Union['Datalayer', None], dependencies=()):
+        """Run the job.
+
+        :param db: Datalayer instance to use
+        :param dependencies: list of dependencies
+        """
         if db is None:
             from superduperdb.base.build import build_datalayer
 
@@ -179,16 +185,21 @@ class ComponentJob(Job):
 
     @property
     def component(self):
+        """Get the component."""
         return self._component
 
     @component.setter
     def component(self, value):
+        """Set the component.
+
+        :param value: component to set
+        """
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
     def submit(self, dependencies=()):
-        """
-        Submit job for execution
+        """Submit job for execution.
+
         :param dependencies: list of dependencies
         """
         self.future, self.job_id = self.db.compute.submit(
@@ -206,7 +217,12 @@ class ComponentJob(Job):
         )
         return self
 
-    def __call__(self, db: t.Any = None, dependencies=()):
+    def __call__(self, db: t.Union['Datalayer', None] = None, dependencies=()):
+        """Run the job.
+
+        :param db: Datalayer instance to use
+        :param dependencies: list of dependencies
+        """
         if db is None:
             from superduperdb.base.build import build_datalayer
 
@@ -221,6 +237,7 @@ class ComponentJob(Job):
         return self
 
     def dict(self):
+        """Return a dictionary representation of the job."""
         d = super().dict()
         d.update(
             {

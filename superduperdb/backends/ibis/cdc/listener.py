@@ -15,6 +15,16 @@ if t.TYPE_CHECKING:
 
 
 class PollingStrategyIbis:
+    """PollingStrategyIbis.
+
+    This is a base class for polling strategies for ibis backend.
+
+    :param db: The datalayer instance.
+    :param table: The table on which the polling strategy is applied.
+    :param strategy: The strategy to use for polling.
+    :param primary_id: The primary id of the table.
+    """
+
     def __init__(
         self, db: 'Datalayer', table: 'Table', strategy, primary_id: str = 'id'
     ):
@@ -28,12 +38,15 @@ class PollingStrategyIbis:
         self._last_processed_id = -1
 
     def fetch_ids(self):
+        """fetch_ids."""
         raise NotImplementedError
 
     def post_handling(self):
+        """post_handling."""
         time.sleep(self.frequency)
 
     def get_strategy(self):
+        """get_strategy."""
         if self.increment_field:
             return PollingStrategyIbisByIncrement(
                 self.db, self.table, self.strategy, primary_id=self.primary_id
@@ -45,9 +58,16 @@ class PollingStrategyIbis:
 
 
 class PollingStrategyIbisByIncrement(PollingStrategyIbis):
+    """PollingStrategyIbisByIncrement.
+
+    This is a polling strategy for ibis backend which polls the table
+    based on the increment field.
+    """
+
     def fetch_ids(
         self,
     ):
+        """fetch_ids."""
         assert self.increment_field
         _filter = self.table.__getattr__(self.increment_field) > self._last_processed_id
         query = self.table.select(self.primary_id).filter(_filter)
@@ -58,19 +78,31 @@ class PollingStrategyIbisByIncrement(PollingStrategyIbis):
 
 
 class PollingStrategyIbisByID(PollingStrategyIbis):
+    """PollingStrategyIbisByID.
+
+    This is a polling strategy for ibis backend which polls the table
+    based on the primary id.
+    """
+
     ...
 
 
 class IbisDatabaseListener(cdc.BaseDatabaseListener):
     """
-    It is a class which helps capture data from ibis database and handle it
-    accordingly.
+    It is a class which helps capture data from ibis database and handle it accordingly.
 
     This class accepts options and db instance from user and starts a scheduler
     which could schedule a listening service to listen change stream.
 
     This class builds a workflow graph on each change observed.
 
+    :param db: It is a datalayer instance.
+    :param on: It is used to define a Collection on which CDC would be performed.
+    :param stop_event: A threading event flag to notify for stoppage.
+    :param identifier: A identifier to represent the listener service.
+    :param timeout: A timeout to stop the listener service.
+    :param strategy: Used to select strategy used for listening changes,
+                    Options: [PollingStrategy, LogBasedStrategy]
     """
 
     DEFAULT_ID: str = 'id'
@@ -100,7 +132,6 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
                                             superduperdb.cdc.cdc.PollingStrategy)
                             LogBasedStrategy (Not implemented yet)
         """
-
         if not strategy:
             assert CFG.cluster.cdc
             self.strategy = CFG.cluster.cdc.strategy
@@ -117,20 +148,33 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_update(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
+        """on_update.
+
+        :param ids: Changed row ids.
+        :param db: a datalayer instance.
+        :param table: The table on which change was observed.
+        """
         raise NotImplementedError
 
     def on_delete(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
+        """on_delete.
+
+        :param ids: Changed row ids.
+        :param db: a datalayer instance.
+        :param table: The table on which change was observed.
+        """
         raise NotImplementedError
 
     def on_create(self, ids: t.Sequence, db: 'Datalayer', table: query.Table) -> None:
         """on_create.
+
         A helper on create event handler which handles inserted document in the
         change stream.
         It basically extracts the change document and build the taskflow graph to
         execute.
 
         :param ids: Changed row ids.
-        :param db: a superduperdb instance.
+        :param db: a datalayer instance.
         :param table: The table on which change was observed.
         """
         logging.debug('Triggered `on_create` handler.')
@@ -139,9 +183,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def setup_cdc(self):
-        """
-        Setup cdc change stream from user provided
-        """
+        """Setup cdc change stream from user provided."""
         if isinstance(self.strategy, PollingStrategy):
             self.stream = PollingStrategyIbis(
                 self.db,
@@ -156,8 +198,9 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         return self.stream
 
     def next_cdc(self, stream) -> None:
-        """
-        Get the next stream of change observed on the given `Collection`.
+        """Get the next stream of change observed on the given `Collection`.
+
+        :param stream: The stream to get the next change.
         """
         ids = stream.fetch_ids()
         if ids:
@@ -168,6 +211,10 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
     def listen(
         self,
     ) -> None:
+        """Start listening cdc changes.
+
+        This starts the corresponding scheduler as well.
+        """
         try:
             self._stop_event.clear()
             if self._scheduler:
@@ -191,8 +238,8 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
             raise
 
     def stop(self) -> None:
-        """
-        Stop listening cdc changes.
+        """Stop listening cdc changes.
+
         This stops the corresponding services as well.
         """
         self._stop_event.set()
@@ -200,4 +247,5 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
             self._scheduler.join()
 
     def running(self) -> bool:
+        """Check if the listener is running."""
         return not self._stop_event.is_set()

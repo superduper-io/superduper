@@ -37,6 +37,11 @@ app = superduperapp.SuperDuperApp('rest', port=port)
 
 @dc.dataclass(kw_only=True)
 class MyBoolean(Component):
+    """A simple boolean component.
+
+    :param my_bool: a boolean value
+    """
+
     type_id: t.ClassVar[str] = 'bool'
     my_bool: bool
 

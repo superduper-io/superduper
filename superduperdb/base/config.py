@@ -1,4 +1,5 @@
-"""
+"""Configuration variables for SuperDuperDB.
+
 The classes in this file define the configuration variables for SuperDuperDB,
 which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
@@ -28,7 +29,14 @@ def _dataclass_from_dict(data_class: t.Any, data: dict):
 
 @dc.dataclass
 class BaseConfig:
+    """A base class for configuration dataclasses.
+
+    This class allows for easy updating of configuration dataclasses
+    with a dictionary of parameters.
+    """
+
     def __call__(self, **kwargs):
+        """Update the configuration with the given parameters."""
         parameters = self.dict()
         for k, v in kwargs.items():
             if '__' in k:
@@ -41,13 +49,13 @@ class BaseConfig:
         return _dataclass_from_dict(type(self), parameters)
 
     def dict(self):
+        """Return the configuration as a dictionary."""
         return dc.asdict(self)
 
 
 @dc.dataclass
 class Retry(BaseConfig):
-    """
-    Describes how to retry using the `tenacity` library
+    """Describes how to retry using the `tenacity` library.
 
     :param stop_after_attempt: The number of attempts to make
     :param wait_max: The maximum time to wait between attempts
@@ -63,13 +71,23 @@ class Retry(BaseConfig):
 
 @dc.dataclass
 class CDCStrategy:
-    '''Base CDC strategy dataclass'''
+    """Base CDC strategy dataclass.
+
+    :param type: The type of CDC strategy
+    """
 
     type: str
 
 
 @dc.dataclass
 class PollingStrategy(CDCStrategy):
+    """Describes a polling strategy for change data capture.
+
+    :param auto_increment_field: The field to use for auto-incrementing
+    :param frequency: The frequency to poll for changes
+    :param type: The type of CDC strategy
+    """
+
     auto_increment_field: t.Optional[str] = None
     frequency: float = 3600
     type: 'str' = 'incremental'
@@ -77,18 +95,37 @@ class PollingStrategy(CDCStrategy):
 
 @dc.dataclass
 class LogBasedStrategy(CDCStrategy):
+    """Describes a log-based strategy for change data capture.
+
+    :param resume_token: The resume token to use for log-based CDC
+    :param type: The type of CDC strategy
+    """
+
     resume_token: t.Optional[t.Dict[str, str]] = None
     type: str = 'logbased'
 
 
 @dc.dataclass
 class CDCConfig(BaseConfig):
+    """Describes the configuration for change data capture.
+
+    :param uri: The URI for the CDC service
+    :param strategy: The strategy to use for CDC
+    """
+
     uri: t.Optional[str] = None  # None implies local mode
     strategy: t.Optional[t.Union[PollingStrategy, LogBasedStrategy]] = None
 
 
 @dc.dataclass
 class VectorSearch(BaseConfig):
+    """Describes the configuration for vector search.
+
+    :param uri: The URI for the vector search service
+    :param type: The type of vector search service
+    :param backfill_batch_size: The size of the backfill batch
+    """
+
     uri: t.Optional[str] = None  # None implies local mode
     type: str = 'in_memory'  # in_memory|lance
     backfill_batch_size: int = 100
@@ -96,19 +133,29 @@ class VectorSearch(BaseConfig):
 
 @dc.dataclass
 class Rest(BaseConfig):
+    """Describes the configuration for the REST service.
+
+    :param uri: The URI for the REST service
+    """
+
     uri: t.Optional[str] = None
 
 
 @dc.dataclass
 class Compute(BaseConfig):
+    """Describes the configuration for distributed computing.
+
+    :param uri: The URI for the compute service
+    :param compute_kwargs: The keyword arguments to pass to the compute service
+    """
+
     uri: t.Optional[str] = None  # None implies local mode
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
 
 
 @dc.dataclass
 class Cluster(BaseConfig):
-    """
-    Describes a connection to distributed work via Dask
+    """Describes a connection to distributed work via Ray.
 
     :param compute: The URI for compute
                     - None: run all jobs in local mode i.e. simple function call
@@ -116,6 +163,7 @@ class Cluster(BaseConfig):
     :param vector_search: The URI for the vector search service
                           None: Run vector search on local
                           "http://<host>:<port>": Connect a remote vector search service
+    :param rest: The URI for the REST service
     :param cdc: The URI for the change data capture service (if "None"
                 then no cdc assumed)
                 None: Run cdc on local as a thread.
@@ -129,9 +177,7 @@ class Cluster(BaseConfig):
 
 
 class LogLevel(str, Enum):
-    """
-    Enumerate log severity level
-    """
+    """Enumerate log severity level."""
 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
@@ -141,9 +187,7 @@ class LogLevel(str, Enum):
 
 
 class LogType(str, Enum):
-    """
-    Enumerate the standard logs
-    """
+    """Enumerate the standard logs."""
 
     # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
     # DEBUG, INFO, and WARN go to STDOUT.
@@ -155,12 +199,22 @@ class LogType(str, Enum):
 
 
 class BytesEncoding(str, Enum):
+    """Enumerate the encoding of bytes in the data backend."""
+
     BYTES = 'Bytes'
     BASE64 = 'Str'
 
 
 @dc.dataclass
 class Downloads(BaseConfig):
+    """Describes the configuration for downloading files.
+
+    :param folder: The folder to download files to
+    :param n_workers: The number of workers to use for downloading
+    :param headers: The headers to use for downloading
+    :param timeout: The timeout for downloading
+    """
+
     folder: t.Optional[str] = None
     n_workers: int = 0
     headers: t.Dict = dc.field(default_factory=lambda: {'User-Agent': 'me'})
@@ -169,11 +223,12 @@ class Downloads(BaseConfig):
 
 @dc.dataclass
 class Config(BaseConfig):
-    """
-    The data class containing all configurable superduperdb values
+    """The data class containing all configurable superduperdb values.
 
+    :param envs: The envs datas
     :param data_backend: The URI for the data backend
-    :param vector_search: The configuration for the vector search {'in_memory', 'lance'}
+    :param lance_home: The home directory for the Lance vector indices,
+                       Default: .superduperdb/vector_indices
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
     :param cluster: Settings distributed computing and change data capture
@@ -212,20 +267,20 @@ class Config(BaseConfig):
 
     @property
     def hybrid_storage(self):
+        """Whether to use hybrid storage."""
         return self.downloads.folder is not None
 
     @property
     def comparables(self):
-        """
-        A dict of `self` excluding some defined attributes.
-        """
+        """A dict of `self` excluding some defined attributes."""
         _dict = dc.asdict(self)
         list(map(_dict.pop, ('cluster', 'retries', 'downloads')))
         return _dict
 
     def match(self, cfg: t.Dict):
-        """
-        Match the target cfg dict with `self` comparables dict.
+        """Match the target cfg dict with `self` comparables dict.
+
+        :param cfg: The target configuration dictionary.
         """
         self_cfg = self.comparables
         self_hash = hash(json.dumps(self_cfg, sort_keys=True))
@@ -233,9 +288,14 @@ class Config(BaseConfig):
         return self_hash == cfg_hash
 
     def diff(self, cfg: t.Dict):
+        """Return the difference between `self` and the target cfg dict.
+
+        :param cfg: The target configuration dictionary.
+        """
         return _diff(self.dict(), cfg)
 
     def to_yaml(self):
+        """Return the configuration as a YAML string."""
         import yaml
 
         def enum_representer(dumper, data):
@@ -249,7 +309,8 @@ class Config(BaseConfig):
 
 
 def _diff(r1, r2):
-    """
+    """Return the difference between two dictionaries.
+
     >>> _diff({'a': 1, 'b': 2}, {'a': 2, 'b': 2})
     {'a': (1, 2)}
     >>> _diff({'a': {'c': 3}, 'b': 2}, {'a': 2, 'b': 2})

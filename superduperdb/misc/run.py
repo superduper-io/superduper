@@ -23,6 +23,7 @@ def run(
     :param args: The command to run.
     :param text: Whether to use text mode.
     :param check: Whether to raise an error if the command fails.
+    :param verbose: Whether to print the command.
     :param **kwargs: Additional arguments to pass to ``subprocess.run``.
     """
     if verbose:

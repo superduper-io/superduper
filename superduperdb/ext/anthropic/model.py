@@ -21,7 +21,10 @@ KEY_NAME = 'ANTHROPIC_API_KEY'
 
 @dc.dataclass(kw_only=True)
 class Anthropic(APIBaseModel):
-    """Anthropic predictor."""
+    """Anthropic predictor.
+
+    :param client_kwargs: The keyword arguments to pass to the client.
+    """
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
@@ -37,13 +40,19 @@ class Anthropic(APIBaseModel):
 class AnthropicCompletions(Anthropic):
     """Cohere completions (chat) predictor.
 
-    :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
     """
 
     prompt: str = ''
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre create method for the model.
+
+        If the datalayer is Ibis, the datatype will be set to the appropriate
+        SQL datatype.
+
+        :param db: The datalayer to use for the model.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
@@ -55,6 +64,13 @@ class AnthropicCompletions(Anthropic):
         context: t.Optional[t.List[str]] = None,
         **kwargs,
     ):
+        """Generate text from a single input.
+
+        :param X: The input to generate text from.
+        :param context: The context to use for the prompt.
+        :param kwargs: The keyword arguments to pass to the prompt function and
+                        the llm model.
+        """
         if isinstance(X, str):
             if context is not None:
                 X = format_prompt(X, self.prompt, context=context)
@@ -75,4 +91,8 @@ class AnthropicCompletions(Anthropic):
         return message.content[0].text
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict the embeddings of a dataset.
+
+        :param dataset: The dataset to predict the embeddings of.
+        """
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]

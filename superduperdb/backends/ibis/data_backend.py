@@ -23,6 +23,13 @@ INPUT_KEY = '_input_id'
 
 
 class IbisDataBackend(BaseDataBackend):
+    """Ibis data backend for the database.
+
+    :param conn: The connection to the database.
+    :param name: The name of the database.
+    :param in_memory: Whether to store the data in memory.
+    """
+
     db_type = DBType.SQL
 
     def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
@@ -32,18 +39,31 @@ class IbisDataBackend(BaseDataBackend):
         self.db_helper = get_db_helper(self.dialect)
 
     def url(self):
+        """Get the URL of the database."""
         return self.conn.con.url + self.name
 
     def build_artifact_store(self):
+        """Build artifact store for the database."""
         return FileSystemArtifactStore(conn='.superduperdb/artifacts/', name='ibis')
 
     def build_metadata(self):
+        """Build metadata for the database."""
         return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
 
     def create_ibis_table(self, identifier: str, schema: Schema):
+        """Create a table in the database.
+
+        :param identifier: The identifier of the table.
+        :param schema: The schema of the table.
+        """
         self.conn.create_table(identifier, schema=schema)
 
     def insert(self, table_name, raw_documents):
+        """Insert data into the database.
+
+        :param table_name: The name of the table.
+        :param raw_documents: The data to insert.
+        """
         for doc in raw_documents:
             for k, v in doc.items():
                 doc[k] = self.db_helper.convert_data_format(v)
@@ -71,6 +91,12 @@ class IbisDataBackend(BaseDataBackend):
         datatype: t.Union[FieldType, DataType],
         flatten: bool = False,
     ):
+        """Create a table for the output of the model.
+
+        :param predict_id: The identifier of the prediction.
+        :param datatype: The data type of the output.
+        :param flatten: Whether to flatten the output.
+        """
         msg = (
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."
@@ -103,6 +129,10 @@ class IbisDataBackend(BaseDataBackend):
             )
 
     def check_output_dest(self, predict_id) -> bool:
+        """Check if the output destination exists.
+
+        :param predict_id: The identifier of the prediction.
+        """
         try:
             self.conn.table(f'_outputs.{predict_id}')
             return True
@@ -110,10 +140,11 @@ class IbisDataBackend(BaseDataBackend):
             return False
 
     def create_table_and_schema(self, identifier: str, mapping: dict):
-        """
-        Create a schema in the data-backend.
-        """
+        """Create a schema in the data-backend.
 
+        :param identifier: The identifier of the table.
+        :param mapping: The mapping of the schema.
+        """
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
@@ -126,27 +157,33 @@ class IbisDataBackend(BaseDataBackend):
         return t
 
     def drop(self, force: bool = False):
+        """Drop tables or collections in the database.
+
+        :param force: Whether to force the drop.
+        """
         raise NotImplementedError(
             "Dropping tables needs to be done in each DB natively"
         )
 
     def get_table_or_collection(self, identifier):
+        """Get a table or collection from the database.
+
+        :param identifier: The identifier of the table or collection.
+        """
         return self.conn.table(identifier)
 
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""
 
         # TODO: implement me
 
     def list_tables_or_collections(self):
+        """List all tables or collections in the database."""
         return self.conn.list_tables()
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """
-        Infer a schema from a given data object
+        """Infer a schema from a given data object.
 
         :param data: The data object
         :param identifier: The identifier for the schema, if None, it will be generated

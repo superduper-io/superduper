@@ -15,30 +15,47 @@ DEFAULT_LENGTH = 255
 
 class JsonMixin:
     """Mixin for JSON type columns.
+
     Converts dict to JSON strings before saving to database
     and converts JSON strings to dict when loading from database.
     """
 
     def process_bind_param(self, value, dialect):
+        """Convert dict to JSON string.
+
+        :param value: The dict to convert.
+        :param dialect: The dialect of the database.
+        """
         if value is not None:
             value = json.dumps(value)
         return value
 
     def process_result_value(self, value, dialect):
+        """Convert JSON string to dict.
+
+        :param value: The JSON string to convert.
+        :param dialect: The dialect of the database.
+        """
         if value is not None:
             value = json.loads(value)
         return value
 
 
 class JsonAsString(JsonMixin, TypeDecorator):
+    """JSON type column for short JSON strings."""
+
     impl = String(DEFAULT_LENGTH)
 
 
 class JsonAsText(JsonMixin, TypeDecorator):
+    """JSON type column for long JSON strings."""
+
     impl = Text
 
 
 class DefaultConfig:
+    """Default configuration for database types."""
+
     type_string = String(DEFAULT_LENGTH)
     type_json_as_string = JsonAsString
     type_json_as_text = JsonAsText
@@ -54,6 +71,7 @@ class DefaultConfig:
 
 
 def create_clickhouse_config():
+    """Create configuration for ClickHouse database."""
     # lazy import
     try:
         from clickhouse_sqlalchemy import engines, types
@@ -89,6 +107,10 @@ def create_clickhouse_config():
 
 
 def get_db_config(dialect):
+    """Get the configuration class for the specified dialect.
+
+    :param dialect: The dialect of the database.
+    """
     if dialect == 'clickhouse':
         return create_clickhouse_config()
     else:

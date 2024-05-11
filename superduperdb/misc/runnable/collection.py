@@ -10,26 +10,33 @@ _SENTINEL_MESSAGE = object()
 
 
 class HasRunnables(Runnable):
-    """Collect zero or more Runnable into one"""
+    """Collect zero or more Runnable into one."""
 
     runnables: t.Sequence[Runnable]
 
     def start(self):
+        """Start all runnables."""
         for r in self.runnables:
             r.running.on_set.append(self._on_start)
             r.stopped.on_set.append(self._on_stop)
             r.start()
 
     def stop(self):
+        """Stop all runnables."""
         self.running.clear()
         for r in self.runnables:
             r.stop()
 
     def finish(self):
+        """Finish all runnables."""
         for r in self.runnables:
             r.finish()
 
     def join(self, timeout: t.Optional[float] = None):
+        """Join all runnables.
+
+        :param timeout: Timeout in seconds
+        """
         for r in self.runnables:
             r.join(timeout)
 
@@ -49,6 +56,13 @@ class ThreadQueue(HasRunnables):
     There is a special `finish_message` value, which when received shuts down
     that consumer.  ThreadQueue.finish() puts one `self.finish_message` onto the
     queue for each consumer.
+
+    :param callback: The callback to run for each item in the queue.
+    :param error: The error callback.
+    :param maxsize: The maximum size of the queue.
+    :param name: The name of the queue.
+    :param thread_count: The number of threads to run.
+    :param timeout: The timeout for getting an item from the queue.
     """
 
     callback: t.Callable[[t.Any], None]
@@ -64,10 +78,11 @@ class ThreadQueue(HasRunnables):
 
     @cached_property
     def queue(self) -> Queue:
+        """Return a new queue."""
         return Queue(self.maxsize)
 
     def finish(self) -> None:
-        """Put an empty message into the queue for each listener"""
+        """Put an empty message into the queue for each listener."""
         for _ in self.runnables:
             self.queue.put(_SENTINEL_MESSAGE)
 

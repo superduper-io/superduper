@@ -6,6 +6,11 @@ from . import command
 
 @command(help='Start local cluster: server, ray and change data capture')
 def local_cluster(action: str, notebook_token: t.Optional[str] = None):
+    """Start local cluster: server, ray and change data capture.
+
+    :param action: Action to perform (up, down, attach).
+    :param notebook_token: Notebook token.
+    """
     from superduperdb.server.cluster import attach_cluster, down_cluster, up_cluster
 
     action = action.lower()
@@ -20,6 +25,7 @@ def local_cluster(action: str, notebook_token: t.Optional[str] = None):
 
 @command(help='Start vector search server')
 def vector_search():
+    """Start vector search server."""
     from superduperdb.vector_search.server.app import app
 
     app.start()
@@ -27,6 +33,7 @@ def vector_search():
 
 @command(help='Start standalone change data capture')
 def cdc():
+    """Start standalone change data capture."""
     from superduperdb.cdc.app import app
 
     app.start()
@@ -39,6 +46,13 @@ def ray_serve(
     ray_actor_options: str = '',
     num_replicas: int = 1,
 ):
+    """Serve a model on ray.
+
+    :param model: Model name.
+    :param version: Model version.
+    :param ray_actor_options: Ray actor options.
+    :param num_replicas: Number of replicas.
+    """
     from superduperdb.backends.ray.serve import run
 
     run(
@@ -51,6 +65,7 @@ def ray_serve(
 
 @command(help='Start FastAPI REST server')
 def rest():
+    """Start FastAPI REST server."""
     from superduperdb.rest.app import app
 
     app.start()

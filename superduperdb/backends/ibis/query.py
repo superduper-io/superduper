@@ -102,7 +102,8 @@ def _model_update_impl(
 
 
 class IbisBackendError(DatabackendException):
-    """
+    """Ibis backend error.
+
     This error represents ibis query related errors
     i.e when there is an error while executing an ibis query,
     use this exception to represent the error.
@@ -111,9 +112,7 @@ class IbisBackendError(DatabackendException):
 
 @dc.dataclass(repr=False)
 class IbisCompoundSelect(CompoundSelect):
-    """
-    A query incorporating vector-search and a standard ``ibis`` query
-    """
+    """A query incorporating vector-search and a standard ``ibis`` query."""
 
     DB_TYPE: t.ClassVar[str] = 'SQL'
 
@@ -121,6 +120,7 @@ class IbisCompoundSelect(CompoundSelect):
 
     @property
     def primary_id(self):
+        """Return the primary id of the query."""
         if self.query_linker is None:
             return self.table_or_collection.primary_id
         return self.query_linker.primary_id
@@ -167,6 +167,7 @@ class IbisCompoundSelect(CompoundSelect):
 
     @property
     def output_fields(self):
+        """Return the output fields."""
         return self.query_linker.output_fields
 
     def _get_query_component(
@@ -183,13 +184,9 @@ class IbisCompoundSelect(CompoundSelect):
         return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
 
     def outputs(self, *predict_ids):
-        """
-        This method returns a query which joins a query with the outputs
-        for a table.
+        """Returns a query which joins a query with the outputs for a table.
 
-        :param key: The key on which the model was evaluated
-        :param model: The model identifier for which to get the outputs
-        :param version: The version of the model for which to get the outputs (optional)
+        :param *predict_ids: The predict ids of the outputs
 
         >>> q = t.filter(t.age > 25).outputs('txt', 'model_name')
         """
@@ -224,6 +221,7 @@ class IbisCompoundSelect(CompoundSelect):
         return self.query_linker.compile(db, tables=tables)
 
     def get_all_tables(self):
+        """Get all tables in the query."""
         tables = [self.table_or_collection.identifier]
         if self.query_linker is not None:
             tables.extend(self.query_linker.get_all_tables())
@@ -253,6 +251,7 @@ class IbisCompoundSelect(CompoundSelect):
 
     @property
     def select_table(self):
+        """Return the select table."""
         return self.table_or_collection
 
     def _execute_with_pre_like(self, db):
@@ -298,11 +297,17 @@ class IbisCompoundSelect(CompoundSelect):
 
     @property
     def renamings(self):
+        """Return the renamings."""
         if self.query_linker is not None:
             return self.query_linker.renamings
         return {}
 
     def execute(self, db, reference: bool = False):
+        """Execute the query.
+
+        :param db: The Datalayer instance
+        :param reference: Whether to return a reference to the query
+        """
         # TODO handle load_hybrid for `ibis`
         output, scores = self._execute(db)
         fields = self._get_all_fields(db)
@@ -329,10 +334,10 @@ class IbisCompoundSelect(CompoundSelect):
         )
 
     def select_ids_of_missing_outputs(self, predict_id: str):
-        """
-        Query which selects ids where outputs are missing.
-        """
+        """Query which selects ids where outputs are missing.
 
+        :param predict_id: The identifier of the model
+        """
         assert self.pre_like is None
         assert self.post_like is None
         assert self.query_linker is not None
@@ -354,6 +359,15 @@ class IbisCompoundSelect(CompoundSelect):
         flatten: bool = False,
         document_embedded: t.Optional[bool] = None,
     ):
+        """Update the model outputs in the output table.
+
+        :param db: The Datalayer instance
+        :param ids: The ids of the outputs
+        :param predict_id: The identifier of the model
+        :param outputs: The outputs of the model
+        :param flatten: Whether to flatten the outputs
+        :param document_embedded: Whether the outputs are document embedded
+        """
         if document_embedded is True:
             logging.warn(
                 "Ibis backend does not support document embedded parameter.",
@@ -365,6 +379,10 @@ class IbisCompoundSelect(CompoundSelect):
         )
 
     def add_fold(self, fold: str) -> Select:
+        """Add a fold to the query.
+
+        :param fold: The fold to add
+        """
         if self.query_linker is not None:
             # make sure we have a fold column in the query
             query_members = [
@@ -380,11 +398,12 @@ class IbisCompoundSelect(CompoundSelect):
 
 
 class _LogicalExprMixin:
-    '''
+    """_LogicalExpr.
+
     Mixin class which holds '__eq__', '__or__', '__gt__', etc arithmetic operators
     These methods are overloaded for ibis logical expression dynamic wrapping
     with superduperdb.
-    '''
+    """
 
     def _logical_expr(self, members, collection, k, other: t.Optional[t.Any] = None):
         if other is not None:
@@ -427,6 +446,13 @@ class _LogicalExprMixin:
 
 @dc.dataclass(repr=False)
 class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
+    """A query linker for ibis queries.
+
+    This class is used to link multiple queries together in a chain.
+
+    :param primary_id: The primary id of the table
+    """
+
     primary_id: t.Union[str, t.List[str], None] = None
 
     def __post_init__(self):
@@ -436,12 +462,14 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     @property
     def renamings(self):
+        """Return the renamings."""
         out = {}
         for m in self.members:
             out.update(m.renamings)
         return out
 
     def repr_(self) -> str:
+        """Return the representation of the query."""
         out = super().repr_()
         out = re.sub('\. ', ' ', out)
         out = re.sub('\.\[', '[', out)
@@ -449,10 +477,15 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     @property
     def output_fields(self):
+        """Return the output fields."""
         return self._output_fields
 
     @output_fields.setter
     def output_fields(self, value):
+        """Set the output fields.
+
+        :param value: The output fields
+        """
         self._output_fields = value
 
     def __eq__(self, other):
@@ -496,15 +529,24 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     @property
     def select_ids(self):
+        """Return a query which selects ids."""
         return self.select(self.table_or_collection.primary_id)
 
     def select_single_id(self, id):
+        """Return a query which selects a single id.
+
+        :param id: The id to select
+        """
         return self.filter(
             self.table_or_collection.__getattr__(self.table_or_collection.primary_id)
             == id
         )
 
     def select_using_ids(self, ids):
+        """Return a query which selects using the given ids.
+
+        :param ids: The ids to select
+        """
         return self.filter(
             self.__getattr__(self.table_or_collection.primary_id).isin(ids)
         )
@@ -522,6 +564,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         return out
 
     def get_all_tables(self):
+        """Get all tables in the query."""
         out = []
         for member in self.members:
             out.extend(member.get_all_tables())
@@ -541,6 +584,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             return other_query
 
     def __call__(self, *args, **kwargs):
+        """Execute the query."""
         primary_id = (
             [self.primary_id]
             if isinstance(self.primary_id, str)
@@ -583,6 +627,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         )
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
+        """Compile the query.
+
+        :param db: The Datalayer instance
+        :param tables: The tables to use for the query
+        """
         table_id = self.table_or_collection.identifier
         if tables is None:
             tables = {}
@@ -594,6 +643,10 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         return result, tables
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The Datalayer instance
+        """
         native_query, _ = self.compile(db)
         try:
             result = native_query.execute()
@@ -609,11 +662,12 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
 
 class QueryType(str, enum.Enum):
-    '''
+    """Query type enum.
+
     This class holds type of query
     query: This means Query and can be called
     attr: This means Attribute and cannot be called
-    '''
+    """
 
     QUERY = 'query'
     ATTR = 'attr'
@@ -621,7 +675,8 @@ class QueryType(str, enum.Enum):
 
 @dc.dataclass(repr=False, kw_only=True)
 class Table(Component):
-    """
+    """Table component.
+
     This is a representation of an SQL table in ibis,
     saving the important meta-data associated with the table
     in the ``superduperdb`` meta-data store.
@@ -646,6 +701,10 @@ class Table(Component):
         assert self.primary_id != '_input_id', '"_input_id" is a reserved value'
 
     def pre_create(self, db: 'Datalayer'):
+        """Pre-create the table.
+
+        :param db: The Datalayer instance
+        """
         assert self.schema is not None, "Schema must be set"
         # TODO why? This is done already
         for e in self.schema.encoders:
@@ -670,24 +729,44 @@ class Table(Component):
 
     @property
     def table_or_collection(self):
+        """Return the table or collection."""
         return IbisQueryTable(self.identifier, primary_id=self.primary_id)
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
+        """Compile the query.
+
+        :param db: The Datalayer instance
+        :param tables: The tables to use for the query
+        """
         return IbisQueryTable(self.identifier, primary_id=self.primary_id).compile(
             db, tables=tables
         )
 
     def insert(self, documents, **kwargs):
+        """Return a query which inserts documents into the table.
+
+        :param documents: The documents to insert
+        """
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
         ).insert(documents, **kwargs)
 
     def like(self, r: 'Document', vector_index: str, n: int = 10):
+        """Return a query which finds similar documents to the given document.
+
+        :param r: The document to find similar documents to
+        :param vector_index: The vector index to use for the search
+        :param n: The number of similar documents to find
+        """
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
         ).like(r=r, vector_index=vector_index, n=n)
 
     def outputs(self, *predict_ids):
+        """Returns a query which joins a query with the model outputs.
+
+        :param *predict_ids: The predict ids of the outputs
+        """
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
         ).outputs(*predict_ids)
@@ -703,6 +782,7 @@ class Table(Component):
         ).__getitem__(item)
 
     def to_query(self):
+        """Return the query representation of the table."""
         return IbisCompoundSelect(
             table_or_collection=IbisQueryTable(
                 self.identifier, primary_id=self.primary_id
@@ -717,9 +797,7 @@ class Table(Component):
 
 @dc.dataclass(repr=False)
 class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
-    """
-    This is a symbolic representation of a table
-    for building ``IbisCompoundSelect`` queries.
+    """A symbolic representation of a table for building ``IbisCompoundSelect`` queries.
 
     :param primary_id: The primary id of the table
     """
@@ -727,6 +805,11 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     primary_id: str = 'id'
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
+        """Compile the query.
+
+        :param db: The Datalayer instance
+        :param tables: The tables to use for the query
+        """
         if tables is None:
             tables = {}
         if self.identifier not in tables:
@@ -734,16 +817,20 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         return tables[self.identifier], tables
 
     def repr_(self):
+        """Return the representation of the table."""
         return self.identifier
 
     def add_fold(self, fold: str) -> Select:
+        """Add a fold to the query.
+
+        :param fold: The fold to add
+        """
         return self.filter(self.fold == fold)
 
     def outputs(self, *predict_ids):
-        """
-        This method returns a query which joins a query with the model outputs.
+        """Returns a query which joins a query with the model outputs.
 
-        :param model: The model identifier for which to get the outputs
+        :param *predict_ids: The predict ids of the outputs
 
         >>> q = t.filter(t.age > 25).outputs('model_name', db)
 
@@ -756,20 +843,31 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
     @property
     def id_field(self):
+        """Return the primary id of the table."""
         return self.primary_id
 
     @property
     def select_table(self) -> Select:
+        """Return the select table."""
         return self
 
     @property
     def select_ids(self) -> Select:
+        """Select the ids of the table."""
         return self.select(self.primary_id)
 
     def select_using_ids(self, ids: t.Sequence[t.Any]) -> Select:
+        """Select using ids.
+
+        :param ids: The ids to select
+        """
         return self.filter(self[self.primary_id].isin(ids))
 
     def select_ids_of_missing_outputs(self, predict_id: str) -> Select:
+        """Select ids where outputs are missing.
+
+        :param predict_id: The predict id of the outputs
+        """
         output_table = IbisQueryTable(
             identifier=f'_outputs.{predict_id}',
             primary_id='output_id',
@@ -779,6 +877,10 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         )
 
     def select_single_id(self, id):
+        """Select a single id from the table.
+
+        :param id: The id to select
+        """
         return self.filter(getattr(self, self.primary_id) == id)
 
     def __getitem__(self, item):
@@ -821,12 +923,17 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         *args,
         **kwargs,
     ):
+        """Insert data into the table."""
         return self._insert(*args, **kwargs)
 
     def _delete(self, *args, **kwargs):
         return super()._delete(*args, **kwargs)
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The Datalayer instance
+        """
         return db.databackend.conn.table(self.identifier).execute()
 
     def model_update(
@@ -838,6 +945,14 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         flatten: bool = False,
         **kwargs,
     ):
+        """Update the model outputs in the output table.
+
+        :param db: The Datalayer isinstance
+        :param ids: The ids of the input data
+        :param predict_id: The identifier of the model
+        :param outputs: The outputs of the model
+        :param flatten: Whether to flatten the outputs
+        """
         return _model_update_impl(
             db, ids=ids, predict_id=predict_id, outputs=outputs, flatten=flatten
         )
@@ -877,7 +992,8 @@ def _get_all_tables(item):
 
 @dc.dataclass
 class IbisQueryComponent(QueryComponent):
-    """
+    """Ibis query component.
+
     This class represents a component of an ``ibis`` query.
     For example ``filter`` in ``t.filter(t.age > 25)``.
     """
@@ -886,6 +1002,7 @@ class IbisQueryComponent(QueryComponent):
 
     @property
     def primary_id(self):
+        """Return the primary id of the query component."""
         assert self.type == QueryType.QUERY, 'can\'t get primary id of an attribute'
         primary_id = []
         for a in self.args:
@@ -906,6 +1023,7 @@ class IbisQueryComponent(QueryComponent):
 
     @property
     def renamings(self):
+        """Return the renamings of the query component."""
         if self.name == 'rename':
             return self.args[0]
         elif self.name == 'relabel':
@@ -927,7 +1045,8 @@ class IbisQueryComponent(QueryComponent):
             return out
 
     def repr_(self) -> str:
-        """
+        """Return the string representation of the query component.
+
         >>> IbisQueryComponent('__eq__(2)', type=QueryType.QUERY, args=[1, 2]).repr_()
         """
         out = super().repr_()
@@ -946,6 +1065,12 @@ class IbisQueryComponent(QueryComponent):
     def compile(
         self, parent: t.Any, db: 'Datalayer', tables: t.Optional[t.Dict] = None
     ):
+        """Compile the query component.
+
+        :param parent: The parent query
+        :param db: The Datalayer instance
+        :param tables: The tables to use for the query
+        """
         if self.type == QueryType.ATTR:
             return getattr(parent, self.name), tables
         args, tables = _compile_item(self.args, db, tables=tables)
@@ -953,6 +1078,7 @@ class IbisQueryComponent(QueryComponent):
         return getattr(parent, self.name)(*args, **kwargs), tables
 
     def get_all_tables(self):
+        """Get all tables in the query."""
         out = []
         out.extend(_get_all_tables(self.args))
         out.extend(_get_all_tables(self.kwargs))
@@ -961,6 +1087,8 @@ class IbisQueryComponent(QueryComponent):
 
 @dc.dataclass
 class IbisInsert(Insert):
+    """Insert query for ibis."""
+
     def __post_init__(self):
         if isinstance(self.documents, pandas.DataFrame):
             self.documents = [
@@ -971,6 +1099,10 @@ class IbisInsert(Insert):
         return [r.encode(table.schema) for r in self.documents]
 
     def execute(self, db):
+        """Execute the query.
+
+        :param db: The Datalayer instance
+        """
         table = db.load(
             'table',
             self.table_or_collection.identifier,
@@ -985,6 +1117,7 @@ class IbisInsert(Insert):
 
     @property
     def select_table(self):
+        """Return the table or collection to select from."""
         return self.table_or_collection
 
 
@@ -1004,10 +1137,20 @@ class _SQLDictIterable:
 
 @dc.dataclass
 class RawSQL(RawQuery):
+    """Raw SQL query.
+
+    :param query: The raw SQL query
+    :param id_field: The field to use as the primary id
+    """
+
     query: str
     id_field: str = 'id'
 
     def execute(self, db):
+        """Run the query.
+
+        :param db: The DataLayer instance
+        """
         cursor = db.databackend.conn.raw_sql(self.query)
         try:
             cursor = cursor.mappings().all()

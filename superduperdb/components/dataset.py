@@ -50,8 +50,7 @@ class Dataset(Component):
     def __post_init__(self, artifacts):
         """Post-initialization method.
 
-        Args:
-            artifacts: Optional additional artifacts for initialization.
+        :param artifacts: Optional additional artifacts for initialization.
         """
         self._data = None
         return super().__post_init__(artifacts)
@@ -59,25 +58,19 @@ class Dataset(Component):
     @property
     @ensure_initialized
     def data(self):
-        """
-        Property representing the dataset's data.
-        """
+        """Property representing the dataset's data."""
         return self._data
 
     def init(self):
-        """
-        Initialization method.
-        """
+        """Initialization method."""
         super().init()
         self._data = [Document.decode(r, self.db) for r in pickle_decode(self.raw_data)]
 
     @override
     def pre_create(self, db: 'Datalayer') -> None:
-        """
-        Pre-create hook for database operations.
+        """Pre-create hook for database operations.
 
-        Args:
-            db: The Datalayer instance.
+        :param db: The database to use for the operation.
         """
         if self.raw_data is None:
             if self.select is None:
@@ -90,7 +83,5 @@ class Dataset(Component):
 
     @cached_property
     def random(self):
-        """
-        Cached property representing the random number generator.
-        """
+        """Cached property representing the random number generator."""
         return numpy.random.default_rng(seed=self.random_seed)

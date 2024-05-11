@@ -8,6 +8,14 @@ from superduperdb.base.serializable import Serializable
 
 @dc.dataclass
 class FieldType(Serializable):
+    """Field type to represent the type of a field in a table.
+
+    This is a wrapper around ibis.expr.datatypes.DataType to make it
+    serializable.
+
+    :param identifier: The name of the data type.
+    """
+
     identifier: t.Union[str, DataType]
 
     def __post_init__(self):
@@ -16,8 +24,9 @@ class FieldType(Serializable):
 
 
 def dtype(x):
-    '''
-    Ibis dtype to represent basic data types in ibis
-    e.g int, str, etc
-    '''
+    """Ibis dtype to represent basic data types in ibis.
+
+    :param x: The data type
+    e.g int, str, etc.
+    """
     return FieldType(_dtype(x))

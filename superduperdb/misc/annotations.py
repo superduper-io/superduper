@@ -59,12 +59,13 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
 
 
 def requires_packages(*packages, warn=False):
-    """
-    Require the packages to be installed
-    :param packages: list of tuples of packages
+    """Require the packages to be installed.
+
+    :param *packages: list of tuples of packages
                      each tuple of the form
                      (import_name, lower_bound/None,
                       upper_bound/None, install_name/None)
+    :param warn: if True, warn instead of raising an exception
 
     E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
     """
@@ -86,10 +87,11 @@ def requires_packages(*packages, warn=False):
 def _requires_packages(
     import_module, lower_bound=None, upper_bound=None, install_module=None
 ):
-    '''
+    """Compare the versions of the required packages.
+
     A utility function to check that a required package for a module
     in superduperdb.ext is installed.
-    '''
+    """
     import_module, lower_bound, upper_bound, install_module = _normalize_module(
         import_module,
         lower_bound,
@@ -100,6 +102,13 @@ def _requires_packages(
 
 
 def deprecated(f):
+    """Decorator to mark a function as deprecated.
+
+    This will result in a warning being emitted when the function is used.
+
+    :param f: function to deprecate
+    """
+
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         logging.warn(
@@ -110,7 +119,7 @@ def deprecated(f):
     return decorated
 
 
-# TODO add deprecated also
+# TODO: add deprecated also
 def public_api(stability: str = 'stable'):
     """Annotation for documenting public APIs.
 
@@ -122,8 +131,9 @@ def public_api(stability: str = 'stable'):
 
     If ``stability="stable"``, the APIs will remain backwards compatible across
     minor releases.
-    """
 
+    :param stability: stability of the API
+    """
     assert stability in ["stable", "beta", "alpha"]
 
     def wrap(obj):
@@ -139,7 +149,7 @@ def public_api(stability: str = 'stable'):
 
 
 class SuperDuperDBDeprecationWarning(DeprecationWarning):
-    """Specialized Deprecation Warning for fine grained filtering control"""
+    """Specialized Deprecation Warning for fine grained filtering control."""
 
     pass
 
@@ -180,6 +190,12 @@ def _get_indent(docstring: str) -> int:
 
 
 def ui(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
+    """Annotation for documenting UI schemas.
+
+    :param *schema: list of dictionaries representing the UI schema
+    :param handle_integration: function to handle the integration of the UI schema
+    """
+
     def decorated(f):
         f.get_ui_schema = lambda: schema
         f.build = lambda r: f(**r)

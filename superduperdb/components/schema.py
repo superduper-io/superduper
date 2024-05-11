@@ -12,8 +12,7 @@ from superduperdb.misc.annotations import public_api
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class Schema(Component):
-    """
-    A component containing information about the types or encoders of a table.
+    """A component containing information about the types or encoders of a table.
 
     {component_parameters}
     :param fields: A mapping of field names to types or encoders.
@@ -31,8 +30,7 @@ class Schema(Component):
 
     @override
     def pre_create(self, db) -> None:
-        """
-        Database pre-create hook to add datatype to the database.
+        """Database pre-create hook to add datatype to the database.
 
         :param db: Datalayer instance.
         """
@@ -43,7 +41,8 @@ class Schema(Component):
 
     @property
     def raw(self):
-        """
+        """Return the raw fields.
+
         Get a dictionary of fields as keys and datatypes as values.
         This is used to create ibis tables.
         """
@@ -54,34 +53,26 @@ class Schema(Component):
 
     @cached_property
     def encoded_types(self):
-        """
-        List of fields of type DataType.
-        """
+        """List of fields of type DataType."""
         return [k for k, v in self.fields.items() if isinstance(v, DataType)]
 
     @cached_property
     def trivial(self):
-        """
-        Determine if the schema contains only trivial fields.
-        """
+        """Determine if the schema contains only trivial fields."""
         return not any([isinstance(v, DataType) for v in self.fields.values()])
 
     @property
     def encoders(self):
-        """
-        An iterable to list DataType fields.
-        """
+        """An iterable to list DataType fields."""
         for v in self.fields.values():
             if isinstance(v, DataType):
                 yield v
 
     def decode_data(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
-        """
-        Decode data using the schema's encoders.
+        """Decode data using the schema's encoders.
 
         :param data: Data to decode.
         """
-
         if self.trivial:
             return data
 
@@ -94,8 +85,7 @@ class Schema(Component):
         return decoded
 
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
-        """
-        Encode data using the schema's encoders.
+        """Encode data using the schema's encoders.
 
         :param data: Data to encode.
         """

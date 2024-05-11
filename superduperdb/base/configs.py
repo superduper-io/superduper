@@ -24,13 +24,11 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class ConfigSettings:
-    """
-    A class that reads a dataclass class from a configuration file and
-      environment variables.
+    """Helper class to read a configuration from a dataclass.
+
+    Reads a dataclass class from a configuration file and environment variables.
 
     :param cls: The Pydantic class to read.
-    :param default_files: The default config files to read.
-    :param prefix: The prefix to use for environment variables.
     :param environ: The environment variables to read from.
     """
 
@@ -39,8 +37,7 @@ class ConfigSettings:
 
     @cached_property
     def config(self) -> t.Any:
-        """Read a configuration using defaults as basis"""
-
+        """Read a configuration using defaults as basis."""
         parent = self.cls().dict()
         env = dict(os.environ if self.environ is None else self.environ)
         env = config_dicts.environ_to_config_dict(PREFIX, parent, env)

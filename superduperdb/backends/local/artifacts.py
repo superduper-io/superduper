@@ -34,11 +34,12 @@ class FileSystemArtifactStore(ArtifactStore):
         return os.path.exists(path)
 
     def url(self):
+        """Return the URL of the artifact store."""
         return self.conn
 
     def _delete_artifact(self, file_id: str):
-        """
-        Delete artifact from artifact store
+        """Delete artifact from artifact store.
+
         :param file_id: File id uses to identify artifact in store
         """
         path = os.path.join(self.conn, file_id)
@@ -48,8 +49,11 @@ class FileSystemArtifactStore(ArtifactStore):
             os.remove(path)
 
     def drop(self, force: bool = False):
-        """
-        Drop the artifact store.
+        """Drop the artifact store.
+
+        Please use with caution as this will delete all data in the artifact store.
+
+        :param force: Whether to force the drop.
         """
         if not force:
             if not click.confirm(
@@ -78,9 +82,12 @@ class FileSystemArtifactStore(ArtifactStore):
             return f.read()
 
     def _save_file(self, file_path: str, file_id: str):
-        """
-        Save file in artifact store and return the relative path
+        """Save file in artifact store and return the relative path.
+
         return the relative path {file_id}/{name}
+
+        :param file_path: The path to the file to be saved.
+        :param file_id: The id of the file.
         """
         path = Path(file_path)
         name = path.name
@@ -96,13 +103,11 @@ class FileSystemArtifactStore(ArtifactStore):
         return os.path.join(file_id, name)
 
     def _load_file(self, file_id: str) -> str:
-        """Return the path to the file in the artifact store"""
+        """Return the path to the file in the artifact store."""
         logging.info(f"Loading file {file_id} from {self.conn}")
         return os.path.join(self.conn, file_id)
 
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""
         # Not necessary since just local filesystem
         pass

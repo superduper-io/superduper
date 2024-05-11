@@ -51,7 +51,10 @@ class MongoStyleDict(t.Dict[str, t.Any]):
             self[parent] = parent_item
 
 
+# TODO: Is this an unused class?
 class ArgumentDefaultDict(defaultdict):
+    """ArgumentDefaultDict."""
+
     def __getitem__(self, item):
         if item not in self:
             self[item] = self.default_factory(item)
@@ -59,11 +62,15 @@ class ArgumentDefaultDict(defaultdict):
 
 
 def diff(r1, r2):
-    """
+    """Get the difference between two dictionaries.
+
     >>> _diff({'a': 1, 'b': 2}, {'a': 2, 'b': 2})
     {'a': (1, 2)}
     >>> _diff({'a': {'c': 3}, 'b': 2}, {'a': 2, 'b': 2})
     {'a': ({'c': 3}, 2)}
+
+    :param r1: Dict
+    :param r2: Dict
     """
     d = _diff_impl(r1, r2)
     out = {}

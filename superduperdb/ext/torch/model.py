@@ -29,12 +29,13 @@ if t.TYPE_CHECKING:
     from superduperdb.jobs.job import Job
 
 
-def torchmodel(cls):
-    """
+def torchmodel(class_obj):
+    """A decorator to convert a `torch.nn.Module` into a `TorchModel`.
+
     Decorate a `torch.nn.Module` so that when it is invoked,
     the result is a `TorchModel`.
 
-    :param cls: Class to decorate
+    :param class_obj: Class to decorate
     """
 
     def factory(
@@ -54,7 +55,7 @@ def torchmodel(cls):
     ):
         return TorchModel(
             identifier=identifier,
-            object=cls(*args, **kwargs),
+            object=class_obj(*args, **kwargs),
             preprocess=preprocess,
             postprocess=postprocess,
             collate_fn=collate_fn,
@@ -72,10 +73,11 @@ def torchmodel(cls):
 
 class BasicDataset(data.Dataset):
     """
-    Basic database iterating over a list of documents and applying a transformation
+    Basic database iterating over a list of documents and applying a transformation.
 
-    :param documents: documents
-    :param transform: function
+    :param items: items, typically documents
+    :param transform: function, typically a preprocess function
+    :param signature: signature of the transform function
     """
 
     def __init__(self, items, transform, signature):
@@ -99,6 +101,27 @@ class BasicDataset(data.Dataset):
 
 @dc.dataclass(kw_only=True)
 class TorchModel(Model, _Fittable, _DeviceManaged):
+    """Torch model.
+
+    This class is a wrapper around a PyTorch model.
+
+    :param object: Torch model, e.g. `torch.nn.Module`
+    :param preprocess: Preprocess function, the function to apply to the input
+    :param preprocess_signature: The signature of the preprocess function
+    :param postprocess: The postprocess function, the function to apply to the output
+    :param postprocess_signature: The signature of the postprocess function
+    :param forward_method: The forward method, the method to call on the model
+    :param forward_signature: The signature of the forward method
+    :param train_forward_method: Train forward method, the method to call on the model
+    :param train_forward_signature: The signature of the train forward method
+    :param train_preprocess: Train preprocess function,
+                                the function to apply to the input
+    :param train_preprocess_signature: The signature of the train preprocess function
+    :param collate_fn: The collate function for the dataloader
+    :param optimizer_state: The optimizer state
+    :param loader_kwargs: The kwargs for the dataloader
+    """
+
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('object', dill_serializer),
     )
@@ -128,12 +151,17 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
 
     @property
     def signature(self):
+        """Get the signature of the model."""
         if self.preprocess:
             return self.preprocess_signature
         return self.forward_signature
 
     @signature.setter
     def signature(self, signature):
+        """Set the signature of the model.
+
+        :param signature: Signature
+        """
         if self.preprocess:
             self.preprocess_signature = signature
         else:
@@ -144,40 +172,66 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
     ) -> t.Sequence[t.Any]:
+        """Schedule jobs for the model.
+
+        :param db: Datalayer
+        :param dependencies: Dependencies
+        """
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
         return jobs
 
     @property
     def inputs(self) -> CallableInputs:
+        """Get the inputs callable for the model."""
         return CallableInputs(
             self.object.forward if not self.preprocess else self.preprocess, {}
         )
 
     def to(self, device):
+        """Move the model to a device.
+
+        :param device: Device
+        """
         self.object.to(device)
 
     def save(self, db: Datalayer):
+        """Save the model to the database.
+
+        :param db: Datalayer
+        """
         with self.saving():
             db.replace(object=self, upsert=True)
 
     @contextmanager
     def evaluating(self):
+        """Context manager for evaluating the model.
+
+        This context manager ensures that the model is in evaluation mode
+        """
         yield eval(self)
 
     def train(self):
+        """Set the model to training mode."""
         return self.object.train()
 
     def eval(self):
+        """Set the model to evaluation mode."""
         return self.object.eval()
 
     def parameters(self):
+        """Get the model parameters."""
         return self.object.parameters()
 
     def state_dict(self):
+        """Get the model state dict."""
         return self.object.state_dict()
 
     @contextmanager
     def saving(self):
+        """Context manager for saving the model.
+
+        This context manager ensures that the model is in evaluation mode
+        """
         was_training = self.object.training
         try:
             self.object.eval()
@@ -208,6 +262,11 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
 
     @ensure_initialized
     def predict_one(self, *args, **kwargs):
+        """Predict on a single input.
+
+        :param args: Input arguments
+        :param kwargs: Input keyword arguments
+        """
         with torch.no_grad(), eval(self.object):
             if self.preprocess is not None:
                 out = self.preprocess(*args, **kwargs)
@@ -226,6 +285,10 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict on a dataset.
+
+        :param dataset: Dataset
+        """
         with torch.no_grad(), eval(self.object):
             inputs = BasicDataset(
                 items=dataset,
@@ -253,6 +316,11 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
             return out
 
     def train_forward(self, X, y=None):
+        """The forward method for training.
+
+        :param X: Input
+        :param y: Target
+        """
         X = X.to(self.device)
         if y is not None:
             y = y.to(self.device)
@@ -271,8 +339,7 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
 
 
 def unpack_batch(args):
-    """
-    Unpack a batch into lines of tensor output.
+    """Unpack a batch into lines of tensor output.
 
     :param args: a batch of model outputs
 
@@ -296,7 +363,6 @@ def unpack_batch(args):
     >>> out[1]['a']['b'].shape
     torch.Size([10])
     """
-
     if isinstance(args, torch.Tensor):
         return [args[i] for i in range(args.shape[0])]
 
@@ -314,8 +380,7 @@ def unpack_batch(args):
 
 
 def create_batch(args):
-    """
-    Create a singleton batch in a manner similar to the PyTorch dataloader
+    """Create a singleton batch in a manner similar to the PyTorch dataloader.
 
     :param args: single data point for batching
 

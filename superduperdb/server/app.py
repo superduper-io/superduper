@@ -2,6 +2,7 @@ import json
 import sys
 import threading
 import time
+import typing as t
 from functools import cached_property
 from traceback import format_exc
 
@@ -15,13 +16,21 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from superduperdb import logging
 from superduperdb.base.build import build_datalayer
+from superduperdb.base.config import Config
 from superduperdb.base.datalayer import Datalayer
 
 # --------------- Create exception handler middleware-----------------
 
 
 class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
+    """Middleware to handle exceptions and log them."""
+
     async def dispatch(self, request: Request, call_next):
+        """Dispatch the request and handle exceptions.
+
+        :param request: request to dispatch
+        :param call_next: next call to make
+        """
         try:
             return await call_next(request)
         except Exception as e:
@@ -50,9 +59,14 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
 
 
 class SuperDuperApp:
-    """
-    This is a wrapper class that prepares helper functions used to create a
-    fastapi application in the realm of superduperdb.
+    """A wrapper class for creating a fastapi application.
+
+    The class provides a simple interface for creating a fastapi application
+    with custom endpoints.
+
+    :param service: name of the service
+    :param port: port to run the service on
+    :param db: datalayer instance
     """
 
     def __init__(self, service='vector_search', port=8000, db: Datalayer = None):
@@ -83,19 +97,27 @@ class SuperDuperApp:
 
     @cached_property
     def app(self):
+        """Return the application instance."""
         self._app.include_router(self.router)
         return self._app
 
     def raise_error(self, msg: str, code: int):
+        """Raise an error with the given message and code.
+
+        :param msg: message to raise
+        :param code: code to raise
+        """
         raise HTTPException(code, detail=msg)
 
     @cached_property
     def db(self):
+        """Return the database instance from the app state."""
         return self._app.state.pool
 
     def add(self, *args, method='post', **kwargs):
-        """
-        Register an endpoint with this method.
+        """Register an endpoint with this method.
+
+        :param method: method to use
         """
 
         def decorator(function):
@@ -106,8 +128,10 @@ class SuperDuperApp:
         return decorator
 
     def add_default_endpoints(self):
-        """
-        Add a list of default endpoints which comes out of the box with `SuperDuperApp`
+        """Add default endpoints to the application.
+
+        - /health: Health check endpoint
+        - /handshake/config: Handshake endpoint
         """
 
         @self.router.get('/health')
@@ -131,6 +155,7 @@ class SuperDuperApp:
             )
 
     def print_routes(self):
+        """Print the routes of the application."""
         table = PrettyTable()
 
         # Define the table headers
@@ -142,7 +167,11 @@ class SuperDuperApp:
 
         logging.info(f"Routes for '{self.service}' app: \n{table}")
 
-    def pre_start(self, cfg=None):
+    def pre_start(self, cfg: t.Union[Config, None] = None):
+        """Pre-start the application.
+
+        :param cfg: Configurations to use
+        """
         self.add_default_endpoints()
 
         if not self._user_startup:
@@ -152,6 +181,7 @@ class SuperDuperApp:
         assert self.app
 
     def run(self):
+        """Run the application."""
         uvicorn.run(
             self._app,
             host=self.app_host,
@@ -159,16 +189,20 @@ class SuperDuperApp:
         )
 
     def start(self):
-        """
-        This method is used to start the application server
-        """
+        """Start the application."""
         self.pre_start()
         self.print_routes()
         self.run()
 
-    def startup(self, function=None, cfg=None):
-        """
-        This method is used to register a startup function
+    def startup(
+        self,
+        function: t.Union[t.Callable, None] = None,
+        cfg: t.Union[Config, None] = None,
+    ):
+        """Startup the application.
+
+        :param function: function to run on startup
+        :param cfg: Configurations to use
         """
         self._user_startup = True
 
@@ -186,9 +220,10 @@ class SuperDuperApp:
 
         return
 
-    def shutdown(self, function=None):
-        """
-        This method is used to register a shutdown function
+    def shutdown(self, function: t.Union[t.Callable, None] = None):
+        """Shutdown the application.
+
+        :param function: function to run on shutdown
         """
         self._user_shutdown = True
 
@@ -203,22 +238,27 @@ class SuperDuperApp:
 
 
 def database(request: Request) -> Datalayer:
+    """Return the database instance from the app state.
+
+    :param request: request object
+    """
     return request.app.state.pool
 
 
 def DatalayerDependency():
-    """
-    A helper method to be used for injecting datalayer instance
-    into endpoint implementation
-    """
+    """Dependency for injecting datalayer instance into endpoint implementation."""
     return Depends(database)
 
 
 class Server(uvicorn.Server):
+    """Custom server class."""
+
     def install_signal_handlers(self):
+        """Install signal handlers."""
         pass
 
     def run_in_thread(self):
+        """Run the server in a separate thread."""
         self._thread = threading.Thread(target=self.run)
         self._thread.start()
 
@@ -226,5 +266,6 @@ class Server(uvicorn.Server):
             time.sleep(1e-3)
 
     def stop(self):
+        """Stop the server."""
         self.should_exit = True
         self._thread.join()

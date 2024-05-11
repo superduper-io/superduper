@@ -6,9 +6,7 @@ from superduperdb.backends.base.compute import ComputeBackend
 
 
 class LocalComputeBackend(ComputeBackend):
-    """
-    A mockup backend for running jobs locally.
-    """
+    """A mockup backend for running jobs locally."""
 
     def __init__(
         self,
@@ -17,10 +15,12 @@ class LocalComputeBackend(ComputeBackend):
 
     @property
     def type(self) -> str:
+        """The type of the backend."""
         return "local"
 
     @property
     def name(self) -> str:
+        """The name of the backend."""
         return "local"
 
     def submit(
@@ -30,6 +30,7 @@ class LocalComputeBackend(ComputeBackend):
         Submits a function for local execution.
 
         :param function: The function to be executed.
+        :param compute_kwargs: Do not use this parameter.
         """
         logging.info(f"Submitting job. function:{function}")
         future = function(*args, **kwargs)
@@ -44,20 +45,16 @@ class LocalComputeBackend(ComputeBackend):
 
     @property
     def tasks(self) -> t.Dict[str, t.Any]:
-        """
-        List for all pending tasks
-        """
+        """List for all pending tasks."""
         return self.__outputs
 
     def wait_all(self) -> None:
-        """
-        Waits for all pending tasks to complete.
-        """
+        """Waits for all pending tasks to complete."""
         pass
 
     def result(self, identifier: str) -> t.Any:
-        """
-        Retrieves the result of a previously submitted task.
+        """Retrieves the result of a previously submitted task.
+
         Note: This will block until the future is completed.
 
         :param identifier: The identifier of the submitted task.
@@ -65,13 +62,9 @@ class LocalComputeBackend(ComputeBackend):
         return self.__outputs[identifier]
 
     def disconnect(self) -> None:
-        """
-        Disconnect the local client.
-        """
+        """Disconnect the local client."""
         pass
 
     def shutdown(self) -> None:
-        """
-        Shuts down the local cluster.
-        """
+        """Shuts down the local cluster."""
         pass

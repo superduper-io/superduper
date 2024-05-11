@@ -28,9 +28,13 @@ _ATOMIC_TYPES = frozenset(
 
 
 def asdict(obj, *, copy_method=copy.copy) -> t.Dict[str, t.Any]:
-    """
+    """Convert the dataclass instance to a dict.
+
     Custom ``asdict`` function which exports a dataclass object into a dict,
     with a option to choose for nested non atomic objects copy strategy.
+
+    :param obj: The dataclass instance to
+    :param copy_method: The copy method to use for non atomic objects
     """
     if not dc.is_dataclass(obj):
         raise TypeError("asdict() should be called on dataclass instances")

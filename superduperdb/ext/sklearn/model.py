@@ -21,6 +21,13 @@ from superduperdb.jobs.job import Job
 
 @dc.dataclass(kw_only=True)
 class SklearnTrainer(Trainer):
+    """A trainer for `sklearn` models.
+
+    :param fit_params: The parameters to pass to `fit`.
+    :param predict_params: The parameters to pass to `predict
+    :param y_preprocess: The preprocessing function to use for the target.
+    """
+
     fit_params: t.Dict = dc.field(default_factory=dict)
     predict_params: t.Dict = dc.field(default_factory=dict)
     y_preprocess: t.Optional[t.Callable] = None
@@ -64,6 +71,13 @@ class SklearnTrainer(Trainer):
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
     ):
+        """Fit the model.
+
+        :param model: Model
+        :param db: Datalayer
+        :param train_dataset: Training dataset
+        :param valid_dataset: Validation dataset
+        """
         train_X, train_y = self._get_data_from_dataset(
             dataset=train_dataset, X=self.key
         )
@@ -76,6 +90,16 @@ class SklearnTrainer(Trainer):
 
 @dc.dataclass(kw_only=True)
 class Estimator(Model, _Fittable):
+    """Estimator model.
+
+    This is a model that can be trained and used for prediction.
+
+    :param object: The estimator object from `sklearn`.
+    :param trainer: The trainer to use.
+    :param preprocess: The preprocessing function to use.
+    :param postprocess: The postprocessing function to use.
+    """
+
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('object', pickle_serializer),
     )
@@ -96,6 +120,11 @@ class Estimator(Model, _Fittable):
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
+        """Schedule jobs for the model.
+
+        :param db: The datalayer to use.
+        :param dependencies: The dependencies to wait for.
+        """
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
         if self.validation is not None:
             jobs = self.validation.schedule_jobs(
@@ -104,6 +133,10 @@ class Estimator(Model, _Fittable):
         return jobs
 
     def predict_one(self, X):
+        """Predict on a single input.
+
+        :param X: The input to predict on.
+        """
         X = X[None, :]
         if self.preprocess is not None:
             X = self.preprocess(X)
@@ -113,6 +146,10 @@ class Estimator(Model, _Fittable):
         return X
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict on a dataset.
+
+        :param dataset: The dataset to predict on.
+        """
         if self.preprocess is not None:
             inputs = []
             for i in range(len(dataset)):

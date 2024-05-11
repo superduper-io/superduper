@@ -7,13 +7,13 @@ __all__ = ('superduper',)
 
 
 def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
-    """
+    """Superduper API to automatically wrap an object to a db or a component.
+
     Attempts to automatically wrap an item in a superduperdb component by
     using duck typing to recognize it.
 
     :param item: A database or model
     """
-
     if item is None:
         item = CFG.data_backend
 
@@ -65,9 +65,10 @@ class _DuckTyper:
 
         raise ValueError(f'{item} matched more than one type: {dts}')
 
+    # TODO: Does this item match the DuckType?
     @classmethod
     def accept(cls, item: t.Any) -> bool:
-        """Does this item match the DuckType?
+        """Check if an item matches the DuckType.
 
         The default implementation returns True if the number of attrs that
         the item has is exactly equal to self.count.
@@ -77,7 +78,11 @@ class _DuckTyper:
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
-        """Create a superduperdb component for an item that has already been accepted"""
+        """Create a component from the item.
+
+        This method should be implemented by subclasses.
+        :param item: The item to create the component from.
+        """
         raise NotImplementedError
 
     _DUCK_TYPES: t.List[t.Type] = []
@@ -88,15 +93,29 @@ class _DuckTyper:
 
 
 class MongoDbTyper(_DuckTyper):
+    """A DuckTyper for MongoDB databases.
+
+    This DuckTyper is used to automatically wrap a MongoDB database in a
+    Datalayer.
+    """
+
     attrs = ('list_collection_names',)
     count = len(attrs)
 
     @classmethod
     def accept(cls, item: t.Any) -> bool:
+        """Check if an item is a MongoDB database.
+
+        :param item: The item to check.
+        """
         return super().accept(item) and item.__class__.__name__ == 'Database'
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
+        """Create a Datalayer from a MongoDB database.
+
+        :param item: A MongoDB database.
+        """
         from mongomock.database import Database as MockDatabase
         from pymongo.database import Database
 
@@ -120,11 +139,21 @@ class MongoDbTyper(_DuckTyper):
 
 
 class SklearnTyper(_DuckTyper):
+    """A DuckTyper for scikit-learn estimators.
+
+    This DuckTyper is used to automatically wrap a scikit-learn estimator in
+    an Estimator.
+    """
+
     attrs = '_predict', 'fit', 'score', 'transform'
     count = 2
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
+        """Create an Estimator from a scikit-learn estimator.
+
+        :param item: A scikit-learn estimator.
+        """
         from sklearn.base import BaseEstimator
 
         from superduperdb.ext.sklearn.model import Estimator
@@ -137,11 +166,21 @@ class SklearnTyper(_DuckTyper):
 
 
 class TorchTyper(_DuckTyper):
+    """A DuckTyper for torch.nn.Module and torch.jit.ScriptModule.
+
+    This DuckTyper is used to automatically wrap a torch.nn.Module or
+    torch.jit.ScriptModule in a TorchModel.
+    """
+
     attrs = 'forward', 'parameters', 'state_dict', '_load_from_state_dict'
     count = len(attrs)
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
+        """Create a TorchModel from a torch.nn.Module or torch.jit.ScriptModule.
+
+        :param item: A torch.nn.Module or torch.jit.ScriptModule.
+        """
         from torch import jit, nn
 
         from superduperdb.ext.torch.model import TorchModel

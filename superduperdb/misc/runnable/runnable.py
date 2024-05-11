@@ -5,12 +5,14 @@ Callback = t.Callable[[], None]
 
 
 class Event(threading.Event):
-    """
+    """An Event that calls a list of callbacks when set or cleared.
+
     A threading.Event that also calls back to zero or more functions when its state
     is set or reset, and has a __bool__ method.
 
     Note that the callback might happen on some completely different thread,
-    so these functions cannot block"""
+    so these functions cannot block
+    """
 
     on_set: t.List[Callback]
 
@@ -19,10 +21,12 @@ class Event(threading.Event):
         super().__init__()
 
     def set(self):
+        """Set the flag to True and call all the callbacks."""
         super().set()
         [c() for c in self.on_set]
 
     def clear(self):
+        """Clear the flag to False and call all the callbacks."""
         super().clear()
         [c() for c in self.on_set]
 
@@ -31,7 +35,7 @@ class Event(threading.Event):
 
 
 class Runnable:
-    """A base class for things that start, run, finish, stop and join
+    """A base class for things that start, run, finish, stop and join.
 
     Stopping is requesting immediate termination: finishing is saying that
     there is no more work to be done, finish what you are doing.
@@ -95,7 +99,10 @@ class Runnable:
         self.stop()
 
     def join(self, timeout: t.Optional[float] = None):
-        """Join this thread or process.  Might block indefinitely, might do nothing"""
+        """Join this thread or process.  Might block indefinitely, might do nothing.
+
+        :param timeout: Timeout in seconds
+        """
 
     def __enter__(self):
         self.start()

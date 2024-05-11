@@ -6,11 +6,12 @@ LEFT_N = 2
 
 
 def anonymize_url(url):
-    """
-    Anonymize a URL by replacing the username and password with a mask token.
-    Change the username and password to *** keeping one character before and after each.
-    """
+    """Anonymize a URL by replacing the username and password with a mask token.
 
+    Change the username and password to *** keeping one character before and after each.
+
+    :param url: Database URL
+    """
     if not url:
         return url
 

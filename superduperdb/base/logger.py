@@ -14,6 +14,8 @@ __all__ = ('Logging',)
 
 
 class Logging:
+    """Logging class to handle logging for the SuperDuperDB."""
+
     if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
             url=os.environ["LOKI_URI"],
@@ -75,26 +77,53 @@ class Logging:
     # Example: logging.info("param 1", "param 2", ..)
     @staticmethod
     def multikey_debug(msg: str, *args):
+        """Log a message with the DEBUG level.
+
+        :param msg: The message to log.
+        """
         logger.opt(depth=1).debug(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_info(msg: str, *args):
+        """Log a message with the INFO level.
+
+        :param msg: The message to log.
+        """
         logger.opt(depth=1).info(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_success(msg: str, *args):
+        """Log a message with the SUCCESS level.
+
+        :param msg: The message to log.
+        """
         logger.opt(depth=1).success(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_warn(msg: str, *args):
+        """Log a message with the WARNING level.
+
+        :param msg: The message to log.
+        """
         logger.opt(depth=1).warning(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_error(msg: str, *args):
+        """Log a message with the ERROR level.
+
+        :param msg: The message to log.
+        """
         logger.opt(depth=1).error(" ".join(map(str, (msg, *args))))
 
     @staticmethod
     def multikey_exception(msg: str, *args, e=None):
+        """Log a message with the ERROR level.
+
+        e.g. logger.exception("An error occurred", e)
+
+        :param msg: The message to log.
+        :param e: The exception to log.
+        """
         logger.opt(depth=1, exception=e).error(" ".join(map(str, (msg, *args))))
 
     debug = multikey_debug

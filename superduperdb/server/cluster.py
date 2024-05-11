@@ -8,10 +8,11 @@ SESSION_NAME = 'superduperdb-local-cluster-session'
 
 
 def create_tmux_session(session_name, commands):
-    '''
-    Create a tmux local cluster
-    '''
+    """Create a tmux local cluster.
 
+    :param session_name: name of the tmux session
+    :param commands: list of commands to run
+    """
     for ix, cmd in enumerate(commands, start=0):
         window_name = f'{session_name}:{ix}'
         run_tmux_command(['send-keys', '-t', window_name, cmd, 'C-m'])
@@ -22,11 +23,19 @@ def create_tmux_session(session_name, commands):
 
 
 def run_tmux_command(command):
+    """Run a tmux command.
+
+    :param command: command to run
+    """
     print('tmux ' + ' '.join(command))
     subprocess.run(["tmux"] + command, check=True)
 
 
 def up_cluster(notebook_token: t.Optional[str] = None):
+    """Start the local cluster.
+
+    :param notebook_token: token to use for the jupyter notebook
+    """
     print('Starting the local cluster...')
 
     CFG = os.environ.get('SUPERDUPERDB_CONFIG')
@@ -85,10 +94,12 @@ def up_cluster(notebook_token: t.Optional[str] = None):
 
 
 def down_cluster():
+    """Stop the local cluster."""
     print('Stopping the local cluster...')
     run_tmux_command(['kill-session', '-t', SESSION_NAME])
     print('local cluster stopped')
 
 
 def attach_cluster():
+    """Attach to the tmux session."""
     run_tmux_command(['attach-session', '-t', SESSION_NAME])

@@ -20,15 +20,26 @@ from superduperdb.base.serializable import Serializable
 
 
 class TimeoutException(Exception):
+    """Timeout exception."""
+
     ...
 
 
 def timeout_handler(signum, frame):
+    """Timeout handler to raise an TimeoutException.
+
+    :param signum: signal number
+    :param frame: frame
+    """
     raise TimeoutException()
 
 
 @contextmanager
 def timeout(seconds):
+    """Context manager to set a timeout.
+
+    :param seconds: seconds until timeout
+    """
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:
@@ -39,8 +50,7 @@ def timeout(seconds):
 
 
 class Fetcher:
-    """
-    Fetches data from a URI
+    """Fetches data from a URI.
 
     :param headers: headers to be used for download
     :param n_workers: number of download workers
@@ -76,8 +86,7 @@ class Fetcher:
         return self.request_session.get(uri, headers=self.headers).content
 
     def __call__(self, uri: str):
-        """
-        Download data from a URI
+        """Download data from a URI.
 
         :param uri: uri to download from
         """
@@ -92,8 +101,7 @@ class Fetcher:
 
 
 class BaseDownloader:
-    """
-    Base class for downloading files
+    """Base class for downloading files.
 
     :param uris: list of uris/ file names to fetch
     :param n_workers: number of multiprocessing workers
@@ -119,8 +127,8 @@ class BaseDownloader:
         self.results: t.Dict = {}
 
     def go(self):
-        """
-        Download all files
+        """Download all files.
+
         Uses a :py:class:`multiprocessing.pool.ThreadPool` to parallelize
                           connections.
         """
@@ -185,11 +193,24 @@ class BaseDownloader:
 
 
 class Updater:
+    """Updater class to update the artifact.
+
+    :param db: Datalayer instance
+    :param query: query to be executed
+    """
+
     def __init__(self, db, query):
         self.db = db
         self.query = query
 
     def exists(self, uri, key, id, datatype):
+        """Check if the artifact exists.
+
+        :param uri: uri to download from
+        :param key: key in the document
+        :param id: id of the document
+        :param datatype: datatype of the document
+        """
         if self.db.datatypes[datatype].encodable == 'artifact':
             out = self.db.artifact_store.exists(uri=uri, datatype=datatype)
         else:
@@ -206,6 +227,14 @@ class Updater:
         datatype,
         bytes_,
     ):
+        """Run the updater.
+
+        :param uri: uri to download from
+        :param key: key in the document
+        :param id: id of the document
+        :param datatype: datatype of the document
+        :param bytes_: bytes to insert
+        """
         if self.db.datatypes[datatype].encodable == 'artifact':
             self.db.artifact_store.save_artifact(
                 {
@@ -228,6 +257,7 @@ class Downloader(BaseDownloader):
     :param update_one: function to call to insert data into table
     :param ids: list of ids of rows/ documents to update
     :param keys: list of keys in rows/ documents to insert to
+    :param datatypes: list of datatypes of rows/ documents to insert to
     :param n_workers: number of multiprocessing workers
     :param headers: dictionary of request headers passed to``requests`` package
     :param skip_existing: if ``True`` then don't bother getting already present data
@@ -286,8 +316,7 @@ class Downloader(BaseDownloader):
 def gather_uris(
     documents: t.Sequence[Document], gather_ids: bool = True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[t.Any], t.List[str]]:
-    """
-    Get the uris out of all documents as denoted by ``{"_content": ...}``
+    """Get the uris out of all documents as denoted by ``{"_content": ...}``.
 
     :param documents: list of dictionaries
     :param gather_ids: if ``True`` then gather ids of documents
@@ -309,7 +338,8 @@ def gather_uris(
 
 
 def _gather_uris_for_document(r: Document, id_field: str = '_id'):
-    '''
+    """Get the uris out of a single document as denoted by ``{"_content": ...}``.
+
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])
     >>> d = {'b': {'a': {'_content': {'uri': 'test'}}}}
@@ -318,7 +348,7 @@ def _gather_uris_for_document(r: Document, id_field: str = '_id'):
     >>> d = {'b': {'a': {'_content': {'uri': 'test', 'bytes': b'abc'}}}}
     >>> _gather_uris_for_document(d)
     ([], [])
-    '''
+    """
     uris = []
     keys = []
     datatypes = []
@@ -341,8 +371,9 @@ def download_content(
     raises: bool = True,
     n_workers: t.Optional[int] = None,
 ) -> t.Optional[t.Sequence[Document]]:
-    """
-    Download content contained in uploaded data. Items to be downloaded are identifier
+    """Download content contained in uploaded data.
+
+    Items to be downloaded are identifier
     via the subdocuments in the form exemplified below. By default items are downloaded
     to the database, unless a ``download_update`` function is provided.
 
@@ -350,12 +381,8 @@ def download_content(
     :param query: query to be executed
     :param ids: ids to be downloaded
     :param documents: documents to be downloaded
-    :param timeout: timeout for download
     :param raises: whether to raise errors
-    :param n_download_workers: number of download workers
-    :param headers: headers to be used for download
-    :param download_update: function to be used for updating the database
-    :param **kwargs: additional keyword arguments
+    :param n_workers: number of download workers
 
     >>> d = {"_content": {"uri": "<uri>", "encoder": "<encoder-identifier>"}}
     >>> def update(key, id, bytes):
@@ -408,6 +435,12 @@ def download_content(
 
 
 def download_from_one(r: Document):
+    """Download content from a single document.
+
+    This function will find all URIs in the document and download them.
+
+    :param r: document to download from
+    """
     uris, keys, _, _ = gather_uris([r])
     if not uris:
         return

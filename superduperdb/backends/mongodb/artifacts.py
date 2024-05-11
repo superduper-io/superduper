@@ -25,9 +25,16 @@ class MongoArtifactStore(ArtifactStore):
         self.filesystem = gridfs.GridFS(self.db)
 
     def url(self):
+        """Return the URL of the database."""
         return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
 
     def drop(self, force: bool = False):
+        """Drop the database.
+
+        Please use with caution as this will delete all artifacts.
+
+        :param force: If True, will not prompt for confirmation
+        """
         if not force:
             if not click.confirm(
                 f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
@@ -56,7 +63,7 @@ class MongoArtifactStore(ArtifactStore):
         return cur.read()
 
     def _save_file(self, file_path: str, file_id: str):
-        """Save file to GridFS"""
+        """Save file to GridFS."""
         path = Path(file_path)
         if path.is_dir():
             upload_folder(file_path, file_id, self.filesystem)
@@ -65,8 +72,8 @@ class MongoArtifactStore(ArtifactStore):
         return file_id
 
     def _load_file(self, file_id: str) -> str:
-        """
-        Download file from GridFS and return the path
+        """Download file from GridFS and return the path.
+
         The path is a temporary directory, {tmp_prefix}/{file_id}/{filename or folder}
         """
         return download(file_id, self.filesystem)
@@ -80,15 +87,18 @@ class MongoArtifactStore(ArtifactStore):
         )
 
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""
 
         # TODO: implement me
 
 
 def upload_file(path, file_id, fs):
-    """Upload file to GridFS"""
+    """Upload file to GridFS.
+
+    :param path: The path to the file to upload
+    :param file_id: The file_id of the file
+    :param fs: The GridFS object
+    """
     logging.info(f"Uploading file {path} to GridFS with file_id {file_id}")
     path = Path(path)
     with open(path, 'rb') as file_to_upload:
@@ -100,7 +110,13 @@ def upload_file(path, file_id, fs):
 
 
 def upload_folder(path, file_id, fs, parent_path=""):
-    """Upload folder to GridFS"""
+    """Upload folder to GridFS.
+
+    :param path: The path to the folder to upload
+    :param file_id: The file_id of the folder
+    :param fs: The GridFS object
+    :param parent_path: The parent path of the folder
+    """
     path = Path(path)
     if not parent_path:
         logging.info(f"Uploading folder {path} to GridFS with file_id {file_id}")
@@ -128,8 +144,13 @@ def upload_folder(path, file_id, fs, parent_path=""):
 
 
 def download(file_id, fs):
-    """Download file or folder from GridFS and return the path"""
+    """Download file or folder from GridFS and return the path.
 
+    The path is a temporary directory, {tmp_prefix}/{file_id}/{filename or folder}
+
+    :param file_id: The file_id of the file or folder to download
+    :param fs: The GridFS object
+    """
     download_folder = CFG.downloads.folder
 
     if not download_folder:

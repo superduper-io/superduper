@@ -14,11 +14,22 @@ default = template.format(definition='def my_code(x):\n    return x\n')
 
 @dc.dataclass
 class Code(Serializable):
+    """A class to store remote code.
+
+    This class stores remote code that can be executed on a remote server.
+
+    :param code: The code to store.
+    """
+
     code: str
     default: t.ClassVar[str] = default
 
     @staticmethod
     def from_object(obj):
+        """Create a Code object from a callable object.
+
+        :param obj: The object to create the Code object from.
+        """
         code = inspect.getsource(obj)
 
         mini_module = template.format(
@@ -39,4 +50,8 @@ class Code(Serializable):
         self.object = remote_code
 
     def unpack(self, db=None):
+        """Unpack the code object.
+
+        :param db: Do not use this parameter, should be None.
+        """
         return self.object

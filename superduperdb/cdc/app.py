@@ -12,13 +12,19 @@ app = superduperapp.SuperDuperApp('cdc', port=port)
 
 @app.startup
 def cdc_startup(db: Datalayer):
+    """Start the cdc server.
+
+    :param db: Datalayer instance.
+    """
     db.cdc.start()
 
 
 @app.add('/listener/add', method='get')
 def add_listener(name: str, db: Datalayer = superduperapp.DatalayerDependency()):
-    """
-    Endpoint for adding a listener to cdc
+    """Endpoint for adding a listener to cdc.
+
+    :param name: Listener identifier.
+    :param db: Datalayer instance.
     """
     listener = db.load('listener', name)
     assert isinstance(listener, Listener)
@@ -27,8 +33,10 @@ def add_listener(name: str, db: Datalayer = superduperapp.DatalayerDependency())
 
 @app.add('/listener/delete', method='get')
 def remove_listener(name: str, db: Datalayer = superduperapp.DatalayerDependency()):
-    """
-    Endpoint for removing a listener from cdc
+    """Endpoint for removing a listener from cdc.
+
+    :param name: Listener identifier.
+    :param db: Datalayer instance.
     """
     listener = db.load('listener', name)
     assert isinstance(listener, Listener)

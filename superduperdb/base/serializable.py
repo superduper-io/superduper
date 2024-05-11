@@ -37,6 +37,8 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
 
 
 class VariableError(Exception):
+    """Variable error."""
+
     ...
 
 
@@ -91,8 +93,9 @@ def _replace_variables(x, db, **kwargs):
 
 @dc.dataclass
 class Serializable(Leaf):
-    """
-    Base class for serializable objects. This class is used to serialize and
+    """Base class for serializable objects.
+
+    This class is used to serialize and
     deserialize objects to and from JSON + Artifact instances.
     """
 
@@ -107,13 +110,19 @@ class Serializable(Leaf):
 
     @property
     def unique_id(self):
+        """Return a unique id for the object."""
         return hash(str(self.dict().encode()))
 
     @property
     def variables(self) -> t.List['Variable']:
+        """Return a list of variables in the object."""
         return sorted(list(set(self.dict().variables)), key=lambda x: x.value)
 
     def getattr_with_path(self, path):
+        """Get attribute with path.
+
+        :param path: Path to the attribute.
+        """
         assert path
         item = self
         for x in path:
@@ -125,6 +134,11 @@ class Serializable(Leaf):
         return item
 
     def setattr_with_path(self, path, value):
+        """Set attribute with path.
+
+        :param path: Path to the attribute.
+        :param value: Value to set.
+        """
         if len(path) == 1:
             return setattr(self, path[0], value)
         else:
@@ -133,10 +147,9 @@ class Serializable(Leaf):
         return
 
     def set_variables(self, db, **kwargs) -> 'Serializable':
-        """
-        Set free variables of self.
+        """Set free variables of self.
 
-        :param db:
+        :param db: Datalayer instance.
         """
         r = self.encode(leaf_types_to_keep=(Variable,))
         r = _replace_variables(r, db, **kwargs)
@@ -146,27 +159,38 @@ class Serializable(Leaf):
         self,
         leaf_types_to_keep: t.Sequence = (),
     ):
+        """Encode the object to a dictionary.
+
+        :param leaf_types_to_keep: Leaf types to keep.
+        """
         r = dict(self.dict().encode(leaf_types_to_keep=leaf_types_to_keep))
         r['leaf_type'] = 'serializable'
         return {'_content': r}
 
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None):
+        """Decode the object from a encoded data.
+
+        :param r: Encoded data.
+        :param db: Datalayer instance.
+        """
         return _from_dict(r, db=db)
 
     def dict(self):
+        """Return a dictionary representation of the object."""
         from superduperdb import Document
 
         return Document(asdict(self))
 
     def copy(self):
+        """Return a deep copy of the object."""
         return deepcopy(self)
 
 
 @dc.dataclass
 class Variable(Serializable):
-    """
-    Mechanism for allowing "free variables" in a serializable object.
+    """Mechanism for allowing "free variables" in a serializable object.
+
     The idea is to allow a variable to be set at runtime, rather than
     at object creation time.
 
@@ -193,7 +217,7 @@ class Variable(Serializable):
         Get the intended value from the values of the global variables.
 
         :param db: The datalayer instance.
-        :param kwargs: Variables to be used in the setter_callback
+        :param **kwargs: Variables to be used in the setter_callback
                        or as formatting variables.
 
         >>> Variable('number').set(db, number=1.5, other='test')

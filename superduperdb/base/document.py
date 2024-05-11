@@ -35,11 +35,10 @@ _OUTPUTS_KEY = '_outputs'
 
 
 class Document(MongoStyleDict):
-    """
-    A wrapper around an instance of dict or a Encodable which may be used to dump
-    that resource to a mix of json-able content, ids and `bytes`
+    """A wrapper around an instance of dict or a Encodable.
 
-    :param content: The content to wrap
+    The document data is used to dump that resource to a mix of json-able content, ids and `bytes`
+
     """
 
     _DEFAULT_ID_KEY: str = '_id'
@@ -49,22 +48,35 @@ class Document(MongoStyleDict):
         schema: t.Optional['Schema'] = None,
         leaf_types_to_keep: t.Sequence[t.Type] = (),
     ) -> t.Dict:
-        """Make a copy of the content with all the Leaves encoded"""
+        """Make a copy of the content with all the Leaves encoded.
+
+        :param schema: The schema to encode with.
+        :param leaf_types_to_keep: The types of leaves to keep.
+        """
         if schema is not None:
             return _encode_with_schema(dict(self), schema)
         return _encode(dict(self), leaf_types_to_keep)
 
     def get_leaves(self, *leaf_types: str):
+        """Get all the leaves in the document.
+
+        :param *leaf_types: The types of leaves to get.
+        """
         keys, leaves = _find_leaves(self, *leaf_types)
         return dict(zip(keys, leaves))
 
     @property
     def variables(self) -> t.List[str]:
+        """Return a list of variables in the object."""
         from superduperdb.base.serializable import _find_variables
 
         return _find_variables(self)
 
-    def set_variables(self, db, **kwargs) -> 'Document':
+    def set_variables(self, db: 'Datalayer', **kwargs) -> 'Document':
+        """Set free variables of self.
+
+        :param db: The datalayer to use.
+        """
         from superduperdb.base.serializable import _replace_variables
 
         content = _replace_variables(
@@ -73,10 +85,12 @@ class Document(MongoStyleDict):
         return Document(**content)
 
     @staticmethod
-    def decode(
-        r: t.Dict,
-        db: t.Optional['Datalayer'] = None,
-    ) -> t.Any:
+    def decode(r: t.Dict, db: t.Optional['Datalayer'] = None) -> t.Any:
+        """Decode the object from a encoded data.
+
+        :param r: Encoded data.
+        :param db: Datalayer instance.
+        """
         cache = {}
         if '_leaves' in r:
             r['_leaves'] = _build_leaves(r['_leaves'], db=db)
@@ -90,7 +104,11 @@ class Document(MongoStyleDict):
         return f'Document({repr(dict(self))})'
 
     def unpack(self, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
-        """Returns the content, but with any encodables replaced by their contents"""
+        """Returns the content, but with any encodables replaced by their contents.
+
+        :param db: The datalayer to use.
+        :param leaves_to_keep: The types of leaves to keep.
+        """
         out = _unpack(self, db=db, leaves_to_keep=leaves_to_keep)
         if '_base' in out:
             out = out['_base']
@@ -219,6 +237,11 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
 
 
 class NotBuiltError(Exception):
+    """Exception for when a leaf is not built.
+
+    :param key: The key that was not built.
+    """
+
     def __init__(self, *args, key, **kwargs):
         super().__init__(*args, **kwargs)
         self.key = key

@@ -8,8 +8,8 @@ from superduperdb.misc.annotations import public_api
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class Metric(Component):
-    """
-    Metric base object used to evaluate performance on a dataset.
+    """Metric base object used to evaluate performance on a dataset.
+
     These objects are callable and are applied row-wise to the data, and averaged.
 
     {component_parameters}
@@ -24,4 +24,9 @@ class Metric(Component):
     object: t.Callable
 
     def __call__(self, x: t.Sequence[int], y: t.Sequence[int]) -> bool:
+        """Call the metric object on the x and y data.
+
+        :param x: First sequence of data.
+        :param y: Second sequence of data.
+        """
         return self.object(x, y)

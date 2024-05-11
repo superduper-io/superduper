@@ -51,6 +51,18 @@ class _TrainerWithSaving(NativeTrainer):
 
 @dc.dataclass(kw_only=True)
 class TransformersTrainer(TrainingArguments, Trainer):
+    """Trainer for transformers models.
+
+    It's used to train the transformers models.
+
+    :param signature: signature, default is '**kwargs'
+    :param output_dir: output directory
+    :param data_collator: data collator
+    :param callbacks: callbacks for training
+    :param optimizers: optimizers for training
+    :param preprocess_logits_for_metrics: preprocess logits for metrics
+    """
+
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
         ('data_collator', dill_serializer),
         ('callbacks', dill_serializer),
@@ -78,6 +90,7 @@ class TransformersTrainer(TrainingArguments, Trainer):
 
     @property
     def native_arguments(self):
+        """Get native arguments of TrainingArguments."""
         _TRAINING_DEFAULTS = {
             k: v
             for k, v in TrainingArguments('_tmp').to_dict().items()
@@ -136,6 +149,13 @@ class TransformersTrainer(TrainingArguments, Trainer):
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
     ):
+        """Fit the model.
+
+        :param model: model
+        :param db: Datalayer instance
+        :param train_dataset: training dataset
+        :param valid_dataset: validation dataset
+        """
         trainer = self._build_trainer(
             model=model,
             db=db,
@@ -147,12 +167,21 @@ class TransformersTrainer(TrainingArguments, Trainer):
 
 @dc.dataclass(kw_only=True)
 class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
-    """
-    A wrapper for ``transformers.Pipeline``
+    """A wrapper for ``transformers.Pipeline``.
 
-    >>> model = TextClassificationPipeline(...)  # 123456
-    >>> ,sd.s,d.s,ds
-    >>>
+    :param tokenizer_name: tokenizer name
+    :param tokenizer_cls: tokenizer class, e.g. ``transformers.AutoTokenizer``
+    :param tokenizer_kwargs: tokenizer kwargs, will pass to ``tokenizer_cls``
+    :param model_name: model name, will pass to ``model_cls``
+    :param model_cls: model class, e.g. ``AutoModelForSequenceClassification``
+    :param model_kwargs: model kwargs, will pass to ``model_cls``
+    :param pipeline: pipeline instance, default is None, will build when None
+    :param task: task of the pipeline
+
+    Example:
+    -------
+    >>> model = TextClassificationPipeline(...)
+
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
@@ -185,9 +214,17 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         super().__post_init__(artifacts)
 
     def predict_one(self, text: str):
+        """Predict the class of a single text.
+
+        :param text: a text
+        """
         return self.pipeline(text)[0]
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict the class of a list of text.
+
+        :param dataset: a list of text
+        """
         text = [dataset[i] for i in range(len(dataset))]
         return self.pipeline(text)
 
@@ -199,14 +236,13 @@ class LLM(BaseLLM, _Fittable):
 
     :param identifier: model identifier
     :param model_name_or_path: model name or path
-    :param bits: quantization bits, [4, 8], default is None
     :param adapter_id: adapter id, default is None
         Add a adapter to the base model for inference.
         When model_name_or_path, bits, model_kwargs, tokenizer_kwargs are the same,
         will share the same base model and tokenizer cache.
     :param model_kwargs: model kwargs,
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
-    :param tokenizer_kwagrs: tokenizer kwargs,
+    :param tokenizer_kwargs: tokenizer kwargs,
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
     :param prompt_template: prompt template, default is "{input}"
     :param prompt_func: prompt function, default is None
@@ -215,12 +251,11 @@ class LLM(BaseLLM, _Fittable):
     identifier: str = ""
     model_name_or_path: t.Optional[str] = None
     adapter_id: t.Optional[t.Union[str, Checkpoint]] = None
-    object: t.Optional[transformers.Trainer] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
-    signature: str = 'singleton'
+    signature: t.ClassVar[Signature] = 'singleton'
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}
@@ -252,10 +287,17 @@ class LLM(BaseLLM, _Fittable):
         predict_kwargs=None,
         **kwargs,
     ):
-        """
-        A new function to create a LLM model from from_pretrained function.
+        """A new function to create a LLM model from from_pretrained function.
+
         Allow the user to directly replace:
         AutoModelForCausalLM.from_pretrained -> LLM.from_pretrained
+
+        :param model_name_or_path: model name or path
+        :param identifier: model identifier
+        :param prompt_template: prompt template, default is "{input}"
+        :param prompt_func: prompt function, default is None
+        :param predict_kwargs: predict kwargs, default is None
+        :param kwargs: additional keyword arguments, all the kwargs will pass to `LLM`
         """
         model_kwargs = kwargs.copy()
         tokenizer_kwargs = {}
@@ -273,6 +315,11 @@ class LLM(BaseLLM, _Fittable):
     def init_pipeline(
         self, adapter_id: t.Optional[str] = None, load_adapter_directly: bool = False
     ):
+        """Initialize pipeline.
+
+        :param adapter_id: adapter id
+        :param load_adapter_directly: load adapter directly
+        """
         # Do not update model state here
         model_kwargs = self.model_kwargs.copy()
         tokenizer_kwargs = self.tokenizer_kwargs.copy()
@@ -334,6 +381,10 @@ class LLM(BaseLLM, _Fittable):
         return pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     def init(self):
+        """Initialize the model.
+
+        If adapter_id is provided, will load the adapter to the model.
+        """
         db = self.db
 
         real_adapter_id = None
@@ -364,6 +415,10 @@ class LLM(BaseLLM, _Fittable):
         self.pipeline = self.init_pipeline(real_adapter_id)
 
     def handle_chekpoint(self, db):
+        """Handle checkpoint identifier.
+
+        :param db: Datalayer instance
+        """
         if isinstance(self.adapter_id, str):
             # match checkpoint://<identifier>/<version>
             if Checkpoint.check_uri(self.adapter_id):
@@ -376,6 +431,11 @@ class LLM(BaseLLM, _Fittable):
 
     @ensure_initialized
     def predict_one(self, X, **kwargs):
+        """Generate text from a single prompt.
+
+        :param X: a prompt
+        :param kwargs: additional keyword arguments
+        """
         X = self._process_inputs(X, **kwargs)
         kwargs.pop("context", None)
         results = self._batch_generate([X], **kwargs)
@@ -383,6 +443,11 @@ class LLM(BaseLLM, _Fittable):
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.List:
+        """Generate text from a list of prompts.
+
+        :param dataset: a list of prompts
+        :param kwargs: additional keyword arguments
+        """
         dataset = [
             self._process_inputs(dataset[i], **kwargs) for i in range(len(dataset))
         ]
@@ -395,8 +460,8 @@ class LLM(BaseLLM, _Fittable):
         return X
 
     def _batch_generate(self, prompts: t.List[str], **kwargs) -> t.List[str]:
-        """
-        Generate text.
+        """Generate text.
+
         Can overwrite this method to support more inference methods.
         """
         kwargs = {**self.predict_kwargs, **kwargs.copy()}
@@ -418,6 +483,11 @@ class LLM(BaseLLM, _Fittable):
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
+        """Schedule jobs for LLM model.
+
+        :param db: Datalayer instance
+        :param dependencies: dependencies
+        """
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
         if self.validation is not None:
             jobs = self.validation.schedule_jobs(
@@ -426,6 +496,11 @@ class LLM(BaseLLM, _Fittable):
         return jobs
 
     def add_adapter(self, model_id, adapter_name: str):
+        """Add adapter to the model.
+
+        :param model_id: model id
+        :param adapter_name: adapter name
+        """
         # TODO: Support lora checkpoint from s3
         try:
             from peft import PeftModel
@@ -448,6 +523,10 @@ class LLM(BaseLLM, _Fittable):
             self.model.load_adapter(model_id, adapter_name)
 
     def post_create(self, db: "Datalayer") -> None:
+        """Post create hook for LLM model.
+
+        :param db: Datalayer instance
+        """
         # TODO: Do not make sense to add this logic here,
         # Need a auto DataType to handle this
         from superduperdb.backends.ibis.data_backend import IbisDataBackend

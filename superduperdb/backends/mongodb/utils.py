@@ -6,8 +6,8 @@ from superduperdb.misc.anonymize import anonymize_url
 
 
 def get_avaliable_conn(uri: str, **kwargs):
-    """
-    Get an available connection to the database.
+    """Get an available connection to the database.
+
     This can avoid some issues with database permission verification.
     1. Try to connect to the database with the given URI.
     2. Try to connect to the database with the base URI without database name.

@@ -16,6 +16,16 @@ DEFAULT_PREDICT_KWARGS = {
 
 @dc.dataclass(kw_only=True)
 class SentenceTransformer(Model, _DeviceManaged):
+    """A model for sentence embeddings using `sentence-transformers`.
+
+    :param object: The SentenceTransformer object to use.
+    :param model: The model name, e.g. 'all-MiniLM-L6-v2'.
+    :param device: The device to use, e.g. 'cpu' or 'cuda'.
+    :param preprocess: The preprocessing function to apply to the input.
+    :param postprocess: The postprocessing function to apply to the output.
+    :param signature: The signature of the model.
+    """
+
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
     )
@@ -36,6 +46,7 @@ class SentenceTransformer(Model, _DeviceManaged):
 
     @classmethod
     def handle_integration(cls, kwargs):
+        """Handle integration of the model."""
         if isinstance(kwargs.get('preprocess'), str):
             kwargs['preprocess'] = Code(kwargs['preprocess'])
         if isinstance(kwargs.get('postprocess'), str):
@@ -52,10 +63,15 @@ class SentenceTransformer(Model, _DeviceManaged):
             self.object = _SentenceTransformer(self.model, device=self.device)
 
     def init(self):
+        """Initialize the model."""
         super().init()
         self.to(self.device)
 
     def to(self, device):
+        """Move the model to a device.
+
+        :param device: The device to move to, e.g. 'cpu' or 'cuda'.
+        """
         self.object = self.object.to(device)
         self.object._target_device = device
 
@@ -73,6 +89,12 @@ class SentenceTransformer(Model, _DeviceManaged):
 
     @ensure_initialized
     def predict_one(self, X, *args, **kwargs):
+        """Predict on a single input.
+
+        :param X: The input to predict on.
+        :param args: Additional positional arguments, which are passed to the model.
+        :param kwargs: Additional keyword arguments, which are passed to the model.
+        """
         if self.preprocess is not None:
             X = self.preprocess(X)
 
@@ -84,6 +106,10 @@ class SentenceTransformer(Model, _DeviceManaged):
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict on a dataset.
+
+        :param dataset: The dataset to predict on.
+        """
         if self.preprocess is not None:
             dataset = list(map(self.preprocess, dataset))  # type: ignore[arg-type]
         assert self.object is not None

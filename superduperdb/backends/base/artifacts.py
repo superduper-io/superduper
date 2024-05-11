@@ -29,28 +29,36 @@ class ArtifactStore(ABC):
 
     @property
     def serializers(self):
+        """Return the serializers."""
         assert self._serializers is not None, 'Serializers not initialized!'
         return self._serializers
 
     @serializers.setter
     def serializers(self, value):
+        """Set the serializers.
+
+        :param value: The serializers.
+        """
         self._serializers = value
 
     @abstractmethod
     def url(self):
-        """
-        Artifact store connection url
-        """
+        """Artifact store connection url."""
         pass
 
     @abstractmethod
     def _delete_artifact(self, file_id: str):
-        """
-        Delete artifact from artifact store
-        :param file_id: File id uses to identify artifact in store
+        """Delete artifact from artifact store.
+
+        :param file_id: File id uses to identify artifact in store.
         """
 
     def delete(self, r: t.Dict):
+        """Delete artifact from artifact store.
+
+        :param r: dictionary with mandatory fields
+                  {'file_id'}
+        """
         if '_content' in r and 'file_id' in r['_content']:
             return self._delete_artifact(r['_content']['file_id'])
         for v in r.values():
@@ -76,6 +84,12 @@ class ArtifactStore(ABC):
         datatype: t.Optional[str] = None,
         uri: t.Optional[str] = None,
     ):
+        """Check if artifact exists in artifact store.
+
+        :param file_id: file id of artifact in the store
+        :param datatype: Datatype of the artifact
+        :param uri: URI of the artifact
+        """
         if file_id is None:
             assert uri is not None, "if file_id is None, uri can\'t be None"
             file_id = _construct_file_id_from_uri(uri)
@@ -91,7 +105,7 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def _save_file(self, file_path: str, file_id: str) -> str:
-        """Save file in artifact store and return file_id"""
+        """Save file in artifact store and return file_id."""
         pass
 
     def save_artifact(self, r: t.Dict):
@@ -147,7 +161,7 @@ class ArtifactStore(ABC):
     @abstractmethod
     def _load_file(self, file_id: str) -> str:
         """
-        Load file from artifact store and return path
+        Load file from artifact store and return path.
 
         :param file_id: Identifier of artifact in the store
         """
@@ -159,7 +173,6 @@ class ArtifactStore(ABC):
 
         :param r: Mandatory fields {'file_id', 'datatype'}
         """
-
         datatype = self.serializers[r['datatype']]
         file_id = r.get('file_id')
         if r.get('encodable') == 'file':
@@ -174,9 +187,9 @@ class ArtifactStore(ABC):
         return datatype.decode_data(x)
 
     def save(self, r: t.Dict) -> t.Dict:
-        """
-        Save list of artifacts and replace the artifacts with file reference
-        :param r: `dict` of artifacts
+        """Save list of artifacts and replace the artifacts with file reference.
+
+        :param r: `dict` of artifacts.
         """
         if isinstance(r, dict):
             if '_content' in r and r['_content']['leaf_type'] in {
@@ -196,11 +209,11 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""
         pass
 
 
 class ArtifactSavingError(Exception):
+    """Error when saving artifact in artifact store fails."""
+
     pass

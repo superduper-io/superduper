@@ -10,8 +10,7 @@ from superduperdb.ext.llm.model import BaseLLM
 
 # TODO use core downloader already implemented
 def download_uri(uri, save_path):
-    """
-    Download file
+    """Download file.
 
     :param uri: URI to download
     :param save_path: place to save
@@ -26,13 +25,11 @@ def download_uri(uri, save_path):
 
 @dc.dataclass(kw_only=True)
 class LlamaCpp(BaseLLM):
-    """
-    Llama.cpp connector
+    """Llama.cpp connector.
 
     :param model_name_or_path: path or name of model
     :param model_kwargs: dictionary of init-kwargs
     :param download_dir: local caching directory
-    :param signature: s
     """
 
     signature: t.ClassVar[str] = 'singleton'
@@ -42,6 +39,10 @@ class LlamaCpp(BaseLLM):
     download_dir: str = '.llama_cpp'
 
     def init(self):
+        """Initialize the model.
+
+        If the model_name_or_path is a uri, download it to the download_dir.
+        """
         if self.model_name_or_path.startswith('http'):
             # Download the uri
             os.makedirs(self.download_dir, exist_ok=True)
@@ -56,8 +57,10 @@ class LlamaCpp(BaseLLM):
         self._model = Llama(self.model_name_or_path, **self.model_kwargs)
 
     def _generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate text from a prompt.
+        """Generate text from a prompt.
+
+        :param prompt: The prompt to generate text from.
+        :param kwargs: The keyword arguments to pass to the llm model.
         """
         out = self._model.create_completion(prompt, **self.predict_kwargs, **kwargs)
         return out['choices'][0]['text']
@@ -65,9 +68,13 @@ class LlamaCpp(BaseLLM):
 
 @dc.dataclass
 class LlamaCppEmbedding(LlamaCpp):
+    """Llama.cpp connector for embeddings."""
+
     def _generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate embedding from a prompt.
+        """Generate embedding from a prompt.
+
+        :param prompt: The prompt to generate the embedding from.
+        :param kwargs: The keyword arguments to pass to the llm model.
         """
         return self._model.create_embedding(
             prompt, embedding=True, **self.predict_kwargs, **kwargs

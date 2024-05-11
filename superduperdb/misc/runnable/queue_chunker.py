@@ -8,7 +8,8 @@ from .runnable import Event
 
 @dc.dataclass
 class QueueChunker:
-    """Chunk a queue into lists of length at most `chunk_size` within time `timeout`
+    """Chunk a queue into lists of length at most `chunk_size` within time `timeout`.
+
     :param chunk_size: Maximum number of entries in a chunk
     :param timeout: Maximum amount of time to block
     :param accumulate_timeouts: If accumulate timeouts is True, then `timeout` is
@@ -21,6 +22,12 @@ class QueueChunker:
     accumulate_timeouts: bool = False
 
     def __call__(self, queue: Queue, stop_event: Event) -> t.Iterator[t.List]:
+        """Chunk the queue.
+
+        :param queue: Queue to chunk
+        :param stop_event: Event to stop the chunking
+        """
+
         def chunk():
             start = self.accumulate_timeouts and time.time()
 

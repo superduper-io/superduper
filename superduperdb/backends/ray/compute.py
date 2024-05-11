@@ -7,8 +7,7 @@ from superduperdb.backends.base.compute import ComputeBackend
 
 
 class RayComputeBackend(ComputeBackend):
-    """
-    A client for interacting with a ray cluster. Initialize the ray client.
+    """A client for interacting with a ray cluster. Initialize the ray client.
 
     :param address: The address of the ray cluster.
     :param local: Set to True to create a local Dask cluster. (optional)
@@ -30,10 +29,12 @@ class RayComputeBackend(ComputeBackend):
 
     @property
     def type(self) -> str:
+        """The type of the compute backend."""
         return "distributed"
 
     @property
     def name(self) -> str:
+        """The name of the compute backend."""
         return f"ray://{self.address}"
 
     def submit(
@@ -43,6 +44,7 @@ class RayComputeBackend(ComputeBackend):
         Submits a function to the ray server for execution.
 
         :param function: The function to be executed.
+        :param compute_kwargs: Additional keyword arguments to be passed to ray API.
         """
 
         def _dependable_remote_job(function, *args, **kwargs):
@@ -71,30 +73,26 @@ class RayComputeBackend(ComputeBackend):
 
     @property
     def tasks(self) -> t.Dict[str, ray.ObjectRef]:
-        """
-        List all pending tasks
-        """
+        """List all pending tasks."""
         return self._futures_collection
 
     def wait(self, identifier: str) -> None:
-        """
-        Waits for task corresponding to identifier to complete.
+        """Waits for task corresponding to identifier to complete.
+
         :param identifier: Future task id to wait
         """
         ray.wait([self._futures_collection[identifier]])
 
     def wait_all(self) -> None:
-        """
-        Waits for all tasks to complete.
-        """
+        """Waits for all tasks to complete."""
         ray.wait(
             list(self._futures_collection.values()),
             num_returns=len(self._futures_collection),
         )
 
     def result(self, identifier: str) -> t.Any:
-        """
-        Retrieves the result of a previously submitted task.
+        """Retrieves the result of a previously submitted task.
+
         Note: This will block until the future is completed.
 
         :param identifier: The identifier of the submitted task.
@@ -103,13 +101,9 @@ class RayComputeBackend(ComputeBackend):
         return ray.get(future)
 
     def disconnect(self) -> None:
-        """
-        Disconnect the ray client.
-        """
+        """Disconnect the ray client."""
         ray.shutdown()
 
     def shutdown(self) -> None:
-        """
-        Shuts down the ray cluster.
-        """
+        """Shuts down the ray cluster."""
         ray.shutdown()

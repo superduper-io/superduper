@@ -21,11 +21,11 @@ getLogger("httpx").setLevel(WARNING)
 
 @dc.dataclass(kw_only=True)
 class BaseLLM(Model, metaclass=abc.ABCMeta):
-    """
-    :param prompt_template: The template to use for the prompt.
+    """Base class for LLM models.
+
+    :param prompt: The template to use for the prompt.
     :param prompt_func: The function to use for the prompt.
     :param max_batch_size: The maximum batch size to use for batch generation.
-    :param predict_kwargs: Parameters used during inference.
     """
 
     prompt: str = "{input}"
@@ -38,10 +38,11 @@ class BaseLLM(Model, metaclass=abc.ABCMeta):
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
 
-    def to_call(self, X, *args, **kwargs):
-        raise NotImplementedError
-
     def post_create(self, db: "Datalayer") -> None:
+        """Post create method for the model.
+
+        :param db: The datalayer to use for the model.
+        """
         # TODO: Do not make sense to add this logic here,
         # Need a auto DataType to handle this
         from superduperdb.backends.ibis.data_backend import IbisDataBackend
@@ -54,36 +55,54 @@ class BaseLLM(Model, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def init(self):
+        """Initialize the model."""
         ...
 
     def _generate(self, prompt: str, **kwargs: t.Any):
         raise NotImplementedError
 
     def _batch_generate(self, prompts: t.List[str], **kwargs) -> t.List[str]:
-        """
-        Base method to batch generate text from a list of prompts.
+        """Base method to batch generate text from a list of prompts.
+
         If the model can run batch generation efficiently, pls override this method.
+
+        :param prompts: The list of prompts to generate text from.
+        :param kwargs: The keyword arguments to pass to the prompt function and
+                        the llm model.
         """
         return [self._generate(prompt, **self.predict_kwargs) for prompt in prompts]
 
     @ensure_initialized
     def predict_one(self, X: t.Union[str, dict[str, str]], context=None, **kwargs):
+        """Generate text from a single input.
+
+        :param X: The input to generate text from.
+        :param context: The context to use for the prompt.
+        :param kwargs: The keyword arguments to pass to the prompt function and
+                        the llm model.
+        """
         x = self.prompter(X, context=context, **kwargs)
         return self._generate(x, **kwargs)
 
     @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.Sequence:
+        """Generate text from a dataset.
+
+        :param dataset: The dataset to generate text from.
+        :param kwargs: The keyword arguments to pass to the prompt function and
+                        the llm model.
+
+        """
         xs = [self.prompter(dataset[i], **kwargs) for i in range(len(dataset))]
         kwargs.pop("context", None)
         return self._batch_generate(xs, **kwargs)
 
-    def get_kwargs(self, func, *kwargs_list):
-        """
-        Get kwargs and object attributes that are in the function signature
-        :param func (Callable): function to get kwargs for
-        :param kwargs (list of dict): kwargs to filter
-        """
+    def get_kwargs(self, func: t.Callable, *kwargs_list):
+        """Get kwargs and object attributes that are in the function signature.
 
+        :param func: function to get kwargs for
+        :param *kwargs_list: kwargs to filter
+        """
         total_kwargs = reduce(lambda x, y: {**y, **x}, [self.dict(), *kwargs_list])
         sig = inspect.signature(func)
         new_kwargs = {}
@@ -94,12 +113,14 @@ class BaseLLM(Model, metaclass=abc.ABCMeta):
 
     @property
     def prompter(self):
+        """Return a prompter for the model."""
         return Prompter(self.prompt, self.prompt_func)
 
 
 @dc.dataclass
 class BaseLLMAPI(BaseLLM):
-    """
+    """Base class for LLM models that use an API.
+
     :param api_url: The URL for the API.
     {parent_doc}
     """
@@ -109,12 +130,11 @@ class BaseLLMAPI(BaseLLM):
     api_url: str = dc.field(default="")
 
     def init(self):
+        """Initialize the model."""
         pass
 
     def _generate_wrapper(self, prompt: str, **kwargs: t.Any) -> str:
-        """
-        Wrapper for the _generate method to handle exceptions.
-        """
+        """Wrapper for the _generate method to handle exceptions."""
         try:
             return self._generate(prompt, **kwargs)
         except Exception as e:
@@ -124,7 +144,10 @@ class BaseLLMAPI(BaseLLM):
     def _batch_generate(self, prompts: t.List[str], **kwargs: t.Any) -> t.List[str]:
         """
         Base method to batch generate text from a list of prompts using multi-threading.
+
         Handles exceptions in _generate method.
+
+        :param prompts: The list of prompts to generate text from.
         """
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_batch_size

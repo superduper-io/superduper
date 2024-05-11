@@ -1,4 +1,5 @@
-"""
+"""CDC module for superduperdb.
+
 Change Data Capture (CDC) is a mechanism used in database systems to track
 and capture changes made to a table or collection in real-time.
 It allows applications to stay up-to-date with the latest changes in the database
@@ -58,18 +59,27 @@ class DBEvent(str, Enum):
 
 @dc.dataclass
 class Packet:
+    """Packet to hold the cdc event data.
+
+    :param ids: Document ids.
+    :param query: Query to fetch the document.
+    :param event_type: CDC event type.
+    """
+
     ids: t.Any
     query: t.Optional['Serializable']
     event_type: DBEvent = DBEvent.insert
 
     @property
     def is_delete(self) -> bool:
+        """Check if the event is delete."""
         return self.event_type == DBEvent.delete
 
     @staticmethod
     def collate(packets: t.Sequence['Packet']) -> 'Packet':
-        """
-        Collate a batch of packets into one
+        """Collate a batch of packets into one.
+
+        :param packets: A list of packets.
         """
         assert packets
         ids = []
@@ -87,8 +97,16 @@ queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
 
 
 class BaseDatabaseListener(ABC):
-    """
-    A Base class which defines basic functions to implement.
+    """A Base class which defines basic functions to implement.
+
+    This class is responsible for defining the basic functions
+    that needs to be implemented by the database listener.
+
+    :param db: A superduperdb instance.
+    :param on: A table or collection on which the listener is invoked.
+    :param stop_event: A threading event flag to notify for stoppage.
+    :param identifier: A identity given to the listener service.
+    :param timeout: A timeout for the listener.
     """
 
     IDENTITY_SEP: str = '/'
@@ -115,6 +133,7 @@ class BaseDatabaseListener(ABC):
 
     @property
     def identity(self) -> str:
+        """Get the database listener identity."""
         return self._identifier
 
     @classmethod
@@ -127,9 +146,7 @@ class BaseDatabaseListener(ABC):
         return cls.IDENTITY_SEP.join(identifiers)
 
     def info(self) -> t.Dict:
-        """
-        Get info on the current state of listener.
-        """
+        """Get info on the current state of listener."""
         info = {}
         info.update(
             {
@@ -143,30 +160,40 @@ class BaseDatabaseListener(ABC):
 
     @abstractmethod
     def listen(self):
+        """Start the database listener."""
         raise NotImplementedError
 
     @abstractmethod
     def stop(self):
+        """Stop the database listener."""
         raise NotImplementedError
 
     @abstractmethod
     def setup_cdc(self) -> CollectionChangeStream:
+        """setup_cdc."""
         raise NotImplementedError
 
     @abstractmethod
     def on_create(self, *args, **kwargs):
+        """Handle the create event."""
         raise NotImplementedError
 
     @abstractmethod
     def on_update(self, *args, **kwargs):
+        """Handle the update event."""
         raise NotImplementedError
 
     @abstractmethod
     def on_delete(self, *args, **kwargs):
+        """Handle the delete event."""
         raise NotImplementedError
 
     @abstractmethod
     def next_cdc(self, stream: CollectionChangeStream) -> None:
+        """next_cdc.
+
+        :param stream: CollectionChangeStream
+        """
         raise NotImplementedError
 
     def create_event(
@@ -176,10 +203,11 @@ class BaseDatabaseListener(ABC):
         table_or_collection: t.Union['Table', 'TableOrCollection'],
         event: DBEvent,
     ):
-        """
+        """Create an event.
+
         A helper to create packet based on the event type and put it on the cdc queue
 
-        :param change: The changed document.
+        :param ids: Document ids
         :param db: a superduperdb instance.
         :param table_or_collection: The collection on which change was observed.
         :param event: CDC event type
@@ -192,7 +220,8 @@ class BaseDatabaseListener(ABC):
         db.cdc.CDC_QUEUE.put_nowait(self.packet(ids, cdc_query, event))
 
     def event_handler(self, ids: t.Sequence, event: DBEvent) -> None:
-        """event_handler.
+        """Handle the incoming change stream event.
+
         A helper fxn to handle incoming changes from change stream on a collection.
 
         :param ids: Changed document ids
@@ -212,6 +241,16 @@ class BaseDatabaseListener(ABC):
 
 
 class DatabaseListenerThreadScheduler(threading.Thread):
+    """DatabaseListenerThreadScheduler to listen to the cdc changes.
+
+    This class is responsible for listening to the cdc changes and
+    executing the following job.
+
+    :param listener: A BaseDatabaseListener instance.
+    :param stop_event: A threading event flag to notify for stoppage.
+    :param start_event: A threading event flag to notify for start.
+    """
+
     def __init__(
         self,
         listener: BaseDatabaseListener,
@@ -224,6 +263,7 @@ class DatabaseListenerThreadScheduler(threading.Thread):
         self.listener = listener
 
     def run(self) -> None:
+        """Start to listen to the cdc changes."""
         try:
             cdc_stream = self.listener.setup_cdc()
             self.start_event.set()
@@ -235,10 +275,15 @@ class DatabaseListenerThreadScheduler(threading.Thread):
 
 
 class CDCHandler(threading.Thread):
-    """
+    """CDCHandler for handling CDC changes.
+
     This class is responsible for handling the change by executing the taskflow.
     This class also extends the task graph by adding funcation job node which
     does post model executiong jobs, i.e `copy_vectors`.
+
+    :param db: A superduperdb instance.
+    :param stop_event: A threading event flag to notify for stoppage.
+    :param queue: A queue to hold the cdc packets.
     """
 
     def __init__(self, db: 'Datalayer', stop_event: Event, queue):
@@ -247,7 +292,6 @@ class CDCHandler(threading.Thread):
         :param db: a superduperdb instance.
         :param stop_event: A threading event flag to notify for stoppage.
         """
-
         self.db = db
         self._stop_event = stop_event
         self._is_running = False
@@ -256,9 +300,11 @@ class CDCHandler(threading.Thread):
 
     @property
     def is_running(self):
+        """Check if the cdc handler is running."""
         return self._is_running
 
     def run(self):
+        """Run the cdc handler."""
         self._is_running = True
         try:
             for c in queue_chunker(self.cdc_queue, self._stop_event):
@@ -282,8 +328,12 @@ DBListenerType = t.TypeVar('DBListenerType')
 
 
 class DatabaseListenerFactory(t.Generic[DBListenerType]):
-    """A Factory class to create instance of DatabaseListener corresponding to the
-    `db_type`.
+    """DatabaseListenerFactory to create listeners for different databases.
+
+    This class is responsible for creating a DatabaseListener instance
+    based on the database type.
+
+    :param db_type: Database type.
     """
 
     SUPPORTED_LISTENERS: t.List[str] = ['mongodb', 'ibis']
@@ -294,6 +344,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         self.db_type = db_type
 
     def create(self, *args, **kwargs) -> DBListenerType:
+        """Create a DatabaseListener instance."""
         stop_event = Event()
         kwargs['stop_event'] = stop_event
         if self.db_type == 'mongodb':
@@ -315,7 +366,8 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
 
 
 class DatabaseChangeDataCapture:
-    """
+    """DatabaseChangeDataCapture (CDC).
+
     DatabaseChangeDataCapture is a Python class that provides a flexible and
     extensible framework for capturing and managing data changes
     in a database.
@@ -324,6 +376,8 @@ class DatabaseChangeDataCapture:
     This class is designed to simplify the process of tracking changes
     to database records,allowing you to monitor and respond to
     data modifications efficiently.
+
+    :param db: A superduperdb datalayer instance.
     """
 
     def __init__(self, db: 'Datalayer'):
@@ -348,12 +402,11 @@ class DatabaseChangeDataCapture:
 
     @property
     def running(self) -> bool:
+        """Check if the cdc service is running."""
         return self._running or CFG.cluster.cdc.uri is not None
 
     def start(self):
-        """
-        This method starts the cdc process on the database.
-        """
+        """Start the cdc service."""
         self._running = True
 
         # Listen to existing collection without cdc enabled
@@ -367,11 +420,10 @@ class DatabaseChangeDataCapture:
         *args,
         **kwargs,
     ):
-        """
-        Starts cdc service on the provided collection
+        """Starts cdc service on the provided collection.
+
         Not to be confused with ``superduperdb.container.listener.Listener``.
 
-        :param db: A superduperdb instance.
         :param on: Which collection/table listener service this be invoked on?
         :param identifier: A identity given to the listener service.
         """
@@ -401,8 +453,8 @@ class DatabaseChangeDataCapture:
         return listener
 
     def stop(self, name: str = ''):
-        """
-        Stop all registered listeners
+        """Stop all registered listeners.
+
         :param name: Listener name
         """
         try:
@@ -422,17 +474,16 @@ class DatabaseChangeDataCapture:
             self.stop_handler()
 
     def stop_handler(self):
-        """
-        Stop the cdc handler thread
-        """
+        """Stop the cdc handler thread."""
         self._cdc_stop_event.set()
         if self.cdc_change_handler:
             self.cdc_change_handler.join()
         self.cdc_change_handler = None
 
     def add(self, listener: 'Listener'):
-        """
-        This method registered the given collection for cdc
+        """Register a listener to the cdc service.
+
+        :param listener: A listener instance.
         """
         collection = listener.select.table_or_collection
         if self.running and collection.identifier not in self._CDC_LISTENERS:

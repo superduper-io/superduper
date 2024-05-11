@@ -13,7 +13,8 @@ if t.TYPE_CHECKING:
 @public_api(stability='alpha')
 @dc.dataclass(kw_only=True)
 class Stack(Component):
-    """
+    """Component to hold a list of components under a namespace and package.
+
     A placeholder to hold a list of components under a namespace and
     package them as a tarball.
     This tarball can be retrieved back to a Stack instance with the
@@ -31,15 +32,12 @@ class Stack(Component):
 
     @property
     def db(self):
-        """
-        Datalayer property.
-        """
+        """Datalayer property."""
         return self._db
 
     @db.setter
     def db(self, value):
-        """
-        Datalayer setter.
+        """Datalayer setter.
 
         :param value: Item to set the property.
         """
@@ -49,8 +47,7 @@ class Stack(Component):
 
     @staticmethod
     def from_list(identifier, content, db: t.Optional['Datalayer'] = None):
-        """
-        Helper method to create a Stack from a list `content`.
+        """Helper method to create a Stack from a list `content`.
 
         :param identifier: Unique identifier.
         :param content: Content to create a stack.

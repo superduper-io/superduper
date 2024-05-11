@@ -27,6 +27,7 @@ def method_job(
     :param kwargs: keyword arguments to pass to the method
     :param job_id: unique identifier for this job
     :param dependencies: other jobs that this job depends on
+    :param db: datalayer to use
     """
     import sys
 
@@ -57,18 +58,31 @@ def method_job(
     db.metadata.update_job(job_id, 'status', 'success')
 
 
+# TODO: Is this class used?
 class Logger:
+    """Logger class for writing to the database.
+
+    :param database: database to write to
+    :param id_: job id
+    :param stream: stream to write to
+    """
+
     def __init__(self, database, id_, stream='stdout'):
         self.database = database
         self.id_ = id_
         self.stream = stream
 
     def write(self, message):
+        """Write a message to the database.
+
+        :param message: message to write
+        """
         self.database.metadata.write_output_to_job(
             self.id_, message, stream=self.stream
         )
 
     def flush(self):
+        """Flush something."""
         pass
 
 
@@ -81,6 +95,16 @@ def callable_job(
     dependencies=(),
     db: t.Optional['Datalayer'] = None,
 ):
+    """Run a function in the database.
+
+    :param cfg: configuration
+    :param function_to_call: function to call
+    :param args: positional arguments to pass to the function
+    :param kwargs: keyword arguments to pass to the function
+    :param job_id: unique identifier for this job
+    :param dependencies: other jobs that this job depends on
+    :param db: datalayer to use
+    """
     import sys
 
     from superduperdb import CFG

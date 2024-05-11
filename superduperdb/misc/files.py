@@ -13,6 +13,8 @@ def get_file_from_uri(uri):
     'test.txt'
     >>> _get_file('http://test.txt')
     '414388bd5644669b8a92e45a96318890f6e8de54'
+
+    :param uri: The uri to get the file from
     """
     if uri.startswith('file://'):
         file = uri[7:]
@@ -38,6 +40,7 @@ def load_uris(
     Load ``"bytes"`` into ``"_content"`` from ``"uri"`` inside ``r``.
 
     :param r: The dict to load the bytes into
+    :param datatypes: The datatypes to use for encoding
     :param root: The root directory to load the bytes from
     :param raises: Whether to raise an error if the file is not found
 

@@ -119,11 +119,13 @@ class SQLAlchemyMetadata(MetaDataStore):
         metadata.create_all(self.conn)
 
     def url(self):
+        """Return the URL of the metadata store."""
         return self.conn.url + self.name
 
     def drop(self, force: bool = False):
-        """
-        Drop the metadata store.
+        """Drop the metadata store.
+
+        :param force: whether to force the drop (without confirmation)
         """
         if not force:
             if not click.confirm(
@@ -141,6 +143,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     @contextmanager
     def session_context(self):
+        """Provide a transactional scope around a series of operations."""
         sm = sessionmaker(bind=self.conn)
         session = sm()
         try:
@@ -157,6 +160,12 @@ class SQLAlchemyMetadata(MetaDataStore):
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
     ):
+        """Check if a component version has parents.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        :param version: the version of the component
+        """
         unique_id = _Component.make_unique_id(type_id, identifier, version)
         with self.session_context() as session:
             stmt = (
@@ -170,6 +179,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             return len(res) > 0
 
     def create_component(self, info: t.Dict):
+        """Create a component in the metadata store.
+
+        :param info: the information to create
+        """
         if 'hidden' not in info:
             info['hidden'] = False
         info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
@@ -178,6 +191,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.execute(stmt)
 
     def create_parent_child(self, parent_id: str, child_id: str):
+        """Create a parent-child relationship between two components.
+
+        :param parent_id: the parent component
+        :param child_id: the child component
+        """
         with self.session_context() as session:
             stmt = insert(self.parent_child_association_table).values(
                 parent_id=parent_id, child_id=child_id
@@ -185,6 +203,12 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.execute(stmt)
 
     def delete_component_version(self, type_id: str, identifier: str, version: int):
+        """Delete a component from the metadata store.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        :param version: the version of the component
+        """
         with self.session_context() as session:
             stmt = (
                 self.component_table.select()
@@ -210,6 +234,13 @@ class SQLAlchemyMetadata(MetaDataStore):
         version: int,
         allow_hidden: bool = False,
     ):
+        """Get a component from the metadata store.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        :param version: the version of the component
+        :param allow_hidden: whether to allow hidden components
+        """
         with self.session_context() as session:
             stmt = select(self.component_table).where(
                 self.component_table.c.type_id == type_id,
@@ -223,6 +254,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             return res[0] if res else None
 
     def get_component_version_parents(self, unique_id: str):
+        """Get the parents of a component version.
+
+        :param unique_id: the unique identifier of the component version
+        """
         with self.session_context() as session:
             stmt = select(self.parent_child_association_table).where(
                 self.parent_child_association_table.c.child_id == unique_id,
@@ -234,6 +269,12 @@ class SQLAlchemyMetadata(MetaDataStore):
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
     ):
+        """Get the latest version of a component.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        :param allow_hidden: whether to allow hidden components
+        """
         with self.session_context() as session:
             stmt = (
                 select(self.component_table)
@@ -255,6 +296,12 @@ class SQLAlchemyMetadata(MetaDataStore):
             return versions[0]
 
     def hide_component_version(self, type_id: str, identifier: str, version: int):
+        """Hide a component in the metadata store.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        :param version: the version of the component
+        """
         with self.session_context() as session:
             stmt = (
                 self.component_table.update()
@@ -287,6 +334,13 @@ class SQLAlchemyMetadata(MetaDataStore):
         type_id: str,
         version: t.Optional[int] = None,
     ) -> None:
+        """Replace a component in the metadata store.
+
+        :param info: the information to replace
+        :param identifier: the identifier of the component
+        :param type_id: the type of the component
+        :param version: the version of the component
+        """
         if version is not None:
             version = self.get_latest_version(type_id, identifier)
         return self._replace_object(
@@ -297,6 +351,10 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
     def show_components(self, type_id: t.Optional[str] = None):
+        """Show all components in the database.
+
+        :param type_id: the type of the component
+        """
         with self.session_context() as session:
             stmt = select(self.component_table)
             if type_id is not None:
@@ -313,6 +371,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             ]
 
     def show_component_versions(self, type_id: str, identifier: str):
+        """Show all versions of a component in the database.
+
+        :param type_id: the type of the component
+        :param identifier: the identifier of the component
+        """
         with self.session_context() as session:
             stmt = select(self.component_table).where(
                 self.component_table.c.type_id == type_id,
@@ -346,11 +409,19 @@ class SQLAlchemyMetadata(MetaDataStore):
     # --------------- JOBS -----------------
 
     def create_job(self, info: t.Dict):
+        """Create a job with the given info.
+
+        :param info: The information used to create the job
+        """
         with self.session_context() as session:
             stmt = insert(self.job_table).values(**info)
             session.execute(stmt)
 
     def get_job(self, job_id: str):
+        """Get the job with the given job_id.
+
+        :param job_id: The identifier of the job
+        """
         with self.session_context() as session:
             stmt = (
                 select(self.job_table)
@@ -361,6 +432,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             return res[0] if res else None
 
     def listen_job(self, identifier: str):
+        """Listen a job.
+
+        :param identifier: the identifier of the job
+        """
         # Not supported currently
         raise NotImplementedError
 
@@ -369,6 +444,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         component_identifier: t.Optional[str] = None,
         type_id: t.Optional[str] = None,
     ):
+        """Show all jobs in the database.
+
+        :param component_identifier: the identifier of the component
+        :param type_id: the type of the component
+        """
         with self.session_context() as session:
             # Start building the select statement
             stmt = select(self.job_table)
@@ -389,6 +469,12 @@ class SQLAlchemyMetadata(MetaDataStore):
             return [r['identifier'] for r in res]
 
     def update_job(self, job_id: str, key: str, value: t.Any):
+        """Update the job with the given key and value.
+
+        :param job_id: The identifier of the job
+        :param key: The key to update
+        :param value: The value to update
+        """
         with self.session_context() as session:
             stmt = (
                 self.job_table.update()
@@ -398,17 +484,32 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.execute(stmt)
 
     def write_output_to_job(self, identifier, msg, stream):
+        """Write output to the job.
+
+        :param identifier: the identifier of the job
+        :param msg: the message to write
+        :param stream: the stream to write to
+        """
         # Not supported currently
         raise NotImplementedError
 
     # --------------- METADATA -----------------
 
     def create_metadata(self, key, value):
+        """Create metadata with the given key and value.
+
+        :param key: The key to create
+        :param value: The value to create
+        """
         with self.session_context() as session:
             stmt = insert(self.meta_table).values(key=key, value=value)
             session.execute(stmt)
 
     def get_metadata(self, key):
+        """Get the metadata with the given key.
+
+        :param key: The key to retrieve
+        """
         with self.session_context() as session:
             stmt = select(self.meta_table).where(self.meta_table.c.key == key).limit(1)
             res = self.query_results(self.meta_table, stmt, session)
@@ -416,6 +517,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             return value
 
     def update_metadata(self, key, value):
+        """Update the metadata with the given key.
+
+        :param key: The key to update
+        :param value: The updated value
+        """
         with self.session_context() as session:
             stmt = (
                 self.meta_table.update()
@@ -426,6 +532,11 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     # --------------- Query ID -----------------
     def add_query(self, query: 'Select', model: str):
+        """Add a query to the query table.
+
+        :param query: The query to add to the table.
+        :param model: The model to associate with the query.
+        """
         query_hash = str(hash(query))
 
         with self.session_context() as session:
@@ -440,8 +551,9 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.execute(stmt)
 
     def get_query(self, query_hash: str):
-        """
-        Get the query from the query table corresponding to the query hash
+        """Get the query from the query table corresponding to the query hash.
+
+        :param query_hash: The hash of the query to retrieve.
         """
         try:
             with self.session_context() as session:
@@ -463,8 +575,9 @@ class SQLAlchemyMetadata(MetaDataStore):
             raise NonExistentMetadataError(f'Query hash {query_hash} does not exist')
 
     def get_model_queries(self, model: str):
-        """
-        Get queries related to the given model.
+        """Get queries related to the given model.
+
+        :param model: The name of the model to retrieve queries for.
         """
         with self.session_context() as session:
             stmt = select(self.query_id_table).where(
@@ -483,13 +596,17 @@ class SQLAlchemyMetadata(MetaDataStore):
             return unpacked_queries
 
     def disconnect(self):
-        """
-        Disconnect the client
-        """
+        """Disconnect the client."""
 
         # TODO: implement me
 
     def query_results(self, table, statment, session):
+        """Query the database and return the results as a list of row datas.
+
+        :param table: The table object to query, used to derive column names.
+        :param statment: The SQL statement to execute.
+        :param session: The database session within which the query is executed.
+        """
         # Some databases don't support defining statment outside of session
         result = session.execute(statment)
         columns = [col.name for col in table.columns]

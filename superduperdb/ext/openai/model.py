@@ -3,7 +3,6 @@ import dataclasses as dc
 import json
 import os
 import typing as t
-from typing import Any
 
 import requests
 import tqdm
@@ -22,7 +21,6 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIBaseModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
-from superduperdb.ext.llm.model import BaseLLMAPI
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -45,9 +43,10 @@ def _available_models(skwargs):
 
 @dc.dataclass(kw_only=True)
 class _OpenAI(APIBaseModel):
-    '''
+    """Base class for OpenAI models.
+
     :param client_kwargs: The kwargs to be passed to OpenAI
-    '''
+    """
 
     openai_api_key: t.Optional[str] = None
     openai_api_base: t.Optional[str] = None
@@ -99,10 +98,11 @@ class _OpenAI(APIBaseModel):
 
 @dc.dataclass(kw_only=True)
 class OpenAIEmbedding(_OpenAI):
-    """
-    OpenAI embedding predictor
+    """OpenAI embedding predictor.
+
     {_openai_parameters}
     :param shape: The shape as ``tuple`` of the embedding.
+    :param batch_size: The batch size to use.
     """
 
     __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
@@ -114,6 +114,7 @@ class OpenAIEmbedding(_OpenAI):
 
     @property
     def inputs(self):
+        """The inputs of the model."""
         return Inputs(['input'])
 
     def __post_init__(self, artifacts):
@@ -122,6 +123,13 @@ class OpenAIEmbedding(_OpenAI):
             self.shape = self.shapes[self.model]
 
     def pre_create(self, db):
+        """Pre creates the model.
+
+        If the datatype is not set and the datalayer is an IbisDataBackend,
+        the datatype is set to ``sqlvector`` or ``vector``.
+
+        :param db: The datalayer instance.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
             if self.datatype is None:
@@ -131,6 +139,10 @@ class OpenAIEmbedding(_OpenAI):
 
     @retry
     def predict_one(self, X: str):
+        """Generates embeddings from text.
+
+        :param X: The text to generate embeddings for.
+        """
         e = self.syncClient.embeddings.create(
             input=X, model=self.model, **self.predict_kwargs
         )
@@ -147,7 +159,9 @@ class OpenAIEmbedding(_OpenAI):
 @dc.dataclass(kw_only=True)
 class OpenAIChatCompletion(_OpenAI):
     """OpenAI chat completion predictor.
+
     {_openai_parameters}
+    :param batch_size: The batch size to use.
     :param prompt: The prompt to use to seed the response.
     """
 
@@ -166,12 +180,24 @@ class OpenAIChatCompletion(_OpenAI):
         return prompt + X
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre creates the model.
+
+        If the datatype is not set and the datalayer is an IbisDataBackend,
+        the datatype is set to ``dtype('str')``.
+
+        :param db: The datalayer instance.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry
     def predict_one(self, X: str, context: t.Optional[str] = None, **kwargs):
+        """Generates text completions from prompts.
+
+        :param X: The prompt.
+        :param context: The context to use for the prompt.
+        """
         if context is not None:
             X = self._format_prompt(context, X)
         return (
@@ -185,6 +211,10 @@ class OpenAIChatCompletion(_OpenAI):
         )
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Generates text completions from prompts.
+
+        :param dataset: The dataset of prompts.
+        """
         out = []
         for i in range(len(dataset)):
             args, kwargs = self.handle_input_type(
@@ -197,9 +227,12 @@ class OpenAIChatCompletion(_OpenAI):
 @dc.dataclass(kw_only=True)
 class OpenAIImageCreation(_OpenAI):
     """OpenAI image creation predictor.
+
     {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
+    :param n: The number of images to generate.
+    :param response_format: The response format to use.
     """
 
     signature: t.ClassVar[str] = 'singleton'
@@ -212,6 +245,13 @@ class OpenAIImageCreation(_OpenAI):
     response_format: str = 'b64_json'
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre creates the model.
+
+        If the datatype is not set and the datalayer is an IbisDataBackend,
+        the datatype is set to ``dtype('bytes')``.
+
+        :param db: The datalayer instance.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('bytes')
@@ -222,6 +262,10 @@ class OpenAIImageCreation(_OpenAI):
 
     @retry
     def predict_one(self, X: str):
+        """Generates images from text prompts.
+
+        :param X: The text prompt.
+        """
         if self.response_format == 'b64_json':
             resp = self.syncClient.images.generate(
                 prompt=X,
@@ -243,6 +287,10 @@ class OpenAIImageCreation(_OpenAI):
             return requests.get(url).content
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Generates images from text prompts.
+
+        :param dataset: The dataset of text prompts.
+        """
         out = []
         for i in range(len(dataset)):
             args, kwargs = self.handle_input_type(
@@ -255,9 +303,12 @@ class OpenAIImageCreation(_OpenAI):
 @dc.dataclass(kw_only=True)
 class OpenAIImageEdit(_OpenAI):
     """OpenAI image edit predictor.
+
     {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
+    :param response_format: The response format to use.
+    :param n: The number of images to generate.
     """
 
     __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
@@ -272,6 +323,13 @@ class OpenAIImageEdit(_OpenAI):
         return prompt
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre creates the model.
+
+        If the datatype is not set and the datalayer is an IbisDataBackend,
+        the datatype is set to ``dtype('bytes')``.
+
+        :param db: The datalayer instance.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('bytes')
@@ -283,6 +341,12 @@ class OpenAIImageEdit(_OpenAI):
         mask: t.Optional[t.BinaryIO] = None,
         context: t.Optional[t.List[str]] = None,
     ):
+        """Edits an image.
+
+        :param image: The image to edit.
+        :param mask: The mask to apply to the image.
+        :param context: The context to use for the prompt.
+        """
         if context is not None:
             self.prompt = self._format_prompt(context)
 
@@ -318,6 +382,10 @@ class OpenAIImageEdit(_OpenAI):
         return out
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predicts the output for a dataset of images.
+
+        :param dataset: The dataset of images.
+        """
         out = []
         for i in range(len(dataset)):
             args, kwargs = self.handle_input_type(
@@ -330,6 +398,7 @@ class OpenAIImageEdit(_OpenAI):
 @dc.dataclass(kw_only=True)
 class OpenAIAudioTranscription(_OpenAI):
     """OpenAI audio transcription predictor.
+
     {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
@@ -341,13 +410,24 @@ class OpenAIAudioTranscription(_OpenAI):
     prompt: str = ''
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre creates the model.
+
+        If the datatype is not set and the datalayer is an IbisDataBackend,
+        the datatype is set to ``dtype('str')``.
+
+        :param db: The datalayer instance.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry
     def predict_one(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
-        "Converts a file-like Audio recording to text."
+        """Converts a file-like Audio recording to text.
+
+        :param file: The file-like Audio recording to transcribe.
+        :param context: The context to use for the prompt.
+        """
         if context is not None:
             self.prompt = self.prompt.format(context='\n'.join(context))
         return self.syncClient.audio.transcriptions.create(
@@ -359,7 +439,7 @@ class OpenAIAudioTranscription(_OpenAI):
 
     @retry
     def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
-        "Converts multiple file-like Audio recordings to text."
+        """Converts multiple file-like Audio recordings to text."""
         resps = [
             self.syncClient.audio.transcriptions.create(
                 file=file, model=self.model, **self.predict_kwargs
@@ -372,9 +452,11 @@ class OpenAIAudioTranscription(_OpenAI):
 @dc.dataclass(kw_only=True)
 class OpenAIAudioTranslation(_OpenAI):
     """OpenAI audio translation predictor.
+
     {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
+    :param batch_size: The batch size to use.
     """
 
     signature: t.ClassVar[str] = 'singleton'
@@ -386,6 +468,10 @@ class OpenAIAudioTranslation(_OpenAI):
     batch_size: int = 1
 
     def pre_create(self, db: Datalayer) -> None:
+        """Translates a file-like Audio recording to English.
+
+        :param db: The datalayer to use for the model.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
@@ -396,7 +482,11 @@ class OpenAIAudioTranslation(_OpenAI):
         file: t.BinaryIO,
         context: t.Optional[t.List[str]] = None,
     ):
-        "Translates a file-like Audio recording to English."
+        """Translates a file-like Audio recording to English.
+
+        :param file: The file-like Audio recording to translate.
+        :param context: The context to use for the prompt.
+        """
         if context is not None:
             self.prompt = self.prompt.format(context='\n'.join(context))
         return (
@@ -410,7 +500,7 @@ class OpenAIAudioTranslation(_OpenAI):
 
     @retry
     def _predict_a_batch(self, files: t.List[t.BinaryIO]):
-        "Translates multiple file-like Audio recordings to English."
+        """Translates multiple file-like Audio recordings to English."""
         # TODO use async or threads
         resps = [
             self.syncClient.audio.translations.create(
@@ -419,120 +509,3 @@ class OpenAIAudioTranslation(_OpenAI):
             for file in files
         ]
         return [resp.text for resp in resps]
-
-
-@dc.dataclass
-class BaseOpenAILLM(BaseLLMAPI):
-    """
-    :param openai_api_base: The base URL for the OpenAI API.
-    :param openai_api_key: The API key to use for the OpenAI API.
-    :param model_name: The name of the model to use.
-    :param chat: Whether to use the chat API or the completion API. Defaults to False.
-    :param system_prompt: The prompt to use for the system.
-    :param user_role: The role to use for the user.
-    :param system_role: The role to use for the system.
-    {parent_doc}
-    """
-
-    __doc__ = __doc__.format(parent_doc=BaseLLMAPI.__doc__)
-
-    identifier: str = dc.field(default="")
-    openai_api_base: str = "https://api.openai.com/v1"
-    openai_api_key: t.Optional[str] = None
-    model_name: str = "gpt-3.5-turbo"
-    chat: bool = True
-    system_prompt: t.Optional[str] = None
-    user_role: str = "user"
-    system_role: str = "system"
-
-    def __post_init__(self, artifacts):
-        self.api_url = self.openai_api_base
-        self.identifier = self.identifier or self.model_name
-        super().__post_init__(artifacts)
-
-    def init(self):
-        try:
-            from openai import OpenAI
-        except ImportError:
-            raise Exception("You must install openai with command 'pip install openai'")
-
-        params = {
-            "api_key": self.openai_api_key,
-            "base_url": self.openai_api_base,
-        }
-
-        self.client = OpenAI(**params)
-        model_set = self.get_model_set()
-        assert (
-            self.model_name in model_set
-        ), f"model_name {self.model_name} is not in model_set {model_set}"
-
-    def get_model_set(self):
-        model_list = self.client.models.list()
-        return sorted({model.id for model in model_list.data})
-
-    def _generate(self, prompt: str, **kwargs: Any) -> str:
-        if self.chat:
-            return self._chat_generate(prompt, **kwargs)
-        else:
-            return self._prompt_generate(prompt, **kwargs)
-
-    def _prompt_generate(self, prompt: str, **kwargs: Any) -> str:
-        """
-        Generate a completion for a given prompt with prompt format.
-        """
-        completion = self.client.completions.create(
-            model=self.model_name,
-            prompt=prompt,
-            **self.get_kwargs(
-                self.client.completions.create, kwargs, self.predict_kwargs
-            ),
-        )
-        return completion.choices[0].text
-
-    def _chat_generate(self, content: str, **kwargs: Any) -> str:
-        """
-        Generate a completion for a given prompt with chat format.
-        :param prompt: The prompt to generate a completion for.
-        :param kwargs: Any additional arguments to pass to the API.
-        """
-        messages = kwargs.get("messages", [])
-
-        if self.system_prompt:
-            messages = [
-                {"role": self.system_role, "content": self.system_prompt}
-            ] + messages
-
-        messages.append({"role": self.user_role, "content": content})
-        completion = self.client.chat.completions.create(
-            messages=messages,
-            model=self.model_name,
-            **self.get_kwargs(
-                self.client.chat.completions.create, kwargs, self.predict_kwargs
-            ),
-        )
-        return completion.choices[0].message.content
-
-
-@dc.dataclass
-class OpenAILLM(BaseOpenAILLM):
-    """
-    OpenAI chat completion predictor.
-    {parent_doc}
-    """
-
-    __doc__ = __doc__.format(parent_doc=BaseOpenAILLM.__doc__)
-
-    def __post_init__(self, artifacts):
-        """Set model name."""
-        # only support chat mode
-        self.chat = True
-        super().__post_init__(artifacts)
-
-    @retry
-    def get_model_set(self):
-        return super().get_model_set()
-
-    @retry
-    def _generate(self, *args, **kwargs) -> str:
-        return super()._generate(*args, **kwargs)

@@ -15,13 +15,18 @@ class Retry:
 
     This is a thin wrapper around the tenacity retry library, using our configs.
     :param exception_types: The exception types to retry on.
-    :param cfg: The retry config.
+    :param cfg: The retry config. If None, uses the default config.
     """
 
     exception_types: ExceptionTypes
     cfg: t.Optional[s.config.Retry] = None
 
     def __call__(self, f: t.Callable) -> t.Any:
+        """Decorate a function to retry on exceptions.
+
+        Uses the exception types and config provided to the constructor.
+        :param f: The function to decorate.
+        """
         cfg = self.cfg or s.CFG.retries
         retry = tenacity.retry_if_exception_type(self.exception_types)
         stop = tenacity.stop_after_attempt(cfg.stop_after_attempt)

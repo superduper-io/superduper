@@ -10,9 +10,7 @@ from superduperdb.components.model import Model, Signature
 
 
 def input_node(*args):
-    """
-    Create an IndexableNode for input.
-    """
+    """Create an IndexableNode for input."""
     return IndexableNode(
         model=Input(spec=args if len(args) > 1 else args[0]),
         parent_graph=nx.DiGraph(),
@@ -21,16 +19,15 @@ def input_node(*args):
 
 
 def document_node(*args):
-    """
-    Create an IndexableNode for document input.
-    """
+    """Create an IndexableNode for document input."""
     return IndexableNode(
         model=DocumentInput(spec=args), parent_graph=nx.DiGraph(), parent_models={}
     )
 
 
 class IndexableNode:
-    """
+    """IndexableNode class to index the model.
+
     Create a model IndexableNode, which can be used to
     index the model while creating graph links.
 
@@ -51,8 +48,7 @@ class IndexableNode:
         self.identifier = identifier
 
     def __getitem__(self, item):
-        """
-        Method for indexing the model.
+        """Method for indexing the model.
 
         :param item: Index
         """
@@ -65,8 +61,7 @@ class IndexableNode:
         )
 
     def to_graph(self, identifier: str):
-        """
-        Helper method to get the graph form.
+        """Helper method to get the graph form.
 
         :param identifier: Unique identifier
         """
@@ -92,8 +87,7 @@ class IndexableNode:
         return self.parent_models[u]
 
     def to_listeners(self, select: CompoundSelect, identifier: str):
-        """
-        Create listeners from the parent graph and models.
+        """Create listeners from the parent graph and models.
 
         :param select: CompoundSelect query
         :param identifier: Unique identifier
@@ -136,8 +130,7 @@ class IndexableNode:
 
 
 class OutputWrapper:
-    """
-    OutputWrapper class for wrapping model outputs.
+    """OutputWrapper class for wrapping model outputs.
 
     :param r: Output
     :param keys: Output keys
@@ -158,8 +151,7 @@ class OutputWrapper:
 
 @dc.dataclass(kw_only=True)
 class Input(Model):
-    """
-    Root model of a graph.
+    """Root model of a graph.
 
     :param spec: Model specifications from `inspect`
     :param identifier: Unique identifier
@@ -176,9 +168,7 @@ class Input(Model):
             self.signature = 'singleton'
 
     def predict_one(self, *args):
-        """
-        Single prediction.
-        """
+        """Single prediction."""
         if self.signature == 'singleton':
             return args[0]
         return OutputWrapper(
@@ -186,8 +176,7 @@ class Input(Model):
         )
 
     def predict(self, dataset):
-        """
-        Predict on the dataset.
+        """Predict on the dataset.
 
         :param dataset: Series of datapoints
         """
@@ -196,8 +185,7 @@ class Input(Model):
 
 @dc.dataclass(kw_only=True)
 class DocumentInput(Model):
-    """
-    Document Input node of the graph.
+    """Document Input node of the graph.
 
     :param spec: Model specifications from `inspect`
     :param identifier: Unique identifier
@@ -211,16 +199,14 @@ class DocumentInput(Model):
         super().__post_init__(artifacts)
 
     def predict_one(self, r):
-        """
-        Single prediction.
+        """Single prediction.
 
         :param r: Model input
         """
         return {k: r[k] for k in self.spec}
 
     def predict(self, dataset):
-        """
-        Predict on the dataset.
+        """Predict on the dataset.
 
         :param dataset: Series of datapoints
         """
@@ -235,8 +221,7 @@ from superduperdb.components.model import Model, Signature
 
 @dc.dataclass(kw_only=True)
 class Graph(Model):
-    """
-    Represents a directed acyclic graph composed of interconnected model nodes.
+    """Represents a directed acyclic graph composed of interconnected model nodes.
 
     This class enables the creation of complex predictive models
     by defining a computational graph structure where each node
@@ -253,11 +238,13 @@ class Graph(Model):
     :param signature: Graph signature.
 
     Example:
+    -------
     >> g = Graph(
     >>   identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
     >> )
     >> g.connect(model1, model2)
     >> assert g.predict_one(1) == [(4, 2)]
+
     """
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
@@ -314,7 +301,8 @@ class Graph(Model):
         on: t.Optional[t.Tuple[t.Union[int, str], str]] = None,
         update_edge: t.Optional[bool] = True,
     ):
-        """
+        """Connect the relationship between two models.
+
         Connects two nodes `u` and `v` on an edge, where the edge is a tuple with
         the first element describing output index (int or None)
         and the second describing input argument (str).
@@ -326,7 +314,9 @@ class Graph(Model):
         :param update_edge: Bool to update edge.
 
         Note:
+        ----
         Output index: None means all outputs of node u are connected to node v.
+
         """
         assert isinstance(u, Model)
         assert isinstance(v, Model)
@@ -361,8 +351,7 @@ class Graph(Model):
     def fetch_output(
         self, output, index: t.Optional[t.Union[int, str]] = None, one: bool = False
     ):
-        """
-        Get corresponding output from model outputs with respect to link weight.
+        """Get corresponding output from model outputs with respect to link weight.
 
         :param output: model output.
         :param index: index to select output.
@@ -388,8 +377,7 @@ class Graph(Model):
         return output
 
     def validate(self, node):
-        """
-        Validates the graph for any disconnection.
+        """Validates the graph for any disconnection.
 
         :param node: Graph node.
         """
@@ -494,7 +482,8 @@ class Graph(Model):
         return cache[node]
 
     def predict_one(self, *args, **kwargs):
-        """
+        """Predict on single data point.
+
         Single data point prediction passes the args and kwargs to the defined node flow
         in the graph.
         """
@@ -515,7 +504,8 @@ class Graph(Model):
             )
 
     def patch_dataset_to_args(self, dataset):
-        """
+        """Get the dataset and patch it with args.
+
         Patch the dataset with args type as default, since all
         corresponding nodes take args as input type.
 
@@ -541,8 +531,7 @@ class Graph(Model):
         return args_dataset
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """
-        Predict on dataset i.e. series of datapoints.
+        """Predict on dataset i.e. series of datapoints.
 
         :param dataset: Series of datapoints.
         """
@@ -569,8 +558,7 @@ class Graph(Model):
         return outputs
 
     def encode_outputs(self, outputs):
-        """
-        Encode outputs for serialization in the database.
+        """Encode outputs for serialization in the database.
 
         :param outputs: model outputs.
         """

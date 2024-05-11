@@ -21,7 +21,10 @@ KEY_NAME = 'COHERE_API_KEY'
 
 @dc.dataclass(kw_only=True)
 class Cohere(APIBaseModel):
-    """Cohere predictor"""
+    """Cohere predictor.
+
+    :param client_kwargs: The keyword arguments to pass to the client.
+    """
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
@@ -32,9 +35,10 @@ class Cohere(APIBaseModel):
 
 @dc.dataclass(kw_only=True)
 class CohereEmbed(Cohere):
-    """Cohere embedding predictor
+    """Cohere embedding predictor.
 
     :param shape: The shape as ``tuple`` of the embedding.
+    :param batch_size: The batch size to use for the predictor.
     """
 
     signature: t.ClassVar[str] = 'singleton'
@@ -48,6 +52,13 @@ class CohereEmbed(Cohere):
             self.shape = self.shapes[self.identifier]
 
     def pre_create(self, db):
+        """Pre create method for the model.
+
+        If the datalayer is Ibis, the datatype will be set to the appropriate
+        SQL datatype.
+
+        :param db: The datalayer to use for the model.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend):
             if self.datatype is None:
@@ -57,6 +68,10 @@ class CohereEmbed(Cohere):
 
     @retry
     def predict_one(self, X: str):
+        """Predict the embedding of a single text.
+
+        :param X: The text to predict the embedding of.
+        """
         client = cohere.Client(get_key(KEY_NAME), **self.client_kwargs)
         e = client.embed(texts=[X], model=self.identifier, **self.predict_kwargs)
         return e.embeddings[0]
@@ -68,6 +83,10 @@ class CohereEmbed(Cohere):
         return [r for r in out.embeddings]
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict the embeddings of a dataset.
+
+        :param dataset: The dataset to predict the embeddings of.
+        """
         out = []
         for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
             out.extend(
@@ -80,7 +99,7 @@ class CohereEmbed(Cohere):
 
 @dc.dataclass(kw_only=True)
 class CohereGenerate(Cohere):
-    """Cohere realistic text generator (chat predictor)
+    """Cohere realistic text generator (chat predictor).
 
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
@@ -91,12 +110,24 @@ class CohereGenerate(Cohere):
     prompt: str = ''
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre create method for the model.
+
+        If the datalayer is Ibis, the datatype will be set to the appropriate
+        SQL datatype.
+
+        :param db: The datalayer to use for the model.
+        """
         super().pre_create(db)
         if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry
     def predict_one(self, prompt: str, context: t.Optional[t.List[str]] = None):
+        """Predict the generation of a single prompt.
+
+        :param prompt: The prompt to generate text from.
+        :param context: The context to use for the prompt.
+        """
         if context is not None:
             prompt = format_prompt(prompt, self.prompt, context=context)
         client = cohere.Client(get_key(KEY_NAME), **self.client_kwargs)
@@ -107,4 +138,8 @@ class CohereGenerate(Cohere):
 
     @retry
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict the generations of a dataset.
+
+        :param dataset: The dataset to predict the generations of.
+        """
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]

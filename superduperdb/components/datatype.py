@@ -29,17 +29,14 @@ Encode = t.Callable[[t.Any], bytes]
 
 
 class IntermidiaType:
-    """
-    Intermidia data type
-    """
+    """Intermidia data type."""
 
     BYTES = 'bytes'
     STRING = 'string'
 
 
 def json_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> str:
-    """
-    Encode the dict to a JSON string
+    """Encode the dict to a JSON string.
 
     :param object: The object to encode
     :param info: Optional information
@@ -48,8 +45,7 @@ def json_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> str:
 
 
 def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
-    """
-    Decode the JSON string to an dict
+    """Decode the JSON string to an dict.
 
     :param b: The JSON string to decode
     :param info: Optional information
@@ -58,8 +54,7 @@ def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
-    """
-    Encodes an object using pickle.
+    """Encodes an object using pickle.
 
     :param object: The object to encode.
     :param info: Optional information.
@@ -68,8 +63,7 @@ def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 
 def pickle_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
-    """
-    Decodes bytes using pickle.
+    """Decodes bytes using pickle.
 
     :param b: The bytes to decode.
     :param info: Optional information.
@@ -78,8 +72,7 @@ def pickle_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def dill_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
-    """
-    Encodes an object using dill.
+    """Encodes an object using dill.
 
     :param object: The object to encode.
     :param info: Optional information.
@@ -88,8 +81,7 @@ def dill_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 
 def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
-    """
-    Decodes bytes using dill.
+    """Decodes bytes using dill.
 
     :param b: The bytes to decode.
     :param info: Optional information.
@@ -98,8 +90,7 @@ def dill_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def file_check(path: t.Any, info: t.Optional[t.Dict] = None) -> str:
-    """
-    Checks if a file path exists.
+    """Checks if a file path exists.
 
     :param path: The file path to check.
     :param info: Optional information.
@@ -111,8 +102,7 @@ def file_check(path: t.Any, info: t.Optional[t.Dict] = None) -> str:
 
 
 def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
-    """
-    Saves an object in torch format.
+    """Saves an object in torch format.
 
     :param object: The object to encode.
     :param info: Optional information.
@@ -135,8 +125,7 @@ def torch_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
 
 
 def torch_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
-    """
-    Decodes bytes to a torch model.
+    """Decodes bytes to a torch model.
 
     :param b: The bytes to decode.
     :param info: Optional information.
@@ -147,8 +136,7 @@ def torch_decode(b: bytes, info: t.Optional[t.Dict] = None) -> t.Any:
 
 
 def bytes_to_base64(bytes):
-    """
-    Converts bytes to base64.
+    """Converts bytes to base64.
 
     :param bytes: The bytes to convert.
     """
@@ -156,8 +144,7 @@ def bytes_to_base64(bytes):
 
 
 def base64_to_bytes(encoded):
-    """
-    Decodes a base64 encoded string.
+    """Decodes a base64 encoded string.
 
     :param encoded: The base64 encoded string.
     """
@@ -165,14 +152,12 @@ def base64_to_bytes(encoded):
 
 
 class DataTypeFactory:
-    """
-    Abstract class for creating a DataType
-    """
+    """Abstract class for creating a DataType."""
 
     @abstractstaticmethod
     def check(data: t.Any) -> bool:
-        """
-        Check if the data can be encoded by the DataType
+        """Check if the data can be encoded by the DataType.
+
         If the data can be encoded, return True, otherwise False
 
         :param data: The data to check
@@ -181,8 +166,7 @@ class DataTypeFactory:
 
     @abstractstaticmethod
     def create(data: t.Any) -> "DataType":
-        """
-        Create a DataType for the data
+        """Create a DataType for the data.
 
         :param data: The data to create the DataType for
         """
@@ -192,8 +176,7 @@ class DataTypeFactory:
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class DataType(Component):
-    """
-    A data type component that defines how data is encoded and decoded.
+    """A data type component that defines how data is encoded and decoded.
 
     {component_parameters}
 
@@ -252,8 +235,7 @@ class DataType(Component):
     registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
 
     def __post_init__(self, artifacts):
-        """
-        Post-initialization hook.
+        """Post-initialization hook.
 
         :param artifacts: The artifacts.
         """
@@ -264,9 +246,7 @@ class DataType(Component):
         self.register_datatype(self)
 
     def dict(self):
-        """
-        Get the dictionary representation of the object.
-        """
+        """Get the dictionary representation of the object."""
         r = super().dict()
         if hasattr(self.bytes_encoding, 'value'):
             r['dict']['bytes_encoding'] = str(self.bytes_encoding.value)
@@ -275,8 +255,7 @@ class DataType(Component):
     def __call__(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
     ) -> '_BaseEncodable':
-        """
-        Create an instance of the encodable class.
+        """Create an instance of the encodable class.
 
         :param x: The optional content.
         :param uri: The optional URI.
@@ -288,8 +267,7 @@ class DataType(Component):
 
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
-        """
-        Encode the item into bytes.
+        """Encode the item into bytes.
 
         :param item: The item to encode.
         :param info: The optional information dictionary.
@@ -301,8 +279,7 @@ class DataType(Component):
 
     @ensure_initialized
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
-        """
-        Decode the item from bytes.
+        """Decode the item from bytes.
 
         :param item: The item to decode.
         :param info: The optional information dictionary.
@@ -312,8 +289,8 @@ class DataType(Component):
         return self.decoder(item, info=info)
 
     def bytes_encoding_after_encode(self, data):
-        """
-        Encode the data to base64,
+        """Encode the data to base64.
+
         if the bytes_encoding is BASE64 and the intermidia_type is BYTES
 
         :param data: Encoded data
@@ -326,8 +303,8 @@ class DataType(Component):
         return data
 
     def bytes_encoding_before_decode(self, data):
-        """
-        Encode the data to base64,
+        """Encode the data to base64.
+
         if the bytes_encoding is BASE64 and the intermidia_type is BYTES
 
         :param data: Decoded data
@@ -341,8 +318,7 @@ class DataType(Component):
 
     @classmethod
     def register_datatype(cls, instance):
-        """
-        Register a datatype.
+        """Register a datatype.
 
         :param instance: The datatype instance to register.
         """
@@ -350,8 +326,7 @@ class DataType(Component):
 
 
 def encode_torch_state_dict(module, info):
-    """
-    Encode torch state dictionary.
+    """Encode torch state dictionary.
 
     :param module: Module.
     :param info: Information.
@@ -365,8 +340,7 @@ def encode_torch_state_dict(module, info):
 
 
 class DecodeTorchStateDict:
-    """
-    Torch state dictionary decoder.
+    """Torch state dictionary decoder.
 
     :param cls: Torch state cls
     """
@@ -375,6 +349,11 @@ class DecodeTorchStateDict:
         self.cls = cls
 
     def __call__(self, b: bytes, info: t.Dict):
+        """Decode the torch state dictionary.
+
+        :param b: Bytes.
+        :param info: Information.
+        """
         import torch
 
         buffer = io.BytesIO(b)
@@ -385,8 +364,7 @@ class DecodeTorchStateDict:
 
 # TODO: Remove this because this function is only used in test cases.
 def build_torch_state_serializer(module, info):
-    """
-    Datatype for serializing torch state dict.
+    """Datatype for serializing torch state dict.
 
     :param module: Module.
     :param info: Information.
@@ -400,8 +378,7 @@ def build_torch_state_serializer(module, info):
 
 
 def _find_descendants(cls):
-    """
-    Find descendants of the given class.
+    """Find descendants of the given class.
 
     :param cls: The class to find descendants for.
     """
@@ -413,8 +390,9 @@ def _find_descendants(cls):
 
 @dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
-    """
-    Data variable wrapping encode-able item. Encoding is controlled by the referred
+    """Data variable wrapping encode-able item.
+
+    Encoding is controlled by the referred
     to ``Encoder`` instance.
 
     :param encoder: Instance of ``Encoder`` controlling encoding.
@@ -428,8 +406,7 @@ class _BaseEncodable(Leaf):
     sha1: t.Optional[str] = None
 
     def _deep_flat_encode(self, cache):
-        """
-        Deep flat encode the encodable item.
+        """Deep flat encode the encodable item.
 
         :param cache: Cache to store encoded items.
         """
@@ -450,16 +427,12 @@ class _BaseEncodable(Leaf):
 
     @property
     def id(self):
-        """
-        Get the ID of the encodable item.
-        """
+        """Get the ID of the encodable item."""
         assert self.file_id is not None
         return f'_{self.leaf_type}/{self.file_id}'
 
     def __post_init__(self):
-        """
-        Post-initialization hook.
-        """
+        """Post-initialization hook."""
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
 
@@ -468,23 +441,18 @@ class _BaseEncodable(Leaf):
 
     @property
     def unique_id(self):
-        """
-        Get the unique ID of the encodable item.
-        """
+        """Get the unique ID of the encodable item."""
         if self.file_id is not None:
             return self.file_id
         return str(id(self.x))
 
     @property
     def reference(self):
-        """
-        Get the reference to the datatype.
-        """
+        """Get the reference to the datatype."""
         return self.datatype.reference
 
     def unpack(self, db):
-        """
-        Unpack the content of the `Encodable`.
+        """Unpack the content of the `Encodable`.
 
         :param db: Datalayer instance.
         """
@@ -492,8 +460,8 @@ class _BaseEncodable(Leaf):
 
     @classmethod
     def get_encodable_cls(cls, name, default=None):
-        """
-        Get the subclass of the _BaseEncodable with the given name.
+        """Get the subclass of the _BaseEncodable with the given name.
+
         All the registered subclasses must be subclasses of the _BaseEncodable.
 
         :param name: Name of the subclass.
@@ -517,8 +485,7 @@ class _BaseEncodable(Leaf):
     @classmethod
     @abstractmethod
     def _get_object(cls, db, r):
-        """
-        Get object from the given representation.
+        """Get object from the given representation.
 
         :param db: Datalayer instance.
         :param r: Representation of the object.
@@ -528,8 +495,7 @@ class _BaseEncodable(Leaf):
     @classmethod
     @abstractmethod
     def decode(cls, r, db=None) -> '_BaseEncodable':
-        """
-        Decode the representation to an instance of _BaseEncodable.
+        """Decode the representation to an instance of _BaseEncodable.
 
         :param r: Representation to decode.
         :param db: Datalayer instance.
@@ -537,8 +503,7 @@ class _BaseEncodable(Leaf):
         pass
 
     def get_hash(self, data):
-        """
-        Get the hash of the given data.
+        """Get the hash of the given data.
 
         :param data: Data to hash.
         """
@@ -553,21 +518,16 @@ class _BaseEncodable(Leaf):
 
 
 class Empty:
-    """
-    Sentinel class.
-    """
+    """Sentinel class."""
 
     def __repr__(self):
-        """
-        Get the string representation of the Empty object.
-        """
+        """Get the string representation of the Empty object."""
         return '<EMPTY>'
 
 
 @dc.dataclass
 class Encodable(_BaseEncodable):
-    """
-    Class for encoding non-Python datatypes to the database.
+    """Class for encoding non-Python datatypes to the database.
 
     :param x: The encodable object.
     """
@@ -590,7 +550,8 @@ class Encodable(_BaseEncodable):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        """
+        """Encode itself to a specific format.
+
         Encode `self.x` to dictionary format which could be serialized
         to a database.
 
@@ -614,16 +575,14 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def build(cls, r):
-        """
-        Build an `Encodable` instance with the given parameters `r`.
+        """Build an `Encodable` instance with the given parameters `r`.
 
         :param r: Parameters for building the `Encodable` instance.
         """
         return cls(**r)
 
     def init(self, db):
-        """
-        Initialization method.
+        """Initialization method.
 
         :param db: The Datalayer instance.
         """
@@ -631,8 +590,7 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def decode(cls, r, db=None) -> 'Encodable':
-        """
-        Decode the dictionary `r` to an `Encodable` instance.
+        """Decode the dictionary `r` to an `Encodable` instance.
 
         :param r: The dictionary to decode.
         :param db: The Datalayer instance.
@@ -647,8 +605,7 @@ class Encodable(_BaseEncodable):
 
     @classmethod
     def get_datatype(cls, db, r):
-        """
-        Get the datatype of the object
+        """Get the datatype of the object.
 
         :param db: `Datalayer` instance to assist with
         :param r: The object to get the datatype from
@@ -670,8 +627,7 @@ class Encodable(_BaseEncodable):
 
 @dc.dataclass
 class Native(_BaseEncodable):
-    """
-    Class for representing native data supported by the underlying database.
+    """Class for representing native data supported by the underlying database.
 
     :param x: The encodable object.
     """
@@ -685,8 +641,7 @@ class Native(_BaseEncodable):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        """
-        Encode the object.
+        """Encode itself to a specific format.
 
         :param leaf_types_to_keep: Leaf nodes to keep from encoding.
         """
@@ -694,8 +649,7 @@ class Native(_BaseEncodable):
 
     @classmethod
     def decode(cls, r, db=None):
-        """
-        Decode the object `r` to a `Native` instance.
+        """Decode the object `r` to a `Native` instance.
 
         :param r: The object to decode.
         :param db: The Datalayer instance.
@@ -712,8 +666,7 @@ class _ArtifactSaveMixin:
 
 @dc.dataclass
 class Artifact(_BaseEncodable, _ArtifactSaveMixin):
-    """
-    Class for representing data to be saved on disk or in the artifact-store.
+    """Class for representing data to be saved on disk or in the artifact-store.
 
     :param x: The artifact object.
     :param artifact: Whether the object is an artifact.
@@ -729,9 +682,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return bytes_, sha1
 
     def init(self, db):
-        """
-        Initialization method to seed `x` with the actual object from
-        the artifact store.
+        """Initialize the x attribute with the actual value from the artifact store.
 
         :param db: The Datalayer instance.
         """
@@ -745,7 +696,8 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        """
+        """Encode itself to a specific format.
+
         Encode `self.x` to dictionary format which is later saved
         in an artifact store.
 
@@ -784,8 +736,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return obj
 
     def unpack(self, db):
-        """
-        Unpack the content of the `Encodable`.
+        """Unpack the content of the `Encodable`.
 
         :param db: The `Datalayer` instance to assist with unpacking.
         """
@@ -793,8 +744,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return self.x
 
     def save(self, artifact_store):
-        """
-        Save the encoded data into an artifact store.
+        """Save the encoded data into an artifact store.
 
         :param artifact_store: The artifact store for storing the encoded object.
         """
@@ -804,8 +754,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
     @classmethod
     def decode(cls, r, db=None) -> 'Artifact':
-        """
-        Decode the dictionary `r` into an instance of `Artifact`.
+        """Decode the dictionary `r` into an instance of `Artifact`.
 
         :param r: The dictionary to decode.
         :param db: The Datalayer instance.
@@ -825,9 +774,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
 @dc.dataclass
 class LazyArtifact(Artifact):
-    """
-    Data to be saved on disk or in the artifact store
-    and loaded only when needed.
+    """A class for loading an artifact only when needed.
 
     :param artifact: If the object is an artifact
     """
@@ -841,8 +788,7 @@ class LazyArtifact(Artifact):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        """
-        Encode `x` in dictionary format for the artifact store.
+        """Encode `x` in dictionary format for the artifact store.
 
         :param leaf_types_to_keep: Leaf nodes to exclude
                                    from encoding.
@@ -850,8 +796,7 @@ class LazyArtifact(Artifact):
         return super().encode(leaf_types_to_keep)
 
     def unpack(self, db):
-        """
-        Unpack the content of the `Encodable`.
+        """Unpack the content of the `Encodable`.
 
         :param db: `Datalayer` instance to assist with
         """
@@ -859,8 +804,7 @@ class LazyArtifact(Artifact):
         return self.x
 
     def save(self, artifact_store):
-        """
-        Save the encoded data into the artifact store.
+        """Save the encoded data into the artifact store.
 
         :param artifact_store: Artifact store for saving
                                the encoded object.
@@ -871,8 +815,7 @@ class LazyArtifact(Artifact):
 
     @classmethod
     def decode(cls, r, db=None) -> 'LazyArtifact':
-        """
-        Decode data into a `LazyArtifact` instance.
+        """Decode data into a `LazyArtifact` instance.
 
         :param r: Object to decode
         :param db: Datalayer instance
@@ -887,9 +830,7 @@ class LazyArtifact(Artifact):
 
 @dc.dataclass
 class File(_BaseEncodable, _ArtifactSaveMixin):
-    """
-    Data to be saved on disk and passed
-    as a file reference.
+    """Data to be saved on disk and passed as a file reference.
 
     :param x: File object
     """
@@ -898,9 +839,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     x: t.Any = Empty()
 
     def init(self, db):
-        """
-        Initialize to load `x` with the actual file from
-        the artifact store.
+        """Initialize to load `x` with the actual file from the artifact store.
 
         :param db: A Datalayer instance
         """
@@ -909,8 +848,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
             self.x = file
 
     def unpack(self, db):
-        """
-        Unpack and get the original data.
+        """Unpack and get the original data.
 
         :param db: Datalayer instance.
         """
@@ -923,9 +861,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     @override
     def encode(self, leaf_types_to_keep: t.Sequence = ()):
-        """
-        Encode `x` to a dictionary which is saved to
-        the artifact store later.
+        """Encode `x` to a dictionary which is saved to the artifact store later.
 
         :param leaf_types_to_keep: Leaf nodes to exclude
                                    from encoding
@@ -945,8 +881,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     @classmethod
     def decode(cls, r, db=None) -> 'File':
-        """
-        Decode data to a `File` instance.
+        """Decode data to a `File` instance.
 
         :param r: Object to decode
         :param db: Datalayer instance
@@ -961,16 +896,13 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
 
 class LazyFile(File):
-    """
-    Class is used to load a file only when needed.
-    """
+    """Class is used to load a file only when needed."""
 
     leaf_type: t.ClassVar[str] = 'lazy_file'
 
     @classmethod
     def decode(cls, r, db=None) -> 'LazyFile':
-        """
-        Decode a dictionary to a `LazyFile` instance.
+        """Decode a dictionary to a `LazyFile` instance.
 
         :param r: Object to decode
         :param db: Datalayer instance

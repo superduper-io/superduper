@@ -1,6 +1,13 @@
 # https://stackoverflow.com/questions/39969064/how-to-print-a-message-box-in-python
+# TODO: Remove the unused functions
 def border_msg(msg, indent=1, width=None, title=None):
-    """Print message-box with optional title."""
+    """Print message-box with optional title.
+
+    :param msg: Message to print
+    :param indent: Indentation of the box
+    :param width: Width of the box
+    :param title: Title of the box
+    """
     lines = msg.split('\n')
     space = " " * indent
     if not width:

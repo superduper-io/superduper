@@ -3,26 +3,20 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 class ComputeBackend(ABC):
-    """
-    Abstraction for sending jobs to a distributed compute platform.
-    """
+    """Abstraction for sending jobs to a distributed compute platform."""
 
     @abstractproperty
     def type(self) -> str:
-        """
-        Return the type of compute engine
-        """
+        """Return the type of compute engine."""
         pass
 
     @abstractproperty
     def name(self) -> str:
-        """
-        Return the name of current compute engine
-        """
+        """Return the name of current compute engine."""
         pass
 
     def get_local_client(self):
-        '''Returns a local version of self'''
+        """Returns a local version of self."""
         pass
 
     @abstractmethod
@@ -37,22 +31,18 @@ class ComputeBackend(ABC):
 
     @abstractproperty
     def tasks(self) -> t.Any:
-        """
-        List for all tasks
-        """
+        """List for all tasks."""
         pass
 
     @abstractmethod
     def wait_all(self) -> None:
-        """
-        Waits for all pending tasks to complete.
-        """
+        """Waits for all pending tasks to complete."""
         pass
 
     @abstractmethod
     def result(self, identifier: str) -> t.Any:
-        """
-        Retrieves the result of a previously submitted task.
+        """Retrieves the result of a previously submitted task.
+
         Note: This will block until the future is completed.
 
         :param identifier: The identifier of the submitted task.
@@ -61,14 +51,10 @@ class ComputeBackend(ABC):
 
     @abstractmethod
     def disconnect(self) -> None:
-        """
-        Disconnect the client.
-        """
+        """Disconnect the client."""
         pass
 
     @abstractmethod
     def shutdown(self) -> None:
-        """
-        Shuts down the compute cluster.
-        """
+        """Shuts down the compute cluster."""
         pass

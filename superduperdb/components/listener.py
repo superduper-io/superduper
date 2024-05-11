@@ -26,7 +26,8 @@ SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 @public_api(stability='stable')
 @dc.dataclass(kw_only=True)
 class Listener(Component):
-    """
+    """Listener component.
+
     Listener object which is used to process a column/key of a collection or table,
     and store the outputs.
 
@@ -60,8 +61,7 @@ class Listener(Component):
 
     @classmethod
     def handle_integration(cls, kwargs):
-        """
-        Method to handle integration.
+        """Method to handle integration.
 
         :param kwargs: Integration keyword arguments.
         """
@@ -89,16 +89,12 @@ class Listener(Component):
 
     @property
     def mapping(self):
-        """
-        Mapping property.
-        """
+        """Mapping property."""
         return Mapping(self.key, signature=self.model.signature)
 
     @property
     def outputs(self):
-        """
-        Get reference to outputs of listener model.
-        """
+        """Get reference to outputs of listener model."""
         if self.model.version is not None:
             return f'{_OUTPUTS_KEY}.{self.identifier}::{self.version}'
         else:
@@ -113,9 +109,7 @@ class Listener(Component):
 
     @property
     def outputs_select(self):
-        """
-        Get query reference to model outputs.
-        """
+        """Get query reference to model outputs."""
         if self.select.DB_TYPE == "SQL":
             return self.select.table_or_collection.outputs(self.predict_id)
 
@@ -132,9 +126,7 @@ class Listener(Component):
 
     @property
     def outputs_key(self):
-        """
-        Model outputs key.
-        """
+        """Model outputs key."""
         if self.select.DB_TYPE == "SQL":
             return 'output'
         else:
@@ -142,8 +134,7 @@ class Listener(Component):
 
     @override
     def pre_create(self, db: "Datalayer") -> None:
-        """
-        Pre-create hook.
+        """Pre-create hook.
 
         :param db: Data layer instance.
         """
@@ -168,8 +159,7 @@ class Listener(Component):
 
     @override
     def post_create(self, db: "Datalayer") -> None:
-        """
-        Post-create hook.
+        """Post-create hook.
 
         :param db: Data layer instance.
         """
@@ -206,9 +196,7 @@ class Listener(Component):
 
     @property
     def dependencies(self) -> t.List[ComponentTuple]:
-        """
-        Listener model dependencies.
-        """
+        """Listener model dependencies."""
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
         out = []
@@ -221,9 +209,7 @@ class Listener(Component):
 
     @property
     def predict_id(self):
-        """
-        Get predict ID.
-        """
+        """Get predict ID."""
         return f'{self.identifier}::{self.version}'
 
     @classmethod
@@ -234,15 +220,12 @@ class Listener(Component):
         :param db: Data layer instance.
         :param predict_id: Predict ID.
         """
-
         identifier, version = predict_id.rsplit('::', 1)
         return t.cast(Listener, db.load('listener', identifier, version=int(version)))
 
     @property
     def id_key(self) -> str:
-        """
-        Get identifier key.
-        """
+        """Get identifier key."""
 
         def _id_key(key) -> str:
             if isinstance(key, str):
@@ -260,8 +243,7 @@ class Listener(Component):
         return _id_key(self.key)
 
     def depends_on(self, other: Component):
-        """
-        Check if the listener depends on another component.
+        """Check if the listener depends on another component.
 
         :param other: Another component.
         """
@@ -280,8 +262,7 @@ class Listener(Component):
         dependencies: t.Sequence[Job] = (),
         overwrite: bool = False,
     ) -> t.Sequence[t.Any]:
-        """
-        Schedule jobs for the listener.
+        """Schedule jobs for the listener.
 
         :param db: Data layer instance to process.
         :param dependencies: A list of dependencies.

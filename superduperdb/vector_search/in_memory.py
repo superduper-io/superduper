@@ -11,6 +11,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
     Simple hash-set for looking up with vector similarity.
 
     :param identifier: Unique string identifier of index
+    :param dimensions: Dimension of the vector embeddings
     :param h: array/ tensor of vectors
     :param index: list of IDs
     :param measure: measure to assess similarity
@@ -63,10 +64,21 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.lookup = dict(zip(index, range(len(index))))
 
     def find_nearest_from_id(self, _id, n=100):
+        """Find the nearest vectors to the given ID.
+
+        :param _id: ID of the vector
+        :param n: number of nearest vectors to return
+        """
         self.post_create()
         return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
+        """Find the nearest vectors to the given vector.
+
+        :param h: vector
+        :param n: number of nearest vectors to return
+        :param within_ids: list of IDs to search within
+        """
         self.post_create()
 
         if self.h is None:
@@ -98,6 +110,12 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return _ids, scores
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
+        """Add vectors to the index.
+
+        Only adds to cache if cache is not full.
+
+        :param items: List of vectors to add
+        """
         if len(self._cache) < self._CACHE_SIZE:
             for item in items:
                 self._cache.append(item)
@@ -106,6 +124,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self._cache = []
 
     def post_create(self):
+        """Post create method to incorporate remaining vectors to be added in cache."""
         if self._cache:
             self._add(self._cache)
             self._cache = []
@@ -123,6 +142,10 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return self._setup(h, index)
 
     def delete(self, ids):
+        """Delete vectors from the index.
+
+        :param ids: List of IDs to delete
+        """
         self.post_create()
         ix = list(map(self.lookup.__getitem__, ids))
         h = numpy.delete(self.h, ix, axis=0)

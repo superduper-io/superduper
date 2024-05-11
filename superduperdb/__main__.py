@@ -9,9 +9,9 @@ __all__ = 'config', 'info', 'local_cluster', 'vector_search', 'cdc', 'ray_serve'
 
 
 def run():
-    """
-    Entrypoint for the CLI. This is the function that is called when the
-    user runs `python -m superduperdb`.
+    """Entrypoint for the CLI.
+
+    This is the function that is called when the user runs `python -m superduperdb`.
     """
     try:
         app(standalone_mode=False)

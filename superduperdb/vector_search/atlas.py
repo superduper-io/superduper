@@ -15,10 +15,13 @@ if t.TYPE_CHECKING:
 
 
 class MongoAtlasVectorSearcher(BaseVectorSearcher):
-    """
-    Implementation of atlas vector search
+    """Vector searcher implementation of atlas vector search.
 
     :param identifier: Unique string identifier of index
+    :param collection: Collection name
+    :param dimensions: Dimension of the vector embeddings
+    :param measure: measure to assess similarity
+    :param output_path: Path to the output
     """
 
     def __init__(
@@ -49,10 +52,15 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
 
     @cached_property
     def index(self):
+        """Return the index collection."""
         return self.database[self.collection]
 
     @classmethod
     def from_component(cls, vi: 'VectorIndex'):
+        """Create a vector searcher from a vector index.
+
+        :param vi: VectorIndex instance
+        """
         from superduperdb.components.listener import Listener
         from superduperdb.components.model import ObjectModel
 
@@ -129,18 +137,38 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         return ids, scores
 
     def find_nearest_from_id(self, id: str, n=100, within_ids=None):
+        """Find the nearest vectors to the given ID.
+
+        :param id: ID of the vector
+        :param n: number of nearest vectors to return
+        :param within_ids: list of IDs to search within
+        """
         h = self.index.find_one({'id': id})
         return self.find_nearest_from_array(h, n=n, within_ids=within_ids)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
+        """Find the nearest vectors to the given vector.
+
+        :param h: vector
+        :param n: number of nearest vectors to return
+        :param within_ids: list of IDs to search within
+        """
         return self._find(h, n=n)
 
     def add(self, items):
+        """Add vectors to the index.
+
+        :param items: List of vectors to add
+        """
         items = list(map(lambda x: x.to_dict(), items))
         if not CFG.cluster.vector_search == CFG.data_backend:
             self.index.insert_many(items)
 
     def delete(self, items):
+        """Delete vectors from the index.
+
+        :param items: List of vectors to delete
+        """
         ids = list(map(lambda x: x.id, items))
         if not CFG.cluster.vector_search == CFG.data_backend:
             self.index.delete_many({'id': {'$in': ids}})
@@ -149,7 +177,8 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         """
         Create a vector index in the data backend if an Atlas deployment.
 
-        :param vector_index: vector index to create
+        :param collection: Collection name
+        :param output_path: Path to the output
         """
         _, key, model, version = output_path.split('.')
         if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):

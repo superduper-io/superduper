@@ -11,7 +11,7 @@ class RayComputeBackend(ComputeBackend):
 
     :param address: The address of the ray cluster.
     :param local: Set to True to create a local Dask cluster. (optional)
-    :param **kwargs: Additional keyword arguments to be passed to the ray client.
+    :param kwargs: Additional keyword arguments to be passed to the ray client.
     """
 
     def __init__(
@@ -44,7 +44,9 @@ class RayComputeBackend(ComputeBackend):
         Submits a function to the ray server for execution.
 
         :param function: The function to be executed.
+        :param args: Positional arguments to be passed to the function.
         :param compute_kwargs: Additional keyword arguments to be passed to ray API.
+        :param kwargs: Keyword arguments to be passed to the function.
         """
 
         def _dependable_remote_job(function, *args, **kwargs):

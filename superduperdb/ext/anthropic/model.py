@@ -10,6 +10,7 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIBaseModel
 from superduperdb.ext.utils import format_prompt, get_key
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.retry import Retry
 
 retry = Retry(
@@ -19,6 +20,7 @@ retry = Retry(
 KEY_NAME = 'ANTHROPIC_API_KEY'
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Anthropic(APIBaseModel):
     """Anthropic predictor.
@@ -36,6 +38,7 @@ class Anthropic(APIBaseModel):
         )
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class AnthropicCompletions(Anthropic):
     """Cohere completions (chat) predictor.

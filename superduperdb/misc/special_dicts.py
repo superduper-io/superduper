@@ -43,7 +43,12 @@ class IndexableDict(OrderedDict):
 
 
 class SuperDuperFlatEncode(t.Dict[str, t.Any]):
-    """Dictionary for representing flattened encoding data."""
+    """
+    Dictionary for representing flattened encoding data.
+
+    :param args: *args for `dict`
+    :param kwargs: **kwargs for `dict`
+    """
 
     @property
     def leaves(self):
@@ -124,24 +129,35 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
 
 
 class MongoStyleDict(t.Dict[str, t.Any]):
+    """Dictionary object mirroring how MongoDB handles fields.
+
+    :param args: *args for `dict`
+    :param kwargs: **kwargs for `dict`
     """
-    Dictionary object mirroring how fields can be referred to and set in MongoDB.
 
-    >>> d = MongoStyleDict({'a': {'b': 1}})
-    >>> d['a.b']
-    1
+    def items(self, deep: bool = False):
+        """Returns an iterator of key-value pairs.
 
-    t.Set deep fields directly with string keys:
-    >>> d['a.c'] = 2
-    >>> d
-    {'a': {'b': 1, 'c': 2}}
+        :param deep: `bool` whether to iterate over all nested key-value pairs.
+        """
+        for key, value in super().items():
+            if deep and isinstance(value, MongoStyleDict):
+                for sub_key, sub_value in value.items(deep=True):
+                    yield f'{key}.{sub_key}', sub_value
+            else:
+                yield key, value
 
-    Parent keys should exist in order to set subfields:
-    >>> d['a.d.e'] = 3
-    Traceback (most recent call last):
-    ...
-    KeyError: 'd'
-    """
+    def keys(self, deep: bool = False):
+        """Returns an iterator of keys.
+
+        :param deep: `bool` whether to iterate over all nested keys.
+        """
+        for key in super().keys():
+            if deep and isinstance(self[key], MongoStyleDict):
+                for sub_key in self[key].keys(deep=True):
+                    yield f'{key}.{sub_key}'
+            else:
+                yield key
 
     def __getitem__(self, key: str) -> t.Any:
         if key == '_base':
@@ -174,7 +190,12 @@ class MongoStyleDict(t.Dict[str, t.Any]):
 
 # TODO: Is this an unused class?
 class ArgumentDefaultDict(defaultdict):
-    """ArgumentDefaultDict."""
+    """
+    ArgumentDefaultDict.
+
+    :param args: *args for `defaultdict`
+    :param kwargs: **kwargs for `defaultdict`
+    """
 
     def __getitem__(self, item):
         if item not in self:

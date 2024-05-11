@@ -14,6 +14,9 @@ class ExpiryCache(list):
     """Expiry Cache for storing documents.
 
     The document will be removed from the cache after fetching it from the cache.
+
+    :param args: *args for `list`
+    :param kwargs: **kwargs for `list`
     """
 
     def __getitem__(self, index):

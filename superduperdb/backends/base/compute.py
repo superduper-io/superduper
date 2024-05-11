@@ -3,7 +3,12 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 class ComputeBackend(ABC):
-    """Abstraction for sending jobs to a distributed compute platform."""
+    """
+    Abstraction for sending jobs to a distributed compute platform.
+
+    :param args: *args for `ABC`
+    :param kwargs: *kwargs for `ABC`
+    """
 
     @abstractproperty
     def type(self) -> str:

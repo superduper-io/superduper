@@ -7,7 +7,7 @@ from superduperdb import CFG
 from superduperdb.backends.base.query import Query
 from superduperdb.base.document import _OUTPUTS_KEY
 from superduperdb.components.model import Mapping
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.server import request_server
 from superduperdb.rest.utils import parse_query
 
@@ -22,7 +22,7 @@ if t.TYPE_CHECKING:
 SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Listener(Component):
     """Listener component.
@@ -37,8 +37,6 @@ class Listener(Component):
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param identifier: A string used to identify the model.
     """
-
-    __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'identifier', 'type': 'str', 'default': ''},
@@ -191,6 +189,7 @@ class Listener(Component):
 
         :param db: Data layer instance to process.
         :param dependencies: A list of dependencies.
+        :param overwrite: Overwrite the existing data.
         """
         if not self.active:
             return []

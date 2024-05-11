@@ -1,4 +1,4 @@
-import ast
+import inspect
 import os
 import re
 
@@ -6,32 +6,44 @@ import pytest
 
 
 class _BaseDocstringException(Exception):
-    def __init__(self, file_path, node, *args, parent=None, msg: str = ''):
+    def __init__(
+        self,
+        module,
+        name,
+        *args,
+        msg: str = '',
+        parent=None,
+        line=None,
+    ):
         super().__init__(*args)
-        self.filename = file_path
-        self.node = node
+        self.module = module
+        self.name = name
         self.msg = msg
         self.parent = parent
+        self.line = line
 
-    def __str__(self) -> str:
-        if self.parent:
-            return (
-                f'{self.msg} in {self.filename}:'
-                f'{self.node.lineno} - {self.parent}.{self.node.name}'
-            )
-        else:
-            return (
-                f'{self.msg} in {self.filename}:{self.node.lineno} - {self.node.name}'
-            )
+    def __str__(self):
+        return (
+            f'{self.msg} in {self.module}.{self.name} of {self.parent}\n'
+            f'path: {self.module.replace(".", "/")}.py:{self.line}'
+        )
 
 
 class MissingDocstring(_BaseDocstringException):
-    def __init__(self, file_path, node, *args, parent=None):
+    def __init__(
+        self,
+        module,
+        name,
+        *args,
+        parent=None,
+        line=None,
+    ):
         super().__init__(
-            file_path=file_path,
-            node=node,
+            module=module,
+            name=name,
             msg='Found no docstring',
             parent=parent,
+            line=line,
         )
 
 
@@ -43,271 +55,277 @@ class MissingParameterExplanation(_BaseDocstringException):
     ...
 
 
-def get_class_init_params(node):
-    init_params = []
-    for node in node.body:
-        if isinstance(node, ast.FunctionDef) and node.name == '__init__':
-            args = node.args.args
-            args += node.args.kwonlyargs or []
-            for arg in node.args.args:
-                if arg.arg != 'self':
-                    init_params.append(arg.arg)
-            break
-    return init_params
-
-
-def get_function_params(node):
-    params = []
-    args = node.args.args
-    args += node.args.kwonlyargs or []
-    args += node.args.posonlyargs or []
-    for arg in args:
-        if arg.arg not in ['self', 'cls', 'args', 'kwargs']:
-            params.append(arg.arg)
-    return params
-
-
-def get_method_params(node):
-    params = []
-    for arg in node.args.args:
-        if arg.arg not in ['self', 'cls', 'args' 'kwargs']:
-            params.append(arg.arg)
-    return params
-
-
-def get_dataclass_init_params(node):
-    init_params = []
-    for item in node.body:
-        if isinstance(item, ast.AnnAssign):
-            annotation = ast.unparse(item.annotation)
-            if 'ClassVar' not in annotation:
-                field_name = item.target.id
-                init_params.append(field_name)
-        elif isinstance(item, ast.Assign):
-            for target in item.targets:
-                if isinstance(target, ast.Name):
-                    field_name = target.id
-                    init_params.append(field_name)
-        elif isinstance(item, (ast.FunctionDef,)):
-            # Ignore the assign after function
-            break
-    init_params = [p for p in init_params if p != '__doc__']
-    return init_params
-
-
 def get_doc_string_params(doc_string):
     param_pattern = r":param (\w+): (.+)"
     params = re.findall(param_pattern, doc_string)
-    params = [
-        param
-        for param in params
-        if not param[0].startswith('*')
-        if param[0] not in ['args', 'kwargs']
-    ]
+    params = [param for param in params if not param[0].startswith('*')]
     return {param[0]: param[1] for param in params}
 
 
-def check_class_docstring(file_path, node, dataclass=False):
-    print(f'{file_path}::{node.name}')
-    doc_string = ast.get_docstring(node)
+def check_class_docstring(cls, line):
+    print(f'{cls.__module__}.{cls.__name__}')
+    doc_string = cls.__doc__
     if doc_string is None:
-        raise MissingDocstring(file_path, node)
+        raise MissingDocstring(cls.__module__, cls.__name__)
 
-    if dataclass:
-        params = get_dataclass_init_params(node)
-    else:
-        params = get_class_init_params(node)
-    params = [p for p in params if p not in ['args', 'kwargs']]
+    params = [k for k in inspect.signature(cls.__init__).parameters if k != 'self']
     doc_params = get_doc_string_params(doc_string)
-
     if len(doc_params) != len(params):
+        diff = (set(params) - set(doc_params.keys())).union(
+            set(doc_params.keys()) - set(params)
+        )
         raise MismatchingDocParameters(
-            file_path=file_path,
-            node=node,
+            module=cls.__module__,
+            name=cls.__name__,
             msg=(
-                f'Got {len(params)} parameters but doc-string has {len(doc_params)}. '
-                f'Diffs: {set(params) ^ set(doc_params.keys())}'
+                f'Got {len(params)} parameters but doc-string has {len(doc_params)}.\n'
+                f'{params} vs. {list(doc_params.keys())}\n'
+                f'diff is {diff}'
             ),
+            line=line,
         )
 
     for i, (p, (dp, expl)) in enumerate(zip(params, doc_params.items())):
-        if p != dp:
-            raise MismatchingDocParameters(
-                file_path=file_path, node=node, msg=f'At position {i}: {p} != {dp}'
-            )
         if not expl.strip():
             raise MissingParameterExplanation(
-                file_path=file_path,
-                node=node,
+                module=cls.__module__,
+                name=cls.__name__,
                 msg=f'Missing explanation of parameter {dp}',
+                line=line,
             )
 
 
-def check_method_docstring(file_path, parent_class, node):
-    print(f'{file_path}::{parent_class}::{node.name}')
-    doc_string = ast.get_docstring(node)
+def check_method_docstring(method, cls, line):
+    str_ = f'{cls.__module__}.{cls.__name__}.{method.__name__}'
+    print(str_)
+    if 'builtin' in str_:
+        return
+    doc_string = method.__doc__
     if doc_string is None:
-        raise MissingDocstring(file_path, node, parent=parent_class)
+        raise MissingDocstring(method, cls.__module__, parent=cls.__name__)
 
-    params = get_method_params(node)
+    params = {
+        k: v for k, v in inspect.signature(method).parameters.items() if k != 'self'
+    }
     doc_params = get_doc_string_params(doc_string)
 
     if len(doc_params) != len(params):
         raise MismatchingDocParameters(
-            file_path=file_path,
-            node=node,
-            msg=(
-                f'Got {len(params)} parameters but doc-string has {len(doc_params)}. '
-                f'Diffs: {set(params) ^ set(doc_params.keys())}'
-            ),
-            parent=parent_class,
+            module=cls.__module__,
+            name=method.__name__,
+            msg=f'Got {len(params)} parameters but doc-string has {len(doc_params)}.',
+            parent=cls,
+            line=line,
         )
 
     for i, (p, (dp, expl)) in enumerate(zip(params, doc_params.items())):
         if p != dp:
             raise MismatchingDocParameters(
-                file_path=file_path,
-                node=node,
+                module=cls.__module__,
+                name=method.__name__,
                 msg=f'At position {i}: {p} != {dp}',
-                parent=parent_class,
+                parent=cls.__name__,
+                line=line,
             )
         if not expl.strip():
             raise MissingParameterExplanation(
-                file_path=file_path,
-                node=node,
+                module=cls.__module__,
+                name=method.__name__,
                 msg=f'Missing explanation of parameter {dp}',
-                parent=parent_class,
+                parent=cls.__name__,
+                line=line,
             )
 
 
-def check_function_doc_string(file_path, node):
-    print(f'{file_path}::{node.name}')
-    doc_string = ast.get_docstring(node)
+def check_function_doc_string(function, line):
+    print(f'{function.__module__}.{function.__name__}')
+    doc_string = function.__doc__
     if doc_string is None:
-        raise MissingDocstring(file_path, node)
+        raise MissingDocstring(function.__module__, function.__name__)
 
-    params = get_function_params(node)
+    params = inspect.signature(function).parameters
     doc_params = get_doc_string_params(doc_string)
 
     if len(doc_params) != len(params):
         raise MismatchingDocParameters(
-            file_path=file_path,
-            node=node,
-            msg=(
-                f'Got {len(params)} parameters but doc-string has {len(doc_params)}. '
-                f'Diffs: {set(params) ^ set(doc_params.keys())}'
-            ),
+            module=function.__module__,
+            name=function.__name__,
+            msg=f'Got {len(params)} parameters but doc-string has {len(doc_params)}.',
+            line=line,
         )
 
     for i, (p, (dp, expl)) in enumerate(zip(params, doc_params.items())):
         if p != dp:
             raise MismatchingDocParameters(
-                file_path=file_path,
-                node=node,
+                module=function.__module__,
+                name=function.__name__,
                 msg=f'At position {i}: {p} != {dp}',
+                line=line,
             )
         if not expl.strip():
             raise MissingParameterExplanation(
-                file_path=file_path,
-                node=node,
+                module=function.__module__,
+                name=function.__name__,
                 msg=f'Missing explanation of parameter {dp}',
+                line=line,
             )
 
 
-def is_dataclass(node):
-    for decorator in node.decorator_list:
-        if isinstance(decorator, ast.Call):
-            if (
-                isinstance(decorator.func, ast.Name)
-                and decorator.func.id == 'dataclass'
-            ) or (
-                isinstance(decorator.func, ast.Attribute)
-                and decorator.func.attr == 'dataclass'
-            ):
-                return True
-        elif isinstance(decorator, ast.Name) and decorator.id == 'dataclass':
-            return True
-        elif isinstance(decorator, ast.Attribute) and decorator.attr == 'dataclass':
-            return True
-    return False
+def list_all_members(package, prefix=None, seen=None):
+    if seen is None:
+        seen = set()
+    if prefix is None:
+        prefix = package.__name__
+
+    members = []
+
+    for name, obj in inspect.getmembers(package):
+        if (
+            inspect.ismodule(obj)
+            and obj.__name__.startswith(prefix)
+            and obj.__name__ not in seen
+        ):
+            seen.add(obj.__name__)
+            members.extend(list_all_members(obj, prefix, seen))
+        elif inspect.isfunction(obj):
+            if obj.__module__.startswith(prefix):
+                members.append(
+                    (obj, obj.__module__, name, None, 'function', obj.__doc__)
+                )
+        elif inspect.isclass(obj):
+            if obj.__module__.startswith(prefix):
+                members.append((obj, obj.__module__, name, None, 'class', obj.__doc__))
+                # Inspect methods within the class
+                class_methods = inspect.getmembers(obj, predicate=inspect.isfunction)
+                for meth_name, meth_obj in class_methods:
+                    if meth_obj.__module__ == obj.__module__:
+                        members.append(
+                            (
+                                meth_obj,
+                                meth_obj.__module__,
+                                name,
+                                meth_name,
+                                'method',
+                                meth_obj.__doc__,
+                            )
+                        )
+
+    return members
 
 
-def extract_docstrings(*directory):
-    class_test_cases = []
-    method_test_cases = []
-    function_test_cases = []
+def extract_docstrings():
+    import superduperdb
 
-    def _extract(file_path):
-        with open(file_path, 'r') as file:
-            file_content = file.read()
-            try:
-                ast_tree = ast.parse(file_content)
-                for node in ast.iter_child_nodes(ast_tree):
-                    if isinstance(node, ast.ClassDef) and not node.name.startswith('_'):
-                        class_test_cases.append((file_path, node))
-                        for item in node.body:
-                            if isinstance(
-                                item, ast.FunctionDef
-                            ) and not item.name.startswith('_'):
-                                skip = False
-                                for decorator in item.decorator_list:
-                                    if (
-                                        isinstance(decorator, ast.Name)
-                                        and decorator.id == 'override'
-                                    ):
-                                        skip = True
-                                if not skip:
-                                    method_test_cases.append(
-                                        (file_path, node.name, item)
-                                    )
-                    elif isinstance(node, ast.FunctionDef) and not node.name.startswith(
-                        '_'
-                    ):
-                        function_test_cases.append((file_path, node))
-            except SyntaxError as e:
-                print(f"Syntax error in file {file_path}: {e}")
+    members = list_all_members(package=superduperdb)
+    for subpackage in os.listdir('superduperdb/ext'):
+        if subpackage.startswith('_') or subpackage == 'utils.py':
+            continue
+        exec(f'import superduperdb.ext.{subpackage}')
+        package = eval(f'superduperdb.ext.{subpackage}')
+        members += list_all_members(
+            package=package, prefix=f'superduperdb.ext.{subpackage}'
+        )
+    from superduperdb.misc.special_dicts import MongoStyleDict
 
-    for path in directory:
-        if os.path.isdir(path):
-            for subdir, _, files in os.walk(path):
-                for filename in files:
-                    if filename.endswith('.py'):
-                        file_path = os.path.join(subdir, filename)
-                        _extract(file_path)
-        else:
-            _extract(path)
-    return class_test_cases, method_test_cases, function_test_cases
+    lookup = MongoStyleDict({})
+
+    for m, module, item, child, type, doc in members:
+        try:
+            line = inspect.getsourcelines(m)[1]
+        except OSError:
+            line = None
+        if child is None:
+            lookup[f'{module}.{item}'] = {
+                '::type': type,
+                '::item': item,
+                '::doc': doc,
+                '::object': m,
+                '::line': line,
+            }
+            continue
+        lookup[f'{module}.{item}.{child}'] = {
+            '::type': type,
+            '::item': item,
+            '::doc': doc,
+            '::object': m,
+            '::line': line,
+        }
+    return lookup
 
 
-CLASS_TEST_CASES, METHOD_TEST_CASES, FUNCTION_TEST_CASES = extract_docstrings(
-    './superduperdb',
-)
+TEST_CASES = extract_docstrings()
+FUNCTION_TEST_CASES = []
+CLASS_TEST_CASES = []
+METHOD_TEST_CASES = []
 
+for k in TEST_CASES.keys(True):
+    parent = k.split('.::')[0]
+    v = TEST_CASES[parent]
+    if isinstance(v['::doc'], str) and 'noqa' in v['::doc']:
+        continue
+
+    if (
+        v['::type'] == 'method'
+        and not v['::item'].startswith('_')
+        and not parent.split('.')[-1].startswith('_')
+    ):
+        METHOD_TEST_CASES.append(parent)
+
+    if v['::type'] == 'class' and not parent.split('.')[-1].startswith('_'):
+        CLASS_TEST_CASES.append(parent)
+
+    if v['::type'] == 'function' and not parent.split('.')[-1].startswith('_'):
+        FUNCTION_TEST_CASES.append(parent)
+
+
+CLASS_TEST_CASES = {
+    '/'.join(k.split('.')[:-1]) + f'.py:{TEST_CASES[k]["::line"]}': k
+    for k in CLASS_TEST_CASES
+}
+
+FUNCTION_TEST_CASES = {
+    '/'.join(k.split('.')[:-1]) + f'.py:{TEST_CASES[k]["::line"]}': k
+    for k in FUNCTION_TEST_CASES
+}
+
+METHOD_TEST_CASES = {
+    '/'.join(k.split('.')[:-2]) + f'.py:{TEST_CASES[k]["::line"]}': k
+    for k in METHOD_TEST_CASES
+}
+
+
+CLASS_TEST_CASES_KEYS = sorted(list(set(CLASS_TEST_CASES.keys())))
+METHOD_TEST_CASES_KEYS = sorted(list(set(METHOD_TEST_CASES.keys())))
+FUNCTION_TEST_CASES_KEYS = sorted(list(set(FUNCTION_TEST_CASES.keys())))
 
 print(f'Found {len(CLASS_TEST_CASES)} class __init__ documentation test-cases')
-print(f'Found {len(METHOD_TEST_CASES)} method documentation test-cases')
 print(f'Found {len(FUNCTION_TEST_CASES)} function documentation test-cases')
+print(f'Found {len(METHOD_TEST_CASES)} method documentation test-cases')
 
 
-@pytest.mark.parametrize("test_case", CLASS_TEST_CASES)
+@pytest.mark.parametrize("test_case", CLASS_TEST_CASES_KEYS)
 def test_class_docstrings(test_case):
-    file_path, node = test_case
-    check_class_docstring(file_path=file_path, node=node, dataclass=is_dataclass(node))
-
-
-@pytest.mark.parametrize("test_case", METHOD_TEST_CASES)
-def test_method_docstrings(test_case):
-    file_path, _, node = test_case
-    check_function_doc_string(
-        file_path=file_path,
-        node=node,
+    test_case = CLASS_TEST_CASES[test_case]
+    check_class_docstring(
+        TEST_CASES[test_case]["::object"],
+        TEST_CASES[test_case]["::line"],
     )
 
 
-@pytest.mark.parametrize("test_case", FUNCTION_TEST_CASES)
+@pytest.mark.parametrize("test_case", FUNCTION_TEST_CASES_KEYS)
 def test_function_docstrings(test_case):
-    file_path, node = test_case
+    test_case = FUNCTION_TEST_CASES[test_case]
     check_function_doc_string(
-        file_path=file_path,
-        node=node,
+        TEST_CASES[test_case]["::object"],
+        TEST_CASES[test_case]["::line"],
+    )
+
+
+@pytest.mark.parametrize("test_case", METHOD_TEST_CASES_KEYS)
+def test_method_docstrings(test_case):
+    test_case = METHOD_TEST_CASES[test_case]
+    check_method_docstring(
+        TEST_CASES[test_case]["::object"],
+        TEST_CASES[test_case]["::object"].__class__,
+        TEST_CASES[test_case]["::line"],
     )

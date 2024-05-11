@@ -8,8 +8,10 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import APIBaseModel
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.jina.client import JinaAPIClient
+from superduperdb.misc.annotations import merge_docstrings
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Jina(APIBaseModel):
     """Cohere predictor.
@@ -25,6 +27,7 @@ class Jina(APIBaseModel):
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class JinaEmbedding(Jina):
     """Jina embedding predictor.
@@ -35,9 +38,8 @@ class JinaEmbedding(Jina):
     """
 
     batch_size: int = 100
-    signature: t.ClassVar[str] = 'singleton'
-
     shape: t.Optional[t.Sequence[int]] = None
+    signature: str = 'singleton'
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)

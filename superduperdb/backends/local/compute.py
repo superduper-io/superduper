@@ -30,7 +30,9 @@ class LocalComputeBackend(ComputeBackend):
         Submits a function for local execution.
 
         :param function: The function to be executed.
+        :param args: Positional arguments to be passed to the function.
         :param compute_kwargs: Do not use this parameter.
+        :param kwargs: Keyword arguments to be passed to the function.
         """
         logging.info(f"Submitting job. function:{function}")
         future = function(*args, **kwargs)

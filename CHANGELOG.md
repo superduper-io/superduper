@@ -19,8 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - At the end of the test, drop the collection instead of the database
 - Force load vector indices during backfill
 - Fix pandas database (in-memory)
-- Add docstrings in component classes and methods.
-
+- Add and update docstrings in component classes and methods.
 
 #### New Features & Functionality
 - Add nightly image for pre-release testing in the cloud environment

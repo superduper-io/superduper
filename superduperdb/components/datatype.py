@@ -20,7 +20,7 @@ from superduperdb.backends.base.artifacts import (
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.misc.annotations import component, public_api
+from superduperdb.misc.annotations import component, merge_docstrings
 from superduperdb.misc.hash import random_sha1
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -32,15 +32,8 @@ if t.TYPE_CHECKING:
     from superduperdb.components.schema import Schema
 
 
-class Empty:
-    """Empty class for representing an empty object."""
-
-    def __repr__(self):
-        return '<EMPTY>'
-
-
-class IntermidiaType:
-    """Intermidia data type."""
+class IntermediateType:
+    """Intermediate data type # noqa."""
 
     BYTES = 'bytes'
     STRING = 'string'
@@ -163,7 +156,7 @@ def base64_to_bytes(encoded):
 
 
 class DataTypeFactory:
-    """Abstract class for creating a DataType."""
+    """Abstract class for creating a DataType # noqa."""
 
     @abstractstaticmethod
     def check(data: t.Any) -> bool:
@@ -184,12 +177,10 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class DataType(Component):
     """A data type component that defines how data is encoded and decoded.
-
-    {component_parameters}
 
     :param encoder: A callable that converts an encodable object of this
                     encoder to bytes.
@@ -205,8 +196,6 @@ class DataType(Component):
            [IntermidiaType.BYTES, IntermidiaType.STRING]
     :param media_type: The media type.
     """
-
-    __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {
@@ -241,7 +230,7 @@ class DataType(Component):
     directory: t.Optional[str] = None
     encodable: str = 'encodable'
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
-    intermidia_type: t.Optional[str] = IntermidiaType.BYTES
+    intermidia_type: t.Optional[str] = IntermediateType.BYTES
     media_type: t.Optional[str] = None
     registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
 
@@ -309,7 +298,7 @@ class DataType(Component):
         """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
-            and self.intermidia_type == IntermidiaType.BYTES
+            and self.intermidia_type == IntermediateType.BYTES
         ):
             return bytes_to_base64(data)
         return data
@@ -323,7 +312,7 @@ class DataType(Component):
         """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
-            and self.intermidia_type == IntermidiaType.BYTES
+            and self.intermidia_type == IntermediateType.BYTES
         ):
             return base64_to_bytes(data)
         return data
@@ -400,6 +389,7 @@ def _find_descendants(cls):
     return descendants
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
     """Data variable wrapping encode-able item.
@@ -407,9 +397,11 @@ class _BaseEncodable(Leaf):
     Encoding is controlled by the referred
     to ``Encoder`` instance.
 
-    :param encoder: Instance of ``Encoder`` controlling encoding.
-    :param x: Wrapped content.
+    :param file_id: unique-id of the content
+    :param datatype: The datatype of the content.
     :param uri: URI of the content, if any.
+    :param sha1: SHA1 hash of the content.
+    :param x: Wrapped content.
     """
 
     identifier: str = ''
@@ -442,11 +434,7 @@ class _BaseEncodable(Leaf):
         return self.datatype.reference
 
     def unpack(self):
-        """
-        Unpack the content of the `Encodable`.
-
-        :param db: Datalayer instance.
-        """
+        """Unpack the content of the `Encodable`."""
         return self.x
 
     @classmethod
@@ -487,6 +475,15 @@ class _BaseEncodable(Leaf):
         return hashlib.sha1(bytes_).hexdigest()
 
 
+class Empty:
+    """Sentinel class # noqa."""
+
+    def __repr__(self):
+        """Get the string representation of the Empty object."""
+        return '<EMPTY>'
+
+
+@merge_docstrings
 @dc.dataclass
 class Encodable(_BaseEncodable):
     """Class for encoding non-Python datatypes to the database.
@@ -600,6 +597,7 @@ class Encodable(_BaseEncodable):
         return datatype
 
 
+@merge_docstrings
 @dc.dataclass
 class Native(_BaseEncodable):
     """Class for representing native data supported by the underlying database.
@@ -629,11 +627,16 @@ class Native(_BaseEncodable):
 # TODO: Remove the unused class
 class _ArtifactSaveMixin:
     def save(self, artifact_store):
+        """Save in the artifact store.
+
+        :param artifact_store: Artifact store instance.
+        """
         r = artifact_store.save_artifact(self.encode()['_content'])
         self.x = None
         self.file_id = r['file_id']
 
 
+@merge_docstrings
 @dc.dataclass
 class Artifact(_BaseEncodable, _ArtifactSaveMixin):
     """Class for representing data to be saved on disk or in the artifact-store.
@@ -687,14 +690,16 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return self.x
 
 
+@merge_docstrings
 @dc.dataclass
 class LazyArtifact(Artifact):
-    """Data to be saved on disk or in the artifact store and loaded only when needed."""
+    """Data to be saved and loaded only when needed."""
 
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
     lazy: t.ClassVar[bool] = True
 
 
+@merge_docstrings
 @dc.dataclass
 class File(_BaseEncodable, _ArtifactSaveMixin):
     """Data to be saved on disk and passed as a file reference.
@@ -753,6 +758,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
         return r['x']
 
 
+@merge_docstrings
 class LazyFile(File):
     """Class is used to load a file only when needed."""
 
@@ -778,7 +784,7 @@ json_serializer = DataType(
     decoder=json_decode,
     encodable='encodable',
     bytes_encoding=BytesEncoding.BASE64,
-    intermidia_type=IntermidiaType.STRING,
+    intermidia_type=IntermediateType.STRING,
 )
 
 methods: t.Dict[str, t.Dict] = {

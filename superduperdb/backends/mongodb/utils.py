@@ -13,6 +13,7 @@ def get_avaliable_conn(uri: str, **kwargs):
     2. Try to connect to the database with the base URI without database name.
 
     :param uri: The URI of the database.
+    :param kwargs: Additional keyword arguments for the MongoClient.
     """
     base_uri, db_name = uri.rsplit("/", 1)
     kwargs.setdefault("serverSelectionTimeoutMS", 5000)

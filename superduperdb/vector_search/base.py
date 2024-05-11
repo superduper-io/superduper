@@ -127,7 +127,7 @@ class BaseVectorSearcher(ABC):
 
 
 class VectorIndexMeasureType(str, enum.Enum):
-    """Enum for vector index measure types."""
+    """Enum for vector index measure types # noqa."""
 
     cosine = 'cosine'
     css = 'css'

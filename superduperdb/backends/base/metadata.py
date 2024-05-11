@@ -7,9 +7,11 @@ if t.TYPE_CHECKING:
 
 
 class NonExistentMetadataError(Exception):
-    """NonExistentMetadataError."""
+    """NonExistentMetadataError.
 
-    ...
+    :param args: *args for `Exception`
+    :param kwargs: **kwargs for `Exception`
+    """
 
 
 class MetaDataStore(ABC):

@@ -13,6 +13,7 @@ def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
     using duck typing to recognize it.
 
     :param item: A database or model
+    :param kwargs: Additional keyword arguments to pass to the component
     """
     if item is None:
         item = CFG.data_backend
@@ -53,6 +54,12 @@ class _DuckTyper:
 
     @staticmethod
     def run(item: t.Any, **kwargs) -> t.Any:
+        """
+        Run the DuckTyper on an item.
+
+        :param item: The item to run the DuckTyper on.
+        :param kwargs: Additional keyword arguments to pass to the Duck
+        """
         dts = [dt for dt in _DuckTyper._DUCK_TYPES if dt.accept(item)]
         if not dts:
             raise ValueError(
@@ -96,7 +103,7 @@ class MongoDbTyper(_DuckTyper):
     """A DuckTyper for MongoDB databases.
 
     This DuckTyper is used to automatically wrap a MongoDB database in a
-    Datalayer.
+    Datalayer.   # noqa
     """
 
     attrs = ('list_collection_names',)
@@ -139,7 +146,7 @@ class MongoDbTyper(_DuckTyper):
 
 
 class SklearnTyper(_DuckTyper):
-    """A DuckTyper for scikit-learn estimators.
+    """A DuckTyper for scikit-learn estimators # noqa.
 
     This DuckTyper is used to automatically wrap a scikit-learn estimator in
     an Estimator.
@@ -169,7 +176,7 @@ class TorchTyper(_DuckTyper):
     """A DuckTyper for torch.nn.Module and torch.jit.ScriptModule.
 
     This DuckTyper is used to automatically wrap a torch.nn.Module or
-    torch.jit.ScriptModule in a TorchModel.
+    torch.jit.ScriptModule in a TorchModel. # noqa
     """
 
     attrs = 'forward', 'parameters', 'state_dict', '_load_from_state_dict'

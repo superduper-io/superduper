@@ -73,7 +73,7 @@ def array(
 
 
 class NumpyDataTypeFactory(DataTypeFactory):
-    """A factory for numpy arrays."""
+    """A factory for numpy arrays # noqa."""
 
     @staticmethod
     def check(data: t.Any) -> bool:

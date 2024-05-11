@@ -287,6 +287,8 @@ class Datalayer:
 
         :param query: The SQL query to execute, such as select, insert,
                       delete, or update.
+        :param args: Positional arguments to pass to the execute call.
+        :param kwargs: Keyword arguments to pass to the execute call.
         """
         if query.type == 'delete':
             return self._delete(query, *args, **kwargs)

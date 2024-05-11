@@ -21,6 +21,7 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIBaseModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -41,17 +42,19 @@ def _available_models(skwargs):
     return tuple([r.id for r in SyncOpenAI(**kwargs).models.list().data])
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class _OpenAI(APIBaseModel):
     """Base class for OpenAI models.
 
+    :param openai_api_key: The OpenAI API key.
+    :param openai_api_base: The server to use for requests.
     :param client_kwargs: The kwargs to be passed to OpenAI
     """
 
     openai_api_key: t.Optional[str] = None
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
-    __doc__ = APIBaseModel.__doc__  # type: ignore[assignment]
 
     @classmethod
     def handle_integration(cls, kwargs):
@@ -87,6 +90,10 @@ class _OpenAI(APIBaseModel):
             )
 
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+        """Predict on a dataset.
+
+        :param dataset: The dataset to predict on.
+        """
         out = []
         for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
             batch = [
@@ -96,20 +103,19 @@ class _OpenAI(APIBaseModel):
         return out
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIEmbedding(_OpenAI):
     """OpenAI embedding predictor.
 
-    {_openai_parameters}
     :param shape: The shape as ``tuple`` of the embedding.
     :param batch_size: The batch size to use.
     """
 
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
+    shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
 
     shape: t.Optional[t.Sequence[int]] = None
-    shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
-    signature: t.ClassVar[str] = 'singleton'
+    signature: str = 'singleton'
     batch_size: int = 100
 
     @property
@@ -156,18 +162,16 @@ class OpenAIEmbedding(_OpenAI):
         return [r.embedding for r in out.data]
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIChatCompletion(_OpenAI):
     """OpenAI chat completion predictor.
 
-    {_openai_parameters}
     :param batch_size: The batch size to use.
     :param prompt: The prompt to use to seed the response.
     """
 
-    signature: t.ClassVar[str] = 'singleton'
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
-
+    signature: str = 'singleton'
     batch_size: int = 1
     prompt: str = ''
 
@@ -197,6 +201,7 @@ class OpenAIChatCompletion(_OpenAI):
 
         :param X: The prompt.
         :param context: The context to use for the prompt.
+        :param kwargs: Additional keyword arguments.
         """
         if context is not None:
             X = self._format_prompt(context, X)
@@ -224,21 +229,18 @@ class OpenAIChatCompletion(_OpenAI):
         return out
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIImageCreation(_OpenAI):
     """OpenAI image creation predictor.
 
-    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
     :param n: The number of images to generate.
     :param response_format: The response format to use.
     """
 
-    signature: t.ClassVar[str] = 'singleton'
-
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
-
+    signature: str = 'singleton'
     takes_context: bool = True
     prompt: str = ''
     n: int = 1
@@ -300,18 +302,16 @@ class OpenAIImageCreation(_OpenAI):
         return out
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIImageEdit(_OpenAI):
     """OpenAI image edit predictor.
 
-    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
     :param response_format: The response format to use.
     :param n: The number of images to generate.
     """
-
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__)
 
     takes_context: bool = True
     prompt: str = ''
@@ -395,16 +395,16 @@ class OpenAIImageEdit(_OpenAI):
         return out
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIAudioTranscription(_OpenAI):
     """OpenAI audio transcription predictor.
 
-    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
-    """
+    :param prompt: The prompt to guide the model's style.
 
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__, context='{context}')
+    The prompt should contain the `"context"` format variable.
+    """
 
     takes_context: bool = True
     prompt: str = ''
@@ -449,19 +449,19 @@ class OpenAIAudioTranscription(_OpenAI):
         return [resp.text for resp in resps]
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class OpenAIAudioTranslation(_OpenAI):
     """OpenAI audio translation predictor.
 
-    {_openai_parameters}
     :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
+    :param prompt: The prompt to guide the model's style.
     :param batch_size: The batch size to use.
+
+    The prompt should contain the `"context"` format variable.
     """
 
-    signature: t.ClassVar[str] = 'singleton'
-
-    __doc__ = __doc__.format(_openai_parameters=_OpenAI.__doc__, context='{context}')
+    signature: str = 'singleton'
 
     takes_context: bool = True
     prompt: str = ''

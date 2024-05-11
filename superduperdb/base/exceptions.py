@@ -2,13 +2,23 @@ from superduperdb import logging
 
 
 class ComponentInUseError(Exception):
-    """Exception raised when a component is already in use."""
+    """
+    Exception raised when a component is already in use.
+
+    :param args: *args for Exception
+    :param kwargs: **kwargs for Exception
+    """
 
     pass
 
 
 class ComponentInUseWarning(Warning):
-    """Warning raised when a component is already in use."""
+    """
+    Warning raised when a component is already in use.
+
+    :param args: *args for Exception
+    :param kwargs: **kwargs for Exception
+    """
 
     pass
 
@@ -16,7 +26,7 @@ class ComponentInUseWarning(Warning):
 class BaseException(Exception):
     """BaseException which logs a message after exception.
 
-    :param msg: The message to log.
+    :param msg: msg for Exception
     """
 
     def __init__(self, msg):
@@ -28,28 +38,56 @@ class BaseException(Exception):
 
 
 class RequiredPackageVersionsNotFound(ImportError):
-    """Exception raised when one or more required packages are not found."""
+    """
+    Exception raised when one or more required packages are not found.
+
+    :param args: *args for ImportError
+    :param kwargs: **kwargs for ImportError
+    """
 
 
 class RequiredPackageVersionsWarning(ImportWarning):
-    """Exception raised when one or more required packages are not found."""
+    """
+    Exception raised when one or more required packages are not found.
+
+    :param args: *args for ImportWarning
+    :param kwargs: **kwargs for ImportWarning
+    """
 
 
 class ServiceRequestException(BaseException):
-    """ServiceRequestException."""
+    """ServiceRequestException.
+
+    :param msg: msg for BaseException
+    """
 
 
 class QueryException(BaseException):
-    """QueryException."""
+    """QueryException.
+
+    :param msg: msg for BaseException
+    """
 
 
 class DatabackendException(BaseException):
-    """DatabackendException."""
+    """
+    DatabackendException.
+
+    :param msg: msg for BaseException
+    """
 
 
 class MetadataException(BaseException):
-    """MetadataException."""
+    """
+    MetadataException.
+
+    :param msg: msg for BaseException
+    """
 
 
 class ComponentException(BaseException):
-    """ComponentException."""
+    """
+    ComponentException.
+
+    :param msg: msg for BaseException
+    """

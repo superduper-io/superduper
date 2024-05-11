@@ -5,7 +5,7 @@ import requests
 
 from superduperdb import logging
 from superduperdb.ext.llm.model import BaseLLM, BaseLLMAPI
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import merge_docstrings
 
 __all__ = ["VllmAPI", "VllmModel"]
 
@@ -35,16 +35,13 @@ VLLM_INFERENCE_PARAMETERS_LIST = [
 ]
 
 
-@public_api(stability='beta')
+@merge_docstrings
 @dc.dataclass
 class VllmAPI(BaseLLMAPI):
     """Wrapper for requesting the vLLM API service.
 
-    (API Server format, started by vllm.entrypoints.api_server)
-    {parent_doc}
+    API Server format, started by `vllm.entrypoints.api_server`.
     """
-
-    __doc__ = __doc__.format(parent_doc=BaseLLMAPI.__doc__)
 
     def _generate(self, prompt: str, **kwargs) -> t.Union[str, t.List[str]]:
         """Batch generate text from a prompt."""
@@ -96,7 +93,7 @@ class _VllmCore:
         return texts_outputs
 
 
-@public_api(stability='beta')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class VllmModel(BaseLLM):
     """
@@ -109,10 +106,7 @@ class VllmModel(BaseLLM):
     :param on_ray: Whether to use Ray for parallelism.
     :param ray_address: The address of the Ray cluster.
     :param ray_config: The configuration for Ray.
-    {parent_doc}
     """
-
-    __doc__ = __doc__.format(parent_doc=BaseLLM.__doc__)
 
     model_name: str = dc.field(default="")
     tensor_parallel_size: int = 1

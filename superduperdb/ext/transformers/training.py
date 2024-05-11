@@ -5,6 +5,13 @@ import typing as t
 from copy import deepcopy
 from functools import wraps
 
+from superduperdb.misc.annotations import merge_docstrings, requires_packages
+
+_, requirements = requires_packages(
+    ['peft', '0.10.0', None],
+    ['trl', '0.8.0', None],
+)
+
 import torch
 import transformers
 from datasets import Dataset as NativeDataset
@@ -32,6 +39,7 @@ if t.TYPE_CHECKING:
     from superduperdb.ext.transformers.model import LLM
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Checkpoint(Component):
     """Checkpoint component for saving the model checkpoint.
@@ -195,13 +203,13 @@ class LLMCallback(TrainerCallback):
         assert self.llm is not None
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class LLMTrainer(TrainingArguments, SuperDuperTrainer):
-    """LLM Training Arguments.
+    """LLM Training Arguments # noqa.
 
     Inherits from :class:`transformers.TrainingArguments`.
 
-    {training_arguments_doc}
     :param output_dir: The output directory to use.
     :param use_lora: Whether to use LoRA training.
     :param lora_r: Lora R dimension.
@@ -217,8 +225,6 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     :param num_gpus: The number of GPUs to use, if None, will use all GPUs.
     :param ray_configs: The ray configs to use.
     """
-
-    __doc__ = __doc__.format(training_arguments_doc=TrainingArguments.__doc__)
 
     output_dir: str = ''
     use_lora: bool = True
@@ -410,8 +416,7 @@ def train(
     :param db: datalayer, used for creating LLMCallback
     :param llm: llm model, used for creating LLMCallback
     :param ray_configs: ray configs, must provide if using ray
-    :param **kwargs: other kwargs for Trainer
-
+    :param kwargs: other kwargs for Trainer
     """
     on_ray = bool(ray_configs)
 
@@ -532,7 +537,7 @@ def train_func(
         This function will be called after the trainer is created,
         we can add some custom settings to the trainer
     :param callbacks: list of callbacks will be added to the trainer
-    :param **kwargs: other kwargs for Trainer
+    :param kwargs: other kwargs for Trainer
         All the kwargs will be passed to Trainer,
         make sure the Trainer support these kwargs
     """

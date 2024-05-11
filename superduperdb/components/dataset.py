@@ -17,15 +17,13 @@ from superduperdb.components.datatype import (
     pickle_decode,
     pickle_encode,
 )
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import merge_docstrings
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Dataset(Component):
     """A dataset is an immutable collection of documents.
-
-    {component_params}
 
     :param select: A query to select the documents for the dataset.
     :param sample_size: The number of documents to sample from the query.
@@ -33,8 +31,6 @@ class Dataset(Component):
     :param creation_date: The date the dataset was created.
     :param raw_data: The raw data for the dataset.
     """
-
-    __doc__ = __doc__.format(component_params=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'dataset'
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (

@@ -19,7 +19,12 @@ ROOT = Path(__file__).parents[2]
 
 
 class ConfigError(Exception):
-    """An exception raised when there is an error in the configuration."""
+    """
+    An exception raised when there is an error in the configuration.
+
+    :param args: *args for `Exception`
+    :param kwargs: **kwargs for `Exception`
+    """
 
 
 @dataclass(frozen=True)

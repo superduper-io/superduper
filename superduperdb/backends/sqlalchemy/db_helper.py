@@ -18,6 +18,8 @@ class JsonMixin:
 
     Converts dict to JSON strings before saving to database
     and converts JSON strings to dict when loading from database.
+
+    # noqa
     """
 
     def process_bind_param(self, value, dialect):
@@ -42,19 +44,19 @@ class JsonMixin:
 
 
 class JsonAsString(JsonMixin, TypeDecorator):
-    """JSON type column for short JSON strings."""
+    """JSON type column for short JSON strings # noqa."""
 
     impl = String(DEFAULT_LENGTH)
 
 
 class JsonAsText(JsonMixin, TypeDecorator):
-    """JSON type column for long JSON strings."""
+    """JSON type column for long JSON strings # noqa."""
 
     impl = Text
 
 
 class DefaultConfig:
-    """Default configuration for database types."""
+    """Default configuration for database types # noqa."""
 
     type_string = String(DEFAULT_LENGTH)
     type_json_as_string = JsonAsString

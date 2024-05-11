@@ -12,6 +12,8 @@ class Event(threading.Event):
 
     Note that the callback might happen on some completely different thread,
     so these functions cannot block
+
+    :param on_set: Callbacks to call when the event is set
     """
 
     on_set: t.List[Callback]

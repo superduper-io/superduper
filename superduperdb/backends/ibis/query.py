@@ -15,6 +15,7 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.components.schema import Schema
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -108,6 +109,7 @@ def _model_update_impl(
     db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True, repr=False)
 class IbisQuery(Query):
     """A query that can be executed on an Ibis database."""
@@ -338,6 +340,7 @@ class IbisQuery(Query):
         :param predict_id: The predict id.
         :param outputs: The outputs.
         :param flatten: Whether to flatten the outputs.
+        :param kwargs: Additional keyword arguments.
         """
         if not flatten:
             return _model_update_impl(
@@ -381,7 +384,10 @@ class IbisQuery(Query):
 
     @applies_to('select')
     def outputs(self, *predict_ids):
-        """Return a query that selects outputs."""
+        """Return a query that selects outputs.
+
+        :param predict_ids: The predict ids.
+        """
         find_args = ()
         if self.parts:
             find_args, _ = self.parts[0][1:]

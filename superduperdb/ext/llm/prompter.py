@@ -4,6 +4,7 @@ import typing as t
 
 from superduperdb.components.model import QueryModel
 from superduperdb.ext.utils import format_prompt
+from superduperdb.misc.annotations import merge_docstrings
 
 
 @dc.dataclass
@@ -51,6 +52,7 @@ PROMPT_INTRODUCTION = (
 )
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class RetrievalPrompt(QueryModel):
     """Retrieve a prompt based on data recalled from the database.

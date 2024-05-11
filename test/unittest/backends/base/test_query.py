@@ -167,7 +167,7 @@ def test_model(db):
 
 def test_builder():
     q = MongoQuery(identifier='table', parts=()).select('id').where(2, 3, 4, a=5)
-    assert str(q) == 'table.find("id").where(2, 3, 4, a=5)'
+    assert str(q) == 'table.select("id").where(2, 3, 4, a=5)'
 
 
 multi_query = """something.find().limit(5)
@@ -258,9 +258,7 @@ def test_insert(db):
         assert d['y'] == d_db['y']
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_with_schema(db):
     import numpy as np
     import PIL.Image

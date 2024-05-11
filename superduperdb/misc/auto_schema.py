@@ -152,7 +152,7 @@ def updated_schema_data_for_mongodb(schema_data) -> t.Dict[str, DataType]:
 
 
 class JsonDataTypeFactory(DataTypeFactory):
-    """A factory for JSON datatypes."""
+    """A factory for JSON datatypes # noqa."""
 
     @staticmethod
     def check(data: t.Any) -> bool:

@@ -24,6 +24,7 @@ from superduperdb.components.model import (
     _Fittable,
 )
 from superduperdb.ext.torch.utils import device_of, eval, to_device
+from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb.jobs.job import Job
@@ -99,11 +100,10 @@ class BasicDataset(data.Dataset):
         return out
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class TorchModel(Model, _Fittable, _DeviceManaged):
-    """Torch model.
-
-    This class is a wrapper around a PyTorch model.
+    """Torch model. This class is a wrapper around a PyTorch model.
 
     :param object: Torch model, e.g. `torch.nn.Module`
     :param preprocess: Preprocess function, the function to apply to the input
@@ -120,6 +120,9 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
     :param collate_fn: The collate function for the dataloader
     :param optimizer_state: The optimizer state
     :param loader_kwargs: The kwargs for the dataloader
+    :param trainer: `Trainer` object to train the model
+    :param preferred_devices: The order of devices to use
+    :param device: The device to be used
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (

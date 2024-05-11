@@ -97,6 +97,21 @@ These tests check that cluster mode works as expected (`ray`, `vector-search`, `
 make smoke_testing
 ```
 
+## Create an issue
+
+If you have an unsolvable problem or find a bug with the code, we
+would love it if you could create a useful [issue on GitHub](https://github.com/SuperDuperDB/superduperdb-stealth/issues).
+
+Creating a useful issue, is itself a useful skill. Think about following these pointers:
+
+- Add the "bug label" to flag the issue as a bug
+- Make sure the issue contains the ***minimal code*** needed to create the issue:
+  - Remove padding code, unnecessary setup etc. 
+  - Make it as easy as possible to recreate the problem.
+- Always include the traceback in the issue
+- To flag the issue to the team, escalate this in the Slack channels
+- Tag relevant people who have worked on that issue, or know the feature
+
 ## Getting Help 🙋
 
 [![Slack](https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack)](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)

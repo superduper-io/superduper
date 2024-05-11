@@ -8,12 +8,14 @@ from superduperdb.base.code import Code
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.model import Model, Signature, _DeviceManaged
+from superduperdb.misc.annotations import merge_docstrings
 
 DEFAULT_PREDICT_KWARGS = {
     'show_progress_bar': True,
 }
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class SentenceTransformer(Model, _DeviceManaged):
     """A model for sentence embeddings using `sentence-transformers`.
@@ -24,6 +26,7 @@ class SentenceTransformer(Model, _DeviceManaged):
     :param preprocess: The preprocessing function to apply to the input.
     :param postprocess: The postprocessing function to apply to the output.
     :param signature: The signature of the model.
+    :param preferred_devices: A list of devices to prefer, in that order.
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (

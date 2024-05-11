@@ -1,9 +1,11 @@
 import functools
 import hashlib
 import importlib
+import inspect
 import sys
 import typing as t
 import warnings
+from collections import defaultdict
 from importlib import metadata
 from typing import Optional
 
@@ -11,7 +13,6 @@ from packaging import version
 
 from superduperdb import logging
 from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
-from superduperdb.components.component import Component
 
 
 def _normalize_module(import_module, lower_bound, upper_bound, install_module):
@@ -63,7 +64,7 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
 def requires_packages(*packages, warn=False):
     """Require the packages to be installed.
 
-    :param *packages: list of tuples of packages
+    :param packages: list of tuples of packages
                      each tuple of the form
                      (import_name, lower_bound/None,
                       upper_bound/None, install_name/None)
@@ -121,39 +122,13 @@ def deprecated(f):
     return decorated
 
 
-# TODO: add deprecated also
-def public_api(stability: str = 'stable'):
-    """Annotation for documenting public APIs.
-
-    If ``stability="alpha"``, the API can be used by advanced users who are
-    tolerant to and expect breaking changes.
-
-    If ``stability="beta"``, the API is still public and can be used by early
-    users, but are subject to change.
-
-    If ``stability="stable"``, the APIs will remain backwards compatible across
-    minor releases.
-
-    :param stability: stability of the API
-    """
-    assert stability in ["stable", "beta", "alpha"]
-
-    def wrap(obj):
-        if stability in ["alpha", "beta"]:
-            message = (
-                f"**public_api({stability}):** This API is in {stability} "
-                "and may change before becoming stable."
-            )
-            _append_doc(obj, message=message)
-        return obj
-
-    return wrap
-
-
 class SuperDuperDBDeprecationWarning(DeprecationWarning):
-    """Specialized Deprecation Warning for fine grained filtering control."""
+    """
+    Specialized Deprecation Warning for fine grained filtering control.
 
-    pass
+    :param args: *args of `DeprecationWarning`
+    :param kwargs: **kwargs of `DeprecationWarning`
+    """
 
 
 if not sys.warnoptions:
@@ -194,7 +169,7 @@ def _get_indent(docstring: str) -> int:
 def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     """Decorator for creating a component.
 
-    :param *schema: schema for the component
+    :param schema: schema for the component
     :param handle_integration: function to handle integration
     """
 
@@ -207,6 +182,8 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
                 out = f(**kwargs, db=db)
             else:
                 out = f(**kwargs)
+
+            from superduperdb.components.component import Component
 
             assert isinstance(out, Component)
 
@@ -226,3 +203,97 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
         return decorated
 
     return decorator
+
+
+def merge_docstrings(cls):
+    """Decorator that merges Sphinx-styled class docstrings.
+
+    Decorator merges doc-strings from parent to child classes,
+    ensuring no duplicate parameters and correct indentation.
+
+    :param cls: Class to merge docstrings for.
+    """
+    parent_doc = next(
+        (parent.__doc__ for parent in inspect.getmro(cls)[1:] if parent.__doc__), None
+    )
+    if parent_doc:
+        parent_params = extract_parameters(parent_doc)
+        child_doc = cls.__doc__ or """"""
+        child_params = extract_parameters(child_doc)
+        for k in child_params:
+            parent_params[k] = child_params[k]
+        placeholder_doc = replace_parameters(child_doc)
+        param_string = ''
+        for k, v in parent_params.items():
+            v = '\n    '.join(v)
+            param_string += f':param {k}: {v}\n'
+        cls.__doc__ = placeholder_doc.replace('!!!', param_string)
+    return cls
+
+
+def extract_parameters(doc):
+    """
+    Extracts and organizes parameter descriptions from a Sphinx-styled docstring.
+
+    :param doc: Sphinx-styled docstring.
+                Docstring may have multiple lines
+    """
+    lines = [x.strip() for x in doc.split('\n')]
+    was_doc = False
+    import re
+
+    params = defaultdict(list)
+    for line in lines:
+        if line.startswith(':param'):
+            was_doc = True
+            match = re.search(r':param[ ]+(.*):(.*)$', line)
+            param = match.groups()[0]
+            params[param].append(match.groups()[1].strip())
+        if not line.startswith(':') and was_doc and line.strip():
+            params[param].append(line.strip())
+        if not line.strip():
+            was_doc = False
+    return params
+
+
+def replace_parameters(doc, placeholder: str = '!!!'):
+    """
+    Replace parameters in a doc-string with a placeholder.
+
+    :param doc: Sphinx-styled docstring.
+    :param placeholder: Placeholder to replace parameters with.
+    """
+    doc = [x.strip() for x in doc.split('\n')]
+    lines = []
+    had_parameters = False
+    parameters_done = False
+    for line in doc:
+        if parameters_done:
+            lines.append(line)
+            continue
+
+        if not had_parameters and line.startswith(':param'):
+            lines.append(placeholder)
+            had_parameters = True
+            assert not parameters_done, 'Can\'t have multiple parameter sections'
+            continue
+
+        if had_parameters and line.startswith(':param'):
+            continue
+
+        if not line.strip() and had_parameters:
+            parameters_done = True
+
+        if had_parameters and not parameters_done:
+            continue
+
+        lines.append(line)
+
+    if not had_parameters:
+        lines = lines + ['\n' + placeholder]
+
+    return '\n'.join(lines)
+
+
+if __name__ == '__main__':
+    print(replace_parameters(extract_parameters.__doc__))

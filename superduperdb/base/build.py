@@ -167,7 +167,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     :param cfg: Configuration to use. If None, use ``superduperdb.CFG``.
     :param databackend: Databacked to use.
                         If None, use ``superduperdb.CFG.data_backend``.
-    :pararm kwargs: keyword arguments to be adopted by the `CFG`
+    :param kwargs: keyword arguments to be adopted by the `CFG`
     """
     # Configuration
     # ------------------------------

@@ -15,6 +15,7 @@ from superduperdb import logging
 from superduperdb.base.leaf import Leaf
 from superduperdb.base.variables import _find_variables_with_path
 from superduperdb.jobs.job import ComponentJob, Job
+from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb import Document
@@ -60,8 +61,10 @@ def getdeepattr(obj, attr):
 
 
 ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
+ComponentTuple.__doc__ = 'noqa'
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Component(Leaf):
     """Base class for all components in SuperDuperDB.
@@ -69,8 +72,7 @@ class Component(Leaf):
     Class to represent SuperDuperDB serializable entities
     that can be saved into a database.
 
-    :param artifacts: List of artifacts which represent entities that are
-                      not serializable by default.
+    :param artifacts: A dictionary of artifacts paths and `DataType` objects
     """
 
     type_id: t.ClassVar[str] = 'component'
@@ -78,8 +80,9 @@ class Component(Leaf):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'identifier', 'type': 'str'}]
-    artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     changed: t.ClassVar[set] = set([])
+
+    artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @property
     def _id(self):
@@ -127,6 +130,7 @@ class Component(Leaf):
         """Set free variables of self.
 
         :param db: Datalayer instance.
+        :param kwargs: The values to set the variables to `_replace_variables`.
         """
         r = self.dict()
         variables = _find_variables_with_path(r)

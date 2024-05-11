@@ -20,9 +20,12 @@ from superduperdb.components.datatype import _BaseEncodable
 
 
 class TimeoutException(Exception):
-    """Timeout exception."""
+    """
+    Timeout exception.
 
-    ...
+    :param args: *args of `Exception`
+    :param kwargs: **kwargs of `Exception`
+    """
 
 
 def timeout_handler(signum, frame):

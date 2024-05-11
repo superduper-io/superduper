@@ -37,7 +37,11 @@ class SuperDuperCursor:
     _it: int = 0
 
     def limit(self, *args, **kwargs) -> 'SuperDuperCursor':
-        """Limit the number of results returned by the cursor."""
+        """Limit the number of results returned by the cursor.
+
+        :param args: Positional arguments to pass to the cursor's limit method.
+        :param kwargs: Keyword arguments to pass to the cursor's limit method.
+        """
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
             id_field=self.id_field,
@@ -60,6 +64,7 @@ class SuperDuperCursor:
         return self
 
     def __next__(self):
+        """Get the next document from the cursor."""
         r = self.cursor_next()
         if self.scores is not None:
             try:

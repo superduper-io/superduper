@@ -14,7 +14,7 @@ __all__ = ('Logging',)
 
 
 class Logging:
-    """Logging class to handle logging for the SuperDuperDB."""
+    """Logging class to handle logging for the SuperDuperDB # noqa."""
 
     if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
@@ -80,6 +80,7 @@ class Logging:
         """Log a message with the DEBUG level.
 
         :param msg: The message to log.
+        :param args: Additional arguments to log.
         """
         logger.opt(depth=1).debug(" ".join(map(str, (msg, *args))))
 
@@ -88,6 +89,7 @@ class Logging:
         """Log a message with the INFO level.
 
         :param msg: The message to log.
+        :param args: Additional arguments to log.
         """
         logger.opt(depth=1).info(" ".join(map(str, (msg, *args))))
 
@@ -96,6 +98,7 @@ class Logging:
         """Log a message with the SUCCESS level.
 
         :param msg: The message to log.
+        param args: Additional arguments to log.
         """
         logger.opt(depth=1).success(" ".join(map(str, (msg, *args))))
 
@@ -104,6 +107,7 @@ class Logging:
         """Log a message with the WARNING level.
 
         :param msg: The message to log.
+        :param args: Additional arguments to log.
         """
         logger.opt(depth=1).warning(" ".join(map(str, (msg, *args))))
 
@@ -112,6 +116,7 @@ class Logging:
         """Log a message with the ERROR level.
 
         :param msg: The message to log.
+        :param args: Additional arguments to log.
         """
         logger.opt(depth=1).error(" ".join(map(str, (msg, *args))))
 
@@ -122,6 +127,7 @@ class Logging:
         e.g. logger.exception("An error occurred", e)
 
         :param msg: The message to log.
+        :param args: Additional arguments to log.
         :param e: The exception to log.
         """
         logger.opt(depth=1, exception=e).error(" ".join(map(str, (msg, *args))))

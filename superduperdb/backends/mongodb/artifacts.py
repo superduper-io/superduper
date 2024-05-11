@@ -68,15 +68,15 @@ class MongoArtifactStore(ArtifactStore):
         if path.is_dir():
             upload_folder(file_path, file_id, self.filesystem)
         else:
-            upload_file(file_path, file_id, self.filesystem)
+            _upload_file(file_path, file_id, self.filesystem)
         return file_id
 
     def _load_file(self, file_id: str) -> str:
         """Download file from GridFS and return the path.
 
-        The path is a temporary directory, {tmp_prefix}/{file_id}/{filename or folder}
+        The path is a temporary directory, `{tmp_prefix}/{file_id}/{filename or folder}`
         """
-        return download(file_id, self.filesystem)
+        return _download(file_id, self.filesystem)
 
     def _save_bytes(self, serialized: bytes, file_id: str):
         cur = self.filesystem.find_one({'filename': file_id})
@@ -92,7 +92,7 @@ class MongoArtifactStore(ArtifactStore):
         # TODO: implement me
 
 
-def upload_file(path, file_id, fs):
+def _upload_file(path, file_id, fs):
     """Upload file to GridFS.
 
     :param path: The path to the file to upload
@@ -143,10 +143,10 @@ def upload_folder(path, file_id, fs, parent_path=""):
                     )
 
 
-def download(file_id, fs):
+def _download(file_id, fs):
     """Download file or folder from GridFS and return the path.
 
-    The path is a temporary directory, {tmp_prefix}/{file_id}/{filename or folder}
+    The path is a temporary directory, `{tmp_prefix}/{file_id}/{filename or folder}`
 
     :param file_id: The file_id of the file or folder to download
     :param fs: The GridFS object

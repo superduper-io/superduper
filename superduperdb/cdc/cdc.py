@@ -49,7 +49,11 @@ if t.TYPE_CHECKING:
 
 
 class DBEvent(str, Enum):
-    """`DBEvent` simple enum to hold mongo basic events."""
+    """
+    `DBEvent` simple enum to hold mongo basic events.
+
+    # noqa
+    """
 
     delete = 'delete'
     insert = 'insert'
@@ -174,17 +178,29 @@ class BaseDatabaseListener(ABC):
 
     @abstractmethod
     def on_create(self, *args, **kwargs):
-        """Handle the create event."""
+        """Handle the create event.
+
+        :param args: Arguments
+        :param kwargs: Keyword arguments
+        """
         raise NotImplementedError
 
     @abstractmethod
     def on_update(self, *args, **kwargs):
-        """Handle the update event."""
+        """Handle the update event.
+
+        :param args: Arguments
+        :param kwargs: Keyword arguments
+        """
         raise NotImplementedError
 
     @abstractmethod
     def on_delete(self, *args, **kwargs):
-        """Handle the delete event."""
+        """Handle the delete event.
+
+        :param args: Arguments
+        :param kwargs: Keyword arguments
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -343,7 +359,11 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         self.db_type = db_type
 
     def create(self, *args, **kwargs) -> DBListenerType:
-        """Create a DatabaseListener instance."""
+        """Create a DatabaseListener instance # noqa.
+
+        :param args: Arguments
+        :param kwargs: Keyword arguments
+        """
         stop_event = Event()
         kwargs['stop_event'] = stop_event
         if self.db_type == 'mongodb':
@@ -405,10 +425,9 @@ class DatabaseChangeDataCapture:
         return self._running or CFG.cluster.cdc.uri is not None
 
     def start(self):
-        """Start the cdc service."""
+        """Start the cdc service # noqa."""
         self._running = True
 
-        # Listen to existing collection without cdc enabled
         for collection in self._cdc_existing_collections:
             self.listen(collection)
 
@@ -425,6 +444,8 @@ class DatabaseChangeDataCapture:
 
         :param on: Which collection/table listener service this be invoked on?
         :param identifier: A identity given to the listener service.
+        :param args: Arguments passed to `DatabaseListenerFactory.create`
+        :param kwargs: Keyword arguments to `DatabaseListenerFactory.create`
         """
         from superduperdb.backends.base import backends
 

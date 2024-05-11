@@ -12,7 +12,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.model import Mapping, ModelInputType
 from superduperdb.ext.utils import str_shape
 from superduperdb.jobs.job import FunctionJob
-from superduperdb.misc.annotations import component, public_api
+from superduperdb.misc.annotations import component, merge_docstrings
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 from superduperdb.vector_search.update_tasks import copy_vectors
@@ -22,13 +22,12 @@ if t.TYPE_CHECKING:
     from superduperdb.jobs.job import Job
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
-    A component carrying the information to apply a vector index to a ``DB`` instance.
+    A component carrying the information to apply a vector index.
 
-    {component_parameters}
     :param indexing_listener: Listener which is applied to created vectors
     :param compatible_listener: Listener which is applied to vectors to be compared
     :param measure: Measure to use for comparison
@@ -40,8 +39,6 @@ class VectorIndex(Component):
         {'name': 'compatible_listener', 'type': 'component/listener', 'optional': True},
         {'name': 'measure', 'type': 'str', 'choices': ['cosine', 'dot', 'l2']},
     ]
-
-    __doc__ = __doc__.format(component_parameters=Component.__doc__)
 
     type_id: t.ClassVar[str] = 'vector_index'
 

@@ -11,6 +11,7 @@ from superduperdb.components.datatype import (
     _BaseEncodable,
 )
 from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -35,8 +36,10 @@ class Document(MongoStyleDict):
     The document data is used to dump that resource to
     a mix of json-able content, ids and `bytes`
 
+    :param args: *args for `dict`
     :param schema: The schema to use.
     :param db: The datalayer to use.
+    :param kwargs: **kwargs for `dict`
     """
 
     _DEFAULT_ID_KEY: str = '_id'
@@ -155,6 +158,7 @@ class Document(MongoStyleDict):
         """Set free variables of self.
 
         :param db: The datalayer to use.
+        :param kwargs: The vales to set the variables to `_replace_variables`.
         """
         from superduperdb.base.variables import _replace_variables
 
@@ -177,6 +181,7 @@ class Document(MongoStyleDict):
         return out
 
 
+@merge_docstrings
 class QueryUpdateDocument(Document):
     """A document that is used to update a document in a database.
 

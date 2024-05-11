@@ -91,6 +91,7 @@ class Leaf(ABC):
         """Set free variables of self.
 
         :param db: Datalayer instance.
+        :param kwargs: Keyword arguments to pass to `_replace_variables`.
         """
         from superduperdb import Document
         from superduperdb.base.variables import Variable, _replace_variables

@@ -15,6 +15,7 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document, QueryUpdateDocument
 from superduperdb.base.leaf import Leaf
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -58,6 +59,7 @@ class ChangeStream:
         return collection.watch(**self.kwargs)
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True, repr=False)
 class MongoQuery(Query):
     """A query class for MongoDB.
@@ -330,14 +332,18 @@ class MongoQuery(Query):
         return ids
 
     def change_stream(self, *args, **kwargs):
-        """Return a callable Mongodb change stream instance."""
+        """Return a callable Mongodb change stream instance.
+
+        :param args: Arguments to pass to the change-stream
+        :param kwargs: The keyword arguments to pass to the change-stream
+        """
         return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
 
     @applies_to('find')
     def outputs(self, *predict_ids):
         """Return a query that selects the outputs of the given predict ids.
 
-        :param *predict_ids: The ids of the predictions to select.
+        :param predict_ids: The ids of the predictions to select.
         """
         find_args, find_kwargs = self.parts[0][1:]
         find_args = list(find_args)
@@ -494,7 +500,7 @@ class MongoQuery(Query):
         :param predict_id: The id of the prediction.
         :param outputs: The outputs to store.
         :param flatten: Whether to flatten the outputs.
-        :return: The result of the update operation.
+        :param kwargs: Additional keyword arguments.
         """
         if not len(outputs):
             return
@@ -652,11 +658,11 @@ def ReplaceOne(**kwargs):
     return BulkOp(identifier='ReplaceOne', kwargs=kwargs)
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class BulkOp(Leaf):
     """A bulk operation for MongoDB.
 
-    :param identifier: The operation to perform.
     :param kwargs: The arguments to pass to the operation.
     """
 
@@ -666,7 +672,6 @@ class BulkOp(Leaf):
         'DeleteOne',
         'ReplaceOne',
     ]
-    identifier: str
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, db):

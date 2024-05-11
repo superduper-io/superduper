@@ -159,15 +159,18 @@ class Cluster(BaseConfig):
 
     :param compute: The URI for compute
                     - None: run all jobs in local mode i.e. simple function call
-                    - "ray://<host>:<port>": Run all jobs on a remote ray cluster
+                    - "ray://host:port": Run all jobs on a remote ray cluster
     :param vector_search: The URI for the vector search service
-                          None: Run vector search on local
-                          "http://<host>:<port>": Connect a remote vector search service
+                          - None: Run vector search on local
+                          - `f"http://{host}:{port}"`:
+                            Connect a remote vector search service
     :param rest: The URI for the REST service
+                          - `f"http://{host}:{port}"`:
+                            Connect a remote vector search service
     :param cdc: The URI for the change data capture service (if "None"
                 then no cdc assumed)
                 None: Run cdc on local as a thread.
-                "http://<host>:<port>": Connect a remote cdc service
+                - `f"{http://{host}:{port}"`: Connect a remote cdc service
     """
 
     compute: Compute = dc.field(default_factory=Compute)
@@ -177,7 +180,7 @@ class Cluster(BaseConfig):
 
 
 class LogLevel(str, Enum):
-    """Enumerate log severity level."""
+    """Enumerate log severity level # noqa."""
 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
@@ -187,7 +190,7 @@ class LogLevel(str, Enum):
 
 
 class LogType(str, Enum):
-    """Enumerate the standard logs."""
+    """Enumerate the standard logs # noqa."""
 
     # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
     # DEBUG, INFO, and WARN go to STDOUT.
@@ -199,7 +202,7 @@ class LogType(str, Enum):
 
 
 class BytesEncoding(str, Enum):
-    """Enumerate the encoding of bytes in the data backend."""
+    """Enumerate the encoding of bytes in the data backend # noqa."""
 
     BYTES = 'Bytes'
     BASE64 = 'Str'

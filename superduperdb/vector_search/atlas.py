@@ -31,7 +31,6 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         dimensions: t.Optional[int] = None,
         measure: t.Optional[str] = None,
         output_path: t.Optional[str] = None,
-        **kwargs,
     ):
         self.identifier = identifier
         vector_search_uri = CFG.cluster.vector_search.uri

@@ -35,6 +35,7 @@ from superduperdb.components.model import (
 from superduperdb.ext.llm.model import BaseLLM
 from superduperdb.ext.transformers.training import Checkpoint
 from superduperdb.jobs.job import Job
+from superduperdb.misc.annotations import merge_docstrings
 
 
 class _TrainerWithSaving(NativeTrainer):
@@ -49,9 +50,10 @@ class _TrainerWithSaving(NativeTrainer):
             self.custom_saver()
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class TransformersTrainer(TrainingArguments, Trainer):
-    """Trainer for transformers models.
+    """Trainer for transformers models # noqa.
 
     It's used to train the transformers models.
 
@@ -165,6 +167,7 @@ class TransformersTrainer(TrainingArguments, Trainer):
         trainer.train()
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
     """A wrapper for ``transformers.Pipeline``.
@@ -177,6 +180,9 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
     :param model_kwargs: model kwargs, will pass to ``model_cls``
     :param pipeline: pipeline instance, default is None, will build when None
     :param task: task of the pipeline
+    :param trainer: `TransformersTrainer` instance
+    :param preferred_devices: preferred devices
+    :param device: device to use
 
     Example:
     -------
@@ -189,7 +195,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         ('model_cls', pickle_serializer),
         ('object', pickle_serializer),
     )
-    signature: t.ClassVar[Signature] = 'singleton'
+    signature: Signature = 'singleton'
     tokenizer_name: t.Optional[str] = None
     tokenizer_cls: object = AutoTokenizer
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -229,6 +235,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         return self.pipeline(text)
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class LLM(BaseLLM, _Fittable):
     """
@@ -238,14 +245,19 @@ class LLM(BaseLLM, _Fittable):
     :param model_name_or_path: model name or path
     :param adapter_id: adapter id, default is None
         Add a adapter to the base model for inference.
-        When model_name_or_path, bits, model_kwargs, tokenizer_kwargs are the same,
-        will share the same base model and tokenizer cache.
     :param model_kwargs: model kwargs,
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
     :param tokenizer_kwargs: tokenizer kwargs,
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
     :param prompt_template: prompt template, default is "{input}"
     :param prompt_func: prompt function, default is None
+
+    All the `model_kwargs` will pass to
+    `transformers.AutoModelForCausalLM.from_pretrained`.
+    All the `tokenize_kwargs` will pass to
+    `transformers.AutoTokenizer.from_pretrained`.
+    When `model_name_or_path`, `bits`, `model_kwargs`, `tokenizer_kwargs` are the same,
+    will share the same base model and tokenizer cache.
     """
 
     identifier: str = ""

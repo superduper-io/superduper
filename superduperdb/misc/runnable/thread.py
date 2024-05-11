@@ -96,6 +96,9 @@ class IsThread(ThreadBase, Thread):
 
     To use IsThread, derive from it and override either or both of
     self.callback() and self.pre_run()
+
+    :param args: Positional arguments for `threading.Thread`
+    :param kwargs: Keyword arguments for `threading.Thread`
     """
 
     def __init__(self, *args, **kwargs):

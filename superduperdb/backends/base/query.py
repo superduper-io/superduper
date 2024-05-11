@@ -8,6 +8,7 @@ from functools import wraps
 
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.hash import hash_string
 
 if t.TYPE_CHECKING:
@@ -18,7 +19,7 @@ if t.TYPE_CHECKING:
 def applies_to(*flavours):
     """Decorator to check if the query matches the accepted flavours.
 
-    :param *flavours: The flavours to check against.
+    :param flavours: The flavours to check against.
     """
 
     def decorator(f):
@@ -41,11 +42,13 @@ def applies_to(*flavours):
     return decorator
 
 
+@merge_docstrings
 @dc.dataclass
 class _BaseQuery(Leaf, ABC):
     ...
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True, repr=False)
 class Query(_BaseQuery):
     """A query object.
@@ -57,8 +60,9 @@ class Query(_BaseQuery):
     """
 
     flavours: t.ClassVar[t.Dict[str, str]] = {}
+    methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
+
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
-    metholds_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
     def __getitem__(self, item):
         if not isinstance(item, slice):
@@ -295,7 +299,7 @@ class Query(_BaseQuery):
         )
 
     def __getattr__(self, item):
-        item = type(self).metholds_mapping.get(item, item)
+        item = type(self).methods_mapping.get(item, item)
         return type(self)(
             db=self.db,
             identifier=self.identifier,
@@ -427,7 +431,7 @@ class Query(_BaseQuery):
         :param predict_id: The id of the prediction.
         :param outputs: The outputs to store.
         :param flatten: Whether to flatten the outputs.
-        :return: The result of the update operation.
+        :param kwargs: Additional keyword arguments.
         """
         pass
 
@@ -552,19 +556,29 @@ def parse_query(
     return query[-1]
 
 
+@merge_docstrings
 @dc.dataclass
 class Model(Leaf):
     """A model helper class for create a query to predict."""
 
     def predict_one(self, *args, **kwargs):
-        """Predict one."""
+        """Predict one.
+
+        :param args: The arguments to pass to the model
+        :param kwargs: The keyword arguments to pass to the model
+        """
         return PredictOne(self.identifier, args=args, kwargs=kwargs)
 
     def predict(self, *args, **kwargs):
-        """Predict."""
+        """Predict.
+
+        :param args: The arguments to pass to the model
+        :param kwargs: The keyword arguments to pass to the model
+        """
         raise NotImplementedError
 
 
+@merge_docstrings
 @dc.dataclass
 class PredictOne(_BaseQuery):
     """A query to predict a single document.
@@ -573,10 +587,10 @@ class PredictOne(_BaseQuery):
     :param kwargs: The keyword arguments to pass to the model
     """
 
+    type: t.ClassVar[str] = 'predict'
+
     args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
-
-    type: t.ClassVar[str] = 'predict'
 
     def do_execute(self, db):
         """Execute the query.

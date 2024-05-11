@@ -26,7 +26,7 @@ from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.misc.annotations import public_api
+from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.rest.utils import parse_query
 
 if t.TYPE_CHECKING:
@@ -205,6 +205,7 @@ class CallableInputs(Inputs):
         self.params = params
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Trainer(Component):
     """Trainer component to train a model.
@@ -255,6 +256,7 @@ class Trainer(Component):
         pass
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Validation(Component):
     """component which represents Validation definition.
@@ -272,6 +274,8 @@ class Validation(Component):
 
 @dc.dataclass(kw_only=True)
 class _Fittable:
+    """:param trainer: Trainer to use to handle training details"""
+
     trainer: t.Optional[Trainer] = None
 
     def schedule_jobs(self, db, dependencies=()):
@@ -472,6 +476,7 @@ class Mapping:
         return args, kwargs
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Model(Component):
     """Base class for components which can predict.
@@ -490,13 +495,13 @@ class Model(Component):
     """
 
     type_id: t.ClassVar[str] = 'model'
-    signature: Signature = '*args,**kwargs'
     ui_schema: t.ClassVar[t.Dict] = [
         {'name': 'datatype', 'type': 'component/datatype', 'optional': True},
         {'name': 'predict_kwargs', 'type': 'json', 'default': {}},
         {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
     ]
 
+    signature: Signature = '*args,**kwargs'
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     flatten: bool = False
@@ -522,6 +527,9 @@ class Model(Component):
 
         Execute a single prediction on a data point
         given by positional and keyword arguments.
+
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
         """
         pass
 
@@ -897,6 +905,35 @@ class Model(Component):
             identifier=outputs,
         )
 
+    def to_vector_index(
+        self,
+        key: ModelInputType,
+        select: Query,
+        identifier: t.Optional[str] = None,
+        predict_kwargs: t.Optional[dict] = None,
+        **kwargs,
+    ):
+        """
+        Create a single-model `VectorIndex` from the model.
+
+        :param key: Key to be bound to the model
+        :param select: Object for selecting which data is processed
+        :param identifier: A string used to identify the model.
+        :param predict_kwargs: Keyword arguments to self.model.predict
+        :param kwargs: Additional keyword arguments
+        """
+        identifier = identifier or f'{self.identifier}:vector_index'
+        from superduperdb.components.vector_index import VectorIndex
+
+        listener = self.to_listener(
+            key=key,
+            select=select,
+            identifier='',
+            predict_kwargs=predict_kwargs,
+            **kwargs,
+        )
+        return VectorIndex(identifier=identifier, indexing_listener=listener)
+
     def to_listener(
         self,
         key: ModelInputType,
@@ -911,6 +948,7 @@ class Model(Component):
         :param select: Object for selecting which data is processed
         :param identifier: A string used to identify the model.
         :param predict_kwargs: Keyword arguments to self.model.predict
+        :param kwargs: Additional keyword arguments to pass to `Listener`
         """
         from superduperdb.components.listener import Listener
 
@@ -1001,21 +1039,28 @@ class _Node:
 
 @dc.dataclass
 class IndexableNode:
-    """Base indexable node for `ObjectModel`."""
+    """
+    Base indexable node for `ObjectModel`.
 
-    def __init__(self, types):
-        self.types = types
+    :param types: Sequence of types
+    """
+
+    types: t.Sequence[t.Type]
 
     def __getitem__(self, item):
         assert type(item) in self.types
         return _Node(item)
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class _ObjectModel(Model, ABC):
-    __doc__ = Model.__doc__
-    __doc__ = __doc__.format(_model=Model.__doc__)  # type: ignore[union-attr]
+    """Base class for components which can predict based on a Python object.
+
+    :param num_workers: Number of workers to use for parallel processing
+    :param object: Model/ computation object
+    """
+
     num_workers: int = 0
     object: t.Any
 
@@ -1059,6 +1104,9 @@ class _ObjectModel(Model, ABC):
 
         Method to execute ``Object`` on args and kwargs.
         This method is also used for debugging the Model.
+
+        :param args: Positional arguments of model
+        :param kwargs: Keyword arguments of model
         """
         return self.object(*args, **kwargs)
 
@@ -1081,15 +1129,18 @@ class _ObjectModel(Model, ABC):
         return outputs
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class ObjectModel(_ObjectModel):
     """Model component which wraps a Model to become serializable.
 
-    {_object_model_params}
-    """
+    Example:
+    -------
+    >>> m = ObjectModel('test', lambda x: x + 2)
+    >>> m.predict_one(2)
+    4
 
-    __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
+    """
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'object', 'type': 'artifact'}]
 
@@ -1098,16 +1149,13 @@ class ObjectModel(_ObjectModel):
     )
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class CodeModel(_ObjectModel):
-    """Model component which wraps a Model to become serializable.
+    """Model component which stores a code object.
 
-    {_object_model_params}
     :param object: Code object
     """
-
-    __doc__ = __doc__.format(_object_model_params=_ObjectModel.__doc__)
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'object', 'type': 'code', 'default': Code.default}
@@ -1127,22 +1175,15 @@ class CodeModel(_ObjectModel):
         return kwargs
 
 
-@public_api(stability='beta')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
     """APIBaseModel component which is used to make the type of API request.
 
-    {component_params}
-    {predictor_params}
     :param model: The Model to use, e.g. ``'text-embedding-ada-002'``
     :param max_batch_size: Maximum  batch size.
 
     """
-
-    __doc__ = __doc__.format(
-        component_params=Component.__doc__,
-        predictor_params=Model.__doc__,
-    )
 
     model: t.Optional[str] = None
     max_batch_size: int = 8
@@ -1173,22 +1214,14 @@ class APIBaseModel(Model):
         return results
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class APIModel(APIBaseModel):
     """APIModel component which is used to make the type of API request.
 
-    {component_params}
-    {predictor_params}
-    {api_base_model_params}
     :param url: The url to use for the API request
     :param postprocess: Postprocess function to use on the output of the API request
     """
-
-    __doc__ = __doc__.format(
-        component_params=Component.__doc__,
-        predictor_params=Model.__doc__,
-        api_base_model_params=APIBaseModel.__doc__,
-    )
 
     url: str
     postprocess: t.Optional[t.Callable] = None
@@ -1219,6 +1252,9 @@ class APIModel(APIBaseModel):
 
         Method to requests to `url` on args and kwargs.
         This method is also used for debugging the model.
+
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
         """
         runtime_params = self.inputs(*args, **kwargs)
         out = requests.get(self.build_url(params=runtime_params)).json()
@@ -1241,7 +1277,7 @@ LIKE_TEMPLATE = {
 }
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class QueryModel(Model):
     """QueryModel component.
@@ -1262,7 +1298,7 @@ class QueryModel(Model):
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Union[t.Callable, Code]] = None
     select: Query
-    signature: t.ClassVar[Signature] = '**kwargs'
+    signature: Signature = '**kwargs'
 
     @staticmethod
     def _replace_variables(r):
@@ -1307,6 +1343,9 @@ class QueryModel(Model):
 
         Method to perform a single prediction on args and kwargs.
         This method is also used for debugging the model.
+
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
         """
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
@@ -1333,18 +1372,13 @@ class QueryModel(Model):
             raise NotImplementedError
 
 
-@public_api(stability='stable')
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class SequentialModel(Model):
     """Sequential model component which wraps a model to become serializable.
 
-    {_model_params}
     :param models: A list of models to use
     """
-
-    __doc__ = __doc__.format(
-        _model_params=Model.__doc__,
-    )
 
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'models', 'type': 'component/model', 'sequence': True},
@@ -1379,6 +1413,9 @@ class SequentialModel(Model):
 
         Method to do single prediction on args and kwargs.
         This method is also used for debugging the model.
+
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
         """
         return self.predict([(args, kwargs)])[0]
 

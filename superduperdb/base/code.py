@@ -3,6 +3,7 @@ import inspect
 import typing as t
 
 from superduperdb.base.leaf import Leaf
+from superduperdb.misc.annotations import merge_docstrings
 
 template = """from superduperdb import code
 
@@ -12,6 +13,7 @@ template = """from superduperdb import code
 default = template.format(definition='def my_code(x):\n    return x\n')
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Code(Leaf):
     """A class to store remote code.

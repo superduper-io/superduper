@@ -16,3 +16,6 @@ scikit-learn>=1.1.3
 python-magic
 python-multipart
 anthropic>=0.25.0
+peft>=0.10.0
+trl>=0.8.0 
+unstructured[md]>=0.12.5

@@ -19,7 +19,8 @@ except ImportError:
     trl = None
 
 
-RUN_LLM_FINETUNE = all([datasets, peft, trl])
+# commented out due to a versioning conflict
+RUN_LLM_FINETUNE = False  # all([datasets, peft, trl])
 
 # Some predefined parameters
 model = "facebook/opt-125m"

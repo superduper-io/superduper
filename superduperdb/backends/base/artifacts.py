@@ -218,6 +218,9 @@ class ArtifactStore(ABC):
 
 
 class ArtifactSavingError(Exception):
-    """Error when saving artifact in artifact store fails."""
+    """
+    Error when saving artifact in artifact store fails.
 
-    pass
+    :param args: *args for `Exception`
+    :param kwargs: **kwargs for `Exception`
+    """

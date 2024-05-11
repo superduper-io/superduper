@@ -6,11 +6,10 @@ BASE64_PREFIX = 'base64:'
 
 
 class Base64Mixin:
-    """
-    Mixin class for converting byte data to base64 format for storage in the database.
+    """Mixin class for converting byte data to base64 format.
 
     This class is used to convert byte data to base64 format for storage in the
-    database.
+    database.  # noqa
     """
 
     def convert_data_format(self, data):
@@ -90,6 +89,8 @@ class ClickHouseHelper(Base64Mixin, DBHelper):
 
     This class is used to convert byte data to base64 format for storage in the
     database.
+
+    :param dialect: The dialect of the database.
     """
 
     match_dialect = 'clickhouse'

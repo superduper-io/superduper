@@ -81,9 +81,9 @@ def tensor(
 
 
 class TorchDataTypeFactory(DataTypeFactory):
-    """Factory for torch datatypes.
+    """Factory for torch datatypes # noqa.
 
-    It's used for registering the auto schema.
+    This is used for registering the auto schema.
     """
 
     @staticmethod

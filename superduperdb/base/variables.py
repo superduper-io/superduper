@@ -4,6 +4,7 @@ import inspect
 import typing as t
 
 from superduperdb.base.leaf import Leaf
+from superduperdb.misc.annotations import merge_docstrings
 
 
 # TODO: (New) remove the unused code
@@ -36,9 +37,12 @@ def _from_dict(r: t.Any, db: None = None) -> t.Any:
 
 
 class VariableError(Exception):
-    """Variable error."""
+    """
+    Variable error.
 
-    ...
+    :param args: *args for `Exception`.
+    :param kwargs: **kwargs for `Exception`.
+    """
 
 
 def _find_variables(r):
@@ -90,6 +94,7 @@ def _replace_variables(x, db, **kwargs):
     return x
 
 
+@merge_docstrings
 @dc.dataclass
 class Variable(Leaf):
     """Mechanism for allowing "free variables" in a leaf object.
@@ -119,7 +124,7 @@ class Variable(Leaf):
         Get the intended value from the values of the global variables.
 
         :param db: The datalayer instance.
-        :param **kwargs: Variables to be used in the setter_callback
+        :param kwargs: Variables to be used in the setter_callback
                        or as formatting variables.
 
         >>> Variable('number').set(db, number=1.5, other='test')

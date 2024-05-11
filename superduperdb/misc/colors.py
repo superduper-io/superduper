@@ -1,5 +1,5 @@
 class Colors:
-    """Colors list for terminal output."""
+    """Colors list for terminal output # noqa."""
 
     BLACK = '\033[30m'
     RED = '\033[31m'

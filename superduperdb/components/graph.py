@@ -7,10 +7,15 @@ from superduperdb import Schema
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import Model, Signature, ensure_initialized
+from superduperdb.misc.annotations import merge_docstrings
 
 
 def input_node(*args):
-    """Create an IndexableNode for input."""
+    """
+    Create an IndexableNode for input.
+
+    :param args: Arguments for the input.
+    """
     return IndexableNode(
         model=Input(spec=args if len(args) > 1 else args[0]),
         parent_graph=nx.DiGraph(),
@@ -19,7 +24,10 @@ def input_node(*args):
 
 
 def document_node(*args):
-    """Create an IndexableNode for document input."""
+    """Create an IndexableNode for document input.
+
+    :param args: Arguments for the document input.
+    """
     return IndexableNode(
         model=DocumentInput(spec=args), parent_graph=nx.DiGraph(), parent_models={}
     )
@@ -149,6 +157,7 @@ class OutputWrapper:
             raise TypeError(f'Unsupported type for __getitem__: {type(item)}')
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Input(Model):
     """Root model of a graph.
@@ -183,6 +192,7 @@ class Input(Model):
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class DocumentInput(Model):
     """Document Input node of the graph.
@@ -193,7 +203,7 @@ class DocumentInput(Model):
 
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
-    signature: t.ClassVar[Signature] = 'singleton'
+    signature: Signature = 'singleton'
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -213,12 +223,7 @@ class DocumentInput(Model):
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
-import dataclasses as dc
-import typing as t
-
-from superduperdb.components.model import Model, Signature
-
-
+@merge_docstrings
 @dc.dataclass(kw_only=True)
 class Graph(Model):
     """Represents a directed acyclic graph composed of interconnected model nodes.
@@ -247,6 +252,9 @@ class Graph(Model):
 
     """
 
+    _DEFAULT_ARG_WEIGHT: t.ClassVar[t.Tuple] = (None, 'singleton')
+    type_id: t.ClassVar[str] = 'model'
+
     ui_schema: t.ClassVar[t.List[t.Dict]] = [
         {'name': 'models', 'type': 'component/model', 'sequence': True},
         {'name': 'edges', 'type': 'json'},
@@ -259,9 +267,7 @@ class Graph(Model):
     )
     input: Model
     outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
-    _DEFAULT_ARG_WEIGHT: t.ClassVar[t.Tuple] = (None, 'singleton')
     signature: Signature = '*args,**kwargs'
-    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self, db, artifacts):
         self.G = nx.DiGraph()

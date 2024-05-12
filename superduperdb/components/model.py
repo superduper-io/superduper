@@ -13,9 +13,9 @@ import requests
 import tqdm
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
+
 # from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
@@ -1337,8 +1337,8 @@ class QueryModel(Model):
 class SequentialModel(Model):
     """Sequential model component which wraps a model to become serializable.
 
-    {_model_params}
-    :param models: A list of models to use
+        {_model_params}
+        :param models: A list of models to use
     """
 
     __doc__ = __doc__.format(

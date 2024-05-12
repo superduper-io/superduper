@@ -303,10 +303,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             info['hidden'] = False
         info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
         component_fields = ['id', 'identifier', 'version', 'hidden', 'type_id', '_path']
-        new_info = {
-            k: info[k]
-            for k in component_fields
-        }
+        new_info = {k: info[k] for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         return new_info
 

@@ -90,6 +90,7 @@ def test_mongo_schema(db, schema):
 
     db.add(schema)
     import copy
+
     gt = copy.deepcopy(data[0])
 
     db.execute(
@@ -101,12 +102,11 @@ def test_mongo_schema(db, schema):
 
     rs = sorted(rs, key=lambda x: x['id'])
 
-    assert np.array_equal(r['x'], gt['x'])
-    breakpoint()
-    assert np.array_equal(r['z'], data[0]['z'])
+    assert np.array_equal(r['x'].x, gt['x'])
+    assert np.array_equal(r['z'].x, gt['z'])
 
-    assert np.array_equal(rs[0]['x'], data[0]['x'])
-    assert np.array_equal(rs[0]['z'], data[0]['z'])
+    assert np.array_equal(rs[0]['x'].x, gt['x'])
+    assert np.array_equal(rs[0]['z'].x, gt['z'])
 
 
 def test_select_missing_outputs(db):

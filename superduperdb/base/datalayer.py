@@ -189,7 +189,7 @@ class Datalayer:
                 assert not isinstance(vi.indexing_listener.model, str)
                 h = record[f'_outputs.{vi.indexing_listener.predict_id}']
                 if isinstance(h, _BaseEncodable):
-                    h = h.unpack(db=self)
+                    h = h.unpack()
                 items.append(VectorItem.create(id=str(id), vector=h))
 
             searcher.add(items)
@@ -811,7 +811,8 @@ class Datalayer:
             model = vi.indexing_listener.model.identifier
             uuid = vi.indexing_listener.uuid
             G.add_edge(
-                f'{model}.predict_in_db({uuid})', f'{identifier}.{copy_vectors.__name__}'
+                f'{model}.predict_in_db({uuid})',
+                f'{identifier}.{copy_vectors.__name__}',
             )
 
         return G
@@ -835,9 +836,7 @@ class Datalayer:
             dependencies = sum(
                 [jobs.get(d[:2], []) for d in component.dependencies], []
             )
-            tmp = self._add(
-                component, parent=parent.uuid, dependencies=dependencies
-            )
+            tmp = self._add(component, parent=parent.uuid, dependencies=dependencies)
             jobs[n] = tmp
 
         return sum(list(jobs.values()), [])
@@ -883,8 +882,7 @@ class Datalayer:
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
         children = [
-            v for k, v in serialized['_leaves'].items()
-            if isinstance(v, Component)
+            v for k, v in serialized['_leaves'].items() if isinstance(v, Component)
         ]
 
         jobs.extend(self._add_child_components(children, parent=object))

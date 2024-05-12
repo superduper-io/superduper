@@ -147,7 +147,9 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
             db=db, on=on, stop_event=stop_event, identifier=identifier, timeout=timeout
         )
 
-    def on_update(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
+    def on_update(
+        self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery
+    ) -> None:
         """on_update.
 
         :param ids: Changed row ids.
@@ -156,7 +158,9 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         raise NotImplementedError
 
-    def on_delete(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
+    def on_delete(
+        self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery
+    ) -> None:
         """on_delete.
 
         :param ids: Changed row ids.
@@ -165,7 +169,9 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         raise NotImplementedError
 
-    def on_create(self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery) -> None:
+    def on_create(
+        self, ids: t.Sequence, db: 'Datalayer', table: query.IbisQuery
+    ) -> None:
         """on_create.
 
         A helper on create event handler which handles inserted document in the

@@ -6,7 +6,7 @@ from superduperdb.misc.annotations import public_api
 from .component import Component
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.datalayer import Datalayer
+    pass
 
 
 @public_api(stability='alpha')

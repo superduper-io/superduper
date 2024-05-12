@@ -183,6 +183,13 @@ class Listener(Component):
 
         return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
 
+    @property
+    def predict_id(self):
+        """
+        Get predict ID.
+        """
+        return self.uuid
+
     @override
     def schedule_jobs(
         self,

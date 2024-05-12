@@ -16,7 +16,6 @@ from tqdm import tqdm
 from superduperdb import CFG, logging
 from superduperdb.backends.base.query import Query
 from superduperdb.base.document import Document
-from superduperdb.base.leaf import Leaf
 from superduperdb.components.datatype import _BaseEncodable
 
 

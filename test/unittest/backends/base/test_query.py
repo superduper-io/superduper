@@ -1,11 +1,11 @@
-import lorem
 from test.db_config import DBConfig
 
+import lorem
 import pytest
 
 from superduperdb.backends.base.query import Query
-
 from superduperdb.backends.ibis.field_types import dtype
+
 # from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
@@ -167,13 +167,12 @@ other_thing.join(query[0]).filter(documents[0])"""
 
 def test_parse_and_dump():
     from superduperdb.backends.base.query import parse_query
-    q = parse_query(documents=[], query='collection.find().limit(5)',
-                    builder_cls=Query)
+
+    q = parse_query(documents=[], query='collection.find().limit(5)', builder_cls=Query)
     print('\n')
     print(q)
 
-    q = parse_query(documents=[{'txt': 'test'}], query=multi_query,
-                    builder_cls=Query)
+    q = parse_query(documents=[{'txt': 'test'}], query=multi_query, builder_cls=Query)
 
     print('\n')
     print(q)
@@ -187,15 +186,13 @@ def test_parse_and_dump():
     r = q.encode()
 
     import pprint
+
     pprint.pprint(r)
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute(db):
-
-    q = db.test_coll.insert_many([
-        {'txt': lorem.sentence()} for _ in range(20)
-    ])
+    q = db.test_coll.insert_many([{'txt': lorem.sentence()} for _ in range(20)])
 
     q.execute()
 
@@ -211,10 +208,10 @@ def test_execute(db):
 
 
 def test_serialize_with_image():
-
     import PIL.Image
-    from superduperdb.ext.pillow import pil_image
+
     from superduperdb.backends.mongodb import MongoQuery
+    from superduperdb.ext.pillow import pil_image
 
     img = PIL.Image.open('test/material/data/test.png')
     img = img.resize((2, 2))
@@ -227,6 +224,7 @@ def test_serialize_with_image():
     s = q.encode()
 
     import pprint
+
     pprint.pprint(s)
 
     decode_q = Document.decode(s).unpack()

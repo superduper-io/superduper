@@ -1,16 +1,15 @@
 import dataclasses as dc
 import pprint
 import typing as t
-from superduperdb.components.datatype import Artifact, DataType
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
 from test.db_config import DBConfig
 
 import pytest
 
 from superduperdb.backends.mongodb.query import MongoQuery
+from superduperdb.components.datatype import Artifact, DataType
 from superduperdb.components.model import ObjectModel
-from superduperdb.components.vector_index import vector
+from superduperdb.components.schema import Schema
+from superduperdb.components.table import Table
 
 try:
     import torch
@@ -36,7 +35,7 @@ class _db:
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_document_encoding(document):
     t = tensor(torch.float, shape=(20,))
-    db = _db(datatypes={'torch.float32[20]': t})
+    _db(datatypes={'torch.float32[20]': t})
     new_document = Document.decode(document.encode())
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
@@ -56,10 +55,13 @@ def test_flat_query_encoding():
 
 
 def test_encode_decode_flattened_document():
-    from superduperdb.ext.pillow.encoder import image_type
     import PIL.Image
 
-    schema = Schema('my-schema', fields={'img': image_type(identifier='png', encodable='artifact')})
+    from superduperdb.ext.pillow.encoder import image_type
+
+    schema = Schema(
+        'my-schema', fields={'img': image_type(identifier='png', encodable='artifact')}
+    )
 
     img = PIL.Image.open('test/material/data/test.png')
 
@@ -74,6 +76,7 @@ def test_encode_decode_flattened_document():
     encoded_r = r.encode()
 
     import yaml
+
     print(yaml.dump({k: v for k, v in encoded_r.items() if k != '_blobs'}))
 
     assert not isinstance(encoded_r, Document)
@@ -90,7 +93,6 @@ def test_encode_decode_flattened_document():
 
 
 def test_encode_model():
-
     m = ObjectModel(
         identifier='test',
         object=lambda x: x + 2,
@@ -122,8 +124,9 @@ def test_encode_model():
 
 
 def test_decode_inline_data():
-    from superduperdb.ext.pillow.encoder import image_type
     import PIL.Image
+
+    from superduperdb.ext.pillow.encoder import image_type
 
     it = image_type(identifier='png', encodable='artifact')
 
@@ -149,13 +152,14 @@ def test_refer_to_applied_item(db):
         identifier='test',
         object=lambda x: x + 2,
         datatype=dt,
-    )   
+    )
 
     db.apply(m)
     r = db.metadata._get_component_by_uuid(m.uuid)
-    dt_key = next(k for k in r['_leaves'] if k.startswith('component/datatype/my-type'))
+    next(k for k in r['_leaves'] if k.startswith('component/datatype/my-type'))
 
     import pprint
+
     pprint.pprint(r)
 
     print(db.show('datatype'))
@@ -167,23 +171,28 @@ def test_refer_to_applied_item(db):
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_column_encoding(db):
-
     from superduperdb.ext.pillow.encoder import pil_image
 
-    schema = Schema('test', fields={
-        'x': int,
-        'y': int,
-        'img': pil_image,
-    })
+    schema = Schema(
+        'test',
+        fields={
+            'x': int,
+            'y': int,
+            'img': pil_image,
+        },
+    )
 
     db.apply(Table('test', schema=schema))
 
     import PIL.Image
+
     img = PIL.Image.open('test/material/data/test.png')
 
-    db.test.insert([
-        Document({'x': 1, 'y': 2, 'img': img}),
-        Document({'x': 3, 'y': 4, 'img': img}),
-    ]).execute()
+    db.test.insert(
+        [
+            Document({'x': 1, 'y': 2, 'img': img}),
+            Document({'x': 3, 'y': 4, 'img': img}),
+        ]
+    ).execute()
 
-    results = db.test.select().execute()
+    db.test.select().execute()

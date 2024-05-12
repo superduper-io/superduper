@@ -1,14 +1,16 @@
-from collections import defaultdict
 import dataclasses as dc
 import typing as t
+from collections import defaultdict
 
 from bson import ObjectId
-import mongomock.collection
 
-from superduperdb.backends.base.query import Query, applies_to
-from superduperdb.backends.base.query import parse_query as _parse_query
+from superduperdb.backends.base.query import (
+    Query,
+    applies_to,
+    parse_query as _parse_query,
+)
 from superduperdb.base.cursor import SuperDuperCursor
-from superduperdb.base.document import Document
+from superduperdb.base.document import Document, QueryUpdateDocument
 from superduperdb.base.leaf import Leaf
 
 if t.TYPE_CHECKING:
@@ -26,7 +28,6 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
 
 @dc.dataclass(kw_only=True, repr=False)
 class MongoQuery(Query):
-
     flavours: t.ClassVar[t.Dict[str, str]] = {
         'pre_like': '^.*\.like\(.*\)\.find',
         'post_like': '^.*\.find\(.*\)\.like(.*)$',
@@ -35,30 +36,38 @@ class MongoQuery(Query):
         'find': '^.*\.find\(.*\)',
         'insert_many': '^.*\.insert_many\(.*\)$',
         'insert_one': '^.*\.insert_one\(.*\)$',
+        'replace_one': '^.*\.replace_one\(.*\)$',
         'update_many': '^.*\.update_many\(.*\)$',
         'update_one': '^.*\.update_one\(.*\)$',
         'delete_many': '^.*\.delete_many\(.*\)$',
+        'delete_one': '^.*\.delete_one\(.*\)$',
     }
 
     def _create_table_if_not_exists(self):
         return
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep
+        )
         cache[r[1:]]['_path'] = 'superduperdb/backends/mongodb/query/parse_query'
         return r
 
     @property
     def type(self):
-        return defaultdict(lambda: 'select', {
-            'update_many': 'update',
-            'update_one': 'update',
-            'delete_many': 'delete',
-            'delete_one': 'delete',
-            'bulk_write': 'write',
-            'insert_many': 'insert',
-            'insert_one': 'insert',
-        })[self.flavour]
+        return defaultdict(
+            lambda: 'select',
+            {
+                'update_many': 'update',
+                'update_one': 'update',
+                'delete_many': 'delete',
+                'delete_one': 'delete',
+                'bulk_write': 'write',
+                'insert_many': 'insert',
+                'insert_one': 'insert',
+                'outputs': 'outputs',
+            },
+        )[self.flavour]
 
     def _prepare_inputs(self, inputs):
         if isinstance(inputs, BulkOp):
@@ -84,8 +93,9 @@ class MongoQuery(Query):
 
     def _execute(self, parent, method='encode'):
         c = super()._execute(parent, method=method)
-        import pymongo
         import mongomock
+        import pymongo
+
         if isinstance(c, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
                 raw_cursor=c,
@@ -97,33 +107,34 @@ class MongoQuery(Query):
     def _execute_pre_like(self, parent):
         assert self.parts[0][0] == 'like'
         assert self.parts[1][0] == 'find'
-        like_args, like_kwargs = self.parts[1][1:]
+        like_args, like_kwargs = self.parts[0][1:]
         like_args = list(like_args)
         if not like_args:
             like_args = [{}]
-        r = like_args[0]
+        r = like_args[0] or like_kwargs.pop('r', {})
 
-        vector_index = like_kwargs['vector_index']
+        vector_index = like_kwargs.pop('vector_index')
+        ids = like_kwargs.pop('within_ids', [])
         vector_index = next(iter(self.db.vector_indices.keys()))
 
         n = like_kwargs.get('n', 100)
-        ids = self.db.select_nearest(
+
+        # TODO: use scores
+        ids, scores = self.db.select_nearest(
             like=r,
             vector_index=vector_index,
             ids=ids,
             n=n,
         )
-        like_args[0]['_id'] = {'$in': ids}
+        like_args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
 
         q = type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=[
-                ('find', tuple(like_args), like_kwargs),
-                *self.parts[2:]
-            ]
+            parts=[('find', tuple(like_args), like_kwargs), *self.parts[2:]],
         )
-        return q._execute(parent=parent)
+        result = q._execute(parent=parent)
+        return result
 
     def _execute_post_like(self, parent):
         assert len(self.parts) == 2
@@ -149,7 +160,7 @@ class MongoQuery(Query):
             ids=relevant_ids,
             n=like_kwargs.get('n', 100),
         )
-        
+
         final_args = find_args[:]
         if not final_args:
             final_args = [{}]
@@ -175,11 +186,30 @@ class MongoQuery(Query):
     def _execute_find(self, parent):
         return self._execute(parent, method='unpack')
 
+    def _execute_replace_one(self, parent):
+        documents = self.parts[0][1][0]
+        trailing_args = list(self.parts[0][1][1:])
+        kwargs = self.parts[0][2]
+
+        schema = kwargs.pop('schema', None)
+
+        schema = get_schema(self.db, schema) if schema else None
+        replacement = trailing_args[0]
+        if isinstance(replacement, Document):
+            replacement = replacement.encode(schema)
+        trailing_args.insert(0, replacement)
+
+        q = self.table_or_collection.replace_one(documents, *trailing_args, **kwargs)
+        q._execute(parent)
+
     def _execute_find_one(self, parent):
         r = self._execute(parent)
         if r is None:
             return
         return Document.decode(r, db=self.db)
+
+    def _execute_insert_one(self, parent):
+        return self._execute_insert_many(parent)
 
     def _execute_insert_many(self, parent):
         documents = self.parts[0][1][0]
@@ -193,21 +223,61 @@ class MongoQuery(Query):
             if '_blobs' in r:
                 for file_id, bytes in r['_blobs'].items():
                     self.db.artifact_store._save_bytes(
-                        bytes, file_id,
+                        bytes,
+                        file_id,
                     )
                 r['_blobs'] = list(r['_blobs'].keys())
         q = self.table_or_collection.insert_many(documents, *trailing_args, **kwargs)
         result = q._execute(parent)
-        return [str(id) for id in result.inserted_ids]
+        return result.inserted_ids
 
     def _execute_update_many(self, parent):
         ids = [r['_id'] for r in self.select_ids._execute(parent)]
         filter = self.parts[0][1][0]
-        trailing_args = self.parts[0][1][1:]
+        trailing_args = list(self.parts[0][1][1:])
+        update = {}
+
+        # Encode update document
+        for ix, arg in enumerate(trailing_args):
+            if '$set' in arg:
+                if isinstance(arg, Document):
+                    update = QueryUpdateDocument.from_document(arg)
+                else:
+                    update = arg
+                del trailing_args[ix]
+                break
+
         kwargs = self.parts[0][2]
         filter['_id'] = {'$in': ids}
+        trailing_args.insert(0, update.encode())
+
         parent.update_many(filter, *trailing_args, **kwargs)
         return ids
+
+    @applies_to('find')
+    def outputs(self, *predict_ids):
+        find_args, find_kwargs = self.parts[0][1:]
+        find_args = list(find_args)
+
+        if not find_args:
+            find_args = [{}]
+
+        if not find_args[1:]:
+            find_args.append({})
+        for identifier in predict_ids:
+            find_args[1][f'_outputs.{identifier}'] = 1
+            find_args[1]['_leaves'] = 1
+            find_args[1]['_files'] = 1
+            find_args[1]['_blobs'] = 1
+        x = type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[
+                ('find', tuple(find_args), find_kwargs),
+                *self.parts[1:],
+            ],
+        )
+        return x
 
     @applies_to('find')
     def add_fold(self, fold: str):
@@ -249,11 +319,11 @@ class MongoQuery(Query):
             parts=[
                 ('find', args, kwargs),
                 *self.parts[1:],
-            ]
+            ],
         )
 
     @property
-    @applies_to('find', 'update_many', 'delete_many')
+    @applies_to('find', 'update_many', 'delete_many', 'delete_one')
     def select_ids(self):
         filter_ = {}
         if self.parts[0][1]:
@@ -285,7 +355,7 @@ class MongoQuery(Query):
         if len(args) == 1:
             args.append({})
         args[1] = {'_id': 1}
-        
+
         return self.table_or_collection.find(*args, **kwargs)
 
     @property
@@ -297,9 +367,7 @@ class MongoQuery(Query):
             args[0] = {}
         args[0]['_id'] = ObjectId(id)
         return type(self)(
-            db=self.db,
-            identifier=self.identifier,
-            parts=[('find_one', args, kwargs)]
+            db=self.db, identifier=self.identifier, parts=[('find_one', args, kwargs)]
         )
 
     @property
@@ -325,13 +393,15 @@ class MongoQuery(Query):
                     'Flattened outputs cannot be stored along with input documents.'
                     'Please use `document_embedded = False` option with flatten = True'
                 )
-            
+
             bulk_operations = []
             for i, id in enumerate(ids):
                 mongo_filter = {'_id': ObjectId(id)}
-                update = {**outputs[i], f'_outputs.{predict_id}': outputs[i]['_base']}
-                del update['_base']
-                update = Document({'$set': update})
+
+                update = {f'_outputs.{predict_id}': outputs[i]['_base']}
+
+                update = QueryUpdateDocument._create_metadata_update(update, outputs[i])
+                update = Document(update)
                 bulk_operations.append(
                     UpdateOne(
                         filter=mongo_filter,
@@ -347,24 +417,30 @@ class MongoQuery(Query):
                     _outputs = outputs[i]
                     if isinstance(_outputs, (list, tuple)):
                         for offset, output in enumerate(_outputs):
-                            documents.append({
-                                **output,
-                                '_source': ObjectId(id),
-                                '_offset': offset,
-                            })
+                            documents.append(
+                                {
+                                    **output,
+                                    '_source': ObjectId(id),
+                                    '_offset': offset,
+                                }
+                            )
                     else:
-                        documents.append({
-                            **outputs[i],
-                            '_source': ObjectId(id),
-                            '_offset': 0,
-                        })
+                        documents.append(
+                            {
+                                **outputs[i],
+                                '_source': ObjectId(id),
+                                '_offset': 0,
+                            }
+                        )
 
             else:
                 for i, id in enumerate(ids):
-                    documents.append({
-                        '_id': ObjectId(id),
-                        **outputs[i],
-                    })
+                    documents.append(
+                        {
+                            '_id': ObjectId(id),
+                            **outputs[i],
+                        }
+                    )
             return collection.insert_many(documents)
 
     @staticmethod
@@ -411,17 +487,21 @@ class BulkOp(Leaf):
     def __post_init__(self, db):
         super().__post_init__(db)
         assert self.identifier in self.ops
-    
+
     @property
     def op(self):
         import pymongo
+
         kwargs = {**self.kwargs}
         for k, v in self.kwargs.items():
             if isinstance(v, Document):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)
 
+
 from superduperdb.components.schema import Schema
+
+
 def get_schema(db, schema: t.Union[Schema, str]) -> Schema:
     """Handle schema caching and loading."""
     if isinstance(schema, Schema):

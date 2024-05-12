@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import inspect
 import json
 import os
 import typing as t
@@ -234,6 +233,7 @@ class Component(Leaf):
             cache[self.id] = self
             return f'?{self.id}'
         from superduperdb.base.document import _deep_flat_encode
+
         r = dict(self.dict())
         r = _deep_flat_encode(r, cache, blobs, files)
         cache[self.id] = r

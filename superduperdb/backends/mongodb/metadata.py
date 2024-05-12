@@ -1,12 +1,10 @@
 import typing as t
 
 import click
-import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore
-from superduperdb.components.component import Component
 from superduperdb.misc.colors import Colors
 
 
@@ -267,7 +265,7 @@ class MongoMetaDataStore(MetaDataStore):
         """
         uuid = self.component_collection.find_one(
             {'type_id': type_id, 'identifier': identifier, 'version': version},
-            {'uuid': 1, 'id': 1}
+            {'uuid': 1, 'id': 1},
         )['uuid']
         doc = {'child': uuid}
         return self.parent_child_mappings.count_documents(doc)
@@ -281,12 +279,9 @@ class MongoMetaDataStore(MetaDataStore):
         :param identifier: identifier of component
         :param version: version of component
         """
-
         uuid = self._get_component_uuid(type_id, identifier, version)
 
-        self.parent_child_mappings.delete_many(
-            {'parent': uuid}
-        )
+        self.parent_child_mappings.delete_many({'parent': uuid})
 
         return self.component_collection.delete_many(
             {
@@ -346,9 +341,7 @@ class MongoMetaDataStore(MetaDataStore):
 
         :param uuid: unique identifier of component
         """
-        return [
-            r['parent'] for r in self.parent_child_mappings.find({'child': uuid})
-        ]
+        return [r['parent'] for r in self.parent_child_mappings.find({'child': uuid})]
 
     def _replace_object(
         self,

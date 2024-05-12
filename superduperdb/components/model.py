@@ -13,9 +13,9 @@ import requests
 import tqdm
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
+
 # from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
@@ -770,7 +770,7 @@ class Model(Component):
             ids=ids,
             in_memory=in_memory,
         )
-    
+
         outputs = self.predict(dataset)
         outputs = self.encode_outputs(outputs)
 
@@ -1306,14 +1306,14 @@ class QueryModel(Model):
 @dc.dataclass(kw_only=True)
 class SequentialModel(Model):
     """
-<<<<<<< HEAD
-    Sequential model component which wraps a model to become serializable.
-=======
-    Sequential model component which wraps a model to become saveable 
->>>>>>> 9d83d21ec (Deprecate Serializable)
+    <<<<<<< HEAD
+        Sequential model component which wraps a model to become serializable.
+    =======
+        Sequential model component which wraps a model to become saveable
+    >>>>>>> 9d83d21ec (Deprecate Serializable)
 
-    {_model_params}
-    :param models: A list of models to use
+        {_model_params}
+        :param models: A list of models to use
     """
 
     __doc__ = __doc__.format(

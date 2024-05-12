@@ -8,7 +8,7 @@ import os
 import pickle
 import re
 import typing as t
-from abc import abstractmethod, abstractstaticmethod
+from abc import abstractstaticmethod
 
 import dill
 
@@ -33,6 +33,7 @@ if t.TYPE_CHECKING:
 class Empty:
     def __repr__(self):
         return '<EMPTY>'
+
 
 class IntermidiaType:
     """
@@ -61,7 +62,6 @@ def json_decode(b: str, info: t.Optional[t.Dict] = None) -> t.Any:
     :param info: Optional information
     """
     return json.loads(b)
-
 
 
 def pickle_encode(object: t.Any, info: t.Optional[t.Dict] = None) -> bytes:
@@ -436,7 +436,6 @@ class _BaseEncodable(Leaf):
     sha1: t.Optional[str] = None
     x: t.Optional[t.Any] = None
 
-
     def __post_init__(self, db):
         """
         Post-initialization hook.
@@ -638,7 +637,9 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
 
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep
+        )
         del r['x']
         blobs[self.file_id] = maybe_bytes
         cache[self.id] = r
@@ -784,7 +785,9 @@ methods = {
 
 
 @component()
-def get_serializer(identifier: str, method: str, encodable: str, db: t.Optional['Datalayer'] = None):
+def get_serializer(
+    identifier: str, method: str, encodable: str, db: t.Optional['Datalayer'] = None
+):
     return DataType(
         identifier=identifier,
         encodable=encodable,

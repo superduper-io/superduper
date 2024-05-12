@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
-from collections import defaultdict
 import dataclasses as dc
-from functools import wraps
 import json
 import re
 import typing as t
 import uuid
+from abc import ABC, abstractmethod
+from functools import wraps
 
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
@@ -24,9 +23,11 @@ def applies_to(*flavours):
                 f' for the {f.__name__} method to which this method applies.'
             )
             return f(self, *args, **kwargs)
+
         return decorated
+
     return decorator
-    
+
 
 @dc.dataclass(kw_only=True, repr=False)
 class Query(Leaf, ABC):
@@ -131,10 +132,7 @@ class Query(Leaf, ABC):
     def _dump_query(self):
         output, documents, queries = self._to_str()
         if queries:
-            output = (
-                '\n'.join(list(queries.values()))
-                + '\n' + output
-            )
+            output = '\n'.join(list(queries.values())) + '\n' + output
         for i, k in enumerate(queries):
             output = output.replace(k, str(i))
         for i, k in enumerate(documents):
@@ -197,7 +195,10 @@ class Query(Leaf, ABC):
                 return tuple(out)
             return out
         if isinstance(r, dict):
-            return {k: Query._encode_or_unpack_args(v, db, method=method) for k, v in r.items()}
+            return {
+                k: Query._encode_or_unpack_args(v, db, method=method)
+                for k, v in r.items()
+            }
         return r
 
     def _execute(self, parent, method='encode'):
@@ -222,7 +223,9 @@ class Query(Leaf, ABC):
         try:
             flavour = self._get_flavour()
             handler = getattr(self, f'_execute_{flavour}')
-            assert not isinstance(handler, Query), f'No method "{type(self)}._execute_{flavour}" found.'
+            assert not isinstance(
+                handler, Query
+            ), f'No method "{type(self)}._execute_{flavour}" found.'
             return handler(parent=parent)
         except StopIteration:
             return self._execute(parent=parent)
@@ -296,7 +299,12 @@ def _parse_query_part(part, documents, query, builder_cls):
     return current
 
 
-def parse_query(query: t.Union[str, list], documents, builder_cls, db: t.Optional['Datalayer'] = None):
+def parse_query(
+    query: t.Union[str, list],
+    documents,
+    builder_cls,
+    db: t.Optional['Datalayer'] = None,
+):
     documents = [Document(r) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]

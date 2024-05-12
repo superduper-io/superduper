@@ -10,7 +10,7 @@ from superduperdb.base.leaf import Leaf
 class FieldType(Leaf):
     identifier: t.Union[str, DataType]
 
-    def __post_init__(self, db): 
+    def __post_init__(self, db):
         super().__post_init__(db)
         if isinstance(self.identifier, DataType):
             self.identifier = self.identifier.name

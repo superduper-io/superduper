@@ -47,7 +47,7 @@ class Listener(Component):
 
     key: ModelInputType
     model: Model
-    select: Query 
+    select: Query
     active: bool = True
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     identifier: str = ''
@@ -157,6 +157,13 @@ class Listener(Component):
         all_ = list(args) + list(kwargs.values())
 
         return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
+
+    @property
+    def predict_id(self):
+        """
+        Get predict ID.
+        """
+        return self.uuid
 
     @override
     def schedule_jobs(

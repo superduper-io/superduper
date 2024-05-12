@@ -123,7 +123,7 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
         image_url = image_url[7:]
 
     collection = MongoQuery('documents')
-    to_insert = [Document({'img': my_pil_image(PIL.Image.open(image_url)).encode()})]
+    to_insert = [Document({'img': my_pil_image(PIL.Image.open(image_url))})]
 
     db.execute(collection.insert_many(to_insert))
 
@@ -143,10 +143,9 @@ def test_update_many(db):
 
     assert all(r['x'].x == to_update)
     assert all(s['x'].x == to_update)
-    assert (
-        r['_outputs']['x::linear_a::0::0'].x.tolist()
-        == s['_outputs']['x::linear_a::0::0'].x.tolist()
-    )
+    keys = [k.split('/')[-1] for k in db.show('listener')]
+
+    assert r['_outputs'][keys[1]].x.tolist() == s['_outputs'][keys[1]].x.tolist()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -155,7 +154,9 @@ def test_insert_many(db):
     an_update = get_new_data(db.datatypes['torch.float32[32]'], 10, update=True)
     db.execute(collection.insert_many(an_update))
     r = next(db.execute(collection.find({'update': True})))
-    assert 'x::linear_a::0::0' in r['_outputs']
+
+    keys = [l.split('/')[-1] for l in db.show('listener')]
+    assert any([k in r['_outputs'] for k in keys])
     assert len(list(db.execute(collection.find()))) == 5 + 10
 
 

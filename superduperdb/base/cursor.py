@@ -1,9 +1,8 @@
 import dataclasses as dc
 import typing as t
 
-from superduperdb import CFG, logging
+from superduperdb import logging
 from superduperdb.base.document import Document
-from superduperdb.misc.files import load_uris
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -62,6 +61,7 @@ class SuperDuperCursor:
                 r['score'] = self.scores[str(r[self.id_field])]
             except KeyError:
                 logging.warn(f"No document id found for {r}")
+
         return Document.decode(r, db=self.db, schema=self.schema)
 
     next = __next__

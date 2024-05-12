@@ -69,7 +69,9 @@ class Dataset(Component):
         Initialization method.
         """
         super().init()
-        self._data = [Document.decode(r, db=self.db) for r in pickle_decode(self.raw_data)]
+        self._data = [
+            Document.decode(r, db=self.db) for r in pickle_decode(self.raw_data)
+        ]
 
     @override
     def pre_create(self, db: 'Datalayer') -> None:

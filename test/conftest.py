@@ -11,7 +11,6 @@ import pytest
 import superduperdb as s
 from superduperdb import CFG, logging
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 
@@ -23,6 +22,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema
+from superduperdb.components.table import Table
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import pil_image
 
@@ -140,7 +140,6 @@ def add_random_data_to_sql_db(
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
     float_tensor = tensor(dtype='float', shape=(32,))
-    data = []
 
     schema = Schema(
         identifier=table_name,

@@ -4,7 +4,7 @@ All the llm model can use the check_xxx func to test the intergration with db.
 """
 
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Schema, IbisQuery
+from superduperdb.backends.ibis.query import IbisQuery, Schema
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document

@@ -1,4 +1,3 @@
-import dataclasses as dc
 import json
 import typing as t
 
@@ -8,7 +7,6 @@ from fastapi import File, Response
 from superduperdb import CFG, logging
 from superduperdb.backends.base.query import Delete, Insert
 from superduperdb.base.document import Document
-from superduperdb.components.component import Component, import_
 from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import (
@@ -17,7 +15,6 @@ from superduperdb.components.model import (
     QueryModel,
     SequentialModel,
 )
-from superduperdb.components.stack import Stack
 from superduperdb.components.vector_index import VectorIndex, vector
 from superduperdb.ext import openai, sentence_transformers
 from superduperdb.ext.llm.prompter import RetrievalPrompt

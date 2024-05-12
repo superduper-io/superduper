@@ -43,7 +43,6 @@ class DecoderPILImage:
 decode_pil_image = DecoderPILImage()
 
 
-
 @component(
     {'name': 'identifier', 'type': 'str'},
     {'name': 'media_type', 'type': 'str', 'default': 'image/png'},

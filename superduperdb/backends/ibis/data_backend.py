@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 import typing as t
 from warnings import warn
 
@@ -40,7 +40,7 @@ class IbisDataBackend(BaseDataBackend):
     def build_metadata(self):
         return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
 
-    # TODO this duplicates the method create_table_and_schema 
+    # TODO this duplicates the method create_table_and_schema
     def create_ibis_table(self, identifier: str, schema: Schema):
         self.conn.create_table(identifier, schema=schema)
 
@@ -108,8 +108,10 @@ class IbisDataBackend(BaseDataBackend):
         Create a schema in the data-backend.
         """
         if self.in_memory:
-            logging.info('Using in-memory tables so doing nothing'
-                         f' on create_table_and_schema for {identifier}')
+            logging.info(
+                'Using in-memory tables so doing nothing'
+                f' on create_table_and_schema for {identifier}'
+            )
             return
         try:
             mapping = self.db_helper.process_schema_types(mapping)

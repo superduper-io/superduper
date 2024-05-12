@@ -14,6 +14,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
+
 from .query import MongoQuery
 
 
@@ -33,7 +34,10 @@ class MongoDataBackend(BaseDataBackend):
 
     def get_query_builder(self, item):
         item_gotten = self._db[item]
-        if isinstance(item_gotten, (pymongo.collection.Collection, mongomock.collection.Collection)):
+        if isinstance(
+            item_gotten,
+            (pymongo.collection.Collection, mongomock.collection.Collection),
+        ):
             return MongoQuery(identifier=item, db=self.datalayer)
         return item_gotten
 

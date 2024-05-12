@@ -38,38 +38,59 @@ class Document(MongoStyleDict):
 
     _DEFAULT_ID_KEY: str = '_id'
 
-    def __init__(self,
-                 *args,
-                 schema: t.Optional['Schema'] = None,
-                 db: t.Optional['Datalayer'] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        *args,
+        schema: t.Optional['Schema'] = None,
+        db: t.Optional['Datalayer'] = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.db = db
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep: t.Sequence = (), schema: t.Optional['Schema']=None):
+    def _deep_flat_encode(
+        self,
+        cache,
+        blobs,
+        files,
+        leaves_to_keep: t.Sequence = (),
+        schema: t.Optional['Schema'] = None,
+    ):
         out = dict(self)
         if schema is not None:
             out = schema.deep_flat_encode_data(
-                self, cache, blobs, files,
+                self,
+                cache,
+                blobs,
+                files,
                 leaves_to_keep=leaves_to_keep,
             )
         return _deep_flat_encode(
-            out, cache, blobs, files,
+            out,
+            cache,
+            blobs,
+            files,
             leaves_to_keep=leaves_to_keep,
         )
 
-    def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep: t.Sequence = ()) -> t.Dict:
+    def encode(
+        self, schema: t.Optional['Schema'] = None, leaves_to_keep: t.Sequence = ()
+    ) -> t.Dict:
         cache = {}
         blobs = {}
         files = []
-        out = self._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        out = self._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        )
         out['_leaves'] = cache
         out['_files'] = files
         out['_blobs'] = blobs
         return out
 
     @classmethod
-    def decode(cls, r, schema: t.Optional['Schema'] = None, db: t.Optional['Datalayer'] = None):
+    def decode(
+        cls, r, schema: t.Optional['Schema'] = None, db: t.Optional['Datalayer'] = None
+    ):
         cache = {}
         blobs = {}
         if '_leaves' in r:
@@ -122,13 +143,48 @@ class Document(MongoStyleDict):
         return out
 
 
+class QueryUpdateDocument(Document):
+    @classmethod
+    def from_document(cls, document):
+        r = dict(document)
+        r = r.get('$set', r)
+        return QueryUpdateDocument(r)
+
+    @staticmethod
+    def _create_metadata_update(update, original=None):
+        # Update leaves
+        if original is None:
+            original = update
+        metadata = original.pop('_leaves', {})
+        for m, v in metadata.items():
+            update[f'_leaves.{m}'] = v
+
+        # Append files and blobs
+        push = {}
+        for k in ('_files', '_blobs'):
+            item = original.pop(k, [])
+            if item:
+                push[k] = {k: {'$each': item}}
+        update = {'$set': update, '$push': push}
+        return update
+
+    def encode(
+        self,
+        original: t.Any = None,
+        schema: t.Optional['Schema'] = None,
+        leaves_to_keep: t.Sequence = (),
+    ) -> t.Dict:
+        r = dict(self)
+        r = r.get('$set', r)
+        update = super().encode(schema=schema, leaves_to_keep=leaves_to_keep)
+        return self._create_metadata_update(update, original=original)
+
+
 def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
     if isinstance(item, _BaseEncodable) and not isinstance(item, leaves_to_keep):  # type: ignore[arg-type]
         return item.unpack()
     elif isinstance(item, dict):
-        return {
-            k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()
-        }
+        return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}
     elif isinstance(item, list):
         return [_unpack(x, leaves_to_keep=leaves_to_keep) for x in item]
     else:
@@ -137,9 +193,15 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
 
 def _deep_flat_encode(r, cache, blobs, files, leaves_to_keep: t.Sequence[Leaf] = ()):
     if isinstance(r, dict):
-        return {k: _deep_flat_encode(v, cache, blobs, files, leaves_to_keep=leaves_to_keep) for k, v in r.items()}
+        return {
+            k: _deep_flat_encode(v, cache, blobs, files, leaves_to_keep=leaves_to_keep)
+            for k, v in r.items()
+        }
     if isinstance(r, list):
-        return [_deep_flat_encode(x, cache, blobs, files, leaves_to_keep=leaves_to_keep) for x in r]
+        return [
+            _deep_flat_encode(x, cache, blobs, files, leaves_to_keep=leaves_to_keep)
+            for x in r
+        ]
     if isinstance(r, Leaf):
         return r._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
     return r
@@ -154,6 +216,7 @@ def _get_leaf_from_cache(k, cache, blobs, db: t.Optional['Datalayer'] = None):
 
 
 def _deep_flat_decode(r, cache, blobs, db: t.Optional['Datalayer'] = None):
+    # TODO: Document this function (Important)
     if isinstance(r, Leaf):
         return r
     if isinstance(r, list):

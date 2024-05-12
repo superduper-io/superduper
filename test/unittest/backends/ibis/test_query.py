@@ -1,5 +1,4 @@
 import tempfile
-from superduperdb.base.document import Document
 from test.db_config import DBConfig
 
 import numpy
@@ -8,6 +7,7 @@ import pytest
 
 from superduperdb import superduper
 from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.base.document import Document
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
@@ -164,5 +164,5 @@ def test_add_fold(db):
     indirect=True,
 )
 def test_get_data(db):
-    q = db['documents'].limit(2)
-    r = db.metadata.get_component('table', 'documents')
+    db['documents'].limit(2)
+    db.metadata.get_component('table', 'documents')

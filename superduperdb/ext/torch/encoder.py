@@ -53,7 +53,12 @@ class DecodeTensor:
 
 
 @component()
-def tensor(dtype, shape: t.Sequence, bytes_encoding: t.Optional[str] = None, db: t.Optional['Datalayer'] = None):
+def tensor(
+    dtype,
+    shape: t.Sequence,
+    bytes_encoding: t.Optional[str] = None,
+    db: t.Optional['Datalayer'] = None,
+):
     """
     Create an encoder for a tensor of a given dtype and shape.
 

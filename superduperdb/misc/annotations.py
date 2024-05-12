@@ -194,6 +194,7 @@ def _get_indent(docstring: str) -> int:
 def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     def decorator(f):
         import inspect
+
         db_dep = 'db' in inspect.signature(f).parameters
 
         @functools.wraps(f)
@@ -204,12 +205,14 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
                 out = f(*args, **kwargs)
 
             assert isinstance(out, Component)
+
             def _deep_flat_encode(cache, blobs, files, leaves_to_keep=()):
                 h = hashlib.sha1(str(kwargs).encode()).hexdigest()
                 path = f'{f.__module__}/{f.__name__}'.replace('.', '/')
                 id = f'{path}/{h}'
                 cache[id] = {'_path': path, **kwargs}
                 return f'?{id}'
+
             out._deep_flat_encode = _deep_flat_encode
             return out
 
@@ -217,4 +220,5 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
         decorated.build = lambda r: f(**r)
         decorated.handle_integration = handle_integration
         return decorated
+
     return decorator

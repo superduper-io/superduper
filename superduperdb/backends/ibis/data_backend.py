@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 import typing as t
 from warnings import warn
 
@@ -151,8 +151,10 @@ class IbisDataBackend(BaseDataBackend):
         :param mapping: The mapping of the schema.
         """
         if self.in_memory:
-            logging.info('Using in-memory tables so doing nothing'
-                         f' on create_table_and_schema for {identifier}')
+            logging.info(
+                'Using in-memory tables so doing nothing'
+                f' on create_table_and_schema for {identifier}'
+            )
             return
         try:
             mapping = self.db_helper.process_schema_types(mapping)

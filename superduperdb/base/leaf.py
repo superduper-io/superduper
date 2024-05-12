@@ -2,8 +2,9 @@ import dataclasses as dc
 import importlib
 import inspect
 import typing as t
-from abc import ABC
 import uuid
+from abc import ABC
+
 from superduperdb.misc.serialization import asdict
 
 _CLASS_REGISTRY = {}
@@ -21,15 +22,20 @@ def _import_item(cls, module, dict, db: t.Optional['Datalayer'] = None):
         if 'got an unexpected keyword argument' in str(e):
             if callable(cls) and not inspect.isclass(cls):
                 return cls(
-                    **{k: v for k, v in dict.items() if k in inspect.signature(cls).parameters},
-                    db=db
+                    **{
+                        k: v
+                        for k, v in dict.items()
+                        if k in inspect.signature(cls).parameters
+                    },
+                    db=db,
                 )
-            init_params = {k: v for k, v in dict.items() if k in inspect.signature(cls.__init__).parameters}
+            init_params = {
+                k: v
+                for k, v in dict.items()
+                if k in inspect.signature(cls.__init__).parameters
+            }
             post_init_params = {k: v for k, v in dict.items() if k in cls.set_post_init}
-            instance = cls(
-                **init_params,
-                db=db
-            )
+            instance = cls(**init_params, db=db)
             for k, v in post_init_params.items():
                 setattr(instance, k, v)
             return instance
@@ -68,16 +74,17 @@ class Leaf(ABC):
             cache[self.id] = self
             return f'?{self.id}'
         from superduperdb.base.document import _deep_flat_encode
+
         r = dict(self.dict())
         return _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep)
 
     def dict(self):
         from superduperdb import Document
+
         r = asdict(self)
-        path = (
-            f'{self.__class__.__module__}.'
-            f'{self.__class__.__name__}'
-        ).replace('.', '/')
+        path = (f'{self.__class__.__module__}.' f'{self.__class__.__name__}').replace(
+            '.', '/'
+        )
         return Document({'_path': path, **r})
 
     @classmethod

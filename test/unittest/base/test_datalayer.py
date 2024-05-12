@@ -15,15 +15,15 @@ except ImportError:
 
 import dataclasses as dc
 from test.db_config import DBConfig
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from superduperdb.backends.ibis.field_types import dtype
+
 # from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import (
@@ -106,14 +106,11 @@ def add_fake_model(db: Datalayer):
     )
 
 
-
 # EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
 EMPTY_CASES = [DBConfig.mongodb_empty]
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
@@ -152,9 +149,7 @@ def test_add_version(db: Datalayer):
     assert db.show('test-component', 'test') == [0, 1, 2]
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_component_with_bad_artifact(db):
     artifact = {'data': lambda x: x}
     component = TestComponent(
@@ -164,9 +159,7 @@ def test_add_component_with_bad_artifact(db):
         db.apply(component)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = {'data': 1}
@@ -179,9 +172,7 @@ def test_add_artifact_auto_replace(db):
         assert 'sha1' in serialized['_leaves'][key]
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_child(db):
     child_component = TestComponent(identifier='child')
     component = TestComponent(identifier='test', child=child_component)
@@ -203,9 +194,7 @@ def test_add_child(db):
     assert parents == [component_3.uuid]
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add(db):
     component = TestComponent(identifier='test')
     db.apply(component)
@@ -249,9 +238,7 @@ def test_add_table(db):
     db.apply(component)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_version(db):
     db.apply(
         [
@@ -280,9 +267,7 @@ def test_remove_component_version(db):
     assert db.show('test-component', 'test') == []
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
     db.apply(
@@ -298,9 +283,7 @@ def test_remove_component_with_parent(db):
     assert 'is involved in other components' in str(e)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_clean_up(db):
     # Test clean up
     component_clean_up = TestComponent(
@@ -312,9 +295,7 @@ def test_remove_component_with_clean_up(db):
     assert 'cleanup' in str(e)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
     test_datatype = DataType(identifier='test_datatype')
@@ -324,9 +305,7 @@ def test_remove_component_from_data_layer_dict(db):
         db.datatypes['test_datatype']
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
     component_with_artifact = TestComponent(
@@ -346,9 +325,7 @@ def test_remove_component_with_artifact(db):
         mock_delete.assert_called_once_with(artifact_file_id)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_one_version(db):
     db.apply(
         [
@@ -364,9 +341,7 @@ def test_remove_one_version(db):
     assert db.show('test-component', 'test') == [0]
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_multi_version(db):
     db.apply(
         [
@@ -382,9 +357,7 @@ def test_remove_multi_version(db):
     assert db.show('test-component', 'test') == []
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_not_exist_component(db):
     with pytest.raises(FileNotFoundError) as e:
         db.remove('test-component', 'test', 0, force=True)
@@ -393,9 +366,7 @@ def test_remove_not_exist_component(db):
     db.remove('test-component', 'test', force=True)
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_show(db):
     db.apply(
         [
@@ -431,9 +402,7 @@ def test_show(db):
     assert db.show('test-component', 'b', -1)['version'] == 2
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
     db.apply(
@@ -521,7 +490,7 @@ def test_insert_sql_db(db):
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    q =  MongoQuery('documents').insert_many(
+    q = MongoQuery('documents').insert_many(
         [Document({'x': i, 'update': True}) for i in range(5)]
     )
     db._insert(q)
@@ -552,9 +521,7 @@ def test_delete(db):
     assert len(new_docs) == 5
 
 
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_replace(db):
     model = ObjectModel(
         object=lambda x: x + 1,
@@ -587,9 +554,7 @@ def test_replace(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db", EMPTY_CASES, indirect=True
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_compound_component(db):
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
@@ -664,5 +629,6 @@ def test_dataset(db):
     assert db.show('dataset') == ['test_dataset']
     dataset = db.load('dataset', 'test_dataset')
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
+
 
 # TODO: add UT for task workflow

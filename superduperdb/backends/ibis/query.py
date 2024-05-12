@@ -1,9 +1,9 @@
-from collections import defaultdict
 import dataclasses as dc
-import uuid
-import pandas
-
 import typing as t
+import uuid
+from collections import defaultdict
+
+import pandas
 
 from superduperdb.backends.base.query import Query, applies_to
 from superduperdb.base.cursor import SuperDuperCursor
@@ -66,7 +66,6 @@ def _model_update_impl(
 
 @dc.dataclass(kw_only=True, repr=False)
 class IbisQuery(Query):
-
     flavours: t.ClassVar[t.Dict[str, str]] = {
         'pre_like': '^.*\.like\(.*\)\.find',
         'post_like': '^.*\.([a-z]+)\(.*\)\.like(.*)$',
@@ -93,7 +92,9 @@ class IbisQuery(Query):
     @property
     def schema(self):
         fields = {}
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
         t = self.db.load('table', 'documents')
         tables = self.tables
         if len(tables) == 1:
@@ -102,9 +103,9 @@ class IbisQuery(Query):
             renamings = t.renamings
             tmp = c.schema.fields
             to_update = dict(
-                (renamings[k], v) 
-                if k in renamings else (k, v)
-                for k, v in tmp.items() if k in renamings
+                (renamings[k], v) if k in renamings else (k, v)
+                for k, v in tmp.items()
+                if k in renamings
             )
             fields.update(to_update)
         return Schema(f'_tmp:{self.identifier}', fields)
@@ -125,12 +126,13 @@ class IbisQuery(Query):
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['like']
 
-        similar_ids, similar_scores = self.db.get_nearest(like, vector_index=vector_index)
+        similar_ids, similar_scores = self.db.get_nearest(
+            like, vector_index=vector_index
+        )
         similar_scores = dict(zip(similar_ids, similar_scores))
-        table = self.table_or_collection
         filter_query = eval(f'table.{self.primary_id}.isin(similar_ids)')
         new_query = self.table_or_collection.filter(filter_query)
-    
+
         return IbisQuery(
             db=self.db,
             identifier=self.identifier,
@@ -145,7 +147,7 @@ class IbisQuery(Query):
         like_kwargs = self.parts[-1][2]
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['like']
-        ids = [r[self.primary_id] for r in self.select_ids._execute(parent)]
+        [r[self.primary_id] for r in self.select_ids._execute(parent)]
         similar_ids, similar_scores = self.db.find_nearest(
             like,
             vector_index=vector_index,
@@ -175,7 +177,7 @@ class IbisQuery(Query):
         )
 
     def _execute(self, parent, method='encode'):
-        output  = super()._execute(parent, method=method)
+        output = super()._execute(parent, method=method)
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient='records')
         component_table = self.db.tables[self.table_or_collection]
@@ -189,7 +191,7 @@ class IbisQuery(Query):
     @property
     def type(self):
         return defaultdict(lambda: 'select', {'insert': 'insert'})[self.flavour]
-        
+
     @property
     def primary_id(self):
         return self.db.tables[self.identifier].primary_id
@@ -241,7 +243,6 @@ class IbisQuery(Query):
         return out
 
     def select_single_id(self, id: str):
-        table = self.table_or_collection
         filter_query = eval(f'table.{self.primary_id} == id')
         return self.filter(filter_query)
 

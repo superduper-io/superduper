@@ -83,7 +83,7 @@ class Component(Leaf):
     changed: t.ClassVar[set] = set([])
 
     @property
-    def id(self):
+    def _id(self):
         return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
 
     def __post_init__(self, db, artifacts):
@@ -228,16 +228,16 @@ class Component(Leaf):
         """
         assert db
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(),schema=None):
         if isinstance(self, leaves_to_keep):
-            cache[self.id] = self
-            return f'?{self.id}'
+            cache[self._id] = self
+            return f'?{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
-        r = _deep_flat_encode(r, cache, blobs, files)
-        cache[self.id] = r
-        return f'?{self.id}'
+        r = _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        cache[self._id] = r
+        return f'?{self._id}'
 
     def _to_dict_and_bytes(self):
         r = self.deep_flat_encode()

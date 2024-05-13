@@ -5,10 +5,20 @@ from collections import defaultdict
 
 import pandas
 
-from superduperdb.backends.base.query import Query, applies_to
+from superduperdb import Document
+from superduperdb.backends.base.query import Query, applies_to, parse_query as _parse_query
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.components.schema import Schema
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
+def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
+    return _parse_query(
+        query=query,
+        documents=documents,
+        builder_cls=IbisQuery,
+        db=db,
+    )
 
 def _model_update_impl_flatten(
     db,
@@ -20,18 +30,16 @@ def _model_update_impl_flatten(
 
     for ix in range(len(outputs)):
         for r in outputs[ix]:
+            
             d = {
                 '_input_id': str(ids[ix]),
                 '_source': str(ids[ix]),
-                'output': r,
+                'output': Document.decode(r).unpack(),
             }
             table_records.append(d)
 
-    for r in table_records:
-        if isinstance(r['output'], dict) and '_content' in r['output']:
-            r['output'] = r['output']['_content']['bytes']
 
-    db.databackend.insert(f'_outputs.{predict_id}', table_records)
+    return db[f'_outputs.{predict_id}'].insert(table_records)
 
 
 def _model_update_impl(
@@ -53,7 +61,7 @@ def _model_update_impl(
     for ix in range(len(outputs)):
         d = {
             '_input_id': str(ids[ix]),
-            'output': outputs[ix],
+            'output': Document.decode(outputs[ix]).unpack(),
         }
         table_records.append(d)
 
@@ -61,56 +69,70 @@ def _model_update_impl(
         if isinstance(r['output'], dict) and '_content' in r['output']:
             r['output'] = r['output']['_content']['bytes']
 
-    db.databackend.insert(f'_outputs.{predict_id}', table_records)
+    return db[f'_outputs.{predict_id}'].insert(table_records)
+
 
 
 @dc.dataclass(kw_only=True, repr=False)
 class IbisQuery(Query):
     flavours: t.ClassVar[t.Dict[str, str]] = {
-        'pre_like': '^.*\.like\(.*\)\.find',
+        'pre_like': '^.*\.like\(.*\)\.select',
         'post_like': '^.*\.([a-z]+)\(.*\)\.like(.*)$',
         'insert': '^[^\(]+\.insert\(.*\)$',
+        'filter': '^[^\(]+\.filter\(.*\)$',
+        'delete': '^[^\(]+\.delete\(.*\)$',
+        'select': '^[^\(]+\.select\(.*\)$',
+        'join': '^.*\.join\(.*\)$',
+        'anti_join': '^[^\(]+\.anti_join\(.*\)$',
     }
+
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep,schema=schema
+        )
+        cache[r[1:]]['_path'] = 'superduperdb/backends/ibis/query/parse_query'
+        return r
+
 
     @property
     @applies_to('insert')
     def documents(self):
         return self.parts[0][1][0]
 
-    @property
-    def tables(self):
+    def _get_tables(self):
         out = {self.identifier: self.db.tables[self.identifier]}
+
         for part in self.parts:
-            for a in part[1]:
+            if isinstance(part, str):
+                return out
+            args = part[1]
+            for a in args:
                 if isinstance(a, IbisQuery):
-                    out.update(a.tables)
-            for v in part[2].values():
+                    out.update(a._get_tables())
+            kwargs = part[2].values()
+            for v in kwargs:
                 if isinstance(v, IbisQuery):
-                    out.update(v.tables)
+                    out.update(v._get_tables())
         return out
 
-    @property
-    def schema(self):
+    def _get_schema(self):
         fields = {}
-        import pdb
+        tables = self._get_tables()
 
-        pdb.set_trace()
-        t = self.db.load('table', 'documents')
-        tables = self.tables
         if len(tables) == 1:
             return self.db.tables[self.identifier].schema
-        for t, c in self.tables.items():
-            renamings = t.renamings
+
+        for _, c in tables.items():
+            renamings = self.renamings()
             tmp = c.schema.fields
             to_update = dict(
                 (renamings[k], v) if k in renamings else (k, v)
                 for k, v in tmp.items()
-                if k in renamings
             )
             fields.update(to_update)
-        return Schema(f'_tmp:{self.identifier}', fields)
 
-    @property
+        return Schema(f'_tmp:{self.identifier}', fields=fields)
+
     def renamings(self):
         r = {}
         for part in self.parts:
@@ -124,47 +146,92 @@ class IbisQuery(Query):
         like_args = self.parts[0][1]
         like_kwargs = self.parts[0][2]
         vector_index = like_kwargs['vector_index']
-        like = like_args[0] if like_args else like_kwargs['like']
+        like = like_args[0] if like_args else like_kwargs['r']
 
-        similar_ids, similar_scores = self.db.get_nearest(
-            like, vector_index=vector_index
-        )
-        similar_scores = dict(zip(similar_ids, similar_scores))
-        filter_query = eval(f'table.{self.primary_id}.isin(similar_ids)')
-        new_query = self.table_or_collection.filter(filter_query)
-
-        return IbisQuery(
-            db=self.db,
-            identifier=self.identifier,
-            parts=[
-                *new_query.parts,
-                *self.parts[1:],
-            ],
-        )
-
-    def _execute_post_like(self, parent):
-        like_args = self.parts[-1][1]
-        like_kwargs = self.parts[-1][2]
-        vector_index = like_kwargs['vector_index']
-        like = like_args[0] if like_args else like_kwargs['like']
-        [r[self.primary_id] for r in self.select_ids._execute(parent)]
-        similar_ids, similar_scores = self.db.find_nearest(
-            like,
-            vector_index=vector_index,
+        similar_ids, similar_scores = self.db.select_nearest(
+            like, vector_index=vector_index, 
             n=like_kwargs.get('n', 10),
         )
         similar_scores = dict(zip(similar_ids, similar_scores))
-        output = self._execute(self[:-1].select_using_ids(similar_ids))
-        output.scores = similar_scores
-        return output
+        t = self.db[self.identifier]
+        filter_query =  t.filter(getattr(t, self.primary_id).isin(similar_ids))
+        
+        query = IbisQuery(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[
+                *filter_query.parts,
+                *self.parts[1:],
+            ],
+        )
+        return query._execute(parent)
+
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __leq__(self, other):
+        return super().__leq__(other)
+    def __geq__(self, other):
+        return super().__geq__(other)
+
+
+
+    def _execute_post_like(self, parent):
+        pre_like_parts= []
+        like_part = []
+        like_part_index= 0
+        for i, part in enumerate(self.parts):
+            if not isinstance(part, str):
+                if part[0] == 'like':
+                    like_part = part
+                    like_part_index = i
+                    break
+            pre_like_parts.append(part)
+        post_like_parts = self.parts[like_part_index+1:]
+
+        like_args = like_part[1]
+        like_kwargs = like_part[2]
+        vector_index = like_kwargs['vector_index']
+        like = like_args[0] if like_args else like_kwargs['r']
+        pre_like_query = IbisQuery(db=self.db, identifier=self.identifier, parts=pre_like_parts)
+        within_ids = [r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)]
+        similar_ids, similar_scores = self.db.select_nearest(
+            like,
+            vector_index=vector_index,
+            n=like_kwargs.get('n', 10),
+            ids=within_ids
+        )
+        similar_scores = dict(zip(similar_ids, similar_scores))
+
+        t = self.db[pre_like_query._get_parent().get_name()]
+        filter_query =  pre_like_query.filter(getattr(t, self.primary_id).isin(similar_ids))
+        
+
+        parts = filter_query.parts + post_like_parts
+
+        q = IbisQuery(db=self.db, identifier=self.identifier, parts=parts)
+        outputs  = q._execute(parent)
+        outputs.scores = similar_scores
+        return outputs
+
+    def _execute_select(self, parent):
+        return self._execute(parent)
+
 
     def _execute_insert(self, parent):
         documents = self.documents
+        table = self._get_tables()[self.identifier]
+        schema = table.schema
+
+        documents = [ r.encode(schema) if isinstance(r, Document) else r for r in documents ]
         for r in documents:
             if self.primary_id not in r:
-                r[self.primary_id] = str(uuid.uuid4())
+                pid = str(uuid.uuid4())
+                r[self.primary_id] = pid
         ids = [r[self.primary_id] for r in documents]
-        self._execute(parent, method='encode')
+        self.db.databackend.insert(
+            self.table_or_collection.identifier, raw_documents=documents
+        )
         return ids
 
     def _create_table_if_not_exists(self):
@@ -173,24 +240,24 @@ class IbisQuery(Query):
             return
         self.db.databackend.create_table_and_schema(
             self.identifier,
-            self.schema.raw,
+            self._get_schema().raw,
         )
 
     def _execute(self, parent, method='encode'):
-        output = super()._execute(parent, method=method)
+        output = super()._execute(parent, method=method).execute()
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient='records')
-        component_table = self.db.tables[self.table_or_collection]
+        component_table = self.db.tables[self.identifier]
         return SuperDuperCursor(
-            raw_cursor=(r for r in output),
+            raw_cursor=output,
             db=self.db,
             id_field=component_table.primary_id,
-            schema=component_table.schema,
+            schema=self._get_schema(),
         )
 
     @property
     def type(self):
-        return defaultdict(lambda: 'select', {'insert': 'insert'})[self.flavour]
+        return defaultdict(lambda:'select', {'replace':'update', 'delete':'delete', 'filter':'select', 'insert': 'insert'})[self.flavour]
 
     @property
     def primary_id(self):
@@ -225,7 +292,7 @@ class IbisQuery(Query):
         return self.filter(self._fold == fold)
 
     def select_using_ids(self, ids: t.Sequence[str]):
-        filter_query = eval(f'self.{self.primary_id}.isin(ids)')
+        filter_query =  self.__getattr__(self.table_or_collection.primary_id).isin(ids)
         return self.filter(filter_query)
 
     @property
@@ -233,12 +300,35 @@ class IbisQuery(Query):
         return self.select(self.primary_id)
 
     @applies_to('select')
+    def outputs(self, *predict_ids):
+        find_args, find_kwargs = self.parts[0][1:]
+        find_args = list(find_args)
+
+        if not find_args:
+            find_args = [{}]
+
+        if not find_args[1:]:
+            find_args.append({})
+
+        for identifier in predict_ids:
+            symbol_table = self.db[f'_outputs.{identifier}']
+            symbol_table = symbol_table.relabel(
+                # TODO: check for folds
+                {'output': f'_outputs.{identifier}'}# '_fold': f'fold.{identifier}'}
+            )
+            attr = getattr(self.db[self.identifier], self.table_or_collection.primary_id)
+            other_query = symbol_table.join(self.db[self.identifier], symbol_table._input_id == attr)
+            return other_query
+
+
+
+    @applies_to('select')
     def select_ids_of_missing_outputs(self, predict_id: str):
-        output_table = self.db.tables[f'_outputs.{predict_id}']
-        output_table = output_table.relabel({'_base': '_outputs.' + predict_id})
+        output_table = self.db[f'_outputs.{predict_id}']
+        input_table = self.db[self.table_or_collection.identifier]
         out = self.anti_join(
             output_table,
-            output_table._input_id == self[self.table_or_collection.primary_id],
+            output_table._input_id == getattr(input_table, input_table.primary_id),
         )
         return out
 

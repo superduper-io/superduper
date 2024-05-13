@@ -652,7 +652,9 @@ class Model(Component):
         :param overwrite: Overwrite all documents or only new documents
         """
         if isinstance(select, dict):
+            # TODO: select is loaded without db
             select = Document.decode(select).unpack()
+            select.db = db
 
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
@@ -797,13 +799,15 @@ class Model(Component):
 
         :param outputs: outputs to encode.
         """
+        # TODO: Fallback when output schema not provided in ibis.
+
         if isinstance(self.datatype, DataType):
             if self.flatten:
                 outputs = [
-                    [self.datatype(x).encode() for x in output] for output in outputs
+                    [self.datatype(x).encode(self.output_schema) for x in output] for output in outputs
                 ]
             else:
-                outputs = [self.datatype(x).encode() for x in outputs]
+                outputs = [self.datatype(x).encode(self.output_schema) for x in outputs]
         elif isinstance(self.output_schema, Schema):
             outputs = self.encode_with_schema(outputs)
 

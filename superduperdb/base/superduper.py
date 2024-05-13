@@ -188,7 +188,7 @@ class TorchTyper(_DuckTyper):
         if isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule):
             return TorchModel(identifier=_auto_identify(item), object=item, **kwargs)
 
-        raise TypeError('Expected a Module but got {type(item)}')
+        raise TypeError(f'Expected a Module but got {type(item)}')
 
 
 def _auto_identify(instance: t.Any) -> str:

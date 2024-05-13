@@ -206,7 +206,7 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
 
             assert isinstance(out, Component)
 
-            def _deep_flat_encode(cache, blobs, files, leaves_to_keep=()):
+            def _deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=schema):
                 h = hashlib.sha1(str(kwargs).encode()).hexdigest()
                 path = f'{f.__module__}/{f.__name__}'.replace('.', '/')
                 id = f'{path}/{h}'

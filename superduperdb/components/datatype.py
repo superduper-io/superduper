@@ -504,23 +504,34 @@ class Encodable(_BaseEncodable):
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def encode(self, schema: t.Optional['Schema']=None):
+        cache = {}
+        blobs = {}
+        files = {}
+        
+        return {
+            '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
+            '_leaves': cache,
+            '_blobs': blobs,
+        }
+
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
 
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
-        r = super()._deep_flat_encode(cache, blobs, files)
+        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=schema)
         del r['x']
         r['blob'] = maybe_bytes
         cache[self.id] = r
+        if schema is not None:
+            return maybe_bytes
         return f'?{self.id}'
 
     @classmethod
     def _get_object(cls, db, r):
-        if r.get('bytes') is None:
-            return None
         datatype = cls.get_datatype(db, r)
         object = datatype.decode_data(r['bytes'], info=datatype.info)
         return object
@@ -539,6 +550,42 @@ class Encodable(_BaseEncodable):
         :param db: The Datalayer instance.
         """
         pass
+    @classmethod
+    def decode(cls, r, db=None) -> 'Encodable':
+        """
+        Decode the dictionary `r` to an `Encodable` instance.
+
+        :param r: The dictionary to decode.
+        :param db: The Datalayer instance.
+        """
+        object = cls._get_object(db, r)
+        return cls(
+            x=object,
+            blob=r
+        )
+
+    @classmethod
+    def get_datatype(cls, db, r):
+        """
+        Get the datatype of the object
+
+        :param db: `Datalayer` instance to assist with
+        :param r: The object to get the datatype from
+        """
+        if db is None:
+            try:
+                from superduperdb.components.datatype import serializers
+
+                datatype = serializers[r['datatype']]
+            except KeyError:
+                raise ValueError(
+                    f'You specified a serializer which doesn\'t have a'
+                    f' default value: {r["datatype"]}'
+                )
+        else:
+            datatype = db.datatypes[r['datatype']]
+        return datatype
+
 
 
 @dc.dataclass
@@ -555,12 +602,12 @@ class Native(_BaseEncodable):
     def _get_object(cls, db, r):
         raise NotImplementedError
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
 
-        r = super()._deep_flat_encode(cache, blobs, files)
+        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
         cache[self.id] = r
         return f'?{self.id}'
 
@@ -600,7 +647,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
@@ -608,7 +655,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
         r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         del r['x']
         blobs[self.file_id] = maybe_bytes
@@ -651,7 +698,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'

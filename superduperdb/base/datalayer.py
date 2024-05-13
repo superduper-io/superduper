@@ -168,10 +168,13 @@ class Datalayer:
         if vi.indexing_listener.select is None:
             raise ValueError('.select must be set')
 
+        if vi.indexing_listener.select.db is None:
+            vi.indexing_listener.select.db = self
+
         key = vi.indexing_listener.key
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
-
+        
         query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
 
         logging.info(str(query))
@@ -191,7 +194,6 @@ class Datalayer:
                 if isinstance(h, _BaseEncodable):
                     h = h.unpack()
                 items.append(VectorItem.create(id=str(id), vector=h))
-
             searcher.add(items)
             progress.update(len(items))
 
@@ -607,7 +609,6 @@ class Datalayer:
                 ' after version 0.2.0'
             )
             type_id = 'datatype'
-
         if uuid is None:
             info = self.metadata.get_component(
                 type_id=type_id,

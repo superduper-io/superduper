@@ -10,12 +10,14 @@ from superduperdb.components.datatype import (
     Encodable,
     _BaseEncodable,
 )
-from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
+from superduperdb.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.schema import Schema
 
+
+ 
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
@@ -27,6 +29,13 @@ _LEAF_TYPES = {
 }
 _LEAF_TYPES.update(_ENCODABLES)
 _OUTPUTS_KEY = '_outputs'
+
+def get_schema(db, schema: t.Union['Schema', str]) -> 'Schema':
+    """Handle schema caching and loading."""
+    if isinstance(schema, Schema):
+        return schema
+    assert isinstance(schema, str)
+    return db.schemas[schema]
 
 
 class Document(MongoStyleDict):
@@ -71,20 +80,26 @@ class Document(MongoStyleDict):
             blobs,
             files,
             leaves_to_keep=leaves_to_keep,
+            schema=schema
         )
 
     def encode(
-        self, schema: t.Optional['Schema'] = None, leaves_to_keep: t.Sequence = ()
+        self, schema: t.Optional[t.Union['Schema', str]] = None, leaves_to_keep: t.Sequence = ()
     ) -> t.Dict:
         cache = {}
         blobs = {}
         files = []
+            
+        # Get schema from database.
+        schema = get_schema(self.db, schema) if schema else None
+
         out = self._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         out['_leaves'] = cache
         out['_files'] = files
         out['_blobs'] = blobs
+        out = SuperDuperFlatEncode(out)
         return out
 
     @classmethod
@@ -191,19 +206,19 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
         return item
 
 
-def _deep_flat_encode(r, cache, blobs, files, leaves_to_keep: t.Sequence[Leaf] = ()):
+def _deep_flat_encode(r, cache, blobs, files, leaves_to_keep: t.Sequence[Leaf] = (), schema: t.Optional[Schema] = None):
     if isinstance(r, dict):
         return {
-            k: _deep_flat_encode(v, cache, blobs, files, leaves_to_keep=leaves_to_keep)
+            k: _deep_flat_encode(v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
             for k, v in r.items()
         }
     if isinstance(r, list):
         return [
-            _deep_flat_encode(x, cache, blobs, files, leaves_to_keep=leaves_to_keep)
+            _deep_flat_encode(x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
             for x in r
         ]
     if isinstance(r, Leaf):
-        return r._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep)
+        return r._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
     return r
 
 

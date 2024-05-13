@@ -152,22 +152,26 @@ def add_random_data_to_sql_db(
     )
     t = Table(identifier=table_name, schema=schema)
     db.add(t)
-
-    # for i in range(number_data_points):
-    #     x = torch.randn(32)
-    #     y = int(random.random() > 0.5)
-    #     z = torch.randn(32)
-    #     data.append(
-    #         Document(
-    #             {
-    #                 'id': str(i),
-    #                 'x': x,
-    #                 'y': y,
-    #                 'z': z,
-    #             }
-    #         )
-    #     )
-    # db[table_name].insert(data).execute()
+    data = []
+    for i in range(number_data_points):
+        x = torch.randn(32)
+        y = int(random.random() > 0.5)
+        z = torch.randn(32)
+        fold = int(random.random() > 0.5)
+        fold = 'valid' if fold else 'train'
+    
+        data.append(
+            Document(
+                {
+                    'id': str(i),
+                    'x': x,
+                    'y': y,
+                    'z': z,
+                    '_fold': fold
+                }
+            )
+        )
+    db[table_name].insert(data).execute()
 
 
 def add_random_data_to_mongo_db(
@@ -204,7 +208,7 @@ def add_datatypes(db: Datalayer):
     db.apply(pil_image)
 
 
-def add_models(db: Datalayer):
+def add_models(db: Datalayer, is_mongodb_backend=True ):
     # identifier, weight_shape, encoder
     params = [
         ['linear_a', (32, 16), tensor(dtype='float', shape=(16,))],
@@ -216,7 +220,17 @@ def add_models(db: Datalayer):
             identifier=identifier,
             datatype=datatype,
             preferred_devices=['cpu'],
+            output_schema={'output': tensor}
         )
+        if not is_mongodb_backend:
+            schema = Schema(
+                identifier=identifier,
+                fields={
+                    'output': datatype,
+                },
+            )
+            m.output_schema = schema
+
         db.add(m)
 
 
@@ -229,9 +243,9 @@ def add_vector_index(
         select_x = MongoQuery(collection_name).find()
         select_z = MongoQuery(collection_name).find()
     else:
-        table = db.load('table', collection_name).to_query()
-        select_x = table.select('id', 'x')
-        select_z = table.select('id', 'z')
+        table = db.load('table', collection_name)
+        select_x = db[table.identifier].select('id', 'x')
+        select_z = db[table.identifier].select('id', 'z')
 
     model = db.load('model', 'linear_a')
 
@@ -282,7 +296,7 @@ def create_db(CFG, **kwargs):
 
     # prepare models
     if kwargs.get('add_models', True):
-        add_models(db)
+        add_models(db, is_mongodb_backend)
 
     # prepare vector index
     if kwargs.get('add_vector_index', True):

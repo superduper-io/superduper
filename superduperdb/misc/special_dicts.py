@@ -1,5 +1,74 @@
 import typing as t
 from collections import defaultdict
+from collections import OrderedDict
+import copy
+
+class IndexableDict(OrderedDict):
+    def __init__(self, ordered_dict):
+        self._ordered_dict = ordered_dict
+        self._keys = list(ordered_dict.keys())
+        super().__init__(ordered_dict)
+
+    def __getitem__(self, index):
+        if isinstance(index, str):
+            return super().__getitem__(index)
+        try:
+            return self[self._keys[index]]
+        except IndexError:
+            raise IndexError(f"Index {index} is out of range.")
+
+    def __setitem__(self, index, value):
+        if isinstance(index, str):
+            super().__setitem__(index, value)
+            return
+        try:
+            self[self._keys[index]] = value
+        except IndexError:
+            raise IndexError(f"Index {index} is out of range.")
+
+class SuperDuperFlatEncode(t.Dict[str, t.Any]):
+    """
+    Dictionary for representing flattened encoding data.
+    """
+    @property
+    def leaves(self):
+        return IndexableDict(self.get('_leaves', {}))
+
+    @property
+    def files(self):
+        return self.get('_files', [])
+
+    @property
+    def blobs(self):
+        return self.get('_blobs', [])
+
+    def merge(self, d, inplace=False):
+        if '_base' in d:
+            assert '_base' in self, "Cannot merge differently encoded data"
+        leaves = copy.deepcopy(self.leaves)
+        leaves.update(d.leaves)
+
+        blobs = copy.deepcopy(self.blobs)
+        blobs = blobs.append(d.blobs)
+
+        files = copy.deepcopy(self.files)
+        files = files.append(d.files)
+
+        if inplace:
+            if leaves:
+                self['_leaves'] = leaves
+            self['_blobs'] = blobs
+            self['_files'] = files
+            return self
+        else:
+
+            out = copy.deepcopy(self)
+            if leaves:
+                out['_leaves'] = leaves
+            out['_blobs'] = blobs
+            out['_files'] = files
+            return out
+
 
 
 class MongoStyleDict(t.Dict[str, t.Any]):

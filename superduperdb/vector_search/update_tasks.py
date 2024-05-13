@@ -3,6 +3,7 @@ import typing as t
 from superduperdb import Document
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorItem
 
@@ -68,14 +69,15 @@ def copy_vectors(
     elif isinstance(db.databackend, IbisDataBackend):
         docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
         from superduperdb.backends.ibis.data_backend import INPUT_KEY
-
-        vectors = [
-            {
+        vectors = []
+        for doc in docs:
+            doc = doc.unpack()
+            vectors.append({
                 'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
                 'id': str(doc[INPUT_KEY]),
-            }
-            for doc in docs
-        ]
+
+                })
+
     for r in vectors:
         if hasattr(r['vector'], 'numpy'):
             r['vector'] = r['vector'].numpy()

@@ -46,9 +46,9 @@ class MongoQuery(Query):
     def _create_table_if_not_exists(self):
         return
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         cache[r[1:]]['_path'] = 'superduperdb/backends/mongodb/query/parse_query'
         return r
@@ -115,7 +115,6 @@ class MongoQuery(Query):
 
         vector_index = like_kwargs.pop('vector_index')
         ids = like_kwargs.pop('within_ids', [])
-        vector_index = next(iter(self.db.vector_indices.keys()))
 
         n = like_kwargs.get('n', 100)
 
@@ -193,7 +192,6 @@ class MongoQuery(Query):
 
         schema = kwargs.pop('schema', None)
 
-        schema = get_schema(self.db, schema) if schema else None
         replacement = trailing_args[0]
         if isinstance(replacement, Document):
             replacement = replacement.encode(schema)
@@ -217,7 +215,6 @@ class MongoQuery(Query):
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 
-        schema = get_schema(self.db, schema) if schema else None
         documents = [r.encode(schema) for r in self.documents]
         for r in documents:
             if '_blobs' in r:
@@ -499,20 +496,3 @@ class BulkOp(Leaf):
         return getattr(pymongo, self.identifier)(**kwargs)
 
 
-from superduperdb.components.schema import Schema
-
-
-def get_schema(db, schema: t.Union[Schema, str]) -> Schema:
-    """Handle schema caching and loading."""
-    if isinstance(schema, Schema):
-        # If the schema is not in the db, it is added to the db.
-        if schema.identifier not in db.show(Schema.type_id):
-            db.add(schema)
-        schema_identifier = schema.identifier
-
-    else:
-        schema_identifier = schema
-
-    assert isinstance(schema_identifier, str)
-
-    return db.schemas[schema_identifier]

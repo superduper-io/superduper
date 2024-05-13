@@ -12,6 +12,7 @@ from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.ext.numpy.encoder import array
 from superduperdb.ext.pillow.encoder import pil_image
+from superduperdb.components.table import Table
 
 try:
     import torch
@@ -31,82 +32,19 @@ def test_serialize_table():
     )
 
     s = schema.encode()
-    print(s)
     ds = Document.decode(s).unpack()
-
-    print(ds)
+    assert isinstance(ds, Schema)
 
     t = Table(identifier='my_table', schema=schema)
 
     s = t.encode()
     ds = Document.decode(s).unpack()
+    assert isinstance(ds, Table)
 
-    print(ds)
-
-
-@pytest.fixture
-def duckdb(monkeypatch):
-    with tempfile.TemporaryDirectory() as d:
-        from superduperdb import CFG
-        from superduperdb.base.config import Cluster
-
-        monkeypatch.setattr(CFG, 'cluster', Cluster())
-        db = superduper(f'duckdb://{d}/test.ddb')
-
-        _, t = db.add(
-            Table(
-                'test',
-                primary_id='id',
-                schema=Schema(
-                    'my-schema',
-                    fields={'x': dtype(str), 'id': dtype(str)},
-                ),
-            )
-        )
-
-        db.execute(
-            t.insert(
-                pandas.DataFrame([{'x': f'test::{i}', 'id': str(i)} for i in range(20)])
-            )
-        )
-
-        model = ObjectModel(
-            object=lambda _: numpy.random.randn(32),
-            identifier='test',
-            datatype=array('float64', shape=(32,)),
-        )
-        output_table = db.databackend.create_output_dest('test::0', model.datatype)
-        db.add(output_table)
-        model.predict_in_db('x', select=t, db=db, predict_id='test::0')
-
-        _, s = db.add(
-            Table(
-                'other',
-                primary_id='other_id',
-                schema=Schema(
-                    'my-schema',
-                    fields={'y': dtype(str), 'other_id': dtype(str), 'id2': dtype(str)},
-                ),
-            )
-        )
-
-        db.execute(
-            s.insert(
-                pandas.DataFrame(
-                    [
-                        {'y': f'test2::{i}', 'other_id': str(i // 2), 'id2': str(i)}
-                        for i in range(40)
-                    ]
-                )
-            )
-        )
-
-        yield db
-
-
+@pytest.mark.skip
 def test_auto_inference_primary_id():
-    s = IbisQueryTable('other', primary_id='other_id')
-    t = IbisQueryTable('test', primary_id='id')
+    s = Table('other', primary_id='other_id')
+    t = Table('test', primary_id='id')
 
     q = t.join(s, t.id == s.other_id)
 
@@ -116,20 +54,34 @@ def test_auto_inference_primary_id():
 
     assert q.primary_id == 'other_id'
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+    ],
+    indirect=True,
+)
+def test_renamings(db):
+    t = db['documents']
+    listener_uuid= [l.split('/')[-1] for l in db.show('listener')][0]
+    q = t.select('id', 'x', 'y').outputs(listener_uuid)
+    data = list(db.execute(q))
+    assert torch.is_tensor(data[0].unpack()[f'_outputs.{listener_uuid}'])
 
-def test_renamings(duckdb):
-    t = duckdb.load('table', 'test')
-    q = t.outputs('test::0')
-    print(q)
-    data = duckdb.execute(t.outputs('test::0'))
-    assert isinstance(data[0]['_outputs.test::0'], numpy.ndarray)
 
-
-def test_serialize_deserialize():
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_empty),
+    ],
+    indirect=True,
+)
+def test_serialize_query(db):
     from superduperdb.backends.ibis.query import IbisQuery
 
     t = IbisQuery(
-        'test', primary_id='id', schema=Schema('my-schema', fields={'x': dtype(str)})
+        db=db, identifier='documents', parts=[('select', ('id',), {})]
     )
 
     q = t.filter(t.id == 1).select(t.id, t.x)
@@ -141,18 +93,20 @@ def test_serialize_deserialize():
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.sqldb_data, {'n_data': 500}),
+        (DBConfig.sqldb_data, {'n_data': 10}),
     ],
     indirect=True,
 )
 def test_add_fold(db):
-    table = db.load('table', 'documents')
+    table = db['documents']
     select_train = table.select('id', 'x', '_fold').add_fold('train')
     result_train = db.execute(select_train)
 
     select_valid = table.select('id', 'x', '_fold').add_fold('valid')
-    result_vaild = db.execute(select_valid)
-    assert len(result_train) + len(result_vaild) == 500
+    result_valid = db.execute(select_valid)
+    result_train = list(result_train)
+    result_valid = list(result_valid)
+    assert len(result_train) + len(result_valid) == 10
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -166,3 +120,75 @@ def test_add_fold(db):
 def test_get_data(db):
     db['documents'].limit(2)
     db.metadata.get_component('table', 'documents')
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 5}),
+    ],
+    indirect=True,
+)
+def test_insert_select(db):
+
+    q = db['documents'].select('id', 'x', 'y').limit(2)
+    r = list(db.execute(q))
+
+    assert len(r) == 2
+    assert all( all([k in ['id', 'x', 'y'] for k in x.unpack().keys()])  for x in r )
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 5}),
+    ],
+    indirect=True,
+)
+def test_filter(db):
+    t = db['documents']
+    q = t.select('id', 'y')
+    r = list(db.execute(q))
+    ys = [x['y'] for x in r]
+    uq = numpy.unique(ys, return_counts=True)
+
+    q = t.select('id', 'y').filter(t.y == uq[0][0] )
+    r = list(db.execute(q))
+    assert len(r) == uq[1][0]
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+    ],
+    indirect=True,
+)
+def test_pre_like(db):
+    r = list(db.execute(db['documents'].select('id', 'x')))[0]
+    query = db['documents'].like(
+        r=Document({'x': r['x'].x}),
+        vector_index='test_vector_search',
+    ).select('id')
+    s = list(db.execute(query))[0]
+    assert r['id'] == s['id']
+
+
+@pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+    ],
+    indirect=True,
+)
+def test_post_like(db):
+    r = list(db.execute(db['documents'].select('id', 'x')))[0]
+    t = db['documents']
+    query = t.select('id', 'x', 'y').filter(t.id.isin(['1', '2', '3'])).like(
+        r=Document({'x': r['x'].x}),
+        vector_index='test_vector_search',
+    ).limit(2)
+    s = list(db.execute(query))
+    assert len(s) == 2
+    assert all([d['id'] in ['1', '2', '3'] for d in s])

@@ -12,16 +12,23 @@ from superduperdb.misc.hash import hash_string
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.schema import Schema
 
 
 def applies_to(*flavours):
     def decorator(f):
         @wraps(f)
         def decorated(self, *args, **kwargs):
-            assert self.flavour in flavours, (
+            msg = (
                 f'Query {self} does not match any of accepted patterns {flavours},'
                 f' for the {f.__name__} method to which this method applies.'
             )
+
+            try:
+                flavour = self.flavour
+            except TypeError:
+                raise TypeError(msg) 
+            assert flavour in flavours, msg
             return f(self, *args, **kwargs)
 
         return decorated
@@ -43,7 +50,10 @@ class Query(Leaf, ABC):
 
     def _get_flavour(self):
         repr_ = self._to_str()[0]
-        return next(k for k, v in self.flavours.items() if re.match(v, repr_))
+        try:
+            return next(k for k, v in self.flavours.items() if re.match(v, repr_))
+        except StopIteration:
+            raise TypeError(f'Query flavour {repr_} did not match existing {type(self)} flavours')
 
     def _get_parent(self):
         return self.db.databackend.get_table_or_collection(self.identifier)
@@ -62,21 +72,22 @@ class Query(Leaf, ABC):
     def type(self):
         pass
 
+
     @property
-    def id(self):
+    def _id(self):
         return f'query/{hash_string(str(self))}'
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema'] = None):
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
         for i, doc in enumerate(documents):
-            documents[i] = doc._deep_flat_encode(cache, blobs, files, leaves_to_keep)
-        cache[self.id] = {
-            '_path': 'superduperdb/backends/base/new_query/parse_query',
+            documents[i] = doc._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema=schema)
+        cache[self._id] = {
+            '_path': 'superduperdb/backends/base/query/parse_query',
             'documents': documents,
             'query': query,
         }
-        return f'?{self.id}'
+        return f'?{self._id}'
 
     @staticmethod
     def _update_item(a, documents, queries):
@@ -153,14 +164,14 @@ class Query(Leaf, ABC):
         return type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=self.parts + [('__eq__', other)],
+            parts=self.parts + [('__eq__', (other,), {})],
         )
 
     def __leq__(self, other):
         return type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=self.parts + [('__leq__', other)],
+            parts=self.parts + [('__leq__', (other,), {})],
         )
 
     def __geq__(self, other):
@@ -185,20 +196,24 @@ class Query(Leaf, ABC):
             parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
         )
 
-    @staticmethod
-    def _encode_or_unpack_args(r, db, method='encode'):
+    
+    def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
             return getattr(r, method)()
         if isinstance(r, (tuple, list)):
-            out = [Query._encode_or_unpack_args(x, db, method=method) for x in r]
+            out = [self._encode_or_unpack_args(x, db, method=method, parent=parent) for x in r]
             if isinstance(r, tuple):
                 return tuple(out)
             return out
         if isinstance(r, dict):
             return {
-                k: Query._encode_or_unpack_args(v, db, method=method)
+                k: self._encode_or_unpack_args(v, db, method=method, parent=parent)
                 for k, v in r.items()
             }
+        if isinstance(r, Query):
+            parent =super(type(self), r)._get_parent() 
+            return super(type(self), r)._execute(parent)
+
         return r
 
     def _execute(self, parent, method='encode'):
@@ -206,8 +221,8 @@ class Query(Leaf, ABC):
             if isinstance(part, str):
                 parent = getattr(parent, part)
                 continue
-            args = self._encode_or_unpack_args(part[1], self.db, method=method)
-            kwargs = self._encode_or_unpack_args(part[2], self.db, method=method)
+            args = self._encode_or_unpack_args(part[1], self.db, method=method, parent=parent)
+            kwargs = self._encode_or_unpack_args(part[2], self.db, method=method, parent=parent)
             parent = getattr(parent, part[0])(*args, **kwargs)
         return parent
 
@@ -222,13 +237,17 @@ class Query(Leaf, ABC):
         parent = self._get_parent()
         try:
             flavour = self._get_flavour()
+            handler = f'_execute_{flavour}' in dir(self)
+            if handler is False:
+                raise AssertionError
             handler = getattr(self, f'_execute_{flavour}')
-            assert not isinstance(
-                handler, Query
-            ), f'No method "{type(self)}._execute_{flavour}" found.'
             return handler(parent=parent)
-        except StopIteration:
+        except TypeError as e:
+            if 'did not match' in str(e):
+                return self._execute(parent=parent)
+        except AssertionError:
             return self._execute(parent=parent)
+
 
     @property
     @abstractmethod

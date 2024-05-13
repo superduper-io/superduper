@@ -245,7 +245,13 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .limit(1)
             )
             res = self.query_results(self.component_table, stmt, session)
-            r = res[0]
+            try:
+                r = res[0]
+            except IndexError:
+                raise NonExistentMetadataError(
+                        f'Table with uuid: {uuid} does not exist'
+                )
+
         return self._get_component(
             type_id=r['type_id'],
             identifier=r['identifier'],
@@ -305,6 +311,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         component_fields = ['id', 'identifier', 'version', 'hidden', 'type_id', '_path']
         new_info = {k: info[k] for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
+        new_info['uuid'] = new_info['dict']['uuid']
         return new_info
 
     def get_latest_version(

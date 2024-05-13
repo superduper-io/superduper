@@ -11,6 +11,7 @@ _CLASS_REGISTRY = {}
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.schema import Schema
 
 
 def _import_item(cls, module, dict, db: t.Optional['Datalayer'] = None):
@@ -55,28 +56,28 @@ class Leaf(ABC):
         self.db: 'Datalayer' = db
 
     @property
-    def id(self):
+    def _id(self):
         return f'{self.__class__.__name__.lower()}/{self.uuid}'
 
-    def encode(self):
+    def encode(self, schema: t.Optional['Schema']=None):
         cache = {}
         blobs = {}
         files = {}
-        self._deep_flat_encode(cache, blobs, files, ())
+        self._deep_flat_encode(cache, blobs, files, (), schema)
         return {
-            '_base': f'?{self.id}',
+            '_base': f'?{self._id}',
             '_leaves': cache,
             '_blobs': blobs,
         }
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=()):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema']=None):
         if isinstance(self, leaves_to_keep):
-            cache[self.id] = self
-            return f'?{self.id}'
+            cache[self._id] = self
+            return f'?{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
-        return _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep)
+        return _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
 
     def dict(self):
         from superduperdb import Document

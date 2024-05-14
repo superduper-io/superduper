@@ -174,6 +174,17 @@ testenv_init: ## Initialize a local Testing environment
 	@echo "===> Waiting for TestEnv to become ready"
 	@cd deploy/testenv/; ./wait_ready.sh
 
+testenv_shutdown: ## Terminate the local Testing environment
+	@echo "===> Shutting down the local Testing environment"
+	docker compose -f deploy/testenv/docker-compose.yaml down
+
+testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
+
+
+##@ Database Testing
+
+# When the default paths are fixed, this function can be replaced with:
+# make testdb_init DB=mongodb
 testenv_init_mongodb: ## Initialize a local Testing environment
 	@echo "===> Discover Hostnames"
 	@deploy/testenv/validate_hostnames.sh
@@ -187,13 +198,6 @@ testenv_init_mongodb: ## Initialize a local Testing environment
 
 	@echo "===> Run TestEnv MongoDB"
 	docker compose -f deploy/testenv/docker-compose.yaml up --detach mongodb --remove-orphans &
-
-testenv_shutdown: ## Terminate the local Testing environment
-	@echo "===> Shutting down the local Testing environment"
-	docker compose -f deploy/testenv/docker-compose.yaml down
-
-testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
-
 
 
 ## Helper function for starting database containers

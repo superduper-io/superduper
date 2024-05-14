@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized LLM finetuning usage experience
 - Auto-infer Schema from data
 - Lazy-creation of output tables for ibis to enable auto-inference of output schema
+- Add database packages that improve deployment and connection testing.
 
 #### Bug Fixes
 - Fixed cross platfrom issue in cli command

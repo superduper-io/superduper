@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+
+  # Azure  SQL Server
+  # ------------------------------
+  azuresql:
+    image: mcr.microsoft.com/azure-sql-edge
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Superduper#1"

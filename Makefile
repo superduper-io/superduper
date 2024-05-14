@@ -56,10 +56,6 @@ new_release: ## Release a new version of SuperDuperDB
 	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
 
 install-devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	python -m pip install pre-commit
-
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser
 
@@ -198,12 +194,25 @@ testenv_shutdown: ## Terminate the local Testing environment
 
 testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 
-testdb_init: ## Initialize databases in Docker
-	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
-	cd deploy/databases/; docker compose up --remove-orphans &
 
-testdb_shutdown: ## Terminate Databases Containers
-	cd deploy/databases/; docker compose down
+
+## Helper function for starting database containers
+VALID_DATABASES := mongodb postgres mysql mssql azuresql clickhouse
+check_db_variable:
+	@if [ -z "$(DB)" ]; then \
+		echo "Error: 'DB' is not set."; \
+		exit 1; \
+	fi; \
+	if ! echo "$(VALID_DATABASES)" | grep -qw "$(DB)"; then \
+		echo "Error: '$(DB)' is not a valid database name. Valid options are: $(VALID_DATABASES)"; \
+		exit 1; \
+	fi
+
+testdb_init: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make init_db
+
+testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make shutdown_db
 
 ##@ CI Testing Functions
 
@@ -225,10 +234,3 @@ ext-testing: ## Execute integration testing
 
 smoke-testing: ## Execute smoke testing
 	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke
-
-test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
-	@echo "Notebook Path: $(NOTEBOOKS)"
-
-	@if [ -n "$(NOTEBOOKS)" ]; then	\
-		pytest --nbval-lax $(NOTEBOOKS); 	\
-	fi

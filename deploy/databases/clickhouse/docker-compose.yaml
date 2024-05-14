@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+
+
+  # Clickhouse
+  # ------------------------------
+  clickhouse:
+    image:  clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"

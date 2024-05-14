@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+
+  # PostgreSQL
+  # ------------------------------
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=superduper
+      - POSTGRES_PASSWORD=superduper
+      - POSTGRES_DB=test_db

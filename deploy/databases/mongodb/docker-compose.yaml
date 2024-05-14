@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+
+  # ------------------------------
+  # MongoDB
+  # ------------------------------
+  mongodb:
+    image: mongo:6
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --logpath /dev/null
+
+  mongo-init:
+    image: mongo:6
+    depends_on:
+      - mongodb
+    volumes:
+      - ./mongo-init.sh:/scripts/mongo-init.sh
+    environment:
+      - SDDB_USER=superduper
+      - SDDB_PASS=superduper
+      - SDDB_DATABASE=test_db
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /scripts/mongo-init.sh

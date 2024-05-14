@@ -211,6 +211,9 @@ check_db_variable:
 testdb_init: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
 	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make init_db
 
+testdb_run: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make requirements && make run-example
+
 testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
 	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make shutdown_db
 

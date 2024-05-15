@@ -47,7 +47,7 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
 
 
-# @component()
+@component()
 def array(
     dtype: str,
     shape: t.Sequence,
@@ -91,4 +91,4 @@ class NumpyDataTypeFactory(DataTypeFactory):
         It's used for registering the auto schema.
         :param data: The numpy array.
         """
-        return array(data.dtype, data.shape)
+        return array(dtype=data.dtype, shape=data.shape)

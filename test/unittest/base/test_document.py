@@ -5,6 +5,7 @@ from test.db_config import DBConfig
 
 import pytest
 
+from superduperdb.ext.pillow.encoder import pil_image
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.components.datatype import Artifact, DataType
 from superduperdb.components.model import ObjectModel
@@ -23,7 +24,7 @@ from superduperdb.base.document import Document
 
 @pytest.fixture
 def document():
-    t = tensor(torch.float, shape=(20,))
+    t = tensor(dtype='float', shape=(20,))
     yield Document({'x': t(torch.randn(20))})
 
 
@@ -34,7 +35,7 @@ class _db:
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_document_encoding(document):
-    t = tensor(torch.float, shape=(20,))
+    t = tensor(dtype='float', shape=(20,))
     _db(datatypes={'torch.float32[20]': t})
     new_document = Document.decode(document.encode())
     assert (new_document['x'].x - document['x'].x).sum() == 0
@@ -43,13 +44,13 @@ def test_document_encoding(document):
 def test_flat_query_encoding():
     q = MongoQuery('docs').find({'a': 1}).limit(2)
 
-    r = q._deep_flat_encode(None)
+    r = q._deep_flat_encode({}, {}, {})
 
     doc = Document({'x': 1})
 
     q = MongoQuery('docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
 
-    r = q._deep_flat_encode(None)
+    r = q._deep_flat_encode({}, {}, {})
 
     print(r)
 
@@ -83,7 +84,6 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert '_leaves' in encoded_r
     assert '_blobs' in encoded_r
-    assert isinstance(encoded_r['img'], str)
     assert encoded_r['img'].startswith('?artifact')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
@@ -120,7 +120,7 @@ def test_encode_model():
 
     print(r)
 
-    pprint.pprint(m.dict().deep_flat_encode())
+    pprint.pprint(m.dict()._deep_flat_encode({}, {}, {}))
 
 
 def test_decode_inline_data():
@@ -171,8 +171,9 @@ def test_refer_to_applied_item(db):
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_column_encoding(db):
-    from superduperdb.ext.pillow.encoder import pil_image
+    import PIL
 
+    img = PIL.Image.open('test/material/data/test.png')
     schema = Schema(
         'test',
         fields={
@@ -188,11 +189,11 @@ def test_column_encoding(db):
 
     img = PIL.Image.open('test/material/data/test.png')
 
-    db.test.insert(
+    db['test'].insert(
         [
             Document({'x': 1, 'y': 2, 'img': img}),
             Document({'x': 3, 'y': 4, 'img': img}),
         ]
     ).execute()
 
-    db.test.select().execute()
+    db['test'].select().execute()

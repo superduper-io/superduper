@@ -8,6 +8,12 @@ from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.annotations import public_api
 
+class _Native:
+    _TYPES = {str: 'str', int: 'int', float: 'float'}
+    def __init__(self, x):
+        if x in self._TYPES:
+            x = self._TYPES[x]
+        self.identifier =  x
 
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
@@ -27,6 +33,13 @@ class Schema(Component):
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
         super().__post_init__(db, artifacts)
+
+        for k, v in self.fields.items():
+            if isinstance(v, str):
+                self.fields[k] = _Native(v)
+            elif v in (str, bool, int, float):
+                self.fields[k] = _Native(v)
+
 
     @override
     def pre_create(self, db) -> None:

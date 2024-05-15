@@ -191,33 +191,29 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
+
 def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     def decorator(f):
-        import inspect
-
-        db_dep = 'db' in inspect.signature(f).parameters
-
         @functools.wraps(f)
-        def decorated(*args, db=None, **kwargs):
-            if db_dep:
-                out = f(*args, **kwargs, db=db)
+        def decorated(*, db=None, **kwargs):
+            import inspect
+            if 'db' in inspect.signature(f).parameters:
+                out = f(**kwargs, db=db)
             else:
-                out = f(*args, **kwargs)
+                out = f(**kwargs)
 
             assert isinstance(out, Component)
 
-            def _deep_flat_encode(
-                cache, blobs, files, leaves_to_keep=(), schema=schema
-            ):
+            def _deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=None):
                 h = hashlib.sha1(str(kwargs).encode()).hexdigest()
-                path = f'{f.__module__}/{f.__name__}'.replace('.', '/')
+                path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
                 id = f'{path}/{h}'
                 cache[id] = {'_path': path, **kwargs}
                 return f'?{id}'
 
             out._deep_flat_encode = _deep_flat_encode
             return out
-
+        
         decorated.get_ui_schema = lambda: schema
         decorated.build = lambda r: f(**r)
         decorated.handle_integration = handle_integration

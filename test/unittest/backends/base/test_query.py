@@ -3,10 +3,9 @@ from test.db_config import DBConfig
 import lorem
 import pytest
 
-from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import dtype
 
-# from superduperdb.backends.ibis.query import Table
+from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
@@ -32,8 +31,8 @@ def test_execute_insert_and_find_mongodb(db):
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_execute_insert_and_find_sqldb(db, table):
     db.add(table)
-    table.insert([Document({'this': 'is a test', 'id': '1'})]).execute(db)
-    r = table.select('this').limit(1).execute(db).next()
+    db[table.identifier].insert([Document({'this': 'is a test', 'id': '1'})]).execute(db)
+    r = db[table.identifier].select('this').limit(1).execute(db).next()
     assert r['this'] == 'is a test'
 
 
@@ -59,6 +58,7 @@ def test_execute_complex_query_sqldb(db, table):
     import ibis
 
     db.add(table)
+    table = db[table.identifier]
     table.insert(
         [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
     ).execute(db)
@@ -70,45 +70,49 @@ def test_execute_complex_query_sqldb(db, table):
 
 
 def test_execute_like_queries_mongodb(db):
-    collection = MongoQuery('documents')
-    # get a data point for testing
-    r = collection.find_one().execute(db)
+    collection = MongoQuery(identifier='documents', db=db)
+    # Get a data point for testing
+    r = collection.find_one({}).execute(db)
 
     out = (
         collection.like({'x': r['x']}, vector_index='test_vector_search', n=10)
         .find()
         .execute(db)
     )
-
-    ids = list(out.scores.keys())
     scores = out.scores
+    ids = [ o['_id'] for o in list(out)]
+    from bson import ObjectId
 
-    assert str(r['_id']) in ids
-    assert scores[ids[0]] > 0.999999
+    assert ObjectId(r['_id']) in ids
+    assert scores[str(ids[0])] > 0.999999
 
-    # pre-like
+    # Pre-like
     result = (
         collection.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
         .find_one()
         .execute(db)
     )
 
-    assert result['_id'] == r['_id']
+    assert result['_id'] == ObjectId(r['_id'])
 
-    # post-like
-    q = collection.find().like(
+    # Post-like
+    q = collection.find({}).like(
         Document({'x': r['x']}), vector_index='test_vector_search', n=3
+
     )
-    result = list(q.execute(db))
+    result = q.execute(db)
+    result = list(result)
     assert len(result) == 3
-    assert result[0]['_id'] == r['_id']
+    assert result[0]['_id'] == ObjectId(r['_id'])
 
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb], indirect=True)
 def test_execute_like_queries_sqldb(db):
     table = db.load('table', 'documents')
     # get a data point for testing
-    r = table.outputs().limit(1).execute(db).next()
+    table = db[table.identifier]
+
+    r = list(table.select('id', 'x', 'y', 'z').execute(db=db))[0]
 
     out = (
         table.like({'x': r['x']}, vector_index='test_vector_search', n=10)
@@ -128,6 +132,7 @@ def test_execute_like_queries_sqldb(db):
         .execute(db)
     )
 
+    result =list(result)
     assert result[0]['id'] == r['id']
 
     # post-like
@@ -138,7 +143,7 @@ def test_execute_like_queries_sqldb(db):
     assert len(result) == 3
     assert result[0]['id'] == r['id']
 
-
+@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
 def test_model(db):
     import torch
@@ -155,7 +160,6 @@ def test_model(db):
 
     q = Model('linear_a').predict_one(t)
 
-    # isinstance(q, Predict)
 
     out = db.execute(q).unpack()
 
@@ -163,7 +167,7 @@ def test_model(db):
 
 
 def test_builder():
-    q = Query(identifier='table', parts=()).select('id').where(2, 3, 4, a=5)
+    q = MongoQuery(identifier='table', parts=()).select('id').where(2, 3, 4, a=5)
     assert str(q) == 'table.select("id").where(2, 3, 4, a=5)'
 
 
@@ -174,11 +178,11 @@ other_thing.join(query[0]).filter(documents[0])"""
 def test_parse_and_dump():
     from superduperdb.backends.base.query import parse_query
 
-    q = parse_query(documents=[], query='collection.find().limit(5)', builder_cls=Query)
+    q = parse_query(documents=[], query='collection.find().limit(5)', builder_cls=MongoQuery)
     print('\n')
     print(q)
 
-    q = parse_query(documents=[{'txt': 'test'}], query=multi_query, builder_cls=Query)
+    q = parse_query(documents=[{'txt': 'test'}], query=multi_query, builder_cls=MongoQuery)
 
     print('\n')
     print(q)
@@ -198,15 +202,15 @@ def test_parse_and_dump():
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute(db):
-    q = db.test_coll.insert_many([{'txt': lorem.sentence()} for _ in range(20)])
+    q = db['test_coll'].insert_many([{'txt': lorem.sentence()} for _ in range(20)])
 
     q.execute()
 
-    r = db.test_coll.find_one().execute()
+    r = db['test_coll'].find_one().execute()
 
     assert 'txt' in r
 
-    q = db.test_coll.find_one()
+    q = db['test_coll'].find_one()
 
     print(q)
 

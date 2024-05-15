@@ -81,7 +81,7 @@ class Leaf(ABC):
         from superduperdb import Document
         from superduperdb.base.variables import Variable, _replace_variables
 
-        r = self.encode(leaves_to_keep=(Variable,))
+        r = self.dict().encode(leaves_to_keep=(Variable,))
         r = _replace_variables(r, db, **kwargs)
         return Document.decode(r, db=db).unpack()
 

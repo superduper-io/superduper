@@ -112,7 +112,7 @@ class QueryDataset:
             input = self.select_one(
                 self._ids[item], self.db, encoders=self.db.datatypes
             )
-        input = MongoStyleDict(input.unpack(db=self.db))
+        input = MongoStyleDict(input.unpack())
         return self._get_item(input)
 
 

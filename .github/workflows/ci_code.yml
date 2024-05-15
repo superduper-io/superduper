@@ -62,7 +62,7 @@ jobs:
       run: |
         # Install core and testsuite dependencies on the cached python environment.
         python -m pip install .
-        python -m pip install -r deploy/installations/extra_requirements.txt
+        python -m pip install -r deploy/installations/testenv_requirements.txt
 
     - name: Install DevKit (docs, testing, etc)
       run: |

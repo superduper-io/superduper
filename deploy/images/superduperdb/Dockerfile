@@ -98,11 +98,11 @@ FROM base AS build_sandbox
 # Install the requirements. To be used in conjuction with "make testenv_init" for development.
 ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/testenv_requirements.txt
 ONBUILD USER superduper
-ONBUILD COPY --chown=superduper ./pyproject.toml ${HOME}/superduperdb/pyproject.toml
-ONBUILD COPY --chown=superduper ./Makefile ${HOME}/superduperdb/Makefile
-ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ${HOME}/superduperdb/requirements.txt
-ONBUILD COPY --chown=superduper ${EXTRA_REQUIREMENTS_FILE} ${HOME}/superduperdb/extra_requirements.txt
 ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD COPY --chown=superduper ./pyproject.toml ./pyproject.toml
+ONBUILD COPY --chown=superduper ./Makefile ./Makefile
+ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ./requirements.txt
+ONBUILD COPY --chown=superduper ${EXTRA_REQUIREMENTS_FILE} ./extra_requirements.txt
 ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r ./extra_requirements.txt
 ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r requirements.txt
 ONBUILD RUN make install_devkit

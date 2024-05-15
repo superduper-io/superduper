@@ -39,7 +39,9 @@ def _model_update_impl_flatten(
             table_records.append(d)
 
 
-    return db[f'_outputs.{predict_id}'].insert(table_records)
+    return db.databackend.insert(
+        f'_outputs.{predict_id}', raw_documents=table_records
+    )
 
 
 def _model_update_impl(
@@ -51,25 +53,26 @@ def _model_update_impl(
 ):
     if not outputs:
         return
-
     if flatten:
         return _model_update_impl_flatten(
             db, ids=ids, predict_id=predict_id, outputs=outputs
         )
 
     table_records = []
+
     for ix in range(len(outputs)):
+        output = outputs[ix]
+        if '_base' in output:
+            output =  output['_leaves'][output['_base'][1:]]['blob']
+
         d = {
             '_input_id': str(ids[ix]),
-            'output': Document.decode(outputs[ix]).unpack(),
+            'output': output,
         }
         table_records.append(d)
-
-    for r in table_records:
-        if isinstance(r['output'], dict) and '_content' in r['output']:
-            r['output'] = r['output']['_content']['bytes']
-
-    return db[f'_outputs.{predict_id}'].insert(table_records)
+    db.databackend.insert(
+        f'_outputs.{predict_id}', raw_documents=table_records
+    )
 
 
 
@@ -138,6 +141,7 @@ class IbisQuery(Query):
         for part in self.parts:
             if part[0] == 'rename':
                 r.update(part[1][0])
+                r.update(part[1][0])
             if part[0] == 'relabel':
                 r.update(part[1][0])
         return r
@@ -145,6 +149,7 @@ class IbisQuery(Query):
     def _execute_pre_like(self, parent):
         like_args = self.parts[0][1]
         like_kwargs = self.parts[0][2]
+
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['r']
 
@@ -217,7 +222,6 @@ class IbisQuery(Query):
     def _execute_select(self, parent):
         return self._execute(parent)
 
-
     def _execute_insert(self, parent):
         documents = self.documents
         table = self._get_tables()[self.identifier]
@@ -230,7 +234,7 @@ class IbisQuery(Query):
                 r[self.primary_id] = pid
         ids = [r[self.primary_id] for r in documents]
         self.db.databackend.insert(
-            self.table_or_collection.identifier, raw_documents=documents
+            self.identifier, raw_documents=documents
         )
         return ids
 
@@ -292,8 +296,9 @@ class IbisQuery(Query):
         return self.filter(self._fold == fold)
 
     def select_using_ids(self, ids: t.Sequence[str]):
-        filter_query =  self.__getattr__(self.table_or_collection.primary_id).isin(ids)
-        return self.filter(filter_query)
+        t = self.db[self._get_parent().get_name()]
+        filter_query = self.filter(getattr(t, self.primary_id).isin(ids))
+        return filter_query
 
     @property
     def select_ids(self):
@@ -311,12 +316,14 @@ class IbisQuery(Query):
             find_args.append({})
 
         for identifier in predict_ids:
-            symbol_table = self.db[f'_outputs.{identifier}']
+            identifier = identifier if '_outputs' in identifier else f'_outputs.{identifier}'
+            symbol_table = self.db[identifier]
             symbol_table = symbol_table.relabel(
-                # TODO: check for folds
-                {'output': f'_outputs.{identifier}'}# '_fold': f'fold.{identifier}'}
+                # TODO: Check for folds
+                {'output': identifier, '_fold': f'fold.{identifier}'}
             )
-            attr = getattr(self.db[self.identifier], self.table_or_collection.primary_id)
+
+            attr = getattr(self.db[self.identifier], self.primary_id)
             other_query = symbol_table.join(self.db[self.identifier], symbol_table._input_id == attr)
             return other_query
 
@@ -326,11 +333,11 @@ class IbisQuery(Query):
     def select_ids_of_missing_outputs(self, predict_id: str):
         output_table = self.db[f'_outputs.{predict_id}']
         input_table = self.db[self.table_or_collection.identifier]
-        out = self.anti_join(
+
+        return self.anti_join(
             output_table,
             output_table._input_id == getattr(input_table, input_table.primary_id),
         )
-        return out
 
     def select_single_id(self, id: str):
         filter_query = eval(f'table.{self.primary_id} == id')
@@ -338,4 +345,5 @@ class IbisQuery(Query):
 
     @property
     def select_table(self):
-        return self.table_or_collection
+        t = self.db[self.table_or_collection.identifier]
+        return t.select(t)

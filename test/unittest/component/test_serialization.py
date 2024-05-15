@@ -18,7 +18,7 @@ from superduperdb.ext.sklearn.model import Estimator
 def test_model():
     m = ObjectModel(
         identifier='test',
-        datatype=tensor(torch.float, shape=(32,)),
+        datatype=tensor('float', shape=(32,)),
         object=torch.nn.Linear(13, 18),
     )
     m_dict = m.dict()
@@ -35,10 +35,9 @@ def test_sklearn(db):
     m = Estimator(
         identifier='test',
         object=SVC(),
-        datatype=tensor(torch.float, shape=(32,)),
+        datatype=tensor('float', shape=(32,)),
     )
     assert 'object' in m.artifact_schema.fields
-
     db.apply(m)
     assert db.show('model') == ['test']
     assert db.show('datatype') == ['torch.float32[32]']

@@ -121,8 +121,9 @@ def test_disconnected_edge(model1, model2_multi):
         g.predict_one(1)
         assert 'Graph disconnected at Node: m2_multi' in str(excinfo.value)
 
-
+    
 def test_complex_graph_with_select(db):
+    breakpoint()
     linear_a = db.load('model', 'linear_a')
     linear_b = db.load('model', 'linear_b')
     g = Graph(identifier='complex-graph', input=linear_a, outputs=[linear_b])
@@ -130,7 +131,7 @@ def test_complex_graph_with_select(db):
 
     from superduperdb.backends.mongodb import MongoQuery
 
-    select = MongoQuery('documents').find({})
+    select = MongoQuery(identifier='documents', db=db).find({})
     g.predict_in_db(X='x', select=select, db=db, predict_id='test')
     assert all(['test' in x['_outputs'] for x in list(db.execute(select))])
 

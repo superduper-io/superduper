@@ -47,7 +47,7 @@ class Dataset(Component):
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Sequence[t.Any]] = None
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         """Post-initialization method.
 
         :param artifacts: Optional additional artifacts for initialization.

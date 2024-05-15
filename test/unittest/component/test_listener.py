@@ -20,17 +20,17 @@ def test_listener_serializes_properly():
         select=q,
         key="test",
     )
-    r = listener.dict().encode()
+    r = listener.encode()
 
     # check that the result is JSON-able
     import json
-
+    r.pop('_blobs')
     print(json.dumps(r, indent=2))
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_listener_chaining(db):
-    collection = MongoQuery('test')
+    collection = MongoQuery(identifier='test', db=db)
     data = []
 
     def insert_random():

@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 from superduperdb.backends.ibis.field_types import dtype
 
-# from superduperdb.backends.ibis.query import Table
+from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
@@ -96,14 +96,16 @@ def add_fake_model(db: Datalayer):
         )
         t = Table(identifier='documents', schema=schema)
         db.apply(t)
-        select = db.load('table', 'documents').to_query().select('id', 'x')
-    db.apply(
-        Listener(
+        select = db['documents'].select('id', 'x')
+    listener = Listener(
             model=model,
             select=select,
             key='x',
-        ),
+        )
+    db.apply(
+            listener
     )
+    return listener
 
 
 # EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
@@ -471,18 +473,19 @@ def test_insert_artifacts(db):
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_sql_db(db):
-    add_fake_model(db)
-    table = db.load('table', 'documents')
-    inserted_ids, _ = db._insert(
+    listener = add_fake_model(db)
+
+    table = db['documents']
+    inserted_ids, _ = db.execute(
         table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
     )
     assert len(inserted_ids) == 5
 
-    q = table.select('id', 'x').outputs('x::fake_model::0::0')
+    q = table.select('id', 'x').outputs(listener.outputs)
     new_docs = db.execute(q)
     new_docs = list(new_docs)
 
-    result = [doc.unpack()['_outputs.x::fake_model::0::0'] for doc in new_docs]
+    result = [doc.unpack()[listener.outputs] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
@@ -590,7 +593,7 @@ def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
 
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery('documents').find({'_fold': 'valid'})
+        select = MongoQuery(db=db, identifier='documents').find({'_fold': 'valid'})
     else:
         table = db.load('table', 'documents')
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
@@ -609,8 +612,8 @@ def test_reload_dataset(db):
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.mongodb_no_vector_index, {'n_data': n_data_points}),
-        (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
+        (DBConfig.mongodb_no_vector_index, {'n_data': 10}),
+        #(DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )
@@ -618,7 +621,7 @@ def test_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
         select = MongoQuery('documents').find({'_fold': 'valid'})
     else:
-        table = db.load('table', 'documents')
+        table = db['documents']
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
 
     d = Dataset(

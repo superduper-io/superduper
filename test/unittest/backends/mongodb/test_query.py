@@ -65,9 +65,8 @@ def test_mongo_without_schema(db):
     assert np.array_equal(rs[0]['z'].x, data[0]['z'].x)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 @pytest.mark.parametrize(
-    "schema", [BytesEncoding.BASE64, BytesEncoding.BYTES], indirect=True
+    "db,schema", [(DBConfig.mongodb_empty, BytesEncoding.BASE64), (DBConfig.mongodb_empty, BytesEncoding.BYTES)], indirect=True
 )
 def test_mongo_schema(db, schema):
     collection_name = "documents"
@@ -84,29 +83,28 @@ def test_mongo_schema(db, schema):
                     "x": x,
                     "y": y,
                     "z": z,
-                }
+                },
+                db=db,
             )
         )
 
     db.add(schema)
-    import copy
-
-    gt = copy.deepcopy(data[0])
+    gt = data[0]
 
     db.execute(
-        MongoQuery(collection_name).insert_many(data, schema=schema.identifier),
+        MongoQuery(db=db, identifier=collection_name).insert_many(data, schema=schema.identifier),
     )
-    collection = MongoQuery(collection_name)
+    collection = MongoQuery(collection_name, db=db)
     r = collection.find_one().execute(db)
     rs = list(collection.find().execute(db))
 
     rs = sorted(rs, key=lambda x: x['id'])
 
-    assert np.array_equal(r['x'].x, gt['x'])
-    assert np.array_equal(r['z'].x, gt['z'])
+    assert np.array_equal(r['x'], gt['x'])
+    assert np.array_equal(r['z'], gt['z'])
 
-    assert np.array_equal(rs[0]['x'].x, gt['x'])
-    assert np.array_equal(rs[0]['z'].x, gt['z'])
+    assert np.array_equal(rs[0]['x'], gt['x'])
+    assert np.array_equal(rs[0]['z'], gt['z'])
 
 
 def test_select_missing_outputs(db):

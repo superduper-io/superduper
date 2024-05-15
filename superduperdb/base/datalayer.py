@@ -880,7 +880,7 @@ class Datalayer:
             else:
                 object.version = 0
 
-        serialized = object.dict().encode(leaves_to_keep=(Component,))
+        serialized = object.dict().encode(leaves_to_keep=(Component, ))
 
         children = [
             v for k, v in serialized['_leaves'].items() if isinstance(v, Component)

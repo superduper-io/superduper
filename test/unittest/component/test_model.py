@@ -13,6 +13,7 @@ from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
+from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.base.variables import Variable
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode
@@ -359,7 +360,7 @@ def test_query_model(db):
     q = (
         MongoQuery(identifier='documents', db=db)
         .like(
-            {'x': Variable(identifier='x', value='X')},
+            {'x': Variable(identifier='X')},
             vector_index='test_vector_search',
             n=3,
         )

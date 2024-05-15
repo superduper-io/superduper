@@ -125,7 +125,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
 
     db.add(listener1)
     doc = list(db.execute(listener1.outputs_select))[0]
-    result = Document(doc.unpack(db))[listener1.outputs]
+    result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))
     if isinstance(data, np.ndarray):
         assert np.allclose(result, data)

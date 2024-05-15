@@ -6,6 +6,7 @@ from overrides import override
 
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.misc.annotations import public_api
 
 class _Native:
@@ -120,11 +121,22 @@ class Schema(Component):
             return data
 
         encoded_data = {}
+        cache = {}
+        files = {}
+        blobs = {}
         for k, v in data.items():
             if k in self.fields and isinstance(self.fields[k], DataType):
                 field_encoder = self.fields[k]
                 assert callable(field_encoder)
-                encoded_data.update({k: field_encoder(v).encode()})
+                v = field_encoder(v).encode()
+                base = v['_base']
+                cache.update(v['_leaves'])
+                blobs.update(v.get('_blobs', {}))
+                files.update(v.get('_files', {}))
+                encoded_data.update({k: base})
             else:
                 encoded_data.update({k: v})
-        return encoded_data
+        encoded_data['_leaves'] = cache
+        encoded_data['_blobs'] = blobs
+        encoded_data['_files'] = files
+        return SuperDuperFlatEncode(encoded_data)

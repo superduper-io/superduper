@@ -43,6 +43,15 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
     def blobs(self):
         return self.get('_blobs', [])
 
+    def pop_leaves(self):
+        return IndexableDict(self.pop('_leaves', {}))
+
+    def pop_files(self):
+        return self.pop('_files', [])
+
+    def pop_blobs(self):
+        return self.pop('_blobs', [])
+
     def merge(self, d, inplace=False):
         if '_base' in d:
             assert '_base' in self, "Cannot merge differently encoded data"

@@ -24,7 +24,7 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
         ```python
-        !make testenv_image
+        !make build_sandbox
         !make testenv_init        
         ```
     </TabItem>

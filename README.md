@@ -248,7 +248,7 @@ docker run -p 8888:8888 superduperdb/superduperdb
 #### # Option 3. SuperDuperDB Testenv
 Ideal for learning advanced SuperDuperDB functionalities and testing whole AI stacks.
 ```shell
-make testenv_image
+make build_sandbox
 make testenv_init
 ```
 

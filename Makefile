@@ -2,60 +2,52 @@ DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
 BACKENDS ?= mongodb_community sqlite duckdb pandas
 
+# Default environment file for Pytest
 export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
 
-# Export variables
+# Export directories for data and artifacts
 export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
 export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
 
 
 ##@ General
 
-# The help target prints out all targets with their descriptions organized
-# beneath their categories. The categories are represented by '##@' and the
-# target descriptions by '##'.
-# https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
-# More info on the awk command:
-# http://linuxcommand.org/lc3_adv_awk.php
-
+# Display help message with available targets
 .DEFAULT_GOAL := help
 
 help: ## Display this help
 	@cat ./docs/api/banner.txt
-
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
 ##@ Release Management
 
-# RELEASE_VERSION defines the project version for the operator.
-# Update this value when you upgrade the version of your project.
+# Release a new version of SuperDuperDB
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
 
-
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "$(RELEASE_VERSION)" == "v$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
-
+	# Switch to release branch
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)
-
+	# Update version in source code
 	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION:v%=%)"
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
-
+	# Commit and tag release
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
 	@git tag $(RELEASE_VERSION)
-
+	# Push release branch and tag
 	@echo "** Push release-$(RELEASE_VERSION)"
 	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
 
-install-devkit: ## Add essential development tools
+install_devkit: ## Add essential development tools
 	@echo "Download Docs dependencies"
 	python -m pip install --user sphinx furo myst_parser
 
@@ -68,7 +60,7 @@ install-devkit: ## Add essential development tools
 
 ##@ Code Quality
 
-build-docs: ## Generate Docs and API
+build_docs: ## Generate Docs and API
 	@echo "===> Generate docusaurus docs and blog-posts <==="
 	cd docs/hr && npm i --legacy-peer-deps && npm run build
 	cd ../..
@@ -81,8 +73,7 @@ build-docs: ## Generate Docs and API
 	sphinx-build -a docs/api docs/hr/build/apidocs
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
-
-lint-and-type-check: ##  Perform code linting and type checking
+lint-and-type-check: ## Lint and type-check the code
 	@echo "===> Code Formatting <==="
 	black --check $(DIRECTORIES)
 	ruff check $(DIRECTORIES)
@@ -111,14 +102,15 @@ fix-and-check: ##  Lint the code before testing
 
 ##@ Image Management
 
-# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
-build_superduperdb: ## Build a minimal Docker image for general use
+# superduperdb/superduperdb is a production image that includes the latest framework from pypi.
+# It can be used as "FROM superduper/superduperdb as base" for building custom Dockerfiles.
+build_release: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="release"
 
 
-push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
+push_release: ## Push the superduperdb/superduperdb:<release> image
 	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
@@ -126,20 +118,26 @@ push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
 	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
 	docker push superduperdb/superduperdb:latest
 
-
-testenv_image: ## Build a sandbox image
-	@echo "===> Build superduperdb/sandbox"
+# superduperdb/sandbox is a development image with all dependencies pre-installed (framework + testenv)
+build_sandbox: ## Build superduperdb/sandbox:<commit> image
+	@echo "===> build superduperdb/sandbox:$(CURRENT_COMMIT)"
+	# install dependencies.
 	python -m pip install toml
 	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
-	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	# build image
+	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox:$(CURRENT_COMMIT) --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg REQUIREMENTS_FILE="deploy/testenv/optional_requirements.txt" \
+		--build-arg EXTRA_REQUIREMENTS_FILE="deploy/installations/testenv_requirements.txt" \
+	# mark the image as the latest
+	docker tag superduperdb/sandbox:$(CURRENT_COMMIT) superduperdb/sandbox:latest
 
+# superduperdb/nightly is a pre-release image with the latest code (and core dependencies) installed.
+build_nightly: ## Build superduperdb/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>)
+	@echo "===> build superduperdb/superduperdb:$(CURRENT_COMMIT)"
+	DOCKER_BUILDKIT=1 docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/nightly:$(CURRENT_COMMIT) --progress=plain \
+	--build-arg BUILD_ENV="nightly" \
+	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),)
 
-build_nightly: ## Build superduperdb/nightly:<commit> image
-	echo "===> build superduperdb/superduperdb:$(CURRENT_COMMIT)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/nightly:$(CURRENT_COMMIT) --progress=plain --no-cache \
-	--build-arg BUILD_ENV="nightly"
 
 push_nightly: ## Push the superduperdb/nightly:<commit> image
 	@echo "===> release superduperdb/nightly:$(CURRENT_COMMIT)"
@@ -149,11 +147,11 @@ push_nightly: ## Push the superduperdb/nightly:<commit> image
 ##@ Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	@echo "===> Discover Images"
+	@echo "===> discover superduper/sandbox:latest"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
-        echo "superduper/sandbox found";\
+        echo "superduper/sandbox:latest found";\
     else \
-      	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
+      	echo "superduper/sandbox:latest not found. Please run 'make build_sandbox'";\
       	exit -1;\
     fi
 
@@ -223,10 +221,10 @@ testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb
 
 ##@ CI Testing Functions
 
-unit-testing: ## Execute unit testing
+unit_testing: ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
-databackend-testing: ## Execute integration testing
+databackend_testing: ## Execute integration testing
 	@echo "TESTING BACKENDS"
 	@for backend in $(BACKENDS); do \
 		echo "TESTING $$backend"; \
@@ -234,10 +232,10 @@ databackend-testing: ## Execute integration testing
 	done
 	@echo "TODO -- implement more backends integration testing..."
 
-ext-testing: ## Execute integration testing
+ext_testing: ## Execute integration testing
 	find ./test -type d -name __pycache__ -exec rm -r {} +
 	find ./test -type f -name "*.pyc" -delete
 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
 
-smoke-testing: ## Execute smoke testing
+smoke_testing: ## Execute smoke testing
 	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke

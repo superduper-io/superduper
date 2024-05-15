@@ -77,7 +77,7 @@ Clone the code:
 
 ```bash
 git clone --branch main --single-branch --depth 1 https://github.com/SuperDuperDB/superduperdb.git
-make build_superduperdb
+make build_release
 ```
 
 #### Developer's docker image and environment
@@ -85,7 +85,7 @@ make build_superduperdb
 If you wish to use your local copy of code with a docker build, execute the following command:
 
 ```bash
-make testenv_image
+make build_sandbox
 ```
 
 You will see something like these lines in `docker images`:

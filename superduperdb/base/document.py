@@ -183,6 +183,9 @@ class QueryUpdateDocument(Document):
         # Update leaves
         if original is None:
             original = update
+        if not isinstance(original, SuperDuperFlatEncode):
+            return {'$set': update}
+
         metadata = original.pop('_leaves', {})
         for m, v in metadata.items():
             update[f'_leaves.{m}'] = v

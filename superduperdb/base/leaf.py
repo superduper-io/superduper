@@ -6,6 +6,7 @@ import uuid
 from abc import ABC
 
 from superduperdb.misc.serialization import asdict
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 _CLASS_REGISTRY = {}
 
@@ -66,12 +67,12 @@ class Leaf(ABC):
         blobs = {}
         files = {}
         self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
-        return {
+        return SuperDuperFlatEncode({
             '_base': f'?{self._id}',
             '_leaves': cache,
             '_blobs': blobs,
             '_files': files,
-        }
+        })
 
     def set_variables(self, db, **kwargs) -> 'Leaf':
         """Set free variables of self.

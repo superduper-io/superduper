@@ -94,7 +94,8 @@ class Listener(Component):
     @property
     def outputs_select(self):
         """Get query reference to model outputs."""
-        return self.select.table_or_collection.outputs(self.id)
+        if self.select.DB_TYPE == "SQL":
+            return self.select.table_or_collection.outputs(self.id)
 
         else:
             from superduperdb.backends.mongodb.query import Collection

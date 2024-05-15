@@ -177,7 +177,7 @@ def test_pre_like(db):
     query = (
         db['documents']
         .like(
-            r=Document({'x': r['x'].x}),
+            r=Document({'x': r['x']}),
             vector_index='test_vector_search',
         )
         .select('id')
@@ -204,7 +204,7 @@ def test_post_like(db):
         t.select('id', 'x', 'y')
         .filter(t.id.isin(['1', '2', '3']))
         .like(
-            r=Document({'x': r['x'].x}),
+            r=Document({'x': r['x']}),
             vector_index='test_vector_search',
         )
         .limit(2)

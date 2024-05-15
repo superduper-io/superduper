@@ -135,4 +135,4 @@ class Variable(Leaf):
                 ) from e
         else:
             assert isinstance(self.value, str)
-            return kwargs[self.value]
+            return kwargs.get(self.value, self)

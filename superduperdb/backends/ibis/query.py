@@ -65,8 +65,12 @@ def _model_update_impl(
 
     for ix in range(len(outputs)):
         output = outputs[ix]
-        if isinstance(output, dict) and '_base' in output:
-            output = output['_leaves'][output['_base'][1:]]['blob']
+        if '_base' in output:
+            key = output['_base']
+            if isinstance(key, str):
+                output = output['_leaves'][key[1:]]['blob']
+            else:
+                output = key
 
         d = {
             '_input_id': str(ids[ix]),
@@ -150,6 +154,8 @@ class IbisQuery(Query):
 
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['r']
+        if isinstance(like, Document):
+            like = like.unpack()
 
         similar_ids, similar_scores = self.db.select_nearest(
             like,
@@ -168,7 +174,9 @@ class IbisQuery(Query):
                 *self.parts[1:],
             ],
         )
-        return query._execute(parent)
+        result = query._execute(parent)
+        result.scores = similar_scores
+        return result
 
     def __eq__(self, other):
         return super().__eq__(other)
@@ -196,6 +204,8 @@ class IbisQuery(Query):
         like_kwargs = like_part[2]
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['r']
+        if isinstance(like, Document):
+            like = like.unpack()
         pre_like_query = IbisQuery(
             db=self.db, identifier=self.identifier, parts=pre_like_parts
         )

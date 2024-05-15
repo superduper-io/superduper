@@ -60,6 +60,7 @@ class Document(MongoStyleDict):
     ):
         super().__init__(*args, **kwargs)
         self.db = db
+        self.schema= schema
 
     def _deep_flat_encode(
         self,
@@ -92,6 +93,7 @@ class Document(MongoStyleDict):
         files = {}
 
         # Get schema from database.
+        schema = self.schema or schema
         schema = get_schema(self.db, schema) if schema else None
 
         out = self._deep_flat_encode(

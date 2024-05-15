@@ -47,7 +47,7 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
 
 
-@component()
+# @component()
 def array(
     dtype: str,
     shape: t.Sequence,
@@ -63,7 +63,7 @@ def array(
     :param encodable: The encodable to use.
     """
     return DataType(
-        identifier=f'numpy.{dtype}[{str_shape(shape)}]',
+        identifier=f'numpy:{dtype}[{str_shape(shape)}]',
         encoder=EncodeArray(dtype),
         decoder=DecodeArray(dtype, shape),
         shape=shape,

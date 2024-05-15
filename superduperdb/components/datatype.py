@@ -699,6 +699,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
     lazy: t.ClassVar[bool] = False
+    file_name: t.Optional[str] = None
 
     def __post_init__(self, db):
         super().__post_init__(db)
@@ -714,6 +715,8 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
         self.file_id = self.file_id or random_sha1()
         if self.x not in files:
             files[self.file_id] = self.x
+
+        self.file_name = os.path.basename(self.x.rstrip('/'))
 
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=(), schema=schema
@@ -733,6 +736,8 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
         """
         if isinstance(self.x, Empty):
             file = self.db.artifact_store._load_file(self.file_id)
+            if self.file_name is not None:
+                file = os.path.join(file, self.file_name)
             self.x = file
 
     def unpack(self):

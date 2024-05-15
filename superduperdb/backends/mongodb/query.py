@@ -403,7 +403,12 @@ class MongoQuery(Query):
             for i, id in enumerate(ids):
                 mongo_filter = {'_id': ObjectId(id)}
 
-                update = {f'_outputs.{predict_id}': outputs[i]['_base']}
+                output = outputs[i]
+
+                if isinstance(output, dict) and '_base' in output:
+                    output = output['_base']
+
+                update = {f'_outputs.{predict_id}': output}
 
                 update = QueryUpdateDocument._create_metadata_update(update, outputs[i])
                 update = Document(update)

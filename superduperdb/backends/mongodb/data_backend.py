@@ -12,7 +12,6 @@ from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
 from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
-from superduperdb.base.serializable import Serializable
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict

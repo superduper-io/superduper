@@ -37,5 +37,8 @@ def test_add_fold(db):
         refresh=False,
     )
 
-    x = db.databackend.conn['test_db'].documents.find_one()
-    breakpoint()
+    x = db.execute(db['documents'].find_one()).unpack()
+
+    assert x['x'].shape == (32,)
+    assert x['y'] in [0, 1]
+    assert x['z'].shape == (32,)

@@ -52,7 +52,7 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-# @component()
+@component()
 def tensor(
     dtype,
     shape: t.Sequence,
@@ -101,4 +101,4 @@ class TorchDataTypeFactory(DataTypeFactory):
 
         :param data: Data to create the datatype from
         """
-        return tensor(data.dtype, data.shape)
+        return tensor(dtype=data.dtype, shape=data.shape)

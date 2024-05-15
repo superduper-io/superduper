@@ -2,7 +2,7 @@ import dataclasses as dc
 import typing as t
 
 from superduperdb.components.component import Component
-from superduperdb.components.schema import Schema
+from superduperdb.components.schema import Schema, _Native
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb import logging
 
@@ -20,11 +20,20 @@ class Table(Component):
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
+        fields = {}
         if '_fold' not in self.schema.fields:
-            self.schema = Schema(
-                self.schema.identifier,
-                fields={**self.schema.fields, '_fold': dtype('str')},
-            )
+            fields.update({'_fold': dtype('str')})
+
+        for k, v in self.schema.fields.items():
+            if isinstance(v, _Native):
+                fields[k] = dtype(v.identifier)
+            else:
+                fields[k] = v
+
+        self.schema = Schema(
+            self.schema.identifier,
+            fields={**fields},
+        )
 
         assert self.primary_id != '_input_id', '"_input_id" is a reserved value'
 

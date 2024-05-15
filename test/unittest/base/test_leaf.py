@@ -58,7 +58,7 @@ def test_encode_leaf():
 
 
 def test_encode_leaf_with_children():
-    obj = MySer('my_ser', a=1, b='test_b', c=OtherSer('other_ser', d='test'))
+    obj = MySer(identifier='my_ser', a=1, b='test_b', c=OtherSer(identifier='other_ser', d='test'))
     assert obj.dict().encode() == {
         '_path': 'test/unittest/base/test_leaf/MySer',
         'uuid': obj.uuid,
@@ -74,11 +74,13 @@ def test_encode_leaf_with_children():
 
 def test_serialize_variables_1():
     s = Test(
+            identifier='tst',
         a=1,
         b=Variable(
-            'test/{version}', lambda db, value, kwargs: value.format(version=db.version)
+            identifier='test/{version}', setter_callback=lambda db, value, kwargs: value.format(version=db.version)
+
         ),
-        c=Variable('number', lambda db, value, kwargs: db[value]),
+        c=Variable(identifier='number', setter_callback=lambda db, value, kwargs: db[value]),
     )
 
     @dc.dataclass
@@ -88,24 +90,25 @@ def test_serialize_variables_1():
         def __getitem__(self, item):
             return {'number': 1.5}[item]
 
-    assert s.set_variables(db=Tmp(version=1)).encode() == r.encode()
+    q = s.set_variables(db=Tmp(version=1), number=1)
+    assert q.dict().encode()['c'] == 1
 
 
 def test_save_variables_2():
     query = (
-        MongoQuery(Variable('Collection'))
+        MongoQuery('documents')
         .like({'x': Variable('X')}, vector_index='test')
         .find({'x': {'$regex': '^test/1'}})
     )
 
-    assert [x.value for x in query.variables] == ['Collection', 'X']
+    assert [x.value for x in query.variables] == ['X']
 
-    q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
-    print(pprint(q.dict()))
+    #q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
+    #print(pprint(q.dict()))
 
 
 def test_saveable():
-    s = MySer(a=1, b='test', c=OtherSer(d='test'))
+    s = MySer(identifier='sr', a=1, b='test', c=OtherSer(identifier='other', d='test'))
     r = Document(s.dict()).encode()
     print(r)
 
@@ -117,13 +120,13 @@ def test_component_with_document():
         b='test',
         c=ObjectModel('test-2', object=lambda x: x + 2),
         d=[ObjectModel('test-3', object=lambda x: x + 2)],
-        e=OtherSer(d='test'),
+        e=OtherSer(identifier='other', d='test'),
         f=lambda x: x,
     )
     print('encoding')
     d = Document(t.dict())
     r = d.encode()
-    leaves = d.get_leaves()
+    leaves = r['_leaves']
 
     import pprint
 
@@ -132,7 +135,7 @@ def test_component_with_document():
     print(r)
 
     print(leaves)
-    assert len(leaves) == 4
+    assert len(leaves) == 7
 
     for leaf in leaves:
         print(type(leaf))

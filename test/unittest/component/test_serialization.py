@@ -35,12 +35,12 @@ def test_sklearn(db):
     m = Estimator(
         identifier='test',
         object=SVC(),
-        datatype=tensor('float', shape=(32,)),
+        datatype=tensor(dtype='float', shape=(32,)),
     )
     assert 'object' in m.artifact_schema.fields
     db.apply(m)
     assert db.show('model') == ['test']
-    assert db.show('datatype') == ['torch.float32[32]']
+    assert db.show('datatype') == []
 
     reloaded = db.load(type_id='model', identifier='test')
     reloaded.init()

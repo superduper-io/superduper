@@ -15,6 +15,7 @@ class FieldType(Leaf):
 
     :param identifier: The name of the data type.
     """
+
     identifier: t.Union[str, DataType]
 
     def __post_init__(self, db):

@@ -6,11 +6,17 @@ from collections import defaultdict
 import pandas
 
 from superduperdb import Document
-from superduperdb.backends.base.query import Query, applies_to, parse_query as _parse_query
+from superduperdb.backends.base.query import (
+    Query,
+    applies_to,
+    parse_query as _parse_query,
+)
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.components.schema import Schema
+
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+
 
 def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
     return _parse_query(
@@ -19,6 +25,7 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
         builder_cls=IbisQuery,
         db=db,
     )
+
 
 def _model_update_impl_flatten(
     db,
@@ -30,7 +37,6 @@ def _model_update_impl_flatten(
 
     for ix in range(len(outputs)):
         for r in outputs[ix]:
-            
             d = {
                 '_input_id': str(ids[ix]),
                 '_source': str(ids[ix]),
@@ -38,10 +44,7 @@ def _model_update_impl_flatten(
             }
             table_records.append(d)
 
-
-    return db.databackend.insert(
-        f'_outputs.{predict_id}', raw_documents=table_records
-    )
+    return db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
 
 
 def _model_update_impl(
@@ -63,17 +66,14 @@ def _model_update_impl(
     for ix in range(len(outputs)):
         output = outputs[ix]
         if '_base' in output:
-            output =  output['_leaves'][output['_base'][1:]]['blob']
+            output = output['_leaves'][output['_base'][1:]]['blob']
 
         d = {
             '_input_id': str(ids[ix]),
             'output': output,
         }
         table_records.append(d)
-    db.databackend.insert(
-        f'_outputs.{predict_id}', raw_documents=table_records
-    )
-
+    db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
 
 
 @dc.dataclass(kw_only=True, repr=False)
@@ -91,11 +91,10 @@ class IbisQuery(Query):
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep,schema=schema
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         cache[r[1:]]['_path'] = 'superduperdb/backends/ibis/query/parse_query'
         return r
-
 
     @property
     @applies_to('insert')
@@ -129,8 +128,7 @@ class IbisQuery(Query):
             renamings = self.renamings()
             tmp = c.schema.fields
             to_update = dict(
-                (renamings[k], v) if k in renamings else (k, v)
-                for k, v in tmp.items()
+                (renamings[k], v) if k in renamings else (k, v) for k, v in tmp.items()
             )
             fields.update(to_update)
 
@@ -154,13 +152,14 @@ class IbisQuery(Query):
         like = like_args[0] if like_args else like_kwargs['r']
 
         similar_ids, similar_scores = self.db.select_nearest(
-            like, vector_index=vector_index, 
+            like,
+            vector_index=vector_index,
             n=like_kwargs.get('n', 10),
         )
         similar_scores = dict(zip(similar_ids, similar_scores))
         t = self.db[self.identifier]
-        filter_query =  t.filter(getattr(t, self.primary_id).isin(similar_ids))
-        
+        filter_query = t.filter(getattr(t, self.primary_id).isin(similar_ids))
+
         query = IbisQuery(
             db=self.db,
             identifier=self.identifier,
@@ -176,15 +175,14 @@ class IbisQuery(Query):
 
     def __leq__(self, other):
         return super().__leq__(other)
+
     def __geq__(self, other):
         return super().__geq__(other)
 
-
-
     def _execute_post_like(self, parent):
-        pre_like_parts= []
+        pre_like_parts = []
         like_part = []
-        like_part_index= 0
+        like_part_index = 0
         for i, part in enumerate(self.parts):
             if not isinstance(part, str):
                 if part[0] == 'like':
@@ -192,30 +190,32 @@ class IbisQuery(Query):
                     like_part_index = i
                     break
             pre_like_parts.append(part)
-        post_like_parts = self.parts[like_part_index+1:]
+        post_like_parts = self.parts[like_part_index + 1 :]
 
         like_args = like_part[1]
         like_kwargs = like_part[2]
         vector_index = like_kwargs['vector_index']
         like = like_args[0] if like_args else like_kwargs['r']
-        pre_like_query = IbisQuery(db=self.db, identifier=self.identifier, parts=pre_like_parts)
-        within_ids = [r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)]
+        pre_like_query = IbisQuery(
+            db=self.db, identifier=self.identifier, parts=pre_like_parts
+        )
+        within_ids = [
+            r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)
+        ]
         similar_ids, similar_scores = self.db.select_nearest(
-            like,
-            vector_index=vector_index,
-            n=like_kwargs.get('n', 10),
-            ids=within_ids
+            like, vector_index=vector_index, n=like_kwargs.get('n', 10), ids=within_ids
         )
         similar_scores = dict(zip(similar_ids, similar_scores))
 
         t = self.db[pre_like_query._get_parent().get_name()]
-        filter_query =  pre_like_query.filter(getattr(t, self.primary_id).isin(similar_ids))
-        
+        filter_query = pre_like_query.filter(
+            getattr(t, self.primary_id).isin(similar_ids)
+        )
 
         parts = filter_query.parts + post_like_parts
 
         q = IbisQuery(db=self.db, identifier=self.identifier, parts=parts)
-        outputs  = q._execute(parent)
+        outputs = q._execute(parent)
         outputs.scores = similar_scores
         return outputs
 
@@ -227,15 +227,15 @@ class IbisQuery(Query):
         table = self._get_tables()[self.identifier]
         schema = table.schema
 
-        documents = [ r.encode(schema) if isinstance(r, Document) else r for r in documents ]
+        documents = [
+            r.encode(schema) if isinstance(r, Document) else r for r in documents
+        ]
         for r in documents:
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid
         ids = [r[self.primary_id] for r in documents]
-        self.db.databackend.insert(
-            self.identifier, raw_documents=documents
-        )
+        self.db.databackend.insert(self.identifier, raw_documents=documents)
         return ids
 
     def _create_table_if_not_exists(self):
@@ -261,7 +261,15 @@ class IbisQuery(Query):
 
     @property
     def type(self):
-        return defaultdict(lambda:'select', {'replace':'update', 'delete':'delete', 'filter':'select', 'insert': 'insert'})[self.flavour]
+        return defaultdict(
+            lambda: 'select',
+            {
+                'replace': 'update',
+                'delete': 'delete',
+                'filter': 'select',
+                'insert': 'insert',
+            },
+        )[self.flavour]
 
     @property
     def primary_id(self):
@@ -316,7 +324,9 @@ class IbisQuery(Query):
             find_args.append({})
 
         for identifier in predict_ids:
-            identifier = identifier if '_outputs' in identifier else f'_outputs.{identifier}'
+            identifier = (
+                identifier if '_outputs' in identifier else f'_outputs.{identifier}'
+            )
             symbol_table = self.db[identifier]
             symbol_table = symbol_table.relabel(
                 # TODO: Check for folds
@@ -324,10 +334,10 @@ class IbisQuery(Query):
             )
 
             attr = getattr(self.db[self.identifier], self.primary_id)
-            other_query = symbol_table.join(self.db[self.identifier], symbol_table._input_id == attr)
+            other_query = symbol_table.join(
+                self.db[self.identifier], symbol_table._input_id == attr
+            )
             return other_query
-
-
 
     @applies_to('select')
     def select_ids_of_missing_outputs(self, predict_id: str):

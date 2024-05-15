@@ -27,7 +27,7 @@ def applies_to(*flavours):
             try:
                 flavour = self.flavour
             except TypeError:
-                raise TypeError(msg) 
+                raise TypeError(msg)
             assert flavour in flavours, msg
             return f(self, *args, **kwargs)
 
@@ -47,17 +47,14 @@ class Query(Leaf, ABC):
         assert isinstance(item, slice)
         parts = self.parts[item]
         return type(self)(db=self.db, identifier=self.identifier, parts=parts)
-    
+
     def set_db(self, db):
         def _set_db(r, db):
             if isinstance(r, (tuple, list)):
                 out = [_set_db(x, db) for x in r]
                 return out
             if isinstance(r, dict):
-                return {
-                    k: _set_db(v, db)
-                    for k, v in r.items()
-                }
+                return {k: _set_db(v, db) for k, v in r.items()}
             if isinstance(r, Query):
                 r.db = db
                 return r
@@ -78,8 +75,6 @@ class Query(Leaf, ABC):
             parts.append((part, part_args, part_kwargs))
         self.parts = parts
 
-
-
     def _get_flavour(self):
         _query_str = self._to_str()
         repr_ = _query_str[0]
@@ -91,7 +86,9 @@ class Query(Leaf, ABC):
         try:
             return next(k for k, v in self.flavours.items() if re.match(v, repr_))
         except StopIteration:
-            raise TypeError(f'Query flavour {repr_} did not match existing {type(self)} flavours')
+            raise TypeError(
+                f'Query flavour {repr_} did not match existing {type(self)} flavours'
+            )
 
     def _get_parent(self):
         return self.db.databackend.get_table_or_collection(self.identifier)
@@ -110,16 +107,24 @@ class Query(Leaf, ABC):
     def type(self):
         pass
 
-
     @property
     def _id(self):
         return f'query/{hash_string(str(self))}'
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema'] = None):
+    def _deep_flat_encode(
+        self,
+        cache,
+        blobs,
+        files,
+        leaves_to_keep=(),
+        schema: t.Optional['Schema'] = None,
+    ):
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
         for i, doc in enumerate(documents):
-            documents[i] = doc._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema=schema)
+            documents[i] = doc._deep_flat_encode(
+                cache, blobs, files, leaves_to_keep, schema=schema
+            )
         cache[self._id] = {
             '_path': 'superduperdb/backends/base/query/parse_query',
             'documents': documents,
@@ -234,12 +239,14 @@ class Query(Leaf, ABC):
             parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
         )
 
-    
     def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
             return getattr(r, method)()
         if isinstance(r, (tuple, list)):
-            out = [self._encode_or_unpack_args(x, db, method=method, parent=parent) for x in r]
+            out = [
+                self._encode_or_unpack_args(x, db, method=method, parent=parent)
+                for x in r
+            ]
             if isinstance(r, tuple):
                 return tuple(out)
             return out
@@ -249,7 +256,7 @@ class Query(Leaf, ABC):
                 for k, v in r.items()
             }
         if isinstance(r, Query):
-            parent =super(type(self), r)._get_parent() 
+            parent = super(type(self), r)._get_parent()
             return super(type(self), r)._execute(parent)
 
         return r
@@ -259,8 +266,12 @@ class Query(Leaf, ABC):
             if isinstance(part, str):
                 parent = getattr(parent, part)
                 continue
-            args = self._encode_or_unpack_args(part[1], self.db, method=method, parent=parent)
-            kwargs = self._encode_or_unpack_args(part[2], self.db, method=method, parent=parent)
+            args = self._encode_or_unpack_args(
+                part[1], self.db, method=method, parent=parent
+            )
+            kwargs = self._encode_or_unpack_args(
+                part[2], self.db, method=method, parent=parent
+            )
             parent = getattr(parent, part[0])(*args, **kwargs)
         return parent
 
@@ -285,7 +296,6 @@ class Query(Leaf, ABC):
                 return self._execute(parent=parent)
         except AssertionError:
             return self._execute(parent=parent)
-
 
     @property
     @abstractmethod

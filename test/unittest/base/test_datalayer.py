@@ -18,8 +18,6 @@ from test.db_config import DBConfig
 from unittest.mock import patch
 
 from superduperdb.backends.ibis.field_types import dtype
-
-from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
@@ -38,6 +36,7 @@ from superduperdb.components.datatype import (
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
+from superduperdb.components.table import Table
 
 n_data_points = 250
 
@@ -98,13 +97,11 @@ def add_fake_model(db: Datalayer):
         db.apply(t)
         select = db['documents'].select('id', 'x')
     listener = Listener(
-            model=model,
-            select=select,
-            key='x',
-        )
-    db.apply(
-            listener
+        model=model,
+        select=select,
+        key='x',
     )
+    db.apply(listener)
     return listener
 
 
@@ -613,7 +610,7 @@ def test_reload_dataset(db):
     "db",
     [
         (DBConfig.mongodb_no_vector_index, {'n_data': 10}),
-        #(DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
+        # (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )

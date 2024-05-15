@@ -18,7 +18,7 @@ from superduperdb.ext.sklearn.model import Estimator
 def test_model():
     m = ObjectModel(
         identifier='test',
-        datatype=tensor('float', shape=(32,)),
+        datatype=tensor(dtype='float', shape=(32,)),
         object=torch.nn.Linear(13, 18),
     )
     m_dict = m.dict()

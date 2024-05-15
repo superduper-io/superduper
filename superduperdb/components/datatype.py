@@ -20,6 +20,7 @@ from superduperdb.backends.base.artifacts import (
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.misc.annotations import component, public_api
 from superduperdb.misc.hash import random_sha1
 
@@ -268,9 +269,10 @@ class DataType(Component):
         :param uri: The optional URI.
         """
         if self._takes_x:
-            return self.encodable_cls(datatype=self, x=x, uri=uri)
+            x = Empty() if x is None else x
+            return self.encodable_cls(datatype=self, x=x, uri=uri, db=self.db)
         else:
-            return self.encodable_cls(datatype=self, uri=uri)
+            return self.encodable_cls(datatype=self, uri=uri, db=self.db)
 
     @ensure_initialized
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
@@ -509,11 +511,11 @@ class Encodable(_BaseEncodable):
         blobs = {}
         files = {}
 
-        return {
+        return SuperDuperFlatEncode({
             '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
             '_leaves': cache,
             '_blobs': blobs,
-        }
+        })
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -652,7 +654,6 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
-
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
         r = super()._deep_flat_encode(

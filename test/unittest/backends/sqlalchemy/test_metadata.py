@@ -20,12 +20,14 @@ def metadata():
 
 
 def test(metadata):
+    import uuid
     metadata.create_component(
         {
             'identifier': 'my-model',
             'type_id': 'model',
             'version': 0,
             '_path': 'superduperdb.container.model.Model',
+            'uuid': str(uuid.uuid4())
         }
     )
 
@@ -38,6 +40,7 @@ def test(metadata):
             'type_id': 'model',
             'version': 0,
             '_path': 'superduperdb.container.model.Model',
+            'uuid': str(uuid.uuid4())
         }
     )
 

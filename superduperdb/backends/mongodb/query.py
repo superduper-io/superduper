@@ -112,6 +112,8 @@ class MongoQuery(Query):
         if not like_args:
             like_args = [{}]
         r = like_args[0] or like_kwargs.pop('r', {})
+        if isinstance(r, Document):
+            r = r.unpack()
 
         vector_index = like_kwargs.pop('vector_index')
         ids = like_kwargs.pop('within_ids', [])
@@ -124,8 +126,12 @@ class MongoQuery(Query):
             ids=ids,
             n=n,
         )
+
+        scores = dict(zip(ids , scores))
         find_args = self.parts[1][1]
         find_kwargs = self.parts[1][2]
+        if find_args == ():
+            find_args = ({},)
         find_args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
 
         q = type(self)(
@@ -145,22 +151,28 @@ class MongoQuery(Query):
         find_args = self.parts[0][1]
         find_kwargs = self.parts[0][2]
 
-        like_args = self.parts[1][1][0]
-        r = like_args[0]
+        like_args = self.parts[1][1]
 
         like_kwargs = self.parts[1][2]
-        range = like_kwargs.get('range')
+        r = like_args[0] or like_kwargs.pop('r')
+        if isinstance(r, Document):
+            r = r.unpack()
+        range = like_kwargs.pop('range', None)
 
         parent_query = self[:-1].select_ids
         if range:
             parent_query = parent_query.limit(range)
 
-        relevant_ids = [r['_id'] for r in parent_query.execute()]
+        relevant_ids = [str(r['_id']) for r in parent_query.execute()]
+
         similar_ids, scores = self.db.select_nearest(
             like=r,
             ids=relevant_ids,
+            vector_index = like_kwargs.pop('vector_index'),
             n=like_kwargs.get('n', 100),
         )
+        scores = dict(zip(similar_ids, scores))
+        similar_ids = [ObjectId(id) for id in similar_ids]
 
         final_args = find_args[:]
         if not final_args:
@@ -170,9 +182,8 @@ class MongoQuery(Query):
         final_query = self.table_or_collection.find(*final_args, **find_kwargs)
         result = final_query._execute(parent)
 
-        c = SuperDuperCursor(result, scores=scores, db=self.db)
-        c.scores = scores
-        return c
+        result.scores = scores
+        return result
 
     def _execute_bulk_write(self, parent):
         for part in self.parts:

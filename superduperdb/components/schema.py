@@ -93,7 +93,7 @@ class Schema(Component):
                 # TODO: We need to sort out the logic here
                 # We use encodable_cls to encode the data, but we the decoder here
                 # decoded[k] = field.encodable_cls.decode(data[k])
-                decoded[k] = field(field.decoder(data[k]))
+                decoded[k] = field.decoder(data[k])
             else:
                 decoded[k] = data[k]
         return decoded

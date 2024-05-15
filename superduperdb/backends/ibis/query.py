@@ -65,7 +65,7 @@ def _model_update_impl(
 
     for ix in range(len(outputs)):
         output = outputs[ix]
-        if '_base' in output:
+        if isinstance(output, dict) and '_base' in output:
             output = output['_leaves'][output['_base'][1:]]['blob']
 
         d = {

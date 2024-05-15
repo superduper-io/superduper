@@ -67,7 +67,7 @@ def test_file(db, random_file):
 
     dt = DataType("my-file", encodable="file")
     db.apply(dt)
-    collection = MongoQuery("my-file")
+    collection = MongoQuery("my-file", db=db)
     db.execute(collection.insert_one(Document({"x": dt(random_file)})))
 
     data = db.execute(collection.find_one())

@@ -124,7 +124,7 @@ def valid_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
         select = MongoQuery('documents').find({'_fold': 'valid'})
     else:
-        table = db.load('table', 'documents')
+        table = db['documents']
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
     d = Dataset(
         identifier='my_valid',
@@ -220,7 +220,6 @@ def add_models(db: Datalayer, is_mongodb_backend=True ):
             identifier=identifier,
             datatype=datatype,
             preferred_devices=['cpu'],
-            output_schema={'output': tensor}
         )
         if not is_mongodb_backend:
             schema = Schema(

@@ -47,9 +47,47 @@ class Query(Leaf, ABC):
         assert isinstance(item, slice)
         parts = self.parts[item]
         return type(self)(db=self.db, identifier=self.identifier, parts=parts)
+    
+    def set_db(self, db):
+        def _set_db(r, db):
+            if isinstance(r, (tuple, list)):
+                out = [_set_db(x, db) for x in r]
+                return out
+            if isinstance(r, dict):
+                return {
+                    k: _set_db(v, db)
+                    for k, v in r.items()
+                }
+            if isinstance(r, Query):
+                r.db = db
+                return r
+
+            return r
+
+        self.db = db
+
+        # Recursively set db
+        parts = []
+        for part in self.parts:
+            if isinstance(part, str):
+                parts.append(part)
+                continue
+            part_args = tuple(_set_db(part[1], db))
+            part_kwargs = _set_db(part[2], db)
+            part = part[0]
+            parts.append((part, part_args, part_kwargs))
+        self.parts = parts
+
+
 
     def _get_flavour(self):
-        repr_ = self._to_str()[0]
+        _query_str = self._to_str()
+        repr_ = _query_str[0]
+
+        if repr_ == self.identifier and not (_query_str[0] and _query_str[-1]):
+            # Table selection query.
+            return 'select'
+
         try:
             return next(k for k, v in self.flavours.items() if re.match(v, repr_))
         except StopIteration:

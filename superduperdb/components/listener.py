@@ -104,8 +104,7 @@ class Listener(Component):
                 collection_name = self.select.table_or_collection.identifier
             else:
                 collection_name = self.outputs
-
-            return self.db[collection_name].find()
+            return self.db[collection_name].find().outputs(self.uuid)
 
     @property
     def outputs_key(self):

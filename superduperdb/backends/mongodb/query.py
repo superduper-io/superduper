@@ -10,6 +10,7 @@ from superduperdb.backends.base.query import (
     parse_query as _parse_query,
 )
 from superduperdb.base.cursor import SuperDuperCursor
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.base.document import Document, QueryUpdateDocument
 from superduperdb.base.leaf import Leaf
 
@@ -416,8 +417,8 @@ class MongoQuery(Query):
 
                 output = outputs[i]
 
-                if isinstance(output, dict) and '_base' in output:
-                    output = output['_base']
+                if isinstance(output, SuperDuperFlatEncode):
+                    output = output.get('_base', output)
 
                 update = {f'_outputs.{predict_id}': output}
 
@@ -433,33 +434,54 @@ class MongoQuery(Query):
         else:
             collection = MongoQuery(f'_outputs.{predict_id}')
             documents = []
+            leaves, blobs, files = {}, {}, {}
             if flatten:
                 for i, id in enumerate(ids):
                     _outputs = outputs[i]
                     if isinstance(_outputs, (list, tuple)):
                         for offset, output in enumerate(_outputs):
+                            if isinstance(output, SuperDuperFlatEncode):
+                                leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                                output = output.get('_base', output)
                             documents.append(
                                 {
                                     f'_outputs': {predict_id: output},
                                     '_source': ObjectId(id),
                                     '_offset': offset,
+                                    '_leaves': leaves,
+                                    '_blobs': blobs,
+                                    '_files': files
                                 }
                             )
                     else:
+                        output = outputs[i]
+                        if isinstance(output, SuperDuperFlatEncode):
+                            leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                            output = output.get('_base', output)
                         documents.append(
                             {
-                                f'_outputs': {predict_id: outputs[i]},
+                                f'_outputs': {predict_id: output},
                                 '_source': ObjectId(id),
                                 '_offset': 0,
+                                '_leaves': leaves,
+                                '_blobs': blobs,
+                                '_files': files
                             }
                         )
 
             else:
                 for i, id in enumerate(ids):
+                    output = outputs[i]
+                    if isinstance(output, SuperDuperFlatEncode):
+                        leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                        output = output.get('_base', output)
                     documents.append(
                         {
                             '_id': ObjectId(id),
-                            f'_outputs': {predict_id: outputs[i]},
+                            f'_outputs': {predict_id: output},
+                            '_leaves': leaves,
+                            '_blobs': blobs,
+                            '_files': files
                         }
                     )
             return collection.insert_many(documents)

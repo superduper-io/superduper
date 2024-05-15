@@ -59,16 +59,33 @@ class Leaf(ABC):
     def _id(self):
         return f'{self.__class__.__name__.lower()}/{self.uuid}'
 
-    def encode(self, schema: t.Optional['Schema']=None):
+    def encode(self, schema: t.Optional['Schema']=None, leaves_to_keep=()):
         cache = {}
         blobs = {}
         files = {}
-        self._deep_flat_encode(cache, blobs, files, (), schema)
+        self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
         return {
             '_base': f'?{self._id}',
             '_leaves': cache,
             '_blobs': blobs,
         }
+
+    def set_variables(self, db, **kwargs) -> 'Leaf':
+        """Set free variables of self.
+
+        :param db: Datalayer instance.
+        """
+        from superduperdb import Document
+        from superduperdb.base.variables import Variable, _replace_variables
+        r = self.encode(leaves_to_keep=(Variable,))
+        r = _replace_variables(r, db, **kwargs)
+        return Document.decode(r, db=db).unpack()
+
+    @property
+    def variables(self) -> t.List[str]:
+        from superduperdb.base.variables import _find_variables
+        from superduperdb.base.variables import Variable
+        return _find_variables(self.encode(leaves_to_keep=Variable))
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema']=None):
         if isinstance(self, leaves_to_keep):

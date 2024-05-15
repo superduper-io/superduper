@@ -25,19 +25,19 @@ class OtherSer(Leaf):
 @dc.dataclass(kw_only=True)
 class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
-    a: int
-    b: t.Union[str, Variable]
-    c: ObjectModel
-    d: t.List[ObjectModel]
-    e: OtherSer
-    f: t.Callable
+    a: int = 1
+    b: t.Union[str, Variable] = 'b'
+    c: ObjectModel = dc.field(default_factory=ObjectModel(identifier='test-2', object=lambda x: x + 2))
+    d: t.List[ObjectModel] = dc.field(default_factory=[])
+    e: OtherSer = dc.field(default_factory=OtherSer(identifier='test', d='test'))
+    f: t.Callable = lambda x:x
 
 
 @dc.dataclass
 class MySer(Leaf):
-    a: int
-    b: str
-    c: Leaf
+    a: int = 1
+    b: str = 'b'
+    c: Leaf = dc.field(default_factory=OtherSer(identifier='test', d='test'))
 
 
 def test_serialize_variables_1():

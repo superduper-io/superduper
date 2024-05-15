@@ -35,6 +35,9 @@ def get_schema(db, schema: t.Union['Schema', str]) -> 'Schema':
     if isinstance(schema, Schema):
         return schema
     assert isinstance(schema, str)
+    if db is None:
+        raise ValueError(f'A Datalayer instance is required for encoding with schema {schema}')
+
     return db.schemas[schema]
 
 
@@ -88,7 +91,7 @@ class Document(MongoStyleDict):
     ) -> t.Dict:
         cache = {}
         blobs = {}
-        files = []
+        files = {}
             
         # Get schema from database.
         schema = get_schema(self.db, schema) if schema else None
@@ -96,6 +99,7 @@ class Document(MongoStyleDict):
         out = self._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
+
         out['_leaves'] = cache
         out['_files'] = files
         out['_blobs'] = blobs
@@ -108,6 +112,8 @@ class Document(MongoStyleDict):
     ):
         cache = {}
         blobs = {}
+        files = {}
+
         if '_leaves' in r:
             cache = r['_leaves']
             del r['_leaves']
@@ -116,9 +122,14 @@ class Document(MongoStyleDict):
             blobs = r['_blobs']
             del r['_blobs']
 
+        if '_files' in r:
+            files = r['_files']
+            del r['_files']
+
         if schema is not None:
             r = schema.decode_data(r)
-        r = _deep_flat_decode(r, cache, blobs, db=db)
+        r = _deep_flat_decode(r, cache, blobs, files=files, db=db)
+
         if isinstance(r, dict):
             return Document(r, schema=schema)
         else:
@@ -196,7 +207,7 @@ class QueryUpdateDocument(Document):
 
 
 def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
-    if isinstance(item, _BaseEncodable) and not isinstance(item, leaves_to_keep):  # type: ignore[arg-type]
+    if isinstance(item, _BaseEncodable) and not any([isinstance(item, l) for l in leaves_to_keep]):  # type: ignore[arg-type]
         return item.unpack()
     elif isinstance(item, dict):
         return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}
@@ -222,31 +233,37 @@ def _deep_flat_encode(r, cache, blobs, files, leaves_to_keep: t.Sequence[Leaf] =
     return r
 
 
-def _get_leaf_from_cache(k, cache, blobs, db: t.Optional['Datalayer'] = None):
+def _get_leaf_from_cache(k, cache, blobs, files, db: t.Optional['Datalayer'] = None):
     if isinstance(cache[k], Leaf):
-        return cache[k]
-    leaf = _deep_flat_decode(cache[k], cache, blobs, db=db)
+        leaf = cache[k]
+        if isinstance(leaf, Leaf):
+            leaf.db = db
+        return leaf
+    leaf = _deep_flat_decode(cache[k], cache, blobs, files, db=db)
     cache[k] = leaf
+    if isinstance(leaf, Leaf):
+        leaf.db = db
     return leaf
 
 
-def _deep_flat_decode(r, cache, blobs, db: t.Optional['Datalayer'] = None):
+def _deep_flat_decode(r, cache, blobs,files={}, db: t.Optional['Datalayer'] = None):
     # TODO: Document this function (Important)
     if isinstance(r, Leaf):
+        r.db = db
         return r
     if isinstance(r, list):
-        return [_deep_flat_decode(x, cache, blobs, db=db) for x in r]
+        return [_deep_flat_decode(x, cache, blobs, files=files, db=db) for x in r]
     if isinstance(r, dict) and '_path' in r:
         parts = r['_path'].split('/')
         cls = parts[-1]
         module = '.'.join(parts[:-1])
         dict_ = {k: v for k, v in r.items() if k != '_path'}
-        dict_ = _deep_flat_decode(dict_, cache, blobs, db=db)
+        dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
         return _import_item(cls=cls, module=module, dict=dict_, db=db)
     if isinstance(r, dict):
-        return {k: _deep_flat_decode(v, cache, blobs, db=db) for k, v in r.items()}
+        return {k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()}
     if isinstance(r, str) and r.startswith('?'):
-        return _get_leaf_from_cache(r[1:], cache, blobs, db=db)
+        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
     if isinstance(r, str) and r.startswith('%'):
         uuid = r.split('/')[-1]
         return db.load(uuid=uuid)

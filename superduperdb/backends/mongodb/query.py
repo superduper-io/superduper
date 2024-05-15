@@ -35,7 +35,7 @@ class MongoQuery(Query):
         'find_one': '^.*\.find_one\(.*\)',
         'find': '^.*\.find\(.*\)',
         'insert_many': '^.*\.insert_many\(.*\)$',
-        'insert_one': '^.*\.insert_one\(.*\)$',
+        'insert_one':  '^.*\.insert_one\(.*\)$',
         'replace_one': '^.*\.replace_one\(.*\)$',
         'update_many': '^.*\.update_many\(.*\)$',
         'update_one': '^.*\.update_one\(.*\)$',
@@ -106,7 +106,7 @@ class MongoQuery(Query):
 
     def _execute_pre_like(self, parent):
         assert self.parts[0][0] == 'like'
-        assert self.parts[1][0] == 'find'
+        assert self.parts[1][0] in ['find', 'find_one']
         like_args, like_kwargs = self.parts[0][1:]
         like_args = list(like_args)
         if not like_args:
@@ -116,23 +116,25 @@ class MongoQuery(Query):
         vector_index = like_kwargs.pop('vector_index')
         ids = like_kwargs.pop('within_ids', [])
 
-        n = like_kwargs.get('n', 100)
+        n = like_kwargs.pop('n', 100)
 
-        # TODO: use scores
         ids, scores = self.db.select_nearest(
             like=r,
             vector_index=vector_index,
             ids=ids,
             n=n,
         )
-        like_args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
+        find_args = self.parts[1][1]
+        find_kwargs = self.parts[1][2]
+        find_args[0]['_id']= {'$in': [ObjectId(id) for id in ids]}
 
         q = type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=[('find', tuple(like_args), like_kwargs), *self.parts[2:]],
+            parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
         )
-        result = q._execute(parent=parent)
+        result = q.execute(db=self.db)
+        result.scores =scores
         return result
 
     def _execute_post_like(self, parent):
@@ -201,12 +203,17 @@ class MongoQuery(Query):
         q._execute(parent)
 
     def _execute_find_one(self, parent):
-        r = self._execute(parent)
+        r = self._execute(parent, method='unpack')
         if r is None:
             return
         return Document.decode(r, db=self.db)
 
     def _execute_insert_one(self, parent):
+        insert_part = self.parts[0]
+        parts = self.parts[1:]
+        insert_part = (insert_part[0], [insert_part[1]], insert_part[2])
+
+        self.parts = [insert_part] + parts
         return self._execute_insert_many(parent)
 
     def _execute_insert_many(self, parent):
@@ -215,7 +222,7 @@ class MongoQuery(Query):
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 
-        documents = [r.encode(schema) for r in self.documents]
+        documents = [ r.encode(schema) if isinstance(r, Document) else r for r in documents ]
         for r in documents:
             if '_blobs' in r:
                 for file_id, bytes in r['_blobs'].items():
@@ -383,7 +390,6 @@ class MongoQuery(Query):
             return
 
         document_embedded = kwargs.get('document_embedded', True)
-
         if document_embedded:
             if flatten:
                 raise AttributeError(
@@ -416,7 +422,7 @@ class MongoQuery(Query):
                         for offset, output in enumerate(_outputs):
                             documents.append(
                                 {
-                                    **output,
+                                    f'_outputs': {predict_id: output},
                                     '_source': ObjectId(id),
                                     '_offset': offset,
                                 }
@@ -424,7 +430,7 @@ class MongoQuery(Query):
                     else:
                         documents.append(
                             {
-                                **outputs[i],
+                                    f'_outputs': {predict_id: outputs[i]},
                                 '_source': ObjectId(id),
                                 '_offset': 0,
                             }
@@ -435,7 +441,7 @@ class MongoQuery(Query):
                     documents.append(
                         {
                             '_id': ObjectId(id),
-                            **outputs[i],
+                            f'_outputs': {predict_id: outputs[i]},
                         }
                     )
             return collection.insert_many(documents)

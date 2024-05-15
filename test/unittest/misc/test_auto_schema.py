@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import torch
 
-from superduperdb.backends.ibis.query import Table
-from superduperdb.backends.mongodb.query import Collection
+from superduperdb.components.table import Table
+#from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.misc.auto_schema import infer_datatype, infer_schema
 

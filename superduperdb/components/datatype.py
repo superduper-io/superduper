@@ -704,8 +704,14 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
             return f'?{self.id}'
 
         self.file_id = self.file_id or random_sha1()
+
+        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=schema)
+
         if self.x not in files:
-            files.append(self.x)
+            files[self.id] = self.x
+
+        cache[self.id] = r
+
         return f'?{self.id}'
 
     def init(self, db):
@@ -721,7 +727,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
         """
         Unpack and get the original data.
         """
-        self.init()
+        self.init(self.db)
         return self.x
 
     @classmethod

@@ -91,4 +91,4 @@ class NumpyDataTypeFactory(DataTypeFactory):
         It's used for registering the auto schema.
         :param data: The numpy array.
         """
-        return array(dtype=data.dtype, shape=data.shape)
+        return array(dtype=str(data.dtype), shape=data.shape)

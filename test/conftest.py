@@ -159,18 +159,8 @@ def add_random_data_to_sql_db(
         z = torch.randn(32)
         fold = int(random.random() > 0.5)
         fold = 'valid' if fold else 'train'
-    
-        data.append(
-            Document(
-                {
-                    'id': str(i),
-                    'x': x,
-                    'y': y,
-                    'z': z,
-                    '_fold': fold
-                }
-            )
-        )
+
+        data.append(Document({'id': str(i), 'x': x, 'y': y, 'z': z, '_fold': fold}))
     db[table_name].insert(data).execute()
 
 
@@ -208,7 +198,7 @@ def add_datatypes(db: Datalayer):
     db.apply(pil_image)
 
 
-def add_models(db: Datalayer, is_mongodb_backend=True ):
+def add_models(db: Datalayer, is_mongodb_backend=True):
     # identifier, weight_shape, encoder
     params = [
         ['linear_a', (32, 16), tensor(dtype='float', shape=(16,))],

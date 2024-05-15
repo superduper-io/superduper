@@ -228,14 +228,16 @@ class Component(Leaf):
         """
         assert db
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(),schema=None):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self._id] = self
             return f'?{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
-        r = _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        r = _deep_flat_encode(
+            r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        )
         cache[self._id] = r
         return f'?{self._id}'
 

@@ -89,27 +89,26 @@ def _replace_variables(x, db, **kwargs):
     return x
 
 
-@dc.dataclass(kw_only=True)
+@dc.dataclass
 class Variable(Leaf):
-    """
-    Mechanism for allowing "free variables" in a leaf object.
+    """Mechanism for allowing "free variables" in a leaf object.
+
     The idea is to allow a variable to be set at runtime, rather than
     at object creation time.
 
-    :param value: The name of the variable to be set at runtime.
     :param setter_callback: A callback function that takes the value, datalayer
                             and kwargs as input and returns the formatted
                             variable.
     """
 
-    value: t.Any
     setter_callback: dc.InitVar[t.Optional[t.Callable]] = None
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
+        self.value = self.identifier
 
     def __repr__(self) -> str:
-        return '$' + str(self.value)
+        return f'${str(self.value)}'
 
     def __hash__(self) -> int:
         return hash(self.value)

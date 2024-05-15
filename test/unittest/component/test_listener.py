@@ -6,8 +6,9 @@ import pytest
 
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb import Document
-from superduperdb.backends.ibis.query import Table, dtype
-from superduperdb.backends.mongodb.query import Collection
+
+# from superduperdb.backends.ibis.query import Table, dtype
+# from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
@@ -24,6 +25,7 @@ def test_listener_serializes_properly():
 
     # check that the result is JSON-able
     import json
+
     r.pop('_blobs')
     print(json.dumps(r, indent=2))
 
@@ -101,7 +103,7 @@ def test_listener_chaining(db):
 @pytest.mark.parametrize("flatten", [True, False])
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
-    collection = Collection("test")
+    collection = db["test"]
 
     # Do not support flatten is True and document_embedded is True
     if flatten is True and document_embedded is True:
@@ -117,7 +119,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
 
     listener1 = Listener(
         model=m1,
-        select=Collection("test").find({}),
+        select=collection.find({}),
         key="x",
         identifier="listener1",
     )

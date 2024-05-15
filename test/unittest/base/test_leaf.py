@@ -27,10 +27,12 @@ class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1
     b: t.Union[str, Variable] = 'b'
-    c: ObjectModel = dc.field(default_factory=ObjectModel(identifier='test-2', object=lambda x: x + 2))
+    c: ObjectModel = dc.field(
+        default_factory=ObjectModel(identifier='test-2', object=lambda x: x + 2)
+    )
     d: t.List[ObjectModel] = dc.field(default_factory=[])
     e: OtherSer = dc.field(default_factory=OtherSer(identifier='test', d='test'))
-    f: t.Callable = lambda x:x
+    f: t.Callable = lambda x: x
 
 
 @dc.dataclass
@@ -40,14 +42,37 @@ class MySer(Leaf):
     c: Leaf = dc.field(default_factory=OtherSer(identifier='test', d='test'))
 
 
-def test_serialize_variables_1():
-    r = Test(a=1, b='test/1', c=1.5)
-    assert r.dict().encode() == {
-        '_path': 'test.unittest.base.test_leaf.Test',
+def test_encode_leaf():
+    obj = Test('test', a=1, b='test_b', c=1.5)
+    assert obj.dict().encode() == {
+        '_path': 'test/unittest/base/test_leaf/Test',
+        'uuid': obj.uuid,
+        'identifier': 'test',
         'a': 1,
-        'b': 'test/1',
+        'b': 'test_b',
         'c': 1.5,
+        '_leaves': {},
+        '_files': {},
+        '_blobs': {},
     }
+
+
+def test_encode_leaf_with_children():
+    obj = MySer('my_ser', a=1, b='test_b', c=OtherSer('other_ser', d='test'))
+    assert obj.dict().encode() == {
+        '_path': 'test/unittest/base/test_leaf/MySer',
+        'uuid': obj.uuid,
+        'identifier': 'my_ser',
+        'a': 1,
+        'b': 'test_b',
+        'c': obj.c.dict().unpack(),
+        '_leaves': {},
+        '_files': {},
+        '_blobs': {},
+    }
+
+
+def test_serialize_variables_1():
     s = Test(
         a=1,
         b=Variable(

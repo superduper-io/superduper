@@ -98,7 +98,6 @@ class Listener(Component):
             return self.select.table_or_collection.outputs(self.id)
 
         else:
-            from superduperdb.backends.mongodb.query import Collection
 
             model_update_kwargs = self.model.model_update_kwargs or {}
             if model_update_kwargs.get('document_embedded', True):
@@ -106,7 +105,7 @@ class Listener(Component):
             else:
                 collection_name = self.outputs
 
-            return Collection(collection_name).find()
+            return self.db[collection_name].find()
 
     @property
     def outputs_key(self):

@@ -235,11 +235,11 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     num_gpus: t.Optional[int] = None
     ray_configs: t.Optional[dict] = None
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
         if self.num_gpus and 'num_gpus' not in self.compute_kwargs:
             self.compute_kwargs['num_gpus'] = self.num_gpus
-        return SuperDuperTrainer.__post_init__(self, artifacts)
+        return SuperDuperTrainer.__post_init__(self, db, artifacts)
 
     def build(self):
         """Build the training arguments."""

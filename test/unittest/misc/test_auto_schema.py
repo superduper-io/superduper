@@ -5,9 +5,8 @@ import pandas as pd
 import pytest
 import torch
 
-from superduperdb.components.table import Table
-#from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
+from superduperdb.components.table import Table
 from superduperdb.misc.auto_schema import infer_datatype, infer_schema
 
 
@@ -93,17 +92,16 @@ def test_infer_schema_ibis(data):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_mongo_schema(db, data):
-    collection_name = "documents"
+    collection = db['documents']
     schema = db.infer_schema(data)
 
     db.apply(schema)
 
     db.execute(
-        Collection(collection_name).insert_one(
+        collection.insert_one(
             Document(data), schema=schema.identifier
         ),
     )
-    collection = Collection(collection_name)
     decode_data = collection.find_one().execute(db).unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))

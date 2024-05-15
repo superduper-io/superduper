@@ -504,11 +504,11 @@ class Encodable(_BaseEncodable):
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
-    def encode(self, schema: t.Optional['Schema']=None):
+    def encode(self, schema: t.Optional['Schema'] = None):
         cache = {}
         blobs = {}
         files = {}
-        
+
         return {
             '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
             '_leaves': cache,
@@ -522,7 +522,9 @@ class Encodable(_BaseEncodable):
 
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=schema)
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=(), schema=schema
+        )
         del r['x']
         r['blob'] = maybe_bytes
         cache[self.id] = r
@@ -550,6 +552,7 @@ class Encodable(_BaseEncodable):
         :param db: The Datalayer instance.
         """
         pass
+
     @classmethod
     def decode(cls, r, db=None) -> 'Encodable':
         """
@@ -559,10 +562,7 @@ class Encodable(_BaseEncodable):
         :param db: The Datalayer instance.
         """
         object = cls._get_object(db, r)
-        return cls(
-            x=object,
-            blob=r
-        )
+        return cls(x=object, blob=r)
 
     @classmethod
     def get_datatype(cls, db, r):
@@ -587,7 +587,6 @@ class Encodable(_BaseEncodable):
         return datatype
 
 
-
 @dc.dataclass
 class Native(_BaseEncodable):
     """Class for representing native data supported by the underlying database.
@@ -607,7 +606,9 @@ class Native(_BaseEncodable):
             cache[self.id] = self
             return f'?{self.id}'
 
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        )
         cache[self.id] = r
         return f'?{self.id}'
 
@@ -697,6 +698,13 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
+    lazy: t.ClassVar[bool] = False
+
+    def __post_init__(self, db):
+        super().__post_init__(db)
+
+        if not self.lazy and isinstance(self.x, Empty):
+            self.init()
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -704,70 +712,46 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
             return f'?{self.id}'
 
         self.file_id = self.file_id or random_sha1()
-
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=schema)
-
         if self.x not in files:
-            files[self.id] = self.x
+            files[self.file_id] = self.x
+
+        r = super()._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=(), schema=schema
+        )
+
+        del r['x']
+
 
         cache[self.id] = r
 
         return f'?{self.id}'
 
-    def init(self, db):
+    def init(self):
         """Initialize to load `x` with the actual file from the artifact store.
 
         :param db: A Datalayer instance
         """
         if isinstance(self.x, Empty):
-            file = db.artifact_store._load_file(self.file_id)
+            file = self.db.artifact_store._load_file(self.file_id)
             self.x = file
 
     def unpack(self):
         """
         Unpack and get the original data.
         """
-        self.init(self.db)
+        self.init()
         return self.x
 
     @classmethod
     def _get_object(cls, db, r):
         return r['x']
 
-    @classmethod
-    def decode(cls, r, db=None) -> 'File':
-        """Decode data to a `File` instance.
-
-        :param r: Object to decode
-        :param db: Datalayer instance
-        """
-        file = cls(
-            x=Empty(),
-            datatype=db.datatypes[r['_content']['datatype']],
-            file_id=r['_content']['file_id'],
-        )
-        file.init(db)
-        return file
-
-
 class LazyFile(File):
     """Class is used to load a file only when needed."""
 
     leaf_type: t.ClassVar[str] = 'lazy_file'
+    lazy: t.ClassVar[bool] = True
 
-    @classmethod
-    def decode(cls, r, db=None) -> 'LazyFile':
-        """Decode a dictionary to a `LazyFile` instance.
-
-        :param r: Object to decode
-        :param db: Datalayer instance
-        """
-        file = cls(
-            x=Empty(),
-            datatype=db.datatypes[r['_content']['datatype']],
-            file_id=r['_content']['file_id'],
-        )
-        return file
 
 
 Encoder = DataType

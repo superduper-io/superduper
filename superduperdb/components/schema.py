@@ -57,7 +57,9 @@ class Schema(Component):
                 encodable = self.fields[k](r[k])
                 if isinstance(encodable, leaves_to_keep):
                     continue
-                r[k] = encodable._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=self)
+                r[k] = encodable._deep_flat_encode(
+                    cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=self
+                )
         return r
 
     @cached_property
@@ -88,6 +90,9 @@ class Schema(Component):
         decoded = {}
         for k in data.keys():
             if isinstance(field := self.fields.get(k), DataType):
+                # TODO: We need to sort out the logic here
+                # We use encodable_cls to encode the data, but we the decoder here
+                # decoded[k] = field.encodable_cls.decode(data[k])
                 decoded[k] = field(field.decoder(data[k]))
             else:
                 decoded[k] = data[k]

@@ -67,14 +67,16 @@ def copy_vectors(
     elif isinstance(db.databackend, IbisDataBackend):
         docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
         from superduperdb.backends.ibis.data_backend import INPUT_KEY
+
         vectors = []
         for doc in docs:
             doc = doc.unpack()
-            vectors.append({
-                'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
-                'id': str(doc[INPUT_KEY]),
-
-                })
+            vectors.append(
+                {
+                    'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
+                    'id': str(doc[INPUT_KEY]),
+                }
+            )
 
     for r in vectors:
         if hasattr(r['vector'], 'numpy'):

@@ -41,7 +41,9 @@ def test_reference(db, random_file):
     db.add(c)
 
     reloaded = db.load("special", c.identifier)
+    reloaded.init()
     assert isinstance(reloaded.my_file, str)
+    assert reloaded.my_file != random_file
     with open(reloaded.my_file, "r") as f, open(random_file, "r") as f2:
         assert f.read() == f2.read()
 
@@ -75,6 +77,7 @@ def test_file(db, random_file):
     path = data["x"].x
     assert os.path.exists(path)
     # Check that the file is the same
+    assert path != random_file
     with open(path, "r") as f, open(random_file, "r") as f2:
         assert f.read() == f2.read()
 
@@ -91,10 +94,11 @@ def test_file_lazy(db, random_file):
     data = db.execute(collection.find_one())
 
     assert isinstance(data["x"].x, Empty)
-    data = data.unpack(db)
+    data = data.unpack()
     path = data["x"]
     assert isinstance(path, str)
     assert os.path.exists(path)
     # Check that the file is the same
+    assert path != random_file
     with open(path, "r") as f, open(random_file, "r") as f2:
         assert f.read() == f2.read()

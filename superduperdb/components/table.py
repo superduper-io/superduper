@@ -11,13 +11,14 @@ if t.TYPE_CHECKING:
 
 DEFAULT_PRIMARY_ID = 'id'
 
+
 @dc.dataclass(kw_only=True)
 class Table(Component):
     type_id: t.ClassVar[str] = 'table'
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID
 
-    def __post_init__(self,db, artifacts):
+    def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
         if '_fold' not in self.schema.fields:
             self.schema = Schema(
@@ -43,4 +44,3 @@ class Table(Component):
                 pass
             else:
                 raise e
-

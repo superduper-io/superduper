@@ -779,7 +779,6 @@ class Model(Component):
         self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
 
-
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
@@ -806,7 +805,8 @@ class Model(Component):
         if isinstance(self.datatype, DataType):
             if self.flatten:
                 outputs = [
-                    [self.datatype(x).encode(self.output_schema) for x in output] for output in outputs
+                    [self.datatype(x).encode(self.output_schema) for x in output]
+                    for output in outputs
                 ]
             else:
                 outputs = [self.datatype(x).encode(self.output_schema) for x in outputs]
@@ -1343,8 +1343,8 @@ class QueryModel(Model):
 class SequentialModel(Model):
     """Sequential model component which wraps a model to become serializable.
 
-        {_model_params}
-        :param models: A list of models to use
+    {_model_params}
+    :param models: A list of models to use
     """
 
     __doc__ = __doc__.format(
@@ -1358,7 +1358,7 @@ class SequentialModel(Model):
 
     models: t.List[Model]
 
-    def __post_init__(self,db, artifacts):
+    def __post_init__(self, db, artifacts):
         self.signature = self.models[0].signature
         self.datatype = self.models[-1].datatype
         return super().__post_init__(db, artifacts)

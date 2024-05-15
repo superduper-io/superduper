@@ -186,6 +186,7 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
         return CallableInputs(
             self.object.forward if not self.preprocess else self.preprocess, {}
         )
+
     def to(self, device):
         """Move the model to a device.
 

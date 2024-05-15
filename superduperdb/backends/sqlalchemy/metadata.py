@@ -249,7 +249,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 r = res[0]
             except IndexError:
                 raise NonExistentMetadataError(
-                        f'Table with uuid: {uuid} does not exist'
+                    f'Table with uuid: {uuid} does not exist'
                 )
 
         return self._get_component(

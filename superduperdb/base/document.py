@@ -17,8 +17,6 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
- 
-
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
@@ -30,13 +28,16 @@ _LEAF_TYPES = {
 _LEAF_TYPES.update(_ENCODABLES)
 _OUTPUTS_KEY = '_outputs'
 
+
 def get_schema(db, schema: t.Union['Schema', str]) -> 'Schema':
     """Handle schema caching and loading."""
     if isinstance(schema, Schema):
         return schema
     assert isinstance(schema, str)
     if db is None:
-        raise ValueError(f'A Datalayer instance is required for encoding with schema {schema}')
+        raise ValueError(
+            f'A Datalayer instance is required for encoding with schema {schema}'
+        )
 
     return db.schemas[schema]
 
@@ -67,7 +68,7 @@ class Document(MongoStyleDict):
         files,
         leaves_to_keep: t.Sequence = (),
         schema: t.Optional['Schema'] = None,
-    ):
+    ) -> dict[t.Any, t.Any]:
         out = dict(self)
         if schema is not None:
             out = schema.deep_flat_encode_data(
@@ -78,21 +79,18 @@ class Document(MongoStyleDict):
                 leaves_to_keep=leaves_to_keep,
             )
         return _deep_flat_encode(
-            out,
-            cache,
-            blobs,
-            files,
-            leaves_to_keep=leaves_to_keep,
-            schema=schema
+            out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
 
     def encode(
-        self, schema: t.Optional[t.Union['Schema', str]] = None, leaves_to_keep: t.Sequence = ()
-    ) -> t.Dict:
+        self,
+        schema: t.Optional[t.Union['Schema', str]] = None,
+        leaves_to_keep: t.Sequence = (),
+    ) -> SuperDuperFlatEncode:
         cache = {}
         blobs = {}
         files = {}
-            
+
         # Get schema from database.
         schema = get_schema(self.db, schema) if schema else None
 
@@ -100,6 +98,7 @@ class Document(MongoStyleDict):
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
 
+        # TODO: (New) Only include _leaves, _files, _blobs if they are not empty.
         out['_leaves'] = cache
         out['_files'] = files
         out['_blobs'] = blobs
@@ -217,19 +216,32 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
         return item
 
 
-def _deep_flat_encode(r, cache, blobs, files, leaves_to_keep: t.Sequence[Leaf] = (), schema: t.Optional[Schema] = None):
+def _deep_flat_encode(
+    r,
+    cache,
+    blobs,
+    files,
+    leaves_to_keep: t.Sequence[Leaf] = (),
+    schema: t.Optional[Schema] = None,
+):
     if isinstance(r, dict):
         return {
-            k: _deep_flat_encode(v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+            k: _deep_flat_encode(
+                v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            )
             for k, v in r.items()
         }
     if isinstance(r, list):
         return [
-            _deep_flat_encode(x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+            _deep_flat_encode(
+                x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            )
             for x in r
         ]
     if isinstance(r, Leaf):
-        return r._deep_flat_encode(cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        return r._deep_flat_encode(
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        )
     return r
 
 
@@ -246,7 +258,7 @@ def _get_leaf_from_cache(k, cache, blobs, files, db: t.Optional['Datalayer'] = N
     return leaf
 
 
-def _deep_flat_decode(r, cache, blobs,files={}, db: t.Optional['Datalayer'] = None):
+def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
     # TODO: Document this function (Important)
     if isinstance(r, Leaf):
         r.db = db
@@ -261,7 +273,9 @@ def _deep_flat_decode(r, cache, blobs,files={}, db: t.Optional['Datalayer'] = No
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
         return _import_item(cls=cls, module=module, dict=dict_, db=db)
     if isinstance(r, dict):
-        return {k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()}
+        return {
+            k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
+        }
     if isinstance(r, str) and r.startswith('?'):
         return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
     if isinstance(r, str) and r.startswith('%'):

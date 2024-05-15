@@ -225,6 +225,7 @@ class ComponentJob(Job):
         """
         if db is None:
             from superduperdb.base.build import build_datalayer
+
             db = build_datalayer()
 
         self.db = db

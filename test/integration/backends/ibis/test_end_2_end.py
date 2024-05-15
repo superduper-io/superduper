@@ -7,14 +7,7 @@ import torchvision
 
 from superduperdb import CFG
 from superduperdb.backends.ibis.field_types import dtype
-<<<<<<< HEAD
-from superduperdb.backends.ibis.query import RawSQL, Table
-=======
 from superduperdb.backends.ibis.query import RawSQL, IbisQuery
-from superduperdb.backends.local.artifacts import FileSystemArtifactStore
-from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.base.datalayer import Datalayer
->>>>>>> 9d83d21ec (Deprecate Serializable)
 from superduperdb.base.document import Document as D
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema

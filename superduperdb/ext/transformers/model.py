@@ -82,11 +82,11 @@ class TransformersTrainer(TrainingArguments, Trainer):
         t.Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
     ] = None
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         assert self.output_dir == '' or self.output_dir == self.identifier
         self.output_dir = self.identifier
         TrainingArguments.__post_init__(self)
-        return Trainer.__post_init__(self, artifacts)
+        return Trainer.__post_init__(self, db, artifacts)
 
     @property
     def native_arguments(self):
@@ -208,10 +208,10 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
             model=self.model_cls.from_pretrained(self.model_name),
         )
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         if self.pipeline is None:
             self._build_pipeline()
-        super().__post_init__(artifacts)
+        super().__post_init__(db ,artifacts)
 
     def predict_one(self, text: str):
         """Predict the class of a single text.
@@ -266,7 +266,7 @@ class LLM(BaseLLM, _Fittable):
         ("tokenizer_kwargs", dill_serializer),
     )
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db,artifacts):
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
 
@@ -275,7 +275,7 @@ class LLM(BaseLLM, _Fittable):
             "pretrained_model_name_or_path", self.model_name_or_path
         )
 
-        super().__post_init__(artifacts)
+        super().__post_init__(db, artifacts)
 
     @classmethod
     def from_pretrained(

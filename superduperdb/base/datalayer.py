@@ -174,7 +174,7 @@ class Datalayer:
         key = vi.indexing_listener.key
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
-        
+
         query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
 
         logging.info(str(query))
@@ -880,7 +880,7 @@ class Datalayer:
             else:
                 object.version = 0
 
-        serialized = object.dict().encode(leaves_to_keep=(Component, ))
+        serialized = object.dict().encode(leaves_to_keep=(Component,))
 
         children = [
             v for k, v in serialized['_leaves'].items() if isinstance(v, Component)
@@ -898,7 +898,15 @@ class Datalayer:
             except FileExistsError:
                 continue
 
+        for file_id, file_path in serialized['_files'].items():
+            try:
+                new_file_id = self.artifact_store._save_file(file_path, file_id=file_id)
+                serialized['_files'][file_id] = new_file_id
+            except FileExistsError:
+                continue
+
         serialized['_blobs'] = list(serialized['_blobs'].keys())
+        serialized['_files'] = list(serialized['_files'].keys())
 
         self.metadata.create_component(serialized)
 

@@ -195,7 +195,7 @@ class DocumentInput(Model):
     identifier: str = '_input'
     signature: t.ClassVar[Signature] = 'singleton'
 
-    def __post_init__(self,db, artifacts):
+    def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
 
     def predict_one(self, r):

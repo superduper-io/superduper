@@ -3,6 +3,7 @@ from collections import defaultdict
 from collections import OrderedDict
 import copy
 
+
 class IndexableDict(OrderedDict):
     def __init__(self, ordered_dict):
         self._ordered_dict = ordered_dict
@@ -26,10 +27,10 @@ class IndexableDict(OrderedDict):
         except IndexError:
             raise IndexError(f"Index {index} is out of range.")
 
+
 class SuperDuperFlatEncode(t.Dict[str, t.Any]):
-    """
-    Dictionary for representing flattened encoding data.
-    """
+    """Dictionary for representing flattened encoding data."""
+
     @property
     def leaves(self):
         return IndexableDict(self.get('_leaves', {}))
@@ -61,14 +62,12 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
             self['_files'] = files
             return self
         else:
-
             out = copy.deepcopy(self)
             if leaves:
                 out['_leaves'] = leaves
             out['_blobs'] = blobs
             out['_files'] = files
             return out
-
 
 
 class MongoStyleDict(t.Dict[str, t.Any]):

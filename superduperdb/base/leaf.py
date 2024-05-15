@@ -46,6 +46,7 @@ def _import_item(cls, module, dict, db: t.Optional['Datalayer'] = None):
 @dc.dataclass
 class Leaf(ABC):
     """Base class for all leaf classes."""
+
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
 
     identifier: str
@@ -59,7 +60,8 @@ class Leaf(ABC):
     def _id(self):
         return f'{self.__class__.__name__.lower()}/{self.uuid}'
 
-    def encode(self, schema: t.Optional['Schema']=None, leaves_to_keep=()):
+    def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep=()):
+        # TODO: (New) Use self.dict().encode() instead??
         cache = {}
         blobs = {}
         files = {}
@@ -68,6 +70,7 @@ class Leaf(ABC):
             '_base': f'?{self._id}',
             '_leaves': cache,
             '_blobs': blobs,
+            '_files': files,
         }
 
     def set_variables(self, db, **kwargs) -> 'Leaf':
@@ -77,6 +80,7 @@ class Leaf(ABC):
         """
         from superduperdb import Document
         from superduperdb.base.variables import Variable, _replace_variables
+
         r = self.encode(leaves_to_keep=(Variable,))
         r = _replace_variables(r, db, **kwargs)
         return Document.decode(r, db=db).unpack()
@@ -85,16 +89,26 @@ class Leaf(ABC):
     def variables(self) -> t.List[str]:
         from superduperdb.base.variables import _find_variables
         from superduperdb.base.variables import Variable
+
         return _find_variables(self.encode(leaves_to_keep=Variable))
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema']=None):
+    def _deep_flat_encode(
+        self,
+        cache,
+        blobs,
+        files,
+        leaves_to_keep=(),
+        schema: t.Optional['Schema'] = None,
+    ):
         if isinstance(self, leaves_to_keep):
             cache[self._id] = self
             return f'?{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
-        return _deep_flat_encode(r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema)
+        return _deep_flat_encode(
+            r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        )
 
     def dict(self):
         from superduperdb import Document

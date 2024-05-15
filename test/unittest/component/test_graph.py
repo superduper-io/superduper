@@ -121,9 +121,8 @@ def test_disconnected_edge(model1, model2_multi):
         g.predict_one(1)
         assert 'Graph disconnected at Node: m2_multi' in str(excinfo.value)
 
-    
+
 def test_complex_graph_with_select(db):
-    breakpoint()
     linear_a = db.load('model', 'linear_a')
     linear_b = db.load('model', 'linear_b')
     g = Graph(identifier='complex-graph', input=linear_a, outputs=[linear_b])

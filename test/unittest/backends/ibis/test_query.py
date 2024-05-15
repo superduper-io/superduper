@@ -41,6 +41,7 @@ def test_serialize_table():
     ds = Document.decode(s).unpack()
     assert isinstance(ds, Table)
 
+
 @pytest.mark.skip
 def test_auto_inference_primary_id():
     s = Table('other', primary_id='other_id')
@@ -54,17 +55,21 @@ def test_auto_inference_primary_id():
 
     assert q.primary_id == 'other_id'
 
+
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+        (
+            DBConfig.sqldb_data,
+            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
+        ),
     ],
     indirect=True,
 )
 def test_renamings(db):
     t = db['documents']
-    listener_uuid= [l.split('/')[-1] for l in db.show('listener')][0]
+    listener_uuid = [l.split('/')[-1] for l in db.show('listener')][0]
     q = t.select('id', 'x', 'y').outputs(listener_uuid)
     data = list(db.execute(q))
     assert torch.is_tensor(data[0].unpack()[f'_outputs.{listener_uuid}'])
@@ -80,9 +85,7 @@ def test_renamings(db):
 def test_serialize_query(db):
     from superduperdb.backends.ibis.query import IbisQuery
 
-    t = IbisQuery(
-        db=db, identifier='documents', parts=[('select', ('id',), {})]
-    )
+    t = IbisQuery(db=db, identifier='documents', parts=[('select', ('id',), {})])
 
     q = t.filter(t.id == 1).select(t.id, t.x)
 
@@ -121,6 +124,7 @@ def test_get_data(db):
     db['documents'].limit(2)
     db.metadata.get_component('table', 'documents')
 
+
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     "db",
@@ -130,12 +134,12 @@ def test_get_data(db):
     indirect=True,
 )
 def test_insert_select(db):
-
     q = db['documents'].select('id', 'x', 'y').limit(2)
     r = list(db.execute(q))
 
     assert len(r) == 2
-    assert all( all([k in ['id', 'x', 'y'] for k in x.unpack().keys()])  for x in r )
+    assert all(all([k in ['id', 'x', 'y'] for k in x.unpack().keys()]) for x in r)
+
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
@@ -152,24 +156,32 @@ def test_filter(db):
     ys = [x['y'] for x in r]
     uq = numpy.unique(ys, return_counts=True)
 
-    q = t.select('id', 'y').filter(t.y == uq[0][0] )
+    q = t.select('id', 'y').filter(t.y == uq[0][0])
     r = list(db.execute(q))
     assert len(r) == uq[1][0]
+
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+        (
+            DBConfig.sqldb_data,
+            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
+        ),
     ],
     indirect=True,
 )
 def test_pre_like(db):
     r = list(db.execute(db['documents'].select('id', 'x')))[0]
-    query = db['documents'].like(
-        r=Document({'x': r['x'].x}),
-        vector_index='test_vector_search',
-    ).select('id')
+    query = (
+        db['documents']
+        .like(
+            r=Document({'x': r['x'].x}),
+            vector_index='test_vector_search',
+        )
+        .select('id')
+    )
     s = list(db.execute(query))[0]
     assert r['id'] == s['id']
 
@@ -178,17 +190,25 @@ def test_pre_like(db):
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.sqldb_data, {'n_data': 5, 'add_vector_index': True, 'add_models': True}),
+        (
+            DBConfig.sqldb_data,
+            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
+        ),
     ],
     indirect=True,
 )
 def test_post_like(db):
     r = list(db.execute(db['documents'].select('id', 'x')))[0]
     t = db['documents']
-    query = t.select('id', 'x', 'y').filter(t.id.isin(['1', '2', '3'])).like(
-        r=Document({'x': r['x'].x}),
-        vector_index='test_vector_search',
-    ).limit(2)
+    query = (
+        t.select('id', 'x', 'y')
+        .filter(t.id.isin(['1', '2', '3']))
+        .like(
+            r=Document({'x': r['x'].x}),
+            vector_index='test_vector_search',
+        )
+        .limit(2)
+    )
     s = list(db.execute(query))
     assert len(s) == 2
     assert all([d['id'] in ['1', '2', '3'] for d in s])

@@ -35,7 +35,7 @@ class MongoQuery(Query):
         'find_one': '^.*\.find_one\(.*\)',
         'find': '^.*\.find\(.*\)',
         'insert_many': '^.*\.insert_many\(.*\)$',
-        'insert_one':  '^.*\.insert_one\(.*\)$',
+        'insert_one': '^.*\.insert_one\(.*\)$',
         'replace_one': '^.*\.replace_one\(.*\)$',
         'update_many': '^.*\.update_many\(.*\)$',
         'update_one': '^.*\.update_one\(.*\)$',
@@ -126,7 +126,7 @@ class MongoQuery(Query):
         )
         find_args = self.parts[1][1]
         find_kwargs = self.parts[1][2]
-        find_args[0]['_id']= {'$in': [ObjectId(id) for id in ids]}
+        find_args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
 
         q = type(self)(
             db=self.db,
@@ -134,7 +134,7 @@ class MongoQuery(Query):
             parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
         )
         result = q.execute(db=self.db)
-        result.scores =scores
+        result.scores = scores
         return result
 
     def _execute_post_like(self, parent):
@@ -222,7 +222,9 @@ class MongoQuery(Query):
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 
-        documents = [ r.encode(schema) if isinstance(r, Document) else r for r in documents ]
+        documents = [
+            r.encode(schema) if isinstance(r, Document) else r for r in documents
+        ]
         for r in documents:
             if '_blobs' in r:
                 for file_id, bytes in r['_blobs'].items():
@@ -430,7 +432,7 @@ class MongoQuery(Query):
                     else:
                         documents.append(
                             {
-                                    f'_outputs': {predict_id: outputs[i]},
+                                f'_outputs': {predict_id: outputs[i]},
                                 '_source': ObjectId(id),
                                 '_offset': 0,
                             }
@@ -500,5 +502,3 @@ class BulkOp(Leaf):
             if isinstance(v, Document):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)
-
-

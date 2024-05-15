@@ -212,7 +212,6 @@ def test_find_one(db):
     assert isinstance(r, Document)
 
 
-
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace_one(db):
     collection = MongoQuery('documents')

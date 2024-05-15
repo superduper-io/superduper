@@ -66,7 +66,8 @@ def tensor(
     :param shape: The shape of the tensor.
     :param bytes_encoding: The bytes encoding to use.
     """
-    dtype = getattr(torch, dtype)
+    if not isinstance(dtype, torch.dtype):
+        dtype = getattr(torch, dtype)
     return DataType(
         identifier=f"{str(dtype)}[{str_shape(shape)}]",
         encoder=EncodeTensor(dtype),

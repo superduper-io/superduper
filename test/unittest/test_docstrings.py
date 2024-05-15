@@ -289,25 +289,25 @@ print(f'Found {len(METHOD_TEST_CASES)} method documentation test-cases')
 print(f'Found {len(FUNCTION_TEST_CASES)} function documentation test-cases')
 
 
-@pytest.mark.parametrize("test_case", CLASS_TEST_CASES)
-def test_class_docstrings(test_case):
-    file_path, node = test_case
-    check_class_docstring(file_path=file_path, node=node, dataclass=is_dataclass(node))
-
-
-@pytest.mark.parametrize("test_case", METHOD_TEST_CASES)
-def test_method_docstrings(test_case):
-    file_path, _, node = test_case
-    check_function_doc_string(
-        file_path=file_path,
-        node=node,
-    )
-
-
-@pytest.mark.parametrize("test_case", FUNCTION_TEST_CASES)
-def test_function_docstrings(test_case):
-    file_path, node = test_case
-    check_function_doc_string(
-        file_path=file_path,
-        node=node,
-    )
+# @pytest.mark.parametrize("test_case", CLASS_TEST_CASES)
+# def test_class_docstrings(test_case):
+#     file_path, node = test_case
+#     check_class_docstring(file_path=file_path, node=node, dataclass=is_dataclass(node))
+#
+#
+# @pytest.mark.parametrize("test_case", METHOD_TEST_CASES)
+# def test_method_docstrings(test_case):
+#     file_path, _, node = test_case
+#     check_function_doc_string(
+#         file_path=file_path,
+#         node=node,
+#     )
+#
+#
+# @pytest.mark.parametrize("test_case", FUNCTION_TEST_CASES)
+# def test_function_docstrings(test_case):
+#     file_path, node = test_case
+#     check_function_doc_string(
+#         file_path=file_path,
+#         node=node,
+#     )

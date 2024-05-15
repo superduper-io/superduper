@@ -202,8 +202,8 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         select_using_id.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
         datatype = predict_mixin.datatype
-        kwargs_output_ids = [o['_base'] for o in kwargs.get('outputs') ]
-        assert kwargs_output_ids== [datatype(2).encode()['_base'] for _ in range(10)]
+        kwargs_output_ids = [o['_base'] for o in kwargs.get('outputs')]
+        assert kwargs_output_ids == [datatype(2).encode()['_base'] for _ in range(10)]
 
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = {'out': 2}
@@ -358,7 +358,11 @@ def test_model_fit(db, valid_dataset):
 def test_query_model(db):
     q = (
         MongoQuery(identifier='documents', db=db)
-        .like({'x': Variable(identifier='x', value='X')}, vector_index='test_vector_search', n=3)
+        .like(
+            {'x': Variable(identifier='x', value='X')},
+            vector_index='test_vector_search',
+            n=3,
+        )
         .find_one({}, {'_id': 1})
     )
 

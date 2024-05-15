@@ -3,7 +3,7 @@ from superduperdb.components.stack import Stack
 
 db = superduper('mongomock://localhost:27017/test_db')
 
-# TODO: implement below with new serialization 
+# TODO: implement below with new serialization
 '''
 
 defn = {

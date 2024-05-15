@@ -21,9 +21,11 @@ def table():
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_insert_and_find_mongodb(db):
-    collection = MongoQuery('documents')
-    collection.insert_many([Document({'this': 'is a test'})]).execute(db)
-    r = collection.find_one().execute(db)
+    t = db['documents']
+    insert_query = t.insert_many([Document({'this': 'is a test'})])
+    db.execute(insert_query)
+    select_query = t.find_one()
+    r = db.execute(select_query)
     assert r['this'] == 'is a test'
 
 
@@ -37,12 +39,16 @@ def test_execute_insert_and_find_sqldb(db, table):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_complex_query_mongodb(db):
-    collection = MongoQuery('documents')
-    collection.insert_many(
-        [Document({'this': f'is a test {i}'}) for i in range(100)]
-    ).execute(db)
+    t = db['documents']
 
-    cur = collection.find().sort('this', -1).limit(10).execute(db)
+    insert_query = t.insert_many(
+        [Document({'this': f'is a test {i}'}) for i in range(100)]
+    )
+    db.execute(insert_query)
+
+    select_query = t.find().sort('this', -1).limit(10)
+    cur = db.execute(select_query)
+
     expected = [f'is a test {i}' for i in range(99, 89, -1)]
     cur_this = [r['this'] for r in cur]
     assert sorted(cur_this) == sorted(expected)

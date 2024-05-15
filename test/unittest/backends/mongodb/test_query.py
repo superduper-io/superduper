@@ -66,7 +66,12 @@ def test_mongo_without_schema(db):
 
 
 @pytest.mark.parametrize(
-    "db,schema", [(DBConfig.mongodb_empty, BytesEncoding.BASE64), (DBConfig.mongodb_empty, BytesEncoding.BYTES)], indirect=True
+    "db,schema",
+    [
+        (DBConfig.mongodb_empty, BytesEncoding.BASE64),
+        (DBConfig.mongodb_empty, BytesEncoding.BYTES),
+    ],
+    indirect=True,
 )
 def test_mongo_schema(db, schema):
     collection_name = "documents"
@@ -92,7 +97,9 @@ def test_mongo_schema(db, schema):
     gt = data[0]
 
     db.execute(
-        MongoQuery(db=db, identifier=collection_name).insert_many(data, schema=schema.identifier),
+        MongoQuery(db=db, identifier=collection_name).insert_many(
+            data, schema=schema.identifier
+        ),
     )
     collection = MongoQuery(collection_name, db=db)
     r = collection.find_one().execute(db)

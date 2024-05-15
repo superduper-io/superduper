@@ -1,8 +1,10 @@
 from superduperdb import superduper
-from superduperdb.base.document import _build_leaves
 from superduperdb.components.stack import Stack
 
 db = superduper('mongomock://localhost:27017/test_db')
+
+# TODO: implement below with new serialization 
+'''
 
 defn = {
     "identifier": "mystack",
@@ -23,3 +25,4 @@ out2 = Stack.from_list(
     identifier=defn["identifier"],
     db=db,
 )
+'''

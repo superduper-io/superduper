@@ -396,6 +396,7 @@ def download_content(
     # TODO handle this in the job runner
     if isinstance(query, dict):
         query = Document.decode(query).unpack()
+        query.set_db(db)
 
     if documents is not None:
         pass

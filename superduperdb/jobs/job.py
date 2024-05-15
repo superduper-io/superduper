@@ -225,13 +225,14 @@ class ComponentJob(Job):
         """
         if db is None:
             from superduperdb.base.build import build_datalayer
-
             db = build_datalayer()
 
         self.db = db
+
         db.metadata.create_job(self.dict())
         if self.component is None:
             self.component = db.load(self.type_id, self.component_identifier)
+
         self.submit(dependencies=dependencies)
         db.metadata.update_job(self.identifier, 'job_id', self.job_id)
         return self

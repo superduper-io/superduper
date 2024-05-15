@@ -4,7 +4,7 @@ import typing as t
 import networkx as nx
 
 from superduperdb import Schema
-from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.backends.base.query import Query
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import Model, Signature
 
@@ -86,10 +86,10 @@ class IndexableNode:
             return self
         return self.parent_models[u]
 
-    def to_listeners(self, select: CompoundSelect, identifier: str):
+    def to_listeners(self, select: Query, identifier: str):
         """Create listeners from the parent graph and models.
 
-        :param select: CompoundSelect query
+        :param select: Query query
         :param identifier: Unique identifier
         """
         from superduperdb.components.listener import Listener
@@ -162,8 +162,8 @@ class Input(Model):
     identifier: str = '_input'
     signature: Signature = '*args'
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if isinstance(self.spec, str):
             self.signature = 'singleton'
 
@@ -195,8 +195,8 @@ class DocumentInput(Model):
     identifier: str = '_input'
     signature: t.ClassVar[Signature] = 'singleton'
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self,db, artifacts):
+        super().__post_init__(db, artifacts)
 
     def predict_one(self, r):
         """Single prediction.
@@ -263,7 +263,7 @@ class Graph(Model):
     signature: Signature = '*args,**kwargs'
     type_id: t.ClassVar[str] = 'model'
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         self.G = nx.DiGraph()
         self.nodes = {}
         self.version = 0
@@ -292,7 +292,7 @@ class Graph(Model):
                     on=on,
                     update_edge=False,
                 )
-        super().__post_init__(artifacts=artifacts)
+        super().__post_init__(db, artifacts=artifacts)
 
     def connect(
         self,

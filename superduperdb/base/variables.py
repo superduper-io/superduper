@@ -105,8 +105,8 @@ class Variable(Leaf):
     value: t.Any
     setter_callback: dc.InitVar[t.Optional[t.Callable]] = None
 
-    def __post_init__(self, setter_callback):
-        self.setter_callback = setter_callback
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db)
 
     def __repr__(self) -> str:
         return '$' + str(self.value)

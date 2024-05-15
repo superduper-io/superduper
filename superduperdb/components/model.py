@@ -654,7 +654,7 @@ class Model(Component):
         if isinstance(select, dict):
             # TODO: select is loaded without db
             select = Document.decode(select).unpack()
-            select.db = db
+            select.set_db(db)
 
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
@@ -779,6 +779,7 @@ class Model(Component):
         self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
 
+
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
@@ -792,7 +793,8 @@ class Model(Component):
             flatten=self.flatten,
             **self.model_update_kwargs,
         )
-        update.execute(db=db)
+        if update:
+            update.execute(db=db)
 
     def encode_outputs(self, outputs):
         """Method that encodes outputs of a model for saving in the database.
@@ -1150,8 +1152,8 @@ class APIBaseModel(Model):
     model: t.Optional[str] = None
     max_batch_size: int = 8
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if self.model is None:
             assert self.identifier is not None
             self.model = self.identifier
@@ -1201,8 +1203,8 @@ class APIModel(APIBaseModel):
         """Method to get ``Inputs`` instance for model inputs."""
         return Inputs(self.runtime_params)
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         self.params['model'] = self.model
         env_variables = re.findall('{([A-Z0-9\_]+)}', self.url)
         runtime_variables = re.findall('{([a-z0-9\_]+)}', self.url)
@@ -1356,10 +1358,10 @@ class SequentialModel(Model):
 
     models: t.List[Model]
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self,db, artifacts):
         self.signature = self.models[0].signature
         self.datatype = self.models[-1].datatype
-        return super().__post_init__(artifacts)
+        return super().__post_init__(db, artifacts)
 
     @property
     def inputs(self) -> Inputs:

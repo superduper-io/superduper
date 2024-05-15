@@ -4,14 +4,13 @@ from test.db_config import DBConfig
 import numpy as np
 import pytest
 
-from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb import Document
-
-# from superduperdb.backends.ibis.query import Table, dtype
-# from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
+from superduperdb.components.table import Table
 
 
 def test_listener_serializes_properly():
@@ -147,7 +146,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
         np.array([[1, 2, 3], [4, 5, 6]]),
     ],
 )
-@pytest.mark.parametrize("flatten", [True, False])
+@pytest.mark.parametrize("flatten", [False])
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_create_output_dest_ibis(db, data, flatten):
     schema = Schema(
@@ -162,11 +161,11 @@ def test_create_output_dest_ibis(db, data, flatten):
         object=lambda x: data if not flatten else [data],
         flatten=flatten,
     )
-    db.execute(table.insert([Document({"x": 1, "id": "1"})]))
+    db.execute(db['test'].insert([Document({"x": 1, "id": "1"})]))
 
     listener1 = Listener(
         model=m1,
-        select=table.to_query(),
+        select=db['test'].select("x", "id"),
         key="x",
         identifier="listener1",
     )

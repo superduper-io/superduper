@@ -95,7 +95,7 @@ class Listener(Component):
     def outputs_select(self):
         """Get query reference to model outputs."""
         if self.select.DB_TYPE == "SQL":
-            return self.select.table_or_collection.outputs(self.id)
+            return self.select.outputs(self.uuid)
 
         else:
 
@@ -121,13 +121,7 @@ class Listener(Component):
 
         :param db: Data layer instance.
         """
-        output_table = db.databackend.create_output_dest(
-            self.uuid,
-            self.model.datatype,
-            flatten=self.model.flatten,
-        )
-        if output_table is not None:
-            db.add(output_table)
+        self.create_output_dest(db, self.uuid, self.model)
         if self.select is not None and self.active and not db.server_mode:
             if CFG.cluster.cdc.uri:
                 request_server(
@@ -140,7 +134,7 @@ class Listener(Component):
                 db.cdc.add(self)
 
     @classmethod
-    def create_output_dest(cls, db: "Datalayer", predict_id, model: Model):
+    def create_output_dest(cls, db: "Datalayer", uuid, model: Model):
         """
         Create output destination.
 
@@ -151,7 +145,7 @@ class Listener(Component):
         if model.datatype is None:
             return
         output_table = db.databackend.create_output_dest(
-            predict_id,
+            uuid,
             model.datatype,
             flatten=model.flatten,
         )

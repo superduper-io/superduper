@@ -126,6 +126,7 @@ class Document(MongoStyleDict):
             del r['_files']
 
         if schema is not None:
+            schema.init()
             r = schema.decode_data(r)
         r = _deep_flat_decode(r, cache, blobs, files=files, db=db)
 

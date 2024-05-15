@@ -900,8 +900,7 @@ class Datalayer:
 
         for file_id, file_path in serialized['_files'].items():
             try:
-                new_file_id = self.artifact_store._save_file(file_path, file_id=file_id)
-                serialized['_files'][file_id] = new_file_id
+                self.artifact_store._save_file(file_path, file_id=file_id)
             except FileExistsError:
                 continue
 

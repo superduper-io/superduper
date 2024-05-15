@@ -52,7 +52,7 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-@component()
+# @component()
 def tensor(
     dtype,
     shape: t.Sequence,

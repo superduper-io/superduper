@@ -16,7 +16,6 @@ from superduperdb import logging
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
 
-# from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.base.document import Document
@@ -574,7 +573,7 @@ class Model(Component):
             type_id='model',
             args=[X],
             kwargs={
-                'select': select.dict().encode() if select else None,
+                'select': select.encode() if select else None,
                 'predict_id': predict_id,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,

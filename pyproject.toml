@@ -51,7 +51,7 @@ dependencies = [
     "tenacity>=8.1.0",
     "pillow>=9.4.0",
     "mongomock>=4.1.2",
-    "sqlglot<=20.10",
+    "sqlglot<=23.12.2",
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",

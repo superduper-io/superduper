@@ -779,6 +779,8 @@ class Model(Component):
         self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
 
+        outputs = [Document({"_base": output}).encode() for output in outputs]
+
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
@@ -804,12 +806,9 @@ class Model(Component):
 
         if isinstance(self.datatype, DataType):
             if self.flatten:
-                outputs = [
-                    [self.datatype(x).encode(self.output_schema) for x in output]
-                    for output in outputs
-                ]
+                outputs = [[self.datatype(x) for x in output] for output in outputs]
             else:
-                outputs = [self.datatype(x).encode(self.output_schema) for x in outputs]
+                outputs = [self.datatype(x) for x in outputs]
         elif isinstance(self.output_schema, Schema):
             outputs = self.encode_with_schema(outputs)
 

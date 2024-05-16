@@ -295,6 +295,8 @@ class Query(Leaf, ABC):
         except TypeError as e:
             if 'did not match' in str(e):
                 return self._execute(parent=parent)
+            else:
+                raise e
         except AssertionError:
             return self._execute(parent=parent)
 

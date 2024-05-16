@@ -99,7 +99,7 @@ def test_listener_chaining(db):
     ],
 )
 @pytest.mark.parametrize("document_embedded", [True, False])
-@pytest.mark.parametrize("flatten", [True, False])
+@pytest.mark.parametrize("flatten", [False, True])
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
     collection = db["test"]

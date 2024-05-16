@@ -211,7 +211,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
     def __post_init__(self, db, artifacts):
         if self.pipeline is None:
             self._build_pipeline()
-        super().__post_init__(db ,artifacts)
+        super().__post_init__(db, artifacts)
 
     def predict_one(self, text: str):
         """Predict the class of a single text.
@@ -266,14 +266,12 @@ class LLM(BaseLLM, _Fittable):
         ("tokenizer_kwargs", dill_serializer),
     )
 
-    def __post_init__(self, db,artifacts):
+    def __post_init__(self, db, artifacts):
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
 
         #  TODO: Compatible with the bug of artifact sha1 equality and will be deleted
         super().__post_init__(db, artifacts)
-
-
 
     @classmethod
     def from_pretrained(

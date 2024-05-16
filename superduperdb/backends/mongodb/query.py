@@ -128,7 +128,7 @@ class MongoQuery(Query):
             n=n,
         )
 
-        scores = dict(zip(ids , scores))
+        scores = dict(zip(ids, scores))
         find_args = self.parts[1][1]
         find_kwargs = self.parts[1][2]
         if find_args == ():
@@ -169,7 +169,7 @@ class MongoQuery(Query):
         similar_ids, scores = self.db.select_nearest(
             like=r,
             ids=relevant_ids,
-            vector_index = like_kwargs.pop('vector_index'),
+            vector_index=like_kwargs.pop('vector_index'),
             n=like_kwargs.get('n', 100),
         )
         scores = dict(zip(similar_ids, scores))
@@ -441,7 +441,11 @@ class MongoQuery(Query):
                     if isinstance(_outputs, (list, tuple)):
                         for offset, output in enumerate(_outputs):
                             if isinstance(output, SuperDuperFlatEncode):
-                                leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                                leaves, blobs, files = (
+                                    output.pop_leaves(),
+                                    output.pop_blobs(),
+                                    output.pop_files(),
+                                )
                                 output = output.get('_base', output)
                             documents.append(
                                 {
@@ -450,13 +454,17 @@ class MongoQuery(Query):
                                     '_offset': offset,
                                     '_leaves': leaves,
                                     '_blobs': blobs,
-                                    '_files': files
+                                    '_files': files,
                                 }
                             )
                     else:
                         output = outputs[i]
                         if isinstance(output, SuperDuperFlatEncode):
-                            leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                            leaves, blobs, files = (
+                                output.pop_leaves(),
+                                output.pop_blobs(),
+                                output.pop_files(),
+                            )
                             output = output.get('_base', output)
                         documents.append(
                             {
@@ -465,7 +473,7 @@ class MongoQuery(Query):
                                 '_offset': 0,
                                 '_leaves': leaves,
                                 '_blobs': blobs,
-                                '_files': files
+                                '_files': files,
                             }
                         )
 
@@ -473,7 +481,11 @@ class MongoQuery(Query):
                 for i, id in enumerate(ids):
                     output = outputs[i]
                     if isinstance(output, SuperDuperFlatEncode):
-                        leaves, blobs, files = output.pop_leaves(), output.pop_blobs(), output.pop_files()
+                        leaves, blobs, files = (
+                            output.pop_leaves(),
+                            output.pop_blobs(),
+                            output.pop_files(),
+                        )
                         output = output.get('_base', output)
                     documents.append(
                         {
@@ -481,7 +493,7 @@ class MongoQuery(Query):
                             f'_outputs': {predict_id: output},
                             '_leaves': leaves,
                             '_blobs': blobs,
-                            '_files': files
+                            '_files': files,
                         }
                     )
             return collection.insert_many(documents)

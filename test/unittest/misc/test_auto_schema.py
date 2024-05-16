@@ -49,7 +49,7 @@ def test_infer_datatype():
 
 def test_infer_schema_mongo(data):
     schema = infer_schema(data)
-    encode_data = schema(data)
+    encode_data = Document(data).encode(schema)
 
     expected_datatypes = [
         "np_array",
@@ -70,7 +70,7 @@ def test_infer_schema_mongo(data):
 
 def test_infer_schema_ibis(data):
     schema = infer_schema(data, ibis=True)
-    encode_data = schema(data)
+    encode_data = Document(data).encode(schema)
 
     expected_datatypes = [
         "np_array",
@@ -98,9 +98,7 @@ def test_mongo_schema(db, data):
     db.apply(schema)
 
     db.execute(
-        collection.insert_one(
-            Document(data), schema=schema.identifier
-        ),
+        collection.insert_one(Document(data, db=db, schema=schema)),
     )
     decode_data = collection.find_one().execute(db).unpack()
     for key in data:
@@ -117,9 +115,9 @@ def test_ibis_schema(db, data):
 
     db.apply(t)
 
-    db.execute(t.insert([Document(data)]))
+    db.execute(db["my_table"].insert([Document(data)]))
 
-    select = t.select(*data.keys()).limit(1)
+    select = db["my_table"].select(*data.keys()).limit(1)
     decode_data = db.execute(select).next().unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))

@@ -11,7 +11,7 @@ from superduperdb.components.datatype import (
     _BaseEncodable,
 )
 from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
-from superduperdb.components.schema import Schema
+from superduperdb.components.schema import Schema, get_schema, SCHEMA_KEY
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -27,19 +27,6 @@ _LEAF_TYPES = {
 }
 _LEAF_TYPES.update(_ENCODABLES)
 _OUTPUTS_KEY = '_outputs'
-
-
-def get_schema(db, schema: t.Union['Schema', str]) -> 'Schema':
-    """Handle schema caching and loading."""
-    if isinstance(schema, Schema):
-        return schema
-    assert isinstance(schema, str)
-    if db is None:
-        raise ValueError(
-            f'A Datalayer instance is required for encoding with schema {schema}'
-        )
-
-    return db.schemas[schema]
 
 
 class Document(MongoStyleDict):
@@ -60,7 +47,7 @@ class Document(MongoStyleDict):
     ):
         super().__init__(*args, **kwargs)
         self.db = db
-        self.schema= schema
+        self.schema = schema
 
     def _deep_flat_encode(
         self,
@@ -73,12 +60,13 @@ class Document(MongoStyleDict):
         out = dict(self)
         if schema is not None:
             out = schema.deep_flat_encode_data(
-                self,
+                out,
                 cache,
                 blobs,
                 files,
                 leaves_to_keep=leaves_to_keep,
             )
+            pass
         return _deep_flat_encode(
             out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
@@ -127,6 +115,8 @@ class Document(MongoStyleDict):
             files = r['_files']
             del r['_files']
 
+        schema = schema or r.get(SCHEMA_KEY)
+        schema = get_schema(db, schema)
         if schema is not None:
             schema.init()
             r = schema.decode_data(r)
@@ -277,7 +267,11 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         module = '.'.join(parts[:-1])
         dict_ = {k: v for k, v in r.items() if k != '_path'}
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
-        return _import_item(cls=cls, module=module, dict=dict_, db=db)
+        instence = _import_item(cls=cls, module=module, dict=dict_, db=db)
+        # TODO: Auto unpack the instence
+        # instence.unpack()
+        return instence
+
     if isinstance(r, dict):
         return {
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()

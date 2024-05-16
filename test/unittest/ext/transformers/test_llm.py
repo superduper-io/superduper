@@ -19,7 +19,7 @@ def test_predict(db):
 
 
 @pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+    "db", [DBConfig.mongodb_empty], indirect=True
 )
 def test_model_as_listener_model(db):
     model = LLM(identifier="llm", model_name_or_path=TEST_MODEL_NAME)

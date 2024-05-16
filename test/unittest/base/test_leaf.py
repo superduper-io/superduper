@@ -58,7 +58,12 @@ def test_encode_leaf():
 
 
 def test_encode_leaf_with_children():
-    obj = MySer(identifier='my_ser', a=1, b='test_b', c=OtherSer(identifier='other_ser', d='test'))
+    obj = MySer(
+        identifier='my_ser',
+        a=1,
+        b='test_b',
+        c=OtherSer(identifier='other_ser', d='test'),
+    )
     assert obj.dict().encode() == {
         '_path': 'test/unittest/base/test_leaf/MySer',
         'uuid': obj.uuid,
@@ -74,13 +79,15 @@ def test_encode_leaf_with_children():
 
 def test_serialize_variables_1():
     s = Test(
-            identifier='tst',
+        identifier='tst',
         a=1,
         b=Variable(
-            identifier='test/{version}', setter_callback=lambda db, value, kwargs: value.format(version=db.version)
-
+            identifier='test/{version}',
+            setter_callback=lambda db, value, kwargs: value.format(version=db.version),
         ),
-        c=Variable(identifier='number', setter_callback=lambda db, value, kwargs: db[value]),
+        c=Variable(
+            identifier='number', setter_callback=lambda db, value, kwargs: db[value]
+        ),
     )
 
     @dc.dataclass
@@ -103,8 +110,8 @@ def test_save_variables_2():
 
     assert [x.value for x in query.variables] == ['X']
 
-    #q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
-    #print(pprint(q.dict()))
+    # q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
+    # print(pprint(q.dict()))
 
 
 def test_saveable():

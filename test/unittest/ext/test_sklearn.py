@@ -64,5 +64,4 @@ class TestPipeline:
     # TODO: Test the sqldb
     @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
     def test_fit_db(self, pipeline, data_in_db):
-        breakpoint()
-        _ = data_in_db.add(pipeline)
+        _ = data_in_db.apply(pipeline)

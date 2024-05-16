@@ -67,12 +67,14 @@ class Leaf(ABC):
         blobs = {}
         files = {}
         self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
-        return SuperDuperFlatEncode({
-            '_base': f'?{self._id}',
-            '_leaves': cache,
-            '_blobs': blobs,
-            '_files': files,
-        })
+        return SuperDuperFlatEncode(
+            {
+                '_base': f'?{self._id}',
+                '_leaves': cache,
+                '_blobs': blobs,
+                '_files': files,
+            }
+        )
 
     def set_variables(self, db, **kwargs) -> 'Leaf':
         """Set free variables of self.
@@ -135,7 +137,7 @@ class Leaf(ABC):
         cls.full_import_path = full_import_path
         _CLASS_REGISTRY[full_import_path] = cls
 
-    def unpack(self, db=None):
+    def unpack(self):
         """Unpack object.
 
         :param db: Datalayer instance.

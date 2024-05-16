@@ -45,8 +45,8 @@ class Checkpoint(Component):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (("path", file_lazy),)
     type_id: t.ClassVar[str] = "checkpoint"
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         self.version = int(self.step)
 
     @property

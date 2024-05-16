@@ -176,7 +176,7 @@ def download(file_id, fs):
         logging.info(f"Downloading file_id {file_id} to {save_path}")
         with open(save_path, 'wb') as f:
             f.write(file.read())
-        return save_path
+        return save_folder
 
     logging.info(f"Downloading folder with file_id {file_id} to {save_folder}")
     for grid_out in tqdm(
@@ -195,6 +195,6 @@ def download(file_id, fs):
 
     folders = os.listdir(save_folder)
     assert len(folders) == 1, f"Expected only one folder, got {folders}"
-    save_folder = os.path.join(save_folder, folders[0])
-    logging.info(f"Downloaded folder with file_id {file_id} to {save_folder}")
+    folder_path = os.path.join(save_folder, folders[0])
+    logging.info(f"Downloaded folder with file_id {file_id} to {folder_path}")
     return save_folder

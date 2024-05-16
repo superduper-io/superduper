@@ -135,5 +135,5 @@ jobs:
 
       - name: Push Base Docker image
         run: |
-          make build_release
-          make push_release
+          make build_superduperdb
+          make push_superduperdb

@@ -104,13 +104,13 @@ fix-and-check: ##  Lint the code before testing
 
 # superduperdb/superduperdb is a production image that includes the latest framework from pypi.
 # It can be used as "FROM superduper/superduperdb as base" for building custom Dockerfiles.
-build_release: ## Build a minimal Docker image for general use
+build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="release"
 
 
-push_release: ## Push the superduperdb/superduperdb:<release> image
+push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
 	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 

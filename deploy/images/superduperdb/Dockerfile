@@ -119,7 +119,7 @@ ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pytho
 # -------------------------------
 # Build Release (Production)
 # -------------------------------
-FROM common-stage AS build_release
+FROM common-stage AS build_superduperdb
 
 # Install the latest release from pypi
 # TODO: to be updated when we create the release branch.

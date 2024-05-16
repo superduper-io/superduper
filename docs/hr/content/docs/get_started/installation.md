@@ -77,7 +77,7 @@ Clone the code:
 
 ```bash
 git clone --branch main --single-branch --depth 1 https://github.com/SuperDuperDB/superduperdb.git
-make build_release
+make build_superduperdb
 ```
 
 #### Developer's docker image and environment

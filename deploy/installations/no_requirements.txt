@@ -13,7 +13,7 @@
 #        spacy==1.1.0
 #
 # Once you have added all the necessary modules, save the document and rebuild the image using
-#        make testenv_image # Build new image
+#        make build_sandbox # Build new image
 #        docker image ls    # Validate the new image
 #
 # Your sandbox image will now incorporate these custom dependencies.

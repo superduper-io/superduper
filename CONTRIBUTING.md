@@ -47,13 +47,13 @@ python3 -m pip install --upgrade pip-tools
 
 # Install the superduperdb project in editable mode along with the developer tools
 python3 -m pip install -e '.'
-python3 -m pip install -r deploy/testenv/optional_requirements.txt
+python3 -m pip install -r deploy/installations/testenv_requirements.txt
 ```
 
 (Optional) build the docker development environment:
 
 ```shell
-make testenv_image
+make build_sandbox
 ```
 
 ## Branch workflow
@@ -68,7 +68,7 @@ These tests check that there are no basic programming errors in how
 classes and functions work internally.
 
 ```shell
-make unit-testing
+make unit_testing
 ```
 
 ### Extension integration tests
@@ -77,7 +77,7 @@ These tests that package integrations, such as `sklearn` or `openai`
 work properly.
 
 ```shell
-make ext-testing
+make ext_testing
 ```
 
 ### Databackend integration tests
@@ -86,7 +86,7 @@ These tests check that data-backend integrations such as MongoDB or SQLite
 work as expected.
 
 ```shell
-make databackend-testing
+make databackend_testing
 ```
 
 ### Smoke tests of cluster mode
@@ -94,7 +94,7 @@ make databackend-testing
 These tests check that cluster mode works as expected (`ray`, `vector-search`, `cdc`, `rest`):
 
 ```shell
-make smoke-testing
+make smoke_testing
 ```
 
 ## Getting Help 🙋

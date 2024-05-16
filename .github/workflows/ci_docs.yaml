@@ -44,12 +44,12 @@ jobs:
 
       - name: Install DevKit (docs, testing, etc)
         run: |
-          make install-devkit
+          make install_devkit
 
       - name: Build docs
         run: |
           # Build HR and API docs
-          make build-docs
+          make gen_docs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

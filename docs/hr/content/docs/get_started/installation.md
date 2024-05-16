@@ -85,7 +85,7 @@ make build_superduperdb
 If you wish to use your local copy of code with a docker build, execute the following command:
 
 ```bash
-make testenv_image
+make build_sandbox
 ```
 
 You will see something like these lines in `docker images`:

@@ -119,24 +119,32 @@ push_release: ## Push the superduperdb/superduperdb:<release> image
 	docker push superduperdb/superduperdb:latest
 
 # superduperdb/sandbox is a development image with all dependencies pre-installed (framework + testenv)
-build_sandbox: ## Build superduperdb/sandbox:<commit> image
-	@echo "===> build superduperdb/sandbox:$(CURRENT_COMMIT)"
+build_sandbox: ## Build superduperdb/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	# install dependencies.
 	python -m pip install toml
 	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
+
 	# build image
-	DOCKER_BUILDKIT=1 docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox:$(CURRENT_COMMIT) --progress=plain \
-		--build-arg BUILD_ENV="sandbox" \
-		--build-arg EXTRA_REQUIREMENTS_FILE="deploy/installations/testenv_requirements.txt" \
+	docker build . -f deploy/images/superduperdb/Dockerfile \
+	--build-arg BUILD_ENV="sandbox" \
+	--progress=plain \
+	--build-arg EXTRA_REQUIREMENTS_FILE="deploy/installations/testenv_requirements.txt" \
+	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
+	-t $(if $(filter cuda,$(RUNNER)),superduperdb/sandbox_cuda:$(CURRENT_COMMIT),superduperdb/sandbox:$(CURRENT_COMMIT))
+
 	# mark the image as the latest
-	docker tag superduperdb/sandbox:$(CURRENT_COMMIT) superduperdb/sandbox:latest
+	docker tag $(if $(filter cuda,$(RUNNER)),superduperdb/sandbox_cuda:$(CURRENT_COMMIT),superduperdb/sandbox:$(CURRENT_COMMIT)) superduperdb/sandbox:latest
+
 
 # superduperdb/nightly is a pre-release image with the latest code (and core dependencies) installed.
-build_nightly: ## Build superduperdb/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>)
-	@echo "===> build superduperdb/superduperdb:$(CURRENT_COMMIT)"
-	DOCKER_BUILDKIT=1 docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/nightly:$(CURRENT_COMMIT) --progress=plain \
+build_nightly: ## Build superduperdb/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
+	docker build . -f ./deploy/images/superduperdb/Dockerfile \
 	--build-arg BUILD_ENV="nightly" \
-	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),)
+	--progress=plain \
+	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),) \
+	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
+	-t $(if $(filter cuda,$(RUNNER)),superduperdb/nightly_cuda:$(CURRENT_COMMIT),superduperdb/nightly:$(CURRENT_COMMIT))
+
 
 
 push_nightly: ## Push the superduperdb/nightly:<commit> image

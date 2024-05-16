@@ -5,19 +5,11 @@
 # ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
 ARG BUILD_ENV=release
-ARG RUNNER=cpu
 
 # ---------------
-# Define Runners (CPU/CUDA)
+# Configure Basic Template
 # ---------------
-ARG CUDA_VERSION=11.8.0
-FROM nvidia/cuda:${CUDA_VERSION}-base-ubuntu22.04 as cuda
-FROM ubuntu:22.04 as cpu
-
-# ---------------
-# Install Common Dependencies
-# ---------------
-FROM ${RUNNER} as common-stage
+FROM ubuntu:22.04 as base
 
 # Don't write .pyc files on the import of source modules.
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -78,14 +70,14 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install jupyterlab dependencies
 # ---------------
-COPY ./deploy/images/superduperdb/requirements.txt ./requirements.txt
+COPY ./deploy/images/base/requirements.txt ./requirements.txt
 RUN python -m pip install setuptools pip -r ./requirements.txt
 
 
 # -------------------------------
 # Build Sandbox (Development)
 # -------------------------------
-FROM common-stage AS build_sandbox
+FROM base AS build_sandbox
 
 # Install the requirements. To be used in conjuction with "make testenv_init" for development.
 ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/testenv_requirements.txt
@@ -103,7 +95,7 @@ ONBUILD RUN make install_devkit
 # -------------------------------
 # Build Nightly (Pre-Release)
 # -------------------------------
-FROM common-stage AS build_nightly
+FROM base AS build_nightly
 
 # Install the latest commit of the main branch in GitHub.
 ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/no_requirements.txt
@@ -119,7 +111,7 @@ ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pytho
 # -------------------------------
 # Build Release (Production)
 # -------------------------------
-FROM common-stage AS build_release
+FROM base AS build_release
 
 # Install the latest release from pypi
 # TODO: to be updated when we create the release branch.

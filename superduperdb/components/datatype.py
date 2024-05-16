@@ -516,6 +516,7 @@ class Encodable(_BaseEncodable):
                 '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
                 '_leaves': cache,
                 '_blobs': blobs,
+                '_files': files,
             }
         )
 

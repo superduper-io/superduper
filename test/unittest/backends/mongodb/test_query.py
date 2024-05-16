@@ -98,9 +98,7 @@ def test_mongo_schema(db, schema):
     gt = data[0]
 
     db.execute(
-        MongoQuery(db=db, identifier=collection_name).insert_many(
-            data
-        ),
+        MongoQuery(db=db, identifier=collection_name).insert_many(data),
     )
     r = db[collection_name].find_one().execute()
     rs = list(db[collection_name].find().execute())

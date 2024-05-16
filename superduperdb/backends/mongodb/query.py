@@ -209,7 +209,7 @@ class MongoQuery(Query):
         replacement = trailing_args[0]
         if isinstance(replacement, Document):
             replacement = replacement.encode(schema)
-        trailing_args.insert(0, replacement)
+        trailing_args[0] = replacement
 
         q = self.table_or_collection.replace_one(documents, *trailing_args, **kwargs)
         q._execute(parent)
@@ -238,13 +238,7 @@ class MongoQuery(Query):
             r.encode(schema) if isinstance(r, Document) else r for r in documents
         ]
         for r in documents:
-            if '_blobs' in r:
-                for file_id, bytes in r['_blobs'].items():
-                    self.db.artifact_store._save_bytes(
-                        bytes,
-                        file_id,
-                    )
-                r['_blobs'] = list(r['_blobs'].keys())
+            r = self.db.artifact_store.save_artifact(r)
         q = self.table_or_collection.insert_many(documents, *trailing_args, **kwargs)
         result = q._execute(parent)
         return result.inserted_ids
@@ -446,7 +440,7 @@ class MongoQuery(Query):
                                     output.pop_blobs(),
                                     output.pop_files(),
                                 )
-                                output = output.get('_base', output)
+                                output = output.get('_base', output)[offset]
                             documents.append(
                                 {
                                     f'_outputs': {predict_id: output},
@@ -466,16 +460,17 @@ class MongoQuery(Query):
                                 output.pop_files(),
                             )
                             output = output.get('_base', output)
-                        documents.append(
-                            {
-                                f'_outputs': {predict_id: output},
-                                '_source': ObjectId(id),
-                                '_offset': 0,
-                                '_leaves': leaves,
-                                '_blobs': blobs,
-                                '_files': files,
-                            }
-                        )
+                        for o in output:
+                            documents.append(
+                                {
+                                    f'_outputs': {predict_id: o},
+                                    '_source': ObjectId(id),
+                                    '_offset': 0,
+                                    '_leaves': leaves,
+                                    '_blobs': blobs,
+                                    '_files': files,
+                                }
+                            )
 
             else:
                 for i, id in enumerate(ids):
@@ -496,6 +491,7 @@ class MongoQuery(Query):
                             '_files': files,
                         }
                     )
+
             return collection.insert_many(documents)
 
     @staticmethod

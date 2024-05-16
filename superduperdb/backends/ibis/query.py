@@ -70,7 +70,7 @@ def _model_update_impl(
         if isinstance(output, SuperDuperFlatEncode):
             # TODO: what if it has no _base
             key = output['_base']
-            if isinstance(key, str):
+            if isinstance(key, str) and key[0] == '?':
                 output = output['_leaves'][key[1:]]['blob']
             else:
                 output = key

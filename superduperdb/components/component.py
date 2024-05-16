@@ -170,7 +170,6 @@ class Component(Leaf):
 
         return self
 
-
     @property
     def artifact_schema(self):
         """Returns `Schema` representation for the serializers in the component."""

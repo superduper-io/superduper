@@ -217,9 +217,13 @@ def test_replace_one(db):
     collection = MongoQuery('documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
+    print(new_x)
     t = db.datatypes['torch.float32[32]']
     r = db.execute(collection.find_one())
+    print(r['x'].x)
     r['x'] = t(new_x)
+    print(r['x'].x)
     db.execute(collection.replace_one({'_id': r['_id']}, r))
     doc = db.execute(collection.find_one({'_id': r['_id']}))
+    print(doc['x'].x)
     assert doc.unpack()['x'].tolist() == new_x.tolist()

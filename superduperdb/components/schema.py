@@ -21,7 +21,6 @@ class _Native:
         self.identifier = x
 
 
-
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
 class Schema(Component):
@@ -127,25 +126,15 @@ class Schema(Component):
             return data
 
         encoded_data = {}
-        cache = {}
-        files = {}
-        blobs = {}
         for k, v in data.items():
             if k in self.fields and isinstance(self.fields[k], DataType):
                 field_encoder = self.fields[k]
                 assert callable(field_encoder)
-                v = field_encoder(v).encode()
-                base = v['_base']
-                cache.update(v['_leaves'])
-                blobs.update(v.get('_blobs', {}))
-                files.update(v.get('_files', {}))
-                encoded_data.update({k: base})
+                encoded_data.update({k: field_encoder(v)})
             else:
                 encoded_data.update({k: v})
-        encoded_data['_leaves'] = cache
-        encoded_data['_blobs'] = blobs
-        encoded_data['_files'] = files
         return SuperDuperFlatEncode(encoded_data)
+
 
 def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
     """Handle schema caching and loading."""
@@ -160,4 +149,3 @@ def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
         )
 
     return db.schemas[schema]
-

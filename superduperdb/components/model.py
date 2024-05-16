@@ -840,8 +840,6 @@ class Model(Component):
             self.datatype = self.db.infer_schema({"data": output}).fields.get(
                 "data", None
             )
-            if isinstance(self.datatype, DataType):
-                self.db.apply(self.datatype)
 
         if self.datatype is not None and not self.db.databackend.check_output_dest(
             predict_id
@@ -850,7 +848,7 @@ class Model(Component):
 
             Listener.create_output_dest(self.db, predict_id, self)
 
-        if self.datatype is not None and self.output_schema is not None:
+        if self.datatype is not None or self.output_schema is not None:
             self.db.replace(self)
 
     def encode_with_schema(self, outputs):

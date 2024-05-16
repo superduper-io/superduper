@@ -3,10 +3,10 @@ import typing as t
 
 import networkx as nx
 
-from superduperdb import Schema
+from superduperdb import Schema, Document
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.components.model import Model, Signature
+from superduperdb.components.model import Model, Signature, ensure_initialized
 
 
 def input_node(*args):
@@ -481,6 +481,7 @@ class Graph(Model):
             return cache[node]
         return cache[node]
 
+    @ensure_initialized
     def predict_one(self, *args, **kwargs):
         """Predict on single data point.
 
@@ -530,6 +531,7 @@ class Graph(Model):
             args_dataset.append(data)
         return args_dataset
 
+    @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on dataset i.e. series of datapoints.
 
@@ -562,18 +564,17 @@ class Graph(Model):
 
         :param outputs: model outputs.
         """
-        encoded_outputs = []
-        for o, n in zip(outputs, self.output_identifiers):
-            encoded_outputs.append(self.nodes[n].encode_outputs(o))
-        outputs = self._transpose(outputs=encoded_outputs or outputs)
 
-        # Set the schema at runtime
-        self.output_schema = Schema(
-            identifier=self.identifier,
-            fields={k.identifier: k.datatype for k in self.outputs},
-        )
+        outputs = self._transpose(outputs=outputs)
+        new_outputs = []
+        for graph_outputs in outputs:
+            new_output = {}
+            for o, n in zip(graph_outputs, self.output_identifiers):
+                new_output[n] = o
 
-        return self.encode_with_schema(outputs)
+            new_outputs.append(new_output)
+
+        return super().encode_outputs(new_outputs)
 
     @staticmethod
     def _transpose(outputs):

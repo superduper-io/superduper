@@ -17,17 +17,18 @@ class SpecialComponent(Component):
     type_id: t.ClassVar[str] = "special"
     my_data: str | None = None
     my_data_lazy: str | None = None
-    _artifacts: t.ClassVar = (("my_data", pickle_serializer), ("my_file_lazy", pickle_lazy))
+    _artifacts: t.ClassVar = (
+        ("my_data", pickle_serializer),
+        ("my_file_lazy", pickle_lazy),
+    )
 
 
 @pytest.fixture
 def random_data():
-
     df = pd.DataFrame(
         [{"a": 1, "b": 2}, {"a": 3, "b": 4}, {"a": 5, "b": 6}, {"a": 7, "b": 8}]
     )
     return df
-
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)

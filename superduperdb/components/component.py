@@ -143,7 +143,9 @@ class Component(Leaf):
 
     def init(self):
         """Method to help initiate component field dependencies."""
+        self.unpack()
 
+    def unpack(self):
         def _init(item):
             if isinstance(item, Component):
                 item.init()
@@ -165,6 +167,9 @@ class Component(Leaf):
             item = getattr(self, f.name)
             unpacked_item = _init(item)
             setattr(self, f.name, unpacked_item)
+
+        return self
+
 
     @property
     def artifact_schema(self):

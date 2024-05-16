@@ -4,11 +4,12 @@ All the llm model can use the check_xxx func to test the intergration with db.
 """
 
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import IbisQuery, Schema
+from superduperdb.backends.ibis.query import Schema
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
+from superduperdb.components.table import Table
 
 
 def check_predict(db, llm):
@@ -36,29 +37,23 @@ def check_llm_as_listener_model(db, llm):
                 "question": dtype("str"),
             },
         )
-        table = IbisQuery(identifier=collection_name, schema=schema)
+        table = Table(identifier=collection_name, schema=schema)
         db.add(table)
-        db.execute(table.insert(datas))
-        select = table.select("id", "question")
+        db.execute(db[collection_name].insert(datas))
+        select = db[collection_name].select("id", "question")
 
-    db.add(
-        Listener(
-            select=select,
-            key="question",
-            model=llm,
-        )
+    listener = Listener(
+        select=select,
+        key="question",
+        model=llm,
     )
+    db.add(listener)
 
-    if isinstance(db.databackend, MongoDataBackend):
-        output_select = MongoQuery(collection_name).find()
-    else:
-        output_select = table.select("id", "question").outputs(
-            f'question::{llm.identifier}::0::0'
-        )
+    output_select = listener.outputs_select
 
     results = db.execute(output_select)
     for result in results:
-        output = result[f'_outputs.question::{llm.identifier}::0::0']
+        output = result[listener.outputs]
         assert isinstance(output, str)
 
 

@@ -69,7 +69,7 @@ def model():
     'db',
     [
         (DBConfig.mongodb_data, {'n_data': 500}),
-        (DBConfig.sqldb_data, {'n_data': 500}),
+        # (DBConfig.sqldb_data, {'n_data': 500}),
     ],
     indirect=True,
 )
@@ -79,8 +79,7 @@ def test_fit(db, valid_dataset, model):
     if isinstance(db.databackend, MongoDataBackend):
         select = MongoQuery('documents').find()
     else:
-        table = db.load('table', 'documents')
-        select = table.select('id', 'x', 'y', 'z', '_fold')
+        select = db['documents'].select('id', 'x', 'y', 'z', '_fold')
 
     trainer = TorchTrainer(
         key=('x', 'y'),

@@ -90,6 +90,7 @@ def test_mongo_schema(db, schema):
                     "z": z,
                 },
                 db=db,
+                schema=schema,
             )
         )
 
@@ -98,12 +99,11 @@ def test_mongo_schema(db, schema):
 
     db.execute(
         MongoQuery(db=db, identifier=collection_name).insert_many(
-            data, schema=schema.identifier
+            data
         ),
     )
-    collection = MongoQuery(collection_name, db=db)
-    r = collection.find_one().execute(db)
-    rs = list(collection.find().execute(db))
+    r = db[collection_name].find_one().execute()
+    rs = list(db[collection_name].find().execute())
 
     rs = sorted(rs, key=lambda x: x['id'])
 

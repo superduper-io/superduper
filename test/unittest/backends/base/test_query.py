@@ -31,7 +31,9 @@ def test_execute_insert_and_find_mongodb(db):
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_execute_insert_and_find_sqldb(db, table):
     db.add(table)
-    db[table.identifier].insert([Document({'this': 'is a test', 'id': '1'})]).execute(db)
+    db[table.identifier].insert([Document({'this': 'is a test', 'id': '1'})]).execute(
+        db
+    )
     r = db[table.identifier].select('this').limit(1).execute(db).next()
     assert r['this'] == 'is a test'
 
@@ -80,7 +82,7 @@ def test_execute_like_queries_mongodb(db):
         .execute(db)
     )
     scores = out.scores
-    ids = [ o['_id'] for o in list(out)]
+    ids = [o['_id'] for o in list(out)]
     from bson import ObjectId
 
     assert ObjectId(r['_id']) in ids
@@ -98,7 +100,6 @@ def test_execute_like_queries_mongodb(db):
     # Post-like
     q = collection.find({}).like(
         Document({'x': r['x']}), vector_index='test_vector_search', n=3
-
     )
     result = q.execute(db)
     result = list(result)
@@ -132,7 +133,7 @@ def test_execute_like_queries_sqldb(db):
         .execute(db)
     )
 
-    result =list(result)
+    result = list(result)
     assert result[0]['id'] == r['id']
 
     # post-like
@@ -142,6 +143,7 @@ def test_execute_like_queries_sqldb(db):
     result = list(q.execute(db))
     assert len(result) == 3
     assert result[0]['id'] == r['id']
+
 
 @pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
@@ -160,7 +162,6 @@ def test_model(db):
 
     q = Model('linear_a').predict_one(t)
 
-
     out = db.execute(q).unpack()
 
     assert isinstance(out, torch.Tensor)
@@ -178,11 +179,15 @@ other_thing.join(query[0]).filter(documents[0])"""
 def test_parse_and_dump():
     from superduperdb.backends.base.query import parse_query
 
-    q = parse_query(documents=[], query='collection.find().limit(5)', builder_cls=MongoQuery)
+    q = parse_query(
+        documents=[], query='collection.find().limit(5)', builder_cls=MongoQuery
+    )
     print('\n')
     print(q)
 
-    q = parse_query(documents=[{'txt': 'test'}], query=multi_query, builder_cls=MongoQuery)
+    q = parse_query(
+        documents=[{'txt': 'test'}], query=multi_query, builder_cls=MongoQuery
+    )
 
     print('\n')
     print(q)

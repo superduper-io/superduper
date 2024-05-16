@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+
+  # Oracle SQL Server
+  # ------------------------------
+  oracle:
+    image: gvenzl/oracle-free
+    ports:
+      - "1522:1522" # TLS
+      - "8443:8443" # HTTPS port for ORDS / APEX and Database Actions
+    environment:
+      ORACLE_PASSWORD: admin
+      APP_USER: superduper
+      APP_USER_PASSWORD: superduper

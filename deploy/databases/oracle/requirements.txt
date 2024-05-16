@@ -1,0 +1,2 @@
+pyodbc
+ibis-framework[oracle]

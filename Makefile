@@ -190,7 +190,7 @@ testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing envi
 ##@ Database Testing
 
 ## Helper function for starting database containers
-VALID_DATABASES := mongodb postgres mysql mssql azuresql clickhouse
+VALID_DATABASES := mongodb postgres mysql mssql azuresql clickhouse oracle
 check_db_variable:
 	@if [ -z "$(DB)" ]; then \
 		echo "Error: 'DB' is not set."; \
@@ -201,13 +201,13 @@ check_db_variable:
 		exit 1; \
 	fi
 
-testdb_init: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+testdb_init: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse|oracle>)
 	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make init_db
 
-testdb_connect: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+testdb_connect: check_db_variable ## Init Database Container (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse|oracle>)
 	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make requirements && make run-example
 
-testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse>)
+testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb|postgres|mysql|mssql|azuresql|clickhouse|oracle>)
 	@database_path="deploy/databases/$(DB)" && cd "$$database_path" && make shutdown_db
 
 ##@ CI Testing Functions

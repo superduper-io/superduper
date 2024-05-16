@@ -60,7 +60,7 @@ install_devkit: ## Add essential development tools
 
 ##@ Code Quality
 
-build_docs: ## Generate Docs and API
+gen_docs: ## Generate Docs and API
 	@echo "===> Generate docusaurus docs and blog-posts <==="
 	cd docs/hr && npm i --legacy-peer-deps && npm run build
 	cd ../..
@@ -188,23 +188,6 @@ testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing envi
 
 
 ##@ Database Testing
-
-# When the default paths are fixed, this function can be replaced with:
-# make testdb_init DB=mongodb
-testenv_init_mongodb: ## Initialize a local Testing environment
-	@echo "===> Discover Hostnames"
-	@deploy/testenv/validate_hostnames.sh
-
-	@echo "===> Discover Paths"
-	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
-	echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
-
-	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
-	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
-
-	@echo "===> Run TestEnv MongoDB"
-	docker compose -f deploy/testenv/docker-compose.yaml up --detach mongodb --remove-orphans &
-
 
 ## Helper function for starting database containers
 VALID_DATABASES := mongodb postgres mysql mssql azuresql clickhouse

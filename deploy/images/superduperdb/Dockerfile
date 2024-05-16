@@ -42,7 +42,7 @@ RUN apt-get update \
         # Required by OpenCV
         libglib2.0-0 libgl1-mesa-glx \
         # Required for PostgreSQL \
-        libpq-dev \
+        unixodbc libpq-dev \
         # Required for rest server \
         libmagic1 \
         # Required for Llama.cpp

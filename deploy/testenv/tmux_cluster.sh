@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make testenv_init_mongodb
+make testdb_init DB=mongodb
 
 # Start a new tmux session
 SESSION_NAME="debug_session"

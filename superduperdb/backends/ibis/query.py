@@ -1,6 +1,7 @@
 import dataclasses as dc
 import typing as t
 import uuid
+import copy
 from collections import defaultdict
 
 import pandas
@@ -159,9 +160,8 @@ class IbisQuery(Query):
 
         if len(tables) == 1:
             return self.db.tables[self.identifier].schema
-
-        for _, c in tables.items():
-            renamings = self.renamings()
+        for identifier, c in tables.items():
+            renamings = self.db[identifier].renamings()
             tmp = c.schema.fields
             to_update = dict(
                 (renamings[k], v) if k in renamings else (k, v) for k, v in tmp.items()
@@ -268,6 +268,11 @@ class IbisQuery(Query):
     def _execute_insert(self, parent):
         documents = self._prepare_documents()
         for r in documents:
+            if isinstance(r, dict):
+                r.pop('_leaves')
+                r.pop('_files')
+                r.pop('_blobs')
+
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid
@@ -358,7 +363,8 @@ class IbisQuery(Query):
         :param ids: The ids to select.
         """
         t = self.db[self._get_parent().get_name()]
-        filter_query = self.filter(getattr(t, self.primary_id).isin(ids))
+        primary_id = '_input_id' if t.identifier.startswith('_outputs.') else t.primary_id
+        filter_query = self.filter(getattr(t, primary_id).isin(ids))
         return filter_query
 
     @property
@@ -369,8 +375,10 @@ class IbisQuery(Query):
     @applies_to('select')
     def outputs(self, *predict_ids):
         """Return a query that selects outputs."""
-        find_args, find_kwargs = self.parts[0][1:]
-        find_args = list(find_args)
+        find_args = ()
+        if self.parts:
+            find_args, _ = self.parts[0][1:]
+        find_args = copy.deepcopy(list(find_args))
 
         if not find_args:
             find_args = [{}]
@@ -383,18 +391,19 @@ class IbisQuery(Query):
                 identifier if '_outputs' in identifier else f'_outputs.{identifier}'
             )
             symbol_table = self.db[identifier]
+
             symbol_table = symbol_table.relabel(
                 # TODO: Check for folds
                 {'output': identifier, '_fold': f'fold.{identifier}'}
             )
 
             attr = getattr(self.db[self.identifier], self.primary_id)
-            other_query = symbol_table.join(
-                self.db[self.identifier], symbol_table._input_id == attr
+            other_query = self.join(
+                symbol_table, symbol_table._input_id == attr
             )
             return other_query
 
-    @applies_to('select')
+    @applies_to('select', 'join')
     def select_ids_of_missing_outputs(self, predict_id: str):
         """Return a query that selects ids of missing outputs.
 
@@ -403,9 +412,10 @@ class IbisQuery(Query):
         output_table = self.db[f'_outputs.{predict_id}']
         input_table = self.db[self.table_or_collection.identifier]
 
+        output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(
             output_table,
-            output_table._input_id == getattr(input_table, input_table.primary_id),
+            output_table._input_id == getattr(input_table, self.primary_id),
         )
 
     def select_single_id(self, id: str):
@@ -434,3 +444,7 @@ class IbisQuery(Query):
             table = self.db.databackend.get_table_or_collection(self.identifier)
             args = tuple(table.columns)
         return super().__call__(*args, **kwargs)
+
+    def compile(self,db):
+        parent = self._get_parent()
+        return super()._execute(parent).compile()

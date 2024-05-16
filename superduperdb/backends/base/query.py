@@ -60,6 +60,7 @@ class Query(_BaseQuery):
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     metholds_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
+
     def __getitem__(self, item):
         if not isinstance(item, slice):
             return super().__getitem__(item)
@@ -242,18 +243,32 @@ class Query(_BaseQuery):
             parts=self.parts + [('__eq__', (other,), {})],
         )
 
-    def __leq__(self, other):
+    def __lt__(self, other):
         return type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=self.parts + [('__leq__', (other,), {})],
+            parts=self.parts + [('__lt__', (other,), {})],
         )
 
-    def __geq__(self, other):
+    def __gt__(self, other):
         return type(self)(
             db=self.db,
             identifier=self.identifier,
-            parts=self.parts + [('__geq__', other)],
+            parts=self.parts + [('__gt__', (other,), {})],
+        )
+
+    def __le__(self, other):
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=self.parts + [('__le__', (other,), {})],
+        )
+
+    def __ge__(self, other):
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=self.parts + [('__ge__', (other,), {})],
         )
 
     def __getattr__(self, item):
@@ -279,7 +294,14 @@ class Query(_BaseQuery):
 
     def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
-            return getattr(r, method)()
+            out = getattr(r, method)()
+            from superduperdb.misc.special_dicts import SuperDuperFlatEncode
+            if isinstance(out, SuperDuperFlatEncode):
+                out.pop_leaves()
+                out.pop_files()
+                out.pop_blobs()
+            return out
+
         if isinstance(r, (tuple, list)):
             out = [
                 self._encode_or_unpack_args(x, db, method=method, parent=parent)
@@ -294,8 +316,9 @@ class Query(_BaseQuery):
                 for k, v in r.items()
             }
         if isinstance(r, Query):
-            parent = super(type(self), r)._get_parent()
-            return super(type(self), r)._execute(parent)
+            r.db = db
+            parent = r._get_parent()
+            return super(type(self), r)._execute(parent, method=method)
 
         return r
 
@@ -420,6 +443,7 @@ class Query(_BaseQuery):
     def select_table(self):
         """Return the table to select from."""
         pass
+    
 
     def _prepare_documents(self):
         documents = self.parts[0][1][0]
@@ -442,8 +466,15 @@ class Query(_BaseQuery):
 
 
 def _parse_query_part(part, documents, query, builder_cls):
-    current = builder_cls(identifier=part.split('.')[0], parts=())
-    part = part.split('.')[1:]
+    key = part.split('.')
+    if key[0] == '_outputs':
+        identifier = f'{key[0]}.{key[1]}'
+        part = part.split('.')[2:]
+    else:
+        identifier = key[0]
+        part = part.split('.')[1:]
+
+    current = builder_cls(identifier=identifier, parts=())
     for comp in part:
         match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
         if match is None:

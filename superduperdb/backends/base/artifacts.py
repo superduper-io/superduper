@@ -108,46 +108,83 @@ class ArtifactStore(ABC):
         """Save file in artifact store and return file_id."""
         pass
 
+    # def save_artifact(self, r: t.Dict):
+    #     """
+    #     Save serialized object in the artifact store.
+    #
+    #     :param r: dictionary with mandatory fields
+    #               {'bytes', 'datatype'}
+    #               and optional fields
+    #               {'file_id', 'uri'}
+    #     """
+    #     if (
+    #         r.get('artifact_type') != 'file'
+    #         and 'file_id' in r
+    #         and r.get('bytes') is None
+    #     ):
+    #         return
+    #     if r.get('artifact_type') == 'file':
+    #         assert 'file_id' in r, 'file_id is missing!'
+    #         file_id = self._save_file(r['uri'], r['file_id'])
+    #     else:
+    #         assert 'bytes' in r, 'serialized bytes are missing!'
+    #         assert 'datatype' in r, 'no datatype specified!'
+    #         datatype = self.serializers[r['datatype']]
+    #         uri = r.get('uri')
+    #         file_id = r.get('file_id')
+    #         if uri is not None:
+    #             file_id = _construct_file_id_from_uri(uri)
+    #         else:
+    #             file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
+    #         if r.get('directory'):
+    #             file_id = os.path.join(datatype.directory, file_id)
+    #         try:
+    #             self._save_bytes(r['bytes'], file_id=file_id)
+    #         except FileExistsError:
+    #             logging.warn(
+    #                 f'Artifact with file_id {file_id} already exists, skipping...'
+    #             )
+    #
+    #         del r['bytes']
+    #     r['file_id'] = file_id
+    #     return r
+    #
     def save_artifact(self, r: t.Dict):
         """
         Save serialized object in the artifact store.
 
         :param r: dictionary with mandatory fields
-                  {'bytes', 'datatype'}
-                  and optional fields
-                  {'file_id', 'uri'}
         """
-        if (
-            r.get('artifact_type') != 'file'
-            and 'file_id' in r
-            and r.get('bytes') is None
-        ):
-            return
-        if r.get('artifact_type') == 'file':
-            assert 'file_id' in r, 'file_id is missing!'
-            file_id = self._save_file(r['uri'], r['file_id'])
-        else:
-            assert 'bytes' in r, 'serialized bytes are missing!'
-            assert 'datatype' in r, 'no datatype specified!'
-            datatype = self.serializers[r['datatype']]
-            uri = r.get('uri')
-            file_id = r.get('file_id')
-            if uri is not None:
-                file_id = _construct_file_id_from_uri(uri)
-            else:
-                file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
-            if r.get('directory'):
-                file_id = os.path.join(datatype.directory, file_id)
-            try:
-                self._save_bytes(r['bytes'], file_id=file_id)
-            except FileExistsError:
-                logging.warn(
-                    f'Artifact with file_id {file_id} already exists, skipping...'
-                )
 
-            del r['bytes']
-        r['file_id'] = file_id
+        blobs = r.get('_blobs', {})
+        files = r.get('_files', {})
+
+        for file_id, blob in blobs.items():
+            try:
+                self._save_bytes(blob, file_id=file_id)
+            except FileExistsError:
+                continue
+
+        for file_id, file_path in files.items():
+            try:
+                self._save_file(file_path, file_id=file_id)
+            except FileExistsError:
+                continue
+
+        r['_blobs'] = list(blobs.keys())
+        r['_files'] = list(files.keys())
         return r
+
+    def delete_artifact(self, r: t.Dict):
+        for blob in r['_blobs']:
+            self._delete_bytes(blob)
+
+        for file_path in r['_files']:
+            self._delete_bytes(file_path)
+
+    def update_artifact(self, old_r: t.Dict, new_r: t.Dict):
+        self.delete_artifact(old_r)
+        return self.save_artifact(new_r)
 
     @abstractmethod
     def _load_bytes(self, file_id: str) -> bytes:

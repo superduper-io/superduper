@@ -564,17 +564,18 @@ class Graph(Model):
 
         :param outputs: model outputs.
         """
+        encoded_outputs = []
+        for o, n in zip(outputs, self.output_identifiers):
+            encoded_outputs.append(self.nodes[n].encode_outputs(o))
+        outputs = self._transpose(outputs=encoded_outputs or outputs)
 
-        outputs = self._transpose(outputs=outputs)
-        new_outputs = []
-        for graph_outputs in outputs:
-            new_output = {}
-            for o, n in zip(graph_outputs, self.output_identifiers):
-                new_output[n] = o
+        # Set the schema at runtime
+        self.output_schema = Schema(
+            identifier=self.identifier,
+            fields={k.identifier: k.datatype for k in self.outputs},
+        )
 
-            new_outputs.append(new_output)
-
-        return super().encode_outputs(new_outputs)
+        return self.encode_with_schema(outputs)
 
     @staticmethod
     def _transpose(outputs):

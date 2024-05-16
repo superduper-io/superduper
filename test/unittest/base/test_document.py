@@ -196,4 +196,4 @@ def test_column_encoding(db):
         ]
     ).execute()
 
-    db['test'].select().execute()
+    db['test'].select("x", "y", "img").execute()

@@ -160,7 +160,7 @@ class Query(Leaf, ABC):
     def _to_str(self):
         documents = {}
         queries = {}
-        #out = self.identifier[:]
+        # out = self.identifier[:]
         out = str(self.identifier)
         for part in self.parts:
             if isinstance(part, str):

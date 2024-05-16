@@ -59,15 +59,13 @@ def tensor(
     bytes_encoding: t.Optional[str] = None,
     db: t.Optional['Datalayer'] = None,
 ):
-    """
-    Create an encoder for a tensor of a given dtype and shape.
+    """Create an encoder for a tensor of a given dtype and shape.
 
     :param dtype: The dtype of the tensor.
     :param shape: The shape of the tensor.
     :param bytes_encoding: The bytes encoding to use.
     """
-    if not isinstance(dtype, torch.dtype):
-        dtype = getattr(torch, dtype)
+    dtype = getattr(torch, dtype)
     return DataType(
         identifier=f"{str(dtype)}[{str_shape(shape)}]",
         encoder=EncodeTensor(dtype),
@@ -101,4 +99,5 @@ class TorchDataTypeFactory(DataTypeFactory):
 
         :param data: Data to create the datatype from
         """
-        return tensor(dtype=data.dtype, shape=data.shape)
+        dtype = str(data.dtype).split(".")[1]
+        return tensor(dtype=dtype, shape=list(data.shape))

@@ -98,7 +98,6 @@ class Listener(Component):
             return self.select.outputs(self.uuid)
 
         else:
-
             model_update_kwargs = self.model.model_update_kwargs or {}
             if model_update_kwargs.get('document_embedded', True):
                 collection_name = self.select.table_or_collection.identifier

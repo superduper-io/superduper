@@ -191,12 +191,12 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
-
 def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
     def decorator(f):
         @functools.wraps(f)
         def decorated(*, db=None, **kwargs):
             import inspect
+
             if 'db' in inspect.signature(f).parameters:
                 out = f(**kwargs, db=db)
             else:
@@ -213,7 +213,7 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
 
             out._deep_flat_encode = _deep_flat_encode
             return out
-        
+
         decorated.get_ui_schema = lambda: schema
         decorated.build = lambda r: f(**r)
         decorated.handle_integration = handle_integration

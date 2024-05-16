@@ -72,9 +72,9 @@ def test_file(db, random_file):
     collection = MongoQuery("my-file", db=db)
     db.execute(collection.insert_one(Document({"x": dt(random_file)})))
 
-    data = db.execute(collection.find_one())
+    data = db.execute(collection.find_one()).unpack()
 
-    path = data["x"].x
+    path = data["x"]
     assert os.path.exists(path)
     # Check that the file is the same
     assert path != random_file

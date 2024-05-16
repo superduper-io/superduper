@@ -17,9 +17,9 @@ DEFECTS = {
 # over time.  If you have decreased the number of defects, change it here,
 # and take a bow!
 ALLOWABLE_DEFECTS = {
-    'cast': 9,  # Try to keep this down
-    'noqa': 6,  # This should never change
-    'type_ignore': 24,  # This should only ever increase in obscure edge cases
+    'cast': 8,  # Try to keep this down
+    'noqa': 5,  # This should never change
+    'type_ignore': 21,  # This should only ever increase in obscure edge cases
 }
 
 

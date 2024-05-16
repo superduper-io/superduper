@@ -49,7 +49,7 @@ class Code(Leaf):
             raise ValueError('No remote code found in the provided code')
         self.object = remote_code
 
-    def unpack(self, db=None):
+    def unpack(self):
         """Unpack the code object.
 
         :param db: Do not use this parameter, should be None.

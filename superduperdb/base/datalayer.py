@@ -907,6 +907,7 @@ class Datalayer:
         serialized['_blobs'] = list(serialized['_blobs'].keys())
         serialized['_files'] = list(serialized['_files'].keys())
 
+        print(serialized)
         self.metadata.create_component(serialized)
 
         if parent is not None:
@@ -1005,12 +1006,23 @@ class Datalayer:
 
         # If object has no version, update the last version
         object.version = info['version']
-        for blob in info['_blobs']:
-            self.artifact_store._delete_bytes(blob)
+
         new_info = object.dict().encode()
-        for file_id, blob in new_info['_blobs'].items():
+        new_blobs = list(new_info['_blobs'].keys())
+        old_blobs = info['_blobs']
+
+        delete_blobs = set(old_blobs) - set(new_blobs)
+        add_blobs = set(new_blobs) - set(old_blobs)
+
+        for blob in delete_blobs:
+            if blob not in new_blobs:
+                self.artifact_store._delete_bytes(blob)
+
+        for file_id in add_blobs:
+            blob = new_info['_blobs'][file_id]
             self.artifact_store._save_bytes(blob, file_id=file_id)
-        new_info['_blobs'] = list(new_info['_blobs'].keys())
+
+        new_info['_blobs'] = new_blobs
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,

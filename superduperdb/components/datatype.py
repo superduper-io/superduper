@@ -511,11 +511,13 @@ class Encodable(_BaseEncodable):
         blobs = {}
         files = {}
 
-        return SuperDuperFlatEncode({
-            '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
-            '_leaves': cache,
-            '_blobs': blobs,
-        })
+        return SuperDuperFlatEncode(
+            {
+                '_base': self._deep_flat_encode(cache, blobs, files, (), schema),
+                '_leaves': cache,
+                '_blobs': blobs,
+            }
+        )
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -725,7 +727,6 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
 
         del r['x']
 
-
         cache[self.id] = r
 
         return f'?{self.id}'
@@ -752,12 +753,12 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     def _get_object(cls, db, r):
         return r['x']
 
+
 class LazyFile(File):
     """Class is used to load a file only when needed."""
 
     leaf_type: t.ClassVar[str] = 'lazy_file'
     lazy: t.ClassVar[bool] = True
-
 
 
 Encoder = DataType

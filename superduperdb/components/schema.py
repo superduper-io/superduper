@@ -6,15 +6,21 @@ from overrides import override
 
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.misc.annotations import public_api
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
+
+SCHEMA_KEY = '_schema'
+
 
 class _Native:
     _TYPES = {str: 'str', int: 'int', float: 'float'}
+
     def __init__(self, x):
         if x in self._TYPES:
             x = self._TYPES[x]
-        self.identifier =  x
+        self.identifier = x
+
+
 
 @public_api(stability='beta')
 @dc.dataclass(kw_only=True)
@@ -40,7 +46,6 @@ class Schema(Component):
                 self.fields[k] = _Native(v)
             elif v in (str, bool, int, float):
                 self.fields[k] = _Native(v)
-
 
     @override
     def pre_create(self, db) -> None:
@@ -74,6 +79,7 @@ class Schema(Component):
                 r[k] = encodable._deep_flat_encode(
                     cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=self
                 )
+        r[SCHEMA_KEY] = self.identifier
         return r
 
     @cached_property
@@ -107,7 +113,7 @@ class Schema(Component):
                 # TODO: We need to sort out the logic here
                 # We use encodable_cls to encode the data, but we the decoder here
                 # decoded[k] = field.encodable_cls.decode(data[k])
-                decoded[k] = field.decoder(data[k])
+                decoded[k] = field.decode_data(data[k])
             else:
                 decoded[k] = data[k]
         return decoded
@@ -140,3 +146,18 @@ class Schema(Component):
         encoded_data['_blobs'] = blobs
         encoded_data['_files'] = files
         return SuperDuperFlatEncode(encoded_data)
+
+def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
+    """Handle schema caching and loading."""
+    if schema is None:
+        return None
+    if isinstance(schema, Schema):
+        return schema
+    assert isinstance(schema, str)
+    if db is None:
+        raise ValueError(
+            f'A Datalayer instance is required for encoding with schema {schema}'
+        )
+
+    return db.schemas[schema]
+

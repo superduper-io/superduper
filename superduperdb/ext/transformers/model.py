@@ -271,11 +271,9 @@ class LLM(BaseLLM, _Fittable):
             self.identifier = self.adapter_id or self.model_name_or_path
 
         #  TODO: Compatible with the bug of artifact sha1 equality and will be deleted
-        self.tokenizer_kwargs.setdefault(
-            "pretrained_model_name_or_path", self.model_name_or_path
-        )
-
         super().__post_init__(db, artifacts)
+
+
 
     @classmethod
     def from_pretrained(
@@ -322,7 +320,11 @@ class LLM(BaseLLM, _Fittable):
         """
         # Do not update model state here
         model_kwargs = self.model_kwargs.copy()
+
         tokenizer_kwargs = self.tokenizer_kwargs.copy()
+        tokenizer_kwargs.setdefault(
+            "pretrained_model_name_or_path", self.model_name_or_path
+        )
 
         if self.model_name_or_path and not load_adapter_directly:
             model_kwargs["pretrained_model_name_or_path"] = self.model_name_or_path
@@ -408,7 +410,8 @@ class LLM(BaseLLM, _Fittable):
                 assert db, "db must be provided when using checkpoint indetiifer"
                 if self.db is None:
                     self.db = db
-                real_adapter_id = checkpoint.path.unpack(db)
+                checkpoint.init()
+                real_adapter_id = checkpoint.path
 
         super().init()
 
@@ -426,6 +429,7 @@ class LLM(BaseLLM, _Fittable):
                 identifier, version = Checkpoint.parse_uri(self.adapter_id)
                 version = int(version)
                 checkpoint = db.load("checkpoint", identifier, version=version)
+                checkpoint.init()
                 assert checkpoint, f"Checkpoint {self.adapter_id} not found"
                 self.adapter_id = checkpoint
 

@@ -16,7 +16,16 @@ def test_query_dataset(db):
         db=db,
         mapping=Mapping('_base', signature='singleton'),
         select=MongoQuery(identifier='documents', db=db).find(
-            {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1, '_leaves': 1, '_blobs': 1, '_files': 1}
+            {},
+            {
+                '_id': 0,
+                'x': 1,
+                '_fold': 1,
+                '_outputs': 1,
+                '_leaves': 1,
+                '_blobs': 1,
+                '_files': 1,
+            },
         ),
         fold='train',
     )
@@ -25,7 +34,11 @@ def test_query_dataset(db):
     assert r['_fold'] == 'train'
     assert 'y' not in r
 
-    key = [l.split('/')[-1] for l in db.show('listener') if db.load('listener', l).key =='x' ][0]
+    key = [
+        l.split('/')[-1]
+        for l in db.show('listener')
+        if db.load('listener', l).key == 'x'
+    ][0]
     assert r['_outputs'][key].shape[0] == 16
 
     train_data = QueryDataset(

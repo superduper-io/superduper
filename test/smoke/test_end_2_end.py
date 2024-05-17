@@ -155,8 +155,9 @@ def test_advance_setup(test_db, image_url):
     listener2 = Listener(
                 model=model2,
                 key=f'{listener1.outputs}.int',
-                select=MongoQuery(listener1.outputs).find(),
+                select=MongoQuery(listener1.outputs, db=db).find(),
             )
+    db.add(listener2)
 
     db.add(
         VectorIndex(

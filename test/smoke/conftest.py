@@ -24,8 +24,8 @@ np.random.seed(42)
 
 
 def add_models_encoders(test_db):
-    test_db.add(tensor(torch.float, shape=(32,)))
-    _, dt_16 = test_db.add(tensor(torch.float, shape=(16,)))
+    test_db.add(tensor(dtype='float', shape=(32,)))
+    _, dt_16 = test_db.add(tensor(dtype='float', shape=(16,)))
     _, model = test_db.add(
         TorchModel(
             object=torch.nn.Linear(32, 16),
@@ -35,14 +35,14 @@ def add_models_encoders(test_db):
     )
     _, indexing_listener = test_db.add(
         Listener(
-            select=MongoQuery(identifier='documents').find(),
+            select=MongoQuery(identifier='documents', db=test_db).find(),
             key='x',
             model=model,
         )
     )
     _, compatible_listener = test_db.add(
         Listener(
-            select=MongoQuery(identifier='documents').find(),
+            select=MongoQuery(identifier='documents', db=test_db).find(),
             key='z',
             model=model,
         )

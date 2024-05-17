@@ -55,7 +55,7 @@ class Model2:
         return x
 
 
-def _wait_for_keys(db, collection='_outputs.int::model1::0::0', n=10, key=''):
+def _wait_for_keys(db, collection, n=10, key=''):
     retry_left = 10
 
     def check_outputs():
@@ -76,7 +76,7 @@ def _wait_for_keys(db, collection='_outputs.int::model1::0::0', n=10, key=''):
         retry_left -= 1
 
 
-def _wait_for_outputs(db, collection='_outputs.int::model1::0::0', n=10):
+def _wait_for_outputs(db, collection, n=10):
     retry_left = 10
 
     def check_outputs():
@@ -102,21 +102,11 @@ def test_advance_setup(test_db, image_url):
     db = test_db
     # Take empty database
 
-    image = [
-        {
-            '_content': {
-                'uri': image_url,
-                'datatype': 'pil_image',
-                'leaf_type': 'encodable',
-            }
-        }
-    ]
-
     raw_bytes = 'some raw bytes'.encode('utf-8')
     data = [
         Document(
             {
-                'image': image,
+                'image': pil_image(uri=image_url),
                 'int': i,
                 'text': str(i),
                 'float': float(i),
@@ -138,12 +128,12 @@ def test_advance_setup(test_db, image_url):
         model_update_kwargs={'document_embedded': False},
         output_schema=Schema(
             identifier='myschema',
-            fields={'image': pil_image, 'int': array('int64', (10,))},
+            fields={'image': pil_image, 'int': array(dtype='int64', shape=(10,))},
         ),
     )
     db.add(model1)
 
-    e = array('int64', (10,))
+    e = array(dtype='int64', shape=(10,))
 
     model2 = ObjectModel(
         identifier='model2',
@@ -159,18 +149,20 @@ def test_advance_setup(test_db, image_url):
     db.add(listener1)
 
     db.execute(MongoQuery('mixed_input').insert_many(data))
+    collection=listener1.outputs
 
-    _wait_for_outputs(db=db)
+    _wait_for_outputs(db=db,collection=collection)
+    listener2 = Listener(
+                model=model2,
+                key=f'{listener1.outputs}.int',
+                select=MongoQuery(listener1.outputs).find(),
+            )
 
     db.add(
         VectorIndex(
             identifier='test_search_index',
             measure='l2',
-            indexing_listener=Listener(
-                model=model2,
-                key='_outputs.int::model1::0::0.int',
-                select=MongoQuery('_outputs.int::model1::0::0').find(),
-            ),
+            indexing_listener=listener2,
             compatible_listener=Listener(
                 model=model2, key='text', select=None, active=False
             ),
@@ -181,22 +173,23 @@ def test_advance_setup(test_db, image_url):
     _wait_for_keys(
         db=db,
         n=10,
-        collection='_outputs.int::model1::0::0',
-        key='_outputs.int::model2::0::0',
+        collection=listener1.outputs,
+        key=listener2.outputs,
     )
 
     r = next(
         db.execute(
-            MongoQuery('_outputs.int::model1::0::0')
+            MongoQuery(listener1.outputs)
             .like(
                 Document({'text': search_phrase}), vector_index='test_search_index', n=1
             )
             .find()
         )
     )
-    r = r.unpack()
+    r = Document(r.unpack())
+
 
     assert '_outputs' in r
     assert np.allclose(
-        np.asarray([400] * 10), r['_outputs']['int::model1::0::0']['int']
+        np.asarray([400] * 10), r[listener1.outputs]['int']
     )

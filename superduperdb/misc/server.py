@@ -6,8 +6,9 @@ import requests
 
 from superduperdb import CFG, logging
 from superduperdb.base import exceptions
-from superduperdb.ext.utils import superduperencode
+from superduperdb.misc.auto_schema import DEFAULT_DATATYPE
 
+primitives = (bool, str, int, float, type(None))
 
 @lru_cache(maxsize=None)
 def _handshake(service: str):
@@ -33,16 +34,14 @@ def _request_server(
     logging.debug(f'Trying to connect {service} at {url} method: {type}')
 
     if type == 'post':
-        data = superduperencode(data)
-        if isinstance(data, dict):
-            if '_content' in data:
-                try:
-                    data['_content']['bytes'] = base64.b64encode(
-                        data['_content']['bytes']
-                    ).decode()
-                except Exception as e:
-                    logging.error(str(data))
-                    raise e
+        if data is not None:
+            # TODO: Please use Document.encode with autoschema.
+
+            if not isinstance(data, primitives):
+                data  = DEFAULT_DATATYPE.encoder(data)  
+                data = {'b64data': base64.b64encode(data).decode()}
+                                                 
+
         response = requests.post(url, json=data, params=args)
         result = json.loads(response.content)
     else:

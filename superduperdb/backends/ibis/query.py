@@ -397,7 +397,7 @@ class IbisQuery(Query):
                 {'output': identifier, '_fold': f'fold.{identifier}'}
             )
 
-            attr = getattr(self.db[self.identifier], self.primary_id)
+            attr = getattr(self, self.primary_id)
             other_query = self.join(
                 symbol_table, symbol_table._input_id == attr
             )
@@ -448,3 +448,41 @@ class IbisQuery(Query):
     def compile(self,db):
         parent = self._get_parent()
         return super()._execute(parent).compile()
+
+class _SQLDictIterable:
+    def __init__(self, iterable):
+        self.iterable = iter(iterable)
+
+    def next(self):
+        element = next(self.iterable)
+        return dict(element)
+
+    def __iter__(self):
+        return self
+
+    __next__ = next
+
+
+@dc.dataclass
+class RawSQL:
+    """Raw SQL query.
+
+    :param query: The raw SQL query
+    :param id_field: The field to use as the primary id
+    """
+
+    query: str
+    id_field: str = 'id'
+
+    def execute(self, db):
+        """Run the query.
+
+        :param db: The DataLayer instance
+        """
+        cursor = db.databackend.conn.raw_sql(self.query)
+        try:
+            cursor = cursor.mappings().all()
+            cursor = _SQLDictIterable(cursor)
+            return SuperDuperCursor(cursor, id_field=self.id_field)
+        except Exception:
+            return cursor

@@ -28,9 +28,9 @@ class Anthropic(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         self.model = self.model or self.identifier
-        super().__post_init__(artifacts)
+        super().__post_init__(db, artifacts)
         self.client = anthropic.Anthropic(
             api_key=get_key(KEY_NAME), **self.client_kwargs
         )

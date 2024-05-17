@@ -122,7 +122,7 @@ class VllmModel(BaseLLM):
     ray_address: t.Optional[str] = None
     ray_config: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self, artifacts):
+    def __post_init__(self, db, artifacts):
         self.on_ray = self.on_ray or bool(self.ray_address)
         if "tensor_parallel_size" not in self.vllm_kwargs:
             self.vllm_kwargs["tensor_parallel_size"] = self.tensor_parallel_size
@@ -133,7 +133,7 @@ class VllmModel(BaseLLM):
         if "model" not in self.vllm_kwargs:
             self.vllm_kwargs["model"] = self.model_name
 
-        super().__post_init__(artifacts)
+        super().__post_init__(db, artifacts)
 
     def init(self):
         """Initialize the model."""

@@ -12,7 +12,7 @@ from superduperdb.components.datatype import (
     file_serializer,
 )
 
-DO_SKIP = not CFG.data_backend.startswith("mongodb")
+DO_SKIP = not CFG.data_backend.startswith("mongo")
 
 
 @dc.dataclass(kw_only=True)

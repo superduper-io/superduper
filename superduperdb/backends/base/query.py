@@ -58,6 +58,7 @@ class Query(_BaseQuery):
 
     flavours: t.ClassVar[t.Dict[str, str]] = {}
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
+    metholds_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
     def __getitem__(self, item):
         if not isinstance(item, slice):
@@ -256,6 +257,7 @@ class Query(_BaseQuery):
         )
 
     def __getattr__(self, item):
+        item = type(self).metholds_mapping.get(item, item)
         return type(self)(
             db=self.db,
             identifier=self.identifier,
@@ -418,6 +420,25 @@ class Query(_BaseQuery):
     def select_table(self):
         """Return the table to select from."""
         pass
+
+    def _prepare_documents(self):
+        documents = self.parts[0][1][0]
+        kwargs = self.parts[0][2]
+        schema = kwargs.pop('schema', None)
+
+        if schema is None:
+            try:
+                table = self.db.tables[self.identifier]
+                schema = table.schema
+            except FileNotFoundError:
+                pass
+
+        documents = [
+            r.encode(schema) if isinstance(r, Document) else r for r in documents
+        ]
+        for r in documents:
+            r = self.db.artifact_store.save_artifact(r)
+        return documents
 
 
 def _parse_query_part(part, documents, query, builder_cls):

@@ -266,13 +266,7 @@ class IbisQuery(Query):
         return self._execute(parent)
 
     def _execute_insert(self, parent):
-        documents = self.documents
-        table = self._get_tables()[self.identifier]
-        schema = table.schema
-
-        documents = [
-            r.encode(schema) if isinstance(r, Document) else r for r in documents
-        ]
+        documents = self._prepare_documents()
         for r in documents:
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
@@ -427,3 +421,16 @@ class IbisQuery(Query):
         """Return a query that selects the table."""
         t = self.db[self.table_or_collection.identifier]
         return t.select(t)
+
+    def __call__(self, *args, **kwargs):
+        """Add a method call to the query.
+
+        :param args: The arguments to pass to the method.
+        :param kwargs: The keyword arguments to pass to the method.
+        """
+        assert isinstance(self.parts[-1], str)
+        if self.parts[0] == 'select' and not args:
+            # support table.select() without column args
+            table = self.db.databackend.get_table_or_collection(self.identifier)
+            args = tuple(table.columns)
+        return super().__call__(*args, **kwargs)

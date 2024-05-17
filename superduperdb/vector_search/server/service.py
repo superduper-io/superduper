@@ -23,7 +23,7 @@ def _vector_search(
     vi = db.fast_vector_searchers[vector_index]
     if by_array:
         x = x['b64data']
-        x = DEFAULT_DATATYPE.encoder(  base64.b64decode(x))
+        x = DEFAULT_DATATYPE.decoder(  base64.b64decode(x))
         ids, scores = vi.searcher.find_nearest_from_array(x, n=n)
     else:
         ids, scores = vi.searcher.find_nearest_from_id(x, n=n)

@@ -171,10 +171,6 @@ class Datalayer:
         if vi.indexing_listener.select.db is None:
             vi.indexing_listener.select.db = self
 
-        key = vi.indexing_listener.key
-        if key.startswith('_outputs.'):
-            key = key.split('.')[1]
-
         query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
 
         logging.info(str(query))

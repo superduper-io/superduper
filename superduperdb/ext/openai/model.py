@@ -59,8 +59,8 @@ class _OpenAI(APIBaseModel):
             del kwargs['signature']
         return kwargs
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
 
         assert isinstance(self.client_kwargs, dict)
 
@@ -117,8 +117,8 @@ class OpenAIEmbedding(_OpenAI):
         """The inputs of the model."""
         return Inputs(['input'])
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if self.shape is None:
             self.shape = self.shapes[self.model]
 
@@ -171,8 +171,8 @@ class OpenAIChatCompletion(_OpenAI):
     batch_size: int = 1
     prompt: str = ''
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         self.takes_context = True
 
     def _format_prompt(self, context, X):

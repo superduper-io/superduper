@@ -19,8 +19,8 @@ class Jina(APIBaseModel):
 
     api_key: t.Optional[str] = None
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
@@ -39,8 +39,8 @@ class JinaEmbedding(Jina):
 
     shape: t.Optional[t.Sequence[int]] = None
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if self.shape is None:
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 

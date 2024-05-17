@@ -69,7 +69,6 @@ class Component(Leaf):
     Class to represent SuperDuperDB serializable entities
     that can be saved into a database.
 
-    :param identifier: A unique identifier for the component.
     :param artifacts: List of artifacts which represent entities that are
                       not serializable by default.
     """
@@ -146,6 +145,11 @@ class Component(Leaf):
         self.unpack()
 
     def unpack(self):
+        """Method to unpack the component.
+
+        This method is used to initialize all the fields of the component and leaf
+        """
+
         def _init(item):
             if isinstance(item, Component):
                 item.init()

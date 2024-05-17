@@ -28,10 +28,15 @@ class BaseDataBackend(ABC):
 
     @property
     def datalayer(self):
+        """Return the datalayer."""
         return self._datalayer
 
     @datalayer.setter
     def datalayer(self, value):
+        """Set the datalayer.
+
+        :param value: The datalayer.
+        """
         self._datalayer = value
 
     @abstractmethod
@@ -74,6 +79,11 @@ class BaseDataBackend(ABC):
 
     @abstractmethod
     def get_query_builder(self, key):
+        """Get a query builder for the database.
+
+        :param key: The key of the query builder,
+                    typically the table or collection name.
+        """
         pass
 
     @abstractmethod

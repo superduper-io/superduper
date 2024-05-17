@@ -1,5 +1,4 @@
 from superduperdb import superduper
-from superduperdb.components.stack import Stack
 
 db = superduper('mongomock://localhost:27017/test_db')
 

@@ -12,14 +12,20 @@ from superduperdb.backends.base.query import (
     parse_query as _parse_query,
 )
 from superduperdb.base.cursor import SuperDuperCursor
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.components.schema import Schema
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
 def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
+    """Parse a string query into a query object.
+
+    :param query: The query to parse.
+    :param documents: The documents to query.
+    :param db: The datalayer to use to execute the query.
+    """
     return _parse_query(
         query=query,
         documents=documents,
@@ -85,6 +91,8 @@ def _model_update_impl(
 
 @dc.dataclass(kw_only=True, repr=False)
 class IbisQuery(Query):
+    """A query that can be executed on an Ibis database."""
+
     flavours: t.ClassVar[t.Dict[str, str]] = {
         'pre_like': '^.*\.like\(.*\)\.select',
         'post_like': '^.*\.([a-z]+)\(.*\)\.like(.*)$',
@@ -106,6 +114,7 @@ class IbisQuery(Query):
     @property
     @applies_to('insert')
     def documents(self):
+        """Return the documents."""
         return self.parts[0][1][0]
 
     def _get_tables(self):
@@ -142,6 +151,7 @@ class IbisQuery(Query):
         return Schema(f'_tmp:{self.identifier}', fields=fields)
 
     def renamings(self):
+        """Return the renamings."""
         r = {}
         for part in self.parts:
             if part[0] == 'rename':
@@ -274,6 +284,7 @@ class IbisQuery(Query):
 
     @property
     def type(self):
+        """Return the type of the query."""
         return defaultdict(
             lambda: 'select',
             {
@@ -286,6 +297,7 @@ class IbisQuery(Query):
 
     @property
     def primary_id(self):
+        """Return the primary id."""
         return self.db.tables[self.identifier].primary_id
 
     def model_update(
@@ -296,6 +308,13 @@ class IbisQuery(Query):
         flatten: bool = False,
         **kwargs,
     ):
+        """Update the model outputs in the database.
+
+        :param ids: The ids of the inputs.
+        :param predict_id: The predict id.
+        :param outputs: The outputs.
+        :param flatten: Whether to flatten the outputs.
+        """
         if not flatten:
             return _model_update_impl(
                 db=self.db,
@@ -310,23 +329,32 @@ class IbisQuery(Query):
                 ids=ids,
                 predict_id=predict_id,
                 outputs=outputs,
-                flatten=flatten,
             )
 
     def add_fold(self, fold: str):
+        """Return a query that adds a fold.
+
+        :param fold: The fold to add.
+        """
         return self.filter(self._fold == fold)
 
     def select_using_ids(self, ids: t.Sequence[str]):
+        """Return a query that selects using ids.
+
+        :param ids: The ids to select.
+        """
         t = self.db[self._get_parent().get_name()]
         filter_query = self.filter(getattr(t, self.primary_id).isin(ids))
         return filter_query
 
     @property
     def select_ids(self):
+        """Return a query that selects ids."""
         return self.select(self.primary_id)
 
     @applies_to('select')
     def outputs(self, *predict_ids):
+        """Return a query that selects outputs."""
         find_args, find_kwargs = self.parts[0][1:]
         find_args = list(find_args)
 
@@ -354,6 +382,10 @@ class IbisQuery(Query):
 
     @applies_to('select')
     def select_ids_of_missing_outputs(self, predict_id: str):
+        """Return a query that selects ids of missing outputs.
+
+        :param predict_id: The predict id.
+        """
         output_table = self.db[f'_outputs.{predict_id}']
         input_table = self.db[self.table_or_collection.identifier]
 
@@ -363,10 +395,15 @@ class IbisQuery(Query):
         )
 
     def select_single_id(self, id: str):
-        filter_query = eval(f'table.{self.primary_id} == id')
+        """Return a query that selects a single id.
+
+        :param id: The id to select.
+        """
+        filter_query = eval(f'table.{self.primary_id} == {id}')
         return self.filter(filter_query)
 
     @property
     def select_table(self):
+        """Return a query that selects the table."""
         t = self.db[self.table_or_collection.identifier]
         return t.select(t)

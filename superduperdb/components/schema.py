@@ -69,7 +69,15 @@ class Schema(Component):
             for k, v in self.fields.items()
         }
 
-    def deep_flat_encode_data(self, r, cache, blobs, files, leaves_to_keep=None):
+    def deep_flat_encode_data(self, r, cache, blobs, files, leaves_to_keep=()):
+        """Deep flat encode data.
+
+        :param r: Data to encode.
+        :param cache: Cache for encoding.
+        :param blobs: Blobs for encoding.
+        :param files: Files for encoding.
+        :param leaves_to_keep: Leaves to keep.
+        """
         for k in self.fields:
             if isinstance(self.fields[k], DataType):
                 encodable = self.fields[k](r[k])
@@ -137,7 +145,11 @@ class Schema(Component):
 
 
 def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
-    """Handle schema caching and loading."""
+    """Handle schema caching and loading.
+
+    :param db: Datalayer instance.
+    :param schema: Schema to get. If a string, it will be loaded from the database.
+    """
     if schema is None:
         return None
     if isinstance(schema, Schema):

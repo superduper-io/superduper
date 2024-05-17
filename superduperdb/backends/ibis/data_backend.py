@@ -40,8 +40,12 @@ class IbisDataBackend(BaseDataBackend):
         self.dialect = getattr(conn, 'name', 'base')
         self.db_helper = get_db_helper(self.dialect)
 
-    def get_query_builder(self, item):
-        return IbisQuery(identifier=item, db=self.datalayer)
+    def get_query_builder(self, table_name):
+        """Get the query builder for the data backend.
+
+        :param table_name: Which table to get the query builder for
+        """
+        return IbisQuery(identifier=table_name, db=self.datalayer)
 
     def url(self):
         """Get the URL of the database."""

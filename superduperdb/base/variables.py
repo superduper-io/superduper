@@ -6,12 +6,13 @@ import typing as t
 from superduperdb.base.leaf import Leaf
 
 
+# TODO: (New) remove the unused code
 def _from_dict(r: t.Any, db: None = None) -> t.Any:
     from superduperdb.base.document import Document
     from superduperdb.components.datatype import LazyArtifact, LazyFile
 
     if isinstance(r, Document):
-        r = r.unpack(db, leaves_to_keep=(LazyArtifact, LazyFile))
+        r = r.unpack(leaves_to_keep=(LazyArtifact, LazyFile))
     if isinstance(r, (list, tuple)):
         return [_from_dict(i, db=db) for i in r]
     if not isinstance(r, dict):

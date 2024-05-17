@@ -287,13 +287,11 @@ class Datalayer:
         )
 
     def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
-        """
-        Execute a query on the database.
+        """Execute a query on the database.
 
         :param query: The SQL query to execute, such as select, insert,
                       delete, or update.
         """
-
         if query.type == 'delete':
             return self._delete(query, *args, **kwargs)
         if query.type == 'insert':
@@ -588,6 +586,9 @@ class Datalayer:
         """
         Load a component using uniquely identifying information.
 
+        If `uuid` is provided, `type_id` and `identifier` are ignored.
+        If `uuid` is not provided, `type_id` and `identifier` must be provided.
+
         :param type_id: Type ID of the component to load
                          ('datatype', 'model', 'listener', ...).
         :param identifier: Identifier of the component
@@ -595,6 +596,7 @@ class Datalayer:
         :param version: [Optional] Numerical version.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
+        :param uuid: [Optional] UUID of the component to load.
         """
         if type_id == 'encoder':
             logging.warn(
@@ -603,6 +605,12 @@ class Datalayer:
             )
             type_id = 'datatype'
         if uuid is None:
+            if type_id is None or identifier is None:
+                raise ValueError(
+                    'Must specify `type_id` and `identifier` to load a component '
+                    'when `uuid` is not provided.'
+                )
+
             info = self.metadata.get_component(
                 type_id=type_id,
                 identifier=identifier,
@@ -610,15 +618,19 @@ class Datalayer:
                 allow_hidden=allow_hidden,
             )
         else:
+            # TODO: Do not call private method
             info = self.metadata._get_component_by_uuid(
                 uuid=uuid,
                 allow_hidden=allow_hidden,
             )
+            assert info is not None
+            type_id = info['type_id']
 
         m = Document.decode(info, db=self)
         m.db = self
         m.on_load(self)
 
+        assert type_id is not None
         if cm := self.type_id_to_cache_mapping.get(type_id):
             try:
                 getattr(self, cm)[m.identifier] = m

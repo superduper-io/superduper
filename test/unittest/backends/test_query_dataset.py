@@ -35,9 +35,9 @@ def test_query_dataset(db):
     assert 'y' not in r
 
     key = [
-        l.split('/')[-1]
-        for l in db.show('listener')
-        if db.load('listener', l).key == 'x'
+        k.split('/')[-1]
+        for k in db.show('listener')
+        if db.load('listener', k).key == 'x'
     ][0]
     assert r['_outputs'][key].shape[0] == 16
 

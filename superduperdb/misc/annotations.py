@@ -192,6 +192,12 @@ def _get_indent(docstring: str) -> int:
 
 
 def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
+    """Decorator for creating a component.
+
+    :param *schema: schema for the component
+    :param handle_integration: function to handle integration
+    """
+
     def decorator(f):
         @functools.wraps(f)
         def decorated(*, db=None, **kwargs):

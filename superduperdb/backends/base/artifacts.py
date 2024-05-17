@@ -3,8 +3,6 @@ import os
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb import logging
-
 
 def _construct_file_id_from_uri(uri):
     return str(hashlib.sha1(uri.encode()).hexdigest())
@@ -48,8 +46,8 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def _delete_bytes(self, file_id: str):
-        """
-        Delete artifact from artifact store
+        """Delete artifact from artifact store.
+
         :param file_id: File id uses to identify artifact in store
         """
 
@@ -108,54 +106,12 @@ class ArtifactStore(ABC):
         """Save file in artifact store and return file_id."""
         pass
 
-    # def save_artifact(self, r: t.Dict):
-    #     """
-    #     Save serialized object in the artifact store.
-    #
-    #     :param r: dictionary with mandatory fields
-    #               {'bytes', 'datatype'}
-    #               and optional fields
-    #               {'file_id', 'uri'}
-    #     """
-    #     if (
-    #         r.get('artifact_type') != 'file'
-    #         and 'file_id' in r
-    #         and r.get('bytes') is None
-    #     ):
-    #         return
-    #     if r.get('artifact_type') == 'file':
-    #         assert 'file_id' in r, 'file_id is missing!'
-    #         file_id = self._save_file(r['uri'], r['file_id'])
-    #     else:
-    #         assert 'bytes' in r, 'serialized bytes are missing!'
-    #         assert 'datatype' in r, 'no datatype specified!'
-    #         datatype = self.serializers[r['datatype']]
-    #         uri = r.get('uri')
-    #         file_id = r.get('file_id')
-    #         if uri is not None:
-    #             file_id = _construct_file_id_from_uri(uri)
-    #         else:
-    #             file_id = r.get('sha1') or hashlib.sha1(r['bytes']).hexdigest()
-    #         if r.get('directory'):
-    #             file_id = os.path.join(datatype.directory, file_id)
-    #         try:
-    #             self._save_bytes(r['bytes'], file_id=file_id)
-    #         except FileExistsError:
-    #             logging.warn(
-    #                 f'Artifact with file_id {file_id} already exists, skipping...'
-    #             )
-    #
-    #         del r['bytes']
-    #     r['file_id'] = file_id
-    #     return r
     #
     def save_artifact(self, r: t.Dict):
-        """
-        Save serialized object in the artifact store.
+        """Save serialized object in the artifact store.
 
         :param r: dictionary with mandatory fields
         """
-
         blobs = r.get('_blobs', {})
         files = r.get('_files', {})
 
@@ -176,6 +132,10 @@ class ArtifactStore(ABC):
         return r
 
     def delete_artifact(self, r: t.Dict):
+        """Delete artifact from artifact store.
+
+        :param r: dictionary with mandatory fields
+        """
         for blob in r['_blobs']:
             self._delete_bytes(blob)
 
@@ -183,6 +143,13 @@ class ArtifactStore(ABC):
             self._delete_bytes(file_path)
 
     def update_artifact(self, old_r: t.Dict, new_r: t.Dict):
+        """Update artifact in artifact store.
+
+        This method deletes the old artifact and saves the new artifact.
+
+        :param old_r: dictionary with mandatory fields
+        :param new_r: dictionary with mandatory fields
+        """
         self.delete_artifact(old_r)
         return self.save_artifact(new_r)
 

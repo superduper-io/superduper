@@ -7,7 +7,7 @@ import torchvision
 
 from superduperdb import CFG
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import RawSQL, IbisQuery
+from superduperdb.backends.ibis.query import IbisQuery, RawSQL
 from superduperdb.base.document import Document as D
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema

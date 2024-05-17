@@ -38,8 +38,8 @@ class FileSystemArtifactStore(ArtifactStore):
         return self.conn
 
     def _delete_bytes(self, file_id: str):
-        """
-        Delete artifact from artifact store
+        """Delete artifact from artifact store.
+
         :param file_id: File id uses to identify artifact in store
         """
         path = os.path.join(self.conn, file_id)

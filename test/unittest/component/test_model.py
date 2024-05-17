@@ -7,13 +7,13 @@ import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
+from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.base.variables import Variable
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode

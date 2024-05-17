@@ -144,7 +144,6 @@ def test_execute_like_queries_sqldb(db):
     assert result[0]['id'] == r['id']
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
 def test_model(db):
     import torch

@@ -110,7 +110,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
 
     m1 = ObjectModel(
         "m1",
-        object=lambda x: data if not flatten else [data],
+        object=lambda x: data if not flatten else [data] * 10,
         model_update_kwargs={"document_embedded": document_embedded},
         flatten=flatten,
     )
@@ -146,7 +146,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
         np.array([[1, 2, 3], [4, 5, 6]]),
     ],
 )
-@pytest.mark.parametrize("flatten", [False])
+@pytest.mark.parametrize("flatten", [True, False])
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_create_output_dest_ibis(db, data, flatten):
     schema = Schema(
@@ -158,7 +158,7 @@ def test_create_output_dest_ibis(db, data, flatten):
 
     m1 = ObjectModel(
         "m1",
-        object=lambda x: data if not flatten else [data],
+        object=lambda x: data if not flatten else [data] * 10,
         flatten=flatten,
     )
     db.execute(db['test'].insert([Document({"x": 1, "id": "1"})]))

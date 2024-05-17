@@ -38,7 +38,7 @@ RUN apt-get update \
         # Required for downloading code/data from the internet \
         wget curl unzip git \
         # DevOps
-        vim procps make \
+        dnsutils vim procps make \
         # Required by OpenCV
         libglib2.0-0 libgl1-mesa-glx \
         # Required for PostgreSQL \

@@ -1,2 +1,4 @@
 # Ignore all files starting with '.'
 **/.*
+
+superduperdb.egg-info

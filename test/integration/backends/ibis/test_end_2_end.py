@@ -7,7 +7,7 @@ import torchvision
 
 from superduperdb import CFG
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import IbisQuery, RawSQL
+from superduperdb.backends.ibis.query import RawSQL
 from superduperdb.base.document import Document as D
 from superduperdb.components.listener import Listener
 from superduperdb.components.schema import Schema
@@ -152,19 +152,15 @@ def _end_2_end(db, memory_table=False):
     assert 'image' in result[0].unpack()
 
     # TODO: Make this work
-    '''
 
     q = t.select('id', 'image', 'age').filter(t.age > 25).outputs(listener2.outputs)
 
     # Get the results
     result = list(db.execute(q))
     assert listener2.outputs in result[0].unpack()
-    '''
 
     # Raw query
     # TODO: Support RawSQL
-    '''
-
     if not memory_table:
         query = RawSQL(query='SELECT id from my_table')
         rows = list(db.execute(query))
@@ -175,7 +171,6 @@ def _end_2_end(db, memory_table=False):
             {'id': '3'},
             {'id': '4'},
         ]
-    '''
 
 
 @pytest.mark.skipif(DO_SKIP, reason="skipping ibis tests if mongodb")
@@ -206,7 +201,7 @@ def test_nested_query(clean_cache):
     expr_ = q.compile(db)
 
     if not memory_table:
-        assert 'SELECT t0._fold, t0.id, t0.health, t0.age, t0.image' in str(
+        assert 'SELECT t0._fold, t0._schema, t0.id, t0.health, t0.age, t0.image' in str(
             expr_
         )
     else:

@@ -53,8 +53,8 @@ class SentenceTransformer(Model, _DeviceManaged):
             kwargs['postprocess'] = Code(kwargs['postprocess'])
         return kwargs
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
 
         if self.model is None:
             self.model = self.identifier

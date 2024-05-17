@@ -32,6 +32,27 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
         db=db,
     )
 
+@dc.dataclass
+class ChangeStream:
+    """Change stream class to watch for changes in specified collection.
+
+    :param collection: The collection to perform the query on
+    :param args: Positional query arguments to ``pymongo.Collection.watch``
+    :param kwargs: Named query arguments to ``pymongo.Collection.watch``
+    """
+
+    collection: str
+    args: t.Sequence = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def __call__(self, db):
+        """Watch for changes in the database in specified collection.
+
+        :param db: The datalayer instance
+        """
+        collection = db.databackend.get_table_or_collection(self.collection)
+        return collection.watch(**self.kwargs)
+
 
 @dc.dataclass(kw_only=True, repr=False)
 class MongoQuery(Query):
@@ -279,6 +300,9 @@ class MongoQuery(Query):
 
         parent.update_many(filter, *trailing_args, **kwargs)
         return ids
+
+    def change_stream(self, *args, **kwargs):
+        return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
 
     @applies_to('find')
     def outputs(self, *predict_ids):
@@ -617,3 +641,4 @@ class BulkOp(Leaf):
             if isinstance(v, Document):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)
+

@@ -343,9 +343,6 @@ class Datalayer:
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
 
-        r = insert.encode()
-        r = self.artifact_store.save_artifact(r)
-
         inserted_ids = insert.execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None

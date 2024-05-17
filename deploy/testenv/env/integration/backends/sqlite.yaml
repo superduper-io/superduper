@@ -1,10 +1,25 @@
+artifact_store: null
+bytes_encoding: Bytes
 cluster:
   cdc:
-    uri: http://localhost:8001
+    strategy: null
+    uri: null
   compute:
     uri: null
-  vector_search:
-    uri: http://localhost:8000
-  rest:
-    uri: http://localhost:8002
 data_backend: sqlite://
+downloads:
+  folder: null
+  headers:
+    User-Agent: me
+  n_workers: 0
+  timeout: null
+fold_probability: 0.05
+lance_home: .superduperdb/vector_indices
+log_level: INFO
+logging_type: SYSTEM
+metadata_store: null
+retries:
+  stop_after_attempt: 2
+  wait_max: 10.0
+  wait_min: 4.0
+  wait_multiplier: 1.0

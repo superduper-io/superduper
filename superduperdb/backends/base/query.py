@@ -41,8 +41,13 @@ def applies_to(*flavours):
     return decorator
 
 
+@dc.dataclass
+class _BaseQuery(Leaf, ABC):
+    ...
+
+
 @dc.dataclass(kw_only=True, repr=False)
-class Query(Leaf, ABC):
+class Query(_BaseQuery):
     """A query object.
 
     This base class is used to create a query object that can be executed
@@ -462,7 +467,41 @@ def parse_query(
     return query[-1]
 
 
-class Model(Query):
-    """A query for a model."""
+@dc.dataclass
+class Model(Leaf):
+    """A model helper class for create a query to predict."""
 
-    ...
+    def predict_one(self, *args, **kwargs):
+        """Predict one."""
+        return PredictOne(self.identifier, args=args, kwargs=kwargs)
+
+    def predict(self, *args, **kwargs):
+        """Predict."""
+        raise NotImplementedError
+
+
+@dc.dataclass
+class PredictOne(_BaseQuery):
+    """A query to predict a single document.
+
+    :param args: The arguments to pass to the model
+    :param kwargs: The keyword arguments to pass to the model
+    """
+
+    args: t.Sequence = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def execute(self, db):
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
+        m = db.models[self.identifier]
+        out = m.predict_one(*self.args, **self.kwargs)
+        outputs = m.encode_outputs([out])
+        return Document({'_base': outputs[0]})
+
+    @property
+    def type(self):
+        """Return the type of the query."""
+        return 'predict'

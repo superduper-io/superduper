@@ -142,7 +142,6 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     )
 
 
-@pytest.mark.skip
 def test_pm_predict(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
@@ -150,8 +149,12 @@ def test_pm_predict(predict_mixin):
     db.metadata = MagicMock()
     db.databackend = MagicMock()
     select = MagicMock(spec=Query)
+    predict_mixin.db = db
 
-    with patch.object(predict_mixin, 'predict') as predict_func:
+    with patch.object(predict_mixin, 'predict') as predict_func, patch.object(
+        predict_mixin, '_get_ids_from_select'
+    ) as get_ids:
+        get_ids.return_value = [1]
         predict_mixin.predict_in_db('x', db=db, select=select, predict_id='test')
         predict_func.assert_called_once()
 

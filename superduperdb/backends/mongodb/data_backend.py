@@ -210,3 +210,10 @@ class MongoDataBackend(BaseDataBackend):
         from superduperdb.misc.auto_schema import infer_schema
 
         return infer_schema(data, identifier)
+
+    def create_table_and_schema(self, identifier: str, mapping: dict):
+        """Create a table and schema in the data backend.
+
+        :param identifier: The identifier for the table
+        :param mapping: The mapping for the schema
+        """

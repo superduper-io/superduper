@@ -55,6 +55,11 @@ class MongoQuery(Query):
         'delete_one': '^.*\.delete_one\(.*\)$',
     }
 
+    metholds_mapping: t.ClassVar[t.Dict[str, str]] = {
+        "insert": "insert_many",
+        "select": "find",
+    }
+
     def _create_table_if_not_exists(self):
         return
 
@@ -241,19 +246,16 @@ class MongoQuery(Query):
         return self._execute_insert_many(parent)
 
     def _execute_insert_many(self, parent):
-        documents = self.parts[0][1][0]
         trailing_args = self.parts[0][1][1:]
         kwargs = self.parts[0][2]
-        schema = kwargs.pop('schema', None)
-
-        documents = [
-            r.encode(schema) if isinstance(r, Document) else r for r in documents
-        ]
-        for r in documents:
-            r = self.db.artifact_store.save_artifact(r)
+        documents = self._prepare_documents()
         q = self.table_or_collection.insert_many(documents, *trailing_args, **kwargs)
         result = q._execute(parent)
         return result.inserted_ids
+
+    def _execute_insert(self, parent):
+        """Provide a unified insertion interface."""
+        return self._execute_insert_many(parent)
 
     def _execute_update_many(self, parent):
         ids = [r['_id'] for r in self.select_ids._execute(parent)]

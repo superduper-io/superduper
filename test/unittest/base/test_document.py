@@ -5,12 +5,12 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.ext.pillow.encoder import pil_image
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.components.datatype import Artifact, DataType
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
+from superduperdb.ext.pillow.encoder import pil_image
 
 try:
     import torch

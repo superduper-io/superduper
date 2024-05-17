@@ -2,8 +2,8 @@ import typing as t
 
 from superduperdb import Document
 from superduperdb.backends.base.query import Query
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorItem
 

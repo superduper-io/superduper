@@ -35,13 +35,17 @@ class MongoDataBackend(BaseDataBackend):
         super().__init__(conn=conn, name=name)
         self._db = self.conn[self.name]
 
-    def get_query_builder(self, item):
-        item_gotten = self._db[item]
+    def get_query_builder(self, collection_name):
+        """Get the query builder for the data backend.
+
+        :param collection_name: Which collection to get the query builder for
+        """
+        item_gotten = self._db[collection_name]
         if isinstance(
             item_gotten,
             (pymongo.collection.Collection, mongomock.collection.Collection),
         ):
-            return MongoQuery(identifier=item, db=self.datalayer)
+            return MongoQuery(identifier=collection_name, db=self.datalayer)
         return item_gotten
 
     def url(self):

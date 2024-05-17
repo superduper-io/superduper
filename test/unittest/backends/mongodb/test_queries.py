@@ -145,7 +145,7 @@ def test_update_many(db):
     assert all(r['x'].x == to_update)
     assert all(s['x'].x == to_update)
     listeners = [db.load('listener', k) for k in db.show('listener')]
-    key = [l.uuid for l in listeners if l.key == 'x'][0]
+    key = [k.uuid for k in listeners if k.key == 'x'][0]
 
     assert r['_outputs'][key].x.tolist() == s['_outputs'][key].x.tolist()
 
@@ -157,7 +157,7 @@ def test_insert_many(db):
     db.execute(collection.insert_many(an_update))
     r = next(db.execute(collection.find({'update': True})))
 
-    keys = [l.split('/')[-1] for l in db.show('listener')]
+    keys = [k.split('/')[-1] for k in db.show('listener')]
     assert any([k in r['_outputs'] for k in keys])
     assert len(list(db.execute(collection.find()))) == 5 + 10
 
@@ -217,12 +217,9 @@ def test_replace_one(db):
     collection = MongoQuery('documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
-    print(new_x)
     t = db.datatypes['torch.float32[32]']
     r = db.execute(collection.find_one())
-    print(r['x'].x)
     r['x'] = t(new_x)
-    print(r['x'].x)
     db.execute(collection.replace_one({'_id': r['_id']}, r))
     doc = db.execute(collection.find_one({'_id': r['_id']}))
     print(doc['x'].x)

@@ -50,8 +50,5 @@ class Code(Leaf):
         self.object = remote_code
 
     def unpack(self):
-        """Unpack the code object.
-
-        :param db: Do not use this parameter, should be None.
-        """
+        """Unpack the code object."""
         return self.object

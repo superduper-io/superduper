@@ -20,18 +20,21 @@ from superduperdb.backends.base.artifacts import (
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.misc.annotations import component, public_api
 from superduperdb.misc.hash import random_sha1
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.schema import Schema
 
 
 class Empty:
+    """Empty class for representing an empty object."""
+
     def __repr__(self):
         return '<EMPTY>'
 
@@ -489,6 +492,7 @@ class Encodable(_BaseEncodable):
     """Class for encoding non-Python datatypes to the database.
 
     :param x: The encodable object.
+    :param blob: The blob data.
     """
 
     x: t.Any = Empty()
@@ -507,9 +511,13 @@ class Encodable(_BaseEncodable):
         return bytes_, sha1
 
     def encode(self, schema: t.Optional['Schema'] = None):
-        cache = {}
-        blobs = {}
-        files = {}
+        """Encode the object.
+
+        :param schema: The schema to encode the object with.
+        """
+        cache: t.Dict[str, dict] = {}
+        blobs: t.Dict[str, bytes] = {}
+        files: t.Dict[str, str] = {}
 
         return SuperDuperFlatEncode(
             {
@@ -558,21 +566,21 @@ class Encodable(_BaseEncodable):
         """
         pass
 
-    @classmethod
-    def decode(cls, r, db=None) -> 'Encodable':
-        """
-        Decode the dictionary `r` to an `Encodable` instance.
-
-        :param r: The dictionary to decode.
-        :param db: The Datalayer instance.
-        """
-        object = cls._get_object(db, r)
-        return cls(x=object, blob=r)
+    # TODO: (New) Remove unused method
+    # @classmethod
+    # def decode(cls, r, db=None) -> 'Encodable':
+    #     """
+    #     Decode the dictionary `r` to an `Encodable` instance.
+    #
+    #     :param r: The dictionary to decode.
+    #     :param db: The Datalayer instance.
+    #     """
+    #     object = cls._get_object(db, r)
+    #     return cls(x=object, blob=r)
 
     @classmethod
     def get_datatype(cls, db, r):
-        """
-        Get the datatype of the object
+        """Get the datatype of the object.
 
         :param db: `Datalayer` instance to assist with
         :param r: The object to get the datatype from
@@ -618,6 +626,7 @@ class Native(_BaseEncodable):
         return f'?{self.id}'
 
 
+# TODO: Remove the unused class
 class _ArtifactSaveMixin:
     def save(self, artifact_store):
         r = artifact_store.save_artifact(self.encode()['_content'])
@@ -630,7 +639,6 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
     """Class for representing data to be saved on disk or in the artifact-store.
 
     :param x: The artifact object.
-    :param artifact: Whether the object is an artifact.
     """
 
     leaf_type: t.ClassVar[str] = 'artifact'
@@ -647,6 +655,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
             raise ArtifactSavingError('BASE64 not supported on disk!')
 
     def init(self):
+        """Initialize to load `x` with the actual file from the artifact store."""
         assert self.file_id is not None
         if isinstance(self.x, Empty):
             blob = self.db.artifact_store._load_bytes(self.file_id)
@@ -673,21 +682,14 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         return bytes_, sha1
 
     def unpack(self):
-        """
-        Unpack the content of the `Encodable`.
-
-        :param db: The `Datalayer` instance to assist with unpacking.
-        """
+        """Unpack the content of the `Encodable`."""
         self.init()
         return self.x
 
 
 @dc.dataclass
 class LazyArtifact(Artifact):
-    """
-    Data to be saved on disk or in the artifact store
-    and loaded only when needed.
-    """
+    """Data to be saved on disk or in the artifact store and loaded only when needed."""
 
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
     lazy: t.ClassVar[bool] = True
@@ -697,7 +699,8 @@ class LazyArtifact(Artifact):
 class File(_BaseEncodable, _ArtifactSaveMixin):
     """Data to be saved on disk and passed as a file reference.
 
-    :param x: File object
+    :param x: path to the file
+    :param file_name: File name
     """
 
     leaf_type: t.ClassVar[str] = 'file'
@@ -733,10 +736,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
         return f'?{self.id}'
 
     def init(self):
-        """Initialize to load `x` with the actual file from the artifact store.
-
-        :param db: A Datalayer instance
-        """
+        """Initialize to load `x` with the actual file from the artifact store."""
         if isinstance(self.x, Empty):
             file = self.db.artifact_store._load_file(self.file_id)
             if self.file_name is not None:
@@ -744,9 +744,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
             self.x = file
 
     def unpack(self):
-        """
-        Unpack and get the original data.
-        """
+        """Unpack and get the original data."""
         self.init()
         return self.x
 
@@ -783,7 +781,7 @@ json_serializer = DataType(
     intermidia_type=IntermidiaType.STRING,
 )
 
-methods = {
+methods: t.Dict[str, t.Dict] = {
     'pickle': {'encoder': pickle_encode, 'decoder': pickle_decode},
     'dill': {'encoder': dill_encode, 'decoder': dill_decode},
     'torch': {'encoder': torch_encode, 'decoder': torch_decode},
@@ -795,11 +793,18 @@ methods = {
 def get_serializer(
     identifier: str, method: str, encodable: str, db: t.Optional['Datalayer'] = None
 ):
+    """Get a serializer.
+
+    :param identifier: The identifier of the serializer.
+    :param method: The method of the serializer.
+    :param encodable: The type of encodable object.
+    :param db: The Datalayer instance.
+    """
     return DataType(
         identifier=identifier,
         encodable=encodable,
-        **methods[method],
         db=db,
+        **methods[method],
     )
 
 

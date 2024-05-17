@@ -16,6 +16,11 @@ if t.TYPE_CHECKING:
 
 
 def applies_to(*flavours):
+    """Decorator to check if the query matches the accepted flavours.
+
+    :param *flavours: The flavours to check against.
+    """
+
     def decorator(f):
         @wraps(f)
         def decorated(self, *args, **kwargs):
@@ -38,6 +43,14 @@ def applies_to(*flavours):
 
 @dc.dataclass(kw_only=True, repr=False)
 class Query(Leaf, ABC):
+    """A query object.
+
+    This base class is used to create a query object that can be executed
+    in the datalayer.
+
+    :param parts: The parts of the query.
+    """
+
     flavours: t.ClassVar[t.Dict[str, str]] = {}
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
 
@@ -48,7 +61,12 @@ class Query(Leaf, ABC):
         parts = self.parts[item]
         return type(self)(db=self.db, identifier=self.identifier, parts=parts)
 
-    def set_db(self, db):
+    def set_db(self, db: 'Datalayer'):
+        """Set the datalayer to use to execute the query.
+
+        :param db: The datalayer to use to execute the query.
+        """
+
         def _set_db(r, db):
             if isinstance(r, (tuple, list)):
                 out = [_set_db(x, db) for x in r]
@@ -64,7 +82,7 @@ class Query(Leaf, ABC):
         self.db = db
 
         # Recursively set db
-        parts = []
+        parts: t.List[t.Union[str, tuple]] = []
         for part in self.parts:
             if isinstance(part, str):
                 parts.append(part)
@@ -95,16 +113,23 @@ class Query(Leaf, ABC):
 
     @property
     def flavour(self):
+        """Return the flavour of the query."""
         return self._get_flavour()
 
     @property
     @abstractmethod
     def documents(self):
+        """Return the documents of the query."""
         pass
 
     @property
     @abstractmethod
     def type(self):
+        """Return the type of the query.
+
+        The type is used to route the correct method to execute the query in the
+        datalayer.
+        """
         pass
 
     @property
@@ -233,6 +258,11 @@ class Query(Leaf, ABC):
         )
 
     def __call__(self, *args, **kwargs):
+        """Add a method call to the query.
+
+        :param args: The arguments to pass to the method.
+        :param kwargs: The keyword arguments to pass to the method.
+        """
         assert isinstance(self.parts[-1], str)
         return type(self)(
             db=self.db,
@@ -281,6 +311,18 @@ class Query(Leaf, ABC):
         pass
 
     def execute(self, db=None):
+        """Execute the query.
+
+        This methold will first create the table if it does not exist and then
+        execute the query.
+
+        All the methods matching the pattern `_execute_{flavour}` will be
+        called if they exist.
+
+        If no such method exists, the `_execute` method will be called.
+
+        :param db: The datalayer to use to execute the query.
+        """
         self.db = db or self.db
         assert self.db is not None, 'No datalayer (db) provided'
         self._create_table_if_not_exists()
@@ -303,6 +345,7 @@ class Query(Leaf, ABC):
     @property
     @abstractmethod
     def primary_id(self):
+        """Return the primary id of the table."""
         pass
 
     @abstractmethod
@@ -314,32 +357,61 @@ class Query(Leaf, ABC):
         flatten: bool = False,
         **kwargs,
     ):
+        """Update the model outputs in the database.
+
+        :param ids: The ids of the documents to update.
+        :param predict_id: The id of the prediction.
+        :param outputs: The outputs to store.
+        :param flatten: Whether to flatten the outputs.
+        :return: The result of the update operation.
+        """
         pass
 
     @abstractmethod
     def add_fold(self, fold: str):
+        """Add a fold to the query.
+
+        :param fold: The fold to add.
+        """
         pass
 
     @abstractmethod
     def select_using_ids(self, ids: t.Sequence[str]):
+        """Return a query that selects ids.
+
+        :param ids: The ids to select.
+        """
         pass
 
     @property
     @abstractmethod
     def select_ids(self, ids: t.Sequence[str]):
+        """Return a query that selects ids.
+
+        :param ids: The ids to select.
+        """
         pass
 
     @abstractmethod
     def select_ids_of_missing_outputs(self, predict_id: str):
+        """Return the ids of missing outputs.
+
+        :param predict_id: The id of the prediction.
+        """
         pass
 
     @abstractmethod
     def select_single_id(self, id: str):
+        """Return a single document by id.
+
+        :param id: The id of the document.
+        """
         pass
 
     @property
     @abstractmethod
     def select_table(self):
+        """Return the table to select from."""
         pass
 
 
@@ -375,6 +447,13 @@ def parse_query(
     builder_cls,
     db: t.Optional['Datalayer'] = None,
 ):
+    """Parse a string query into a query object.
+
+    :param query: The query to parse.
+    :param documents: The documents to query.
+    :param builder_cls: The class to use to build the query.
+    :param db: The datalayer to use to execute the query.
+    """
     documents = [Document(r) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
@@ -384,4 +463,6 @@ def parse_query(
 
 
 class Model(Query):
+    """A query for a model."""
+
     ...

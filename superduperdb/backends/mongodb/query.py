@@ -10,15 +10,21 @@ from superduperdb.backends.base.query import (
     parse_query as _parse_query,
 )
 from superduperdb.base.cursor import SuperDuperCursor
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.base.document import Document, QueryUpdateDocument
 from superduperdb.base.leaf import Leaf
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
 def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
+    """Parse a string query into a query object.
+
+    :param query: The query to parse.
+    :param documents: The documents to query.
+    :param db: The datalayer to use to execute the query.
+    """
     return _parse_query(
         query=query,
         documents=documents,
@@ -29,6 +35,11 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
 
 @dc.dataclass(kw_only=True, repr=False)
 class MongoQuery(Query):
+    """A query class for MongoDB.
+
+    This class is used to build and execute queries on a MongoDB database.
+    """
+
     flavours: t.ClassVar[t.Dict[str, str]] = {
         'pre_like': '^.*\.like\(.*\)\.find',
         'post_like': '^.*\.find\(.*\)\.like(.*)$',
@@ -56,6 +67,7 @@ class MongoQuery(Query):
 
     @property
     def type(self):
+        """Return the type of the query."""
         return defaultdict(
             lambda: 'select',
             {
@@ -268,6 +280,10 @@ class MongoQuery(Query):
 
     @applies_to('find')
     def outputs(self, *predict_ids):
+        """Return a query that selects the outputs of the given predict ids.
+
+        :param *predict_ids: The ids of the predictions to select.
+        """
         find_args, find_kwargs = self.parts[0][1:]
         find_args = list(find_args)
 
@@ -293,6 +309,10 @@ class MongoQuery(Query):
 
     @applies_to('find')
     def add_fold(self, fold: str):
+        """Return a query that adds a fold to the query.
+
+        :param fold: The fold to add.
+        """
         find_args, find_kwargs = self.parts[0][1:]
         find_args = list(find_args)
         if not find_args:
@@ -310,16 +330,22 @@ class MongoQuery(Query):
     @property
     @applies_to('insert_many', 'insert_one')
     def documents(self):
+        """Return the documents to insert."""
         if self.parts[0][0] == 'insert_many':
             return self.parts[0][1][0]
         return [self.parts[0][1][0]]
 
     @property
     def primary_id(self):
+        """Return the primary id of the documents."""
         return '_id'
 
     @applies_to('find')
     def select_using_ids(self, ids: t.Sequence[str]):
+        """Return a query that selects using the given ids.
+
+        :param ids: The ids to select.
+        """
         args, kwargs = self.parts[0][1:]
         args = list(args)[:]
         if not args:
@@ -337,6 +363,7 @@ class MongoQuery(Query):
     @property
     @applies_to('find', 'update_many', 'delete_many', 'delete_one')
     def select_ids(self):
+        """Select the ids of the documents."""
         filter_ = {}
         if self.parts[0][1]:
             filter_ = self.parts[0][1][0]
@@ -346,10 +373,15 @@ class MongoQuery(Query):
 
     @property
     def table_or_collection(self):
+        """Return the table or collection to select from."""
         return type(self)(identifier=self.identifier, db=self.db)
 
     @applies_to('find')
     def select_ids_of_missing_outputs(self, predict_id: str):
+        """Select the ids of documents that are missing the given output.
+
+        :param predict_id: The id of the prediction.
+        """
         args, kwargs = self.parts[0][1:]
         if args:
             args = [
@@ -373,6 +405,10 @@ class MongoQuery(Query):
     @property
     @applies_to('find')
     def select_single_id(self, id: str):
+        """Return a query that selects a single id.
+
+        :param id: The id to select.
+        """
         args, kwargs = self.parts[0][1:]
         args = list(self.args)[:]
         if not args:
@@ -384,6 +420,7 @@ class MongoQuery(Query):
 
     @property
     def select_table(self):
+        """Return the table or collection to select from."""
         return self.table_or_collection.find()
 
     def model_update(
@@ -394,6 +431,14 @@ class MongoQuery(Query):
         flatten: bool = False,
         **kwargs,
     ):
+        """Update the model outputs in the database.
+
+        :param ids: The ids of the documents to update.
+        :param predict_id: The id of the prediction.
+        :param outputs: The outputs to store.
+        :param flatten: Whether to flatten the outputs.
+        :return: The result of the update operation.
+        """
         if not len(outputs):
             return
 
@@ -443,7 +488,7 @@ class MongoQuery(Query):
                                 output = output.get('_base', output)[offset]
                             documents.append(
                                 {
-                                    f'_outputs': {predict_id: output},
+                                    '_outputs': {predict_id: output},
                                     '_source': ObjectId(id),
                                     '_offset': offset,
                                     '_leaves': leaves,
@@ -463,7 +508,7 @@ class MongoQuery(Query):
                         for o in output:
                             documents.append(
                                 {
-                                    f'_outputs': {predict_id: o},
+                                    '_outputs': {predict_id: o},
                                     '_source': ObjectId(id),
                                     '_offset': 0,
                                     '_leaves': leaves,
@@ -485,7 +530,7 @@ class MongoQuery(Query):
                     documents.append(
                         {
                             '_id': ObjectId(id),
-                            f'_outputs': {predict_id: output},
+                            '_outputs': {predict_id: output},
                             '_leaves': leaves,
                             '_blobs': blobs,
                             '_files': files,
@@ -496,8 +541,7 @@ class MongoQuery(Query):
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """
-        Infer a schema from a given data object
+        """Infer a schema from a given data object.
 
         :param data: The data object
         :param identifier: The identifier for the schema, if None, it will be generated
@@ -509,23 +553,45 @@ class MongoQuery(Query):
 
 
 def InsertOne(**kwargs):
+    """InsertOne operation for MongoDB.
+
+    :param kwargs: The arguments to pass to the operation.
+    """
     return BulkOp(identifier='InsertOne', kwargs=kwargs)
 
 
 def UpdateOne(**kwargs):
+    """UpdateOne operation for MongoDB.
+
+    :param kwargs: The arguments to pass to the operation.
+    """
     return BulkOp(identifier='UpdateOne', kwargs=kwargs)
 
 
 def DeleteOne(**kwargs):
+    """DeleteOne operation for MongoDB.
+
+    :param kwargs: The arguments to pass to the operation.
+    """
     return BulkOp(identifier='DeleteOne', kwargs=kwargs)
 
 
 def ReplaceOne(**kwargs):
+    """ReplaceOne operation for MongoDB.
+
+    :param kwargs: The arguments to pass to the operation.
+    """
     return BulkOp(identifier='ReplaceOne', kwargs=kwargs)
 
 
 @dc.dataclass(kw_only=True)
 class BulkOp(Leaf):
+    """A bulk operation for MongoDB.
+
+    :param identifier: The operation to perform.
+    :param kwargs: The arguments to pass to the operation.
+    """
+
     ops: t.ClassVar[t.Sequence[str]] = [
         'InsertOne',
         'UpdateOne',
@@ -541,6 +607,7 @@ class BulkOp(Leaf):
 
     @property
     def op(self):
+        """Return the operation."""
         import pymongo
 
         kwargs = {**self.kwargs}

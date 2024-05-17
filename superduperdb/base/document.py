@@ -10,8 +10,8 @@ from superduperdb.components.datatype import (
     Encodable,
     _BaseEncodable,
 )
+from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
 from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
-from superduperdb.components.schema import Schema, get_schema, SCHEMA_KEY
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -32,8 +32,11 @@ _OUTPUTS_KEY = '_outputs'
 class Document(MongoStyleDict):
     """A wrapper around an instance of dict or a Encodable.
 
-    The document data is used to dump that resource to a mix of json-able content, ids and `bytes`
+    The document data is used to dump that resource to
+    a mix of json-able content, ids and `bytes`
 
+    :param schema: The schema to use.
+    :param db: The datalayer to use.
     """
 
     _DEFAULT_ID_KEY: str = '_id'
@@ -76,9 +79,17 @@ class Document(MongoStyleDict):
         schema: t.Optional[t.Union['Schema', str]] = None,
         leaves_to_keep: t.Sequence = (),
     ) -> SuperDuperFlatEncode:
-        cache = {}
-        blobs = {}
-        files = {}
+        """Encode the document to a format that can be used in a database.
+
+        After encoding everything is a vanilla dictionary (JSON + bytes).
+        (Even a model, or artifact etc..)
+
+        :param schema: The schema to use.
+        :param leaves_to_keep: The types of leaves to keep.
+        """
+        cache: t.Dict[str, dict] = {}
+        blobs: t.Dict[str, bytes] = {}
+        files: t.Dict[str, str] = {}
 
         # Get schema from database.
         schema = self.schema or schema
@@ -99,6 +110,12 @@ class Document(MongoStyleDict):
     def decode(
         cls, r, schema: t.Optional['Schema'] = None, db: t.Optional['Datalayer'] = None
     ):
+        """Converts any dictionary into a Document or a Leaf.
+
+        :param r: The encoded data.
+        :param schema: The schema to use.
+        :param db: The datalayer to use.
+        """
         cache = {}
         blobs = {}
         files = {}
@@ -152,7 +169,6 @@ class Document(MongoStyleDict):
     def unpack(self, leaves_to_keep: t.Sequence = ()) -> t.Any:
         """Returns the content, but with any encodables replaced by their contents.
 
-        :param db: The datalayer to use.
         :param leaves_to_keep: The types of leaves to keep.
         """
         out = _unpack(self, leaves_to_keep=leaves_to_keep)
@@ -162,8 +178,18 @@ class Document(MongoStyleDict):
 
 
 class QueryUpdateDocument(Document):
+    """A document that is used to update a document in a database.
+
+    This document is used to update a document in a database.
+    It is a subclass of Document.
+    """
+
     @classmethod
     def from_document(cls, document):
+        """Create a QueryUpdateDocument from a document.
+
+        :param document: The document to create the QueryUpdateDocument from.
+        """
         r = dict(document)
         r = r.get('$set', r)
         return QueryUpdateDocument(r)
@@ -195,6 +221,12 @@ class QueryUpdateDocument(Document):
         schema: t.Optional['Schema'] = None,
         leaves_to_keep: t.Sequence = (),
     ) -> t.Dict:
+        """Encode the document to a format that can be used in a database.
+
+        :param original: The original document.
+        :param schema: The schema to use.
+        :param leaves_to_keep: The types of leaves to keep.
+        """
         r = dict(self)
         r = r.get('$set', r)
         update = super().encode(schema=schema, leaves_to_keep=leaves_to_keep)
@@ -202,7 +234,9 @@ class QueryUpdateDocument(Document):
 
 
 def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
-    if isinstance(item, _BaseEncodable) and not any([isinstance(item, l) for l in leaves_to_keep]):  # type: ignore[arg-type]
+    if isinstance(item, _BaseEncodable) and not any(
+        [isinstance(item, leaf) for leaf in leaves_to_keep]
+    ):
         return item.unpack()
     elif isinstance(item, dict):
         return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}
@@ -280,5 +314,7 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
     if isinstance(r, str) and r.startswith('%'):
         uuid = r.split('/')[-1]
+        if db is None:
+            raise ValueError(f'No database provided to decode {r}')
         return db.load(uuid=uuid)
     return r

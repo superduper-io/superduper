@@ -1,10 +1,10 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb import logging
+from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.components.component import Component
 from superduperdb.components.schema import Schema, _Native
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb import logging
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -14,6 +14,13 @@ DEFAULT_PRIMARY_ID = 'id'
 
 @dc.dataclass(kw_only=True)
 class Table(Component):
+    """
+    A component that represents a table in a database.
+
+    :param schema: The schema of the table
+    :param primary_id: The primary id of the table
+    """
+
     type_id: t.ClassVar[str] = 'table'
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID
@@ -38,6 +45,11 @@ class Table(Component):
         assert self.primary_id != '_input_id', '"_input_id" is a reserved value'
 
     def pre_create(self, db: 'Datalayer'):
+        """
+        Create the table in the database.
+
+        :param db: The datalayer isinstance
+        """
         assert self.schema is not None, "Schema must be set"
         # TODO why? This is done already
         for e in self.schema.encoders:

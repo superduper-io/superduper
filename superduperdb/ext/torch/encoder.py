@@ -64,6 +64,7 @@ def tensor(
     :param dtype: The dtype of the tensor.
     :param shape: The shape of the tensor.
     :param bytes_encoding: The bytes encoding to use.
+    :param db: The datalayer instance.
     """
     dtype = getattr(torch, dtype)
     return DataType(

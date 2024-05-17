@@ -193,6 +193,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             return len(res) > 0
 
     def create_component(self, info: t.Dict):
+        """Create a component in the metadata store.
+
+        :param info: the information to create the component
+        """
         new_info = self._refactor_component_info(info)
         with self.session_context() as session:
             stmt = insert(self.component_table).values(**new_info)

@@ -1,10 +1,24 @@
-import typing as t
-from collections import defaultdict
-from collections import OrderedDict
 import copy
+import typing as t
+from collections import OrderedDict, defaultdict
 
 
 class IndexableDict(OrderedDict):
+    """IndexableDict.
+
+    Example:
+    -------
+    >>> d = IndexableDict({'a': 1, 'b': 2})
+    >>> d[0]
+    1
+
+    >>> d[1]
+    2
+
+    :param ordered_dict: OrderedDict
+
+    """
+
     def __init__(self, ordered_dict):
         self._ordered_dict = ordered_dict
         self._keys = list(ordered_dict.keys())
@@ -33,26 +47,37 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
 
     @property
     def leaves(self):
+        """Return the leaves of the dictionary."""
         return IndexableDict(self.get('_leaves', {}))
 
     @property
     def files(self):
+        """Return the files of the dictionary."""
         return self.get('_files', [])
 
     @property
     def blobs(self):
+        """Return the blobs of the dictionary."""
         return self.get('_blobs', [])
 
     def pop_leaves(self):
+        """Pop the leaves of the dictionary."""
         return IndexableDict(self.pop('_leaves', {}))
 
     def pop_files(self):
+        """Pop the files of the dictionary."""
         return self.pop('_files', [])
 
     def pop_blobs(self):
+        """Pop the blobs of the dictionary."""
         return self.pop('_blobs', [])
 
     def merge(self, d, inplace=False):
+        """Merge two dictionaries.
+
+        :param d: Dict, must have '_base' key
+        :param inplace: bool, if True, merge in place
+        """
         if '_base' in d:
             assert '_base' in self, "Cannot merge differently encoded data"
         leaves = copy.deepcopy(self.leaves)

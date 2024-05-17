@@ -352,7 +352,9 @@ def _gather_uris_for_document(r: Document, id_field: str = '_id'):
     uris = []
     keys = []
     datatypes = []
-    leaf_lookup = r.encode(leaves_to_keep=_BaseEncodable)['_leaves']
+    # TODO: This function not be tested in UT,
+    # fast fix the schema parameter to avoid type error
+    leaf_lookup = r.encode(None, leaves_to_keep=(_BaseEncodable,))['_leaves']
     for k in leaf_lookup:
         if leaf_lookup[k].uri is None:
             continue
@@ -396,6 +398,7 @@ def download_content(
     # TODO handle this in the job runner
     if isinstance(query, dict):
         query = Document.decode(query).unpack()
+        query = t.cast(Query, query)
         query.set_db(db)
 
     if documents is not None:

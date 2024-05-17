@@ -34,6 +34,17 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
     )
 
 
+def _get_reference_output(output):
+    if isinstance(output, SuperDuperFlatEncode) or isinstance(output, dict):
+        # TODO: what if it has no _base
+        key = output['_base']
+        if isinstance(key, str) and key[0] == '?':
+            output = output['_leaves'][key[1:]]['blob']
+        else:
+            output = key
+    return output
+
+
 def _model_update_impl_flatten(
     db,
     ids: t.List[t.Any],
@@ -42,14 +53,30 @@ def _model_update_impl_flatten(
 ):
     table_records = []
 
-    for ix in range(len(outputs)):
-        for r in outputs[ix]:
-            d = {
-                '_input_id': str(ids[ix]),
-                '_source': str(ids[ix]),
-                'output': Document.decode(r).unpack(),
-            }
-            table_records.append(d)
+    for i, id in enumerate(ids):
+        _outputs = outputs[i]
+        if isinstance(_outputs, (list, tuple)):
+            for output in _outputs:
+                output = _get_reference_output(output)
+                table_records.append(
+                    {
+                        'output': output,
+                        '_input_id': id,
+                        '_source': id,
+                    }
+                )
+        else:
+            assert isinstance(_outputs, dict), 'Expected dict'
+            assert '_base' in _outputs, 'Expected _base in output'
+            for o in _outputs['_base']:
+                output = _get_reference_output({**_outputs, **{'_base': o}})
+                table_records.append(
+                    {
+                        'output': output,
+                        '_input_id': id,
+                        '_source': id,
+                    }
+                )
 
     return db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
 
@@ -72,14 +99,7 @@ def _model_update_impl(
 
     for ix in range(len(outputs)):
         output = outputs[ix]
-
-        if isinstance(output, SuperDuperFlatEncode):
-            # TODO: what if it has no _base
-            key = output['_base']
-            if isinstance(key, str) and key[0] == '?':
-                output = output['_leaves'][key[1:]]['blob']
-            else:
-                output = key
+        output = _get_reference_output(output)
 
         d = {
             '_input_id': str(ids[ix]),

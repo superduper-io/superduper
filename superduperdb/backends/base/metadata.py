@@ -344,7 +344,7 @@ class MetaDataStore(ABC):
         """
         Get the parents of a component version.
 
-        :param unique_id: unique identifier of component version
+        :param uuid: unique identifier of component version
         """
         pass
 

@@ -67,6 +67,7 @@ def image_type(
     :param identifier: The identifier for the data type.
     :param encodable: The encodable type.
     :param media_type: The media type.
+    :param db: The datalayer instance.
     """
     return DataType(
         identifier=identifier,

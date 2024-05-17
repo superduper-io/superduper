@@ -1,18 +1,13 @@
-import tempfile
 from test.db_config import DBConfig
 
 import numpy
-import pandas
 import pytest
 
-from superduperdb import superduper
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.base.document import Document
-from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
-from superduperdb.ext.numpy.encoder import array
-from superduperdb.ext.pillow.encoder import pil_image
 from superduperdb.components.table import Table
+from superduperdb.ext.pillow.encoder import pil_image
 
 try:
     import torch
@@ -69,7 +64,7 @@ def test_auto_inference_primary_id():
 )
 def test_renamings(db):
     t = db['documents']
-    listener_uuid = [l.split('/')[-1] for l in db.show('listener')][0]
+    listener_uuid = [k.split('/')[-1] for k in db.show('listener')][0]
     q = t.select('id', 'x', 'y').outputs(listener_uuid)
     data = list(db.execute(q))
     assert torch.is_tensor(data[0].unpack()[f'_outputs.{listener_uuid}'])

@@ -46,7 +46,12 @@ def _import_item(cls, module, dict, db: t.Optional['Datalayer'] = None):
 
 @dc.dataclass
 class Leaf(ABC):
-    """Base class for all leaf classes."""
+    """Base class for all leaf classes.
+
+    :param identifier: Identifier of the leaf.
+    :param db: Datalayer instance.
+    :param uuid: UUID of the leaf.
+    """
 
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
 
@@ -62,10 +67,16 @@ class Leaf(ABC):
         return f'{self.__class__.__name__.lower()}/{self.uuid}'
 
     def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep=()):
-        # TODO: (New) Use self.dict().encode() instead??
-        cache = {}
-        blobs = {}
-        files = {}
+        """Encode itself.
+
+        After encoding everything is a vanilla dictionary (JSON + bytes).
+
+        :param schema: Schema instance.
+        :param leaves_to_keep: Leaves to keep.
+        """
+        cache: t.Dict[str, dict] = {}
+        blobs: t.Dict[str, bytes] = {}
+        files: t.Dict[str, str] = {}
         self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
         return SuperDuperFlatEncode(
             {
@@ -90,8 +101,8 @@ class Leaf(ABC):
 
     @property
     def variables(self) -> t.List[str]:
-        from superduperdb.base.variables import _find_variables
-        from superduperdb.base.variables import Variable
+        """Get list of variables in the object."""
+        from superduperdb.base.variables import Variable, _find_variables
 
         return _find_variables(self.encode(leaves_to_keep=Variable))
 
@@ -114,6 +125,7 @@ class Leaf(ABC):
         )
 
     def dict(self):
+        """Return dictionary representation of the object."""
         from superduperdb import Document
 
         r = asdict(self)
@@ -138,10 +150,7 @@ class Leaf(ABC):
         _CLASS_REGISTRY[full_import_path] = cls
 
     def unpack(self):
-        """Unpack object.
-
-        :param db: Datalayer instance.
-        """
+        """Unpack object."""
         return self
 
     @classmethod

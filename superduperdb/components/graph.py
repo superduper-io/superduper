@@ -3,7 +3,7 @@ import typing as t
 
 import networkx as nx
 
-from superduperdb import Schema, Document
+from superduperdb import Schema
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import Model, Signature, ensure_initialized

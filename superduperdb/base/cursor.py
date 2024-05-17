@@ -16,10 +16,12 @@ class SuperDuperCursor:
     A cursor that wraps a cursor and returns ``Document`` wrapping
     a dict including ``Encodable`` objects.
 
-    :param raw_cursor: the cursor to wrap :param id_field: the field to use as the document id
+    :param raw_cursor: the cursor to wrap
+    :param id_field: the field to use as the document id
     :param db: the datalayer to use to decode the documents
     :param scores: a dict of scores to add to the documents
     :param decode_function: a function to use to decode the documents
+    :param schema: the schema to use to decode the documents
     :param _it: an iterator to keep track of the current position in the cursor,
             Default is 0.
     """
@@ -28,6 +30,7 @@ class SuperDuperCursor:
     id_field: str
     db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
+    # TODO: Remove the unused decode_function
     decode_function: t.Optional[t.Callable] = None
     schema: t.Optional['Schema'] = None
 

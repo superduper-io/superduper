@@ -4,11 +4,10 @@ import lorem
 import pytest
 
 from superduperdb.backends.ibis.field_types import dtype
-
-from superduperdb.components.table import Table
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.components.schema import Schema
+from superduperdb.components.table import Table
 
 
 @pytest.fixture

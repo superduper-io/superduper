@@ -446,7 +446,7 @@ class DatabaseChangeDataCapture:
         listener = db_factory.create(
             db=self.db, on=on, identifier=identifier, *args, **kwargs
         )
-        self._CDC_LISTENERS[on.identifier] = listener  # type: ignore[index]
+        self._CDC_LISTENERS[on.identifier] = listener
 
         listener.listen()
         return listener

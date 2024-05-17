@@ -15,7 +15,8 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     model_match = re.match('^model\([\'"]([^)]+)+[\'"]\)\.(.*)$', part)
 
     if model_match:
-        current = Model(model_match.groups()[0])
+        # TODO: This might not work, please test and remove the todo
+        current = Model(model_match.groups()[0])  # type: ignore
         part = model_match.groups()[1].split('.')
     else:
         current = MongoQuery(part.split('.')[0])
@@ -43,7 +44,7 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     return current
 
 
-def parse_query(query, documents, builder):
+def parse_query(query, documents, db):
     """Parse a query string into a query object.
 
     :param query: query string to parse
@@ -53,7 +54,7 @@ def parse_query(query, documents, builder):
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, query[:i], builder=builder)
+        query[i] = _parse_query_part(q, documents, query[:i], db=db)
     return query[-1]
 
 

@@ -1,6 +1,5 @@
 import traceback
 import typing as t
-from superduperdb.base.leaf import Leaf
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -46,7 +45,10 @@ def method_job(
         db = build_datalayer(cfg=cfg, cluster__compute__uri=None)
 
     component = db.load(type_id, identifier)
-    component = t.cast(Leaf, component)
+    # TODO: Move the unpack method to the better place
+    from superduperdb.components.component import Component
+
+    component = t.cast(Component, component)
     component.unpack()
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')

@@ -32,7 +32,7 @@ class TestSubModel(Component):
     )
     d: t.List[ObjectModel] = dc.field(default_factory=[])
     e: OtherSer = dc.field(default_factory=OtherSer(identifier='test', d='test'))
-    f: t.Callable = lambda x: x
+    f: t.Callable = dc.field(default=lambda x: x)
 
 
 @dc.dataclass
@@ -135,13 +135,7 @@ def test_component_with_document():
     r = d.encode()
     leaves = r['_leaves']
 
-    import pprint
-
-    pprint.pprint(r)
-
-    print(r)
-
-    print(leaves)
+    pprint(r)
     assert len(leaves) == 7
 
     for leaf in leaves:

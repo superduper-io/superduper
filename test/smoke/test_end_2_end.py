@@ -151,7 +151,7 @@ def test_advance_setup(test_db, image_url):
     db.execute(MongoQuery('mixed_input').insert_many(data))
     collection=listener1.outputs
 
-    _wait_for_outputs(db=db,collection=collection)
+    _wait_for_outputs(db=db,collection=collection, n=5)
     listener2 = Listener(
                 model=model2,
                 key=f'{listener1.outputs}.int',
@@ -173,9 +173,9 @@ def test_advance_setup(test_db, image_url):
     search_phrase = '4'
     _wait_for_keys(
         db=db,
-        n=10,
+        n=5,
         collection=listener1.outputs,
-        key=listener2.outputs,
+        key=f'{listener1.outputs}.int',
     )
 
     r = next(

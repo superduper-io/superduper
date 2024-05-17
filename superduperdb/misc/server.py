@@ -16,6 +16,14 @@ def _handshake(service: str):
     cfg = json.dumps(CFG.comparables)
     _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
 
+def server_request_decoder(x):
+    x = x['_b64data']
+    x = DEFAULT_DATATYPE.decoder(  base64.b64decode(x))
+    return x
+
+def _server_request_encoder(x):
+    x = DEFAULT_DATATYPE.encoder(x)  
+    return {'_b64data': base64.b64encode(x).decode()}
 
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
@@ -38,8 +46,7 @@ def _request_server(
             # TODO: Please use Document.encode with autoschema.
 
             if not isinstance(data, primitives):
-                data  = DEFAULT_DATATYPE.encoder(data)  
-                data = {'b64data': base64.b64encode(data).decode()}
+                data = _server_request_encoder(data)
                                                  
 
         response = requests.post(url, json=data, params=args)

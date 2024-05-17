@@ -473,6 +473,7 @@ class RawSQL:
 
     query: str
     id_field: str = 'id'
+    type: t.ClassVar[str]= 'select'
 
     def execute(self, db):
         """Run the query.

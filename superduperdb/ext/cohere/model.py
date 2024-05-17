@@ -28,8 +28,8 @@ class Cohere(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         self.identifier = self.identifier or self.model
 
 
@@ -46,8 +46,8 @@ class CohereEmbed(Cohere):
     shape: t.Optional[t.Sequence[int]] = None
     batch_size: int = 100
 
-    def __post_init__(self, artifacts):
-        super().__post_init__(artifacts)
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
 

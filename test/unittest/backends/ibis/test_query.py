@@ -37,6 +37,7 @@ def test_serialize_table():
     assert isinstance(ds, Table)
 
 
+# TODO: Do we need this test?
 @pytest.mark.skip
 def test_auto_inference_primary_id():
     s = Table('other', primary_id='other_id')

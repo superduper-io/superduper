@@ -63,7 +63,6 @@ def test_replace(db):
     assert new_r['x'].x.tolist() == new_x.x.tolist()
 
 
-@pytest.mark.skip
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize('db', [DBConfig.mongodb_empty], indirect=True)
 def test_insert_from_uris(db, image_url):
@@ -71,36 +70,17 @@ def test_insert_from_uris(db, image_url):
 
     from superduperdb.ext.pillow.encoder import pil_image
 
+    if image_url.startswith('file://'):
+        image_url = image_url[7:]
+
     db.add(pil_image)
     collection = MongoQuery('documents')
-    to_insert = [
-        Document(
-            {
-                'item': {
-                    '_content': {
-                        'uri': image_url,
-                        'datatype': 'pil_image',
-                        'leaf_type': 'encodable',
-                    }
-                },
-                'other': {
-                    'item': {
-                        '_content': {
-                            'uri': image_url,
-                            'datatype': 'pil_image',
-                            'leaf_type': 'encodable',
-                        }
-                    }
-                },
-            }
-        )
-        for _ in range(2)
-    ]
+    to_insert = [Document({'img': pil_image(uri=image_url)})]
+
     db.execute(collection.insert_many(to_insert))
 
     r = db.execute(collection.find_one())
-    assert isinstance(r['item'].x, PIL.Image.Image)
-    assert isinstance(r['other']['item'].x, PIL.Image.Image)
+    assert isinstance(r['img'].x, PIL.Image.Image)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

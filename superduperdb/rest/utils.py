@@ -15,8 +15,7 @@ def _parse_query_part(part, documents, query, db: t.Optional[t.Any] = None):
     model_match = re.match('^model\([\'"]([^)]+)+[\'"]\)\.(.*)$', part)
 
     if model_match:
-        # TODO: This might not work, please test and remove the todo
-        current = Model(model_match.groups()[0])  # type: ignore
+        current = Model(model_match.groups()[0])
         part = model_match.groups()[1].split('.')
     else:
         current = MongoQuery(part.split('.')[0])

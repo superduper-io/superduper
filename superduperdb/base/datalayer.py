@@ -303,6 +303,8 @@ class Datalayer:
         if query.type == 'update':
             return self._update(query, *args, **kwargs)
 
+        return query.execute(self)
+
         raise TypeError(
             f'Wrong type of {query}; '
             f'Expected object of type "delete", "insert", "select", "update"'

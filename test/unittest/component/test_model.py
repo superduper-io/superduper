@@ -112,6 +112,7 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     mock_db = MagicMock()
     mock_select = MagicMock()
     mock_select.dict().encode.return_value = b'encoded_select'
+    mock_select.encode.return_value = b'encoded_select'
     X = 'model_input'
     ids = ['id1', 'id2']
     max_chunk_size = 100

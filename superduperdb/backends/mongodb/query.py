@@ -302,6 +302,9 @@ class MongoQuery(Query):
         return ids
 
     def change_stream(self, *args, **kwargs):
+        '''
+        Return a callable Mongodb change stream instance.
+        '''
         return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
 
     @applies_to('find')

@@ -160,8 +160,10 @@ class IbisQuery(Query):
 
         if len(tables) == 1:
             return self.db.tables[self.identifier].schema
+        table_renamings = self.renamings()
         for identifier, c in tables.items():
-            renamings = self.db[identifier].renamings()
+            renamings = table_renamings.get(identifier, {})
+
             tmp = c.schema.fields
             to_update = dict(
                 (renamings[k], v) if k in renamings else (k, v) for k, v in tmp.items()
@@ -170,15 +172,23 @@ class IbisQuery(Query):
 
         return Schema(f'_tmp:{self.identifier}', fields=fields)
 
-    def renamings(self):
-        """Return the renamings."""
-        r = {}
+    def renamings(self, r={}):
+        """Return the renamings.
+        
+        :param r: Renamings.
+        """
         for part in self.parts:
+            if isinstance(part, str):
+                continue
             if part[0] == 'rename':
-                r.update(part[1][0])
-                r.update(part[1][0])
+                r[self.identifier] = part[1][0]
             if part[0] == 'relabel':
-                r.update(part[1][0])
+                r[self.identifier] = part[1][0]
+            else:
+                queries = list(part[1]) + list(part[2].values())
+                for query in queries:
+                    if isinstance(query, IbisQuery):
+                        query.renamings(r)
         return r
 
     def _execute_pre_like(self, parent):
@@ -397,10 +407,12 @@ class IbisQuery(Query):
                 {'output': identifier, '_fold': f'fold.{identifier}'}
             )
 
+
             attr = getattr(self, self.primary_id)
             other_query = self.join(
                 symbol_table, symbol_table._input_id == attr
             )
+            other_query._get_schema()
             return other_query
 
     @applies_to('select', 'join')
@@ -411,11 +423,10 @@ class IbisQuery(Query):
         """
         output_table = self.db[f'_outputs.{predict_id}']
         input_table = self.db[self.table_or_collection.identifier]
-
         output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(
             output_table,
-            output_table._input_id == getattr(input_table, self.primary_id),
+            output_table._input_id == getattr(input_table, input_table.primary_id),
         )
 
     def select_single_id(self, id: str):
@@ -445,7 +456,13 @@ class IbisQuery(Query):
             args = tuple(table.columns)
         return super().__call__(*args, **kwargs)
 
-    def compile(self,db):
+    def compile(self, db):
+        """
+        Compile `IbisQuery` to native ibis query
+        format.
+
+        :param db: Datalayer instance.
+        """
         parent = self._get_parent()
         return super()._execute(parent).compile()
 

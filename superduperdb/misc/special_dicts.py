@@ -72,12 +72,33 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         """Pop the blobs of the dictionary."""
         return self.pop('_blobs', [])
 
+    def load_keys_with_blob(self):
+        """
+        Load all outer reference keys with actual data
+        blob.
+        """
+
+        def _get_blob(output, key):
+            if isinstance(key, str) and key[0] == '?':
+                output = output['_leaves'][key[1:]]['blob']
+            else:
+                output = key
+            return output
+        if '_base' in self:
+            key = self['_base']
+            return _get_blob(self, key)
+        else:
+            for k, v in self.items():
+                self[k] = _get_blob(self, key=v) 
+        return self
+
     def merge(self, d, inplace=False):
         """Merge two dictionaries.
 
         :param d: Dict, must have '_base' key
         :param inplace: bool, if True, merge in place
         """
+        assert isinstance(d, SuperDuperFlatEncode)
         if '_base' in d:
             assert '_base' in self, "Cannot merge differently encoded data"
         leaves = copy.deepcopy(self.leaves)

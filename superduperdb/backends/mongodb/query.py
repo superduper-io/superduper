@@ -146,32 +146,15 @@ class MongoQuery(Query):
     def _execute_pre_like(self, parent):
         assert self.parts[0][0] == 'like'
         assert self.parts[1][0] in ['find', 'find_one']
-        like_args, like_kwargs = self.parts[0][1:]
-        like_args = list(like_args)
-        if not like_args:
-            like_args = [{}]
-        r = like_args[0] or like_kwargs.pop('r', {})
-        if isinstance(r, Document):
-            r = r.unpack()
 
-        vector_index = like_kwargs.pop('vector_index')
-        ids = like_kwargs.pop('within_ids', [])
+        similar_ids, similar_scores = self._prepare_pre_like(parent)
 
-        n = like_kwargs.pop('n', 100)
-
-        ids, scores = self.db.select_nearest(
-            like=r,
-            vector_index=vector_index,
-            ids=ids,
-            n=n,
-        )
-
-        scores = dict(zip(ids, scores))
         find_args = self.parts[1][1]
         find_kwargs = self.parts[1][2]
         if find_args == ():
             find_args = ({},)
-        find_args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
+
+        find_args[0]['_id'] = {'$in': [ObjectId(id) for id in similar_ids]}
 
         q = type(self)(
             db=self.db,
@@ -179,8 +162,9 @@ class MongoQuery(Query):
             parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
         )
         result = q.execute(db=self.db)
-        result.scores = scores
+        result.scores = similar_scores
         return result
+
 
     def _execute_post_like(self, parent):
         assert len(self.parts) == 2
@@ -369,13 +353,15 @@ class MongoQuery(Query):
         """Return the primary id of the documents."""
         return '_id'
 
-    @applies_to('find')
     def select_using_ids(self, ids: t.Sequence[str]):
         """Return a query that selects using the given ids.
 
         :param ids: The ids to select.
         """
-        args, kwargs = self.parts[0][1:]
+        if self.parts == () or isinstance(self.parts[0], str):
+            args, kwargs = (), {}
+        else:
+            args, kwargs = self.parts[0][1:]
         args = list(args)[:]
         if not args:
             args = [{}]

@@ -31,10 +31,6 @@ class Table(Component):
         if '_fold' not in self.schema.fields:
             fields.update({'_fold': dtype('str')})
 
-        if '_schema' not in self.schema.fields:
-            fields.update({'_schema': dtype('str')})
-
-
         for k, v in self.schema.fields.items():
             if isinstance(v, _Native):
                 fields[k] = dtype(v.identifier)

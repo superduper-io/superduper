@@ -201,7 +201,7 @@ def test_nested_query(clean_cache):
     expr_ = q.compile(db)
 
     if not memory_table:
-        assert 'SELECT t0._fold, t0._schema, t0.id, t0.health, t0.age, t0.image' in str(
+        assert 'SELECT t0._fold, t0.id, t0.health, t0.age, t0.image' in str(
             expr_
         )
     else:

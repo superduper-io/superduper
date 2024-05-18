@@ -35,14 +35,11 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
     )
 
 
-def _get_reference_output(output):
-    if isinstance(output, SuperDuperFlatEncode) or isinstance(output, dict):
-        # TODO: what if it has no _base
-        key = output['_base']
-        if isinstance(key, str) and key[0] == '?':
-            output = output['_leaves'][key[1:]]['blob']
-        else:
-            output = key
+def _load_keys_with_blob(output):
+    if isinstance(output, SuperDuperFlatEncode):
+        return output.load_keys_with_blob()
+    elif isinstance(output, dict):
+        return SuperDuperFlatEncode(output).load_keys_with_blob()
     return output
 
 
@@ -58,7 +55,7 @@ def _model_update_impl_flatten(
         _outputs = outputs[i]
         if isinstance(_outputs, (list, tuple)):
             for output in _outputs:
-                output = _get_reference_output(output)
+                output = _load_keys_with_blob(output)
                 table_records.append(
                     {
                         'output': output,
@@ -70,7 +67,7 @@ def _model_update_impl_flatten(
             assert isinstance(_outputs, dict), 'Expected dict'
             assert '_base' in _outputs, 'Expected _base in output'
             for o in _outputs['_base']:
-                output = _get_reference_output({**_outputs, **{'_base': o}})
+                output = _load_keys_with_blob({**_outputs, **{'_base': o}})
                 table_records.append(
                     {
                         'output': output,
@@ -100,7 +97,7 @@ def _model_update_impl(
 
     for ix in range(len(outputs)):
         output = outputs[ix]
-        output = _get_reference_output(output)
+        output = _load_keys_with_blob(output)
 
         d = {
             '_input_id': str(ids[ix]),
@@ -192,24 +189,13 @@ class IbisQuery(Query):
         return r
 
     def _execute_pre_like(self, parent):
-        like_args = self.parts[0][1]
-        like_kwargs = self.parts[0][2]
+        assert self.parts[0][0] == 'like'
+        assert self.parts[1][0] in ['select']
+        similar_ids, similar_scores = self._prepare_pre_like(parent)
 
-        vector_index = like_kwargs['vector_index']
-        like = like_args[0] if like_args else like_kwargs['r']
-        if isinstance(like, Document):
-            like = like.unpack()
-
-        similar_ids, similar_scores = self.db.select_nearest(
-            like,
-            vector_index=vector_index,
-            n=like_kwargs.get('n', 10),
-        )
-        similar_scores = dict(zip(similar_ids, similar_scores))
         t = self.db[self.identifier]
-        filter_query = t.filter(getattr(t, self.primary_id).isin(similar_ids))
-
-        query = IbisQuery(
+        filter_query = t.select_using_ids(similar_ids)
+        query = type(self)(
             db=self.db,
             identifier=self.identifier,
             parts=[
@@ -217,7 +203,7 @@ class IbisQuery(Query):
                 *self.parts[1:],
             ],
         )
-        result = query._execute(parent)
+        result = query.execute(db=self.db)
         result.scores = similar_scores
         return result
 
@@ -282,6 +268,7 @@ class IbisQuery(Query):
                 r.pop('_leaves')
                 r.pop('_files')
                 r.pop('_blobs')
+                r.pop('_schema')
 
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())

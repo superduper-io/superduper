@@ -17,6 +17,11 @@ def _handshake(service: str):
     _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
 
 def server_request_decoder(x):
+    """
+    Decodes a request to `SuperDuperApp` service.
+
+    :param x: Object to decode.
+    """
     x = x['_b64data']
     x = DEFAULT_DATATYPE.decoder(  base64.b64decode(x))
     return x

@@ -118,6 +118,33 @@ class Query(_BaseQuery):
     def _get_parent(self):
         return self.db.databackend.get_table_or_collection(self.identifier)
 
+    def _prepare_pre_like(self, parent):
+
+        like_args, like_kwargs = self.parts[0][1:]
+        like_args = list(like_args)
+        if not like_args:
+            like_args = [{}]
+        like  = like_args[0] or like_kwargs.pop('r', {})
+        if isinstance(like, Document):
+            like = like.unpack()
+
+        ids = like_kwargs.pop('within_ids', [])
+
+        n = like_kwargs.pop('n', 100)
+
+        vector_index = like_kwargs.pop('vector_index')
+
+        similar_ids, similar_scores = self.db.select_nearest(
+            like,
+            vector_index=vector_index,
+            ids=ids,
+            n=n,
+        )
+        similar_scores = dict(zip(similar_ids, similar_scores))
+        return similar_ids, similar_scores
+
+
+
     @property
     def flavour(self):
         """Return the flavour of the query."""

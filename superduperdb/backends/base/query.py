@@ -60,7 +60,6 @@ class Query(_BaseQuery):
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     metholds_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
-
     def __getitem__(self, item):
         if not isinstance(item, slice):
             return super().__getitem__(item)
@@ -119,12 +118,11 @@ class Query(_BaseQuery):
         return self.db.databackend.get_table_or_collection(self.identifier)
 
     def _prepare_pre_like(self, parent):
-
         like_args, like_kwargs = self.parts[0][1:]
         like_args = list(like_args)
         if not like_args:
             like_args = [{}]
-        like  = like_args[0] or like_kwargs.pop('r', {})
+        like = like_args[0] or like_kwargs.pop('r', {})
         if isinstance(like, Document):
             like = like.unpack()
 
@@ -142,8 +140,6 @@ class Query(_BaseQuery):
         )
         similar_scores = dict(zip(similar_ids, similar_scores))
         return similar_ids, similar_scores
-
-
 
     @property
     def flavour(self):
@@ -323,6 +319,7 @@ class Query(_BaseQuery):
         if isinstance(r, Document):
             out = getattr(r, method)()
             from superduperdb.misc.special_dicts import SuperDuperFlatEncode
+
             if isinstance(out, SuperDuperFlatEncode):
                 out.pop_leaves()
                 out.pop_files()
@@ -368,7 +365,8 @@ class Query(_BaseQuery):
         pass
 
     def execute(self, db=None):
-        """Execute the query with query.execute() notation.
+        """
+        Execute the query.
 
         :param db: Datalayer instance.
         """
@@ -376,7 +374,8 @@ class Query(_BaseQuery):
         return self.db.execute(self)
 
     def do_execute(self, db=None):
-        """Execute the query.
+        """
+        Execute the query.
 
         This methold will first create the table if it does not exist and then
         execute the query.
@@ -478,7 +477,6 @@ class Query(_BaseQuery):
     def select_table(self):
         """Return the table to select from."""
         pass
-    
 
     def _prepare_documents(self):
         documents = self.parts[0][1][0]
@@ -578,6 +576,8 @@ class PredictOne(_BaseQuery):
     args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
+    type: t.ClassVar[str] = 'predict'
+
     def do_execute(self, db):
         """Execute the query.
 
@@ -587,8 +587,3 @@ class PredictOne(_BaseQuery):
         out = m.predict_one(*self.args, **self.kwargs)
         outputs = m.encode_outputs([out])
         return Document({'_base': outputs[0]})
-
-    @property
-    def type(self):
-        """Return the type of the query."""
-        return 'predict'

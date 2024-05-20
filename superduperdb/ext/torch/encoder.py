@@ -57,6 +57,7 @@ def tensor(
     dtype,
     shape: t.Sequence,
     bytes_encoding: t.Optional[str] = None,
+    encodable: str = 'encodable',
     db: t.Optional['Datalayer'] = None,
 ):
     """Create an encoder for a tensor of a given dtype and shape.
@@ -64,6 +65,8 @@ def tensor(
     :param dtype: The dtype of the tensor.
     :param shape: The shape of the tensor.
     :param bytes_encoding: The bytes encoding to use.
+    :param encodable: The encodable name
+        ["artifact", "encodable", "lazy_artifact", "file"].
     :param db: The datalayer instance.
     """
     dtype = getattr(torch, dtype)
@@ -73,6 +76,7 @@ def tensor(
         decoder=DecodeTensor(dtype, shape),
         shape=shape,
         bytes_encoding=bytes_encoding,
+        encodable=encodable,
     )
 
 

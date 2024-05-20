@@ -1,7 +1,7 @@
+import copy
 import dataclasses as dc
 import typing as t
 import uuid
-import copy
 from collections import defaultdict
 
 import pandas
@@ -171,7 +171,7 @@ class IbisQuery(Query):
 
     def renamings(self, r={}):
         """Return the renamings.
-        
+
         :param r: Renamings.
         """
         for part in self.parts:
@@ -360,7 +360,9 @@ class IbisQuery(Query):
         :param ids: The ids to select.
         """
         t = self.db[self._get_parent().get_name()]
-        primary_id = '_input_id' if t.identifier.startswith('_outputs.') else t.primary_id
+        primary_id = (
+            '_input_id' if t.identifier.startswith('_outputs.') else t.primary_id
+        )
         filter_query = self.filter(getattr(t, primary_id).isin(ids))
         return filter_query
 
@@ -394,11 +396,8 @@ class IbisQuery(Query):
                 {'output': identifier, '_fold': f'fold.{identifier}'}
             )
 
-
             attr = getattr(self, self.primary_id)
-            other_query = self.join(
-                symbol_table, symbol_table._input_id == attr
-            )
+            other_query = self.join(symbol_table, symbol_table._input_id == attr)
             other_query._get_schema()
             return other_query
 
@@ -445,13 +444,13 @@ class IbisQuery(Query):
 
     def compile(self, db):
         """
-        Compile `IbisQuery` to native ibis query
-        format.
+        Compile `IbisQuery` to native ibis query format.
 
         :param db: Datalayer instance.
         """
         parent = self._get_parent()
         return super()._execute(parent).compile()
+
 
 class _SQLDictIterable:
     def __init__(self, iterable):
@@ -477,9 +476,9 @@ class RawSQL:
 
     query: str
     id_field: str = 'id'
-    type: t.ClassVar[str]= 'select'
+    type: t.ClassVar[str] = 'select'
 
-    def execute(self, db):
+    def do_execute(self, db):
         """Run the query.
 
         :param db: The DataLayer instance

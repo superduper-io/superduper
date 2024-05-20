@@ -1,0 +1,47 @@
+{
+  "_base": "?component/model/test/cf80f74b-915e-4e4e-8bba-f3e5392b1a87",
+  "_leaves": {
+    "superduperdb/ext/torch/encoder/tensor/d907e2c77bf526d0f02c737656cafd706950122f": {
+      "_path": "superduperdb/ext/torch/encoder/tensor",
+      "dtype": "float",
+      "shape": [
+        32
+      ]
+    },
+    "superduperdb/components/datatype/get_serializer/f170ded96645fadd382b5aa8167c299b39379c06": {
+      "_path": "superduperdb/components/datatype/get_serializer",
+      "identifier": "dill_lazy",
+      "method": "dill",
+      "encodable": "lazy_artifact"
+    },
+    "lazy_artifact/d793c7f44d20a0af604e4cdd9b5b17e56b87b782": {
+      "_path": "superduperdb/components/datatype/LazyArtifact",
+      "identifier": "",
+      "uuid": "b03888a4-062c-4621-9b76-4374b22f3449",
+      "file_id": "d793c7f44d20a0af604e4cdd9b5b17e56b87b782",
+      "datatype": "?superduperdb/components/datatype/get_serializer/f170ded96645fadd382b5aa8167c299b39379c06",
+      "uri": null,
+      "sha1": null
+    },
+    "component/model/test/cf80f74b-915e-4e4e-8bba-f3e5392b1a87": {
+      "_path": "superduperdb/components/model/ObjectModel",
+      "identifier": "test",
+      "uuid": "cf80f74b-915e-4e4e-8bba-f3e5392b1a87",
+      "signature": "*args,**kwargs",
+      "datatype": "?superduperdb/ext/torch/encoder/tensor/d907e2c77bf526d0f02c737656cafd706950122f",
+      "output_schema": null,
+      "flatten": false,
+      "model_update_kwargs": {},
+      "predict_kwargs": {},
+      "compute_kwargs": {},
+      "validation": null,
+      "metric_values": {},
+      "num_workers": 0,
+      "object": "?lazy_artifact/d793c7f44d20a0af604e4cdd9b5b17e56b87b782",
+      "type_id": "model",
+      "version": null,
+      "hidden": false
+    }
+  },
+  "_files": {}
+}

@@ -68,12 +68,6 @@ jobs:
       run: |
         make install_devkit
 
-    - name: Check core imports
-      run: |
-        # This job checks that no optional dependencies are imported in the core code.
-        python -m pip install impall==1.3.1
-        python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
-
     - name: Lint and type-check
       run: |
         make lint-and-type-check

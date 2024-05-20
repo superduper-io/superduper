@@ -5,7 +5,6 @@ import magic
 from fastapi import File, Response
 
 from superduperdb import CFG, logging
-from superduperdb.backends.base.query import Delete, Insert
 from superduperdb.base.document import Document
 from superduperdb.components.datatype import DataType
 from superduperdb.components.listener import Listener
@@ -156,7 +155,7 @@ def build_app(app: superduperapp.SuperDuperApp):
 
         result = app.db.execute(query)
 
-        if isinstance(query, Insert) or isinstance(query, Delete):
+        if query.type in {'insert', 'delete'}:
             return {'_base': [str(x) for x in result[0]]}, []
 
         logging.warn(str(query))

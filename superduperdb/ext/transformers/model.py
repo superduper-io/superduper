@@ -469,7 +469,6 @@ class LLM(BaseLLM, _Fittable):
         kwargs = {**self.predict_kwargs, **kwargs.copy()}
 
         # Set default values, if not will cause bad output
-        kwargs.setdefault("add_special_tokens", True)
         outputs = self.pipeline(
             prompts,
             return_type=ReturnType.NEW_TEXT,

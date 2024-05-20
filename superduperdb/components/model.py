@@ -15,7 +15,6 @@ import tqdm
 from superduperdb import logging
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
-
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduperdb.base.code import Code
 from superduperdb.base.document import Document

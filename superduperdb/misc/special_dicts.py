@@ -73,10 +73,7 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         return self.pop('_blobs', [])
 
     def load_keys_with_blob(self):
-        """
-        Load all outer reference keys with actual data
-        blob.
-        """
+        """Load all outer reference keys with actual data blob."""
 
         def _get_blob(output, key):
             if isinstance(key, str) and key[0] == '?':
@@ -84,12 +81,13 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
             else:
                 output = key
             return output
+
         if '_base' in self:
             key = self['_base']
             return _get_blob(self, key)
         else:
             for k, v in self.items():
-                self[k] = _get_blob(self, key=v) 
+                self[k] = _get_blob(self, key=v)
         return self
 
     def merge(self, d, inplace=False):

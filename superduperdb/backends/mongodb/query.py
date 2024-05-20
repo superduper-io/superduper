@@ -1,12 +1,12 @@
-import dataclasses as dc
 import copy
+import dataclasses as dc
 import typing as t
 from collections import defaultdict
-from superduperdb import logging
 
-from bson import ObjectId
 import pymongo
+from bson import ObjectId
 
+from superduperdb import logging
 from superduperdb.backends.base.query import (
     Query,
     applies_to,
@@ -34,6 +34,7 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
         builder_cls=MongoQuery,
         db=db,
     )
+
 
 @dc.dataclass
 class ChangeStream:
@@ -168,7 +169,6 @@ class MongoQuery(Query):
         result.scores = similar_scores
         return result
 
-
     def _execute_post_like(self, parent):
         assert len(self.parts) == 2
         assert self.parts[0][0] == 'find'
@@ -210,6 +210,7 @@ class MongoQuery(Query):
 
         result.scores = scores
         return result
+
     def _execute_bulk_write(self, parent):
         """Execute the query.
 
@@ -223,7 +224,7 @@ class MongoQuery(Query):
                 raise ValueError(
                     'Please provided update/delete id in args',
                     'all ids selection e.g `\{\}` is not supported',
-                    )
+                )
 
         collection = self.db.databackend.get_table_or_collection(
             self.table_or_collection.identifier
@@ -260,7 +261,6 @@ class MongoQuery(Query):
                 'wont trigger any `model/listeners` unless CDC is active.',
             )
         return bulk_result, bulk_update_ids, bulk_delete_ids
-
 
     def _execute_find(self, parent):
         return self._execute(parent, method='unpack')
@@ -330,9 +330,7 @@ class MongoQuery(Query):
         return ids
 
     def change_stream(self, *args, **kwargs):
-        '''
-        Return a callable Mongodb change stream instance.
-        '''
+        """Return a callable Mongodb change stream instance."""
         return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
 
     @applies_to('find')
@@ -526,7 +524,6 @@ class MongoQuery(Query):
                     UpdateOne(
                         filter=mongo_filter,
                         update=update,
-
                     )
                 )
             return self.table_or_collection.bulk_write(bulk_operations)
@@ -627,9 +624,9 @@ def UpdateOne(**kwargs):
     """
     try:
         filter = kwargs['filter']
-    except:
-        raise KeyError('Filter not found in `UpdateOne`')
-    
+    except Exception as e:
+        raise KeyError('Filter not found in `UpdateOne`') from e
+
     id = filter['_id']
     if isinstance(id, ObjectId):
         ids = [id]
@@ -679,11 +676,9 @@ class BulkOp(Leaf):
     @property
     def op(self):
         """Return the operation."""
-
         kwargs = copy.deepcopy(self.kwargs)
         kwargs.pop('arg_ids')
         for k, v in kwargs.items():
             if isinstance(v, Document):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)
-

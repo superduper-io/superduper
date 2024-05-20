@@ -59,6 +59,7 @@ def _end_2_end(db, memory_table=False):
     ]
 
     from superduperdb.components.table import Table
+
     t = Table(identifier='my_table', schema=schema, db=db)
 
     db.add(t)
@@ -191,6 +192,7 @@ def test_nested_query(clean_cache):
     )
 
     from superduperdb.components.table import Table
+
     t = Table(identifier='my_table', schema=schema)
 
     db.add(t)
@@ -201,9 +203,7 @@ def test_nested_query(clean_cache):
     expr_ = q.compile(db)
 
     if not memory_table:
-        assert 'SELECT t0._fold, t0.id, t0.health, t0.age, t0.image' in str(
-            expr_
-        )
+        assert 'SELECT t0._fold, t0.id, t0.health, t0.age, t0.image' in str(expr_)
     else:
         assert 'Selection[r0]\n  predicates:\n    r0.age >= 10' in str(expr_)
         assert (

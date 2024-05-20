@@ -67,9 +67,6 @@ class SuperDuperCursor:
             except KeyError:
                 logging.warn(f"No document id found for {r}")
 
-        try:
-            return Document.decode(r, db=self.db, schema=self.schema)
-        except:
-            breakpoint()
+        return Document.decode(r, db=self.db, schema=self.schema)
 
     next = __next__

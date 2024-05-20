@@ -298,8 +298,8 @@ class Datalayer:
             return self._write(query, *args, **kwargs)
         if query.type == 'update':
             return self._update(query, *args, **kwargs)
-
-        return query.do_execute(self)
+        if query.type == 'predict':
+            return self._predict(query, *args, **kwargs)
 
         raise TypeError(
             f'Wrong type of {query}; '
@@ -308,7 +308,7 @@ class Datalayer:
         )
 
     def _predict(self, prediction: t.Any) -> PredictResult:
-        return prediction.execute(self)
+        return prediction.do_execute(self)
 
     def _delete(self, delete: Query, refresh: bool = True) -> DeleteResult:
         """

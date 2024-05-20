@@ -149,14 +149,14 @@ def test_advance_setup(test_db, image_url):
     db.add(listener1)
 
     db.execute(MongoQuery('mixed_input').insert_many(data))
-    collection=listener1.outputs
+    collection = listener1.outputs
 
-    _wait_for_outputs(db=db,collection=collection, n=5)
+    _wait_for_outputs(db=db, collection=collection, n=5)
     listener2 = Listener(
-                model=model2,
-                key=f'{listener1.outputs}.int',
-                select=MongoQuery(listener1.outputs, db=db).find(),
-            )
+        model=model2,
+        key=f'{listener1.outputs}.int',
+        select=MongoQuery(listener1.outputs, db=db).find(),
+    )
     db.add(listener2)
 
     db.add(
@@ -189,8 +189,5 @@ def test_advance_setup(test_db, image_url):
     )
     r = Document(r.unpack())
 
-
     assert '_outputs' in r
-    assert np.allclose(
-        np.asarray([400] * 10), r[listener1.outputs]['int']
-    )
+    assert np.allclose(np.asarray([400] * 10), r[listener1.outputs]['int'])

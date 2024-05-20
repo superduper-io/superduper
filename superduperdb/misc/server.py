@@ -10,11 +10,13 @@ from superduperdb.misc.auto_schema import DEFAULT_DATATYPE
 
 primitives = (bool, str, int, float, type(None))
 
+
 @lru_cache(maxsize=None)
 def _handshake(service: str):
     endpoint = 'handshake/config'
     cfg = json.dumps(CFG.comparables)
     _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
+
 
 def server_request_decoder(x):
     """
@@ -23,12 +25,14 @@ def server_request_decoder(x):
     :param x: Object to decode.
     """
     x = x['_b64data']
-    x = DEFAULT_DATATYPE.decoder(  base64.b64decode(x))
+    x = DEFAULT_DATATYPE.decoder(base64.b64decode(x))
     return x
 
+
 def _server_request_encoder(x):
-    x = DEFAULT_DATATYPE.encoder(x)  
+    x = DEFAULT_DATATYPE.encoder(x)
     return {'_b64data': base64.b64encode(x).decode()}
+
 
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
@@ -52,7 +56,6 @@ def _request_server(
 
             if not isinstance(data, primitives):
                 data = _server_request_encoder(data)
-                                                 
 
         response = requests.post(url, json=data, params=args)
         result = json.loads(response.content)

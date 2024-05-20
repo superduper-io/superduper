@@ -249,49 +249,71 @@ class Component(Leaf):
         cache[self._id] = r
         return f'?{self._id}'
 
-    def _to_dict_and_bytes(self):
-        r = self.deep_flat_encode()
-        bytes = {}
-        for leaf in r['_leaves']:
-            if 'bytes' in leaf['dict']:
-                bytes[leaf['dict']['file_id']] = leaf['dict']['bytes']
-                del leaf['dict']['bytes']
-        return r, bytes
-
-    def export(self, format=None):
-        """Method to export the component in the provided format.
-
-        If format is None, the method exports the component in a dictionary.
-
-        :param format: `json` and `yaml`.
+    @staticmethod
+    def read(path: str):
         """
-        r, bytes = self._to_dict_and_bytes()
+        Read a `Component` instance from a directory created with `.export`.
 
-        if format is None:
-            return r, bytes
+        :param path: Path to the directory containing the component.
 
-        if self.version is None:
-            path = f'_component.{self.type_id}.{self.identifier}'
-        else:
-            path = f'_component.{self.type_id}.{self.identifier}.{self.version}'
+        Expected directory structure:
+        ```
+        |_component.json/yaml
+        |_blobs/*
+        |_files/*
+        ```
+        """
+        try:
+            config = os.path.join(path, 'component.json')
+            with open(config) as f:
+                config_object = json.load(f)
+        except FileNotFoundError:
+            try:
+                config = os.path.join(path, 'component.yaml')
+                with open(config) as f:
+                    config_object = yaml.safe_load(f)
+            except FileNotFoundError as e:
+                raise FileNotFoundError(
+                    'No component.json or component.yaml found'
+                ) from e
 
+        config_object['_blobs'] = {}
+        if os.path.exists(os.path.join(path, 'blobs')):
+            blobs = {}
+            for file_id in os.listdir(os.path.join(path, 'blobs')):
+                with open(os.path.join(path, 'blobs', file_id), 'rb') as f:
+                    blobs[file_id] = f.read()
+            config_object['_blobs'] = blobs
+
+        from superduperdb import Document
+
+        return Document.decode(config_object).unpack()
+
+    def export(self, path: str):
+        """
+        Save `self` to a directory using super-duper protocol.
+
+        :param path: Path to the directory to save the component.
+
+        Created directory structure:
+        ```
+        |_component.json/yaml
+        |_blobs/*
+        |_files/*
+        ```
+        """
+        r = self.encode()
         os.makedirs(path, exist_ok=True)
+        if r.blobs:
+            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+            for file_id, bytestr_ in r.blobs.items():
+                filepath = os.path.join(path, 'blobs', file_id)
+                with open(filepath, 'wb') as f:
+                    f.write(bytestr_)
 
-        for file_id in bytes:
-            with open(f'{path}/{file_id}', 'wb') as f:
-                f.write(bytes[file_id])
-
-        if format == 'json':
-            with open(f'{path}/component.json', 'w') as f:
-                f.write(json.dumps(r, indent=4))
-            return r, bytes
-
-        if format == 'yaml':
-            with open(f'{path}/component.yaml', 'w') as f:
-                f.write(yaml.safe_dump(r))
-            return r, bytes
-
-        raise NotImplementedError(f'Format {format} not supported')
+        r.pop_blobs()
+        with open(os.path.join(path, 'component.json'), 'w') as f:
+            json.dump(r, f, indent=2)
 
     def dict(self) -> 'Document':
         """A dictionary representation of the component."""

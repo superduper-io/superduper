@@ -1,6 +1,7 @@
 import dataclasses as dc
 import os
 import shutil
+import tempfile
 import typing as t
 from test.db_config import DBConfig
 
@@ -10,10 +11,12 @@ from superduperdb import ObjectModel
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     Artifact,
+    DataType,
     Empty,
     LazyArtifact,
     dill_serializer,
 )
+from superduperdb.ext.torch.encoder import tensor
 
 
 @pytest.fixture
@@ -82,3 +85,23 @@ def test_load_lazily(db):
     reloaded.init()
 
     assert callable(reloaded.object)
+
+
+def test_export_and_read():
+    m = ObjectModel(
+        'test', object=lambda x: x + 2, datatype=tensor(dtype='float', shape=(32,))
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, 'tmp_save')
+        m.export(save_path)
+        assert os.path.exists(os.path.join(tmpdir, 'tmp_save', 'blobs'))
+
+        reloaded = Component.read(save_path)
+
+        assert isinstance(reloaded, ObjectModel)
+        assert isinstance(reloaded.datatype, DataType)
+
+    reloaded_from_hr = Component.read('test/material/data/hr_component')
+
+    assert isinstance(reloaded_from_hr, ObjectModel)

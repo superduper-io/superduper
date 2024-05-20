@@ -207,6 +207,7 @@ def test_nested_query(clean_cache):
     else:
         assert 'Selection[r0]\n  predicates:\n    r0.age >= 10' in str(expr_)
         assert (
-            'my_table\n  id     int64\n  _fold  string\n  health int32\n  age    '
+            'my_table\n  _fold  string\n  id     '
+            'int64\n  health int32\n  age    '
             'int32\n  image  binary' in str(expr_)
         )

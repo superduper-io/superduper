@@ -161,7 +161,7 @@ class MongoQuery(Query):
             identifier=self.identifier,
             parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
         )
-        result = q.execute(db=self.db)
+        result = q.do_execute(db=self.db)
         result.scores = similar_scores
         return result
 
@@ -186,7 +186,7 @@ class MongoQuery(Query):
         if range:
             parent_query = parent_query.limit(range)
 
-        relevant_ids = [str(r['_id']) for r in parent_query.execute()]
+        relevant_ids = [str(r['_id']) for r in parent_query.do_execute()]
 
         similar_ids, scores = self.db.select_nearest(
             like=r,

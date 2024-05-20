@@ -53,8 +53,8 @@ def test_mongo_without_schema(db):
         MongoQuery(collection_name).insert_many(data),
     )
     collection = MongoQuery(collection_name)
-    r = collection.find_one().execute(db)
-    rs = list(collection.find().execute(db))
+    r = collection.find_one().do_execute(db)
+    rs = list(collection.find().do_execute(db))
 
     rs = sorted(rs, key=lambda x: x['id'])
 

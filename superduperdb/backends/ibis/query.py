@@ -203,7 +203,7 @@ class IbisQuery(Query):
                 *self.parts[1:],
             ],
         )
-        result = query.execute(db=self.db)
+        result = query.do_execute(db=self.db)
         result.scores = similar_scores
         return result
 

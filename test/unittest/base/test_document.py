@@ -177,6 +177,7 @@ def test_column_encoding(db):
     schema = Schema(
         'test',
         fields={
+            'id': int,
             'x': int,
             'y': int,
             'img': pil_image,
@@ -191,8 +192,8 @@ def test_column_encoding(db):
 
     db['test'].insert(
         [
-            Document({'x': 1, 'y': 2, 'img': img}),
-            Document({'x': 3, 'y': 4, 'img': img}),
+            Document({'id': 1, 'x': 1, 'y': 2, 'img': img}),
+            Document({'id': 2, 'x': 3, 'y': 4, 'img': img}),
         ]
     ).execute()
 

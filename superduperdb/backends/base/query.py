@@ -368,6 +368,14 @@ class Query(_BaseQuery):
         pass
 
     def execute(self, db=None):
+        """Execute the query with query.execute() notation.
+
+        :param db: Datalayer instance.
+        """
+        self.db = db or self.db
+        return self.db.execute(self)
+
+    def do_execute(self, db=None):
         """Execute the query.
 
         This methold will first create the table if it does not exist and then
@@ -570,7 +578,7 @@ class PredictOne(_BaseQuery):
     args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
-    def execute(self, db):
+    def do_execute(self, db):
         """Execute the query.
 
         :param db: The datalayer instance

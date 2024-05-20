@@ -1,8 +1,11 @@
 import dataclasses as dc
+import copy
 import typing as t
 from collections import defaultdict
+from superduperdb import logging
 
 from bson import ObjectId
+import pymongo
 
 from superduperdb.backends.base.query import (
     Query,
@@ -207,16 +210,57 @@ class MongoQuery(Query):
 
         result.scores = scores
         return result
-
     def _execute_bulk_write(self, parent):
-        for part in self.parts:
-            if isinstance(part, str):
-                parent = getattr(parent, part)
-                continue
-            args = self._prepare_inputs(part[1])
-            kwargs = self._prepare_inputs(part[2])
-            parent = getattr(parent, part[0])(*args, **kwargs)
-        return parent
+        """Execute the query.
+
+        :param db: The datalayer instance
+        """
+        assert self.parts[0][0] == 'bulk_write'
+        operations = self.parts[0][1][0]
+        for query in operations:
+            assert isinstance(query, (BulkOp))
+            if not query.kwargs.get('arg_ids', None):
+                raise ValueError(
+                    'Please provided update/delete id in args',
+                    'all ids selection e.g `\{\}` is not supported',
+                    )
+
+        collection = self.db.databackend.get_table_or_collection(
+            self.table_or_collection.identifier
+        )
+        bulk_operations = []
+        bulk_update_ids = []
+        bulk_delete_ids = []
+        bulk_result = {'delete': [], 'update': []}
+        for query in operations:
+            operation = query.op
+
+            bulk_operations.append(operation)
+            ids = query.kwargs['arg_ids']
+            if query.identifier == 'DeleteOne':
+                bulk_result['delete'].append({'query': query, 'ids': ids})
+                bulk_delete_ids += ids
+            else:
+                bulk_update_ids += ids
+                bulk_result['update'].append({'query': query, 'ids': ids})
+
+        result = collection.bulk_write(bulk_operations)
+        if result.deleted_count != bulk_delete_ids:
+            logging.warn(
+                'Some delete ids are not executed',
+                ', hence halting execution',
+                'Please note the partially executed operations',
+                'wont trigger any `model/listeners` unless CDC is active.',
+            )
+        elif (result.modified_count + result.upserted_count) != bulk_update_ids:
+            logging.warn(
+                'Some update ids are not executed',
+                ', hence halting execution',
+                'Please note the partially executed operations',
+                'wont trigger any `model/listeners` unless CDC is active.',
+            )
+        return bulk_result, bulk_update_ids, bulk_delete_ids
+
 
     def _execute_find(self, parent):
         return self._execute(parent, method='unpack')
@@ -482,6 +526,7 @@ class MongoQuery(Query):
                     UpdateOne(
                         filter=mongo_filter,
                         update=update,
+
                     )
                 )
             return self.table_or_collection.bulk_write(bulk_operations)
@@ -580,6 +625,17 @@ def UpdateOne(**kwargs):
 
     :param kwargs: The arguments to pass to the operation.
     """
+    try:
+        filter = kwargs['filter']
+    except:
+        raise KeyError('Filter not found in `UpdateOne`')
+    
+    id = filter['_id']
+    if isinstance(id, ObjectId):
+        ids = [id]
+    else:
+        ids = id['$in']
+    kwargs['arg_ids'] = ids
     return BulkOp(identifier='UpdateOne', kwargs=kwargs)
 
 
@@ -623,10 +679,10 @@ class BulkOp(Leaf):
     @property
     def op(self):
         """Return the operation."""
-        import pymongo
 
-        kwargs = {**self.kwargs}
-        for k, v in self.kwargs.items():
+        kwargs = copy.deepcopy(self.kwargs)
+        kwargs.pop('arg_ids')
+        for k, v in kwargs.items():
             if isinstance(v, Document):
                 kwargs[k] = v.unpack()
         return getattr(pymongo, self.identifier)(**kwargs)

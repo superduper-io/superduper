@@ -203,7 +203,7 @@ class IbisQuery(Query):
                 *self.parts[1:],
             ],
         )
-        result = query.execute(db=self.db)
+        result = query.do_execute(db=self.db)
         result.scores = similar_scores
         return result
 
@@ -287,7 +287,7 @@ class IbisQuery(Query):
         )
 
     def _execute(self, parent, method='encode'):
-        output = super()._execute(parent, method=method).execute()
+        output = super()._execute(parent, method=method).do_execute()
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient='records')
         component_table = self.db.tables[self.identifier]

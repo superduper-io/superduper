@@ -194,6 +194,6 @@ def test_column_encoding(db):
             Document({'x': 1, 'y': 2, 'img': img}),
             Document({'x': 3, 'y': 4, 'img': img}),
         ]
-    ).execute()
+    ).do_execute()
 
-    db['test'].select("x", "y", "img").execute()
+    db['test'].select("x", "y", "img").do_execute()

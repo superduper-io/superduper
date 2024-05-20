@@ -161,7 +161,7 @@ def add_random_data_to_sql_db(
         fold = 'valid' if fold else 'train'
 
         data.append(Document({'id': str(i), 'x': x, 'y': y, 'z': z, '_fold': fold}))
-    db[table_name].insert(data).execute()
+    db[table_name].insert(data).do_execute()
 
 
 def add_random_data_to_mongo_db(

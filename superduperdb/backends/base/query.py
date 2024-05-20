@@ -368,6 +368,10 @@ class Query(_BaseQuery):
         pass
 
     def execute(self, db=None):
+        self.db = db or self.db
+        return self.db.execute(self)
+
+    def do_execute(self, db=None):
         """Execute the query.
 
         This methold will first create the table if it does not exist and then

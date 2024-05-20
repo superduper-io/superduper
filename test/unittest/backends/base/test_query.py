@@ -73,12 +73,12 @@ def test_execute_complex_query_sqldb(db, table):
 def test_execute_like_queries_mongodb(db):
     collection = MongoQuery(identifier='documents', db=db)
     # Get a data point for testing
-    r = collection.find_one({}).execute(db)
+    r = collection.find_one({}).do_execute(db)
 
     out = (
         collection.like({'x': r['x']}, vector_index='test_vector_search', n=10)
         .find()
-        .execute(db)
+        .do_execute(db)
     )
     scores = out.scores
     ids = [o['_id'] for o in list(out)]
@@ -91,7 +91,7 @@ def test_execute_like_queries_mongodb(db):
     result = (
         collection.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
         .find_one()
-        .execute(db)
+        .do_execute(db)
     )
 
     assert result['_id'] == ObjectId(r['_id'])
@@ -100,7 +100,7 @@ def test_execute_like_queries_mongodb(db):
     q = collection.find({}).like(
         Document({'x': r['x']}), vector_index='test_vector_search', n=3
     )
-    result = q.execute(db)
+    result = q.do_execute(db)
     result = list(result)
     assert len(result) == 3
     assert result[0]['_id'] == ObjectId(r['_id'])
@@ -287,9 +287,9 @@ def test_insert_with_schema(db):
     table_or_collection = db['documents']
     datas = [Document(data)]
 
-    table_or_collection.insert(datas).execute()
+    table_or_collection.insert(datas).do_execute()
+    datas_from_db = list(table_or_collection.select().do_execute())
 
-    datas_from_db = list(table_or_collection.select().execute())
     for d, d_db in zip(datas, datas_from_db):
         assert d['img'].size == d_db['img'].size
         assert np.all(d['array'] == d_db['array'])

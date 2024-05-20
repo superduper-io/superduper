@@ -299,7 +299,7 @@ class Datalayer:
         if query.type == 'update':
             return self._update(query, *args, **kwargs)
 
-        return query.execute(self)
+        return query.do_execute(self)
 
         raise TypeError(
             f'Wrong type of {query}; '
@@ -316,7 +316,7 @@ class Datalayer:
 
         :param delete: The delete query object specifying the data to be deleted.
         """
-        result = delete.execute(self)
+        result = delete.do_execute(self)
         if refresh and not self.cdc.running:
             return result, self.refresh_after_delete(delete, ids=result)
         return result, None
@@ -339,7 +339,7 @@ class Datalayer:
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
 
-        inserted_ids = insert.execute(self)
+        inserted_ids = insert.do_execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
 
@@ -358,7 +358,7 @@ class Datalayer:
 
         :param select: The select query object specifying the data to be retrieved.
         """
-        return select.execute(db=self)
+        return select.do_execute(db=self)
 
     def refresh_after_delete(
         self,
@@ -414,7 +414,7 @@ class Datalayer:
         :param write: The update query object specifying the data to be written.
         :param refresh: Boolean indicating whether to refresh the task group on write.
         """
-        write_result, updated_ids, deleted_ids = write.execute(self)
+        write_result, updated_ids, deleted_ids = write.do_execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
         if refresh:
@@ -453,7 +453,7 @@ class Datalayer:
         :return: Tuple containing the updated IDs and the refresh result if
                  performed.
         """
-        updated_ids = update.execute(self)
+        updated_ids = update.do_execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
         if refresh:

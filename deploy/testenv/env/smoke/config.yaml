@@ -11,6 +11,7 @@ cluster:
     backfill_batch_size: 100
   rest:
     uri: http://rest:8002
+    config: deploy/rest/config.yaml
 data_backend: mongodb://superduper:superduper@mongodb:27017/test_db
 downloads:
   folder: null

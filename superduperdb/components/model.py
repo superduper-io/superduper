@@ -27,7 +27,6 @@ from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.annotations import merge_docstrings
-from superduperdb.rest.utils import parse_query
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -495,12 +494,6 @@ class Model(Component):
     """
 
     type_id: t.ClassVar[str] = 'model'
-    ui_schema: t.ClassVar[t.Dict] = [
-        {'name': 'datatype', 'type': 'component/datatype', 'optional': True},
-        {'name': 'predict_kwargs', 'type': 'json', 'default': {}},
-        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
-    ]
-
     signature: Signature = '*args,**kwargs'
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
@@ -1073,11 +1066,6 @@ class _ObjectModel(Model, ABC):
     num_workers: int = 0
     object: t.Any
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'num_workers', 'type': 'int', 'default': '0'},
-        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
-    ]
-
     @property
     def outputs(self):
         """Get an instance of ``IndexableNode`` to index outputs."""
@@ -1151,8 +1139,6 @@ class ObjectModel(_ObjectModel):
 
     """
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'object', 'type': 'artifact'}]
-
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
     )
@@ -1166,22 +1152,7 @@ class CodeModel(_ObjectModel):
     :param object: Code object
     """
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'object', 'type': 'code', 'default': Code.default}
-    ]
     object: Code
-
-    @classmethod
-    def handle_integration(cls, kwargs):
-        """Handler integration from ui.
-
-        :param kwargs: integration kwargs
-        """
-        if isinstance(kwargs['object'], str):
-            kwargs['object'] = Code(kwargs['object'])
-        else:
-            assert isinstance(kwargs['object'], Code)
-        return kwargs
 
 
 @merge_docstrings
@@ -1191,7 +1162,6 @@ class APIBaseModel(Model):
 
     :param model: The Model to use, e.g. ``'text-embedding-ada-002'``
     :param max_batch_size: Maximum  batch size.
-
     """
 
     model: t.Optional[str] = None
@@ -1272,20 +1242,6 @@ class APIModel(APIBaseModel):
         return out
 
 
-LIKE_TEMPLATE = {
-    'documents': [
-        {"<key-1>": "$my_value"},
-        {"_outputs": 0, "_id": 0},
-    ],
-    'query': (
-        "<collection_name>"
-        ".like(_documents[0], vector_index='<index_id>')"
-        ".find({}, _documents[1])"
-        ".limit(10)"
-    ),
-}
-
-
 @merge_docstrings
 @dc.dataclass(kw_only=True)
 class QueryModel(Model):
@@ -1298,11 +1254,6 @@ class QueryModel(Model):
     :param postprocess: Postprocess callable
     :param select: query used to find data (can include `like`)
     """
-
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'postprocess', 'type': 'code', 'default': Code.default},
-        {'name': 'select', 'type': 'json', 'default': LIKE_TEMPLATE},
-    ]
 
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Union[t.Callable, Code]] = None
@@ -1319,25 +1270,6 @@ class QueryModel(Model):
             elif isinstance(v, str) and v.startswith('$'):
                 r[k] = Variable(v[1:])
         return r
-
-    @classmethod
-    def handle_integration(cls, kwargs):
-        """Handle integration from UI.
-
-        :param kwargs: Integration kwargs.
-        """
-        if 'select' in kwargs and isinstance(kwargs['select'], dict):
-            for i, r in enumerate(kwargs['select']['documents']):
-                kwargs['select']['documents'][i] = cls._replace_variables(r)
-            kwargs['select'] = parse_query(
-                query=kwargs['select']['query'],
-                documents=kwargs['select']['documents'],
-            )
-        if isinstance(kwargs.get('preprocess'), str):
-            kwargs['preprocess'] = Code(kwargs['preprocess'])
-        if isinstance(kwargs.get('postprocess'), str):
-            kwargs['postprocess'] = Code(kwargs['postprocess'])
-        return kwargs
 
     @property
     def inputs(self) -> Inputs:
@@ -1388,11 +1320,6 @@ class SequentialModel(Model):
 
     :param models: A list of models to use
     """
-
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'models', 'type': 'component/model', 'sequence': True},
-        {'name': 'signature', 'type': 'str', 'optional': True, 'default': None},
-    ]
 
     models: t.List[Model]
 

@@ -34,7 +34,7 @@ VOLUME /artifacts
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
-        python3 python3-pip python-is-python3 \
+        python3 python3-pip python-is-python3 gcc python3-dev \
         # Required for downloading code/data from the internet \
         wget curl unzip git \
         # DevOps

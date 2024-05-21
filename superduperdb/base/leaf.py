@@ -136,14 +136,6 @@ class Leaf(ABC):
         return Document({'_path': path, **r})
 
     @classmethod
-    def handle_integration(cls, r):
-        """Method to handle integration.
-
-        :param r: Encoded data.
-        """
-        return r
-
-    @classmethod
     def _register_class(cls):
         """Register class in the class registry and set the full import path."""
         full_import_path = f"{cls.__module__}.{cls.__name__}"

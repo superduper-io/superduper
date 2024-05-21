@@ -56,14 +56,23 @@ class MongoArtifactStore(ArtifactStore):
         for _id in ids:
             self.filesystem.delete(_id)
 
-    def _load_bytes(self, file_id: str):
+    def get_bytes(self, file_id: str):
+        """
+        Get the bytes of the file from GridFS.
+
+        :param file_id: The file_id of the file to get
+        """
         cur = self.filesystem.find_one({'filename': file_id})
         if cur is None:
             raise FileNotFoundError(f'File not found in {file_id}')
         return cur.read()
 
-    def _save_file(self, file_path: str, file_id: str):
-        """Save file to GridFS."""
+    def put_file(self, file_path: str, file_id: str):
+        """Save file to GridFS.
+
+        :param file_path: The path to the file to save
+        :param file_id: The file_id of the file
+        """
         path = Path(file_path)
         if path.is_dir():
             upload_folder(file_path, file_id, self.filesystem)
@@ -71,14 +80,21 @@ class MongoArtifactStore(ArtifactStore):
             _upload_file(file_path, file_id, self.filesystem)
         return file_id
 
-    def _load_file(self, file_id: str) -> str:
+    def get_file(self, file_id: str) -> str:
         """Download file from GridFS and return the path.
 
         The path is a temporary directory, `{tmp_prefix}/{file_id}/{filename or folder}`
+        :param file_id: The file_id of the file to download
         """
         return _download(file_id, self.filesystem)
 
-    def _save_bytes(self, serialized: bytes, file_id: str):
+    def put_bytes(self, serialized: bytes, file_id: str):
+        """
+        Save bytes in GridFS.
+
+        :param serialized: The bytes to save
+        :param file_id: The file_id of the file
+        """
         cur = self.filesystem.find_one({'filename': file_id})
         if cur is not None:
             raise FileExistsError

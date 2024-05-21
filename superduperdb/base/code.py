@@ -1,6 +1,5 @@
 import dataclasses as dc
 import inspect
-import typing as t
 
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.annotations import merge_docstrings
@@ -9,8 +8,6 @@ template = """from superduperdb import code
 
 @code
 {definition}"""
-
-default = template.format(definition='def my_code(x):\n    return x\n')
 
 
 @merge_docstrings
@@ -24,7 +21,7 @@ class Code(Leaf):
     """
 
     code: str
-    default: t.ClassVar[str] = default
+    identifier: str = ''
 
     @staticmethod
     def from_object(obj):
@@ -40,7 +37,8 @@ class Code(Leaf):
         print(mini_module)
         return Code(mini_module)
 
-    def __post_init__(self):
+    def __post_init__(self, db):
+        super().__post_init__(db)
         namespace = {}
         exec(self.code, namespace)
         remote_code = next(

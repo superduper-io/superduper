@@ -22,7 +22,9 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
-def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
+def parse_query(
+    query, documents: t.Sequence[t.Dict] = (), db: t.Optional['Datalayer'] = None
+):
     """Parse a string query into a query object.
 
     :param query: The query to parse.
@@ -31,8 +33,8 @@ def parse_query(query, documents, db: t.Optional['Datalayer'] = None):
     """
     return _parse_query(
         query=query,
-        documents=documents,
         builder_cls=MongoQuery,
+        documents=list(documents),
         db=db,
     )
 

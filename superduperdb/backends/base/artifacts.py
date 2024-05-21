@@ -97,16 +97,15 @@ class ArtifactStore(ABC):
         return self._exists(file_id)
 
     @abstractmethod
-    def _save_bytes(self, serialized: bytes, file_id: str):
+    def put_bytes(self, serialized: bytes, file_id: str):
         """Save bytes in artifact store""" ""
         pass
 
     @abstractmethod
-    def _save_file(self, file_path: str, file_id: str) -> str:
+    def put_file(self, file_path: str, file_id: str) -> str:
         """Save file in artifact store and return file_id."""
         pass
 
-    #
     def save_artifact(self, r: t.Dict):
         """Save serialized object in the artifact store.
 
@@ -117,13 +116,13 @@ class ArtifactStore(ABC):
 
         for file_id, blob in blobs.items():
             try:
-                self._save_bytes(blob, file_id=file_id)
+                self.put_bytes(blob, file_id=file_id)
             except FileExistsError:
                 continue
 
         for file_id, file_path in files.items():
             try:
-                self._save_file(file_path, file_id=file_id)
+                self.put_file(file_path, file_id=file_id)
             except FileExistsError:
                 continue
 
@@ -154,7 +153,7 @@ class ArtifactStore(ABC):
         return self.save_artifact(new_r)
 
     @abstractmethod
-    def _load_bytes(self, file_id: str) -> bytes:
+    def get_bytes(self, file_id: str) -> bytes:
         """
         Load bytes from artifact store.
 
@@ -163,7 +162,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _load_file(self, file_id: str) -> str:
+    def get_file(self, file_id: str) -> str:
         """
         Load file from artifact store and return path.
 
@@ -180,14 +179,14 @@ class ArtifactStore(ABC):
         datatype = self.serializers[r['datatype']]
         file_id = r.get('file_id')
         if r.get('encodable') == 'file':
-            x = self._load_file(file_id)
+            x = self.get_file(file_id)
         else:
-            # We should always have file_id available at load time (because saved)
+            # TODO We should always have file_id available at load time (because saved)
             uri = r.get('uri')
             if file_id is None:
                 assert uri is not None, '"uri" and "file_id" can\'t both be None'
                 file_id = _construct_file_id_from_uri(uri)
-            x = self._load_bytes(file_id)
+            x = self.get_bytes(file_id)
         return datatype.decode_data(x)
 
     def save(self, r: t.Dict) -> t.Dict:

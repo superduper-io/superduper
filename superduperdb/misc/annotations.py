@@ -166,11 +166,10 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
-def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
+def component(*schema: t.Dict):
     """Decorator for creating a component.
 
     :param schema: schema for the component
-    :param handle_integration: function to handle integration
     """
 
     def decorator(f):
@@ -197,9 +196,6 @@ def component(*schema: t.Dict, handle_integration: t.Callable = lambda x: x):
             out._deep_flat_encode = _deep_flat_encode
             return out
 
-        decorated.get_ui_schema = lambda: schema
-        decorated.build = lambda r: f(**r)
-        decorated.handle_integration = handle_integration
         return decorated
 
     return decorator

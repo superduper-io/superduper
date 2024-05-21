@@ -1,3 +1,4 @@
+import re
 import typing as t
 
 from bson.objectid import ObjectId
@@ -124,22 +125,25 @@ class Document(MongoStyleDict):
 
         if '_leaves' in r:
             cache = r['_leaves']
-            del r['_leaves']
 
         if '_blobs' in r:
             blobs = r['_blobs']
-            del r['_blobs']
 
         if '_files' in r:
             files = r['_files']
-            del r['_files']
 
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
         if schema is not None:
             schema.init()
             r = schema.decode_data(r)
-        r = _deep_flat_decode(r, cache, blobs, files=files, db=db)
+        r = _deep_flat_decode(
+            {k: v for k, v in r.items() if k not in ('_leaves', '_blobs', '_files')},
+            cache,
+            blobs,
+            files=files,
+            db=db,
+        )
 
         if isinstance(r, dict):
             return Document(r, schema=schema)
@@ -305,20 +309,24 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         module = '.'.join(parts[:-1])
         dict_ = {k: v for k, v in r.items() if k != '_path'}
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
-        instence = _import_item(cls=cls, module=module, dict=dict_, db=db)
-        # TODO: Auto unpack the instence
-        # instence.unpack()
-        return instence
-
+        instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
+        return instance
     if isinstance(r, dict):
         return {
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
         }
-    if isinstance(r, str) and r.startswith('?'):
+    if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
         return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
-    if isinstance(r, str) and r.startswith('%'):
-        uuid = r.split('/')[-1]
-        if db is None:
-            raise ValueError(f'No database provided to decode {r}')
-        return db.load(uuid=uuid)
+    if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
+        match = re.match("^\?db\.load\((.*)\)$", r)
+        assert match is not None
+        assert db is not None, 'db is required for ?db.load()'
+        args = [x.strip() for x in match.groups()[0].split(',')]
+        if len(args) == 1:
+            return db.load(uuid=args[0])
+        if len(args) == 2:
+            return db.load(type_id=args[0], identifier=args[1], include_presets=True)
+        if len(args) == 3:
+            return db.load(type_id=args[0], identifier=args[1], version=int(args[2]))
+        raise ValueError(f'Invalid number of arguments for {r}')
     return r

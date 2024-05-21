@@ -661,10 +661,10 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param session: The database session within which the query is executed.
         """
         # Some databases don't support defining statment outside of session
-        result = session.execute(statment)
-        columns = [col.name for col in table.columns]
-        results = []
         try:
+            result = session.execute(statment)
+            columns = [col.name for col in table.columns]
+            results = []
             for row in result:
                 if len(row) != len(columns):
                     raise ValueError(
@@ -673,7 +673,9 @@ class SQLAlchemyMetadata(MetaDataStore):
                     )
                 results.append(dict(zip(columns, row)))
         except ProgrammingError:
-            # Some databases don't support return empty results, such as duckdb
+            # Known ProgrammingErrors:
+            # - EmptyResults: Duckdb don't support return empty results
+            # - NotExist: SnowFlake returns error if a component does not exist
             return []
 
         return results

@@ -1,4 +1,6 @@
 # Ignore all files starting with '.'
 **/.*
 
+# Exclude prexisting eggs
 superduperdb.egg-info
+

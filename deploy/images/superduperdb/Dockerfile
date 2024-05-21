@@ -108,16 +108,18 @@ ONBUILD RUN make install_devkit
 # -------------------------------
 FROM common-stage AS build_nightly
 
-# Install the latest commit of the main branch in GitHub.
-ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/no_requirements.txt
-ONBUILD RUN git clone -b main --single-branch  https://github.com/SuperDuperDB/superduperdb.git ${HOME}/superduperdb
+# Install the latest commit from local repo.
+ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD COPY --chown=superduper ${EXTRA_REQUIREMENTS_FILE} ./extra_requirements.txt
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r ./extra_requirements.txt
 ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user ./ \
     # Purge pip cache to reduce image size.
     && pip cache purge
-
+# EXTRA_REQUIREMENTS_FILE takes precedence for packages with the same name. This allows to overwrite version when needed.
+ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/no_requirements.txt
+ONBUILD COPY --chown=superduper ${EXTRA_REQUIREMENTS_FILE} ./extra_requirements.txt
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user -r ./extra_requirements.txt \
+    # Purge pip cache to reduce image size.
+    && pip cache purge
 
 # -------------------------------
 # Build Release (Production)

@@ -80,13 +80,9 @@ jobs:
       run: |
         make ext_testing
 
-    - name: Upload code coverage to Codecov
-      uses: codecov/codecov-action@v3.1.4
-      with:
-        env_vars: RUNNER_OS,PYTHON_VERSION
-        file: ./coverage.xml
-        fail_ci_if_error: false
-        name: codecov-umbrella
+    - name: Rest Testing
+      run: |
+        make rest_testing
 
   # ---------------------------------
   # Integration Testing

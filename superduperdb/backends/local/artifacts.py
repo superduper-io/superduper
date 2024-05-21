@@ -66,22 +66,33 @@ class FileSystemArtifactStore(ArtifactStore):
         shutil.rmtree(self.conn, ignore_errors=force)
         os.makedirs(self.conn)
 
-    def _save_bytes(
+    def put_bytes(
         self,
         serialized: bytes,
         file_id: str,
     ) -> t.Any:
+        """
+        Save bytes in artifact store.
+
+        :param serialized: The bytes to be saved.
+        :param file_id: The id of the file.
+        """
         path = os.path.join(self.conn, file_id)
         if os.path.exists(path):
             logging.warn(f"File {path} already exists")
         with open(path, 'wb') as f:
             f.write(serialized)
 
-    def _load_bytes(self, file_id: str) -> bytes:
+    def get_bytes(self, file_id: str) -> bytes:
+        """
+        Return the bytes from the artifact store.
+
+        :param file_id: The id of the file.
+        """
         with open(os.path.join(self.conn, file_id), 'rb') as f:
             return f.read()
 
-    def _save_file(self, file_path: str, file_id: str):
+    def put_file(self, file_path: str, file_id: str):
         """Save file in artifact store and return the relative path.
 
         return the relative path {file_id}/{name}
@@ -102,8 +113,11 @@ class FileSystemArtifactStore(ArtifactStore):
         # return the relative path {file_id}/{name}
         return os.path.join(file_id, name)
 
-    def _load_file(self, file_id: str) -> str:
-        """Return the path to the file in the artifact store."""
+    def get_file(self, file_id: str) -> str:
+        """Return the path to the file in the artifact store.
+
+        :param file_id: The id of the file.
+        """
         logging.info(f"Loading file {file_id} from {self.conn}")
         return os.path.join(self.conn, file_id)
 

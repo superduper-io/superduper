@@ -79,7 +79,6 @@ class Component(Leaf):
     leaf_type: t.ClassVar[str] = 'component'
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'identifier', 'type': 'str'}]
     changed: t.ClassVar[set] = set([])
 
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
@@ -97,14 +96,6 @@ class Component(Leaf):
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 
-    @classmethod
-    def handle_integration(cls, kwargs):
-        """Abstract method for handling integration.
-
-        :param kwargs: Integration kwargs.
-        """
-        return kwargs
-
     @property
     def id(self):
         """Returns the component identifier."""
@@ -115,16 +106,6 @@ class Component(Leaf):
     def id_tuple(self):
         """Returns an object as `ComponentTuple`."""
         return ComponentTuple(self.type_id, self.identifier, self.version)
-
-    @classmethod
-    def get_ui_schema(cls):
-        """Helper method to get the UI schema."""
-        out = {}
-        ancestors = cls.mro()[::-1]
-        for a in ancestors:
-            if hasattr(a, 'ui_schema'):
-                out.update({x['name']: x for x in a.ui_schema})
-        return list(out.values())
 
     def set_variables(self, db, **kwargs):
         """Set free variables of self.

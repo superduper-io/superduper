@@ -221,7 +221,6 @@ class Query(_BaseQuery):
     def _to_str(self):
         documents = {}
         queries = {}
-        # out = self.identifier[:]
         out = str(self.identifier)
         for part in self.parts:
             if isinstance(part, str):
@@ -258,11 +257,11 @@ class Query(_BaseQuery):
 
     def __repr__(self):
         output, docs = self._dump_query()
-        for i, doc in enumerate(docs):
-            doc_string = str(doc)
-            if isinstance(doc, Document):
-                doc_string = str(doc.unpack())
-            output = output.replace(f'documents[{i}]', doc_string)
+        # for i, doc in enumerate(docs):
+        #     doc_string = str(doc)
+        #     if isinstance(doc, Document):
+        #         doc_string = str(doc.unpack())
+        #     output = output.replace(f'documents[{i}]', doc_string)
         return output
 
     def __eq__(self, other):
@@ -504,7 +503,7 @@ class Query(_BaseQuery):
         return documents
 
 
-def _parse_query_part(part, documents, query, builder_cls):
+def _parse_query_part(part, documents, query, builder_cls, db=None):
     key = part.split('.')
     if key[0] == '_outputs':
         identifier = f'{key[0]}.{key[1]}'
@@ -513,7 +512,7 @@ def _parse_query_part(part, documents, query, builder_cls):
         identifier = key[0]
         part = part.split('.')[1:]
 
-    current = builder_cls(identifier=identifier, parts=())
+    current = builder_cls(identifier=identifier, parts=(), db=db)
     for comp in part:
         match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
         if match is None:
@@ -539,22 +538,22 @@ def _parse_query_part(part, documents, query, builder_cls):
 
 def parse_query(
     query: t.Union[str, list],
-    documents,
     builder_cls,
+    documents: t.Sequence[t.Any] = (),
     db: t.Optional['Datalayer'] = None,
 ):
     """Parse a string query into a query object.
 
     :param query: The query to parse.
-    :param documents: The documents to query.
     :param builder_cls: The class to use to build the query.
+    :param documents: The documents to query.
     :param db: The datalayer to use to execute the query.
     """
-    documents = [Document(r) for r in documents]
+    documents = [Document(r, db=db) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, query[:i], builder_cls)
+        query[i] = _parse_query_part(q, documents, query[:i], builder_cls, db=db)
     return query[-1]
 
 

@@ -1,11 +1,8 @@
-import json
-import os
-
 import pytest
 
-from superduperdb import CFG
+from superduperdb.base.document import Document
 
-from .mock_client import curl_post, setup as _setup, teardown
+from .mock_client import curl_get, curl_post, curl_put, setup as _setup, teardown
 
 
 @pytest.fixture
@@ -15,76 +12,103 @@ def setup():
 
 
 def test_select_data(setup):
-    form = {
-        "documents": [],
-        "query": "documents.find()",
-        "artifacts": [],
-    }
-    result = curl_post('/db/execute', form)
+    result = curl_post('/db/execute', data={'query': 'coll.find({}, {"_id": 0})'})
     print(result)
     assert len(result) == 2
 
 
-def test_insert_image(setup):
-    request = f"""curl -X 'PUT' \
-        '{CFG.cluster.rest.uri}/db/artifact_store/save_artifact?datatype=image' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: multipart/form-data' \
-        -s \
-        -F 'raw=@test/material/data/test.png;type=image/png'"""
-
-    result = os.popen(request).read()
-    result = json.loads(result)
-    assert 'file_id' in result
-    file_id = result['file_id']
-
-    form = {
-        "documents": [
-            {
-                "img": {
-                    "_content": {
-                        "file_id": result["file_id"],
-                        "datatype": "image",
-                        "leaf_type": "lazy_artifact",
-                        "uri": None,
-                    }
-                }
-            },
-        ],
-        "query": ["documents.insert_one(_documents[0])"],
-    }
-    form = json.dumps(form)
-
-    request = f"""curl -X 'POST' \
-        '{CFG.cluster.rest.uri}/db/execute' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -s \
-        -d '{form}'"""
-
-    print('making request')
-    result = json.loads(os.popen(request).read())
-    if 'error' in result:
-        raise Exception(result['messages'])
+def test_presets(setup):
+    result = curl_get(
+        '/db/show',
+        params={'type_id': 'datatype'},
+    )
     print(result)
+    assert 'image' in result
 
-    form = json.dumps(
-        {
-            "documents": [],
-            "query": "documents.find()",
-        }
+
+CODE = """
+from superduperdb import code
+
+@code
+def my_function(x):
+    return x + 1
+"""
+
+
+def test_apply(setup):
+    m = {
+        '_leaves': {
+            'function_body': {
+                '_path': 'superduperdb/base/code/Code',
+                'code': CODE,
+            },
+            'my_function': {
+                '_path': 'superduperdb/components/model/CodeModel',
+                'object': '?function_body',
+                'identifier': 'my_function',
+            },
+        },
+        '_base': '?my_function',
+    }
+
+    _ = curl_post(
+        endpoint='/db/apply',
+        data=m,
     )
 
-    request = f"""curl -X 'POST' \
-        '{CFG.cluster.rest.uri}/db/execute' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -s \
-        -d '{form}'"""
+    models = curl_get('/db/show', params={'type_id': 'model'})
 
-    print('making request')
-    result = os.popen(request).read()
-    print(result)
-    result = json.loads(result)
-    result = next(r for r in result if 'img' in r)
-    assert result['img']['_content']['file_id'] == file_id
+    assert models == ['my_function']
+
+
+def test_insert_image(setup):
+    result = curl_put(
+        endpoint='/db/artifact_store/put',
+        file='test/material/data/test.png',
+        media_type='image/png',
+    )
+
+    file_id = result['file_id']
+
+    query = {
+        '_path': 'superduperdb/backends/mongodb/query/parse_query',
+        '_leaves': {
+            'my_artifact': {
+                '_path': 'superduperdb/components/datatype/LazyArtifact',
+                'file_id': file_id,
+                'datatype': "?db.load(datatype, image)",
+            }
+        },
+        'query': 'coll.insert_one(documents[0])',
+        'documents': [{'img': '?my_artifact'}],
+    }
+
+    result = curl_post(
+        endpoint='/db/execute',
+        data=query,
+    )
+
+    query = {
+        '_path': 'superduperdb/backends/mongodb/query/parse_query',
+        'query': 'coll.find(documents[0], documents[1])',
+        'documents': [{}, {'_id': 0}],
+    }
+
+    result = curl_post(
+        endpoint='/db/execute',
+        data=query,
+    )
+
+    from superduperdb import superduper
+
+    db = superduper()
+
+    result = [Document.decode(r, db=db).unpack() for r in result]
+
+    assert len(result) == 3
+
+    image_record = next(r for r in result if 'img' in r)
+
+    from PIL.PngImagePlugin import PngImageFile
+
+    assert isinstance(image_record['img'], PngImageFile)

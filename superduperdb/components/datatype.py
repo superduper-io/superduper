@@ -192,35 +192,10 @@ class DataType(Component):
     :param encodable: The type of encodable object ('encodable',
                       'lazy_artifact', or 'file').
     :param bytes_encoding: The encoding type for bytes ('base64' or 'bytes').
-    :param intermidia_type: Type of the intermidia data
-           [IntermidiaType.BYTES, IntermidiaType.STRING]
+    :param intermediate_type: Type of the intermediate data
+           [IntermediateType.BYTES, IntermediateType.STRING]
     :param media_type: The media type.
     """
-
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {
-            'name': 'serializer',
-            'type': 'string',
-            'choices': ['pickle', 'dill', 'torch'],
-            'default': 'dill',
-        },
-        {'name': 'info', 'type': 'json', 'optional': True},
-        {'name': 'shape', 'type': 'json', 'optional': True},
-        {'name': 'directory', 'type': 'str', 'optional': True},
-        {
-            'name': 'encodable',
-            'type': 'str',
-            'choices': ['encodable', 'lazy_artifact', 'file'],
-            'default': 'lazy_artifact',
-        },
-        {
-            'name': 'bytes_encoding',
-            'type': 'str',
-            'choices': ['base64', 'bytes'],
-            'default': 'bytes',
-        },
-        {'name': 'media_type', 'type': 'str', 'optional': True},
-    ]
 
     type_id: t.ClassVar[str] = 'datatype'
     encoder: t.Optional[t.Callable] = None  # not necessary if encodable is file
@@ -230,7 +205,7 @@ class DataType(Component):
     directory: t.Optional[str] = None
     encodable: str = 'encodable'
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
-    intermidia_type: t.Optional[str] = IntermediateType.BYTES
+    intermediate_type: t.Optional[str] = IntermediateType.BYTES
     media_type: t.Optional[str] = None
     registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
 
@@ -298,7 +273,7 @@ class DataType(Component):
         """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
-            and self.intermidia_type == IntermediateType.BYTES
+            and self.intermediate_type == IntermediateType.BYTES
         ):
             return bytes_to_base64(data)
         return data
@@ -312,7 +287,7 @@ class DataType(Component):
         """
         if (
             self.bytes_encoding == BytesEncoding.BASE64
-            and self.intermidia_type == IntermediateType.BYTES
+            and self.intermediate_type == IntermediateType.BYTES
         ):
             return base64_to_bytes(data)
         return data
@@ -661,7 +636,7 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         """Initialize to load `x` with the actual file from the artifact store."""
         assert self.file_id is not None
         if isinstance(self.x, Empty):
-            blob = self.db.artifact_store._load_bytes(self.file_id)
+            blob = self.db.artifact_store.get_bytes(self.file_id)
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
@@ -669,13 +644,15 @@ class Artifact(_BaseEncodable, _ArtifactSaveMixin):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
-        maybe_bytes, file_id = self._encode()
-        self.file_id = file_id
+        maybe_bytes = None
+        if self.file_id is None:
+            maybe_bytes, self.file_id = self._encode()
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         del r['x']
-        blobs[self.file_id] = maybe_bytes
+        if isinstance(maybe_bytes, bytes):
+            blobs[self.file_id] = maybe_bytes
         cache[self.id] = r
         return f'?{self.id}'
 
@@ -743,7 +720,7 @@ class File(_BaseEncodable, _ArtifactSaveMixin):
     def init(self):
         """Initialize to load `x` with the actual file from the artifact store."""
         if isinstance(self.x, Empty):
-            file = self.db.artifact_store._load_file(self.file_id)
+            file = self.db.artifact_store.get_file(self.file_id)
             if self.file_name is not None:
                 file = os.path.join(file, self.file_name)
             self.x = file
@@ -784,7 +761,7 @@ json_serializer = DataType(
     decoder=json_decode,
     encodable='encodable',
     bytes_encoding=BytesEncoding.BASE64,
-    intermidia_type=IntermediateType.STRING,
+    intermediate_type=IntermediateType.STRING,
 )
 
 methods: t.Dict[str, t.Dict] = {

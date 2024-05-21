@@ -20,8 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Force load vector indices during backfill
 - Fix pandas database (in-memory)
 - Add and update docstrings in component classes and methods.
+- Changed the rest implementation to use new serialization
 
 #### New Features & Functionality
+
 - Add nightly image for pre-release testing in the cloud environment
 - Fix  torch model fit and make schedule_jobs at db add
 - Add requires functionality for all extension modules

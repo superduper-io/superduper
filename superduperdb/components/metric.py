@@ -16,7 +16,6 @@ class Metric(Component):
     """
 
     type_id: t.ClassVar[str] = 'metric'
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [{'name': 'object', 'type': 'artifact'}]
 
     object: t.Callable
 

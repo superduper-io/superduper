@@ -40,22 +40,6 @@ class SentenceTransformer(Model, _DeviceManaged):
     postprocess: t.Union[None, t.Callable, Code] = None
     signature: Signature = 'singleton'
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'model', 'type': 'str', 'default': 'all-MiniLM-L6-v2'},
-        {'name': 'device', 'type': 'str', 'default': 'cpu', 'choices': ['cpu', 'cuda']},
-        {'name': 'predict_kwargs', 'type': 'json', 'default': DEFAULT_PREDICT_KWARGS},
-        {'name': 'postprocess', 'type': 'code', 'default': Code.default},
-    ]
-
-    @classmethod
-    def handle_integration(cls, kwargs):
-        """Handle integration of the model."""
-        if isinstance(kwargs.get('preprocess'), str):
-            kwargs['preprocess'] = Code(kwargs['preprocess'])
-        if isinstance(kwargs.get('postprocess'), str):
-            kwargs['postprocess'] = Code(kwargs['postprocess'])
-        return kwargs
-
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
 

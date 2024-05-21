@@ -222,5 +222,13 @@ ext_testing: ## Execute integration testing
 	find ./test -type f -name "*.pyc" -delete
 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
 
+rest_testing: ## Execute smoke testing
+	echo "starting rest server"
+	SUPERDUPERDB_CONFIG=deploy/testenv/env/rest/rest_mock.yaml python -m superduperdb rest &
+	sleep 10
+	SUPERDUPERDB_CONFIG=deploy/testenv/env/rest/rest_mock.yaml pytest test/rest/test_rest.py
+	echo "stopping rest server"
+	lsof -ti:8002 | xargs kill -9
+
 smoke_testing: ## Execute smoke testing
 	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke

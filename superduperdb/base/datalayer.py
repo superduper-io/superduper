@@ -63,7 +63,9 @@ class Datalayer:
         'datatype': 'datatypes',
         'vector_index': 'vector_indices',
         'schema': 'schemas',
+        'listener': 'listeners',
     }
+    cache_to_type_id_mapping = {v: k for k, v in type_id_to_cache_mapping.items()}
 
     def __init__(
         self,
@@ -246,6 +248,7 @@ class Datalayer:
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
+        include_presets: bool = False,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -264,11 +267,36 @@ class Datalayer:
         if type_id is None:
             nt = namedtuple('nt', ('type_id', 'identifier'))
             out = self.metadata.show_components()
-            out = list(set(nt(**x) for x in out))
+            if not include_presets:
+                return out
+            subcaches = [
+                self.models,
+                self.datatypes,
+                self.tables,
+                self.schemas,
+                self.vector_indices,
+                self.listeners,
+            ]
+            cached = sum(
+                [
+                    [nt(comp.type_id, comp.identifier) for comp in subcache.values()]
+                    for subcache in subcaches
+                ],
+                [],
+            )
+            out = sorted(list(set([nt(**x) for x in out] + cached)))
             return [x._asdict() for x in out]
 
         if identifier is None:
-            return self.metadata.show_components(type_id=type_id)
+            mapping = self.type_id_to_cache_mapping
+            out = self.metadata.show_components(type_id=type_id)
+            if not include_presets:
+                return sorted(out)
+            try:
+                t = mapping[type_id]
+                return sorted(list(set(out + list(getattr(self, t).keys()))))
+            except KeyError:
+                return sorted(out)
 
         if version is None:
             return sorted(
@@ -590,6 +618,7 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
+        include_presets: bool = False,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load a component using uniquely identifying information.
@@ -605,7 +634,22 @@ class Datalayer:
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
         :param uuid: [Optional] UUID of the component to load.
+        :param include_presets: Include items cached in `db.models` etc.
         """
+        if (
+            include_presets
+            and isinstance(type_id, str)
+            and isinstance(identifier, str)
+            and version is None
+            and type_id in self.type_id_to_cache_mapping
+        ):
+            cache_name = self.type_id_to_cache_mapping[type_id]
+            cache = getattr(self, cache_name)
+            try:
+                return cache[identifier]
+            except KeyError:
+                pass
+
         if type_id == 'encoder':
             logging.warn(
                 '"encoder" has moved to "datatype" this functionality will not work'
@@ -896,14 +940,16 @@ class Datalayer:
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
         children = [
-            v for k, v in serialized['_leaves'].items() if isinstance(v, Component)
+            v for v in serialized['_leaves'].values() if isinstance(v, Component)
         ]
 
         jobs.extend(self._add_child_components(children, parent=object))
 
         for k, v in serialized['_leaves'].items():
             if isinstance(v, Component):
-                serialized['_leaves'][k] = f'%{v.id}'
+                serialized['_leaves'][
+                    k
+                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
 
         serialized = self.artifact_store.save_artifact(serialized)
 
@@ -1115,7 +1161,9 @@ class LoadDict(dict):
 
     def __missing__(self, key: str):
         if self.field is not None:
-            value = self[key] = self.database.load(self.field, key)
+            value = self[key] = self.database.load(
+                self.field, key, include_presets=False
+            )
         else:
             msg = f'callable is ``None`` for {key}'
             assert self.callable is not None, msg

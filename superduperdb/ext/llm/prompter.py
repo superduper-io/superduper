@@ -69,11 +69,6 @@ class RetrievalPrompt(QueryModel):
     prompt_explanation: str = PROMPT_EXPLANATION
     prompt_introduction: str = PROMPT_INTRODUCTION
     join: str = "\n---\n"
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'prompt_explanation', 'type': 'str', 'default': PROMPT_EXPLANATION},
-        {'name': 'prompt_introduction', 'type': 'str', 'default': PROMPT_INTRODUCTION},
-        {'name': 'join', 'type': 'str', 'default': "\n---\n"},
-    ]
 
     def __post_init__(self, artifacts):
         assert len(self.select.variables) == 1

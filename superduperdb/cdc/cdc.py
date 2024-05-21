@@ -410,13 +410,15 @@ class DatabaseChangeDataCapture:
             t.Union['TableOrCollection', 'IbisQuery']
         ] = []
 
-        listeners = self.db.show('listeners')
+        listeners = self.db.show('listener')
         if listeners:
             from superduperdb.components.listener import Listener
 
             for listener in listeners:
                 listener = db.load(identifier=listener, type_id='listener')
                 assert isinstance(listener, Listener)
+                if listener.select is None:
+                    continue
                 self.add(listener)
 
     @property

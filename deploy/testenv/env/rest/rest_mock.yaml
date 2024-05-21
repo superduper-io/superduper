@@ -4,6 +4,7 @@ bytes_encoding: Bytes
 cluster:
   rest:
     uri: http://localhost:8002
+    config: deploy/rest/config.yaml
 data_backend: mongomock://test
 downloads:
   folder: null

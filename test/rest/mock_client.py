@@ -1,32 +1,64 @@
 import json
 import os
+from urllib.parse import urlencode
+
+from superduperdb import CFG
+
+HOST = CFG.cluster.rest.uri
+VERBOSE = os.environ.get('SUPERDUPERDB_VERBOSE', '1')
 
 
-def curl_get(endpoint, data):
-    raise NotImplementedError
+def make_params(params):
+    return '?' + urlencode(params)
 
 
-def curl_post(endpoint, data):
+def curl_get(endpoint, params=None):
+    if params is not None:
+        params = make_params(params)
+    else:
+        params = ''
+    request = f"curl '{HOST}{endpoint}{params}'"
+    if VERBOSE == '1':
+        print('CURL REQUEST:')
+        print(request)
+    result = os.popen(request).read()
+    assert result, f'GET request to {request} returned empty response'
+    result = json.loads(result)
+    if 'msg' in result:
+        raise Exception('Error: ' + result['msg'])
+    return result
+
+
+def curl_post(endpoint, data, params=None):
+    if params is not None:
+        params = make_params(params)
+    else:
+        params = ''
     data = json.dumps(data)
     request = f"""curl -X 'POST' \
-        'http://localhost:8002{endpoint}' \
+        '{HOST}{endpoint}{params}' \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -s \
         -d '{data}'"""
-    print('CURL REQUEST:')
-    print(request)
+    if VERBOSE == '1':
+        print('CURL REQUEST:')
+        print(request)
     result = os.popen(request).read()
     assert result, f'POST request to {endpoint} with {data} returned empty response'
-    result = json.loads(result), f'Response is not valid JSON: {result}'
+    result = json.loads(result)
+    if 'msg' in result:
+        raise Exception('Error: ' + result['msg'])
     return result
 
 
 def curl_put(endpoint, file, media_type, params=None):
     if params is not None:
-        params = '?' + '&'.join([f'{k}={v}' for k, v in params.items()])
+        params = make_params(params)
+    else:
+        params = ''
     request = f"""curl -X 'PUT' \
-        'http://localhost:8002{endpoint}{params}' \
+        '{HOST}{endpoint}{params}' \
         -H 'accept: application/json' \
         -H 'Content-Type: multipart/form-data' \
         -s \
@@ -37,34 +69,25 @@ def curl_put(endpoint, file, media_type, params=None):
     assert (
         result
     ), f'PUT request to {endpoint} with {params} and {file} returned empty response'
+    result = json.loads(result)
     return result
 
 
 def insert(data):
-    data = {
-        "documents": data,
-        "query": ["documents.insert_many($documents)"],
-        "artifacts": [],
-    }
-    return curl_post('/db/execute', data)
+    query = {'query': 'coll.insert_many(documents)', 'documents': data}
+    return curl_post('/db/execute', data=query)
 
 
 def apply(component):
-    data = {'component': {component['dict']['identifier']: component}}
-    return curl_post('/db/apply', data)
+    return curl_post('/db/apply', data=component)
 
 
 def delete():
-    data = {
-        "documents": [],
-        "query": ["documents.delete_many({})"],
-        "artifacts": [],
-    }
-    return curl_post('/db/execute', data)
+    return curl_post('/db/execute', data={'query': 'coll.delete_many({})'})
 
 
 def remove(type_id, identifier):
-    return curl_post('/db/remove?type_id={type_id}&identifier={identifier}', {})
+    return curl_post(f'/db/remove?type_id={type_id}&identifier={identifier}', {})
 
 
 def setup():
@@ -73,13 +96,6 @@ def setup():
         {"x": [6, 7, 8, 9, 10], "y": 'test'},
     ]
     insert(data)
-    apply(
-        {
-            'cls': 'image_type',
-            'module': 'superduperdb.ext.pillow.encoder',
-            'dict': {'identifier': 'image', 'media_type': 'image/png'},
-        }
-    )
 
 
 def teardown():

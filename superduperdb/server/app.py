@@ -69,7 +69,13 @@ class SuperDuperApp:
     :param db: datalayer instance
     """
 
-    def __init__(self, service='vector_search', port=8000, db: Datalayer = None):
+    def __init__(
+        self,
+        service='vector_search',
+        port=8000,
+        db: Datalayer = None,
+        init_hook: t.Optional[t.Callable] = None,
+    ):
         self.service = service
         self.port = port
 
@@ -79,6 +85,7 @@ class SuperDuperApp:
         self.router = APIRouter()
         self._user_startup = False
         self._user_shutdown = False
+        self.init_hook = init_hook
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
         self._app.add_middleware(
@@ -110,7 +117,7 @@ class SuperDuperApp:
         raise HTTPException(code, detail=msg)
 
     @cached_property
-    def db(self):
+    def db(self) -> Datalayer:
         """Return the database instance from the app state."""
         return self._app.state.pool
 
@@ -217,6 +224,8 @@ class SuperDuperApp:
             if function:
                 function(db=db)
             self._app.state.pool = db
+            if self.init_hook:
+                self.init_hook(db=db)
 
         return
 

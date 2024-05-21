@@ -105,8 +105,7 @@ def add_fake_model(db: Datalayer):
     return listener
 
 
-# EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
-EMPTY_CASES = [DBConfig.mongodb_empty]
+EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
 
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
@@ -222,7 +221,7 @@ def test_add_with_artifact(db):
 
     db.apply(m)
 
-    m = db.load('model', m.identifier)
+    m = db.load('model', m.identifier, include_presets=False)
 
     assert m.object is not None
 
@@ -385,7 +384,7 @@ def test_show(db):
     assert 'None' in str(e) and '1' in str(e)
 
     assert sorted(db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
-    assert sorted(db.show('datatype')) == ['c1', 'c2']
+    assert sorted(db.show('datatype', include_presets=False)) == ['c1', 'c2']
 
     assert sorted(db.show('test-component', 'a1')) == [0]
     assert sorted(db.show('test-component', 'b')) == [0, 1, 2]
@@ -590,10 +589,24 @@ def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
 
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery(db=db, identifier='documents').find({'_fold': 'valid'})
+        select = db['documents'].find({'_fold': 'valid'})
     else:
-        table = db.load('table', 'documents')
-        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
+        db.apply(
+            Table(
+                'documents',
+                schema=Schema(
+                    'documents',
+                    fields={
+                        'id': dtype('str'),
+                        'x': dtype('int'),
+                        'y': dtype('int'),
+                        'z': dtype('int'),
+                    },
+                ),
+            )
+        )
+        condition = db['documents']._fold == 'valid'
+        select = db['documents'].select('id', 'x', 'y', 'z').filter(condition)
 
     d = Dataset(
         identifier='my_valid',

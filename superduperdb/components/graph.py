@@ -255,12 +255,6 @@ class Graph(Model):
     _DEFAULT_ARG_WEIGHT: t.ClassVar[t.Tuple] = (None, 'singleton')
     type_id: t.ClassVar[str] = 'model'
 
-    ui_schema: t.ClassVar[t.List[t.Dict]] = [
-        {'name': 'models', 'type': 'component/model', 'sequence': True},
-        {'name': 'edges', 'type': 'json'},
-        {'name': 'signature', 'type': 'str', 'default': '*args,**kwargs'},
-    ]
-
     models: t.List[Model] = dc.field(default_factory=list)
     edges: t.List[t.Tuple[str, str, t.Tuple[t.Union[int, str], str]]] = dc.field(
         default_factory=list

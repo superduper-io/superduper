@@ -136,9 +136,12 @@ class Rest(BaseConfig):
     """Describes the configuration for the REST service.
 
     :param uri: The URI for the REST service
+    :param config: The path to the config yaml file
+        for the REST service
     """
 
     uri: t.Optional[str] = None
+    config: t.Optional[str] = None
 
 
 @dc.dataclass

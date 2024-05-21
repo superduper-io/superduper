@@ -1,26 +1,13 @@
-import json
+import hashlib
 import typing as t
 
 import magic
+import yaml
 from fastapi import File, Response
 
 from superduperdb import CFG, logging
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.components.datatype import DataType
-from superduperdb.components.listener import Listener
-from superduperdb.components.model import (
-    CodeModel,
-    ObjectModel,
-    QueryModel,
-    SequentialModel,
-)
-from superduperdb.components.vector_index import VectorIndex, vector
-from superduperdb.ext import openai, sentence_transformers
-from superduperdb.ext.llm.prompter import RetrievalPrompt
-from superduperdb.ext.pillow.encoder import image_type
-from superduperdb.ext.sklearn.model import Estimator
-from superduperdb.ext.torch.model import TorchModel
-from superduperdb.rest.utils import parse_query, strip_artifacts
 from superduperdb.server import app as superduperapp
 
 assert isinstance(
@@ -28,52 +15,23 @@ assert isinstance(
 ), "cluster.rest.uri should be set with a valid uri"
 port = int(CFG.cluster.rest.uri.split(':')[-1])
 
+assert CFG.cluster.rest.config, "cluster.rest.config should be set with a valid path"
+with open(CFG.cluster.rest.config) as f:
+    CONFIG = yaml.safe_load(f)
+
 app = superduperapp.SuperDuperApp('rest', port=port)
 
 
-# TODO - should be a configuration
-CLASSES: t.Dict[str, t.Dict[str, t.Any]] = {
-    'model': {
-        'ObjectModel': ObjectModel,
-        'SequentialModel': SequentialModel,
-        'QueryModel': QueryModel,
-        'CodeModel': CodeModel,
-        'RetrievalPrompt': RetrievalPrompt,
-        'TorchModel': TorchModel,
-        'SklearnEstimator': Estimator,
-        'OpenAIEmbedding': openai.OpenAIEmbedding,
-        'OpenAIChatCompletion': openai.OpenAIChatCompletion,
-        'SentenceTransformer': sentence_transformers.SentenceTransformer,
-    },
-    'listener': {
-        'Listener': Listener,
-    },
-    'datatype': {
-        'image': image_type,
-        'vector': vector,
-        'DataType': DataType,
-    },
-    'vector-index': {'VectorIndex': VectorIndex},
-}
-
-FLAT_CLASSES = {}
-for k in CLASSES:
-    for sub in CLASSES[k]:
-        FLAT_CLASSES[sub] = CLASSES[k][sub]
+def _init_hook(db: Datalayer):
+    for type_id in CONFIG['presets']:
+        for leaf in CONFIG['presets'][type_id]:
+            leaf = CONFIG['presets'][type_id][leaf]
+            leaf = Document.decode(leaf).unpack()
+            t = db.type_id_to_cache_mapping[type_id]
+            getattr(db, t)[leaf.identifier] = leaf
 
 
-MODULE_LOOKUP: t.Dict[str, t.Dict[str, t.Any]] = {}
-API_SCHEMAS: t.Dict[str, t.Dict[str, t.Any]] = {}
-for type_id in CLASSES:
-    API_SCHEMAS[type_id] = {}
-    MODULE_LOOKUP[type_id] = {}
-    for cls_name in CLASSES[type_id]:
-        cls = CLASSES[type_id][cls_name]
-        API_SCHEMAS[type_id][cls_name] = cls.get_ui_schema()
-        MODULE_LOOKUP[type_id][cls_name] = cls.__module__
-
-
-logging.info(json.dumps(API_SCHEMAS, indent=2))
+app.init_hook = _init_hook
 
 
 def build_app(app: superduperapp.SuperDuperApp):
@@ -85,32 +43,23 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/spec/show', method='get')
     def spec_show():
-        return API_SCHEMAS
+        return CONFIG
 
-    @app.add('/spec/lookup', method='get')
-    def spec_lookup():
-        return MODULE_LOOKUP
+    @app.add('/db/artifact_store/put', method='put')
+    def db_artifact_store_put_bytes(raw: bytes = File(...)):
+        file_id = str(hashlib.sha1(raw).hexdigest())
+        app.db.artifact_store.put_bytes(serialized=raw, file_id=file_id)
+        return {'file_id': file_id}
 
-    @app.add('/db/artifact_store/save_artifact', method='put')
-    def db_artifact_store_save_artifact(datatype: str, raw: bytes = File(...)):
-        r = app.db.artifact_store.save_artifact({'bytes': raw, 'datatype': datatype})
-        return {'file_id': r['file_id']}
-
-    @app.add('/db/artifact_store/get_artifact', method='get')
-    def db_artifact_store_get_artifact(file_id: str, datatype: t.Optional[str] = None):
-        bytes = app.db.artifact_store._load_bytes(file_id=file_id)
-
-        if datatype is not None:
-            datatype = app.db.datatypes[datatype]
-        if datatype is None or datatype.media_type is None:
-            media_type = magic.from_buffer(bytes, mime=True)
-        else:
-            media_type = datatype.media_type
+    @app.add('/db/artifact_store/get', method='get')
+    def db_artifact_store_get_bytes(file_id: str):
+        bytes = app.db.artifact_store.get_bytes(file_id=file_id)
+        media_type = magic.from_buffer(bytes, mime=True)
         return Response(content=bytes, media_type=media_type)
 
     @app.add('/db/apply', method='post')
     def db_apply(info: t.Dict):
-        component = Document.decode(info)
+        component = Document.decode(info).unpack()
         app.db.apply(component)
         return {'status': 'ok'}
 
@@ -125,12 +74,12 @@ def build_app(app: superduperapp.SuperDuperApp):
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
-        out = app.db.show(type_id=type_id, identifier=identifier, version=version)
-        if isinstance(out, dict) and '_id' in out:
-            del out['_id']
-        if type_id == 'datatype' and identifier is None:
-            out.extend(list(app.db.datatypes.keys()))
-        return out
+        return app.db.show(
+            type_id=type_id,
+            identifier=identifier,
+            version=version,
+            include_presets=True,
+        )
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
@@ -144,33 +93,31 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/execute', method='post')
     def db_execute(
-        query: str = "<collection>.<method>(*args, **kwargs)",
-        documents: t.List[t.Dict] = [],
+        query: t.Dict,
     ):
-        query = [x for x in query.split('\n') if x.strip()]
-        query = parse_query(query, documents, db=app.db)
+        if '_path' not in query:
+            databackend = app.db.databackend.__module__.split('.')[-2]
+            query['_path'] = f'superduperdb/backends/{databackend}/query/parse_query'
+
+        q = Document.decode(query, db=app.db).unpack()
 
         logging.info('processing this query:')
-        logging.info(query)
+        logging.info(q)
 
-        result = app.db.execute(query)
+        result = q.execute()
 
-        if query.type in {'insert', 'delete'}:
+        if q.type in {'insert', 'delete', 'update'}:
             return {'_base': [str(x) for x in result[0]]}, []
 
-        logging.warn(str(query))
+        logging.warn(str(q))
+
         if isinstance(result, Document):
             result = [result]
-        elif result is None:
-            result = []
-        else:
-            result = list(result)
+
+        result = [dict(r.encode()) for r in result]
         for r in result:
-            if '_id' in r:
-                del r['_id']
-        result = [strip_artifacts(r.encode()) for r in result]
-        logging.warn(str(result))
-        return result
+            r['_blobs'] = r['_blobs'].keys()
+        return list(result)
 
 
 build_app(app)

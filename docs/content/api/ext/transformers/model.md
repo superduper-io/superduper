@@ -53,7 +53,7 @@ LLM(self,
 | adapter_id | adapter id, default is None Add a adapter to the base model for inference. |
 | model_kwargs | model kwargs, all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained` |
 | tokenizer_kwargs | tokenizer kwargs, all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained` |
-| prompt_template | prompt template, default is "{input}" |
+| prompt_template | prompt template, default is `"{input}"` |
 
 LLM model based on `transformers` library.
 

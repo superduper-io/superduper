@@ -33,7 +33,7 @@ This will result in a warning being emitted when the function is used.
 
 ```python
 component(*schema: Dict,
-     handle_integration: Callable = <function <lambda> at 0x104aa3c40>)
+     handle_integration: Callable = <function <lambda> at 0x10694fc40>)
 ```
 | Parameter | Description |
 |-----------|-------------|

@@ -56,6 +56,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/hr/build
+          publish_dir: docs/build
           cname: docs.superduperdb.com
-          enable_jekyll: true

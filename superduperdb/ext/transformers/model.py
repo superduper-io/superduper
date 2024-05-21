@@ -249,7 +249,7 @@ class LLM(BaseLLM, _Fittable):
         all the kwargs will pass to `transformers.AutoModelForCausalLM.from_pretrained`
     :param tokenizer_kwargs: tokenizer kwargs,
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
-    :param prompt_template: prompt template, default is "{input}"
+    :param prompt_template: prompt template, default is `"{input}"`
     :param prompt_func: prompt function, default is None
 
     All the `model_kwargs` will pass to
@@ -298,11 +298,11 @@ class LLM(BaseLLM, _Fittable):
         """A new function to create a LLM model from from_pretrained function.
 
         Allow the user to directly replace:
-        AutoModelForCausalLM.from_pretrained -> LLM.from_pretrained
+        `AutoModelForCausalLM.from_pretrained` -> `LLM.from_pretrained`
 
         :param model_name_or_path: model name or path
         :param identifier: model identifier
-        :param prompt_template: prompt template, default is "{input}"
+        :param prompt_template: prompt template, default is `"{input}"`
         :param prompt_func: prompt function, default is None
         :param predict_kwargs: predict kwargs, default is None
         :param kwargs: additional keyword arguments, all the kwargs will pass to `LLM`

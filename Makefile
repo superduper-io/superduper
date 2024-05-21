@@ -62,13 +62,9 @@ install_devkit: ## Add essential development tools
 ##@ Code Quality
 
 gen_docs: ## Generate Docs and API
-	@echo "===> Generate API docs as Markdown <==="
-	python docs/hr/content/build_api_docs.py
-	@echo "Build finished. The HTML pages are in docs/hr/content/build_api_docs"
-
 	@echo "===> Generate docusaurus docs and blog-posts <==="
-	cd docs/hr && npm i --legacy-peer-deps && npm run build
-	cd ../..
+	cd docs && npm i --legacy-peer-deps && npm run build
+	cd ..
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 lint-and-type-check: ## Lint and type-check the code

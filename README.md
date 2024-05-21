@@ -40,7 +40,7 @@
 
 ---
 
-### :mega:  ***We  have a big release v0.2 with a variety of exciting new features and integrations as well as updated docs and use-cases coming up on May 15th. Have a glimpse here in the [changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)! Also, we are launching an enterprise solution. [Sign-up for the preview waiting list here.](https://www.superduperdb.com/join-beta-waitlist)***
+### :mega:  ***We  have a big release v0.2 with a variety of exciting new features and integrations as well as updated docs and use-cases coming up in coming weeks. Have a glimpse here in the [changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)! Also, we are launching an enterprise solution. [Sign-up for the preview waiting list here.](https://www.superduperdb.com/join-beta-waitlist)***
 
 ---
 

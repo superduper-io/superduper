@@ -23,6 +23,7 @@ torch and torch.manual_seed(42)
 np.random.seed(42)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def add_models_encoders(test_db):
     test_db.add(tensor(dtype='float', shape=(32,)))
     _, dt_16 = test_db.add(tensor(dtype='float', shape=(16,)))

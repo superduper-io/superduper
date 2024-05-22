@@ -348,7 +348,9 @@ class Datalayer:
                 r['_fold'] = 'valid'
 
         if auto_schema and self.cfg.auto_schema:
-            self.auto_create_table_schema(insert)
+            self.databackend.auto_create_table_schema(
+                db=self, table_name=insert.identifier, documents=insert.documents
+            )
 
         inserted_ids = insert.do_execute(self)
 
@@ -362,23 +364,6 @@ class Datalayer:
                     insert, ids=inserted_ids, verbose=False
                 )
         return inserted_ids, None
-
-    def auto_create_table_schema(self, insert: Query):
-        """Auto create table schema based on insert query.
-
-        :param insert: The insert query object specifying the data to be inserted.
-        """
-        from superduperdb.components.table import Table
-
-        table_name = insert.identifier
-        try:
-            table = self.tables[table_name]
-        except FileNotFoundError:
-            table = None
-        if table is None:
-            schema = self.infer_schema(insert.documents[0])
-            table = Table(identifier=table_name, schema=schema)
-            self.apply(table)
 
     def _select(self, select: Query, reference: bool = True) -> SelectResult:
         """
@@ -435,7 +420,7 @@ class Datalayer:
         task_workflow.run_jobs()
         return task_workflow
 
-    def _write(self, write: Query, refresh: bool = True, **kwargs) -> UpdateResult:
+    def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
         Bulk write data to the database.
 
@@ -471,7 +456,7 @@ class Datalayer:
                 return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
 
-    def _update(self, update: Query, refresh: bool = True, **kwargs) -> UpdateResult:
+    def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
         """
         Update data in the database.
 

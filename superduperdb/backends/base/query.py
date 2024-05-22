@@ -154,7 +154,7 @@ class Query(_BaseQuery):
 
     @property
     @abstractmethod
-    def documents(self):
+    def documents(self) -> t.List[Document]:
         """Return the documents of the query."""
         pass
 

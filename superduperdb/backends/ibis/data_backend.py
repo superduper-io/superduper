@@ -15,6 +15,7 @@ from superduperdb.backends.ibis.query import IbisQuery
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.enums import DBType
+from superduperdb.base.exceptions import SchemaMismatchError
 from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
@@ -201,3 +202,47 @@ class IbisDataBackend(BaseDataBackend):
         from superduperdb.misc.auto_schema import infer_schema
 
         return infer_schema(data, identifier=identifier, ibis=True)
+
+    def auto_create_table_schema(self, db, table_name, documents):
+        """Auto create table schema.
+
+        For Ibis, we need to create the table schema before inserting the data.
+        The function will infer the schema from the first document and create the table
+        if the table does not exist.
+
+        :param db: The datalayer instanace
+        :param table_name: The table name
+        :param documents: The documents
+        """
+        try:
+            table = db.tables[table_name]
+        except FileNotFoundError:
+            table = None
+
+        schema = self.infer_schema(documents[0])
+        if table is None:
+            # Should we need to check all the documents?
+            table = Table(identifier=table_name, schema=schema)
+            if table.primary_id not in schema.fields:
+                table.schema.fields[table.primary_id] = dtype('str')
+            db.apply(table)
+
+        else:
+            # Only check the shcema built from auto_schema
+            # The schema build from user input should not be checked
+            if not table.schema.identifier.startswith('AUTO:'):
+                return
+            table_schema_identifier = table.schema.identifier.replace("AUTO:", "")
+            table_schema_fields_set = set(table_schema_identifier.split("&"))
+
+            check_schema_identifier = schema.identifier.replace("AUTO:", "")
+            check_schema_fields_set = set(check_schema_identifier.split("&"))
+            # the schema of new documents should be a subset of the existing schema
+            if not table_schema_fields_set.issuperset(check_schema_fields_set):
+                new_fields_set = check_schema_fields_set - table_schema_fields_set
+                error_message = (
+                    f"Cant insert documents with new fields: {new_fields_set} "
+                    f"into the table {table_name}."
+                )
+
+                raise SchemaMismatchError(error_message)

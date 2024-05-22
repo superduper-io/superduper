@@ -211,6 +211,13 @@ def test_add(db):
     with pytest.raises(ValueError):
         db.apply('test')
 
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
+def test_add(db):
+    with patch.object(db, '_update_component', side_effect=Exception):
+        with pytest.raises(Exception) as e:
+            with patch('logging.error') as mock_log:
+                db._add(TestComponent(identifier='test_list_1'))
+                mock_log.assert_called_once_with('Error in adding component')
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_add_with_artifact(db):

@@ -857,55 +857,68 @@ class Datalayer:
         dependencies: t.Sequence[Job] = (),
         parent: t.Optional[str] = None,
     ):
-        jobs = list(dependencies)
-        object.db = self
-        object.pre_create(self)
-        assert hasattr(object, 'identifier')
-        assert hasattr(object, 'version')
+        try:
+            jobs = list(dependencies)
+            object.db = self
+            object.pre_create(self)
+            assert hasattr(object, 'identifier')
+            assert hasattr(object, 'version')
 
-        if not isinstance(object.identifier, variables.Variable):
-            existing_versions = self.show(object.type_id, object.identifier)
-        else:
-            existing_versions = []
-        already_exists = (
-            isinstance(object.version, int) and object.version in existing_versions
-        )
-
-        if already_exists:
-            return self._update_component(
-                object, dependencies=dependencies, parent=parent
+            if not isinstance(object.identifier, variables.Variable):
+                existing_versions = self.show(object.type_id, object.identifier)
+            else:
+                existing_versions = []
+            already_exists = (
+                isinstance(object.version, int) and object.version in existing_versions
             )
 
-        if object.version is None:
-            if existing_versions:
-                object.version = max(existing_versions) + 1
-            else:
-                object.version = 0
+            if already_exists:
+                return self._update_component(
+                    object, dependencies=dependencies, parent=parent
+                )
 
-        serialized = object.dict().encode(leaves_to_keep=(Component,))
+            if object.version is None:
+                if existing_versions:
+                    object.version = max(existing_versions) + 1
+                else:
+                    object.version = 0
 
-        children = [
-            v for k, v in serialized['_leaves'].items() if isinstance(v, Component)
-        ]
+            serialized = object.dict().encode(leaves_to_keep=(Component,))
 
-        jobs.extend(self._add_child_components(children, parent=object))
+            children = [
+                v for k, v in serialized['_leaves'].items() if isinstance(v, Component)
+            ]
 
-        for k, v in serialized['_leaves'].items():
-            if isinstance(v, Component):
-                serialized['_leaves'][k] = f'%{v.id}'
+            jobs.extend(self._add_child_components(children, parent=object))
 
-        serialized = self.artifact_store.save_artifact(serialized)
+            for k, v in serialized['_leaves'].items():
+                if isinstance(v, Component):
+                    serialized['_leaves'][k] = f'%{v.id}'
 
-        self.metadata.create_component(serialized)
+            serialized = self.artifact_store.save_artifact(serialized)
 
-        if parent is not None:
-            self.metadata.create_parent_child(parent, object.uuid)
+            self.metadata.create_component(serialized)
 
-        object.post_create(self)
-        self._add_component_to_cache(object)
-        these_jobs = object.schedule_jobs(self, dependencies=dependencies)
-        jobs.extend(these_jobs)
-        return jobs
+            if parent is not None:
+                self.metadata.create_parent_child(parent, object.uuid)
+
+            object.post_create(self)
+            self._add_component_to_cache(object)
+            these_jobs = object.schedule_jobs(self, dependencies=dependencies)
+            jobs.extend(these_jobs)
+            return jobs
+        except Exception:
+            if parent is not None:
+                self.remove(
+                    parent.type_id,
+                    parent.identifier,
+                    version=parent.version,
+                    force=True,
+                )
+        finally:
+            logging.error(f'Error in adding component {object.id}')
+            return []
+
 
     def _remove_component_version(
         self,

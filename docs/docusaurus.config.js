@@ -102,6 +102,21 @@ const config = {
         },
       },
     ],
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        createRedirects(existingPath) {
+          if (existingPath.includes('/docs')) {
+            // Redirect from /docs/docs/X to /docs/X
+            // This is to avoid broken links on existing sites that are pointing to superduper docs.
+            return [
+              existingPath.replace('/docs', '/docs/docs'),
+            ];
+          }
+          return undefined; // Return a falsy value: no redirect created
+        },
+      },
+    ],
   ],
   scripts: [
     {

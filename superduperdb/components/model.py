@@ -801,7 +801,11 @@ class Model(Component):
             **self.model_update_kwargs,
         )
         if update:
-            update.execute(db=db, auto_schema=False)
+            # Don't use auto_schema for inserting model outputs
+            if update.type == 'insert':
+                update.execute(db=db, auto_schema=False)
+            else:
+                update.execute(db=db)
 
     def encode_outputs(self, outputs):
         """Method that encodes outputs of a model for saving in the database.

@@ -2,7 +2,6 @@ import dataclasses as dc
 import typing as t
 
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.base.enums import DBType
 from superduperdb.components.component import Component
 from superduperdb.components.schema import Schema, _Native
 from superduperdb.misc.annotations import merge_docstrings
@@ -65,10 +64,6 @@ class Table(Component):
                 )
 
                 return
-
-        if self.db.databackend.db_type == DBType.SQL:
-            if self.primary_id not in self.schema.fields:
-                self.schema.fields[self.primary_id] = dtype('str')  # type: ignore
 
         try:
             db.databackend.create_table_and_schema(self.identifier, self.schema.raw)

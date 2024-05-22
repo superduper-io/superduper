@@ -6,6 +6,7 @@ import pytest
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.document import Document
+from superduperdb.base.enums import DBType
 from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
 
@@ -275,8 +276,49 @@ def test_insert_with_schema(db):
     datas = [Document(data)]
 
     table_or_collection.insert(datas).execute()
+    # Make sure multiple insert works
+    table_or_collection.insert(datas).execute()
     datas_from_db = list(table_or_collection.select().execute())
 
     for d, d_db in zip(datas, datas_from_db):
         assert d['img'].size == d_db['img'].size
         assert np.all(d['array'] == d_db['array'])
+
+
+@pytest.mark.parametrize(
+    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
+)
+def test_insert_with_diff_schemas(db):
+    db.cfg.auto_schema = True
+    import numpy as np
+    import PIL.Image
+
+    table_or_collection = db['documents']
+    data = {
+        'array': np.array([1, 2, 3]),
+    }
+    datas = [Document(data)]
+    table_or_collection.insert(datas).execute()
+
+    datas_from_db = list(table_or_collection.select().execute())
+
+    assert np.all(datas[0]['array'] == datas_from_db[0]['array'])
+
+    data = {
+        'img': PIL.Image.open('test/material/data/test.png'),
+    }
+    datas = [Document(data)]
+
+    # Do not support different schema in SQL
+    if db.databackend.db_type == DBType.SQL:
+        from superduperdb.base.exceptions import SchemaMismatchError
+
+        with pytest.raises(SchemaMismatchError) as e:
+            table_or_collection.insert(datas).execute()
+        assert 'img=pil_image' in str(e)
+    # Mongo can support different schema
+    else:
+        table_or_collection.insert(datas).execute()
+        datas_from_db = list(table_or_collection.select().execute())
+
+        assert datas[0]['img'].size == datas_from_db[-1]['img'].size

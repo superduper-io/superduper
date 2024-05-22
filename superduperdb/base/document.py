@@ -72,7 +72,6 @@ class Document(MongoStyleDict):
                 files,
                 leaves_to_keep=leaves_to_keep,
             )
-            pass
         return _deep_flat_encode(
             out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )

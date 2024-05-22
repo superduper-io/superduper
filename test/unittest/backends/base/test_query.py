@@ -166,8 +166,8 @@ def test_model(db):
 
 
 def test_builder():
-    q = MongoQuery(identifier='table', parts=()).select('id').where(2, 3, 4, a=5)
-    assert str(q) == 'table.select("id").where(2, 3, 4, a=5)'
+    q = MongoQuery(identifier='table', parts=()).find('id').where(2, 3, 4, a=5)
+    assert str(q) == 'table.find("id").where(2, 3, 4, a=5)'
 
 
 multi_query = """something.find().limit(5)
@@ -258,35 +258,24 @@ def test_insert(db):
         assert d['y'] == d_db['y']
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+@pytest.mark.parametrize(
+    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
+)
 def test_insert_with_schema(db):
+    db.cfg.auto_schema = True
     import numpy as np
     import PIL.Image
-
-    from superduperdb.ext.numpy.encoder import NumpyDataTypeFactory
-    from superduperdb.ext.pillow.encoder import pil_image
 
     data = {
         'img': PIL.Image.open('test/material/data/test.png'),
         'array': np.array([1, 2, 3]),
     }
 
-    schema = Schema(
-        'schema',
-        fields={
-            'img': pil_image,
-            'array': NumpyDataTypeFactory.create(data['array']),
-        },
-    )
-
-    table = Table('documents', schema=schema)
-    db.add(table)
-
     table_or_collection = db['documents']
     datas = [Document(data)]
 
-    table_or_collection.insert(datas).do_execute()
-    datas_from_db = list(table_or_collection.select().do_execute())
+    table_or_collection.insert(datas).execute()
+    datas_from_db = list(table_or_collection.select().execute())
 
     for d, d_db in zip(datas, datas_from_db):
         assert d['img'].size == d_db['img'].size

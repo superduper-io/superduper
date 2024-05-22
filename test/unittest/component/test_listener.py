@@ -102,6 +102,7 @@ def test_listener_chaining(db):
 @pytest.mark.parametrize("flatten", [False, True])
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
+    db.cfg.auto_schema = True
     collection = db["test"]
 
     # Do not support flatten is True and document_embedded is True
@@ -149,6 +150,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
 @pytest.mark.parametrize("flatten", [True, False])
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_create_output_dest_ibis(db, data, flatten):
+    db.cfg.auto_schema = True
     schema = Schema(
         identifier="test",
         fields={"x": dtype(int), "id": dtype(str)},

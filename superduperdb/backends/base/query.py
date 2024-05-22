@@ -81,6 +81,8 @@ class Query(_BaseQuery):
             if isinstance(r, (tuple, list)):
                 out = [_set_db(x, db) for x in r]
                 return out
+            if isinstance(r, Document):
+                return Document({k: _set_db(v, db) for k, v in r.items()})
             if isinstance(r, dict):
                 return {k: _set_db(v, db) for k, v in r.items()}
             if isinstance(r, Query):
@@ -368,14 +370,14 @@ class Query(_BaseQuery):
     def _create_table_if_not_exists(self):
         pass
 
-    def execute(self, db=None):
+    def execute(self, db=None, **kwargs):
         """
         Execute the query.
 
         :param db: Datalayer instance.
         """
         self.db = db or self.db
-        return self.db.execute(self)
+        return self.db.execute(self, **kwargs)
 
     def do_execute(self, db=None):
         """

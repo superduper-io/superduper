@@ -2,6 +2,7 @@ import importlib
 import typing as t
 
 from superduperdb import logging
+from superduperdb.base.exceptions import UnsupportedDatatype
 from superduperdb.components.datatype import (
     DataType,
     DataTypeFactory,
@@ -68,7 +69,16 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
             break
 
     if datatype is None:
-        logging.info(f"Could not infer datatype for data: {data}, using default")
+        try:
+            encoded_data = dill_encode(data)
+            decoded_data = dill_decode(encoded_data)
+            assert isinstance(decoded_data, type(data))
+        except Exception as e:
+            raise UnsupportedDatatype(
+                f"Could not infer datatype for data: {data}"
+            ) from e
+
+        logging.info(f"Inferring default datatype for data: {data}")
         datatype = DEFAULT_DATATYPE
 
     return datatype
@@ -91,7 +101,12 @@ def infer_schema(
 
     schema_data = {}
     for k, v in data.items():
-        data_type = infer_datatype(v)
+        try:
+            data_type = infer_datatype(v)
+        except UnsupportedDatatype as e:
+            raise UnsupportedDatatype(
+                f"Could not infer datatype for key: {k}, value: {v}"
+            ) from e
         if data_type is not None:
             schema_data[k] = data_type
 

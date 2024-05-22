@@ -82,7 +82,7 @@ class MongoQuery(Query):
         'delete_one': '^.*\.delete_one\(.*\)$',
     }
 
-    metholds_mapping: t.ClassVar[t.Dict[str, str]] = {
+    methods_mapping: t.ClassVar[t.Dict[str, str]] = {
         "insert": "insert_many",
         "select": "find",
     }
@@ -601,18 +601,6 @@ class MongoQuery(Query):
                     )
 
             return collection.insert_many(documents)
-
-    @staticmethod
-    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """Infer a schema from a given data object.
-
-        :param data: The data object
-        :param identifier: The identifier for the schema, if None, it will be generated
-        :return: The inferred schema
-        """
-        from superduperdb.misc.auto_schema import infer_schema
-
-        return infer_schema(data, identifier)
 
 
 def InsertOne(**kwargs):

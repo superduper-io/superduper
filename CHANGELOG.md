@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enable dependency injection on image builders
 - Add database package for oracle
 - Reconstruct data serialization and database queries
+- Auto-create tables and schemas
 
 #### Bug Fixes
 - Fixed cross platfrom issue in cli command

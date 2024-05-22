@@ -18,6 +18,7 @@ from superduperdb.backends.base.metadata import MetaDataStore
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions, variables
+from superduperdb.base.config import Config
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
@@ -104,6 +105,7 @@ class Datalayer:
 
         self.compute = compute
         self._server_mode = False
+        self._cfg = s.CFG
 
     def __getitem__(self, item):
         return self.databackend.get_query_builder(item)
@@ -324,7 +326,11 @@ class Datalayer:
         return result, None
 
     def _insert(
-        self, insert: Query, refresh: bool = True, datatypes: t.Sequence[DataType] = ()
+        self,
+        insert: Query,
+        refresh: bool = True,
+        datatypes: t.Sequence[DataType] = (),
+        auto_schema: bool = True,
     ) -> InsertResult:
         """
         Insert data into the database.
@@ -341,6 +347,9 @@ class Datalayer:
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'
 
+        if auto_schema and self.cfg.auto_schema:
+            self.auto_create_table_schema(insert)
+
         inserted_ids = insert.do_execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
@@ -353,6 +362,23 @@ class Datalayer:
                     insert, ids=inserted_ids, verbose=False
                 )
         return inserted_ids, None
+
+    def auto_create_table_schema(self, insert: Query):
+        """Auto create table schema based on insert query.
+
+        :param insert: The insert query object specifying the data to be inserted.
+        """
+        from superduperdb.components.table import Table
+
+        table_name = insert.identifier
+        try:
+            table = self.tables[table_name]
+        except FileNotFoundError:
+            table = None
+        if table is None:
+            schema = self.infer_schema(insert.documents[0])
+            table = Table(identifier=table_name, schema=schema)
+            self.apply(table)
 
     def _select(self, select: Query, reference: bool = True) -> SelectResult:
         """
@@ -409,7 +435,7 @@ class Datalayer:
         task_workflow.run_jobs()
         return task_workflow
 
-    def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
+    def _write(self, write: Query, refresh: bool = True, **kwargs) -> UpdateResult:
         """
         Bulk write data to the database.
 
@@ -445,7 +471,7 @@ class Datalayer:
                 return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
 
-    def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
+    def _update(self, update: Query, refresh: bool = True, **kwargs) -> UpdateResult:
         """
         Update data in the database.
 
@@ -1075,6 +1101,16 @@ class Datalayer:
         :return: The inferred schema
         """
         return self.databackend.infer_schema(data, identifier)
+
+    def set_cfg(self, cfg: Config):
+        """Set the configuration object for the datalayer."""
+        assert isinstance(cfg, Config)
+        self._cfg = cfg
+
+    @property
+    def cfg(self) -> Config:
+        """Get the configuration object for the datalayer."""
+        return self._cfg or s.CFG
 
 
 @dc.dataclass

@@ -82,32 +82,12 @@ class MongoMetaDataStore(MetaDataStore):
         """
         return self.job_collection.insert_one(info)
 
-    def get_parent_child_relations(self):
-        """Get parent-child relations from the metadata store."""
-        c = self.parent_child_mappings.find()
-        return [(r['parent'], r['child']) for r in c]
-
-    def get_component_version_children(self, uuid: str):
-        """Get the children of a component version.
-
-        :param uuid: unique identifier of component
-        """
-        return self.parent_child_mappings.distinct('child', {'parent': uuid})
-
     def get_job(self, identifier: str):
         """Get a job from the metadata store.
 
         :param identifier: identifier of job
         """
         return self.job_collection.find_one({'identifier': identifier})
-
-    def create_metadata(self, key: str, value: str):
-        """Create metadata in the metadata store.
-
-        :param key: key to be created
-        :param value: value to be created
-        """
-        return self.meta_collection.insert_one({'key': key, 'value': value})
 
     def get_metadata(self, key: str):
         """Get metadata from the metadata store.
@@ -205,23 +185,6 @@ class MongoMetaDataStore(MetaDataStore):
             'version', {'type_id': type_id, 'identifier': identifier}
         )
 
-    def list_components_in_scope(self, scope: str):
-        """List components in a scope.
-
-        :param scope: scope of components
-        """
-        out = []
-        for r in self.component_collection.find({'parent': scope}):
-            out.append((r['type_id'], r['identifier']))
-        return out
-
-    def show_job(self, job_id: str):
-        """Show a job in the metadata store.
-
-        :param job_id: identifier of job
-        """
-        return self.job_collection.find_one({'identifier': job_id})
-
     def show_jobs(
         self,
         component_identifier: t.Optional[str] = None,
@@ -244,15 +207,6 @@ class MongoMetaDataStore(MetaDataStore):
             {'type_id': type_id, 'identifier': identifier, 'version': version},
             {'uuid': 1},
         )['uuid']
-
-    def component_has_parents(self, type_id: str, identifier: str) -> int:
-        """Check if a component has parents.
-
-        :param type_id: type of component
-        :param identifier: identifier of component
-        """
-        doc = {'child': {'$regex': f'^{type_id}/{identifier}/'}}
-        return self.parent_child_mappings.count_documents(doc)
 
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int

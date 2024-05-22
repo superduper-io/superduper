@@ -10,11 +10,10 @@ from sqlalchemy.orm import sessionmaker
 from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduperdb.backends.sqlalchemy.db_helper import get_db_config
-from superduperdb.base.document import Document
 from superduperdb.misc.colors import Colors
 
 if t.TYPE_CHECKING:
-    from superduperdb.backends.base.query import Select
+    pass
 
 
 class SQLAlchemyMetadata(MetaDataStore):
@@ -545,107 +544,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         # Not supported currently
         raise NotImplementedError
 
-    # --------------- METADATA -----------------
-
-    def create_metadata(self, key, value):
-        """Create metadata with the given key and value.
-
-        :param key: The key to create
-        :param value: The value to create
-        """
-        with self.session_context() as session:
-            stmt = insert(self.meta_table).values(key=key, value=value)
-            session.execute(stmt)
-
-    def get_metadata(self, key):
-        """Get the metadata with the given key.
-
-        :param key: The key to retrieve
-        """
-        with self.session_context() as session:
-            stmt = select(self.meta_table).where(self.meta_table.c.key == key).limit(1)
-            res = self.query_results(self.meta_table, stmt, session)
-            value = res[0]['value'] if res else None
-            return value
-
-    def update_metadata(self, key, value):
-        """Update the metadata with the given key.
-
-        :param key: The key to update
-        :param value: The updated value
-        """
-        with self.session_context() as session:
-            stmt = (
-                self.meta_table.update()
-                .where(self.meta_table.c.key == key)
-                .values({key: value})
-            )
-            session.execute(stmt)
-
     # --------------- Query ID -----------------
-    def add_query(self, query: 'Select', model: str):
-        """Add a query to the query table.
-
-        :param query: The query to add to the table.
-        :param model: The model to associate with the query.
-        """
-        query_hash = str(hash(query))
-
-        with self.session_context() as session:
-            with self._lock:
-                row = {
-                    'query': query.dict().encode(),
-                    'model': model,
-                    'query_id': query_hash,
-                }
-
-            stmt = insert(self.query_id_table).values(**row)
-            session.execute(stmt)
-
-    def get_query(self, query_hash: str):
-        """Get the query from the query table corresponding to the query hash.
-
-        :param query_hash: The hash of the query to retrieve.
-        """
-        try:
-            with self.session_context() as session:
-                stmt = (
-                    select(self.query_id_table)
-                    .where(self.query_id_table.c.query_id == str(query_hash))
-                    .limit(1)
-                )
-                res = self.query_results(self.query_id_table, stmt, session)
-                out = res[0] if res else None
-        except AttributeError as e:
-            if 'NoneType' in str(e):
-                raise NonExistentMetadataError(
-                    f'Query hash {query_hash} does not exist'
-                )
-            raise e
-
-        if out is None:
-            raise NonExistentMetadataError(f'Query hash {query_hash} does not exist')
-
-    def get_model_queries(self, model: str):
-        """Get queries related to the given model.
-
-        :param model: The name of the model to retrieve queries for.
-        """
-        with self.session_context() as session:
-            stmt = select(self.query_id_table).where(
-                self.query_id_table.c.model == model
-            )
-            queries = self.query_results(self.query_id_table, stmt, session)
-
-            unpacked_queries = []
-            for row in queries:
-                id = row['query_id']
-                serialized = row['query']
-                query = Document.decode(serialized)
-                unpacked_queries.append(
-                    {'query_id': id, 'query': query, 'sql': query.repr_()}
-                )
-            return unpacked_queries
 
     def disconnect(self):
         """Disconnect the client."""

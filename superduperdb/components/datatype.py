@@ -599,21 +599,9 @@ class Native(_BaseEncodable):
         return f'?{self.id}'
 
 
-# TODO: Remove the unused class
-class _ArtifactSaveMixin:
-    def save(self, artifact_store):
-        """Save in the artifact store.
-
-        :param artifact_store: Artifact store instance.
-        """
-        r = artifact_store.save_artifact(self.encode()['_content'])
-        self.x = None
-        self.file_id = r['file_id']
-
-
 @merge_docstrings
 @dc.dataclass
-class Artifact(_BaseEncodable, _ArtifactSaveMixin):
+class Artifact(_BaseEncodable):
     """Class for representing data to be saved on disk or in the artifact-store.
 
     :param x: The artifact object.
@@ -678,7 +666,7 @@ class LazyArtifact(Artifact):
 
 @merge_docstrings
 @dc.dataclass
-class File(_BaseEncodable, _ArtifactSaveMixin):
+class File(_BaseEncodable):
     """Data to be saved on disk and passed as a file reference.
 
     :param x: path to the file

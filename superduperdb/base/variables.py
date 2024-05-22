@@ -1,39 +1,8 @@
 import dataclasses as dc
-import importlib
-import inspect
 import typing as t
 
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.annotations import merge_docstrings
-
-
-# TODO: (New) remove the unused code
-def _from_dict(r: t.Any, db: None = None) -> t.Any:
-    from superduperdb.base.document import Document
-    from superduperdb.components.datatype import LazyArtifact, LazyFile
-
-    if isinstance(r, Document):
-        r = r.unpack(leaves_to_keep=(LazyArtifact, LazyFile))
-    if isinstance(r, (list, tuple)):
-        return [_from_dict(i, db=db) for i in r]
-    if not isinstance(r, dict):
-        return r
-    if '_content' in r:
-        r = r['_content']
-    if 'cls' in r and 'module' in r and 'dict' in r:
-        module = importlib.import_module(r['module'])
-        cls_ = getattr(module, r['cls'])
-        if inspect.isfunction(cls_):
-            return cls_(**r['dict'])
-        kwargs = _from_dict(r['dict'], db=db)
-        kwargs_init = {k: v for k, v in kwargs.items() if k not in cls_.set_post_init}
-        kwargs_post_init = {k: v for k, v in kwargs.items() if k in cls_.set_post_init}
-        instance = cls_(**kwargs_init)
-        for k, v in kwargs_post_init.items():
-            setattr(instance, k, v)
-        return instance
-    else:
-        return {k: _from_dict(v, db=db) for k, v in r.items()}
 
 
 class VariableError(Exception):
@@ -54,26 +23,6 @@ def _find_variables(r):
         return [r]
     if isinstance(r, Leaf):
         return r.variables
-    return []
-
-
-def _find_variables_with_path(r):
-    if isinstance(r, dict):
-        out = []
-        for k, v in r.items():
-            tmp = _find_variables_with_path(v)
-            for p in tmp:
-                out.append({'path': [k] + p['path'], 'variable': p['variable']})
-        return out
-    elif isinstance(r, (list, tuple)):
-        out = []
-        for i, v in enumerate(r):
-            tmp = _find_variables_with_path(v)
-            for p in tmp:
-                out.append({'path': [i] + p['path'], 'variable': p['variable']})
-        return out
-    elif isinstance(r, Variable):
-        return [{'path': [], 'variable': r}]
     return []
 
 

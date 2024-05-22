@@ -14,7 +14,6 @@ from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
-from superduperdb.misc.special_dicts import MongoStyleDict
 
 from .query import MongoQuery
 
@@ -97,32 +96,6 @@ class MongoDataBackend(BaseDataBackend):
         :param identifier: table or collection identifier
         """
         return self._db[identifier]
-
-    def set_content_bytes(self, r, key, bytes_):
-        """Set the content bytes in the data backend.
-
-        :param r: dictionary containing information about the content
-        :param key: key to set
-        :param bytes_: content bytes
-        """
-        if not isinstance(r, MongoStyleDict):
-            r = MongoStyleDict(r)
-        r[f'{key}._content.bytes'] = bytes_
-        return r
-
-    def exists(self, table_or_collection, id, key):
-        """Check if a document exists in the data backend.
-
-        :param table_or_collection: table or collection identifier
-        :param id: document identifier
-        :param key: key to check
-        """
-        return (
-            self.db[table_or_collection].find_one(
-                {'_id': id, f'{key}._content.bytes': {'$exists': 1}}
-            )
-            is not None
-        )
 
     def unset_outputs(self, info: t.Dict):
         """Unset the output field in the data backend.

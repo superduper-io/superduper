@@ -59,15 +59,6 @@ class IbisDataBackend(BaseDataBackend):
         """Build metadata for the database."""
         return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
 
-    # TODO this duplicates the method create_table_and_schema
-    def create_ibis_table(self, identifier: str, schema: Schema):
-        """Create a table in the database.
-
-        :param identifier: The identifier of the table.
-        :param schema: The schema of the table.
-        """
-        self.conn.create_table(identifier, schema=schema)
-
     def insert(self, table_name, raw_documents):
         """Insert data into the database.
 

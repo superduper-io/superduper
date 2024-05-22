@@ -94,15 +94,6 @@ class BaseDataBackend(ABC):
         """
         pass
 
-    def set_content_bytes(self, r, key, bytes_):
-        """Set content bytes.
-
-        :param r: The row.
-        :param key: The key.
-        :param bytes_: The bytes.
-        """
-        raise NotImplementedError
-
     @abstractmethod
     def drop(self, force: bool = False):
         """Drop the databackend.

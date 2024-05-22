@@ -51,18 +51,6 @@ class ArtifactStore(ABC):
         :param file_id: File id uses to identify artifact in store
         """
 
-    def delete(self, r: t.Dict):
-        """Delete artifact from artifact store.
-
-        :param r: dictionary with mandatory fields
-                  {'file_id'}
-        """
-        if '_content' in r and 'file_id' in r['_content']:
-            return self._delete_bytes(r['_content']['file_id'])
-        for v in r.values():
-            if isinstance(v, dict):
-                self.delete(v)
-
     @abstractmethod
     def drop(self, force: bool = False):
         """
@@ -188,27 +176,6 @@ class ArtifactStore(ABC):
                 file_id = _construct_file_id_from_uri(uri)
             x = self.get_bytes(file_id)
         return datatype.decode_data(x)
-
-    def save(self, r: t.Dict) -> t.Dict:
-        """Save list of artifacts and replace the artifacts with file reference.
-
-        :param r: `dict` of artifacts.
-        """
-        if isinstance(r, dict):
-            if '_content' in r and r['_content']['leaf_type'] in {
-                'artifact',
-                'file',
-                'lazy_artifact',
-                'lazy_file',
-            }:
-                self.save_artifact(r['_content'])
-            else:
-                for k in r:
-                    self.save(r[k])
-        if isinstance(r, list):
-            for x in r:
-                self.save(x)
-        return r
 
     @abstractmethod
     def disconnect(self):

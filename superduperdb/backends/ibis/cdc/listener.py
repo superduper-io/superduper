@@ -106,7 +106,6 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
     """
 
     DEFAULT_ID: str = 'id'
-    EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
     IDENTITY_SEP: str = '/'
     _scheduler: t.Optional[threading.Thread]
 

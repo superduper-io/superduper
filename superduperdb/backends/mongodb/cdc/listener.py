@@ -81,7 +81,6 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
     """
 
     DEFAULT_ID: str = '_id'
-    EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
     IDENTITY_SEP: str = '/'
     _scheduler: t.Optional[threading.Thread]
 

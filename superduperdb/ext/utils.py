@@ -1,12 +1,8 @@
-import base64
 import os
 import typing as t
 
-import numpy as np
-
 if t.TYPE_CHECKING:
-    from superduperdb.base.datalayer import LoadDict
-    from superduperdb.components.datatype import DataType
+    pass
 
 
 def str_shape(shape: t.Sequence[int]) -> str:
@@ -53,31 +49,3 @@ def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) 
             raise ValueError(f'A context is required for prompt {prompt}')
 
     return prompt.format(**format_params)
-
-
-def superduperencode(object):
-    """Encode an object using superduper.
-
-    :param object: The object to encode.
-    """
-    if isinstance(object, np.ndarray):
-        from superduperdb.ext.numpy import array
-
-        encoded = array(dtype=object.dtype, shape=object.shape)(object).encode()
-        encoded['shape'] = object.shape
-        encoded['dtype'] = str(object.dtype)
-        return encoded
-    return object
-
-
-def superduperdecode(r: t.Any, encoders: t.Union[t.Dict[str, 'DataType'], 'LoadDict']):
-    """Decode a superduper encoded object.
-
-    :param r: The object to decode.
-    :param encoders: The encoders to use.
-    """
-    if isinstance(r, dict):
-        encoder = encoders[r['_content']['datatype']]
-        b = base64.b64decode(r['_content']['bytes'])
-        return encoder.decode_data(b)
-    return r

@@ -91,3 +91,11 @@ class ComponentException(BaseException):
 
     :param msg: msg for BaseException
     """
+
+
+class UnsupportedDatatype(BaseException):
+    """
+    UnsupportedDatatype.
+
+    :param msg: msg for BaseException
+    """

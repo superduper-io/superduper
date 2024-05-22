@@ -5,7 +5,7 @@ import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 
-from superduperdb.components.datatype import DataType
+from superduperdb.components.datatype import DataType, DataTypeFactory
 from superduperdb.misc.annotations import component
 
 if t.TYPE_CHECKING:
@@ -87,3 +87,25 @@ pil_image_hybrid = image_type(
     identifier='pil_image_hybrid',
     encodable='artifact',
 )
+
+
+class PilDataTypeFactory(DataTypeFactory):
+    """A factory for pil image # noqa."""
+
+    @staticmethod
+    def check(data: t.Any) -> bool:
+        """Check if the data is a image.
+
+        It's used for registering the auto schema.
+        :param data: The data to check.
+        """
+        return isinstance(data, PIL.Image.Image)
+
+    @staticmethod
+    def create(data: t.Any) -> DataType:
+        """Create a pil_image datatype.
+
+        It's used for registering the auto schema.
+        :param data: The image data.
+        """
+        return pil_image

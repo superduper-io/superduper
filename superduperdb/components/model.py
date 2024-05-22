@@ -801,7 +801,7 @@ class Model(Component):
             **self.model_update_kwargs,
         )
         if update:
-            update.execute(db=db)
+            update.execute(db=db, auto_schema=False)
 
     def encode_outputs(self, outputs):
         """Method that encodes outputs of a model for saving in the database.
@@ -826,7 +826,12 @@ class Model(Component):
 
         :param outputs: Outputs to infer datatype from.
         """
-        if self.datatype is not None or self.output_schema is not None:
+        skip_conds = [
+            not self.db.cfg.auto_schema,
+            self.datatype is not None,
+            self.output_schema is not None,
+        ]
+        if any(skip_conds):
             return
 
         output = outputs[0]

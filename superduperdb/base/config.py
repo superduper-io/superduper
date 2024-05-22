@@ -241,7 +241,8 @@ class Config(BaseConfig):
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
     :param bytes_encoding: The encoding of bytes in the data backend
-
+    :param auto_schema: Whether to automatically create the schema.
+                        If True, the schema will be created if it does not exist.
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
@@ -262,6 +263,7 @@ class Config(BaseConfig):
     logging_type: LogType = LogType.SYSTEM
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
+    auto_schema: bool = True
 
     def __post_init__(self, envs):
         if envs is not None:

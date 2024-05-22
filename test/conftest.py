@@ -311,6 +311,8 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
         raise ValueError(f'Unsupported param type: {type(param)}')
 
     cfg = CFG(data_backend=setup_config['data_backend'])
+    # In the unittests, we needs to call explicitly
+    cfg.auto_schema = False
     db = create_db(cfg, **setup_config)
 
     yield db

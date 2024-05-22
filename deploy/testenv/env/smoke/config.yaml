@@ -28,3 +28,4 @@ retries:
   wait_max: 10.0
   wait_min: 4.0
   wait_multiplier: 1.0
+auto_schema: false

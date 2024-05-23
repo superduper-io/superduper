@@ -65,14 +65,13 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     if isinstance(data, BASE_TYPES):
         datatype = type(data)
-        logging.info(f"Inferred base type: {datatype} for data:", data)
         return datatype
 
     for factory in DataTypeFactory.__subclasses__():
         if factory.check(data):
             datatype = factory.create(data)
             assert isinstance(datatype, DataType)
-            logging.info(f"Inferred datatype: {datatype.identifier} for data: {data}")
+            logging.debug(f"Inferred datatype: {datatype.identifier} for data: {data}")
             break
 
     if datatype is None:
@@ -85,7 +84,7 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
                 f"Could not infer datatype for data: {data}"
             ) from e
 
-        logging.info(f"Inferring default datatype for data: {data}")
+        logging.debug(f"Inferring default datatype for data: {data}")
         datatype = DEFAULT_DATATYPE
 
     return datatype

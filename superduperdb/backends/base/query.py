@@ -136,7 +136,7 @@ class Query(_BaseQuery):
 
         n = like_kwargs.pop('n', 100)
 
-        vector_index = like_kwargs.pop('vector_index')
+        vector_index = like_kwargs.get('vector_index')
 
         similar_ids, similar_scores = self.db.select_nearest(
             like,
@@ -501,6 +501,11 @@ class Query(_BaseQuery):
         for r in documents:
             r = self.db.artifact_store.save_artifact(r)
         return documents
+
+    @property
+    def table_or_collection(self):
+        """Return the table or collection to select from."""
+        return type(self)(identifier=self.identifier, db=self.db)
 
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):

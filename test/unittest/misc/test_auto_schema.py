@@ -120,7 +120,6 @@ def test_mongo_schema(db, data):
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_ibis_schema(db, data):
-    data["id"] = str("1")
     schema = db.infer_schema(data)
 
     t = Table(identifier="my_table", schema=schema)

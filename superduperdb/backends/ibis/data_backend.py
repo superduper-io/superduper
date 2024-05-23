@@ -8,6 +8,7 @@ from ibis.backends.base import BaseBackend
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
+from superduperdb import logging
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
@@ -155,6 +156,8 @@ class IbisDataBackend(BaseDataBackend):
         :param identifier: The identifier of the table.
         :param mapping: The mapping of the schema.
         """
+        if 'id' not in mapping:
+            mapping['id'] = 'string'
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
@@ -225,6 +228,7 @@ class IbisDataBackend(BaseDataBackend):
             table = Table(identifier=table_name, schema=schema)
             if table.primary_id not in schema.fields:
                 table.schema.fields[table.primary_id] = dtype('str')
+            logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
             db.apply(table)
 
         else:
@@ -232,16 +236,15 @@ class IbisDataBackend(BaseDataBackend):
             # The schema build from user input should not be checked
             if not table.schema.identifier.startswith('AUTO:'):
                 return
-            table_schema_identifier = table.schema.identifier.replace("AUTO:", "")
-            table_schema_fields_set = set(table_schema_identifier.split("&"))
+            table_schema_fields_set = table.schema.fields_set
 
-            check_schema_identifier = schema.identifier.replace("AUTO:", "")
-            check_schema_fields_set = set(check_schema_identifier.split("&"))
+            check_schema_fields_set = schema.fields_set
             # the schema of new documents should be a subset of the existing schema
             if not table_schema_fields_set.issuperset(check_schema_fields_set):
                 new_fields_set = check_schema_fields_set - table_schema_fields_set
+                fields_set_message = tuple([f"{k}:{v}" for k, v in new_fields_set])
                 error_message = (
-                    f"Cant insert documents with new fields: {new_fields_set} "
+                    f"Cant insert documents with new fields: {fields_set_message} "
                     f"into the table {table_name}."
                 )
 

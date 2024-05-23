@@ -1,11 +1,14 @@
 import importlib
 import typing as t
 
+from bson import ObjectId
+
 from superduperdb import logging
 from superduperdb.base.exceptions import UnsupportedDatatype
 from superduperdb.components.datatype import (
     DataType,
     DataTypeFactory,
+    _BaseEncodable,
     dill_decode,
     dill_encode,
     json_serializer,
@@ -56,6 +59,12 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
     :param data: The data object
     """
     datatype = None
+
+    if isinstance(data, _BaseEncodable):
+        return datatype
+
+    if isinstance(data, ObjectId):
+        return datatype
 
     if isinstance(data, BASE_TYPES):
         datatype = type(data)

@@ -326,9 +326,10 @@ def test_insert_with_diff_schemas(db):
 )
 def test_auto_document_wrapping(db):
     db.cfg.auto_schema = True
+    import numpy as np
 
-    table_or_collection = db['documents']
-    data = {'x': 1}
+    table_or_collection = db['my_table']
+    data = {'x': np.zeros((1))}
     datas = [Document(data)]
     table_or_collection.insert(datas).execute()
 
@@ -347,13 +348,15 @@ def test_auto_document_wrapping(db):
     _check(2)
 
     # Without `Document` non dict data
-    table_or_collection.insert([1]).execute()
+    table_or_collection.insert([np.zeros((1))]).execute()
     c = _check(3)
+
+    gt = np.zeros((1))
 
     # Auto wrapped _base
     if db.databackend.db_type == DBType.SQL:
         assert 'x' in c[-1]
-        assert c[-1].unpack() == {'x': 1}
+        assert c[-1].unpack() == {'x': gt}
     else:
         assert '_base' in c[-1]
-        assert c[-1].unpack() == 1
+        assert c[-1].unpack() == gt

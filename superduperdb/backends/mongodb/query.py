@@ -293,7 +293,7 @@ class MongoQuery(Query):
     def _execute_insert_one(self, parent):
         insert_part = self.parts[0]
         parts = self.parts[1:]
-        insert_part = (insert_part[0], [insert_part[1]], insert_part[2])
+        insert_part = ('insert_many', [insert_part[1]], insert_part[2])
 
         self.parts = [insert_part] + parts
         return self._execute_insert_many(parent)
@@ -403,14 +403,23 @@ class MongoQuery(Query):
                     document = Document({'_base': document})
             return document
 
+        def _update_part(documents):
+            nonlocal self
+            doc_args = (documents, *self.parts[0][1][1:])
+            insert_part = (self.parts[0][0], doc_args, self.parts[0][2])
+            return [insert_part] + self.parts[1:]
+
         if self.parts[0][0] == 'insert_many':
             documents = self.parts[0][1][0]
             wrapped_documents = []
             for document in documents:
                 document = _wrap_document(document)
                 wrapped_documents.append(document)
+            self.parts = _update_part(wrapped_documents)
             return wrapped_documents
-        return [_wrap_document(self.parts[0][1][0])]
+        document = _wrap_document(self.parts[0][1][0])
+        self.parts = _update_part(document)
+        return [document]
 
     @property
     def primary_id(self):

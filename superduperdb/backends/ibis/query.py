@@ -154,11 +154,18 @@ class IbisQuery(Query):
                     document = Document({field[0]: document})
             return document
 
+        def _update_part(documents):
+            nonlocal self
+            doc_args = (documents, *self.parts[0][1][1:])
+            insert_part = (self.parts[0][0], doc_args, self.parts[0][2])
+            return [insert_part] + self.parts[1:]
+
         documents = self.parts[0][1][0]
         wrapped_documents = []
         for document in documents:
             document = _wrap_document(document)
             wrapped_documents.append(document)
+        self.parts = _update_part(wrapped_documents)
         return wrapped_documents
 
     def _get_tables(self):

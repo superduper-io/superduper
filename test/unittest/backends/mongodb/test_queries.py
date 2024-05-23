@@ -161,7 +161,8 @@ def test_insert_one(db):
     a_single_insert = get_new_data(db.datatypes['torch.float32[32]'], 1, update=False)[
         0
     ]
-    out, _ = db.execute(collection.insert_one(a_single_insert))
+    q = collection.insert_one(a_single_insert)
+    out, _ = db.execute(q)
     r = db.execute(collection.find({'_id': out[0]}))
     docs = list(r)
     assert docs[0]['x'].x.tolist() == a_single_insert['x'].x.tolist()

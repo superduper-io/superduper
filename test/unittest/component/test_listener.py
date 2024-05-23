@@ -115,7 +115,9 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
         model_update_kwargs={"document_embedded": document_embedded},
         flatten=flatten,
     )
-    db.execute(collection.insert_one(Document({"x": 1})))
+    q = collection.insert_one(Document({"x": 1}))
+
+    db.execute(q)
 
     listener1 = Listener(
         model=m1,

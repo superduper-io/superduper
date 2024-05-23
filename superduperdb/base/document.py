@@ -90,9 +90,9 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param leaves_to_keep: The types of leaves to keep.
         """
-        cache: t.Dict[str, dict] = {}
-        blobs: t.Dict[str, bytes] = {}
-        files: t.Dict[str, str] = {}
+        cache: t.Dict[str, dict] = self.get('_leaves', {})
+        blobs: t.Dict[str, bytes] = self.get('_blobs', {})
+        files: t.Dict[str, str] = self.get('_files', {})
 
         # Get schema from database.
         schema = self.schema or schema

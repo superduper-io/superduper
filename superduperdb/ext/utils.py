@@ -1,9 +1,6 @@
 import os
 import typing as t
 
-if t.TYPE_CHECKING:
-    pass
-
 
 def str_shape(shape: t.Sequence[int]) -> str:
     """Convert a shape to a string.

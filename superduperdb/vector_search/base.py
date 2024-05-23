@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 import typing as t
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy
 import numpy.typing
@@ -136,22 +136,6 @@ class VectorIndexMeasureType(str, enum.Enum):
 
 
 @dataclass(frozen=True)
-class VectorSearchConfig:
-    """Represents search config which helps initiate a vector searcher class.
-
-    :param id: Identifier for the vector index
-    :param dimensions: Dimensions of the vector
-    :param measure: Measure for vector search
-    :param parameters: Additional parameters for vector search
-    """
-
-    id: str
-    dimensions: int
-    measure: VectorIndexMeasureType = VectorIndexMeasureType.l2
-    parameters: t.Mapping[str, t.Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
 class VectorItem:
     """Class for representing a vector in vector search with id and vector.
 
@@ -179,18 +163,6 @@ class VectorItem:
     def to_dict(self) -> t.Dict:
         """Converts the vector item to a dictionary."""
         return {'id': self.id, 'vector': self.vector}
-
-
-@dataclass(frozen=True)
-class VectorSearchResult:
-    """Dataclass for representing vector search results with `id` and `score`.
-
-    :param id: ID of the vector
-    :param score: Similarity score of the vector
-    """
-
-    id: str
-    score: float
 
 
 def l2(x, y):

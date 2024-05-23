@@ -91,45 +91,6 @@ class ThreadBase(Runnable):
         pass
 
 
-class IsThread(ThreadBase, Thread):
-    """IsThread is a thread that inherits from threading.Thread.
-
-    To use IsThread, derive from it and override either or both of
-    self.callback() and self.pre_run()
-
-    :param args: Positional arguments for `threading.Thread`
-    :param kwargs: Keyword arguments for `threading.Thread`
-    """
-
-    def __init__(self, *args, **kwargs):
-        ThreadBase.__init__(self, *args, **kwargs)
-        Thread.__init__(self, daemon=self.daemon)
-
-    def callback(self):
-        """The callback to run in the thread."""
-        pass
-
-    def error(self, item: Exception) -> None:
-        """Handle an error.
-
-        :param item: Exception
-        """
-        pass
-
-    @_debug(after=True)
-    def join(self, timeout: t.Optional[float] = None):
-        """Join the thread.
-
-        :param timeout: Timeout in seconds
-        """
-        Thread.join(self, timeout)
-
-    @_debug
-    def start(self):
-        """Start the thread."""
-        Thread.start(self)
-
-
 @dc.dataclass
 class HasThread(ThreadBase):
     """HasThread contains a thread, and is constructed with a callback.

@@ -26,6 +26,26 @@ def _find_variables(r):
     return []
 
 
+def _find_variables_with_path(r):
+    if isinstance(r, dict):
+        out = []
+        for k, v in r.items():
+            tmp = _find_variables_with_path(v)
+            for p in tmp:
+                out.append({'path': [k] + p['path'], 'variable': p['variable']})
+        return out
+    elif isinstance(r, (list, tuple)):
+        out = []
+        for i, v in enumerate(r):
+            tmp = _find_variables_with_path(v)
+            for p in tmp:
+                out.append({'path': [i] + p['path'], 'variable': p['variable']})
+        return out
+    elif isinstance(r, Variable):
+        return [{'path': [], 'variable': r}]
+    return []
+
+
 def _replace_variables(x, db, **kwargs):
     from .document import Document
 

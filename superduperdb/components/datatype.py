@@ -338,21 +338,6 @@ class DecodeTorchStateDict:
         return module
 
 
-# TODO: Remove this because this function is only used in test cases.
-def build_torch_state_serializer(module, info):
-    """Datatype for serializing torch state dict.
-
-    :param module: Module.
-    :param info: Information.
-    """
-    return DataType(
-        identifier=module.__name__,
-        info=info,
-        encoder=encode_torch_state_dict,
-        decoder=DecodeTorchStateDict(module),
-    )
-
-
 def _find_descendants(cls):
     """Find descendants of the given class.
 
@@ -518,12 +503,6 @@ class Encodable(_BaseEncodable):
         return f'?{self.id}'
 
     @classmethod
-    def _get_object(cls, db, r):
-        datatype = cls.get_datatype(db, r)
-        object = datatype.decode_data(r['bytes'], info=datatype.info)
-        return object
-
-    @classmethod
     def build(cls, r):
         """Build an `Encodable` instance with the given parameters `r`.
 
@@ -537,18 +516,6 @@ class Encodable(_BaseEncodable):
         :param db: The Datalayer instance.
         """
         pass
-
-    # TODO: (New) Remove unused method
-    # @classmethod
-    # def decode(cls, r, db=None) -> 'Encodable':
-    #     """
-    #     Decode the dictionary `r` to an `Encodable` instance.
-    #
-    #     :param r: The dictionary to decode.
-    #     :param db: The Datalayer instance.
-    #     """
-    #     object = cls._get_object(db, r)
-    #     return cls(x=object, blob=r)
 
     @classmethod
     def get_datatype(cls, db, r):
@@ -582,10 +549,6 @@ class Native(_BaseEncodable):
 
     leaf_type: t.ClassVar[str] = 'native'
     x: t.Optional[t.Any] = None
-
-    @classmethod
-    def _get_object(cls, db, r):
-        raise NotImplementedError
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -717,10 +680,6 @@ class File(_BaseEncodable):
         """Unpack and get the original data."""
         self.init()
         return self.x
-
-    @classmethod
-    def _get_object(cls, db, r):
-        return r['x']
 
 
 @merge_docstrings

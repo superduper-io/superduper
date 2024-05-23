@@ -129,17 +129,6 @@ class ArtifactStore(ABC):
         for file_path in r['_files']:
             self._delete_bytes(file_path)
 
-    def update_artifact(self, old_r: t.Dict, new_r: t.Dict):
-        """Update artifact in artifact store.
-
-        This method deletes the old artifact and saves the new artifact.
-
-        :param old_r: dictionary with mandatory fields
-        :param new_r: dictionary with mandatory fields
-        """
-        self.delete_artifact(old_r)
-        return self.save_artifact(new_r)
-
     @abstractmethod
     def get_bytes(self, file_id: str) -> bytes:
         """
@@ -157,25 +146,6 @@ class ArtifactStore(ABC):
         :param file_id: Identifier of artifact in the store
         """
         pass
-
-    def load_artifact(self, r):
-        """
-        Load artifact from artifact store, and deserialize.
-
-        :param r: Mandatory fields {'file_id', 'datatype'}
-        """
-        datatype = self.serializers[r['datatype']]
-        file_id = r.get('file_id')
-        if r.get('encodable') == 'file':
-            x = self.get_file(file_id)
-        else:
-            # TODO We should always have file_id available at load time (because saved)
-            uri = r.get('uri')
-            if file_id is None:
-                assert uri is not None, '"uri" and "file_id" can\'t both be None'
-                file_id = _construct_file_id_from_uri(uri)
-            x = self.get_bytes(file_id)
-        return datatype.decode_data(x)
 
     @abstractmethod
     def disconnect(self):

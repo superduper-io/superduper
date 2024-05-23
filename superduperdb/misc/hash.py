@@ -10,24 +10,6 @@ def hash_string(string: str):
     return hashlib.sha256(string.encode()).hexdigest()
 
 
-def hash_dict(data: dict):
-    """Hash a dictionary.
-
-    :param data: dictionary to hash
-    """
-
-    def process(d):
-        if isinstance(d, dict):
-            return sorted((k, process(v)) for k, v in d.items())
-        elif isinstance(d, set):
-            return sorted(d)
-        else:
-            return d
-
-    json_string = str(process(data))
-    return hash_string(json_string)
-
-
 def random_sha1():
     """Generate random sha1 values."""
     random_data = os.urandom(256)

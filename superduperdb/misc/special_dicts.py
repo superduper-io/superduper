@@ -1,6 +1,6 @@
 import copy
 import typing as t
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 
 
 class IndexableDict(OrderedDict):
@@ -186,21 +186,6 @@ class MongoStyleDict(t.Dict[str, t.Any]):
                 parent_item = MongoStyleDict({})
             parent_item[child] = value
             self[parent] = parent_item
-
-
-# TODO: Is this an unused class?
-class ArgumentDefaultDict(defaultdict):
-    """
-    ArgumentDefaultDict.
-
-    :param args: *args for `defaultdict`
-    :param kwargs: **kwargs for `defaultdict`
-    """
-
-    def __getitem__(self, item):
-        if item not in self:
-            self[item] = self.default_factory(item)
-        return super().__getitem__(item)
 
 
 def diff(r1, r2):

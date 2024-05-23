@@ -12,9 +12,6 @@ from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetada
 from superduperdb.backends.sqlalchemy.db_helper import get_db_config
 from superduperdb.misc.colors import Colors
 
-if t.TYPE_CHECKING:
-    pass
-
 
 class SQLAlchemyMetadata(MetaDataStore):
     """
@@ -378,29 +375,6 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def replace_component(
-        self,
-        info: t.Dict[str, t.Any],
-        identifier: str,
-        type_id: str,
-        version: t.Optional[int] = None,
-    ) -> None:
-        """Replace a component in the metadata store.
-
-        :param info: the information to replace
-        :param identifier: the identifier of the component
-        :param type_id: the type of the component
-        :param version: the version of the component
-        """
-        if version is not None:
-            version = self.get_latest_version(type_id, identifier)
-        return self._replace_object(
-            info=info,
-            identifier=identifier,
-            type_id=type_id,
-            version=version,
-        )
-
     def show_components(self, type_id: t.Optional[str] = None):
         """Show all components in the database.
 
@@ -481,14 +455,6 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             res = self.query_results(self.job_table, stmt, session)
             return res[0] if res else None
-
-    def listen_job(self, identifier: str):
-        """Listen a job.
-
-        :param identifier: the identifier of the job
-        """
-        # Not supported currently
-        raise NotImplementedError
 
     def show_jobs(
         self,

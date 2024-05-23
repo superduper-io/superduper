@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pandas database (in-memory)
 - Add and update docstrings in component classes and methods.
 - Changed the rest implementation to use new serialization
+- Remove unused deadcode from the project
 
 #### New Features & Functionality
 

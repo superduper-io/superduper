@@ -155,20 +155,6 @@ class MetaDataStore(ABC):
         """
         pass
 
-    def get_indexing_listener_of_vector_index(
-        self, identifier: str, version: t.Optional[int] = None
-    ):
-        """Get the indexing listener of a vector index.
-
-        :param identifier: identifier of vector index
-        :param version: version of vector index
-        """
-        info = self.get_component(
-            'vector_index', identifier=identifier, version=version
-        )
-        indexing_listener = info['dict']['indexing_listener']['identifier']
-        return indexing_listener
-
     @abstractmethod
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         """
@@ -194,16 +180,6 @@ class MetaDataStore(ABC):
         :param type_id: type of component
         :param identifier: identifier of component
         :param version: version of component
-        """
-        pass
-
-    # TODO - do we still need this or can it be handled by configuration?
-    @abstractmethod
-    def get_metadata(self, key):
-        """
-        Get metadata from the metadata store.
-
-        :param key: key of metadata
         """
         pass
 
@@ -274,34 +250,6 @@ class MetaDataStore(ABC):
     ):
         pass
 
-    def update_object(
-        self,
-        identifier: str,
-        type_id: str,
-        key: str,
-        value: str,
-        version: t.Optional[int] = None,
-    ):
-        """
-        Update an object in the metadata store.
-
-        :param identifier: identifier of object
-        :param type_id: type of object
-        :param key: key to be updated
-        :param value: value to be updated
-        :param version: version of object
-        """
-        if version is not None:
-            version = self.get_latest_version(type_id, identifier)
-        assert isinstance(version, int)
-        return self._update_object(
-            identifier=identifier,
-            type_id=type_id,
-            key=key,
-            value=value,
-            version=version,
-        )
-
     @abstractmethod
     def _replace_object(self, info, identifier, type_id, version):
         pass
@@ -358,16 +306,6 @@ class MetaDataStore(ABC):
         :param type_id: type of component
         :param identifier: identifier of component
         :param version: version of component
-        """
-        pass
-
-    @abstractmethod
-    def update_metadata(self, key, value):
-        """
-        Update metadata in the metadata store.
-
-        :param key: Key of metadata
-        :param value: Value of metadata
         """
         pass
 

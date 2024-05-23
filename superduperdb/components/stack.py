@@ -5,9 +5,6 @@ from superduperdb.misc.annotations import merge_docstrings
 
 from .component import Component
 
-if t.TYPE_CHECKING:
-    pass
-
 
 @merge_docstrings
 @dc.dataclass(kw_only=True)

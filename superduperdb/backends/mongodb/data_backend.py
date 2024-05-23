@@ -10,7 +10,6 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
-from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
@@ -97,52 +96,9 @@ class MongoDataBackend(BaseDataBackend):
         """
         return self._db[identifier]
 
-    def unset_outputs(self, info: t.Dict):
-        """Unset the output field in the data backend.
-
-        :param info: dictionary containing information about the output field
-        """
-        select = Document.decode(info['select']).unpack()
-        logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
-        doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
-        update = select.update(doc)
-        return self.db[select.collection].update_many(update.filter, update.update)
-
-    def list_vector_indexes(self):
-        """List all vector indexes in the data backend."""
-        indexes = []
-        for coll in self.db.list_collection_names():
-            i = self.db.command({'listSearchIndexes': coll})
-            try:
-                batch = i['cursor']['firstBatch'][0]
-            except IndexError:
-                continue
-            if '_outputs' in batch['latestDefinition']['mappings']['fields']:
-                indexes.append(batch['name'])
-        return indexes
-
     def list_tables_or_collections(self):
         """List all tables or collections in the data backend."""
         return self.db.list_collection_names()
-
-    def delete_vector_index(self, vector_index):
-        """
-        Delete a vector index in the data backend if an Atlas deployment.
-
-        :param vector_index: vector index to delete
-        """
-        # see `VectorIndex` class for details
-        # indexing_listener contains a `Select` object
-        assert not isinstance(vector_index.indexing_listener, str)
-        select = vector_index.indexing_listener.select
-
-        # TODO: probably MongoDB queries should all have a common base class
-        self.db.command(
-            {
-                "dropSearchIndex": select.table_or_collection.identifier,
-                "name": vector_index.identifier,
-            }
-        )
 
     def disconnect(self):
         """Disconnect the client."""
@@ -164,6 +120,20 @@ class MongoDataBackend(BaseDataBackend):
         :param flatten: flatten the output
         """
         pass
+
+    def exists(self, table_or_collection, id, key):
+        """Check if a document exists in the data backend.
+
+        :param table_or_collection: table or collection identifier
+        :param id: document identifier
+        :param key: key to check
+        """
+        return (
+            self.db[table_or_collection].find_one(
+                {'_id': id, f'{key}._content.bytes': {'$exists': 1}}
+            )
+            is not None
+        )
 
     def check_output_dest(self, predict_id) -> bool:
         """Check if the output destination exists.

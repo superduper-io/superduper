@@ -1,5 +1,3 @@
-import hashlib
-import os
 import re
 import signal
 import sys
@@ -139,7 +137,7 @@ class BaseDownloader:
         prog = tqdm(total=len(self.uris))
         prog.prefix = 'downloading from uris'
         self.failed = 0
-        prog.prefx = "failed: 0"
+        prog.prefix = "failed: 0"
 
         def f(i):
             prog.update()
@@ -167,15 +165,6 @@ class BaseDownloader:
     def _download(self, i):
         k = self.uris[i]
         self.results[k] = self.fetcher(k)
-
-    def _check_exists_if_hybrid(self, uri):
-        if uri.startswith('file://'):
-            file = f'{CFG.downloads.folder}/{uri.split("file://")[-1]}'
-        else:
-            file = f'{CFG.downloads.folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
-        if os.path.exists(file):
-            return True
-        return False
 
     def _parallel_go(self, f):
         pool = ThreadPool(self.n_workers)

@@ -89,21 +89,6 @@ class MongoMetaDataStore(MetaDataStore):
         """
         return self.job_collection.find_one({'identifier': identifier})
 
-    def get_metadata(self, key: str):
-        """Get metadata from the metadata store.
-
-        :param key: key to be retrieved
-        """
-        return self.meta_collection.find_one({'key': key})['value']
-
-    def update_metadata(self, key: str, value: str):
-        """Update metadata in the metadata store.
-
-        :param key: key to be updated
-        :param value: value to be updated
-        """
-        return self.meta_collection.update_one({'key': key}, {'$set': {'value': value}})
-
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
     ) -> int:

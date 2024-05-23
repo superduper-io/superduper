@@ -63,34 +63,6 @@ def method_job(
     db.metadata.update_job(job_id, 'status', 'success')
 
 
-# TODO: Is this class used?
-class Logger:
-    """Logger class for writing to the database.
-
-    :param database: database to write to
-    :param id_: job id
-    :param stream: stream to write to
-    """
-
-    def __init__(self, database, id_, stream='stdout'):
-        self.database = database
-        self.id_ = id_
-        self.stream = stream
-
-    def write(self, message):
-        """Write a message to the database.
-
-        :param message: message to write
-        """
-        self.database.metadata.write_output_to_job(
-            self.id_, message, stream=self.stream
-        )
-
-    def flush(self):
-        """Flush something."""
-        pass
-
-
 def callable_job(
     cfg,
     function_to_call,

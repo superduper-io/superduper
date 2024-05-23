@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 # Create Vector Search Model
 
 ```python
-from superduperdb.base.serializable import Variable
+from superduperdb.base.variables import Variable
 item = {indexing_key: Variable('query')}
 ```
 
@@ -17,10 +17,11 @@ from superduperdb.components.model import QueryModel
 
 vector_search_model = QueryModel(
     identifier="VectorSearch",
-    select=select,
-    postprocess=lambda docs: [{"text": doc[indexing_key], "_source": doc["_source"]} for doc in docs]
+    select=query_table_or_collection.like(item, vector_index=vector_index_name, n=5).select(),
+    # The _source is the identifier of the upstream data, which can be used to locate the data from upstream sources using `_source`.
+    postprocess=lambda docs: [{"text": doc[indexing_key], "_source": doc["_source"]} for doc in docs],
+    db=db
 )
-vector_search_model.db = db
 ```
 
 ```python

@@ -8,16 +8,6 @@ operate on those outputs.
 
 
 ```python
-# <tab: MongoDB>
-from superduperdb.backends.mongodb import Collection
-
-indexing_key = upstream_listener.outputs
-select = Collection(upstream_listener.outputs).find()
-```
-
-
-```python
-# <tab: SQL>
 indexing_key = upstream_listener.outputs_key
-select = db.load("table", upstream_listener.outputs).to_query()
+select = upstream_listener.outputs_select
 ```

@@ -99,11 +99,3 @@ class UnsupportedDatatype(BaseException):
 
     :param msg: msg for BaseException
     """
-
-
-class SchemaMismatchError(BaseException):
-    """
-    SchemaMismatchError.
-
-    :param msg: msg for BaseException
-    """

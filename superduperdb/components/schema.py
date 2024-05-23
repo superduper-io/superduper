@@ -76,6 +76,8 @@ class Schema(Component):
         :param leaves_to_keep: Leaves to keep.
         """
         for k in self.fields:
+            if k not in r:
+                continue
             if isinstance(self.fields[k], DataType):
                 encodable = self.fields[k](r[k])
                 if isinstance(encodable, leaves_to_keep):

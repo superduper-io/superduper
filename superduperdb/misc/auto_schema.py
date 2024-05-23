@@ -9,8 +9,7 @@ from superduperdb.components.datatype import (
     DataType,
     DataTypeFactory,
     _BaseEncodable,
-    dill_decode,
-    dill_encode,
+    get_serializer,
     json_serializer,
 )
 from superduperdb.components.schema import Schema
@@ -32,12 +31,10 @@ register_module("superduperdb.ext.numpy.encoder")
 register_module("superduperdb.ext.torch.encoder")
 register_module("superduperdb.ext.pillow.encoder")
 
-
-DEFAULT_DATATYPE = DataType(
-    "DEFAULT",
-    encoder=dill_encode,
-    decoder=dill_decode,
-    encodable="encodable",
+DEFAULT_DATATYPE = get_serializer(
+    identifier='DEFAULT',
+    method='dill',
+    encodable='encodable',
 )
 
 BASE_TYPES = (
@@ -80,8 +77,8 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     if datatype is None:
         try:
-            encoded_data = dill_encode(data)
-            decoded_data = dill_decode(encoded_data)
+            encoded_data = DEFAULT_DATATYPE.encoder(data)
+            decoded_data = DEFAULT_DATATYPE.decoder(encoded_data)
             assert isinstance(decoded_data, type(data))
         except Exception as e:
             raise UnsupportedDatatype(

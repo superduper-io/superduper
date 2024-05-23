@@ -16,7 +16,6 @@ from superduperdb.backends.ibis.query import IbisQuery
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.enums import DBType
-from superduperdb.base.exceptions import SchemaMismatchError
 from superduperdb.components.datatype import DataType
 from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
@@ -219,33 +218,14 @@ class IbisDataBackend(BaseDataBackend):
         """
         try:
             table = db.tables[table_name]
+            return table
         except FileNotFoundError:
-            table = None
-
-        schema = self.infer_schema(documents[0])
-        if table is None:
-            # Should we need to check all the documents?
-            table = Table(identifier=table_name, schema=schema)
-            if table.primary_id not in schema.fields:
-                table.schema.fields[table.primary_id] = dtype('str')
-            logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
-            db.apply(table)
-
-        else:
-            # Only check the shcema built from auto_schema
-            # The schema build from user input should not be checked
-            if not table.schema.identifier.startswith('AUTO:'):
-                return
-            table_schema_fields_set = table.schema.fields_set
-
-            check_schema_fields_set = schema.fields_set
-            # the schema of new documents should be a subset of the existing schema
-            if not table_schema_fields_set.issuperset(check_schema_fields_set):
-                new_fields_set = check_schema_fields_set - table_schema_fields_set
-                fields_set_message = tuple([f"{k}:{v}" for k, v in new_fields_set])
-                error_message = (
-                    f"Cant insert documents with new fields: {fields_set_message} "
-                    f"into the table {table_name}."
-                )
-
-                raise SchemaMismatchError(error_message)
+            logging.info(f"Table {table_name} does not exist, auto creating...")
+        # Should we need to check all the documents?
+        document = documents[0]
+        schema = document.schema or self.infer_schema(document)
+        table = Table(identifier=table_name, schema=schema)
+        if table.primary_id not in schema.fields:
+            table.schema.fields[table.primary_id] = dtype('str')
+        logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
+        db.apply(table)

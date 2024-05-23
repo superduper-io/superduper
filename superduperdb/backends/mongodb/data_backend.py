@@ -230,8 +230,10 @@ class MongoDataBackend(BaseDataBackend):
         """
         schema_dict = {}
         for document in documents:
+            if document.schema is not None:
+                continue
             schema = self.infer_schema(document)
             if schema.fields:
                 schema_dict[schema.identifier] = schema
                 document.schema = schema
-            db.apply(list(schema_dict.values()))
+        db.apply(list(schema_dict.values()))

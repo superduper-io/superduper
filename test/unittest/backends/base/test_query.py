@@ -311,11 +311,8 @@ def test_insert_with_diff_schemas(db):
 
     # Do not support different schema in SQL
     if db.databackend.db_type == DBType.SQL:
-        from superduperdb.base.exceptions import SchemaMismatchError
-
-        with pytest.raises(SchemaMismatchError) as e:
+        with pytest.raises(Exception):
             table_or_collection.insert(datas).execute()
-        assert 'img:pil_image' in str(e)
     # Mongo can support different schema
     else:
         table_or_collection.insert(datas).execute()

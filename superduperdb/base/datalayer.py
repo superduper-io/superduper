@@ -1087,15 +1087,16 @@ class Datalayer:
         """
         return self.databackend.infer_schema(data, identifier)
 
-    def set_cfg(self, cfg: Config):
-        """Set the configuration object for the datalayer."""
-        assert isinstance(cfg, Config)
-        self._cfg = cfg
-
     @property
     def cfg(self) -> Config:
         """Get the configuration object for the datalayer."""
         return self._cfg or s.CFG
+
+    @cfg.setter
+    def cfg(self, cfg: Config):
+        """Set the configuration object for the datalayer."""
+        assert isinstance(cfg, Config)
+        self._cfg = cfg
 
 
 @dc.dataclass

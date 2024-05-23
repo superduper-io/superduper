@@ -189,7 +189,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
         compute=compute,
     )
     # Keep the real configuration in the datalayer object.
-    datalayer.set_cfg(cfg)
+    datalayer.cfg = cfg
 
     show_configuration(cfg)
     return datalayer

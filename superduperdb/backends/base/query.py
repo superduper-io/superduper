@@ -484,7 +484,7 @@ class Query(_BaseQuery):
         pass
 
     def _prepare_documents(self):
-        documents = self.parts[0][1][0]
+        documents = self.documents
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 

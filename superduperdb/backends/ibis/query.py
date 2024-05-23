@@ -138,7 +138,28 @@ class IbisQuery(Query):
     @applies_to('insert')
     def documents(self):
         """Return the documents."""
-        return self.parts[0][1][0]
+
+        def _wrap_document(document):
+            if not isinstance(document, Document):
+                if isinstance(document, dict):
+                    document = Document(document)
+                else:
+                    schema = self.db[self.identifier]._get_schema()
+                    field = [
+                        k
+                        for k in schema.fields
+                        if k not in [self.primary_id, '_fold', '_outputs']
+                    ]
+                    assert len(field) == 1
+                    document = Document({field[0]: document})
+            return document
+
+        documents = self.parts[0][1][0]
+        wrapped_documents = []
+        for document in documents:
+            document = _wrap_document(document)
+            wrapped_documents.append(document)
+        return wrapped_documents
 
     def _get_tables(self):
         out = {self.identifier: self.db.tables[self.identifier]}
@@ -270,10 +291,10 @@ class IbisQuery(Query):
         documents = self._prepare_documents()
         for r in documents:
             if isinstance(r, dict):
-                r.pop('_leaves')
-                r.pop('_files')
-                r.pop('_blobs')
-                r.pop('_schema')
+                r.pop('_leaves', None)
+                r.pop('_files', None)
+                r.pop('_blobs', None)
+                r.pop('_schema', None)
 
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())

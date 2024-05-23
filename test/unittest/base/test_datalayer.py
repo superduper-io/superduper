@@ -433,7 +433,7 @@ def test_insert_mongo_db(db):
     add_fake_model(db)
     inserted_ids, _ = db._insert(
         MongoQuery('documents').insert_many(
-            [Document({'x': i, 'update': True}) for i in range(5)]
+            [{'x': i, 'update': True} for i in range(5)]
         )
     )
     assert len(inserted_ids) == 5

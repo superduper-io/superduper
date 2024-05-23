@@ -394,9 +394,23 @@ class MongoQuery(Query):
     @applies_to('insert_many', 'insert_one')
     def documents(self):
         """Return the documents to insert."""
+
+        def _wrap_document(document):
+            if not isinstance(document, Document):
+                if isinstance(document, dict):
+                    document = Document(document)
+                else:
+                    document = Document({'_base': document})
+            return document
+
         if self.parts[0][0] == 'insert_many':
-            return self.parts[0][1][0]
-        return [self.parts[0][1][0]]
+            documents = self.parts[0][1][0]
+            wrapped_documents = []
+            for document in documents:
+                document = _wrap_document(document)
+                wrapped_documents.append(document)
+            return wrapped_documents
+        return [_wrap_document(self.parts[0][1][0])]
 
     @property
     def primary_id(self):

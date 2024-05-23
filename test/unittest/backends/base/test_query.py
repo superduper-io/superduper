@@ -319,3 +319,41 @@ def test_insert_with_diff_schemas(db):
         datas_from_db = list(table_or_collection.select().execute())
 
         assert datas[0]['img'].size == datas_from_db[-1]['img'].size
+
+
+@pytest.mark.parametrize(
+    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
+)
+def test_auto_document_wrapping(db):
+    db.cfg.auto_schema = True
+
+    table_or_collection = db['documents']
+    data = {'x': 1}
+    datas = [Document(data)]
+    table_or_collection.insert(datas).execute()
+
+    def _check(n):
+        if db.databackend.db_type == DBType.SQL:
+            c = list(table_or_collection.select('x').execute())
+        else:
+            c = list(table_or_collection.find().execute())
+        assert len(c) == n
+        return c
+
+    _check(1)
+
+    # Without `Document` dict data
+    table_or_collection.insert([data]).execute()
+    _check(2)
+
+    # Without `Document` non dict data
+    table_or_collection.insert([1]).execute()
+    c = _check(3)
+
+    # Auto wrapped _base
+    if db.databackend.db_type == DBType.SQL:
+        assert 'x' in c[-1]
+        assert c[-1].unpack() == {'x': 1}
+    else:
+        assert '_base' in c[-1]
+        assert c[-1].unpack() == 1

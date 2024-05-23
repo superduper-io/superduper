@@ -103,6 +103,15 @@ class Schema(Component):
             if isinstance(v, DataType):
                 yield v
 
+    @property
+    def fields_set(self):
+        """Get the fields set for the schema."""
+        fields = set()
+        for k, v in self.fields.items():
+            if hasattr(v, 'identifier'):
+                fields.add((k, v.identifier))
+        return fields
+
     def decode_data(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """Decode data using the schema's encoders.
 

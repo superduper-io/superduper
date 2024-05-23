@@ -315,7 +315,7 @@ def test_insert_with_diff_schemas(db):
 
         with pytest.raises(SchemaMismatchError) as e:
             table_or_collection.insert(datas).execute()
-        assert 'img=pil_image' in str(e)
+        assert 'img:pil_image' in str(e)
     # Mongo can support different schema
     else:
         table_or_collection.insert(datas).execute()

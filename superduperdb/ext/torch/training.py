@@ -87,6 +87,7 @@ class TorchTrainer(Trainer):
             db,
             train_dataloader=train_dataloader,
             valid_dataloader=valid_dataloader,
+            validation_sets=model.validation.datasets if model.validation else None,
         )
 
     def take_step(self, model, batch, optimizers):
@@ -132,7 +133,7 @@ class TorchTrainer(Trainer):
         db: Datalayer,
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+        validation_sets: t.Optional[t.Sequence[Dataset]] = None,
     ):
         if validation_sets is None:
             validation_sets = []
@@ -153,13 +154,16 @@ class TorchTrainer(Trainer):
                     )
                     all_metrics = {}
                     for vs in validation_sets:
-                        m = model.validate(vs)
-                        all_metrics.update(m)
+                        m = model.validate(
+                            key=self.key, dataset=vs, metrics=model.validation.metrics
+                        )
+                        all_metrics.update(
+                            {f'{vs.identifier}/{k}': v for k, v in m.items()}
+                        )
                     all_metrics.update({'objective': valid_loss})
                     self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        model.changed.add('object')
                         db.replace(model, upsert=True)
                         self.changed.update({'all_metrics', 'optimizer_state'})
                     stop = self.stopping_criterion(iteration)

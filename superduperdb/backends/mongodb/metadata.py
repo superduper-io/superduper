@@ -53,6 +53,20 @@ class MongoMetaDataStore(MetaDataStore):
         self.db.drop_collection(self.job_collection.name)
         self.db.drop_collection(self.parent_child_mappings.name)
 
+    def delete_parent_child(self, parent: str, child: str) -> None:
+        """
+        Delete parent-child relationships between two components.
+
+        :param parent: parent component uuid
+        :param child: child component uuid
+        """
+        self.parent_child_mappings.delete_many(
+            {
+                'parent': parent,
+                'child': child,
+            }
+        )
+
     def create_parent_child(self, parent: str, child: str) -> None:
         """Create a parent-child relationship between two components.
 

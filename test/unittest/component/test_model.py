@@ -269,7 +269,7 @@ def test_model_validate(mock_call):
     my_metric.return_value = 0.5
     mock_call.return_value = 1
     dataset = MagicMock(spec=Dataset)
-    dataset.data = [None for _ in range(4)]
+    dataset.data = [{'X': 1, 'y': 1} for _ in range(4)]
 
     def acc(x, y):
         return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)
@@ -277,7 +277,7 @@ def test_model_validate(mock_call):
     with patch.object(model, 'predict') as mock_predict:
         mock_predict.return_value = [1, 2, 1, 1]
         returned = model.validate(
-            'y', dataset=dataset, metrics=[Metric('acc', object=acc)]
+            ('X', 'y'), dataset=dataset, metrics=[Metric('acc', object=acc)]
         )
 
     assert returned == {'acc': 0.75}

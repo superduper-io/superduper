@@ -382,10 +382,10 @@ def ensure_initialized(func):
     def wrapper(self, *args, **kwargs):
         if not hasattr(self, "_is_initialized") or not self._is_initialized:
             model_message = f"{self.__class__.__name__} : {self.identifier}"
-            logging.info(f"Initializing {model_message}")
+            logging.debug(f"Initializing {model_message}")
             self.init()
             self._is_initialized = True
-            logging.info(f"Initialized  {model_message} successfully")
+            logging.debug(f"Initialized  {model_message} successfully")
         return func(self, *args, **kwargs)
 
     return wrapper

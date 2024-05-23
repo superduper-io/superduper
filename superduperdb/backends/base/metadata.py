@@ -31,6 +31,16 @@ class MetaDataStore(ABC):
         self.conn = conn
 
     @abstractmethod
+    def delete_parent_child(self, parent: str, child: str):
+        """
+        Delete parent-child mappings.
+
+        :param parent: parent component
+        :param child: child component
+        """
+        pass
+
+    @abstractmethod
     def url(self):
         """Metadata store connection url."""
         pass

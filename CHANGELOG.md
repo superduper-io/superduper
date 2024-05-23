@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the rest implementation to use new serialization
 - Remove unused deadcode from the project
 - Auto wrap insert documents as Document
+- Changed the rest implementation to use the new serialization
 
 #### New Features & Functionality
 

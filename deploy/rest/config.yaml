@@ -19,7 +19,7 @@ leaves:
       identifier:
         type: str
       code:
-        type: str
+        type: code
         default: |
           from superduperdb import code
 

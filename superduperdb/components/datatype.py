@@ -551,19 +551,14 @@ class Native(_BaseEncodable):
     x: t.Optional[t.Any] = None
 
     def __post_init__(self, db):
-        self.sha1 = self.sha1 or random_sha1()
         return super().__post_init__(db)
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
-        if isinstance(self, leaves_to_keep):
-            cache[self.id] = self
-            return f'?{self.id}'
+    @classmethod
+    def _get_object(cls, db, r):
+        raise NotImplementedError
 
-        r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-        )
-        cache[self.id] = r
-        return f'?{self.id}'
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
+        return self.x
 
     @property
     def id(self):

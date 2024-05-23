@@ -299,11 +299,6 @@ Otherwise refer to "Configuring your production system".
 <!-- TABS -->
 ## Get useful sample data
 
-```python
-from superduperdb.backends.ibis import dtype
-
-```
-
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
@@ -315,7 +310,6 @@ from superduperdb.backends.ibis import dtype
             data = json.load(f)
         sample_datapoint = "What is mongodb?"
         
-        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -325,127 +319,28 @@ from superduperdb.backends.ibis import dtype
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
         
-        sample_datapoint = data[-1]
-        chunked_model_datatype = dtype('str')        
-        ```
-    </TabItem>
-</Tabs>
-<!-- TABS -->
-## Setup tables or collections
-
-
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        # Note this is an optional step for MongoDB
-        # Users can also work directly with `DataType` if they want to add
-        # custom data
-        from superduperdb import Schema, DataType
-        from superduperdb.backends.mongodb import Collection
-        
-        table_or_collection = Collection('documents')
-        USE_SCHEMA = False
-        
-        if USE_SCHEMA and isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
-            db.apply(schema)        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb.backends.ibis import Table
-        from superduperdb import Schema, DataType
-        from superduperdb.backends.ibis.field_types import dtype
-        
-        datatype = "str"
-        
-        if isinstance(datatype, DataType):
-            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
-        else:
-            schema = Schema(
-                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
-            )
-        
-        table_or_collection = Table('documents', schema=schema)
-        
-        db.apply(table_or_collection)        
-        ```
-    </TabItem>
-</Tabs>
-<!-- TABS -->
-## Insert data
-
-In order to create data, we need to create a `Schema` for encoding our special `Datatype` column(s) in the databackend.
-
-
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        from superduperdb import Document, DataType
-        
-        def do_insert(data, schema = None):
-            
-            if schema is None and (datatype is None or isinstance(datatype, str)):
-                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None and isinstance(datatype, DataType):
-                data = [Document({'x': datatype(x['x']), 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data))
-            else:
-                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data, schema=schema))
-        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb import Document
-        
-        def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))
-        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
 </Tabs>
 ```python
-do_insert(data[:-len(data) // 4])
+datas = [{'x': d} for d in data]
 ```
 
 <!-- TABS -->
-## Build simple select queries
+## Insert simple data
 
+After turning on auto_schema, we can directly insert data, and superduperdb will automatically analyze the data type, and match the construction of the table and datatype.
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        
-        select = table_or_collection.find({})        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        
-        select = table_or_collection.to_query()        
-        ```
-    </TabItem>
-</Tabs>
-<!-- TABS -->
-## Create Model Output Type
+```python
+from superduperdb import Document
 
+table_or_collection = db['documents']
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        chunked_model_datatype = None        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb.backends.ibis.field_types import dtype
-        chunked_model_datatype = dtype('str')        
-        ```
-    </TabItem>
-</Tabs>
+ids = db.execute(table_or_collection.insert([Document(data) for data in datas]))
+select = table_or_collection.select()
+```
+
 <!-- TABS -->
 ## Apply a chunker for search
 
@@ -464,7 +359,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -480,7 +375,7 @@ won't be necessary.
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -498,6 +393,7 @@ upstream_listener = Listener(
     model=chunker,
     select=select,
     key='x',
+    uuid="chunk",
 )
 
 db.apply(upstream_listener)
@@ -511,23 +407,11 @@ features, or chunking your data. You can use this query to
 operate on those outputs.
 :::
 
+```python
+indexing_key = upstream_listener.outputs_key
+select = upstream_listener.outputs_select
+```
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        from superduperdb.backends.mongodb import Collection
-        
-        indexing_key = upstream_listener.outputs
-        select = Collection(upstream_listener.outputs).find()        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        indexing_key = upstream_listener.outputs_key
-        select = db.load("table", upstream_listener.outputs).to_query()        
-        ```
-    </TabItem>
-</Tabs>
 <!-- TABS -->
 ## Build text embedding model
 
@@ -610,106 +494,36 @@ operate on those outputs.
 print(len(model.predict_one("What is SuperDuperDB")))
 ```
 
-## Create vector-index
+# Create vector-index
 
 ```python
-vector_index_name = 'my-vector-index'
-```
+from superduperdb import VectorIndex, Listener
 
+vector_index_name = 'vector-index'
 
-<Tabs>
-    <TabItem value="1-Modality" label="1-Modality" default>
-        ```python
-        from superduperdb import VectorIndex, Listener
-        
-        jobs, _ = db.add(
-            VectorIndex(
-                vector_index_name,
-                indexing_listener=Listener(
-                    key=indexing_key,      # the `Document` key `model` should ingest to create embedding
-                    select=select,       # a `Select` query telling which data to search over
-                    model=model,         # a `_Predictor` how to convert data to embeddings
-                )
-            )
-        )        
-        ```
-    </TabItem>
-    <TabItem value="2-Modalities" label="2-Modalities" default>
-        ```python
-        from superduperdb import VectorIndex, Listener
-        
-        jobs, _ = db.add(
-            VectorIndex(
-                vector_index_name,
-                indexing_listener=Listener(
-                    key=indexing_key,      # the `Document` key `model` should ingest to create embedding
-                    select=select,       # a `Select` query telling which data to search over
-                    model=model,         # a `_Predictor` how to convert data to embeddings
-                ),
-                compatible_listener=Listener(
-                    key=compatible_key,      # the `Document` key `model` should ingest to create embedding
-                    model=compatible_model,         # a `_Predictor` how to convert data to embeddings
-                    active=False,
-                    select=None,
-                )
-            )
-        )        
-        ```
-    </TabItem>
-</Tabs>
-```python
+jobs, _ = db.add(
+    VectorIndex(
+        vector_index_name,
+        indexing_listener=Listener(
+            key=indexing_key,      # the `Document` key `model` should ingest to create embedding
+            select=select,       # a `Select` query telling which data to search over
+            model=model,         # a `_Predictor` how to convert data to embeddings
+            uuid="embedding"
+        )
+    )
+)
 query_table_or_collection = select.table_or_collection
 ```
 
 ```python
-sample_datapoint = data[0]
-query = "Tell me about the SuperDuperDb"
-```
-
-<!-- TABS -->
-## Perform a vector search
-
-```python
-from superduperdb import Document
-
-def get_sample_item(key, sample_datapoint, datatype=None):
-    if not isinstance(datatype, DataType):
-        item = Document({key: sample_datapoint})
-    else:
-        item = Document({key: datatype(sample_datapoint)})
-
-    return item
-
-if compatible_key:
-    item = get_sample_item(compatible_key, sample_datapoint, None)
-else:
-    item = get_sample_item(indexing_key, sample_datapoint, datatype=datatype)
-```
-
-Once we have this search target, we can execute a search as follows:
-
-
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).find()        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        select = query_table_or_collection.like(item, vector_index=vector_index_name, n=10).limit(10)        
-        ```
-    </TabItem>
-</Tabs>
-```python
-results = db.execute(select)
+query = "Tell me about the SuperDuperDB"
 ```
 
 <!-- TABS -->
 ## Create Vector Search Model
 
 ```python
-from superduperdb.base.serializable import Variable
+from superduperdb.base.variables import Variable
 item = {indexing_key: Variable('query')}
 ```
 
@@ -718,10 +532,11 @@ from superduperdb.components.model import QueryModel
 
 vector_search_model = QueryModel(
     identifier="VectorSearch",
-    select=select,
-    postprocess=lambda docs: [{"text": doc[indexing_key], "_source": doc["_source"]} for doc in docs]
+    select=query_table_or_collection.like(item, vector_index=vector_index_name, n=5).select(),
+    # The _source is the identifier of the upstream data, which can be used to locate the data from upstream sources using `_source`.
+    postprocess=lambda docs: [{"text": doc[indexing_key], "_source": doc["_source"]} for doc in docs],
+    db=db
 )
-vector_search_model.db = db
 ```
 
 ```python
@@ -800,63 +615,56 @@ vector_search_model.predict_one(query=query)
 </Tabs>
 ```python
 # test the llm model
-llm.predict_one("Hello")
+llm.predict_one("Tell me about the SuperDuperDB")
 ```
 
-<!-- TABS -->
-## Answer question with LLM
+# Answer question with LLM
+
+```python
+from superduperdb import objectmodel
+from superduperdb.components.graph import Graph, input_node
+
+prompt_template = (
+    "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n"
+    "{context}\n\n"
+    "Here's the question: {query}"
+)
 
 
-<Tabs>
-    <TabItem value="No-context" label="No-context" default>
-        ```python
-        
-        llm.predict_one(query)        
-        ```
-    </TabItem>
-    <TabItem value="Prompt" label="Prompt" default>
-        ```python
-        from superduperdb import objectmodel
-        from superduperdb.components.graph import Graph, input_node
-        
-        @objectmodel
-        def build_prompt(query):
-            return f"Translate the sentence into German: {query}"
-        
-        in_ = input_node('query')
-        prompt = build_prompt(query=in_)
-        answer = llm(prompt)
-        prompt_llm = answer.to_graph("prompt_llm")
-        prompt_llm.predict_one(query)[0]        
-        ```
-    </TabItem>
-    <TabItem value="Context" label="Context" default>
-        ```python
-        from superduperdb import objectmodel
-        from superduperdb.components.graph import Graph, input_node
-        
-        prompt_template = (
-            "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n"
-            "{context}\n\n"
-            "Here's the question: {query}"
-        )
-        
-        
-        @objectmodel
-        def build_prompt(query, docs):
-            chunks = [doc["text"] for doc in docs]
-            context = "\n\n".join(chunks)
-            prompt = prompt_template.format(context=context, query=query)
-            return prompt
-            
-        
-        in_ = input_node('query')
-        vector_search_results = vector_search_model(query=in_)
-        prompt = build_prompt(query=in_, docs=vector_search_results)
-        answer = llm(prompt)
-        context_llm = answer.to_graph("context_llm")
-        context_llm.predict_one(query)        
-        ```
-    </TabItem>
-</Tabs>
+@objectmodel
+def build_prompt(query, docs):
+    chunks = [doc["text"] for doc in docs]
+    context = "\n\n".join(chunks)
+    prompt = prompt_template.format(context=context, query=query)
+    return prompt
+    
+
+# We build a graph to handle the entire pipeline
+
+# create a input node, only have one input parameter `query`
+in_ = input_node('query')
+# pass the query to the vector search model
+vector_search_results = vector_search_model(query=in_)
+# pass the query and the search results to the prompt builder
+prompt = build_prompt(query=in_, docs=vector_search_results)
+# pass the prompt to the llm model
+answer = llm(prompt)
+# create a graph, and the graph output is the answer
+rag = answer.to_graph("rag")
+print(rag.predict_one(query)[0])
+```
+
+By applying the RAG model to the database, it will subsequently be accessible for use in other services.
+
+```python
+db.add(rag)
+```
+
+You can now load the model elsewhere and make predictions using the following command.
+
+```python
+rag = db.load("model", 'context_llm')
+print(rag.predict_one("Tell me about the SuperDuperDB")[0])
+```
+
 <DownloadButton filename="retrieval_augmented_generation.md" />

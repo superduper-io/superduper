@@ -22,7 +22,7 @@ won't be necessary.
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -38,7 +38,7 @@ won't be necessary.
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False}, datatype=chunked_model_datatype)
+        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -128,6 +128,7 @@ upstream_listener = Listener(
     model=chunker,
     select=select,
     key='x',
+    uuid="chunk",
 )
 
 db.apply(upstream_listener)

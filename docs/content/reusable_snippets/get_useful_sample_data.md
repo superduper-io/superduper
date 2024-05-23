@@ -1,17 +1,11 @@
 ---
 sidebar_label: Get useful sample data
-filename: get_useful_sample_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 <!-- TABS -->
 # Get useful sample data
-
-```python
-from superduperdb.backends.ibis import dtype
-
-```
 
 
 <Tabs>
@@ -24,10 +18,9 @@ from superduperdb.backends.ibis import dtype
             data = json.load(f)
         sample_datapoint = "What is mongodb?"
         
-        chunked_model_datatype = dtype('str')        
         ```
     </TabItem>
-    <TabItem value="labeled_text" label="Text (labeled)" default>
+    <TabItem value="labeled_text" label="labeled_text" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
@@ -44,8 +37,7 @@ from superduperdb.backends.ibis import dtype
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
         
-        sample_datapoint = data[-1]
-        chunked_model_datatype = dtype('str')        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>
@@ -62,7 +54,7 @@ from superduperdb.backends.ibis import dtype
         chunked_model_datatype = pil_image        
         ```
     </TabItem>
-    <TabItem value="labeled_image" label="Image (labeled)" default>
+    <TabItem value="labeled_image" label="labeled_image" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
         import json
@@ -93,8 +85,7 @@ from superduperdb.backends.ibis import dtype
         import os
         
         data = [f'audios/{x}' for x in os.listdir('./audios')]
-        sample_datapoint = data[-1]
-        chunked_model_datatype = dtype('str')        
+        sample_datapoint = data[-1]        
         ```
     </TabItem>
 </Tabs>

@@ -76,6 +76,6 @@ import TabItem from '@theme/TabItem';
 </Tabs>
 ```python
 # test the llm model
-llm.predict_one("Hello")
+llm.predict_one("Tell me about the SuperDuperDB")
 ```
 

@@ -550,6 +550,10 @@ class Native(_BaseEncodable):
     leaf_type: t.ClassVar[str] = 'native'
     x: t.Optional[t.Any] = None
 
+    def __post_init__(self, db):
+        self.sha1 = self.sha1 or random_sha1()
+        return super().__post_init__(db)
+
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
@@ -560,6 +564,11 @@ class Native(_BaseEncodable):
         )
         cache[self.id] = r
         return f'?{self.id}'
+
+    @property
+    def id(self):
+        """Get the id of the object."""
+        return f'{self.leaf_type}/{self.sha1}'
 
 
 @merge_docstrings

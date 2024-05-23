@@ -159,7 +159,7 @@ class MongoQuery(Query):
 
         find_args = self.parts[1][1]
         find_kwargs = self.parts[1][2]
-        if find_args == ():
+        if not find_args:
             find_args = ({},)
 
         find_args[0]['_id'] = {'$in': [ObjectId(id) for id in similar_ids]}
@@ -355,11 +355,13 @@ class MongoQuery(Query):
 
         if not find_args[1:]:
             find_args.append({})
+        find_args = copy.deepcopy(find_args)
         for identifier in predict_ids:
             find_args[1][f'_outputs.{identifier}'] = 1
             find_args[1]['_leaves'] = 1
             find_args[1]['_files'] = 1
             find_args[1]['_blobs'] = 1
+            find_args[1]['_source'] = 1
         x = type(self)(
             db=self.db,
             identifier=self.identifier,
@@ -458,11 +460,6 @@ class MongoQuery(Query):
         projection = {'_id': 1}
         coll = type(self)(identifier=self.identifier, db=self.db)
         return coll.find(filter_, projection)
-
-    @property
-    def table_or_collection(self):
-        """Return the table or collection to select from."""
-        return type(self)(identifier=self.identifier, db=self.db)
 
     @applies_to('find')
     def select_ids_of_missing_outputs(self, predict_id: str):

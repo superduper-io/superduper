@@ -64,7 +64,7 @@ def _model_update_impl_flatten(
                     {
                         'output': output,
                         '_input_id': id,
-                        '_source': id,
+                        '_source': str(uuid.uuid4()),
                     }
                 )
         else:
@@ -76,7 +76,7 @@ def _model_update_impl_flatten(
                     {
                         'output': output,
                         '_input_id': id,
-                        '_source': id,
+                        '_source': str(uuid.uuid4()),
                     }
                 )
 
@@ -88,14 +88,9 @@ def _model_update_impl(
     ids: t.List[t.Any],
     predict_id: str,
     outputs: t.Sequence[t.Any],
-    flatten: bool = False,
 ):
     if not outputs:
         return
-    if flatten:
-        return _model_update_impl_flatten(
-            db, ids=ids, predict_id=predict_id, outputs=outputs
-        )
 
     table_records = []
 
@@ -378,7 +373,6 @@ class IbisQuery(Query):
                 ids=ids,
                 predict_id=predict_id,
                 outputs=outputs,
-                flatten=flatten,
             )
         else:
             return _model_update_impl_flatten(
@@ -401,10 +395,7 @@ class IbisQuery(Query):
         :param ids: The ids to select.
         """
         t = self.db[self._get_parent().get_name()]
-        primary_id = (
-            '_input_id' if t.identifier.startswith('_outputs.') else t.primary_id
-        )
-        filter_query = self.filter(getattr(t, primary_id).isin(ids))
+        filter_query = self.filter(getattr(t, self.primary_id).isin(ids))
         return filter_query
 
     @property
@@ -480,7 +471,7 @@ class IbisQuery(Query):
         :param kwargs: The keyword arguments to pass to the method.
         """
         assert isinstance(self.parts[-1], str)
-        if self.parts[0] == 'select' and not args:
+        if self.parts[-1] == 'select' and not args:
             # support table.select() without column args
             table = self.db.databackend.get_table_or_collection(self.identifier)
             args = tuple(table.columns)

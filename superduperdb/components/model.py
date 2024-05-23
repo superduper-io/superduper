@@ -58,7 +58,7 @@ def objectmodel(
     :param flatten: If `True`, flatten the outputs and save.
     :param output_schema: Schema for the model outputs.
     """
-    if item is not None and inspect.isclass(item):
+    if item is not None and (inspect.isclass(item) or callable(item)):
         if inspect.isclass(item):
 
             def object_model_factory(*args, **kwargs):

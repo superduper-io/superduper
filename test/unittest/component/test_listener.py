@@ -176,7 +176,7 @@ def test_create_output_dest_ibis(db, data, flatten):
 
     db.add(listener1)
     doc = list(db.execute(listener1.outputs_select))[0]
-    result = doc[listener1.outputs]
+    result = doc[listener1.outputs_key]
     if isinstance(data, np.ndarray):
         assert np.allclose(result, data)
     else:

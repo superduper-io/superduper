@@ -6,6 +6,7 @@ from overrides import override
 from superduperdb import CFG
 from superduperdb.backends.base.query import Query
 from superduperdb.base.document import _OUTPUTS_KEY
+from superduperdb.base.enums import DBType
 from superduperdb.components.model import Mapping
 from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.server import request_server
@@ -67,10 +68,18 @@ class Listener(Component):
         return f'{_OUTPUTS_KEY}.{self.uuid}'
 
     @property
+    def outputs_key(self):
+        """Model outputs key."""
+        if self.db.databackend.db_type == DBType.SQL:
+            return 'output'
+        else:
+            return self.outputs
+
+    @property
     def outputs_select(self):
         """Get query reference to model outputs."""
-        if self.select.DB_TYPE == "SQL":
-            return self.select.outputs(self.uuid)
+        if self.db.databackend.db_type == DBType.SQL:
+            return self.db[self.outputs].select()
 
         else:
             model_update_kwargs = self.model.model_update_kwargs or {}
@@ -78,15 +87,7 @@ class Listener(Component):
                 collection_name = self.select.table_or_collection.identifier
             else:
                 collection_name = self.outputs
-            return self.db[collection_name].find().outputs(self.uuid)
-
-    @property
-    def outputs_key(self):
-        """Model outputs key."""
-        if self.select.DB_TYPE == "SQL":
-            return 'output'
-        else:
-            return self.outputs
+            return self.db[collection_name].find()
 
     @override
     def post_create(self, db: "Datalayer") -> None:

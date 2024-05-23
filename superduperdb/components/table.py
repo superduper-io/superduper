@@ -44,8 +44,6 @@ class Table(Component):
             fields={**fields},
         )
 
-        assert self.primary_id != '_input_id', '"_input_id" is a reserved value'
-
     def pre_create(self, db: 'Datalayer'):
         """Pre-create the table.
 

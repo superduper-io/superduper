@@ -59,7 +59,7 @@ class JinaEmbedding(Jina):
             if self.datatype is None:
                 self.datatype = sqlvector(self.shape)
         elif self.datatype is None:
-            self.datatype = vector(self.shape)
+            self.datatype = vector(shape=self.shape)
 
     def predict_one(self, X: str):
         """Predict the embedding of a single text.

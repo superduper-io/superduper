@@ -92,7 +92,6 @@ class Component(Leaf):
 
         self.artifacts = artifacts
         self.version: t.Optional[int] = None
-        self._db = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
 

@@ -53,7 +53,7 @@ def check_llm_as_listener_model(db, llm):
 
     results = db.execute(output_select)
     for result in results:
-        output = result[listener.outputs]
+        output = result[listener.outputs_key]
         assert isinstance(output, str)
 
 

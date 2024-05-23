@@ -197,6 +197,20 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = insert(self.component_table).values(**new_info)
             session.execute(stmt)
 
+    def delete_parent_child(self, parent_id: str, child_id: str):
+        """
+        Delete parent-child relationships between two components.
+
+        :param parent: parent component uuid
+        :param child: child component uuid
+        """
+        with self.session_context() as session:
+            stmt = delete(self.parent_child_association_table).where(
+                self.parent_child_association_table.c.parent_id == parent_id,
+                self.parent_child_association_table.c.child_id == child_id,
+            )
+            session.execute(stmt)
+
     def create_parent_child(self, parent_id: str, child_id: str):
         """Create a parent-child relationship between two components.
 

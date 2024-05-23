@@ -391,6 +391,7 @@ class Datalayer:
                 return inserted_ids, self.refresh_after_update_or_insert(
                     insert, ids=inserted_ids, verbose=False
                 )
+
         return inserted_ids, None
 
     def _select(self, select: Query, reference: bool = True) -> SelectResult:
@@ -815,8 +816,9 @@ class Datalayer:
             )
             if not self.cdc.running:
                 deps = self.listeners[identifier].dependencies
-                for _, dep, _ in deps:
-                    upstream = self.listeners[dep]
+                for dep in deps:
+                    upstream = self.load(uuid=dep)
+                    assert isinstance(upstream, Component)
                     dep_node = (
                         f'{upstream.model.identifier}.predict_in_db({upstream.uuid})'
                     )
@@ -1038,27 +1040,47 @@ class Datalayer:
         :param upsert: Toggle to ``True`` to enable replacement even if
                        the object doesn't exist yet.
         """
+        old_uuid = None
         try:
             info = self.metadata.get_component(
                 object.type_id, object.identifier, version=object.version
             )
-        except FileNotFoundError:
+            old_uuid = info['uuid']
+        except FileNotFoundError as e:
             if upsert:
                 return self.apply(
                     object,
                 )
-            raise FileNotFoundError
+            raise e
 
         # If object has no version, update the last version
         object.version = info['version']
 
+        serialized = object.dict().encode(leaves_to_keep=(Component,))
+
+        children = [
+            v for v in serialized['_leaves'].values() if isinstance(v, Component)
+        ]
+
+        for child in children:
+            self.replace(child)
+            if old_uuid:
+                self.metadata.delete_parent_child(old_uuid, child.uuid)
+
+        for k, v in serialized['_leaves'].items():
+            if isinstance(v, Component):
+                serialized['_leaves'][
+                    k
+                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
+
         self.artifact_store.delete_artifact(info)
-        new_info = object.dict().encode()
-        new_info = self.artifact_store.save_artifact(new_info)
+
+        serialized = self.artifact_store.save_artifact(serialized)
+
         self.metadata.replace_object(
-            new_info,
+            serialized,
             identifier=object.identifier,
-            type_id='model',
+            type_id=object.type_id,
             version=object.version,
         )
 

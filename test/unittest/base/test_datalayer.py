@@ -4,6 +4,8 @@ from typing import Any, ClassVar, Optional, Sequence
 import numpy
 import pytest
 
+from superduperdb.ext.torch.training import TorchTrainer
+
 try:
     import torch
 
@@ -34,7 +36,7 @@ from superduperdb.components.datatype import (
     pickle_serializer,
 )
 from superduperdb.components.listener import Listener
-from superduperdb.components.model import ObjectModel
+from superduperdb.components.model import ObjectModel, _Fittable
 from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
 
@@ -550,6 +552,52 @@ def test_replace(db):
     db.replace(new_model)
     time.sleep(0.1)
     assert db.load('model', 'm').predict([1]) == [4]
+
+
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
+def test_replace_with_child(db):
+    db.apply(
+        Table(
+            'docs', schema=Schema('docs', fields={'X': dtype('int'), 'y': dtype('int')})
+        )
+    )
+
+    trainer = TorchTrainer(
+        identifier='trainer',
+        objective=lambda x, y: 2,
+        key=('X', 'y'),
+        select=db['docs'].select(),
+        max_iterations=1000,
+    )
+    model = TorchModel(
+        object=torch.nn.Linear(16, 32),
+        identifier='m',
+        trainer=trainer,
+    )
+
+    with patch.object(_Fittable, 'fit'):
+        db.apply(model)
+
+    model_ids = db.show('model')
+
+    reloaded = db.load('model', model.identifier)
+
+    assert 'm' in model_ids
+    assert hasattr(reloaded, 'trainer')
+
+    assert isinstance(reloaded.trainer, TorchTrainer)
+    assert not reloaded.metric_values
+
+    model.trainer.metric_values['acc'] = [1, 2, 3]
+    db.replace(model)
+
+    rereloaded = db.load('model', model.identifier)
+    assert isinstance(rereloaded.trainer, TorchTrainer)
+    assert rereloaded.trainer.metric_values
+
+    db.remove('table', 'docs', force=True)
+
+    db.metadata.get_component_version_parents(rereloaded.uuid)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

@@ -964,16 +964,18 @@ class Model(Component):
         )
         return listener
 
-    def validate(self, X, dataset: Dataset, metrics: t.Sequence[Metric]):
+    def validate(self, key, dataset: Dataset, metrics: t.Sequence[Metric]):
         """Validate `dataset` on metrics.
 
-        :param X: Define input map
+        :param key: Define input map
         :param dataset: Dataset to run validation on.
         :param metrics: Metrics for performing validation
         """
-        mapping = Mapping(X, signature='*args')
-        predictions = self.predict(dataset.data)
-        targets = list(map(mapping, dataset.data))
+        mapping1 = Mapping(key[0], self.signature)
+        mapping2 = Mapping(key[1], 'singleton')
+        inputs = [mapping1(r) for r in dataset.data]
+        predictions = self.predict(inputs)
+        targets = [mapping2(r) for r in dataset.data]
         results = {}
         for m in metrics:
             results[m.identifier] = m(predictions, targets)
@@ -994,22 +996,22 @@ class Model(Component):
         job(db, dependencies)
         return job
 
-    def validate_in_db(self, db):
+    def validate_in_db(self, db: Datalayer):
         """Validation job in database.
 
         :param db: DataLayer instance.
         """
+        assert isinstance(self.validation, Validation)
         for dataset in self.validation.datasets:
             logging.info(f'Validating on {dataset.identifier}...')
             db.apply(dataset)
             results = self.validate(
-                X=self.validation.key,
+                key=self.validation.key,
                 dataset=dataset,
                 metrics=self.validation.metrics,
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
-        # should update the new values
-        db.apply(self)
+        db.replace(self, upsert=True)
 
 
 @dc.dataclass(kw_only=True)

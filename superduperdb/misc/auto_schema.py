@@ -65,6 +65,7 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     if isinstance(data, BASE_TYPES):
         datatype = type(data)
+        logging.debug(f"Inferred base type: {datatype} for data:", data)
         return datatype
 
     for factory in DataTypeFactory.__subclasses__():

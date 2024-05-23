@@ -225,3 +225,10 @@ main-wrapper {
 pre code {
   background-color: var(--ifm-pre-background);
 }
+
+.truncate-text {
+  width: 100%; /* Define the width or max-width as per your layout */
+  overflow: hidden; /* Hide the overflow */
+  white-space: nowrap; /* Ensure the text is in a single line */
+  text-overflow: ellipsis; /* Add ellipsis (...) at the end of the truncated text */
+}

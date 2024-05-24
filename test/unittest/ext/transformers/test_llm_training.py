@@ -117,7 +117,7 @@ def test_training(db, tmpdir):
     checkpoint = db.load("checkpoint", experiment_id)
     llm = LLM(
         identifier="llm_chekpoint",
-        adapter_id=checkpoint.uri,
+        adapter_id=checkpoint,
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),
     )

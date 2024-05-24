@@ -46,7 +46,7 @@ def build_use_case(path):
                 '^<snippet: ([a-z0-9_\-]+): ([a-zA-Z0-9_\-\,\*]+)>$',
                 cell['source'][0].strip(),
             ).groups()
-            with open(f'docs/reusable_snippets/{snippet}.ipynb') as f:
+            with open(f'reusable_snippets/{snippet}.ipynb') as f:
                 snippet_nb = json.load(f)
             snippet_nb = process_snippet(snippet_nb, tabs)
             for cell in snippet_nb['cells']:
@@ -115,7 +115,7 @@ def build_notebook_from_tabs(path, selected_tabs):
                 '^<snippet: ([a-z0-9_\-]+): ([a-zA-Z0-9_\-\,\*]+)>$',
                 cell['source'][0].strip(),
             ).groups()
-            with open(f'docs/reusable_snippets/{snippet}.ipynb') as f:
+            with open(f'reusable_snippets/{snippet}.ipynb') as f:
                 snippet_nb = json.load(f)
             snippet_nb = process_snippet(snippet_nb, tabs)
             if tabs != '*':

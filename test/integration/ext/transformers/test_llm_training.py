@@ -12,15 +12,19 @@ from superduperdb.ext.transformers.training import LLMTrainer
 try:
     import datasets
     import peft
+    import torch
     import trl
+
+    GPU_AVAILABLE = torch.cuda.is_available()
 except ImportError:
     datasets = None
     peft = None
     trl = None
-
+    GPU_AVAILABLE = False
 
 # commented out due to a versioning conflict
-RUN_LLM_FINETUNE = False  # all([datasets, peft, trl])
+RUN_LLM_FINETUNE = all([datasets, peft, trl])
+
 
 # Some predefined parameters
 model = "facebook/opt-125m"
@@ -64,10 +68,9 @@ def trainer():
         overwrite_output_dir=True,
         num_train_epochs=1,
         max_steps=5,
-        save_total_limit=5,
+        save_total_limit=3,
         logging_steps=10,
         evaluation_strategy="steps",
-        fp16=True,
         eval_steps=1,
         save_steps=1,
         per_device_train_batch_size=1,
@@ -78,6 +81,7 @@ def trainer():
         use_lora=True,
         key="text",
         select=MongoQuery("datas").find(),
+        training_kwargs=dict(dataset_text_field="text"),
     )
 
 
@@ -131,7 +135,8 @@ def test_lora_finetune(db, trainer):
 
 
 @pytest.mark.skipif(
-    not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
+    not (RUN_LLM_FINETUNE and GPU_AVAILABLE),
+    reason="The peft, datasets and trl are not installed",
 )
 def test_qlora_finetune(db, trainer):
     llm = LLM(
@@ -153,7 +158,7 @@ def test_qlora_finetune(db, trainer):
 
 
 @pytest.mark.skipif(
-    not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
+    not (RUN_LLM_FINETUNE and GPU_AVAILABLE), reason="Deepspeed need GPU"
 )
 def test_local_ray_deepspeed_lora_finetune(db, trainer):
     llm = LLM(

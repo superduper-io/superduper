@@ -63,8 +63,8 @@ def _model_update_impl_flatten(
                 table_records.append(
                     {
                         'output': output,
-                        '_input_id': id,
-                        '_source': str(uuid.uuid4()),
+                        '_source': id,
+                        'id': str(uuid.uuid4()),
                     }
                 )
         else:
@@ -75,8 +75,8 @@ def _model_update_impl_flatten(
                 table_records.append(
                     {
                         'output': output,
-                        '_input_id': id,
-                        '_source': str(uuid.uuid4()),
+                        '_source': id,
+                        'id': str(uuid.uuid4()),
                     }
                 )
 
@@ -99,8 +99,9 @@ def _model_update_impl(
         output = _load_keys_with_blob(output)
 
         d = {
-            '_input_id': str(ids[ix]),
+            '_source': str(ids[ix]),
             'output': output,
+            'id': str(ids[ix]),
         }
         table_records.append(d)
     db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
@@ -183,9 +184,9 @@ class IbisQuery(Query):
         fields = {}
         tables = self._get_tables()
 
-        if len(tables) == 1:
-            return self.db.tables[self.identifier].schema
         table_renamings = self.renamings()
+        if len(tables) == 1 and not table_renamings:
+            return self.db.tables[self.identifier].schema
         for identifier, c in tables.items():
             renamings = table_renamings.get(identifier, {})
 
@@ -394,8 +395,7 @@ class IbisQuery(Query):
 
         :param ids: The ids to select.
         """
-        t = self.db[self._get_parent().get_name()]
-        filter_query = self.filter(getattr(t, self.primary_id).isin(ids))
+        filter_query = self.filter(getattr(self, self.primary_id).isin(ids))
         return filter_query
 
     @property
@@ -432,7 +432,7 @@ class IbisQuery(Query):
             )
 
             attr = getattr(self, self.primary_id)
-            other_query = self.join(symbol_table, symbol_table._input_id == attr)
+            other_query = self.join(symbol_table, symbol_table._source == attr)
             other_query._get_schema()
             return other_query
 
@@ -447,7 +447,7 @@ class IbisQuery(Query):
         output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(
             output_table,
-            output_table._input_id == getattr(input_table, input_table.primary_id),
+            output_table._source == getattr(input_table, input_table.primary_id),
         )
 
     def select_single_id(self, id: str):

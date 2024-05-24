@@ -269,13 +269,15 @@ def _deep_flat_encode(
             )
             for k, v in r.items()
         }
-    if isinstance(r, list):
-        return [
-            _deep_flat_encode(
-                x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-            )
-            for x in r
-        ]
+    if isinstance(r, (list, tuple)):
+        return type(r)(
+            [
+                _deep_flat_encode(
+                    x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                )
+                for x in r
+            ]
+        )
     if isinstance(r, Leaf):
         return r._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
@@ -301,8 +303,10 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
     if isinstance(r, Leaf):
         r.db = db
         return r
-    if isinstance(r, list):
-        return [_deep_flat_decode(x, cache, blobs, files=files, db=db) for x in r]
+    if isinstance(r, (list, tuple)):
+        return type(r)(
+            [_deep_flat_decode(x, cache, blobs, files=files, db=db) for x in r]
+        )
     if isinstance(r, dict) and '_path' in r:
         parts = r['_path'].split('/')
         cls = parts[-1]

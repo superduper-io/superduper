@@ -21,7 +21,7 @@ from superduperdb.components.schema import Schema
 from superduperdb.components.table import Table
 
 BASE64_PREFIX = 'base64:'
-INPUT_KEY = '_input_id'
+INPUT_KEY = '_source'
 
 
 class IbisDataBackend(BaseDataBackend):
@@ -111,11 +111,11 @@ class IbisDataBackend(BaseDataBackend):
         if flatten:
             fields = {
                 INPUT_KEY: dtype('string'),
-                '_source': dtype('string'),
+                'id': dtype('string'),
                 'output': output_type,
             }
             return Table(
-                primary_id='_source',
+                primary_id='id',
                 identifier=f'_outputs.{predict_id}',
                 schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
             )
@@ -123,6 +123,7 @@ class IbisDataBackend(BaseDataBackend):
             fields = {
                 INPUT_KEY: dtype('string'),
                 'output': output_type,
+                'id': dtype('string'),
             }
             return Table(
                 identifier=f'_outputs.{predict_id}',

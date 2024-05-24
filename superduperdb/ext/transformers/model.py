@@ -397,51 +397,16 @@ class LLM(BaseLLM, _Fittable):
 
         If adapter_id is provided, will load the adapter to the model.
         """
-        db = self.db
-
+        super().init()
         real_adapter_id = None
         if self.adapter_id is not None:
-            self.handle_chekpoint(db)
             if isinstance(self.adapter_id, Checkpoint):
-                checkpoint = self.adapter_id
-                self.adapter_id = checkpoint.uri
+                real_adapter_id = self.adapter_id.path
 
             elif isinstance(self.adapter_id, str):
                 real_adapter_id = self.adapter_id
-                checkpoint = None
-            else:
-                raise ValueError(
-                    "adapter_id must be either a string or Checkpoint object, but got "
-                    f"{type(self.adapter_id)}"
-                )
-
-            if checkpoint:
-                db = db or checkpoint.db
-                assert db, "db must be provided when using checkpoint indetiifer"
-                if self.db is None:
-                    self.db = db
-                checkpoint.init()
-                real_adapter_id = checkpoint.path
-
-        super().init()
 
         self.pipeline = self.init_pipeline(real_adapter_id)
-
-    def handle_chekpoint(self, db):
-        """Handle checkpoint identifier.
-
-        :param db: Datalayer instance
-        """
-        if isinstance(self.adapter_id, str):
-            # match checkpoint://<identifier>/<version>
-            if Checkpoint.check_uri(self.adapter_id):
-                assert db, "db must be provided when using checkpoint indetiifer"
-                identifier, version = Checkpoint.parse_uri(self.adapter_id)
-                version = int(version)
-                checkpoint = db.load("checkpoint", identifier, version=version)
-                checkpoint.init()
-                assert checkpoint, f"Checkpoint {self.adapter_id} not found"
-                self.adapter_id = checkpoint
 
     @ensure_initialized
     def predict_one(self, X, **kwargs):

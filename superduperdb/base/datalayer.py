@@ -1000,9 +1000,7 @@ class Datalayer:
                 except KeyError:
                     pass
 
-            # TODO handle files
-            for blob in info['_blobs']:
-                self.artifact_store._delete_bytes(blob)
+            self.artifact_store.delete_artifact(info)
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _get_content_for_filter(self, filter) -> Document:
@@ -1063,7 +1061,7 @@ class Datalayer:
         ]
 
         for child in children:
-            self.replace(child)
+            self.replace(child, upsert=True)
             if old_uuid:
                 self.metadata.delete_parent_child(old_uuid, child.uuid)
 

@@ -141,7 +141,6 @@ class LLMCallback(TrainerCallback):
         checkpoint = Checkpoint(
             identifier=self.experiment_id, path=checkpoint_path, step=state.global_step
         )
-        self.db.apply(checkpoint)
         self.llm.adapter_id = checkpoint
         self.db.replace(self.llm)
 
@@ -188,7 +187,6 @@ class LLMCallback(TrainerCallback):
                 path=state.best_model_checkpoint,
                 step=step,
             )
-            self.db.apply(checkpoint)
             self.llm.adapter_id = checkpoint
             self.db.replace(self.llm)
 

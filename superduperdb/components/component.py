@@ -106,19 +106,6 @@ class Component(Leaf):
         """Returns an object as `ComponentTuple`."""
         return ComponentTuple(self.type_id, self.identifier, self.version)
 
-    def set_variables(self, db, **kwargs):
-        """Set free variables of self.
-
-        :param db: Datalayer instance.
-        :param kwargs: The values to set the variables to `_replace_variables`.
-        """
-        r = self.dict()
-        variables = _find_variables_with_path(r)
-        for item in variables:
-            v = item['variable']
-            value = v.set(db=db, **kwargs)
-            self.setattr_with_path(item['path'], value)
-
     @property
     def dependencies(self):
         """Get dependencies on the component."""

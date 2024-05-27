@@ -79,6 +79,7 @@ We've been working hard improving the quality of the project and bringing new fe
 - The SuperDuper "protocol" for serializing compound AI-components
 - Support for self-hosting LLMs with integrations of v-LLM, Llama.cpp and `transformers` fine-tuning,
   in particular leveraging `ray` features.
+- Restful server implementation
 
 ### New integrations
 

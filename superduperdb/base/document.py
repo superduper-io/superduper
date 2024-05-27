@@ -157,7 +157,7 @@ class Document(MongoStyleDict):
 
         return _find_variables(self)
 
-    def set_variables(self, db, **kwargs) -> 'Document':
+    def set_variables(self, **kwargs) -> 'Document':
         """Set free variables of self.
 
         :param db: The datalayer to use.
@@ -166,8 +166,8 @@ class Document(MongoStyleDict):
         from superduperdb.base.variables import _replace_variables
 
         content = _replace_variables(
-            self, db, **kwargs
-        )  # replace variables with values
+            self, **kwargs
+        ) 
         return Document(**content)
 
     def __repr__(self) -> str:

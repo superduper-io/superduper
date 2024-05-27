@@ -1,4 +1,5 @@
 import dataclasses as dc
+import re
 import typing as t
 
 from superduperdb.base.leaf import Leaf
@@ -20,7 +21,9 @@ def _find_variables(r):
     if isinstance(r, (list, tuple)):
         return sum([_find_variables(v) for v in r], [])
     if isinstance(r, Variable):
-        return [r]
+        return [r.identifier]
+    if isinstance(r, str):
+        return re.findall(r'\#([a-zA-Z0-9_]+)', r)
     if isinstance(r, Leaf):
         return r.variables
     return []
@@ -46,20 +49,26 @@ def _find_variables_with_path(r):
     return []
 
 
-def _replace_variables(x, db, **kwargs):
+def _replace_variables(x, **kwargs):
     from .document import Document
 
     if isinstance(x, dict):
         return {
-            _replace_variables(k, db, **kwargs): _replace_variables(v, db, **kwargs)
+            _replace_variables(k, **kwargs): _replace_variables(v, **kwargs)
             for k, v in x.items()
         }
+    if isinstance(x, str):
+        variables = re.findall(r'\#([a-zA-Z0-9_]+)', x)
+        for k, v in kwargs.items():
+            if k in variables:
+                x = x.replace(f'#{k}', str(v))
+        return x
     if isinstance(x, (list, tuple)):
-        return [_replace_variables(v, db, **kwargs) for v in x]
+        return [_replace_variables(v, **kwargs) for v in x]
     if isinstance(x, Variable):
-        return x.set(db, **kwargs)
+        return x.set(**kwargs)
     if isinstance(x, Document):
-        return x.set_variables(db, **kwargs)
+        return x.set_variables(**kwargs)
     return x
 
 
@@ -70,15 +79,9 @@ class Variable(Leaf):
 
     The idea is to allow a variable to be set at runtime, rather than
     at object creation time.
-
-    :param setter_callback: A callback function that takes the value, datalayer
-                            and kwargs as input and returns the formatted
-                            variable.
     """
 
-    setter_callback: dc.InitVar[t.Optional[t.Callable]] = None
-
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         super().__post_init__(db)
         self.value = self.identifier
 
@@ -88,7 +91,7 @@ class Variable(Leaf):
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def set(self, db, **kwargs):
+    def set(self, **kwargs):
         """
         Get the intended value from the values of the global variables.
 
@@ -100,14 +103,5 @@ class Variable(Leaf):
         1.5
 
         """
-        if self.setter_callback is not None:
-            try:
-                return self.setter_callback(db, self.value, kwargs)
-            except Exception as e:
-                raise VariableError(
-                    f'Could not set variable {self.value} '
-                    f'based on {self.setter_callback} and **kwargs: {kwargs}'
-                ) from e
-        else:
-            assert isinstance(self.value, str)
-            return kwargs.get(self.value, self)
+        assert isinstance(self.value, str)
+        return kwargs.get(self.value, self)

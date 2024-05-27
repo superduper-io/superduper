@@ -393,7 +393,7 @@ def test_query_model(db):
     db.apply(m)
 
     n = db.load('model', m.identifier)
-    assert set(x.value for x in n.select.variables) == set(x.value for x in q.variables)
+    assert set(n.select.variables) == set(q.variables)
 
 
 def test_sequential_model():

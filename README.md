@@ -23,16 +23,11 @@
 	<a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
 	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
-
-<b>English</b> |
-[**中文**](README_zh.md) |
-[**日本語**](README_ja.md)
-
 </div>
 
 
 <div align="center">
-	
+
 `⭐ SuperDuperDB is open-source: Leave a star to support the project! ⭐`
 
 </div>
@@ -74,6 +69,67 @@ SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB tr
 	<a href="https://www.youtube.com/watch?v=Hr0HkmIL3go"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/icons/quickstart.png" alt="QuickStart" width="400"></a>
 </div>
 
+## What's new in `v0.2`?
+
+We've been working hard improving the quality of the project and bringing new features at the intersection of AI and databasing.
+
+### New features
+
+- Full support for `ray` as a "compute" backend (inference and training)
+- The SuperDuper "protocol" for serializing compound AI-components
+- Support for self-hosting LLMs with integrations of v-LLM, Llama.cpp and `transformers` fine-tuning,
+  in particular leveraging `ray` features.
+
+### New integrations
+
+- `ray`
+- `jina`
+- `transformers` (fine-tuning)
+- `llama_cpp`
+- `vllm`
+
+### Developer contract
+
+- Easier path to integrating AI models. Developers only need to implement these methods
+
+| Optional | Method | Description |
+| --- | --- | --- |
+| `False` | `Model.predict_one` | Predict on one datapoint |
+| `False` | `Model.predict` | Predict on batches of datapoints |
+| `True` | `Model.fit` | Fit the model on datasets |
+
+- Easier path to integrating new databases and vector-search functionalities. Developers only need to implement:
+
+| Method | Description |
+| --- | --- |
+| `Query.documents` | Documents referred to by a query |
+| `Query.type` | `"insert"`<br />`"delete"`<br />`"select"`<br />`"update"` |
+| `Query._create_table_if_not_exists` | Create table in databackend if it doesn't exist |
+| `Query.primary_id` | Get primary-id of base table in query |
+| `Query.model_update` | Construct a model-update query |
+| `Query.add_fold` | Add a fold to a `select` query |
+| `Query.select_using_ids` | Select data using only ids |
+| `Query.select_ids` | Select the ids of some data |
+| `Query.select_ids_of_missing_outputs` | Select the ids of rows which haven't got outputs yet |
+
+***Better quality***
+
+- Fully re-vamped test-suite with separation into the following categories
+
+| Type | Description | Command |
+| --- | --- | --- | 
+| Unit | Unittest - isolated code unit functionality | `make unit_testing` |
+| AI integration | Test the installation together with external AI provider works | `make ext_testing` |
+| Databackend integration | Test the installation with a fully functioning database backend | `make databackend_testing` |
+| Smoke | Test the full integration with `ray`, vector-search service, data-backend, change-data capture | `make smoke_testing` |
+| Rest | Test the Rest-ful server implementation integrates with the rest of the project | `make rest_testing` |
+
+***Better documentation***
+
+- [Flexible and modular use-cases](https://docs.superduperdb.com/docs/category/use-cases/)
+- [Structure which reflects project structure and philosophy](https://docs.superduperdb.com/docs/intro)
+- [End-2-end docusaurus documentation, including utilities to build API documentation as docusaurus pages]()
+
 ## Example use-cases and apps (notebooks)
 
 The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
@@ -93,13 +149,20 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 </table >
 
-
 ## Why opt for SuperDuperDB?
-|                            | With SuperDuperDB                                                                                                                                                                              | Without                                                                                                                                    |
-|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management. | Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead.             |
-| Infrastructure             | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.                                                                 | Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                       | Minimal learning curve due to a simple and declarative API, requiring simple Python commands.                                                                                                  | Hundreds of lines of codes and settings in different environments and tools.                                                               |
+
+
+
+
+
+| **Task**                    | With SuperDuperDB                                            | Without                                                      |
+| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Feature/ output computation | Outputs stored directly in database. All I/O and datatype encoding (images etc.) managed automatically. | Write complex MLOps / ETL pipelines to compute outputs and save outputs back to database |
+| Vector-search               | One command configures vector creation, storage, and an elegant search + filtering API based on your database's API | Connect a diverse array of tools for setting up, configuring and refreshing vector-search for your database. |
+| Fine-tuning                 | Fine-tune models directly based on data in your database. All data, weights, traces etc. can be handled and stored by `superdueprdb`. Training can be scaled horizontally and vertically with `ray`. | Immense landscape of tools and integrations to manage; manage all infrastructure, hardware etc. oneself. |
+| Data Management & Security  | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management. | Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead. |
+| Infrastructure              | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency. | Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
+| Code                        | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. | Hundreds of lines of codes and settings in different environments and tools. |
 
 
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://blog.superduperdb.com/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 

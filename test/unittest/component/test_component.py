@@ -3,6 +3,8 @@ import os
 import shutil
 import tempfile
 import typing as t
+from superduperdb.base.variables import Variable
+from superduperdb.components.listener import Listener
 from test.db_config import DBConfig
 
 import pytest
@@ -105,3 +107,28 @@ def test_export_and_read():
     reloaded_from_hr = Component.read('test/material/data/hr_component')
 
     assert isinstance(reloaded_from_hr, ObjectModel)
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
+def test_set_variables(db):
+
+    m = Listener(
+        model=ObjectModel(
+            identifier=Variable('test'),
+            object=lambda x: x + 2,
+        ),
+        key=Variable('key'),
+        select=None, #db['#docs'].find(),
+    )
+
+
+
+    from superduperdb import Document
+
+    recon = Document.decode(m.encode()).unpack()
+    
+    # Doesn\'t work
+    recon.init()
+    
+    # Doesn\'t work
+    n = m.set_variables(test='test_value', key='key_value', docs='docs_value')

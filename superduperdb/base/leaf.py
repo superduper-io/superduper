@@ -87,7 +87,7 @@ class Leaf(ABC):
             }
         )
 
-    def set_variables(self, db, **kwargs) -> 'Leaf':
+    def set_variables(self, **kwargs) -> 'Leaf':
         """Set free variables of self.
 
         :param db: Datalayer instance.
@@ -97,14 +97,13 @@ class Leaf(ABC):
         from superduperdb.base.variables import Variable, _replace_variables
 
         r = self.dict().encode(leaves_to_keep=(Variable,))
-        r = _replace_variables(r, db, **kwargs)
-        return Document.decode(r, db=db).unpack()
+        r = _replace_variables(r, **kwargs)
+        return Document.decode(r).unpack()
 
     @property
     def variables(self) -> t.List[str]:
         """Get list of variables in the object."""
         from superduperdb.base.variables import Variable, _find_variables
-
         return _find_variables(self.encode(leaves_to_keep=Variable))
 
     def _deep_flat_encode(

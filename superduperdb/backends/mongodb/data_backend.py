@@ -38,6 +38,8 @@ class MongoDataBackend(BaseDataBackend):
 
         :param collection_name: Which collection to get the query builder for
         """
+        if collection_name.startswith('?'):
+            return MongoQuery(identifier=collection_name, db=self.datalayer)
         item_gotten = self._db[collection_name]
         if isinstance(
             item_gotten,

@@ -108,10 +108,7 @@ def test_save_variables_2():
         .find({'x': {'$regex': '^test/1'}})
     )
 
-    assert [x.value for x in query.variables] == ['X']
-
-    # q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
-    # print(pprint(q.dict()))
+    assert [x for x in query.variables] == ['X']
 
 
 def test_saveable():
@@ -149,11 +146,11 @@ def test_find_variables():
 
     r = Document({'txt': Variable('test')})
 
-    assert [str(x) for x in r.variables] == ['$test']
+    assert r.variables == ['test']
 
     q = MongoQuery('test').find_one(Document({'txt': Variable('test')}))
 
-    assert [str(x) for x in q.variables] == ['$test']
+    assert q.variables == ['test']
 
     q = (
         MongoQuery('test')

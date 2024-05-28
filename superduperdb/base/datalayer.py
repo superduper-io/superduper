@@ -764,18 +764,10 @@ class Datalayer:
             ),
         )
 
-        listeners = self.show('listener')
-        if not listeners:
-            return G
-
-        for identifier in listeners:
-            # TODO reload listener here (with lazy loading)
+        listeners = []
+        for identifier in self.show('listener'):
             listener = self.listeners[identifier]
-            if not listener.select:
-                logging.debug(
-                    f'Listener {identifier} was loaded with `None` select, '
-                    f'{identifier} will not be added to refresh jobs.'
-                )
+            if listener.select is None:
                 continue
 
             if (
@@ -784,6 +776,12 @@ class Datalayer:
             ):
                 continue
 
+            listeners.append(listener)
+
+        if not listeners:
+            return G
+
+        for listener in listeners:
             G.add_node(
                 f'{listener.model.identifier}.predict_in_db({listener.uuid})',
                 job=ComponentJob(
@@ -801,21 +799,13 @@ class Datalayer:
                 ),
             )
 
-        for identifier in listeners:
-            listener = self.listeners[identifier]
-            if listener.select is None:
-                continue
-            if (
-                listener.select.table_or_collection.identifier
-                != query.table_or_collection.identifier
-            ):
-                continue
+        for listener in listeners:
             G.add_edge(
                 f'{download_content.__name__}()',
                 f'{listener.model.identifier}.predict_in_db({listener.uuid})',
             )
             if not self.cdc.running:
-                deps = self.listeners[identifier].dependencies
+                deps = listener.dependencies
                 for dep in deps:
                     upstream = self.load(uuid=dep)
                     assert isinstance(upstream, Component)
@@ -826,13 +816,6 @@ class Datalayer:
                         G.add_edge(
                             dep_node,
                             f'{listener.model.identifier}.predict_in_db({listener.uuid})',
-                        )
-                    else:
-                        raise Exception(
-                            f'The dependent listener {upstream.uuid}'
-                            ' does not exist.'
-                            'Please make sure to add this listener'
-                            f'`db.add(...)`'
                         )
 
         if s.CFG.cluster.vector_search.type == 'native':

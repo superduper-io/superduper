@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove unused deadcode from the project
 - Auto wrap insert documents as Document
 - Changed the rest implementation to use the new serialization
+- Mask special character keys in mongodb query
 
 #### New Features & Functionality
 

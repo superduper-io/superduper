@@ -125,3 +125,14 @@ def test_select_missing_outputs(db):
     modified_select = select.select_ids_of_missing_outputs('x::test_model_output::0::0')
     out = list(db.execute(modified_select))
     assert len(out) == (len(docs) - len(ids))
+
+
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_special_query_serialization(db):
+    q2 = db['docs'].find({'x': {'$lt': 9}})
+    encoded_query = q2.encode()
+    base = encoded_query['_base'][1:]
+    assert encoded_query['_leaves'][base]['documents'][0] == {'x': {'<$>lt': 9}}
+
+    rq2 = Document.decode(encoded_query).unpack()
+    assert rq2.parts[0][1][0] == {'x': {'$lt': 9}}

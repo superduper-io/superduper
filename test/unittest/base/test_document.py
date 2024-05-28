@@ -84,7 +84,7 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert '_leaves' in encoded_r
     assert '_blobs' in encoded_r
-    assert encoded_r['img'].startswith('?artifact')
+    assert encoded_r['img'].startswith('@artifact')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
     decoded_r = Document.decode(encoded_r, schema=schema).unpack()
@@ -216,10 +216,10 @@ def test_refer_to_system(db):
             'my_artifact': {
                 '_path': 'superduperdb/components/datatype/LazyArtifact',
                 'file_id': '12345',
-                'datatype': "?db.load(datatype, image)",
+                'datatype': "@db.load(datatype, image)",
             }
         },
-        'img': '?my_artifact',
+        'img': '@my_artifact',
     }
 
     r = Document.decode(r, db=db).unpack()

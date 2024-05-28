@@ -4,6 +4,10 @@ import typing as t
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.annotations import merge_docstrings
 
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.schema import Schema
+
 
 class VariableError(Exception):
     """
@@ -12,18 +16,6 @@ class VariableError(Exception):
     :param args: *args for `Exception`.
     :param kwargs: **kwargs for `Exception`.
     """
-
-
-def _find_variables(r):
-    if isinstance(r, dict):
-        return sum([_find_variables(v) for v in r.values()], [])
-    if isinstance(r, (list, tuple)):
-        return sum([_find_variables(v) for v in r], [])
-    if isinstance(r, Variable):
-        return [r]
-    if isinstance(r, Leaf):
-        return r.variables
-    return []
 
 
 def _find_variables_with_path(r):
@@ -46,20 +38,26 @@ def _find_variables_with_path(r):
     return []
 
 
-def _replace_variables(x, db, **kwargs):
+def _replace_variables(x, db: t.Optional['Datalayer'] = None, **kwargs):
     from .document import Document
 
     if isinstance(x, dict):
         return {
-            _replace_variables(k, db, **kwargs): _replace_variables(v, db, **kwargs)
+            _replace_variables(k, db=db, **kwargs): _replace_variables(v, db=db, **kwargs)
             for k, v in x.items()
         }
     if isinstance(x, (list, tuple)):
-        return [_replace_variables(v, db, **kwargs) for v in x]
+        return [_replace_variables(v, db=db, **kwargs) for v in x]
+    if isinstance(x, str) and x.startswith('?'):
+        import re
+        variables = re.findall(r'\?(\w+)', x)
+        for v in variables:
+            x = x.replace(f'?{v}', str(kwargs[v]))
+        return x
     if isinstance(x, Variable):
-        return x.set(db, **kwargs)
+        return x.set_variables(db=db, **kwargs)
     if isinstance(x, Document):
-        return x.set_variables(db, **kwargs)
+        return x.set_variables(db=db, **kwargs)
     return x
 
 
@@ -78,17 +76,29 @@ class Variable(Leaf):
 
     setter_callback: dc.InitVar[t.Optional[t.Callable]] = None
 
+    @property
+    def _id(self):
+        return f'variable/{self.identifier}'
+
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
         self.value = self.identifier
 
     def __repr__(self) -> str:
-        return f'${str(self.value)}'
+        return f'?{str(self.value)}'
 
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def set(self, db, **kwargs):
+    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional['Schema'] = None):
+        if isinstance(self, leaves_to_keep):
+            cache[self._id] = self
+            return f'@{self._id}'
+        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
+        cache[self._id] = r
+        return f'@{self._id}'
+
+    def set_variables(self, db: t.Optional['Datalayer'] = None, **kwargs):
         """
         Get the intended value from the values of the global variables.
 

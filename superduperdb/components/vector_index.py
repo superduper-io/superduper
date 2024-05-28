@@ -81,12 +81,14 @@ class VectorIndex(Component):
 
         """
         document = MongoStyleDict(like.unpack())
+
         if outputs is not None:
             outputs = outputs or {}
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
             assert not isinstance(self.indexing_listener, str)
+
         available_keys = list(document.keys())
 
         key: t.Optional[t.Any] = None
@@ -114,8 +116,12 @@ class VectorIndex(Component):
                 )
 
         model = db.models[model_name]
-        data = Mapping(key, model.signature)(document)
-        args, kwargs = model.handle_input_type(data, model.signature)
+        if key == '_base':
+            args = (document['_base'],)
+            kwargs = {}
+        else:
+            data = Mapping(key, model.signature)(document)
+            args, kwargs = model.handle_input_type(data, model.signature)
         return (
             model.predict_one(*args, **kwargs),
             model.identifier,

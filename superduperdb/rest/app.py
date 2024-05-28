@@ -29,6 +29,11 @@ def _init_hook(db: Datalayer):
             leaf = Document.decode(leaf).unpack()
             t = db.type_id_to_cache_mapping[type_id]
             getattr(db, t)[leaf.identifier] = leaf
+        templates = db.show('template')
+        for template in templates:
+            t = db.load('template', template)
+            db['templates'][t.identifier] = t
+            CONFIG['apps'][t.identifier] = t.info
 
 
 app.init_hook = _init_hook
@@ -61,6 +66,12 @@ def build_app(app: superduperapp.SuperDuperApp):
     def db_apply(info: t.Dict):
         component = Document.decode(info).unpack()
         app.db.apply(component)
+        return {'status': 'ok'}
+
+    @app.add('/db/apply_template', method='post')
+    def db_apply_template(template: str, info: t.Dict):
+        c = app.db.templates[template](info)
+        app.db.apply(c)
         return {'status': 'ok'}
 
     @app.add('/db/remove', method='post')

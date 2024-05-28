@@ -11,6 +11,7 @@ from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
 from superduperdb.base.enums import DBType
+from superduperdb.base.variables import Variable
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
 
@@ -38,6 +39,8 @@ class MongoDataBackend(BaseDataBackend):
 
         :param collection_name: Which collection to get the query builder for
         """
+        if isinstance(collection_name, Variable):
+            return MongoQuery(identifier=collection_name, db=self.datalayer)
         item_gotten = self._db[collection_name]
         if isinstance(
             item_gotten,

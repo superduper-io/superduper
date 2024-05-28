@@ -14,9 +14,12 @@ from superduperdb.backends import ibis, mongodb
 
 from .base.decorators import code
 from .base.document import Document
+from .base.variables import Variable
 from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
+from .components.template import Template
+from .components.application import Application
 from .components.metric import Metric
 from .components.model import (
     CodeModel,
@@ -54,6 +57,9 @@ __all__ = (
     'Metric',
     'Schema',
     'Stack',
+    'Template',
+    'Variable',
+    'Application',
     'mongodb',
     'ibis',
 )

@@ -488,7 +488,7 @@ class Encodable(_BaseEncodable):
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
-            return f'?{self.id}'
+            return f'@{self.id}'
 
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
@@ -500,7 +500,7 @@ class Encodable(_BaseEncodable):
         cache[self.id] = r
         if schema is not None:
             return maybe_bytes
-        return f'?{self.id}'
+        return f'@{self.id}'
 
     @classmethod
     def build(cls, r):
@@ -589,16 +589,18 @@ class Artifact(_BaseEncodable):
 
     def init(self):
         """Initialize to load `x` with the actual file from the artifact store."""
-        assert self.file_id is not None
         if isinstance(self.x, Empty):
+            assert self.file_id is not None
             blob = self.db.artifact_store.get_bytes(self.file_id)
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
-            cache[self.id] = self
-            return f'?{self.id}'
+            if self.file_id is not None:
+                cache[self.id] = self
+                return f'@{self.id}'
+            return self
         maybe_bytes = None
         if self.file_id is None:
             maybe_bytes, self.file_id = self._encode()
@@ -609,7 +611,7 @@ class Artifact(_BaseEncodable):
         if isinstance(maybe_bytes, bytes):
             blobs[self.file_id] = maybe_bytes
         cache[self.id] = r
-        return f'?{self.id}'
+        return f'@{self.id}'
 
     def _encode(self):
         bytes_ = self.datatype.encode_data(self.x)
@@ -654,7 +656,7 @@ class File(_BaseEncodable):
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
-            return f'?{self.id}'
+            return f'@{self.id}'
 
         self.file_id = self.file_id or random_sha1()
         if self.x not in files:
@@ -670,7 +672,7 @@ class File(_BaseEncodable):
 
         cache[self.id] = r
 
-        return f'?{self.id}'
+        return f'@{self.id}'
 
     def init(self):
         """Initialize to load `x` with the actual file from the artifact store."""
@@ -719,6 +721,7 @@ methods: t.Dict[str, t.Dict] = {
     'pickle': {'encoder': pickle_encode, 'decoder': pickle_decode},
     'dill': {'encoder': dill_encode, 'decoder': dill_decode},
     'torch': {'encoder': torch_encode, 'decoder': torch_decode},
+    'dict': {'encoder': json_encode, 'decoder': json_decode},
     'file': {'encoder': file_check, 'decoder': file_check},
 }
 
@@ -748,7 +751,6 @@ pickle_encoder = get_serializer(
     encodable='encodable',
 )
 
-
 pickle_serializer = get_serializer(
     identifier='pickle',
     method='pickle',
@@ -760,6 +762,14 @@ pickle_lazy = get_serializer(
     method='pickle',
     encodable='lazy_artifact',
 )
+
+
+dict_serializer = get_serializer(
+    identifier='dict_serializer',
+    method='dict',
+    encodable='artifact',
+)
+
 
 dill_serializer = get_serializer(
     identifier='dill',

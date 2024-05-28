@@ -84,6 +84,8 @@ class MongoQuery(Query):
         'delete_one': '^.*\.delete_one\(.*\)$',
     }
 
+    default_flavour: t.ClassVar[str] = 'find'
+
     methods_mapping: t.ClassVar[t.Dict[str, str]] = {
         "insert": "insert_many",
         "select": "find",

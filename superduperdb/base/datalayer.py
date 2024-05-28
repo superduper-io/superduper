@@ -110,6 +110,7 @@ class Datalayer:
         self._cfg = s.CFG
 
     def __getitem__(self, item):
+        print(f'DEBUG DEBUG DEBUG {item}')
         return self.databackend.get_query_builder(item)
 
     @property
@@ -312,7 +313,7 @@ class Datalayer:
             type_id=type_id, identifier=identifier, version=version
         )
 
-    def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
+    def execute(self, query: Query, *args, allow_free: bool = False, **kwargs) -> ExecuteResult:
         """Execute a query on the database.
 
         :param query: The SQL query to execute, such as select, insert,
@@ -332,6 +333,8 @@ class Datalayer:
             return self._update(query, *args, **kwargs)
         if query.type == 'predict':
             return self._predict(query, *args, **kwargs)
+        if allow_free:
+            return query.do_execute(self)
 
         raise TypeError(
             f'Wrong type of {query}; '
@@ -920,10 +923,7 @@ class Datalayer:
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
-        if not isinstance(object.identifier, variables.Variable):
-            existing_versions = self.show(object.type_id, object.identifier)
-        else:
-            existing_versions = []
+        existing_versions = self.show(object.type_id, object.identifier)
         already_exists = (
             isinstance(object.version, int) and object.version in existing_versions
         )
@@ -951,7 +951,7 @@ class Datalayer:
             if isinstance(v, Component):
                 serialized['_leaves'][
                     k
-                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
+                ] = f'@db.load({v.type_id}, {v.identifier}, {v.version})'
 
         serialized = self.artifact_store.save_artifact(serialized)
 
@@ -1071,7 +1071,7 @@ class Datalayer:
             if isinstance(v, Component):
                 serialized['_leaves'][
                     k
-                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
+                ] = f'@db.load({v.type_id}, {v.identifier}, {v.version})'
 
         self.artifact_store.delete_artifact(info)
 

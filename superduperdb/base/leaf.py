@@ -69,7 +69,7 @@ class Leaf(ABC):
     def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep=()):
         """Encode itself.
 
-        After encoding everything is a vanilla dictionary (JSON + bytes).
+        After encoding everything is a vanilla dictionary (JSON + bytes),
 
         :param schema: Schema instance.
         :param leaves_to_keep: Leaves to keep.
@@ -80,14 +80,14 @@ class Leaf(ABC):
         self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
         return SuperDuperFlatEncode(
             {
-                '_base': f'?{self._id}',
+                '_base': f'@{self._id}',
                 '_leaves': cache,
                 '_blobs': blobs,
                 '_files': files,
             }
         )
 
-    def set_variables(self, db, **kwargs) -> 'Leaf':
+    def set_variables(self, db: t.Optional['Datalayer'] = None, **kwargs) -> 'Leaf':
         """Set free variables of self.
 
         :param db: Datalayer instance.
@@ -95,17 +95,24 @@ class Leaf(ABC):
         """
         from superduperdb import Document
         from superduperdb.base.variables import Variable, _replace_variables
+        from superduperdb.components.datatype import _BaseEncodable
 
-        r = self.dict().encode(leaves_to_keep=(Variable,))
+        r = self.encode(leaves_to_keep=(Variable, _BaseEncodable))
         r = _replace_variables(r, db, **kwargs)
         return Document.decode(r, db=db).unpack()
+
+    def copy(self):
+        from superduperdb import Document
+        return Document.decode(self.encode()).unpack()
 
     @property
     def variables(self) -> t.List[str]:
         """Get list of variables in the object."""
-        from superduperdb.base.variables import Variable, _find_variables
+        from superduperdb.base.variables import Variable
 
-        return _find_variables(self.encode(leaves_to_keep=Variable))
+        r = self.encode(leaves_to_keep=Variable)
+        
+        return [v for v in r['_leaves'].values() if isinstance(v, Variable)]
 
     def _deep_flat_encode(
         self,
@@ -117,12 +124,17 @@ class Leaf(ABC):
     ):
         if isinstance(self, leaves_to_keep):
             cache[self._id] = self
-            return f'?{self._id}'
+            return f'@{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
         return _deep_flat_encode(
-            r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            r,
+            cache,
+            blobs,
+            files,
+            leaves_to_keep=leaves_to_keep,
+            schema=schema,
         )
 
     def dict(self):

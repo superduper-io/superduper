@@ -74,7 +74,7 @@ class Document(MongoStyleDict):
                 leaves_to_keep=leaves_to_keep,
             )
         return _deep_flat_encode(
-            out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema,
         )
 
     def encode(
@@ -99,7 +99,7 @@ class Document(MongoStyleDict):
         schema = get_schema(self.db, schema) if schema else None
 
         out = self._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema,
         )
 
         # TODO: (New) Only include _leaves, _files, _blobs if they are not empty.
@@ -152,12 +152,14 @@ class Document(MongoStyleDict):
 
     @property
     def variables(self) -> t.List[str]:
-        """Return a list of variables in the object."""
-        from superduperdb.base.variables import _find_variables
+        """Get list of variables in the object."""
+        from superduperdb.base.variables import Variable
 
-        return _find_variables(self)
+        r = self.encode(leaves_to_keep=Variable)
+        
+        return [v for v in r['_leaves'].values() if isinstance(v, Variable)]
 
-    def set_variables(self, db, **kwargs) -> 'Document':
+    def set_variables(self, db: t.Optional['Datalayer'] = None, **kwargs) -> 'Document':
         """Set free variables of self.
 
         :param db: The datalayer to use.
@@ -166,7 +168,7 @@ class Document(MongoStyleDict):
         from superduperdb.base.variables import _replace_variables
 
         content = _replace_variables(
-            self, db, **kwargs
+            self, db=db, **kwargs
         )  # replace variables with values
         return Document(**content)
 
@@ -265,7 +267,7 @@ def _deep_flat_encode(
     if isinstance(r, dict):
         return {
             k: _deep_flat_encode(
-                v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema,
             )
             for k, v in r.items()
         }
@@ -273,14 +275,15 @@ def _deep_flat_encode(
         return type(r)(
             [
                 _deep_flat_encode(
-                    x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                    x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema,
                 )
                 for x in r
             ]
         )
     if isinstance(r, Leaf):
+        # TODO incorporate "leaves_to_keep" logic into this function
         return r._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema,
         )
     return r
 
@@ -319,12 +322,12 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         return {
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
         }
-    if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
+    if isinstance(r, str) and r.startswith('@') and not r.startswith('@db'):
         return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
-    if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
-        match = re.match("^\?db\.load\((.*)\)$", r)
+    if isinstance(r, str) and re.match("^\@db\.load\((.*)\)$", r):
+        match = re.match("^\@db\.load\((.*)\)$", r)
         assert match is not None
-        assert db is not None, 'db is required for ?db.load()'
+        assert db is not None, 'db is required for @db.load()'
         args = [x.strip() for x in match.groups()[0].split(',')]
         if len(args) == 1:
             return db.load(uuid=args[0])

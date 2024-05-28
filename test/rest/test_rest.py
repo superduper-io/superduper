@@ -44,11 +44,11 @@ def test_apply(setup):
             },
             'my_function': {
                 '_path': 'superduperdb/components/model/CodeModel',
-                'object': '?function_body',
+                'object': '@function_body',
                 'identifier': 'my_function',
             },
         },
-        '_base': '?my_function',
+        '_base': '@my_function',
     }
 
     _ = curl_post(
@@ -76,11 +76,11 @@ def test_insert_image(setup):
             'my_artifact': {
                 '_path': 'superduperdb/components/datatype/LazyArtifact',
                 'file_id': file_id,
-                'datatype': "?db.load(datatype, image)",
+                'datatype': "@db.load(datatype, image)",
             }
         },
         'query': 'coll.insert_one(documents[0])',
-        'documents': [{'img': '?my_artifact'}],
+        'documents': [{'img': '@my_artifact'}],
     }
 
     result = curl_post(

@@ -8,6 +8,8 @@ from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
 from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
+from superduperdb.components.datatype import _BaseEncodable
+from superduperdb.components.listener import Listener
 
 
 @dc.dataclass
@@ -57,6 +59,23 @@ def test_encode_leaf():
     }
 
 
+def test_no_wrap():
+    m = Listener(
+        key='X',
+        model=ObjectModel(
+            identifier='test',
+            object=lambda x: x + 2,
+        ),
+        select=None,
+    )
+
+    r = m.encode(leaves_to_keep=(_BaseEncodable,))
+
+    decoded = Document.decode(r).unpack()
+    decoded.init()
+    print(decoded)
+
+
 def test_encode_leaf_with_children():
     obj = MySer(
         identifier='my_ser',
@@ -77,30 +96,6 @@ def test_encode_leaf_with_children():
     }
 
 
-def test_serialize_variables_1():
-    s = Test(
-        identifier='tst',
-        a=1,
-        b=Variable(
-            identifier='test/{version}',
-            setter_callback=lambda db, value, kwargs: value.format(version=db.version),
-        ),
-        c=Variable(
-            identifier='number', setter_callback=lambda db, value, kwargs: db[value]
-        ),
-    )
-
-    @dc.dataclass
-    class Tmp:
-        version: int
-
-        def __getitem__(self, item):
-            return {'number': 1.5}[item]
-
-    q = s.set_variables(db=Tmp(version=1), number=1)
-    assert q.dict().encode()['c'] == 1
-
-
 def test_save_variables_2():
     query = (
         MongoQuery('documents')
@@ -109,9 +104,6 @@ def test_save_variables_2():
     )
 
     assert [x.value for x in query.variables] == ['X']
-
-    # q = MongoQuery(Variable('Collection')).find({'x': Variable('X')})
-    # print(pprint(q.dict()))
 
 
 def test_saveable():
@@ -149,11 +141,11 @@ def test_find_variables():
 
     r = Document({'txt': Variable('test')})
 
-    assert [str(x) for x in r.variables] == ['$test']
+    assert [str(x) for x in r.variables] == ['?test']
 
     q = MongoQuery('test').find_one(Document({'txt': Variable('test')}))
 
-    assert [str(x) for x in q.variables] == ['$test']
+    assert [str(x) for x in q.variables] == ['?test']
 
     q = (
         MongoQuery('test')

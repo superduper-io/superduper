@@ -191,9 +191,10 @@ def component(*schema: t.Dict):
                 path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
                 id = f'{path}/{h}'
                 cache[id] = {'_path': path, **kwargs}
-                return f'?{id}'
+                return f'@{id}'
 
             out._deep_flat_encode = _deep_flat_encode
+            out.inline = True
             return out
 
         return decorated

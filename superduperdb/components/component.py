@@ -6,7 +6,6 @@ import dataclasses as dc
 import json
 import os
 import typing as t
-from collections import namedtuple
 from functools import wraps
 
 import yaml
@@ -22,46 +21,6 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
     from superduperdb.components.datatype import DataType
-
-
-def import_(r=None, path=None, db=None):
-    """Helper function for importing component JSONs, YAMLs, etc.
-
-    :param r: Object to be imported.
-    :param path: Components directory.
-    :param db: Datalayer instance.
-    """
-    from superduperdb.base.document import _build_leaves
-
-    if r is None:
-        try:
-            with open(f'{path}/component.json') as f:
-                r = json.load(f)
-        except FileNotFoundError:
-            with open(f'{path}/component.yaml') as f:
-                r = yaml.safe_load(f)
-        for id_ in os.listdir(path):
-            if id_ == 'component.json' or id_ == 'component.yaml':
-                continue
-            with open(f'{path}/{id_}', 'rb') as f:
-                bytes[id_] = f.read()
-    r['_leaves'] = _build_leaves(r['_leaves'], db=db)[0]
-    return r['_leaves'][r['_base']]
-
-
-def getdeepattr(obj, attr):
-    """Get nested attribute with dot notation.
-
-    :param obj: Object.
-    :param attr: Attribute.
-    """
-    for a in attr.split('.'):
-        obj = getattr(obj, a)
-    return obj
-
-
-ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
-ComponentTuple.__doc__ = 'noqa'
 
 
 @merge_docstrings
@@ -85,7 +44,7 @@ class Component(Leaf):
 
     @property
     def _id(self):
-        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
+        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'.replace('.', '-')
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
@@ -99,25 +58,6 @@ class Component(Leaf):
     def id(self):
         """Returns the component identifier."""
         return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
-
-    # TODO remove
-    @property
-    def id_tuple(self):
-        """Returns an object as `ComponentTuple`."""
-        return ComponentTuple(self.type_id, self.identifier, self.version)
-
-    def set_variables(self, db, **kwargs):
-        """Set free variables of self.
-
-        :param db: Datalayer instance.
-        :param kwargs: The values to set the variables to `_replace_variables`.
-        """
-        r = self.dict()
-        variables = _find_variables_with_path(r)
-        for item in variables:
-            v = item['variable']
-            value = v.set(db=db, **kwargs)
-            self.setattr_with_path(item['path'], value)
 
     @property
     def dependencies(self):
@@ -223,7 +163,7 @@ class Component(Leaf):
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self._id] = self
-            return f'?{self._id}'
+            return f'@{self._id}'
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
@@ -231,7 +171,7 @@ class Component(Leaf):
             r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         cache[self._id] = r
-        return f'?{self._id}'
+        return f'@{self._id}'
 
     @staticmethod
     def read(path: str):
@@ -273,11 +213,12 @@ class Component(Leaf):
 
         return Document.decode(config_object).unpack()
 
-    def export(self, path: str):
+    def export(self, path: str, format: str = 'json'):
         """
         Save `self` to a directory using super-duper protocol.
 
         :param path: Path to the directory to save the component.
+        :param format: 'json' or 'yaml'
 
         Created directory structure:
         ```
@@ -296,8 +237,15 @@ class Component(Leaf):
                     f.write(bytestr_)
 
         r.pop_blobs()
-        with open(os.path.join(path, 'component.json'), 'w') as f:
-            json.dump(r, f, indent=2)
+        if format == 'json':
+            with open(os.path.join(path, 'component.json'), 'w') as f:
+                json.dump(r, f, indent=2)
+        elif format == 'yaml':
+            with open(os.path.join(path, 'component.yaml'), 'w') as f:
+                yaml.dump(dict(r), f)
+        else:
+            raise ValueError(f'Unknown format: {format}')
+
 
     def dict(self) -> 'Document':
         """A dictionary representation of the component."""
@@ -310,11 +258,18 @@ class Component(Leaf):
             attr = getattr(self, k)
             if isinstance(attr, (Artifact, File)):
                 r[k] = attr
+            if isinstance(attr, tuple):
+                r[k] = list(attr)
             else:
                 r[k] = s.fields[k](x=attr)  # artifact or file
 
+        for k, v in r.items():
+            if isinstance(v, tuple):
+                r[k] = list(v)
+
         r['type_id'] = self.type_id
-        r['version'] = self.version
+        if hasattr(self, 'version'):
+            r['version'] = self.version
         r['identifier'] = self.identifier
         r['hidden'] = False
         return Document(r)

@@ -81,7 +81,7 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         """Load all outer reference keys with actual data blob."""
 
         def _get_blob(output, key):
-            if isinstance(key, str) and key[0] == '?':
+            if isinstance(key, str) and key[0] == '@':
                 output = output['_leaves'][key[1:]]['blob']
             else:
                 output = key

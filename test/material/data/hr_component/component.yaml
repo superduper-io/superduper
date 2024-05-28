@@ -1,4 +1,4 @@
-_base: "?my_object"
+_base: "@my_object"
 _leaves:
 
   torch_32:
@@ -15,10 +15,10 @@ _leaves:
 
   my_lambda:
     _path: superduperdb/components/datatype/LazyArtifact
-    datatype: "?dill"
+    datatype: "@dill"
   
   my_object:
     _path: superduperdb/components/model/ObjectModel
     identifier: test
-    datatype: "?torch_32"
-    object: "?my_lambda"
+    datatype: "@torch_32"
+    object: "@my_lambda"

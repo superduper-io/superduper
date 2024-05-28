@@ -12,7 +12,7 @@ from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
-from .component import Component, ComponentTuple
+from .component import Component
 from .model import Model, ModelInputType
 
 if t.TYPE_CHECKING:
@@ -38,7 +38,7 @@ class Listener(Component):
     :param identifier: A string used to identify the model.
     """
 
-    key: ModelInputType
+    key: ModelInputType 
     model: Model
     select: Query
     active: bool = True
@@ -129,7 +129,7 @@ class Listener(Component):
             db.add(output_table)
 
     @property
-    def dependencies(self) -> t.List[ComponentTuple]:
+    def dependencies(self) -> t.List[str]:
         """Listener model dependencies."""
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())

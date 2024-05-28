@@ -20,7 +20,7 @@ class Code(Leaf):
     :param code: The code to store.
     """
 
-    code: str
+    code: str = template
     identifier: str = ''
 
     @staticmethod

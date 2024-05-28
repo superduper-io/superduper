@@ -8,6 +8,7 @@ from functools import wraps
 
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
+from superduperdb.base.variables import Variable
 from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.hash import hash_string
 
@@ -71,6 +72,23 @@ class Query(_BaseQuery):
         parts = self.parts[item]
         return type(self)(db=self.db, identifier=self.identifier, parts=parts)
 
+    @property
+    def variables(self):
+        v = super().variables
+        q = self._to_str()[0]
+        patterns = re.findall(r'\?([a-zA-Z0-9_]+)', q)
+        v.extend([Variable(identifier=x) for x in patterns])
+        return v
+
+    def set_variables(self, db: t.Optional['Datalayer'] = None, **kwargs) -> 'Query':
+        r = super().set_variables(db=db, **kwargs)
+        r = r.encode()
+        q = r['_leaves'][r['_base'][1:]]['query']
+        for k, v in kwargs.items():
+            q = q.replace(f'?{k}', str(v))
+        r['_leaves'][r['_base'][1:]]['query'] = q
+        return Document.decode(r, db=db).unpack()
+
     def set_db(self, db: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
@@ -115,10 +133,13 @@ class Query(_BaseQuery):
 
         try:
             return next(k for k, v in self.flavours.items() if re.match(v, repr_))
-        except StopIteration:
-            raise TypeError(
-                f'Query flavour {repr_} did not match existing {type(self)} flavours'
-            )
+        except StopIteration as e:
+            if hasattr(self, 'default_flavour'):
+                return self.default_flavour
+            else:
+                raise TypeError(
+                    f'Query flavour {repr_} did not match existing {type(self)} flavours'
+                ) from e
 
     def _get_parent(self):
         return self.db.databackend.get_table_or_collection(self.identifier)
@@ -186,12 +207,13 @@ class Query(_BaseQuery):
             documents[i] = doc._deep_flat_encode(
                 cache, blobs, files, leaves_to_keep, schema=schema
             )
+
         cache[self._id] = {
             '_path': 'superduperdb/backends/base/query/parse_query',
             'documents': documents,
             'query': query,
         }
-        return f'?{self._id}'
+        return f'@{self._id}'
 
     @staticmethod
     def _update_item(a, documents, queries):
@@ -257,11 +279,11 @@ class Query(_BaseQuery):
 
     def __repr__(self):
         output, docs = self._dump_query()
-        # for i, doc in enumerate(docs):
-        #     doc_string = str(doc)
-        #     if isinstance(doc, Document):
-        #         doc_string = str(doc.unpack())
-        #     output = output.replace(f'documents[{i}]', doc_string)
+        for i, doc in enumerate(docs):
+            doc_string = str(doc)
+            if isinstance(doc, Document):
+                doc_string = str(dict(doc))
+            output = output.replace(f'documents[{i}]', doc_string)
         return output
 
     def __eq__(self, other):
@@ -510,7 +532,10 @@ class Query(_BaseQuery):
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):
     key = part.split('.')
-    if key[0] == '_outputs':
+    if key[0].startswith('?'):
+        identifier = Variable(key[0][1:])
+        part = part.split('.')[1:]
+    elif key[0] == '_outputs':
         identifier = f'{key[0]}.{key[1]}'
         part = part.split('.')[2:]
     else:
@@ -539,6 +564,7 @@ def _parse_query_part(part, documents, query, builder_cls, db=None):
                 args.append(eval(x, {'documents': documents, 'query': query}))
         current = comp(*args, **kwargs)
     return current
+
 
 
 def parse_query(

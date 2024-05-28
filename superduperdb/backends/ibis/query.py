@@ -443,11 +443,10 @@ class IbisQuery(Query):
         :param predict_id: The predict id.
         """
         output_table = self.db[f'_outputs.{predict_id}']
-        input_table = self.db[self.table_or_collection.identifier]
         output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(
             output_table,
-            output_table._source == getattr(input_table, input_table.primary_id),
+            output_table._source == getattr(self, self.primary_id),
         )
 
     def select_single_id(self, id: str):

@@ -109,7 +109,7 @@ def test_export_and_read():
     assert isinstance(reloaded_from_hr, ObjectModel)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_set_variables(db):
 
     m = Listener(
@@ -118,17 +118,18 @@ def test_set_variables(db):
             object=lambda x: x + 2,
         ),
         key=Variable('key'),
-        select=None, #db['#docs'].find(),
+        select=db['docs'].find(),
     )
 
 
 
     from superduperdb import Document
 
-    recon = Document.decode(m.encode()).unpack()
+    e = m.encode()
+    recon = Document.decode(e).unpack()
     
-    # Doesn\'t work
-    recon.init()
+    recon.init(db=db)
     
-    # Doesn\'t work
-    n = m.set_variables(test='test_value', key='key_value', docs='docs_value')
+    listener = m.set_variables(test='test_value', key='key_value', docs='docs_value')
+    assert listener.model.identifier == 'test_value'
+    assert listener.key == 'key_value'

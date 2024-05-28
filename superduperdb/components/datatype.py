@@ -383,6 +383,9 @@ class _BaseEncodable(Leaf):
         if self.uri and not re.match('^[a-z]{0,5}://', self.uri):
             self.uri = f'file://{self.uri}'
 
+    def init_from_blobs(self, blobs):
+        pass
+
     @property
     def id(self):
         assert self.file_id is not None
@@ -587,11 +590,18 @@ class Artifact(_BaseEncodable):
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
             raise ArtifactSavingError('BASE64 not supported on disk!')
 
-    def init(self):
+    def init_from_blobs(self, blobs):
+        blob = blobs.get(self.file_id, None)
+        if blob:
+            self.datatype.init()
+            self.x = self.datatype.decoder(blob)
+
+    def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
         assert self.file_id is not None
-        if isinstance(self.x, Empty):
-            blob = self.db.artifact_store.get_bytes(self.file_id)
+        db = self.db or db
+        if isinstance(self.x, Empty) and db:
+            blob = db.artifact_store.get_bytes(self.file_id)
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
@@ -672,10 +682,16 @@ class File(_BaseEncodable):
 
         return f'?{self.id}'
 
-    def init(self):
+    def init_from_blobs(self, blobs):
+        # Implement me
+        # TODO: @jalon
+        pass
+
+    def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
+        db = self.db or db
         if isinstance(self.x, Empty):
-            file = self.db.artifact_store.get_file(self.file_id)
+            file = db.artifact_store.get_file(self.file_id)
             if self.file_name is not None:
                 file = os.path.join(file, self.file_name)
             self.x = file

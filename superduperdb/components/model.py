@@ -22,7 +22,7 @@ from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.components.datatype import DataType, dill_lazy
+from superduperdb.components.datatype import DataType, dill_serializer
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
@@ -1135,7 +1135,7 @@ class ObjectModel(_ObjectModel):
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_lazy),
+        ('object', dill_serializer),
     )
 
 

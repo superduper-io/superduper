@@ -288,20 +288,20 @@ def _deep_flat_encode(
 def _get_leaf_from_cache(k, cache, blobs, files, db: t.Optional['Datalayer'] = None):
     if isinstance(cache[k], Leaf):
         leaf = cache[k]
-        if isinstance(leaf, Leaf):
+        if not leaf.db:
             leaf.db = db
         return leaf
     leaf = _deep_flat_decode(cache[k], cache, blobs, files, db=db)
     cache[k] = leaf
     if isinstance(leaf, Leaf):
-        leaf.db = db
+        if not leaf.db:
+            leaf.db = db
     return leaf
 
 
 def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
     # TODO: Document this function (Important)
     if isinstance(r, Leaf):
-        r.db = db
         return r
     if isinstance(r, (list, tuple)):
         return type(r)(
@@ -314,6 +314,7 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         dict_ = {k: v for k, v in r.items() if k != '_path'}
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
         instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
+        instance.init_from_blobs(blobs)
         return instance
     if isinstance(r, dict):
         return {

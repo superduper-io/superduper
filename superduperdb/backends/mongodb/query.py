@@ -524,17 +524,30 @@ class MongoQuery(Query):
         :param flatten: Whether to flatten the outputs.
         :param kwargs: Additional keyword arguments.
         """
-        if not len(outputs):
-            return
-
-        document_embedded = kwargs.get('document_embedded', True)
-        if document_embedded:
-            if flatten:
+        if flatten:
+            if kwargs.get('document_embedded', True):
                 raise AttributeError(
                     'Flattened outputs cannot be stored along with input documents.'
                     'Please use `document_embedded = False` option with flatten = True'
                 )
+            flattened_outputs = []
+            flattened_ids = []
+            for output, id in zip(outputs, ids):
+                assert isinstance(output, (list, tuple)), 'Expected list or tuple'
+                for o in output:
+                    flattened_outputs.append(o)
+                    flattened_ids.append(id)
+            return self.model_update(
+                ids=flattened_ids,
+                predict_id=predict_id,
+                outputs=flattened_outputs,
+                flatten=False,
+                **kwargs,
+            )
 
+        document_embedded = kwargs.get('document_embedded', True)
+        if document_embedded:
+            outputs = [Document({"_base": output}).encode() for output in outputs]
             bulk_operations = []
             for i, id in enumerate(ids):
                 mongo_filter = {'_id': ObjectId(id)}
@@ -555,74 +568,17 @@ class MongoQuery(Query):
                     )
                 )
             return self.table_or_collection.bulk_write(bulk_operations)
+
         else:
-            collection = MongoQuery(f'_outputs.{predict_id}')
             documents = []
-            leaves, blobs, files = {}, {}, {}
-            if flatten:
-                for i, id in enumerate(ids):
-                    _outputs = outputs[i]
-                    if isinstance(_outputs, (list, tuple)):
-                        for offset, output in enumerate(_outputs):
-                            if isinstance(output, SuperDuperFlatEncode):
-                                leaves, blobs, files = (
-                                    output.pop_leaves(),
-                                    output.pop_blobs(),
-                                    output.pop_files(),
-                                )
-                                output = output.get('_base', output)[offset]
-                            documents.append(
-                                {
-                                    '_outputs': {predict_id: output},
-                                    '_source': ObjectId(id),
-                                    '_offset': offset,
-                                    '_leaves': leaves,
-                                    '_blobs': blobs,
-                                    '_files': files,
-                                }
-                            )
-                    else:
-                        output = outputs[i]
-                        if isinstance(output, SuperDuperFlatEncode):
-                            leaves, blobs, files = (
-                                output.pop_leaves(),
-                                output.pop_blobs(),
-                                output.pop_files(),
-                            )
-                            output = output.get('_base', output)
-                        for o in output:
-                            documents.append(
-                                {
-                                    '_outputs': {predict_id: o},
-                                    '_source': ObjectId(id),
-                                    '_offset': 0,
-                                    '_leaves': leaves,
-                                    '_blobs': blobs,
-                                    '_files': files,
-                                }
-                            )
-
-            else:
-                for i, id in enumerate(ids):
-                    output = outputs[i]
-                    if isinstance(output, SuperDuperFlatEncode):
-                        leaves, blobs, files = (
-                            output.pop_leaves(),
-                            output.pop_blobs(),
-                            output.pop_files(),
-                        )
-                        output = output.get('_base', output)
-                    documents.append(
-                        {
-                            '_id': ObjectId(id),
-                            '_outputs': {predict_id: output},
-                            '_leaves': leaves,
-                            '_blobs': blobs,
-                            '_files': files,
-                        }
-                    )
-
-            return collection.insert_many(documents)
+            for output, id in zip(outputs, ids):
+                documents.append(
+                    {
+                        '_outputs': {predict_id: output},
+                        '_source': ObjectId(id),
+                    }
+                )
+            return self.db[f'_outputs.{predict_id}'].insert_many(documents)
 
 
 def InsertOne(**kwargs):

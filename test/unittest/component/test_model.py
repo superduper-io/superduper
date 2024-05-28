@@ -187,7 +187,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
             #  make sure the outputs are set
-            assert [i['_base'] for i in kwargs.get('outputs')] == [2] * 10
+            assert kwargs.get('outputs') == [2] * 10
 
     with (
         patch.object(predict_mixin, 'object') as my_object,
@@ -206,9 +206,8 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         )
         select_using_id.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
-        datatype = predict_mixin.datatype
-        kwargs_output_ids = [o['_base'] for o in kwargs.get('outputs')]
-        assert kwargs_output_ids == [datatype(2).encode()['_base'] for _ in range(10)]
+        kwargs_output_ids = [o.x for o in kwargs.get('outputs')]
+        assert kwargs_output_ids == [2] * 10
 
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = {'out': 2}
@@ -226,9 +225,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
-            assert [i['_base'] for i in kwargs.get('outputs')] == [
-                str({'out': 2}) for _ in range(10)
-            ]
+            assert kwargs.get('outputs') == [str({'out': 2}) for _ in range(10)]
 
 
 def test_model_append_metrics():
@@ -446,7 +443,7 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
             #  make sure the outputs are set
-            assert [i['_base'] for i in kwargs.get('outputs')] == [2] * 10
+            assert kwargs.get('outputs') == [2] * 10
 
     # TODO - I don't know how this works given that the `_outputs` field
     # should break...

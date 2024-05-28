@@ -42,6 +42,7 @@ def copy_vectors(
     if isinstance(query, dict):
         # ruff: noqa: E501
         query: Query = Document.decode(query).unpack()  # type: ignore[no-redef]
+        query.set_db(db)
     assert isinstance(query, Query)
     if not ids:
         select = query

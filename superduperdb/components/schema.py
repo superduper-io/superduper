@@ -5,7 +5,7 @@ from functools import cached_property
 from overrides import override
 
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType
+from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -75,11 +75,16 @@ class Schema(Component):
         :param files: Files for encoding.
         :param leaves_to_keep: Leaves to keep.
         """
-        for k in self.fields:
+        for k, datatype in self.fields.items():
             if k not in r:
                 continue
-            if isinstance(self.fields[k], DataType):
-                encodable = self.fields[k](r[k])
+            value = r[k]
+            if isinstance(datatype, DataType):
+                if isinstance(value, _BaseEncodable):
+                    assert value.datatype.identifier == datatype.identifier
+                    encodable = value
+                else:
+                    encodable = datatype(value)
                 if isinstance(encodable, leaves_to_keep):
                     continue
                 r[k] = encodable._deep_flat_encode(

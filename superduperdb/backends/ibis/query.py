@@ -53,34 +53,21 @@ def _model_update_impl_flatten(
     predict_id: str,
     outputs: t.Sequence[t.Any],
 ):
-    table_records = []
+    """Flatten the outputs and ids and update the model outputs in the database."""
+    flattened_outputs = []
+    flattened_ids = []
+    for output, id in zip(outputs, ids):
+        assert isinstance(output, (list, tuple)), 'Expected list or tuple'
+        for o in output:
+            flattened_outputs.append(o)
+            flattened_ids.append(id)
 
-    for i, id in enumerate(ids):
-        _outputs = outputs[i]
-        if isinstance(_outputs, (list, tuple)):
-            for output in _outputs:
-                output = _load_keys_with_blob(output)
-                table_records.append(
-                    {
-                        'output': output,
-                        '_source': id,
-                        'id': str(uuid.uuid4()),
-                    }
-                )
-        else:
-            assert isinstance(_outputs, dict), 'Expected dict'
-            assert '_base' in _outputs, 'Expected _base in output'
-            for o in _outputs['_base']:
-                output = _load_keys_with_blob({**_outputs, **{'_base': o}})
-                table_records.append(
-                    {
-                        'output': output,
-                        '_source': id,
-                        'id': str(uuid.uuid4()),
-                    }
-                )
-
-    return db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
+    return _model_update_impl(
+        db=db,
+        ids=flattened_ids,
+        predict_id=predict_id,
+        outputs=flattened_outputs,
+    )
 
 
 def _model_update_impl(
@@ -92,19 +79,15 @@ def _model_update_impl(
     if not outputs:
         return
 
-    table_records = []
-
-    for ix in range(len(outputs)):
-        output = outputs[ix]
-        output = _load_keys_with_blob(output)
-
+    documents = []
+    for output, source_id in zip(outputs, ids):
         d = {
-            '_source': str(ids[ix]),
+            '_source': str(source_id),
             'output': output,
-            'id': str(ids[ix]),
+            'id': str(uuid.uuid4()),
         }
-        table_records.append(d)
-    db.databackend.insert(f'_outputs.{predict_id}', raw_documents=table_records)
+        documents.append(Document(d))
+    return db[f'_outputs.{predict_id}'].insert(documents)
 
 
 @merge_docstrings
@@ -184,7 +167,7 @@ class IbisQuery(Query):
         fields = {}
         tables = self._get_tables()
 
-        table_renamings = self.renamings()
+        table_renamings = self.renamings({})
         if len(tables) == 1 and not table_renamings:
             return self.db.tables[self.identifier].schema
         for identifier, c in tables.items():

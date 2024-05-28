@@ -538,6 +538,7 @@ class Model(Component):
     def _prepare_select_for_predict(self, select, db):
         if isinstance(select, dict):
             select = Document.decode(select).unpack()
+        select.set_db(db)
         return select
 
     def predict_in_db_job(
@@ -650,11 +651,6 @@ class Model(Component):
         :param in_memory: Load data into memory or not
         :param overwrite: Overwrite all documents or only new documents
         """
-        if isinstance(select, dict):
-            # TODO: select is loaded without db
-            select = Document.decode(select).unpack()
-            select.set_db(db)
-
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')
@@ -777,9 +773,6 @@ class Model(Component):
         outputs = self.predict(dataset)
         self._infer_auto_schema(outputs, predict_id)
         outputs = self.encode_outputs(outputs)
-
-        outputs = [Document({"_base": output}).encode() for output in outputs]
-
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(

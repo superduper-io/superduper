@@ -1,5 +1,7 @@
 import copy
 import dataclasses as dc
+import functools
+import re
 import typing as t
 from collections import defaultdict
 
@@ -19,7 +21,50 @@ from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
+    from superduperdb import Schema
     from superduperdb.base.datalayer import Datalayer
+
+_SPECIAL_CHRS: list = ['$', '.']
+
+
+def _serialize_special_character(d, to='encode'):
+    def extract_character(s):
+        pattern = r'<(.)>'
+        match = re.search(pattern, s)
+        if match:
+            return match.group(1)
+        return None
+
+    if not isinstance(d, dict):
+        return d
+
+    new_dict = {}
+    for key, value in d.items():
+        new_key = key
+        if isinstance(key, str):
+            if to == 'encode':
+                if key[0] in _SPECIAL_CHRS:
+                    new_key = f'<{key[0]}>' + key[1:]
+            elif to == 'decode':
+                k = extract_character(key[:3])
+                if k in _SPECIAL_CHRS:
+                    new_key = k + key[3:]
+
+        if isinstance(value, dict):
+            new_dict[new_key] = _serialize_special_character(value, to=to)
+        elif isinstance(value, list):
+            new_dict[new_key] = [
+                _serialize_special_character(item, to=to)
+                if isinstance(item, dict)
+                else item
+                for item in value
+            ]
+        else:
+            new_dict[new_key] = value
+
+    d.clear()
+    d.update(new_dict)
+    return d
 
 
 def parse_query(
@@ -31,6 +76,8 @@ def parse_query(
     :param documents: The documents to query.
     :param db: The datalayer to use to execute the query.
     """
+    _decode = functools.partial(_serialize_special_character, to='decode')
+    documents = list(map(_decode, documents))
     return _parse_query(
         query=query,
         builder_cls=MongoQuery,
@@ -92,12 +139,27 @@ class MongoQuery(Query):
     def _create_table_if_not_exists(self):
         return
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
-        r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-        )
-        cache[r[1:]]['_path'] = 'superduperdb/backends/mongodb/query/parse_query'
-        return r
+    def _deep_flat_encode(
+        self,
+        cache,
+        blobs,
+        files,
+        leaves_to_keep=(),
+        schema: t.Optional['Schema'] = None,
+    ):
+        query, documents = self._dump_query()
+        documents = [Document(r) for r in documents]
+        for i, doc in enumerate(documents):
+            documents[i] = doc._deep_flat_encode(
+                cache, blobs, files, leaves_to_keep, schema=schema
+            )
+        documents = list(map(_serialize_special_character, documents))
+        cache[self._id] = {
+            '_path': 'superduperdb/backends/mongodb/query/parse_query',
+            'documents': documents,
+            'query': query,
+        }
+        return f'?{self._id}'
 
     @property
     def type(self):

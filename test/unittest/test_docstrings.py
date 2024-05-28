@@ -222,9 +222,10 @@ def extract_docstrings():
             continue
         exec(f'import superduperdb.ext.{subpackage}')
         package = eval(f'superduperdb.ext.{subpackage}')
-        members += list_all_members(
+        tmp = list_all_members(
             package=package, prefix=f'superduperdb.ext.{subpackage}'
         )
+        members.extend(tmp)
     from superduperdb.misc.special_dicts import MongoStyleDict
 
     lookup = MongoStyleDict({})

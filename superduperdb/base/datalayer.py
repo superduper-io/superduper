@@ -24,7 +24,7 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
+from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
@@ -91,7 +91,6 @@ class Datalayer:
         self.vector_indices = LoadDict(self, field='vector_index')
         self.schemas = LoadDict(self, field='schema')
         self.tables = LoadDict(self, field='table')
-        self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher

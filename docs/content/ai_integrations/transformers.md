@@ -5,13 +5,16 @@
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |
-| `superduperdb.ext.transformers.model.TextClassification` | A pipeline for classifying text. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/transformers/model.py) | ... |
-| `superduperdb.ext.transformers.model.LLM` | Work locally with the `transformers` implementations of LLM. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/transformers/model.py) | ... |
+| `superduperdb.ext.transformers.model.TextClassification` | A pipeline for classifying text. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#textclassificationpipeline) |
+| `superduperdb.ext.transformers.model.LLM` | Work locally with the `transformers` implementations of LLM. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#llm) |
 
 
 ### `TextClassification`
 
-...
+One of the most commonly used pipelines in `transformers` is the `TextClassificationPipeline`.
+You may apply and train these pipelines with `superduperdb`.
+Read more in the [API documentation](/docs/api/ext/transformers/model#textclassificationpipeline).
+
 
 ### `LLM`
 
@@ -43,13 +46,12 @@ The model can be configured with the following parameters:
 
 ## Training
 
+For a fully worked out training/ fine-tuning use-case refer to the [use-cases section](../use_cases/fine_tune_llm_on_database.md).
+
 ### LLM fine-tuning
 
 SuperDuperDB provides a convenient fine-tuning method based on the [trl](https://huggingface.co/docs/trl/index) framework to help you train data in the database.
 
-You can find [training examples here](../../use_cases/fine_tune_llm_on_database).
-
-**Running Training**
 ### Supported Features
 
 **Training Methods**:

@@ -28,6 +28,7 @@ from .components.model import (
     Validation,
     objectmodel,
 )
+from .components.component import Component
 from .components.schema import Schema
 from .components.stack import Stack
 from .components.template import Template
@@ -62,4 +63,5 @@ __all__ = (
     'Template',
     'Application',
     'Variable',
+    'Component',
 )

@@ -16,22 +16,15 @@ assert isinstance(
 port = int(CFG.cluster.rest.uri.split(':')[-1])
 
 assert CFG.cluster.rest.config, "cluster.rest.config should be set with a valid path"
-with open(CFG.cluster.rest.config) as f:
-    CONFIG = yaml.safe_load(f)
+try:
+    with open(CFG.cluster.rest.config) as f:
+        CONFIG = yaml.safe_load(f)
+except FileNotFoundError as e:
+    logging.warn("cluster.rest.config should be set with a valid path")
+    CONFIG = {}
 
 app = superduperapp.SuperDuperApp('rest', port=port)
 
-
-def _init_hook(db: Datalayer):
-    for type_id in CONFIG['presets']:
-        for leaf in CONFIG['presets'][type_id]:
-            leaf = CONFIG['presets'][type_id][leaf]
-            leaf = Document.decode(leaf).unpack()
-            t = db.type_id_to_cache_mapping[type_id]
-            getattr(db, t)[leaf.identifier] = leaf
-
-
-app.init_hook = _init_hook
 
 
 def build_app(app: superduperapp.SuperDuperApp):

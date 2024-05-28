@@ -132,6 +132,10 @@ class Document(MongoStyleDict):
         if '_files' in r:
             files = r['_files']
 
+        for k, v in cache.items():
+            if isinstance(v, dict) and 'identifier' not in v:
+                v['identifier'] = k
+
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
         if schema is not None:

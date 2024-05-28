@@ -30,12 +30,11 @@ class Code(Leaf):
         :param obj: The object to create the Code object from.
         """
         code = inspect.getsource(obj)
-
         mini_module = template.format(
             definition=code,
         )
         print(mini_module)
-        return Code(mini_module)
+        return Code(code=mini_module)
 
     def __post_init__(self, db):
         super().__post_init__(db)

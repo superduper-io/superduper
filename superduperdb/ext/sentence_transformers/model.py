@@ -37,8 +37,8 @@ class SentenceTransformer(Model, _DeviceManaged):
     object: t.Optional[_SentenceTransformer] = None
     model: t.Optional[str] = None
     device: str = 'cpu'
-    preprocess: t.Union[None, t.Callable, Code] = None
-    postprocess: t.Union[None, t.Callable, Code] = None
+    preprocess: t.Union[None, t.Callable] = None
+    postprocess: t.Union[None, t.Callable] = None
     signature: Signature = 'singleton'
 
     def __post_init__(self, db, artifacts):
@@ -47,12 +47,24 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.model is None:
             self.model = self.identifier
 
+        self._default_model = False
         if self.object is None:
             self.object = _SentenceTransformer(self.model, device=self.device)
+            self._default_model = True
 
         if self.datatype is None:
             sample = self.predict_one('Test')
             self.shape = (len(sample),)
+
+    def dict(self):
+        r = super().dict()
+        if self._default_model:
+            del r['object']
+        if callable(self.postprocess):
+            r['postprocess'] = Code.from_object(self.postprocess)
+        if callable(self.preprocess):
+            r['preprocess'] = Code.from_object(self.preprocess)
+        return r
 
     def init(self, db=None):
         """Initialize the model."""

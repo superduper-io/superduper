@@ -7,8 +7,17 @@ SuperDuperDB implements 2 main classes of `db.databackend`:
 
 Correspondingly, SuperDuperDB currently has 2 flavours of query API:
 
-- `pymongo`
-- `ibis`
+- [`pymongo`](https://pymongo.readthedocs.io/en/stable/)
+- [`ibis`](https://ibis-project.org/)
+
+## Base
+
+A few commands are shared in common by all supported databackends:
+
+- `db["table_name"].insert(data)`
+- `db["table_name"].select()`
+
+For more specific commands, one should use one of the two following APIs.
 
 ## PyMongo
 
@@ -19,4 +28,4 @@ and retrieving data.
 ## Ibis
 
 `ibis` is a Python library with a uniform compositional approach to building
-SQL queries. It communicates with the `db.databackend` using `pandas`.
+SQL queries.

@@ -30,12 +30,8 @@ SentenceTransformer(self,
      metric_values: 't.Dict' = <factory>,
      object: Optional[sentence_transformers.SentenceTransformer.SentenceTransformer] = None,
      model: Optional[str] = None,
-     preprocess: Union[NoneType,
-     Callable,
-     superduperdb.base.code.Code] = None,
-     postprocess: Union[NoneType,
-     Callable,
-     superduperdb.base.code.Code] = None) -> None
+     preprocess: Optional[Callable] = None,
+     postprocess: Optional[Callable] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

@@ -19,7 +19,6 @@ const sidebars = {
       items: [
         'get_started/installation',
         'get_started/configuration',
-        'get_started/environment',
       ],
       link: {
         type: 'doc',
@@ -71,6 +70,8 @@ const sidebars = {
         'apply_api/metric',
         'apply_api/validation',
         'apply_api/trainer',
+        'apply_api/template',
+        'apply_api/application',
       ]
     },
     {
@@ -90,6 +91,7 @@ const sidebars = {
           },
           items: [
             'execute_api/basic_insertion',
+            'execute_api/auto_data_types',
             'execute_api/data_encodings_and_schemas',
             'execute_api/using_hybrid_storage_to_handle_large_data_blobs',
             'execute_api/referring_to_data_from_diverse_sources',

@@ -352,6 +352,10 @@ def test_model_fit(db, valid_dataset):
         model.fit.assert_called_once()
 
 
+def postprocess(r):
+    return r['_id']
+
+
 @pytest.mark.parametrize(
     "db",
     [
@@ -376,7 +380,7 @@ def test_query_model(db):
     m = QueryModel(
         identifier='test-query-model',
         select=q,
-        postprocess=lambda r: r['_id'],
+        postprocess=postprocess,
     )
     m.db = db
 

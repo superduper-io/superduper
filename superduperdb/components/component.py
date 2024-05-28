@@ -107,7 +107,7 @@ class Component(Leaf):
 
     @property
     def _id(self):
-        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
+        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'.replace('.', '-')
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
@@ -264,7 +264,7 @@ class Component(Leaf):
 
         return Document.decode(config_object).unpack()
 
-    def export(self, path: str):
+    def export(self, path: str, format: str = 'json'):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -287,8 +287,12 @@ class Component(Leaf):
                     f.write(bytestr_)
 
         r.pop_blobs()
-        with open(os.path.join(path, 'component.json'), 'w') as f:
-            json.dump(r, f, indent=2)
+        if format == 'json':
+            with open(os.path.join(path, 'component.json'), 'w') as f:
+                json.dump(r, f, indent=2)
+        elif format == 'yaml':
+            with open(os.path.join(path, 'component.yaml'), 'w') as f:
+                json.dump(r, f, indent=2)
 
     def dict(self) -> 'Document':
         """A dictionary representation of the component."""

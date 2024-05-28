@@ -14,6 +14,7 @@ To change the port and ip-range allowed configure:
 cluster:
   rest:
     uri: http://x1.x2.x3.x4:port
+    config: local/path/to/config.yaml  # optional
 ```
 
 Read more about configuration [here](../core_api/connect) and [here](../connect_api).
@@ -25,10 +26,9 @@ from Python.
 
 | Route | Method | Data | Params |
 | --- | --- | --- | --- |
-| `/db/apply` | `POST` | [JSON defining `Stack`](./yaml_formalism)| N/A | 
+| `/db/apply` | `POST` | [JSON defining `Component`](./yaml_formalism)| N/A | 
 | `/db/execute` | `POST` | `{"query": <str>, "documents": <list_documents>}` | N/A |
-| `/db/execute` | `POST` | `{"query": <str>, "documents": <list_documents>}` | N/A | 
 | `/db/remove` | `POST` | `{"type_id": <type_id>, "identifier": <identifier>}` | N/A |
 | `/db/show` | `GET` | N/A | `?type_id=<type_id>` |
-| `/db/artifact_store/save_artifact` | `PUT` | `<file>` | `?datatype=<datatype>` |
-| `/db/artifact_store/get_artifact` | `GET` | N/A | `?file_id=<file_id>` |
+| `/db/artifact_store/put` | `PUT` | `<file>` | `?datatype=<datatype>` |
+| `/db/artifact_store/get` | `GET` | N/A | `?file_id=<file_id>` |

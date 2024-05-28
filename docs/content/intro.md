@@ -1,5 +1,14 @@
 # Welcome to SuperDuperDB!
 
+Hi 👋 and welcome to the open-source SuperDuperDB project! If you 
+are reading this, you are probably interested in taking full control 
+of your AI-data integrations, and would like to leverage the full power
+of the open-source AI ecosystem on your databases. Well done! We agree
+that herein lies the path to avoiding vendor lock-in, ensuring 
+proper compliance with data and AI regulation, as well as unlocking 
+brand new functionality which you will build by combining best-in-class
+open-source AI projects.
+
 ### What is SuperDuperDB?
 
 :::tip

@@ -39,29 +39,3 @@ get_key(key_name: str) -> str
 
 Get an environment variable.
 
-## `superduperdecode` 
-
-```python
-superduperdecode(r: Any,
-     encoders: Union[Dict[str,
-     ForwardRef('DataType')],
-     ForwardRef('LoadDict')])
-```
-| Parameter | Description |
-|-----------|-------------|
-| r | The object to decode. |
-| encoders | The encoders to use. |
-
-Decode a superduper encoded object.
-
-## `superduperencode` 
-
-```python
-superduperencode(object)
-```
-| Parameter | Description |
-|-----------|-------------|
-| object | The object to encode. |
-
-Encode an object using superduper.
-

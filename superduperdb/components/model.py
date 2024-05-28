@@ -1251,9 +1251,18 @@ class QueryModel(Model):
     """
 
     preprocess: t.Optional[t.Callable] = None
-    postprocess: t.Optional[t.Union[t.Callable, Code]] = None
+    postprocess: t.Optional[t.Union[t.Callable]] = None
     select: Query
     signature: Signature = '**kwargs'
+
+    def dict(self):
+        """Get dictionary representation of the model."""
+        r = super().dict()
+        if callable(self.postprocess):
+            r['postprocess'] = Code.from_object(self.postprocess)
+        if callable(self.preprocess):
+            r['preprocess'] = Code.from_object(self.postprocess)
+        return r
 
     @staticmethod
     def _replace_variables(r):

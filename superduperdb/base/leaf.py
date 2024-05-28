@@ -129,6 +129,7 @@ class Leaf(ABC):
         from superduperdb import Document
 
         r = asdict(self)
+
         path = (f'{self.__class__.__module__}.' f'{self.__class__.__name__}').replace(
             '.', '/'
         )
@@ -157,6 +158,9 @@ class Leaf(ABC):
             if k in inspect.signature(cls.__init__).parameters
         }
         return cls(**modified)
+
+    def init_from_blobs(self, blobs):
+        pass
 
     def init(self, db=None):
         """Initialize object.

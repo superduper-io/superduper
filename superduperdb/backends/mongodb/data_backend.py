@@ -176,6 +176,11 @@ class MongoDataBackend(BaseDataBackend):
         :param table_name: The table name
         :param documents: The documents
         """
+        try:
+            table = db.tables[table_name]
+            return table
+        except FileNotFoundError:
+            logging.info(f"Table {table_name} does not exist, auto creating...")
         schema_dict = {}
         for document in documents:
             if document.schema is not None:

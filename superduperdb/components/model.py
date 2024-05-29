@@ -509,6 +509,18 @@ class Model(Component):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
+    def pre_create(self, db):
+        """Method to run before creating the model in the database.
+
+        :param db: Datalayer instance.
+        """
+        if isinstance(self.datatype, DataType):
+            from superduperdb.misc.datatype_helper import convert_model_datatype
+
+            is_ibis = db.databackend.db_type == DBType.SQL
+            self.datatype = convert_model_datatype(self.datatype, is_ibis)
+        super().pre_create(db)
+
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""

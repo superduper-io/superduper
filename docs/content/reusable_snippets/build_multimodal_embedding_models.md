@@ -1,8 +1,11 @@
 ---
 sidebar_label: Build multimodal embedding models
+filename: build_multimodal_embedding_models.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Build multimodal embedding models
@@ -10,26 +13,16 @@ import TabItem from '@theme/TabItem';
 Some embedding models such as [CLIP](https://github.com/openai/CLIP) come in pairs of `model` and `compatible_model`.
 Otherwise:
 
-```python
-compatible_model = None
-```
-
 
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
         from superduperdb.ext.sentence_transformers import SentenceTransformer
         
-        if not get_chunking_datatype:
-            model_dtype =  vector(shape=(384,))
-        else:
-            model_dtype = get_chunking_datatype(384)
-        
         # Load the pre-trained sentence transformer model
         model = SentenceTransformer(
             identifier='all-MiniLM-L6-v2',
             postprocess=lambda x: x.tolist(),
-            datatype=model_dtype,
         )        
         ```
     </TabItem>
@@ -75,12 +68,13 @@ compatible_model = None
             preprocess=preprocess,
             object=resnet50,
             postprocess=lambda x: x[:, 0, 0],  # Postprocess by extracting the top-left element of the output tensor
-            datatype=tensor(torch.float, shape=(2048,))  # Specify the encoder configuration
+            datatype=tensor(dtype='float', shape=(2048,))  # Specify the encoder configuration
         )        
         ```
     </TabItem>
-    <TabItem value="Text+Image" label="Text+Image" default>
+    <TabItem value="Text-Image" label="Text-Image" default>
         ```python
+        !pip install git+https://github.com/openai/CLIP.git
         import clip
         from superduperdb import vector
         from superduperdb.ext.torch import TorchModel
@@ -90,11 +84,7 @@ compatible_model = None
         
         # Define a vector with shape (1024,)
         
-        if not get_chunking_datatype:
-            e =  vector(shape=(1024,))
-        else:
-            e = get_chunking_datatype(1024)
-        
+        output_datatpye = vector(shape=(1024,))
         
         # Create a TorchModel for text encoding
         compatible_model = TorchModel(
@@ -102,7 +92,7 @@ compatible_model = None
             object=model, # CLIP model
             preprocess=lambda x: clip.tokenize(x)[0],  # Model input preprocessing using CLIP 
             postprocess=lambda x: x.tolist(), # Convert the model output to a list
-            datatype=e,  # Vector encoder with shape (1024,)
+            datatype=output_datatpye,  # Vector encoder with shape (1024,)
             forward_method='encode_text', # Use the 'encode_text' method for forward pass 
         )
         
@@ -112,7 +102,7 @@ compatible_model = None
             object=model.visual,  # Visual part of the CLIP model    
             preprocess=preprocess, # Visual preprocessing using CLIP
             postprocess=lambda x: x.tolist(), # Convert the output to a list 
-            datatype=e, # Vector encoder with shape (1024,)
+            datatype=output_datatpye, # Vector encoder with shape (1024,)
         )        
         ```
     </TabItem>
@@ -142,3 +132,4 @@ compatible_model = None
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="build_multimodal_embedding_models.md" />

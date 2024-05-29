@@ -219,7 +219,6 @@ def add_models(db: Datalayer, is_mongodb_backend=True):
                 },
             )
             m.output_schema = schema
-
         db.add(m)
 
 

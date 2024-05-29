@@ -104,6 +104,7 @@ class Leaf(ABC):
     def variables(self) -> t.List[str]:
         """Get list of variables in the object."""
         from superduperdb.base.variables import Variable, _find_variables
+
         return _find_variables(self.encode(leaves_to_keep=Variable))
 
     def _deep_flat_encode(
@@ -160,7 +161,11 @@ class Leaf(ABC):
         return cls(**modified)
 
     def init_from_blobs(self, blobs):
-        pass
+        """
+        Initialize object from blobs.
+
+        :param blobs: Blobs dictionary to init object.
+        """
 
     def init(self, db=None):
         """Initialize object.

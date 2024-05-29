@@ -54,9 +54,9 @@ class SentenceTransformer(Model, _DeviceManaged):
             sample = self.predict_one('Test')
             self.shape = (len(sample),)
 
-    def init(self):
+    def init(self, db=None):
         """Initialize the model."""
-        super().init()
+        super().init(db=db)
         self.to(self.device)
 
     def to(self, device):

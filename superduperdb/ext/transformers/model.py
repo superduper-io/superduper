@@ -392,7 +392,7 @@ class LLM(BaseLLM, _Fittable):
 
         return pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    def init(self):
+    def init(self, db=None):
         """Initialize the model.
 
         If adapter_id is provided, will load the adapter to the model.

@@ -13,7 +13,6 @@ import yaml
 
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
-from superduperdb.base.variables import _find_variables_with_path
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.annotations import merge_docstrings
 
@@ -113,6 +112,7 @@ class Component(Leaf):
 
     def init(self, db=None):
         """Method to help initiate component field dependencies."""
+        self.db = self.db or db
         self.unpack(db=db)
 
     def unpack(self, db=None):

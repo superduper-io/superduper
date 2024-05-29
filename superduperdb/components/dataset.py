@@ -57,9 +57,9 @@ class Dataset(Component):
         """Property representing the dataset's data."""
         return self._data
 
-    def init(self):
+    def init(self, db=None):
         """Initialization method."""
-        super().init()
+        super().init(db=db)
         self._data = [
             Document.decode(r, db=self.db).unpack()
             for r in pickle_decode(self.raw_data)

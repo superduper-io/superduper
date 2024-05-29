@@ -249,7 +249,7 @@ class DataType(Component):
         :param info: The optional information dictionary.
         """
         info = info or {}
-        data = self.encoder(item, info)
+        data = self.encoder(item, info) if self.encoder else item
         data = self.bytes_encoding_after_encode(data)
         return data
 
@@ -262,7 +262,7 @@ class DataType(Component):
         """
         info = info or {}
         item = self.bytes_encoding_before_decode(item)
-        return self.decoder(item, info=info)
+        return self.decoder(item, info=info) if self.decoder else item
 
     def bytes_encoding_after_encode(self, data):
         """Encode the data to base64.

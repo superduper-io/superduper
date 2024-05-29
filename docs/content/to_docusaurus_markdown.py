@@ -94,13 +94,10 @@ if __name__ == '__main__':
             print(f'processing {file} with tabs...')
             chunks = render_notebook_as_chunks(content)
             md = render_chunks_as_md(chunks)
+            target_filename = file.replace('.ipynb', '.md')
                        
-             # Prepare the filename based on the title
-            target_filename = '_'.join(title.lower().split()) + '.md'
             md = f'---\nsidebar_label: {title}\nfilename: {target_filename}\n---\n' + md
 
-            assert file.replace('.ipynb', '.md') == target_filename, f'{file.replace(".ipynb", ".md")} != {target_filename}'
-            
             with open(f'{directory}/{target_filename}', 'w') as f:
                 f.write(md)
         else:

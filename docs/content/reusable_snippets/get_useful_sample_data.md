@@ -1,8 +1,11 @@
 ---
 sidebar_label: Get useful sample data
+filename: get_useful_sample_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Get useful sample data
@@ -46,12 +49,8 @@ import TabItem from '@theme/TabItem';
         import os
         from PIL import Image
         
-        data = [f'images/{x}' for x in os.listdir('./images')]
-        data = [ Image.open(path) for path in data]
-        sample_datapoint = data[-1]
-        
-        from superduperdb.ext.pillow import pil_image
-        chunked_model_datatype = pil_image        
+        data = [f'images/{x}' for x in os.listdir('./images') if x.endswith(".png")][:200]
+        data = [ Image.open(path) for path in data]        
         ```
     </TabItem>
     <TabItem value="labeled_image" label="labeled_image" default>
@@ -69,7 +68,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Video" label="Video" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
+        # !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
         import os
         
         data = [f'videos/{x}' for x in os.listdir('./videos')]
@@ -81,11 +80,12 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/audio.zip && unzip audio.zip
+        # !curl -O https://superduperdb-public-demo.s3.amazonaws.com/audio.zip && unzip audio.zip
         import os
         
-        data = [f'audios/{x}' for x in os.listdir('./audios')]
+        data = [f'audios/{x}' for x in os.listdir('./audio')]
         sample_datapoint = data[-1]        
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="get_useful_sample_data.md" />

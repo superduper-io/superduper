@@ -384,6 +384,11 @@ class _BaseEncodable(Leaf):
             self.uri = f'file://{self.uri}'
 
     def init_from_blobs(self, blobs):
+        """
+        Initialize object from blobs.
+
+        :param blobs: Blobs dictionary to init object.
+        """
         pass
 
     @property
@@ -591,17 +596,24 @@ class Artifact(_BaseEncodable):
             raise ArtifactSavingError('BASE64 not supported on disk!')
 
     def init_from_blobs(self, blobs):
+        """
+        Initialize object from blobs.
+
+        :param blobs: Blobs dictionary to init object.
+        """
         blob = blobs.get(self.file_id, None)
         if blob:
+            if isinstance(blob, str) and blob.startswith('&'):
+                return
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
         assert self.file_id is not None
-        db = self.db or db
-        if isinstance(self.x, Empty) and db:
-            blob = db.artifact_store.get_bytes(self.file_id)
+        self.db = self.db or db
+        if isinstance(self.x, Empty) and self.db:
+            blob = self.db.artifact_store.get_bytes(self.file_id)
             self.datatype.init()
             self.x = self.datatype.decoder(blob)
 
@@ -683,15 +695,20 @@ class File(_BaseEncodable):
         return f'?{self.id}'
 
     def init_from_blobs(self, blobs):
+        """
+        Initialize object from blobs.
+
+        :param blobs: Blobs dictionary to init object.
+        """
         # Implement me
         # TODO: @jalon
         pass
 
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
-        db = self.db or db
+        self.db = self.db or db
         if isinstance(self.x, Empty):
-            file = db.artifact_store.get_file(self.file_id)
+            file = self.db.artifact_store.get_file(self.file_id)
             if self.file_name is not None:
                 file = os.path.join(file, self.file_name)
             self.x = file

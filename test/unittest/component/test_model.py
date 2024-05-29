@@ -370,7 +370,7 @@ def test_query_model(db):
         .find_one({}, {'_id': 1})
     )
 
-    check = q.set_variables(db, X='test')
+    check = q.set_variables(db=db, X='test')
     assert not check.variables
 
     m = QueryModel(

@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add database package for oracle
 - Reconstruct data serialization and database queries
 - Auto-create tables and schemas
+- Add `Application` and `Template` support to build reusable apps.
 
 #### Bug Fixes
 - Fixed cross platfrom issue in cli command

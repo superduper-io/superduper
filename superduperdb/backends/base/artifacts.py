@@ -107,15 +107,19 @@ class ArtifactStore(ABC):
                 self.put_bytes(blob, file_id=file_id)
             except FileExistsError:
                 continue
+            else:
+                # TODO: Check the following logic.
+                r['_blobs'][file_id] = f'&{file_id}'
 
         for file_id, file_path in files.items():
             try:
                 self.put_file(file_path, file_id=file_id)
             except FileExistsError:
                 continue
+            else:
+                # TODO: Check the following logic.
+                r['_files'][file_id] = f'&{file_id}'
 
-        r['_blobs'] = list(blobs.keys())
-        r['_files'] = list(files.keys())
         return r
 
     def delete_artifact(self, r: t.Dict):

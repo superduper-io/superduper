@@ -83,11 +83,8 @@ def test_serialize_variables_1():
         a=1,
         b=Variable(
             identifier='test/{version}',
-            setter_callback=lambda db, value, kwargs: value.format(version=db.version),
         ),
-        c=Variable(
-            identifier='number', setter_callback=lambda db, value, kwargs: db[value]
-        ),
+        c=Variable(identifier='number'),
     )
 
     @dc.dataclass
@@ -159,6 +156,6 @@ def test_find_variables():
         .limit(5)
     )
 
-    q_set = q.set_variables(None, test='my-value')
+    q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []

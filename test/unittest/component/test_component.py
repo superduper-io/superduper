@@ -3,13 +3,12 @@ import os
 import shutil
 import tempfile
 import typing as t
-from superduperdb.base.variables import Variable
-from superduperdb.components.listener import Listener
 from test.db_config import DBConfig
 
 import pytest
 
 from superduperdb import ObjectModel
+from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     Artifact,
@@ -18,6 +17,7 @@ from superduperdb.components.datatype import (
     LazyArtifact,
     dill_serializer,
 )
+from superduperdb.components.listener import Listener
 from superduperdb.ext.torch.encoder import tensor
 
 
@@ -84,7 +84,7 @@ def test_load_lazily(db):
     assert isinstance(reloaded.object, LazyArtifact)
     assert isinstance(reloaded.object.x, Empty)
 
-    reloaded.init()
+    reloaded.init(db=db)
 
     assert callable(reloaded.object)
 
@@ -111,7 +111,6 @@ def test_export_and_read():
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_set_variables(db):
-
     m = Listener(
         model=ObjectModel(
             identifier=Variable('test'),
@@ -121,15 +120,13 @@ def test_set_variables(db):
         select=db['docs'].find(),
     )
 
-
-
     from superduperdb import Document
 
     e = m.encode()
     recon = Document.decode(e).unpack()
-    
+
     recon.init(db=db)
-    
+
     listener = m.set_variables(test='test_value', key='key_value', docs='docs_value')
     assert listener.model.identifier == 'test_value'
     assert listener.key == 'key_value'

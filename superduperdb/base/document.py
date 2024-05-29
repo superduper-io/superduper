@@ -165,9 +165,7 @@ class Document(MongoStyleDict):
         """
         from superduperdb.base.variables import _replace_variables
 
-        content = _replace_variables(
-            self, **kwargs
-        ) 
+        content = _replace_variables(self, **kwargs)
         return Document(**content)
 
     def __repr__(self) -> str:

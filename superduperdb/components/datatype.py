@@ -501,7 +501,7 @@ class Encodable(_BaseEncodable):
         maybe_bytes, file_id = self._encode()
         self.file_id = file_id
         r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=(), schema=schema
+            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )
         del r['x']
         r['blob'] = maybe_bytes
@@ -618,12 +618,14 @@ class Artifact(_BaseEncodable):
             self.x = self.datatype.decoder(blob)
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
-        if isinstance(self, leaves_to_keep):
-            cache[self.id] = self
-            return f'?{self.id}'
         maybe_bytes = None
         if self.file_id is None:
             maybe_bytes, self.file_id = self._encode()
+
+        if isinstance(self, leaves_to_keep):
+            cache[self._id] = self
+            return f'?{self._id}'
+
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )

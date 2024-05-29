@@ -261,12 +261,13 @@ def _deep_flat_encode(
     schema: t.Optional[Schema] = None,
 ):
     if isinstance(r, dict):
-        return {
-            k: _deep_flat_encode(
-                v, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+        tmp = {}
+        for k in list(r):
+            tmp[k] = _deep_flat_encode(
+                r[k], cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
             )
-            for k, v in r.items()
-        }
+        return tmp
+
     if isinstance(r, (list, tuple)):
         return type(r)(
             [

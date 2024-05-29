@@ -678,7 +678,6 @@ class Datalayer:
             )
             assert info is not None
             type_id = info['type_id']
-
         m = Document.decode(info, db=self)
         m.db = self
         m.on_load(self)

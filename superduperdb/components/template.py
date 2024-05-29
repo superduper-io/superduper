@@ -1,14 +1,13 @@
 import dataclasses as dc
+import json
+import os
 import typing as t
 
 from superduperdb.base.document import Document
-from superduperdb.components.datatype import pickle_serializer
+from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.misc.annotations import merge_docstrings
 
 from .component import Component, ensure_initialized
-
-if t.TYPE_CHECKING:
-    from superduperdb import DataType
 
 
 @merge_docstrings
@@ -17,45 +16,100 @@ class Template(Component):
     """
     Application template component.
 
-    :param template: Template.
+    :param component: Template component with variables.
     :param info: Info.
+    :param _component_blobs: Blobs in `Template.component`
+                             NOTE: This is only for internal
+                             use.
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('component', pickle_serializer),
+        ('_component_blobs', dill_lazy),
     )
     type_id: t.ClassVar[str] = 'template'
 
     component: t.Union[Component, t.Dict]
-    info: t.Dict
+    info: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    _component_blobs: t.Optional[t.Union[t.Dict, bytes]] = dc.field(
+        default_factory=dict
+    )
 
     def __post_init__(self, db, artifacts):
+        self._variables = []
         if isinstance(self.component, Component):
-            self.component = self.component.encode()
+            self._variables = self.component.variables
+            self.component = self.component.dict().encode()
+            if not self._component_blobs:
+                self._component_blobs = self.component.pop_blobs()
         return super().__post_init__(db, artifacts)
-
-    def pre_create(self, db):
-        """
-        Database `pre_create` hook.
-
-        :param db: Datalayer instance.
-        """
-        assert isinstance(self.component, dict)
-        from superduperdb.misc.special_dicts import SuperDuperFlatEncode
-
-        if not isinstance(self.component, SuperDuperFlatEncode):
-            self.component = SuperDuperFlatEncode(self.component)
-        if self.component.blobs:
-            for file_id, blob in self.component.blobs.items():
-                self.db.artifact_store.put_bytes(blob, file_id=file_id)
-            self.component.pop_blobs()
-        for file_id, file_path in self.component.files:
-            self.db.artifact_store.put_file(file_path=file_path, file_id=file_id)
 
     @ensure_initialized
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
-        assert set(kwargs.keys()) == (set(self.info.keys())), 'Invalid variables'
-        t = Document.decode(self.component, db=self.db).unpack()
+        if self.info:
+            assert set(kwargs.keys()) == (set(self.info.keys())), 'Invalid variables'
+        t = Document.decode(
+            {**self.component, '_blobs': self._component_blobs}, db=self.db
+        ).unpack()
+
+        t = t.set_variables(db=self.db, **kwargs)
         t.init(db=self.db)
-        return t.set_variables(db=self.db, **kwargs)
+        return t
+
+    @property
+    def variables(self):
+        """Variables in `Template` property."""
+        return self._variables
+
+    @staticmethod
+    def _append_component_metadata(r, component={}):
+        leaves = r.get('_leaves', {})
+        files = r.get('_files', {})
+        leaves.update(component.pop('_leaves', {}))
+        files.update(component.pop('_files', {}))
+        r['_leaves'] = leaves
+        r['_files'] = files
+        return r
+
+    def dict(self):
+        """Updates base dict document with `component` metadata."""
+        r = super().dict()
+        component = r['component']
+        r = self._append_component_metadata(r, component=component)
+
+        return r
+
+    def export(self, path: str):
+        """
+        Save `self` to a directory using super-duper protocol.
+
+        :param path: Path to the directory to save the component.
+
+        Created directory structure:
+        ```
+        |_component.json/yaml
+        |_blobs/*
+        |_files/*
+        ```
+        """
+        r = self.dict().encode()
+        os.makedirs(path, exist_ok=True)
+        if r.blobs:
+            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+            for file_id, bytestr_ in r.blobs.items():
+                filepath = os.path.join(path, 'blobs', file_id)
+                with open(filepath, 'wb') as f:
+                    f.write(bytestr_)
+
+        r.pop_blobs()
+        with open(os.path.join(path, 'component.json'), 'w') as f:
+            json.dump(r, f, indent=2)
+
+    def on_load(self, db):
+        """
+        Datalayer `on_load` hook.
+
+        :param db: Datalayer instance.
+        """
+        super().on_load(db=db)
+        self.init(db=db)

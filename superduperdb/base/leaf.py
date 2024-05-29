@@ -77,6 +77,7 @@ class Leaf(ABC):
         cache: t.Dict[str, dict] = {}
         blobs: t.Dict[str, bytes] = {}
         files: t.Dict[str, str] = {}
+
         self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
         return SuperDuperFlatEncode(
             {
@@ -105,7 +106,7 @@ class Leaf(ABC):
         """Get list of variables in the object."""
         from superduperdb.base.variables import Variable, _find_variables
 
-        return _find_variables(self.encode(leaves_to_keep=Variable))
+        return list(set(_find_variables(self.encode(leaves_to_keep=Variable))))
 
     def _deep_flat_encode(
         self,

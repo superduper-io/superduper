@@ -22,7 +22,7 @@ def _find_variables(r):
     if isinstance(r, Variable):
         return [r.identifier]
     if isinstance(r, str):
-        return re.findall(r'\#([a-zA-Z0-9_]+)', r)
+        return re.findall(r'<var:(.*?)>', r)
     if isinstance(r, Leaf):
         return r.variables
     return []

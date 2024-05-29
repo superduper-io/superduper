@@ -1,6 +1,5 @@
 import dataclasses as dc
 import re
-import typing as t
 
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.annotations import merge_docstrings
@@ -58,10 +57,12 @@ def _replace_variables(x, **kwargs):
             for k, v in x.items()
         }
     if isinstance(x, str):
-        variables = re.findall(r'\#([a-zA-Z0-9_]+)', x)
+        variables = re.findall(r'<var:(.*?)>', x)
+        variables = list(map(lambda v: v.strip(), variables))
         for k, v in kwargs.items():
             if k in variables:
-                x = x.replace(f'#{k}', str(v))
+                x = x.replace(f'<var:{k}>', str(v))
+
         return x
     if isinstance(x, (list, tuple)):
         return [_replace_variables(v, **kwargs) for v in x]
@@ -81,12 +82,17 @@ class Variable(Leaf):
     at object creation time.
     """
 
-    def __post_init__(self, db):
+    def __post_init__(self, db=None):
         super().__post_init__(db)
         self.value = self.identifier
 
+    @property
+    def key(self):
+        """Variable key."""
+        return f'<var:{str(self.value)}>'
+
     def __repr__(self) -> str:
-        return f'${str(self.value)}'
+        return self.key
 
     def __hash__(self) -> int:
         return hash(self.value)

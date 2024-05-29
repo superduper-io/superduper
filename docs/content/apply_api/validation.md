@@ -4,8 +4,8 @@
 
 ***Dependencies***
 
-- `Metric`
-- `Dataset`
+- [`Metric`](metric.md)
+- [`Dataset`](./dataset.md)
 
 ***Usage pattern***
 

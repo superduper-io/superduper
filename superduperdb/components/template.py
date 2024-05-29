@@ -50,8 +50,8 @@ class Template(Component):
             assert set(kwargs.keys()) == (set(self.info.keys())), 'Invalid variables'
         t = Document.decode(
             {**self.component, '_blobs': self._component_blobs}, db=self.db
-        ).unpack()
-
+        )
+        t.init(db=self.db)
         t = t.set_variables(db=self.db, **kwargs)
         t.init(db=self.db)
         return t
@@ -79,7 +79,7 @@ class Template(Component):
 
         return r
 
-    def export(self, path: str):
+    def export(self, path: str, format: str = 'json'):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -93,17 +93,28 @@ class Template(Component):
         ```
         """
         r = self.dict().encode()
+
         os.makedirs(path, exist_ok=True)
-        if r.blobs:
+        if self._component_blobs:
             os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
             for file_id, bytestr_ in r.blobs.items():
                 filepath = os.path.join(path, 'blobs', file_id)
                 with open(filepath, 'wb') as f:
                     f.write(bytestr_)
+            r.pop_blobs()
+        else:
+            del r['_blobs']
 
-        r.pop_blobs()
-        with open(os.path.join(path, 'component.json'), 'w') as f:
-            json.dump(r, f, indent=2)
+        if format == 'json':
+            with open(os.path.join(path, 'component.json'), 'w') as f:
+                json.dump(r, f, indent=2)
+        elif format == 'yaml':
+            import yaml
+
+            with open(os.path.join(path, 'component.yaml'), 'w') as f:
+                yaml.safe_dump(r, f)
+        else:
+            raise ValueError(f'Invalid format: {format}')
 
     def on_load(self, db):
         """

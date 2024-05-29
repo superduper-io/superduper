@@ -134,3 +134,15 @@ ServiceRequestException(self,
 
 ServiceRequestException.
 
+## `UnsupportedDatatype` 
+
+```python
+UnsupportedDatatype(self,
+     msg)
+```
+| Parameter | Description |
+|-----------|-------------|
+| msg | msg for BaseException |
+
+UnsupportedDatatype.
+

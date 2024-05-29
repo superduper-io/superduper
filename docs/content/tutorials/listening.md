@@ -1,15 +1,17 @@
 
 # Listening for new data
 
+:::note
 In SuperDuperDB, AI models may be configured to listen for newly inserted data.
 Outputs will be computed over that data and saved back to the data-backend.
+:::
 
-In this example we show how to configure 2 models to interact when new data is added.
+In this example we show how to configure 3 models to interact when new data is added.
 
 1. A featurizing computer vision model (images `->` vectors).
 1. 2 models evaluating image-2-text similarity to a set of key-words.
 
-In this tutorial we use an open-source model "CLIP" which we install via `pip` directly from GitHub.
+We use an open-source model "CLIP" which we install via `pip` directly from GitHub.
 You can read more about installing requirements on our docs [here](../get_started/environment).
 
 ```python
@@ -49,10 +51,7 @@ You can read more about installing requirements on our docs [here](../get_starte
 </pre>
 </details>
 
-In this tutorial we show case how to "connect" models to the data in the database and how to connect
-additional models to the output of those initial models. 
-
-To demonstrate that this works on any type of data, we apply this setup to images from the 
+We apply our setup to images from the 
 [cats and dogs dataset](https://www.kaggle.com/c/dogs-vs-cats). We've prepared a subset especially 
 for quick experimentation.
 

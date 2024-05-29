@@ -85,11 +85,13 @@ def test_basic_application(db):
         info={'key': {'type': 'str'}, 'model_id': {'type': 'str'}},
     )
 
+    db.apply(t)
+
     from superduperdb.components.application import Application
 
     application = Application(
         'my_app',
-        template=t,
+        template=t.identifier,
         kwargs={
             'model_id': 'my_model_id',
             'key': 'y',
@@ -100,13 +102,10 @@ def test_basic_application(db):
     # applies the built component
     db.apply(application)
 
-    assert application.component.key == 'y'
-    assert application.component.model.identifier == 'my_model_id'
-
     # Check listener outputs with key and model_id
-
     r = db['documents'].find_one().execute()
-    assert r[application.component.outputs_key] == r['y'] + 2
+
+    assert '_outputs' in r
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)

@@ -61,6 +61,9 @@ cluster:
     uri: None
     # uri: http://<host>:<port>
 
+    config: None
+    # config: path/to/rest_config.yaml
+
 # The base database you would like to connect to
 data_backend: <databackend-uri>
 

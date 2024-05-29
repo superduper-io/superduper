@@ -8,13 +8,13 @@ See [here](../apply_api/overview#key-methods) for an overview of key-methods spe
 
 | Method | Description | Optional |
 | --- | --- | --- |
-| `Model.predict_one` | | `FALSE` | 
-| `Model.predict` | | `FALSE` |
-| `Model.predict_in_db` | | `FALSE` |
-| `Model.predict_in_db_job` | | `FALSE` |
-| `Model.validate` | | `FALSE` |
-| `Model.validate_in_db` | | `FALSE` |
-| `Model.validate_in_db_job` | | `FALSE` |
-| `Model.fit` | | `TRUE` |
-| `Model.fit_in_db` | | `TRUE` |
-| `Model.fit_in_db_job` | | `TRUE` |
+| `Model.predict_one` | Predict on a single data-point | `FALSE` | 
+| `Model.predict` | Predict on batches of data-points | `FALSE` |
+| `Model.predict_in_db` | Predict and save predictions in `db` | `FALSE` |
+| `Model.predict_in_db_job` | `predict_in_db` as compute job | `FALSE` |
+| `Model.validate` | Validate on datasets with metrics | `FALSE` |
+| `Model.validate_in_db` | Validate on datasets with metrics and save in `db` | `FALSE` |
+| `Model.validate_in_db_job` | `validate_in_db` as job | `FALSE` |
+| `Model.fit` | Fit on datasets | `TRUE` |
+| `Model.fit_in_db` | Fit on data in `db` | `TRUE` |
+| `Model.fit_in_db_job` | `.fit_in_db` as job | `TRUE` |

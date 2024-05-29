@@ -68,7 +68,6 @@ def build_use_cases():
             json.dump(built, f)
         
 
-
 def get_snippet(snippet_nb_cells, snippet_tab):
 
     snippet_cells = []
@@ -89,6 +88,7 @@ def get_snippet(snippet_nb_cells, snippet_tab):
         else:
             snippet_cells.append(cell)
     return snippet_cells
+
 
 def build_notebook_from_tabs(path, selected_tabs):
     with open(path) as f:
@@ -153,8 +153,6 @@ def build_notebook_from_tabs(path, selected_tabs):
 
     notebook_bytes  = json.dumps(built_nb).encode('utf-8')
     return Response(content=notebook_bytes, media_type="application/octet-stream")
-
-
 
 
 def serve_notebook_builder():

@@ -202,7 +202,8 @@ def test_column_encoding(db):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_refer_to_system(db):
-    db.datatypes['image'] = image_type(identifier='image', encodable='artifact')
+    image = image_type(identifier='image', encodable='artifact')
+    db.apply(image)
 
     import PIL.Image
     import PIL.PngImagePlugin

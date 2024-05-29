@@ -6,10 +6,10 @@
 
 ```python
 Code(self,
-     identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
      uuid: str = <factory>,
      *,
+     identifier: str = '',
      code: str) -> None
 ```
 | Parameter | Description |

@@ -11,7 +11,6 @@ SelectResult(self,
      db: Optional[ForwardRef('Datalayer')] = None,
      scores: Optional[Dict[str,
      float]] = None,
-     decode_function: Optional[Callable] = None,
      schema: Optional[ForwardRef('Schema')] = None,
      _it: int = 0) -> None
 ```
@@ -21,7 +20,6 @@ SelectResult(self,
 | id_field | the field to use as the document id |
 | db | the datalayer to use to decode the documents |
 | scores | a dict of scores to add to the documents |
-| decode_function | a function to use to decode the documents |
 | schema | the schema to use to decode the documents |
 | _it | an iterator to keep track of the current position in the cursor, Default is 0. |
 

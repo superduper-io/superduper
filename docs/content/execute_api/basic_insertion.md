@@ -5,8 +5,26 @@ These dictionaries may contain basic JSON-compatible data, but also
 other data-types to be handled with `DataType` components. All data inserts are wrapped with the `Document` wrapper:
 
 ```python
-from superduperdb import Document
 data = ... # an iterable of dictionaries
+```
+
+For example, first get some [sample data](../reusable_snippets/get_useful_sample_data.md):
+
+```bash
+!curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
+```
+
+Then load the data:
+
+```python
+with open('./text.json') as f:
+    data = json.load(f)
+```
+
+## Usage pattern
+
+```python
+ids, jobs = db['collection-name'].insert(data).execute()
 ```
 
 ## MongoDB

@@ -23,3 +23,4 @@ db.apply(m)
 ***See also***
 
 - [Change-data capture](../cluster_mode/change_data_capture)
+- [Validation](./validation.md)

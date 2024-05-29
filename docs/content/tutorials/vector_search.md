@@ -13,7 +13,7 @@ computer vision, LLMs, fine-tuning and much much more!
 :::
 
 
-First let's get some data. This data are the markdown files 
+First let's get some data. These data are the markdown files 
 of the very same documentation you are reading!
 You can download other sample data-sets for testing `superduperdb`
 by following [these lines of code](../reusable_snippets/get_useful_sample_data).
@@ -175,8 +175,17 @@ db.show()
 We are going to make these data searchable by activating a [`Model`](../apply_api/model) instance 
 to compute vectors for each item inserted to the `"documents"` collection.
 For that we'll use the [sentence-transformers](https://sbert.net/) integration to `superduperdb`.
-Read more about the `[sentence_transformers` integration [here](../ai_integrations/sentence_transformers)
+Read more about the `sentence_transformers` integration [here](../ai_integrations/sentence_transformers)
 and [here](../../api/ext/sentence_transformers/).
+
+```python
+
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
 
 ```python
 from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -195,8 +204,14 @@ model = SentenceTransformer(
 <pre>
     /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
       warnings.warn(
+
+</pre>
+<pre>
     2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing SentenceTransformer : test
     2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  SentenceTransformer : test successfully
+
+</pre>
+<pre>
     Batches:   0%|          | 0/1 [00:00\<?, ?it/s]
 </pre>
 </details>
@@ -211,7 +226,10 @@ model.predict_one(data[0])
 <details>
 <summary>Outputs</summary>
 <pre>
-    Batches:   0%|          | 0/1 [00:00\<?, ?it/s]    [-0.0728381797671318,
+    Batches:   0%|          | 0/1 [00:00\<?, ?it/s]
+</pre>
+<pre>
+    [-0.0728381797671318,
      -0.04369897395372391,
      -0.053990256041288376,
      0.05244452506303787,
@@ -678,17 +696,44 @@ db.apply(vector_index)
     2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing DataType : dill
     2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  DataType : dill successfully
     2024-May-23 22:33:08.42| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x1107caac0\>
-    204it [00:00, 142844.41it/s]    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing SentenceTransformer : test
+
+</pre>
+<pre>
+    204it [00:00, 142844.41it/s]
+</pre>
+<pre>
+    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing SentenceTransformer : test
     2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  SentenceTransformer : test successfully
+
+</pre>
+<pre>
     
-    Batches:   0%|          | 0/7 [00:00\<?, ?it/s]    2024-May-23 22:33:12.78| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 204 model outputs to `db`
+
+</pre>
+<pre>
+    Batches:   0%|          | 0/7 [00:00\<?, ?it/s]
+</pre>
+<pre>
+    2024-May-23 22:33:12.78| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 204 model outputs to `db`
     2024-May-23 22:33:12.89| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
     2024-May-23 22:33:12.89| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function method_job at 0x1107caac0\> future:3598065c-0bfb-4d94-9b25-6e7e82c09bd0
     2024-May-23 22:33:12.90| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x1107caa20\>
     2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:170  | Loading vectors of vector-index: 'test:vector_index'
     2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:180  | documents.find(documents[0], documents[1])
-    Loading vectors into vector-table...: 204it [00:00, 3148.10it/s]    2024-May-23 22:33:13.05| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:c355caeb-daab-4712-a269-6bfca8da2c09
+
+</pre>
+<pre>
+    Loading vectors into vector-table...: 204it [00:00, 3148.10it/s]
+</pre>
+<pre>
+    2024-May-23 22:33:13.05| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:c355caeb-daab-4712-a269-6bfca8da2c09
+
+</pre>
+<pre>
     
+
+</pre>
+<pre>
     ([\<superduperdb.jobs.job.ComponentJob at 0x28d6f95d0\>,
       \<superduperdb.jobs.job.FunctionJob at 0x28d757850\>],
      VectorIndex(identifier='test:vector_index', uuid='acd20227-14e2-4cee-9507-f738315f5d42', indexing_listener=Listener(identifier='component/listener/test/b335fc9c-ad9e-4495-8c39-6894c5b4f842', uuid='b335fc9c-ad9e-4495-8c39-6894c5b4f842', key='txt', model=SentenceTransformer(preferred_devices=('cuda', 'mps', 'cpu'), device='cpu', identifier='test', uuid='11063ea2-4afa-4cab-8a55-21d0c7ad2900', signature='singleton', datatype=DataType(identifier='test/datatype', uuid='e46268dc-5c88-48dd-8595-f774c35a8f09', encoder=None, decoder=None, info=None, shape=(384,), directory=None, encodable='native', bytes_encoding=\<BytesEncoding.BYTES: 'Bytes'\>, intermediate_type='bytes', media_type=None), output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{'show_progress_bar': True\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, object=SentenceTransformer(
@@ -1128,6 +1173,9 @@ cursor = query.execute()
 <summary>Outputs</summary>
 <pre>
     2024-May-23 22:33:16.62| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:1095 | \{\}
+
+</pre>
+<pre>
     Batches:   0%|          | 0/1 [00:00\<?, ?it/s]
 </pre>
 </details>
@@ -1286,4 +1334,4 @@ for r in cursor:
 You should see that the documents returned are relevant to the `like` part of the 
 query.
 
-Learn more about building queries with `superduperdb` [here](../execute_api).
+Learn more about building queries with `superduperdb` [here](../execute_api/overview.md).

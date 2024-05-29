@@ -129,6 +129,18 @@ def delete_search(
     return {'message': 'Ids deleted successfully'}
 
 
+@app.add("/drop/search")
+def drop_search(vector_index: str, db: Datalayer = DatalayerDependency()):
+    """Delete vectors from the vector index.
+
+    :param ids: List of ids to delete
+    :param vector_index: Vector index to delete from
+    :param db: Datalayer instance
+    """
+    service.drop_search(vector_index=vector_index, db=db)
+    return {'message': f'Index {vector_index} deleted successfully'}
+
+
 @app.add("/list/search")
 def list_search(db: Datalayer = DatalayerDependency()):
     """List all the vector indices in the database.

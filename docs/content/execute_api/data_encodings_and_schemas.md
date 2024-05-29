@@ -7,7 +7,7 @@ sidebar_position: 2
 `superduperdb` has flexible support for data-types. In both MongoDB and SQL databases,
 one can uses `superduperdb.DataType` to define one's own data-types.
 
-If no-datatypes are provided, `superduperdb` uses fallbacks to encode and decode data.
+If no-datatypes are provided, `superduperdb` [uses fallbacks](./auto_data_types.md) to encode and decode data.
 To gain more-control, developers may use the `DataType` and `Schema` components.
 
 ## `DataType` abstraction

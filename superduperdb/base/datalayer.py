@@ -24,7 +24,7 @@ from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, _BaseEncodable, serializers
+from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
@@ -91,7 +91,6 @@ class Datalayer:
         self.vector_indices = LoadDict(self, field='vector_index')
         self.schemas = LoadDict(self, field='schema')
         self.tables = LoadDict(self, field='table')
-        self.datatypes.update(serializers)
 
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
@@ -239,6 +238,10 @@ class Datalayer:
         ):
             logging.warn("Aborting...")
 
+        if self._cfg.cluster.vector_search.uri is not None:
+            for vi in self.show('vector_index'):
+                FastVectorSearcher.drop_remote(vi)
+
         self.databackend.drop(force=True)
         self.metadata.drop(force=True)
         self.artifact_store.drop(force=True)
@@ -248,7 +251,6 @@ class Datalayer:
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
-        include_presets: bool = False,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -267,36 +269,12 @@ class Datalayer:
         if type_id is None:
             nt = namedtuple('nt', ('type_id', 'identifier'))
             out = self.metadata.show_components()
-            if not include_presets:
-                return out
-            subcaches = [
-                self.models,
-                self.datatypes,
-                self.tables,
-                self.schemas,
-                self.vector_indices,
-                self.listeners,
-            ]
-            cached = sum(
-                [
-                    [nt(comp.type_id, comp.identifier) for comp in subcache.values()]
-                    for subcache in subcaches
-                ],
-                [],
-            )
-            out = sorted(list(set([nt(**x) for x in out] + cached)))
+            out = sorted(list(set([nt(**x) for x in out])))
             return [x._asdict() for x in out]
 
         if identifier is None:
-            mapping = self.type_id_to_cache_mapping
             out = self.metadata.show_components(type_id=type_id)
-            if not include_presets:
-                return sorted(out)
-            try:
-                t = mapping[type_id]
-                return sorted(list(set(out + list(getattr(self, t).keys()))))
-            except KeyError:
-                return sorted(out)
+            return sorted(out)
 
         if version is None:
             return sorted(
@@ -619,8 +597,7 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
-        include_presets: bool = False,
-    ) -> t.Union[Component, t.Dict[str, t.Any]]:
+    ) -> Component:
         """
         Load a component using uniquely identifying information.
 
@@ -635,22 +612,7 @@ class Datalayer:
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
         :param uuid: [Optional] UUID of the component to load.
-        :param include_presets: Include items cached in `db.models` etc.
         """
-        if (
-            include_presets
-            and isinstance(type_id, str)
-            and isinstance(identifier, str)
-            and version is None
-            and type_id in self.type_id_to_cache_mapping
-        ):
-            cache_name = self.type_id_to_cache_mapping[type_id]
-            cache = getattr(self, cache_name)
-            try:
-                return cache[identifier]
-            except KeyError:
-                pass
-
         if type_id == 'encoder':
             logging.warn(
                 '"encoder" has moved to "datatype" this functionality will not work'
@@ -970,9 +932,7 @@ class Datalayer:
             info = self.metadata.get_component(
                 type_id, identifier, version=version, allow_hidden=force
             )
-            if hasattr(component, 'cleanup'):
-                # TODO - is there an abstract method thingy for this?
-                component.cleanup(self)
+            component.cleanup(self)
 
             if type_id in self.type_id_to_cache_mapping:
                 try:
@@ -1164,7 +1124,8 @@ class LoadDict(dict):
     def __missing__(self, key: str):
         if self.field is not None:
             value = self[key] = self.database.load(
-                self.field, key, include_presets=False
+                self.field,
+                key,
             )
         else:
             msg = f'callable is ``None`` for {key}'

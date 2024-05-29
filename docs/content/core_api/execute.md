@@ -15,7 +15,7 @@ As well as model predictions:
 And also queries which consist of a combination of model computations and data operations:
 
 - Vector-search queries
-- Model predictions
+- Complex model predictions which include database queries (e.g. "RAG")
 
 Standard database queries are built using a compositional syntax similar to that found in Python database clients 
 such as `pymongo` and `ibis`. The API also includes extensions of this paradigm to cover model predictions
@@ -39,10 +39,7 @@ q = base_object.method_1(*args_1, **kwargs_1).method_2(*args_2, **kwargs_2)....
 A MongoDB `find` query can be built like this:
 
 ```python
-from superduperdb.backends.mongodb import Collection
-
-collection = Collection('documents')
-q = collection.find().limit(5).skip(2)
+q = db['collection'].find().limit(5).skip(2)
 ```
 
 ***SQL***
@@ -50,13 +47,7 @@ q = collection.find().limit(5).skip(2)
 A query with on an SQL data-backend can be built with `ibis` syntax like this:
 
 ```python
-from superduperdb.backends.ibis import Table
-
-t = table('my-table')
-
-db.apply(t)
-
-q = t.filter(t.brand == 'Nike').limit(5)
+q = db['documents'].filter(t.brand == 'Nike').limit(5)
 ```
 
 ### Inserts
@@ -66,8 +57,7 @@ q = t.filter(t.brand == 'Nike').limit(5)
 Typically insert queries wrap `Document` instances and call the `insert` method on a table or collection:
 
 ```python
-from superduperdb import Document
-q = collection.insert_many([Document(r) for r in data])
+q = db['documents'].insert_many([Document(r) for r in data])
 ```
 
 ***SQL***
@@ -75,15 +65,14 @@ q = collection.insert_many([Document(r) for r in data])
 The `ibis` insert is slightly different:
 
 ```python
-from superduperdb import Document
-q = t.insert([Document(r) for r in data])
+q = db['documents'].insert([Document(r) for r in data])
 ```
 
 ## Executing the query
 
 
 ```python
-results = db.execute(q)
+results = q.execute()
 ```
 
 ***Multiple results***
@@ -94,4 +83,4 @@ Iterables of results are sent wrapped in a cursor
 
 Individual results are sent wrapped in a `Document`
 
-Read more about `db.execute` [here](../execute_api/overview).
+Read more about `.execute` [here](../execute_api/overview).

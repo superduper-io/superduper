@@ -97,7 +97,7 @@ class MongoArtifactStore(ArtifactStore):
         """
         cur = self.filesystem.find_one({'filename': file_id})
         if cur is not None:
-            raise FileExistsError
+            return
         return self.filesystem.put(
             serialized, filename=file_id, metadata={"file_id": file_id}
         )

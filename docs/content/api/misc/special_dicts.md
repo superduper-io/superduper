@@ -52,21 +52,6 @@ MongoStyleDict(self,
 
 Dictionary object mirroring how MongoDB handles fields.
 
-## `ArgumentDefaultDict` 
-
-```python
-ArgumentDefaultDict(self,
-     /,
-     *args,
-     **kwargs)
-```
-| Parameter | Description |
-|-----------|-------------|
-| args | *args for `defaultdict` |
-| kwargs | **kwargs for `defaultdict` |
-
-ArgumentDefaultDict.
-
 ## `IndexableDict` 
 
 ```python

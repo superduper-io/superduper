@@ -125,3 +125,14 @@ def delete_search(ids: t.List[str], vector_index: str, db: Datalayer):
     """
     vi = db.fast_vector_searchers[vector_index]
     vi.searcher.delete(ids)
+
+
+def drop_search(vector_index: str, db: Datalayer):
+    """Deletes a vector corresponding to `id`.
+
+    :param ids: List of ids to be deleted.
+    :param vector_index: Vector index where vector needs to be deleted.
+    :param db: Datalayer instance
+    """
+    if vector_index in db.fast_vector_searchers:
+        del db.fast_vector_searchers[vector_index]

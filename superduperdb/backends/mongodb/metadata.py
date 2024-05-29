@@ -277,7 +277,8 @@ class MongoMetaDataStore(MetaDataStore):
                             'hidden': {'$exists': 0},
                         },
                     ]
-                }
+                },
+                {'_id': 0},
             )
         else:
             r = self.component_collection.find_one(
@@ -286,6 +287,7 @@ class MongoMetaDataStore(MetaDataStore):
                     'type_id': type_id,
                     'version': version,
                 },
+                {'_id': 0},
             )
         return r
 

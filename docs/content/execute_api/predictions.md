@@ -12,16 +12,8 @@ results = m.predict_one(*args, **kwargs)
 An alternative is to construct a prediction "query" as follows:
 
 ```python
-from superduperdb.backends.base.query import models
-
 # *args, **kwargs depend on model implementation
-q = models['my-model'].predict_one(*args, **kwargs)
-```
-
-The query may then be "executed" on the datalayer `db`:
-
-```python
-results = db.execute(q)
+db['my-model'].predict_one(*args, **kwargs).execute()
 ```
 
 The results should be the same for both versions.

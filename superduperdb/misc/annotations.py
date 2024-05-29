@@ -72,6 +72,8 @@ def requires_packages(*packages, warn=False):
 
     E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
     """
+    from superduperdb import REQUIRES
+
     out = []
     all = []
     for m in packages:
@@ -84,6 +86,7 @@ def requires_packages(*packages, warn=False):
             warnings.warn('\n' + '\n'.join(out))
         else:
             raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
+    REQUIRES.extend(all)
     return out, all
 
 

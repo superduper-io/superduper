@@ -9,17 +9,29 @@
 
 ***Usage pattern***
 
-(Learn how to build a model [here](model))
-
 ```python
-from superduperdb import Listener
+from superduperdb import *
 
-ds = Dataset(
-    'my-valid-data',
-    select=query_selecting_data,
+m = Listener(
+    model=ObjectModel(
+        object=lambda x: x + 2,
+        identifier=Variable('model_id'),
+    ),
+    select=db['=collection'].find(),
+    key=Variable('key')
 )
 
-db.apply(ds)
+# optional "info" parameter provides details about usage (depends on developer use-case)
+t = Template(m, info={'key': {'type': 'str'}, 'collection': {'type': str}, 'model_id': {'type': 'str'}})
+
+# doesn't trigger work/ computations
+# just "saves" the template and its artifacts
+db.apply(t) 
+
+listener = t(key='my_key', collection='my_collection', model_id='my_id')
+
+# this now triggers standard functionality
+db.apply(listener)
 ```
 
 ***See also***

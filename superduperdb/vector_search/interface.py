@@ -33,6 +33,27 @@ class FastVectorSearcher(BaseVectorSearcher):
                     type='get',
                 )
 
+    @staticmethod
+    def drop_remote(index):
+        """Drop a vector index from the remote.
+
+        :param index: The index to drop.
+        """
+        request_server(
+            service='vector_search',
+            endpoint='drop/search',
+            args={
+                'vector_index': index,
+            },
+        )
+        return
+
+    def drop(self):
+        """Drop the vector index from the remote."""
+        if CFG.cluster.vector_search.uri is not None:
+            self.drop_remote(self.vector_index)
+            request_server
+
     def __len__(self):
         return len(self.searcher)
 

@@ -10,7 +10,7 @@ Follow these steps to get started with SuperDuperDB:
      
     1. [Install SuperDuperDB](./installation.md)
     2. [Configure SuperDuperDB](./configuration.md)
-    3. [Run the hello world example to check your installation](./hello_world.md)
+    3. [Try some of the basic tutorials](../tutorials/intro.md)
 
 2. **Try some of our code-snippets and use-cases**
 

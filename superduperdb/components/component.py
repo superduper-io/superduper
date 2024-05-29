@@ -23,6 +23,29 @@ if t.TYPE_CHECKING:
     from superduperdb.components.datatype import DataType
 
 
+def _build_info_from_path(path: str):
+    try:
+        config = os.path.join(path, 'component.json')
+        with open(config) as f:
+            config_object = json.load(f)
+    except FileNotFoundError:
+        try:
+            config = os.path.join(path, 'component.yaml')
+            with open(config) as f:
+                config_object = yaml.safe_load(f)
+        except FileNotFoundError as e:
+            raise FileNotFoundError('No component.json or component.yaml found') from e
+
+    config_object['_blobs'] = {}
+    if os.path.exists(os.path.join(path, 'blobs')):
+        blobs = {}
+        for file_id in os.listdir(os.path.join(path, 'blobs')):
+            with open(os.path.join(path, 'blobs', file_id), 'rb') as f:
+                blobs[file_id] = f.read()
+        config_object['_blobs'] = blobs
+    return config_object
+
+
 def import_(r=None, path=None, db=None):
     """Helper function for importing component JSONs, YAMLs, etc.
 
@@ -235,27 +258,7 @@ class Component(Leaf):
         |_files/*
         ```
         """
-        try:
-            config = os.path.join(path, 'component.json')
-            with open(config) as f:
-                config_object = json.load(f)
-        except FileNotFoundError:
-            try:
-                config = os.path.join(path, 'component.yaml')
-                with open(config) as f:
-                    config_object = yaml.safe_load(f)
-            except FileNotFoundError as e:
-                raise FileNotFoundError(
-                    'No component.json or component.yaml found'
-                ) from e
-
-        config_object['_blobs'] = {}
-        if os.path.exists(os.path.join(path, 'blobs')):
-            blobs = {}
-            for file_id in os.listdir(os.path.join(path, 'blobs')):
-                with open(os.path.join(path, 'blobs', file_id), 'rb') as f:
-                    blobs[file_id] = f.read()
-            config_object['_blobs'] = blobs
+        config_object = _build_info_from_path(path=path)
 
         from superduperdb import Document
 

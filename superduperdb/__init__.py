@@ -14,6 +14,8 @@ from superduperdb.backends import ibis, mongodb
 
 from .base.decorators import code
 from .base.document import Document
+from .base.variables import Variable
+from .components.application import Application
 from .components.dataset import Dataset
 from .components.datatype import DataType, Encoder
 from .components.listener import Listener
@@ -28,6 +30,7 @@ from .components.model import (
 )
 from .components.schema import Schema
 from .components.stack import Stack
+from .components.template import Template
 from .components.vector_index import VectorIndex, vector
 
 __all__ = (
@@ -56,4 +59,7 @@ __all__ = (
     'Stack',
     'mongodb',
     'ibis',
+    'Template',
+    'Application',
+    'Variable',
 )

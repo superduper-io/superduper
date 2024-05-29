@@ -11,12 +11,13 @@ import uvicorn
 
 def process_snippet(nb, tabs):
     to_delete = []
+    tabs_set = set([tab.strip() for tab in tabs.split(',')])
     for i, cell in enumerate(nb['cells']):
         if tabs != '*':
             match = re.match('^#[ ]+<tab: ([^>]+)>', cell['source'][0])
             if match:
                 tab = match.groups()[0]
-                if tab not in tabs:
+                if tab.strip() not in tabs_set:
                     to_delete.append(i)
                     continue
         if cell['cell_type'] == 'markdown':
@@ -112,7 +113,7 @@ def build_notebook_from_tabs(path, selected_tabs):
                 non_snippet_group = []
 
             snippet, tabs = re.match(
-                '^<snippet: ([a-z0-9_\-]+): ([a-zA-Z0-9_\-\,\*]+)>$',
+                '^<snippet: ([a-z0-9_\-]+): ([a-zA-Z0-9_\-\+\,\*]+)>$',
                 cell['source'][0].strip(),
             ).groups()
             with open(f'reusable_snippets/{snippet}.ipynb') as f:

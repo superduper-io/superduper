@@ -20,14 +20,3 @@ random_sha1()
 ```
 Generate random sha1 values.
 
-## `hash_dict` 
-
-```python
-hash_dict(data: dict)
-```
-| Parameter | Description |
-|-----------|-------------|
-| data | dictionary to hash |
-
-Hash a dictionary.
-

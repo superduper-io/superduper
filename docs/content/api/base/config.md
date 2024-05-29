@@ -88,7 +88,8 @@ Config(self,
      fold_probability: float = 0.05,
      log_level: superduperdb.base.config.LogLevel = <LogLevel.INFO: 'INFO'>,
      logging_type: superduperdb.base.config.LogType = <LogType.SYSTEM: 'SYSTEM'>,
-     bytes_encoding: superduperdb.base.config.BytesEncoding = <BytesEncoding.BYTES: 'Bytes'>) -> None
+     bytes_encoding: superduperdb.base.config.BytesEncoding = <BytesEncoding.BYTES: 'Bytes'>,
+     auto_schema: bool = True) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -104,6 +105,7 @@ Config(self,
 | log_level | The severity level of the logs |
 | logging_type | The type of logging to use |
 | bytes_encoding | The encoding of bytes in the data backend |
+| auto_schema | Whether to automatically create the schema. If True, the schema will be created if it does not exist. |
 
 The data class containing all configurable superduperdb values.
 
@@ -160,11 +162,13 @@ Describes a polling strategy for change data capture.
 
 ```python
 Rest(self,
-     uri: Optional[str] = None) -> None
+     uri: Optional[str] = None,
+     config: Optional[str] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
 | uri | The URI for the REST service |
+| config | The path to the config yaml file for the REST service |
 
 Describes the configuration for the REST service.
 

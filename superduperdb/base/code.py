@@ -30,12 +30,11 @@ class Code(Leaf):
         :param obj: The object to create the Code object from.
         """
         code = inspect.getsource(obj)
-
         mini_module = template.format(
             definition=code,
         )
         print(mini_module)
-        return Code(mini_module)
+        return Code(code=mini_module)
 
     def __post_init__(self, db):
         super().__post_init__(db)
@@ -49,6 +48,15 @@ class Code(Leaf):
             raise ValueError('No remote code found in the provided code')
         self.object = remote_code
 
+    def __call__(self, *args, **kwargs):
+        """
+        Call the code-object on parameters.
+
+        :param args: The positional arguments to pass to the code
+        :param kwargs: The keyword arguments to pass to the code
+        """
+        return self.object(*args, **kwargs)
+
     def unpack(self):
-        """Unpack the code object."""
-        return self.object
+        """Unpack the code object. Does nothing."""
+        return self

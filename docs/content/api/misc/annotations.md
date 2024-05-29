@@ -32,15 +32,28 @@ This will result in a warning being emitted when the function is used.
 ## `component` 
 
 ```python
-component(*schema: Dict,
-     handle_integration: Callable = <function <lambda> at 0x10694fc40>)
+component(*schema: Dict)
 ```
 | Parameter | Description |
 |-----------|-------------|
 | schema | schema for the component |
-| handle_integration | function to handle integration |
 
 Decorator for creating a component.
+
+## `requires_packages` 
+
+```python
+requires_packages(*packages,
+     warn=False)
+```
+| Parameter | Description |
+|-----------|-------------|
+| packages | list of tuples of packages each tuple of the form (import_name, lower_bound/None, upper_bound/None, install_name/None) |
+| warn | if True, warn instead of raising an exception |
+
+Require the packages to be installed.
+
+E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
 
 ## `extract_parameters` 
 
@@ -65,21 +78,6 @@ replace_parameters(doc,
 | placeholder | Placeholder to replace parameters with. |
 
 Replace parameters in a doc-string with a placeholder.
-
-## `requires_packages` 
-
-```python
-requires_packages(*packages,
-     warn=False)
-```
-| Parameter | Description |
-|-----------|-------------|
-| packages | list of tuples of packages each tuple of the form (import_name, lower_bound/None, upper_bound/None, install_name/None) |
-| warn | if True, warn instead of raising an exception |
-
-Require the packages to be installed.
-
-E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
 
 ## `SuperDuperDBDeprecationWarning` 
 

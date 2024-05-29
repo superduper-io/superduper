@@ -6,7 +6,7 @@
 
 ***Dependencies***
 
-- `DataType`
+- [`DataType`](./datatype.md)
 
 ***Usage pattern***
 
@@ -33,18 +33,18 @@ db.apply(schema)
 
 *Usage with SQL*
 
-All columns should be flagged with either `DataType` or `FieldType`:
+All columns should be flagged with either `DataType` or `dtype`:
 
 ```python
-from superduperdb.backends.ibis import FieldType
+from superduperdb.backends.ibis import dtype
 
 schema = Schema(
     'my-schema',
     fields={
         'img': dt_1,   # A `DataType`
         'video': dt_2,   # Another `DataType`
-        'txt', FieldType('str'),
-        'numer', FieldType('int'),
+        'txt', dtype('str'),
+        'numer', dtype('int'),
     }
 )
 
@@ -53,7 +53,19 @@ db.apply(schema)
 
 *Usage with MongoDB*
 
-!!!TODO!!!
+In MongoDB, the non-`DataType` columns/ fields can be omitted:
+
+```python
+schema = Schema(
+    'my-schema',
+    fields={
+        'img': dt_1,   # A `DataType`
+        'video': dt_2,   # Another `DataType`
+    }
+)
+
+db.apply(schema)
+```
 
 *Usage with `Model` descendants (MongoDB only)*
 

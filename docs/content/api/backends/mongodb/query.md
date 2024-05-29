@@ -50,7 +50,7 @@ UpdateOne operation for MongoDB.
 
 ```python
 parse_query(query,
-     documents,
+     documents: Sequence[Dict] = (),
      db: Optional[ForwardRef('Datalayer')] = None)
 ```
 | Parameter | Description |

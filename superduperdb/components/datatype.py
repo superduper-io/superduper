@@ -627,7 +627,11 @@ class Artifact(_BaseEncodable):
             return f'?{self._id}'
 
         r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            cache,
+            blobs,
+            files,
+            leaves_to_keep=leaves_to_keep,
+            schema=schema,
         )
         del r['x']
         if isinstance(maybe_bytes, bytes):

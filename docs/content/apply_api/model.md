@@ -5,19 +5,19 @@
 
 ***Dependencies***
 
-- `Datatype`
+- [`Datatype`](./datatype.md)
 
 ***(Optional dependencies)***
 
-- `Validation`
-- `Trainer`
+- [`Validation`](./validation.md)
+- [`Trainer`](./trainer.md)
 
 ***Usage pattern***
 
 :::note
 Note that `Model` is an abstract base class which cannot be called directly.
 To use `Model` you should call any of its downstream implementations, 
-such as `ObjectModel` or models in the AI-integrations.
+such as [`ObjectModel`](../api/components/model.md#objectmodel-1) or models in the [AI-integrations](/docs/category/ai-integrations).
 :::
 
 ***Important notes***

@@ -1,11 +1,11 @@
 
 # Training and Managing MNIST Predictions with SuperDuperDB
 
-## Introduction
+:::note
+This tutorial guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using SuperDuperDB.
+:::
 
-This notebook guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using SuperDuperDB.
-
-This example makes it easy to connect any of your image recognition model directly to your database in real-time. With SuperDuperDB, you can skip complicated MLOps pipelines. It's a new straightforward way to integrate your AI model with your data, ensuring simplicity, efficiency and speed. 
+This example makes it easy to connect any of your image recognition models directly to your database in real-time. 
 
 ```python
 !pip install torch torchvision
@@ -15,8 +15,6 @@ This example makes it easy to connect any of your image recognition model direct
 <summary>Outputs</summary>
 
 </details>
-
-## Connect to datastore 
 
 First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. 
 
@@ -43,9 +41,7 @@ db = superduper('mongomock://')
 </pre>
 </details>
 
-## Load Dataset
-
-After establishing a connection to MongoDB, the next step is to load the MNIST dataset. SuperDuperDB's strength lies in handling diverse data types, especially those that are challenging. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
+After establishing a connection to MongoDB, the next step is to load the MNIST dataset. SuperDuperDB's strength lies in handling diverse data types, especially those that are not supported by standard databases. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
 
 ```python
 import torchvision
@@ -999,11 +995,9 @@ r.unpack()['img'].resize((300, 300))
 <div>![](/training/8_0.png)</div>
 </details>
 
-## Build Model
-
 Following that, we build our machine learning model. SuperDuperDB conveniently supports various frameworks, and for this example, we opt for PyTorch, a suitable choice for computer vision tasks. In this instance, we combine `torch` with `torchvision`.
 
-To facilitate communication with the SuperDuperDB `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then encapsulated with the model, preprocessing, and postprocessing steps to create a native SuperDuperDB handler.
+To facilitate communication with the SuperDuperDB `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then wrapped with the `TorchModel` wrapper to create a native SuperDuperDB object.
 
 ```python
 from superduperdb.ext.torch import TorchModel
@@ -1083,8 +1077,6 @@ model.predict_one(data[0]['img'])
     2
 </pre>
 </details>
-
-## Train Model
 
 Now we are ready to "train" or "fit" the model. Trainable models in SuperDuperDB come with a sklearn-like `.fit` method,
 which developers may implement for their specific model class. `torch` models come with a pre-configured
@@ -1532,63 +1524,5 @@ plt.show()
 
 <details>
 <summary>Outputs</summary>
-<div>![](/training/15_0.png)</div>
-</details>
-
-```python
-model.trainer.metric_values
-```
-
-<details>
-<summary>Outputs</summary>
-<pre>
-    \{'my-valid/acc': [0.16279069767441862,
-      0.11627906976744186,
-      0.16279069767441862,
-      0.3953488372093023,
-      0.4186046511627907,
-      0.4883720930232558,
-      0.5116279069767442,
-      0.6744186046511628,
-      0.5813953488372093,
-      0.5813953488372093,
-      0.5813953488372093,
-      0.5116279069767442,
-      0.7209302325581395,
-      0.7441860465116279,
-      0.6744186046511628,
-      0.6976744186046512,
-      0.627906976744186,
-      0.7674418604651163,
-      0.6744186046511628,
-      0.7209302325581395,
-      0.7906976744186046,
-      0.8372093023255814,
-      0.813953488372093,
-      0.8372093023255814],
-     'objective': [2.3071595191955567,
-      2.2843324184417724,
-      2.2262439727783203,
-      2.1200345516204835,
-      1.9862218618392944,
-      1.8099432945251466,
-      1.6320355653762817,
-      1.450360083580017,
-      1.3515176057815552,
-      1.2751734495162963,
-      1.1450695395469666,
-      1.1396703839302063,
-      0.8712847888469696,
-      0.8647180676460267,
-      0.8870090007781982,
-      0.7733974754810333,
-      0.8145189821720124,
-      0.6921847283840179,
-      0.8348591446876525,
-      0.7183641791343689,
-      0.5649376273155212,
-      0.4794299900531769,
-      0.4963296115398407,
-      0.46701614558696747]\}
-</pre>
+<div>![](/training/14_0.png)</div>
 </details>

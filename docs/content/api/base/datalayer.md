@@ -9,7 +9,7 @@ Datalayer(self,
      databackend: superduperdb.backends.base.data_backend.BaseDataBackend,
      metadata: superduperdb.backends.base.metadata.MetaDataStore,
      artifact_store: superduperdb.backends.base.artifacts.ArtifactStore,
-     compute: superduperdb.backends.base.compute.ComputeBackend = <superduperdb.backends.local.compute.LocalComputeBackend object at 0x1459d8790>)
+     compute: superduperdb.backends.base.compute.ComputeBackend = <superduperdb.backends.local.compute.LocalComputeBackend object at 0x291ee3510>)
 ```
 | Parameter | Description |
 |-----------|-------------|

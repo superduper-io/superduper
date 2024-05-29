@@ -132,6 +132,10 @@ class Document(MongoStyleDict):
         if '_files' in r:
             files = r['_files']
 
+        for k, v in cache.items():
+            if isinstance(v, dict) and 'identifier' not in v:
+                v['identifier'] = k
+
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
         if schema is not None:
@@ -264,7 +268,12 @@ def _deep_flat_encode(
         tmp = {}
         for k in list(r):
             tmp[k] = _deep_flat_encode(
-                r[k], cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                r[k],
+                cache,
+                blobs,
+                files,
+                leaves_to_keep=leaves_to_keep,
+                schema=schema,
             )
         return tmp
 
@@ -272,14 +281,23 @@ def _deep_flat_encode(
         return type(r)(
             [
                 _deep_flat_encode(
-                    x, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                    x,
+                    cache,
+                    blobs,
+                    files,
+                    leaves_to_keep=leaves_to_keep,
+                    schema=schema,
                 )
                 for x in r
             ]
         )
     if isinstance(r, Leaf):
         return r._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            cache,
+            blobs,
+            files,
+            leaves_to_keep=leaves_to_keep,
+            schema=schema,
         )
     return r
 
@@ -329,7 +347,7 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         if len(args) == 1:
             return db.load(uuid=args[0])
         if len(args) == 2:
-            return db.load(type_id=args[0], identifier=args[1], include_presets=True)
+            return db.load(type_id=args[0], identifier=args[1])
         if len(args) == 3:
             return db.load(type_id=args[0], identifier=args[1], version=int(args[2]))
         raise ValueError(f'Invalid number of arguments for {r}')

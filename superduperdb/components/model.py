@@ -1251,7 +1251,7 @@ class QueryModel(Model):
     """
 
     preprocess: t.Optional[t.Callable] = None
-    postprocess: t.Optional[t.Union[t.Callable, Code]] = None
+    postprocess: t.Optional[t.Union[t.Callable]] = None
     select: Query
     signature: Signature = '**kwargs'
 

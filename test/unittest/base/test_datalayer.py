@@ -223,7 +223,7 @@ def test_add_with_artifact(db):
 
     db.apply(m)
 
-    m = db.load('model', m.identifier, include_presets=False)
+    m = db.load('model', m.identifier)
 
     assert m.object is not None
 
@@ -386,7 +386,7 @@ def test_show(db):
     assert 'None' in str(e) and '1' in str(e)
 
     assert sorted(db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
-    assert sorted(db.show('datatype', include_presets=False)) == ['c1', 'c2']
+    assert sorted(db.show('datatype')) == ['c1', 'c2']
 
     assert sorted(db.show('test-component', 'a1')) == [0]
     assert sorted(db.show('test-component', 'b')) == [0, 1, 2]

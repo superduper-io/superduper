@@ -107,7 +107,9 @@ class Component(Leaf):
 
     @property
     def _id(self):
-        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
+        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'.replace(
+            '.', '-'
+        )
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
@@ -116,6 +118,10 @@ class Component(Leaf):
         self.version: t.Optional[int] = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
+
+    def cleanup(self, db: Datalayer):
+        """Method to clean the component."""
+        pass
 
     @property
     def id(self):
@@ -239,7 +245,12 @@ class Component(Leaf):
 
         r = dict(self.dict())
         r = _deep_flat_encode(
-            r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+            r,
+            cache,
+            blobs,
+            files,
+            leaves_to_keep=leaves_to_keep,
+            schema=schema,
         )
         cache[self._id] = r
         return f'?{self._id}'
@@ -264,7 +275,7 @@ class Component(Leaf):
 
         return Document.decode(config_object).unpack()
 
-    def export(self, path: str):
+    def export(self, path: str, format: str = 'json'):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -287,8 +298,17 @@ class Component(Leaf):
                     f.write(bytestr_)
 
         r.pop_blobs()
-        with open(os.path.join(path, 'component.json'), 'w') as f:
-            json.dump(r, f, indent=2)
+        if format == 'json':
+            with open(os.path.join(path, 'component.json'), 'w') as f:
+                json.dump(r, f, indent=2)
+        elif format == 'yaml':
+            with open(os.path.join(path, 'component.yaml'), 'w') as f:
+                json.dump(r, f, indent=2)
+
+        from superduperdb import REQUIRES
+
+        with open(os.path.join(path, 'requirements.txt'), 'w') as f:
+            f.write('\n'.join(REQUIRES))
 
     def dict(self) -> 'Document':
         """A dictionary representation of the component."""

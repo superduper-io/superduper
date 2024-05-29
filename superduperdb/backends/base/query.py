@@ -48,9 +48,34 @@ class _BaseQuery(Leaf, ABC):
     ...
 
 
+class TraceMixin:
+    """Mixin to add trace functionality to a query # noqa."""
+
+    def __getattr__(self, item):
+        item = type(self).methods_mapping.get(item, item)
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[*self.parts, item],
+        )
+
+    def __call__(self, *args, **kwargs):
+        """Add a method call to the query.
+
+        :param args: The arguments to pass to the method.
+        :param kwargs: The keyword arguments to pass to the method.
+        """
+        assert isinstance(self.parts[-1], str)
+        return type(self)(
+            db=self.db,
+            identifier=self.identifier,
+            parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
+        )
+
+
 @merge_docstrings
 @dc.dataclass(kw_only=True, repr=False)
-class Query(_BaseQuery):
+class Query(_BaseQuery, TraceMixin):
     """A query object.
 
     This base class is used to create a query object that can be executed
@@ -299,27 +324,6 @@ class Query(_BaseQuery):
             parts=self.parts + [('__ge__', (other,), {})],
         )
 
-    def __getattr__(self, item):
-        item = type(self).methods_mapping.get(item, item)
-        return type(self)(
-            db=self.db,
-            identifier=self.identifier,
-            parts=[*self.parts, item],
-        )
-
-    def __call__(self, *args, **kwargs):
-        """Add a method call to the query.
-
-        :param args: The arguments to pass to the method.
-        :param kwargs: The keyword arguments to pass to the method.
-        """
-        assert isinstance(self.parts[-1], str)
-        return type(self)(
-            db=self.db,
-            identifier=self.identifier,
-            parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
-        )
-
     def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
             out = getattr(r, method)()
@@ -543,7 +547,7 @@ def _parse_query_part(part, documents, query, builder_cls, db=None):
 
 def parse_query(
     query: t.Union[str, list],
-    builder_cls,
+    builder_cls: t.Optional[t.Type[Query]] = None,
     documents: t.Sequence[t.Any] = (),
     db: t.Optional['Datalayer'] = None,
 ):
@@ -554,6 +558,12 @@ def parse_query(
     :param documents: The documents to query.
     :param db: The datalayer to use to execute the query.
     """
+    if isinstance(query, str) and query.split('\n')[-1].strip().split('.')[
+        1
+    ].startswith('predict'):
+        builder_cls = Model
+        return _parse_query_part(query, documents, [], builder_cls, db=db)
+
     documents = [Document(r, db=db) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
@@ -564,46 +574,28 @@ def parse_query(
 
 @merge_docstrings
 @dc.dataclass
-class Model(Leaf):
-    """A model helper class for create a query to predict."""
+class Model(Leaf, TraceMixin):
+    """
+    A model helper class for create a query to predict.
 
-    def predict_one(self, *args, **kwargs):
-        """Predict one.
-
-        :param args: The arguments to pass to the model
-        :param kwargs: The keyword arguments to pass to the model
-        """
-        return PredictOne(self.identifier, args=args, kwargs=kwargs)
-
-    def predict(self, *args, **kwargs):
-        """Predict.
-
-        :param args: The arguments to pass to the model
-        :param kwargs: The keyword arguments to pass to the model
-        """
-        raise NotImplementedError
-
-
-@merge_docstrings
-@dc.dataclass
-class PredictOne(_BaseQuery):
-    """A query to predict a single document.
-
-    :param args: The arguments to pass to the model
-    :param kwargs: The keyword arguments to pass to the model
+    :param parts: The parts of the query.
     """
 
+    parts: t.Sequence[t.Union[t.Tuple, str]] = ()
+    methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
     type: t.ClassVar[str] = 'predict'
 
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    def execute(self):
+        """Execute the model as a query."""
+        return self.db.execute(self)
 
-    def do_execute(self, db):
+    def do_execute(self, db=None):
         """Execute the query.
 
-        :param db: The datalayer instance
+        :param db: Datalayer instance.
         """
-        m = db.models[self.identifier]
-        out = m.predict_one(*self.args, **self.kwargs)
-        outputs = m.encode_outputs([out])
-        return Document({'_base': outputs[0]})
+        self.db = db
+        m = self.db.models[self.identifier]
+        method = getattr(m, self.parts[-1][0])
+        r = method(*self.parts[-1][1], **self.parts[-1][2])
+        return Document({'_base': r})

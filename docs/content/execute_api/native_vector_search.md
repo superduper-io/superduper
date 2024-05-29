@@ -1,6 +1,6 @@
 # Using a database's native vector search
 
-Increasing databases include their own vector-comparison and search operations 
+Databases increasingly include their own vector-comparison and search operations 
 (comparing one vector with others). In order to use this, include 
 this configuration in your configuration setup:
 

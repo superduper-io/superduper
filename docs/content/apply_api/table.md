@@ -1,11 +1,11 @@
 # `Table`
 
-- Create a table in an SQL database, which has a `Schema` attached
+- Create a table in an SQL database, which optionally has a `Schema` attached
 - Table can be a `MongoDB` collection or an SQL table.
 
 ***Dependencies***
 
-- `Schema`
+- [`Schema`](./schema.md)
 
 ***Usage pattern***
 
@@ -21,3 +21,5 @@ table = Table(
 
 db.apply(table)
 ```
+
+In MongoDB, the attached `schema` will be used as the default `Schema` for that `Table` (collection).

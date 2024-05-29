@@ -5,7 +5,13 @@ staring with a table of collection, and repeatingly calling
 methods to build a complex query:
 
 ```python
-q = base_object.method_1(*args_1, **kwargs_1).method_2(*args_2, **kwargs_2)....
+q = db['table_name'].method_1(*args_1, **kwargs_1).method_2(*args_2, **kwargs_2)....
+```
+
+As usual, the query is executed with:
+
+```
+q.execute()
 ```
 
 ## Read more

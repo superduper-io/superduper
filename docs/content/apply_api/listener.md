@@ -6,7 +6,7 @@
 
 ***dependencies***
 
-- `model`
+- [`Model`](./model.md)
 
 ***usage pattern***
 

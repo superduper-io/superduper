@@ -122,6 +122,7 @@ class Leaf(ABC):
         from superduperdb.base.document import _deep_flat_encode
 
         r = dict(self.dict())
+        # TODO change this to caches[self._id] = r etc.
         return _deep_flat_encode(
             r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
         )

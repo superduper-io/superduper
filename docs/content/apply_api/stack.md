@@ -43,12 +43,10 @@ from sklearn.svm import SVC
 from my_models.vision import MyTorchModule, prepare_image
 
 from superduperdb.ext.numpy import array
-from superduperdb.ext.sklearn import Estimator
+from superduperdb.ext.sklearn import Estimator, SklearnTrainer
 from superduperdb.ext.torch import TorchModel
 from superduperdb import Stack, VectorIndex, Listener
-from superduperdb.backends.mongodb import Collection
 
-collection = Collection('images')
 
 my_listener=Listener(
     'my-listener',
@@ -57,10 +55,10 @@ my_listener=Listener(
         object=MyTorchModule(),
         preprocess=prepare_image,
         postprocess=lambda x: x.numpy(),
-        encoder=array(dtype='float', shape=(512,))
+        encoder=array(dtype='float', shape=(512,)),
     )
     key='img',
-    select=collection.find({'_fold': 'train'})
+    select=db['documents'].find({'_fold': 'train'}),
 )
 
 db.apply(
@@ -76,9 +74,11 @@ db.apply(
                 'my-classifier',
                 object=SVC()
                 postprocess=lambda x: ['apples', 'pears'][x]
-                train_select=my_listener.outputs,
-                train_X='img',
-                train_y='labels',
+                trainer=SklearnTrainer(
+                    'my-trainer',
+                    select=my_listener.select,
+                    key=(my_listener.outputs, labels),
+                )
             )
         ],
     )
@@ -87,4 +87,4 @@ db.apply(
 
 ***See also***
 
-- [YAML stack syntax](../cluster_mode/yaml_syntax)
+- [YAML stack syntax](../production/yaml_formalism.md)

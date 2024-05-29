@@ -31,16 +31,16 @@ from superduperdb import Document
 
 my_image = PIL.Image.open('test/material/data/test_image.png')
 
-q = my_collection.find({'brand': 'Nike'}).like(Document({'img': pil_image(my_image)}), 
+q = db['my_collection'].find({'brand': 'Nike'}).like(Document({'img': pil_image(my_image)}), 
                                                vector_index='<my-vector-index>')
 
-results = db.execute(q)
+results = q.execute()
 ```
 
 ## SQL
 
 ```python
-t = db.load('table', 'my-table')
+t = db['my_table']
 t.filter(t.brand == 'Nike').like(Document({'img': pil_image(my_image)}))
 
 results = db.execute(q)

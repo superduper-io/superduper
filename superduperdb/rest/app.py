@@ -6,7 +6,6 @@ import yaml
 from fastapi import File, Response
 
 from superduperdb import CFG, logging
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.server import app as superduperapp
 
@@ -15,23 +14,15 @@ assert isinstance(
 ), "cluster.rest.uri should be set with a valid uri"
 port = int(CFG.cluster.rest.uri.split(':')[-1])
 
-assert CFG.cluster.rest.config, "cluster.rest.config should be set with a valid path"
-with open(CFG.cluster.rest.config) as f:
-    CONFIG = yaml.safe_load(f)
+if CFG.cluster.rest.config is not None:
+    try:
+        with open(CFG.cluster.rest.config) as f:
+            CONFIG = yaml.safe_load(f)
+    except FileNotFoundError:
+        logging.warn("cluster.rest.config should be set with a valid path")
+        CONFIG = {}
 
 app = superduperapp.SuperDuperApp('rest', port=port)
-
-
-def _init_hook(db: Datalayer):
-    for type_id in CONFIG['presets']:
-        for leaf in CONFIG['presets'][type_id]:
-            leaf = CONFIG['presets'][type_id][leaf]
-            leaf = Document.decode(leaf).unpack()
-            t = db.type_id_to_cache_mapping[type_id]
-            getattr(db, t)[leaf.identifier] = leaf
-
-
-app.init_hook = _init_hook
 
 
 def build_app(app: superduperapp.SuperDuperApp):
@@ -43,6 +34,20 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/spec/show', method='get')
     def spec_show():
+        template_ids = app.db.show(type_id='template')
+        tmp = {
+            'application': {
+                tid: {
+                    '_path': f'superduperdb/applications/{tid}',
+                    'identifier': {'type': 'str'},
+                    **app.db.show(type_id='template', identifier=tid, version=-1)[
+                        'info'
+                    ],
+                }
+                for tid in template_ids
+            }
+        }
+        CONFIG['leaves'].update(tmp)
         return CONFIG
 
     @app.add('/db/artifact_store/put', method='put')
@@ -78,7 +83,6 @@ def build_app(app: superduperapp.SuperDuperApp):
             type_id=type_id,
             identifier=identifier,
             version=version,
-            include_presets=True,
         )
 
     @app.add('/db/metadata/show_jobs', method='get')
@@ -114,10 +118,9 @@ def build_app(app: superduperapp.SuperDuperApp):
         if isinstance(result, Document):
             result = [result]
 
-        result = [dict(r.encode()) for r in result]
-        for r in result:
-            r['_blobs'] = r['_blobs'].keys()
-        return list(result)
+        result = [r.encode() for r in result]
+        result = [(dict(r), list(r.pop_blobs().keys())) for r in result]
+        return result
 
 
 build_app(app)

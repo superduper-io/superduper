@@ -164,6 +164,14 @@ class VectorIndex(Component):
 
         return searcher.find_nearest_from_array(h, within_ids=within_ids, n=n)
 
+    def cleanup(self, db: Datalayer):
+        """Clean up the vector index.
+
+        :param db: The datalayer to cleanup
+        """
+        db.fast_vector_searchers[self.identifier].drop()
+        del db.fast_vector_searchers[self.identifier]
+
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
         """Return a list of model and keys for each listener."""

@@ -39,19 +39,6 @@ base64_to_bytes(encoded)
 
 Decodes a base64 encoded string.
 
-## `build_torch_state_serializer` 
-
-```python
-build_torch_state_serializer(module,
-     info)
-```
-| Parameter | Description |
-|-----------|-------------|
-| module | Module. |
-| info | Information. |
-
-Datatype for serializing torch state dict.
-
 ## `bytes_to_base64` 
 
 ```python
@@ -200,7 +187,7 @@ Encoder(self,
      directory: Optional[str] = None,
      encodable: str = 'encodable',
      bytes_encoding: Optional[str] = <BytesEncoding.BYTES: 'Bytes'>,
-     intermidia_type: Optional[str] = 'bytes',
+     intermediate_type: Optional[str] = 'bytes',
      media_type: Optional[str] = None) -> None
 ```
 | Parameter | Description |
@@ -216,7 +203,7 @@ Encoder(self,
 | directory | The directory to store file types. |
 | encodable | The type of encodable object ('encodable', 'lazy_artifact', or 'file'). |
 | bytes_encoding | The encoding type for bytes ('base64' or 'bytes'). |
-| intermidia_type | Type of the intermidia data [IntermidiaType.BYTES, IntermidiaType.STRING] |
+| intermediate_type | Type of the intermediate data [IntermediateType.BYTES, IntermediateType.STRING] |
 | media_type | The media type. |
 
 A data type component that defines how data is encoded and decoded.

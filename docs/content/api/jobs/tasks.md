@@ -52,19 +52,3 @@ method_job(cfg,
 
 Run a method on a component in the database.
 
-## `Logger` 
-
-```python
-Logger(self,
-     database,
-     id_,
-     stream='stdout')
-```
-| Parameter | Description |
-|-----------|-------------|
-| database | database to write to |
-| id_ | job id |
-| stream | stream to write to |
-
-Logger class for writing to the database.
-

@@ -4,7 +4,6 @@ import typing as t
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
 from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.base.code import Code
 from superduperdb.base.enums import DBType
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
@@ -37,8 +36,8 @@ class SentenceTransformer(Model, _DeviceManaged):
     object: t.Optional[_SentenceTransformer] = None
     model: t.Optional[str] = None
     device: str = 'cpu'
-    preprocess: t.Union[None, t.Callable, Code] = None
-    postprocess: t.Union[None, t.Callable, Code] = None
+    preprocess: t.Union[None, t.Callable] = None
+    postprocess: t.Union[None, t.Callable] = None
     signature: Signature = 'singleton'
 
     def __post_init__(self, db, artifacts):
@@ -47,12 +46,21 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.model is None:
             self.model = self.identifier
 
+        self._default_model = False
         if self.object is None:
             self.object = _SentenceTransformer(self.model, device=self.device)
+            self._default_model = True
 
         if self.datatype is None:
             sample = self.predict_one('Test')
             self.shape = (len(sample),)
+
+    def dict(self):
+        """Serialize as a dictionary."""
+        r = super().dict()
+        if self._default_model:
+            del r['object']
+        return r
 
     def init(self, db=None):
         """Initialize the model."""
@@ -95,7 +103,7 @@ class SentenceTransformer(Model, _DeviceManaged):
         assert self.object is not None
         results = self.object.encode(dataset, **self.predict_kwargs)
         if self.postprocess is not None:
-            results = self.postprocess(results)  # type: ignore[operator]
+            results = self.postprocess(results)
         return results
 
     def pre_create(self, db):

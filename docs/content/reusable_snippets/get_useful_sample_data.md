@@ -68,7 +68,7 @@ import DownloadButton from '../downloadButton.js';
     </TabItem>
     <TabItem value="Video" label="Video" default>
         ```python
-        # !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/videos.zip && unzip videos.zip
         import os
         
         data = [f'videos/{x}' for x in os.listdir('./videos')]

@@ -54,18 +54,6 @@ class Schema(Component):
                 db.add(v)
         return super().pre_create(db)
 
-    @property
-    def raw(self):
-        """Return the raw fields.
-
-        Get a dictionary of fields as keys and datatypes as values.
-        This is used to create ibis tables.
-        """
-        return {
-            k: (v.identifier if not isinstance(v, DataType) else v.bytes_encoding)
-            for k, v in self.fields.items()
-        }
-
     def deep_flat_encode_data(self, r, cache, blobs, files, leaves_to_keep=()):
         """Deep flat encode data.
 
@@ -129,7 +117,12 @@ class Schema(Component):
 
         decoded = {}
         for k in data.keys():
-            if isinstance(field := self.fields.get(k), DataType):
+            value = data[k]
+            # That's mean the value have been decoded already in `init` function
+            if isinstance(value, _BaseEncodable):
+                assert value.datatype.identifier == self.fields[k].identifier
+                decoded[k] = value
+            elif isinstance(field := self.fields.get(k), DataType):
                 # TODO: We need to sort out the logic here
                 # We use encodable_cls to encode the data, but we the decoder here
                 # decoded[k] = field.encodable_cls.decode(data[k])

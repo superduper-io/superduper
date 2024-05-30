@@ -5,8 +5,7 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb import Document
-from superduperdb.backends.mongodb import MongoQuery
+from superduperdb import DataType, Schema
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     Empty,
@@ -14,6 +13,7 @@ from superduperdb.components.datatype import (
     file_lazy,
     file_serializer,
 )
+from superduperdb.components.table import Table
 
 
 @dc.dataclass(kw_only=True)
@@ -34,7 +34,7 @@ def random_file(tmpdir):
     return file_name
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_reference(db, random_file):
     c = SpecialComponent("test", my_file=random_file)
 
@@ -48,7 +48,7 @@ def test_reference(db, random_file):
         assert f.read() == f2.read()
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_reference_lazy(db, random_file):
     c = SpecialComponent("test", my_file_lazy=random_file)
 
@@ -63,16 +63,17 @@ def test_reference_lazy(db, random_file):
         assert f.read() == f2.read()
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_file(db, random_file):
-    from superduperdb import DataType
-
     dt = DataType("my-file", encodable="file")
-    db.apply(dt)
-    collection = MongoQuery("my-file", db=db)
-    db.execute(collection.insert_one(Document({"x": dt(random_file)})))
+    schema = Schema(identifier="schema", fields={"x": dt})
+    table_or_collection = Table("documents", schema=schema)
+    db.apply(table_or_collection)
 
-    data = db.execute(collection.find_one()).unpack()
+    collection = db['documents']
+    collection.insert([{"x": random_file}]).execute()
+
+    data = list(db.execute(collection.select()))[0].unpack()
 
     path = data["x"]
     assert os.path.exists(path)
@@ -82,16 +83,19 @@ def test_file(db, random_file):
         assert f.read() == f2.read()
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_file_lazy(db, random_file):
     from superduperdb import DataType
 
     dt = DataType("my-file", encodable="lazy_file")
-    db.apply(dt)
-    collection = MongoQuery("my-file")
-    db.execute(collection.insert_one(Document({"x": dt(random_file)})))
+    schema = Schema(identifier="schema", fields={"x": dt})
+    table_or_collection = Table("documents", schema=schema)
+    db.apply(table_or_collection)
 
-    data = db.execute(collection.find_one())
+    collection = db['documents']
+    collection.insert([{"x": random_file}]).execute()
+
+    data = list(db.execute(collection.select()))[0]
 
     assert isinstance(data["x"].x, Empty)
     data = data.unpack()

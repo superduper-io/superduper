@@ -1,5 +1,7 @@
+import base64
 import copy
 import dataclasses as dc
+import pickle
 import typing as t
 import uuid
 from collections import defaultdict
@@ -275,13 +277,8 @@ class IbisQuery(Query):
 
     def _execute_insert(self, parent):
         documents = self._prepare_documents()
+        documents = [self._refactor_insert_data_info(d) for d in documents]
         for r in documents:
-            if isinstance(r, dict):
-                r.pop('_leaves', None)
-                r.pop('_files', None)
-                r.pop('_blobs', None)
-                r.pop('_schema', None)
-
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid
@@ -295,7 +292,7 @@ class IbisQuery(Query):
             return
         self.db.databackend.create_table_and_schema(
             self.identifier,
-            self._get_schema().raw,
+            self._get_schema(),
         )
 
     def _execute(self, parent, method='encode'):
@@ -309,6 +306,7 @@ class IbisQuery(Query):
 
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient='records')
+        output = [self._recover_insert_data_info(d) for d in output]
         component_table = self.db.tables[self.identifier]
         return SuperDuperCursor(
             raw_cursor=output,
@@ -316,6 +314,24 @@ class IbisQuery(Query):
             id_field=component_table.primary_id,
             schema=self._get_schema(),
         )
+
+    @staticmethod
+    def _refactor_insert_data_info(data):
+        merge_data = {}
+        for key in ['_leaves', '_blobs', '_files', '_schema']:
+            if key in data:
+                merge_data[key] = data.pop(key)
+
+        merge_data = base64.b64encode(pickle.dumps(merge_data)).decode()
+        data['_info'] = merge_data
+        return data
+
+    @staticmethod
+    def _recover_insert_data_info(data):
+        if '_info' in data:
+            merge_data = pickle.loads(base64.b64decode(data.pop('_info')))
+            data.update(merge_data)
+        return data
 
     @property
     def type(self):

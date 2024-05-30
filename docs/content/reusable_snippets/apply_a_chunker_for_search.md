@@ -1,8 +1,11 @@
 ---
 sidebar_label: Apply a chunker for search
+filename: apply_a_chunker_for_search.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Apply a chunker for search
@@ -59,7 +62,6 @@ won't be necessary.
         @objectmodel(
             flatten=True,
             model_update_kwargs={'document_embedded': False},
-            output_schema=Schema(identifier='output-schema', fields={'image': pil_image}),
         )
         def chunker(video_file):
             # Set the sampling frequency for frames
@@ -134,3 +136,4 @@ upstream_listener = Listener(
 db.apply(upstream_listener)
 ```
 
+<DownloadButton filename="apply_a_chunker_for_search.md" />

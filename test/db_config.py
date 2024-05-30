@@ -44,3 +44,4 @@ class DBConfig:
     sqldb_data = {**_sqldb_base, 'add_models': False, 'add_vector_index': False}
 
     # Additional frequently used presets can be added as needed...
+    EMPTY_CASES = [mongodb_empty, sqldb_empty]

@@ -13,6 +13,7 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import IbisQuery
+from superduperdb.backends.ibis.utils import convert_schema_to_fields
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.enums import DBType
@@ -98,6 +99,7 @@ class IbisDataBackend(BaseDataBackend):
         :param datatype: The data type of the output.
         :param flatten: Whether to flatten the output.
         """
+        # TODO: Support output schema
         msg = (
             "Model must have an encoder to create with the"
             f" {type(self).__name__} backend."
@@ -113,6 +115,7 @@ class IbisDataBackend(BaseDataBackend):
                 INPUT_KEY: dtype('string'),
                 'id': dtype('string'),
                 'output': output_type,
+                '_info': dtype('string'),
             }
             return Table(
                 primary_id='id',
@@ -124,6 +127,7 @@ class IbisDataBackend(BaseDataBackend):
                 INPUT_KEY: dtype('string'),
                 'output': output_type,
                 'id': dtype('string'),
+                '_info': dtype('string'),
             }
             return Table(
                 identifier=f'_outputs.{predict_id}',
@@ -141,14 +145,16 @@ class IbisDataBackend(BaseDataBackend):
         except NoSuchTableError:
             return False
 
-    def create_table_and_schema(self, identifier: str, mapping: dict):
+    def create_table_and_schema(self, identifier: str, schema: Schema):
         """Create a schema in the data-backend.
 
         :param identifier: The identifier of the table.
         :param mapping: The mapping of the schema.
         """
+        mapping = convert_schema_to_fields(schema)
         if 'id' not in mapping:
             mapping['id'] = 'string'
+        mapping['_info'] = 'string'
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))

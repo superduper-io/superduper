@@ -370,6 +370,7 @@ class _BaseEncodable(Leaf):
     uri: t.Optional[str] = None
     sha1: t.Optional[str] = None
     x: t.Optional[t.Any] = None
+    lazy: t.ClassVar[bool] = False
 
     def __post_init__(self, db):
         """Post-initialization hook.
@@ -782,7 +783,7 @@ def get_serializer(
 
 
 pickle_encoder = get_serializer(
-    identifier='pickle',
+    identifier='pickle_encoder',
     method='pickle',
     encodable='encodable',
 )

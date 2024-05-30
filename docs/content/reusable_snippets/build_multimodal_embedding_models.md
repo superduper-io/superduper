@@ -80,7 +80,7 @@ Otherwise:
         from superduperdb.ext.torch import TorchModel
         
         # Load the CLIP model and obtain the preprocessing function
-        model, preprocess = clip.load("RN50", device='cpu')
+        model, preprocess = clip.load("ViT-B/32", device='cpu')
         
         # Define a vector with shape (1024,)
         

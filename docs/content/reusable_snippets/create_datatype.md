@@ -1,17 +1,16 @@
 ---
 sidebar_label: Create datatype
+filename: create_datatype.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Create datatype
 
 Data types such as "text" or "integer" which are natively support by your `db.databackend` don't need a datatype.
-
-```python
-datatype = None
-```
 
 Otherwise do one of the following:
 
@@ -105,7 +104,7 @@ Otherwise do one of the following:
         # Create an instance of the Encoder with the identifier 'video_on_file' and load_hybrid set to False
         datatype = DataType(
             identifier='video_on_file',
-            encodable='artifact',
+            encodable='file',
         )        
         ```
     </TabItem>
@@ -150,9 +149,4 @@ Otherwise do one of the following:
         ```
     </TabItem>
 </Tabs>
-```python
-from superduperdb import DataType
-if datatype and isinstance(datatype, DataType):
-    db.apply(datatype)
-```
-
+<DownloadButton filename="create_datatype.md" />

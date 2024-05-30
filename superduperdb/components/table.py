@@ -57,14 +57,12 @@ class Table(Component):
             if '_outputs' in self.identifier:
                 db.databackend.in_memory_tables[
                     self.identifier
-                ] = db.databackend.create_table_and_schema(
-                    self.identifier, self.schema.raw
-                )
+                ] = db.databackend.create_table_and_schema(self.identifier, self.schema)
 
                 return
 
         try:
-            db.databackend.create_table_and_schema(self.identifier, self.schema.raw)
+            db.databackend.create_table_and_schema(self.identifier, self.schema)
         except Exception as e:
             if 'already exists' in str(e):
                 pass

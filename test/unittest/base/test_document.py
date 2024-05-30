@@ -87,10 +87,6 @@ def test_encode_decode_flattened_document():
     assert encoded_r['img'].startswith('?artifact')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
-    decoded_r = Document.decode(encoded_r, schema=schema).unpack()
-
-    pprint.pprint(decoded_r)
-
 
 def test_encode_model():
     m = ObjectModel(

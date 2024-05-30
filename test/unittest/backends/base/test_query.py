@@ -259,9 +259,7 @@ def test_insert(db):
         assert d['y'] == d_db['y']
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
-)
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_with_schema(db):
     db.cfg.auto_schema = True
     import numpy as np

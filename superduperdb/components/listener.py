@@ -118,7 +118,7 @@ class Listener(Component):
         :param uuid: UUID of the listener.
         :param model: Model instance.
         """
-        if model.datatype is None:
+        if model.datatype is None and model.output_schema is None:
             return
         output_table = db.databackend.create_output_dest(
             uuid,

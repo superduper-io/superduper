@@ -1,7 +1,11 @@
 import copy
 import typing as t
 from collections import OrderedDict
-
+from rich.console import Console
+from rich.panel import Panel
+from rich.tree import Tree
+from rich.text import Text
+from rich.columns import Columns
 
 class IndexableDict(OrderedDict):
     """IndexableDict.
@@ -221,3 +225,81 @@ def _diff_impl(r1, r2):
             continue
         out.extend([([k, *x[0]], x[1], x[2]) for x in _diff_impl(r1[k], r2[k])])
     return out
+
+
+def _childrens(tree, object):
+    if not object.leaves:
+        return
+    for name, child in object.leaves.items():
+        child_text = f"{name}: {child.__class__}({child.identifier})"
+        subtree = tree.add(Text(child_text, style="yellow"))
+        for key, value in child.__dict__.items():
+            key_text = Text(f"{key}", style="magenta")
+            value_text = Text(f": {value}", style="blue")
+            subtree.add(Text.assemble(key_text, value_text))
+        _childrens(subtree, child)
+
+def _component_metadata(obj):
+    metadata = []
+    variables = obj.variables
+    variable = "[yellow]Variables[/yellow]"
+    metadata.append(variable)
+    for var in variables:
+        metadata.append(f"[magenta]{var}[/magenta]")
+    metadata.append('\n')
+
+    def _all_leaves(obj, leaves=[]):
+        if not obj.leaves:
+            return
+        for name, leaf in obj.leaves.items():
+            _all_leaves(leaf, leaves)
+            leaves.append(name)
+
+    metadata.append("[yellow]Leaves[/yellow]")
+    rleaves = []
+    _all_leaves(obj, rleaves)
+    obj_leaves = list(obj.leaves.keys())
+    for leaf in rleaves:
+        if leaf in obj_leaves:
+            metadata.append(f"[green]{leaf}[/green]")
+        else:
+            metadata.append(f"[magenta]{leaf}[/magenta]")
+    metadata = "\n".join(metadata)
+    return metadata
+
+
+
+def display_component(obj):
+    from superduperdb.base.leaf import Leaf
+    console = Console()
+
+    def _component_info(obj):
+        base_component =[]
+        for key, value in obj.__dict__.items():
+            if isinstance(value, Leaf):
+                value = f"Leaf: {value.__class__}({value.identifier})"
+            base_component.append(f"[magenta]{key}[/magenta]: [blue]{value}[/blue]")
+
+        base_component = "\n".join(base_component)
+        return base_component
+
+    base_component = _component_info(obj)
+    base_component_metadata = _component_metadata(obj)
+
+    properties_panel = Panel(
+    base_component,
+    title=obj.identifier,
+    border_style="bold green"
+)
+
+    tree = Tree(Text(f'Component Map: {obj.identifier}', style="bold green"), guide_style="bold green")
+    _childrens(tree, obj)
+
+    additional_info_panel = Panel(
+            base_component_metadata,
+        title="Component Metadata",
+        border_style="blue"
+    )
+    panels = Columns([properties_panel, additional_info_panel])
+    console.print(panels)
+    console.print(tree)

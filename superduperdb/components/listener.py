@@ -63,6 +63,10 @@ class Listener(Component):
         return Mapping(self.key, signature=self.model.signature)
 
     @property
+    def leaves(self):
+        return {"model": self.model, "select": self.select}
+
+    @property
     def outputs(self):
         """Get reference to outputs of listener model."""
         return f'{_OUTPUTS_KEY}.{self.uuid}'

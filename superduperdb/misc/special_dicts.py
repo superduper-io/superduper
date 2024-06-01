@@ -1,7 +1,13 @@
 import copy
+import re
+import yaml
 import typing as t
 from collections import OrderedDict
-
+from rich.console import Console
+from rich.panel import Panel
+from rich.tree import Tree
+from rich.text import Text
+from rich.columns import Columns
 
 class IndexableDict(OrderedDict):
     """IndexableDict.
@@ -40,6 +46,83 @@ class IndexableDict(OrderedDict):
             self[self._keys[index]] = value
         except IndexError:
             raise IndexError(f"Index {index} is out of range.")
+
+def highlight_references(yaml_str, pattern=r'(\?[\w/<>:.-]+|\&[\w/<>:.-]+)'):
+    highlighted_text = Text()
+    for line in yaml_str.split('\n'):
+        matches = re.finditer(pattern, line)
+        start = 0
+        for match in matches:
+            before = line[start:match.start()]
+            reference = line[match.start():match.end()]
+            start = match.end()
+            if reference.startswith('?'):
+                highlighted_text.append(before)
+                highlighted_text.append(reference, style="bold underline green")
+            elif reference.startswith('&'):
+                highlighted_text.append(before)
+                highlighted_text.append(reference, style="bold underline blue")
+               
+
+        if start < len(line):
+            after = line[start:]
+            field = after.split(':')
+            if len(field) > 1:
+                highlighted_text.append(field[0] + ':', style="bold magenta")
+                highlighted_text.append(':'.join(field[1:]))
+            else:
+                highlighted_text.append(after)
+        highlighted_text.append('\n')
+    return highlighted_text
+
+
+def format_base_section(base_section):
+    blocks = base_section.split('/')
+    component_type = blocks[1]
+    component_identifier = blocks[-1]
+    base = {'type': component_type, 'identifier': component_identifier, 'reference': base_section}
+
+    yaml_str= yaml.dump(base)
+    return yaml_str
+def print_serialized_object(serialized_object):
+    console = Console()
+
+    # Extract sections of the serialized object
+    base_section = serialized_object.get('_base', {})
+    leaves_section = serialized_object.get('_leaves', {})
+    blobs_section = serialized_object.get('_blobs', {})
+
+    # Format base section with additional component info
+    base_yaml= format_base_section(base_section)
+
+    # Convert sections to YAML strings
+    leaves_yaml = yaml.dump(leaves_section)
+    blobs_yaml = yaml.dump(blobs_section)
+
+    # Highlight references
+    base_text = highlight_references(base_yaml)
+    leaves_text = highlight_references(leaves_yaml)
+    blobs_text = highlight_references(blobs_yaml)
+
+    # Create panels for different sections
+    base_panel = Panel(base_text, title="Base Component", border_style="green")
+    leaves_panel = Panel(leaves_text, title="Leaves", border_style="cyan")
+    blobs_panel = Panel(blobs_text, title="Blobs (Binary data)", border_style="magenta")
+
+    # Print the panels
+    console.print(base_panel)
+    console.print(leaves_panel)
+    console.print(blobs_panel)
+    console.print(legend_panel())
+
+def legend_panel():
+    legend_content = """
+    [bold underline green]Legend[/]\n
+    [bold blue]_path[/]: This indicates the module path within SuperDuperDB.\n
+    [bold yellow]&[/]: This denotes an artifact store reference.\n
+    [bold magenta]?[/]: This represents an intra-serialized data reference, typically within the child leaves.\n
+    """
+    return Panel(legend_content, title="Legend", border_style="green", width=50)
 
 
 class SuperDuperFlatEncode(t.Dict[str, t.Any]):
@@ -126,6 +209,9 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
             out['_blobs'] = blobs
             out['_files'] = files
             return out
+
+    def show(self):
+        print_serialized_object(self)
 
 
 class MongoStyleDict(t.Dict[str, t.Any]):
@@ -221,3 +307,81 @@ def _diff_impl(r1, r2):
             continue
         out.extend([([k, *x[0]], x[1], x[2]) for x in _diff_impl(r1[k], r2[k])])
     return out
+
+
+def _childrens(tree, object):
+    if not object.leaves:
+        return
+    for name, child in object.leaves.items():
+        child_text = f"{name}: {child.__class__}({child.identifier})"
+        subtree = tree.add(Text(child_text, style="yellow"))
+        for key, value in child.__dict__.items():
+            key_text = Text(f"{key}", style="magenta")
+            value_text = Text(f": {value}", style="blue")
+            subtree.add(Text.assemble(key_text, value_text))
+        _childrens(subtree, child)
+
+def _component_metadata(obj):
+    metadata = []
+    variables = obj.variables
+    variable = "[yellow]Variables[/yellow]"
+    metadata.append(variable)
+    for var in variables:
+        metadata.append(f"[magenta]{var}[/magenta]")
+    metadata.append('\n')
+
+    def _all_leaves(obj, leaves=[]):
+        if not obj.leaves:
+            return
+        for name, leaf in obj.leaves.items():
+            _all_leaves(leaf, leaves)
+            leaves.append(name)
+
+    metadata.append("[yellow]Leaves[/yellow]")
+    rleaves = []
+    _all_leaves(obj, rleaves)
+    obj_leaves = list(obj.leaves.keys())
+    for leaf in rleaves:
+        if leaf in obj_leaves:
+            metadata.append(f"[green]{leaf}[/green]")
+        else:
+            metadata.append(f"[magenta]{leaf}[/magenta]")
+    metadata = "\n".join(metadata)
+    return metadata
+
+
+
+def display_component(obj):
+    from superduperdb.base.leaf import Leaf
+    console = Console()
+
+    def _component_info(obj):
+        base_component =[]
+        for key, value in obj.__dict__.items():
+            if isinstance(value, Leaf):
+                value = f"Leaf: {value.__class__}({value.identifier})"
+            base_component.append(f"[magenta]{key}[/magenta]: [blue]{value}[/blue]")
+
+        base_component = "\n".join(base_component)
+        return base_component
+
+    base_component = _component_info(obj)
+    base_component_metadata = _component_metadata(obj)
+
+    properties_panel = Panel(
+    base_component,
+    title=obj.identifier,
+    border_style="bold green"
+)
+
+    tree = Tree(Text(f'Component Map: {obj.identifier}', style="bold green"), guide_style="bold green")
+    _childrens(tree, obj)
+
+    additional_info_panel = Panel(
+            base_component_metadata,
+        title="Component Metadata",
+        border_style="blue"
+    )
+    panels = Columns([properties_panel, additional_info_panel])
+    console.print(panels)
+    console.print(tree)

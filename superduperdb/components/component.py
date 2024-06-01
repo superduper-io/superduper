@@ -111,6 +111,10 @@ class Component(Leaf):
             '.', '-'
         )
 
+    @property
+    def leaves(self):
+        return {}
+
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
 
@@ -381,6 +385,10 @@ class Component(Leaf):
         if k in dc.fields(self):
             self.changed.add(k)
         return super().__setattr__(k, v)
+
+    def info(self):
+        from superduperdb.misc.special_dicts import display_component
+        display_component(self)
 
 
 def ensure_initialized(func):

@@ -1139,6 +1139,11 @@ class ObjectModel(_ObjectModel):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
     )
+    @property
+    def leaves(self):
+        if self.datatype:
+            return {"datatype": self.datatype}
+        return {}
 
 
 @merge_docstrings

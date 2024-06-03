@@ -107,7 +107,7 @@ class Component(Leaf):
 
     @property
     def _id(self):
-        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'.replace(
+        return f':component:{self.type_id}/{self.identifier}/{self.uuid}'.replace(
             '.', '-'
         )
 

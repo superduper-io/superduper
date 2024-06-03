@@ -116,19 +116,20 @@ class Schema(Component):
             return data
 
         decoded = {}
-        for k in data.keys():
-            value = data[k]
-            # That's mean the value have been decoded already in `init` function
-            if isinstance(value, _BaseEncodable):
-                assert value.datatype.identifier == self.fields[k].identifier
+        for k, value in data.items():
+            field = self.fields.get(k)
+            if not isinstance(field, DataType):
                 decoded[k] = value
-            elif isinstance(field := self.fields.get(k), DataType):
-                # TODO: We need to sort out the logic here
-                # We use encodable_cls to encode the data, but we the decoder here
-                # decoded[k] = field.encodable_cls.decode(data[k])
-                decoded[k] = field.decode_data(data[k])
+                continue
+
+            value = data[k]
+
+            if isinstance(value, str) and value.startswith('?'):
+                decoded[k] = field.encodable_cls.build_from_reference(
+                    value, datatype=field
+                )
             else:
-                decoded[k] = data[k]
+                decoded[k] = field.decode_data(data[k])
         return decoded
 
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:

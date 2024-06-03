@@ -340,7 +340,7 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
-        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
+        return _get_from_reference(r, cache, blobs, files, db=db)
     if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
         match = re.match("^\?db\.load\((.*)\)$", r)
         assert match is not None
@@ -353,4 +353,16 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         if len(args) == 3:
             return db.load(type_id=args[0], identifier=args[1], version=int(args[2]))
         raise ValueError(f'Invalid number of arguments for {r}')
+    return r
+
+
+def _get_from_reference(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
+    if r[1:] in cache:
+        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
+
+    # Load from component reference
+    if r.startswith('?:component:'):
+        assert db is not None, 'db is required for ?:component:'
+        return db.load(uuid=r.split('/')[-1])
+
     return r

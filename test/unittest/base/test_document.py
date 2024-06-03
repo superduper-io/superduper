@@ -152,7 +152,7 @@ def test_refer_to_applied_item(db):
 
     db.apply(m)
     r = db.metadata._get_component_by_uuid(m.uuid)
-    next(k for k in r['_leaves'] if k.startswith(':component:datatype/my-type'))
+    assert r['datatype'].startswith('?:component:datatype/my-type')
 
     import pprint
 

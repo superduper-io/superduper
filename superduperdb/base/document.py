@@ -139,7 +139,10 @@ class Document(MongoStyleDict):
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
 
-        # First decode all the leaves
+        if schema is not None:
+            schema.init()
+            r = schema.decode_data(r)
+
         r = _deep_flat_decode(
             {k: v for k, v in r.items() if k not in ('_leaves', '_blobs', '_files')},
             cache,
@@ -147,12 +150,6 @@ class Document(MongoStyleDict):
             files=files,
             db=db,
         )
-
-        # Then decode the data with the schema
-        if isinstance(r, dict):
-            if schema is not None:
-                schema.init()
-                r = schema.decode_data(r)
 
         if isinstance(r, dict):
             return Document(r, schema=schema)

@@ -377,6 +377,7 @@ class _BaseEncodable(Leaf):
 
         :param db: Datalayer instance.
         """
+        db = db or self.datatype.db
         super().__post_init__(db)
         if self.uri is not None and self.file_id is None:
             self.file_id = _construct_file_id_from_uri(self.uri)
@@ -442,6 +443,15 @@ class _BaseEncodable(Leaf):
         else:
             raise ValueError(f'Unsupported data type: {type(data)}')
         return hashlib.sha1(bytes_).hexdigest()
+
+    @classmethod
+    def build_from_reference(cls, reference: str, datatype: DataType):
+        """Build an instance of the _BaseEncodable from a reference.
+
+        :param reference: The reference to build the instance from.
+        :param datatype: The datatype of the instance.
+        """
+        raise NotImplementedError
 
 
 class Empty:
@@ -510,14 +520,6 @@ class Encodable(_BaseEncodable):
         if schema is not None:
             return maybe_bytes
         return f'?{self.id}'
-
-    @classmethod
-    def build(cls, r):
-        """Build an `Encodable` instance with the given parameters `r`.
-
-        :param r: Parameters for building the `Encodable` instance.
-        """
-        return cls(**r)
 
     def init(self, db):
         """Initialization method.
@@ -595,6 +597,29 @@ class Artifact(_BaseEncodable):
 
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
             raise ArtifactSavingError('BASE64 not supported on disk!')
+
+    @classmethod
+    def build_from_reference(cls, reference: str, datatype: DataType):
+        """Build an instance of the Artifact from a reference.
+
+        :param reference: The reference to build the instance from. e.g.
+                        `:blob:artifact/123`
+        :param datatype: The datatype of the instance.
+        """
+        file_id = reference.split('/')[-1]
+        artifact = cls(file_id=file_id, datatype=datatype)
+        if not artifact.lazy:
+            return artifact.x
+        return artifact
+
+    @property
+    def id(self):
+        """Get the id of the object.
+
+        We can use this id as a reference to rebuild the object.
+        """
+        assert self.file_id is not None
+        return f':blob:{self.leaf_type}/{self.file_id}'
 
     def init_from_blobs(self, blobs):
         """
@@ -680,6 +705,35 @@ class File(_BaseEncodable):
         if not self.lazy and isinstance(self.x, Empty):
             self.init()
 
+    @classmethod
+    def build_from_reference(cls, reference: str, datatype: DataType):
+        """Build an instance of the File from a reference.
+
+        :param reference: The reference to build the instance from.
+                        e.g. `:file:file/123/hello.txt`
+        :param datatype: The datatype of the instance.
+        """
+        *_, file_id, file_name = reference.split('/')
+        file_name = file_name.replace('__', '.')
+        file = cls(
+            file_id=file_id,
+            file_name=file_name,
+            datatype=datatype,
+        )
+        if not file.lazy:
+            return file.x
+        return file
+
+    @property
+    def id(self):
+        """Get the id of the object.
+
+        We can use this id as a reference to rebuild the object.
+        """
+        assert self.file_id is not None
+        file_name = self.file_name.replace('.', '__')
+        return f':file:{self.leaf_type}/{self.file_id}/{file_name}'
+
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
@@ -716,8 +770,7 @@ class File(_BaseEncodable):
         self.db = self.db or db
         if isinstance(self.x, Empty):
             file = self.db.artifact_store.get_file(self.file_id)
-            if self.file_name is not None:
-                file = os.path.join(file, self.file_name)
+            file = os.path.join(file, self.file_name)
             self.x = file
 
     def unpack(self):

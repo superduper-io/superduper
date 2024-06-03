@@ -115,7 +115,6 @@ class IbisDataBackend(BaseDataBackend):
                 INPUT_KEY: dtype('string'),
                 'id': dtype('string'),
                 'output': output_type,
-                '_info': dtype('string'),
             }
             return Table(
                 primary_id='id',
@@ -127,7 +126,6 @@ class IbisDataBackend(BaseDataBackend):
                 INPUT_KEY: dtype('string'),
                 'output': output_type,
                 'id': dtype('string'),
-                '_info': dtype('string'),
             }
             return Table(
                 identifier=f'_outputs.{predict_id}',
@@ -154,7 +152,6 @@ class IbisDataBackend(BaseDataBackend):
         mapping = convert_schema_to_fields(schema)
         if 'id' not in mapping:
             mapping['id'] = 'string'
-        mapping['_info'] = 'string'
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))

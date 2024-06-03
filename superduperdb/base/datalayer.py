@@ -891,11 +891,9 @@ class Datalayer:
 
         jobs.extend(self._add_child_components(children, parent=object))
 
-        for k, v in serialized['_leaves'].items():
-            if isinstance(v, Component):
-                serialized['_leaves'][
-                    k
-                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
+        for k in list(serialized['_leaves'].keys()):
+            if isinstance(serialized['_leaves'][k], Component):
+                serialized['_leaves'].pop(k)
 
         serialized = self.artifact_store.save_artifact(serialized)
 
@@ -1007,11 +1005,9 @@ class Datalayer:
             if old_uuid:
                 self.metadata.delete_parent_child(old_uuid, child.uuid)
 
-        for k, v in serialized['_leaves'].items():
-            if isinstance(v, Component):
-                serialized['_leaves'][
-                    k
-                ] = f'?db.load({v.type_id}, {v.identifier}, {v.version})'
+        for k in list(serialized['_leaves'].keys()):
+            if isinstance(serialized['_leaves'][k], Component):
+                serialized['_leaves'].pop(k)
 
         self.artifact_store.delete_artifact(info)
 

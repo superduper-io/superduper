@@ -87,9 +87,8 @@ class AutoDataclassMeta(ABCMeta):
     """
     Meta class that automatically applies the dataclass decorator with kw_only=True.
 
-    :param name: Class name (cls.__name__)
-    :param bases: Tuple of base classes (cls.__bases__)
-    :param namespace: Namespace dictionary containing definitions fpr the class body (cls.__dict__)
+    :param args: Arguments.
+    :param kwargs: Keyword arguments.
     """
 
     def __new__(cls, name: str, bases: tuple, namespace: dict):

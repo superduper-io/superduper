@@ -91,6 +91,7 @@ class AutoDataclassMeta(ABCMeta):
     :param bases: Tuple of base classes (cls.__bases__)
     :param namespace: Namespace dictionary containing definitions fpr the class body (cls.__dict__)
     """
+
     def __new__(cls, name: str, bases: tuple, namespace: dict):
         new_cls = super().__new__(cls, name, bases, namespace)
         new_cls = dc.dataclass(kw_only=True)(new_cls)

@@ -7,7 +7,11 @@ import sys
 sys.path.insert(0, os.getcwd())
 
 from superduperdb.misc.annotations import extract_parameters, replace_parameters
-from test.unittest.test_docstrings import FUNCTION_TEST_CASES, CLASS_TEST_CASES, TEST_CASES
+from test.unittest.test_docstrings import (
+    FUNCTION_TEST_CASES,
+    CLASS_TEST_CASES,
+    TEST_CASES,
+)
 
 lookup = defaultdict(list)
 
@@ -23,6 +27,7 @@ shutil.rmtree('docs/hr/content/api', ignore_errors=True)
 os.makedirs('docs/hr/content/api', exist_ok=True)
 
 import re
+
 
 def format_docstring(docstring):
     """
@@ -107,4 +112,3 @@ for k in lookup:
     os.makedirs('docs/content/api/' + parent, exist_ok=True)
     with open(f'docs/content/api/{parent}/{child}.md', 'w') as f:
         f.write(content)
-

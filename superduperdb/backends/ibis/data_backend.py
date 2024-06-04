@@ -87,6 +87,14 @@ class IbisDataBackend(BaseDataBackend):
             if self.conn.backend_table_type == DataFrame:
                 df.to_csv(os.path.join(self.name, table_name + '.csv'), index=False)
 
+    def drop_table_or_collection(self, name: str):
+        """Drop the table or collection.
+
+        Please use with caution as you will lose all data.
+        :param name: Table name to drop.
+        """
+        return self.db.databackend.conn.drop_table(name)
+
     def create_output_dest(
         self,
         predict_id: str,

@@ -215,17 +215,12 @@ class QueryUpdateDocument(Document):
         if not isinstance(original, SuperDuperFlatEncode):
             return {'$set': update}
 
-        metadata = original.pop('_leaves', {})
-        for m, v in metadata.items():
-            update[f'_leaves.{m}'] = v
+        for mk in ('_leaves', '_files', '_blobs'):
+            m = original.pop(mk, {})
+            for k, v in m.items():
+                update[f'{mk}.{k}'] = v
 
-        # Append files and blobs
-        push = {}
-        for k in ('_files', '_blobs'):
-            item = original.pop(k, [])
-            if item:
-                push[k] = {k: {'$each': item}}
-        update = {'$set': update, '$push': push}
+        update = {'$set': update}
         return update
 
     def encode(

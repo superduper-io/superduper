@@ -188,12 +188,13 @@ class Listener(Component):
         ]
         return out
 
-    def cleanup(self, database: "Datalayer") -> None:
+    def cleanup(self, db: "Datalayer") -> None:
         """Clean up when the listener is deleted.
 
-        :param database: Data layer instance to process.
+        :param db: Data layer instance to process.
         """
-        # TODO - this doesn't seem to do anything
-        if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:
-            assert not isinstance(self.model, str)
-            cleanup(database, model=self.model.identifier, key=self.key)
+        model_update_kwargs = self.model.model_update_kwargs or {}
+        embedded = model_update_kwargs.get('document_embedded', True)
+        self.db[self.select.table_or_collection.identifier].drop_outputs(
+            self.outputs, embedded=embedded
+        )

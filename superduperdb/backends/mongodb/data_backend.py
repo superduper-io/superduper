@@ -77,6 +77,14 @@ class MongoDataBackend(BaseDataBackend):
             return FileSystemArtifactStore(f'/tmp/{self.name}')
         return MongoArtifactStore(self.conn, f'_filesystem:{self.name}')
 
+    def drop_table_or_collection(self, name: str):
+        """Drop the table or collection.
+
+        Please use with caution as you will lose all data.
+        :param name: Collection to drop.
+        """
+        return self.db.drop_collection(name)
+
     def drop(self, force: bool = False):
         """Drop the data backend.
 

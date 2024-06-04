@@ -181,3 +181,94 @@ def test_create_output_dest_ibis(db, data, flatten):
         assert np.allclose(result, data)
     else:
         assert result == data
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1,
+        "1",
+        {"x": 1},
+        [1],
+        {
+            "x": np.array([1]),
+        },
+        np.array([[1, 2, 3], [4, 5, 6]]),
+    ],
+)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_listener_cleanup(db, data):
+    db.cfg.auto_schema = True
+    collection = db["test"]
+
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: data,
+    )
+    q = collection.insert_one(Document({"x": 1}))
+
+    db.execute(q)
+
+    listener1 = Listener(
+        model=m1,
+        select=collection.find({}),
+        key="x",
+        identifier="listener1",
+    )
+
+    db.add(listener1)
+    doc = list(db.execute(listener1.outputs_select))[0]
+    result = Document(doc.unpack())[listener1.outputs]
+    assert isinstance(result, type(data))
+    if isinstance(data, np.ndarray):
+        assert np.allclose(result, data)
+    else:
+        assert result == data
+
+    db.remove('listener', listener1.identifier, force=True)
+    doc = db.execute(collection.find_one())
+    assert doc['_outputs'] == {}
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1,
+        "1",
+        {"x": 1},
+        [1],
+        {
+            "x": np.array([1]),
+        },
+        np.array([[1, 2, 3], [4, 5, 6]]),
+    ],
+)
+@pytest.mark.parametrize("flatten", [True, False])
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+def test_listener_cleanup_ibis(db, data, flatten):
+    db.cfg.auto_schema = True
+    schema = Schema(
+        identifier="test",
+        fields={"x": dtype(int), "id": dtype(str)},
+    )
+    table = Table("test", schema=schema)
+    db.apply(table)
+
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: data if not flatten else [data] * 10,
+        flatten=flatten,
+    )
+    db.execute(db['test'].insert([Document({"x": 1, "id": "1"})]))
+
+    listener1 = Listener(
+        model=m1,
+        select=db['test'].select("x", "id"),
+        key="x",
+        identifier="listener1",
+    )
+
+    db.add(listener1)
+    db.remove('listener', listener1.identifier, force=True)
+
+    assert listener1.outputs not in db.databackend.conn.tables

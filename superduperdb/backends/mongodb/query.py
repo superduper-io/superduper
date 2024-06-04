@@ -377,6 +377,7 @@ class MongoQuery(Query):
         filter = self.parts[0][1][0]
         trailing_args = list(self.parts[0][1][1:])
         update = {}
+        kwargs = self.parts[0][2]
 
         # Encode update document
         for ix, arg in enumerate(trailing_args):
@@ -388,9 +389,11 @@ class MongoQuery(Query):
                 del trailing_args[ix]
                 break
 
-        kwargs = self.parts[0][2]
         filter['_id'] = {'$in': ids}
-        trailing_args.insert(0, update.encode())
+
+        trailing_args.insert(
+            0, update.encode() if isinstance(update, Document) else update
+        )
 
         parent.update_many(filter, *trailing_args, **kwargs)
         return ids
@@ -402,6 +405,16 @@ class MongoQuery(Query):
         :param kwargs: The keyword arguments to pass to the change-stream
         """
         return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
+
+    def drop_outputs(self, predict_id: str, embedded=True):
+        """Return a query that removes output corresponding to the predict id.
+
+        :param predict_ids: The ids of the predictions to select.
+        """
+        if not embedded:
+            return self.db.drop_table_or_collection(self.identifier)
+        parent = self._get_parent()
+        return parent.update_many({}, {"$unset": {predict_id: ""}})
 
     @applies_to('find')
     def outputs(self, *predict_ids):

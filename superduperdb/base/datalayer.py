@@ -477,7 +477,7 @@ class Datalayer:
         updated_ids = update.do_execute(self)
 
         cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
-        if refresh:
+        if refresh and updated_ids:
             if cdc_status:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:

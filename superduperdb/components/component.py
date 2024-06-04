@@ -1,6 +1,7 @@
 """The component module provides the base class for all components in SuperDuperDB."""
 
 from __future__ import annotations
+from abc import ABCMeta
 
 import dataclasses as dc
 import json
@@ -80,6 +81,16 @@ def getdeepattr(obj, attr):
     for a in attr.split('.'):
         obj = getattr(obj, a)
     return obj
+
+
+class AutoDataclassMeta(ABCMeta):
+    """
+    Meta class that automatically applies the dataclass decorator with kw_only=True.
+    """
+    def __new__(cls, name, bases, dct):
+        new_cls = super().__new__(cls, name, bases, dct)
+        new_cls = dc.dataclass(kw_only=True)(new_cls)
+        return new_cls
 
 
 ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])

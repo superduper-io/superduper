@@ -35,8 +35,7 @@ from superduperdb.jobs.job import ComponentJob
 # Test the _TrainingConfiguration class (tc)
 # ------------------------------------------
 @dc.dataclass
-class Validator(_Fittable, ObjectModel):
-    ...
+class Validator(_Fittable, ObjectModel): ...
 
 
 # --------------------------------
@@ -230,12 +229,10 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
 
 def test_model_append_metrics():
     @dc.dataclass
-    class _Tmp(ObjectModel, _Fittable):
-        ...
+    class _Tmp(ObjectModel, _Fittable): ...
 
     class MyTrainer(Trainer):
-        def fit(self, *args, **kwargs):
-            ...
+        def fit(self, *args, **kwargs): ...
 
     model = _Tmp(
         'test',

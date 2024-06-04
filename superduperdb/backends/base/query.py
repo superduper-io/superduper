@@ -44,8 +44,7 @@ def applies_to(*flavours):
 
 @merge_docstrings
 @dc.dataclass
-class _BaseQuery(Leaf, ABC):
-    ...
+class _BaseQuery(Leaf, ABC): ...
 
 
 class TraceMixin:

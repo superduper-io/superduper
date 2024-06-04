@@ -48,6 +48,7 @@ python3 -m pip install --upgrade pip-tools
 # Install the superduperdb project in editable mode along with the developer tools
 python3 -m pip install -e '.'
 python3 -m pip install -r deploy/installations/testenv_requirements.txt
+make install_devkit
 ```
 
 (Optional) build the docker development environment:

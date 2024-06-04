@@ -11,6 +11,176 @@ import DownloadButton from '../downloadButton.js';
 # Multimodal vector search - Image
 
 <!-- TABS -->
+## Configure your production system
+
+:::note
+If you would like to use the production features 
+of SuperDuperDB, then you should set the relevant 
+connections and configurations in a configuration 
+file. Otherwise you are welcome to use "development" mode 
+to get going with SuperDuperDB quickly.
+:::
+
+```python
+import os
+
+os.makedirs('.superduperdb', exist_ok=True)
+os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
+```
+
+
+<Tabs>
+    <TabItem value="MongoDB Community" label="MongoDB Community" default>
+        ```python
+        CFG = '''
+        data_backend: mongodb://127.0.0.1:27017/documents
+        artifact_store: filesystem://./artifact_store
+        cluster:
+          cdc:
+            strategy: null
+            uri: ray://127.0.0.1:20000
+          compute:
+            uri: ray://127.0.0.1:10001
+          vector_search:
+            backfill_batch_size: 100
+            type: in_memory
+            uri: http://127.0.0.1:21000
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="MongoDB Atlas" label="MongoDB Atlas" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+                type: native
+        databackend: mongodb+srv://<user>:<password>@<mongo-host>:27017/documents
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="SQLite" label="SQLite" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: sqlite://<path-to-db>.db
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="MySQL" label="MySQL" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: mysql://<user>:<password>@<host>:<port>/database
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Oracle" label="Oracle" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: mssql://<user>:<password>@<host>:<port>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="PostgreSQL" label="PostgreSQL" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: postgres://<user>:<password>@<host>:<port</<database>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Snowflake" label="Snowflake" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        metadata_store: sqlite://<path-to-sqlite-db>.db
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: snowflake://<user>:<password>@<account>/<database>
+        '''        
+        ```
+    </TabItem>
+    <TabItem value="Clickhouse" label="Clickhouse" default>
+        ```python
+        CFG = '''
+        artifact_store: filesystem://<path-to-artifact-store>
+        metadata_store: sqlite://<path-to-sqlite-db>.db
+        cluster: 
+            compute: ray://<ray-host>
+            cdc:    
+                uri: http://<cdc-host>:<cdc-port>
+            vector_search:
+                uri: http://<vector-search-host>:<vector-search-port>
+        databackend: clickhouse://<user>:<password>@<host>:<port>
+        '''        
+        ```
+    </TabItem>
+</Tabs>
+```python
+with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
+    f.write(CFG)
+```
+
+<!-- TABS -->
+## Start your cluster
+
+:::note
+Starting a SuperDuperDB cluster is useful in production and model development
+if you want to enable scalable compute, access to the models by multiple users for collaboration, 
+monitoring.
+
+If you don't need this, then it is simpler to start in development mode.
+:::
+
+
+<Tabs>
+    <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
+        ```python
+        !python -m superduperdb local-cluster up        
+        ```
+    </TabItem>
+    <TabItem value="Docker-Compose" label="Docker-Compose" default>
+        ```python
+        !make build_sandbox
+        !make testenv_init        
+        ```
+    </TabItem>
+</Tabs>
+<!-- TABS -->
 ## Connect to SuperDuperDB
 
 :::note
@@ -158,11 +328,26 @@ ids = db.execute(table_or_collection.insert([Document(data) for data in datas]))
 select = table_or_collection.select()
 ```
 
-<!-- TABS -->
 ## Build multimodal embedding models
 
-Some embedding models such as [CLIP](https://github.com/openai/CLIP) come in pairs of `model` and `compatible_model`.
-Otherwise:
+We define the output data type of a model as a vector for vector transformation.
+
+
+<Tabs>
+    <TabItem value="MongoDB" label="MongoDB" default>
+        ```python
+        from superduperdb.components.vector_index import vector
+        output_datatpye = vector(shape=(1024,))        
+        ```
+    </TabItem>
+    <TabItem value="SQL" label="SQL" default>
+        ```python
+        from superduperdb.components.vector_index import sqlvector
+        output_datatpye = sqlvector(shape=(1024,))        
+        ```
+    </TabItem>
+</Tabs>
+Then define two models, one for text embedding and one for image embedding.
 
 
 <Tabs>
@@ -175,10 +360,6 @@ Otherwise:
         
         # Load the CLIP model and obtain the preprocessing function
         model, preprocess = clip.load("RN50", device='cpu')
-        
-        # Define a vector with shape (1024,)
-        
-        output_datatpye = vector(shape=(1024,))
         
         # Create a TorchModel for text encoding
         compatible_model = TorchModel(

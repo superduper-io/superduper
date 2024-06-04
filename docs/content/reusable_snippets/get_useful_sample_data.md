@@ -18,9 +18,7 @@ import DownloadButton from '../downloadButton.js';
         import json
         
         with open('text.json', 'r') as f:
-            data = json.load(f)
-        sample_datapoint = "What is mongodb?"
-        
+            data = json.load(f)        
         ```
     </TabItem>
     <TabItem value="Text-Classification" label="Text-Classification" default>
@@ -38,9 +36,7 @@ import DownloadButton from '../downloadButton.js';
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
         import os
         
-        data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
-        
-        sample_datapoint = data[-1]        
+        data = [f'pdfs/{x}' for x in os.listdir('./pdfs') if x.endswith('.pdf')]        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>

@@ -37,7 +37,6 @@ won't be necessary.
         !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
         from unstructured.partition.pdf import partition_pdf
-        import PyPDF2
         
         CHUNK_SIZE = 500
         

@@ -21,7 +21,6 @@ from superduperdb.misc.annotations import merge_docstrings
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class SklearnTrainer(Trainer):
     """A trainer for `sklearn` models.
 
@@ -91,7 +90,6 @@ class SklearnTrainer(Trainer):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Estimator(Model, _Fittable):
     """Estimator model.
 

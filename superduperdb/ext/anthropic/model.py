@@ -21,7 +21,6 @@ KEY_NAME = 'ANTHROPIC_API_KEY'
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Anthropic(APIBaseModel):
     """Anthropic predictor.
 
@@ -39,7 +38,6 @@ class Anthropic(APIBaseModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class AnthropicCompletions(Anthropic):
     """Cohere completions (chat) predictor.
 

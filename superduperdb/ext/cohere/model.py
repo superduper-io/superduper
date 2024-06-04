@@ -21,7 +21,6 @@ KEY_NAME = 'COHERE_API_KEY'
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Cohere(APIBaseModel):
     """Cohere predictor.
 
@@ -36,7 +35,6 @@ class Cohere(APIBaseModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class CohereEmbed(Cohere):
     """Cohere embedding predictor.
 
@@ -101,7 +99,6 @@ class CohereEmbed(Cohere):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class CohereGenerate(Cohere):
     """Cohere realistic text generator (chat predictor).
 

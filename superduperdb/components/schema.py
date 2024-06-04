@@ -22,7 +22,6 @@ class _Native:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Schema(Component):
     """A component carrying the `DataType` of columns.
 

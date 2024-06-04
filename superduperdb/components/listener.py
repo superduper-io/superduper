@@ -23,7 +23,6 @@ SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Listener(Component):
     """Listener component.
 

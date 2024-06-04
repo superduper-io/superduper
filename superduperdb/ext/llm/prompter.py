@@ -53,7 +53,6 @@ PROMPT_INTRODUCTION = (
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class RetrievalPrompt(QueryModel):
     """Retrieve a prompt based on data recalled from the database.
 

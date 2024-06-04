@@ -6,7 +6,6 @@ from superduperdb.misc.annotations import merge_docstrings
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Metric(Component):
     """Metric base object used to evaluate performance on a dataset.
 

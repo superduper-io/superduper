@@ -14,7 +14,6 @@ from superduperdb.misc.annotations import merge_docstrings
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class TorchTrainer(Trainer):
     """
     Configuration for the PyTorch trainer.

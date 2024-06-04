@@ -98,8 +98,7 @@ ComponentTuple.__doc__ = 'noqa'
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
-class Component(Leaf):
+class Component(Leaf, metaclass=AutoDataclassMeta):
     """Base class for all components in SuperDuperDB.
 
     Class to represent SuperDuperDB serializable entities

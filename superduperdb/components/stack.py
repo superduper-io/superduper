@@ -7,7 +7,6 @@ from .component import Component
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Stack(Component):
     """
     A placeholder to hold list of components under a namespace.

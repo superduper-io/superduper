@@ -51,7 +51,6 @@ class _TrainerWithSaving(NativeTrainer):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class TransformersTrainer(TrainingArguments, Trainer):
     """Trainer for transformers models # noqa.
 
@@ -168,7 +167,6 @@ class TransformersTrainer(TrainingArguments, Trainer):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
     """A wrapper for ``transformers.Pipeline``.
 
@@ -236,7 +234,6 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class LLM(BaseLLM, _Fittable):
     """
     LLM model based on `transformers` library.

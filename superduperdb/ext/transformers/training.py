@@ -40,7 +40,6 @@ if t.TYPE_CHECKING:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Checkpoint(Component):
     """Checkpoint component for saving the model checkpoint.
 
@@ -202,7 +201,6 @@ class LLMCallback(TrainerCallback):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     """LLM Training Arguments # noqa.
 

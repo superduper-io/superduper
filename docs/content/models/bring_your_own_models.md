@@ -97,7 +97,6 @@ import dataclasses as dc
 from superduperdb.components.model import Model
 import typing as t
 
-@dc.dataclass(kw_only=True)
 class CustomModel(Model):
     signature: t.ClassVar[str] = '**kwargs'
     my_argument: int = 1
@@ -128,7 +127,6 @@ import numpy as np
 from superduperdb.ext.numpy import array
 
 
-@dc.dataclass(kw_only=True)
 class AnotherModel(Model):
     _artifacts: t.ClassVar[t.Any] = [
         ('my_array', array)

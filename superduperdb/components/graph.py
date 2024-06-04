@@ -158,7 +158,6 @@ class OutputWrapper:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Input(Model):
     """Root model of a graph.
 
@@ -193,7 +192,6 @@ class Input(Model):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class DocumentInput(Model):
     """Document Input node of the graph.
 
@@ -224,7 +222,6 @@ class DocumentInput(Model):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Graph(Model):
     """Represents a directed acyclic graph composed of interconnected model nodes.
 

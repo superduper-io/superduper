@@ -23,7 +23,6 @@ if t.TYPE_CHECKING:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
     A component carrying the information to apply a vector index.

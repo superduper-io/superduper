@@ -13,7 +13,6 @@ DEFAULT_PRIMARY_ID = 'id'
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Table(Component):
     """
     A component that represents a table in a database.

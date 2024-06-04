@@ -25,7 +25,6 @@ def download_uri(uri, save_path):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class LlamaCpp(BaseLLM):
     """Llama.cpp connector.
 

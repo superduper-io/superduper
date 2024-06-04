@@ -1,8 +1,11 @@
 ---
 sidebar_label: Compute features
+filename: compute_features.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Compute features
@@ -11,9 +14,7 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        
         key = 'txt'
-        
         import sentence_transformers
         from superduperdb import vector, Listener
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -21,7 +22,6 @@ import TabItem from '@theme/TabItem';
         superdupermodel = SentenceTransformer(
             identifier="embedding",
             object=sentence_transformers.SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2"),
-            datatype=vector(shape=(384,)),
             postprocess=lambda x: x.tolist(),
         )
         
@@ -37,9 +37,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        
         key = 'image'
-        
         import torchvision.models as models
         from torchvision import transforms
         from superduperdb.ext.torch import TorchModel
@@ -54,9 +52,8 @@ import TabItem from '@theme/TabItem';
                 # Set the model to evaluation mode
                 self.resnet.eval()
                 
-            def preprocess(self, image_array):
+            def preprocess(self, image):
                 # Preprocess the image
-                image = Image.fromarray(image_array.astype(np.uint8))
                 preprocess = preprocess = transforms.Compose([
                     transforms.Resize(256),
                     transforms.CenterCrop(224),
@@ -171,3 +168,4 @@ import TabItem from '@theme/TabItem';
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="compute_features.md" />

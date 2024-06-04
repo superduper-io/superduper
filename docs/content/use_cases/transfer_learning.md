@@ -297,26 +297,21 @@ Otherwise refer to "Configuring your production system".
 <!-- TABS -->
 ## Get useful sample data
 
-```python
-from superduperdb.backends.ibis import dtype
-
-```
-
 
 <Tabs>
-    <TabItem value="labeled_text" label="Text (Labeled)" default>
+    <TabItem value="Text-Classification" label="Text-Classification" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
         
         with open("text_classification.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = data[-1]        
+        num_classes = 2        
         ```
     </TabItem>
-    <TabItem value="labeled_image" label="Image (Labeled)" default>
+    <TabItem value="Image-Classification" label="Image-Classification" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images_classification.zip
         import json
         from PIL import Image
         
@@ -324,89 +319,37 @@ from superduperdb.backends.ibis import dtype
             data = json.load(f)
         
         data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
-        sample_datapoint = data[-1]        
+        num_classes = 2        
+        ```
+    </TabItem>
+</Tabs>
+After obtaining the data, we insert it into the database.
+
+
+<Tabs>
+    <TabItem value="Text-Classification" label="Text-Classification" default>
+        ```python
+        datas = [{'txt': d['x'], 'label': d['y']} for d in data]        
+        ```
+    </TabItem>
+    <TabItem value="Image-Classification" label="Image-Classification" default>
+        ```python
+        datas = [{'image': d['x'], 'label': d['y']} for d in data]        
         ```
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Setup tables or collections
+## Insert simple data
 
+After turning on auto_schema, we can directly insert data, and superduperdb will automatically analyze the data type, and match the construction of the table and datatype.
 
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        # Note this is an optional step for MongoDB
-        # Users can also work directly with `DataType` if they want to add
-        # custom data
-        from superduperdb import Schema, DataType
-        from superduperdb.backends.mongodb import Collection
-        
-        table_or_collection = Collection('documents')
-        USE_SCHEMA = False
-        
-        if USE_SCHEMA and isinstance(datatype, DataType):
-            schema = Schema(fields={'x': datatype})
-            db.apply(schema)        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb.backends.ibis import Table
-        from superduperdb import Schema, DataType
-        from superduperdb.backends.ibis.field_types import dtype
-        
-        datatype = "str"
-        
-        if isinstance(datatype, DataType):
-            schema = Schema(identifier="schema", fields={"id": dtype("str"), "x": datatype})
-        else:
-            schema = Schema(
-                identifier="schema", fields={"id": dtype("str"), "x": dtype(datatype)}
-            )
-        
-        table_or_collection = Table('documents', schema=schema)
-        
-        db.apply(table_or_collection)        
-        ```
-    </TabItem>
-</Tabs>
-<!-- TABS -->
-## Insert data
-
-In order to create data, we need to create a `Schema` for encoding our special `Datatype` column(s) in the databackend.
-
-
-<Tabs>
-    <TabItem value="MongoDB" label="MongoDB" default>
-        ```python
-        from superduperdb import Document, DataType
-        
-        def do_insert(data, schema = None):
-            
-            if schema is None and (datatype is None or isinstance(datatype, str)):
-                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data))
-            elif schema is None and datatype is not None and isinstance(datatype, DataType):
-                data = [Document({'x': datatype(x['x']), 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': datatype(x)}) for x in data]
-                db.execute(table_or_collection.insert_many(data))
-            else:
-                data = [Document({'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'x': x}) for x in data]
-                db.execute(table_or_collection.insert_many(data, schema=schema))
-        
-        ```
-    </TabItem>
-    <TabItem value="SQL" label="SQL" default>
-        ```python
-        from superduperdb import Document
-        
-        def do_insert(data):
-            db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))
-        
-        ```
-    </TabItem>
-</Tabs>
 ```python
-do_insert(data[:-len(data) // 4])
+from superduperdb import Document
+
+table_or_collection = db['documents']
+
+ids = db.execute(table_or_collection.insert([Document(data) for data in datas]))
+select = table_or_collection.select()
 ```
 
 <!-- TABS -->
@@ -416,9 +359,7 @@ do_insert(data[:-len(data) // 4])
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        
         key = 'txt'
-        
         import sentence_transformers
         from superduperdb import vector, Listener
         from superduperdb.ext.sentence_transformers import SentenceTransformer
@@ -426,7 +367,6 @@ do_insert(data[:-len(data) // 4])
         superdupermodel = SentenceTransformer(
             identifier="embedding",
             object=sentence_transformers.SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2"),
-            datatype=vector(shape=(384,)),
             postprocess=lambda x: x.tolist(),
         )
         
@@ -442,9 +382,7 @@ do_insert(data[:-len(data) // 4])
     </TabItem>
     <TabItem value="Image" label="Image" default>
         ```python
-        
         key = 'image'
-        
         import torchvision.models as models
         from torchvision import transforms
         from superduperdb.ext.torch import TorchModel
@@ -459,9 +397,8 @@ do_insert(data[:-len(data) // 4])
                 # Set the model to evaluation mode
                 self.resnet.eval()
                 
-            def preprocess(self, image_array):
+            def preprocess(self, image):
                 # Preprocess the image
-                image = Image.fromarray(image_array.astype(np.uint8))
                 preprocess = preprocess = transforms.Compose([
                     transforms.Resize(256),
                     transforms.CenterCrop(224),
@@ -485,30 +422,30 @@ do_insert(data[:-len(data) // 4])
         ```
     </TabItem>
 </Tabs>
-## Choose input key from listener outputs
-
-:::note
-This is useful if you have performed a first step, such as pre-computing 
-features, or chunking your data. You can use this query to 
-choose the input key for further models such as classification models.
-:::
+## Choose features key from feature listener
 
 
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
         input_key = listener.outputs
-        select = table_or_collection.find()        
+        training_select = select        
         ```
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
         input_key = listener.outputs
-        select = table_or_collection.outputs(listener.predict_id).select(target_key, input_key)
-        
+        training_select = select.outputs(listener.predict_id)        
         ```
     </TabItem>
 </Tabs>
+We can find the calculated feature data from the database.
+
+```python
+feature = list(training_select.limit(1).execute())[0][input_key]
+feature_size = len(feature)
+```
+
 <!-- TABS -->
 ## Build and train classifier
 
@@ -516,26 +453,27 @@ choose the input key for further models such as classification models.
 <Tabs>
     <TabItem value="Scikit-Learn" label="Scikit-Learn" default>
         ```python
-        from sklearn.linear_model import LogisticRegression
-        from superduperdb.ext.sklearn.model import SklearnTrainer, Estimator
+        from superduperdb.ext.sklearn import Estimator, SklearnTrainer
+        from sklearn.svm import SVC
         
-        # Create a Logistic Regression model
-        model = LogisticRegression()
         model = Estimator(
-            object=model,
-            identifier='my-model',
+            identifier="my-model",
+            object=SVC(),
             trainer=SklearnTrainer(
-                key=(input_key, 'y'),
-                select=select,
-            )
+                "my-trainer",
+                key=(input_key, "label"),
+                select=training_select,
+            ),
         )        
         ```
     </TabItem>
     <TabItem value="Torch" label="Torch" default>
         ```python
+        import torch
         from torch import nn
         from superduperdb.ext.torch.model import TorchModel
         from superduperdb.ext.torch.training import TorchTrainer
+        from torch.nn.functional import cross_entropy
         
         
         class SimpleModel(nn.Module):
@@ -551,35 +489,87 @@ choose the input key for further models such as classification models.
                 out = self.fc2(out)
                 return out
         
-        # Loss function
-        def my_loss(X, y):
-            return torch.nn.functional.binary_cross_entropy_with_logits(
-                X[:, 0], y.type(torch.float)
-            )
+        preprocess = lambda x: torch.tensor(x)
         
+        # Postprocess function for the model output    
+        def postprocess(x):
+            return int(x.topk(1)[1].item())
+        
+        def data_transform(features, label):
+            return torch.tensor(features), label
         
         # Create a Logistic Regression model
-        model = SimpleModel()
+        # feature_length is the input feature size
+        model = SimpleModel(feature_size, num_classes=num_classes)
         model = TorchModel(
             identifier='my-model',
             object=model,         
+            preprocess=preprocess,
+            postprocess=postprocess,
             trainer=TorchTrainer(
-                key=(input_key, 'y'),
+                key=(input_key, 'label'),
                 identifier='my_trainer',
-                objective=my_loss,
+                objective=cross_entropy,
                 loader_kwargs={'batch_size': 10},
-                max_iterations=100,
-                validation_interval=10,
+                max_iterations=1000,
+                validation_interval=100,
                 select=select,
+                transform=data_transform,
             ),
         )        
         ```
     </TabItem>
 </Tabs>
-The following command adds the model to the system and trains the model in one command.
+Define a validation for evaluating the effect after training.
+
+```python
+from superduperdb import Dataset, Metric, Validation
+
+def acc(x, y):
+    return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)
+
+
+accuracy = Metric(identifier="acc", object=acc)
+validation = Validation(
+    "transfer_learning_performance",
+    key=(input_key, "label"),
+    datasets=[
+        Dataset(identifier="my-valid", select=training_select.add_fold('valid'))
+    ],
+    metrics=[accuracy],
+)
+model.validation = validation
+```
+
+If we execute the apply function, then the model will be added to the database, and because the model has a Trainer, it will perform training tasks.
 
 ```python
 db.apply(model)
 ```
 
+Get the training metrics
+
+
+<Tabs>
+    <TabItem value="Scikit-Learn" label="Scikit-Learn" default>
+        ```python
+        # Load the model from the database
+        model = db.load('model', model.identifier)
+        model.metric_values        
+        ```
+    </TabItem>
+    <TabItem value="Torch" label="Torch" default>
+        ```python
+        !pip -q install matplotlib
+        from matplotlib import pyplot as plt
+        
+        # Load the model from the database
+        model = db.load('model', model.identifier)
+        
+        # Plot the accuracy values
+        plt.plot(model.trainer.metric_values['my-valid/acc'])
+        plt.show()        
+        ```
+    </TabItem>
+</Tabs>
 <DownloadButton filename="transfer_learning.md" />

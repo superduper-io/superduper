@@ -23,14 +23,14 @@ import DownloadButton from '../downloadButton.js';
         
         ```
     </TabItem>
-    <TabItem value="labeled_text" label="labeled_text" default>
+    <TabItem value="Text-Classification" label="Text-Classification" default>
         ```python
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
         import json
         
         with open("text_classification.json", "r") as f:
             data = json.load(f)
-        sample_datapoint = data[-1]        
+        num_classes = 2        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -53,9 +53,9 @@ import DownloadButton from '../downloadButton.js';
         data = [ Image.open(path) for path in data]        
         ```
     </TabItem>
-    <TabItem value="labeled_image" label="labeled_image" default>
+    <TabItem value="Image-Classification" label="Image-Classification" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images.zip
+        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images_classification.zip
         import json
         from PIL import Image
         
@@ -63,7 +63,7 @@ import DownloadButton from '../downloadButton.js';
             data = json.load(f)
         
         data = [{'x': Image.open(d['image_path']), 'y': d['label']} for d in data]
-        sample_datapoint = data[-1]        
+        num_classes = 2        
         ```
     </TabItem>
     <TabItem value="Video" label="Video" default>

@@ -68,7 +68,7 @@ class SklearnTrainer(Trainer):
 
     def fit(
         self,
-        model: _Fittable,
+        model: 'Estimator',
         db: Datalayer,
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
@@ -87,6 +87,18 @@ class SklearnTrainer(Trainer):
             model.object.fit(train_X, train_y, **self.fit_params)
         else:
             model.object.fit(train_X, **self.fit_params)
+
+        metrics = {}
+        if (validation := model.validation) is not None:
+            key = validation.key or self.key
+            for dataset in validation.datasets:
+                dataset_metrics = model.validate(key, dataset, validation.metrics)
+                dataset_metrics = {
+                    f'{dataset.identifier}/{k}': v for k, v in dataset_metrics.items()
+                }
+                metrics.update(dataset_metrics)
+
+        model.metric_values = metrics
         db.replace(model, upsert=True)
 
 

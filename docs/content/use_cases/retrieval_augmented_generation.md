@@ -10,8 +10,6 @@ import DownloadButton from '../downloadButton.js';
 <!-- TABS -->
 # Retrieval augmented generation
 
-The first step in any SuperDuperDB application is to connect to your data-backend with SuperDuperDB:
-
 <!-- TABS -->
 ## Configure your production system
 
@@ -307,9 +305,7 @@ Otherwise refer to "Configuring your production system".
         import json
         
         with open('text.json', 'r') as f:
-            data = json.load(f)
-        sample_datapoint = "What is mongodb?"
-        
+            data = json.load(f)        
         ```
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
@@ -317,9 +313,7 @@ Otherwise refer to "Configuring your production system".
         !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
         import os
         
-        data = [f'pdfs/{x}' for x in os.listdir('./pdfs')]
-        
-        sample_datapoint = data[-1]        
+        data = [f'pdfs/{x}' for x in os.listdir('./pdfs') if x.endswith('.pdf')]        
         ```
     </TabItem>
 </Tabs>
@@ -371,7 +365,6 @@ won't be necessary.
         !pip install -q "unstructured[pdf]"
         from superduperdb import objectmodel
         from unstructured.partition.pdf import partition_pdf
-        import PyPDF2
         
         CHUNK_SIZE = 500
         
@@ -494,7 +487,7 @@ select = upstream_listener.outputs_select
 print(len(model.predict_one("What is SuperDuperDB")))
 ```
 
-# Create vector-index
+## Create vector-index
 
 ```python
 from superduperdb import VectorIndex, Listener
@@ -618,7 +611,7 @@ vector_search_model.predict_one(query=query)
 llm.predict_one("Tell me about the SuperDuperDB")
 ```
 
-# Answer question with LLM
+## Answer question with LLM
 
 ```python
 from superduperdb import objectmodel

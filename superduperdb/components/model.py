@@ -449,6 +449,8 @@ class Mapping:
         >>> _Predictor._data_from_input_type(docs)
         ([1], {'X': 2})
         """
+        if not isinstance(r, Document):
+            r = Document(r)
         args = []
         kwargs = {}
         for key in self.mapping[0]:

@@ -10,9 +10,9 @@ import DownloadButton from '../downloadButton.js';
 <!-- TABS -->
 # Create datatype
 
-Data types such as "text" or "integer" which are natively support by your `db.databackend` don't need a datatype.
+SuperduperDB supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
 
-Otherwise do one of the following:
+It also supports custom data conversion methods for transforming data, such as defining the following Datatype.
 
 
 <Tabs>
@@ -39,18 +39,20 @@ Otherwise do one of the following:
         datatype = array(dtype="float64", shape=(32, 32, 3))        
         ```
     </TabItem>
-    <TabItem value="PDF" label="PDF" default>
-        ```python
-        !pip install PyPDF2
-        from superduperdb import DataType
-        from superduperdb.components.datatype import File
-        
-        datatype = DataType('pdf', encodable='file')        
-        ```
-    </TabItem>
     <TabItem value="Text" label="Text" default>
         ```python
         datatype = 'str'        
+        ```
+    </TabItem>
+    <TabItem value="PDF" label="PDF" default>
+        ```python
+        from superduperdb import DataType
+        
+        # By creating a datatype and setting its encodable attribute to “file” for saving PDF files, 
+        # all datatypes encoded as “file” will have their corresponding files uploaded to the artifact store. 
+        # References will be recorded in the database, and the files will be downloaded locally when needed. 
+        
+        datatype = DataType('pdf', encodable='file')        
         ```
     </TabItem>
     <TabItem value="Image" label="Image" default>

@@ -127,7 +127,7 @@ class IndexableNode:
             listener_lookup[node.model.identifier] = Listener(
                 model=node.model,
                 select=select,
-                key=key,  # type: ignore[arg-type]
+                key=key,
                 identifier=node.identifier,
             )
         return Stack(

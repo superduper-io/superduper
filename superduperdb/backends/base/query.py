@@ -1,9 +1,8 @@
-import dataclasses as dc
 import json
 import re
 import typing as t
 import uuid
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from functools import wraps
 
 from superduperdb.base.document import Document

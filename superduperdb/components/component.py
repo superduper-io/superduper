@@ -1,7 +1,6 @@
 """The component module provides the base class for all components in SuperDuperDB."""
 
 from __future__ import annotations
-from abc import ABCMeta
 
 import dataclasses as dc
 import json

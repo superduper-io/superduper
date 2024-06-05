@@ -1,4 +1,3 @@
-import dataclasses as dc
 import inspect
 
 from superduperdb.base.leaf import Leaf

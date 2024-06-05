@@ -342,6 +342,13 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
         instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
         return instance
+    if isinstance(r, dict) and '_object' in r:
+        dict_ = {k: v for k, v in r.items() if k != '_object'}
+        dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
+        object = _deep_flat_decode(cache[r['_object'][1:]], cache, blobs, files, db=db)
+        instance = _import_item(object=object.unpack(), dict=dict_, db=db)
+        instance.init_from_blobs(blobs)
+        return instance
     if isinstance(r, dict):
         return {
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()

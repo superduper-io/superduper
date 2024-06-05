@@ -433,6 +433,10 @@ class IbisQuery(Query):
 
         :param predict_id: The predict id.
         """
+        from superduperdb.base.datalayer import Datalayer
+
+        assert isinstance(self.db, Datalayer)
+
         output_table = self.db[f'_outputs.{predict_id}']
         output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(

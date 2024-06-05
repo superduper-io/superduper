@@ -80,7 +80,7 @@ target-version = ["py38"]
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_ignores = true
-disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override"]
+disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg"]
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"

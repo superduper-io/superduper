@@ -22,12 +22,11 @@ from .components.datatype import DataType, Encoder
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
-    CodeModel,
     Model,
     ObjectModel,
     QueryModel,
     Validation,
-    objectmodel,
+    model,
 )
 from .components.schema import Schema
 from .components.stack import Stack
@@ -50,11 +49,10 @@ __all__ = (
     'Document',
     'code',
     'ObjectModel',
-    'CodeModel',
     'QueryModel',
     'Validation',
     'Model',
-    'objectmodel',
+    'model',
     'Listener',
     'VectorIndex',
     'vector',

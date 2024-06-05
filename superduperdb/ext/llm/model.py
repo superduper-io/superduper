@@ -1,4 +1,3 @@
-import abc
 import concurrent.futures
 import dataclasses as dc
 import inspect
@@ -79,7 +78,9 @@ class BaseLLM(Model):
         return self._generate(x, **kwargs)
 
     @ensure_initialized
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.Sequence:
+    def predict_batches(
+        self, dataset: t.Union[t.List, QueryDataset], **kwargs
+    ) -> t.Sequence:
         """Generate text from a dataset.
 
         :param dataset: The dataset to generate text from.

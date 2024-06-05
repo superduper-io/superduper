@@ -143,7 +143,7 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     )
 
 
-def test_pm_predict(predict_mixin):
+def test_pm_predict_batches(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
     db.compute = MagicMock(spec=LocalComputeBackend)

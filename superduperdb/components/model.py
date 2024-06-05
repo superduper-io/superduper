@@ -7,7 +7,7 @@ import multiprocessing
 import os
 import re
 import typing as t
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import requests
 import tqdm
@@ -16,14 +16,13 @@ from superduperdb import logging
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.query_dataset import CachedQueryDataset, QueryDataset
-from superduperdb.base.code import Code
 from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.base.leaf import LeafMeta
 from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.components.datatype import DataType 
+from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
@@ -38,7 +37,7 @@ ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
-def objectmodel(
+def model(
     item: t.Optional[t.Callable] = None,
     identifier: t.Optional[str] = None,
     datatype=None,
@@ -102,49 +101,6 @@ def objectmodel(
                     flatten=flatten,
                     output_schema=output_schema,
                 )
-
-        return decorated_function
-
-
-def codemodel(
-    item: t.Optional[t.Callable] = None,
-    identifier: t.Optional[str] = None,
-    datatype=None,
-    model_update_kwargs: t.Optional[t.Dict] = None,
-    flatten: bool = False,
-    output_schema: t.Optional[Schema] = None,
-):
-    """Decorator to wrap a function with `CodeModel`.
-
-    When a function is wrapped with this decorator,
-    the function comes out as a `CodeModel`.
-
-    :param item: Callable to wrap with `CodeModel`.
-    :param identifier: Identifier for the `CodeModel`.
-    :param datatype: Datatype for the model outputs.
-    :param model_update_kwargs: Dictionary to define update kwargs.
-    :param flatten: If `True`, flatten the outputs and save.
-    :param output_schema: Schema for the model outputs.
-    """
-    if item is not None and callable(item):
-        return CodeModel(
-            identifier=item.__name__,
-            object=Code.from_object(item),
-        )
-    elif item is not None and inspect.isclass(item):
-        raise NotImplementedError
-    else:
-
-        def decorated_function(item):
-            assert callable(item)
-            return CodeModel(
-                identifier=identifier or item.__name__,
-                object=Code.from_object(item),
-                datatype=datatype,
-                model_update_kwargs=model_update_kwargs or {},
-                flatten=flatten,
-                output_schema=output_schema,
-            )
 
         return decorated_function
 
@@ -474,10 +430,10 @@ class Mapping:
 
 
 class ModelMeta(LeafMeta):
-    """Metaclass to require certain behavior from the `Model` class 
-    and descendants # noqa.
-    """
+    """Metaclass for the `Model` class and descendants # noqa."""
+
     def __new__(mcls, name, bases, dct):
+        """Create a new class with merged docstrings # noqa."""
         cls = super().__new__(mcls, name, bases, dct)
         cls.predict_batches = ensure_initialized(cls.predict_batches)
         cls.predict = ensure_initialized(cls.predict)
@@ -498,6 +454,7 @@ class Model(Component, metaclass=ModelMeta):
                            compute_kwargs = dict(resources=...).
     :param validation: The validation ``Dataset`` instances to use.
     :param metric_values: The metrics to evaluate on.
+    :param num_workers: Number of workers to use for parallel prediction.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -510,6 +467,7 @@ class Model(Component, metaclass=ModelMeta):
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     validation: t.Optional[Validation] = None
     metric_values: t.Dict = dc.field(default_factory=dict)
+    num_workers: int = 0
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -1080,9 +1038,33 @@ class ObjectModel(Model):
 
     :param num_workers: Number of workers to use for parallel processing
     :param object: Model/ computation object
+
     """
-    num_workers: int = 0
+
+    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
+        ('object', dill_lazy),
+    )
     object: t.Callable
+
+    @staticmethod
+    def _infer_signature(object):
+        # find positional and key-word parameters from the object
+        # using the inspect module
+        sig = inspect.signature(object)
+        positional = []
+        keyword = []
+        for k, v in sig.parameters.items():
+            if v.default == v.empty:
+                positional.append(k)
+            else:
+                keyword.append(k)
+        if not keyword:
+            if len(positional) == 1:
+                return 'singleton'
+            return '*args'
+        if not positional:
+            return '**kwargs'
+        return '*args,**kwargs'
 
     @property
     def outputs(self):

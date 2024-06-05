@@ -47,7 +47,7 @@ def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
         return obj
     elif not top and isinstance(obj, Leaf):
         return obj
-    elif dc.is_dataclass(obj):
+    elif dc.is_dataclass(obj) and not isinstance(obj, type):
         # fast path for the common case
         return {
             f.name: _asdict_inner(getattr(obj, f.name), dict, copy_method)

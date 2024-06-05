@@ -14,18 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Run Tests from within the container
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
-- Make vectors normalized in inmemory vector database for cosine measure.
+- Make vectors normalized in inmemory vector database for cosine measure
 - Add local cluster as tmux session 
 - At the end of the test, drop the collection instead of the database
 - Force load vector indices during backfill
 - Fix pandas database (in-memory)
-- Add and update docstrings in component classes and methods.
+- Add and update docstrings in component classes and methods
 - Changed the rest implementation to use new serialization
 - Remove unused deadcode from the project
 - Auto wrap insert documents as Document instances
 - Changed the rest implementation to use the new serialization
 - Mask special character keys in mongodb queries
 - Fix listener cleanup after removal
+- Don't require `@dc.dataclass` or `@merge_docstrings` decorator
 
 #### New Features & Functionality
 
@@ -55,15 +56,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized LLM finetuning usage experience
 - Auto-infer Schema from data
 - Lazy-creation of output tables for ibis to enable auto-inference of output schema
-- Add database packages that improve deployment and connection testing.
+- Add database packages that improve deployment and connection testing
 - Enable dependency injection on image builders
 - Add database package for oracle
 - Reconstruct data serialization and database queries
 - Auto-create tables and schemas
-- Add `Application` and `Template` support to build reusable apps.
+- Add `Application` and `Template` support to build reusable apps
 - Add pretty-print to `Component.info`
+- `Model` 
 
 #### Bug Fixes
+
 - Fixed cross platfrom issue in cli command
 - Separate nightly release from sandbox
 - Fixed a bug in refresh_after_insert for listeners with select None
@@ -73,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in variable set
 - Fixed the bug where select in listener is modified in schedule_jobs.
 - LLM CI random errors
-- VectorIndex schedule_jobs missing function.
+- VectorIndex schedule_jobs missing function
 - Fixed some bugs of the cdc RAG application
 - Fixed open source RAG Pipeline
 - Fixed vllm real-time task concurrency bug
@@ -84,21 +87,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in artifact store to skip duplicate artifacts
 - Fixed database permission issues when connecting to mongodb
 - Handle ProgrammingError of SnowFlake for non-existing objects
+<<<<<<< HEAD
 - Updated the use cases.
 - Update references to components and artifacts.
+=======
+- Updated the use cases
+>>>>>>> bd5b5ef4 (Auto infer object signature in ObjectModel)
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 
 #### Changed defaults / behaviours
 
-- Test suite takes config from external .env file.
+- Test suite takes config from external .env file
 - Added support for multi key in model predict
 - Support 3.10+ due to `dataclass` supported features
-- Updated the table creation method in MetaDataStore to improve compatibility across various databases.
-- Replaced JSON data with String format before storage in SQLAlchemy.
-- Implemented storage of byte data in base64 format.
-- Migrated MongoDB Atlas vector search as a standalone searcher like lance.
-- Deprecated Demo Image. Now Notebooks run in Colab.
+- Updated the table creation method in MetaDataStore to improve compatibility across various databases
+- Replaced JSON data with String format before storage in SQLAlchemy
+- Implemented storage of byte data in base64 format
+- Migrated MongoDB Atlas vector search as a standalone searcher like lance
+- Deprecated Demo Image. Now Notebooks run in Colab
 - Replace dask with ray compute backend
 - All training and validation parameters to be configured in `_Predictor` attributes (`.trainer`, `.train_X`, etc.)
 - Docker build can include optional custom `requirements.txt` path
@@ -110,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Graph mode support to chain models
 - Simplify the testing of SQL databases using containerized databases
 - Integrate Monitoring(cadvisor/Prometheus) and Logging (promtail/Loki) with Grafana, in the `testenv`
-- Add `QueryModel` and `SequentialModel` to make chaining searches and models easier.
+- Add `QueryModel` and `SequentialModel` to make chaining searches and models easier
 - Add `insert_to=<table-or-collection>` to `.predict` to allow single predictions to be saved.
 - Support vLLM (running locally or remotely on a ray cluster)
 - Support LLM service in OpenAI format
@@ -118,8 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
-- Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases.
-- Fixed a bug related to using Clickhouse as both databackend and metastore.
+- Update connection uris in `sql_examples.ipynb` to include snippets for Embedded, Cloud, and Distributed databases
+- Fixed a bug related to using Clickhouse as both databackend and metastore
 
 ## [0.1.0](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Dec-05)
 
@@ -135,14 +142,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
-- Chop down large files from the history to reduce the size of the repo.
+- Chop down large files from the history to reduce the size of the repo
 
 ## [0.0.19](https://github.com/SuperDuperDB/superduperdb/compare/0.0.15...0.0.19])    (2023-Dec-04)  
 
 #### Changed defaults / behaviours
 
-- Add Changelog for tracking changes on the repo. It must be filled before any PR.
-- Remove ci-pinned-dependencies and replaced them with actions with better cache management.
+- Add Changelog for tracking changes on the repo. It must be filled before any PR
+- Remove ci-pinned-dependencies and replaced them with actions with better cache management
 - Change logging mechanism from the default to loguru
 - Update icons on the README.
 - Reboot test-suite, with modular approach to toggling between SQL and MongoDB tests
@@ -159,12 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for selecting whether logs will be redirected to the system output or directly to Loki
 
-
-
 #### Bug Fixes
 
-- Added libgl libraries in Dockerfile to correctly render the video in notebooks.
-
+- Added libgl libraries in Dockerfile to correctly render the video in notebooks
 
 ## [0.0.15](https://github.com/SuperDuperDB/superduperdb/compare/0.0.14...0.0.15])    (2023-Nov-01)
 
@@ -176,8 +180,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Added conditional builders in Dockerfile by @fnikolai in #1213.
 -   Optimized unit tests by @jieguangzhou in #1204.
 
-
-
 #### New Features & Functionality
 
 -   Updated README.md with announcement emoji by @thejumpman2323 in #1222.
@@ -188,14 +190,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Merged Ashishpatel26 main by @blythed in #1224.
 -   Bumped Version to 0.0.15 by @fnikolai in #1225.
 
-
-
 #### Bug Fixes
 
 -   Fixed dependencies and makefile by @fnikolai in #1209.
 -   Fixed demo release by @fnikolai in #1210.
-
-
 
 ## [0.0.14](https://github.com/SuperDuperDB/superduperdb/compare/0.0.13...0.0.14])    (2023-Oct-27)
 
@@ -207,16 +205,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.10](https://github.com/SuperDuperDB/superduperdb/compare/0.0.9...0.0.10])    (2023-Oct-09)
 
-
 ## [0.0.9](https://github.com/SuperDuperDB/superduperdb/compare/0.0.8...0.0.9])      (2023-Oct-06)
 
 ## [0.0.8](https://github.com/SuperDuperDB/superduperdb/compare/0.0.7...0.0.8])      (2023-Sep-29)
 
 ## [0.0.7](https://github.com/SuperDuperDB/superduperdb/compare/0.0.6...0.0.7])      (2023-Sep-14)
 
-
 ## [0.0.6](https://github.com/SuperDuperDB/superduperdb/compare/0.0.5...0.0.6])      (2023-Aug-29)
-
 
 ## [0.0.5](https://github.com/SuperDuperDB/superduperdb/compare/0.0.5...0.0.4])      (2023-Aug-15)
 

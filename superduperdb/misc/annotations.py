@@ -178,8 +178,6 @@ def component(*schema: t.Dict):
     def decorator(f):
         @functools.wraps(f)
         def decorated(*, db=None, **kwargs):
-            import inspect
-
             if 'db' in inspect.signature(f).parameters:
                 out = f(**kwargs, db=db)
             else:

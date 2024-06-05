@@ -44,7 +44,9 @@ def transformers_model(db):
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict('this is a test')
     assert isinstance(one_prediction, dict)
-    predictions = transformers_model.predict_batches(['this is a test', 'this is another'])
+    predictions = transformers_model.predict_batches(
+        ['this is a test', 'this is another']
+    )
     assert isinstance(predictions, list)
 
 

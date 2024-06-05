@@ -650,6 +650,10 @@ class MongoQuery(Query):
                         '_source': ObjectId(id),
                     }
                 )
+
+            from superduperdb.base.datalayer import Datalayer
+
+            assert isinstance(self.db, Datalayer)
             return self.db[f'_outputs.{predict_id}'].insert_many(documents)
 
 

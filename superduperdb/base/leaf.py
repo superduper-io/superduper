@@ -15,29 +15,41 @@ if t.TYPE_CHECKING:
     from superduperdb.components.schema import Schema
 
 
-def _import_item(cls, module, dict, db: t.Optional['Datalayer'] = None):
-    module = importlib.import_module(module)
-    cls = getattr(module, cls)
+def _import_item(
+    dict,
+    cls: t.Optional[str] = None,
+    module: t.Optional[str] = None,
+    object: t.Optional[type] = None,
+    db: t.Optional['Datalayer'] = None,
+):
+    if object is None:
+        assert cls is not None
+        assert module is not None
+        module = importlib.import_module(module)
+        object = getattr(module, cls)
+
     try:
-        return cls(**dict, db=db)
+        return object(**dict, db=db)
     except TypeError as e:
         if 'got an unexpected keyword argument' in str(e):
-            if callable(cls) and not inspect.isclass(cls):
-                return cls(
+            if callable(object) and not inspect.isclass(object):
+                return object(
                     **{
                         k: v
                         for k, v in dict.items()
-                        if k in inspect.signature(cls).parameters
+                        if k in inspect.signature(object).parameters
                     },
                     db=db,
                 )
             init_params = {
                 k: v
                 for k, v in dict.items()
-                if k in inspect.signature(cls.__init__).parameters
+                if k in inspect.signature(object.__init__).parameters
             }
-            post_init_params = {k: v for k, v in dict.items() if k in cls.set_post_init}
-            instance = cls(**init_params, db=db)
+            post_init_params = {
+                k: v for k, v in dict.items() if k in object.set_post_init
+            }
+            instance = object(**init_params, db=db)
             for k, v in post_init_params.items():
                 setattr(instance, k, v)
             return instance
@@ -108,11 +120,6 @@ class Leaf(metaclass=LeafMeta):
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
-
-    @property
-    def leaves(self):
-        """Return the leaves of the component."""
-        return {}
 
     def __post_init__(self, db):
         self.db: 'Datalayer' = db
@@ -197,6 +204,14 @@ class Leaf(metaclass=LeafMeta):
 
         r = asdict(self)
 
+        from superduperdb.components.datatype import Artifact, dill_serializer
+
+        if self.__class__.__module__ == '__main__':
+            cls = Artifact(
+                x=self.__class__,
+                datatype=dill_serializer,
+            )
+            return Document({'_object': cls, **r})
         path = (f'{self.__class__.__module__}.' f'{self.__class__.__name__}').replace(
             '.', '/'
         )

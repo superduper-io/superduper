@@ -91,13 +91,13 @@ def test_predict_core_multikey(predict_mixin_multikey):
     assert output == expect
 
     with pytest.raises(TypeError):
-        predict_mixin_multikey.predict(X, Y)
+        predict_mixin_multikey.predict_batches(X, Y)
 
-    output = predict_mixin_multikey.predict([((X, Y), {}), ((X, Y), {})])
+    output = predict_mixin_multikey.predict_batches([((X, Y), {}), ((X, Y), {})])
     assert isinstance(output, list)
 
     predict_mixin_multikey.num_workers = 2
-    output = predict_mixin_multikey.predict([((X, Y), {}), ((X, Y), {})])
+    output = predict_mixin_multikey.predict_batches([((X, Y), {}), ((X, Y), {})])
     assert isinstance(output, list)
 
 
@@ -152,7 +152,7 @@ def test_pm_predict(predict_mixin):
     select = MagicMock(spec=Query)
     predict_mixin.db = db
 
-    with patch.object(predict_mixin, 'predict') as predict_func, patch.object(
+    with patch.object(predict_mixin, 'predict_batches') as predict_func, patch.object(
         predict_mixin, '_get_ids_from_select'
     ) as get_ids:
         get_ids.return_value = [1]
@@ -271,7 +271,7 @@ def test_model_validate(mock_call):
     def acc(x, y):
         return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)
 
-    with patch.object(model, 'predict') as mock_predict:
+    with patch.object(model, 'predict_batches') as mock_predict:
         mock_predict.return_value = [1, 2, 1, 1]
         returned = model.validate(
             ('X', 'y'), dataset=dataset, metrics=[Metric('acc', object=acc)]
@@ -390,7 +390,7 @@ def test_query_model(db):
 
     assert isinstance(out, bson.ObjectId)
 
-    out = m.predict([{'X': torch.randn(32)} for _ in range(4)])
+    out = m.predict_batches([{'X': torch.randn(32)} for _ in range(4)])
 
     assert len(out) == 4
 
@@ -417,7 +417,7 @@ def test_sequential_model():
     )
 
     assert m.predict_one(x=1) == 4
-    assert m.predict([((1,), {}) for _ in range(4)]) == [4, 4, 4, 4]
+    assert m.predict_batches([((1,), {}) for _ in range(4)]) == [4, 4, 4, 4]
 
 
 def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey):

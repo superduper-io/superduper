@@ -543,7 +543,7 @@ def test_replace(db):
     new_model.version = 0
     db.replace(new_model)
     time.sleep(0.1)
-    assert db.load('model', 'm').predict([1]) == [3]
+    assert db.load('model', 'm').predict_batches([1]) == [3]
 
     # replace the last version of the model
     new_model = ObjectModel(
@@ -551,7 +551,7 @@ def test_replace(db):
     )
     db.replace(new_model)
     time.sleep(0.1)
-    assert db.load('model', 'm').predict([1]) == [4]
+    assert db.load('model', 'm').predict_batches([1]) == [4]
 
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)

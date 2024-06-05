@@ -88,7 +88,7 @@ class AnthropicCompletions(Anthropic):
         )
         return message.content[0].text
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict the embeddings of a dataset.
 
         :param dataset: The dataset to predict the embeddings of.

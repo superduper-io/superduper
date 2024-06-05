@@ -90,7 +90,7 @@ class SentenceTransformer(Model, _DeviceManaged):
         return result
 
     @ensure_initialized
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
         :param dataset: The dataset to predict on.

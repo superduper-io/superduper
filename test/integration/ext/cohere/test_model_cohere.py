@@ -32,7 +32,7 @@ def test_embed_one():
 )
 def test_embed_batch():
     embed = CohereEmbed(identifier='embed-english-v2.0', batch_size=1)
-    resp = embed.predict(['Hello', 'world'])
+    resp = embed.predict_batches(['Hello', 'world'])
 
     assert len(resp) == 2
     assert len(resp[0]) == embed.shape[0]
@@ -57,7 +57,7 @@ def test_generate():
 )
 def test_batch_generate():
     e = CohereGenerate(identifier='base-light')
-    resp = e.predict(
+    resp = e.predict_batches(
         [
             (('Hello, world!',), {}),
         ]

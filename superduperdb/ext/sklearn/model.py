@@ -150,7 +150,7 @@ class Estimator(Model, _Fittable):
             X = self.postprocess(X)
         return X
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
         :param dataset: The dataset to predict on.

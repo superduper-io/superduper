@@ -67,7 +67,7 @@ class BaseLLM(Model):
         return [self._generate(prompt, **self.predict_kwargs) for prompt in prompts]
 
     @ensure_initialized
-    def predict_one(self, X: t.Union[str, dict[str, str]], context=None, **kwargs):
+    def predict(self, X: t.Union[str, dict[str, str]], context=None, **kwargs):
         """Generate text from a single input.
 
         :param X: The input to generate text from.

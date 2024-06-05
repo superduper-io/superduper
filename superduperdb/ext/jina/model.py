@@ -56,7 +56,7 @@ class JinaEmbedding(Jina):
         elif self.datatype is None:
             self.datatype = vector(shape=self.shape)
 
-    def predict_one(self, X: str):
+    def predict(self, X: str):
         """Predict the embedding of a single text.
 
         :param X: The text to predict the embedding of.

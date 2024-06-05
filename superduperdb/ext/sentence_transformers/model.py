@@ -49,7 +49,7 @@ class SentenceTransformer(Model, _DeviceManaged):
             self._default_model = True
 
         if self.datatype is None:
-            sample = self.predict_one('Test')
+            sample = self.predict('Test')
             self.shape = (len(sample),)
 
     def dict(self):
@@ -73,7 +73,7 @@ class SentenceTransformer(Model, _DeviceManaged):
         self.object._target_device = device
 
     @ensure_initialized
-    def predict_one(self, X, *args, **kwargs):
+    def predict(self, X, *args, **kwargs):
         """Predict on a single input.
 
         :param X: The input to predict on.

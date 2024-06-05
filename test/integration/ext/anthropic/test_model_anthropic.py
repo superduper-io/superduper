@@ -13,7 +13,7 @@ CASSETTE_DIR = 'test/integration/ext/anthropic/cassettes'
 )
 def test_completions():
     e = AnthropicCompletions(identifier='claude-2.1', predict_kwargs={'max_tokens': 64})
-    resp = e.predict_one('Hello')
+    resp = e.predict('Hello')
     assert isinstance(resp, str)
 
 

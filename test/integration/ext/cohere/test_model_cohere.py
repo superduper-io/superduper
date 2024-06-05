@@ -19,7 +19,7 @@ if os.getenv('COHERE_API_KEY') is None:
 )
 def test_embed_one():
     embed = CohereEmbed(identifier='embed-english-v2.0')
-    resp = embed.predict_one('Hello world')
+    resp = embed.predict('Hello world')
 
     assert len(resp) == embed.shape[0]
     assert isinstance(resp, list)
@@ -46,7 +46,7 @@ def test_embed_batch():
 )
 def test_generate():
     e = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
-    resp = e.predict_one('', context=['world!'])
+    resp = e.predict('', context=['world!'])
 
     assert isinstance(resp, str)
 

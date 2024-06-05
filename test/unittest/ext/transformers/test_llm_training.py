@@ -110,7 +110,7 @@ def test_training(db, tmpdir):
 
     # Load from db directly
     llm = db.load("model", "llm")
-    assert isinstance(llm.predict_one("1+1="), str)
+    assert isinstance(llm.predict("1+1="), str)
 
     # load from checkpoint
     experiment_id = db.show("checkpoint")[-1]
@@ -122,7 +122,7 @@ def test_training(db, tmpdir):
         tokenizer_kwargs=dict(model_max_length=64),
     )
     llm.db = db
-    assert isinstance(llm.predict_one("1+1="), str)
+    assert isinstance(llm.predict("1+1="), str)
 
     # load from local path
     checkpoint_paths = os.listdir(tmpdir)
@@ -141,4 +141,4 @@ def test_training(db, tmpdir):
             model_name_or_path="facebook/opt-125m",
             tokenizer_kwargs=dict(model_max_length=64),
         )
-        assert isinstance(llm.predict_one("1+1="), str)
+        assert isinstance(llm.predict("1+1="), str)

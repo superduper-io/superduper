@@ -56,7 +56,7 @@ class AnthropicCompletions(Anthropic):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(
+    def predict(
         self,
         X: t.Union[str, list[dict]],
         context: t.Optional[t.List[str]] = None,
@@ -93,4 +93,4 @@ class AnthropicCompletions(Anthropic):
 
         :param dataset: The dataset to predict the embeddings of.
         """
-        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+        return [self.predict(dataset[i]) for i in range(len(dataset))]

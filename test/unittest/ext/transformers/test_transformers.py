@@ -42,7 +42,7 @@ def transformers_model(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_transformer_predict(transformers_model):
-    one_prediction = transformers_model.predict_one('this is a test')
+    one_prediction = transformers_model.predict('this is a test')
     assert isinstance(one_prediction, dict)
     predictions = transformers_model.predict_batches(['this is a test', 'this is another'])
     assert isinstance(predictions, list)

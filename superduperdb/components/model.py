@@ -480,7 +480,7 @@ class ModelMeta(LeafMeta):
     def __new__(mcls, name, bases, dct):
         cls = super().__new__(mcls, name, bases, dct)
         cls.predict_batches = ensure_initialized(cls.predict_batches)
-        cls.predict_one = ensure_initialized(cls.predict_one)
+        cls.predict = ensure_initialized(cls.predict)
         return cls
 
 
@@ -519,10 +519,10 @@ class Model(Component, metaclass=ModelMeta):
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
-        return Inputs(list(inspect.signature(self.predict_one).parameters.keys()))
+        return Inputs(list(inspect.signature(self.predict).parameters.keys()))
 
     @abstractmethod
-    def predict_one(self, *args, **kwargs) -> int:
+    def predict(self, *args, **kwargs) -> int:
         """Predict on a single data point.
 
         Execute a single prediction on a data point
@@ -1095,7 +1095,7 @@ class _ObjectModel(Model):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.object(*args, **kwargs)
 
-    def predict_one(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Predict on a single data point.
 
         Method to execute ``Object`` on args and kwargs.
@@ -1130,7 +1130,7 @@ class ObjectModel(_ObjectModel):
     Example:
     -------
     >>> m = ObjectModel('test', lambda x: x + 2)
-    >>> m.predict_one(2)
+    >>> m.predict(2)
     4
 
     """
@@ -1178,7 +1178,7 @@ class APIBaseModel(Model):
         ) as executor:
             results = list(
                 executor.map(
-                    lambda x: self.predict_one(x, *args, **kwargs),
+                    lambda x: self.predict(x, *args, **kwargs),
                     dataset,  # type: ignore[arg-type]
                 )
             )
@@ -1216,7 +1216,7 @@ class APIModel(APIBaseModel):
         """
         return self.url.format(**params, **{k: os.environ[k] for k in self.envs})
 
-    def predict_one(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Predict on a single data point.
 
         Method to requests to `url` on args and kwargs.
@@ -1266,7 +1266,7 @@ class QueryModel(Model):
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
-    def predict_one(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Predict on a single data point.
 
         Method to perform a single prediction on args and kwargs.
@@ -1291,11 +1291,11 @@ class QueryModel(Model):
         """
         if isinstance(dataset[0], tuple):
             return [
-                self.predict_one(*dataset[i][0], **dataset[i][1])
+                self.predict(*dataset[i][0], **dataset[i][1])
                 for i in range(len(dataset))
             ]
         elif isinstance(dataset[0], dict):
-            return [self.predict_one(**dataset[i]) for i in range(len(dataset))]
+            return [self.predict(**dataset[i]) for i in range(len(dataset))]
         else:
             raise NotImplementedError
 
@@ -1329,7 +1329,7 @@ class SequentialModel(Model):
             p.post_create(db)
         self.on_load(db)
 
-    def predict_one(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Predict on a single data point.
 
         Method to do single prediction on args and kwargs.

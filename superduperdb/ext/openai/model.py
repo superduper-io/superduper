@@ -133,7 +133,7 @@ class OpenAIEmbedding(_OpenAI):
             self.datatype = vector(shape=self.shape)
 
     @retry
-    def predict_one(self, X: str):
+    def predict(self, X: str):
         """Generates embeddings from text.
 
         :param X: The text to generate embeddings for.
@@ -183,7 +183,7 @@ class OpenAIChatCompletion(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(self, X: str, context: t.Optional[str] = None, **kwargs):
+    def predict(self, X: str, context: t.Optional[str] = None, **kwargs):
         """Generates text completions from prompts.
 
         :param X: The prompt.
@@ -212,7 +212,7 @@ class OpenAIChatCompletion(_OpenAI):
             args, kwargs = self.handle_input_type(
                 data=dataset[i], signature=self.signature
             )
-            out.append(self.predict_one(*args, **kwargs))
+            out.append(self.predict(*args, **kwargs))
         return out
 
 
@@ -248,7 +248,7 @@ class OpenAIImageCreation(_OpenAI):
         return prompt + X
 
     @retry
-    def predict_one(self, X: str):
+    def predict(self, X: str):
         """Generates images from text prompts.
 
         :param X: The text prompt.
@@ -283,7 +283,7 @@ class OpenAIImageCreation(_OpenAI):
             args, kwargs = self.handle_input_type(
                 data=dataset[i], signature=self.signature
             )
-            out.append(self.predict_one(*args, **kwargs))
+            out.append(self.predict(*args, **kwargs))
         return out
 
 
@@ -318,7 +318,7 @@ class OpenAIImageEdit(_OpenAI):
             self.datatype = dtype('bytes')
 
     @retry
-    def predict_one(
+    def predict(
         self,
         image: t.BinaryIO,
         mask: t.Optional[t.BinaryIO] = None,
@@ -374,7 +374,7 @@ class OpenAIImageEdit(_OpenAI):
             args, kwargs = self.handle_input_type(
                 data=dataset[i], signature=self.signature
             )
-            out.append(self.predict_one(*args, **kwargs))
+            out.append(self.predict(*args, **kwargs))
         return out
 
 
@@ -403,7 +403,7 @@ class OpenAIAudioTranscription(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
+    def predict(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
         """Converts a file-like Audio recording to text.
 
         :param file: The file-like Audio recording to transcribe.
@@ -456,7 +456,7 @@ class OpenAIAudioTranslation(_OpenAI):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(
+    def predict(
         self,
         file: t.BinaryIO,
         context: t.Optional[t.List[str]] = None,

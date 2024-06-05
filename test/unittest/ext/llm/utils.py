@@ -15,7 +15,7 @@ from superduperdb.components.table import Table
 def check_predict(db, llm):
     """Test whether db can call model prediction normally."""
     db.add(llm)
-    result = llm.predict_one("1+1=")
+    result = llm.predict("1+1=")
     assert isinstance(result, str)
 
 

@@ -19,12 +19,12 @@ def data_in_db(db):
     yield db
 
 
-def test_function_predict_one():
-    function = ObjectModel(object=lambda x: x, identifier='test')
-    assert function.predict_one(1) == 1
-
-
 def test_function_predict():
+    function = ObjectModel(object=lambda x: x, identifier='test')
+    assert function.predict(1) == 1
+
+
+def test_function_predict_batches():
     function = ObjectModel(object=lambda x: x, identifier='test', signature='singleton')
     assert function.predict_batches([1, 1]) == [1, 1]
 

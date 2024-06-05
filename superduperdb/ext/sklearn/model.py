@@ -137,7 +137,7 @@ class Estimator(Model, _Fittable):
             )
         return jobs
 
-    def predict_one(self, X):
+    def predict(self, X):
         """Predict on a single input.
 
         :param X: The input to predict on.

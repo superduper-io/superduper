@@ -214,7 +214,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
             self._build_pipeline()
         super().__post_init__(db, artifacts)
 
-    def predict_one(self, text: str):
+    def predict(self, text: str):
         """Predict the class of a single text.
 
         :param text: a text
@@ -402,7 +402,7 @@ class LLM(BaseLLM, _Fittable):
         self.pipeline = self.init_pipeline(real_adapter_id)
 
     @ensure_initialized
-    def predict_one(self, X, **kwargs):
+    def predict(self, X, **kwargs):
         """Generate text from a single prompt.
 
         :param X: a prompt

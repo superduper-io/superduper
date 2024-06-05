@@ -77,12 +77,12 @@ class RetrievalPrompt(QueryModel):
         """The inputs of the model."""
         return super().inputs
 
-    def predict_one(self, prompt):
+    def predict(self, prompt):
         """Predict the answer to the question based on the prompt.
 
         :param prompt: The prompt to answer the question.
         """
-        out = super().predict_one(prompt=prompt)
+        out = super().predict(prompt=prompt)
         prompt = (
             self.prompt_explanation
             + self.join

@@ -67,7 +67,7 @@ def test_simple_graph(model1, model2):
         identifier='simple-graph', input=model1, outputs=model2, signature='*args'
     )
     g.connect(model1, model2)
-    assert g.predict_one(1) == (4, 2)
+    assert g.predict(1) == (4, 2)
 
     g = Graph(
         identifier='simple-graph', input=model1, outputs=model2, signature='*args'
@@ -85,7 +85,7 @@ def test_graph_output_indexing(model2_multi_dict, model2, model1):
     )
     g.connect(model1, model2_multi_dict, on=(None, 'x'))
     g.connect(model2_multi_dict, model2, on=('x', 'x'))
-    assert g.predict_one(1) == [(6, 4)]
+    assert g.predict(1) == [(6, 4)]
 
 
 def test_complex_graph(model1, model2_multi, model3, model2):
@@ -99,7 +99,7 @@ def test_complex_graph(model1, model2_multi, model3, model2):
     g.connect(model2, model2_multi, on=(0, 'y'))
     g.connect(model2, model3, on=(1, 'x'))
     g.connect(model2_multi, model3, on=(None, 'y'))
-    assert g.predict_one(1) == [(4, 2), 8]
+    assert g.predict(1) == [(4, 2), 8]
     assert g.predict_batches([1, 2, 3]) == [
         [(4, 2), (5, 3), (6, 4)],
         [8, 10, 12],
@@ -118,7 +118,7 @@ def test_disconnected_edge(model1, model2_multi):
     with pytest.raises(TypeError) as excinfo:
         g = Graph(identifier='complex-graph', input=model1, outputs=[model2_multi])
         g.connect(model1, model2_multi, on=(-1, 'x'))
-        g.predict_one(1)
+        g.predict(1)
         assert 'Graph disconnected at Node: m2_multi' in str(excinfo.value)
 
 
@@ -149,7 +149,7 @@ def test_to_graph():
     out1 = model1(x=in_)
     out2 = model2(x=out1[1], y=in_)
     graph = out2.to_graph('my_graph')
-    print(graph.predict_one(5))
+    print(graph.predict(5))
 
 
 def test_to_listeners():

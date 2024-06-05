@@ -40,7 +40,7 @@ def run(
         @app.app.post("/predict")
         def predict(self, args: t.List, kwargs: t.Dict):
             assert isinstance(self.model, Model)
-            return self.model.predict_one(*args, **kwargs)
+            return self.model.predict(*args, **kwargs)
 
     serve.run(
         SuperDuperRayServe.bind(model_identifier=model, version=version),

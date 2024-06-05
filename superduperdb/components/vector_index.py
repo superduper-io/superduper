@@ -115,7 +115,7 @@ class VectorIndex(Component):
         data = Mapping(key, model.signature)(document)
         args, kwargs = model.handle_input_type(data, model.signature)
         return (
-            model.predict_one(*args, **kwargs),
+            model.predict(*args, **kwargs),
             model.identifier,
             key,
         )

@@ -60,7 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reconstruct data serialization and database queries
 - Auto-create tables and schemas
 - Add `Application` and `Template` support to build reusable apps.
-- Add pretty-print to `Component.info`
 
 #### Bug Fixes
 - Fixed cross platfrom issue in cli command

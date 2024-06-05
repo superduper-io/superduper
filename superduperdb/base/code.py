@@ -2,7 +2,6 @@ import dataclasses as dc
 import inspect
 
 from superduperdb.base.leaf import Leaf
-from superduperdb.misc.annotations import merge_docstrings
 
 template = """from superduperdb import code
 
@@ -10,8 +9,6 @@ template = """from superduperdb import code
 {definition}"""
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Code(Leaf):
     """A class to store remote code.
 

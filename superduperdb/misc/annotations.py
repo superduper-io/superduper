@@ -204,32 +204,6 @@ def component(*schema: t.Dict):
     return decorator
 
 
-def merge_docstrings(cls):
-    """Decorator that merges Sphinx-styled class docstrings.
-
-    Decorator merges doc-strings from parent to child classes,
-    ensuring no duplicate parameters and correct indentation.
-
-    :param cls: Class to merge docstrings for.
-    """
-    parent_doc = next(
-        (parent.__doc__ for parent in inspect.getmro(cls)[1:] if parent.__doc__), None
-    )
-    if parent_doc:
-        parent_params = extract_parameters(parent_doc)
-        child_doc = cls.__doc__ or """"""
-        child_params = extract_parameters(child_doc)
-        for k in child_params:
-            parent_params[k] = child_params[k]
-        placeholder_doc = replace_parameters(child_doc)
-        param_string = ''
-        for k, v in parent_params.items():
-            v = '\n    '.join(v)
-            param_string += f':param {k}: {v}\n'
-        cls.__doc__ = placeholder_doc.replace('!!!', param_string)
-    return cls
-
-
 def extract_parameters(doc):
     """
     Extracts and organizes parameter descriptions from a Sphinx-styled docstring.

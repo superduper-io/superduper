@@ -20,7 +20,7 @@ from superduperdb.backends.base.artifacts import (
 from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
-from superduperdb.misc.annotations import component, merge_docstrings
+from superduperdb.misc.annotations import component
 from superduperdb.misc.hash import random_sha1
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -177,8 +177,6 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class DataType(Component):
     """A data type component that defines how data is encoded and decoded.
 
@@ -349,8 +347,6 @@ def _find_descendants(cls):
     return descendants
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class _BaseEncodable(Leaf):
     """Data variable wrapping encode-able item.
 
@@ -445,8 +441,6 @@ class Empty:
         return '<EMPTY>'
 
 
-@merge_docstrings
-@dc.dataclass
 class Encodable(_BaseEncodable):
     """Class for encoding non-Python datatypes to the database.
 
@@ -534,8 +528,6 @@ class Encodable(_BaseEncodable):
         return datatype
 
 
-@merge_docstrings
-@dc.dataclass
 class Native(_BaseEncodable):
     """Class for representing native data supported by the underlying database.
 
@@ -561,8 +553,6 @@ class Native(_BaseEncodable):
         return f'{self.leaf_type}/{self.sha1}'
 
 
-@merge_docstrings
-@dc.dataclass
 class Artifact(_BaseEncodable):
     """Class for representing data to be saved on disk or in the artifact-store.
 
@@ -653,8 +643,6 @@ class Artifact(_BaseEncodable):
         return self.x
 
 
-@merge_docstrings
-@dc.dataclass
 class LazyArtifact(Artifact):
     """Data to be saved and loaded only when needed."""
 
@@ -662,8 +650,6 @@ class LazyArtifact(Artifact):
     lazy: t.ClassVar[bool] = True
 
 
-@merge_docstrings
-@dc.dataclass
 class File(_BaseEncodable):
     """Data to be saved on disk and passed as a file reference.
 
@@ -746,7 +732,6 @@ class File(_BaseEncodable):
         return self.x
 
 
-@merge_docstrings
 class LazyFile(File):
     """Class is used to load a file only when needed."""
 

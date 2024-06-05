@@ -15,7 +15,6 @@ import yaml
 from superduperdb import logging
 from superduperdb.base.leaf import Leaf
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb import Document
@@ -83,22 +82,10 @@ def getdeepattr(obj, attr):
     return obj
 
 
-class AutoDataclassMeta(ABCMeta):
-    """
-    Meta class that automatically applies the dataclass decorator with kw_only=True.
-    """
-    def __new__(cls, name, bases, dct):
-        new_cls = super().__new__(cls, name, bases, dct)
-        new_cls = dc.dataclass(kw_only=True)(new_cls)
-        return new_cls
-
-
 ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
 ComponentTuple.__doc__ = 'noqa'
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Component(Leaf):
     """Base class for all components in SuperDuperDB.
 

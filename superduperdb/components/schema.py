@@ -6,7 +6,6 @@ from overrides import override
 
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable
-from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.reference import parse_reference
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -22,8 +21,6 @@ class _Native:
         self.identifier = x
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Schema(Component):
     """A component carrying the `DataType` of columns.
 

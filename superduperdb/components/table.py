@@ -4,7 +4,6 @@ import typing as t
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.components.component import Component
 from superduperdb.components.schema import Schema, _Native
-from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -12,8 +11,6 @@ if t.TYPE_CHECKING:
 DEFAULT_PRIMARY_ID = 'id'
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Table(Component):
     """
     A component that represents a table in a database.

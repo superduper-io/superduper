@@ -10,11 +10,8 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.model import Trainer
 from superduperdb.ext.torch.model import TorchModel
-from superduperdb.misc.annotations import merge_docstrings
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class TorchTrainer(Trainer):
     """
     Configuration for the PyTorch trainer.

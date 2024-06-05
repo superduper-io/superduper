@@ -2,11 +2,8 @@ import dataclasses as dc
 import typing as t
 
 from superduperdb.components.component import Component
-from superduperdb.misc.annotations import merge_docstrings
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Application(Component):
     """
     Application built from template.

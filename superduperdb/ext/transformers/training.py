@@ -5,7 +5,7 @@ import typing as t
 from copy import deepcopy
 from functools import wraps
 
-from superduperdb.misc.annotations import merge_docstrings, requires_packages
+from superduperdb.misc.annotations import requires_packages
 
 _, requirements = requires_packages(
     ['peft', '0.10.0', None],
@@ -39,8 +39,6 @@ if t.TYPE_CHECKING:
     from superduperdb.ext.transformers.model import LLM
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Checkpoint(Component):
     """Checkpoint component for saving the model checkpoint.
 
@@ -201,8 +199,6 @@ class LLMCallback(TrainerCallback):
         assert self.llm is not None
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     """LLM Training Arguments # noqa.
 

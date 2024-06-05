@@ -24,7 +24,6 @@ from superduperdb.components.model import (
     _Fittable,
 )
 from superduperdb.ext.torch.utils import device_of, eval, to_device
-from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb.jobs.job import Job
@@ -100,8 +99,6 @@ class BasicDataset(data.Dataset):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class TorchModel(Model, _Fittable, _DeviceManaged):
     """Torch model. This class is a wrapper around a PyTorch model.
 

@@ -17,11 +17,8 @@ from superduperdb.components.model import (
     _Fittable,
 )
 from superduperdb.jobs.job import Job
-from superduperdb.misc.annotations import merge_docstrings
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class SklearnTrainer(Trainer):
     """A trainer for `sklearn` models.
 
@@ -102,8 +99,6 @@ class SklearnTrainer(Trainer):
         db.replace(model, upsert=True)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Estimator(Model, _Fittable):
     """Estimator model.
 

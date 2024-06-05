@@ -249,7 +249,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         """Build the training arguments."""
         super().__post_init__()
 
-    def build_training_args(self):
+    def build_training_args(self, build_class=TrainingArguments):
         """Build the training arguments."""
         _TRAINING_DEFAULTS = {
             k: v
@@ -257,7 +257,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
             if k != 'output_dir'
         }
         kwargs = {k: getattr(self, k) for k in _TRAINING_DEFAULTS}
-        return TrainingArguments(output_dir=self.output_dir, **kwargs)
+        return build_class(output_dir=self.output_dir, **kwargs)
 
     @staticmethod
     def get_compute_metrics(metrics):
@@ -578,7 +578,7 @@ def train_func(
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
-    from trl import setup_chat_format
+    from trl import SFTConfig, setup_chat_format
     from trl.trainer import SFTTrainer
 
     if training_args.setup_chat_format:
@@ -592,7 +592,7 @@ def train_func(
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
-        args=training_args.build_training_args(),
+        args=training_args.build_training_args(build_class=SFTConfig),
         train_dataset=train_dataset,
         eval_dataset=eval_datasets,
         max_seq_length=training_args.max_seq_length,

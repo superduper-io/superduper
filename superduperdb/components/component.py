@@ -111,6 +111,13 @@ class Component(Leaf):
             '.', '-'
         )
 
+    @property
+    def leaves(self):
+        """Get all the leaves in the component."""
+        r = self.dict()
+        leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Leaf)]
+        return {k: r[k] for k in leaf_keys}
+
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
 
@@ -381,6 +388,15 @@ class Component(Leaf):
         if k in dc.fields(self):
             self.changed.add(k)
         return super().__setattr__(k, v)
+
+    def info(self, verbosity: int = 1):
+        """Method to display the component information.
+
+        :param verbosity: Verbosity level.
+        """
+        from superduperdb.misc.special_dicts import _display_component
+
+        _display_component(self, verbosity=verbosity)
 
 
 def ensure_initialized(func):

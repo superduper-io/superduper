@@ -31,7 +31,12 @@ def run_tmux_command(command):
     subprocess.run(["tmux"] + command, check=True)
 
 
-def up_cluster(notebook_token: t.Optional[str] = None):
+def up_cluster(
+    notebook_token: t.Optional[str] = None,
+    num_workers: int = 0,
+    attach: bool = True,
+    cdc: bool = False,
+):
     """Start the local cluster.
 
     :param notebook_token: token to use for the jupyter notebook
@@ -53,11 +58,17 @@ def up_cluster(notebook_token: t.Optional[str] = None):
     )
 
     run_tmux_command(['rename-window', '-t', f'{SESSION_NAME}:0', 'ray-head'])
-    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:1', '-n', 'ray-worker'])
-    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:2', '-n', 'vector-search'])
-    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:3', '-n', 'cdc'])
-    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:4', '-n', 'rest'])
-    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:5', '-n', 'jupyter'])
+    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:1', '-n', 'vector-search'])
+    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:2', '-n', 'rest'])
+    run_tmux_command(['new-window', '-t', f'{SESSION_NAME}:3', '-n', 'jupyter'])
+    for i in range(num_workers):
+        run_tmux_command(
+            ['new-window', '-t', f'{SESSION_NAME}:{4 + i}', '-n', f'ray-worker-{i}']
+        )
+    if cdc:
+        run_tmux_command(
+            ['new-window', '-t', f'{SESSION_NAME}:{4 + num_workers}', '-n', 'cdc']
+        )
 
     cmd = (
         f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. {ray_executable} start"
@@ -70,11 +81,15 @@ def up_cluster(notebook_token: t.Optional[str] = None):
         "RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 PYTHONPATH=$(pwd)"
         f":. {ray_executable} start --address=localhost:6379  --block"
     )
-    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:ray-worker', cmd, 'C-m'])
+    for i in range(num_workers):
+        run_tmux_command(
+            ['send-keys', '-t', f'{SESSION_NAME}:ray-worker-{i}', cmd, 'C-m']
+        )
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb vector-search"
     run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:vector-search', cmd, 'C-m'])
-    cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb cdc"
-    run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:cdc', cmd, 'C-m'])
+    if cdc:
+        cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb cdc"
+        run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:cdc', cmd, 'C-m'])
     cmd = f"SUPERDUPERDB_CONFIG={CFG} {python_executable} -m superduperdb rest"
     run_tmux_command(['send-keys', '-t', f'{SESSION_NAME}:rest', cmd, 'C-m'])
     cmd = (
@@ -91,6 +106,9 @@ def up_cluster(notebook_token: t.Optional[str] = None):
     print('You can attach to the tmux session with:')
     print(f'tmux a -t {SESSION_NAME}')
     print(f'local cluster started with tmux session {SESSION_NAME}')
+
+    if attach:
+        attach_cluster()
 
 
 def down_cluster():

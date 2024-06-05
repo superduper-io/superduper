@@ -80,7 +80,7 @@ class CohereEmbed(Cohere):
         out = client.embed(texts=texts, model=self.identifier, **self.predict_kwargs)
         return [r for r in out.embeddings]
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict the embeddings of a dataset.
 
         :param dataset: The dataset to predict the embeddings of.
@@ -134,7 +134,7 @@ class CohereGenerate(Cohere):
         return resp.generations[0].text
 
     @retry
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict the generations of a dataset.
 
         :param dataset: The dataset to predict the generations of.

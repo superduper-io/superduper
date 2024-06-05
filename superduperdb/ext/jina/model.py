@@ -66,7 +66,7 @@ class JinaEmbedding(Jina):
     def _predict_a_batch(self, texts: t.List[str]):
         return self.client.encode_batch(texts)
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict the embeddings of a dataset.
 
         :param dataset: The dataset to predict the embeddings of.

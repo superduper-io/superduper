@@ -26,7 +26,7 @@ def test_function_predict_one():
 
 def test_function_predict():
     function = ObjectModel(object=lambda x: x, identifier='test', signature='singleton')
-    assert function.predict([1, 1]) == [1, 1]
+    assert function.predict_batches([1, 1]) == [1, 1]
 
 
 # TODO: use table to test the sqldb

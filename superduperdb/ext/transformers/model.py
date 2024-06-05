@@ -221,7 +221,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         """
         return self.pipeline(text)[0]
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict the class of a list of text.
 
         :param dataset: a list of text
@@ -414,7 +414,7 @@ class LLM(BaseLLM, _Fittable):
         return results[0]
 
     @ensure_initialized
-    def predict(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset], **kwargs) -> t.List:
         """Generate text from a list of prompts.
 
         :param dataset: a list of prompts

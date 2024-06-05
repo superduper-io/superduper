@@ -32,7 +32,7 @@ def test_embed_one():
 )
 def test_embed_batch():
     embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en', batch_size=3)
-    resp = embed.predict(['Hello', 'world', 'I', 'am', 'here'])
+    resp = embed.predict_batches(['Hello', 'world', 'I', 'am', 'here'])
 
     assert len(resp) == 5
     assert len(resp[0]) == embed.shape[0]

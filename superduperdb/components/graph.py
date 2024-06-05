@@ -181,7 +181,7 @@ class Input(Model):
             {k: arg for k, arg in zip(self.spec, args)}, keys=self.spec
         )
 
-    def predict(self, dataset):
+    def predict_batches(self, dataset):
         """Predict on the dataset.
 
         :param dataset: Series of datapoints
@@ -210,7 +210,7 @@ class DocumentInput(Model):
         """
         return {k: r[k] for k in self.spec}
 
-    def predict(self, dataset):
+    def predict_batches(self, dataset):
         """Predict on the dataset.
 
         :param dataset: Series of datapoints
@@ -470,7 +470,7 @@ class Graph(Model):
                 dataset = self._fetch_inputs(
                     args[0], edges=edges, outputs=outputs, node=node
                 )
-                cache[node] = self.nodes[node].predict(dataset=dataset)
+                cache[node] = self.nodes[node].predict_batches(dataset=dataset)
             return cache[node]
         return cache[node]
 
@@ -525,7 +525,7 @@ class Graph(Model):
         return args_dataset
 
     @ensure_initialized
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on dataset i.e. series of datapoints.
 
         :param dataset: Series of datapoints.

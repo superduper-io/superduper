@@ -284,7 +284,7 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
             return args
 
     @ensure_initialized
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
         :param dataset: Dataset

@@ -80,7 +80,7 @@ class _OpenAI(APIBaseModel):
                 'nor in `client_kwargs`'
             )
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
         :param dataset: The dataset to predict on.
@@ -202,7 +202,7 @@ class OpenAIChatCompletion(_OpenAI):
             .message.content
         )
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Generates text completions from prompts.
 
         :param dataset: The dataset of prompts.
@@ -273,7 +273,7 @@ class OpenAIImageCreation(_OpenAI):
             )
             return requests.get(url).content
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Generates images from text prompts.
 
         :param dataset: The dataset of text prompts.
@@ -364,7 +364,7 @@ class OpenAIImageEdit(_OpenAI):
             out = requests.get(url).content
         return out
 
-    def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predicts the output for a dataset of images.
 
         :param dataset: The dataset of images.

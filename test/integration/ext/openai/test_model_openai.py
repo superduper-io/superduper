@@ -100,7 +100,7 @@ def test_embed():
 @vcr.use_cassette()
 def test_batch_embed():
     e = OpenAIEmbedding(identifier='text-embedding-ada-002', batch_size=1)
-    resp = e.predict(['Hello', 'world!'])
+    resp = e.predict_batches(['Hello', 'world!'])
 
     assert len(resp) == 2
     assert all(len(x) == e.shape[0] for x in resp)
@@ -118,7 +118,7 @@ def test_chat():
 @vcr.use_cassette()
 def test_batch_chat():
     e = OpenAIChatCompletion(identifier='gpt-3.5-turbo')
-    resp = e.predict([(('Hello, world!',), {})])
+    resp = e.predict_batches([(('Hello, world!',), {})])
 
     assert isinstance(resp, list)
     assert isinstance(resp[0], str)
@@ -144,7 +144,7 @@ def test_create_url_batch():
         prompt='a close up, studio photographic portrait of a',
         response_format='url',
     )
-    resp = e.predict(['cat', 'dog'])
+    resp = e.predict_batches(['cat', 'dog'])
 
     for img in resp:
         # PNG 8-byte signature
@@ -179,7 +179,7 @@ def test_edit_url_batch():
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer_two = io.BytesIO(f.read())
 
-    resp = e.predict(
+    resp = e.predict_batches(
         [
             ((buffer_one,), {}),
             ((buffer_two,), {}),
@@ -237,7 +237,7 @@ def test_batch_translate():
         buffer2.name = 'test.wav'
 
     e = OpenAIAudioTranslation(identifier='whisper-1', batch_size=1)
-    resp = e.predict([buffer, buffer2])
+    resp = e.predict_batches([buffer, buffer2])
     buffer.close()
 
     assert len(resp) == 2

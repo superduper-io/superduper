@@ -24,7 +24,7 @@ def test_completions():
 )
 def test_batch_completions():
     e = AnthropicCompletions(identifier='claude-2.1', predict_kwargs={'max_tokens': 64})
-    resp = e.predict(['Hello, world!'])
+    resp = e.predict_batches(['Hello, world!'])
 
     assert isinstance(resp, list)
     assert isinstance(resp[0], str)

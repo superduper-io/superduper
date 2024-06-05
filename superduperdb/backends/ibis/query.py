@@ -15,7 +15,6 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.components.schema import Schema
-from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -90,8 +89,6 @@ def _model_update_impl(
     return db[f'_outputs.{predict_id}'].insert(documents)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True, repr=False)
 class IbisQuery(Query):
     """A query that can be executed on an Ibis database."""
 

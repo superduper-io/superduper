@@ -11,7 +11,6 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.component import ensure_initialized
 from superduperdb.components.model import Model
 from superduperdb.ext.llm.prompter import Prompter
-from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -20,9 +19,7 @@ if t.TYPE_CHECKING:
 getLogger("httpx").setLevel(WARNING)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
-class BaseLLM(Model, metaclass=abc.ABCMeta):
+class BaseLLM(Model):
     """Base class for LLM models.
 
     :param prompt: The template to use for the prompt.
@@ -114,8 +111,6 @@ class BaseLLM(Model, metaclass=abc.ABCMeta):
         return Prompter(self.prompt, self.prompt_func)
 
 
-@merge_docstrings
-@dc.dataclass
 class BaseLLMAPI(BaseLLM):
     """Base class for LLM models with an API.
 

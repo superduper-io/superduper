@@ -21,7 +21,6 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIBaseModel, Inputs
 from superduperdb.components.vector_index import sqlvector, vector
-from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 
@@ -42,8 +41,6 @@ def _available_models(skwargs):
     return tuple([r.id for r in SyncOpenAI(**kwargs).models.list().data])
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class _OpenAI(APIBaseModel):
     """Base class for OpenAI models.
 
@@ -97,8 +94,6 @@ class _OpenAI(APIBaseModel):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIEmbedding(_OpenAI):
     """OpenAI embedding predictor.
 
@@ -156,8 +151,6 @@ class OpenAIEmbedding(_OpenAI):
         return [r.embedding for r in out.data]
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIChatCompletion(_OpenAI):
     """OpenAI chat completion predictor.
 
@@ -223,8 +216,6 @@ class OpenAIChatCompletion(_OpenAI):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIImageCreation(_OpenAI):
     """OpenAI image creation predictor.
 
@@ -296,8 +287,6 @@ class OpenAIImageCreation(_OpenAI):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIImageEdit(_OpenAI):
     """OpenAI image edit predictor.
 
@@ -389,8 +378,6 @@ class OpenAIImageEdit(_OpenAI):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIAudioTranscription(_OpenAI):
     """OpenAI audio transcription predictor.
 
@@ -443,8 +430,6 @@ class OpenAIAudioTranscription(_OpenAI):
         return [resp.text for resp in resps]
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class OpenAIAudioTranslation(_OpenAI):
     """OpenAI audio translation predictor.
 

@@ -17,7 +17,6 @@ from superduperdb.backends.base.query import (
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document, QueryUpdateDocument
 from superduperdb.base.leaf import Leaf
-from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -108,8 +107,6 @@ class ChangeStream:
         return collection.watch(**self.kwargs)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True, repr=False)
 class MongoQuery(Query):
     """A query class for MongoDB.
 
@@ -699,8 +696,6 @@ def ReplaceOne(**kwargs):
     return BulkOp(identifier='ReplaceOne', kwargs=kwargs)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class BulkOp(Leaf):
     """A bulk operation for MongoDB.
 

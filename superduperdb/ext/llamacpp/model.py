@@ -6,7 +6,6 @@ import requests
 from llama_cpp import Llama
 
 from superduperdb.ext.llm.model import BaseLLM
-from superduperdb.misc.annotations import merge_docstrings
 
 
 # TODO use core downloader already implemented
@@ -24,8 +23,6 @@ def download_uri(uri, save_path):
         raise Exception(f"Error while downloading uri {uri}")
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class LlamaCpp(BaseLLM):
     """Llama.cpp connector.
 
@@ -67,8 +64,6 @@ class LlamaCpp(BaseLLM):
         return out['choices'][0]['text']
 
 
-@merge_docstrings
-@dc.dataclass
 class LlamaCppEmbedding(LlamaCpp):
     """Llama.cpp connector for embeddings."""
 

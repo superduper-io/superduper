@@ -7,7 +7,6 @@ from superduperdb import Schema
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.components.model import Model, Signature, ensure_initialized
-from superduperdb.misc.annotations import merge_docstrings
 
 
 def input_node(*args):
@@ -157,8 +156,6 @@ class OutputWrapper:
             raise TypeError(f'Unsupported type for __getitem__: {type(item)}')
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Input(Model):
     """Root model of a graph.
 
@@ -192,8 +189,6 @@ class Input(Model):
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class DocumentInput(Model):
     """Document Input node of the graph.
 
@@ -223,8 +218,6 @@ class DocumentInput(Model):
         return [self.predict_one(dataset[i]) for i in range(len(dataset))]
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Graph(Model):
     """Represents a directed acyclic graph composed of interconnected model nodes.
 

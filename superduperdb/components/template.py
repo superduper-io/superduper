@@ -5,13 +5,10 @@ import typing as t
 
 from superduperdb.base.document import Document
 from superduperdb.components.datatype import DataType, dill_lazy
-from superduperdb.misc.annotations import merge_docstrings
 
 from .component import Component, ensure_initialized
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Template(Component):
     """
     Application template component.

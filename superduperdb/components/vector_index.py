@@ -12,7 +12,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.model import Mapping, ModelInputType
 from superduperdb.ext.utils import str_shape
 from superduperdb.jobs.job import FunctionJob
-from superduperdb.misc.annotations import component, merge_docstrings
+from superduperdb.misc.annotations import component
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 from superduperdb.vector_search.update_tasks import copy_vectors
@@ -22,8 +22,6 @@ if t.TYPE_CHECKING:
     from superduperdb.jobs.job import Job
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class VectorIndex(Component):
     """
     A component carrying the information to apply a vector index.

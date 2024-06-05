@@ -4,7 +4,6 @@ import typing as t
 
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.schema import Schema
-from superduperdb.misc.annotations import merge_docstrings
 
 
 class VariableError(Exception):
@@ -75,8 +74,6 @@ def _replace_variables(x, **kwargs):
     return x
 
 
-@merge_docstrings
-@dc.dataclass
 class Variable(Leaf):
     """Mechanism for allowing "free variables" in a leaf object.
 

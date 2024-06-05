@@ -20,13 +20,13 @@ from superduperdb.base.code import Code
 from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
+from superduperdb.base.leaf import LeafMeta
 from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.misc.annotations import merge_docstrings
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -204,8 +204,6 @@ class CallableInputs(Inputs):
         self.params = params
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Trainer(Component):
     """Trainer component to train a model.
 
@@ -255,8 +253,6 @@ class Trainer(Component):
         pass
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Validation(Component):
     """component which represents Validation definition.
 
@@ -477,9 +473,15 @@ class Mapping:
         return args, kwargs
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
-class Model(Component):
+class ModelMeta(LeafMeta):
+    def __new__(mcls, name, bases, dct):
+        cls = super().__new__(mcls, name, bases, dct)
+        cls.predict = ensure_initialized(cls.predict)
+        cls.predict_one = ensure_initialized(cls.predict_one)
+        return cls
+
+
+class Model(Component, metaclass=ModelMeta):
     """Base class for components which can predict.
 
     :param signature: Model signature.
@@ -1051,9 +1053,7 @@ class IndexableNode:
         return _Node(item)
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
-class _ObjectModel(Model, ABC):
+class _ObjectModel(Model):
     """Base class for components which can predict based on a Python object.
 
     :param num_workers: Number of workers to use for parallel processing
@@ -1092,7 +1092,6 @@ class _ObjectModel(Model, ABC):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.object(*args, **kwargs)
 
-    @ensure_initialized
     def predict_one(self, *args, **kwargs):
         """Predict on a single data point.
 
@@ -1104,7 +1103,6 @@ class _ObjectModel(Model, ABC):
         """
         return self.object(*args, **kwargs)
 
-    @ensure_initialized
     def predict(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Run the predict on series of Model inputs (dataset).
 
@@ -1123,8 +1121,6 @@ class _ObjectModel(Model, ABC):
         return outputs
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class ObjectModel(_ObjectModel):
     """Model component which wraps a Model to become serializable.
 
@@ -1141,8 +1137,6 @@ class ObjectModel(_ObjectModel):
     )
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class CodeModel(_ObjectModel):
     """Model component which stores a code object.
 
@@ -1152,8 +1146,6 @@ class CodeModel(_ObjectModel):
     object: Code
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
     """APIBaseModel component which is used to make the type of API request.
 
@@ -1190,8 +1182,6 @@ class APIBaseModel(Model):
         return results
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class APIModel(APIBaseModel):
     """APIModel component which is used to make the type of API request.
 
@@ -1239,8 +1229,6 @@ class APIModel(APIBaseModel):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class QueryModel(Model):
     """QueryModel component.
 
@@ -1275,7 +1263,6 @@ class QueryModel(Model):
             return CallableInputs(self.preprocess)
         return Inputs([x.value for x in self.select.variables])
 
-    @ensure_initialized
     def predict_one(self, *args, **kwargs):
         """Predict on a single data point.
 
@@ -1310,8 +1297,6 @@ class QueryModel(Model):
             raise NotImplementedError
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class SequentialModel(Model):
     """Sequential model component which wraps a model to become serializable.
 

@@ -10,19 +10,16 @@ from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 
 
-@dc.dataclass
 class Test(Leaf):
     b: t.Optional[t.Union[str, Variable]] = 'a'
     c: t.Optional[t.Union[float, Variable]] = 1.0
     a: t.Optional[int] = 1
 
 
-@dc.dataclass
 class OtherSer(Leaf):
     d: str = 'd'
 
 
-@dc.dataclass(kw_only=True)
 class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1
@@ -35,7 +32,6 @@ class TestSubModel(Component):
     f: t.Callable = dc.field(default=lambda x: x)
 
 
-@dc.dataclass
 class MySer(Leaf):
     a: int = 1
     b: str = 'b'

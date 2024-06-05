@@ -12,7 +12,6 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.model import APIBaseModel
 from superduperdb.components.vector_index import sqlvector, vector
 from superduperdb.ext.utils import format_prompt, get_key
-from superduperdb.misc.annotations import merge_docstrings
 from superduperdb.misc.retry import Retry
 
 retry = Retry(exception_types=(CohereAPIError, CohereConnectionError))
@@ -20,8 +19,6 @@ retry = Retry(exception_types=(CohereAPIError, CohereConnectionError))
 KEY_NAME = 'COHERE_API_KEY'
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class Cohere(APIBaseModel):
     """Cohere predictor.
 
@@ -35,8 +32,6 @@ class Cohere(APIBaseModel):
         self.identifier = self.identifier or self.model
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class CohereEmbed(Cohere):
     """Cohere embedding predictor.
 
@@ -100,8 +95,6 @@ class CohereEmbed(Cohere):
         return out
 
 
-@merge_docstrings
-@dc.dataclass(kw_only=True)
 class CohereGenerate(Cohere):
     """Cohere realistic text generator (chat predictor).
 

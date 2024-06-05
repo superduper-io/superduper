@@ -113,7 +113,10 @@ class Component(Leaf):
 
     @property
     def leaves(self):
-        return {}
+        """Get all the leaves in the component."""
+        r = self.dict()
+        leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Leaf)]
+        return {k: r[k] for k in leaf_keys}
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db)
@@ -387,8 +390,10 @@ class Component(Leaf):
         return super().__setattr__(k, v)
 
     def info(self):
-        from superduperdb.misc.special_dicts import display_component
-        display_component(self)
+        """Method to display the component information."""
+        from superduperdb.misc.special_dicts import _display_component
+
+        _display_component(self)
 
 
 def ensure_initialized(func):

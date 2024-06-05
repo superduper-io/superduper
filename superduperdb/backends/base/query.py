@@ -96,10 +96,6 @@ class Query(_BaseQuery, TraceMixin):
         parts = self.parts[item]
         return type(self)(db=self.db, identifier=self.identifier, parts=parts)
 
-    @property
-    def leaves(self):
-        return {}
-
     def set_db(self, db: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 

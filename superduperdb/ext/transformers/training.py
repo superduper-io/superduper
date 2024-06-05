@@ -40,7 +40,6 @@ if t.TYPE_CHECKING:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Checkpoint(Component):
     """Checkpoint component for saving the model checkpoint.
 
@@ -202,7 +201,6 @@ class LLMCallback(TrainerCallback):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     """LLM Training Arguments # noqa.
 
@@ -672,9 +670,9 @@ def ray_train(
                 train_loop_config.get("gradient_checkpointing_kwargs", {}) or {}
             )
             gradient_checkpointing_kwargs["use_reentrant"] = False
-            train_loop_config[
-                "gradient_checkpointing_kwargs"
-            ] = gradient_checkpointing_kwargs
+            train_loop_config["gradient_checkpointing_kwargs"] = (
+                gradient_checkpointing_kwargs
+            )
         train_loop_args = LLMTrainer(**train_loop_config)
         # Build the training_args on remote machine
         train_loop_args.build()

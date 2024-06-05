@@ -205,7 +205,6 @@ class CallableInputs(Inputs):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Trainer(Component):
     """Trainer component to train a model.
 
@@ -256,7 +255,6 @@ class Trainer(Component):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Validation(Component):
     """component which represents Validation definition.
 
@@ -476,7 +474,6 @@ class Mapping:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Model(Component):
     """Base class for components which can predict.
 
@@ -1050,7 +1047,6 @@ class IndexableNode:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class _ObjectModel(Model, ABC):
     """Base class for components which can predict based on a Python object.
 
@@ -1122,7 +1118,6 @@ class _ObjectModel(Model, ABC):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class ObjectModel(_ObjectModel):
     """Model component which wraps a Model to become serializable.
 
@@ -1140,7 +1135,6 @@ class ObjectModel(_ObjectModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class CodeModel(_ObjectModel):
     """Model component which stores a code object.
 
@@ -1151,7 +1145,6 @@ class CodeModel(_ObjectModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class APIBaseModel(Model):
     """APIBaseModel component which is used to make the type of API request.
 
@@ -1189,7 +1182,6 @@ class APIBaseModel(Model):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class APIModel(APIBaseModel):
     """APIModel component which is used to make the type of API request.
 
@@ -1238,7 +1230,6 @@ class APIModel(APIBaseModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class QueryModel(Model):
     """QueryModel component.
 
@@ -1309,7 +1300,6 @@ class QueryModel(Model):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class SequentialModel(Model):
     """Sequential model component which wraps a model to become serializable.
 

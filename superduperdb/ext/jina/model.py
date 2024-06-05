@@ -12,7 +12,6 @@ from superduperdb.misc.annotations import merge_docstrings
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Jina(APIBaseModel):
     """Cohere predictor.
 
@@ -28,7 +27,6 @@ class Jina(APIBaseModel):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class JinaEmbedding(Jina):
     """Jina embedding predictor.
 

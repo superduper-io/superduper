@@ -21,7 +21,6 @@ getLogger("httpx").setLevel(WARNING)
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class BaseLLM(Model, metaclass=abc.ABCMeta):
     """Base class for LLM models.
 

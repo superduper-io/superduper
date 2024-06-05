@@ -13,7 +13,6 @@ DEFAULT_PRIMARY_ID = 'id'
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Table(Component):
     """
     A component that represents a table in a database.
@@ -55,9 +54,9 @@ class Table(Component):
             db.add(e)
         if db.databackend.in_memory:
             if '_outputs' in self.identifier:
-                db.databackend.in_memory_tables[
-                    self.identifier
-                ] = db.databackend.create_table_and_schema(self.identifier, self.schema)
+                db.databackend.in_memory_tables[self.identifier] = (
+                    db.databackend.create_table_and_schema(self.identifier, self.schema)
+                )
 
                 return
 

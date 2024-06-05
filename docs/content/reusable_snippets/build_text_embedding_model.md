@@ -51,7 +51,6 @@ import TabItem from '@theme/TabItem';
         from transformers import AutoTokenizer, AutoModel
         import torch
         
-        @dc.dataclass(kw_only=True)
         class TransformerEmbedding(Model):
             signature: Signature = 'singleton'
             pretrained_model_name_or_path : str

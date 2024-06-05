@@ -16,7 +16,6 @@ DEFAULT_PREDICT_KWARGS = {
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class SentenceTransformer(Model, _DeviceManaged):
     """A model for sentence embeddings using `sentence-transformers`.
 

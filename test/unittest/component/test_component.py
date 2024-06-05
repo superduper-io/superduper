@@ -31,7 +31,6 @@ def cleanup():
         pass
 
 
-@dc.dataclass(kw_only=True)
 class MyComponent(Component):
     type_id: t.ClassVar[str] = 'my_type'
     _lazy_fields: t.ClassVar[t.Sequence[str]] = ('my_dict',)

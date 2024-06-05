@@ -101,7 +101,6 @@ class BasicDataset(data.Dataset):
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class TorchModel(Model, _Fittable, _DeviceManaged):
     """Torch model. This class is a wrapper around a PyTorch model.
 

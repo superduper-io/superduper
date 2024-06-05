@@ -94,7 +94,6 @@ class _VllmCore:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class VllmModel(BaseLLM):
     """
     Load a large language model from VLLM.

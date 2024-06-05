@@ -15,7 +15,6 @@ from superduperdb.components.datatype import (
 DO_SKIP = not CFG.data_backend.startswith("mongo")
 
 
-@dc.dataclass(kw_only=True)
 class TestComponent(Component):
     path: str
     type_id: t.ClassVar[str] = "TestComponent"

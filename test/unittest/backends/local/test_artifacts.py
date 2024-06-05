@@ -15,7 +15,6 @@ from superduperdb.components.datatype import (
 )
 
 
-@dc.dataclass(kw_only=True)
 class TestComponent(Component):
     path: str
     type_id: t.ClassVar[str] = "TestComponent"
@@ -25,7 +24,6 @@ class TestComponent(Component):
     )
 
 
-@dc.dataclass(kw_only=True)
 class TestComponentBytes(Component):
     function: callable
     type_id: t.ClassVar[str] = "TestComponent"

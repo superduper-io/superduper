@@ -178,7 +178,6 @@ class DataTypeFactory:
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class DataType(Component):
     """A data type component that defines how data is encoded and decoded.
 

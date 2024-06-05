@@ -43,7 +43,6 @@ from superduperdb.components.table import Table
 n_data_points = 250
 
 
-@dc.dataclass(kw_only=True)
 class TestComponent(Component):
     _artifacts: ClassVar[Sequence[str]] = (('artifact', dill_serializer),)
     version: Optional[int] = None

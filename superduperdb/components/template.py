@@ -11,7 +11,6 @@ from .component import Component, ensure_initialized
 
 
 @merge_docstrings
-@dc.dataclass(kw_only=True)
 class Template(Component):
     """
     Application template component.

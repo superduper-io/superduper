@@ -22,7 +22,6 @@ class OtherSer(Leaf):
     d: str = 'd'
 
 
-@dc.dataclass(kw_only=True)
 class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1

@@ -107,18 +107,16 @@ class ArtifactStore(ABC):
                 self.put_bytes(blob, file_id=file_id)
             except FileExistsError:
                 continue
-            else:
-                # TODO: Check the following logic.
-                r['_blobs'][file_id] = f'&{file_id}'
 
         for file_id, file_path in files.items():
             try:
                 self.put_file(file_path, file_id=file_id)
             except FileExistsError:
                 continue
-            else:
-                # TODO: Check the following logic.
-                r['_files'][file_id] = f'&{file_id}'
+
+        # After we save the artifacts, we can remove the blobs and files
+        r['_files'] = {}
+        r['_blobs'] = {}
 
         return r
 
@@ -127,11 +125,23 @@ class ArtifactStore(ABC):
 
         :param r: dictionary with mandatory fields
         """
-        for blob in r['_blobs']:
-            self._delete_bytes(blob)
+        from superduperdb.misc.special_dicts import recursive_find
 
-        for file_path in r['_files']:
-            self._delete_bytes(file_path)
+        # find all blobs with `&:blob:` prefix,
+        blobs = recursive_find(
+            r, lambda v: isinstance(v, str) and v.startswith('&:blob:')
+        )
+
+        for blob in blobs:
+            self._delete_bytes(blob.split(':')[-1])
+
+        # find all files with `&:file:` prefix
+        files = recursive_find(
+            r, lambda v: isinstance(v, str) and v.startswith('&:file:')
+        )
+        for file_path in files:
+            # file: &:file:file_name/file_id
+            self._delete_bytes(file_path.split('/')[-1])
 
     @abstractmethod
     def get_bytes(self, file_id: str) -> bytes:

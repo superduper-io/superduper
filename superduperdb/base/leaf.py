@@ -167,13 +167,6 @@ class Leaf(ABC):
         }
         return cls(**modified)
 
-    def init_from_blobs(self, blobs):
-        """
-        Initialize object from blobs.
-
-        :param blobs: Blobs dictionary to init object.
-        """
-
     def init(self, db=None):
         """Initialize object.
 

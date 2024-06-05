@@ -32,6 +32,7 @@ from superduperdb.misc.annotations import deprecated
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
 from superduperdb.misc.download import download_content, download_from_one
+from superduperdb.misc.special_dicts import recursive_update
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.interface import FastVectorSearcher
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
@@ -891,10 +892,8 @@ class Datalayer:
 
         jobs.extend(self._add_child_components(children, parent=object))
 
-        for k in list(serialized['_leaves'].keys()):
-            if isinstance(serialized['_leaves'][k], Component):
-                serialized['_leaves'].pop(k)
-
+        if children:
+            serialized = self._change_component_reference_prefix(serialized)
         serialized = self.artifact_store.save_artifact(serialized)
 
         self.metadata.create_component(serialized)
@@ -907,6 +906,29 @@ class Datalayer:
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
         return jobs
+
+    def _change_component_reference_prefix(self, serialized):
+        """Replace '?' to '&' in the serialized object."""
+        references = set()
+        for reference in list(serialized['_leaves'].keys()):
+            if isinstance(serialized['_leaves'][reference], Component):
+                serialized['_leaves'].pop(reference)
+                references.add(reference)
+
+        # Only replace component references
+        if not references:
+            return
+
+        def replace_function(value):
+            # Change value if it is a string and starts with '?'
+            # and the value is in references
+            # ?:xxx: -> &:xxx:
+            if isinstance(value, str) and value[1:] in references:
+                return f'&{value[1:]}'
+            return value
+
+        serialized = recursive_update(serialized, replace_function)
+        return serialized
 
     def _remove_component_version(
         self,
@@ -1005,9 +1027,8 @@ class Datalayer:
             if old_uuid:
                 self.metadata.delete_parent_child(old_uuid, child.uuid)
 
-        for k in list(serialized['_leaves'].keys()):
-            if isinstance(serialized['_leaves'][k], Component):
-                serialized['_leaves'].pop(k)
+        if children:
+            serialized = self._change_component_reference_prefix(serialized)
 
         self.artifact_store.delete_artifact(info)
 

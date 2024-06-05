@@ -43,11 +43,6 @@ class MyComponent(Component):
 def test_init(monkeypatch):
     from unittest.mock import MagicMock
 
-    def unpack(self, db):
-        if '_base' in self.keys():
-            return [lambda x: x + 1, lambda x: x + 2]
-        return {'a': lambda x: x + 1}
-
     e = Artifact(x=None, file_id='123', datatype=dill_serializer)
     a = Artifact(x=None, file_id='456', datatype=dill_serializer)
 

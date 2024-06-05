@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed database permission issues when connecting to mongodb
 - Handle ProgrammingError of SnowFlake for non-existing objects
 - Updated the use cases.
+- Update references to components and artifacts.
 
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 

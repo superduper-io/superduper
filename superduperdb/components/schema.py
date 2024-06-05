@@ -115,6 +115,9 @@ class Schema(Component):
         if self.trivial:
             return data
 
+        blobs = data.get('_blobs', {})
+        files = data.get('_files', {})
+
         decoded = {}
         for k, value in data.items():
             field = self.fields.get(k)
@@ -124,12 +127,23 @@ class Schema(Component):
 
             value = data[k]
 
-            if isinstance(value, str) and value.startswith('?'):
-                decoded[k] = field.encodable_cls.build_from_reference(
-                    value, datatype=field
-                )
+            if isinstance(value, str) and value.startswith('&'):
+                kwargs = {}
+
+                if value.startswith('&:blob:'):
+                    file_id = value.split('&:blob:')[1]
+                    kwargs['blob'] = blobs.get(file_id, value)
+
+                elif value.startswith('&:file:'):
+                    kwargs['file'] = files.get(value.split('/')[1], value)
+                encodable = field.encodable_cls(datatype=field, **kwargs)
+                if not field.encodable_cls.lazy:
+                    encodable = encodable.unpack()
+                decoded[k] = encodable
             else:
                 decoded[k] = field.decode_data(data[k])
+
+        decoded.pop(SCHEMA_KEY, None)
         return decoded
 
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:

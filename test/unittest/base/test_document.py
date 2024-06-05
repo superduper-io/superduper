@@ -84,7 +84,7 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert '_leaves' in encoded_r
     assert '_blobs' in encoded_r
-    assert encoded_r['img'].startswith('?:blob:')
+    assert encoded_r['img'].startswith('&:blob:')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
 
@@ -152,7 +152,7 @@ def test_refer_to_applied_item(db):
 
     db.apply(m)
     r = db.metadata._get_component_by_uuid(m.uuid)
-    assert r['datatype'].startswith('?:component:datatype/my-type')
+    assert r['datatype'].startswith('&:component:datatype/my-type')
 
     import pprint
 

@@ -406,3 +406,46 @@ def _display_component(obj, verbosity=1):
     console.print(panels)
     if verbosity > 1:
         console.print(tree)
+
+
+# TODO: Use this function to replace the similar logic in codebase
+def recursive_update(data, replace_function: t.Callable):
+    """Recursively update data with a replace function.
+
+    :param data: Dict, List, Tuple, Set
+    :param replace_function: Callable
+    """
+    if isinstance(data, dict):
+        return {
+            key: recursive_update(value, replace_function)
+            for key, value in data.items()
+        }
+    elif isinstance(data, (list, tuple, set)):
+        updated = (recursive_update(item, replace_function) for item in data)
+        return type(data)(updated)
+    else:
+        return replace_function(data)
+
+
+# TODO: Use this function to replace the similar logic in codebase
+def recursive_find(data, check_function: t.Callable):
+    """Recursively find items in data that satisfy a check function.
+
+    :param data: Dict, List, Tuple, Set
+    :param check_function: Callable
+    """
+    found_items = []
+
+    def recurse(data):
+        if isinstance(data, dict):
+            for value in data.values():
+                recurse(value)
+        elif isinstance(data, (list, tuple, set)):
+            for item in data:
+                recurse(item)
+        else:
+            if check_function(data):
+                found_items.append(data)
+
+    recurse(data)
+    return found_items

@@ -333,13 +333,14 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
         dict_ = {k: v for k, v in r.items() if k != '_path'}
         dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
         instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
-        instance.init_from_blobs(blobs)
         return instance
     if isinstance(r, dict):
         return {
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
+        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
+    if isinstance(r, str) and r.startswith('&:'):
         return _get_from_reference(r, cache, blobs, files, db=db)
     if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
         match = re.match("^\?db\.load\((.*)\)$", r)
@@ -357,12 +358,16 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
 
 
 def _get_from_reference(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
-    if r[1:] in cache:
-        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
+    if r.startswith('&:blob:'):
+        # r must be in this format: '&:blob:{file_id}'
+        file_id = r.split('&:blob:')[-1]
+        return blobs.get(file_id, r)
 
-    # Load from component reference
-    if r.startswith('?:component:'):
+    if r.startswith('&:file:'):
+        # r must be in this format: '&:file:{file_name}/{file_id}'
+        return files.get(r.split('/')[-1], r)
+
+    if r.startswith('&:component:'):
+        # r must be in this format: '&:component:xxx/xxx/{uuid}
         assert db is not None, 'db is required for ?:component:'
         return db.load(uuid=r.split('/')[-1])
-
-    return r

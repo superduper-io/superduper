@@ -385,14 +385,6 @@ class _BaseEncodable(Leaf):
         if self.uri and not re.match('^[a-z]{0,5}://', self.uri):
             self.uri = f'file://{self.uri}'
 
-    def init_from_blobs(self, blobs):
-        """
-        Initialize object from blobs.
-
-        :param blobs: Blobs dictionary to init object.
-        """
-        pass
-
     @property
     def id(self):
         assert self.file_id is not None
@@ -443,15 +435,6 @@ class _BaseEncodable(Leaf):
         else:
             raise ValueError(f'Unsupported data type: {type(data)}')
         return hashlib.sha1(bytes_).hexdigest()
-
-    @classmethod
-    def build_from_reference(cls, reference: str, datatype: DataType):
-        """Build an instance of the _BaseEncodable from a reference.
-
-        :param reference: The reference to build the instance from.
-        :param datatype: The datatype of the instance.
-        """
-        raise NotImplementedError
 
 
 class Empty:
@@ -510,6 +493,9 @@ class Encodable(_BaseEncodable):
             return f'?{self.id}'
 
         maybe_bytes, file_id = self._encode()
+        if schema is not None:
+            return maybe_bytes
+
         self.file_id = file_id
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
@@ -517,8 +503,6 @@ class Encodable(_BaseEncodable):
         del r['x']
         r['blob'] = maybe_bytes
         cache[self.id] = r
-        if schema is not None:
-            return maybe_bytes
         return f'?{self.id}'
 
     def init(self, db):
@@ -583,14 +567,19 @@ class Artifact(_BaseEncodable):
     """Class for representing data to be saved on disk or in the artifact-store.
 
     :param x: The artifact object.
+    :param blob: The blob data. Can be a string or bytes.
+                if string, it should be in the format `&:blob:{file_id}`
+                if bytes, it should be the actual data.
     """
 
     leaf_type: t.ClassVar[str] = 'artifact'
     x: t.Any = Empty()
+    blob: dc.InitVar[t.Optional[t.Union[str, bytes]]] = None
     lazy: t.ClassVar[bool] = False
 
-    def __post_init__(self, db):
+    def __post_init__(self, db, blob=None):
         super().__post_init__(db)
+        self._blob = blob
 
         if not self.lazy and isinstance(self.x, Empty):
             self.init()
@@ -598,50 +587,32 @@ class Artifact(_BaseEncodable):
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
             raise ArtifactSavingError('BASE64 not supported on disk!')
 
-    @classmethod
-    def build_from_reference(cls, reference: str, datatype: DataType):
-        """Build an instance of the Artifact from a reference.
-
-        :param reference: The reference to build the instance from. e.g.
-                        `:blob:artifact/123`
-        :param datatype: The datatype of the instance.
-        """
-        file_id = reference.split('/')[-1]
-        artifact = cls(file_id=file_id, datatype=datatype)
-        if not artifact.lazy:
-            return artifact.x
-        return artifact
-
     @property
-    def id(self):
-        """Get the id of the object.
-
-        We can use this id as a reference to rebuild the object.
-        """
+    def _id(self):
         assert self.file_id is not None
-        return f':blob:{self.leaf_type}/{self.file_id}'
-
-    def init_from_blobs(self, blobs):
-        """
-        Initialize object from blobs.
-
-        :param blobs: Blobs dictionary to init object.
-        """
-        blob = blobs.get(self.file_id, None)
-        if blob:
-            if isinstance(blob, str) and blob.startswith('&'):
-                return
-            self.datatype.init()
-            self.x = self.datatype.decoder(blob)
+        return f':blob:{self.file_id}'
 
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
-        assert self.file_id is not None
         self.db = self.db or db
-        if isinstance(self.x, Empty) and self.db:
+
+        if not isinstance(self.x, Empty):
+            return
+
+        if isinstance(self._blob, str):
+            self.file_id = self._blob.split('&:blob:')[-1]
+
+        if isinstance(self._blob, bytes):
+            blob = self._blob
+        else:
+            assert (
+                self.file_id is not None
+            ), 'file_id must be provided to init from database'
+            assert self.db is not None, 'db must be provided to init from file_id'
             blob = self.db.artifact_store.get_bytes(self.file_id)
-            self.datatype.init()
-            self.x = self.datatype.decoder(blob)
+
+        self.datatype.init()
+        self.x = self.datatype.decoder(blob)
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         maybe_bytes = None
@@ -652,6 +623,10 @@ class Artifact(_BaseEncodable):
             cache[self._id] = self
             return f'?{self._id}'
 
+        if schema is not None:
+            blobs[self.file_id] = maybe_bytes
+            return f'&{self._id}'
+
         r = super()._deep_flat_encode(
             cache,
             blobs,
@@ -659,6 +634,8 @@ class Artifact(_BaseEncodable):
             leaves_to_keep=leaves_to_keep,
             schema=schema,
         )
+        r['blob'] = f'&{self._id}'
+
         del r['x']
         if isinstance(maybe_bytes, bytes):
             blobs[self.file_id] = maybe_bytes
@@ -692,47 +669,27 @@ class File(_BaseEncodable):
 
     :param x: path to the file
     :param file_name: File name
+    :param file: file reference, format `&:file:{file_name}/{file_id}
     """
 
     leaf_type: t.ClassVar[str] = 'file'
     x: t.Any = Empty()
     lazy: t.ClassVar[bool] = False
     file_name: t.Optional[str] = None
+    file: dc.InitVar[t.Optional[bytearray]] = None
 
-    def __post_init__(self, db):
+    def __post_init__(self, db, file=None):
         super().__post_init__(db)
+        self._file = file
 
         if not self.lazy and isinstance(self.x, Empty):
             self.init()
 
-    @classmethod
-    def build_from_reference(cls, reference: str, datatype: DataType):
-        """Build an instance of the File from a reference.
-
-        :param reference: The reference to build the instance from.
-                        e.g. `:file:file/123/hello.txt`
-        :param datatype: The datatype of the instance.
-        """
-        *_, file_id, file_name = reference.split('/')
-        file_name = file_name.replace('__', '.')
-        file = cls(
-            file_id=file_id,
-            file_name=file_name,
-            datatype=datatype,
-        )
-        if not file.lazy:
-            return file.x
-        return file
-
     @property
-    def id(self):
-        """Get the id of the object.
-
-        We can use this id as a reference to rebuild the object.
-        """
+    def _id(self):
         assert self.file_id is not None
         file_name = self.file_name.replace('.', '__')
-        return f':file:{self.leaf_type}/{self.file_id}/{file_name}'
+        return f':file:{file_name}/{self.file_id}'
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -745,9 +702,14 @@ class File(_BaseEncodable):
 
         self.file_name = os.path.basename(self.x.rstrip('/'))
 
+        if schema is not None:
+            files[self.file_id]
+            return f'&{self._id}'
+
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=(), schema=schema
         )
+        r['file'] = f'&{self._id}'
 
         del r['x']
 
@@ -755,23 +717,28 @@ class File(_BaseEncodable):
 
         return f'?{self.id}'
 
-    def init_from_blobs(self, blobs):
-        """
-        Initialize object from blobs.
-
-        :param blobs: Blobs dictionary to init object.
-        """
-        # Implement me
-        # TODO: @jalon
-        pass
-
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
         self.db = self.db or db
-        if isinstance(self.x, Empty):
-            file = self.db.artifact_store.get_file(self.file_id)
-            file = os.path.join(file, self.file_name)
-            self.x = file
+        if not isinstance(self.x, Empty):
+            return
+
+        if self._file is not None:
+            # parse the file reference
+            if self._file.startswith('&:file:'):
+                file = self._file.replace('&:file:', '')
+                *_, file_name, file_id = file.split('/')
+                file_name = file_name.replace('__', '.')
+                self.file_id = file_id
+                self.file_name = file_name
+            else:
+                # Get the real path and return
+                self.x = self._file
+                return
+
+        file_path = self.db.artifact_store.get_file(self.file_id)
+        file_path = os.path.join(file_path, self.file_name)
+        self.x = file_path
 
     def unpack(self):
         """Unpack and get the original data."""

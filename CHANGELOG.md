@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add and update docstrings in component classes and methods.
 - Changed the rest implementation to use new serialization
 - Remove unused deadcode from the project
-- Auto wrap insert documents as Document
+- Auto wrap insert documents as Document instances
 - Changed the rest implementation to use the new serialization
 - Mask special character keys in mongodb queries
 

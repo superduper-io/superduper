@@ -34,7 +34,7 @@ def test_apply(setup):
                 'code': CODE,
             },
             'my_function': {
-                '_path': 'superduperdb/components/model/CodeModel',
+                '_path': 'superduperdb/components/model/ObjectModel',
                 'object': '?function_body',
                 'identifier': 'my_function',
             },

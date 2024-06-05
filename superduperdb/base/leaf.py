@@ -59,11 +59,6 @@ class Leaf(ABC):
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
 
-    @property
-    def leaves(self):
-        """Return the leaves of the component."""
-        return {}
-
     def __post_init__(self, db):
         self.db: 'Datalayer' = db
 

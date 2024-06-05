@@ -91,7 +91,7 @@ def mock_lru_cache():
 @vcr.use_cassette()
 def test_embed():
     e = OpenAIEmbedding(identifier='text-embedding-ada-002')
-    resp = e.predict_one('Hello, world!')
+    resp = e.predict('Hello, world!')
 
     assert len(resp) == e.shape[0]
     assert all(isinstance(x, float) for x in resp)
@@ -110,7 +110,7 @@ def test_batch_embed():
 @vcr.use_cassette()
 def test_chat():
     e = OpenAIChatCompletion(identifier='gpt-3.5-turbo', prompt='Hello, {context}')
-    resp = e.predict_one('', context=['world!'])
+    resp = e.predict('', context=['world!'])
 
     assert isinstance(resp, str)
 
@@ -131,7 +131,7 @@ def test_create_url():
         prompt='a close up, studio photographic portrait of a {context}',
         response_format='url',
     )
-    resp = e.predict_one('cat')
+    resp = e.predict('cat')
 
     # PNG 8-byte signature
     assert resp[0:16] == PNG_BYTE_SIGNATURE
@@ -160,7 +160,7 @@ def test_edit_url():
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer = io.BytesIO(f.read())
-    resp = e.predict_one(buffer, context=['superduperdb'])
+    resp = e.predict(buffer, context=['superduperdb'])
     buffer.close()
 
     # PNG 8-byte signature
@@ -204,7 +204,7 @@ def test_transcribe():
         'only make an exception for the following words: {context}'
     )
     e = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
-    resp = e.predict_one(buffer, context=['United States'])
+    resp = e.predict(buffer, context=['United States'])
     buffer.close()
 
     assert 'United States' in resp
@@ -220,7 +220,7 @@ def test_translate():
         'only make an exception for the following words: {context}'
     )
     e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
-    resp = e.predict_one(buffer, context=['Emmerich'])
+    resp = e.predict(buffer, context=['Emmerich'])
     buffer.close()
 
     assert 'station' in resp

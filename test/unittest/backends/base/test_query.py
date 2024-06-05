@@ -151,15 +151,15 @@ def test_model(db):
 
     m = db.load('model', 'linear_a')
 
-    m.predict_one(torch.randn(32))
+    m.predict(torch.randn(32))
 
     from superduperdb.backends.base.query import Model
 
     t = torch.randn(32)
 
-    m.predict_one(t)
+    m.predict(t)
 
-    q = Model('linear_a').predict_one(t)
+    q = Model('linear_a').predict(t)
 
     out = db.execute(q).unpack()
 

@@ -261,7 +261,7 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
                 )
 
     @ensure_initialized
-    def predict_one(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Predict on a single input.
 
         :param args: Input arguments

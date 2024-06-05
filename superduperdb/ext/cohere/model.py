@@ -65,7 +65,7 @@ class CohereEmbed(Cohere):
             self.datatype = vector(shape=self.shape)
 
     @retry
-    def predict_one(self, X: str):
+    def predict(self, X: str):
         """Predict the embedding of a single text.
 
         :param X: The text to predict the embedding of.
@@ -119,7 +119,7 @@ class CohereGenerate(Cohere):
             self.datatype = dtype('str')
 
     @retry
-    def predict_one(self, prompt: str, context: t.Optional[t.List[str]] = None):
+    def predict(self, prompt: str, context: t.Optional[t.List[str]] = None):
         """Predict the generation of a single prompt.
 
         :param prompt: The prompt to generate text from.
@@ -139,4 +139,4 @@ class CohereGenerate(Cohere):
 
         :param dataset: The dataset to predict the generations of.
         """
-        return [self.predict_one(dataset[i]) for i in range(len(dataset))]
+        return [self.predict(dataset[i]) for i in range(len(dataset))]

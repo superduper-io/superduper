@@ -19,7 +19,7 @@ if os.getenv('JINA_API_KEY') is None:
 )
 def test_embed_one():
     embed = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
-    resp = embed.predict_one('Hello world')
+    resp = embed.predict('Hello world')
 
     assert len(resp) == embed.shape[0]
     assert isinstance(resp, list)

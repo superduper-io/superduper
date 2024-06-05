@@ -109,7 +109,7 @@ def test_full_finetune(db, trainer):
         model_kwargs=dict(device_map="auto"),
     )
 
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
+    result = llm.predict(prompt, max_new_tokens=200, do_sample=False)
     assert len(result) > 0
 
 
@@ -130,7 +130,7 @@ def test_lora_finetune(db, trainer):
 
     llm = db.load("model", "llm-finetune")
 
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
+    result = llm.predict(prompt, max_new_tokens=200, do_sample=False)
     assert len(result) > 0
 
 
@@ -153,7 +153,7 @@ def test_qlora_finetune(db, trainer):
 
     llm = db.load("model", "llm-finetune")
 
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
+    result = llm.predict(prompt, max_new_tokens=200, do_sample=False)
     assert len(result) > 0
 
 
@@ -186,5 +186,5 @@ def test_local_ray_deepspeed_lora_finetune(db, trainer):
 
     llm = db.load("model", "llm-finetune")
 
-    result = llm.predict_one(prompt, max_new_tokens=200, do_sample=False)
+    result = llm.predict(prompt, max_new_tokens=200, do_sample=False)
     assert len(result) > 0

@@ -74,20 +74,20 @@ def predict_mixin_multikey() -> Model:
     return predict_mixin
 
 
-def test_pm_predict_one(predict_mixin):
+def test_pm_predict(predict_mixin):
     X = np.random.randn(5)
     expect = to_call(X)
-    assert np.allclose(predict_mixin.predict_one(X), expect)
+    assert np.allclose(predict_mixin.predict(X), expect)
 
 
 def test_predict_core_multikey(predict_mixin_multikey):
     X = 1
     Y = 2
     expect = to_call_multi(X, Y)
-    output = predict_mixin_multikey.predict_one(X, Y)
+    output = predict_mixin_multikey.predict(X, Y)
     assert output == expect
 
-    output = predict_mixin_multikey.predict_one(x=X, y=Y)
+    output = predict_mixin_multikey.predict(x=X, y=Y)
     assert output == expect
 
     with pytest.raises(TypeError):
@@ -102,9 +102,9 @@ def test_predict_core_multikey(predict_mixin_multikey):
 
 
 def test_pm_core_predict(predict_mixin):
-    # make sure _predict_one is called
-    with patch.object(predict_mixin, 'predict_one', return_self):
-        assert predict_mixin.predict_one(5) == return_self(5)
+    # make sure predict is called
+    with patch.object(predict_mixin, 'predict', return_self):
+        assert predict_mixin.predict(5) == return_self(5)
 
 
 @patch('superduperdb.components.model.ComponentJob')
@@ -386,7 +386,7 @@ def test_query_model(db):
 
     import torch
 
-    out = m.predict_one(X=torch.randn(32))
+    out = m.predict(X=torch.randn(32))
 
     assert isinstance(out, bson.ObjectId)
 
@@ -416,7 +416,7 @@ def test_sequential_model():
         ],
     )
 
-    assert m.predict_one(x=1) == 4
+    assert m.predict(x=1) == 4
     assert m.predict_batches([((1,), {}) for _ in range(4)]) == [4, 4, 4, 4]
 
 

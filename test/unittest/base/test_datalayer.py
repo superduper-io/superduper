@@ -535,7 +535,7 @@ def test_replace(db):
 
     db.replace(model, upsert=True)
 
-    assert db.load('model', 'm').predict_one(1) == 2
+    assert db.load('model', 'm').predict(1) == 2
 
     new_model = ObjectModel(
         object=lambda x: x + 2, identifier='m', signature='singleton'

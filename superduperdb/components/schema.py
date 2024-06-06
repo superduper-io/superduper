@@ -7,6 +7,7 @@ from overrides import override
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.misc.annotations import merge_docstrings
+from superduperdb.misc.reference import parse_reference
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 SCHEMA_KEY = '_schema'
@@ -114,10 +115,6 @@ class Schema(Component):
         """
         if self.trivial:
             return data
-
-        blobs = data.get('_blobs', {})
-        files = data.get('_files', {})
-
         decoded = {}
         for k, value in data.items():
             field = self.fields.get(k)
@@ -127,15 +124,13 @@ class Schema(Component):
 
             value = data[k]
 
-            if isinstance(value, str) and value.startswith('&'):
+            if reference := parse_reference(value):
                 kwargs = {}
+                if not reference.is_in_database:
+                    file_id = value.split(':')[-1]
+                    value = data.get(f'_{reference.name}s', {}).get(file_id)
+                kwargs[reference.name] = value
 
-                if value.startswith('&:blob:'):
-                    file_id = value.split('&:blob:')[1]
-                    kwargs['blob'] = blobs.get(file_id, value)
-
-                elif value.startswith('&:file:'):
-                    kwargs['file'] = files.get(value.split('/')[1], value)
                 encodable = field.encodable_cls(datatype=field, **kwargs)
                 if not field.encodable_cls.lazy:
                     encodable = encodable.unpack()

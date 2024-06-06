@@ -13,6 +13,7 @@ from superduperdb.components.datatype import (
 )
 from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
 from superduperdb.misc.annotations import merge_docstrings
+from superduperdb.misc.reference import parse_reference
 from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
@@ -305,6 +306,15 @@ def _deep_flat_encode(
 
 
 def _get_leaf_from_cache(k, cache, blobs, files, db: t.Optional['Datalayer'] = None):
+    if reference := parse_reference(k):
+        file_id = k.split(':')[-1]
+        if reference.name == 'blob':
+            return blobs.get(file_id)
+
+        elif reference.name == 'file':
+            return files.get(file_id)
+
+    k = k[1:]
     if isinstance(cache[k], Leaf):
         leaf = cache[k]
         if not leaf.db:
@@ -339,9 +349,9 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
             k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
-        return _get_leaf_from_cache(r[1:], cache, blobs, files, db=db)
+        return _get_leaf_from_cache(r, cache, blobs, files, db=db)
     if isinstance(r, str) and r.startswith('&:'):
-        return _get_from_reference(r, cache, blobs, files, db=db)
+        return _get_from_in_db_reference(r, cache, blobs, files, db=db)
     if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
         match = re.match("^\?db\.load\((.*)\)$", r)
         assert match is not None
@@ -357,17 +367,14 @@ def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = N
     return r
 
 
-def _get_from_reference(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
-    if r.startswith('&:blob:'):
-        # r must be in this format: '&:blob:{file_id}'
-        file_id = r.split('&:blob:')[-1]
-        return blobs.get(file_id, r)
+def _get_from_in_db_reference(
+    r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None
+):
+    if not (reference := parse_reference(r)):
+        return r
 
-    if r.startswith('&:file:'):
-        # r must be in this format: '&:file:{file_name}/{file_id}'
-        return files.get(r.split('/')[-1], r)
-
-    if r.startswith('&:component:'):
-        # r must be in this format: '&:component:xxx/xxx/{uuid}
+    if reference.name == 'component':
         assert db is not None, 'db is required for ?:component:'
         return db.load(uuid=r.split('/')[-1])
+
+    return r

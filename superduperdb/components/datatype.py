@@ -625,7 +625,7 @@ class Artifact(_BaseEncodable):
 
         if schema is not None:
             blobs[self.file_id] = maybe_bytes
-            return f'&{self._id}'
+            return f'?{self._id}'
 
         r = super()._deep_flat_encode(
             cache,
@@ -634,7 +634,7 @@ class Artifact(_BaseEncodable):
             leaves_to_keep=leaves_to_keep,
             schema=schema,
         )
-        r['blob'] = f'&{self._id}'
+        r['blob'] = f'?{self._id}'
 
         del r['x']
         if isinstance(maybe_bytes, bytes):
@@ -689,7 +689,7 @@ class File(_BaseEncodable):
     def _id(self):
         assert self.file_id is not None
         file_name = self.file_name.replace('.', '__')
-        return f':file:{file_name}/{self.file_id}'
+        return f':file:{file_name}:{self.file_id}'
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
         if isinstance(self, leaves_to_keep):
@@ -704,12 +704,12 @@ class File(_BaseEncodable):
 
         if schema is not None:
             files[self.file_id]
-            return f'&{self._id}'
+            return f'?{self._id}'
 
         r = super()._deep_flat_encode(
             cache, blobs, files, leaves_to_keep=(), schema=schema
         )
-        r['file'] = f'&{self._id}'
+        r['file'] = f'?{self._id}'
 
         del r['x']
 
@@ -727,7 +727,7 @@ class File(_BaseEncodable):
             # parse the file reference
             if self._file.startswith('&:file:'):
                 file = self._file.replace('&:file:', '')
-                *_, file_name, file_id = file.split('/')
+                *_, file_name, file_id = file.split(':')
                 file_name = file_name.replace('__', '.')
                 self.file_id = file_id
                 self.file_name = file_name

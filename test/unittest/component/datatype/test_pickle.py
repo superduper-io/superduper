@@ -1,5 +1,3 @@
-import dataclasses as dc
-import typing as t
 from test.db_config import DBConfig
 from test.unittest.component.datatype import utils
 
@@ -8,7 +6,6 @@ import pandas as pd
 import pytest
 
 from superduperdb.base.enums import DBType
-from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     DataType,
     pickle_encoder,
@@ -17,25 +14,10 @@ from superduperdb.components.datatype import (
 )
 
 
-@dc.dataclass(kw_only=True)
-class SpecialComponent(Component):
-    type_id: t.ClassVar[str] = "special"
-    my_data: str | None = None
-    my_data_lazy: str | None = None
-    _artifacts: t.ClassVar = (
-        ("my_data", pickle_serializer),
-        ("my_file_lazy", pickle_lazy),
-    )
-
-
 @pytest.fixture
 def random_data():
     array = np.array([1])
     return array
-
-
-def print_sep():
-    print("\n", "-" * 80, "\n")
 
 
 datatypes = [
@@ -77,6 +59,6 @@ def test_component(random_data, datatype):
 def test_component_with_db(db, random_data, datatype):
     # TODO: Need to fix the encodable in component when db is SQL
     # Some bytes are not serializable, then can't be stored in SQL
-    if datatype.encodable == 'encodable' and db.databackend.db_type == DBType.SQL:
+    if datatype.encodable == "encodable" and db.databackend.db_type == DBType.SQL:
         return
     utils.check_component_with_db(random_data, datatype, db)

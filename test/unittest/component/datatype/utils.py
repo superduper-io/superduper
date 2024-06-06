@@ -2,7 +2,6 @@ import dataclasses as dc
 import os
 import typing as t
 from pprint import pprint
-from unittest.mock import patch
 
 import numpy as np
 
@@ -59,14 +58,14 @@ def check_data_with_schema(data, datatype: DataType):
 
     decoded = Document.decode(encoded, schema=schema)
     if datatype.encodable_cls.lazy:
-        assert isinstance(decoded['x'], datatype.encodable_cls)
-        assert isinstance(decoded['x'].x, Empty)
+        assert isinstance(decoded["x"], datatype.encodable_cls)
+        assert isinstance(decoded["x"].x, Empty)
         decoded = Document(decoded.unpack())
     pprint(decoded)
     print_sep()
 
-    assert_equal(document['x'], decoded['x'])
-    assert_equal(document['y'], decoded['y'])
+    assert_equal(document["x"], decoded["x"])
+    assert_equal(document["y"], decoded["y"])
 
     return document, encoded, decoded
 
@@ -82,29 +81,29 @@ def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
     document = Document({"x": data, "y": 1})
     print(document)
     print_sep()
-    db['documents'].insert([document]).execute(refresh=False)
+    db["documents"].insert([document]).execute(refresh=False)
 
     if db.databackend.db_type == DBType.MONGODB:
-        encoded = db.databackend.conn['test_db']['documents'].find_one()
+        encoded = db.databackend.conn["test_db"]["documents"].find_one()
     else:
-        t = db.databackend.conn.table('documents')
+        t = db.databackend.conn.table("documents")
         encoded = dict(t.select(t).execute().iloc[0])
 
     pprint(encoded)
     print_sep()
 
-    decoded = list(db['documents'].select().execute())[0]
+    decoded = list(db["documents"].select().execute())[0]
 
     if datatype.encodable_cls.lazy:
-        assert isinstance(decoded['x'], datatype.encodable_cls)
-        assert isinstance(decoded['x'].x, Empty)
+        assert isinstance(decoded["x"], datatype.encodable_cls)
+        assert isinstance(decoded["x"].x, Empty)
         decoded = Document(decoded.unpack())
 
     pprint(decoded)
     print_sep()
 
-    assert_equal(document['x'], decoded['x'])
-    assert_equal(document['y'], decoded['y'])
+    assert_equal(document["x"], decoded["x"])
+    assert_equal(document["y"], decoded["y"])
 
     return document, encoded, decoded
 
@@ -123,8 +122,8 @@ def check_data_without_schema(data, datatype: DataType):
 
     decoded = Document.decode(encoded)
     pprint(decoded)
-    assert_equal(document['x'], decoded['x'])
-    assert_equal(document['y'], decoded['y'])
+    assert_equal(document["x"], decoded["x"])
+    assert_equal(document["y"], decoded["y"])
     return document, encoded, decoded
 
 
@@ -135,20 +134,20 @@ def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
     document = Document({"x": datatype(data), "y": 1})
     print(document)
     print("\n", "-" * 80, "\n")
-    db['documents'].insert([document]).execute(refresh=False)
+    db["documents"].insert([document]).execute(refresh=False)
 
     if db.databackend.db_type == DBType.MONGODB:
-        encoded = db.databackend.conn['test_db']['documents'].find_one()
+        encoded = db.databackend.conn["test_db"]["documents"].find_one()
 
     pprint(encoded)
     print("\n", "-" * 80, "\n")
 
-    decoded = list(db['documents'].select().execute())[0]
+    decoded = list(db["documents"].select().execute())[0]
     pprint(decoded)
     print("\n", "-" * 80, "\n")
 
-    assert_equal(document['x'], decoded['x'])
-    assert_equal(document['y'], decoded['y'])
+    assert_equal(document["x"], decoded["x"])
+    assert_equal(document["y"], decoded["y"])
 
     return document, encoded, decoded
 
@@ -172,26 +171,24 @@ def check_component(data, datatype: DataType):
     print("datatype", datatype)
     print_sep()
 
-    with patch.object(TestComponent, "_artifacts", (("x", datatype),)), patch.object(
-        ChildComponent, "_artifacts", (("x", datatype),)
-    ):
-        c = TestComponent(
-            "test",
-            x=data,
-            child=ChildComponent("child", y=2),
-        )
-        pprint(c)
-        print_sep()
+    c = TestComponent(
+        "test",
+        x=data,
+        child=ChildComponent("child", y=2, artifacts={"x": datatype}),
+        artifacts={"x": datatype},
+    )
+    pprint(c)
+    print_sep()
 
-        encoded = c.encode()
-        pprint(encoded)
-        print_sep()
+    encoded = c.encode()
+    pprint(encoded)
+    print_sep()
 
-        decoded = Document.decode(encoded).unpack()
-        decoded.init()
-        pprint(decoded)
+    decoded = Document.decode(encoded).unpack()
+    decoded.init()
+    pprint(decoded)
 
-        assert_equal(c.x, decoded.x)
+    assert_equal(c.x, decoded.x)
 
     return c, encoded, decoded
 
@@ -200,25 +197,23 @@ def check_component_with_db(data, datatype, db):
     print("datatype", datatype)
     print_sep()
 
-    with patch.object(TestComponent, "_artifacts", (("x", datatype),)), patch.object(
-        ChildComponent, "_artifacts", (("x", datatype),)
-    ):
-        c = TestComponent(
-            "test",
-            x=data,
-            child=ChildComponent("child", y=2),
-        )
-        db.add(c)
-        pprint(c)
-        print_sep()
+    c = TestComponent(
+        "test",
+        x=data,
+        child=ChildComponent("child", y=2, artifacts={"x": datatype}),
+        artifacts={"x": datatype},
+    )
+    db.add(c)
+    pprint(c)
+    print_sep()
 
-        encoded = db.metadata._get_component_by_uuid(c.uuid)
-        pprint(encoded)
-        print_sep()
+    encoded = db.metadata._get_component_by_uuid(c.uuid)
+    pprint(encoded)
+    print_sep()
 
-        decoded = Document.decode(encoded, db=db).unpack()
-        decoded.init()
-        pprint(decoded)
-        assert_equal(c.x, decoded.x)
+    decoded = Document.decode(encoded, db=db).unpack()
+    decoded.init()
+    pprint(decoded)
+    assert_equal(c.x, decoded.x)
 
     return c, encoded, decoded

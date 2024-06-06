@@ -84,7 +84,7 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert '_leaves' in encoded_r
     assert '_blobs' in encoded_r
-    assert encoded_r['img'].startswith('&:blob:')
+    assert encoded_r['img'].startswith('?:blob:')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
 

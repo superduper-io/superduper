@@ -114,6 +114,19 @@ class ArtifactStore(ABC):
             except FileExistsError:
                 continue
 
+        from superduperdb.misc.special_dicts import recursive_update
+
+        file_ids = list(blobs.keys()) + list(files.keys())
+
+        def replace_file_id(v):
+            if isinstance(v, str) and v.startswith(('?:file:', '?:blob:')):
+                file_id = v.split(':')[-1]
+                if file_id in file_ids:
+                    return f'&{v[1:]}'
+            return v
+
+        r = recursive_update(r, replace_file_id)
+
         # After we save the artifacts, we can remove the blobs and files
         r['_files'] = {}
         r['_blobs'] = {}
@@ -141,7 +154,7 @@ class ArtifactStore(ABC):
         )
         for file_path in files:
             # file: &:file:file_name/file_id
-            self._delete_bytes(file_path.split('/')[-1])
+            self._delete_bytes(file_path.split(':')[-1])
 
     @abstractmethod
     def get_bytes(self, file_id: str) -> bytes:

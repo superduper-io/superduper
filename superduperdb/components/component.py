@@ -404,7 +404,7 @@ def ensure_initialized(func):
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if not hasattr(self, "_is_initialized") or not self._is_initialized:
+        if not getattr(self, "_is_initialized", False):
             model_message = f"{self.__class__.__name__} : {self.identifier}"
             logging.debug(f"Initializing {model_message}")
             self.init()

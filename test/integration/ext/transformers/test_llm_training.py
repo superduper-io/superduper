@@ -7,13 +7,14 @@ from superduperdb import superduper
 from superduperdb.backends.mongodb import MongoQuery
 from superduperdb.base.document import Document
 from superduperdb.ext.transformers.model import LLM
-from superduperdb.ext.transformers.training import LLMTrainer
 
 try:
     import datasets
     import peft
     import torch
     import trl
+
+    from superduperdb.ext.transformers.training import LLMTrainer
 
     GPU_AVAILABLE = torch.cuda.is_available()
 except ImportError:

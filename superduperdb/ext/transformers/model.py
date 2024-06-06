@@ -32,8 +32,8 @@ from superduperdb.components.model import (
     _DeviceManaged,
     _Fittable,
 )
+from superduperdb.components.training import Checkpoint
 from superduperdb.ext.llm.model import BaseLLM
-from superduperdb.ext.transformers.training import Checkpoint
 from superduperdb.jobs.job import Job
 
 

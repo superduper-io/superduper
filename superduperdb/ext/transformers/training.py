@@ -1,6 +1,5 @@
 import dataclasses as dc
 import os
-import re
 import typing as t
 from copy import deepcopy
 from functools import wraps
@@ -29,55 +28,13 @@ from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.config import Config
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
-from superduperdb.components.datatype import DataType, file_lazy
 from superduperdb.components.model import Trainer as SuperDuperTrainer
+from superduperdb.components.training import Checkpoint
 from superduperdb.misc.hash import random_sha1
 
 if t.TYPE_CHECKING:
     from superduperdb.ext.transformers.model import LLM
-
-
-class Checkpoint(Component):
-    """Checkpoint component for saving the model checkpoint.
-
-    :param path: The path to the checkpoint.
-    :param step: The step of the checkpoint.
-    """
-
-    path: t.Optional[str]
-    step: int
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (("path", file_lazy),)
-    type_id: t.ClassVar[str] = "checkpoint"
-
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
-        self.version = int(self.step)
-
-    @property
-    def uri(self):
-        """Get the uri of the checkpoint."""
-        return f"checkpoint://{self.identifier}/{self.step}"
-
-    @staticmethod
-    def check_uri(uri):
-        """Check if the uri is a valid checkpoint uri.
-
-        :param uri: The uri to check.
-        """
-        return re.match(r"^checkpoint://.*?/\d+$", uri) is not None
-
-    @staticmethod
-    def parse_uri(uri):
-        """Parse the uri to get the identifier and step.
-
-        :param uri: The uri to parse.
-        """
-        if not Checkpoint.check_uri(uri):
-            raise ValueError(f"Invalid uri: {uri}")
-        *_, identifier, step = uri.split("/")
-        return identifier, int(step)
 
 
 class LLMCallback(TrainerCallback):

@@ -15,7 +15,7 @@ Usage: {CLI_NAME} [GLOBAL-FLAGS] [COMMAND] [COMMAND-FLAGS] [COMMAND-ARGS]
 
     $ {CLI_NAME} serve
 
-    $ {CLI_NAME} local-cluster users documents products
+    $ {CLI_NAME} local-cluster up
 
     $ {CLI_NAME} config
 """,

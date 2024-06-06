@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from superduperdb.cli import app, config, info
+from superduperdb.cli import app, info, apply
 from superduperdb.cli.serve import cdc, local_cluster, ray_serve, vector_search
 
 __all__ = 'config', 'info', 'local_cluster', 'vector_search', 'cdc', 'ray_serve'

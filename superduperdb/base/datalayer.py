@@ -221,11 +221,14 @@ class Datalayer:
         logging.info(f"Connecting to compute engine: {new.name}")
         self.compute = new
 
+    def disconnect(self):
+        self.compute.disconnect()
+
     def get_compute(self):
         """Get compute."""
         return self.compute
 
-    def drop(self, force: bool = False):
+    def drop(self, force: bool = False, data: bool = False):
         """
         Drop all data, artifacts, and metadata.
 
@@ -243,7 +246,8 @@ class Datalayer:
             for vi in self.show('vector_index'):
                 FastVectorSearcher.drop_remote(vi)
 
-        self.databackend.drop(force=True)
+        if data:
+            self.databackend.drop(force=True)
         self.metadata.drop(force=True)
         self.artifact_store.drop(force=True)
 

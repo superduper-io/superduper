@@ -81,7 +81,7 @@ def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
     document = Document({"x": data, "y": 1})
     print(document)
     print_sep()
-    db["documents"].insert([document]).execute(refresh=False)
+    db["documents"].insert([document]).execute()
 
     if db.databackend.db_type == DBType.MONGODB:
         encoded = db.databackend.conn["test_db"]["documents"].find_one()
@@ -134,7 +134,7 @@ def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
     document = Document({"x": datatype(data), "y": 1})
     print(document)
     print("\n", "-" * 80, "\n")
-    db["documents"].insert([document]).execute(refresh=False)
+    db["documents"].insert([document]).execute()
 
     if db.databackend.db_type == DBType.MONGODB:
         encoded = db.databackend.conn["test_db"]["documents"].find_one()

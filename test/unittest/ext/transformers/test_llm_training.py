@@ -9,13 +9,14 @@ from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.metric import Metric
 from superduperdb.ext.transformers import LLM
-from superduperdb.ext.transformers.training import LLMTrainer
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
     import datasets
     import peft
     import trl
+
+    from superduperdb.ext.transformers.training import LLMTrainer
 except ImportError:
     datasets = None
     peft = None

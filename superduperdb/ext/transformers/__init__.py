@@ -5,6 +5,5 @@ _, requirements = requires_packages(
 )
 
 from .model import LLM, TextClassificationPipeline
-from .training import LLMTrainer
 
-__all__ = ('TextClassificationPipeline', 'LLM', 'LLMTrainer')
+__all__ = ('TextClassificationPipeline', 'LLM')

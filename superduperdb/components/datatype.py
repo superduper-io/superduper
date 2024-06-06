@@ -678,11 +678,12 @@ class File(_BaseEncodable):
         return f':file:{file_name}:{self.file_id}'
 
     def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
+        self.file_id = self.file_id or random_sha1()
+
         if isinstance(self, leaves_to_keep):
             cache[self.id] = self
             return f'?{self.id}'
 
-        self.file_id = self.file_id or random_sha1()
         if self.x not in files:
             files[self.file_id] = self.x
 

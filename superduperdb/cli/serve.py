@@ -25,6 +25,10 @@ def local_cluster(
     action = action.lower()
 
     if action == 'up':
+        try:
+            down_cluster()
+        except Exception:
+            pass
         up_cluster(
             notebook_token=notebook_token,
             num_workers=num_workers,

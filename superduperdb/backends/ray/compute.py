@@ -1,4 +1,5 @@
 import typing as t
+import uuid
 
 import ray
 
@@ -63,7 +64,7 @@ class RayComputeBackend(ComputeBackend):
             remote_function = ray.remote(**compute_kwargs)(_dependable_remote_job)
         else:
             remote_function = ray.remote(_dependable_remote_job)
-        future = remote_function.remote(function, *args, **kwargs)
+        future = remote_function.remote(function, *args, **kwargs, lifetime='detached')
         task_id = str(future.task_id().hex())
         self._futures_collection[task_id] = future
 
@@ -71,6 +72,12 @@ class RayComputeBackend(ComputeBackend):
             f"Job submitted on {self}.  function: {function}; "
             f"task: {task_id}; job_id: {str(future.job_id())}"
         )
+
+        job_id = task_id[-8:]
+        port = '8265'
+        job_port = self.address.split(':')[-1]
+        link = f"{self.address.replace('ray://', 'http://').replace(job_port, port)}/#/jobs/{job_id}/tasks/{task_id}"
+        logging.info('Follow the progress of work at the following link:', link)
         return future, task_id
 
     @property
@@ -108,4 +115,4 @@ class RayComputeBackend(ComputeBackend):
 
     def shutdown(self) -> None:
         """Shuts down the ray cluster."""
-        ray.shutdown()
+        raise NotImplementedError

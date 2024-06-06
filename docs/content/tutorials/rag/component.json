@@ -1,0 +1,179 @@
+{
+  "_base": "?:component:stack/rag/37e587f3-91e8-4a4f-b286-2d32398dd0b3",
+  "_leaves": {
+    "superduperdb/components/vector_index/vector/232a2649119b9619411948dc32785b5addb1549a": {
+      "_path": "superduperdb/components/vector_index/vector",
+      "shape": 384,
+      "identifier": "my-vec"
+    },
+    ":component:model/my-embedding/a34389e8-12bf-4bf3-bca7-bbe5c027d859": {
+      "_path": "superduperdb/ext/sentence_transformers/model/SentenceTransformer",
+      "preferred_devices": [
+        "cuda",
+        "mps",
+        "cpu"
+      ],
+      "device": "cpu",
+      "identifier": "my-embedding",
+      "uuid": "a34389e8-12bf-4bf3-bca7-bbe5c027d859",
+      "signature": "*args,**kwargs",
+      "datatype": "?superduperdb/components/vector_index/vector/232a2649119b9619411948dc32785b5addb1549a",
+      "output_schema": null,
+      "flatten": false,
+      "model_update_kwargs": {},
+      "predict_kwargs": {
+        "show_progress_bar": true
+      },
+      "compute_kwargs": {},
+      "validation": null,
+      "metric_values": {},
+      "num_workers": 0,
+      "model": "all-MiniLM-L6-v2",
+      "preprocess": null,
+      "postprocess": {
+        "_path": "superduperdb/base/code/Code",
+        "identifier": "",
+        "uuid": "2c9da7eb-8fdf-4fe6-9c0d-d1f1dd056f6f",
+        "code": "from superduperdb import code\n\n@code\ndef postprocess(x):\n    return x.tolist()\n"
+      },
+      "type_id": "model",
+      "version": 0,
+      "hidden": false
+    },
+    "query/89c6bbe09d45e024c89b0eb0caaf620a04d608885796fe739fdafadd9ed87ce4": {
+      "_path": "superduperdb/backends/mongodb/query/parse_query",
+      "documents": [],
+      "query": "docu.find()"
+    },
+    ":component:listener/my-listener/f2a5cc60-9308-4146-8370-4c0b787292e3": {
+      "_path": "superduperdb/components/listener/Listener",
+      "identifier": "my-listener",
+      "uuid": "f2a5cc60-9308-4146-8370-4c0b787292e3",
+      "key": "txt",
+      "model": "?:component:model/my-embedding/a34389e8-12bf-4bf3-bca7-bbe5c027d859",
+      "select": "?query/89c6bbe09d45e024c89b0eb0caaf620a04d608885796fe739fdafadd9ed87ce4",
+      "active": true,
+      "predict_kwargs": {
+        "max_chunk_size": 50
+      },
+      "type_id": "listener",
+      "version": 0,
+      "hidden": false
+    },
+    ":component:vector_index/my-index/a32aae9a-465c-4041-aa82-ecbebbb4e0fb": {
+      "_path": "superduperdb/components/vector_index/VectorIndex",
+      "identifier": "my-index",
+      "uuid": "a32aae9a-465c-4041-aa82-ecbebbb4e0fb",
+      "indexing_listener": "?:component:listener/my-listener/f2a5cc60-9308-4146-8370-4c0b787292e3",
+      "compatible_listener": null,
+      "measure": "cosine",
+      "metric_values": {},
+      "type_id": "vector_index",
+      "version": 0,
+      "hidden": false
+    },
+    "variable/prompt": {
+      "_path": "superduperdb/base/variables/Variable",
+      "identifier": "prompt",
+      "uuid": "2cb12f3d-2fb1-4aae-ab0c-a3afb6166923"
+    },
+    "query/d2e7bca73884aee93102dba7d578275fbc35d241a8cbbf4b2aad82fd57b7c805": {
+      "_path": "superduperdb/backends/mongodb/query/parse_query",
+      "documents": [
+        {
+          "txt": "?variable/prompt"
+        }
+      ],
+      "query": "docu.like(documents[0], vector_index=\"my-index\", n=5).find().limit(10)"
+    },
+    ":component:model/my-prompt/5e165724-d78f-47b9-b4e0-f782f21eecf7": {
+      "_path": "superduperdb/ext/llm/prompter/RetrievalPrompt",
+      "identifier": "my-prompt",
+      "uuid": "5e165724-d78f-47b9-b4e0-f782f21eecf7",
+      "signature": "**kwargs",
+      "datatype": null,
+      "output_schema": null,
+      "flatten": false,
+      "model_update_kwargs": {},
+      "predict_kwargs": {},
+      "compute_kwargs": {},
+      "validation": null,
+      "metric_values": {},
+      "num_workers": 0,
+      "preprocess": null,
+      "postprocess": {
+        "_path": "superduperdb/base/code/Code",
+        "identifier": "",
+        "uuid": "9d1e182d-42bc-4ec2-857f-06fb4008dee2",
+        "code": "from superduperdb import code\n\n@code\ndef get_output(c):\n    return [r['txt'] for r in c]\n"
+      },
+      "select": "?query/d2e7bca73884aee93102dba7d578275fbc35d241a8cbbf4b2aad82fd57b7c805",
+      "prompt_explanation": "HERE ARE SOME FACTS SEPARATED BY '---' IN OUR DATA REPOSITORY WHICH WILL HELP YOU ANSWER THE QUESTION.",
+      "prompt_introduction": "HERE IS THE QUESTION WHICH YOU SHOULD ANSWER BASED ONLY ON THE PREVIOUS FACTS:",
+      "join": "\n---\n",
+      "type_id": "model",
+      "version": 0,
+      "hidden": false
+    },
+    ":component:model/gpt-3-5-turbo/eb850e54-e5b3-49a2-806c-77808f520a05": {
+      "_path": "superduperdb/ext/openai/model/OpenAIChatCompletion",
+      "identifier": "gpt-3.5-turbo",
+      "uuid": "eb850e54-e5b3-49a2-806c-77808f520a05",
+      "signature": "singleton",
+      "datatype": null,
+      "output_schema": null,
+      "flatten": false,
+      "model_update_kwargs": {},
+      "predict_kwargs": {},
+      "compute_kwargs": {},
+      "validation": null,
+      "metric_values": {},
+      "num_workers": 0,
+      "model": "gpt-3.5-turbo",
+      "max_batch_size": 8,
+      "openai_api_key": null,
+      "openai_api_base": null,
+      "client_kwargs": {},
+      "batch_size": 1,
+      "prompt": "",
+      "type_id": "model",
+      "version": 0,
+      "hidden": false
+    },
+    ":component:model/rag/c95f5400-c9d4-4cf7-99e3-ec86b685e7f1": {
+      "_path": "superduperdb/components/model/SequentialModel",
+      "identifier": "rag",
+      "uuid": "c95f5400-c9d4-4cf7-99e3-ec86b685e7f1",
+      "signature": "**kwargs",
+      "datatype": null,
+      "output_schema": null,
+      "flatten": false,
+      "model_update_kwargs": {},
+      "predict_kwargs": {},
+      "compute_kwargs": {},
+      "validation": null,
+      "metric_values": {},
+      "num_workers": 0,
+      "models": [
+        "?:component:model/my-prompt/5e165724-d78f-47b9-b4e0-f782f21eecf7",
+        "?:component:model/gpt-3-5-turbo/eb850e54-e5b3-49a2-806c-77808f520a05"
+      ],
+      "type_id": "model",
+      "version": 0,
+      "hidden": false
+    },
+    ":component:stack/rag/37e587f3-91e8-4a4f-b286-2d32398dd0b3": {
+      "_path": "superduperdb/components/stack/Stack",
+      "identifier": "rag",
+      "uuid": "37e587f3-91e8-4a4f-b286-2d32398dd0b3",
+      "components": [
+        "?:component:vector_index/my-index/a32aae9a-465c-4041-aa82-ecbebbb4e0fb",
+        "?:component:model/rag/c95f5400-c9d4-4cf7-99e3-ec86b685e7f1"
+      ],
+      "type_id": "stack",
+      "version": null,
+      "hidden": false
+    }
+  },
+  "_files": {}
+}

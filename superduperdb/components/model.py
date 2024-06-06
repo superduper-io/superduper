@@ -8,6 +8,7 @@ import os
 import re
 import typing as t
 from abc import abstractmethod
+from functools import wraps
 
 import requests
 import tqdm
@@ -429,14 +430,35 @@ class Mapping:
         return args, kwargs
 
 
+def init_decorator(func):
+    """Decorator to set _is_initialized to True after init method is called.
+
+    :param func: init function.
+    """
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        self._is_initialized = True
+        return result
+
+    return wrapper
+
+
 class ModelMeta(LeafMeta):
     """Metaclass for the `Model` class and descendants # noqa."""
 
     def __new__(mcls, name, bases, dct):
         """Create a new class with merged docstrings # noqa."""
+        # Ensure the instance is initialized before calling predict/predict_batches
+        if 'predict' in dct:
+            dct['predict'] = ensure_initialized(dct['predict'])
+        if 'predict_batches' in dct:
+            dct['predict_batches'] = ensure_initialized(dct['predict_batches'])
+        # If instance call init method, set _is_initialized to True
+        if 'init' in dct:
+            dct['init'] = init_decorator(dct['init'])
         cls = super().__new__(mcls, name, bases, dct)
-        cls.predict_batches = ensure_initialized(cls.predict_batches)
-        cls.predict = ensure_initialized(cls.predict)
         return cls
 
 
@@ -471,6 +493,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
+        self._is_initialized = False
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 

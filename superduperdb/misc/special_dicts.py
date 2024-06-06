@@ -416,10 +416,9 @@ def recursive_update(data, replace_function: t.Callable):
     :param replace_function: Callable
     """
     if isinstance(data, dict):
-        return {
-            key: recursive_update(value, replace_function)
-            for key, value in data.items()
-        }
+        for key, value in data.items():
+            data[key] = recursive_update(value, replace_function)
+        return data
     elif isinstance(data, (list, tuple, set)):
         updated = (recursive_update(item, replace_function) for item in data)
         return type(data)(updated)

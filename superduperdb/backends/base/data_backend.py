@@ -26,6 +26,10 @@ class BaseDataBackend(ABC):
         """Return the datalayer."""
         raise NotImplementedError
 
+    @abstractmethod
+    def drop_outputs(self):
+        """Drop all outputs."""
+
     @property
     def datalayer(self):
         """Return the datalayer."""

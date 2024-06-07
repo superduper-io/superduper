@@ -4,12 +4,17 @@ import typing as t
 from functools import cached_property
 
 import numpy
+from overrides import override
 
 from superduperdb.backends.base.query import Query
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import (
     DataType,
     dill_serializer,
+    pickle_decode,
+    pickle_encode,
 )
 
 
@@ -20,6 +25,10 @@ class Dataset(Component):
     :param sample_size: The number of documents to sample from the query.
     :param random_seed: The random seed to use for sampling.
     :param creation_date: The date the dataset was created.
+    :param raw_data: The raw data for the dataset.
+    :param pin: Whether to pin the dataset.
+                If True, the dataset will load the datas from the database every time.
+                If False, the dataset will cache the datas after we apply to db.
     """
 
     type_id: t.ClassVar[str] = 'dataset'
@@ -31,6 +40,8 @@ class Dataset(Component):
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None
+    raw_data: t.Optional[t.Sequence[t.Any]] = None
+    pin: bool = False
 
     def __post_init__(self, db, artifacts):
         """Post-initialization method.
@@ -48,15 +59,34 @@ class Dataset(Component):
 
     def init(self, db=None):
         """Initialization method."""
+        db = db or self.db
         super().init(db=db)
-        if self._data is None:
-            if self.select is None:
-                raise ValueError('Select cannot be None')
-            data = list(self.db.execute(self.select))
-            if self.sample_size is not None and self.sample_size < len(data):
-                perm = self.random.permutation(len(data)).tolist()
-                data = [data[perm[i]] for i in range(self.sample_size)]
-            self._data = data
+        if self.pin:
+            assert self.raw_data is not None
+            self._data = [
+                Document.decode(r, db=db).unpack() for r in pickle_decode(self.raw_data)
+            ]
+        else:
+            self._data = self._load_data(db)
+
+    @override
+    def pre_create(self, db: 'Datalayer') -> None:
+        """Pre-create hook for database operations.
+
+        :param db: The database to use for the operation.
+        """
+        if self.raw_data is None and self.pin:
+            data = self._load_data(db)
+            self.raw_data = pickle_encode([r.encode() for r in data])
+
+    def _load_data(self, db: 'Datalayer'):
+        assert self.db is not None, 'Database must be set'
+        assert self.select is not None, 'Select must be set'
+        data = list(db.execute(self.select))
+        if self.sample_size is not None and self.sample_size < len(data):
+            perm = self.random.permutation(len(data)).tolist()
+            data = [data[perm[i]] for i in range(self.sample_size)]
+        return data
 
     @cached_property
     def random(self):

@@ -77,6 +77,14 @@ class MongoDataBackend(BaseDataBackend):
             return FileSystemArtifactStore(f'/tmp/{self.name}')
         return MongoArtifactStore(self.conn, f'_filesystem:{self.name}')
 
+    def drop_outputs(self):
+        """Drop all outputs."""
+        for collection in self.db.list_collection_names():
+            if collection.startswith('output_'):
+                self.db.drop_collection(collection)
+            else:
+                self.db[collection].update_many({}, {'$unset': {'_outputs': ''}})
+
     def drop_table_or_collection(self, name: str):
         """Drop the table or collection.
 

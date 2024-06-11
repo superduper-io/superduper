@@ -19,19 +19,10 @@
 <div align="center">
 	<a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
   	<a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>    
-	<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>	
-	<a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
+	<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
 	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
 	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 </div>
-
-
-<div align="center">
-
-`⭐ SuperDuperDB is open-source: Leave a star to support the project! ⭐`
-
-</div>
-
 
 ---
 
@@ -43,14 +34,6 @@
 ## What is SuperDuperDB? 🔮 
 
 SuperDuperDB is a Python framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
-
-Build, deploy and manage any AI application without the need for complex pipelines, infrastructure as well as specialized vector databases, and migrating data, by integrating AI at your data's source: 
-- Generative AI, LLMs, RAG, vector search
-- Standard machine learning use-cases (classification, segmentation, regression, forecasting recommendation etc.)
-- Custom AI use-cases involving specialized models
-- Even the most complex applications/workflows in which different models work together
-
-SuperDuperDB is **not** a database. Think `db = superduper(db)`: SuperDuperDB transforms your databases into an intelligent platform that allows you to leverage the full AI and Python ecosystem. A single development and deployment environment for all your AI applications in one place, fully scalable and easy to manage.
 
 
 ## Key Features:
@@ -91,7 +74,7 @@ We've been working hard improving the quality of the project and bringing new fe
 
 ### Developer contract
 
-- Easier path to integrating AI models. Developers only need to implement these methods
+- Easier path to integrating AI models and components. Developers only need to implement these methods:
 
 | Optional | Method | Description |
 | --- | --- | --- |
@@ -150,24 +133,7 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 </table >
 
-## Why opt for SuperDuperDB?
-
-
-
-
-
-| **Task**                    | With SuperDuperDB                                            | Without                                                      |
-| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Feature/ output computation | Outputs stored directly in database. All I/O and datatype encoding (images etc.) managed automatically. | Write complex MLOps / ETL pipelines to compute outputs and save outputs back to database |
-| Vector-search               | One command configures vector creation, storage, and an elegant search + filtering API based on your database's API | Connect a diverse array of tools for setting up, configuring and refreshing vector-search for your database. |
-| Fine-tuning                 | Fine-tune models directly based on data in your database. All data, weights, traces etc. can be handled and stored by `superdueprdb`. Training can be scaled horizontally and vertically with `ray`. | Immense landscape of tools and integrations to manage; manage all infrastructure, hardware etc. oneself. |
-| Data Management & Security  | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management. | Data duplication and migration to different environments, and specialized vector databases, imposing data management overhead. |
-| Infrastructure              | A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency. | Complex fragmented infrastructure, with multiple pipelines, coming with high adoption and maintenance costs and increasing security risks. |
-| Code                        | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. | Hundreds of lines of codes and settings in different environments and tools. |
-
-
 For more information about SuperDuperDB and why we believe it is much needed, [read this blog post](https://blog.superduperdb.com/superduperdb-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
-
 
 
 ## Supported Datastores (*more coming soon*):

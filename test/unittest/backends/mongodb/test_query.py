@@ -50,9 +50,9 @@ def test_mongo_without_schema(db):
         )
 
     db.execute(
-        MongoQuery(collection_name).insert_many(data),
+        MongoQuery(table=collection_name).insert_many(data),
     )
-    collection = MongoQuery(collection_name)
+    collection = MongoQuery(table=collection_name)
     r = collection.find_one().do_execute(db)
     rs = list(collection.find().do_execute(db))
 
@@ -98,7 +98,7 @@ def test_mongo_schema(db, schema):
     gt = data[0]
 
     db.execute(
-        MongoQuery(db=db, identifier=collection_name).insert_many(data),
+        MongoQuery(db=db, table=collection_name).insert_many(data),
     )
     r = db[collection_name].find_one().execute()
     rs = list(db[collection_name].find().execute())
@@ -113,15 +113,15 @@ def test_mongo_schema(db, schema):
 
 
 def test_select_missing_outputs(db):
-    docs = list(db.execute(q.MongoQuery('documents').find({}, {'_id': 1})))
+    docs = list(db.execute(q.MongoQuery(table='documents').find({}, {'_id': 1})))
     ids = [r['_id'] for r in docs[: len(docs) // 2]]
     db.execute(
-        q.MongoQuery('documents').update_many(
+        q.MongoQuery(table='documents').update_many(
             {'_id': {'$in': ids}},
             Document({'$set': {'_outputs.x::test_model_output::0::0': 'test'}}),
         )
     )
-    select = q.MongoQuery('documents').find({}, {'_id': 1})
+    select = q.MongoQuery(table='documents').find({}, {'_id': 1})
     modified_select = select.select_ids_of_missing_outputs('x::test_model_output::0::0')
     out = list(db.execute(modified_select))
     assert len(out) == (len(docs) - len(ids))

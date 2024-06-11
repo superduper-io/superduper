@@ -35,7 +35,7 @@ def test_training(db, tmpdir):
         fold = "train" if i < 32 else "valid"
         datas.append({"text": text, "id": str(i), "fold": fold})
 
-    collection = MongoQuery("doc")
+    collection = MongoQuery(table="doc")
     db.execute(collection.insert_many(list(map(Document, datas))))
     select = collection.find()
 

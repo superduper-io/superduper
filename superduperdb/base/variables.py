@@ -85,23 +85,9 @@ class Variable(Leaf):
         self.value = self.identifier
 
     @property
-    def _id(self):
-        return f'variable/{self.identifier}'
-
-    @property
     def key(self):
         """Variable key."""
         return f'<var:{str(self.value)}>'
-
-    def _deep_flat_encode(
-        self, cache, blobs, files, leaves_to_keep=(), schema: t.Optional[Schema] = None
-    ):
-        r = super()._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
-        if isinstance(self, leaves_to_keep):
-            cache[self._id] = self
-            return f'?{self._id}'
-        cache[self._id] = r
-        return f'?{self._id}'
 
     def __repr__(self) -> str:
         return self.key

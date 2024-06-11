@@ -46,37 +46,7 @@ class Schema(Component):
 
         :param db: Datalayer instance.
         """
-        for v in self.fields.values():
-            if isinstance(v, DataType):
-                db.add(v)
         return super().pre_create(db)
-
-    def deep_flat_encode_data(self, r, cache, blobs, files, leaves_to_keep=()):
-        """Deep flat encode data.
-
-        :param r: Data to encode.
-        :param cache: Cache for encoding.
-        :param blobs: Blobs for encoding.
-        :param files: Files for encoding.
-        :param leaves_to_keep: Leaves to keep.
-        """
-        for k, datatype in self.fields.items():
-            if k not in r:
-                continue
-            value = r[k]
-            if isinstance(datatype, DataType):
-                if isinstance(value, _BaseEncodable):
-                    assert value.datatype.identifier == datatype.identifier
-                    encodable = value
-                else:
-                    encodable = datatype(value)
-                if isinstance(encodable, leaves_to_keep):
-                    continue
-                r[k] = encodable._deep_flat_encode(
-                    cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=self
-                )
-        r[SCHEMA_KEY] = self.identifier
-        return r
 
     @cached_property
     def encoded_types(self):

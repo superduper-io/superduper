@@ -37,8 +37,8 @@ def test_infer_datatype():
     assert infer_datatype(True) is bool
     assert infer_datatype(b"1") is bytes
 
-    assert infer_datatype(np.array([1, 2, 3])).identifier == "numpy:int64[3]"
-    assert infer_datatype(torch.tensor([1, 2, 3])).identifier == "torch.int64[3]"
+    assert infer_datatype(np.array([1, 2, 3])).identifier == "numpy-int64[3]"
+    assert infer_datatype(torch.tensor([1, 2, 3])).identifier == "torch-int64[3]"
 
     assert infer_datatype({"a": 1}).identifier == "json"
 

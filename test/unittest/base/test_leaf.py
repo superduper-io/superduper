@@ -62,41 +62,23 @@ def test_encode_leaf_with_children():
     )
     assert obj.dict().encode() == {
         '_path': 'test/unittest/base/test_leaf/MySer',
-        'uuid': obj.uuid,
         'identifier': 'my_ser',
+        'uuid': obj.uuid,
         'a': 1,
         'b': 'test_b',
-        'c': obj.c.dict().unpack(),
-        '_leaves': {},
+        'c': '?other_ser',
+        '_leaves': {
+            'other_ser': {k: v for k, v in obj.c.dict().unpack().items() if k != 'identifier'},
+        },
         '_files': {},
         '_blobs': {},
     }
 
 
-def test_serialize_variables_1():
-    s = Test(
-        identifier='tst',
-        a=1,
-        b=Variable(
-            identifier='test/{version}',
-        ),
-        c=Variable(identifier='number'),
-    )
-
-    @dc.dataclass
-    class Tmp:
-        version: int
-
-        def __getitem__(self, item):
-            return {'number': 1.5}[item]
-
-    q = s.set_variables(db=Tmp(version=1), number=1)
-    assert q.dict().encode()['c'] == 1
-
 
 def test_save_variables_2():
     query = (
-        MongoQuery('documents')
+        MongoQuery(table='documents')
         .like({'x': Variable('X')}, vector_index='test')
         .find({'x': {'$regex': '^test/1'}})
     )
@@ -126,7 +108,7 @@ def test_component_with_document():
     leaves = r['_leaves']
 
     pprint(r)
-    assert len(leaves) == 7
+    assert len(leaves) == 8
 
     for leaf in leaves:
         print(type(leaf))
@@ -141,12 +123,12 @@ def test_find_variables():
 
     assert r.variables == ['test']
 
-    q = MongoQuery('test').find_one(Document({'txt': Variable('test')}))
+    q = MongoQuery(table='test').find_one(Document({'txt': Variable('test')}))
 
     assert q.variables == ['test']
 
     q = (
-        MongoQuery('test')
+        MongoQuery(table='test')
         .like(Document({'txt': Variable('test')}), vector_index='test')
         .find()
         .limit(5)

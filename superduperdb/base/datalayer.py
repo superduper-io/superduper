@@ -284,11 +284,12 @@ class Datalayer:
             return sorted(out)
 
         if version is None:
-            return sorted(
+            out = sorted(
                 self.metadata.show_component_versions(
                     type_id=type_id, identifier=identifier
                 )
             )
+            return out
 
         if version == -1:
             return self._get_object_info(type_id=type_id, identifier=identifier)
@@ -362,7 +363,7 @@ class Datalayer:
 
         if auto_schema and self.cfg.auto_schema:
             self.databackend.auto_create_table_schema(
-                db=self, table_name=insert.identifier, documents=insert.documents
+                db=self, table_name=insert.table, documents=insert.documents
             )
 
         inserted_ids = insert.do_execute(self)
@@ -856,7 +857,7 @@ class Datalayer:
         self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
     ):
         # TODO add update logic here to check changed attributes
-        s.logging.debug(f'{object.id} already exists - doing nothing')
+        s.logging.debug(f'{object.type_id},{object.identifier} already exists - doing nothing')
         return []
 
     def _add(
@@ -871,10 +872,8 @@ class Datalayer:
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
-        if not isinstance(object.identifier, variables.Variable):
-            existing_versions = self.show(object.type_id, object.identifier)
-        else:
-            existing_versions = []
+        existing_versions = self.show(object.type_id, object.identifier)
+
         already_exists = (
             isinstance(object.version, int) and object.version in existing_versions
         )
@@ -892,6 +891,12 @@ class Datalayer:
 
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
+        for k, v in serialized['_leaves'].items():
+            if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
+                r = dict(v.dict())
+                del r['identifier']
+                serialized['_leaves'][k] = r
+
         children = [
             v for v in serialized['_leaves'].values() if isinstance(v, Component)
         ]
@@ -900,6 +905,7 @@ class Datalayer:
 
         if children:
             serialized = self._change_component_reference_prefix(serialized)
+
         serialized = self.artifact_store.save_artifact(serialized)
 
         self.metadata.create_component(serialized)
@@ -915,11 +921,12 @@ class Datalayer:
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""
-        references = set()
+        references = {}
         for reference in list(serialized['_leaves'].keys()):
             if isinstance(serialized['_leaves'][reference], Component):
+                comp = serialized['_leaves'][reference]
                 serialized['_leaves'].pop(reference)
-                references.add(reference)
+                references[reference] = comp.type_id + ':' + comp.identifier + ':' + comp.uuid
 
         # Only replace component references
         if not references:
@@ -929,8 +936,8 @@ class Datalayer:
             # Change value if it is a string and starts with '?'
             # and the value is in references
             # ?:xxx: -> &:xxx:
-            if isinstance(value, str) and value[1:] in references:
-                return f'&{value[1:]}'
+            if isinstance(value, str) and value.startswith('?') and value[1:] in references:
+                return '&:component:' + references[value[1:]]
             return value
 
         serialized = recursive_update(serialized, replace_function)
@@ -1023,6 +1030,11 @@ class Datalayer:
         object.version = info['version']
 
         serialized = object.dict().encode(leaves_to_keep=(Component,))
+        for k, v in serialized['_leaves'].items():
+            if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
+                r = dict(v.dict())
+                del r['identifier']
+                serialized['_leaves'][k] = r
 
         children = [
             v for v in serialized['_leaves'].values() if isinstance(v, Component)

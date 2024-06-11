@@ -40,7 +40,7 @@ class TestPipeline:
             trainer=SklearnTrainer(
                 'my-trainer',
                 key=('X', 'y'),
-                select=MongoQuery('documents').find(),
+                select=MongoQuery(table='documents').find(),
             ),
         )
 
@@ -51,7 +51,7 @@ class TestPipeline:
     @pytest.fixture()
     def data_in_db(self, db, X, y):
         db.execute(
-            MongoQuery('documents').insert_many(
+            MongoQuery(table='documents').insert_many(
                 [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )

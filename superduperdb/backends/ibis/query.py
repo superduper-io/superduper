@@ -14,6 +14,7 @@ from superduperdb.backends.base.query import (
 )
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.exceptions import DatabackendException
+from superduperdb.components.datatype import Encodable
 from superduperdb.components.schema import Schema
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -82,7 +83,7 @@ def _model_update_impl(
     for output, source_id in zip(outputs, ids):
         d = {
             '_source': str(source_id),
-            'output': output,
+            'output': output.x if isinstance(output, Encodable) else output,
             'id': str(uuid.uuid4()),
         }
         documents.append(Document(d))
@@ -103,13 +104,6 @@ class IbisQuery(Query):
         'anti_join': '^[^\(]+\.anti_join\(.*\)$',
     }
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
-        r = super()._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-        )
-        cache[r[1:]]['_path'] = 'superduperdb/backends/ibis/query/parse_query'
-        return r
-
     @property
     @applies_to('insert')
     def documents(self):
@@ -120,7 +114,7 @@ class IbisQuery(Query):
                 if isinstance(document, dict):
                     document = Document(document)
                 else:
-                    schema = self.db[self.identifier]._get_schema()
+                    schema = self.db[self.table]._get_schema()
                     field = [
                         k
                         for k in schema.fields
@@ -145,7 +139,7 @@ class IbisQuery(Query):
         return wrapped_documents
 
     def _get_tables(self):
-        out = {self.identifier: self.db.tables[self.identifier]}
+        out = {self.table: self.db.tables[self.table]}
 
         for part in self.parts:
             if isinstance(part, str):
@@ -166,7 +160,7 @@ class IbisQuery(Query):
 
         table_renamings = self.renamings({})
         if len(tables) == 1 and not table_renamings:
-            return self.db.tables[self.identifier].schema
+            return self.db.tables[self.table].schema
         for identifier, c in tables.items():
             renamings = table_renamings.get(identifier, {})
 
@@ -176,7 +170,7 @@ class IbisQuery(Query):
             )
             fields.update(to_update)
 
-        return Schema(f'_tmp:{self.identifier}', fields=fields)
+        return Schema(f'_tmp:{self.table}', fields=fields)
 
     def renamings(self, r={}):
         """Return the renamings.
@@ -187,9 +181,9 @@ class IbisQuery(Query):
             if isinstance(part, str):
                 continue
             if part[0] == 'rename':
-                r[self.identifier] = part[1][0]
+                r[self.table] = part[1][0]
             if part[0] == 'relabel':
-                r[self.identifier] = part[1][0]
+                r[self.table] = part[1][0]
             else:
                 queries = list(part[1]) + list(part[2].values())
                 for query in queries:
@@ -202,11 +196,11 @@ class IbisQuery(Query):
         assert self.parts[1][0] in ['select']
         similar_ids, similar_scores = self._prepare_pre_like(parent)
 
-        t = self.db[self.identifier]
+        t = self.db[self.table]
         filter_query = t.select_using_ids(similar_ids)
         query = type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[
                 *filter_query.parts,
                 *self.parts[1:],
@@ -245,7 +239,7 @@ class IbisQuery(Query):
         if isinstance(like, Document):
             like = like.unpack()
         pre_like_query = IbisQuery(
-            db=self.db, identifier=self.identifier, parts=pre_like_parts
+            db=self.db, table=self.table, parts=pre_like_parts
         )
         within_ids = [
             r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)
@@ -262,7 +256,7 @@ class IbisQuery(Query):
 
         parts = filter_query.parts + post_like_parts
 
-        q = IbisQuery(db=self.db, identifier=self.identifier, parts=parts)
+        q = IbisQuery(db=self.db, table=self.table, parts=parts)
         outputs = q._execute(parent)
         outputs.scores = similar_scores
         return outputs
@@ -281,15 +275,15 @@ class IbisQuery(Query):
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid
         ids = [r[self.primary_id] for r in documents]
-        self.db.databackend.insert(self.identifier, raw_documents=documents)
+        self.db.databackend.insert(self.table, raw_documents=documents)
         return ids
 
     def _create_table_if_not_exists(self):
         tables = self.db.databackend.list_tables_or_collections()
-        if self.identifier in tables:
+        if self.table in tables:
             return
         self.db.databackend.create_table_and_schema(
-            self.identifier,
+            self.table,
             self._get_schema(),
         )
 
@@ -304,7 +298,7 @@ class IbisQuery(Query):
 
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient='records')
-        component_table = self.db.tables[self.identifier]
+        component_table = self.db.tables[self.table]
         return SuperDuperCursor(
             raw_cursor=output,
             db=self.db,
@@ -328,7 +322,7 @@ class IbisQuery(Query):
     @property
     def primary_id(self):
         """Return the primary id."""
-        return self.db.tables[self.identifier].primary_id
+        return self.db.tables[self.table].primary_id
 
     def model_update(
         self,
@@ -455,8 +449,7 @@ class IbisQuery(Query):
     @property
     def select_table(self):
         """Return a query that selects the table."""
-        t = self.db[self.table_or_collection.identifier]
-        return t.select(t)
+        return self.db[self.table].select()
 
     def __call__(self, *args, **kwargs):
         """Add a method call to the query.
@@ -467,7 +460,7 @@ class IbisQuery(Query):
         assert isinstance(self.parts[-1], str)
         if self.parts[-1] == 'select' and not args:
             # support table.select() without column args
-            table = self.db.databackend.get_table_or_collection(self.identifier)
+            table = self.db.databackend.get_table_or_collection(self.table)
             args = tuple(table.columns)
         return super().__call__(*args, **kwargs)
 

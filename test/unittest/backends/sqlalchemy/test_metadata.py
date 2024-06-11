@@ -54,4 +54,5 @@ def test(metadata):
         allow_hidden=True,
     )
 
-    assert r['id'] == 'model/other-model/0'
+    assert r['identifier'] == 'other-model'
+    assert r['version'] == 0

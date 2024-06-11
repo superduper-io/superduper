@@ -30,7 +30,7 @@ m = Stack(
 
 from superduperdb.base.document import Document
 
-collection = MongoQuery('documents')
+collection = MongoQuery(table='documents')
 data = [
     Document({'x': random.randrange(100), 'y': lorem.sentence()}) for _ in range(100)
 ]
@@ -58,7 +58,7 @@ os.system(f"echo '{str_}' | pbcopy")
 img = PIL.Image.open('test/material/data/rickroll.png')
 
 _, i = db.add(image_type('image'))
-insert = MongoQuery('images').insert_one(Document({'img': i(img)}))
+insert = MongoQuery(table='images').insert_one(Document({'img': i(img)}))
 
 db.execute(insert)
 

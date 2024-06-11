@@ -33,8 +33,8 @@ def test_file_blobs(db, patch_cfg_downloads, image_url):
     db.apply(pil_image)
     to_insert = [Document({"item": pil_image(uri=image_url)}) for _ in range(2)]
 
-    db.execute(MongoQuery('documents').insert_many(to_insert))
-    r = db.execute(MongoQuery('documents').find_one())
+    db.execute(MongoQuery(table='documents').insert_many(to_insert))
+    r = db.execute(MongoQuery(table='documents').find_one())
 
     import PIL.PngImagePlugin
 

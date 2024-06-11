@@ -6,7 +6,7 @@ import uuid
 
 from superduperdb.misc.annotations import extract_parameters, replace_parameters
 from superduperdb.misc.serialization import asdict
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
+from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
 
 _CLASS_REGISTRY = {}
 
@@ -121,8 +121,12 @@ class Leaf(metaclass=LeafMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
 
-    def __post_init__(self, db):
-        self.db: 'Datalayer' = db
+    @property
+    def metadata(self):
+        return {}
+
+    def __post_init__(self, db: t.Optional['Datalayer'] = None):
+        self.db = db
 
     @property
     def leaves(self):
@@ -133,11 +137,7 @@ class Leaf(metaclass=LeafMeta):
             if isinstance(getattr(self, f.name), Leaf)
         }
 
-    @property
-    def _id(self):
-        return f'{self.__class__.__name__.lower()}/{self.uuid}'
-
-    def encode(self, schema: t.Optional['Schema'] = None, leaves_to_keep=()):
+    def encode(self, leaves_to_keep=()):
         """Encode itself.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
@@ -145,19 +145,24 @@ class Leaf(metaclass=LeafMeta):
         :param schema: Schema instance.
         :param leaves_to_keep: Leaves to keep.
         """
-        cache: t.Dict[str, dict] = {}
-        blobs: t.Dict[str, bytes] = {}
-        files: t.Dict[str, str] = {}
-
-        self._deep_flat_encode(cache, blobs, files, leaves_to_keep, schema)
-        return SuperDuperFlatEncode(
-            {
-                '_base': f'?{self._id}',
-                '_leaves': cache,
-                '_blobs': blobs,
-                '_files': files,
-            }
+        from superduperdb.base.document import _deep_flat_encode
+        builds = {}
+        blobs = {}
+        files = {}
+        r = _deep_flat_encode(
+            self.dict(), 
+            builds,
+            blobs=blobs,
+            files=files,
+            leaves_to_keep=leaves_to_keep,
         )
+        builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
+        return SuperDuperFlatEncode({
+            '_base': f'?{self.identifier}',
+            '_leaves': builds,
+            '_blobs': blobs,
+            '_files': files,
+        })
 
     def set_variables(self, **kwargs) -> 'Leaf':
         """Set free variables of self.
@@ -179,30 +184,12 @@ class Leaf(metaclass=LeafMeta):
 
         return list(set(_find_variables(self.encode(leaves_to_keep=Variable))))
 
-    def _deep_flat_encode(
-        self,
-        cache,
-        blobs,
-        files,
-        leaves_to_keep=(),
-        schema: t.Optional['Schema'] = None,
-    ):
-        if isinstance(self, leaves_to_keep):
-            cache[self._id] = self
-            return f'?{self._id}'
-        from superduperdb.base.document import _deep_flat_encode
-
-        r = dict(self.dict())
-        # TODO change this to caches[self._id] = r etc.
-        return _deep_flat_encode(
-            r, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-        )
-
     def dict(self):
         """Return dictionary representation of the object."""
         from superduperdb import Document
 
         r = asdict(self)
+        r.update(self.metadata)
 
         from superduperdb.components.datatype import Artifact, dill_serializer
 
@@ -212,6 +199,7 @@ class Leaf(metaclass=LeafMeta):
                 datatype=dill_serializer,
             )
             return Document({'_object': cls, **r})
+    
         path = (f'{self.__class__.__module__}.' f'{self.__class__.__name__}').replace(
             '.', '/'
         )

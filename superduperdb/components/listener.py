@@ -46,13 +46,8 @@ class Listener(Component):
 
     def __post_init__(self, db, artifacts):
         if self.identifier == '':
-            self.identifier = self.id
+            self.identifier = self.uuid
         super().__post_init__(db, artifacts)
-
-    @property
-    def id(self):
-        """Get identifier."""
-        return f'component/{self.type_id}/{self.model.identifier}/{self.uuid}'
 
     @property
     def mapping(self):
@@ -83,7 +78,7 @@ class Listener(Component):
         else:
             model_update_kwargs = self.model.model_update_kwargs or {}
             if model_update_kwargs.get('document_embedded', True):
-                collection_name = self.select.table_or_collection.identifier
+                collection_name = self.select.table
             else:
                 collection_name = self.outputs
             return self.db[collection_name].find()
@@ -192,6 +187,6 @@ class Listener(Component):
         """
         model_update_kwargs = self.model.model_update_kwargs or {}
         embedded = model_update_kwargs.get('document_embedded', True)
-        self.db[self.select.table_or_collection.identifier].drop_outputs(
+        self.db[self.select.table].drop_outputs(
             self.outputs, embedded=embedded
         )

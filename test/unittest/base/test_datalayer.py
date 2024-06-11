@@ -86,7 +86,7 @@ def add_fake_model(db: Datalayer):
     )
     db.apply(model)
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery('documents').find()
+        select = MongoQuery(table='documents').find()
     else:
         schema = Schema(
             identifier='documents',
@@ -169,7 +169,7 @@ def test_add_artifact_auto_replace(db):
         serialized = create_component.call_args[0][0]
         print(serialized)
         key = serialized['artifact'][1:]
-        assert 'sha1' in serialized['_leaves'][key]
+        serialized['_leaves'][key]['blob'].startswith('&:blob:')
 
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
@@ -317,7 +317,7 @@ def test_remove_component_with_artifact(db):
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
-    artifact_file_id = info_with_artifact['artifact'].split('/')[-1]
+    artifact_file_id = info_with_artifact['artifact'][1:]
     with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
@@ -434,14 +434,14 @@ def test_load(db):
 def test_insert_mongo_db(db):
     add_fake_model(db)
     inserted_ids, _ = db._insert(
-        MongoQuery('documents').insert_many(
+        MongoQuery(table='documents').insert_many(
             [{'x': i, 'update': True} for i in range(5)]
         )
     )
     assert len(inserted_ids) == 5
 
     new_docs = list(
-        db.execute(MongoQuery('documents').find().select_using_ids(inserted_ids))
+        db.execute(MongoQuery(table='documents').find().select_using_ids(inserted_ids))
     )
 
     listener_uuid = db.show('listener')[0].split('/')[-1]
@@ -460,12 +460,12 @@ def test_insert_artifacts(db):
     )
     db.apply(dt)
     db._insert(
-        MongoQuery('documents').insert_many(
+        MongoQuery(table='documents').insert_many(
             [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
         )
     )
-    r = db.execute(MongoQuery('documents').find_one())
-    assert db.artifact_store.exists(r['x'].file_id)
+    r = db.execute(MongoQuery(table='documents').find_one())
+    assert db.artifact_store.exists(r['x'].identifier)
     assert isinstance(r.unpack()['x'], numpy.ndarray)
 
 
@@ -491,16 +491,16 @@ def test_insert_sql_db(db):
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    q = MongoQuery('documents').insert_many(
+    q = MongoQuery(table='documents').insert_many(
         [Document({'x': i, 'update': True}) for i in range(5)]
     )
     db._insert(q)
     updated_ids, _ = db._update(
-        MongoQuery('documents').update_many({}, Document({'$set': {'x': 100}}))
+        MongoQuery(table='documents').update_many({}, Document({'$set': {'x': 100}}))
     )
     assert len(updated_ids) == 5
     new_docs = list(
-        db.execute(MongoQuery('documents').find().select_using_ids(updated_ids))
+        db.execute(MongoQuery(table='documents').find().select_using_ids(updated_ids))
     )
     for doc in new_docs:
         assert doc['_outputs']
@@ -517,8 +517,8 @@ def test_update_db(db):
 )
 def test_delete(db):
     # TODO: add sqldb test after the delete method is implemented
-    db._delete(MongoQuery('documents').delete_one({}))
-    new_docs = list(db.execute(MongoQuery('documents').find()))
+    db._delete(MongoQuery(table='documents').delete_one({}))
+    new_docs = list(db.execute(MongoQuery(table='documents').find()))
     assert len(new_docs) == 5
 
 
@@ -677,7 +677,7 @@ def test_reload_dataset(db):
 )
 def test_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery('documents').find({'_fold': 'valid'})
+        select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')

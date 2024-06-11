@@ -27,8 +27,8 @@ def check_llm_as_listener_model(db, llm):
         for i in range(10)
     ]
     if isinstance(db.databackend, MongoDataBackend):
-        db.execute(MongoQuery(collection_name).insert_many(datas))
-        select = MongoQuery(collection_name).find()
+        db.execute(MongoQuery(table=collection_name).insert_many(datas))
+        select = MongoQuery(table=collection_name).find()
     else:
         schema = Schema(
             identifier=collection_name,

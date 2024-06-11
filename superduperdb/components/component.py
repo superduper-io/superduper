@@ -103,12 +103,6 @@ class Component(Leaf):
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @property
-    def _id(self):
-        return f':component:{self.type_id}/{self.identifier}/{self.uuid}'.replace(
-            '.', '-'
-        )
-
-    @property
     def leaves(self):
         """Get all the leaves in the component."""
         r = self.dict()
@@ -128,15 +122,13 @@ class Component(Leaf):
         pass
 
     @property
-    def id(self):
-        """Returns the component identifier."""
-        return f'component/{self.type_id}/{self.identifier}/{self.uuid}'
-
-    # TODO remove
-    @property
-    def id_tuple(self):
-        """Returns an object as `ComponentTuple`."""
-        return ComponentTuple(self.type_id, self.identifier, self.version)
+    def metadata(self):
+        return {
+            'type_id': self.type_id,
+            'version': self.version,
+            'identifier': self.identifier,
+            'uuid': self.uuid,
+        }
 
     @property
     def dependencies(self):
@@ -241,24 +233,6 @@ class Component(Leaf):
         """
         assert db
 
-    def _deep_flat_encode(self, cache, blobs, files, leaves_to_keep=(), schema=None):
-        if isinstance(self, leaves_to_keep):
-            cache[self._id] = self
-            return f'?{self._id}'
-        from superduperdb.base.document import _deep_flat_encode
-
-        r = dict(self.dict())
-        r = _deep_flat_encode(
-            r,
-            cache,
-            blobs,
-            files,
-            leaves_to_keep=leaves_to_keep,
-            schema=schema,
-        )
-        cache[self._id] = r
-        return f'?{self._id}'
-
     @staticmethod
     def read(path: str):
         """
@@ -277,7 +251,15 @@ class Component(Leaf):
 
         from superduperdb import Document
 
-        return Document.decode(config_object).unpack()
+        def load_blob(blob):
+            with open(path + '/blobs/' + blob, 'rb') as f:
+                return f.read()
+
+        getters = {
+            'blob': load_blob
+        }
+
+        return Document.decode(config_object, getters=getters).unpack()
 
     def export(self, path: str, format: str = 'json'):
         """

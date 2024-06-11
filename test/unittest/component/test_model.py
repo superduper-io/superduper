@@ -321,7 +321,7 @@ def test_model_create_fit_job(db):
     # Check the fit job is created correctly
     model = Validator('test', object=object())
     # TODO move these parameters into the `Trainer` (same thing for validation)
-    model.trainer = MyTrainer('test', select=MongoQuery('test').find(), key='x')
+    model.trainer = MyTrainer('test', select=MongoQuery(table='test').find(), key='x')
     db.apply(model)
     with patch.object(ComponentJob, '__call__') as mock_call:
         mock_call.return_value = None
@@ -341,7 +341,7 @@ def test_model_fit(db, valid_dataset):
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer('my-trainer', key='x', select=MongoQuery('test').find()),
+        trainer=MyTrainer('my-trainer', key='x', select=MongoQuery(table='test').find()),
         validation=Validation(
             'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
         ),
@@ -365,7 +365,7 @@ def postprocess(r):
 )
 def test_query_model(db):
     q = (
-        MongoQuery(identifier='documents', db=db)
+        MongoQuery(table='documents', db=db)
         .like(
             {'x': Variable(identifier='X')},
             vector_index='test_vector_search',

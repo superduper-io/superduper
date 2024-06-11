@@ -207,8 +207,6 @@ def test_refer_to_system(db):
 
     img = PIL.Image.open('test/material/data/test.png')
 
-    existing = db.show()
-
     db.artifact_store.put_bytes(db.datatypes['image'].encoder(img), file_id='12345')
 
     r = {

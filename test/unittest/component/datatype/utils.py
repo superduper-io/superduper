@@ -59,7 +59,7 @@ def check_data_with_schema(data, datatype: DataType):
     decoded = Document.decode(encoded, schema=schema)
     if datatype.encodable_cls.lazy:
         assert isinstance(decoded["x"], datatype.encodable_cls)
-        assert isinstance(decoded["x"].x, Empty)
+        assert isinstance(decoded["x"].x, type(data))
         decoded = Document(decoded.unpack())
     pprint(decoded)
     print_sep()

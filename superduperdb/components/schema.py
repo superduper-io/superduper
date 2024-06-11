@@ -4,7 +4,7 @@ from functools import cached_property
 from overrides import override
 
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import DataType, _BaseEncodable
+from superduperdb.components.datatype import Blob, DataType, _BaseEncodable, FileItem
 from superduperdb.misc.reference import parse_reference
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -74,6 +74,32 @@ class Schema(Component):
                 fields.add((k, v.identifier))
         return fields
 
+    def encode_data(self, out, builds, blobs, files):
+        for k, field in self.fields.items():
+            if not isinstance(field, DataType):
+                continue
+
+            data, identifier = field.encode_data_with_identifier(out[k])
+            if field.encodable_cls.artifact:
+                reference = field.encodable_cls.build_reference(identifier, data)
+                ref_obj = parse_reference(reference)
+
+                if ref_obj.name == 'blob':
+                    blobs[identifier] = data
+                elif ref_obj.name == 'file':
+                    files[identifier] = data
+                else:
+                    assert (
+                        False
+                    ), f'Unknown reference type {ref_obj.name}, Only blob and file are supported'
+                out[k] = reference
+            else:
+                out[k] = data
+
+        out['_schema'] = self.identifier
+
+        return out
+
     def decode_data(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """Decode data using the schema's encoders.
 
@@ -91,13 +117,10 @@ class Schema(Component):
             value = data[k]
 
             if reference := parse_reference(value):
-                kwargs = {}
-                if not reference.is_in_database:
+                if not reference.is_in_document:
                     file_id = value.split(':')[-1]
-                    value = data.get(f'_{reference.name}s', {}).get(file_id)
-                kwargs[reference.name] = value
-
-                encodable = field.encodable_cls(datatype=field, **kwargs)
+                    value = data.get(f'_{reference.name}s', {}).get(file_id, value)
+                encodable = field.encodable_cls(datatype=field, x=value)
                 if not field.encodable_cls.lazy:
                     encodable = encodable.unpack()
                 decoded[k] = encodable

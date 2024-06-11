@@ -77,7 +77,7 @@ def test_fit(db, valid_dataset, model):
     m = model
 
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery('documents').find()
+        select = MongoQuery(table='documents').find()
     else:
         select = db['documents'].select('id', 'x', 'y', 'z', '_fold')
 

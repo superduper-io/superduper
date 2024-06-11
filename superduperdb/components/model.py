@@ -657,6 +657,7 @@ class Model(Component, metaclass=ModelMeta):
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
             db.apply(self)
+
         assert isinstance(
             self.version, int
         ), 'Something has gone wrong setting `self.version`'
@@ -668,7 +669,6 @@ class Model(Component, metaclass=ModelMeta):
             overwrite=overwrite,
             predict_id=predict_id,
         )
-
         return self._predict_with_select_and_ids(
             X=X,
             predict_id=predict_id,
@@ -773,12 +773,15 @@ class Model(Component, metaclass=ModelMeta):
 
         outputs = self.predict_batches(dataset)
         self._infer_auto_schema(outputs, predict_id)
+        # TODO implement this so that we can toggle between different ibis/ mongodb
         outputs = self.encode_outputs(outputs)
+
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
             self.version, int
         ), 'Version has not been set, can\'t save outputs...'
+
         update = select.model_update(
             db=db,
             predict_id=predict_id,
@@ -801,14 +804,13 @@ class Model(Component, metaclass=ModelMeta):
         """
         # TODO: Fallback when output schema not provided in ibis.
 
+        if isinstance(self.output_schema, Schema):
+            return self.encode_with_schema(outputs)
         if isinstance(self.datatype, DataType):
             if self.flatten:
-                outputs = [[self.datatype(x) for x in output] for output in outputs]
+                return [[self.datatype(x) for x in output] for output in outputs]
             else:
-                outputs = [self.datatype(x) for x in outputs]
-        elif isinstance(self.output_schema, Schema):
-            outputs = self.encode_with_schema(outputs)
-
+                return [self.datatype(x) for x in outputs]
         return outputs
 
     def _infer_auto_schema(self, outputs, predict_id):
@@ -846,7 +848,6 @@ class Model(Component, metaclass=ModelMeta):
             predict_id
         ):
             from superduperdb.components.listener import Listener
-
             Listener.create_output_dest(self.db, predict_id, self)
 
         if self.datatype is not None or self.output_schema is not None:

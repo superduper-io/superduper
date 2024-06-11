@@ -137,7 +137,7 @@ def infer_schema(
     if identifier is None:
         raise ValueError("Could not infer schema identifier")
 
-    identifier = "AUTO:" + identifier
+    identifier = "AUTO-" + identifier
 
     return Schema(identifier=identifier, fields=schema_data)  # type: ignore
 

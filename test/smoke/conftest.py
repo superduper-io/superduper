@@ -36,14 +36,14 @@ def add_models_encoders(test_db):
     )
     _, indexing_listener = test_db.add(
         Listener(
-            select=MongoQuery(identifier='documents', db=test_db).find(),
+            select=MongoQuery(table='documents', db=test_db).find(),
             key='x',
             model=model,
         )
     )
     _, compatible_listener = test_db.add(
         Listener(
-            select=MongoQuery(identifier='documents', db=test_db).find(),
+            select=MongoQuery(table='documents', db=test_db).find(),
             key='z',
             model=model,
         )

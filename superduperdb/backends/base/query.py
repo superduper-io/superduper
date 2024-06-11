@@ -5,6 +5,7 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
+from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.hash import hash_string
@@ -51,7 +52,7 @@ class TraceMixin:
         item = type(self).methods_mapping.get(item, item)
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[*self.parts, item],
         )
 
@@ -64,7 +65,7 @@ class TraceMixin:
         assert isinstance(self.parts[-1], str)
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
         )
 
@@ -75,20 +76,28 @@ class Query(_BaseQuery, TraceMixin):
     This base class is used to create a query object that can be executed
     in the datalayer.
 
+    :param table: The table to use.
     :param parts: The parts of the query.
     """
 
     flavours: t.ClassVar[t.Dict[str, str]] = {}
     methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
+    table: str
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
+    identifier: str = ''
+
+    def __post_init__(self, db: t.Optional['Datalayer'] = None):
+        super().__post_init__(db)
+        if not self.identifier:
+            self.identifier = f'query/{hash_string(str(self))}'
 
     def __getitem__(self, item):
         if not isinstance(item, slice):
             return super().__getitem__(item)
         assert isinstance(item, slice)
         parts = self.parts[item]
-        return type(self)(db=self.db, identifier=self.identifier, parts=parts)
+        return type(self)(db=self.db, table=self.table, parts=parts)
 
     def set_db(self, db: 'Datalayer'):
         """Set the datalayer to use to execute the query.
@@ -128,7 +137,7 @@ class Query(_BaseQuery, TraceMixin):
         _query_str = self._to_str()
         repr_ = _query_str[0]
 
-        if repr_ == self.identifier and not (_query_str[0] and _query_str[-1]):
+        if repr_ == self.table and not (_query_str[0] and _query_str[-1]):
             # Table selection query.
             return 'select'
 
@@ -140,7 +149,7 @@ class Query(_BaseQuery, TraceMixin):
             )
 
     def _get_parent(self):
-        return self.db.databackend.get_table_or_collection(self.identifier)
+        return self.db.databackend.get_table_or_collection(self.table)
 
     def _prepare_pre_like(self, parent):
         like_args, like_kwargs = self.parts[0][1:]
@@ -187,30 +196,16 @@ class Query(_BaseQuery, TraceMixin):
         """
         pass
 
-    @property
-    def _id(self):
-        return f'query/{hash_string(str(self))}'
-
-    def _deep_flat_encode(
-        self,
-        cache,
-        blobs,
-        files,
-        leaves_to_keep=(),
-        schema: t.Optional['Schema'] = None,
-    ):
+    def dict(self):
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
-        for i, doc in enumerate(documents):
-            documents[i] = doc._deep_flat_encode(
-                cache, blobs, files, leaves_to_keep, schema=schema
-            )
-        cache[self._id] = {
-            '_path': 'superduperdb/backends/base/query/parse_query',
+        backend = self.__module__.split('.')[-2]
+        return Document({
+            '_path': f'superduperdb/backends/{backend}/query/parse_query',
             'documents': documents,
+            'identifier': self.identifier,
             'query': query,
-        }
-        return f'?{self._id}'
+        })
 
     @staticmethod
     def _update_item(a, documents, queries):
@@ -240,7 +235,7 @@ class Query(_BaseQuery, TraceMixin):
     def _to_str(self):
         documents = {}
         queries = {}
-        out = str(self.identifier)
+        out = str(self.table)
         for part in self.parts:
             if isinstance(part, str):
                 out += f'.{part}'
@@ -286,35 +281,35 @@ class Query(_BaseQuery, TraceMixin):
     def __eq__(self, other):
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=self.parts + [('__eq__', (other,), {})],
         )
 
     def __lt__(self, other):
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=self.parts + [('__lt__', (other,), {})],
         )
 
     def __gt__(self, other):
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=self.parts + [('__gt__', (other,), {})],
         )
 
     def __le__(self, other):
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=self.parts + [('__le__', (other,), {})],
         )
 
     def __ge__(self, other):
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=self.parts + [('__ge__', (other,), {})],
         )
 
@@ -366,6 +361,14 @@ class Query(_BaseQuery, TraceMixin):
     @abstractmethod
     def _create_table_if_not_exists(self):
         pass
+
+    def e(self, *args, **kwargs):
+        out = self.execute()
+        if isinstance(out, SuperDuperCursor):
+            return [r.unpack() for r in out]
+        if isinstance(out, Document):
+            return out.unpack()
+        return out
 
     def execute(self, db=None, **kwargs):
         """
@@ -488,7 +491,7 @@ class Query(_BaseQuery, TraceMixin):
 
         if schema is None:
             try:
-                table = self.db.tables[self.identifier]
+                table = self.db.tables[self.table]
                 schema = table.schema
             except FileNotFoundError:
                 pass
@@ -503,19 +506,19 @@ class Query(_BaseQuery, TraceMixin):
     @property
     def table_or_collection(self):
         """Return the table or collection to select from."""
-        return type(self)(identifier=self.identifier, db=self.db)
+        return type(self)(table=self.table, db=self.db)
 
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):
     key = part.split('.')
     if key[0] == '_outputs':
-        identifier = f'{key[0]}.{key[1]}'
+        table = f'{key[0]}.{key[1]}'
         part = part.split('.')[2:]
     else:
-        identifier = key[0]
+        table = key[0]
         part = part.split('.')[1:]
 
-    current = builder_cls(identifier=identifier, parts=(), db=db)
+    current = builder_cls(table=table, parts=(), db=db)
     for comp in part:
         match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
         if match is None:
@@ -570,9 +573,12 @@ class Model(Leaf, TraceMixin):
     """
     A model helper class for create a query to predict.
 
+    :param table: The table to use.
     :param parts: The parts of the query.
     """
 
+    table: str
+    identifier: str = ''
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
     type: t.ClassVar[str] = 'predict'
@@ -587,7 +593,7 @@ class Model(Leaf, TraceMixin):
         :param db: Datalayer instance.
         """
         self.db = db
-        m = self.db.models[self.identifier]
+        m = self.db.models[self.table]
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
         return Document({'_base': r})

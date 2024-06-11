@@ -93,8 +93,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.component_table = Table(
             'component',
             metadata,
-            Column('id', type_string, primary_key=True),
-            Column('uuid', type_string),
+            Column('uuid', type_string, primary_key=True),
             Column('identifier', type_string),
             Column('version', type_integer),
             Column('hidden', type_boolean),
@@ -165,6 +164,15 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             res = self.query_results(self.component_table, stmt, session)
             return res[0]['uuid'] if res else None
+
+    def _get_all_component_info(self):
+        with self.session_context() as session:
+            res = self.query_results(
+                self.component_table,
+                select(self.component_table),
+                session=session,
+            )
+        return list(res)
 
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
@@ -244,7 +252,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             cv = res[0] if res else None
             if cv:
                 stmt_delete = delete(self.component_table).where(
-                    self.component_table.c.id == cv['id']
+                    self.component_table.c.uuid == cv['uuid']
                 )
                 session.execute(stmt_delete)
 
@@ -320,8 +328,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     def _refactor_component_info(info):
         if 'hidden' not in info:
             info['hidden'] = False
-        info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
-        component_fields = ['id', 'identifier', 'version', 'hidden', 'type_id', '_path']
+        component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path']
         new_info = {k: info[k] for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['uuid'] = new_info['dict']['uuid']

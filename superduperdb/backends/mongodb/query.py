@@ -137,27 +137,10 @@ class MongoQuery(Query):
     def _create_table_if_not_exists(self):
         return
 
-    def _deep_flat_encode(
-        self,
-        cache,
-        blobs,
-        files,
-        leaves_to_keep=(),
-        schema: t.Optional['Schema'] = None,
-    ):
-        query, documents = self._dump_query()
-        documents = [Document(r) for r in documents]
-        for i, doc in enumerate(documents):
-            documents[i] = doc._deep_flat_encode(
-                cache, blobs, files, leaves_to_keep, schema=schema
-            )
-        documents = list(map(_serialize_special_character, documents))
-        cache[self._id] = {
-            '_path': 'superduperdb/backends/mongodb/query/parse_query',
-            'documents': documents,
-            'query': query,
-        }
-        return f'?{self._id}'
+    def dict(self):
+        r = super().dict()
+        r['documents'] = list(map(_serialize_special_character, r['documents']))
+        return r
 
     @property
     def type(self):
@@ -226,7 +209,7 @@ class MongoQuery(Query):
 
         q = type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
         )
         result = q.do_execute(db=self.db)
@@ -291,7 +274,7 @@ class MongoQuery(Query):
                 )
 
         collection = self.db.databackend.get_table_or_collection(
-            self.table_or_collection.identifier
+            self.table
         )
         bulk_operations = []
         bulk_update_ids = []
@@ -402,7 +385,7 @@ class MongoQuery(Query):
         :param args: Arguments to pass to the change-stream
         :param kwargs: The keyword arguments to pass to the change-stream
         """
-        return ChangeStream(collection=self.identifier, args=args, kwargs=kwargs)
+        return ChangeStream(collection=self.table, args=args, kwargs=kwargs)
 
     def drop_outputs(self, predict_id: str, embedded=True):
         """Return a query that removes output corresponding to the predict id.
@@ -410,7 +393,7 @@ class MongoQuery(Query):
         :param predict_ids: The ids of the predictions to select.
         """
         if not embedded:
-            return self.db.drop_table_or_collection(self.identifier)
+            return self.db.drop_table_or_collection(self.table)
         parent = self._get_parent()
         return parent.update_many({}, {"$unset": {predict_id: ""}})
 
@@ -437,7 +420,7 @@ class MongoQuery(Query):
             find_args[1]['_source'] = 1
         x = type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[
                 ('find', tuple(find_args), find_kwargs),
                 *self.parts[1:],
@@ -458,7 +441,7 @@ class MongoQuery(Query):
         find_args[0]['_fold'] = fold
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[
                 ('find', tuple(find_args), find_kwargs),
                 *self.parts[1:],
@@ -516,7 +499,7 @@ class MongoQuery(Query):
         args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
         return type(self)(
             db=self.db,
-            identifier=self.identifier,
+            table=self.table,
             parts=[
                 ('find', args, kwargs),
                 *self.parts[1:],
@@ -531,7 +514,7 @@ class MongoQuery(Query):
         if self.parts[0][1]:
             filter_ = self.parts[0][1][0]
         projection = {'_id': 1}
-        coll = type(self)(identifier=self.identifier, db=self.db)
+        coll = type(self)(table=self.table, db=self.db)
         return coll.find(filter_, projection)
 
     @applies_to('find')
@@ -573,7 +556,7 @@ class MongoQuery(Query):
             args[0] = {}
         args[0]['_id'] = ObjectId(id)
         return type(self)(
-            db=self.db, identifier=self.identifier, parts=[('find_one', args, kwargs)]
+            db=self.db, table=self.table, parts=[('find_one', args, kwargs)]
         )
 
     @property
@@ -631,7 +614,6 @@ class MongoQuery(Query):
                     output = output.get('_base', output)
 
                 update = {f'_outputs.{predict_id}': output}
-
                 update = QueryUpdateDocument._create_metadata_update(update, outputs[i])
                 update = Document(update)
                 bulk_operations.append(

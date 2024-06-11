@@ -14,7 +14,7 @@ from superduperdb.components.table import Table
 
 
 def test_listener_serializes_properly():
-    q = MongoQuery('test').find({}, {})
+    q = MongoQuery(table='test').find({}, {})
     listener = Listener(
         model=ObjectModel("test", object=lambda x: x),
         select=q,
@@ -31,7 +31,7 @@ def test_listener_serializes_properly():
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_listener_chaining(db):
-    collection = MongoQuery(identifier='test', db=db)
+    collection = MongoQuery(table='test', db=db)
     data = []
 
     def insert_random():
@@ -66,7 +66,7 @@ def test_listener_chaining(db):
 
     listener2 = Listener(
         model=m2,
-        select=MongoQuery('_outputs.listener1::0').find(),
+        select=MongoQuery(table='_outputs.listener1::0').find(),
         key='_outputs.listener1::0',
         identifier='listener2',
     )
@@ -74,13 +74,13 @@ def test_listener_chaining(db):
     db.add(listener1)
     db.add(listener2)
 
-    docs = list(db.execute(MongoQuery('_outputs.listener1::0').find({})))
+    docs = list(db.execute(MongoQuery(table='_outputs.listener1::0').find({})))
 
     assert all("listener2::0" in r["_outputs"] for r in docs)
 
     insert_random()
 
-    docs = list(db.execute(MongoQuery("_outputs.listener1::0").find({})))
+    docs = list(db.execute(MongoQuery(table="_outputs.listener1::0").find({})))
 
     assert all(["listener2::0" in d["_outputs"] for d in docs])
 
@@ -127,6 +127,7 @@ def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
     )
 
     db.add(listener1)
+
     doc = list(db.execute(listener1.outputs_select))[0]
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))

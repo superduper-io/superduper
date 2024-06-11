@@ -29,7 +29,7 @@ def transformers_model(db):
         {'text': 'dummy text 1', 'label': 1},
     ]
     data = [D(d) for d in data]
-    db.execute(MongoQuery('train_documents').insert_many(data))
+    db.execute(MongoQuery(table='train_documents').insert_many(data))
 
     model = TextClassificationPipeline(
         identifier='my-sentiment-analysis',
@@ -63,7 +63,7 @@ def test_transformer_fit(transformers_model, db, td):
     repo_name = td
     trainer = TransformersTrainer(
         key={'text': 'text', 'label': 'label'},
-        select=MongoQuery('train_documents').find(),
+        select=MongoQuery(table='train_documents').find(),
         identifier=repo_name,
         learning_rate=2e-5,
         per_device_train_batch_size=1,
@@ -77,7 +77,7 @@ def test_transformer_fit(transformers_model, db, td):
     transformers_model.validation_sets = [
         Dataset(
             identifier='my-eval',
-            select=MongoQuery('train_documents').find({'_fold': 'valid'}),
+            select=MongoQuery(table='train_documents').find({'_fold': 'valid'}),
         )
     ]
     transformers_model.fit_in_db(db)

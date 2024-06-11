@@ -122,7 +122,7 @@ def test_db(request) -> Iterator[Datalayer]:
 @pytest.fixture
 def valid_dataset(db):
     if isinstance(db.databackend, MongoDataBackend):
-        select = MongoQuery('documents').find({'_fold': 'valid'})
+        select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']
         select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
@@ -187,7 +187,7 @@ def add_random_data_to_mongo_db(
         )
 
     db.execute(
-        MongoQuery(identifier=collection_name).insert_many(data),
+        MongoQuery(table=collection_name).insert_many(data),
         refresh=False,
     )
 
@@ -228,12 +228,11 @@ def add_vector_index(
     # TODO: Support configurable key and mode
     is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
     if is_mongodb_backend:
-        select_x = MongoQuery(collection_name).find()
-        select_z = MongoQuery(collection_name).find()
+        select_x = db[collection_name].find()
+        select_z = db[collection_name].find()
     else:
-        table = db.load('table', collection_name)
-        select_x = db[table.identifier].select('id', 'x')
-        select_z = db[table.identifier].select('id', 'z')
+        select_x = db[collection_name].select('id', 'x')
+        select_z = db[collection_name].select('id', 'z')
 
     model = db.load('model', 'linear_a')
 
@@ -252,11 +251,13 @@ def add_vector_index(
             model=model,
         )
     )
+
     vi = VectorIndex(
         identifier=identifier,
         indexing_listener=i_list,
         compatible_listener=c_list,
     )
+
     db.add(vi)
 
 

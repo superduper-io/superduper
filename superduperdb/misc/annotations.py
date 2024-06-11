@@ -184,17 +184,15 @@ def component(*schema: t.Dict):
                 out = f(**kwargs)
 
             from superduperdb.components.component import Component
-
             assert isinstance(out, Component)
 
-            def _deep_flat_encode(cache, blobs, files, leaves_to_keep=(), schema=None):
-                h = hashlib.sha1(str(kwargs).encode()).hexdigest()
+            def to_dict():
                 path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
-                id = f'{path}/{h}'
-                cache[id] = {'_path': path, **kwargs}
-                return f'?{id}'
+                from superduperdb.base.document import Document
+                return Document({'_path': path, **kwargs, **out.metadata})
 
-            out._deep_flat_encode = _deep_flat_encode
+            out.dict = to_dict
+            out.inline = True
             return out
 
         return decorated

@@ -116,7 +116,7 @@ def test_advance_setup(test_db, image_url):
         for i in range(5)
     ]
 
-    mixed_input = MongoQuery('mixed_input')
+    mixed_input = MongoQuery(table='mixed_input')
     db.add(pil_image)
 
     from superduperdb.ext.numpy import array
@@ -148,14 +148,14 @@ def test_advance_setup(test_db, image_url):
     )
     db.add(listener1)
 
-    db.execute(MongoQuery('mixed_input').insert_many(data))
+    db.execute(MongoQuery(table='mixed_input').insert_many(data))
     collection = listener1.outputs
 
     _wait_for_outputs(db=db, collection=collection, n=5)
     listener2 = Listener(
         model=model2,
         key=f'{listener1.outputs}.int',
-        select=MongoQuery(listener1.outputs, db=db).find(),
+        select=MongoQuery(table=listener1.outputs, db=db).find(),
     )
     db.add(listener2)
 
@@ -180,7 +180,7 @@ def test_advance_setup(test_db, image_url):
 
     r = next(
         db.execute(
-            MongoQuery(listener1.outputs)
+            MongoQuery(table=listener1.outputs)
             .like(
                 Document({'text': search_phrase}), vector_index='test_search_index', n=1
             )

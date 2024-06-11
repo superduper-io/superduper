@@ -42,13 +42,13 @@ class MongoDataBackend(BaseDataBackend):
         if isinstance(
             collection_name, variables.Variable
         ) or collection_name.startswith('?'):
-            return MongoQuery(identifier=collection_name, db=self.datalayer)
+            return MongoQuery(table=collection_name, db=self.datalayer)
         item_gotten = self._db[collection_name]
         if isinstance(
             item_gotten,
             (pymongo.collection.Collection, mongomock.collection.Collection),
         ):
-            return MongoQuery(identifier=collection_name, db=self.datalayer)
+            return MongoQuery(table=collection_name, db=self.datalayer)
         return item_gotten
 
     def url(self):

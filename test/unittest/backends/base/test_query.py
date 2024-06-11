@@ -72,7 +72,7 @@ def test_execute_complex_query_sqldb(db, table):
 
 
 def test_execute_like_queries_mongodb(db):
-    collection = MongoQuery(identifier='documents', db=db)
+    collection = MongoQuery(table='documents', db=db)
     # Get a data point for testing
     r = collection.find_one({}).do_execute(db)
 
@@ -159,7 +159,7 @@ def test_model(db):
 
     m.predict(t)
 
-    q = Model('linear_a').predict(t)
+    q = Model(table='linear_a').predict(t)
 
     out = db.execute(q).unpack()
 
@@ -167,7 +167,7 @@ def test_model(db):
 
 
 def test_builder():
-    q = MongoQuery(identifier='table', parts=()).find('id').where(2, 3, 4, a=5)
+    q = MongoQuery(table='table', parts=()).find('id').where(2, 3, 4, a=5)
     assert str(q) == 'table.find("id").where(2, 3, 4, a=5)'
 
 
@@ -232,7 +232,7 @@ def test_serialize_with_image():
 
     r = Document({'img': pil_image(img)})
 
-    q = MongoQuery(identifier='test_coll').like(r).find()
+    q = MongoQuery(table='test_coll').like(r).find()
     print(q)
 
     s = q.encode()

@@ -16,6 +16,11 @@ class ComputeBackend(ABC):
         pass
 
     @abstractproperty
+    def remote(self) -> bool:
+        """Return if remote compute engine."""
+        pass
+
+    @abstractproperty
     def name(self) -> str:
         """Return the name of current compute engine."""
         pass
@@ -63,3 +68,6 @@ class ComputeBackend(ABC):
     def shutdown(self) -> None:
         """Shuts down the compute cluster."""
         pass
+
+    def execute_task(self, job_id, dependencies, compute_kwargs={}):
+        """Execute task function for distributed backends."""

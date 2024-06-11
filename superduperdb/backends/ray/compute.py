@@ -1,6 +1,10 @@
+import json
+import os
 import typing as t
+import uuid
 
 import ray
+from ray.job_submission import JobSubmissionClient
 
 from superduperdb import logging
 from superduperdb.backends.base.compute import ComputeBackend
@@ -22,10 +26,13 @@ class RayComputeBackend(ComputeBackend):
     ):
         self._futures_collection: t.Dict[str, ray.ObjectRef] = {}
         self.address = address
-        if local:
-            ray.init(ignore_reinit_error=True)
-        else:
-            ray.init(address=address, **kwargs, ignore_reinit_error=True)
+
+        self.client = JobSubmissionClient(self.address)
+
+    @property
+    def remote(self) -> bool:
+        """Return if remote compute engine."""
+        return True
 
     @property
     def type(self) -> str:
@@ -37,24 +44,58 @@ class RayComputeBackend(ComputeBackend):
         """The name of the compute backend."""
         return f"ray://{self.address}"
 
-    def submit(
-        self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
+    def submit(self, identifier, dependencies=(), compute_kwargs={}):
+        """
+        Submit job to remote cluster.
+
+        :param identifier: Job identifier.
+        :param dependencies: List of dependencies on the job.
+        :param compute_kwargs: Compute kwargs for the job.
+        """
+        try:
+            uuid.UUID(str(identifier))
+        except ValueError:
+            raise ValueError(f'Identifier {identifier} is not valid')
+        dependencies = list([d for d in dependencies if d is not None])
+
+        if dependencies:
+            dependencies = f"dependencies={json.dumps(dependencies)}"
+            job_string = f"remote_job(\"{identifier}\", {dependencies}"
+        else:
+            job_string = f"remote_job(\"{identifier}\""
+
+        if compute_kwargs:
+            job_string += f", compute_kwargs={json.dumps(compute_kwargs)})"
+        else:
+            job_string += ")"
+
+        entrypoint = (
+            f"python -c 'from superduperdb.jobs.job import remote_job; {job_string}'"
+        )
+
+        runtime_env = {}
+        env_vars = {
+            k: os.environ[k] for k in os.environ if k.startswith('SUPERDUPERDB_')
+        }
+        if env_vars:
+            runtime_env = {'env_vars': env_vars}
+        job_id = self.client.submit_job(entrypoint=entrypoint, runtime_env=runtime_env)
+        return job_id
+
+    def execute_task(
+        self, job_id, dependencies, compute_kwargs={}
     ) -> t.Tuple[ray.ObjectRef, str]:
         """
         Submits a function to the ray server for execution.
 
         :param function: The function to be executed.
         :param args: Positional arguments to be passed to the function.
-        :param compute_kwargs: Additional keyword arguments to be passed to ray API.
         :param kwargs: Keyword arguments to be passed to the function.
         """
 
         def _dependable_remote_job(function, *args, **kwargs):
-            if (
-                function.__name__ in ['method_job', 'callable_job']
-                and 'dependencies' in kwargs
-            ):
-                dependencies = kwargs['dependencies']
+            if 'dependencies' in kwargs:
+                dependencies = kwargs.pop('dependencies', None)
                 if dependencies:
                     ray.wait(dependencies)
             return function(*args, **kwargs)
@@ -63,12 +104,17 @@ class RayComputeBackend(ComputeBackend):
             remote_function = ray.remote(**compute_kwargs)(_dependable_remote_job)
         else:
             remote_function = ray.remote(_dependable_remote_job)
-        future = remote_function.remote(function, *args, **kwargs)
+
+        from superduperdb.jobs.job import remote_task
+
+        future = remote_function.remote(remote_task, job_id, dependencies=dependencies)
+
+        ray.get(future)
         task_id = str(future.task_id().hex())
         self._futures_collection[task_id] = future
 
         logging.success(
-            f"Job submitted on {self}.  function: {function}; "
+            f"Job submitted on {self}.  function: remote_job; "
             f"task: {task_id}; job_id: {str(future.job_id())}"
         )
         return future, task_id
@@ -108,4 +154,4 @@ class RayComputeBackend(ComputeBackend):
 
     def shutdown(self) -> None:
         """Shuts down the ray cluster."""
-        ray.shutdown()
+        raise NotImplementedError

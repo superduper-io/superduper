@@ -5,7 +5,7 @@ cluster:
     strategy: null
     uri: http://cdc:8001
   compute:
-    uri: ray://ray-head:10001
+    uri: http://ray-head:8265
   vector_search:
     uri: http://vector-search:8000
     backfill_batch_size: 100

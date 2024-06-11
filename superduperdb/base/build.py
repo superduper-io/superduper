@@ -23,6 +23,12 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc.anonymize import anonymize_url
 
 
+def _get_metadata_store(cfg):
+    # try to connect to the metadata store specified in the configuration.
+    logging.info("Connecting to Metadata Client:", cfg.metadata_store)
+    return _build_databackend_impl(cfg.metadata_store, metadata_stores, type='metadata')
+
+
 def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     # Connect to metadata store.
     # ------------------------------
@@ -30,11 +36,7 @@ def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     # 2. if that fails, try to connect to the data backend engine.
     # 3. if that fails, try to connect to the data backend uri.
     if cfg.metadata_store is not None:
-        # try to connect to the metadata store specified in the configuration.
-        logging.info("Connecting to Metadata Client:", cfg.metadata_store)
-        return _build_databackend_impl(
-            cfg.metadata_store, metadata_stores, type='metadata'
-        )
+        return _get_metadata_store(cfg)
     else:
         try:
             # try to connect to the data backend engine.
@@ -151,7 +153,12 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
             return mapping['sqlalchemy'](sql_conn, name)
 
 
-def _build_compute(compute):
+def build_compute(compute):
+    """
+    Helper function to build compute backend.
+
+    :param compute: Compute uri.
+    """
     logging.info("Connecting to compute client:", compute)
 
     if compute is None:
@@ -180,7 +187,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     assert metadata
 
     artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
-    compute = _build_compute(cfg.cluster.compute.uri)
+    compute = build_compute(cfg.cluster.compute.uri)
 
     datalayer = Datalayer(
         databackend=databackend,

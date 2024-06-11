@@ -32,7 +32,7 @@ class ComputeBackend(ABC):
     @abstractmethod
     def submit(self, function: t.Callable, **kwargs) -> t.Any:
         """
-        Submits a function to the Dask server for execution.
+        Submits a function to the server for execution.
 
         :param function: The function to be executed.
         :param kwargs: Additional keyword arguments to be passed to the function.

@@ -36,7 +36,8 @@ class Job:
 
     :param args: positional arguments to be passed to the function or method
     :param kwargs: keyword arguments to be passed to the function or method
-    :param compute_kwargs: Arguments to use for model predict computation
+    :param identifier: Job identifier.
+    :param db: A datalayer instance.
     """
 
     callable: t.Optional[t.Callable]
@@ -45,18 +46,18 @@ class Job:
         self,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
-        compute_kwargs: t.Dict = {},
+        identifier: t.Optional[str] = None,
+        db: t.Optional['Datalayer'] = None,
     ):
         self.args = args or ()
         self.kwargs = kwargs or {}
-        self.identifier = str(uuid.uuid4())
+        self.identifier = identifier or str(uuid.uuid4())
         self.time = datetime.datetime.now()
         self.callable = None
         self.db = None
         self.future = None
         self.job_id = None
-        # Use compute kwargs from either the model  or global config
-        self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
+        self.db = db
 
     def watch(self):
         """Watch the stdout of the job."""
@@ -100,7 +101,7 @@ class FunctionJob(Job):
     :param callable: function to be called
     :param args: positional arguments to be passed to the function
     :param kwargs: keyword arguments to be passed to the function
-    :param compute_kwargs: Arguments to use for model predict computation
+    :param db: A datalayer instance.
     """
 
     def __init__(
@@ -108,16 +109,25 @@ class FunctionJob(Job):
         callable: t.Callable,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
-        compute_kwargs: t.Dict = {},
+        db: t.Optional['Datalayer'] = None,
     ):
-        super().__init__(args=args, kwargs=kwargs, compute_kwargs=compute_kwargs)
+        super().__init__(args=args, kwargs=kwargs, db=db)
         self.callable = callable
 
     def dict(self):
         """Return a dictionary representation of the job."""
         d = super().dict()
-        d['cls'] = 'FunctionJob'
+        path = self.callable.__module__ + ';' + self.callable.__name__
+        d['_path'] = f'superduper/jobs/job/FunctionJob/{path}'
         return d
+
+    def submit_remote(self, dependencies=()):
+        """Submit job for remote execution.
+
+        :param dependencies: list of dependencies
+        """
+        self.job_id = self.db.compute.submit(self.identifier, dependencies=dependencies)
+        return
 
     def submit(self, dependencies=()):
         """Submit job for execution.
@@ -151,7 +161,11 @@ class FunctionJob(Job):
         self.db = db
         db.metadata.create_job(self.dict())
 
-        self.submit(dependencies=dependencies)
+        if db.compute.remote is True:
+            self.submit_remote(dependencies=dependencies)
+        else:
+            self.submit(dependencies=dependencies)
+
         return self
 
 
@@ -165,6 +179,7 @@ class ComponentJob(Job):
     :param args: positional arguments to be passed to the method
     :param kwargs: keyword arguments to be passed to the method
     :param compute_kwargs: Arguments to use for model predict computation
+    :param db: A Datalayer instance.
     """
 
     def __init__(
@@ -175,8 +190,11 @@ class ComponentJob(Job):
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
         compute_kwargs: t.Dict = {},
+        db: t.Optional['Datalayer'] = None,
     ):
-        super().__init__(args=args, kwargs=kwargs, compute_kwargs=compute_kwargs)
+        self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
+
+        super().__init__(args=args, kwargs=kwargs, db=db)
 
         self.component_identifier = component_identifier
         self.method_name = method_name
@@ -197,6 +215,18 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
+    def submit_remote(self, dependencies=()):
+        """Submit job for remote execution.
+
+        :param dependencies: list of dependencies
+        """
+        self.job_id = self.db.compute.submit(
+            self.identifier,
+            dependencies=dependencies,
+            compute_kwargs=self.compute_kwargs,
+        )
+        return
+
     def submit(self, dependencies=()):
         """Submit job for execution.
 
@@ -212,9 +242,9 @@ class ComponentJob(Job):
             args=self.args,
             kwargs=self.kwargs,
             dependencies=dependencies,
-            compute_kwargs=self.compute_kwargs,
             db=self.db if self.db.compute.type == 'local' else None,
         )
+        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
         return self
 
     def __call__(self, db: t.Union['Datalayer', None] = None, dependencies=()):
@@ -234,8 +264,10 @@ class ComponentJob(Job):
         if self.component is None:
             self.component = db.load(self.type_id, self.component_identifier)
 
-        self.submit(dependencies=dependencies)
-        db.metadata.update_job(self.identifier, 'job_id', self.job_id)
+        if db.compute.remote is True:
+            self.submit_remote(dependencies=dependencies)
+        else:
+            self.submit(dependencies=dependencies)
         return self
 
     def dict(self):
@@ -246,7 +278,79 @@ class ComponentJob(Job):
                 'method_name': self.method_name,
                 'component_identifier': self.component_identifier,
                 'type_id': self.type_id,
-                'cls': 'ComponentJob',
+                '_path': 'superduperdb/jobs/job/ComponentJob',
             }
         )
         return d
+
+
+def remote_job(identifier, dependencies=(), compute_kwargs: t.Union[str, t.Dict] = ""):
+    """
+    Remote Job to execute remote tasks.
+
+    :param identifier: Job identifier.
+    :param dependencies: List of dependencies.
+    :param compute_kwargs: Compute kwargs.
+    """
+    # Connect to remote cluster
+    import json
+
+    from superduperdb import CFG
+    from superduperdb.base.build import build_compute
+
+    if isinstance(compute_kwargs, str) and compute_kwargs:
+        compute_kwargs = json.loads(compute_kwargs)
+
+    compute = build_compute(CFG.cluster.compute.uri)
+
+    assert compute.remote is True, "Compute is not a distributed backend type."
+
+    compute.execute_task(
+        identifier, dependencies=dependencies, compute_kwargs=compute_kwargs
+    )
+
+
+def remote_task(identifier, dependencies=()):
+    """
+    Load job from job metadata and schedule it on remote cluster.
+
+    :param identifier: Job identifier.
+    :param dependencies: List of dependencies.
+    """
+    from superduperdb import CFG
+    from superduperdb.base.build import build_datalayer
+
+    # TODO: Make this run a predict job with multiple
+    # chunks as tasks.
+    db = build_datalayer(CFG, cluster__compute__uri=None)
+
+    info = db.metadata.get_job(identifier)
+
+    args = info['args']
+    kwargs = info['kwargs']
+    path = info['_path']
+
+    if 'ComponentJob' in path:
+        component_identifier = info['component_identifier']
+        method_name = info['method_name']
+        type_id = info['type_id']
+        job = ComponentJob(
+            args=args,
+            kwargs=kwargs,
+            method_name=method_name,
+            component_identifier=component_identifier,
+            type_id=type_id,
+            db=db,
+        )
+    elif 'FunctionJob' in path:
+        import importlib
+
+        function = path.split('/')[-1]
+        import_path, function = function.split(';')
+        callable = getattr(importlib.import_module(import_path), function)
+
+        job = FunctionJob(args=args, kwargs=kwargs, callable=callable, db=db)
+    else:
+        raise TypeError
+    job.submit(dependencies=dependencies)
+    return

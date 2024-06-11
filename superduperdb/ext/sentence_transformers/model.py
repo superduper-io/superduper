@@ -88,6 +88,7 @@ class SentenceTransformer(Model, _DeviceManaged):
             result = self.postprocess(result)
         return result
 
+    @t.no_type_check
     @ensure_initialized
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
@@ -95,8 +96,9 @@ class SentenceTransformer(Model, _DeviceManaged):
         :param dataset: The dataset to predict on.
         """
         if self.preprocess is not None:
-            dataset = list(map(self.preprocess, dataset))  # type: ignore[arg-type]
+            dataset = list(map(self.preprocess, dataset))
         assert self.object is not None
+
         results = self.object.encode(dataset, **self.predict_kwargs)
         if self.postprocess is not None:
             results = self.postprocess(results)

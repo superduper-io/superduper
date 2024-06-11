@@ -14,6 +14,11 @@ class LocalComputeBackend(ComputeBackend):
         self.__outputs: t.Dict = {}
 
     @property
+    def remote(self) -> bool:
+        """Return if remote compute engine."""
+        return False
+
+    @property
     def type(self) -> str:
         """The type of the backend."""
         return "local"

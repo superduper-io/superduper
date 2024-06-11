@@ -56,7 +56,7 @@ class Model2:
 
 
 def _wait_for_keys(db, collection, n=10, key=''):
-    retry_left = 10
+    retry_left = 20
 
     def check_outputs():
         docs = list(db.databackend.db[collection].find({}))

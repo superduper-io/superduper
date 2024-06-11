@@ -77,7 +77,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('method_name', type_string),
             Column('stdout', type_json_as_string),
             Column('stderr', type_json_as_string),
-            Column('cls', type_string),
+            Column('_path', type_string),
             Column('job_id', type_string),
             *job_table_args,
         )

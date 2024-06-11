@@ -1,8 +1,8 @@
 import dataclasses as dc
 import re
 
-T_IN_DATABSE = "&"
-T_IN_LEAVES = "?"
+T_NOT_IN_DOCUMENT = "&"
+T_IN_DOCUMENT = "?"
 
 
 @dc.dataclass
@@ -19,9 +19,9 @@ class Reference:
     path: str
 
     @property
-    def is_in_database(self):
-        """Check if the reference is in the database."""
-        return self.type == T_IN_DATABSE
+    def is_in_document(self):
+        """Check if the reference is in the document."""
+        return self.type == T_IN_DOCUMENT
 
     def __bool__(self):
         return bool(self.type) and bool(self.name)

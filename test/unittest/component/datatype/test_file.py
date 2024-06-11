@@ -32,6 +32,11 @@ datatypes = [
 
 
 @pytest.mark.parametrize("datatype", datatypes)
+def test_data_with_schema(datatype: DataType, random_data):
+    utils.check_data_with_schema(random_data, datatype)
+
+
+@pytest.mark.parametrize("datatype", datatypes)
 @pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_data_with_schema_and_db(datatype: DataType, random_data, db):
     utils.check_data_with_schema_and_db(random_data, datatype, db)

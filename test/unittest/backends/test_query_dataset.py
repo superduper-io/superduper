@@ -15,7 +15,7 @@ def test_query_dataset(db):
     train_data = QueryDataset(
         db=db,
         mapping=Mapping('_base', signature='singleton'),
-        select=MongoQuery(identifier='documents', db=db).find(
+        select=MongoQuery(table='documents', db=db).find(
             {},
             {
                 '_id': 0,
@@ -43,7 +43,7 @@ def test_query_dataset(db):
 
     train_data = QueryDataset(
         db=db,
-        select=MongoQuery('documents').find(),
+        select=MongoQuery(table='documents').find(),
         mapping=Mapping({'x': 'x', 'y': 'y'}, signature='**kwargs'),
         fold='train',
     )
@@ -57,7 +57,7 @@ def test_query_dataset(db):
 def test_query_dataset_base(db):
     train_data = QueryDataset(
         db=db,
-        select=MongoQuery('documents').find({}, {'_id': 0}),
+        select=MongoQuery(table='documents').find({}, {'_id': 0}),
         mapping=Mapping(['_base', 'y'], signature='*args'),
         fold='train',
     )

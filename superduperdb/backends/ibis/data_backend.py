@@ -46,7 +46,7 @@ class IbisDataBackend(BaseDataBackend):
 
         :param table_name: Which table to get the query builder for
         """
-        return IbisQuery(identifier=table_name, db=self.datalayer)
+        return IbisQuery(table=table_name, db=self.datalayer)
 
     def url(self):
         """Get the URL of the database."""

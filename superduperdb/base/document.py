@@ -8,8 +8,11 @@ from superduperdb.base.leaf import Leaf, _import_item
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
+    Blob,
+    DataType,
     Encodable,
     _BaseEncodable,
+    FileItem,
 )
 from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
 from superduperdb.misc.reference import parse_reference
@@ -56,27 +59,6 @@ class Document(MongoStyleDict):
         self.db = db
         self.schema = schema
 
-    def _deep_flat_encode(
-        self,
-        cache,
-        blobs,
-        files,
-        leaves_to_keep: t.Sequence = (),
-        schema: t.Optional['Schema'] = None,
-    ) -> dict[t.Any, t.Any]:
-        out = dict(self)
-        if schema is not None:
-            out = schema.deep_flat_encode_data(
-                out,
-                cache,
-                blobs,
-                files,
-                leaves_to_keep=leaves_to_keep,
-            )
-        return _deep_flat_encode(
-            out, cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
-        )
-
     def encode(
         self,
         schema: t.Optional[t.Union['Schema', str]] = None,
@@ -90,28 +72,45 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param leaves_to_keep: The types of leaves to keep.
         """
-        cache: t.Dict[str, dict] = self.get('_leaves', {})
-        blobs: t.Dict[str, bytes] = self.get('_blobs', {})
-        files: t.Dict[str, str] = self.get('_files', {})
+        # TODO merge with Leaf.encode
+        builds = {}
+        files = {}
+        blobs = {}
 
         # Get schema from database.
         schema = self.schema or schema
         schema = get_schema(self.db, schema) if schema else None
+        out = dict(self)
+        if schema is not None:
+            for k in schema.fields:
+                if not isinstance(schema.fields[k], DataType):
+                    continue
 
-        out = self._deep_flat_encode(
-            cache, blobs, files, leaves_to_keep=leaves_to_keep, schema=schema
+                bytes, identifier = schema.fields[k].encode_data_with_identifier(out[k])
+                if schema.fields[k].artifact:
+                    out[k] = '&:blob:' + identifier
+                    blobs[identifier] = bytes
+                else:
+                    out[k] = bytes
+
+            out['_schema'] = schema.identifier
+
+        out = _deep_flat_encode(
+            out, builds=builds, blobs=blobs, files=files, leaves_to_keep=leaves_to_keep,
         )
-
-        # TODO: (New) Only include _leaves, _files, _blobs if they are not empty.
-        out['_leaves'] = cache
-        out['_files'] = files
-        out['_blobs'] = blobs
+        # TODO - don't need to save in one document
+        # can return encoded, builds, files, blobs
+        out.update({'_leaves': builds, '_files': files, '_blobs': blobs})
         out = SuperDuperFlatEncode(out)
         return out
 
     @classmethod
     def decode(
-        cls, r, schema: t.Optional['Schema'] = None, db: t.Optional['Datalayer'] = None
+        cls,
+        r,
+        schema: t.Optional['Schema'] = None, 
+        db: t.Optional['Datalayer'] = None,
+        getters: t.Optional[t.Dict[str, t.Callable]] = None,
     ):
         """Converts any dictionary into a Document or a Leaf.
 
@@ -119,23 +118,6 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param db: The datalayer to use.
         """
-        cache = {}
-        blobs = {}
-        files = {}
-
-        if '_leaves' in r:
-            cache = r['_leaves']
-
-        if '_blobs' in r:
-            blobs = r['_blobs']
-
-        if '_files' in r:
-            files = r['_files']
-
-        for k, v in cache.items():
-            if isinstance(v, dict) and 'identifier' not in v:
-                v['identifier'] = k
-
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
 
@@ -143,12 +125,31 @@ class Document(MongoStyleDict):
             schema.init()
             r = schema.decode_data(r)
 
+        builds = r.get('_leaves', {})   
+
+        # Important: Leaf.identifier is used as the key, but must be set if not present.
+        for k in builds:
+            if isinstance(builds[k], dict) and ('_path' in builds[k] or '_object' in builds[k]):
+                if 'identifier' not in builds[k]:
+                    builds[k]['identifier'] = k
+
+        if db is not None:
+            getters={
+                'component': lambda x: _get_component(db, x),
+                'blob': lambda x: _get_artifact(db, x),
+                **(getters or {})
+            }
+        elif r.get('_blobs'):
+            getters={
+                'blob': lambda x: r['_blobs'][x],
+                **(getters or {})
+            }
+        
         r = _deep_flat_decode(
             {k: v for k, v in r.items() if k not in ('_leaves', '_blobs', '_files')},
-            cache,
-            blobs,
-            files=files,
+            builds=builds,
             db=db,
+            getters=getters,
         )
 
         if isinstance(r, dict):
@@ -259,22 +260,21 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
 
 def _deep_flat_encode(
     r,
-    cache,
-    blobs,
+    builds,
+    blobs, 
     files,
     leaves_to_keep: t.Sequence[Leaf] = (),
-    schema: t.Optional[Schema] = None,
 ):
+
     if isinstance(r, dict):
         tmp = {}
         for k in list(r):
             tmp[k] = _deep_flat_encode(
                 r[k],
-                cache,
-                blobs,
-                files,
+                builds,
+                blobs=blobs,
+                files=files,
                 leaves_to_keep=leaves_to_keep,
-                schema=schema,
             )
         return tmp
 
@@ -283,102 +283,118 @@ def _deep_flat_encode(
             [
                 _deep_flat_encode(
                     x,
-                    cache,
-                    blobs,
-                    files,
+                    builds,
+                    blobs=blobs,
+                    files=files,
                     leaves_to_keep=leaves_to_keep,
-                    schema=schema,
                 )
                 for x in r
             ]
         )
-    if isinstance(r, Leaf):
-        return r._deep_flat_encode(
-            cache,
-            blobs,
-            files,
+
+    if isinstance(r, Document):
+        return _deep_flat_encode(
+            r,
+            builds=builds,
+            blobs=blobs,
+            files=files,
             leaves_to_keep=leaves_to_keep,
-            schema=schema,
         )
+
+    if isinstance(r, Blob):
+        blobs[r.identifier] = r.bytes
+        return '&:blob:' + r.identifier
+
+    if isinstance(r, Leaf):
+
+        if isinstance(r, leaves_to_keep):
+            builds[r.identifier] = r
+            return '?' + r.identifier
+
+        r = r.dict()
+        r = _deep_flat_encode(
+            r,
+            builds=builds,
+            blobs=blobs,
+            files=files,
+            leaves_to_keep=leaves_to_keep,
+        )
+        for k in r:
+            if isinstance(r[k], Blob):
+                blobs[r[k].identifier] = r[k].bytes
+                r[k] = '&:blob:' + r[k].identifier
+
+            if isinstance(r[k], FileItem):
+                files[r[k].identifier] = r[k].path
+
+        identifier = r.pop('identifier')
+        builds[identifier] = r
+        return f'?{identifier}'
+    
     return r
 
 
-def _get_leaf_from_cache(k, cache, blobs, files, db: t.Optional['Datalayer'] = None):
-    if reference := parse_reference(k):
-        file_id = k.split(':')[-1]
-        if reference.name == 'blob':
-            return blobs.get(file_id)
-
-        elif reference.name == 'file':
-            return files.get(file_id)
-
-    k = k[1:]
-    if isinstance(cache[k], Leaf):
-        leaf = cache[k]
+def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None):
+    if isinstance(builds[k], Leaf):
+        leaf = builds[k]
         if not leaf.db:
             leaf.db = db
         return leaf
-    leaf = _deep_flat_decode(cache[k], cache, blobs, files, db=db)
-    cache[k] = leaf
+    leaf = _deep_flat_decode(builds[k], builds, getters=getters, db=db)
+    builds[k] = leaf
     if isinstance(leaf, Leaf):
         if not leaf.db:
             leaf.db = db
     return leaf
 
 
-def _deep_flat_decode(r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None):
-    # TODO: Document this function (Important)
+def _deep_flat_decode(r, builds, getters: t.Optional[None], db: t.Optional['Datalayer'] = None):
     if isinstance(r, Leaf):
         return r
     if isinstance(r, (list, tuple)):
         return type(r)(
-            [_deep_flat_decode(x, cache, blobs, files=files, db=db) for x in r]
+            [_deep_flat_decode(x, builds, getters=getters, db=db) for x in r]
         )
     if isinstance(r, dict) and '_path' in r:
         parts = r['_path'].split('/')
         cls = parts[-1]
         module = '.'.join(parts[:-1])
         dict_ = {k: v for k, v in r.items() if k != '_path'}
-        dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
+        dict_ = _deep_flat_decode(dict_, builds, getters=getters, db=db)
         instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
         return instance
     if isinstance(r, dict) and '_object' in r:
         dict_ = {k: v for k, v in r.items() if k != '_object'}
-        dict_ = _deep_flat_decode(dict_, cache, blobs, files, db=db)
-        object = _deep_flat_decode(cache[r['_object'][1:]], cache, blobs, files, db=db)
+        dict_ = _deep_flat_decode(dict_, builds, getters=getters, db=db)
+        object = _deep_flat_decode(builds[r['_object'][1:]], builds, getters=getters, db=db)
         instance = _import_item(object=object.unpack(), dict=dict_, db=db)
         return instance
     if isinstance(r, dict):
         return {
-            k: _deep_flat_decode(v, cache, blobs, files, db=db) for k, v in r.items()
+            k: _deep_flat_decode(v, builds, getters=getters, db=db)
+            for k, v in r.items()
         }
-    if isinstance(r, str) and r.startswith('?') and not r.startswith('?db'):
-        return _get_leaf_from_cache(r, cache, blobs, files, db=db)
-    if isinstance(r, str) and r.startswith('&:'):
-        return _get_from_in_db_reference(r, cache, blobs, files, db=db)
-    if isinstance(r, str) and re.match("^\?db\.load\((.*)\)$", r):
-        match = re.match("^\?db\.load\((.*)\)$", r)
-        assert match is not None
-        assert db is not None, 'db is required for ?db.load()'
-        args = [x.strip() for x in match.groups()[0].split(',')]
-        if len(args) == 1:
-            return db.load(uuid=args[0])
-        if len(args) == 2:
-            return db.load(type_id=args[0], identifier=args[1])
-        if len(args) == 3:
-            return db.load(type_id=args[0], identifier=args[1], version=int(args[2]))
-        raise ValueError(f'Invalid number of arguments for {r}')
+    if isinstance(r, str) and r.startswith('?'):
+        return _get_leaf_from_cache(r[1:], builds, getters=getters, db=db)
+    if isinstance(r, str) and r.startswith('&'):
+        assert getters is not None
+        reference = parse_reference(r)
+        return getters[reference.name](reference.path)
     return r
 
 
-def _get_from_in_db_reference(
-    r, cache, blobs, files={}, db: t.Optional['Datalayer'] = None
-):
-    if not (reference := parse_reference(r)):
-        return r
+def _get_component(db, path):
+    parts = path.split(':')
+    if len(parts) == 1:
+        return db.load(uuid=parts[0])
+    if len(parts) == 2:
+        return db.load(type_id=parts[0], identifier=parts[1])
+    if len(parts) == 3:
+        if not parts[2].isnumeric():
+            return db.load(uuid=parts[2])
+        return db.load(type_id=parts[0], identifier=parts[1], version=parts[2])
+    raise ValueError(f'Invalid component reference: {path}')
 
-    if reference.name == 'component':
-        assert db is not None, 'db is required for ?:component:'
-        return db.load(uuid=r.split('/')[-1])
 
-    return r
+def _get_artifact(db, path):
+    return db.artifact_store.get_bytes(path)

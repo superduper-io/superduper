@@ -11,10 +11,12 @@ class Reference:
 
     :param type: The type of the reference. Either "&" for a database or "?" for a leaf.
     :param name: The name of the reference.
+    :param path: The path of the reference, e.g. type_id:identifier:version
     """
 
     type: str
     name: str
+    path: str
 
     @property
     def is_in_database(self):
@@ -31,11 +33,11 @@ def parse_reference(string) -> Reference:
     :param string: The string to parse.
     """
     if not isinstance(string, str):
-        return Reference("", "")
+        return Reference("", "", "")
 
-    match = re.match(r"^(\?|&):(.*?):", string)
+    match = re.match(r"^(\?|&):(.*?):(.*)$", string)
 
     if not match:
-        return Reference("", "")
+        return Reference("", "", "")
 
-    return Reference(match.group(1), match.group(2))
+    return Reference(match.group(1), match.group(2), match.group(3))

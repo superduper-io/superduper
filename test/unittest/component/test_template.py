@@ -34,7 +34,7 @@ def test_basic_template(db):
     assert all([v in ['key', 'model_id'] for v in vars])
     db.apply(template)
 
-    # Check template component is not been added to metadata
+    # Check template component has not been added to metadata
     assert 'my_id' not in db.show('model')
     assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('listener')])
 
@@ -44,6 +44,7 @@ def test_basic_template(db):
     assert listener.model.identifier == 'my_id'
 
     db.apply(listener)
+
     reloaded_template = db.load('template', template.identifier)
     listener = reloaded_template(key='y', model_id='my_id')
 

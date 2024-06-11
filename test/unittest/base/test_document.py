@@ -1,6 +1,7 @@
 import dataclasses as dc
 import pprint
 import typing as t
+from superduperdb.base.variables import Variable
 from test.db_config import DBConfig
 
 import pytest
@@ -19,7 +20,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.base.document import Document
+from superduperdb.base.document import Document, _deep_flat_decode
 
 
 @pytest.fixture
@@ -36,19 +37,18 @@ class _db:
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_document_encoding(document):
     t = tensor(dtype='float', shape=(20,))
-    _db(datatypes={'torch.float32[20]': t})
-    new_document = Document.decode(document.encode())
+    new_document = Document.decode(document.encode(), getters={'component': lambda x: t})
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
 def test_flat_query_encoding():
-    q = MongoQuery('docs').find({'a': 1}).limit(2)
+    q = MongoQuery(table='docs').find({'a': 1}).limit(2)
 
     r = q._deep_flat_encode({}, {}, {})
 
     doc = Document({'x': 1})
 
-    q = MongoQuery('docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
+    q = MongoQuery(table='docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
 
     r = q._deep_flat_encode({}, {}, {})
 
@@ -84,7 +84,7 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert '_leaves' in encoded_r
     assert '_blobs' in encoded_r
-    assert encoded_r['img'].startswith('?:blob:')
+    assert encoded_r['img'].startswith('&:blob:')
     assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
 
 
@@ -98,7 +98,7 @@ def test_encode_model():
 
     pprint.pprint(encoded_r)
 
-    decoded_r = Document.decode(encoded_r)
+    decoded_r = Document.decode(encoded_r, getters={'blob': lambda x: encoded_r['_blobs'][x]})
 
     print(decoded_r)
 
@@ -116,7 +116,7 @@ def test_encode_model():
 
     print(r)
 
-    pprint.pprint(m.dict()._deep_flat_encode({}, {}, {}))
+    pprint.pprint(m.dict().encode())
 
 
 def test_decode_inline_data():
@@ -152,7 +152,8 @@ def test_refer_to_applied_item(db):
 
     db.apply(m)
     r = db.metadata._get_component_by_uuid(m.uuid)
-    assert r['datatype'].startswith('&:component:datatype/my-type')
+
+    assert r['datatype'].startswith('&:component:datatype:my-type')
 
     import pprint
 
@@ -206,14 +207,16 @@ def test_refer_to_system(db):
 
     img = PIL.Image.open('test/material/data/test.png')
 
+    existing = db.show()
+
     db.artifact_store.put_bytes(db.datatypes['image'].encoder(img), file_id='12345')
 
     r = {
         '_leaves': {
             'my_artifact': {
                 '_path': 'superduperdb/components/datatype/LazyArtifact',
-                'file_id': '12345',
-                'datatype': "?db.load(datatype, image)",
+                'blob': '&:blob:12345',
+                'datatype': "&:component:datatype:image",
             }
         },
         'img': '?my_artifact',

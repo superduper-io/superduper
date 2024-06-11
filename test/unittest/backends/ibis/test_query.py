@@ -17,7 +17,7 @@ except ImportError:
 
 def test_serialize_table():
     schema = Schema(
-        identifier='my_table',
+        identifier='my_schema',
         fields={
             'id': dtype('int64'),
             'health': dtype('int32'),
@@ -33,6 +33,7 @@ def test_serialize_table():
     t = Table(identifier='my_table', schema=schema)
 
     s = t.encode()
+
     ds = Document.decode(s).unpack()
     assert isinstance(ds, Table)
 
@@ -81,7 +82,7 @@ def test_renamings(db):
 def test_serialize_query(db):
     from superduperdb.backends.ibis.query import IbisQuery
 
-    t = IbisQuery(db=db, identifier='documents', parts=[('select', ('id',), {})])
+    t = IbisQuery(db=db, table='documents', parts=[('select', ('id',), {})])
 
     q = t.filter(t.id == 1).select(t.id, t.x)
 

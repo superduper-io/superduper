@@ -43,8 +43,8 @@ class MyComponent(Component):
 def test_init(monkeypatch):
     from unittest.mock import MagicMock
 
-    e = Artifact(x=None, file_id='123', datatype=dill_serializer)
-    a = Artifact(x=None, file_id='456', datatype=dill_serializer)
+    e = Artifact(x=None, identifier='123', datatype=dill_serializer)
+    a = Artifact(x=None, identifier='456', datatype=dill_serializer)
 
     def side_effect(*args, **kwargs):
         a.x = lambda x: x + 1
@@ -94,7 +94,14 @@ def test_export_and_read():
         m.export(save_path)
         assert os.path.exists(os.path.join(tmpdir, 'tmp_save', 'blobs'))
 
-        reloaded = Component.read(save_path)
+        def load(blob):
+            with open(blob, 'rb') as f:
+                return f.read()
+
+        getters = {
+            'blob': load,
+        }
+        reloaded = Component.read(save_path)    # getters=getters
 
         assert isinstance(reloaded, ObjectModel)
         assert isinstance(reloaded.datatype, DataType)

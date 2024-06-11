@@ -71,7 +71,7 @@ def tensor(
     """
     dtype = getattr(torch, dtype)
     return DataType(
-        identifier=f"{str(dtype)}[{str_shape(shape)}]",
+        identifier=f"{str(dtype).replace('.', '-')}[{str_shape(shape)}]",
         encoder=EncodeTensor(dtype),
         decoder=DecodeTensor(dtype, shape),
         shape=shape,

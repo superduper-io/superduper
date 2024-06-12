@@ -13,8 +13,6 @@ from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import (
     DataType,
     dill_serializer,
-    pickle_decode,
-    pickle_encode,
 )
 
 
@@ -63,9 +61,7 @@ class Dataset(Component):
         super().init(db=db)
         if self.pin:
             assert self.raw_data is not None
-            self._data = [
-                Document.decode(r, db=db).unpack() for r in pickle_decode(self.raw_data)
-            ]
+            self._data = [Document.decode(r, db=db).unpack() for r in self.raw_data]
         else:
             self._data = self._load_data(db)
 
@@ -77,7 +73,7 @@ class Dataset(Component):
         """
         if self.raw_data is None and self.pin:
             data = self._load_data(db)
-            self.raw_data = pickle_encode([r.encode() for r in data])
+            self.raw_data = [r.encode() for r in data]
 
     def _load_data(self, db: 'Datalayer'):
         assert self.db is not None, 'Database must be set'

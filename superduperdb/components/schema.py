@@ -74,7 +74,7 @@ class Schema(Component):
                 fields.add((k, v.identifier))
         return fields
 
-    def encode_data(self, out, builds, blobs, files):
+    def encode_data(self, out, builds, blobs, files, leaves_to_keep=()):
         """Encode data using the schema's encoders.
 
         :param out: Data to encode.
@@ -84,6 +84,9 @@ class Schema(Component):
         """
         for k, field in self.fields.items():
             if not isinstance(field, DataType):
+                continue
+
+            if isinstance(out[k], leaves_to_keep):
                 continue
 
             data, identifier = field.encode_data_with_identifier(out[k])

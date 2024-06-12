@@ -82,7 +82,9 @@ class Document(MongoStyleDict):
         schema = get_schema(self.db, schema) if schema else None
         out = dict(self)
         if schema is not None:
-            out = schema.encode_data(out, builds, blobs, files)
+            out = schema.encode_data(
+                out, builds, blobs, files, leaves_to_keep=leaves_to_keep
+            )
 
         out = _deep_flat_encode(
             out,

@@ -1,7 +1,6 @@
 import base64
 import dataclasses as dc
 import hashlib
-import inspect
 import io
 import json
 import os
@@ -22,7 +21,6 @@ from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.misc.annotations import component
 from superduperdb.misc.hash import random_sha1
-from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 from superduperdb.misc.reference import parse_reference
 
 Decode = t.Callable[[bytes], t.Any]
@@ -30,7 +28,6 @@ Encode = t.Callable[[t.Any], bytes]
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.schema import Schema
 
 
 class IntermediateType:
@@ -228,6 +225,7 @@ class DataType(Component):
 
     @property
     def artifact(self):
+        """Check if the encodable is an artifact."""
         return self.encodable_cls.artifact
 
     def dict(self):
@@ -472,6 +470,7 @@ class Encodable(_BaseEncodable):
         return bytes_, sha1
 
     def dict(self):
+        """Get the dictionary representation of the object."""
         r = super().dict()
         del r['x']
         r['blob'], r['identifier'] = self._encode()
@@ -565,7 +564,9 @@ class Artifact(_BaseEncodable):
         # If we get the reference witch is in the database,
         # we use identifier to get the blob from the artifact store
         elif self._reference:
-            assert not self._reference.is_in_document, 'Artifact must be in the database'
+            assert (
+                not self._reference.is_in_document
+            ), 'Artifact must be in the database'
             self.identifier = self._reference.path
             self.x = Empty()
 
@@ -594,6 +595,7 @@ class Artifact(_BaseEncodable):
         self.x = self.datatype.decoder(blob)
 
     def dict(self):
+        """Get the dictionary representation of the object."""
         bytes, self.identifier = self._encode()
         r = super().dict()
         del r['x']
@@ -678,6 +680,7 @@ class File(_BaseEncodable):
             self.init()
 
     def dict(self):
+        """Get the dictionary representation of the object."""
         self.identifier = self.identifier or random_sha1()
         r = super().dict()
         r['x'] = FileItem(

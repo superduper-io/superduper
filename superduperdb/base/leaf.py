@@ -6,13 +6,12 @@ import uuid
 
 from superduperdb.misc.annotations import extract_parameters, replace_parameters
 from superduperdb.misc.serialization import asdict
-from superduperdb.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
+from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 _CLASS_REGISTRY = {}
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.schema import Schema
 
 
 def _import_item(
@@ -123,6 +122,7 @@ class Leaf(metaclass=LeafMeta):
 
     @property
     def metadata(self):
+        """Get metadata of the object."""
         return {}
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
@@ -146,23 +146,26 @@ class Leaf(metaclass=LeafMeta):
         :param leaves_to_keep: Leaves to keep.
         """
         from superduperdb.base.document import _deep_flat_encode
+
         builds = {}
         blobs = {}
         files = {}
         r = _deep_flat_encode(
-            self.dict(), 
+            self.dict(),
             builds,
             blobs=blobs,
             files=files,
             leaves_to_keep=leaves_to_keep,
         )
         builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
-        return SuperDuperFlatEncode({
-            '_base': f'?{self.identifier}',
-            '_leaves': builds,
-            '_blobs': blobs,
-            '_files': files,
-        })
+        return SuperDuperFlatEncode(
+            {
+                '_base': f'?{self.identifier}',
+                '_leaves': builds,
+                '_blobs': blobs,
+                '_files': files,
+            }
+        )
 
     def set_variables(self, **kwargs) -> 'Leaf':
         """Set free variables of self.
@@ -199,7 +202,7 @@ class Leaf(metaclass=LeafMeta):
                 datatype=dill_serializer,
             )
             return Document({'_object': cls, **r})
-    
+
         path = (f'{self.__class__.__module__}.' f'{self.__class__.__name__}').replace(
             '.', '/'
         )

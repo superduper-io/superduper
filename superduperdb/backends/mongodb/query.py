@@ -20,7 +20,6 @@ from superduperdb.base.leaf import Leaf
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
-    from superduperdb import Schema
     from superduperdb.base.datalayer import Datalayer
 
 _SPECIAL_CHRS: list = ['$', '.']
@@ -138,6 +137,7 @@ class MongoQuery(Query):
         return
 
     def dict(self):
+        """Return the query as a dictionary."""
         r = super().dict()
         r['documents'] = list(map(_serialize_special_character, r['documents']))
         return r
@@ -273,9 +273,7 @@ class MongoQuery(Query):
                     'all ids selection e.g `\{\}` is not supported',
                 )
 
-        collection = self.db.databackend.get_table_or_collection(
-            self.table
-        )
+        collection = self.db.databackend.get_table_or_collection(self.table)
         bulk_operations = []
         bulk_update_ids = []
         bulk_delete_ids = []

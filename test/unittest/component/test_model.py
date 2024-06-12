@@ -341,7 +341,9 @@ def test_model_fit(db, valid_dataset):
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer('my-trainer', key='x', select=MongoQuery(table='test').find()),
+        trainer=MyTrainer(
+            'my-trainer', key='x', select=MongoQuery(table='test').find()
+        ),
         validation=Validation(
             'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
         ),

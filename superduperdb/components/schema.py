@@ -4,7 +4,7 @@ from functools import cached_property
 from overrides import override
 
 from superduperdb.components.component import Component
-from superduperdb.components.datatype import Blob, DataType, _BaseEncodable, FileItem
+from superduperdb.components.datatype import DataType
 from superduperdb.misc.reference import parse_reference
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
@@ -75,6 +75,13 @@ class Schema(Component):
         return fields
 
     def encode_data(self, out, builds, blobs, files):
+        """Encode data using the schema's encoders.
+
+        :param out: Data to encode.
+        :param builds: Builds.
+        :param blobs: Blobs.
+        :param files: Files.
+        """
         for k, field in self.fields.items():
             if not isinstance(field, DataType):
                 continue
@@ -89,9 +96,7 @@ class Schema(Component):
                 elif ref_obj.name == 'file':
                     files[identifier] = data
                 else:
-                    assert (
-                        False
-                    ), f'Unknown reference type {ref_obj.name}, Only blob and file are supported'
+                    assert False, f'Unknown reference type {ref_obj.name}'
                 out[k] = reference
             else:
                 out[k] = data

@@ -98,10 +98,7 @@ def test_export_and_read():
             with open(blob, 'rb') as f:
                 return f.read()
 
-        getters = {
-            'blob': load,
-        }
-        reloaded = Component.read(save_path)    # getters=getters
+        reloaded = Component.read(save_path)  # getters=getters
 
         assert isinstance(reloaded, ObjectModel)
         assert isinstance(reloaded.datatype, DataType)

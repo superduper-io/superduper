@@ -1,7 +1,6 @@
 import dataclasses as dc
 import pprint
 import typing as t
-from superduperdb.base.variables import Variable
 from test.db_config import DBConfig
 
 import pytest
@@ -20,7 +19,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.base.document import Document, _deep_flat_decode
+from superduperdb.base.document import Document
 
 
 @pytest.fixture
@@ -37,7 +36,9 @@ class _db:
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_document_encoding(document):
     t = tensor(dtype='float', shape=(20,))
-    new_document = Document.decode(document.encode(), getters={'component': lambda x: t})
+    new_document = Document.decode(
+        document.encode(), getters={'component': lambda x: t}
+    )
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
@@ -98,7 +99,9 @@ def test_encode_model():
 
     pprint.pprint(encoded_r)
 
-    decoded_r = Document.decode(encoded_r, getters={'blob': lambda x: encoded_r['_blobs'][x]})
+    decoded_r = Document.decode(
+        encoded_r, getters={'blob': lambda x: encoded_r['_blobs'][x]}
+    )
 
     print(decoded_r)
 

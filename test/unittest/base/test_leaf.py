@@ -68,12 +68,13 @@ def test_encode_leaf_with_children():
         'b': 'test_b',
         'c': '?other_ser',
         '_leaves': {
-            'other_ser': {k: v for k, v in obj.c.dict().unpack().items() if k != 'identifier'},
+            'other_ser': {
+                k: v for k, v in obj.c.dict().unpack().items() if k != 'identifier'
+            },
         },
         '_files': {},
         '_blobs': {},
     }
-
 
 
 def test_save_variables_2():

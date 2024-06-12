@@ -1,8 +1,6 @@
 import re
-import typing as t
 
 from superduperdb.base.leaf import Leaf
-from superduperdb.components.schema import Schema
 
 
 class VariableError(Exception):

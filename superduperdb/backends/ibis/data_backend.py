@@ -88,6 +88,7 @@ class IbisDataBackend(BaseDataBackend):
                 df.to_csv(os.path.join(self.name, table_name + '.csv'), index=False)
 
     def drop_outputs(self):
+        """Drop the outputs."""
         raise NotImplementedError
 
     def drop_table_or_collection(self, name: str):

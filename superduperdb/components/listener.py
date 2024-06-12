@@ -187,6 +187,4 @@ class Listener(Component):
         """
         model_update_kwargs = self.model.model_update_kwargs or {}
         embedded = model_update_kwargs.get('document_embedded', True)
-        self.db[self.select.table].drop_outputs(
-            self.outputs, embedded=embedded
-        )
+        self.db[self.select.table].drop_outputs(self.outputs, embedded=embedded)

@@ -298,6 +298,7 @@ def _deep_flat_encode(
             leaves_to_keep=leaves_to_keep,
         )
 
+
     if isinstance(r, Blob):
         blobs[r.identifier] = r.bytes
         return '&:blob:' + r.identifier
@@ -323,6 +324,9 @@ def _deep_flat_encode(
         identifier = r.pop('identifier')
         builds[identifier] = r
         return f'?{identifier}'
+
+    if isinstance(r, Variable):
+        return r.key
 
     return r
 
@@ -385,6 +389,9 @@ def _deep_flat_decode(
         if reference.name in getters:
             return getters[reference.name](reference.path)
         return r
+    if isinstance(r, str) and (vars:=re.findall(r'^<var:(.*?)>$', r)):
+        return Variable(vars[0])
+
     return r
 
 

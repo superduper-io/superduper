@@ -217,7 +217,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def _get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+    def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
         pass
 
     def get_component(

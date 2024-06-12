@@ -10,10 +10,9 @@ from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
     Blob,
-    DataType,
     Encodable,
-    _BaseEncodable,
     FileItem,
+    _BaseEncodable,
 )
 from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
 from superduperdb.misc.reference import parse_reference
@@ -25,6 +24,7 @@ if t.TYPE_CHECKING:
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
+LeafMetaType = t.Type['Leaf']
 
 _LEAF_TYPES = {
     'component': Component,
@@ -130,11 +130,14 @@ class Document(MongoStyleDict):
 
         getters = getters or {}
         if r.get('_blobs'):
+
             def _get_from_local_artifacts(x):
                 return r['_blobs'].get(x, x)
+
             getters['blob'] = _get_from_local_artifacts
 
         if r.get('_files'):
+
             def _get_from_local_files(x):
                 return r['_files'].get(x.split(':')[-1], x)
 
@@ -261,7 +264,7 @@ def _deep_flat_encode(
     builds,
     blobs,
     files,
-    leaves_to_keep: t.Sequence[Leaf] = (),
+    leaves_to_keep=(),
 ):
     if isinstance(r, dict):
         tmp = {}
@@ -297,7 +300,6 @@ def _deep_flat_encode(
             files=files,
             leaves_to_keep=leaves_to_keep,
         )
-
 
     if isinstance(r, Blob):
         blobs[r.identifier] = r.bytes
@@ -335,7 +337,6 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     if reference := parse_reference(f'?{k}'):
         if reference.name in getters:
             return getters[reference.name](reference.path)
-    
 
     if isinstance(builds[k], Leaf):
         leaf = builds[k]
@@ -351,7 +352,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
 
 
 def _deep_flat_decode(
-    r, builds, getters: t.Optional[None], db: t.Optional['Datalayer'] = None
+    r, builds, getters: t.Optional[dict], db: t.Optional['Datalayer'] = None
 ):
     if isinstance(r, Leaf):
         return r
@@ -378,7 +379,9 @@ def _deep_flat_decode(
     if isinstance(r, dict):
         literals = r.get('_literals', [])
         return {
-            k: _deep_flat_decode(v, builds, getters=getters, db=db) if k not in literals else v
+            k: _deep_flat_decode(v, builds, getters=getters, db=db)
+            if k not in literals
+            else v
             for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?'):
@@ -389,7 +392,7 @@ def _deep_flat_decode(
         if reference.name in getters:
             return getters[reference.name](reference.path)
         return r
-    if isinstance(r, str) and (vars:=re.findall(r'^<var:(.*?)>$', r)):
+    if isinstance(r, str) and (vars := re.findall(r'^<var:(.*?)>$', r)):
         return Variable(vars[0])
 
     return r

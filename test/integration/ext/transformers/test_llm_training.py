@@ -54,8 +54,8 @@ def db():
         for example in eval_dataset
     ]
 
-    db_.execute(MongoQuery("datas").insert_many(train_documents[:100]))
-    db_.execute(MongoQuery("datas").insert_many(eval_documents[:4]))
+    db_['datas'].insert_many(train_documents[:100]).execute()
+    db_['datas'].insert_many(eval_documents[:4]).execute()
 
     yield db_
 
@@ -81,7 +81,7 @@ def trainer():
         max_seq_length=512,
         use_lora=True,
         key="text",
-        select=MongoQuery("datas").find(),
+        select=MongoQuery(table="datas").find(),
         training_kwargs=dict(dataset_text_field="text"),
     )
 

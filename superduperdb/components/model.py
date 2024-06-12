@@ -848,6 +848,7 @@ class Model(Component, metaclass=ModelMeta):
             predict_id
         ):
             from superduperdb.components.listener import Listener
+
             Listener.create_output_dest(self.db, predict_id, self)
 
         if self.datatype is not None or self.output_schema is not None:

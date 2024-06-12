@@ -238,9 +238,7 @@ class IbisQuery(Query):
         like = like_args[0] if like_args else like_kwargs['r']
         if isinstance(like, Document):
             like = like.unpack()
-        pre_like_query = IbisQuery(
-            db=self.db, table=self.table, parts=pre_like_parts
-        )
+        pre_like_query = IbisQuery(db=self.db, table=self.table, parts=pre_like_parts)
         within_ids = [
             r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)
         ]

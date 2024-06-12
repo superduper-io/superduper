@@ -1,5 +1,4 @@
 import functools
-import hashlib
 import importlib
 import inspect
 import sys
@@ -184,11 +183,13 @@ def component(*schema: t.Dict):
                 out = f(**kwargs)
 
             from superduperdb.components.component import Component
+
             assert isinstance(out, Component)
 
             def to_dict():
                 path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
                 from superduperdb.base.document import Document
+
                 return Document({'_path': path, **kwargs, **out.metadata})
 
             out.dict = to_dict

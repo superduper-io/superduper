@@ -4,8 +4,6 @@ import os
 import typing as t
 
 from superduperdb.base.document import Document
-from superduperdb.components.datatype import DataType, dill_lazy
-from superduperdb.misc.annotations import component
 
 from .component import Component, ensure_initialized
 
@@ -52,10 +50,11 @@ class Template(Component):
             assert set(kwargs.keys()) == (set(self.info.keys())), 'Invalid variables'
         t = Document.decode(
             {
-                **self.component, 
+                **self.component,
                 '_blobs': self._component_blobs or {},
                 '_leaves': self._component_leaves or {},
-             }, db=self.db
+            },
+            db=self.db,
         )
         t.init(db=self.db)
         t = t.set_variables(db=self.db, **kwargs)
@@ -82,6 +81,7 @@ class Template(Component):
         ```
         """
         from superduperdb.components.component import _build_info_from_path
+
         config_object = _build_info_from_path(path=path)
 
         from superduperdb import Document

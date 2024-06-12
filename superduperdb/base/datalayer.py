@@ -17,7 +17,7 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.base.metadata import MetaDataStore
 from superduperdb.backends.base.query import Query
 from superduperdb.backends.local.compute import LocalComputeBackend
-from superduperdb.base import exceptions, variables
+from superduperdb.base import exceptions
 from superduperdb.base.config import Config
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
@@ -222,6 +222,7 @@ class Datalayer:
         self.compute = new
 
     def disconnect(self):
+        """Disconnect from the compute engine."""
         self.compute.disconnect()
 
     def get_compute(self):
@@ -857,7 +858,9 @@ class Datalayer:
         self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
     ):
         # TODO add update logic here to check changed attributes
-        s.logging.debug(f'{object.type_id},{object.identifier} already exists - doing nothing')
+        s.logging.debug(
+            f'{object.type_id},{object.identifier} already exists - doing nothing'
+        )
         return []
 
     def _add(
@@ -926,7 +929,9 @@ class Datalayer:
             if isinstance(serialized['_leaves'][reference], Component):
                 comp = serialized['_leaves'][reference]
                 serialized['_leaves'].pop(reference)
-                references[reference] = comp.type_id + ':' + comp.identifier + ':' + comp.uuid
+                references[reference] = (
+                    comp.type_id + ':' + comp.identifier + ':' + comp.uuid
+                )
 
         # Only replace component references
         if not references:
@@ -936,7 +941,11 @@ class Datalayer:
             # Change value if it is a string and starts with '?'
             # and the value is in references
             # ?:xxx: -> &:xxx:
-            if isinstance(value, str) and value.startswith('?') and value[1:] in references:
+            if (
+                isinstance(value, str)
+                and value.startswith('?')
+                and value[1:] in references
+            ):
                 return '&:component:' + references[value[1:]]
             return value
 

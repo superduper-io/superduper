@@ -5,14 +5,12 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
-from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
 from superduperdb.misc.hash import hash_string
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
-    from superduperdb.components.schema import Schema
 
 
 def applies_to(*flavours):
@@ -197,15 +195,18 @@ class Query(_BaseQuery, TraceMixin):
         pass
 
     def dict(self):
+        """Return the query as a dictionary."""
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
         backend = self.__module__.split('.')[-2]
-        return Document({
-            '_path': f'superduperdb/backends/{backend}/query/parse_query',
-            'documents': documents,
-            'identifier': self.identifier,
-            'query': query,
-        })
+        return Document(
+            {
+                '_path': f'superduperdb/backends/{backend}/query/parse_query',
+                'documents': documents,
+                'identifier': self.identifier,
+                'query': query,
+            }
+        )
 
     @staticmethod
     def _update_item(a, documents, queries):
@@ -361,14 +362,6 @@ class Query(_BaseQuery, TraceMixin):
     @abstractmethod
     def _create_table_if_not_exists(self):
         pass
-
-    def e(self, *args, **kwargs):
-        out = self.execute()
-        if isinstance(out, SuperDuperCursor):
-            return [r.unpack() for r in out]
-        if isinstance(out, Document):
-            return out.unpack()
-        return out
 
     def execute(self, db=None, **kwargs):
         """

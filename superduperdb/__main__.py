@@ -2,10 +2,17 @@ import sys
 
 import click
 
-from superduperdb.cli import app, info, apply
+from superduperdb.cli import app, apply, info
 from superduperdb.cli.serve import cdc, local_cluster, ray_serve, vector_search
 
-__all__ = 'config', 'info', 'local_cluster', 'vector_search', 'cdc', 'ray_serve'
+__all__ = (
+    'apply',
+    'info',
+    'local_cluster',
+    'vector_search',
+    'cdc',
+    'ray_serve',
+)
 
 
 def run():

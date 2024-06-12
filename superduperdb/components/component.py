@@ -124,6 +124,7 @@ class Component(Leaf):
 
     @property
     def metadata(self):
+        """Get metadata of the component."""
         return {
             'type_id': self.type_id,
             'version': self.version,
@@ -256,9 +257,7 @@ class Component(Leaf):
             with open(path + '/blobs/' + blob, 'rb') as f:
                 return f.read()
 
-        getters = {
-            'blob': load_blob
-        }
+        getters = {'blob': load_blob}
 
         return Document.decode(config_object, getters=getters).unpack()
 

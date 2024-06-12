@@ -7,7 +7,7 @@ class Trigger(Component):
 
     ***Note that this feature deploys on SuperDuperDB Enterprise.***
     
-    :param on: When to trigger the function {'insert', 'update', 'delete'}.
+    :param on: When to trigger the function `{'insert', 'update', 'delete'}`.
     :param condition: Additional condition to trigger the function.
     """
     table: str

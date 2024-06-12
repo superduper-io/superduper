@@ -244,7 +244,7 @@ class MongoMetaDataStore(MetaDataStore):
             }
         )
 
-    def _get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+    def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
         r = self.component_collection.find_one({'uuid': uuid})
         return self._get_component(
             type_id=r['type_id'],

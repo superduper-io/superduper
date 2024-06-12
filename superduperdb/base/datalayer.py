@@ -294,11 +294,9 @@ class Datalayer:
             return out
 
         if version == -1:
-            return self._get_object_info(type_id=type_id, identifier=identifier)
+            return self.metadata.get_component(type_id=type_id, identifier=identifier, version=None)
 
-        return self._get_object_info(
-            type_id=type_id, identifier=identifier, version=version
-        )
+        return self.metadata.get_component(type_id=type_id, identifier=identifier, version=version)
 
     def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
         """Execute a query on the database.
@@ -377,7 +375,7 @@ class Datalayer:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
                 return inserted_ids, self.refresh_after_update_or_insert(
-                    insert, ids=inserted_ids, verbose=False
+                    insert, ids=inserted_ids, 
                 )
 
         return inserted_ids, None
@@ -394,7 +392,6 @@ class Datalayer:
         self,
         query: Query,
         ids: t.Sequence[str],
-        verbose: bool = False,
     ):
         """
         Trigger cleanup jobs after data deletion.
@@ -402,12 +399,10 @@ class Datalayer:
         :param query: The select or update query object that reduces
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
-        :param verbose: Set to ``True`` to enable more detailed output.
         """
         task_workflow: TaskWorkflow = self._build_delete_task_workflow(
             query,
             ids=ids,
-            verbose=verbose,
         )
         task_workflow.run_jobs()
         return task_workflow
@@ -416,7 +411,6 @@ class Datalayer:
         self,
         query: Query,
         ids: t.Sequence[str],
-        verbose: bool = False,
         overwrite: bool = False,
     ):
         """
@@ -425,13 +419,11 @@ class Datalayer:
         :param query: The select or update query object that reduces
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
-        :param verbose: Set to ``True`` to enable more detailed output.
         :param overwrite: If True, cascade the value to the 'predict_in_db' job.
         """
         task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
-            verbose=verbose,
             overwrite=overwrite,
         )
         task_workflow.run_jobs()
@@ -459,14 +451,14 @@ class Datalayer:
                     # could be done on collections with already existing outputs
                     # We need overwrite ouptuts on those select and recompute predict
                     job_update = self.refresh_after_update_or_insert(
-                        query=q, ids=ids, verbose=False, overwrite=True
+                        query=q, ids=ids, overwrite=True
                     )
                     jobs.append(job_update)
 
                     q = d['query']
                     ids = d['ids']
                     job_update = self.refresh_after_delete(
-                        query=q, ids=ids, verbose=False
+                        query=q, ids=ids, 
                     )
                     jobs.append(job_update)
 
@@ -494,7 +486,7 @@ class Datalayer:
                 # with already existing outputs.
                 # We need overwrite outputs on those select and recompute predict
                 return updated_ids, self.refresh_after_update_or_insert(
-                    query=update, ids=updated_ids, verbose=False, overwrite=True
+                    query=update, ids=updated_ids, overwrite=True
                 )
         return updated_ids, None
 
@@ -527,16 +519,16 @@ class Datalayer:
         """
         if isinstance(object, (list, tuple)):
             return type(object)(
-                self._add(
+                self._apply(
                     object=component,
                     dependencies=dependencies,
                 )
                 for component in object
             )
         elif isinstance(object, Component):
-            return self._add(object=object, dependencies=dependencies), object
+            return self._apply(object=object, dependencies=dependencies), object
         else:
-            return self._add(superduper(object)), object
+            return self._apply(superduper(object)), object
 
     def remove(
         self,
@@ -643,8 +635,7 @@ class Datalayer:
                 allow_hidden=allow_hidden,
             )
         else:
-            # TODO: Do not call private method
-            info = self.metadata._get_component_by_uuid(
+            info = self.metadata.get_component_by_uuid(
                 uuid=uuid,
                 allow_hidden=allow_hidden,
             )
@@ -666,7 +657,6 @@ class Datalayer:
         self,
         query: Query,
         ids: t.Sequence[str],
-        verbose: bool = False,
     ):
         G = TaskWorkflow(self)
         vector_indices = self.show('vector_index')
@@ -710,7 +700,6 @@ class Datalayer:
         query,
         ids=None,
         dependencies=(),
-        verbose: bool = True,
         overwrite: bool = False,
     ) -> TaskWorkflow:
         """A helper function to build a task workflow for a query with dependencies."""
@@ -850,7 +839,7 @@ class Datalayer:
             dependencies = sum(
                 [jobs.get(d[:2], []) for d in component.dependencies], []
             )
-            tmp = self._add(component, parent=parent.uuid, dependencies=dependencies)
+            tmp = self._apply(component, parent=parent.uuid, dependencies=dependencies)
             jobs[n] = tmp
 
         return sum(list(jobs.values()), [])
@@ -864,7 +853,7 @@ class Datalayer:
         )
         return []
 
-    def _add(
+    def _apply(
         self,
         object: Component,
         dependencies: t.Sequence[Job] = (),
@@ -998,17 +987,6 @@ class Datalayer:
             del filter['_id']
         return filter
 
-    # # TODO should create file handler separately
-    # def _get_file_content(self, r):
-    #     for k in r:
-    #         if isinstance(r[k], dict):
-    #             r[k] = self._get_file_content(r[k])
-    #     return r
-
-    # TODO should be confined to metadata implementation
-    def _get_object_info(self, identifier, type_id, version=None):
-        return self.metadata.get_component(type_id, identifier, version=version)
-
     def replace(
         self,
         object: t.Any,
@@ -1114,9 +1092,6 @@ class Datalayer:
 
         logging.info("Disconnect from Compute Engine")
         self.compute.disconnect()
-
-        # TODO: gracefully close all opened connections
-        return
 
     def _add_component_to_cache(self, component: Component):
         """

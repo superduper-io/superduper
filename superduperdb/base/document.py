@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 
 from superduperdb.base.code import Code
 from superduperdb.base.leaf import Leaf, _import_item
+from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
@@ -72,10 +73,9 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param leaves_to_keep: The types of leaves to keep.
         """
-        # TODO merge with Leaf.encode
-        builds = {}
-        files = {}
-        blobs = {}
+        builds: t.Dict[str, dict] = self.get('_leaves', {})
+        blobs: t.Dict[str, bytes] = self.get('_blobs', {})
+        files: t.Dict[str, str] = self.get('_files', {})
 
         # Get schema from database.
         schema = self.schema or schema
@@ -372,8 +372,9 @@ def _deep_flat_decode(
         instance = _import_item(object=object.unpack(), dict=dict_, db=db)
         return instance
     if isinstance(r, dict):
+        literals = r.get('_literals', [])
         return {
-            k: _deep_flat_decode(v, builds, getters=getters, db=db)
+            k: _deep_flat_decode(v, builds, getters=getters, db=db) if k not in literals else v
             for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?'):

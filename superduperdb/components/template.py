@@ -5,6 +5,7 @@ import typing as t
 
 from superduperdb.base.document import Document
 from superduperdb.components.datatype import DataType, dill_lazy
+from superduperdb.misc.annotations import component
 
 from .component import Component, ensure_initialized
 
@@ -18,11 +19,12 @@ class Template(Component):
     :param _component_blobs: Blobs in `Template.component`
                              NOTE: This is only for internal
                              use.
+    :param _component_leaves: Leaves in `Template.component`
+                              NOTE: This is only for internal
+                              use.
     """
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('_component_blobs', dill_lazy),
-    )
+    _literals: t.ClassVar[t.Tuple[str]] = ('component', '_component_leaves')
     type_id: t.ClassVar[str] = 'template'
 
     component: t.Union[Component, t.Dict]
@@ -30,6 +32,7 @@ class Template(Component):
     _component_blobs: t.Optional[t.Union[t.Dict, bytes]] = dc.field(
         default_factory=dict
     )
+    _component_leaves: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
     def __post_init__(self, db, artifacts):
         self._variables = []
@@ -38,6 +41,8 @@ class Template(Component):
             self.component = self.component.dict().encode()
             if not self._component_blobs:
                 self._component_blobs = self.component.pop_blobs()
+            if not self._component_leaves:
+                self._component_leaves = dict(self.component.pop_leaves())
         return super().__post_init__(db, artifacts)
 
     @ensure_initialized
@@ -46,7 +51,11 @@ class Template(Component):
         if self.info:
             assert set(kwargs.keys()) == (set(self.info.keys())), 'Invalid variables'
         t = Document.decode(
-            {**self.component, '_blobs': self._component_blobs}, db=self.db
+            {
+                **self.component, 
+                '_blobs': self._component_blobs or {},
+                '_leaves': self._component_leaves or {},
+             }, db=self.db
         )
         t.init(db=self.db)
         t = t.set_variables(db=self.db, **kwargs)
@@ -59,22 +68,41 @@ class Template(Component):
         return self._variables
 
     @staticmethod
-    def _append_component_metadata(r, component={}):
-        leaves = r.get('_leaves', {})
-        files = r.get('_files', {})
-        leaves.update(component.pop('_leaves', {}))
-        files.update(component.pop('_files', {}))
-        r['_leaves'] = leaves
-        r['_files'] = files
-        return r
+    def read(path: str):
+        """
+        Read a `Component` instance from a directory created with `.export`.
 
-    def dict(self):
-        """Updates base dict document with `component` metadata."""
-        r = super().dict()
-        component = r['component']
-        r = self._append_component_metadata(r, component=component)
+        :param path: Path to the directory containing the component.
 
-        return r
+        Expected directory structure:
+        ```
+        |_component.json/yaml
+        |_blobs/*
+        |_files/*
+        ```
+        """
+        from superduperdb.components.component import _build_info_from_path
+        config_object = _build_info_from_path(path=path)
+
+        from superduperdb import Document
+
+        def load_blob(blob):
+            with open(path + '/blobs/' + blob, 'rb') as f:
+                return f.read()
+
+        # Move back the top level component leaves and blobs to the component
+        total_leaves = config_object.get('_leaves', {})
+        component_leaves = {}
+        for v in config_object.pop('_component_leaves_keys', []):
+            component_leaves[v] = total_leaves.pop(v)
+        config_object['_component_leaves'] = component_leaves
+
+        component_blobs = {}
+        for v in config_object.pop('_component_blobs_keys', []):
+            component_blobs[v] = load_blob(v)
+        config_object['_component_blobs'] = component_blobs
+
+        return Document.decode(config_object).unpack()
 
     def export(self, path: str, format: str = 'json'):
         """
@@ -89,7 +117,16 @@ class Template(Component):
         |_files/*
         ```
         """
+        # Move the component leaves and blobs to the top level
         r = self.dict().encode()
+        component_leaves = r.pop('_component_leaves', {})
+        component_blobs = r.pop('_component_blobs', {})
+        component_leaves_keys = list(component_leaves.keys())
+        component_blobs_keys = list(component_blobs.keys())
+        r['_leaves'].update(component_leaves)
+        r['_blobs'].update(component_blobs)
+        r['_component_leaves_keys'] = component_leaves_keys
+        r['_component_blobs_keys'] = component_blobs_keys
 
         os.makedirs(path, exist_ok=True)
         if self._component_blobs:

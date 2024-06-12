@@ -56,7 +56,7 @@ def test_basic_template(db):
     assert r[listener.outputs_key] == r['y'] + 2
 
     # Try to encode the reloaded_template
-    reloaded_data = reloaded_template.encode()
+    reloaded_data = reloaded_template.dict()
     from superduperdb import Document
 
     reloaded_template = Document.decode(reloaded_data).unpack()
@@ -142,7 +142,7 @@ def test_complex_template(db):
 
     assert listener.key == 'y'
     assert listener.model.identifier == 'my_id'
-    assert listener.select.identifier == 'documents'
+    assert listener.select.table == 'documents'
 
     db.apply(listener)
 
@@ -182,7 +182,7 @@ def test_template_export(db):
         listener = rt(key='y', model_id='my_id', collection='documents')
         assert listener.key == 'y'
         assert listener.model.identifier == 'my_id'
-        assert listener.select.identifier == 'documents'
+        assert listener.select.table == 'documents'
 
         db.apply(listener)
         # Check listener outputs with key and model_id

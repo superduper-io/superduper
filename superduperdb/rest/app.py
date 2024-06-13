@@ -119,7 +119,8 @@ def build_app(app: superduperapp.SuperDuperApp):
             result = [result]
 
         result = [r.encode() for r in result]
-        result = [(dict(r), list(r.pop_blobs().keys())) for r in result]
+        blobs_keys = [list(r.pop_blobs().keys()) for r in result]
+        result = list(zip(result, blobs_keys))
         return result
 
 

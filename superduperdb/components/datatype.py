@@ -596,6 +596,11 @@ class LazyArtifact(Artifact):
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
     lazy: t.ClassVar[bool] = True
 
+    def dict(self):
+        """Get the dictionary representation of the object."""
+        self.init()
+        return super().dict()
+
 
 class FileItem(Leaf):
     """File item class.
@@ -685,6 +690,11 @@ class LazyFile(File):
 
     leaf_type: t.ClassVar[str] = 'lazy_file'
     lazy: t.ClassVar[bool] = True
+
+    def dict(self):
+        """Get the dictionary representation of the object."""
+        self.init()
+        return super().dict()
 
 
 Encoder = DataType

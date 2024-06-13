@@ -70,7 +70,7 @@ def test_insert_image(setup):
             },
             'my_artifact': {
                 '_path': 'superduperdb/components/datatype/LazyArtifact',
-                'file_id': file_id,
+                'blob': f'&:blob:{file_id}',
                 'datatype': "?image_type",
             },
         },
@@ -93,7 +93,6 @@ def test_insert_image(setup):
         endpoint='/db/execute',
         data=query,
     )
-
     from superduperdb import superduper
 
     db = superduper()

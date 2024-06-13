@@ -97,7 +97,6 @@ class Component(Leaf):
     type_id: t.ClassVar[str] = 'component'
     leaf_type: t.ClassVar[str] = 'component'
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
-    _literals: t.ClassVar[t.Sequence[str]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
 
@@ -314,8 +313,6 @@ class Component(Leaf):
         r['version'] = self.version
         r['identifier'] = self.identifier
         r['hidden'] = False
-        if self._literals:
-            r['_literals'] = self._literals
         return Document(r)
 
     @classmethod

@@ -164,11 +164,11 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
 
     def pop_files(self):
         """Pop the files of the dictionary."""
-        return self.pop('_files', {})
+        return self.pop('_files', [])
 
     def pop_blobs(self):
         """Pop the blobs of the dictionary."""
-        return self.pop('_blobs', {})
+        return self.pop('_blobs', [])
 
     def load_keys_with_blob(self):
         """Load all outer reference keys with actual data blob."""

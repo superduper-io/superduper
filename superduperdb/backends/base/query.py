@@ -320,7 +320,7 @@ class Query(_BaseQuery, TraceMixin):
             from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
             if isinstance(out, SuperDuperFlatEncode):
-                out.pop_leaves()
+                out.pop_builds()
                 out.pop_files()
                 out.pop_blobs()
             return out

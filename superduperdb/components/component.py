@@ -12,6 +12,7 @@ from functools import wraps
 import yaml
 
 from superduperdb import logging
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduperdb.base.leaf import Leaf
 from superduperdb.jobs.job import ComponentJob, Job
 
@@ -35,13 +36,13 @@ def _build_info_from_path(path: str):
         except FileNotFoundError as e:
             raise FileNotFoundError('No component.json or component.yaml found') from e
 
-    config_object['_blobs'] = {}
+    config_object[KEY_BLOBS] = {}
     if os.path.exists(os.path.join(path, 'blobs')):
         blobs = {}
         for file_id in os.listdir(os.path.join(path, 'blobs')):
             with open(os.path.join(path, 'blobs', file_id), 'rb') as f:
                 blobs[file_id] = f.read()
-        config_object['_blobs'] = blobs
+        config_object[KEY_BLOBS] = blobs
     return config_object
 
 
@@ -66,8 +67,8 @@ def import_(r=None, path=None, db=None):
                 continue
             with open(f'{path}/{id_}', 'rb') as f:
                 bytes[id_] = f.read()
-    r['_leaves'] = _build_leaves(r['_leaves'], db=db)[0]
-    return r['_leaves'][r['_base']]
+    r[KEY_BUILDS] = _build_leaves(r[KEY_BUILDS], db=db)[0]
+    return r[KEY_BUILDS][r['_base']]
 
 
 def getdeepattr(obj, attr):

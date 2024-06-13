@@ -4,6 +4,7 @@ import inspect
 import typing as t
 import uuid
 
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.misc.annotations import extract_parameters, replace_parameters
 from superduperdb.misc.serialization import asdict
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
@@ -161,9 +162,9 @@ class Leaf(metaclass=LeafMeta):
         return SuperDuperFlatEncode(
             {
                 '_base': f'?{self.identifier}',
-                '_leaves': builds,
-                '_blobs': blobs,
-                '_files': files,
+                KEY_BUILDS: builds,
+                KEY_BLOBS: blobs,
+                KEY_FILES: files,
             }
         )
 

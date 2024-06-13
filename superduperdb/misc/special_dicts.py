@@ -10,6 +10,8 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.tree import Tree
 
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+
 
 class IndexableDict(OrderedDict):
     """IndexableDict.
@@ -97,8 +99,8 @@ def _print_serialized_object(serialized_object):
 
     # Extract sections of the serialized object
     base_section = serialized_object.get('_base', {})
-    leaves_section = serialized_object.get('_leaves', {})
-    blobs_section = serialized_object.get('_blobs', {})
+    leaves_section = serialized_object.get(KEY_BUILDS, {})
+    blobs_section = serialized_object.get(KEY_BLOBS, {})
 
     # Format base section with additional component info
     base_yaml = _format_base_section(base_section)
@@ -144,38 +146,38 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
     """
 
     @property
-    def leaves(self):
-        """Return the leaves of the dictionary."""
-        return IndexableDict(self.get('_leaves', {}))
+    def builds(self):
+        """Return the builds of the dictionary."""
+        return IndexableDict(self.get(KEY_BUILDS, {}))
 
     @property
     def files(self):
         """Return the files of the dictionary."""
-        return self.get('_files', [])
+        return self.get(KEY_FILES, [])
 
     @property
     def blobs(self):
         """Return the blobs of the dictionary."""
-        return self.get('_blobs', [])
+        return self.get(KEY_BLOBS, [])
 
-    def pop_leaves(self):
-        """Pop the leaves of the dictionary."""
-        return IndexableDict(self.pop('_leaves', {}))
+    def pop_builds(self):
+        """Pop the builds of the dictionary."""
+        return IndexableDict(self.pop(KEY_BUILDS, {}))
 
     def pop_files(self):
         """Pop the files of the dictionary."""
-        return self.pop('_files', {})
+        return self.pop(KEY_FILES, {})
 
     def pop_blobs(self):
         """Pop the blobs of the dictionary."""
-        return self.pop('_blobs', {})
+        return self.pop(KEY_BLOBS, {})
 
     def load_keys_with_blob(self):
         """Load all outer reference keys with actual data blob."""
 
         def _get_blob(output, key):
             if isinstance(key, str) and key[0] == '?':
-                output = output['_leaves'][key[1:]]['blob']
+                output = output[KEY_BUILDS][key[1:]]['blob']
             else:
                 output = key
             return output
@@ -197,8 +199,8 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         assert isinstance(d, SuperDuperFlatEncode)
         if '_base' in d:
             assert '_base' in self, "Cannot merge differently encoded data"
-        leaves = copy.deepcopy(self.leaves)
-        leaves.update(d.leaves)
+        builds = copy.deepcopy(self.builds)
+        builds.update(d.builds)
 
         blobs = copy.deepcopy(self.blobs)
         blobs = blobs.append(d.blobs)
@@ -207,17 +209,17 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         files = files.append(d.files)
 
         if inplace:
-            if leaves:
-                self['_leaves'] = leaves
-            self['_blobs'] = blobs
-            self['_files'] = files
+            if builds:
+                self[KEY_BUILDS] = builds
+            self[KEY_BLOBS] = blobs
+            self[KEY_FILES] = files
             return self
         else:
             out = copy.deepcopy(self)
-            if leaves:
-                out['_leaves'] = leaves
-            out['_blobs'] = blobs
-            out['_files'] = files
+            if builds:
+                out[KEY_BUILDS] = builds
+            out[KEY_BLOBS] = blobs
+            out[KEY_FILES] = files
             return out
 
     def info(self):
@@ -321,9 +323,9 @@ def _diff_impl(r1, r2):
 
 
 def _childrens(tree, object, nesting=1):
-    if not object.leaves or not nesting:
+    if not object.builds or not nesting:
         return
-    for name, child in object.leaves.items():
+    for name, child in object.builds.items():
         child_text = f"{name}: {child.__class__}({child.identifier}): {str(child)[:50]}"
         subtree = tree.add(Text(child_text, style="yellow"))
         for key, value in child.__dict__.items():
@@ -345,9 +347,9 @@ def _component_metadata(obj):
 
     def _all_leaves(obj):
         result = []
-        if not obj.leaves:
+        if not obj.builds:
             return result
-        for name, leaf in obj.leaves.items():
+        for name, leaf in obj.builds.items():
             tmp = _all_leaves(leaf)
             result.extend([f'{name}.{x}' for x in tmp])
             result.append(name)
@@ -355,7 +357,7 @@ def _component_metadata(obj):
 
     metadata.append("[yellow]Leaves[/yellow]")
     rleaves = _all_leaves(obj)
-    obj_leaves = list(obj.leaves.keys())
+    obj_leaves = list(obj.builds.keys())
     for leaf in rleaves:
         if leaf in obj_leaves:
             metadata.append(f"[green]{leaf}[/green]")

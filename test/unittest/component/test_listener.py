@@ -7,6 +7,7 @@ import pytest
 from superduperdb import Document
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.mongodb.query import MongoQuery
+from superduperdb.base.constant import KEY_BLOBS
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
@@ -25,7 +26,7 @@ def test_listener_serializes_properly():
     # check that the result is JSON-able
     import json
 
-    r.pop('_blobs')
+    r.pop(KEY_BLOBS)
     print(json.dumps(r, indent=2))
 
 

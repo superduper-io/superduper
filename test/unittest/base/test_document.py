@@ -6,6 +6,7 @@ from test.db_config import DBConfig
 import pytest
 
 from superduperdb.backends.mongodb.query import MongoQuery
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduperdb.components.datatype import Artifact, DataType
 from superduperdb.components.model import ObjectModel
 from superduperdb.components.schema import Schema
@@ -79,14 +80,14 @@ def test_encode_decode_flattened_document():
 
     import yaml
 
-    print(yaml.dump({k: v for k, v in encoded_r.items() if k != '_blobs'}))
+    print(yaml.dump({k: v for k, v in encoded_r.items() if k != KEY_BLOBS}))
 
     assert not isinstance(encoded_r, Document)
     assert isinstance(encoded_r, dict)
-    assert '_leaves' in encoded_r
-    assert '_blobs' in encoded_r
+    assert KEY_BUILDS in encoded_r
+    assert KEY_BLOBS in encoded_r
     assert encoded_r['img'].startswith('&:blob:')
-    assert isinstance(next(iter(encoded_r['_blobs'].values())), bytes)
+    assert isinstance(next(iter(encoded_r[KEY_BLOBS].values())), bytes)
 
 
 def test_encode_model():
@@ -100,7 +101,7 @@ def test_encode_model():
     pprint.pprint(encoded_r)
 
     decoded_r = Document.decode(
-        encoded_r, getters={'blob': lambda x: encoded_r['_blobs'][x]}
+        encoded_r, getters={'blob': lambda x: encoded_r[KEY_BLOBS][x]}
     )
 
     print(decoded_r)
@@ -213,7 +214,7 @@ def test_refer_to_system(db):
     db.artifact_store.put_bytes(db.datatypes['image'].encoder(img), file_id='12345')
 
     r = {
-        '_leaves': {
+        '_builds': {
             'my_artifact': {
                 '_path': 'superduperdb/components/datatype/LazyArtifact',
                 'blob': '&:blob:12345',

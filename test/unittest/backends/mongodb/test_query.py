@@ -132,7 +132,7 @@ def test_special_query_serialization(db):
     q2 = db['docs'].find({'x': {'$lt': 9}})
     encoded_query = q2.encode()
     base = encoded_query['_base'][1:]
-    assert encoded_query['_leaves'][base]['documents'][0] == {'x': {'<$>lt': 9}}
+    assert encoded_query['_builds'][base]['documents'][0] == {'x': {'<$>lt': 9}}
 
     rq2 = Document.decode(encoded_query).unpack()
     assert rq2.parts[0][1][0] == {'x': {'$lt': 9}}

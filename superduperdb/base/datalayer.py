@@ -19,6 +19,7 @@ from superduperdb.backends.base.query import Query
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions
 from superduperdb.base.config import Config
+from superduperdb.base.constant import KEY_BUILDS
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
@@ -894,14 +895,14 @@ class Datalayer:
 
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
-        for k, v in serialized['_leaves'].items():
+        for k, v in serialized[KEY_BUILDS].items():
             if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
                 r = dict(v.dict())
                 del r['identifier']
-                serialized['_leaves'][k] = r
+                serialized[KEY_BUILDS][k] = r
 
         children = [
-            v for v in serialized['_leaves'].values() if isinstance(v, Component)
+            v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
 
         jobs.extend(self._add_child_components(children, parent=object))
@@ -925,10 +926,10 @@ class Datalayer:
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""
         references = {}
-        for reference in list(serialized['_leaves'].keys()):
-            if isinstance(serialized['_leaves'][reference], Component):
-                comp = serialized['_leaves'][reference]
-                serialized['_leaves'].pop(reference)
+        for reference in list(serialized[KEY_BUILDS].keys()):
+            if isinstance(serialized[KEY_BUILDS][reference], Component):
+                comp = serialized[KEY_BUILDS][reference]
+                serialized[KEY_BUILDS].pop(reference)
                 references[reference] = (
                     comp.type_id + ':' + comp.identifier + ':' + comp.uuid
                 )
@@ -1039,14 +1040,14 @@ class Datalayer:
         object.version = info['version']
 
         serialized = object.dict().encode(leaves_to_keep=(Component,))
-        for k, v in serialized['_leaves'].items():
+        for k, v in serialized[KEY_BUILDS].items():
             if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
                 r = dict(v.dict())
                 del r['identifier']
-                serialized['_leaves'][k] = r
+                serialized[KEY_BUILDS][k] = r
 
         children = [
-            v for v in serialized['_leaves'].values() if isinstance(v, Component)
+            v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
 
         for child in children:

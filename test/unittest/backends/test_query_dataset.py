@@ -22,7 +22,7 @@ def test_query_dataset(db):
                 'x': 1,
                 '_fold': 1,
                 '_outputs': 1,
-                '_leaves': 1,
+                '_builds': 1,
                 '_blobs': 1,
                 '_files': 1,
             },

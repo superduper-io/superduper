@@ -1,6 +1,5 @@
 _base: "?my_object"
-_leaves:
-
+_builds:
   torch_32:
     _path: superduperdb/ext/torch/encoder/tensor
     dtype: float

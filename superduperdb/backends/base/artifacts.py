@@ -3,6 +3,8 @@ import os
 import typing as t
 from abc import ABC, abstractmethod
 
+from superduperdb.base.constant import KEY_BLOBS, KEY_FILES
+
 
 def _construct_file_id_from_uri(uri):
     return str(hashlib.sha1(uri.encode()).hexdigest())
@@ -99,8 +101,8 @@ class ArtifactStore(ABC):
 
         :param r: dictionary with mandatory fields
         """
-        blobs = r.get('_blobs', {})
-        files = r.get('_files', {})
+        blobs = r.get(KEY_BLOBS, {})
+        files = r.get(KEY_FILES, {})
 
         for file_id, blob in blobs.items():
             try:
@@ -115,8 +117,8 @@ class ArtifactStore(ABC):
                 continue
 
         # After we save the artifacts, we can remove the blobs and files
-        r['_files'] = {}
-        r['_blobs'] = {}
+        r[KEY_FILES] = {}
+        r[KEY_BLOBS] = {}
 
         return r
 

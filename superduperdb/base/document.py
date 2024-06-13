@@ -5,6 +5,7 @@ from collections import defaultdict
 from bson.objectid import ObjectId
 
 from superduperdb.base.code import Code
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.leaf import Leaf, _import_item
 from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
@@ -107,9 +108,9 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param leaves_to_keep: The types of leaves to keep.
         """
-        builds: t.Dict[str, dict] = self.get('_leaves', {})
-        blobs: t.Dict[str, bytes] = self.get('_blobs', {})
-        files: t.Dict[str, str] = self.get('_files', {})
+        builds: t.Dict[str, dict] = self.get(KEY_BUILDS, {})
+        blobs: t.Dict[str, bytes] = self.get(KEY_BLOBS, {})
+        files: t.Dict[str, str] = self.get(KEY_FILES, {})
 
         # Get schema from database.
         schema = self.schema or schema
@@ -129,7 +130,7 @@ class Document(MongoStyleDict):
         )
         # TODO - don't need to save in one document
         # can return encoded, builds, files, blobs
-        out.update({'_leaves': builds, '_files': files, '_blobs': blobs})
+        out.update({KEY_BUILDS: builds, KEY_FILES: files, KEY_BLOBS: blobs})
         out = SuperDuperFlatEncode(out)
         return out
 
@@ -150,7 +151,7 @@ class Document(MongoStyleDict):
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
 
-        builds = r.get('_leaves', {})
+        builds = r.get(KEY_BUILDS, {})
 
         # Important: Leaf.identifier is used as the key, but must be set if not present.
         for k in builds:
@@ -165,11 +166,11 @@ class Document(MongoStyleDict):
 
         # Prioritize using the local artifact storage getter,
         # and then use the DB read getter.
-        if r.get('_blobs'):
-            getters.add_getter('blob', lambda x: r['_blobs'].get(x))
+        if r.get(KEY_BLOBS):
+            getters.add_getter('blob', lambda x: r[KEY_BLOBS].get(x))
 
-        if r.get('_files'):
-            getters.add_getter('file', lambda x: r['_files'].get(x.split(':')[-1]))
+        if r.get(KEY_FILES):
+            getters.add_getter('file', lambda x: r[KEY_FILES].get(x.split(':')[-1]))
 
         if db is not None:
             getters.add_getter('component', lambda x: _get_component(db, x))
@@ -181,7 +182,7 @@ class Document(MongoStyleDict):
             r = _schema_decode(schema, r, getters)
 
         r = _deep_flat_decode(
-            {k: v for k, v in r.items() if k not in ('_leaves', '_blobs', '_files')},
+            {k: v for k, v in r.items() if k not in (KEY_BUILDS, KEY_BLOBS, KEY_FILES)},
             builds=builds,
             db=db,
             getters=getters,
@@ -254,7 +255,7 @@ class QueryUpdateDocument(Document):
         if not isinstance(original, SuperDuperFlatEncode):
             return {'$set': update}
 
-        for mk in ('_leaves', '_files', '_blobs'):
+        for mk in (KEY_BUILDS, KEY_FILES, KEY_BLOBS):
             m = original.pop(mk, {})
             for k, v in m.items():
                 update[f'{mk}.{k}'] = v

@@ -100,7 +100,7 @@ class IndexableNode:
         :param identifier: Unique identifier
         """
         from superduperdb.components.listener import Listener
-        from superduperdb.components.stack import Stack
+        from superduperdb.components.application import Application
 
         nodes = list(nx.topological_sort(self.parent_graph))
         input_node = next(
@@ -130,7 +130,7 @@ class IndexableNode:
                 key=key,
                 identifier=node.identifier,
             )
-        return Stack(
+        return Application(
             identifier=identifier,
             components=list(listener_lookup.values()),
         )

@@ -73,6 +73,8 @@ const sidebars = {
         'apply_api/trainer',
         'apply_api/template',
         'apply_api/application',
+        'apply_api/trigger',
+        'apply_api/cron_job',
       ]
     },
     {
@@ -252,7 +254,7 @@ const sidebars = {
         'production/development_vs_cluster_mode',
         'production/command_line_interface',
         'production/change_data_capture',
-        'production/yaml_formalism',
+        'production/superduper_protocol',
         'production/rest_api',
         'production/non_blocking_ray_jobs',
         'production/vector_comparison_service',

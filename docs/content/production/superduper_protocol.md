@@ -1,11 +1,12 @@
-# YAML/ JSON formalism
+# SuperDuper Protocol
 
-`superduperdb` includes a mapping back and forth from Python to YAML/ JSON formats.
-The mapping is fairly self-explanatory after reading the example below.
+`superduperdb` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
+The mapping is fairly self-explanatory after reading the examples below.
+
+## Writing in superduper-protocol directly
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-
 
 <Tabs>
     <TabItem value="YAML" label="YAML" default>
@@ -150,3 +151,23 @@ import TabItem from '@theme/TabItem';
       
     </TabItem>
 </Tabs>
+
+## Converting a `Component` to superduper-protocol
+
+All components may be converted to *superduper-protocol* using the `Component.encode` method:
+
+```python
+encoding = vector_index.encode()
+```
+
+This encoding may be written directly to disk with:
+
+```python
+vector_index.export(zip=True)  # outputs to "./my-index.zip"
+```
+
+Developers may reload components from disk with `Component.read`
+
+```python
+reloaded = Component.read('./my-index.zip')
+```

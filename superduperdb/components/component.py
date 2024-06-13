@@ -103,6 +103,16 @@ class Component(Leaf):
 
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
+    @classmethod
+    def from_template(self, template_name: str, db: t.Optional[Datalayer], **kwargs):
+        """Create a component from a template.
+
+        :param template_name: Name of the template.
+        :param db: Datalayer instance.
+        """
+        template = db.load('template', template_name)
+        return template(**kwargs)
+
     @property
     def leaves(self):
         """Get all the leaves in the component."""
@@ -249,6 +259,13 @@ class Component(Leaf):
         |_files/*
         ```
         """
+        was_zipped = False
+        if path.endswith('.zip'):
+            was_zipped = True
+            import shutil
+            shutil.unpack_archive(path)
+            path = path.replace('.zip', '')
+
         config_object = _build_info_from_path(path=path)
 
         from superduperdb import Document
@@ -259,9 +276,12 @@ class Component(Leaf):
 
         getters = {'blob': load_blob}
 
-        return Document.decode(config_object, getters=getters).unpack()
+        out = Document.decode(config_object, getters=getters).unpack()
+        if was_zipped:
+            shutil.rmtree(path)
+        return out
 
-    def export(self, path: str, format: str = 'json'):
+    def export(self, path: t.Optional[str] = None, format: str = 'json', zip: bool = False):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -274,7 +294,11 @@ class Component(Leaf):
         |_files/*
         ```
         """
+        if path is None:
+            path = f'./{self.identifier}'
+
         r = self.encode()
+        
         os.makedirs(path, exist_ok=True)
         if r.blobs:
             os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
@@ -295,6 +319,17 @@ class Component(Leaf):
 
         with open(os.path.join(path, 'requirements.txt'), 'w') as f:
             f.write('\n'.join(REQUIRES))
+
+        if zip:
+            self.zip_export(path)
+
+    @staticmethod
+    def zip_export(path):
+        import shutil
+        name = path.split('/')[-1]
+        shutil.move(path, f'{path}/{name}')
+        shutil.make_archive(path, 'zip', path)
+        shutil.rmtree(path)
 
     def dict(self) -> 'Document':
         """A dictionary representation of the component."""

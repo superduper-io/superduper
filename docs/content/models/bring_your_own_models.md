@@ -84,8 +84,8 @@ from superduperdb.ext.auto.sklearn.svm import SVC
 Developers may create their own `Model` sub-classes, and deploy these directly to `superduperdb`.
 The key methods the developers need to create are:
 
-- `predict_one`
 - `predict`
+- Optionally `predict_batches`, to speed up batching
 - Optionally `fit`
 
 ### Minimal example with `prediction`
@@ -93,21 +93,15 @@ The key methods the developers need to create are:
 Here is a simple sub-class of `Model`:
 
 ```python
-import dataclasses as dc
 from superduperdb.components.model import Model
 import typing as t
 
-@dc.dataclass(kw_only=True)
 class CustomModel(Model):
     signature: t.ClassVar[str] = '**kwargs'
     my_argument: int = 1
 
-    def predict_one(self, x, y):
+    def predict(self, x, y):
         return x + y + self.my_argument
-
-    def predict(self, dataset):
-        return [self.predict_one(**r) for r in dataset]
-        return x + y
 ```
 
 The addition of `signature = **kwargs` controls how the individual datapoints in the dataset 
@@ -128,7 +122,6 @@ import numpy as np
 from superduperdb.ext.numpy import array
 
 
-@dc.dataclass(kw_only=True)
 class AnotherModel(Model):
     _artifacts: t.ClassVar[t.Any] = [
         ('my_array', array)
@@ -137,12 +130,8 @@ class AnotherModel(Model):
     my_argument: int = 1
     my_array: np.ndarray
 
-    @ensure_initialized
-    def predict_one(self, x, y):
+    def predict(self, x, y):
         return x + y + self.my_argument + self.my_array
-
-    def predict(self, dataset):
-        return [self.predict_one(**r) for r in dataset]
 
 my_array = numpy.random.randn(100000, 20)
 my_array_type = array('my_array', shape=my_array.shape, encodable='lazy_artifact')
@@ -156,9 +145,5 @@ m = AnotherModel(
 ```
 
 When `db.apply` is called, `m.my_array` will be converted to `bytes` with `numpy` functionality
-and a reference to these `bytes` will be saved in the `db.metadata_store`.
-
-Notice that the `.predict_one` method is decorated with `@ensure_initialized`.
-This allows `superduperdb` to load `my_array` only when needed.
-
+and a reference to these `bytes` will be saved in the `db.metadata`.
 In principle any `DataType` can be used to encode such an object.

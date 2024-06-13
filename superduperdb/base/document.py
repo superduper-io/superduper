@@ -7,7 +7,6 @@ from bson.objectid import ObjectId
 from superduperdb.base.code import Code
 from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.leaf import Leaf, _import_item
-from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
@@ -361,9 +360,6 @@ def _deep_flat_encode(
         identifier = r.pop('identifier')
         builds[identifier] = r
         return f'?{identifier}'
-
-    if isinstance(r, Variable):
-        return r.key
 
     return r
 

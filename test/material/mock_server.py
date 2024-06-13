@@ -6,13 +6,13 @@ import PIL.Image
 from superduperdb import ObjectModel
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.superduper import superduper
-from superduperdb.components.stack import Stack
+from superduperdb.components.application import Application
 from superduperdb.ext.numpy import array
 from superduperdb.ext.pillow.encoder import image_type
 from superduperdb.rest.app import build_app
 from superduperdb.server.app import SuperDuperApp
 
-m = Stack(
+m = Application(
     'test_stack',
     components=[
         ObjectModel(

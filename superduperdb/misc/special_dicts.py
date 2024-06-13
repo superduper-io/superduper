@@ -11,6 +11,7 @@ from rich.text import Text
 from rich.tree import Tree
 
 from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduperdb.base.variables import _find_variables
 
 
 class IndexableDict(OrderedDict):
@@ -221,6 +222,10 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
             out[KEY_BLOBS] = blobs
             out[KEY_FILES] = files
             return out
+
+    @property
+    def variables(self):
+        return _find_variables(self)
 
     def info(self):
         """Print the serialized object."""

@@ -47,8 +47,9 @@ The [REST API](./rest_api) service may be used to access `superduperdb` using pu
 plus references to saved/ uploaded binaries. This gives great flexibility to application
 developers looking to build on top of `superduperdb` from Javascript etc..
 
-## Declarative markup
+## SuperDuper protocol
 
-All `superduperdb` components may be invoked in Python, or in a [YAML/ JSON formalism](./yaml_formalism).
+All `superduperdb` components may be built using Python, or directly in a YAML/ JSON formalism
+usng the ["superduper-protocol"](./superduper_protocol.md).
 This provides a convenient set of choices for AI engineers, infrastructure engineers 
 and beyond to share and communicate their AI-data setups in `superduperdb`

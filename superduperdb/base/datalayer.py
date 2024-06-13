@@ -505,6 +505,7 @@ class Datalayer:
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
         dependencies: t.Sequence[Job] = (),
+        artifacts: t.Optional[t.Dict[str, bytes]] = None,
     ):
         """
         Add functionality in the form of components.
@@ -517,18 +518,7 @@ class Datalayer:
                              initialization begins.
         :return: Tuple containing the added object(s) and the original object(s).
         """
-        if isinstance(object, (list, tuple)):
-            return type(object)(
-                self._apply(
-                    object=component,
-                    dependencies=dependencies,
-                )
-                for component in object
-            )
-        elif isinstance(object, Component):
-            return self._apply(object=object, dependencies=dependencies), object
-        else:
-            return self._apply(superduper(object)), object
+        return self._apply(object=object, dependencies=dependencies), object
 
     def remove(
         self,
@@ -858,6 +848,7 @@ class Datalayer:
         object: Component,
         dependencies: t.Sequence[Job] = (),
         parent: t.Optional[str] = None,
+        artifacts: t.Optional[t.Dict[str, bytes]] = None,
     ):
         jobs = list(dependencies)
         object.db = self
@@ -900,6 +891,9 @@ class Datalayer:
             serialized = self._change_component_reference_prefix(serialized)
 
         serialized = self.artifact_store.save_artifact(serialized)
+        if artifacts:
+            for file_id, bytes in artifacts.items():
+                self.artifact_store.put_bytes(file_id, bytes)
 
         self.metadata.create_component(serialized)
 

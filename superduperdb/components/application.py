@@ -1,29 +1,15 @@
 import typing as t
 
-from superduperdb.components.component import Component
+from .component import Component
 
 
 class Application(Component):
     """
-    Application built from template.
+    A placeholder to hold list of components with associated 
+    funcionality under a namespace.
 
-    :param template: Template.
-    :param kwargs: Keyword arguments passed to `template`.
+    :param components: List of components to group together and apply to `superduperdb`.
     """
 
     type_id: t.ClassVar[str] = 'application'
-    template: str = None
-    kwargs: t.Dict
-
-    def __post_init__(self, db, artifacts):
-        return super().__post_init__(db, artifacts)
-
-    def post_create(self, db):
-        """
-        Database `PostCreate` hook.
-
-        :param db: Datalayer instance.
-        """
-        template = db.load('template', self.template)
-        component = template(**self.kwargs)
-        db.apply(component)
+    components: t.Sequence[Component]

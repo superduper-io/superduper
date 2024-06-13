@@ -97,6 +97,7 @@ class Query(_BaseQuery, TraceMixin):
         parts = self.parts[item]
         return type(self)(db=self.db, table=self.table, parts=parts)
 
+    # TODO - not necessary: either `Document.decode(r, db=db)` or `db['table'].select...`
     def set_db(self, db: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
@@ -272,11 +273,11 @@ class Query(_BaseQuery, TraceMixin):
 
     def __repr__(self):
         output, docs = self._dump_query()
-        # for i, doc in enumerate(docs):
-        #     doc_string = str(doc)
-        #     if isinstance(doc, Document):
-        #         doc_string = str(doc.unpack())
-        #     output = output.replace(f'documents[{i}]', doc_string)
+        for i, doc in enumerate(docs):
+            doc_string = str(doc)
+            if isinstance(doc, Document):
+                doc_string = str(doc.unpack())
+            output = output.replace(f'documents[{i}]', doc_string)
         return output
 
     def __eq__(self, other):
@@ -496,6 +497,7 @@ class Query(_BaseQuery, TraceMixin):
             r = self.db.artifact_store.save_artifact(r)
         return documents
 
+    # TODO deprecate (self.table)
     @property
     def table_or_collection(self):
         """Return the table or collection to select from."""

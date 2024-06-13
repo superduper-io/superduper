@@ -44,6 +44,33 @@ in the SuperDuperDB system.
 reloaded = db.load('type_id', 'identifier')   # `type_id`
 ```
 
+### 4. Export the component (to share/ migrate)
+
+The `.export` command saves the entirety of the component's parameters, 
+inline code and artifacts in a directory:
+
+```python
+component.export('my_component')
+```
+
+The directory structure looks like this.
+It contains the meta-data of the component as
+well as a "mini-artifact-store". Together
+these items make the export completely portable.
+
+```
+my_component
+|_component.json // meta-data and imports of component
+|_blobs   // directory of blobs used in the component
+| |_234374364783643764
+| |_574759874238947320
+|_files   // directory of files used in the component
+  |_182372983721897389
+  |_982378978978978798
+```
+
+You can read about the serialization mechanism [here](../production/yaml_formalism.md).
+
 ## Read more
 
 ```mdx-code-block

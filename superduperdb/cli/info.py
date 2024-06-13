@@ -23,7 +23,7 @@ def info():
     print('```')
 
 
-@command(help='Print information about the current machine and installation')
+@command(help='Print information about subpackage requirements')
 def requirements(ext: t.List[str]):
     """Print information about the current machine and installation.
 

@@ -116,6 +116,7 @@ class Leaf(metaclass=LeafMeta):
     """
 
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
+    literals: t.ClassVar[t.Sequence[str]] = ()
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
@@ -175,18 +176,17 @@ class Leaf(metaclass=LeafMeta):
         :param kwargs: Keyword arguments to pass to `_replace_variables`.
         """
         from superduperdb import Document
-        from superduperdb.base.variables import Variable, _replace_variables
+        from superduperdb.base.variables import _replace_variables
 
-        r = self.dict().encode(leaves_to_keep=(Variable,))
+        r = self.encode()
         r = _replace_variables(r, **kwargs)
-        return Document.decode(r).unpack()
+        return Document.decode(r)['_base']
 
     @property
     def variables(self) -> t.List[str]:
         """Get list of variables in the object."""
-        from superduperdb.base.variables import Variable, _find_variables
-
-        return list(set(_find_variables(self.encode(leaves_to_keep=Variable))))
+        from superduperdb.base.variables import _find_variables
+        return list(set(_find_variables(self.encode())))
 
     def dict(self):
         """Return dictionary representation of the object."""
@@ -194,6 +194,8 @@ class Leaf(metaclass=LeafMeta):
 
         r = asdict(self)
         r.update(self.metadata)
+        if self.literals:
+            r['_literals'] = list(self.literals)
 
         from superduperdb.components.datatype import Artifact, dill_serializer
 

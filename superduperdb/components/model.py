@@ -21,7 +21,6 @@ from superduperdb.base.document import Document
 from superduperdb.base.enums import DBType
 from superduperdb.base.exceptions import DatabackendException
 from superduperdb.base.leaf import LeafMeta
-from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.components.metric import Metric
@@ -1226,17 +1225,6 @@ class QueryModel(Model):
     postprocess: t.Optional[t.Union[t.Callable]] = None
     select: Query
     signature: Signature = '**kwargs'
-
-    @staticmethod
-    def _replace_variables(r):
-        for k, v in r.items():
-            if isinstance(v, dict):
-                r[k] = QueryModel._replace_variables(v)
-            elif isinstance(v, list):
-                r[k] = [QueryModel._replace_variables(x) for x in v]
-            elif isinstance(v, str) and v.startswith('$'):
-                r[k] = Variable(v[1:])
-        return r
 
     @property
     def inputs(self) -> Inputs:

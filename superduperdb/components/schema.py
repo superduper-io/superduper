@@ -108,36 +108,6 @@ class Schema(Component):
 
         return out
 
-    def decode_data(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
-        """Decode data using the schema's encoders.
-
-        :param data: Data to decode.
-        """
-        if self.trivial:
-            return data
-        decoded = {}
-        for k, value in data.items():
-            field = self.fields.get(k)
-            if not isinstance(field, DataType):
-                decoded[k] = value
-                continue
-
-            value = data[k]
-
-            if reference := parse_reference(value):
-                if not reference.is_in_document:
-                    file_id = value.split(':')[-1]
-                    value = data.get(f'_{reference.name}s', {}).get(file_id, value)
-                encodable = field.encodable_cls(datatype=field, x=value)
-                if not field.encodable_cls.lazy:
-                    encodable = encodable.unpack()
-                decoded[k] = encodable
-            else:
-                decoded[k] = field.decode_data(data[k])
-
-        decoded.pop(SCHEMA_KEY, None)
-        return decoded
-
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """Encode data using the schema's encoders.
 

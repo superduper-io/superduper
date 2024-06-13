@@ -4,6 +4,7 @@ from pprint import pprint
 
 from superduperdb import ObjectModel
 from superduperdb.backends.mongodb.query import MongoQuery
+from superduperdb.base.constant import KEY_BUILDS
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
 from superduperdb.base.variables import Variable
@@ -47,7 +48,7 @@ def test_encode_leaf():
         'a': 1,
         'b': 'test_b',
         'c': 1.5,
-        '_leaves': {},
+        '_builds': {},
         '_files': {},
         '_blobs': {},
     }
@@ -67,7 +68,7 @@ def test_encode_leaf_with_children():
         'a': 1,
         'b': 'test_b',
         'c': '?other_ser',
-        '_leaves': {
+        '_builds': {
             'other_ser': {
                 k: v for k, v in obj.c.dict().unpack().items() if k != 'identifier'
             },
@@ -106,12 +107,12 @@ def test_component_with_document():
     print('encoding')
     d = Document(t.dict())
     r = d.encode()
-    leaves = r['_leaves']
+    builds = r[KEY_BUILDS]
 
     pprint(r)
-    assert len(leaves) == 8
+    assert len(builds) == 8
 
-    for leaf in leaves:
+    for leaf in builds:
         print(type(leaf))
 
 

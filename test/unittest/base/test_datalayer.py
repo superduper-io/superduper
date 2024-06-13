@@ -169,7 +169,7 @@ def test_add_artifact_auto_replace(db):
         serialized = create_component.call_args[0][0]
         print(serialized)
         key = serialized['artifact'][1:]
-        serialized['_leaves'][key]['blob'].startswith('&:blob:')
+        serialized['_builds'][key]['blob'].startswith('&:blob:')
 
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)

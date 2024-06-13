@@ -21,7 +21,6 @@ from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.misc.annotations import component
 from superduperdb.misc.hash import random_sha1
-from superduperdb.misc.reference import parse_reference
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -542,35 +541,7 @@ class Artifact(_BaseEncodable):
         self._blob = blob
         self._reference = None
 
-        # TODO: Need to sort out the initialization of the artifact
-        # 1. Use x(bytes) and schema for decoding. (bytes from _blobs)
-        # 2. Use x(reference) and schema for decoding.
-        # 3. use _blob(reference) for decoding. (bytes from _blobs)
-        # 4. use _blob(bytes) for decoding
-
-        # If we get the reference from x or blob, we use it directly
-        if isinstance(blob, str) and (reference := parse_reference(blob)):
-            self._reference = reference
-            self._blob = None
-
-        elif isinstance(self.x, str) and (reference := parse_reference(self.x)):
-            self._reference = reference
-            self.x = Empty()
-
-        # If we get the blob for builds, we use blob directly
-        if isinstance(self.x, bytes) and blob is None:
-            self.x = self.datatype.decoder(self.x)
-
-        # If we get the reference witch is in the database,
-        # we use identifier to get the blob from the artifact store
-        elif self._reference:
-            assert (
-                not self._reference.is_in_document
-            ), 'Artifact must be in the database'
-            self.identifier = self._reference.path
-            self.x = Empty()
-
-        if not self.lazy and isinstance(self.x, Empty):
+        if not (self.lazy and not isinstance(self._blob, bytes)):
             self.init()
 
         if self.datatype.bytes_encoding == BytesEncoding.BASE64:
@@ -578,21 +549,17 @@ class Artifact(_BaseEncodable):
 
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
-        self.db = self.db or db
-
-        if not isinstance(self.x, Empty):
-            return
+        if isinstance(self._blob, t.Callable):
+            self._blob, _ = self._blob()
 
         if isinstance(self._blob, bytes):
             blob = self._blob
+            self.datatype.init()
+            self.x = self.datatype.decoder(blob)
             self._blob = None
-        else:
-            assert self.identifier, 'file_id must be provided to init from database'
-            assert self.db is not None, 'db must be provided to init from file_id'
-            blob = self.db.artifact_store.get_bytes(self.identifier)
 
-        self.datatype.init()
-        self.x = self.datatype.decoder(blob)
+        if not isinstance(self.x, Empty):
+            return
 
     def dict(self):
         """Get the dictionary representation of the object."""
@@ -663,21 +630,29 @@ class File(_BaseEncodable):
 
     def __post_init__(self, db):
         super().__post_init__(db)
-
         self._file_name = None
-
-        # If we get the file reference witch is in the database,
-        # we use identifier to get the file from the artifact store
-        if isinstance(self.x, str) and self.x.startswith('&:file:'):
-            _file_name, self.identifier = self.x.replace('&:file:', '').split(':')
-            self._file_name = _file_name.replace('__', '.')
+        if isinstance(self.x, t.Callable):
+            self._file = self.x
             self.x = Empty()
+        else:
+            self._file = None
 
         if isinstance(self.x, str):
             self._file_name = os.path.basename(self.x.rstrip('/'))
 
-        if not self.lazy and isinstance(self.x, Empty):
+        if not self.lazy:
             self.init()
+
+    def init(self, db=None):
+        """Initialize to load `x` with the actual file from the artifact store."""
+        if isinstance(self._file, t.Callable):
+            file_path, reference_path = self._file()
+            file_name, self.identifier = reference_path.split(':')
+            self._file_name = file_name.replace('__', '.')
+            self.x = os.path.join(file_path, self._file_name)
+
+        if not isinstance(self.x, Empty):
+            return
 
     def dict(self):
         """Get the dictionary representation of the object."""
@@ -687,16 +662,6 @@ class File(_BaseEncodable):
             identifier=self.identifier, path=self.x, file_name=self._file_name
         )
         return r
-
-    def init(self, db=None):
-        """Initialize to load `x` with the actual file from the artifact store."""
-        self.db = self.db or db
-        if not isinstance(self.x, Empty):
-            return
-
-        file_path = self.db.artifact_store.get_file(self.identifier)
-        file_path = os.path.join(file_path, self._file_name)
-        self.x = file_path
 
     def unpack(self):
         """Unpack and get the original data."""

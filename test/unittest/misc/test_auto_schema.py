@@ -74,7 +74,7 @@ def test_infer_schema_mongo(data):
         if schema.fields.get(key) is not None:
             assert str(data[key]) != str(encode_data[key])
 
-    decode_data = Document(schema.decode_data(encode_data)).unpack()
+    decode_data = Document.decode(encode_data, schema).unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))
         assert str(data[key]) == str(decode_data[key])
@@ -96,7 +96,7 @@ def test_infer_schema_ibis(data):
         if schema.fields.get(key) is not None:
             assert str(data[key]) != str(encode_data[key])
 
-    decode_data = Document(schema.decode_data(encode_data)).unpack()
+    decode_data = Document.decode(encode_data, schema).unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))
         assert str(data[key]) == str(decode_data[key])

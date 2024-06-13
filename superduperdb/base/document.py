@@ -1,5 +1,6 @@
 import re
 import typing as t
+from collections import defaultdict
 
 from bson.objectid import ObjectId
 
@@ -10,6 +11,7 @@ from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
     Blob,
+    DataType,
     Encodable,
     FileItem,
     _BaseEncodable,
@@ -33,6 +35,38 @@ _LEAF_TYPES = {
 }
 _LEAF_TYPES.update(_ENCODABLES)
 _OUTPUTS_KEY = '_outputs'
+
+
+class _Getters:
+    """A class to manage getters for decoding documents.
+
+    We have will have a list of getters for each type of reference.
+
+    For example:
+    - blob: [load_from_blobs, load_from_db]
+    - file: [load_from_files, load_from_db]
+
+    :param getters: A dictionary of getters.
+    """
+
+    def __init__(self, getters=None):
+        self._getters = defaultdict(list)
+        for k, v in (getters or {}).items():
+            self.add_getter(k, v)
+
+    def add_getter(self, name: str, getter: t.Callable):
+        """Add a getter for a reference type."""
+        self._getters[name].append(getter)
+
+    def run(self, name, data):
+        """Run the getters one by one until one returns a value."""
+        if name not in self._getters:
+            return data
+        for getter in self._getters[name]:
+            data = getter(data)
+            if data is not None:
+                break
+        return data
 
 
 class Document(MongoStyleDict):
@@ -105,7 +139,7 @@ class Document(MongoStyleDict):
         r,
         schema: t.Optional['Schema'] = None,
         db: t.Optional['Datalayer'] = None,
-        getters: t.Optional[t.Dict[str, t.Callable]] = None,
+        getters: t.Union[_Getters, t.Dict[str, t.Callable], None] = None,
     ):
         """Converts any dictionary into a Document or a Leaf.
 
@@ -115,10 +149,6 @@ class Document(MongoStyleDict):
         """
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
-
-        if schema is not None:
-            schema.init()
-            r = schema.decode_data(r)
 
         builds = r.get('_leaves', {})
 
@@ -130,23 +160,25 @@ class Document(MongoStyleDict):
                 if 'identifier' not in builds[k]:
                     builds[k]['identifier'] = k
 
-        getters = getters or {}
+        if not isinstance(getters, _Getters):
+            getters = _Getters(getters)
+
+        # Prioritize using the local artifact storage getter,
+        # and then use the DB read getter.
         if r.get('_blobs'):
-
-            def _get_from_local_artifacts(x):
-                return r['_blobs'].get(x, x)
-
-            getters['blob'] = _get_from_local_artifacts
+            getters.add_getter('blob', lambda x: r['_blobs'].get(x))
 
         if r.get('_files'):
-
-            def _get_from_local_files(x):
-                return r['_files'].get(x.split(':')[-1], x)
-
-            getters['file'] = _get_from_local_files
+            getters.add_getter('file', lambda x: r['_files'].get(x.split(':')[-1]))
 
         if db is not None:
-            getters['component'] = lambda x: _get_component(db, x)
+            getters.add_getter('component', lambda x: _get_component(db, x))
+            getters.add_getter('blob', _get_artifact_callback(db))
+            getters.add_getter('file', _get_file_callback(db))
+
+        if schema is not None:
+            schema.init()
+            r = _schema_decode(schema, r, getters)
 
         r = _deep_flat_decode(
             {k: v for k, v in r.items() if k not in ('_leaves', '_blobs', '_files')},
@@ -335,6 +367,42 @@ def _deep_flat_encode(
     return r
 
 
+def _schema_decode(
+    schema, data: dict[str, t.Any], getters: _Getters
+) -> dict[str, t.Any]:
+    """Decode data using the schema's encoders.
+
+    :param data: Data to decode.
+    """
+    if schema.trivial:
+        return data
+    decoded = {}
+    for k, value in data.items():
+        field = schema.fields.get(k)
+        if not isinstance(field, DataType):
+            decoded[k] = value
+            continue
+
+        value = data[k]
+        if reference := parse_reference(value):
+            value = getters.run(reference.name, reference.path)
+            if reference.name == 'blob':
+                kwargs = {'blob': value}
+            elif reference.name == 'file':
+                kwargs = {'x': value}
+            else:
+                assert False, f'Unknown reference type {reference.name}'
+            encodable = field.encodable_cls(datatype=field, **kwargs)
+            if not field.encodable_cls.lazy:
+                encodable = encodable.unpack()
+            decoded[k] = encodable
+        else:
+            decoded[k] = field.decode_data(data[k])
+
+    decoded.pop(SCHEMA_KEY, None)
+    return decoded
+
+
 def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None):
     if reference := parse_reference(f'?{k}'):
         if reference.name in getters:
@@ -353,9 +421,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     return leaf
 
 
-def _deep_flat_decode(
-    r, builds, getters: t.Optional[dict], db: t.Optional['Datalayer'] = None
-):
+def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] = None):
     if isinstance(r, Leaf):
         return r
     if isinstance(r, (list, tuple)):
@@ -391,9 +457,7 @@ def _deep_flat_decode(
     if isinstance(r, str) and r.startswith('&'):
         assert getters is not None
         reference = parse_reference(r)
-        if reference.name in getters:
-            return getters[reference.name](reference.path)
-        return r
+        return getters.run(reference.name, reference.path)
     if isinstance(r, str) and (vars := re.findall(r'^<var:(.*?)>$', r)):
         return Variable(vars[0])
 
@@ -413,7 +477,22 @@ def _get_component(db, path):
     raise ValueError(f'Invalid component reference: {path}')
 
 
-# TODO: How about the lazy loading of the artifact?
-# Should this function return a callback function for getting the artifact?
-def _get_artifact(db, path):
-    return db.artifact_store.get_bytes(path)
+def _get_artifact_callback(db):
+    def callback(path):
+        def pull_bytes():
+            return db.artifact_store.get_bytes(path), path
+
+        return pull_bytes
+
+    return callback
+
+
+def _get_file_callback(db):
+    def callback(path):
+        def pull_file():
+            identifier = path.split(':')[-1]
+            return db.artifact_store.get_file(identifier), path
+
+        return pull_file
+
+    return callback

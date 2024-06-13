@@ -101,12 +101,15 @@ def test_advance_setup(test_db, image_url):
 
     db = test_db
     # Take empty database
+    import PIL.Image
+
+    image = PIL.Image.open(image_url.replace('file://', ''))
 
     raw_bytes = 'some raw bytes'.encode('utf-8')
     data = [
         Document(
             {
-                'image': pil_image(uri=image_url),
+                'image': pil_image(image),
                 'int': i,
                 'text': str(i),
                 'float': float(i),

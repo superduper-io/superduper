@@ -17,7 +17,7 @@ from .base.document import Document
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
-from .components.datatype import DataType, Encoder
+from .components.datatype import DataType
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
@@ -28,7 +28,6 @@ from .components.model import (
     model,
 )
 from .components.schema import Schema
-from .components.application import Application
 from .components.template import Template
 from .components.vector_index import VectorIndex, vector
 
@@ -44,7 +43,6 @@ __all__ = (
     'logging',
     'superduper',
     'DataType',
-    'Encoder',
     'Document',
     'code',
     'ObjectModel',

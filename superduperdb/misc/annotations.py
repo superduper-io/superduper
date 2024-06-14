@@ -186,11 +186,27 @@ def component(*schema: t.Dict):
 
             assert isinstance(out, Component)
 
-            def to_dict():
+            def to_dict(metadata: bool = True, defaults: bool = True):
                 path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
                 from superduperdb.base.document import Document
 
-                return Document({'_path': path, **kwargs, **out.metadata})
+                r = Document({'_path': path, **kwargs})
+
+                if not defaults:
+                    for k, v in out.defaults.items():
+                        if k in r and r[k] == v:
+                            del r[k]
+
+                if metadata:
+                    r.update(out.metadata)
+                else:
+                    for k in out.metadata:
+                        if k in r:
+                            del r[k]
+
+                if 'identifier' not in r:
+                    r['identifier'] = out.identifier
+                return r
 
             out.dict = to_dict
             out.inline = True

@@ -22,7 +22,6 @@ from superduperdb.base.config import Config
 from superduperdb.base.constant import KEY_BUILDS
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
-from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable
@@ -294,9 +293,13 @@ class Datalayer:
             return out
 
         if version == -1:
-            return self.metadata.get_component(type_id=type_id, identifier=identifier, version=None)
+            return self.metadata.get_component(
+                type_id=type_id, identifier=identifier, version=None
+            )
 
-        return self.metadata.get_component(type_id=type_id, identifier=identifier, version=version)
+        return self.metadata.get_component(
+            type_id=type_id, identifier=identifier, version=version
+        )
 
     def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
         """Execute a query on the database.
@@ -375,7 +378,8 @@ class Datalayer:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
                 return inserted_ids, self.refresh_after_update_or_insert(
-                    insert, ids=inserted_ids, 
+                    insert,
+                    ids=inserted_ids,
                 )
 
         return inserted_ids, None
@@ -458,7 +462,8 @@ class Datalayer:
                     q = d['query']
                     ids = d['ids']
                     job_update = self.refresh_after_delete(
-                        query=q, ids=ids, 
+                        query=q,
+                        ids=ids,
                     )
                     jobs.append(job_update)
 
@@ -518,6 +523,8 @@ class Datalayer:
                              initialization begins.
         :return: Tuple containing the added object(s) and the original object(s).
         """
+        if not isinstance(object, Component):
+            raise ValueError('Only components can be applied')
         return self._apply(object=object, dependencies=dependencies), object
 
     def remove(
@@ -893,7 +900,7 @@ class Datalayer:
         serialized = self.artifact_store.save_artifact(serialized)
         if artifacts:
             for file_id, bytes in artifacts.items():
-                self.artifact_store.put_bytes(file_id, bytes)
+                self.artifact_store.put_bytes(bytes, file_id)
 
         self.metadata.create_component(serialized)
 

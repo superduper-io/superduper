@@ -8,7 +8,6 @@ from test.db_config import DBConfig
 import pytest
 
 from superduperdb import ObjectModel
-from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     Artifact,
@@ -112,10 +111,10 @@ def test_export_and_read():
 def test_set_variables(db):
     m = Listener(
         model=ObjectModel(
-            identifier=Variable('test'),
+            identifier='<var:test>',
             object=lambda x: x + 2,
         ),
-        key=Variable('key'),
+        key='<var:key>',
         select=db['docs'].find(),
     )
 

@@ -10,7 +10,6 @@ from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
-from superduperdb.base import variables
 from superduperdb.base.enums import DBType
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
@@ -39,10 +38,6 @@ class MongoDataBackend(BaseDataBackend):
 
         :param collection_name: Which collection to get the query builder for
         """
-        if isinstance(
-            collection_name, variables.Variable
-        ) or collection_name.startswith('?'):
-            return MongoQuery(table=collection_name, db=self.datalayer)
         item_gotten = self._db[collection_name]
         if isinstance(
             item_gotten,
@@ -205,4 +200,5 @@ class MongoDataBackend(BaseDataBackend):
             if schema.fields:
                 schema_dict[schema.identifier] = schema
                 document.schema = schema
-        db.apply(list(schema_dict.values()))
+        for component in schema_dict.values():
+            db.apply(component)

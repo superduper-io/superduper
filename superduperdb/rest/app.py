@@ -7,6 +7,7 @@ from fastapi import File, Response
 
 from superduperdb import CFG, logging
 from superduperdb.base.document import Document
+from superduperdb.components.component import Component
 from superduperdb.server import app as superduperapp
 
 assert isinstance(
@@ -68,11 +69,6 @@ def build_app(app: superduperapp.SuperDuperApp):
         app.db.apply(component)
         return {'status': 'ok'}
 
-    @app.add('/db/remove', method='post')
-    def db_remove(type_id: str, identifier: str):
-        app.db.remove(type_id=type_id, identifier=identifier, force=True)
-        return {'status': 'ok'}
-
     @app.add('/db/show', method='get')
     def db_show(
         type_id: t.Optional[str] = None,
@@ -84,6 +80,29 @@ def build_app(app: superduperapp.SuperDuperApp):
             identifier=identifier,
             version=version,
         )
+
+    @app.add('/db/apply_template', method='post')
+    def db_apply_template(info: t.Dict):
+        assert {'variables', 'template_body', 'identifier'}.issubset(info.keys())
+        component = Component.from_template(**info)
+        app.db.apply(component)
+        return {'status': 'ok'}
+
+    @app.add('/db/remove', method='post')
+    def db_remove(type_id: str, identifier: str):
+        app.db.remove(type_id=type_id, identifier=identifier, force=True)
+        return {'status': 'ok'}
+
+    @app.add('/db/show_template', method='get')
+    def db_show_template(identifier: str):
+        template = app.db.metadata.get_component(
+            type_id='template', identifier=identifier
+        )
+        return {
+            'identifier': '<Please enter a unique name for this application>',
+            'variables': {k: '<Please enter a value>' for k in template['variables']},
+            'template_body': template['template_body'],
+        }
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):

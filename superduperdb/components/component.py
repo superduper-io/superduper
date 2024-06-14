@@ -104,14 +104,51 @@ class Component(Leaf):
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @classmethod
-    def from_template(self, template_name: str, db: t.Optional[Datalayer], **kwargs):
+    def from_template(
+        self,
+        identifier: str,
+        template_body: t.Optional[t.Dict] = None,
+        template_name: t.Optional[str] = None,
+        db: t.Optional[Datalayer] = None,
+        **kwargs,
+    ):
         """Create a component from a template.
 
+        :param identifier: Identifier of the component.
+        :param template_body: Body of the template.
         :param template_name: Name of the template.
         :param db: Datalayer instance.
         """
-        template = db.load('template', template_name)
-        return template(**kwargs)
+        from superduperdb import Template
+
+        if template_name:
+            assert isinstance(db, Datalayer)
+            template: Template = db.load('template', template_name)
+        else:
+            assert template_body is not None
+
+            def _find_blobs(r, out):
+                if isinstance(r, dict):
+                    for v in r.values():
+                        _find_blobs(v, out)
+                if isinstance(r, list):
+                    for i in r:
+                        _find_blobs(i, out)
+                if isinstance(r, str) and r.startswith('&:blob:'):
+                    out.append(r.split(':')[-1])
+
+            blobs: t.List[str] = []
+            _find_blobs(template_body, blobs)
+            template = Template(
+                '_tmp',
+                template=template_body,
+                variables=list(kwargs.keys()),
+                blobs=list(set(blobs)),
+            )
+
+        output = template(**kwargs)
+        output.identifier = identifier
+        return output
 
     @property
     def leaves(self):
@@ -138,7 +175,6 @@ class Component(Leaf):
         return {
             'type_id': self.type_id,
             'version': self.version,
-            'identifier': self.identifier,
             'uuid': self.uuid,
         }
 
@@ -246,7 +282,7 @@ class Component(Leaf):
         assert db
 
     @staticmethod
-    def read(path: str):
+    def read(path: str, db: t.Optional[Datalayer] = None):
         """
         Read a `Component` instance from a directory created with `.export`.
 
@@ -263,6 +299,7 @@ class Component(Leaf):
         if path.endswith('.zip'):
             was_zipped = True
             import shutil
+
             shutil.unpack_archive(path)
             path = path.replace('.zip', '')
 
@@ -270,18 +307,35 @@ class Component(Leaf):
 
         from superduperdb import Document
 
-        def load_blob(blob):
-            with open(path + '/blobs/' + blob, 'rb') as f:
-                return f.read()
+        if db is not None:
+            for blob in os.listdir(path + '/' + 'blobs'):
+                with open(path + '/blobs/' + blob, 'rb') as f:
+                    bytes = f.read()
+                    db.artifact_store.put_bytes(bytes, blob)
 
-        getters = {'blob': load_blob}
+            out = Document.decode(config_object, db=db).unpack()
+        else:
 
-        out = Document.decode(config_object, getters=getters).unpack()
-        if was_zipped:
-            shutil.rmtree(path)
+            def load_blob(blob):
+                with open(path + '/blobs/' + blob, 'rb') as f:
+                    return f.read()
+
+            getters = {'blob': load_blob}
+
+            out = Document.decode(config_object, getters=getters).unpack()
+            if was_zipped:
+                shutil.rmtree(path)
         return out
 
-    def export(self, path: t.Optional[str] = None, format: str = 'json', zip: bool = False):
+    def export(
+        self,
+        path: t.Optional[str] = None,
+        format: str = 'json',
+        zip: bool = False,
+        defaults: bool = False,
+        metadata: bool = False,
+        hr: bool = False,
+    ):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -297,23 +351,63 @@ class Component(Leaf):
         if path is None:
             path = f'./{self.identifier}'
 
-        r = self.encode()
-        
-        os.makedirs(path, exist_ok=True)
-        if r.blobs:
-            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
-            for file_id, bytestr_ in r.blobs.items():
-                filepath = os.path.join(path, 'blobs', file_id)
-                with open(filepath, 'wb') as f:
-                    f.write(bytestr_)
+        r = self.encode(defaults=defaults, metadata=metadata)
 
-        r.pop_blobs()
+        def rewrite_keys(r, keys):
+            if isinstance(r, dict):
+                return {
+                    rewrite_keys(k, keys): rewrite_keys(v, keys) for k, v in r.items()
+                }
+            if isinstance(r, list):
+                return [rewrite_keys(i, keys) for i in r]
+            if isinstance(r, str):
+                for key in keys:
+                    r = r.replace(key, keys[key])
+            return r
+
+        if hr:
+            r = rewrite_keys(
+                r, {k: f'blob_{i}' for i, k in enumerate(r.get(KEY_BLOBS))}
+            )
+
+        os.makedirs(path, exist_ok=True)
+        if r.get(KEY_BLOBS):
+            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+            for file_id, bytestr_ in r[KEY_BLOBS].items():
+                filepath = os.path.join(path, 'blobs', file_id)
+                with open(filepath, 'wb') as ff:
+                    ff.write(bytestr_)
+
+        r.pop(KEY_BLOBS)
         if format == 'json':
             with open(os.path.join(path, 'component.json'), 'w') as f:
                 json.dump(r, f, indent=2)
+
         elif format == 'yaml':
+            import re
+            from io import StringIO
+
+            from ruamel.yaml import YAML
+
+            yaml = YAML()
+
+            def custom_str_representer(dumper, data):
+                if re.search(r'[^_a-zA-Z0-9 ]', data):
+                    return dumper.represent_scalar(
+                        'tag:yaml.org,2002:str', data, style='"'
+                    )
+                else:
+                    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+
+            yaml.representer.add_representer(str, custom_str_representer)
+
+            stream = StringIO()
+            yaml.dump(r, stream)
+
+            output = str(stream.getvalue())
+
             with open(os.path.join(path, 'component.yaml'), 'w') as f:
-                json.dump(r, f, indent=2)
+                f.write(output)
 
         from superduperdb import REQUIRES
 
@@ -321,23 +415,27 @@ class Component(Leaf):
             f.write('\n'.join(REQUIRES))
 
         if zip:
-            self.zip_export(path)
+            self._zip_export(path)
 
     @staticmethod
-    def zip_export(path):
+    def _zip_export(path):
         import shutil
+
         name = path.split('/')[-1]
-        shutil.move(path, f'{path}/{name}')
+        os.makedirs(f'{path}/{name}', exist_ok=True)
+        for file in [x for x in os.listdir(path) if x != name]:
+            shutil.move(f'{path}/{file}', f'{path}/{name}/{file}')
         shutil.make_archive(path, 'zip', path)
         shutil.rmtree(path)
 
-    def dict(self) -> 'Document':
+    def dict(self, metadata: bool = True, defaults: bool = True) -> 'Document':
         """A dictionary representation of the component."""
         from superduperdb import Document
         from superduperdb.components.datatype import Artifact, File
 
-        r = super().dict()
+        r = super().dict(metadata=metadata, defaults=defaults)
         s = self.artifact_schema
+
         for k in s.fields:
             attr = getattr(self, k)
             if isinstance(attr, (Artifact, File)):
@@ -345,10 +443,11 @@ class Component(Leaf):
             else:
                 r[k] = s.fields[k](x=attr)  # artifact or file
 
-        r['type_id'] = self.type_id
-        r['version'] = self.version
-        r['identifier'] = self.identifier
-        r['hidden'] = False
+        if metadata:
+            r['type_id'] = self.type_id
+            r['version'] = self.version
+            r['identifier'] = self.identifier
+            r['hidden'] = False
         return Document(r)
 
     @classmethod

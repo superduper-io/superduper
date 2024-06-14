@@ -155,7 +155,7 @@ def test_refer_to_applied_item(db):
     )
 
     db.apply(m)
-    r = db.metadata._get_component_by_uuid(m.uuid)
+    r = db.metadata.get_component_by_uuid(m.uuid)
 
     assert r['datatype'].startswith('&:component:datatype:my-type')
 

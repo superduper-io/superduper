@@ -58,6 +58,7 @@ dependencies = [
     "fastapi>=0.103.2",
     "ibis-framework>=5.1.0",
     "sqlalchemy>=2.0.28",
+    "ruamel.yaml>=0.18",
     "python-magic"
 ]
 

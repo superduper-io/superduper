@@ -207,7 +207,7 @@ def check_component_with_db(data, datatype, db):
     pprint(c)
     print_sep()
 
-    encoded = db.metadata._get_component_by_uuid(c.uuid)
+    encoded = db.metadata.get_component_by_uuid(c.uuid)
     pprint(encoded)
     print_sep()
 

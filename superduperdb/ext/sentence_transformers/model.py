@@ -51,9 +51,9 @@ class SentenceTransformer(Model, _DeviceManaged):
             sample = self.predict('Test')
             self.shape = (len(sample),)
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Serialize as a dictionary."""
-        r = super().dict()
+        r = super().dict(metadata=metadata, defaults=defaults)
         if self._default_model:
             del r['object']
         return r

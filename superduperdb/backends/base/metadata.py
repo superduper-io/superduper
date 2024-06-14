@@ -218,6 +218,11 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+        """Get a component by UUID.
+
+        :param uuid: UUID of component
+        :param allow_hidden: whether to load hidden components
+        """
         pass
 
     def get_component(

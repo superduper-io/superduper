@@ -13,13 +13,13 @@ def apply(path: str):
 
 
 @command(help='`superduperdb` deployment')
-def drop(data: bool = False):
+def drop(data: bool = False, force: bool = False):
     """Apply a serialized component.
 
     :param path: Path to the stack.
     """
     db = superduper()
-    db.drop(data=data)
+    db.drop(force=force, data=data)
     db.disconnect()
 
 

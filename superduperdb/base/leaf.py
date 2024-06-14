@@ -125,7 +125,7 @@ class Leaf(metaclass=LeafMeta):
     @property
     def metadata(self):
         """Get metadata of the object."""
-        return {}
+        return {'uuid': self.uuid}
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
@@ -139,7 +139,7 @@ class Leaf(metaclass=LeafMeta):
             if isinstance(getattr(self, f.name), Leaf)
         }
 
-    def encode(self, leaves_to_keep=()):
+    def encode(self, leaves_to_keep=(), metadata: bool = True, defaults: bool = True):
         """Encode itself.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
@@ -149,16 +149,23 @@ class Leaf(metaclass=LeafMeta):
         """
         from superduperdb.base.document import _deep_flat_encode
 
-        builds = {}
-        blobs = {}
-        files = {}
+        builds: t.Dict = {}
+        blobs: t.Dict = {}
+        files: t.Dict = {}
         r = _deep_flat_encode(
-            self.dict(),
+            self.dict(
+                metadata=metadata,
+                defaults=defaults,
+            ),
             builds,
             blobs=blobs,
             files=files,
             leaves_to_keep=leaves_to_keep,
+            metadata=metadata,
+            defaults=defaults,
         )
+        if self.identifier in builds:
+            raise ValueError(f'Identifier {self.identifier} already exists in builds.')
         builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
         return SuperDuperFlatEncode(
             {
@@ -180,20 +187,46 @@ class Leaf(metaclass=LeafMeta):
 
         r = self.encode()
         r = _replace_variables(r, **kwargs)
-        return Document.decode(r)['_base']
+        return Document.decode(r).unpack()
 
     @property
     def variables(self) -> t.List[str]:
         """Get list of variables in the object."""
         from superduperdb.base.variables import _find_variables
+
         return list(set(_find_variables(self.encode())))
 
-    def dict(self):
+    @property
+    def defaults(self):
+        """Get the default parameter values."""
+        out = {}
+        fields = dc.fields(self)
+        for f in fields:
+            value = getattr(self, f.name)
+            if f.default is not dc.MISSING and value == f.default:
+                out[f.name] = value
+            elif f.default_factory is not dc.MISSING and value == f.default_factory():
+                out[f.name] = value
+        return out
+
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Return dictionary representation of the object."""
         from superduperdb import Document
 
         r = asdict(self)
-        r.update(self.metadata)
+
+        if not defaults:
+            for k, v in self.defaults.items():
+                if k in r and r[k] == v:
+                    del r[k]
+
+        if metadata:
+            r.update(self.metadata)
+        else:
+            for k in self.metadata:
+                if k in r:
+                    del r[k]
+
         if self.literals:
             r['_literals'] = list(self.literals)
 

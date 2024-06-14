@@ -7,13 +7,12 @@ from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.constant import KEY_BUILDS
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
-from superduperdb.base.variables import Variable
 from superduperdb.components.component import Component
 
 
 class Test(Leaf):
-    b: t.Optional[t.Union[str, Variable]] = 'a'
-    c: t.Optional[t.Union[float, Variable]] = 1.0
+    b: t.Optional[str] = 'a'
+    c: t.Optional[t.Union[float, str]] = 1.0
     a: t.Optional[int] = 1
 
 
@@ -24,7 +23,7 @@ class OtherSer(Leaf):
 class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1
-    b: t.Union[str, Variable] = 'b'
+    b: str = 'b'
     c: ObjectModel = dc.field(
         default_factory=ObjectModel(identifier='test-2', object=lambda x: x + 2)
     )
@@ -81,7 +80,7 @@ def test_encode_leaf_with_children():
 def test_save_variables_2():
     query = (
         MongoQuery(table='documents')
-        .like({'x': Variable('X')}, vector_index='test')
+        .like({'x': '<var:X>'}, vector_index='test')
         .find({'x': {'$regex': '^test/1'}})
     )
 
@@ -119,19 +118,18 @@ def test_component_with_document():
 def test_find_variables():
     from superduperdb import Document
     from superduperdb.backends.mongodb import MongoQuery
-    from superduperdb.base.variables import Variable
 
-    r = Document({'txt': Variable('test')})
+    r = Document({'txt': '<var:test>'})
 
     assert r.variables == ['test']
 
-    q = MongoQuery(table='test').find_one(Document({'txt': Variable('test')}))
+    q = MongoQuery(table='test').find_one(Document({'txt': '<var:test>'}))
 
     assert q.variables == ['test']
 
     q = (
         MongoQuery(table='test')
-        .like(Document({'txt': Variable('test')}), vector_index='test')
+        .like(Document({'txt': '<var:test>'}), vector_index='test')
         .find()
         .limit(5)
     )

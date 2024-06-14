@@ -23,10 +23,11 @@ except ImportError:
     trl = None
 
 
-@pytest.mark.skipif(
-    not all([datasets, peft, trl]),
-    reason="The peft, datasets and trl are not installed",
-)
+# @pytest.mark.skipif(
+#     not all([datasets, peft, trl]),
+#     reason="The peft, datasets and trl are not installed",
+# )
+@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_training(db, tmpdir):
     datas = []

@@ -1,9 +1,9 @@
-import re
 import typing as t
 from collections import defaultdict
 
 from bson.objectid import ObjectId
 
+from superduperdb import logging
 from superduperdb.base.code import Code
 from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.leaf import Leaf, _import_item
@@ -98,6 +98,8 @@ class Document(MongoStyleDict):
         self,
         schema: t.Optional[t.Union['Schema', str]] = None,
         leaves_to_keep: t.Sequence = (),
+        metadata: bool = True,
+        defaults: bool = True,
     ) -> SuperDuperFlatEncode:
         """Encode the document to a format that can be used in a database.
 
@@ -126,6 +128,8 @@ class Document(MongoStyleDict):
             blobs=blobs,
             files=files,
             leaves_to_keep=leaves_to_keep,
+            metadata=metadata,
+            defaults=defaults,
         )
         # TODO - don't need to save in one document
         # can return encoded, builds, files, blobs
@@ -299,6 +303,8 @@ def _deep_flat_encode(
     blobs,
     files,
     leaves_to_keep=(),
+    metadata: bool = True,
+    defaults: bool = True,
 ):
     if isinstance(r, dict):
         tmp = {}
@@ -309,6 +315,8 @@ def _deep_flat_encode(
                 blobs=blobs,
                 files=files,
                 leaves_to_keep=leaves_to_keep,
+                metadata=metadata,
+                defaults=defaults,
             )
         return tmp
 
@@ -321,6 +329,8 @@ def _deep_flat_encode(
                     blobs=blobs,
                     files=files,
                     leaves_to_keep=leaves_to_keep,
+                    metadata=metadata,
+                    defaults=defaults,
                 )
                 for x in r
             ]
@@ -333,6 +343,8 @@ def _deep_flat_encode(
             blobs=blobs,
             files=files,
             leaves_to_keep=leaves_to_keep,
+            metadata=metadata,
+            defaults=defaults,
         )
 
     if isinstance(r, Blob):
@@ -344,17 +356,24 @@ def _deep_flat_encode(
         return '&:file:' + r.reference
 
     if isinstance(r, Leaf):
+        if r.identifier in builds:
+            logging.warn(f'Leaf {r.identifier} already exists')
+
+        logging.info(f'Building leaf {type(r)} with identifier: {r.identifier}')
+
         if isinstance(r, leaves_to_keep):
             builds[r.identifier] = r
             return '?' + r.identifier
 
-        r = r.dict()
+        r = r.dict(metadata=metadata, defaults=defaults)
         r = _deep_flat_encode(
             r,
             builds=builds,
             blobs=blobs,
             files=files,
             leaves_to_keep=leaves_to_keep,
+            metadata=metadata,
+            defaults=defaults,
         )
 
         identifier = r.pop('identifier')
@@ -455,9 +474,6 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
         assert getters is not None
         reference = parse_reference(r)
         return getters.run(reference.name, reference.path)
-    if isinstance(r, str) and (vars := re.findall(r'^<var:(.*?)>$', r)):
-        return Variable(vars[0])
-
     return r
 
 

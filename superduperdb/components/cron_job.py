@@ -8,7 +8,9 @@ class CronJob(Component):
 
     :param schedule: Schedule in cron format.
     """
+
     schedule: str = '0 0 * * *'
 
     def run(self):
+        """Run the job."""
         raise NotImplementedError

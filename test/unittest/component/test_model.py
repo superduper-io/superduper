@@ -14,7 +14,6 @@ from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.query import MongoQuery
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
-from superduperdb.base.variables import Variable
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode
 from superduperdb.components.metric import Metric
@@ -369,7 +368,7 @@ def test_query_model(db):
     q = (
         MongoQuery(table='documents', db=db)
         .like(
-            {'x': Variable(identifier='X')},
+            {'x': '<var:X>'},
             vector_index='test_vector_search',
             n=3,
         )

@@ -7,7 +7,6 @@ from functools import wraps
 
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
-from superduperdb.misc.hash import hash_string
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
@@ -88,7 +87,14 @@ class Query(_BaseQuery, TraceMixin):
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         super().__post_init__(db)
         if not self.identifier:
-            self.identifier = f'query/{hash_string(str(self))}'
+            self.identifier = self._build_hr_identifier()
+
+    def _build_hr_identifier(self):
+        identifier = str(self).split('\n')[-1]
+        identifier = re.sub(r'[^a-zA-Z0-9]', '-', identifier)
+        identifier = re.sub('[-]+$', '', identifier)
+        identifier = re.sub('[-]+', '-', identifier)
+        return identifier
 
     def __getitem__(self, item):
         if not isinstance(item, slice):
@@ -97,7 +103,8 @@ class Query(_BaseQuery, TraceMixin):
         parts = self.parts[item]
         return type(self)(db=self.db, table=self.table, parts=parts)
 
-    # TODO - not necessary: either `Document.decode(r, db=db)` or `db['table'].select...`
+    # TODO - not necessary: either `Document.decode(r, db=db)`
+    # or `db['table'].select...`
     def set_db(self, db: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
@@ -195,7 +202,7 @@ class Query(_BaseQuery, TraceMixin):
         """
         pass
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Return the query as a dictionary."""
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]

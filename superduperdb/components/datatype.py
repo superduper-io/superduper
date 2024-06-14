@@ -227,11 +227,11 @@ class DataType(Component):
         """Check if the encodable is an artifact."""
         return self.encodable_cls.artifact
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
-        r = super().dict()
+        r = super().dict(metadata=metadata, defaults=defaults)
         if hasattr(self.bytes_encoding, 'value'):
-            r['bytes_encoding'] = str(self.bytes_encoding.value)
+            r['bytes_encoding'] = str(self.bytes_encoding.value)  # type: ignore[union-attr]
         return r
 
     def __call__(
@@ -468,11 +468,14 @@ class Encodable(_BaseEncodable):
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
-        r = super().dict()
+        r = super().dict(metadata=metadata, defaults=defaults)
         del r['x']
-        r['blob'], r['identifier'] = self._encode()
+        r['blob'], identifier = self._encode()
+        if not r['identifier']:
+            self.identifier = identifier
+            r['identifier'] = identifier
         return r
 
     def init(self, db):
@@ -561,10 +564,12 @@ class Artifact(_BaseEncodable):
         if not isinstance(self.x, Empty):
             return
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
-        bytes, self.identifier = self._encode()
-        r = super().dict()
+        bytes, identifier = self._encode()
+        if not self.identifier:
+            self.identifier = identifier
+        r = super().dict(metadata=metadata, defaults=defaults)
         del r['x']
         r['blob'] = Blob(identifier=self.identifier, bytes=bytes)
         return r
@@ -596,10 +601,10 @@ class LazyArtifact(Artifact):
     leaf_type: t.ClassVar[str] = 'lazy_artifact'
     lazy: t.ClassVar[bool] = True
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
         self.init()
-        return super().dict()
+        return super().dict(metadata=metadata, defaults=defaults)
 
 
 class FileItem(Leaf):
@@ -659,10 +664,10 @@ class File(_BaseEncodable):
         if not isinstance(self.x, Empty):
             return
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
         self.identifier = self.identifier or random_sha1()
-        r = super().dict()
+        r = super().dict(metadata=metadata, defaults=defaults)
         r['x'] = FileItem(
             identifier=self.identifier, path=self.x, file_name=self._file_name
         )
@@ -691,13 +696,10 @@ class LazyFile(File):
     leaf_type: t.ClassVar[str] = 'lazy_file'
     lazy: t.ClassVar[bool] = True
 
-    def dict(self):
+    def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
         self.init()
-        return super().dict()
-
-
-Encoder = DataType
+        return super().dict(metadata=metadata, defaults=defaults)
 
 
 _ENCODABLES = {

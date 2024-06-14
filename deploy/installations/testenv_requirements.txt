@@ -3,7 +3,7 @@ ibis-framework[sqlite]>=5.1.0
 ibis-framework[duckdb]>=5.1.0
 ibis-framework[snowflake]>=5.1.0
 torch>=2.1.2
-transformers>=4.29.1
+transformers>=4.29.1,<=4.41.0
 vcrpy>=5.1.0
 datasets>=2.17.1
 openai>=1.1.2

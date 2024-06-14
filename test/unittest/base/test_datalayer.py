@@ -200,12 +200,11 @@ def test_add(db):
     db.apply(component)
     assert db.show('test-component', 'test') == [0]
 
-    db.apply(
-        [
-            TestComponent(identifier='test_list_1'),
-            TestComponent(identifier='test_list_2'),
-        ]
-    )
+    for component in [
+        TestComponent(identifier='test_list_1'),
+        TestComponent(identifier='test_list_2'),
+    ]:
+        db.apply(component)
     assert db.show('test-component', 'test_list_1') == [0]
     assert db.show('test-component', 'test_list_2') == [0]
 
@@ -240,12 +239,11 @@ def test_add_table(db):
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_version(db):
-    db.apply(
-        [
-            TestComponent(identifier='test', version=0),
-            TestComponent(identifier='test', version=1),
-        ]
-    )
+    for component in [
+        TestComponent(identifier='test', version=0),
+        TestComponent(identifier='test', version=1),
+    ]:
+        db.apply(component)
     assert db.show('test-component', 'test') == [0, 1]
 
     # Don't remove if not confirmed
@@ -327,12 +325,11 @@ def test_remove_component_with_artifact(db):
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_one_version(db):
-    db.apply(
-        [
-            TestComponent(identifier='test', version=0),
-            TestComponent(identifier='test', version=1),
-        ]
-    )
+    for component in [
+        TestComponent(identifier='test', version=0),
+        TestComponent(identifier='test', version=1),
+    ]:
+        db.apply(component)
 
     # Only remove the version
     db.remove('test-component', 'test', 1, force=True)
@@ -343,13 +340,12 @@ def test_remove_one_version(db):
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_multi_version(db):
-    db.apply(
-        [
-            TestComponent(identifier='test', version=0),
-            TestComponent(identifier='test', version=1),
-            TestComponent(identifier='test', version=2),
-        ]
-    )
+    for component in [
+        TestComponent(identifier='test', version=0),
+        TestComponent(identifier='test', version=1),
+        TestComponent(identifier='test', version=2),
+    ]:
+        db.apply(component)
 
     db.remove('test-component', 'test', force=True)
     # Wait for the db to update
@@ -368,18 +364,17 @@ def test_remove_not_exist_component(db):
 
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_show(db):
-    db.apply(
-        [
-            TestComponent(identifier='a1'),
-            TestComponent(identifier='a2'),
-            TestComponent(identifier='a3'),
-            TestComponent(identifier='b'),
-            TestComponent(identifier='b'),
-            TestComponent(identifier='b'),
-            DataType(identifier='c1'),
-            DataType(identifier='c2'),
-        ]
-    )
+    for component in [
+        TestComponent(identifier='a1'),
+        TestComponent(identifier='a2'),
+        TestComponent(identifier='a3'),
+        TestComponent(identifier='b'),
+        TestComponent(identifier='b'),
+        TestComponent(identifier='b'),
+        DataType(identifier='c1'),
+        DataType(identifier='c2'),
+    ]:
+        db.apply(component)
 
     with pytest.raises(ValueError) as e:
         db.show('test-component', version=1)
@@ -405,15 +400,16 @@ def test_show(db):
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
-    db.apply(
-        [
-            DataType(identifier='e1'),
-            DataType(identifier='e2'),
-            m1,
-            ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32')),
-            m1,
-        ]
-    )
+
+    components = [
+        DataType(identifier='e1'),
+        DataType(identifier='e2'),
+        m1,
+        ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32')),
+        m1,
+    ]
+    for component in components:
+        db.apply(component)
 
     # Test load fails
     # error version

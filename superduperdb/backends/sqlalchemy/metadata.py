@@ -257,6 +257,11 @@ class SQLAlchemyMetadata(MetaDataStore):
                 session.execute(stmt_delete)
 
     def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+        """Get a component by UUID.
+
+        :param uuid: UUID of component
+        :param allow_hidden: whether to load hidden components
+        """
         with self.session_context() as session:
             stmt = (
                 select(self.component_table)

@@ -1,13 +1,11 @@
 import dataclasses as dc
-import json
 import os
 import typing as t
 
-from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduperdb.base.constant import KEY_BLOBS
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.variables import _replace_variables
-from superduperdb.components.datatype import DataType, dill_lazy
 from superduperdb.misc.special_dicts import SuperDuperFlatEncode
 
 from .component import Component, ensure_initialized
@@ -18,47 +16,48 @@ class Template(Component):
     Application template component.
 
     :param component: Template component with variables.
-    :param info: Info.
-    :param _component_blobs: Blobs in `Template.component`
-                             NOTE: This is only for internal
-                             use.
+    :param variables: Variables to be set.
+    :param blobs: Blob identifiers in `Template.component`
+    :param info: Additional information.
     """
 
-    literals: t.ClassVar[t.Tuple[str]] = ('component',)
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('_component_blobs', dill_lazy),
-    )
+    literals: t.ClassVar[t.Tuple[str]] = ('template',)
     type_id: t.ClassVar[str] = "template"
-
-    component: t.Union[Component, t.Dict]
+    template: t.Dict
     variables: t.Optional[t.List[str]] = None
     blobs: t.Optional[t.List[str]] = None
     info: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
     def pre_create(self, db: Datalayer) -> None:
+        """Run before the object is created."""
         super().pre_create(db)
-        for identifier, blob in self.component[KEY_BLOBS]:
-            db.artifact_store.put_bytes(blob, identifier)
-        self.blobs = list(self.component[KEY_BLOBS].keys())
-        self.component.pop(KEY_BLOBS)
+        if KEY_BLOBS in self.template:
+            for identifier, blob in self.template[KEY_BLOBS].items():
+                db.artifact_store.put_bytes(blob, identifier)
+            self.blobs = list(self.template[KEY_BLOBS].keys())
+            self.template.pop(KEY_BLOBS)
 
     def __post_init__(self, db, artifacts):
-        if isinstance(self.component, Component):
-            self.component = self.component.encode()
-        else:
-            self.component = SuperDuperFlatEncode(self.component)
+        self.template = SuperDuperFlatEncode(self.template)
         if self.variables is None:
-            self.variables = self.component.variables
+            self.variables = self.template.variables
         return super().__post_init__(db, artifacts)
 
     @ensure_initialized
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
         assert set(kwargs.keys()) == set(self.variables)
-        _replace_variables(self.component, **kwargs)
-        return Document.decode(self.component, db=self.db)
+        component = _replace_variables(self.template, **kwargs)
+        return Document.decode(component, db=self.db).unpack()
 
-    def export(self, path: str, format: str = 'json', zip: bool = True):
+    def export(
+        self,
+        path: t.Optional[str] = None,
+        format: str = 'json',
+        zip: bool = False,
+        defaults: bool = False,
+        metadata: bool = False,
+    ):
         """
         Save `self` to a directory using super-duper protocol.
 
@@ -71,12 +70,16 @@ class Template(Component):
         |_files/*
         ```
         """
-        super().export(path, format, zip=False)
-        if self.blobs:
-            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+        assert self.db is not None
+        assert self.identifier in self.db.show('template')
+        if path is None:
+            path = './' + self.identifier
+        super().export(path, format, zip=False, defaults=defaults, metadata=metadata)
+        os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+        if self.blobs is not None:
             for identifier in self.blobs:
                 blob = self.db.artifact_store.get_bytes(identifier)
                 with open(path + f'/blobs/{identifier}', 'wb') as f:
                     f.write(blob)
         if zip:
-            self.zip_export(path)
+            self._zip_export(path)

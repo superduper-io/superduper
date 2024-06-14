@@ -44,7 +44,7 @@ class Code(Leaf):
         if remote_code is None:
             raise ValueError('No remote code found in the provided code')
         if not self.identifier:
-            self.identifier = f"remote_code:{remote_code.__name__}:{self.uuid}"
+            self.identifier = remote_code.__name__
         self.object = remote_code
 
     def __call__(self, *args, **kwargs):

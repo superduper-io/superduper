@@ -3,6 +3,7 @@ import re
 
 def _find_variables(r):
     from superduperdb.base.leaf import Leaf
+
     if isinstance(r, dict):
         return sum([_find_variables(v) for v in r.values()], [])
     if isinstance(r, (list, tuple)):
@@ -16,6 +17,7 @@ def _find_variables(r):
 
 def _replace_variables(x, **kwargs):
     from .document import Document
+
     if isinstance(x, dict):
         return {
             _replace_variables(k, **kwargs): _replace_variables(v, **kwargs)

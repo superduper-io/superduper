@@ -225,6 +225,7 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
 
     @property
     def variables(self):
+        """List of variables in the object."""
         return _find_variables(self)
 
     def info(self):
@@ -264,6 +265,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
                 yield key
 
     def __getitem__(self, key: str) -> t.Any:
+        # TODO - handle numeric keys
         if key == '_base':
             return self
         if '.' not in key:
@@ -352,9 +354,9 @@ def _component_metadata(obj):
 
     def _all_leaves(obj):
         result = []
-        if not obj.builds:
+        if not obj.leaves:
             return result
-        for name, leaf in obj.builds.items():
+        for name, leaf in obj.leaves.items():
             tmp = _all_leaves(leaf)
             result.extend([f'{name}.{x}' for x in tmp])
             result.append(name)
@@ -362,7 +364,7 @@ def _component_metadata(obj):
 
     metadata.append("[yellow]Leaves[/yellow]")
     rleaves = _all_leaves(obj)
-    obj_leaves = list(obj.builds.keys())
+    obj_leaves = list(obj.leaves.keys())
     for leaf in rleaves:
         if leaf in obj_leaves:
             metadata.append(f"[green]{leaf}[/green]")

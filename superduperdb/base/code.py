@@ -1,5 +1,6 @@
 import inspect
 
+from superduperdb import logging
 from superduperdb.base.leaf import Leaf
 
 template = """from superduperdb import code
@@ -29,7 +30,7 @@ class Code(Leaf):
         mini_module = template.format(
             definition=code,
         )
-        print(mini_module)
+        logging.info(f'Created code object:\n{mini_module}')
         return Code(code=mini_module)
 
     def __post_init__(self, db):
@@ -42,6 +43,8 @@ class Code(Leaf):
         )
         if remote_code is None:
             raise ValueError('No remote code found in the provided code')
+        if not self.identifier:
+            self.identifier = f"remote_code:{remote_code.__name__}:{self.uuid}"
         self.object = remote_code
 
     def __call__(self, *args, **kwargs):

@@ -23,18 +23,13 @@ except ImportError:
     trl = None
 
 
-# @pytest.mark.skipif(
-#     not all([datasets, peft, trl]),
-#     reason="The peft, datasets and trl are not installed",
-# )
-@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_training(db, tmpdir):
     datas = []
     for i in range(32 + 8):
         text = f"{i}+1={i+1}"
         fold = "train" if i < 32 else "valid"
-        datas.append({"text": text, "id": str(i), "fold": fold})
+        datas.append({"text": text, "id": str(i), "_fold": fold})
 
     collection = MongoQuery(table="doc")
     db.execute(collection.insert_many(list(map(Document, datas))))

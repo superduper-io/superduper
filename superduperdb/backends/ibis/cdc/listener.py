@@ -137,6 +137,13 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         else:
             self.strategy = strategy
 
+        if isinstance(self.strategy, dict):
+            self.strategy = (
+                PollingStrategy(**self.strategy)
+                if self.strategy['type'] == 'incremental'
+                else LogBasedStrategy(**self.strategy)
+            )
+
         self.db_type = 'ibis'
         self.packet = lambda ids, query, event_type: IbisDBPacket(
             ids, query, event_type
@@ -196,7 +203,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
                 strategy=self.strategy,
                 primary_id=self.DEFAULT_ID,
             ).get_strategy()
-        elif isinstance(self.strategy, cdc.LogBasedStrategy):
+        elif isinstance(self.strategy, LogBasedStrategy):
             raise NotImplementedError('logbased strategy not implemented yet')
         else:
             raise TypeError(f'{self.strategy} is not a valid strategy')

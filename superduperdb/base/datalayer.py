@@ -360,9 +360,10 @@ class Datalayer:
             self.add(e)
 
         for r in insert.documents:
-            r['_fold'] = 'train'
-            if random.random() < s.CFG.fold_probability:
-                r['_fold'] = 'valid'
+            r.setdefault(
+                '_fold',
+                'train' if random.random() >= s.CFG.fold_probability else 'valid',
+            )
 
         if auto_schema and self.cfg.auto_schema:
             self.databackend.auto_create_table_schema(

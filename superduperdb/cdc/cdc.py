@@ -413,7 +413,6 @@ class DatabaseChangeDataCapture:
         listeners = self.db.show('listener')
         if listeners:
             from superduperdb.components.listener import Listener
-
             for listener in listeners:
                 listener = db.load(identifier=listener, type_id='listener')
                 assert isinstance(listener, Listener)

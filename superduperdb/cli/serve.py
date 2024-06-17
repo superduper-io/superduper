@@ -57,6 +57,14 @@ def cdc():
     app.start()
 
 
+@command(help='Start standalone crontab service')
+def crontab():
+    """Start standalone crontab service."""
+    from superduperdb.crontab.service import app
+
+    app.start()
+
+
 @command(help='Serve a model on ray')
 def ray_serve(
     model: str,

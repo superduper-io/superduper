@@ -1,5 +1,4 @@
 import copy
-import dataclasses as dc
 import typing as t
 import uuid
 from collections import defaultdict
@@ -485,29 +484,3 @@ class _SQLDictIterable:
         return self
 
     __next__ = next
-
-
-@dc.dataclass
-class RawSQL:
-    """Raw SQL query.
-
-    :param query: The raw SQL query
-    :param id_field: The field to use as the primary id
-    """
-
-    query: str
-    id_field: str = 'id'
-    type: t.ClassVar[str] = 'select'
-
-    def do_execute(self, db):
-        """Run the query.
-
-        :param db: The DataLayer instance
-        """
-        cursor = db.databackend.conn.raw_sql(self.query)
-        try:
-            cursor = cursor.mappings().all()
-            cursor = _SQLDictIterable(cursor)
-            return SuperDuperCursor(cursor, id_field=self.id_field)
-        except Exception:
-            return cursor

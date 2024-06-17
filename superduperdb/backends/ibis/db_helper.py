@@ -54,12 +54,18 @@ class DBHelper:
     def __init__(self, dialect):
         self.dialect = dialect
 
-    def process_before_insert(self, table_name, datas):
+    def process_before_insert(self, table_name, datas, conn):
         """Convert byte data to base64 format for storage in the database.
 
         :param table_name: The name of the table.
         :param datas: The data to insert.
         """
+        datas = pd.DataFrame(datas)
+        # change the order of the columns since
+        # ibis no longer supports permuting the order
+        # based on the names of the columns
+        columns = conn.table(table_name).columns
+        datas = datas[columns]
         return table_name, pd.DataFrame(datas)
 
     def process_schema_types(self, schema_mapping):
@@ -95,13 +101,14 @@ class ClickHouseHelper(Base64Mixin, DBHelper):
 
     match_dialect = 'clickhouse'
 
-    def process_before_insert(self, table_name, datas):
+    def process_before_insert(self, table_name, datas, conn):
         """Convert byte data to base64 format for storage in the database.
 
         :param table_name: The name of the table.
         :param datas: The data to insert.
         """
-        return f'`{table_name}`', pd.DataFrame(datas)
+        table_name, datas = super().process_before_insert(table_name, datas, conn)
+        return f'`{table_name}`', datas
 
 
 def get_db_helper(dialect) -> DBHelper:

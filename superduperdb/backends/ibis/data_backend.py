@@ -4,7 +4,7 @@ from warnings import warn
 
 import ibis
 import pandas
-from ibis.backends.base import BaseBackend
+from ibis.backends import BaseBackend
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
@@ -70,7 +70,9 @@ class IbisDataBackend(BaseDataBackend):
             for k, v in doc.items():
                 doc[k] = self.db_helper.convert_data_format(v)
         table_name, raw_documents = self.db_helper.process_before_insert(
-            table_name, raw_documents
+            table_name,
+            raw_documents,
+            self.conn,
         )
         if not self.in_memory:
             self.conn.insert(table_name, raw_documents)
@@ -152,7 +154,7 @@ class IbisDataBackend(BaseDataBackend):
         try:
             self.conn.table(f'_outputs.{predict_id}')
             return True
-        except NoSuchTableError:
+        except (NoSuchTableError, ibis.IbisError):
             return False
 
     def create_table_and_schema(self, identifier: str, schema: Schema):

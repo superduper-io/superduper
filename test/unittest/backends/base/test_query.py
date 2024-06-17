@@ -31,9 +31,8 @@ def test_execute_insert_and_find_mongodb(db):
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_execute_insert_and_find_sqldb(db, table):
     db.add(table)
-    db[table.identifier].insert([Document({'this': 'is a test', 'id': '1'})]).execute(
-        db
-    )
+    to_insert = [Document({'this': 'is a test', 'id': '1'})]
+    db[table.identifier].insert(to_insert).execute(db)
     r = db[table.identifier].select('this').limit(1).execute(db).next()
     assert r['this'] == 'is a test'
 
@@ -56,18 +55,37 @@ def test_execute_complex_query_mongodb(db):
 
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_execute_complex_query_sqldb(db, table):
+def test_execute_complex_query_sqldb_auto_schema(db):
     import ibis
 
-    db.add(table)
-    table = db[table.identifier]
+    db.cfg.auto_schema = True
+
+    # db.add(table)
+    table = db['documents']
     table.insert(
         [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
-    ).execute(db)
+    ).execute()
 
     cur = table.select('this').order_by(ibis.desc('this')).limit(10).execute(db)
     expected = [f'is a test {i}' for i in range(99, 89, -1)]
     cur_this = [r['this'] for r in cur]
+    assert sorted(cur_this) == sorted(expected)
+
+
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+def test_execute_complex_query_sqldb_no_auto_schema(db, table):
+    import ibis
+
+    db.add(table)
+    table = db['documents']
+    table.insert(
+        [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
+    ).execute()
+
+    cur = table.select('this').order_by(ibis.desc('this')).limit(10).execute(db)
+    expected = [f'is a test {i}' for i in range(99, 89, -1)]
+    cur_this = [r['this'] for r in cur]
+    print(cur_this)
     assert sorted(cur_this) == sorted(expected)
 
 

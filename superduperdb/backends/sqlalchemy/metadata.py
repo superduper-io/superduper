@@ -44,26 +44,16 @@ class SQLAlchemyMetadata(MetaDataStore):
         type_datetime = DBConfig.type_datetime
         type_boolean = DBConfig.type_boolean
 
-        query_id_table_args = DBConfig.query_id_table_args
         job_table_args = DBConfig.job_table_args
         parent_child_association_table_args = (
             DBConfig.parent_child_association_table_args
         )
         component_table_args = DBConfig.component_table_args
-        meta_table_args = DBConfig.meta_table_args
 
         metadata = MetaData()
-        self.query_id_table = Table(
-            'query_id_table',
-            metadata,
-            Column('query_id', type_string, primary_key=True),
-            Column('query', type_json_as_text),
-            Column('model', type_string),
-            *query_id_table_args,
-        )
 
         self.job_table = Table(
-            'job',
+            'JOB',
             metadata,
             Column('identifier', type_string, primary_key=True),
             Column('component_identifier', type_string),
@@ -83,7 +73,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.parent_child_association_table = Table(
-            'parent_child_association',
+            'PARENT_CHILD_ASSOCIATION',
             metadata,
             Column('parent_id', type_string, primary_key=True),
             Column('child_id', type_string, primary_key=True),
@@ -91,9 +81,9 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.component_table = Table(
-            'component',
+            'COMPONENT',
             metadata,
-            Column('uuid', type_string, primary_key=True),
+            Column('id', type_string, primary_key=True),
             Column('identifier', type_string),
             Column('version', type_integer),
             Column('hidden', type_boolean),
@@ -103,13 +93,6 @@ class SQLAlchemyMetadata(MetaDataStore):
             *component_table_args,
         )
 
-        self.meta_table = Table(
-            'meta',
-            metadata,
-            Column('key', type_string, primary_key=True),
-            Column('value', type_string),
-            *meta_table_args,
-        )
         metadata.create_all(self.conn)
 
     def url(self):
@@ -129,11 +112,9 @@ class SQLAlchemyMetadata(MetaDataStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
-        self.query_id_table.drop(self.conn)
         self.job_table.drop(self.conn)
         self.parent_child_association_table.drop(self.conn)
         self.component_table.drop(self.conn)
-        self.meta_table.drop(self.conn)
 
     @contextmanager
     def session_context(self):
@@ -163,7 +144,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .limit(1)
             )
             res = self.query_results(self.component_table, stmt, session)
-            return res[0]['uuid'] if res else None
+            return res[0]['id'] if res else None
 
     def _get_all_component_info(self):
         with self.session_context() as session:
@@ -252,7 +233,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             cv = res[0] if res else None
             if cv:
                 stmt_delete = delete(self.component_table).where(
-                    self.component_table.c.uuid == cv['uuid']
+                    self.component_table.c.id == cv['id']
                 )
                 session.execute(stmt_delete)
 
@@ -266,7 +247,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = (
                 select(self.component_table)
                 .where(
-                    self.component_table.c.uuid == uuid,
+                    self.component_table.c.id == uuid,
                 )
                 .limit(1)
             )
@@ -329,14 +310,14 @@ class SQLAlchemyMetadata(MetaDataStore):
             parents = [r['parent_id'] for r in res]
             return parents
 
-    @staticmethod
-    def _refactor_component_info(info):
+    @classmethod
+    def _refactor_component_info(cls, info):
         if 'hidden' not in info:
             info['hidden'] = False
         component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path']
         new_info = {k: info[k] for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
-        new_info['uuid'] = new_info['dict']['uuid']
+        new_info['id'] = new_info['dict']['uuid']
         return new_info
 
     def get_latest_version(

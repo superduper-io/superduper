@@ -17,7 +17,7 @@ fold_probability: 0.05
 lance_home: .superduperdb/vector_indices
 log_level: INFO
 logging_type: SYSTEM
-metadata_store: null
+metadata_store: sqlite://
 retries:
   stop_after_attempt: 2
   wait_max: 10.0

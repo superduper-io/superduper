@@ -14,6 +14,7 @@ from superduperdb.components.datatype import (
     DataType,
     Encodable,
     FileItem,
+    Native,
     _BaseEncodable,
 )
 from superduperdb.components.schema import SCHEMA_KEY, Schema, get_schema
@@ -354,6 +355,9 @@ def _deep_flat_encode(
     if isinstance(r, FileItem):
         files[r.identifier] = r.path
         return '&:file:' + r.reference
+
+    if isinstance(r, Native):
+        return r.x
 
     if isinstance(r, Leaf):
         if r.identifier in builds:

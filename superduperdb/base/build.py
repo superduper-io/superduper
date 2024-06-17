@@ -140,6 +140,7 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
             tables[filename.split('.')[0]] = df
         ibis_conn = ibis.pandas.connect(tables)
         return mapping['ibis'](ibis_conn, dir_name, in_memory=True)
+
     else:
         name = uri.split('//')[0]
         if type == 'data_backend':
@@ -182,7 +183,6 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     cfg = (cfg or s.CFG)(**kwargs)
 
     databackend = _build_databackend(cfg, databackend)
-
     metadata = _build_metadata(cfg, databackend)
     assert metadata
 

@@ -598,7 +598,6 @@ class Model(Component, metaclass=ModelMeta):
     ):
         if not db.databackend.check_output_dest(predict_id):
             query = select.select_ids
-
         elif not overwrite:
             if ids:
                 select = select.select_using_ids(ids)

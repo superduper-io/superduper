@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix listener cleanup after removal
 - Don't require `@dc.dataclass` or `@merge_docstrings` decorator
 - Make output of `Document.encode()` a bit more minimalistic
+- Increment minimum supported ibis version to 9.0.0
 
 #### New Features & Functionality
 

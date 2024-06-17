@@ -1,4 +1,4 @@
-from ibis.backends.base import BaseBackend
+from ibis.backends import BaseBackend
 from pymongo import MongoClient
 
 from superduperdb.backends.ibis.data_backend import IbisDataBackend

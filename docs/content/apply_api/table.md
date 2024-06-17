@@ -1,6 +1,6 @@
 # `Table`
 
-- Create a table in an SQL database, which optionally has a `Schema` attached
+- Use a table in your databackend database, which optionally has a `Schema` attached
 - Table can be a `MongoDB` collection or an SQL table.
 
 ***Dependencies***

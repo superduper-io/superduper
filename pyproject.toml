@@ -59,7 +59,8 @@ dependencies = [
     "ibis-framework>=9.0.1",
     "sqlalchemy>=2.0.28",
     "ruamel.yaml>=0.18",
-    "python-magic"
+    "python-magic",
+    "apscheduler",
 ]
 
 [project.urls]

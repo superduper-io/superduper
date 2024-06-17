@@ -83,8 +83,6 @@ class SuperDuperApp:
         self._app = FastAPI()
 
         self.router = APIRouter()
-        self._user_startup = False
-        self._user_shutdown = False
         self.init_hook = init_hook
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
@@ -180,11 +178,7 @@ class SuperDuperApp:
         :param cfg: Configurations to use
         """
         self.add_default_endpoints()
-
-        if not self._user_startup:
-            self.startup(cfg=cfg)
-        if not self._user_shutdown:
-            self.shutdown()
+        self.startup(cfg=cfg)
         assert self.app
 
     def run(self):
@@ -225,7 +219,11 @@ class SuperDuperApp:
                 function(db=db)
             self._app.state.pool = db
             if self.init_hook:
-                self.init_hook(db=db)
+                update_vars = self.init_hook(db=db)
+                if update_vars:
+                    for k, v in update_vars.items():
+                        setattr(self, k, v)
+
 
         return
 

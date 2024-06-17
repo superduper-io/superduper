@@ -145,6 +145,16 @@ class Rest(BaseConfig):
 
 
 @dc.dataclass
+class CronTab(BaseConfig):
+    """Describes the configuration for the crontab service.
+
+    :param uri: The URI for the crontab service
+    """
+
+    uri: t.Optional[str] = None
+
+
+@dc.dataclass
 class Compute(BaseConfig):
     """Describes the configuration for distributed computing.
 
@@ -163,6 +173,7 @@ class Cluster(BaseConfig):
     :param compute: The URI for compute
                     - None: run all jobs in local mode i.e. simple function call
                     - "ray://host:port": Run all jobs on a remote ray cluster
+    :param crontab: The URI for the crontab service
     :param vector_search: The URI for the vector search service
                           - None: Run vector search on local
                           - `f"http://{host}:{port}"`:
@@ -177,6 +188,7 @@ class Cluster(BaseConfig):
     """
 
     compute: Compute = dc.field(default_factory=Compute)
+    crontab: CronTab = dc.field(default_factory=CronTab)
     vector_search: VectorSearch = dc.field(default_factory=VectorSearch)
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)

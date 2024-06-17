@@ -46,7 +46,7 @@ dependencies = [
     "pymongo>=4.3.3",
     "numpy>=1.24.3",
     "overrides>=7",
-    "tenacity>=8.1.0",
+    "tenacity>=8.1.0,<=8.2.3",
     "pillow>=9.4.0",
     "mongomock>=4.1.2",
     "sqlglot<=20.10",

@@ -187,7 +187,7 @@ def component(*schema: t.Dict):
             assert isinstance(out, Component)
 
             def to_dict(metadata: bool = True, defaults: bool = True):
-                path = f'{f.__module__}.{f.__name__}'.replace('.', '/')
+                path = f'{f.__module__}.{f.__name__}'
                 from superduperdb.base.document import Document
 
                 r = Document({'_path': path, **kwargs})

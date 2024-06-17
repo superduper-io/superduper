@@ -30,11 +30,11 @@ def test_apply(setup):
     m = {
         '_builds': {
             'function_body': {
-                '_path': 'superduperdb/base/code/Code',
+                '_path': 'superduperdb.base.code.Code',
                 'code': CODE,
             },
             'my_function': {
-                '_path': 'superduperdb/components/model/ObjectModel',
+                '_path': 'superduperdb.components.model.ObjectModel',
                 'object': '?function_body',
                 'identifier': 'my_function',
             },
@@ -62,14 +62,14 @@ def test_insert_image(setup):
     file_id = result['file_id']
 
     query = {
-        '_path': 'superduperdb/backends/mongodb/query/parse_query',
+        '_path': 'superduperdb.backends.mongodb.query.parse_query',
         '_builds': {
             'image_type': {
-                '_path': 'superduperdb/ext/pillow/encoder/image_type',
+                '_path': 'superduperdb.ext.pillow.encoder.image_type',
                 'encodable': 'artifact',
             },
             'my_artifact': {
-                '_path': 'superduperdb/components/datatype/LazyArtifact',
+                '_path': 'superduperdb.components.datatype.LazyArtifact',
                 'blob': f'&:blob:{file_id}',
                 'datatype': "?image_type",
             },
@@ -84,7 +84,7 @@ def test_insert_image(setup):
     )
 
     query = {
-        '_path': 'superduperdb/backends/mongodb/query/parse_query',
+        '_path': 'superduperdb.backends.mongodb.query.parse_query',
         'query': 'coll.find(documents[0], documents[1])',
         'documents': [{}, {'_id': 0}],
     }

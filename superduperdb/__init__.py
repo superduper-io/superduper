@@ -17,7 +17,7 @@ from .base.document import Document
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
-from .components.datatype import DataType
+from .components.datatype import DataType, dill_serializer, pickle_serializer
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
@@ -30,6 +30,7 @@ from .components.model import (
 from .components.schema import Schema
 from .components.template import Template
 from .components.vector_index import VectorIndex, vector
+from .misc.annotations import requires_packages
 
 REQUIRES = [
     'superduperdb=={}'.format(__version__),
@@ -62,4 +63,7 @@ __all__ = (
     'Template',
     'Application',
     'Component',
+    'requires_packages',
+    'pickle_serializer',
+    'dill_serializer',
 )

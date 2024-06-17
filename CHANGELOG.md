@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mask special character keys in mongodb queries
 - Fix listener cleanup after removal
 - Don't require `@dc.dataclass` or `@merge_docstrings` decorator
-- Make output of `Document.encode()` more minimalistic
+- Make output of `Document.encode()` a bit more minimalistic
 
 #### New Features & Functionality
 

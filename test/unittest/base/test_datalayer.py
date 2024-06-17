@@ -391,7 +391,7 @@ def test_show(db):
     assert isinstance(info, dict)
     assert info['version'] == 1
     assert info['identifier'] == 'b'
-    assert info['_path'].split('/')[-1] == 'TestComponent'
+    assert info['_path'].split('.')[-1] == 'TestComponent'
 
     # Test get last version
     assert db.show('test-component', 'b', -1)['version'] == 2

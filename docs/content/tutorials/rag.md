@@ -12,6 +12,19 @@ We'll add this to a testing database by downloading the data snapshot:
 
 ```python
 !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
+```
+
+<details>
+<summary>Outputs</summary>
+<pre>
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100  720k  100  720k    0     0   679k      0  0:00:01  0:00:01 --:--:--  681k
+
+</pre>
+</details>
+
+```python
 import json
 
 from superduperdb import superduper, Document
@@ -26,24 +39,7 @@ _ = db['docu'].insert_many([{'txt': r} for r in data]).execute()
 
 <details>
 <summary>Outputs</summary>
-<pre>
-      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                     Dload  Upload   Total   Spent    Left  Speed
-    100  479k  100  479k    0     0   501k      0 --:--:-- --:--:-- --:--:--  504k
-    2024-Jun-02 14:23:40.34| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
-    2024-Jun-02 14:23:40.35| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
-    2024-Jun-02 14:23:40.36| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:155  | Connecting to compute client: None
-    2024-Jun-02 14:23:40.36| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:85   | Building Data Layer
-    2024-Jun-02 14:23:40.36| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:220  | Configuration: 
-     +---------------+------------------+
-    | Configuration |      Value       |
-    +---------------+------------------+
-    |  Data Backend | mongomock://test |
-    +---------------+------------------+
-    2024-Jun-02 14:23:40.37| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x11e98dda0\>
-    2024-Jun-02 14:23:40.38| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x2a8ed7050\>.  function:\<function callable_job at 0x11e98dda0\> future:ebe43b87-1388-4247-8502-ed2da8659ecd
 
-</pre>
 </details>
 
 Let's verify the data in the `db` by querying one datapoint:
@@ -54,9 +50,7 @@ db['docu'].find_one().execute()
 
 <details>
 <summary>Outputs</summary>
-<pre>
-    Document(\{'txt': "---\nsidebar_position: 5\n---\n\n# Encoding data\n\nIn AI, typical types of data are:\n\n- **Numbers** (integers, floats, etc.)\n- **Text**\n- **Images**\n- **Audio**\n- **Videos**\n- **...bespoke in house data**\n\nMost databases don't support any data other than numbers and text.\nSuperDuperDB enables the use of these more interesting data-types using the `Document` wrapper.\n\n### `Document`\n\nThe `Document` wrapper, wraps dictionaries, and is the container which is used whenever \ndata is exchanged with your database. That means inputs, and queries, wrap dictionaries \nused with `Document` and also results are returned wrapped with `Document`.\n\nWhenever the `Document` contains data which is in need of specialized serialization,\nthen the `Document` instance contains calls to `DataType` instances.\n\n### `DataType`\n\nThe [`DataType` class](../apply_api/datatype), allows users to create and encoder custom datatypes, by providing \ntheir own encoder/decoder pairs.\n\nHere is an example of applying an `DataType` to add an image to a `Document`:\n\n```python\nimport pickle\nimport PIL.Image\nfrom superduperdb import DataType, Document\n\nimage = PIL.Image.open('my_image.jpg')\n\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n)\n\ndocument = Document(\{'img': my_image_encoder(image)\})\n```\n\nThe bare-bones dictionary may be exposed with `.unpack()`:\n\n```python\n\>\>\> document.unpack()\n\{'img': \<PIL.PngImagePlugin.PngImageFile image mode=P size=400x300\>\}\n```\n\nBy default, data encoded with `DataType` is saved in the database, but developers \nmay alternatively save data in the `db.artifact_store` instead. \n\nThis may be achiever by specifying the `encodable=...` parameter:\n\n```python\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n    encodable='artifact',    # saves to disk/ db.artifact_store\n    # encodable='lazy_artifact', # Just in time loading\n)\n```\n\nThe `encodable` specifies the type of the output of the `__call__` method, \nwhich will be a subclass of `superduperdb.components.datatype._BaseEncodable`.\nThese encodables become leaves in the tree defines by a `Document`.\n\n### `Schema`\n\nA `Schema` allows developers to connect named fields of dictionaries \nor columns of `pandas.DataFrame` objects with `DataType` instances.\n\nA `Schema` is used, in particular, for SQL databases/ tables, and for \nmodels that return multiple outputs.\n\nHere is an example `Schema`, which is used together with text and image \nfields:\n\n```python\ns = Schema('my-schema', fields=\{'my-text': 'str', 'my-image': my_image_encoder\})\n```\n", '_fold': 'train', '_id': ObjectId('665c644c53dcb972da5a9928')\})
-</pre>
+
 </details>
 
 The first step in a RAG application is to create a `VectorIndex`. The results of searching 
@@ -68,7 +62,7 @@ vector-search [here](./vector_search.md).
 ```python
 import requests 
 
-from superduperdb import Stack, Document, VectorIndex, Listener, vector
+from superduperdb import Application, Document, VectorIndex, Listener, vector
 from superduperdb.ext.sentence_transformers.model import SentenceTransformer
 from superduperdb.base.code import Code
 
@@ -106,112 +100,14 @@ db.apply(vector_index)
 
 <details>
 <summary>Outputs</summary>
-<pre>
-    from superduperdb import code
-    
-    @code
-    def postprocess(x):
-        return x.tolist()
-    
 
-</pre>
-<pre>
-    /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
-      warnings.warn(
-    /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
-      warnings.warn(
-
-</pre>
-<pre>
-    2024-Jun-02 14:23:58.41| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x11e98de40\>
-
-</pre>
-<pre>
-    204it [00:00, 149744.14it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:23:59.54| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:752  | Computing chunk 0/4
-
-</pre>
-<pre>
-    
-
-</pre>
-<pre>
-    Batches:   0%|          | 0/2 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:00.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:776  | Adding 50 model outputs to `db`
-    2024-Jun-02 14:24:00.58| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:316  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-Jun-02 14:24:00.58| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:752  | Computing chunk 1/4
-
-</pre>
-<pre>
-    Batches:   0%|          | 0/2 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:01.40| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:776  | Adding 50 model outputs to `db`
-    2024-Jun-02 14:24:01.43| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:316  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-Jun-02 14:24:01.43| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:752  | Computing chunk 2/4
-
-</pre>
-<pre>
-    Batches:   0%|          | 0/2 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:02.28| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:776  | Adding 50 model outputs to `db`
-    2024-Jun-02 14:24:02.30| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:316  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-Jun-02 14:24:02.30| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:752  | Computing chunk 3/4
-
-</pre>
-<pre>
-    Batches:   0%|          | 0/2 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:03.13| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:776  | Adding 50 model outputs to `db`
-    2024-Jun-02 14:24:03.16| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:316  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-Jun-02 14:24:03.16| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:752  | Computing chunk 4/4
-
-</pre>
-<pre>
-    Batches:   0%|          | 0/1 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:03.26| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:776  | Adding 4 model outputs to `db`
-    2024-Jun-02 14:24:03.26| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:316  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-Jun-02 14:24:03.26| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x2a8ed7050\>.  function:\<function method_job at 0x11e98de40\> future:ac399012-8213-481a-b537-3d187fb69583
-    2024-Jun-02 14:24:03.26| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x11e98dda0\>
-    2024-Jun-02 14:24:04.56| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:169  | Loading vectors of vector-index: 'my-index'
-    2024-Jun-02 14:24:04.56| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:179  | docu.find(documents[0], documents[1])
-
-</pre>
-<pre>
-    Loading vectors into vector-table...: 204it [00:00, 3031.62it/s]
-</pre>
-<pre>
-    2024-Jun-02 14:24:04.63| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x2a8ed7050\>.  function:\<function callable_job at 0x11e98dda0\> future:41ae1218-3899-4588-bef6-481acee98e25
-
-</pre>
-<pre>
-    
-
-</pre>
-<pre>
-    ([\<superduperdb.jobs.job.ComponentJob at 0x2dfe3a810\>,
-      \<superduperdb.jobs.job.FunctionJob at 0x2acd55dd0\>],
-     VectorIndex(identifier='my-index', uuid='7cb9de9f-4cc8-4944-a297-f6a433c51d19', indexing_listener=Listener(identifier='my-listener', uuid='81ea6d64-21f0-4552-b234-1bcf8094c35f', key='txt', model=SentenceTransformer(preferred_devices=('cuda', 'mps', 'cpu'), device='cpu', identifier='my-embedding', uuid='db4daee6-22fe-43fe-8a57-97ced878ef2a', signature='*args,**kwargs', datatype=DataType(identifier='my-vec', uuid='dbdb8706-10f7-4377-952b-b83b81c6624a', encoder=None, decoder=None, info=None, shape=(384,), directory=None, encodable='native', bytes_encoding=\<BytesEncoding.BYTES: 'Bytes'\>, intermediate_type='bytes', media_type=None), output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{'show_progress_bar': True\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, object=SentenceTransformer(
-       (0): Transformer(\{'max_seq_length': 256, 'do_lower_case': False\}) with Transformer model: BertModel 
-       (1): Pooling(\{'word_embedding_dimension': 384, 'pooling_mode_cls_token': False, 'pooling_mode_mean_tokens': True, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False, 'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True\})
-       (2): Normalize()
-     ), model='all-MiniLM-L6-v2', preprocess=None, postprocess=Code(identifier='', uuid='cb1d9759-5061-4f39-a91d-e25b959e2a18', code='from superduperdb import code\n\n@code\ndef postprocess(x):\n    return x.tolist()\n')), select=docu.find(), active=True, predict_kwargs=\{'max_chunk_size': 50\}), compatible_listener=None, measure='cosine', metric_values=\{\}))
-</pre>
 </details>
 
 Now that we've set up a `VectorIndex`, we can connect this index with an LLM in a number of ways.
 A simple way to do that is with the `SequentialModel`. The first part of the `SequentialModel`
 executes a query and provides the results to the LLM in the second part. 
 
-The `RetrievalPrompt` component takes a query with a "free" `Variable` as input. 
+The `RetrievalPrompt` component takes a query with a "free" variable as input, signified with `<var:???>`. 
 This gives users great flexibility with regard to how they fetch the context
 for their downstream models.
 
@@ -220,22 +116,18 @@ native integrations (see [here](../ai_integraitons/)) but you can also [bring yo
 
 ```python
 from superduperdb.ext.llm.prompter import *
-from superduperdb.base.variables import Variable
 from superduperdb import Document
 from superduperdb.components.model import SequentialModel
 from superduperdb.ext.openai import OpenAIChatCompletion
 
-q = db['docu'].like(Document({'txt': Variable('prompt')}), vector_index='my-index', n=5).find().limit(10)
+q = db['docu'].like(Document({'txt': '<var:prompt>'}), vector_index='my-index', n=5).find().limit(10)
 
 def get_output(c):
     return [r['txt'] for r in c]
 
 prompt_template = RetrievalPrompt('my-prompt', select=q, postprocess=Code.from_object(get_output))
 
-llm = OpenAIChatCompletion(
-    'gpt-3.5-turbo',
-    client_kwargs={'api_key': '[OPENAI-API-KEY]'},
-)
+llm = OpenAIChatCompletion('gpt-3.5-turbo')
 seq = SequentialModel('rag', models=[prompt_template, llm])
 
 db.apply(seq)
@@ -243,37 +135,143 @@ db.apply(seq)
 
 <details>
 <summary>Outputs</summary>
-<pre>
-    from superduperdb import code
-    
-    @code
-    def get_output(c):
-        return [r['txt'] for r in c]
-    
 
-</pre>
-<pre>
-    ([],
-     SequentialModel(identifier='rag', uuid='1c211bfe-00df-4cff-b2a3-7722265150ca', signature='**kwargs', datatype=None, output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, models=[RetrievalPrompt(identifier='my-prompt', uuid='e7142d22-e2fc-44de-8c12-5a8b985239bb', signature='**kwargs', datatype=None, output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, preprocess=None, postprocess=Code(identifier='', uuid='f49a9d39-693b-4504-852c-6a682bca7e0c', code="from superduperdb import code\n\n@code\ndef get_output(c):\n    return [r['txt'] for r in c]\n"), select=docu.like(documents[0], vector_index="my-index", n=5).find().limit(10), prompt_explanation="HERE ARE SOME FACTS SEPARATED BY '---' IN OUR DATA REPOSITORY WHICH WILL HELP YOU ANSWER THE QUESTION.", prompt_introduction='HERE IS THE QUESTION WHICH YOU SHOULD ANSWER BASED ONLY ON THE PREVIOUS FACTS:', join='\n---\n'), OpenAIChatCompletion(identifier='gpt-3.5-turbo', uuid='41b0db16-8269-46fa-a6ac-9e56636f68c0', signature='singleton', datatype=None, output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, model='gpt-3.5-turbo', max_batch_size=8, openai_api_key=None, openai_api_base=None, client_kwargs=\{'api_key': '[OPENAI-API-KEY]'\}, batch_size=1, prompt='')]))
-</pre>
 </details>
 
 Now we can test the `SequentialModel` with a sample question:
 
 ```python
-seq.predict_one('Tell be about vector-indexes?')
+seq.predict('Tell be about vector-indexes')
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
+
+:::tip
+Did you know you can use any tools from the Python ecosystem with `superduperdb`.
+That includes `langchain` and `llamaindex` which can be very useful for RAG applications.
+:::
+
+```python
+from superduperdb import Application
+
+app = Application('rag-app', components=[vector_index, seq, plugin_1, plugin_2])
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
+
+```python
+app.encode()
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
+
+```python
+app.export('rag-app')
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
+
+```python
+!cat rag-app/requirements.txt
+```
+
+<details>
+<summary>Outputs</summary>
+
+</details>
+
+```python
+from superduperdb import *
+
+app = Component.read('rag-app')
 ```
 
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-Jun-02 14:31:27.41| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:1055 | \{\}
+    /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+      warnings.warn(
+
+</pre>
+</details>
+
+```python
+app.info()
+```
+
+<details>
+<summary>Outputs</summary>
+<pre>
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.vector_index.VectorIndex'\> with identifier: my-index
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.listener.Listener'\> with identifier: my-listener
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.sentence_transformers.model.SentenceTransformer'\> with identifier: my-embedding
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.datatype.DataType'\> with identifier: my-vec
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.base.code.Code'\> with identifier: postprocess
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.backends.mongodb.query.MongoQuery'\> with identifier: docu-find
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.model.SequentialModel'\> with identifier: rag
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.llm.prompter.RetrievalPrompt'\> with identifier: my-prompt
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.base.code.Code'\> with identifier: get_output
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.backends.mongodb.query.MongoQuery'\> with identifier: docu-like-txt-var-prompt-vector-index-my-index-n-5-find-limit-10
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.openai.model.OpenAIChatCompletion'\> with identifier: gpt-3.5-turbo
 
 </pre>
 <pre>
-    Batches:   0%|          | 0/1 [00:00\<?, ?it/s]
-</pre>
-<pre>
-    'VectorIndexes in SuperDuperDB wrap a Listener so that outputs are searchable. They can take a second Listener for multimodal search and apply to Listener instances containing Model instances that output vectors, arrays, or tensors. They can be leveraged in SuperDuperDB queries with the `.like` operator. VectorIndexes are set up by applying them to the datalayer `db`.'
+    [1;32m╭─[0m[1;32m───────────────────────────────────────────────────[0m[1;32m rag-app [0m[1;32m───────────────────────────────────────────────────[0m[1;32m─╮[0m
+    [1;32m│[0m [35midentifier[0m: [34mrag-app[0m                                                                                             [1;32m│[0m
+    [1;32m│[0m [35muuid[0m: [34m9115f5ec-5575-4a11-8678-664f3904bab7[0m                                                                      [1;32m│[0m
+    [1;32m│[0m [35mcomponents[0m: [34m[VectorIndex(identifier='my-index', uuid='650db68c-8786-4204-bc2d-6cc4f1d2511c', [0m                   [1;32m│[0m
+    [1;32m│[0m [34mindexing_listener=Listener(identifier='my-listener', uuid='02f5b3d4-7a0a-48d8-990c-bdae29424038', key='txt', [0m   [1;32m│[0m
+    [1;32m│[0m [34mmodel=SentenceTransformer(preferred_devices=('cuda', 'mps', 'cpu'), device='cpu', identifier='my-embedding', [0m   [1;32m│[0m
+    [1;32m│[0m [34muuid='b1351454-3714-4c57-bacf-2f2a667d5fdc', signature='*args,**kwargs', datatype=DataType(identifier='my-vec',[0m [1;32m│[0m
+    [1;32m│[0m [34muuid='ecfbe6d5-5c1f-4b80-b224-aaf0a1f3ee1d', encoder=None, decoder=None, info=None, shape=(384,), [0m              [1;32m│[0m
+    [1;32m│[0m [34mdirectory=None, encodable='native', bytes_encoding=\<BytesEncoding.BYTES: 'Bytes'\>, intermediate_type='bytes', [0m  [1;32m│[0m
+    [1;32m│[0m [34mmedia_type=None), output_schema=None, flatten=False, model_update_kwargs=\{\}, [0m                                   [1;32m│[0m
+    [1;32m│[0m [34mpredict_kwargs=\{'show_progress_bar': True\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, [0m              [1;32m│[0m
+    [1;32m│[0m [34mnum_workers=0, object=SentenceTransformer([0m                                                                      [1;32m│[0m
+    [1;32m│[0m [34m  (0): Transformer(\{'max_seq_length': 256, 'do_lower_case': False\}) with Transformer model: BertModel [0m          [1;32m│[0m
+    [1;32m│[0m [34m  (1): Pooling(\{'word_embedding_dimension': 384, 'pooling_mode_cls_token': False, 'pooling_mode_mean_tokens': [0m  [1;32m│[0m
+    [1;32m│[0m [34mTrue, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False, [0m                            [1;32m│[0m
+    [1;32m│[0m [34m'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True\})[0m            [1;32m│[0m
+    [1;32m│[0m [34m  (2): Normalize()[0m                                                                                              [1;32m│[0m
+    [1;32m│[0m [34m), model='all-MiniLM-L6-v2', preprocess=None, postprocess=Code(identifier='postprocess', [0m                       [1;32m│[0m
+    [1;32m│[0m [34muuid='fadfa78c-4c6b-4914-885a-e1372da93078', code='from superduperdb import code\n\n@code\ndef [0m                 [1;32m│[0m
+    [1;32m│[0m [34mpostprocess(x):\n    return x.tolist()\n')), select=docu.find(), active=True, predict_kwargs=\{'max_chunk_size':[0m [1;32m│[0m
+    [1;32m│[0m [34m50\}), compatible_listener=None, measure=\<VectorIndexMeasureType.cosine: 'cosine'\>, metric_values=\{\}), [0m          [1;32m│[0m
+    [1;32m│[0m [34mSequentialModel(identifier='rag', uuid='fa46eb15-112c-496f-965f-c935494825c5', signature='**kwargs', [0m           [1;32m│[0m
+    [1;32m│[0m [34mdatatype=None, output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\},[0m [1;32m│[0m
+    [1;32m│[0m [34mvalidation=None, metric_values=\{\}, num_workers=0, models=[RetrievalPrompt(identifier='my-prompt', [0m              [1;32m│[0m
+    [1;32m│[0m [34muuid='ded3b9b8-828d-41a4-bc37-02217fe0bc08', signature='**kwargs', datatype=None, output_schema=None, [0m          [1;32m│[0m
+    [1;32m│[0m [34mflatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\},[0m [1;32m│[0m
+    [1;32m│[0m [34mnum_workers=0, preprocess=None, postprocess=Code(identifier='get_output', [0m                                      [1;32m│[0m
+    [1;32m│[0m [34muuid='c1d6fb70-b6c7-42b4-8872-8bfd243ddf07', code="from superduperdb import code\n\n@code\ndef get_output(c):\n[0m [1;32m│[0m
+    [1;32m│[0m [34mreturn [r['txt'] for r in c]\n"), select=docu.like(\{'txt': '\<var:prompt\>'\}, vector_index="my-index", [0m           [1;32m│[0m
+    [1;32m│[0m [34mn=5).find().limit(10), prompt_explanation="HERE ARE SOME FACTS SEPARATED BY '---' IN OUR DATA REPOSITORY WHICH [0m [1;32m│[0m
+    [1;32m│[0m [34mWILL HELP YOU ANSWER THE QUESTION.", prompt_introduction='HERE IS THE QUESTION WHICH YOU SHOULD ANSWER BASED [0m   [1;32m│[0m
+    [1;32m│[0m [34mONLY ON THE PREVIOUS FACTS:', join='\n---\n'), OpenAIChatCompletion(identifier='gpt-3.5-turbo', [0m                [1;32m│[0m
+    [1;32m│[0m [34muuid='bc04fcdf-3217-4cb7-9517-38fc632fc8f7', signature='singleton', datatype=None, output_schema=None, [0m         [1;32m│[0m
+    [1;32m│[0m [34mflatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\},[0m [1;32m│[0m
+    [1;32m│[0m [34mnum_workers=0, model='gpt-3.5-turbo', max_batch_size=8, openai_api_key=None, openai_api_base=None, [0m             [1;32m│[0m
+    [1;32m│[0m [34mclient_kwargs=\{\}, batch_size=1, prompt='')])][0m                                                                   [1;32m│[0m
+    [1;32m╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+    [34m╭─[0m[34m─────────────────────────────────────────────[0m[34m Component Metadata [0m[34m──────────────────────────────────────────────[0m[34m─╮[0m
+    [34m│[0m [33mVariables[0m                                                                                                       [34m│[0m
+    [34m│[0m [35mprompt[0m                                                                                                          [34m│[0m
+    [34m│[0m                                                                                                                 [34m│[0m
+    [34m│[0m                                                                                                                 [34m│[0m
+    [34m│[0m [33mLeaves[0m                                                                                                          [34m│[0m
+    [34m╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
 </pre>
 </details>

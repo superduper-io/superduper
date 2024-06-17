@@ -37,6 +37,7 @@ const sidebars = {
         'tutorials/listening',
         'tutorials/rag',
         'tutorials/training',
+        'tutorials/custom_serialization',
       ]
     },
     {

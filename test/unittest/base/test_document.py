@@ -216,7 +216,7 @@ def test_refer_to_system(db):
     r = {
         '_builds': {
             'my_artifact': {
-                '_path': 'superduperdb/components/datatype/LazyArtifact',
+                '_path': 'superduperdb.components.datatype.LazyArtifact',
                 'blob': '&:blob:12345',
                 'datatype': "&:component:datatype:image",
             }

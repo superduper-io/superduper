@@ -41,7 +41,7 @@ class MySer(Leaf):
 def test_encode_leaf():
     obj = Test('test', a=1, b='test_b', c=1.5)
     assert obj.dict().encode() == {
-        '_path': 'test/unittest/base/test_leaf/Test',
+        '_path': 'test.unittest.base.test_leaf.Test',
         'uuid': obj.uuid,
         'identifier': 'test',
         'a': 1,
@@ -61,7 +61,7 @@ def test_encode_leaf_with_children():
         c=OtherSer(identifier='other_ser', d='test'),
     )
     assert obj.dict().encode() == {
-        '_path': 'test/unittest/base/test_leaf/MySer',
+        '_path': 'test.unittest.base.test_leaf.MySer',
         'identifier': 'my_ser',
         'uuid': obj.uuid,
         'a': 1,

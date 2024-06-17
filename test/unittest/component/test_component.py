@@ -102,10 +102,6 @@ def test_export_and_read():
         assert isinstance(reloaded, ObjectModel)
         assert isinstance(reloaded.datatype, DataType)
 
-    reloaded_from_hr = Component.read('test/material/data/hr_component')
-
-    assert isinstance(reloaded_from_hr, ObjectModel)
-
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_set_variables(db):

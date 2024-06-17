@@ -209,7 +209,7 @@ class Query(_BaseQuery, TraceMixin):
         backend = self.__module__.split('.')[-2]
         return Document(
             {
-                '_path': f'superduperdb/backends/{backend}/query/parse_query',
+                '_path': f'superduperdb.backends.{backend}.query.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,

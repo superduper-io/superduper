@@ -89,7 +89,7 @@ class MongoDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build the metadata store for the data backend."""
-        return MetaDataStoreProxy(MongoMetaDataStore(self.uri))
+        return MetaDataStoreProxy(MongoMetaDataStore(callback=self.connection_callback))
 
     def build_artifact_store(self):
         """Build the artifact store for the data backend."""

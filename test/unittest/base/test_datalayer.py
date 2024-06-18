@@ -17,7 +17,7 @@ except ImportError:
 
 import dataclasses as dc
 from test.db_config import DBConfig
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.mongodb.data_backend import MongoDataBackend
@@ -667,6 +667,7 @@ def test_reload_dataset(db):
     "db",
     [
         (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
+        (DBConfig.mongodb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )
@@ -675,7 +676,9 @@ def test_dataset(db):
         select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']
-        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
+        select = table.select('id', '_fold', 'x', 'y', 'z').filter(
+            table._fold == 'valid'
+        )
 
     d = Dataset(
         identifier='test_dataset',
@@ -687,4 +690,22 @@ def test_dataset(db):
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
-# TODO: add UT for task workflow
+@pytest.mark.parametrize(
+    "db",
+    [
+        (DBConfig.mongodb_data, {'n_data': 6}),
+    ],
+    indirect=True,
+)
+def test_retry_on_token_expiry(db):
+    # Mock the methods
+    db.cfg.auto_schema = True
+    db.databackend.reconnect = MagicMock()
+    db.databackend.auto_create_table_schema = MagicMock(
+        side_effect=[Exception("The connection token has been expired already"), None]
+    )
+
+    # Perform the insert operation
+    db.execute(MongoQuery(table='documents').insert([{'x': 1}]))
+
+    assert db.databackend.reconnect.call_count == 1

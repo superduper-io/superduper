@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import pandas
 
-from superduperdb import Document
+from superduperdb import Document, logging
 from superduperdb.backends.base.query import (
     Query,
     applies_to,
@@ -379,8 +379,6 @@ class IbisQuery(Query):
         :param predict_ids: The ids of the predictions to select.
         """
         if embedded:
-            from superduperdb import logging
-
             logging.warn(
                 'Outputs cannot be emebedded in sql, dropping the entire output table.'
             )

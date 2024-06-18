@@ -2,6 +2,8 @@ import time
 import typing as t
 from abc import ABC, abstractmethod
 
+from .data_backend import DataBackendProxy
+
 if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
 
@@ -18,17 +20,13 @@ class MetaDataStore(ABC):
     """
     Abstraction for storing meta-data separately from primary data.
 
-    :param conn: connection to the meta-data store
-    :param name: Name to identify DB using the connection
+    :param uri: URI to the databackend database.
+    :param flavour: Flavour of the databackend.
     """
 
-    def __init__(
-        self,
-        conn: t.Any,
-        name: t.Optional[str] = None,
-    ):
-        self.name = name
-        self.conn = conn
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        self.uri = uri
+        self.flavour = flavour
 
     @abstractmethod
     def delete_parent_child(self, parent: str, child: str):
@@ -341,3 +339,14 @@ class MetaDataStore(ABC):
     @abstractmethod
     def disconnect(self):
         """Disconnect the client."""
+
+
+class MetaDataStoreProxy(DataBackendProxy):
+    """
+    Proxy class to DataBackend which acts as middleware for performing fallbacks.
+
+    :param backend: Instance of `MetaDataStore`.
+    """
+
+    def __init__(self, backend):
+        super().__init__(backend=backend)

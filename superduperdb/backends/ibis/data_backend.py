@@ -1,15 +1,16 @@
+import glob
 import os
 import typing as t
 from warnings import warn
 
 import ibis
 import pandas
-from ibis.backends import BaseBackend
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
 from superduperdb import logging
 from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.metadata import MetaDataStoreProxy
 from superduperdb.backends.ibis.db_helper import get_db_helper
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import IbisQuery
@@ -25,21 +26,57 @@ BASE64_PREFIX = 'base64:'
 INPUT_KEY = '_source'
 
 
+def _connection_callback(uri, flavour):
+    if flavour == 'pandas':
+        uri = uri.split('://')[-1]
+        csv_files = glob.glob(uri)
+        dir_name = os.path.dirname(uri)
+        tables = {}
+        for csv_file in csv_files:
+            filename = os.path.basename(csv_file)
+            if os.path.getsize(csv_file) == 0:
+                df = pandas.DataFrame()
+            else:
+                df = pandas.read_csv(csv_file)
+            tables[filename.split('.')[0]] = df
+        ibis_conn = ibis.pandas.connect(tables)
+        in_memory = True
+        return ibis_conn, dir_name, in_memory
+    else:
+        name = uri.split('//')[0]
+        in_memory = False
+        ibis_conn = ibis.connect(uri)
+        return ibis_conn, name, in_memory
+
+
 class IbisDataBackend(BaseDataBackend):
     """Ibis data backend for the database.
 
-    :param conn: The connection to the database.
-    :param name: The name of the database.
-    :param in_memory: Whether to store the data in memory.
+    :param conn: MongoDB client connection
+    :param name: Name of database to host filesystem
     """
 
     db_type = DBType.SQL
 
-    def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
-        super().__init__(conn=conn, name=name)
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        conn, name, in_memory = self.connection_callback()
+        super().__init__(uri=uri, flavour=flavour)
+        self.conn = conn
+        self.name = name
         self.in_memory = in_memory
+        self._setup(conn)
+
+    def _setup(self, conn):
         self.dialect = getattr(conn, 'name', 'base')
         self.db_helper = get_db_helper(self.dialect)
+
+    def reconnect(self):
+        """Reconnect to the database client."""
+        # Reconnect to database.
+        conn, _, _ = self.connection_callback()
+        self.conn = conn
+        self._setup(conn)
 
     def get_query_builder(self, table_name):
         """Get the query builder for the data backend.
@@ -58,7 +95,7 @@ class IbisDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build metadata for the database."""
-        return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
+        return MetaDataStoreProxy(SQLAlchemyMetadata(self.uri))
 
     def insert(self, table_name, raw_documents):
         """Insert data into the database.

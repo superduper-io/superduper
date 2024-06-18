@@ -408,6 +408,7 @@ class Query(_BaseQuery, TraceMixin):
         except TypeError as e:
             if 'did not match' in str(e):
                 return self._execute(parent=parent)
+
             else:
                 raise e
         except AssertionError:

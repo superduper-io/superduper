@@ -26,7 +26,7 @@ def check_llm_as_listener_model(db, llm):
         Document({"question": f"1+{i}=", "id": str(i), '_fold': 'train'})
         for i in range(10)
     ]
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         db.execute(MongoQuery(table=collection_name).insert_many(datas))
         select = MongoQuery(table=collection_name).find()
     else:

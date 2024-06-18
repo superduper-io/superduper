@@ -126,7 +126,7 @@ class OpenAIEmbedding(_OpenAI):
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend):
+        if isinstance(db.databackend.type, IbisDataBackend):
             if self.datatype is None:
                 self.datatype = sqlvector(self.shape)
         elif self.datatype is None:
@@ -179,7 +179,7 @@ class OpenAIChatCompletion(_OpenAI):
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry
@@ -240,7 +240,7 @@ class OpenAIImageCreation(_OpenAI):
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('bytes')
 
     def _format_prompt(self, context, X):
@@ -314,7 +314,7 @@ class OpenAIImageEdit(_OpenAI):
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('bytes')
 
     @retry
@@ -399,7 +399,7 @@ class OpenAIAudioTranscription(_OpenAI):
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry
@@ -452,7 +452,7 @@ class OpenAIAudioTranslation(_OpenAI):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype('str')
 
     @retry

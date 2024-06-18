@@ -32,6 +32,7 @@ from superduperdb.misc.annotations import deprecated
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
 from superduperdb.misc.download import download_content, download_from_one
+from superduperdb.misc.retry import db_retry
 from superduperdb.misc.special_dicts import recursive_update
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.interface import FastVectorSearcher
@@ -301,6 +302,7 @@ class Datalayer:
             type_id=type_id, identifier=identifier, version=version
         )
 
+    @db_retry(connector='databackend')
     def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
         """Execute a query on the database.
 

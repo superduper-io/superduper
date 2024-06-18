@@ -55,7 +55,7 @@ def copy_vectors(
         key = key.split('.')[1]
     # TODO: Refactor the below logic
     vectors = []
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         vectors = [
             {
                 'vector': MongoStyleDict(doc)[
@@ -65,7 +65,7 @@ def copy_vectors(
             }
             for doc in docs
         ]
-    elif isinstance(db.databackend, IbisDataBackend):
+    elif isinstance(db.databackend.type, IbisDataBackend):
         docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
         from superduperdb.backends.ibis.data_backend import INPUT_KEY
 

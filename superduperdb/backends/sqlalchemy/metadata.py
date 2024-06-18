@@ -3,7 +3,16 @@ import typing as t
 from contextlib import contextmanager
 
 import click
-from sqlalchemy import Column, MetaData, Table, and_, delete, insert, select
+from sqlalchemy import (
+    Column,
+    MetaData,
+    Table,
+    and_,
+    create_engine,
+    delete,
+    insert,
+    select,
+)
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 
@@ -21,17 +30,28 @@ class SQLAlchemyMetadata(MetaDataStore):
     :param name: Name to identify DB using the connection
     """
 
-    def __init__(
-        self,
-        conn: t.Any,
-        name: t.Optional[str] = None,
-    ):
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        super().__init__(uri=uri, flavour=flavour)
+        assert isinstance(uri, str)
+
+        sql_conn = create_engine(uri)
+        name = uri.split('//')[0]
+
         self.name = name
-        self.conn = conn
-        self.dialect = conn.dialect.name
+        self.conn = sql_conn
+        self.dialect = sql_conn.dialect.name
         self._init_tables()
 
         self._lock = threading.Lock()
+
+    def reconnect(self):
+        """Reconnect to sqlalchmey metadatastore."""
+        sql_conn = create_engine(self.uri)
+        self.conn = sql_conn
+
+        # TODO: is it required to init after
+        # a reconnect.
+        self._init_tables()
 
     def _init_tables(self):
         # Get the DB config for the given dialect

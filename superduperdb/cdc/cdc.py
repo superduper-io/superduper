@@ -451,9 +451,9 @@ class DatabaseChangeDataCapture:
         """
         from superduperdb.backends.base import backends
 
-        if isinstance(self.db.databackend, backends.MongoDataBackend):
+        if isinstance(self.db.databackend.type, backends.MongoDataBackend):
             db_type = 'mongodb'
-        elif isinstance(self.db.databackend, backends.IbisDataBackend):
+        elif isinstance(self.db.databackend.type, backends.IbisDataBackend):
             db_type = 'ibis'
         else:
             raise NotImplementedError(f'{self.db.databackend} not supported yet!')

@@ -120,7 +120,7 @@ class _MetaDataMatcher:
 
 
 class _DataBackendMatcher(_MetaDataMatcher):
-    patterns = {**_MetaDataMatcher.patterns, r'\.csv$': ('ibis', 'pandas')}
+    patterns = {**_MetaDataMatcher.patterns, r'.*\.csv$': ('ibis', 'pandas')}
 
     @classmethod
     def create(cls, uri, mapping: t.Dict):

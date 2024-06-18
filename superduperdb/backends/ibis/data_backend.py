@@ -95,7 +95,11 @@ class IbisDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build metadata for the database."""
-        return MetaDataStoreProxy(SQLAlchemyMetadata(self.uri))
+
+        def callback():
+            return self.conn.con, self.name
+
+        return MetaDataStoreProxy(SQLAlchemyMetadata(callback=callback))
 
     def insert(self, table_name, raw_documents):
         """Insert data into the database.

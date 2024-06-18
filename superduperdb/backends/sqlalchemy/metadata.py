@@ -28,14 +28,25 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     :param conn: connection to the meta-data store
     :param name: Name to identify DB using the connection
+    :param callback: Optional callback to create connection.
     """
 
-    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+    def __init__(
+        self,
+        uri: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
+        callback: t.Optional[t.Callable] = None,
+    ):
         super().__init__(uri=uri, flavour=flavour)
-        assert isinstance(uri, str)
 
-        sql_conn = create_engine(uri)
-        name = uri.split('//')[0]
+        if callback:
+            self.connection_callback = callback
+        else:
+            assert isinstance(uri, str)
+            name = uri.split('//')[0]
+            self.connection_callback = lambda: (create_engine(uri), name)
+
+        sql_conn, name = self.connection_callback()
 
         self.name = name
         self.conn = sql_conn

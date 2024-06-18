@@ -14,14 +14,26 @@ class MongoMetaDataStore(MetaDataStore):
 
     :param conn: MongoDB client connection
     :param name: Name of database to host filesystem
+    :param callback: Optional callback to create connection.
     """
 
-    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+    def __init__(
+        self,
+        uri: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
+        callback: t.Optional[t.Callable] = None,
+    ):
         super().__init__(uri=uri, flavour=flavour)
-        from .data_backend import _connection_callback
 
-        self.conn, self.name = _connection_callback(uri, flavour)
-        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        if callback:
+            self.connection_callback = callback
+        else:
+            assert uri
+            from .data_backend import _connection_callback
+
+            self.connection_callback = lambda: _connection_callback(uri, flavour)
+
+        self.conn, self.name = self.connection_callback()
         self._setup()
 
     def _setup(self):

@@ -22,9 +22,15 @@ class MetaDataStore(ABC):
 
     :param uri: URI to the databackend database.
     :param flavour: Flavour of the databackend.
+    :param callback: Optional callback to create connection.
     """
 
-    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+    def __init__(
+        self,
+        uri: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
+        callback: t.Optional[t.Callable] = None,
+    ):
         self.uri = uri
         self.flavour = flavour
 

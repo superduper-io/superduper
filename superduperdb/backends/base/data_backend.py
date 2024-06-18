@@ -175,7 +175,7 @@ class DataBackendProxy:
                 return attr(*args, **kwargs)
             except Exception as e:
                 error_message = str(e).lower()
-                if 'expire' in error_message or 'token' in error_message:
+                if 'expire' in error_message and 'token' in error_message:
                     logging.warn(
                         f"Authentication expiry detected: {e}. "
                         "Attempting to reconnect..."

@@ -125,7 +125,9 @@ def valid_dataset(db):
         select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']
-        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
+        select = table.select('id', '_fold', 'x', 'y', 'z').filter(
+            table._fold == 'valid'
+        )
     d = Dataset(
         identifier='my_valid',
         select=select,

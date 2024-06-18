@@ -109,7 +109,7 @@ def test_db(request) -> Iterator[Datalayer]:
 
     logging.info("Dropping database ", {db_name})
 
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         try:
             db.databackend.conn.drop_database(db_name)
             db.databackend.conn.drop_database(f'_filesystem:{db_name}')
@@ -121,7 +121,7 @@ def test_db(request) -> Iterator[Datalayer]:
 
 @pytest.fixture
 def valid_dataset(db):
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']
@@ -226,14 +226,13 @@ def add_vector_index(
     db: Datalayer, collection_name='documents', identifier='test_vector_search'
 ):
     # TODO: Support configurable key and mode
-    is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
+    is_mongodb_backend = isinstance(db.databackend.type, MongoDataBackend)
     if is_mongodb_backend:
         select_x = db[collection_name].find()
         select_z = db[collection_name].find()
     else:
         select_x = db[collection_name].select('id', 'x')
         select_z = db[collection_name].select('id', 'z')
-
     model = db.load('model', 'linear_a')
 
     _, i_list = db.add(
@@ -277,7 +276,7 @@ def create_db(CFG, **kwargs):
 
     # prepare data
     n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
-    is_mongodb_backend = isinstance(db.databackend, MongoDataBackend)
+    is_mongodb_backend = isinstance(db.databackend.type, MongoDataBackend)
     if is_mongodb_backend:
         add_random_data_to_mongo_db(db, number_data_points=n_data)
     else:

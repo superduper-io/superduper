@@ -49,7 +49,7 @@ class JinaEmbedding(Jina):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend, IbisDataBackend):
+        if isinstance(db.databackend.type, IbisDataBackend):
             if self.datatype is None:
                 self.datatype = sqlvector(self.shape)
         elif self.datatype is None:

@@ -119,7 +119,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         query: t.Dict,
     ):
         if '_path' not in query:
-            databackend = app.db.databackend.__module__.split('.')[-2]
+            databackend = app.db.databackend.type.__module__.split('.')[-2]
             query['_path'] = f'superduperdb.backends.{databackend}.query.parse_query'
 
         q = Document.decode(query, db=app.db).unpack()

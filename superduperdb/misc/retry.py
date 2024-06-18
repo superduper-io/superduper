@@ -1,4 +1,5 @@
 import dataclasses as dc
+import functools
 import typing as t
 
 import tenacity
@@ -37,3 +38,30 @@ class Retry:
         )
         retrier = tenacity.retry(retry=retry, stop=stop, wait=wait)
         return retrier(f)
+
+
+def db_retry(connector='databackend'):
+    """Helper method to retry methods with database calls.
+
+    :param connector: Connector of the datalayer instance.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except Exception as e:
+                error_message = str(e).lower()
+                if 'expire' in error_message or 'token' in error_message:
+                    s.logging.warn(
+                        f"Token expiration detected: {e}. Attempting to reconnect..."
+                    )
+                    self.databackend.reconnect()
+                    return func(self, *args, **kwargs)
+                else:
+                    raise e
+
+        return wrapper
+
+    return decorator

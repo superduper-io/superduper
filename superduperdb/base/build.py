@@ -1,23 +1,17 @@
-import glob
-import os
 import re
 import sys
 import typing as t
 
-import ibis
-import mongomock
-import pandas
-import pymongo
 from prettytable import PrettyTable
 
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_backends, metadata_stores
-from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.data_backend import BaseDataBackend, DataBackendProxy
+from superduperdb.backends.base.metadata import MetaDataStoreProxy
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
-from superduperdb.backends.mongodb.utils import get_avaliable_conn
 from superduperdb.backends.ray.compute import RayComputeBackend
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc.anonymize import anonymize_url
@@ -40,7 +34,7 @@ def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
     else:
         try:
             # try to connect to the data backend engine.
-            assert isinstance(databackend, BaseDataBackend)
+            assert isinstance(databackend, DataBackendProxy)
             logging.info(
                 "Connecting to Metadata Client with engine: ", databackend.conn
             )
@@ -81,7 +75,7 @@ def _build_artifact_store(
     databackend: t.Optional['BaseDataBackend'] = None,
 ):
     if not artifact_store:
-        assert isinstance(databackend, BaseDataBackend)
+        assert isinstance(databackend, DataBackendProxy)
         return databackend.build_artifact_store()
 
     if artifact_store.startswith('mongodb://'):
@@ -99,59 +93,56 @@ def _build_artifact_store(
         raise ValueError(f'Unknown artifact store: {artifact_store}')
 
 
+class _MetaDataMatcher:
+    patterns = {
+        '^mongodb:\/\/': ('mongodb', 'mongodb'),
+        '^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
+        '^mongomock:\/\/': ('mongodb', 'mongomock'),
+    }
+    not_supported = [('sqlalchemy', 'pandas')]
+
+    @classmethod
+    def create(cls, uri, mapping: t.Dict):
+        """Helper method to create metadata backend."""
+        backend = 'sqlalchemy'
+        flavour = 'base'
+        for pattern in cls.patterns:
+            if re.match(pattern, uri) is not None:
+                backend, flavour = cls.patterns[pattern]
+                if (backend, flavour) in cls.not_supported:
+                    raise ValueError(
+                        f"{backend} with flavour {flavour} not supported "
+                        "to create metadata store."
+                    )
+                return mapping[backend](uri, flavour=flavour)
+
+        return mapping[backend](uri)
+
+
+class _DataBackendMatcher(_MetaDataMatcher):
+    patterns = {**_MetaDataMatcher.patterns, r'\.csv$': ('ibis', 'pandas')}
+
+    @classmethod
+    def create(cls, uri, mapping: t.Dict):
+        """Helper method to create databackend."""
+        backend = 'ibis'
+        for pattern in cls.patterns:
+            if re.match(pattern, uri) is not None:
+                backend, flavour = cls.patterns[pattern]
+
+                return mapping[backend](uri, flavour=flavour)
+
+        return mapping[backend](uri, flavour='base')
+
+
 # Helper function to build a data backend based on the URI.
 def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
     logging.debug(f"Parsing data connection URI:{uri}")
-
-    # TODO: Should we move the following code to the DataBackend classes?
-    if re.match('^mongodb:\/\/', uri) is not None:
-        name = uri.split('/')[-1]
-        conn = get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)
-        return mapping['mongodb'](conn, name)
-
-    elif re.match('^mongodb\+srv:\/\/', uri):
-        name = uri.split('/')[-1]
-        conn = pymongo.MongoClient(
-            '/'.join(uri.split('/')[:-1]),
-            serverSelectionTimeoutMS=5000,
-        )
-        return mapping['mongodb'](conn, name)
-
-    elif uri.startswith('mongomock://'):
-        name = uri.split('/')[-1]
-        conn = mongomock.MongoClient()
-        return mapping['mongodb'](conn, name)
-
-    elif uri.endswith('.csv'):
-        if type == 'metadata':
-            raise ValueError('Cannot build metadata from a CSV file.')
-
-        uri = uri.split('://')[-1]
-
-        csv_files = glob.glob(uri)
-        dir_name = os.path.dirname(uri)
-        tables = {}
-        for csv_file in csv_files:
-            filename = os.path.basename(csv_file)
-            if os.path.getsize(csv_file) == 0:
-                df = pandas.DataFrame()
-            else:
-                df = pandas.read_csv(csv_file)
-            tables[filename.split('.')[0]] = df
-        ibis_conn = ibis.pandas.connect(tables)
-        return mapping['ibis'](ibis_conn, dir_name, in_memory=True)
-
+    if type == 'data_backend':
+        db = DataBackendProxy(_DataBackendMatcher.create(uri, mapping))
     else:
-        name = uri.split('//')[0]
-        if type == 'data_backend':
-            ibis_conn = ibis.connect(uri)
-            return mapping['ibis'](ibis_conn, name)
-        else:
-            assert type == 'metadata'
-            from sqlalchemy import create_engine
-
-            sql_conn = create_engine(uri)
-            return mapping['sqlalchemy'](sql_conn, name)
+        db = MetaDataStoreProxy(_MetaDataMatcher.create(uri, mapping))
+    return db
 
 
 def build_compute(compute):

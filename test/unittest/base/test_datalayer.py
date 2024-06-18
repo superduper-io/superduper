@@ -85,7 +85,7 @@ def add_fake_model(db: Datalayer):
         datatype=pickle_encoder,
     )
     db.apply(model)
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         select = MongoQuery(table='documents').find()
     else:
         schema = Schema(
@@ -632,7 +632,7 @@ def test_compound_component(db):
 def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
 
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         select = db['documents'].find({'_fold': 'valid'})
     else:
         db.apply(
@@ -666,13 +666,12 @@ def test_reload_dataset(db):
 @pytest.mark.parametrize(
     "db",
     [
-        (DBConfig.mongodb_no_vector_index, {'n_data': 10}),
-        # (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
+        (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
     ],
     indirect=True,
 )
 def test_dataset(db):
-    if isinstance(db.databackend, MongoDataBackend):
+    if isinstance(db.databackend.type, MongoDataBackend):
         select = MongoQuery(table='documents').find({'_fold': 'valid'})
     else:
         table = db['documents']

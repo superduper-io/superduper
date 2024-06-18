@@ -1,6 +1,8 @@
+import functools
 import typing as t
 from abc import ABC, abstractmethod
 
+from superduperdb import logging
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.components.datatype import DataType
 
@@ -8,18 +10,24 @@ from superduperdb.components.datatype import DataType
 class BaseDataBackend(ABC):
     """Base data backend for the database.
 
-    :param conn: The connection to the databackend database.
-    :param name: The name of the databackend.
+    :param uri: URI to the databackend database.
+    :param flavour: Flavour of the databackend.
     """
 
     db_type = None
 
-    def __init__(self, conn: t.Any, name: str):
-        self.conn = conn
-        self.name = name
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        self.conn = None
+        self.name = 'base'
+        self.flavour = flavour
         self.in_memory: bool = False
         self.in_memory_tables: t.Dict = {}
         self._datalayer = None
+
+    @property
+    def type(self):
+        """Return databackend."""
+        raise NotImplementedError
 
     @property
     def db(self):
@@ -130,3 +138,58 @@ class BaseDataBackend(ABC):
         :param table_name: The table name
         :param documents: The documents
         """
+
+
+class DataBackendProxy:
+    """
+    Proxy class to DataBackend which acts as middleware for performing fallbacks.
+
+    :param backend: Instance of `BaseDataBackend`.
+    """
+
+    def __init__(self, backend):
+        self._backend = backend
+
+    @property
+    def datalayer(self):
+        """Return the datalayer."""
+        return self._backend._datalayer
+
+    @datalayer.setter
+    def datalayer(self, value):
+        """Set the datalayer.
+
+        :param value: The datalayer.
+        """
+        self._backend._datalayer = value
+
+    @property
+    def type(self):
+        """Instance of databackend."""
+        return self._backend
+
+    def _try_execute(self, attr):
+        @functools.wraps(attr)
+        def wrapper(*args, **kwargs):
+            try:
+                return attr(*args, **kwargs)
+            except Exception as e:
+                error_message = str(e).lower()
+                if 'expire' in error_message or 'token' in error_message:
+                    logging.warn(
+                        f"Authentication expiry detected: {e}. "
+                        "Attempting to reconnect..."
+                    )
+                    self._backend.reconnect()
+                    return attr(*args, **kwargs)
+                else:
+                    raise e
+
+        return wrapper
+
+    def __getattr__(self, name):
+        attr = getattr(self._backend, name)
+
+        if callable(attr):
+            return self._try_execute(attr)
+        return attr

@@ -7,14 +7,36 @@ import pymongo
 
 from superduperdb import logging
 from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.metadata import MetaDataStoreProxy
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
+from superduperdb.backends.mongodb.utils import get_avaliable_conn
 from superduperdb.base.enums import DBType
 from superduperdb.components.datatype import DataType
 from superduperdb.misc.colors import Colors
 
 from .query import MongoQuery
+
+
+def _connection_callback(uri, flavour):
+    if flavour == 'mongodb':
+        name = uri.split('/')[-1]
+        conn = get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)
+
+    elif flavour == 'atlas':
+        name = uri.split('/')[-1]
+        conn = pymongo.MongoClient(
+            '/'.join(uri.split('/')[:-1]),
+            serverSelectionTimeoutMS=5000,
+        )
+
+    elif flavour == 'mongomock':
+        name = uri.split('/')[-1]
+        conn = mongomock.MongoClient()
+    else:
+        raise NotImplementedError
+    return conn, name
 
 
 class MongoDataBackend(BaseDataBackend):
@@ -29,8 +51,18 @@ class MongoDataBackend(BaseDataBackend):
 
     id_field = '_id'
 
-    def __init__(self, conn: pymongo.MongoClient, name: str):
-        super().__init__(conn=conn, name=name)
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        super().__init__(uri, flavour=flavour)
+        self.conn, self.name = _connection_callback(uri, flavour)
+
+        self._db = self.conn[self.name]
+
+    def reconnect(self):
+        """Reconnect to mongodb store."""
+        # Reconnect to database.
+        conn, _ = self.connection_callback()
+        self.conn = conn
         self._db = self.conn[self.name]
 
     def get_query_builder(self, collection_name):
@@ -57,7 +89,7 @@ class MongoDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build the metadata store for the data backend."""
-        return MongoMetaDataStore(self.conn, self.name)
+        return MetaDataStoreProxy(MongoMetaDataStore(self.uri))
 
     def build_artifact_store(self):
         """Build the artifact store for the data backend."""

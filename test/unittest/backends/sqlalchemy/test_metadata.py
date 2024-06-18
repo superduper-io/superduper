@@ -12,7 +12,7 @@ DATABASE_URL = "sqlite:///:memory:"
 @pytest.fixture
 def metadata():
     engine = create_engine(DATABASE_URL)
-    store = SQLAlchemyMetadata(conn=engine.connect(), name='testsqlite')
+    store = SQLAlchemyMetadata(DATABASE_URL)
     yield store
     store.drop(force=True)
     engine.dispose()

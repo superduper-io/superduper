@@ -16,19 +16,26 @@ class MongoMetaDataStore(MetaDataStore):
     :param name: Name of database to host filesystem
     """
 
-    def __init__(
-        self,
-        conn: t.Any,
-        name: t.Optional[str] = None,
-    ) -> None:
-        self.name = name
-        self.db = conn[name]
+    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+        super().__init__(uri=uri, flavour=flavour)
+        from .data_backend import _connection_callback
+
+        self.conn, self.name = _connection_callback(uri, flavour)
+        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        self._setup()
+
+    def _setup(self):
+        self.db = self.conn[self.name]
         self.meta_collection = self.db['_meta']
         self.cdc_collection = self.db['_cdc_tables']
         self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
-        self.conn = conn
+
+    def reconnect(self):
+        """Reconnect to metdata store."""
+        self.conn, self.name = self.connection_callback()
+        self._setup()
 
     def url(self):
         """Metadata store connection url."""

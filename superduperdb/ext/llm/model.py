@@ -46,7 +46,7 @@ class BaseLLM(Model):
         from superduperdb.backends.ibis.data_backend import IbisDataBackend
         from superduperdb.backends.ibis.field_types import dtype
 
-        if isinstance(db.databackend, IbisDataBackend) and self.datatype is None:
+        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
             self.datatype = dtype("str")
 
         super().post_create(db)

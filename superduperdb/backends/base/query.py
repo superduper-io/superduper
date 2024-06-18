@@ -5,6 +5,7 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
+from superduperdb.base.dataview import DataView
 from superduperdb.base.document import Document
 from superduperdb.base.leaf import Leaf
 
@@ -509,6 +510,11 @@ class Query(_BaseQuery, TraceMixin):
     def table_or_collection(self):
         """Return the table or collection to select from."""
         return type(self)(table=self.table, db=self.db)
+
+    @property
+    def data(self) -> DataView:
+        """Return DataFrame from query."""
+        return DataView.from_documents(self.select().execute())
 
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):

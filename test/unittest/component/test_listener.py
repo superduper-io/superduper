@@ -2,6 +2,7 @@ import random
 from test.db_config import DBConfig
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from superduperdb import Document
@@ -245,6 +246,57 @@ def test_listener_cleanup(db, data):
         np.array([[1, 2, 3], [4, 5, 6]]),
     ],
 )
+@pytest.mark.parametrize("document_embedded", [True, False])
+@pytest.mark.parametrize("flatten", [False, True])
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_dataview_mongodb(db, data, flatten, document_embedded):
+    db.cfg.auto_schema = True
+    collection = db["test"]
+
+    # Do not support flatten is True and document_embedded is True
+    if flatten is True and document_embedded is True:
+        return
+
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: data if not flatten else [data] * 10,
+        model_update_kwargs={"document_embedded": document_embedded},
+        flatten=flatten,
+    )
+    q = collection.insert_one(Document({"x": 1}))
+
+    db.execute(q)
+
+    listener1 = Listener(
+        model=m1,
+        select=collection.find({}),
+        key="x",
+        identifier="listener1",
+    )
+
+    db.add(listener1)
+    dataview = db["test"].data
+
+    assert isinstance(dataview, pd.DataFrame)
+    assert dataview["x"][0] == 1
+
+    assert dataview["x"].equals(listener1.data["x"])
+    assert isinstance(listener1.output_data, pd.DataFrame)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1,
+        "1",
+        {"x": 1},
+        [1],
+        {
+            "x": np.array([1]),
+        },
+        np.array([[1, 2, 3], [4, 5, 6]]),
+    ],
+)
 @pytest.mark.parametrize("flatten", [True, False])
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_listener_cleanup_ibis(db, data, flatten):
@@ -274,3 +326,56 @@ def test_listener_cleanup_ibis(db, data, flatten):
     db.remove('listener', listener1.identifier, force=True)
 
     assert listener1.outputs not in db.databackend.conn.tables
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        1,
+        "1",
+        {"x": 1},
+        [1],
+        {
+            "x": np.array([1]),
+        },
+        np.array([[1, 2, 3], [4, 5, 6]]),
+    ],
+)
+@pytest.mark.parametrize("flatten", [True, False])
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
+def test_dataview_ibis(db, data, flatten):
+    db.cfg.auto_schema = True
+    schema = Schema(
+        identifier="test",
+        fields={"x": dtype(int), "id": dtype(str)},
+    )
+    table = Table("test", schema=schema)
+    db.apply(table)
+
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: data if not flatten else [data] * 10,
+        flatten=flatten,
+    )
+    db.execute(db['test'].insert([Document({"x": 1, "id": "1"})]))
+
+    listener1 = Listener(
+        model=m1,
+        select=db['test'].select("x", "id"),
+        key="x",
+        identifier="listener1",
+    )
+
+    db.add(listener1)
+    dataview = db["test"].data
+
+    assert isinstance(dataview, pd.DataFrame)
+    assert dataview["x"].values == np.array([1])
+    assert len(dataview(id="1", x=1)) == 1
+    assert len(dataview(id="0")) == 0
+
+    assert dataview[["x", "id"]].equals(listener1.data[["x", "id"]])
+    if flatten:
+        assert len(listener1.output_data[:3]) == 3
+    else:
+        assert len(listener1.output_data) == 1

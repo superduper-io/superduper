@@ -5,6 +5,7 @@ from overrides import override
 
 from superduperdb import CFG
 from superduperdb.backends.base.query import Query
+from superduperdb.base.dataview import DataView
 from superduperdb.base.document import _OUTPUTS_KEY
 from superduperdb.base.enums import DBType
 from superduperdb.components.model import Mapping
@@ -188,3 +189,13 @@ class Listener(Component):
         model_update_kwargs = self.model.model_update_kwargs or {}
         embedded = model_update_kwargs.get('document_embedded', True)
         self.db[self.select.table].drop_outputs(self.outputs, embedded=embedded)
+
+    @property
+    def data(self) -> DataView:
+        """Return DataFrame from select query."""
+        return DataView.from_documents(self.db.execute(self.select))
+
+    @property
+    def output_data(self) -> DataView:
+        """Return DataFrame from output select query."""
+        return DataView.from_documents(self.db.execute(self.outputs_select))

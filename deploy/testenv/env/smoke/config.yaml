@@ -2,7 +2,6 @@ artifact_store: filesystem:///artifacts
 bytes_encoding: Bytes
 cluster:
   cdc:
-    strategy: null
     uri: http://cdc:8001
   compute:
     uri: http://ray-head:8265

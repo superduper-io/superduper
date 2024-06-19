@@ -298,17 +298,6 @@ class MetaDataStore(ABC):
         )
 
     @abstractmethod
-    def write_output_to_job(self, identifier: str, msg: str, stream: str):
-        """
-        Write output to a job in the metadata store.
-
-        :param identifier: identifier of job
-        :param msg: message to be written
-        :param stream: stream to be written to
-        """
-        pass
-
-    @abstractmethod
     def get_component_version_parents(self, uuid: str):
         """
         Get the parents of a component version.

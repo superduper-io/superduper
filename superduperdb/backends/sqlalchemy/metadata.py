@@ -92,7 +92,6 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('info', type_json_as_string),
             Column('time', type_datetime),
             Column('status', type_string),
-            Column('msg', type_string),
             Column('args', type_json_as_string),
             Column('kwargs', type_json_as_text),
             Column('method_name', type_string),
@@ -537,16 +536,6 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .values({key: value})
             )
             session.execute(stmt)
-
-    def write_output_to_job(self, identifier, msg, stream):
-        """Write output to the job.
-
-        :param identifier: the identifier of the job
-        :param msg: the message to write
-        :param stream: the stream to write to
-        """
-        # Not supported currently
-        raise NotImplementedError
 
     # --------------- Query ID -----------------
 

@@ -78,8 +78,8 @@ We've been working hard improving the quality of the project and bringing new fe
 
 | Optional | Method | Description |
 | --- | --- | --- |
-| `False` | `Model.predict_one` | Predict on one datapoint |
-| `False` | `Model.predict` | Predict on batches of datapoints |
+| `False` | `Model.predict` | Predict on one datapoint |
+| `False` | `Model.predict_batches` | Predict on batches of datapoints |
 | `True` | `Model.fit` | Fit the model on datasets |
 
 - Easier path to integrating new databases and vector-search functionalities. Developers only need to implement:

@@ -62,7 +62,7 @@ import TabItem from '@theme/TabItem';
                 self.model.eval()
         
             @ensure_initialized
-            def predict_one(self, x):
+            def predict(self, x):
                 return self.predict([x])[0]
                 
             @ensure_initialized
@@ -83,6 +83,6 @@ import TabItem from '@theme/TabItem';
     </TabItem>
 </Tabs>
 ```python
-print(len(model.predict_one("What is SuperDuperDB")))
+print(len(model.predict("What is SuperDuperDB")))
 ```
 

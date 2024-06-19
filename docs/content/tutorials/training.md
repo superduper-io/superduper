@@ -1063,7 +1063,7 @@ model = TorchModel(
 )
 
 # Check that the model successfully creates predictions over single data-points
-model.predict_one(data[0]['img'])
+model.predict(data[0]['img'])
 ```
 
 <details>

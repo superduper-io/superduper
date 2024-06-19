@@ -17,7 +17,7 @@
 :::note
 Note that `Model` is an abstract base class which cannot be called directly.
 To use `Model` you should call any of its downstream implementations, 
-such as [`ObjectModel`](../api/components/model.md#objectmodel-1) or models in the [AI-integrations](/docs/category/ai-integrations).
+such as [`ObjectModel`](../api/components/model.md#model-1) or models in the [AI-integrations](/docs/category/ai-integrations).
 :::
 
 ***Important notes***

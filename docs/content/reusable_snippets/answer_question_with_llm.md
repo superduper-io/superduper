@@ -12,15 +12,15 @@ import TabItem from '@theme/TabItem';
     <TabItem value="No-context" label="No-context" default>
         ```python
         
-        llm.predict_one(query)        
+        llm.predict(query)        
         ```
     </TabItem>
     <TabItem value="Prompt" label="Prompt" default>
         ```python
-        from superduperdb import objectmodel
+        from superduperdb import model
         from superduperdb.components.graph import Graph, input_node
         
-        @objectmodel
+        @model
         def build_prompt(query):
             return f"Translate the sentence into German: {query}"
         
@@ -28,12 +28,12 @@ import TabItem from '@theme/TabItem';
         prompt = build_prompt(query=in_)
         answer = llm(prompt)
         prompt_llm = answer.to_graph("prompt_llm")
-        prompt_llm.predict_one(query)[0]        
+        prompt_llm.predict(query)[0]        
         ```
     </TabItem>
     <TabItem value="Context" label="Context" default>
         ```python
-        from superduperdb import objectmodel
+        from superduperdb import model
         from superduperdb.components.graph import Graph, input_node
         
         prompt_template = (
@@ -43,7 +43,7 @@ import TabItem from '@theme/TabItem';
         )
         
         
-        @objectmodel
+        @model
         def build_prompt(query, docs):
             chunks = [doc["text"] for doc in docs]
             context = "\n\n".join(chunks)
@@ -56,7 +56,7 @@ import TabItem from '@theme/TabItem';
         prompt = build_prompt(query=in_, docs=vector_search_results)
         answer = llm(prompt)
         context_llm = answer.to_graph("context_llm")
-        context_llm.predict_one(query)        
+        context_llm.predict(query)        
         ```
     </TabItem>
 </Tabs>

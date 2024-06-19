@@ -380,11 +380,11 @@ won't be necessary.
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        from superduperdb import objectmodel
+        from superduperdb import model
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -394,12 +394,12 @@ won't be necessary.
     <TabItem value="PDF" label="PDF" default>
         ```python
         !pip install -q "unstructured[pdf]"
-        from superduperdb import objectmodel
+        from superduperdb import model
         from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -494,7 +494,7 @@ select = upstream_listener.outputs_select
                 self.model.eval()
         
             @ensure_initialized
-            def predict_one(self, x):
+            def predict(self, x):
                 return self.predict([x])[0]
                 
             @ensure_initialized
@@ -515,7 +515,7 @@ select = upstream_listener.outputs_select
     </TabItem>
 </Tabs>
 ```python
-print(len(model.predict_one("What is SuperDuperDB")))
+print(len(model.predict("What is SuperDuperDB")))
 ```
 
 ## Create vector-index

@@ -375,10 +375,10 @@ won't be necessary.
         import tqdm
         from PIL import Image
         from superduperdb.ext.pillow import pil_image
-        from superduperdb import objectmodel, Schema
+        from superduperdb import model, Schema
         
         
-        @objectmodel(
+        @model(
             flatten=True,
             model_update_kwargs={'document_embedded': False},
         )

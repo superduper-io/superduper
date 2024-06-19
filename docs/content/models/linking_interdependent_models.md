@@ -35,7 +35,7 @@ instance which passes inputs recursively through the graph:
 
 ```python
 >>> graph_model = out3.to_graph('my_graph_model')
->>> graph_model.predict_one({'x1': 1, 'x2': 2})
+>>> graph_model.predict({'x1': 1, 'x2': 2})
 6
 ```
 

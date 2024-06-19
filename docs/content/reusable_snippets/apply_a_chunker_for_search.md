@@ -21,11 +21,11 @@ won't be necessary.
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        from superduperdb import objectmodel
+        from superduperdb import model
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -35,12 +35,12 @@ won't be necessary.
     <TabItem value="PDF" label="PDF" default>
         ```python
         !pip install -q "unstructured[pdf]"
-        from superduperdb import objectmodel
+        from superduperdb import model
         from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -55,10 +55,10 @@ won't be necessary.
         import tqdm
         from PIL import Image
         from superduperdb.ext.pillow import pil_image
-        from superduperdb import objectmodel, Schema
+        from superduperdb import model, Schema
         
         
-        @objectmodel(
+        @model(
             flatten=True,
             model_update_kwargs={'document_embedded': False},
         )
@@ -103,11 +103,11 @@ won't be necessary.
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
         ```python
-        from superduperdb import objectmodel, Schema
+        from superduperdb import model, Schema
         
         CHUNK_SIZE = 10  # in seconds
         
-        @objectmodel(
+        @model(
             flatten=True,
             model_update_kwargs={'document_embedded': False},
             output_schema=Schema(identifier='output-schema', fields={'audio': datatype}),

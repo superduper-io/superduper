@@ -35,7 +35,7 @@ import TabItem from '@theme/TabItem';
 <Tabs>
     <TabItem value="Single Field" label="Single Field" default>
         ```python
-        # Model predict function definition: model.predict_one(x)
+        # Model predict function definition: model.predict(x)
         # Data example in database: {"key_name": 10}
         # Then the listener will call model.predict(10)
         from superduperdb import Listener
@@ -50,7 +50,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Multiple fields(*args)" label="Multiple fields(*args)" default>
         ```python
-        # Model predict function definition: model.predict_one(x1, x2)
+        # Model predict function definition: model.predict(x1, x2)
         # Data example in database: {"key_name_1": 10, "key_name_2": 100}
         # Then the listener will call model.predict(10, 100)
         from superduperdb import Listener
@@ -65,7 +65,7 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Multiple fields(*kwargs)" label="Multiple fields(*kwargs)" default>
         ```python
-        # Model predict function definition: model.predict_one(x1, x2)
+        # Model predict function definition: model.predict(x1, x2)
         # Data example in database: {"key_name_1": 10, "key_name_2": 100}
         # Then the listener will call model.predict(x1=10, x2=100)
         from superduperdb import Listener

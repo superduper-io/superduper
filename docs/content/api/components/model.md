@@ -26,10 +26,10 @@ Decorator to wrap a function with `CodeModel`.
 When a function is wrapped with this decorator,
 the function comes out as a `CodeModel`.
 
-## `objectmodel` 
+## `model` 
 
 ```python
-objectmodel(item: 't.Optional[t.Callable]' = None,
+model(item: 't.Optional[t.Callable]' = None,
      identifier: 't.Optional[str]' = None,
      datatype=None,
      model_update_kwargs: 't.Optional[t.Dict]' = None,
@@ -176,7 +176,7 @@ Model component which wraps a Model to become serializable.
 # Example:
 # -------
 m = ObjectModel('test', lambda x: x + 2)
-m.predict_one(2)
+m.predict(2)
 # 4
 ```
 

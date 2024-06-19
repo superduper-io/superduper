@@ -220,7 +220,7 @@ We can check that this model gives us what we want by evaluating an output
 on a single data-point. (Learn more about the various aspects of `Model` [here](../models/).)
 
 ```python
-model.predict_one(data[0])
+model.predict(data[0])
 ```
 
 <details>

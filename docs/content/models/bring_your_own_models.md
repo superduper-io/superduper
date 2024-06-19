@@ -11,9 +11,9 @@ and models to SuperDuperDB.
 This serializes a Python object or class:
 
 ```python
-from superduperdb import objectmodel
+from superduperdb import model
 
-@objectmodel
+@model
 def my_model(x, y):
     return x + y
 ```
@@ -21,7 +21,7 @@ def my_model(x, y):
 Additional arguments may be provided to the decorator from `superduperdb.components.model.ObjectModel`:
 
 ```python
-@objectmodel(num_workers=4)
+@model(num_workers=4)
 def my_model(x, y):
     return x + y
 ```
@@ -29,21 +29,21 @@ def my_model(x, y):
 Similarly the following snippet saves the source code of a python object instead of serializing the object:
 
 ```python
-from superduperdb import codemodel
+from superduperdb import code
 
-@codemodel
+@code
 def my_other_model(x, y):
     return x * y
 ```
 
 These decorators may also be applied to `callable` classes.
 If your class has important state which should be serialized with the class, 
-then use `objectmodel` otherwise you can use `codemodel`:
+then use `model` otherwise you can use `codemodel`:
 
 ```python
-from superduperdb import ObjectModel
+from superduperdb import ObjectModel, model
 
-@objectmodel
+@model
 class MyClass:
     def __call__(self, x):
         return x + 2
@@ -51,15 +51,15 @@ class MyClass:
 m = MyClass()
 
 assert isinstance(m, ObjectModel)
-assert m.predict_one(2) == 4
+assert m.predict(2) == 4
 ```
 
 As before, additional arguments can be supplied to the decorator:
 
 ```python
-from superduperdb import vector, DataType
+from superduperdb import vector, DataType, model
 
-@objectmodel(datatype=vector(32))
+@model(datatype=vector(shape=(32, )))
 class MyClass:
     def __call__(self, x):
         return [x + 2] * 32

@@ -23,7 +23,7 @@ You can quickly utilize LLM capabilities using the following Python function:
 ```python
 from superduperdb.ext.transformers import LLM
 llm = LLM(model_name_or_path="facebook/opt-350m")
-llm.predict_one("What are we having for dinner?")
+llm.predict("What are we having for dinner?")
 ```
 
 Or use a method similar to transformers’ from_pretrained, just need to supplement the identifier parameter.

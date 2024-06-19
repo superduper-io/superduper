@@ -349,11 +349,11 @@ won't be necessary.
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        from superduperdb import objectmodel
+        from superduperdb import model
         
         CHUNK_SIZE = 200
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(text):
             text = text.split()
             chunks = [' '.join(text[i:i + CHUNK_SIZE]) for i in range(0, len(text), CHUNK_SIZE)]
@@ -363,12 +363,12 @@ won't be necessary.
     <TabItem value="PDF" label="PDF" default>
         ```python
         !pip install -q "unstructured[pdf]"
-        from superduperdb import objectmodel
+        from superduperdb import model
         from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
         
-        @objectmodel(flatten=True, model_update_kwargs={'document_embedded': False})
+        @model(flatten=True, model_update_kwargs={'document_embedded': False})
         def chunker(pdf_file):
             elements = partition_pdf(pdf_file)
             text = '\n'.join([e.text for e in elements])
@@ -463,7 +463,7 @@ select = upstream_listener.outputs_select
                 self.model.eval()
         
             @ensure_initialized
-            def predict_one(self, x):
+            def predict(self, x):
                 return self.predict([x])[0]
                 
             @ensure_initialized
@@ -484,7 +484,7 @@ select = upstream_listener.outputs_select
     </TabItem>
 </Tabs>
 ```python
-print(len(model.predict_one("What is SuperDuperDB")))
+print(len(model.predict("What is SuperDuperDB")))
 ```
 
 ## Create vector-index
@@ -533,7 +533,7 @@ vector_search_model = QueryModel(
 ```
 
 ```python
-vector_search_model.predict_one(query=query)
+vector_search_model.predict(query=query)
 ```
 
 <!-- TABS -->
@@ -608,13 +608,13 @@ vector_search_model.predict_one(query=query)
 </Tabs>
 ```python
 # test the llm model
-llm.predict_one("Tell me about the SuperDuperDB")
+llm.predict("Tell me about the SuperDuperDB")
 ```
 
 ## Answer question with LLM
 
 ```python
-from superduperdb import objectmodel
+from superduperdb import model
 from superduperdb.components.graph import Graph, input_node
 
 prompt_template = (
@@ -624,7 +624,7 @@ prompt_template = (
 )
 
 
-@objectmodel
+@model
 def build_prompt(query, docs):
     chunks = [doc["text"] for doc in docs]
     context = "\n\n".join(chunks)
@@ -644,7 +644,7 @@ prompt = build_prompt(query=in_, docs=vector_search_results)
 answer = llm(prompt)
 # create a graph, and the graph output is the answer
 rag = answer.to_graph("rag")
-print(rag.predict_one(query)[0])
+print(rag.predict(query)[0])
 ```
 
 By applying the RAG model to the database, it will subsequently be accessible for use in other services.
@@ -657,7 +657,7 @@ You can now load the model elsewhere and make predictions using the following co
 
 ```python
 rag = db.load("model", 'context_llm')
-print(rag.predict_one("Tell me about the SuperDuperDB")[0])
+print(rag.predict("Tell me about the SuperDuperDB")[0])
 ```
 
 <DownloadButton filename="retrieval_augmented_generation.md" />

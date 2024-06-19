@@ -584,7 +584,7 @@ There are two methods to load a trained model:
     </TabItem>
 </Tabs>
 ```python
-llm.predict_one(input_text, max_new_tokens=200)
+llm.predict(input_text, max_new_tokens=200)
 ```
 
 <DownloadButton filename="fine_tune_llm_on_database.md" />

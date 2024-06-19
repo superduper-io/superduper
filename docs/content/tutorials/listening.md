@@ -1166,10 +1166,10 @@ image_model = TorchModel(
 
 </details>
 
-We can verify that this model gives us the correct outputs on the added data with the `.predict_one` method:
+We can verify that this model gives us the correct outputs on the added data with the `.predict` method:
 
 ```python
-image_model.predict_one(data[0]['img'])
+image_model.predict(data[0]['img'])
 ```
 
 <details>

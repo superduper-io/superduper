@@ -115,6 +115,6 @@ image_path = "CLIP.png"
     </TabItem>
 </Tabs>
 ```python
-model.predict_one(Image.open(image_path))
+model.predict(Image.open(image_path))
 ```
 

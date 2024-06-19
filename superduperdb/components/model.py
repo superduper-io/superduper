@@ -44,6 +44,7 @@ def model(
     model_update_kwargs: t.Optional[t.Dict] = None,
     flatten: bool = False,
     output_schema: t.Optional[Schema] = None,
+    num_workers: int = 0,
 ):
     """Decorator to wrap a function with `ObjectModel`.
 
@@ -56,6 +57,7 @@ def model(
     :param model_update_kwargs: Dictionary to define update kwargs.
     :param flatten: If `True`, flatten the outputs and save.
     :param output_schema: Schema for the model outputs.
+    :param num_workers: Number of workers to use for parallel processing
     """
     if item is not None and (inspect.isclass(item) or callable(item)):
         if inspect.isclass(item):
@@ -88,6 +90,7 @@ def model(
                         model_update_kwargs=model_update_kwargs or {},
                         flatten=flatten,
                         output_schema=output_schema,
+                        num_workers=num_workers,
                     )
 
                 return object_model_factory
@@ -100,6 +103,7 @@ def model(
                     model_update_kwargs=model_update_kwargs or {},
                     flatten=flatten,
                     output_schema=output_schema,
+                    num_workers=num_workers,
                 )
 
         return decorated_function

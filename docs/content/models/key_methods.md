@@ -8,8 +8,8 @@ See [here](../apply_api/overview#key-methods) for an overview of key-methods spe
 
 | Method | Description | Optional |
 | --- | --- | --- |
-| `Model.predict_one` | Predict on a single data-point | `FALSE` | 
-| `Model.predict` | Predict on batches of data-points | `FALSE` |
+| `Model.predict` | Predict on a single data-point | `FALSE` | 
+| `Model.predict_batches` | Predict on batches of data-points | `FALSE` |
 | `Model.predict_in_db` | Predict and save predictions in `db` | `FALSE` |
 | `Model.predict_in_db_job` | `predict_in_db` as compute job | `FALSE` |
 | `Model.validate` | Validate on datasets with metrics | `FALSE` |

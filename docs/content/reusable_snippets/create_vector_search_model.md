@@ -25,6 +25,6 @@ vector_search_model = QueryModel(
 ```
 
 ```python
-vector_search_model.predict_one(query=query)
+vector_search_model.predict(query=query)
 ```
 

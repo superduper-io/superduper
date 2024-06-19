@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix ibis cdc
 - Fixed 'objectmodel' and 'predict_one' in doc.
 
+
 ## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
 
 #### Changed defaults / behaviours

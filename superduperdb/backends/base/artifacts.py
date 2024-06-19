@@ -3,6 +3,7 @@ import os
 import typing as t
 from abc import ABC, abstractmethod
 
+from superduperdb import logging
 from superduperdb.base.constant import KEY_BLOBS, KEY_FILES
 
 
@@ -135,7 +136,10 @@ class ArtifactStore(ABC):
         )
 
         for blob in blobs:
-            self._delete_bytes(blob.split(':')[-1])
+            try:
+                self._delete_bytes(blob.split(':')[-1])
+            except FileNotFoundError:
+                logging.warn(f'Blob {blob} not found in artifact store')
 
         # find all files with `&:file:` prefix
         files = recursive_find(
@@ -143,7 +147,10 @@ class ArtifactStore(ABC):
         )
         for file_path in files:
             # file: &:file:file_name/file_id
-            self._delete_bytes(file_path.split(':')[-1])
+            try:
+                self._delete_bytes(file_path.split(':')[-1])
+            except FileNotFoundError:
+                logging.warn(f'File {file_path} not found in artifact store')
 
     @abstractmethod
     def get_bytes(self, file_id: str) -> bytes:

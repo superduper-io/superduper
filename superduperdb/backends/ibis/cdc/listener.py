@@ -34,7 +34,7 @@ class PollingStrategyIbis:
 
         self.primary_id = primary_id
         self.increment_field = strategy.auto_increment_field
-        self.frequency = strategy.frequency
+        self.frequency = float(strategy.frequency)
         self._last_processed_id = -1
 
     def fetch_ids(self):
@@ -133,7 +133,7 @@ class IbisDatabaseListener(cdc.BaseDatabaseListener):
         """
         if not strategy:
             assert CFG.cluster.cdc
-            self.strategy = CFG.cluster.cdc.strategy
+            self.strategy = CFG.cluster.cdc.strategy or PollingStrategy()
         else:
             self.strategy = strategy
 

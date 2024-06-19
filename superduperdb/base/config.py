@@ -89,8 +89,8 @@ class PollingStrategy(CDCStrategy):
     """
 
     auto_increment_field: t.Optional[str] = None
-    frequency: float = 3600
-    type: 'str' = 'incremental'
+    frequency: str = '30'
+    type: str = 'incremental'
 
 
 @dc.dataclass
@@ -114,7 +114,9 @@ class CDCConfig(BaseConfig):
     """
 
     uri: t.Optional[str] = None  # None implies local mode
-    strategy: t.Optional[t.Union[PollingStrategy, LogBasedStrategy]] = None
+    strategy: t.Union[PollingStrategy, LogBasedStrategy] = dc.field(
+        default_factory=PollingStrategy
+    )
 
 
 @dc.dataclass

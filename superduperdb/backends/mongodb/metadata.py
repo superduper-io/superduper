@@ -355,19 +355,6 @@ class MongoMetaDataStore(MetaDataStore):
             {'$set': {key: value}},
         )
 
-    def write_output_to_job(self, identifier, msg, stream):
-        """Write output to a job in the metadata store.
-
-        :param identifier: identifier of job
-        :param msg: message to be written
-        :param stream: stream to be written to
-        """
-        if stream not in ('stdout', 'stderr'):
-            raise ValueError(f'stream is "{stream}", should be stdout or stderr')
-        self.job_collection.update_one(
-            {'identifier': identifier}, {'$push': {stream: msg}}
-        )
-
     def hide_component_version(
         self, type_id: str, identifier: str, version: int
     ) -> None:

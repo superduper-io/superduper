@@ -2,7 +2,6 @@ artifact_store: null
 bytes_encoding: Bytes
 cluster:
   cdc:
-    strategy: null
     uri: null
   compute:
     uri: null

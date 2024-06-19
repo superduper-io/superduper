@@ -70,7 +70,7 @@ class PollingStrategyIbisByIncrement(PollingStrategyIbis):
         """fetch_ids."""
         assert self.increment_field
         _filter = self.table.__getattr__(self.increment_field) > self._last_processed_id
-        query = self.table.select(self.primary_id).filter(_filter)
+        query = self.table.select(self.primary_id, self.increment_field).filter(_filter)
         ids = list(self.db.execute(query))
         ids = [id[self.primary_id] for id in ids]
         self._last_processed_id = int(max(ids)) if ids else self._last_processed_id

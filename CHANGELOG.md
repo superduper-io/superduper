@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change '_leaves' to '_builds'
 - Fixed empty identifier of Code.from_object.
 - Fixed Native encodable.
-- Fix ibis cdc
+- Fix ibis cdc and cdc config
 - Fixed 'objectmodel' and 'predict_one' in doc.
 
 

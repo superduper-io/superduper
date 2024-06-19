@@ -103,6 +103,14 @@ class Component(Leaf):
 
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
+    @property
+    def children(self):
+        """Get all the child components of the component."""
+        r = self.dict().encode(leaves_to_keep=Leaf)
+        out = [v for v in r['_builds'].values() if isinstance(v, Component)]
+        out.extend(sum([c.children for c in out], []))
+        return out
+
     @classmethod
     def from_template(
         self,

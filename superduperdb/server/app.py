@@ -224,7 +224,6 @@ class SuperDuperApp:
                     for k, v in update_vars.items():
                         setattr(self, k, v)
 
-
         return
 
     def shutdown(self, function: t.Union[t.Callable, None] = None):

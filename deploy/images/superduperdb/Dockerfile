@@ -4,7 +4,7 @@
 # Global Parameters
 # ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
-ARG BUILD_ENV=release
+ARG BUILD_ENV=superduperdb
 ARG RUNNER=cpu
 
 # ---------------

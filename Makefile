@@ -105,7 +105,7 @@ fix-and-check: ##  Lint the code before testing
 build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg BUILD_ENV="release"
+	--build-arg BUILD_ENV="superduperdb"
 
 
 push_superduperdb: ## Push the superduperdb/superduperdb:<release> image

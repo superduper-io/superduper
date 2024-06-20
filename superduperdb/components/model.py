@@ -654,6 +654,12 @@ class Model(Component, metaclass=ModelMeta):
         :param in_memory: Load data into memory or not
         :param overwrite: Overwrite all documents or only new documents
         """
+        message = (
+            f'Requesting prediction in db\n'
+            f'{self.identifier} with predict_id {predict_id}\n'
+            f'Using select {select} and ids {ids}'
+        )
+        logging.info(message)
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')

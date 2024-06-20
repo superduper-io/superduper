@@ -1,10 +1,11 @@
 import json
 import os
+import time
 import typing as t
 import uuid
 
 import ray
-from ray.job_submission import JobSubmissionClient
+from ray.job_submission import JobStatus, JobSubmissionClient
 
 from superduperdb import logging
 from superduperdb.backends.base.compute import ComputeBackend
@@ -75,11 +76,14 @@ class RayComputeBackend(ComputeBackend):
 
         runtime_env = {}
         env_vars = {
-            k: os.environ[k] for k in os.environ if k.startswith('SUPERDUPERDB_')
+            k: os.environ[k]
+            for k in os.environ
+            if k.startswith('SUPERDUPERDB_') and k != 'SUPERDUPERDB_CONFIG'
         }
         if env_vars:
             runtime_env = {'env_vars': env_vars}
         job_id = self.client.submit_job(entrypoint=entrypoint, runtime_env=runtime_env)
+        self._futures_collection[job_id] = job_id
         return job_id
 
     def execute_task(
@@ -94,11 +98,9 @@ class RayComputeBackend(ComputeBackend):
         """
 
         def _dependable_remote_job(function, *args, **kwargs):
-            if 'dependencies' in kwargs:
-                dependencies = kwargs.pop('dependencies', None)
-                if dependencies:
-                    ray.wait(dependencies)
             return function(*args, **kwargs)
+
+        [self._wait_for_job_completion(str(dependency)) for dependency in dependencies]
 
         if compute_kwargs:
             remote_function = ray.remote(**compute_kwargs)(_dependable_remote_job)
@@ -107,7 +109,7 @@ class RayComputeBackend(ComputeBackend):
 
         from superduperdb.jobs.job import remote_task
 
-        future = remote_function.remote(remote_task, job_id, dependencies=dependencies)
+        future = remote_function.remote(remote_task, job_id)
 
         ray.get(future)
         task_id = str(future.task_id().hex())
@@ -118,6 +120,16 @@ class RayComputeBackend(ComputeBackend):
             f"task: {task_id}; job_id: {str(future.job_id())}"
         )
         return future, task_id
+
+    def _wait_for_job_completion(self, job_id, poll_interval=3):
+        while True:
+            status = self.client.get_job_status(job_id)
+            logging.info(f"Job {job_id} status: {status}")
+            if status == JobStatus.SUCCEEDED:
+                return True
+            elif status in [JobStatus.FAILED, JobStatus.STOPPED]:
+                raise Exception(f"The dependency job {job_id} failed")
+            time.sleep(poll_interval)
 
     @property
     def tasks(self) -> t.Dict[str, ray.ObjectRef]:

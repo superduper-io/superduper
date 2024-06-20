@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- ...
+
+#### New Features & Functionality
+
+- ...
+
+#### Bug Fixes
+
+- ...
+
+## [0.2.0](https://github.com/SuperDuperDB/superduperdb/compare/0.1.10...0.2.0])    (2024-Jun-20)
+
+#### Changed defaults / behaviours
+
 - Run Tests from within container
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
@@ -103,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed ray dependencies bug
 
 
-## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.0.20...0.1.0])    (2023-Feb-09)
+## [0.1.1](https://github.com/SuperDuperDB/superduperdb/compare/0.1.0...0.1.1])    (2023-Feb-09)
 
 #### Changed defaults / behaviours
 

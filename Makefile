@@ -35,13 +35,13 @@ new_release: ## Release a new version of SuperDuperDB
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)
 	# Update version in source code
-	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION:v%=%)"
+	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION)"
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
 	# Commit and tag release
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
-	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
+	@git commit -m "Bump Version $(RELEASE_VERSION)"
 	@git tag $(RELEASE_VERSION)
 	# Push release branch and tag
 	@echo "** Push release-$(RELEASE_VERSION)"

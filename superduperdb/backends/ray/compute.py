@@ -71,7 +71,7 @@ class RayComputeBackend(ComputeBackend):
             job_string += ")"
 
         entrypoint = (
-            f"python -c 'from superduperdb.jobs.job import remote_job; {job_string}'"
+            f"python3 -c 'from superduperdb.jobs.job import remote_job; {job_string}'"
         )
 
         runtime_env = {}

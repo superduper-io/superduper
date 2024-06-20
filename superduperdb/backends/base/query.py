@@ -91,9 +91,15 @@ class Query(_BaseQuery, TraceMixin):
 
     def _build_hr_identifier(self):
         identifier = str(self).split('\n')[-1]
-        identifier = re.sub(r'[^a-zA-Z0-9]', '-', identifier)
+        variables = re.findall(r'(<var:[a-zA-Z0-9]+>)', identifier)
+        variables = sorted(list(set(variables)))
+        for i, v in enumerate(variables):
+            identifier = identifier.replace(v, f'#{i}')
+        identifier = re.sub(r'[^a-zA-Z0-9#]', '-', identifier)
         identifier = re.sub('[-]+$', '', identifier)
         identifier = re.sub('[-]+', '-', identifier)
+        for i, v in enumerate(variables):
+            identifier = identifier.replace(f'#{i}', v)
         return identifier
 
     def __getitem__(self, item):

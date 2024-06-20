@@ -62,21 +62,26 @@ class Template(Component):
         Save `self` to a directory using super-duper protocol.
 
         :param path: Path to the directory to save the component.
+        :param format: Format to save the component in.
+        :param zip: Whether to zip the directory.
+        :param defaults: Whether to save default values.
+        :param metadata: Whether to save metadata.
 
         Created directory structure:
         ```
-        |_component.json/yaml
+        |_component.(json|yaml)
         |_blobs/*
         |_files/*
         ```
         """
-        assert self.db is not None
-        assert self.identifier in self.db.show('template')
+        if self.blobs is not None and self.blobs:
+            assert self.db is not None
+            assert self.identifier in self.db.show('template')
         if path is None:
             path = './' + self.identifier
         super().export(path, format, zip=False, defaults=defaults, metadata=metadata)
-        os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
-        if self.blobs is not None:
+        if self.blobs is not None and self.blobs:
+            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
             for identifier in self.blobs:
                 blob = self.db.artifact_store.get_bytes(identifier)
                 with open(path + f'/blobs/{identifier}', 'wb') as f:

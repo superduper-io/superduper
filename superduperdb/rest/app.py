@@ -65,6 +65,19 @@ def build_app(app: superduperapp.SuperDuperApp):
 
     @app.add('/db/apply', method='post')
     def db_apply(info: t.Dict):
+        if 'variables' in info:
+            assert {'variables', 'template_body', 'identifier'}.issubset(info.keys())
+            component = Component.from_template(
+                identifier=info['identifier'],
+                template_body=info['template_body'],
+                **info['variables'],
+            )
+            app.db.apply(component)
+            for k in info['variables']:
+                assert '<' not in info['variables'][k]
+                assert '>' not in info['variables'][k]
+                assert ' ' not in info['variables'][k]
+            return {'status': 'ok'}
         component = Document.decode(info).unpack()
         app.db.apply(component)
         return {'status': 'ok'}
@@ -74,19 +87,17 @@ def build_app(app: superduperapp.SuperDuperApp):
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
+        application: t.Optional[str] = None,
     ):
-        return app.db.show(
-            type_id=type_id,
-            identifier=identifier,
-            version=version,
-        )
-
-    @app.add('/db/apply_template', method='post')
-    def db_apply_template(info: t.Dict):
-        assert {'variables', 'template_body', 'identifier'}.issubset(info.keys())
-        component = Component.from_template(**info)
-        app.db.apply(component)
-        return {'status': 'ok'}
+        if application is not None:
+            r = app.db.metadata.get_component('application', application)
+            return r['namespace']
+        else:
+            return app.db.show(
+                type_id=type_id,
+                identifier=identifier,
+                version=version,
+            )
 
     @app.add('/db/remove', method='post')
     def db_remove(type_id: str, identifier: str):
@@ -101,7 +112,7 @@ def build_app(app: superduperapp.SuperDuperApp):
         return {
             'identifier': '<Please enter a unique name for this application>',
             'variables': {k: '<Please enter a value>' for k in template['variables']},
-            'template_body': template['template_body'],
+            'template_body': template['template'],
         }
 
     @app.add('/db/metadata/show_jobs', method='get')

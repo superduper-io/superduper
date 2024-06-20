@@ -8,7 +8,7 @@ from superduperdb import CFG, logging
 from superduperdb.base import exceptions
 from superduperdb.misc.auto_schema import DEFAULT_DATATYPE
 
-primitives = (bool, str, int, float, type(None))
+primitives = (bool, str, int, float, type(None), list)
 
 
 @lru_cache(maxsize=None)
@@ -53,6 +53,8 @@ def _request_server(
     if type == 'post':
         if data is not None:
             # TODO: Please use Document.encode with autoschema.
+            # TODO: This is too implicit and hard to read
+            # suggestion: add a parameter
 
             if not isinstance(data, primitives):
                 data = _server_request_encoder(data)

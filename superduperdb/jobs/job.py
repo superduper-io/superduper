@@ -136,7 +136,7 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.future = self.db.compute.submit(
+        self.future, self.job_id = self.db.compute.submit(
             callable_job,
             cfg=s.CFG.dict(),
             function_to_call=self.callable,
@@ -146,7 +146,7 @@ class FunctionJob(Job):
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-        if update_job:
+        if update_job and self.future:
             self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return
 
@@ -249,7 +249,7 @@ class ComponentJob(Job):
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-        if update_job:
+        if update_job and self.future:
             self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return self
 

@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.superduperdb.com">
-    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_logo_color.svg">
+    <img width="70%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
 <div align="center">
@@ -26,7 +26,7 @@
 
 ---
 
-### :mega:  ***We  have a big release v0.2 with a variety of exciting new features and integrations as well as updated docs and use-cases coming up in coming weeks. Have a glimpse here in the [changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)! Also, we are launching an enterprise solution. [Sign-up for the preview waiting list here.](https://www.superduperdb.com/join-beta-waitlist)***
+### :mega:  ***We are thrilled to announce the release of v0.2, packed with a variety of exciting new features and integrations. Updated docs and use-cases are also available now. Have a glimpse here in the  [changelog](https://github.com/SuperDuperDB/superduperdb/blob/main/CHANGELOG.md)! Additionally, we are launching our enterprise solution. [Sign-up for the preview waiting list here.](https://www.superduperdb.com/join-beta-waitlist).***
 
 ---
 
@@ -48,8 +48,7 @@ SuperDuperDB is a Python framework for integrating AI models, APIs, and vector s
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/walkthrough/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
 <div align="center">
-<a href="https://www.youtube.com/watch?v=FxJs7pbHj3Q"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/icons/overview.png" alt="Overview" width="400"></a>
-	<a href="https://www.youtube.com/watch?v=Hr0HkmIL3go"><img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/icons/quickstart.png" alt="QuickStart" width="400"></a>
+<a href="https://www.youtube.com/watch?v=dDJ_ktMtbw0"><img src="https://i.ibb.co/px4G8qG/get-started.png" alt="How to get Started" width="500"></a>
 </div>
 
 ## What's new in `v0.2`?

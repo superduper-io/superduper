@@ -40,7 +40,7 @@ new_release: ## Release a new version of SuperDuperDB
 	@git add superduperdb/__init__.py
 	# Commit and tag release
 	@echo "** Commit Bump Version and Tags"
-	@git add VERSION
+	@git add VERSION CHANGELOG.md
 	@git commit -m "Bump Version $(RELEASE_VERSION)"
 	@git tag $(RELEASE_VERSION)
 

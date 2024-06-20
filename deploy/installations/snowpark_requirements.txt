@@ -1,7 +1,7 @@
 openai>=1.1.2
 snowflake-connector-python
-ibis-framework[snowflake]==8.0.0
-
+snowflake-sqlalchemy
+ibis-framework[snowflake]
 sentence-transformers>=2.2.2
 openai>=1.1.2
 httpx

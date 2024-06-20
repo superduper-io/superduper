@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make output of `Document.encode()` a bit more minimalistic
 - Increment minimum supported ibis version to 9.0.0
 - Make database connections reconnection on token expiry
-- Prototype the cron job service
+- Prototype the cron job services
 
 #### New Features & Functionality
 

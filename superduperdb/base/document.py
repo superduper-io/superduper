@@ -202,7 +202,7 @@ class Document(MongoStyleDict):
         """Return a list of variables in the object."""
         from superduperdb.base.variables import _find_variables
 
-        return _find_variables(self)
+        return sorted(list(set(_find_variables(self))))
 
     def set_variables(self, **kwargs) -> 'Document':
         """Set free variables of self.

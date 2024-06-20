@@ -226,7 +226,7 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
     @property
     def variables(self):
         """List of variables in the object."""
-        return _find_variables(self)
+        return sorted(list(set(_find_variables(self))))
 
     def info(self):
         """Print the serialized object."""

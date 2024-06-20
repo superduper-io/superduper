@@ -1,5 +1,5 @@
 
-# Basic RAG tutorial with templates
+# Basic RAG tutorial
 
 :::info
 In this tutorial we show you how to do retrieval augmented generation (RAG) with `superduperdb`.

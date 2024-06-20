@@ -46,7 +46,7 @@ new_release: ## Release a new version of SuperDuperDB
 
 	# Push branch and set upstream
 	git push --set-upstream origin release-$(RELEASE_VERSION)
-	
+
 	# Push the specific tag
 	git push origin $(RELEASE_VERSION)
 

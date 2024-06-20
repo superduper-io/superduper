@@ -218,6 +218,7 @@ class SuperDuperApp:
             if function:
                 function(db=db)
             self._app.state.pool = db
+            self._db = db
             if self.init_hook:
                 update_vars = self.init_hook(db=db)
                 if update_vars:

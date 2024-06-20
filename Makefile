@@ -43,9 +43,13 @@ new_release: ## Release a new version of SuperDuperDB
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION)"
 	@git tag $(RELEASE_VERSION)
-	# Push release branch and tag
-	@echo "** Push release-$(RELEASE_VERSION)"
-	git push --set-upstream origin release-$(RELEASE_VERSION) --tags
+
+	# Push branch and set upstream
+	git push --set-upstream origin release-$(RELEASE_VERSION)
+	
+	# Push the specific tag
+	git push origin $(RELEASE_VERSION)
+
 
 install_devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.

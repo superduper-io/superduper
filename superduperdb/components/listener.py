@@ -167,13 +167,21 @@ class Listener(Component):
             return []
         assert not isinstance(self.model, str)
 
+        dependencies_ids = []
+        for model_name in self.dependencies:
+            jobs = self.db.metadata.show_jobs(model_name, 'model') or []
+            job_ids = [job['job_id'] for job in jobs]
+            dependencies_ids.extend(job_ids)
+
+        dependencies = {*dependencies_ids, *dependencies}
+
         out = [
             self.model.predict_in_db_job(
                 X=self.key,
                 db=db,
                 predict_id=self.uuid,
                 select=self.select,
-                dependencies=dependencies,
+                dependencies=tuple(dependencies),
                 overwrite=overwrite,
                 **(self.predict_kwargs or {}),
             )

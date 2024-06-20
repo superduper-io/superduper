@@ -1,10 +1,11 @@
 import datetime
+import json
 import typing as t
 import uuid
 from abc import abstractmethod
 
 import superduperdb as s
-from superduperdb import CFG
+from superduperdb import CFG, logging
 from superduperdb.jobs.tasks import callable_job, method_job
 
 if t.TYPE_CHECKING:
@@ -64,7 +65,7 @@ class Job:
         return self.db.metadata.watch_job(identifier=self.identifier)
 
     @abstractmethod
-    def submit(self, compute, dependencies=()):
+    def submit(self, compute, dependencies=(), update_job=True):
         """Submit job for execution.
 
         :param compute: compute engine
@@ -127,9 +128,11 @@ class FunctionJob(Job):
         :param dependencies: list of dependencies
         """
         self.job_id = self.db.compute.submit(self.identifier, dependencies=dependencies)
+        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
+        self.future = self.job_id
         return
 
-    def submit(self, dependencies=()):
+    def submit(self, dependencies=(), update_job=True):
         """Submit job for execution.
 
         :param dependencies: list of dependencies
@@ -144,7 +147,8 @@ class FunctionJob(Job):
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-
+        if update_job:
+            self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return
 
     def __call__(self, db: t.Union['Datalayer', None], dependencies=()):
@@ -225,9 +229,11 @@ class ComponentJob(Job):
             dependencies=dependencies,
             compute_kwargs=self.compute_kwargs,
         )
+        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
+        self.future = self.job_id
         return
 
-    def submit(self, dependencies=()):
+    def submit(self, dependencies=(), update_job=True):
         """Submit job for execution.
 
         :param dependencies: list of dependencies
@@ -244,7 +250,8 @@ class ComponentJob(Job):
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
+        if update_job:
+            self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return self
 
     def __call__(self, db: t.Union['Datalayer', None] = None, dependencies=()):
@@ -298,6 +305,10 @@ def remote_job(identifier, dependencies=(), compute_kwargs: t.Union[str, t.Dict]
     from superduperdb import CFG
     from superduperdb.base.build import build_compute
 
+    logging.info(f"Running remote job {identifier}")
+    logging.info(f"Dependencies: {dependencies}")
+    logging.info(f"Compute kwargs: {compute_kwargs}")
+
     if isinstance(compute_kwargs, str) and compute_kwargs:
         compute_kwargs = json.loads(compute_kwargs)
 
@@ -329,6 +340,7 @@ def remote_task(identifier, dependencies=()):
     args = info['args']
     kwargs = info['kwargs']
     path = info['_path']
+    logging.info(f"Running remote task: {info}")
 
     if 'ComponentJob' in path:
         component_identifier = info['component_identifier']
@@ -352,5 +364,5 @@ def remote_task(identifier, dependencies=()):
         job = FunctionJob(args=args, kwargs=kwargs, callable=callable, db=db)
     else:
         raise TypeError
-    job.submit(dependencies=dependencies)
+    job.submit(dependencies=dependencies, update_job=True)
     return

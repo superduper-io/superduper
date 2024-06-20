@@ -1,4 +1,3 @@
-import traceback
 import typing as t
 
 if t.TYPE_CHECKING:
@@ -56,9 +55,7 @@ def method_job(
     try:
         method(*args, db=db, **kwargs)
     except Exception as e:
-        tb = traceback.format_exc()
         db.metadata.update_job(job_id, 'status', 'failed')
-        db.metadata.update_job(job_id, 'msg', tb)
         raise e
     db.metadata.update_job(job_id, 'status', 'success')
 
@@ -102,9 +99,7 @@ def callable_job(
     try:
         output = function_to_call(*args, db=db, **kwargs)
     except Exception as e:
-        tb = traceback.format_exc()
         db.metadata.update_job(job_id, 'status', 'failed')
-        db.metadata.update_job(job_id, 'msg', tb)
         raise e
     else:
         db.metadata.update_job(job_id, 'status', 'success')

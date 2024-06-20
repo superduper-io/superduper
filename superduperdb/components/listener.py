@@ -169,7 +169,7 @@ class Listener(Component):
 
         dependencies_ids = []
         for model_name in self.dependencies:
-            jobs = self.db.metadata.show_jobs(model_name, 'model') or []
+            jobs = self.db.metadata.show_jobs(str(model_name), 'model') or []
             job_ids = [job['job_id'] for job in jobs]
             dependencies_ids.extend(job_ids)
 

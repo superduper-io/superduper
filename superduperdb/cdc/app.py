@@ -11,12 +11,14 @@ app = superduperapp.SuperDuperApp('cdc', port=port)
 
 
 @app.startup
-def cdc_startup(db: Datalayer):
+def cdc_startup(db: Datalayer) -> Datalayer:
     """Start the cdc server.
 
     :param db: Datalayer instance.
     """
-    db.cdc.start()
+    if not db.cdc._running:
+        db.cdc.start()
+    return db
 
 
 @app.add('/listener/add', method='get')

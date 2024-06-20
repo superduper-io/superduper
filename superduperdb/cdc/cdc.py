@@ -508,7 +508,7 @@ class DatabaseChangeDataCapture:
         :param listener: A listener instance.
         """
         collection = listener.select.table_or_collection
-        if self.running and collection.identifier not in self._CDC_LISTENERS:
+        if self._running and collection.identifier not in self._CDC_LISTENERS:
             self.listen(collection)
         else:
             # Append to existing collection list

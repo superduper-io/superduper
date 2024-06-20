@@ -910,6 +910,8 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
 
+        dependencies = [*[j.job_id for j in jobs], *dependencies]  # type: ignore[list-item]
+
         object.post_create(self)
         self._add_component_to_cache(object)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)

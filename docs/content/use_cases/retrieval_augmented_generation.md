@@ -516,8 +516,7 @@ query = "Tell me about the SuperDuperDB"
 ## Create Vector Search Model
 
 ```python
-from superduperdb.base.variables import Variable
-item = {indexing_key: Variable('query')}
+item = {indexing_key: '<var:query>'}
 ```
 
 ```python

@@ -319,9 +319,9 @@ datas = [{'x': d} for d in data[:3]]
 <!-- TABS -->
 ## Create datatype
 
-Data types such as "text" or "integer" which are natively support by your `db.databackend` don't need a datatype.
+SuperduperDB supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
 
-Otherwise do one of the following:
+It also supports custom data conversion methods for transforming data, such as defining the following Datatype.
 
 
 <Tabs>

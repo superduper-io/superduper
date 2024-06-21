@@ -46,6 +46,7 @@ def up_cluster(
     CFG = os.environ.get('SUPERDUPERDB_CONFIG')
     assert CFG, 'Please set SUPERDUPERDB_CONFIG environment variable'
     python_executable = sys.executable
+    python_executable_dir = os.path.dirname(python_executable)
     ray_path = os.popen('which ray').read().split('\n')[0].strip()
     ray_executable = os.path.join(os.path.dirname(python_executable), ray_path)
     run_tmux_command(
@@ -71,6 +72,7 @@ def up_cluster(
         )
 
     cmd = (
+        f"export PATH={python_executable_dir}:$PATH; "
         f"SUPERDUPERDB_CONFIG={CFG} PYTHONPATH=$(pwd):. {ray_executable} start"
         " --head --dashboard-host=0.0.0.0 --disable-usage-stats --block"
     )

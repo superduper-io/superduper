@@ -86,6 +86,9 @@ class Schema(Component):
             if not isinstance(field, DataType):
                 continue
 
+            if k not in out:
+                continue
+
             if isinstance(out[k], leaves_to_keep):
                 continue
 

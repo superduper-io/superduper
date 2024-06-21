@@ -115,7 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Native encodable.
 - Fix ibis cdc and cdc config
 - Fixed 'objectmodel' and 'predict_one' in doc.
-- Fixed ray dependencies bug
+- Fixed ray dependencies bug.
+- Fixed cluster bug.
 
 ## [0.1.3](https://github.com/SuperDuperDB/superduperdb/compare/0.1.1...0.1.3])    (2024-Jun-20)
 

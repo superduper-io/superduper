@@ -50,6 +50,15 @@ def vector_search():
 
     app.start()
 
+@command(help='Start scheduler server')
+def scheduler():
+    """Start scheduler server."""
+    from superduperdb.server.scheduler import app
+
+    app.pre_start()
+    app.print_routes()
+    app.start()
+
 
 @command(help='Start standalone change data capture')
 def cdc():

@@ -138,6 +138,7 @@ build_sandbox: ## Build superduperdb/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 build_nightly: ## Build superduperdb/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
 	docker build . -f ./deploy/images/superduperdb/Dockerfile \
 	--build-arg BUILD_ENV="nightly" \
+        --platform linux/amd64 \
 	--progress=plain \
 	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),) \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \

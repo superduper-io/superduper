@@ -285,16 +285,19 @@ def vector(shape, identifier: t.Optional[str] = None):
     )
 
 
-def sqlvector(shape):
+@component()
+def sqlvector(shape, bytes_encoding: str = 'Bytes'):
     """Create an encoder for a vector (list of ints/ floats) of a given shape.
 
     This is used for compatibility with SQL databases, as the default vector
 
     :param shape: The shape of the vector
+    :param bytes_encoding: The encoding of the bytes
     """
     return DataType(
         identifier=f'sqlvector[{str_shape(shape)}]',
         shape=shape,
         encoder=EncodeArray(dtype='float64'),
         decoder=DecodeArray(dtype='float64'),
+        bytes_encoding=bytes_encoding,
     )

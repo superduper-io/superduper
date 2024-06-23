@@ -15,6 +15,7 @@ from openai import (
 )
 from openai._types import NOT_GIVEN
 
+from superduperdb import CFG
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.query_dataset import QueryDataset
@@ -128,7 +129,9 @@ class OpenAIEmbedding(_OpenAI):
         super().pre_create(db)
         if isinstance(db.databackend.type, IbisDataBackend):
             if self.datatype is None:
-                self.datatype = sqlvector(self.shape)
+                self.datatype = sqlvector(
+                    shape=self.shape, bytes_encoding=CFG.bytes_encoding
+                )
         elif self.datatype is None:
             self.datatype = vector(shape=self.shape)
 

@@ -13,6 +13,8 @@ def setup():
 
 def test_select_data(setup):
     result = curl_post('/db/execute', data={'query': 'coll.find({}, {"_id": 0})'})
+    if 'error' in result:
+        raise Exception(result['messages'] + result['traceback'])
     print(result)
     assert len(result) == 2
 
@@ -63,6 +65,7 @@ def test_insert_image(setup):
 
     query = {
         '_path': 'superduperdb.backends.mongodb.query.parse_query',
+        'query': 'coll.insert_one(documents[0])',
         '_builds': {
             'image_type': {
                 '_path': 'superduperdb.ext.pillow.encoder.image_type',
@@ -74,8 +77,11 @@ def test_insert_image(setup):
                 'datatype': "?image_type",
             },
         },
-        'query': 'coll.insert_one(documents[0])',
-        'documents': [{'img': '?my_artifact'}],
+        'documents': [
+            {
+                'img': '?my_artifact',
+            }
+        ],
     }
 
     result = curl_post(
@@ -93,6 +99,7 @@ def test_insert_image(setup):
         endpoint='/db/execute',
         data=query,
     )
+
     from superduperdb import superduper
 
     db = superduper()

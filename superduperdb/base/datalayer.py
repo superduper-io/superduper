@@ -250,10 +250,10 @@ class Datalayer:
 
         if data:
             self.databackend.drop(force=True)
+            self.artifact_store.drop(force=True)
         else:
             self.databackend.drop_outputs()
         self.metadata.drop(force=True)
-        self.artifact_store.drop(force=True)
 
     def show(
         self,

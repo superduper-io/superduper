@@ -67,7 +67,7 @@ class SuperDuperCursor:
             try:
                 r['score'] = self.scores[str(r[self.id_field])]
             except KeyError:
-                logging.warn(f"No document id found for {r}")
+                logging.debug(f"No document id found for {r}")
 
         return Document.decode(r, db=self.db, schema=self.schema)
 

@@ -13,6 +13,9 @@ from rich.tree import Tree
 from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.variables import _find_variables
 
+if t.TYPE_CHECKING:
+    pass
+
 
 class IndexableDict(OrderedDict):
     """IndexableDict.
@@ -146,10 +149,36 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
     :param kwargs: **kwargs for `dict`
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     @property
     def builds(self):
         """Return the builds of the dictionary."""
         return IndexableDict(self.get(KEY_BUILDS, {}))
+
+    @staticmethod
+    def _str2var(x, item, variable):
+        if isinstance(x, str):
+            return x.replace(item, f'<var:{variable}>')
+        if isinstance(x, dict):
+            return {
+                SuperDuperFlatEncode._str2var(
+                    k, item, variable
+                ): SuperDuperFlatEncode._str2var(v, item, variable)
+                for k, v in x.items()
+            }
+        if isinstance(x, list):
+            return [SuperDuperFlatEncode._str2var(v, item, variable) for v in x]
+        return x
+
+    def create_template(self, **kwargs):
+        """Convert all instances of string to variable."""
+        r = self
+        for k, v in kwargs.items():
+            r = SuperDuperFlatEncode._str2var(r, v, k)
+        r['_variables'] = {v: f'<value-{i}>' for i, v in enumerate(kwargs.values())}
+        return SuperDuperFlatEncode(r)
 
     @property
     def files(self):

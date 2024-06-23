@@ -1,5 +1,4 @@
 import re
-import sys
 import typing as t
 
 from prettytable import PrettyTable
@@ -44,29 +43,19 @@ def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
             metadata = None
 
     if metadata is None:
-        try:
-            # try to connect to the data backend uri.
-            logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
-            return _build_databackend_impl(
-                cfg.data_backend, metadata_stores, type='metadata'
-            )
-        except Exception as e:
-            # Exit quickly if a connection fails.
-            logging.error("Error initializing to Metadata Client:", str(e))
-            sys.exit(1)
+        # try to connect to the data backend uri.
+        logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
+        return _build_databackend_impl(
+            cfg.data_backend, metadata_stores, type='metadata'
+        )
 
 
 def _build_databackend(cfg, databackend=None):
     # Connect to data backend.
     # ------------------------------
-    try:
-        if not databackend:
-            databackend = _build_databackend_impl(cfg.data_backend, data_backends)
-        logging.info("Data Client is ready.", databackend.conn)
-    except Exception as e:
-        # Exit quickly if a connection fails.
-        logging.error("Error initializing to DataBackend Client:", str(e))
-        sys.exit(1)
+    if not databackend:
+        databackend = _build_databackend_impl(cfg.data_backend, data_backends)
+    logging.info("Data Client is ready.", databackend.conn)
     return databackend
 
 

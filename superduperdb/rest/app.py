@@ -69,7 +69,7 @@ def build_app(app: superduperapp.SuperDuperApp):
             assert {'variables', 'template_body', 'identifier'}.issubset(info.keys())
             component = Component.from_template(
                 identifier=info['identifier'],
-                template_body=info['template_body'],
+                template_body=info['template'],
                 **info['variables'],
             )
             app.db.apply(component)
@@ -105,15 +105,9 @@ def build_app(app: superduperapp.SuperDuperApp):
         return {'status': 'ok'}
 
     @app.add('/db/show_template', method='get')
-    def db_show_template(identifier: str):
-        template = app.db.metadata.get_component(
-            type_id='template', identifier=identifier
-        )
-        return {
-            'identifier': '<Please enter a unique name for this application>',
-            'variables': {k: '<Please enter a value>' for k in template['variables']},
-            'template_body': template['template'],
-        }
+    def db_show_template(identifier: str, type_id: str = 'template'):
+        template = app.db.metadata.get_component(type_id=type_id, identifier=identifier)
+        return template.form_template
 
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):

@@ -7,6 +7,7 @@ from superduperdb import logging
 from superduperdb.base.code import Code
 from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.leaf import Leaf, _import_item
+from superduperdb.base.variables import _replace_variables
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import (
     _ENCODABLES,
@@ -118,11 +119,11 @@ class Document(MongoStyleDict):
         schema = self.schema or schema
         schema = get_schema(self.db, schema) if schema else None
         out = dict(self)
+
         if schema is not None:
             out = schema.encode_data(
                 out, builds, blobs, files, leaves_to_keep=leaves_to_keep
             )
-
         out = _deep_flat_encode(
             out,
             builds=builds,
@@ -152,6 +153,10 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param db: The datalayer to use.
         """
+        if '_variables' in r:
+            r = _replace_variables(
+                {k: v for k, v in r.items() if k != '_variables'}, **r['_variables']
+            )
         schema = schema or r.get(SCHEMA_KEY)
         schema = get_schema(db, schema)
 
@@ -267,6 +272,27 @@ class QueryUpdateDocument(Document):
         update = {'$set': update}
         return update
 
+    def to_template(self, **substitutions):
+        """
+        Convert the document to a template with variables.
+
+        :param substitutions: The substitutions to make.
+            `str-to-replace -> variable-name`
+        """
+
+        def substitute(x):
+            if isinstance(x, str):
+                for k, v in substitutions:
+                    x = x.replace(k, f'<var:{v}>')
+                return x
+            if isinstance(x, dict):
+                return {substitute(k): substitute(v) for k, v in x.items()}
+            if isinstance(x, (list, tuple)):
+                return [substitute(v) for v in x]
+            return x
+
+        return SuperDuperFlatEncode(substitute(dict(self)))
+
     def encode(
         self,
         original: t.Any = None,
@@ -363,7 +389,7 @@ def _deep_flat_encode(
         if r.identifier in builds:
             logging.warn(f'Leaf {r.identifier} already exists')
 
-        logging.info(f'Building leaf {type(r)} with identifier: {r.identifier}')
+        logging.debug(f'Decoding leaf {type(r)} with identifier: {r.identifier}')
 
         if isinstance(r, leaves_to_keep):
             builds[r.identifier] = r

@@ -1,6 +1,8 @@
 import json
 import typing as t
 
+from superduperdb import superduper
+
 from . import command
 
 
@@ -95,3 +97,11 @@ def rest():
     from superduperdb.rest.app import app
 
     app.start()
+
+
+@command(help='Start a stream')
+def subscribe(identifier: str, version: t.Optional[int] = None):
+    """Run a stream."""
+    db = superduper()
+    subscriber = db.load('subscriber', identifier, version=version)
+    subscriber.run()

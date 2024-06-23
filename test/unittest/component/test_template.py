@@ -5,7 +5,7 @@ import pytest
 from superduperdb.components.component import Component
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import ObjectModel
-from superduperdb.components.template import Template
+from superduperdb.components.template import QueryTemplate, Template
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)
@@ -29,7 +29,7 @@ def test_basic_template(db):
         template=m.encode(),
     )
 
-    vars = template.variables
+    vars = template.template_variables
     assert len(vars) == 2
     assert all([v in ['key', 'model_id'] for v in vars])
     db.apply(template)
@@ -120,3 +120,12 @@ def test_from_template(db):
     assert isinstance(component, Listener)
     assert isinstance(component.model, ObjectModel)
     assert component.model.object(3) == 5
+
+
+@pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)
+def test_query_template(db):
+    q = db['documents'].find({'this': 'is a <var:test>'}).limit('<var:limit>')
+    t = QueryTemplate('select_lim', template=q)
+
+    assert set(t.template_variables) == {'limit', 'test'}
+    assert t.template['query'] == 'documents.find(documents[0]).limit("<var:limit>")'

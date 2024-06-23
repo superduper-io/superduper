@@ -150,7 +150,7 @@ class Component(Leaf):
             template = Template(
                 '_tmp',
                 template=template_body,
-                variables=list(kwargs.keys()),
+                template_variables=list(kwargs.keys()),
                 blobs=list(set(blobs)),
             )
 

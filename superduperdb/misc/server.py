@@ -8,7 +8,7 @@ from superduperdb import CFG, logging
 from superduperdb.base import exceptions
 from superduperdb.misc.auto_schema import DEFAULT_DATATYPE
 
-primitives = (bool, str, int, float, type(None), list)
+primitives = (bool, str, int, float, type(None), list, dict)
 
 
 @lru_cache(maxsize=None)
@@ -41,6 +41,8 @@ def _request_server(
         service_uri = CFG.cluster.cdc.uri
     elif service == 'vector_search':
         service_uri = CFG.cluster.vector_search.uri
+    elif service == 'scheduler':
+        service_uri = 'http://localhost:8181'
     else:
         raise NotImplementedError(f'Unknown service {service}')
 

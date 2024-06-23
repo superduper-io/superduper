@@ -223,13 +223,13 @@ class ComponentJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.job_id = self.db.compute.submit(
+        self.db.compute.submit(
             self.identifier,
             dependencies=dependencies,
             compute_kwargs=self.compute_kwargs,
         )
-        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
-        self.future = self.job_id
+        self.db.metadata.update_job(self.identifier, 'job_id', self.identifier)
+        self.future = self.identifier
         return
 
     def submit(self, dependencies=(), update_job=True):
@@ -288,80 +288,3 @@ class ComponentJob(Job):
             }
         )
         return d
-
-
-def remote_job(identifier, dependencies=(), compute_kwargs: t.Union[str, t.Dict] = ""):
-    """
-    Remote Job to execute remote tasks.
-
-    :param identifier: Job identifier.
-    :param dependencies: List of dependencies.
-    :param compute_kwargs: Compute kwargs.
-    """
-    # Connect to remote cluster
-    import json
-
-    from superduperdb import CFG
-    from superduperdb.base.build import build_compute
-
-    logging.info(f"Running remote job {identifier}")
-    logging.info(f"Dependencies: {dependencies}")
-    logging.info(f"Compute kwargs: {compute_kwargs}")
-
-    if isinstance(compute_kwargs, str) and compute_kwargs:
-        compute_kwargs = json.loads(compute_kwargs)
-
-    compute = build_compute(CFG.cluster.compute)
-
-    assert compute.remote is True, "Compute is not a distributed backend type."
-
-    compute.execute_task(
-        identifier, dependencies=dependencies, compute_kwargs=compute_kwargs
-    )
-
-
-def remote_task(identifier, dependencies=()):
-    """
-    Load job from job metadata and schedule it on remote cluster.
-
-    :param identifier: Job identifier.
-    :param dependencies: List of dependencies.
-    """
-    from superduperdb import CFG
-    from superduperdb.base.build import build_datalayer
-
-    # TODO: Make this run a predict job with multiple
-    # chunks as tasks.
-    db = build_datalayer(CFG, cluster__compute___path=None)
-
-    info = db.metadata.get_job(identifier)
-
-    args = info['args']
-    kwargs = info['kwargs']
-    path = info['_path']
-    logging.info(f"Running remote task: {info}")
-
-    if 'ComponentJob' in path:
-        component_identifier = info['component_identifier']
-        method_name = info['method_name']
-        type_id = info['type_id']
-        job = ComponentJob(
-            args=args,
-            kwargs=kwargs,
-            method_name=method_name,
-            component_identifier=component_identifier,
-            type_id=type_id,
-            db=db,
-        )
-    elif 'FunctionJob' in path:
-        import importlib
-
-        function = path.split('/')[-1]
-        import_path, function = function.split(';')
-        callable = getattr(importlib.import_module(import_path), function)
-
-        job = FunctionJob(args=args, kwargs=kwargs, callable=callable, db=db)
-    else:
-        raise TypeError
-    job.submit(dependencies=dependencies, update_job=True)
-    return

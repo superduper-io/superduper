@@ -1,8 +1,11 @@
 ---
 sidebar_label: Build A Trainable LLM
+filename: build_a_trainable_llm.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Build A Trainable LLM
@@ -21,8 +24,8 @@ trainer = LLMTrainer(
     save_total_limit=3,
     logging_steps=10,
     evaluation_strategy="steps",
-    save_steps=10,
-    eval_steps=10,
+    save_steps=100,
+    eval_steps=100,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
     gradient_accumulation_steps=2,
@@ -113,3 +116,4 @@ There are two methods to load a trained model:
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="build_a_trainable_llm.md" />

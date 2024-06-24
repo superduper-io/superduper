@@ -1,15 +1,17 @@
 ---
 sidebar_label: Create Vector Search Model
+filename: create_vector_search_model.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Create Vector Search Model
 
 ```python
-from superduperdb.base.variables import Variable
-item = {indexing_key: Variable('query')}
+item = {indexing_key: '<var:query>'}
 ```
 
 ```python
@@ -28,3 +30,4 @@ vector_search_model = QueryModel(
 vector_search_model.predict(query=query)
 ```
 
+<DownloadButton filename="create_vector_search_model.md" />

@@ -1,8 +1,11 @@
 ---
 sidebar_label: Visualize Results
+filename: visualize_results.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Visualize Results
@@ -37,7 +40,7 @@ import TabItem from '@theme/TabItem';
                 source = None
                 if '_source' in result:
                     source = get_original_callable(result['_source'])
-                visualize(result[output_key], source)        
+                visualize(result[output_key].x, source)        
         ```
     </TabItem>
     <TabItem value="Audio" label="Audio" default>
@@ -103,12 +106,14 @@ import TabItem from '@theme/TabItem';
         def show(results, output_key, get_original_callable=None):
             # show only the first video
             for result in results:
+                source = result['_source']
                 result = result[output_key]
                 timestamp = result['current_timestamp']
-                source = result['_source']
                 uri = get_original_callable(source)['x']
+                print(uri, timestamp)
                 visualize(uri, timestamp)
                 break        
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="visualize_results.md" />

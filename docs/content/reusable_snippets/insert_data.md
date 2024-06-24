@@ -1,8 +1,11 @@
 ---
 sidebar_label: Insert data
+filename: insert_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Insert data
@@ -39,3 +42,4 @@ In order to create data, we need to create a `Schema` for encoding our special `
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="insert_data.md" />

@@ -1,8 +1,11 @@
 ---
 sidebar_label: Configure your production system
+filename: configure_your_production_system.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Configure your production system
@@ -149,3 +152,4 @@ with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
+<DownloadButton filename="configure_your_production_system.md" />

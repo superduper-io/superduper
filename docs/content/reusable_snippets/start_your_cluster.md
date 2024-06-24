@@ -1,8 +1,11 @@
 ---
 sidebar_label: Start your cluster
+filename: start_your_cluster.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Start your cluster
@@ -29,3 +32,4 @@ If you don't need this, then it is simpler to start in development mode.
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="start_your_cluster.md" />

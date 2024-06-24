@@ -1,8 +1,11 @@
 ---
 sidebar_label: Build LLM
+filename: build_llm.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Build LLM
@@ -79,3 +82,4 @@ import TabItem from '@theme/TabItem';
 llm.predict("Tell me about the SuperDuperDB")
 ```
 
+<DownloadButton filename="build_llm.md" />

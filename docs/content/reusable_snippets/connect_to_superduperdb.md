@@ -1,8 +1,11 @@
 ---
 sidebar_label: Connect to SuperDuperDB
+filename: connect_to_superduperdb.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Connect to SuperDuperDB
@@ -118,3 +121,4 @@ Otherwise refer to "Configuring your production system".
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="connect_to_superduperdb.md" />

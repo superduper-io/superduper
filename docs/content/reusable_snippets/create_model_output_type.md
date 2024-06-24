@@ -1,8 +1,11 @@
 ---
 sidebar_label: Create Model Output Type
+filename: create_model_output_type.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Create Model Output Type
@@ -21,3 +24,4 @@ import TabItem from '@theme/TabItem';
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="create_model_output_type.md" />

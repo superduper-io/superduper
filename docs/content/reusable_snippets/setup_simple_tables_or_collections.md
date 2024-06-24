@@ -1,8 +1,11 @@
 ---
 sidebar_label: Setup simple tables or collections
+filename: setup_simple_tables_or_collections.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Setup simple tables or collections
@@ -42,3 +45,4 @@ import TabItem from '@theme/TabItem';
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="setup_simple_tables_or_collections.md" />

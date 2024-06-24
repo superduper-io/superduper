@@ -1,8 +1,11 @@
 ---
 sidebar_label: Build text embedding model
+filename: build_text_embedding_model.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Build text embedding model
@@ -13,7 +16,8 @@ import TabItem from '@theme/TabItem';
         ```python
         !pip install openai
         from superduperdb.ext.openai import OpenAIEmbedding
-        model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
+        
+        embedding_model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
@@ -24,7 +28,7 @@ import TabItem from '@theme/TabItem';
         os.environ["JINA_API_KEY"] = "jina_xxxx"
          
         # define the model
-        model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
+        embedding_model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
         ```
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
@@ -34,7 +38,7 @@ import TabItem from '@theme/TabItem';
         import sentence_transformers
         from superduperdb.ext.sentence_transformers import SentenceTransformer
         
-        model = SentenceTransformer(
+        embedding_model = SentenceTransformer(
             identifier="embedding",
             object=sentence_transformers.SentenceTransformer("BAAI/bge-small-en"),
             datatype=vector(shape=(1024,)),
@@ -45,13 +49,11 @@ import TabItem from '@theme/TabItem';
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        import dataclasses as dc
         from superduperdb import vector
         from superduperdb.components.model import Model, ensure_initialized, Signature
         from transformers import AutoTokenizer, AutoModel
         import torch
         
-        @dc.dataclass(kw_only=True)
         class TransformerEmbedding(Model):
             signature: Signature = 'singleton'
             pretrained_model_name_or_path : str
@@ -78,11 +80,12 @@ import TabItem from '@theme/TabItem';
                 return sentence_embeddings.tolist()
         
         
-        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
+        embedding_model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
         ```
     </TabItem>
 </Tabs>
 ```python
-print(len(model.predict("What is SuperDuperDB")))
+print(len(embedding_model.predict("What is SuperDuperDB")))
 ```
 
+<DownloadButton filename="build_text_embedding_model.md" />

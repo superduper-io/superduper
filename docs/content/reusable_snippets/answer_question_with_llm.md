@@ -1,8 +1,11 @@
 ---
 sidebar_label: Answer question with LLM
+filename: answer_question_with_llm.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Answer question with LLM
@@ -60,3 +63,4 @@ import TabItem from '@theme/TabItem';
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="answer_question_with_llm.md" />

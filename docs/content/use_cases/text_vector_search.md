@@ -445,7 +445,8 @@ select = upstream_listener.outputs_select
         ```python
         !pip install openai
         from superduperdb.ext.openai import OpenAIEmbedding
-        model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
+        
+        embedding_model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
     </TabItem>
     <TabItem value="JinaAI" label="JinaAI" default>
@@ -456,7 +457,7 @@ select = upstream_listener.outputs_select
         os.environ["JINA_API_KEY"] = "jina_xxxx"
          
         # define the model
-        model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
+        embedding_model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')        
         ```
     </TabItem>
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
@@ -466,7 +467,7 @@ select = upstream_listener.outputs_select
         import sentence_transformers
         from superduperdb.ext.sentence_transformers import SentenceTransformer
         
-        model = SentenceTransformer(
+        embedding_model = SentenceTransformer(
             identifier="embedding",
             object=sentence_transformers.SentenceTransformer("BAAI/bge-small-en"),
             datatype=vector(shape=(1024,)),
@@ -477,13 +478,11 @@ select = upstream_listener.outputs_select
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        import dataclasses as dc
         from superduperdb import vector
         from superduperdb.components.model import Model, ensure_initialized, Signature
         from transformers import AutoTokenizer, AutoModel
         import torch
         
-        @dc.dataclass(kw_only=True)
         class TransformerEmbedding(Model):
             signature: Signature = 'singleton'
             pretrained_model_name_or_path : str
@@ -510,12 +509,12 @@ select = upstream_listener.outputs_select
                 return sentence_embeddings.tolist()
         
         
-        model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
+        embedding_model = TransformerEmbedding(identifier="embedding", pretrained_model_name_or_path="BAAI/bge-small-en", datatype=vector(shape=(384, )))        
         ```
     </TabItem>
 </Tabs>
 ```python
-print(len(model.predict("What is SuperDuperDB")))
+print(len(embedding_model.predict("What is SuperDuperDB")))
 ```
 
 ## Create vector-index
@@ -536,7 +535,7 @@ vector_index_name = 'my-vector-index'
                 indexing_listener=Listener(
                     key=indexing_key,      # the `Document` key `model` should ingest to create embedding
                     select=select,       # a `Select` query telling which data to search over
-                    model=model,         # a `_Predictor` how to convert data to embeddings
+                    model=embedding_model,         # a `_Predictor` how to convert data to embeddings
                 )
             )
         )        

@@ -1,8 +1,11 @@
 ---
 sidebar_label: Perform a vector search
+filename: perform_a_vector_search.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Perform a vector search
@@ -43,3 +46,4 @@ Once we have this search target, we can execute a search as follows:
 results = db.execute(select)
 ```
 
+<DownloadButton filename="perform_a_vector_search.md" />

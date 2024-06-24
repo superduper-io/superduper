@@ -1,8 +1,11 @@
 ---
 sidebar_label: Insert simple data
+filename: insert_simple_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Insert simple data
@@ -18,3 +21,4 @@ ids = db.execute(table_or_collection.insert([Document(data) for data in datas]))
 select = table_or_collection.select()
 ```
 
+<DownloadButton filename="insert_simple_data.md" />

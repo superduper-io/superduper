@@ -1,8 +1,11 @@
 ---
 sidebar_label: Get LLM Finetuning Data
+filename: get_llm_finetuning_data.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Get LLM Finetuning Data
@@ -150,3 +153,4 @@ Example input_text and output_text
         ```
     </TabItem>
 </Tabs>
+<DownloadButton filename="get_llm_finetuning_data.md" />

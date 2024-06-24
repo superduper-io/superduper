@@ -1,8 +1,11 @@
 ---
 sidebar_label: Build image embedding model
+filename: build_image_embedding_model.md
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import DownloadButton from '../downloadButton.js';
+
 
 <!-- TABS -->
 # Build image embedding model
@@ -46,8 +49,8 @@ image_path = "CLIP.png"
                 tensor_image = preprocess(image)
                 return tensor_image
                 
-        model = TorchVisionEmbedding()
-        superdupermodel = TorchModel(identifier='my-vision-model-torch', object=model.resnet, preprocess=model.preprocess)        
+        embedding_model = TorchVisionEmbedding()
+        superdupermodel = TorchModel(identifier='my-vision-model-torch', object=embedding_model.resnet, preprocess=embedding_model.preprocess)        
         ```
     </TabItem>
     <TabItem value="CLIP-multimodal" label="CLIP-multimodal" default>
@@ -68,7 +71,7 @@ image_path = "CLIP.png"
                 image = self.preprocess(image).unsqueeze(0).to(self.device)
                 return image
                 
-        model = CLIPVisionEmbedding()
+        embedding_model = CLIPVisionEmbedding()
         superdupermodel = TorchModel(identifier='my-vision-model-clip', object=model.model, preprocess=model.preprocess, forward_method='encode_image')        
         ```
     </TabItem>
@@ -109,12 +112,13 @@ image_path = "CLIP.png"
                 return self.transformation_chain(image).to(self.device)
         
             
-        model = HuggingFaceEmbeddings()
-        superdupermodel = TorchModel(identifier='my-vision-model-huggingface', object=model, preprocess=Preprocessor(model.extractor))        
+        embedding_model = HuggingFaceEmbeddings()
+        superdupermodel = TorchModel(identifier='my-vision-model-huggingface', object=embedding_model, preprocess=Preprocessor(embedding_model.extractor))        
         ```
     </TabItem>
 </Tabs>
 ```python
-model.predict(Image.open(image_path))
+embedding_model.predict(Image.open(image_path))
 ```
 
+<DownloadButton filename="build_image_embedding_model.md" />

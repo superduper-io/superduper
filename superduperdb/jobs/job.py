@@ -56,7 +56,7 @@ class Job:
         self.callable = None
         self.db = None
         self.future = None
-        self.job_id = None
+        self.job_id = self.identifier
         self.db = db
 
     def watch(self):
@@ -109,9 +109,10 @@ class FunctionJob(Job):
         callable: t.Callable,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
+        identifier: t.Optional[str] = None,
         db: t.Optional['Datalayer'] = None,
     ):
-        super().__init__(args=args, kwargs=kwargs, db=db)
+        super().__init__(args=args, kwargs=kwargs, db=db, identifier=identifier)
         self.callable = callable
 
     def dict(self):
@@ -126,9 +127,7 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.job_id = self.db.compute.submit_remote(self.identifier, dependencies=dependencies)
-        self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
-        self.future = self.job_id
+        self.future = self.db.compute.submit_remote(self.identifier, dependencies=dependencies)
         return
 
     def submit(self, dependencies=(), update_job=True):
@@ -136,7 +135,7 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.future, self.job_id = self.db.compute.submit(
+        self.future = self.db.compute.submit(
             callable_job,
             cfg=s.CFG.dict(),
             function_to_call=self.callable,
@@ -146,8 +145,6 @@ class FunctionJob(Job):
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
         )
-        if update_job and self.future:
-            self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return
 
     def __call__(self, db: t.Union['Datalayer', None], dependencies=()):
@@ -193,11 +190,12 @@ class ComponentJob(Job):
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
         compute_kwargs: t.Dict = {},
+        identifier: t.Optional[str] = None,
         db: t.Optional['Datalayer'] = None,
     ):
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
-        super().__init__(args=args, kwargs=kwargs, db=db)
+        super().__init__(args=args, kwargs=kwargs, db=db, identifier=identifier)
 
         self.component_identifier = component_identifier
         self.method_name = method_name
@@ -223,13 +221,11 @@ class ComponentJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.db.compute.submit_remote(
+        self.future = self.db.compute.submit_remote(
             self.identifier,
             dependencies=dependencies,
             compute_kwargs=self.compute_kwargs,
         )
-        self.db.metadata.update_job(self.identifier, 'job_id', self.identifier)
-        self.future = self.identifier
         return
 
     def submit(self, dependencies=(), update_job=True):
@@ -237,7 +233,7 @@ class ComponentJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.future, self.job_id = self.db.compute.submit(
+        self.future = self.db.compute.submit(
             method_job,
             cfg=s.CFG.dict(),
             type_id=self.type_id,
@@ -250,8 +246,6 @@ class ComponentJob(Job):
             db=self.db if self.db.compute.type == 'local' else None,
             compute_kwargs=self.compute_kwargs
         )
-        if update_job and self.future:
-            self.db.metadata.update_job(self.identifier, 'job_id', self.future)
         return self
 
     def __call__(self, db: t.Union['Datalayer', None] = None, dependencies=()):

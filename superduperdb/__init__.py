@@ -27,6 +27,7 @@ from .components.model import (
     Validation,
     model,
 )
+from .components.plugin import Plugin
 from .components.schema import Schema
 from .components.template import Template
 from .components.vector_index import VectorIndex, vector
@@ -56,6 +57,7 @@ __all__ = (
     'vector',
     'Dataset',
     'Metric',
+    'Plugin',
     'Schema',
     'Application',
     'mongodb',

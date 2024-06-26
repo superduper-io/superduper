@@ -270,6 +270,8 @@ class MongoMetaDataStore(MetaDataStore):
         :param allow_hidden: whether to load hidden components
         """
         r = self.component_collection.find_one({'uuid': uuid})
+        if r is None:
+            raise FileNotFoundError(f'Can\'t find {uuid} in metadata')
         return self._get_component(
             type_id=r['type_id'],
             identifier=r['identifier'],

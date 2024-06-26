@@ -1,6 +1,6 @@
 # `Template`
 
-- A `Component` containing placeholders flagged with `Variable` instances
+- A `Component` containing placeholders flagged with `<var:?>`
 - A `Template` may be used as the basis for applying multiple `Component` instances
 - `Template` is leveraged by `Application`.
 - Snapshot allows users to know that their validation comparisons are apples-to-apples
@@ -15,14 +15,14 @@ from superduperdb import *
 m = Listener(
     model=ObjectModel(
         object=lambda x: x + 2,
-        identifier=Variable('model_id'),
+        identifier='<var:model_id>',
     ),
     select=db['=collection'].find(),
-    key=Variable('key')
+    key='<var:key>',
 )
 
 # optional "info" parameter provides details about usage (depends on developer use-case)
-t = Template(m, info={'key': {'type': 'str'}, 'collection': {'type': str}, 'model_id': {'type': 'str'}})
+t = Template('my-template', template=m.encode())
 
 # doesn't trigger work/ computations
 # just "saves" the template and its artifacts

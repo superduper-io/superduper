@@ -1020,6 +1020,9 @@ class Model(Component, metaclass=ModelMeta):
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
         db.replace(self, upsert=True)
 
+    def post_create(self, db):
+        db.compute.component_hook(self.identifier)
+
 
 @dc.dataclass(kw_only=True)
 class _DeviceManaged:

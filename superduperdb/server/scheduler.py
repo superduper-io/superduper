@@ -60,6 +60,7 @@ def submit(job: JobSubmit, db: Datalayer = DatalayerDependency()):
         job = ComponentJob(
             args=args,
             kwargs=kwargs,
+            identifier=job.identifier,
             method_name=method_name,
             component_identifier=component_identifier,
             type_id=type_id,
@@ -72,7 +73,7 @@ def submit(job: JobSubmit, db: Datalayer = DatalayerDependency()):
         import_path, function = function.split(';')
         callable = getattr(importlib.import_module(import_path), function)
 
-        job = FunctionJob(args=args, kwargs=kwargs, callable=callable, db=db)
+        job = FunctionJob(args=args, kwargs=kwargs, callable=callable, db=db, identifier=job.identifier)
     else:
         raise TypeError
     job.submit(dependencies=deps_future, update_job=True)

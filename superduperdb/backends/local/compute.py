@@ -30,6 +30,9 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
+    def component_hook(self, component_id):
+        pass
+
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
     ) -> t.Tuple[str, str]:

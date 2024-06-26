@@ -126,7 +126,7 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.job_id = self.db.compute.submit(self.identifier, dependencies=dependencies)
+        self.job_id = self.db.compute.submit_remote(self.identifier, dependencies=dependencies)
         self.db.metadata.update_job(self.identifier, 'job_id', self.job_id)
         self.future = self.job_id
         return
@@ -223,7 +223,7 @@ class ComponentJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.db.compute.submit(
+        self.db.compute.submit_remote(
             self.identifier,
             dependencies=dependencies,
             compute_kwargs=self.compute_kwargs,
@@ -248,6 +248,7 @@ class ComponentJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
+            compute_kwargs=self.compute_kwargs
         )
         if update_job and self.future:
             self.db.metadata.update_job(self.identifier, 'job_id', self.future)

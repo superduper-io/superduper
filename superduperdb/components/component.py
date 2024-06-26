@@ -23,6 +23,7 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
     from superduperdb.components.datatype import DataType
+    from superduperdb.components.plugin import Plugin
 
 
 def _build_info_from_path(path: str):
@@ -107,6 +108,7 @@ class Component(Leaf):
 
     :param artifacts: A dictionary of artifacts paths and `DataType` objects
     :param upstream: A list of upstream components
+    :param plugins: A list of plugins to be used in the component.
     """
 
     type_id: t.ClassVar[str] = 'component'
@@ -115,6 +117,7 @@ class Component(Leaf):
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
     upstream: t.Optional[t.List["Component"]] = None
+    plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @property

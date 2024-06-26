@@ -579,7 +579,6 @@ class Model(Component, metaclass=ModelMeta):
             component_identifier=self.identifier,
             method_name='predict_in_db',
             type_id='model',
-            args=[X],
             kwargs={
                 'select': select.encode() if select else None,
                 'predict_id': predict_id,
@@ -587,6 +586,7 @@ class Model(Component, metaclass=ModelMeta):
                 'max_chunk_size': max_chunk_size,
                 'in_memory': in_memory,
                 'overwrite': overwrite,
+                'X': X,
             },
             compute_kwargs=self.compute_kwargs,
         )

@@ -1,0 +1,164 @@
+import json
+import os
+import sys
+
+import pytest
+
+from superduperdb.components.plugin import Plugin
+
+PYTHON_CODE = """
+from superduperdb import Model
+
+class PModel(Model):
+    def predict(self) -> int:
+        return "{plugin_type}"
+"""
+
+
+def write_path(path, code):
+    with open(path, "w") as f:
+        f.write(code)
+
+
+def create_module_plugin(tempdirname, module_name):
+    code = PYTHON_CODE.format(plugin_type=module_name)
+    write_path(os.path.join(tempdirname, f"p_{module_name}.py"), code)
+    plugin_path = os.path.join(tempdirname, f"p_{module_name}.py")
+    return plugin_path
+
+
+def create_package_plugin(
+    tempdirname, package_name, include_init=True, requirements=None
+):
+    code = PYTHON_CODE.format(plugin_type=package_name)
+    plugin_path = os.path.join(tempdirname, f"p_{package_name}")
+    os.makedirs(plugin_path)
+
+    if include_init:
+        write_path(os.path.join(plugin_path, "__init__.py"), "")
+
+    if requirements:
+        code = PYTHON_CODE.format(plugin_type=package_name)
+        code = "import matplotlib\nversion=matplotlib.__version__" + code
+        write_path(
+            os.path.join(plugin_path, "requirements.txt"),
+            "matplotlib",
+        )
+    else:
+        code = PYTHON_CODE.format(plugin_type=package_name)
+
+    write_path(os.path.join(plugin_path, f"p_{package_name}.py"), code)
+    return plugin_path
+
+
+def create_import_plugin(tempdirname):
+    import_path = os.path.join(tempdirname, "import")
+    component_dict = {
+        "_base": "?plugin",
+        "_builds": {
+            "file_lazy": {
+                "_path": "superduperdb.components.datatype.get_serializer",
+                "method": "file",
+                "encodable": "lazy_file",
+            },
+            "file_id": {
+                "_path": "superduperdb.components.datatype.LazyFile",
+                "datatype": "?file_lazy",
+                "x": "&:file:p_import:file_id",
+            },
+            "plugin": {
+                "_path": "superduperdb.components.plugin.Plugin",
+                "path": "?file_id",
+            },
+        },
+    }
+    os.makedirs(import_path)
+    write_path(os.path.join(import_path, "component.json"), json.dumps(component_dict))
+    create_package_plugin(
+        os.path.join(import_path, "files", "file_id"),
+        "import",
+    )
+    return import_path
+
+
+def test_module(tmpdir):
+    with pytest.raises(ImportError):
+        import p_module
+
+        print(p_module)
+
+    path = create_module_plugin(tmpdir, "module")
+    Plugin(path=path)
+    from p_module import PModel
+
+    model = PModel("test")
+    assert model.predict() == "module"
+
+
+def test_package(tmpdir):
+    with pytest.raises(ImportError):
+        import p_package
+
+        print(p_package)
+
+    path = create_package_plugin(tmpdir, "package")
+    Plugin(path=path)
+    from p_package.p_package import PModel
+
+    model = PModel("test")
+    assert model.predict() == "package"
+
+
+def test_directory(tmpdir):
+    with pytest.raises(ImportError):
+        import p_directory
+
+        print(p_directory)
+
+    path = create_package_plugin(tmpdir, "directory")
+    Plugin(path=path)
+    from p_directory.p_directory import PModel
+
+    model = PModel("test")
+
+    assert model.predict() == "directory"
+
+
+def test_repeated_loading(tmpdir):
+    path = create_module_plugin(tmpdir, "repeated")
+    Plugin(path=path, uuid="test")
+    assert "p_repeated" in sys.modules
+    assert "_PLUGIN_test" in os.environ
+
+    sys.modules.pop("p_repeated")
+    Plugin(path=path, uuid="test")
+    assert "p_repeated" not in sys.modules
+
+
+def test_requirements(tmpdir):
+    with pytest.raises(ImportError):
+        import p_pip
+
+        print(p_pip)
+
+    path = create_package_plugin(tmpdir, "pip", requirements=True)
+    Plugin(path=path)
+
+    from p_pip.p_pip import version
+
+    assert version
+
+
+def test_import(tmpdir):
+    with pytest.raises(ImportError):
+        import p_import
+
+        print(p_import)
+
+    path = create_import_plugin(tmpdir)
+    Plugin.read(path)
+
+    from p_import.p_import import PModel
+
+    model = PModel("test")
+    assert model.predict() == "import"

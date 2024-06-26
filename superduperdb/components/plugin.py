@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import shutil
+import subprocess
 import sys
 import typing as t
 
@@ -9,6 +10,13 @@ from superduperdb.components.datatype import LazyFile, file_lazy
 
 
 class Plugin(Component):
+    """Plugin component allows to install and use external python packages as plugins.
+
+    :param path: Path to the plugin package or module.
+    :param identifier: Unique identifier for the plugin.
+    :param cache_path: Path to the cache directory where the plugin will be stored.
+    """
+
     type_id: t.ClassVar[str] = "plugin"
     _artifacts: t.ClassVar = (("path", file_lazy),)
     path: str
@@ -17,36 +25,84 @@ class Plugin(Component):
 
     def __post_init__(self, db, artifacts):
         if isinstance(self.path, LazyFile):
-            self.prepare_plugin()
+            self._prepare_plugin()
         else:
             path_name = os.path.basename(self.path.rstrip("/"))
             self.identifier = self.identifier or f"plugin-{path_name}"
+        self._install()
         super().__post_init__(db, artifacts)
-        self.install()
 
-    def install(self):
-        logging.info(f"Installing plugin {self.identifier}")
+    def _install(self):
+        logging.debug(f"Installing plugin {self.identifier}")
         package_path = self.path
-        path_name = os.path.basename(self.path.rstrip("/"))
-        if "__init__.py" in os.listdir(package_path):
-            logging.info(f"Plugin {self.identifier} is a package")
-            spec = importlib.util.spec_from_file_location(
-                path_name, os.path.join(package_path, "__init__.py")
-            )
-            legal_tech = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = legal_tech
-        else:
-            logging.info(f"Plugin {self.identifier} is a module")
-            sys.path.append(package_path)
+        module_name = os.path.basename(self.path.rstrip("/"))
 
-    def prepare_plugin(self):
+        # Check if plugin is already installed
+        check_tag = f"_PLUGIN_{self.uuid}"
+
+        if check_tag in os.environ:
+            logging.debug(f"Plugin {self.identifier} already installed")
+            return
+
+        if os.path.isdir(package_path):
+            import_package_path = os.path.join(package_path, "__init__.py")
+
+            if not os.path.exists(import_package_path):
+                logging.info(f"Creating __init__.py file in {package_path}")
+                open(import_package_path, "w").close()
+
+            logging.debug(f"Plugin {self.identifier} is a package")
+            self._pip_install(package_path)
+        else:
+            module_name = module_name.split(".")[0]
+            import_package_path = package_path
+
+            if package_path.endswith(".py"):
+                logging.debug(f"Plugin {self.identifier} is a standalone Python file")
+            else:
+                raise ValueError(
+                    (
+                        f"Plugin {self.identifier} path "
+                        "is not a valid Python file or directory"
+                    )
+                )
+
+        spec = importlib.util.spec_from_file_location(module_name, import_package_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[module_name] = module
+
+        os.environ[check_tag] = "1"
+
+    def _pip_install(self, package_path):
+        requirement_path = os.path.join(package_path, "requirements.txt")
+        if not os.path.exists(requirement_path):
+            logging.debug(f"No requirements file found for plugin {self.identifier}")
+            return
+        logging.debug(f"Installing requirements for plugin {self.identifier}")
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", requirement_path],
+            check=True,
+        )
+
+    def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
-        logging.info(f"Preparing plugin {plugin_name_tag}")
         assert isinstance(self.path, LazyFile)
+        uuid_path = os.path.join(self.cache_path, self.uuid)
+        # Check if plugin is already in cache
+        if os.path.exists(uuid_path):
+            names = os.listdir(uuid_path)
+            assert len(names) == 1, f"Multiple plugins found in {uuid_path}"
+            self.path = os.path.join(uuid_path, names[0])
+            return
+
+        logging.info(f"Preparing plugin {plugin_name_tag}")
         self.path = self.path.unpack()
         assert os.path.exists(
             self.path
         ), f"Plugin {plugin_name_tag} not found at {self.path}"
+
+        # Pull the plugin to cache
         logging.info(f"Downloading plugin {self.identifier} to {self.path}")
         dist = os.path.join(self.cache_path, self.uuid, os.path.basename(self.path))
         if os.path.exists(dist):
@@ -54,4 +110,5 @@ class Plugin(Component):
         else:
             logging.info(f"Copying plugin [{self.identifier}] to {dist}")
             shutil.copytree(self.path, dist)
+
         self.path = dist

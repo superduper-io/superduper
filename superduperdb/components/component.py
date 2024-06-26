@@ -12,7 +12,7 @@ from functools import wraps
 import yaml
 
 from superduperdb import logging
-from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS
+from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduperdb.base.leaf import Leaf
 from superduperdb.jobs.job import ComponentJob, Job
 
@@ -21,28 +21,40 @@ if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.components.dataset import Dataset
     from superduperdb.components.datatype import DataType
+    from superduperdb.components.plugin import Plugin
 
 
 def _build_info_from_path(path: str):
     try:
-        config = os.path.join(path, 'component.json')
+        config = os.path.join(path, "component.json")
         with open(config) as f:
             config_object = json.load(f)
     except FileNotFoundError:
         try:
-            config = os.path.join(path, 'component.yaml')
+            config = os.path.join(path, "component.yaml")
             with open(config) as f:
                 config_object = yaml.safe_load(f)
         except FileNotFoundError as e:
-            raise FileNotFoundError('No component.json or component.yaml found') from e
+            raise FileNotFoundError("No component.json or component.yaml found") from e
 
     config_object[KEY_BLOBS] = {}
-    if os.path.exists(os.path.join(path, 'blobs')):
+    if os.path.exists(os.path.join(path, "blobs")):
         blobs = {}
-        for file_id in os.listdir(os.path.join(path, 'blobs')):
-            with open(os.path.join(path, 'blobs', file_id), 'rb') as f:
+        for file_id in os.listdir(os.path.join(path, "blobs")):
+            with open(os.path.join(path, "blobs", file_id), "rb") as f:
                 blobs[file_id] = f.read()
         config_object[KEY_BLOBS] = blobs
+
+    config_object[KEY_FILES] = {}
+    if os.path.exists(os.path.join(path, "files")):
+        files = {}
+        for file_id in os.listdir(os.path.join(path, "files")):
+            sub_paths = os.listdir(os.path.join(path, "files", file_id))
+            assert len(sub_paths) == 1, f"Multiple files found in {file_id}"
+            file_name = sub_paths[0]
+            files[file_id] = os.path.join(path, "files", file_id, file_name)
+        config_object[KEY_FILES] = files
+
     return config_object
 
 
@@ -93,6 +105,7 @@ class Component(Leaf):
     that can be saved into a database.
 
     :param artifacts: A dictionary of artifacts paths and `DataType` objects
+    :param plugins: A list of plugins to be used in the component.
     """
 
     type_id: t.ClassVar[str] = 'component'
@@ -100,6 +113,7 @@ class Component(Leaf):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
+    plugins: t.Optional[t.List["Plugin"]] = None
 
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
@@ -338,7 +352,7 @@ class Component(Leaf):
     def export(
         self,
         path: t.Optional[str] = None,
-        format: str = 'json',
+        format: str = "json",
         zip: bool = False,
         defaults: bool = False,
         metadata: bool = False,
@@ -357,7 +371,7 @@ class Component(Leaf):
         ```
         """
         if path is None:
-            path = f'./{self.identifier}'
+            path = f"./{self.identifier}"
 
         r = self.encode(defaults=defaults, metadata=metadata)
 
@@ -375,23 +389,40 @@ class Component(Leaf):
 
         if hr:
             r = rewrite_keys(
-                r, {k: f'blob_{i}' for i, k in enumerate(r.get(KEY_BLOBS))}
+                r, {k: f"blob_{i}" for i, k in enumerate(r.get(KEY_BLOBS))}
             )
 
         os.makedirs(path, exist_ok=True)
         if r.get(KEY_BLOBS):
-            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
+            os.makedirs(os.path.join(path, "blobs"), exist_ok=True)
             for file_id, bytestr_ in r[KEY_BLOBS].items():
-                filepath = os.path.join(path, 'blobs', file_id)
-                with open(filepath, 'wb') as ff:
+                filepath = os.path.join(path, "blobs", file_id)
+                with open(filepath, "wb") as ff:
                     ff.write(bytestr_)
 
         r.pop(KEY_BLOBS)
-        if format == 'json':
-            with open(os.path.join(path, 'component.json'), 'w') as f:
+
+        if r.get(KEY_FILES):
+            os.makedirs(os.path.join(path, "files"), exist_ok=True)
+            for file_id, file_path in r[KEY_FILES].items():
+                file_path = file_path.rstrip("/")
+                assert os.path.exists(file_path), f"File {file_path} not found"
+                name = os.path.basename(file_path)
+                save_path = os.path.join(path, "files", file_id, name)
+                if os.path.isdir(file_path):
+                    import shutil
+
+                    shutil.copytree(file_path, save_path)
+                else:
+                    shutil.copy(file_path, save_path)
+
+        r.pop(KEY_FILES)
+
+        if format == "json":
+            with open(os.path.join(path, "component.json"), "w") as f:
                 json.dump(r, f, indent=2)
 
-        elif format == 'yaml':
+        elif format == "yaml":
             import re
             from io import StringIO
 
@@ -400,12 +431,12 @@ class Component(Leaf):
             yaml = YAML()
 
             def custom_str_representer(dumper, data):
-                if re.search(r'[^_a-zA-Z0-9 ]', data):
+                if re.search(r"[^_a-zA-Z0-9 ]", data):
                     return dumper.represent_scalar(
-                        'tag:yaml.org,2002:str', data, style='"'
+                        "tag:yaml.org,2002:str", data, style='"'
                     )
                 else:
-                    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+                    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
             yaml.representer.add_representer(str, custom_str_representer)
 
@@ -414,13 +445,13 @@ class Component(Leaf):
 
             output = str(stream.getvalue())
 
-            with open(os.path.join(path, 'component.yaml'), 'w') as f:
+            with open(os.path.join(path, "component.yaml"), "w") as f:
                 f.write(output)
 
         from superduperdb import REQUIRES
 
-        with open(os.path.join(path, 'requirements.txt'), 'w') as f:
-            f.write('\n'.join(REQUIRES))
+        with open(os.path.join(path, "requirements.txt"), "w") as f:
+            f.write("\n".join(REQUIRES))
 
         if zip:
             self._zip_export(path)

@@ -20,7 +20,7 @@ from superduperdb.base.config import BytesEncoding
 from superduperdb.base.leaf import Leaf
 from superduperdb.components.component import Component, ensure_initialized
 from superduperdb.misc.annotations import component
-from superduperdb.misc.hash import random_sha1
+from superduperdb.misc.hash import hash_path
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -666,7 +666,7 @@ class File(_BaseEncodable):
 
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""
-        self.identifier = self.identifier or random_sha1()
+        self.identifier = self.identifier or hash_path(self.x)
         r = super().dict(metadata=metadata, defaults=defaults)
         r['x'] = FileItem(
             identifier=self.identifier, path=self.x, file_name=self._file_name

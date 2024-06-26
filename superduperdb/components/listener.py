@@ -3,7 +3,7 @@ import typing as t
 
 from overrides import override
 
-from superduperdb import CFG
+from superduperdb import CFG, logging
 from superduperdb.backends.base.query import Query
 from superduperdb.base.document import _OUTPUTS_KEY
 from superduperdb.base.enums import DBType
@@ -169,8 +169,14 @@ class Listener(Component):
 
         dependencies_ids = []
         for predict_id in self.dependencies:
-            upstream_listener = db.load(uuid=predict_id)
-            upstream_model = upstream_listener.model
+            try:
+                upstream_listener = db.load(uuid=predict_id)
+                upstream_model = upstream_listener.model
+            except Exception:
+                logging.warn(
+                    f"Could not find the upstream listener with uuid {predict_id}"
+                )
+                continue
             jobs = self.db.metadata.show_jobs(upstream_model.identifier, 'model') or []
             job_ids = [job['job_id'] for job in jobs]
             dependencies_ids.extend(job_ids)

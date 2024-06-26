@@ -129,8 +129,8 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
         component_identifier=predict_mixin.identifier,  # Adjust according to your setup
         method_name='predict_in_db',
         type_id='model',
-        args=[X],
         kwargs={
+            'X': X,
             'select': b'encoded_select',
             'ids': ids,
             'predict_id': 'test',

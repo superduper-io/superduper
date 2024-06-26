@@ -410,17 +410,6 @@ class DatabaseChangeDataCapture:
             t.Union['TableOrCollection', 'IbisQuery']
         ] = []
 
-        listeners = self.db.show('listener')
-        if listeners:
-            from superduperdb.components.listener import Listener
-
-            for listener in listeners:
-                listener = db.load(identifier=listener, type_id='listener')
-                assert isinstance(listener, Listener)
-                if listener.select is None:
-                    continue
-                self.add(listener)
-
     @property
     def running(self) -> bool:
         """Check if the cdc service is running."""
@@ -428,10 +417,23 @@ class DatabaseChangeDataCapture:
 
     def start(self):
         """Start the cdc service # noqa."""
+        self._add_listener()
         self._running = True
 
         for collection in self._cdc_existing_collections:
             self.listen(collection)
+
+    def _add_listener(self):
+        listeners = self.db.show('listener')
+        if listeners:
+            from superduperdb.components.listener import Listener
+
+            for listener in listeners:
+                listener = self.db.load(identifier=listener, type_id='listener')
+                assert isinstance(listener, Listener)
+                if listener.select is None:
+                    continue
+                self.add(listener)
 
     def listen(
         self,

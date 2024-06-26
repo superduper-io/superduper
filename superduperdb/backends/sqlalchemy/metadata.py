@@ -519,8 +519,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             # Execute the query and collect results
             res = self.query_results(self.job_table, stmt, session)
 
-            # Return the list of identifiers
-            return [r['identifier'] for r in res]
+            return res
 
     def update_job(self, job_id: str, key: str, value: t.Any):
         """Update the job with the given key and value.

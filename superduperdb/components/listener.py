@@ -11,7 +11,7 @@ from superduperdb.components.model import Mapping
 from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
-from .component import Component, ComponentTuple
+from .component import Component
 from .model import Model, ModelInputType
 
 if t.TYPE_CHECKING:
@@ -121,7 +121,7 @@ class Listener(Component):
             db.add(output_table)
 
     @property
-    def dependencies(self) -> t.List[ComponentTuple]:
+    def dependencies(self):
         """Listener model dependencies."""
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
@@ -168,8 +168,10 @@ class Listener(Component):
         assert not isinstance(self.model, str)
 
         dependencies_ids = []
-        for model_name in self.dependencies:
-            jobs = self.db.metadata.show_jobs(str(model_name), 'model') or []
+        for predict_id in self.dependencies:
+            upstream_listener = db.load(uuid=predict_id)
+            upstream_model = upstream_listener.model
+            jobs = self.db.metadata.show_jobs(upstream_model.identifier, 'model') or []
             job_ids = [job['job_id'] for job in jobs]
             dependencies_ids.extend(job_ids)
 

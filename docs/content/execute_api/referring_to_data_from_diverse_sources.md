@@ -17,9 +17,6 @@ on the public internet.
 ```python
 import io
 from PyPDF2 import PdfReader
-from superduperdb.backends.mongodb import Collection
-
-collection = Collection('pdf-files')
 
 def load_pdf(bytes):
     text = []
@@ -38,14 +35,12 @@ PDF_URI = (
 # This command inserts a record which refers to this URI
 # and also downloads the content from the URI and saves
 # it in the record
-db.execute(
-    collection.insert_one(Document({'txt': pdf_enc(uri=PDF_URI)}))
-)
+db['pdf-files'].insert_one(Document({'txt': pdf_enc(uri=PDF_URI)})).execute()
 ```
 
 Now when the data is loaded from the database, it is loaded as text:
 
 ```python
->>> r = db.execute(collection.find_one())
+>>> r = collection.find_one().execute()
 >>> print(r['txt'])
 ```

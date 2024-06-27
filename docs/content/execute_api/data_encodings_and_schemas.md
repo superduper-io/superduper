@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # (Optional) Setting up tables and encodings
 
 `superduperdb` has flexible support for data-types. In both MongoDB and SQL databases,

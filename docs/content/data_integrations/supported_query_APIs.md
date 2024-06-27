@@ -16,21 +16,13 @@ Queries in these two-worlds can be built by importing the table/collection class
 each data backend. With `pymongo`, one can write:
 
 ```python
-from superduperdb.backends.mongodb import Collection
-
-products = Collection('products')
-
-query = products.find({'brand': 'Nike'}, {'_id': 1}).limit(10)
+query = db['products'].find({'brand': 'Nike'}, {'_id': 1}).limit(10)
 ```
 
 In `ibis`, one would write:
 
 ```python
-from superduperdb.backends.ibis import Table
-
-products = Table('products')
-
-query = products.filter(products.brand == 'Nike').select('id').limit(10)
+query = db['products'].filter(products.brand == 'Nike').select('id').limit(10)
 ```
 
 ## Hybrid API

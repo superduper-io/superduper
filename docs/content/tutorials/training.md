@@ -59,7 +59,7 @@ document_list = [Document({'img': x[0], 'class': x[1]}) for x in mnist_data]
 random.shuffle(document_list)
 data = document_list[:1000]
 
-# Insert the selected data into the mnist_collection which we mentioned before like: mnist_collection = Collection('mnist')
+# Insert the selected data into the mnist_collection which we mentioned before 
 db['mnist'].insert_many(data[:-100]).execute()
 ```
 

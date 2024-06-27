@@ -25,7 +25,6 @@ For example, if you try the following snippet:
 import pickle
 import uuid
 from superduperdb import DataType, Document, superduper
-from superduperdb.backends.mongodb import Collection
 
 db = superduper('mongomock://test', artifact_store='filesystem://./artifacts')
 
@@ -38,11 +37,9 @@ dt = DataType(
 
 db.apply(dt)
 
-my_collection = Collection('my_collection')
-
 my_id = str(uuid.uuid4())
 
-db.execute(my_collection.insert_one(Document({'id': my_id, 'x': dt('This is a test')})))
+db['my_collection'].insert_one(Document({'id': my_id, 'x': dt('This is a test')})).execute()
 ```
 
 If you now reload the data with this query:

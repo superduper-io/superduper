@@ -45,8 +45,7 @@ The order in which these listeners are applied respects
 the graph topology.
 
 ```python
-from superduperdb.backends.mongodb import Collection
-q = Collection('my_documents').find()
+q = db['my_documents'].find()
 stack = out3.to_listeners(q, 'my_stack')
 db.apply(stack)
 ```

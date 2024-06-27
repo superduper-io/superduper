@@ -13,10 +13,6 @@ In general the MongoDB query API works exactly as per `pymongo`, with the except
 ## Inserts
 
 ```python
-from superduperdb.backends.mongodb import Collection
-
-collection = Collection('my-collection-name')
-
 db['my-collection'].insert_many([{'my-field': ..., ...}
     for _ in range(20)
 ]).execute()

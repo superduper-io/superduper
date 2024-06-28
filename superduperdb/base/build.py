@@ -139,7 +139,8 @@ def build_compute(compute):
     :param compute: Compute uri.
     """
     logging.info("Connecting to compute client:", compute)
-    spath = compute._path.split('.')
+    path = compute._path or 'superduperdb.backends.local.compute.LocalComputeBackend'
+    spath = path.split('.')
     path, cls = '.'.join(spath[:-1]), spath[-1]
 
     module = importlib.import_module(path)

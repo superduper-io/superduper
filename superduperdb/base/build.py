@@ -1,4 +1,3 @@
-import importlib
 import re
 import typing as t
 
@@ -140,8 +139,7 @@ def build_compute(compute):
     :param compute: Compute uri.
     """
     logging.info("Connecting to compute client:", compute)
-    path = compute._path or 'superduperdb.backends.local.compute.LocalComputeBackend'
-    spath = path.split('.')
+    spath = compute._path.split('.')
     path, cls = '.'.join(spath[:-1]), spath[-1]
 
     module = importlib.import_module(path)

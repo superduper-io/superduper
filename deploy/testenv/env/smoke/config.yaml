@@ -5,6 +5,7 @@ cluster:
     uri: http://cdc:8001
   compute:
     uri: http://ray-head:8265
+    _path: superduperdb.backends.ray.compute.RayComputeBackend
   vector_search:
     uri: http://vector-search:8000
     backfill_batch_size: 100

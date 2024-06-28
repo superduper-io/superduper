@@ -217,6 +217,8 @@ class Leaf(metaclass=LeafMeta):
 
         if not defaults:
             for k, v in self.defaults.items():
+                if k in {'identifier'}:
+                    continue
                 if k in r and r[k] == v:
                     del r[k]
 

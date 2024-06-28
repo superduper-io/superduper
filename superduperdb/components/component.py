@@ -6,6 +6,7 @@ import dataclasses as dc
 import json
 import os
 import typing as t
+import uuid
 from collections import namedtuple
 from functools import wraps
 
@@ -180,11 +181,17 @@ class Component(Leaf):
     @property
     def metadata(self):
         """Get metadata of the component."""
-        return {
+        metadata = {
             'type_id': self.type_id,
             'version': self.version,
-            'uuid': self.uuid,
         }
+
+        try:
+            uuid.UUID(self.uuid)
+            metadata['uuid'] = self.uuid
+        except ValueError:
+            pass
+        return metadata
 
     @property
     def dependencies(self):

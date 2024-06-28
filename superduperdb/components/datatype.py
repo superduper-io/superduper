@@ -722,7 +722,10 @@ methods: t.Dict[str, t.Dict] = {
 
 @component()
 def get_serializer(
-    identifier: str, method: str, encodable: str, db: t.Optional['Datalayer'] = None
+    identifier: str,
+    method: str,
+    encodable: str = "encodable",
+    db: t.Optional['Datalayer'] = None,
 ):
     """Get a serializer.
 

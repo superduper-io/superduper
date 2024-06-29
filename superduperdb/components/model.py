@@ -591,6 +591,8 @@ class Model(Component, metaclass=ModelMeta):
                 'max_chunk_size': max_chunk_size,
                 'in_memory': in_memory,
                 'overwrite': overwrite,
+                'X': X,
+                **self.predict_kwargs
             },
             compute_kwargs=self.compute_kwargs,
         )

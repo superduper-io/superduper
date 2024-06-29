@@ -194,6 +194,7 @@ class ComponentJob(Job):
         kwargs: t.Optional[t.Dict] = None,
         compute_kwargs: t.Dict = {},
         db: t.Optional['Datalayer'] = None,
+        component: 'Component' =None
     ):
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
@@ -202,7 +203,7 @@ class ComponentJob(Job):
         self.component_identifier = component_identifier
         self.method_name = method_name
         self.type_id = type_id
-        self._component = None
+        self._component = component
 
     @property
     def component(self):
@@ -248,6 +249,7 @@ class ComponentJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
+            component = self.component
         )
         if update_job and self.future:
             self.db.metadata.update_job(self.identifier, 'job_id', self.future)

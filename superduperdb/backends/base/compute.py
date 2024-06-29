@@ -29,6 +29,10 @@ class ComputeBackend(ABC):
         """Returns a local version of self."""
         pass
 
+    def broadcast(self, ids: t.List, to: tuple = ()):
+        pass
+
+
     @abstractmethod
     def submit(self, function: t.Callable, **kwargs) -> t.Any:
         """

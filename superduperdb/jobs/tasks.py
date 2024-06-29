@@ -14,6 +14,7 @@ def method_job(
     job_id,
     dependencies=(),
     db: t.Optional['Datalayer'] = None,
+    component: 'Component' = None
 ):
     """
     Run a method on a component in the database.
@@ -42,8 +43,8 @@ def method_job(
     # Ray cluster would be created inside the job
     if db is None:
         db = build_datalayer(cfg=cfg, cluster__compute__uri=None)
-
-    component = db.load(type_id, identifier)
+    if not component:
+        component = db.load(type_id, identifier)
     # TODO: Move the unpack method to the better place
     from superduperdb.components.component import Component
 

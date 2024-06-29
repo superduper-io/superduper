@@ -107,6 +107,7 @@ class Datalayer:
         self.cdc = DatabaseChangeDataCapture(self)
 
         self.compute = compute
+        self.compute.queue.set_db(self)
         self._server_mode = False
         self._cfg = s.CFG
 
@@ -341,7 +342,7 @@ class Datalayer:
         """
         result = delete.do_execute(self)
         if refresh and not self.cdc.running:
-            return result, self.refresh_after_delete(delete, ids=result)
+            return result, self.on_db_event(delete, ids=result, type='delete')
         return result, None
 
     def _insert(
@@ -380,7 +381,7 @@ class Datalayer:
             if cdc_status:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
-                return inserted_ids, self.refresh_after_update_or_insert(
+                return inserted_ids, self.on_db_event(
                     insert,
                     ids=inserted_ids,
                 )
@@ -395,30 +396,13 @@ class Datalayer:
         """
         return select.do_execute(db=self)
 
-    def refresh_after_delete(
-        self,
-        query: Query,
-        ids: t.Sequence[str],
-    ):
-        """
-        Trigger cleanup jobs after data deletion.
 
-        :param query: The select or update query object that reduces
-                      the scope of computations.
-        :param ids: IDs that further reduce the scope of computations.
-        """
-        task_workflow: TaskWorkflow = self._build_delete_task_workflow(
-            query,
-            ids=ids,
-        )
-        task_workflow.run_jobs()
-        return task_workflow
-
-    def refresh_after_update_or_insert(
+    def on_db_event(
         self,
         query: Query,
         ids: t.Sequence[str],
         overwrite: bool = False,
+        type: str = 'insert'
     ):
         """
         Trigger computation jobs after data insertion.
@@ -428,13 +412,9 @@ class Datalayer:
         :param ids: IDs that further reduce the scope of computations.
         :param overwrite: If True, cascade the value to the 'predict_in_db' job.
         """
-        task_workflow: TaskWorkflow = self._build_task_workflow(
-            query.select_table,  # TODO can be replaced by select_using_ids
-            ids=ids,
-            overwrite=overwrite,
-        )
-        task_workflow.run_jobs()
-        return task_workflow
+        deps = query.listeners()
+        events = [{'identifier': id, 'type': type} for id in ids]
+        return self.compute.broadcast(events, to=deps)
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
@@ -457,16 +437,17 @@ class Datalayer:
                     # Overwrite should be true for update operation since updates
                     # could be done on collections with already existing outputs
                     # We need overwrite ouptuts on those select and recompute predict
-                    job_update = self.refresh_after_update_or_insert(
+                    job_update = self.on_db_event(
                         query=q, ids=ids, overwrite=True
                     )
                     jobs.append(job_update)
 
                     q = d['query']
                     ids = d['ids']
-                    job_update = self.refresh_after_delete(
+                    job_update = self.on_db_event(
                         query=q,
                         ids=ids,
+                        type='delete'
                     )
                     jobs.append(job_update)
 
@@ -493,8 +474,8 @@ class Datalayer:
                 # Overwrite should be true since updates could be done on collections
                 # with already existing outputs.
                 # We need overwrite outputs on those select and recompute predict
-                return updated_ids, self.refresh_after_update_or_insert(
-                    query=update, ids=updated_ids, overwrite=True
+                return updated_ids, self.on_db_event(
+                    query=update, ids=updated_ids, overwrite=True, type='insert'
                 )
         return updated_ids, None
 
@@ -652,173 +633,6 @@ class Datalayer:
             except KeyError:
                 raise exceptions.ComponentException('%s not found in %s cache'.format())
         return m
-
-    def _build_delete_task_workflow(
-        self,
-        query: Query,
-        ids: t.Sequence[str],
-    ):
-        G = TaskWorkflow(self)
-        vector_indices = self.show('vector_index')
-
-        if not vector_indices:
-            return G
-
-        deleted_table_or_collection = query.table_or_collection.identifier
-
-        for vi in vector_indices:
-            vi = self.vector_indices[vi]
-            listener_table_or_collection = (
-                vi.indexing_listener.select.table_or_collection.identifier
-            )
-
-            if deleted_table_or_collection != listener_table_or_collection:
-                continue
-
-            if (
-                s.CFG.cluster.vector_search.type == 'in_memory'
-                and vi.identifier not in self.fast_vector_searchers
-            ):
-                continue
-
-            G.add_node(
-                f'{vi.identifier}.{delete_vectors.__name__}()',
-                job=FunctionJob(
-                    callable=delete_vectors,
-                    args=[],
-                    kwargs=dict(
-                        vector_index=vi.identifier,
-                        ids=ids,
-                    ),
-                ),
-            )
-
-        return G
-
-    def _build_task_workflow(
-        self,
-        query,
-        ids=None,
-        dependencies=(),
-        overwrite: bool = False,
-    ) -> TaskWorkflow:
-        """A helper function to build a task workflow for a query with dependencies."""
-        logging.debug(f"Building task workflow graph. Query:{query}")
-
-        job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
-        job_ids.update(dependencies)
-        # TODO use these job_ids as dependencies for every job
-
-        G = TaskWorkflow(self)
-
-        # TODO extract this logic from this class
-        G.add_node(
-            f'{download_content.__name__}()',
-            job=FunctionJob(
-                callable=download_content,
-                args=[],
-                kwargs=dict(
-                    ids=ids,
-                    query=query.encode(),
-                ),
-            ),
-        )
-
-        listeners = []
-        for identifier in self.show('listener'):
-            listener = self.listeners[identifier]
-            if listener.select is None:
-                continue
-
-            if (
-                listener.select.table_or_collection.identifier
-                != query.table_or_collection.identifier
-            ):
-                continue
-
-            listeners.append(listener)
-
-        if not listeners:
-            return G
-
-        for listener in listeners:
-            G.add_node(
-                f'{listener.model.identifier}.predict_in_db({listener.uuid})',
-                job=ComponentJob(
-                    component_identifier=listener.model.identifier,
-                    kwargs={
-                        'X': listener.key,
-                        'ids': ids,
-                        'select': query.encode(),
-                        'overwrite': overwrite,
-                        'predict_id': listener.uuid,
-                        **listener.predict_kwargs,
-                    },
-                    method_name='predict_in_db',
-                    type_id='model',
-                ),
-            )
-
-        for listener in listeners:
-            G.add_edge(
-                f'{download_content.__name__}()',
-                f'{listener.model.identifier}.predict_in_db({listener.uuid})',
-            )
-            if not self.cdc.running:
-                deps = listener.dependencies
-                for dep in deps:
-                    upstream = self.load(uuid=dep)
-                    assert isinstance(upstream, Component)
-                    dep_node = (
-                        f'{upstream.model.identifier}.predict_in_db({upstream.uuid})'
-                    )
-                    if dep_node in G.nodes:
-                        G.add_edge(
-                            dep_node,
-                            f'{listener.model.identifier}.predict_in_db({listener.uuid})',
-                        )
-
-        if s.CFG.cluster.vector_search.type == 'native':
-            return G
-
-        for identifier in self.show('vector_index'):
-            # if a vector-searcher is not loaded, then skip
-            # since s.CFG.cluster.vector_search_type == 'in_memory' implies the
-            # program is standalone
-
-            if (
-                s.CFG.cluster.vector_search.uri is None
-                and identifier not in self.fast_vector_searchers
-            ):
-                continue
-
-            vi = self.vector_indices[identifier]
-            if (
-                vi.indexing_listener.select.table_or_collection.identifier
-                != query.table_or_collection.identifier
-            ):
-                continue
-
-            G.add_node(
-                f'{identifier}.{copy_vectors.__name__}',
-                FunctionJob(
-                    callable=copy_vectors,
-                    args=[],
-                    kwargs={
-                        'vector_index': identifier,
-                        'ids': ids,
-                        'query': vi.indexing_listener.select.encode(),
-                    },
-                ),
-            )
-            model = vi.indexing_listener.model.identifier
-            uuid = vi.indexing_listener.uuid
-            G.add_edge(
-                f'{model}.predict_in_db({uuid})',
-                f'{identifier}.{copy_vectors.__name__}',
-            )
-
-        return G
 
     def _add_child_components(self, components, parent):
         # TODO this is a bit of a mess

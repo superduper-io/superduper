@@ -15,7 +15,7 @@ def method_job(
     job_id,
     dependencies=(),
     db: t.Optional['Datalayer'] = None,
-    component: 'Component' = None,
+    component: 'Component' = None
 ):
     """
     Run a method on a component in the database.

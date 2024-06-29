@@ -3,6 +3,7 @@ import uuid
 
 from superduperdb import logging
 from superduperdb.backends.base.compute import ComputeBackend
+from superduperdb.jobs.queue import LocalSequentialQueue
 
 
 class LocalComputeBackend(ComputeBackend):
@@ -14,6 +15,8 @@ class LocalComputeBackend(ComputeBackend):
 
     def __init__(self, _uri: t.Optional[str] = None):
         self.__outputs: t.Dict = {}
+        self.queue = LocalSequentialQueue()
+
 
     @property
     def remote(self) -> bool:
@@ -33,6 +36,10 @@ class LocalComputeBackend(ComputeBackend):
     def component_hook(self, *args, **kwargs):
         """Hook for component."""
         pass
+
+    def broadcast(self, ids: t.List, to: tuple = ()):
+        for dep in to:
+            self.queue.publish(ids, to=dep)
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs

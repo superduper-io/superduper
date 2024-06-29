@@ -219,6 +219,9 @@ class Component(Leaf):
         self.db = self.db or db
         self.unpack(db=db)
 
+    def on_db_event(self, db, event):
+        pass
+
     def unpack(self, db=None):
         """Method to unpack the component.
 

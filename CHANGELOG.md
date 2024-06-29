@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increment minimum supported ibis version to 9.0.0
 - Make database connections reconnection on token expiry
 - Prototype the cron job services
+- Simplified Taskworkflow
 
 #### New Features & Functionality
 

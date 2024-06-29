@@ -15,6 +15,7 @@ def delete_vectors(
     vector_index: str,
     ids: t.Sequence[str],
     db=t.Optional['Datalayer'],
+    **kwargs
 ):
     """Delete vectors of a ``VectorIndex`` component in the fast_vector_search backend.
 

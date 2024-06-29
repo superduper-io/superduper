@@ -98,6 +98,14 @@ class Listener(Component):
                     args={'name': self.identifier},
                     type='get',
                 )
+            else:
+                db.cdc.add(self)
+        db.compute.queue.declare_component(self)
+
+    def on_db_event(self, db, events):
+        ids = [event['identifier'] for event in events]
+        self.schedule_jobs(db=db, ids=ids)
+
 
     @classmethod
     def create_output_dest(cls, db: "Datalayer", uuid, model: Model):
@@ -154,6 +162,7 @@ class Listener(Component):
         db: "Datalayer",
         dependencies: t.Sequence[Job] = (),
         overwrite: bool = False,
+        ids: t.Optional[t.List] = []
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the listener.
 
@@ -187,6 +196,7 @@ class Listener(Component):
                 db=db,
                 predict_id=self.uuid,
                 select=self.select,
+                ids=ids,
                 dependencies=tuple(dependencies),
                 overwrite=overwrite,
                 **(self.predict_kwargs or {}),

@@ -130,6 +130,7 @@ class Leaf(metaclass=LeafMeta):
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
 
+
     @property
     def leaves(self):
         """Get all leaves in the object."""

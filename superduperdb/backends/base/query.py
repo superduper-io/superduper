@@ -201,7 +201,7 @@ class Query(_BaseQuery):
             parts.append((part, part_args, part_kwargs))
         self.parts = parts
 
-    def listeners(self, ):
+    def dependencies(self, ):
         listeners = self.db.show('listener')
         vector_indices = self.db.show('vector_index')
         dependencies = []

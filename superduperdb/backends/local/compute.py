@@ -7,11 +7,13 @@ from superduperdb.jobs.queue import LocalSequentialQueue
 
 
 class LocalComputeBackend(ComputeBackend):
-    """A mockup backend for running jobs locally."""
+    """
+    A mockup backend for running jobs locally.
 
-    def __init__(
-        self,
-    ):
+    :param _uri: Optional uri param.
+    """
+
+    def __init__(self, _uri: t.Optional[str] = None):
         self.__outputs: t.Dict = {}
         self.queue = LocalSequentialQueue()
 

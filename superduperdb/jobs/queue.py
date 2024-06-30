@@ -1,11 +1,10 @@
 import typing as t
-from superduperdb.jobs.job import ComponentJob
 
 class LocalSequentialQueue:
     def __init__(self):
         self.queue = {}
         self.components = {}
-        self.db = None
+        self._db = None
         self._component_map = {}
 
     def declare_component(self, component):
@@ -13,15 +12,20 @@ class LocalSequentialQueue:
         self.queue[identifier] = []
         self.components[identifier] = component
 
-    def set_db(self, db):
-        self.db = db
+    @property
+    def db(self):
+        return self._db
 
-    def publish(self, event: t.Dict , to: t.Dict[str, str]):
+    @db.setter
+    def db(self, db):
+        self._db = db
+
+    def publish(self, events: t.List[t.Dict] , to: t.Dict[str, str]):
         identifier = to['identifier']
         type_id = to['type_id']
         self._component_map.update(to)
         
-        self.queue[f'{type_id}.{identifier}'].extend(event)
+        self.queue[f'{type_id}.{identifier}'].extend(events)
         self.consume()
 
     def consume(self):
@@ -32,5 +36,4 @@ class LocalSequentialQueue:
             self.queue[component] = []
 
             component = self.components[component]
-
             component.on_db_event(self.db, events)

@@ -2,7 +2,7 @@ import dataclasses as dc
 import random
 import typing as t
 import warnings
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 import click
 import networkx
@@ -26,8 +26,7 @@ from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.components.schema import Schema
-from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
-from superduperdb.jobs.task_workflow import TaskWorkflow
+from superduperdb.jobs.job import Job
 from superduperdb.misc.annotations import deprecated
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
@@ -36,7 +35,6 @@ from superduperdb.misc.retry import db_retry
 from superduperdb.misc.special_dicts import recursive_update
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.interface import FastVectorSearcher
-from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -48,6 +46,23 @@ UpdateResult = t.Any
 PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
+
+class Event:
+    insert= 'insert'
+    delete= 'delete'
+    update= 'update'
+    upsert= 'upsert'
+
+    @staticmethod
+    def chunk_by_event(lst):
+        chunks = {}
+        for item in lst:
+            item_type = item['type']
+            
+            if item_type not in chunks:
+                chunks[item_type] = []
+            chunks[item_type].append(item)
+        return chunks
 
 class Datalayer:
     """
@@ -107,7 +122,7 @@ class Datalayer:
         self.cdc = DatabaseChangeDataCapture(self)
 
         self.compute = compute
-        self.compute.queue.set_db(self)
+        self.compute.queue.db = self
         self._server_mode = False
         self._cfg = s.CFG
 
@@ -342,7 +357,7 @@ class Datalayer:
         """
         result = delete.do_execute(self)
         if refresh and not self.cdc.running:
-            return result, self.on_db_event(delete, ids=result, type='delete')
+            return result, self.on_event(delete, ids=result, event_type=Event.delete)
         return result, None
 
     def _insert(
@@ -381,7 +396,7 @@ class Datalayer:
             if cdc_status:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
-                return inserted_ids, self.on_db_event(
+                return inserted_ids, self.on_event(
                     insert,
                     ids=inserted_ids,
                 )
@@ -397,12 +412,11 @@ class Datalayer:
         return select.do_execute(db=self)
 
 
-    def on_db_event(
+    def on_event(
         self,
         query: Query,
         ids: t.Sequence[str],
-        overwrite: bool = False,
-        type: str = 'insert'
+        event_type: str = 'insert'
     ):
         """
         Trigger computation jobs after data insertion.
@@ -410,10 +424,9 @@ class Datalayer:
         :param query: The select or update query object that reduces
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
-        :param overwrite: If True, cascade the value to the 'predict_in_db' job.
         """
-        deps = query.listeners()
-        events = [{'identifier': id, 'type': type} for id in ids]
+        deps = query.dependencies()
+        events = [{'identifier': id, 'type': event_type} for id in ids]
         return self.compute.broadcast(events, to=deps)
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
@@ -437,17 +450,17 @@ class Datalayer:
                     # Overwrite should be true for update operation since updates
                     # could be done on collections with already existing outputs
                     # We need overwrite ouptuts on those select and recompute predict
-                    job_update = self.on_db_event(
-                        query=q, ids=ids, overwrite=True
+                    job_update = self.on_event(
+                        query=q, ids=ids, event_type=Event.upsert
                     )
                     jobs.append(job_update)
 
                     q = d['query']
                     ids = d['ids']
-                    job_update = self.on_db_event(
+                    job_update = self.on_event(
                         query=q,
                         ids=ids,
-                        type='delete'
+                        event_type=Event.delete
                     )
                     jobs.append(job_update)
 
@@ -474,8 +487,8 @@ class Datalayer:
                 # Overwrite should be true since updates could be done on collections
                 # with already existing outputs.
                 # We need overwrite outputs on those select and recompute predict
-                return updated_ids, self.on_db_event(
-                    query=update, ids=updated_ids, overwrite=True, type='insert'
+                return updated_ids, self.on_event(
+                    query=update, ids=updated_ids, event_type=Event.upsert
                 )
         return updated_ids, None
 

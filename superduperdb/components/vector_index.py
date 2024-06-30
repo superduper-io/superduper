@@ -172,17 +172,17 @@ class VectorIndex(Component):
 
     def on_db_event(self, db, events):
         from superduperdb.vector_search.update_tasks import delete_vectors, copy_vectors
-        deleted_ids = []
-        inserted_ids = [  ]
-        for event in events:
-            if event['type'] == 'insert':
-                inserted_ids.append(event['identifier'])
+        from superduperdb.base.datalayer import Event
+        def _schedule_jobs(ids, type=Event.insert):
+            if type in [Event.insert, Event.upsert]:
+
+                callable =  copy_vectors
+            elif type == Event.delete:
+                callable = delete_vectors
             else:
-                deleted_ids.append(event['identifier'])
-        
-        def _schedule_jobs(ids, type='insert'):
+                return
             job=FunctionJob(
-                callable=copy_vectors if type=='insert' else delete_vectors,
+                callable=callable,
                 args=[],
                 kwargs=dict(
                     vector_index=self.identifier,
@@ -191,8 +191,10 @@ class VectorIndex(Component):
                 ),
             )
             job(db=db)
-        _schedule_jobs(inserted_ids)
-        _schedule_jobs(deleted_ids, type='delete')
+        
+        for type, events in Event.chunk_by_event(events).items():
+            ids = [event['identifier'] for event in events]
+            _schedule_jobs(ids, type=type)
 
     @override
     def post_create(self, db: "Datalayer") -> None:

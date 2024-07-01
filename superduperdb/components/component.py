@@ -5,10 +5,11 @@ from __future__ import annotations
 import dataclasses as dc
 import json
 import os
+import shutil
 import typing as t
+import uuid
 from collections import namedtuple
 from functools import wraps
-import uuid
 
 import yaml
 
@@ -377,6 +378,10 @@ class Component(Leaf):
         |_files/*
         ```
         """
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         if path is None:
             path = f"./{self.identifier}"
 
@@ -399,31 +404,13 @@ class Component(Leaf):
                 r, {k: f"blob_{i}" for i, k in enumerate(r.get(KEY_BLOBS))}
             )
 
-        os.makedirs(path, exist_ok=True)
         if r.get(KEY_BLOBS):
-            os.makedirs(os.path.join(path, "blobs"), exist_ok=True)
-            for file_id, bytestr_ in r[KEY_BLOBS].items():
-                filepath = os.path.join(path, "blobs", file_id)
-                with open(filepath, "wb") as ff:
-                    ff.write(bytestr_)
-
-        r.pop(KEY_BLOBS)
+            self._save_blobs_for_export(r[KEY_BLOBS], path)
+            r.pop(KEY_BLOBS)
 
         if r.get(KEY_FILES):
-            os.makedirs(os.path.join(path, "files"), exist_ok=True)
-            for file_id, file_path in r[KEY_FILES].items():
-                file_path = file_path.rstrip("/")
-                assert os.path.exists(file_path), f"File {file_path} not found"
-                name = os.path.basename(file_path)
-                save_path = os.path.join(path, "files", file_id, name)
-                if os.path.isdir(file_path):
-                    import shutil
-
-                    shutil.copytree(file_path, save_path)
-                else:
-                    shutil.copy(file_path, save_path)
-
-        r.pop(KEY_FILES)
+            self._save_files_for_export(r[KEY_FILES], path)
+            r.pop(KEY_FILES)
 
         if format == "json":
             with open(os.path.join(path, "component.json"), "w") as f:
@@ -462,6 +449,31 @@ class Component(Leaf):
 
         if zip:
             self._zip_export(path)
+
+    @staticmethod
+    def _save_blobs_for_export(blobs, path):
+        if not blobs:
+            return
+        os.makedirs(os.path.join(path, "blobs"), exist_ok=True)
+        for file_id, bytestr_ in blobs.items():
+            filepath = os.path.join(path, "blobs", file_id)
+            with open(filepath, "wb") as ff:
+                ff.write(bytestr_)
+
+    @staticmethod
+    def _save_files_for_export(files, path):
+        if not files:
+            return
+        os.makedirs(os.path.join(path, "files"), exist_ok=True)
+        for file_id, file_path in files.items():
+            file_path = file_path.rstrip("/")
+            assert os.path.exists(file_path), f"File {file_path} not found"
+            name = os.path.basename(file_path)
+            save_path = os.path.join(path, "files", file_id, name)
+            if os.path.isdir(file_path):
+                shutil.copytree(file_path, save_path)
+            else:
+                shutil.copy(file_path, save_path)
 
     @staticmethod
     def _zip_export(path):

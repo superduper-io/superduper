@@ -376,3 +376,16 @@ def test_auto_document_wrapping(db):
     else:
         assert '_base' in c[-1]
         assert c[-1].unpack() == gt
+
+
+@pytest.mark.parametrize(
+    "db", [DBConfig.mongodb_empty], indirect=True
+)
+def test_model_query(db):
+
+    from superduperdb.backends.base.query import Model
+
+    q = Model(table='my-model').predict('This is a test')
+
+    r = q.dict()
+    assert r['query'] == 'my-model.predict("This is a test")'

@@ -39,12 +39,24 @@ def applies_to(*flavours):
 
 
 class _BaseQuery(Leaf):
-    ...
 
+    def __post_init__(self, db: t.Optional['Datalayer'] = None):
+        super().__post_init__(db)
+        if not self.identifier:
+            self.identifier = self._build_hr_identifier()
 
-class TraceMixin:
-    """Mixin to add trace functionality to a query # noqa."""
-
+    def _build_hr_identifier(self):
+        identifier = str(self).split('\n')[-1]
+        variables = re.findall(r'(<var:[a-zA-Z0-9]+>)', identifier)
+        variables = sorted(list(set(variables)))
+        for i, v in enumerate(variables):
+            identifier = identifier.replace(v, f'#{i}')
+        identifier = re.sub(r'[^a-zA-Z0-9#]', '-', identifier)
+        identifier = re.sub('[-]+$', '', identifier)
+        identifier = re.sub('[-]+', '-', identifier)
+        for i, v in enumerate(variables):
+            identifier = identifier.replace(f'#{i}', v)
+        return identifier
     def __getattr__(self, item):
         item = type(self).methods_mapping.get(item, item)
         return type(self)(
@@ -66,8 +78,70 @@ class TraceMixin:
             parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
         )
 
+    def _to_str(self):
+        documents = {}
+        queries = {}
+        out = str(self.table)
+        for part in self.parts:
+            if isinstance(part, str):
+                out += f'.{part}'
+                continue
+            args = []
+            for a in part[1]:
+                args.append(self._update_item(a, documents, queries))
+            args = ', '.join(args)
+            kwargs = {}
+            for k, v in part[2].items():
+                kwargs[k] = self._update_item(v, documents, queries)
+            kwargs = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
+            if part[1] and part[2]:
+                out += f'.{part[0]}({args}, {kwargs})'
+            if not part[1] and part[2]:
+                out += f'.{part[0]}({kwargs})'
+            if part[1] and not part[2]:
+                out += f'.{part[0]}({args})'
+            if not part[1] and not part[2]:
+                out += f'.{part[0]}()'
+        return out, documents, queries
 
-class Query(_BaseQuery, TraceMixin):
+    def _dump_query(self):
+        output, documents, queries = self._to_str()
+        if queries:
+            output = '\n'.join(list(queries.values())) + '\n' + output
+        for i, k in enumerate(queries):
+            output = output.replace(k, str(i))
+        for i, k in enumerate(documents):
+            output = output.replace(k, str(i))
+        documents = list(documents.values())
+        return output, documents
+
+    @staticmethod
+    def _update_item(a, documents, queries):
+        if isinstance(a, Query):
+            a, sub_documents, sub_queries = a._to_str()
+            documents.update(sub_documents)
+            queries.update(sub_queries)
+            id_ = uuid.uuid4().hex[:5].upper()
+            queries[id_] = a
+            arg = f'query[{id_}]'
+        else:
+            id_ = uuid.uuid4().hex[:5].upper()
+            if isinstance(a, dict):
+                documents[id_] = a
+                arg = f'documents[{id_}]'
+            elif isinstance(a, list):
+                documents[id_] = {'_base': a}
+                arg = f'documents[{id_}]'
+            else:
+                try:
+                    arg = json.dumps(a)
+                except Exception:
+                    documents[id_] = {'_base': a}
+                    arg = id_
+        return arg
+
+
+class Query(_BaseQuery):
     """A query object.
 
     This base class is used to create a query object that can be executed
@@ -83,24 +157,6 @@ class Query(_BaseQuery, TraceMixin):
     table: str
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     identifier: str = ''
-
-    def __post_init__(self, db: t.Optional['Datalayer'] = None):
-        super().__post_init__(db)
-        if not self.identifier:
-            self.identifier = self._build_hr_identifier()
-
-    def _build_hr_identifier(self):
-        identifier = str(self).split('\n')[-1]
-        variables = re.findall(r'(<var:[a-zA-Z0-9]+>)', identifier)
-        variables = sorted(list(set(variables)))
-        for i, v in enumerate(variables):
-            identifier = identifier.replace(v, f'#{i}')
-        identifier = re.sub(r'[^a-zA-Z0-9#]', '-', identifier)
-        identifier = re.sub('[-]+$', '', identifier)
-        identifier = re.sub('[-]+', '-', identifier)
-        for i, v in enumerate(variables):
-            identifier = identifier.replace(f'#{i}', v)
-        return identifier
 
     def __getitem__(self, item):
         if not isinstance(item, slice):
@@ -222,67 +278,6 @@ class Query(_BaseQuery, TraceMixin):
             }
         )
 
-    @staticmethod
-    def _update_item(a, documents, queries):
-        if isinstance(a, Query):
-            a, sub_documents, sub_queries = a._to_str()
-            documents.update(sub_documents)
-            queries.update(sub_queries)
-            id_ = uuid.uuid4().hex[:5].upper()
-            queries[id_] = a
-            arg = f'query[{id_}]'
-        else:
-            id_ = uuid.uuid4().hex[:5].upper()
-            if isinstance(a, dict):
-                documents[id_] = a
-                arg = f'documents[{id_}]'
-            elif isinstance(a, list):
-                documents[id_] = {'_base': a}
-                arg = f'documents[{id_}]'
-            else:
-                try:
-                    arg = json.dumps(a)
-                except Exception:
-                    documents[id_] = {'_base': a}
-                    arg = id_
-        return arg
-
-    def _to_str(self):
-        documents = {}
-        queries = {}
-        out = str(self.table)
-        for part in self.parts:
-            if isinstance(part, str):
-                out += f'.{part}'
-                continue
-            args = []
-            for a in part[1]:
-                args.append(self._update_item(a, documents, queries))
-            args = ', '.join(args)
-            kwargs = {}
-            for k, v in part[2].items():
-                kwargs[k] = self._update_item(v, documents, queries)
-            kwargs = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
-            if part[1] and part[2]:
-                out += f'.{part[0]}({args}, {kwargs})'
-            if not part[1] and part[2]:
-                out += f'.{part[0]}({kwargs})'
-            if part[1] and not part[2]:
-                out += f'.{part[0]}({args})'
-            if not part[1] and not part[2]:
-                out += f'.{part[0]}()'
-        return out, documents, queries
-
-    def _dump_query(self):
-        output, documents, queries = self._to_str()
-        if queries:
-            output = '\n'.join(list(queries.values())) + '\n' + output
-        for i, k in enumerate(queries):
-            output = output.replace(k, str(i))
-        for i, k in enumerate(documents):
-            output = output.replace(k, str(i))
-        documents = list(documents.values())
-        return output, documents
 
     def __repr__(self):
         output, docs = self._dump_query()
@@ -578,7 +573,7 @@ def parse_query(
     return query[-1]
 
 
-class Model(Leaf, TraceMixin):
+class Model(_BaseQuery):
     """
     A model helper class for create a query to predict.
 
@@ -606,3 +601,17 @@ class Model(Leaf, TraceMixin):
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
         return Document({'_base': r})
+
+    def dict(self, metadata: bool = True, defaults: bool = True):
+        """Return the query as a dictionary."""
+        query, documents = self._dump_query()
+        documents = [Document(r) for r in documents]
+        backend = self.__module__.split('.')[-2]
+        return Document(
+            {
+                '_path': f'superduperdb.backends.{backend}.query.parse_query',
+                'documents': documents,
+                'identifier': self.identifier,
+                'query': query,
+            }
+        )

@@ -513,7 +513,6 @@ class Datalayer:
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
         dependencies: t.Sequence[Job] = (),
-        artifacts: t.Optional[t.Dict[str, bytes]] = None,
     ):
         """
         Add functionality in the form of components.

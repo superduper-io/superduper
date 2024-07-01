@@ -107,6 +107,7 @@ def build_app(app: superduperapp.SuperDuperApp):
     @app.add('/db/show_template', method='get')
     def db_show_template(identifier: str, type_id: str = 'template'):
         template = app.db.metadata.get_component(type_id=type_id, identifier=identifier)
+        template = app.db.load(type_id=type_id, identifier=identifier)
         return template.form_template
 
     @app.add('/db/metadata/show_jobs', method='get')

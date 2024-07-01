@@ -136,6 +136,20 @@ class QueryTemplate(_BaseTemplate):
             self.template = self.template.dict(metadata=False, defaults=False).encode()
         return super().__post_init__(db, artifacts, substitutions)
 
+    @property
+    def form_template(self):
+        """Form to be diplayed to user."""
+        return {
+            '_variables': {
+                k: f'<value-{i}>' for i, k in enumerate(self.template_variables)
+            },
+            **{
+                k: v
+                for k, v in self.template.items()
+                if k not in {'_builds', '_blobs', 'identifier', '_path'}
+            },
+        }
+
     def execute(self, **kwargs):
         """Execute the query with the given variables.
 

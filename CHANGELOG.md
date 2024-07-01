@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
-- 
+- Fix templates
 
 ## [0.2.0](https://github.com/SuperDuperDB/superduperdb/compare/0.1.3...0.2.0])    (2024-Jun-21)
 

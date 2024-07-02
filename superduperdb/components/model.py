@@ -496,6 +496,9 @@ class Model(Component, metaclass=ModelMeta):
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
+        from superduperdb import CFG
+        compute_kwargs = CFG.cluster.compute.compute_kwargs
+        self.compute_kwargs = self.compute_kwargs or compute_kwargs
         self._is_initialized = False
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
@@ -1018,7 +1021,7 @@ class Model(Component, metaclass=ModelMeta):
         db.replace(self, upsert=True)
 
     def post_create(self, db):
-        db.compute.component_hook(self.identifier)
+        db.compute.component_hook(self.identifier, compute_kwargs=self.compute_kwargs)
 
 
 @dc.dataclass(kw_only=True)

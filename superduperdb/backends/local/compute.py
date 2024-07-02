@@ -30,7 +30,7 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
-    def component_hook(self, component_id):
+    def component_hook(self, *args, **kwargs):
         pass
 
     def submit(

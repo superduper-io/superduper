@@ -13,8 +13,10 @@ class JobSubmit(BaseModel):
     """A vector item model."""
     identifier: str
     dependencies: t.List[str]
-    compute_kwargs: t.Dict[str, t.Any]
 
+class ComponentHook(BaseModel):
+    identifier: str
+    compute_kwargs: t.Dict[str, t.Any]
 
 @app.startup
 def scheduler_startup(db: Datalayer) -> Datalayer:
@@ -26,9 +28,9 @@ def scheduler_startup(db: Datalayer) -> Datalayer:
     return db
 
 
-@app.add("/job/create/component_hook", status_code=200, method='get')
-def component_hook(component_id: str, db: Datalayer = DatalayerDependency()):
-    db.compute.component_hook(component_id, to='create')
+@app.add("/job/create/component_hook", status_code=200, method='post')
+def component_hook(component: ComponentHook, db: Datalayer = DatalayerDependency()):
+    db.compute.component_hook(component.identifier, compute_kwargs=component.compute_kwargs, to='create')
 
 @app.add("/job/submit", status_code=200, method='post')
 def submit(job: JobSubmit, db: Datalayer = DatalayerDependency()):
@@ -36,7 +38,6 @@ def submit(job: JobSubmit, db: Datalayer = DatalayerDependency()):
     
     logging.info(f"Running remote job {job.identifier}")
     logging.info(f"Dependencies: {job.dependencies}")
-    logging.info(f"Compute kwargs: {job.compute_kwargs}")
 
 
     assert db.compute.remote is True, "Compute is not a distributed backend type."
@@ -79,5 +80,3 @@ def submit(job: JobSubmit, db: Datalayer = DatalayerDependency()):
     job.submit(dependencies=deps_future, update_job=True)
 
     return {'message': 'Job created successfully'}
-
-

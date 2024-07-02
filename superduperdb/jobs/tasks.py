@@ -51,6 +51,8 @@ def method_job(
         component = t.cast(Component, component)
         component.unpack()
 
+    component.unpack()
+
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
 

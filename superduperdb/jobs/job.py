@@ -224,7 +224,6 @@ class ComponentJob(Job):
         self.future = self.db.compute.submit_remote(
             self.identifier,
             dependencies=dependencies,
-            compute_kwargs=self.compute_kwargs,
         )
         return
 
@@ -244,7 +243,6 @@ class ComponentJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
-            compute_kwargs=self.compute_kwargs
         )
         return self
 

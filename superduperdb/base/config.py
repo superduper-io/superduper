@@ -165,7 +165,7 @@ class Compute(BaseConfig):
     :param _path: Compute backend path.
     """
 
-    uri: t.Optional[str] = None  # None implies local mode
+    uri: t.Optional[str] = None # None implies local mode
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     _path: t.Optional[str] = 'superduperdb.backends.local.compute.LocalComputeBackend'
 

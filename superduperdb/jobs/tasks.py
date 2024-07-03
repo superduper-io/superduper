@@ -2,6 +2,7 @@ import typing as t
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.component import Component
 
 
 def method_job(
@@ -14,6 +15,7 @@ def method_job(
     job_id,
     dependencies=(),
     db: t.Optional['Datalayer'] = None,
+    component: 'Component' = None,
 ):
     """
     Run a method on a component in the database.
@@ -42,13 +44,15 @@ def method_job(
     # Ray cluster would be created inside the job
     if db is None:
         db = build_datalayer(cfg=cfg, cluster__compute___path=None)
+    
+    if not component:
+        component = db.load(type_id, identifier)
+        from superduperdb.components.component import Component
+        component = t.cast(Component, component)
+        component.unpack()
 
-    component = db.load(type_id, identifier)
-    # TODO: Move the unpack method to the better place
-    from superduperdb.components.component import Component
-
-    component = t.cast(Component, component)
     component.unpack()
+
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
 

@@ -2,9 +2,6 @@ DIRECTORIES = superduperdb test
 PYTEST_ARGUMENTS ?=
 BACKENDS ?= mongodb_community sqlite duckdb pandas
 
-# Default environment file for Pytest
-export SUPERDUPERDB_PYTEST_ENV_FILE ?= './deploy/testenv/users.env'
-
 # Export directories for data and artifacts
 export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
 export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
@@ -226,14 +223,3 @@ ext_testing: ## Execute integration testing
 	find ./test -type d -name __pycache__ -exec rm -r {} +
 	find ./test -type f -name "*.pyc" -delete
 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
-
-rest_testing: ## Execute smoke testing
-	echo "starting rest server"
-	SUPERDUPERDB_CONFIG=deploy/testenv/env/rest/rest_mock.yaml python -m superduperdb rest &
-	sleep 10
-	SUPERDUPERDB_CONFIG=deploy/testenv/env/rest/rest_mock.yaml pytest test/rest/test_rest.py
-	echo "stopping rest server"
-	lsof -ti:8002 | xargs kill -9
-
-smoke_testing: ## Execute smoke testing
-	SUPERDUPERDB_CONFIG=deploy/testenv/env/smoke/config.yaml pytest $(PYTEST_ARGUMENTS) ./test/smoke

@@ -348,7 +348,7 @@ const config = {
       ],
       announcementBar: {
         id: 'support_us',
-        content: '🔮 We officially released v0.1 on Github! 🔮',
+        content: '🔮 We officially released v0.2 on Github! Check it out! 🔮',
         backgroundColor: '#7628f8',
         textColor: '#fff',
         isCloseable: true,

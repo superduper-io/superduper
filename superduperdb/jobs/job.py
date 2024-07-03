@@ -311,7 +311,7 @@ def remote_job(identifier, dependencies=(), compute_kwargs: t.Union[str, t.Dict]
     if isinstance(compute_kwargs, str) and compute_kwargs:
         compute_kwargs = json.loads(compute_kwargs)
 
-    compute = build_compute(CFG.cluster.compute.uri)
+    compute = build_compute(CFG.cluster.compute)
 
     assert compute.remote is True, "Compute is not a distributed backend type."
 
@@ -332,7 +332,7 @@ def remote_task(identifier, dependencies=()):
 
     # TODO: Make this run a predict job with multiple
     # chunks as tasks.
-    db = build_datalayer(CFG, cluster__compute__uri=None)
+    db = build_datalayer(CFG, cluster__compute___path=None)
 
     info = db.metadata.get_job(identifier)
 

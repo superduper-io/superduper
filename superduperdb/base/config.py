@@ -160,12 +160,14 @@ class CronTab(BaseConfig):
 class Compute(BaseConfig):
     """Describes the configuration for distributed computing.
 
-    :param uri: The URI for the compute service
-    :param compute_kwargs: The keyword arguments to pass to the compute service
+    :param uri: The URI for the compute service.
+    :param compute_kwargs: The keyword arguments to pass to the compute service.
+    :param _path: Compute backend path.
     """
 
     uri: t.Optional[str] = None  # None implies local mode
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
+    _path: t.Optional[str] = 'superduperdb.backends.local.compute.LocalComputeBackend'
 
 
 @dc.dataclass

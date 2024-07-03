@@ -41,7 +41,7 @@ def method_job(
     # Set the compute as local since otherwise a new
     # Ray cluster would be created inside the job
     if db is None:
-        db = build_datalayer(cfg=cfg, cluster__compute__uri=None)
+        db = build_datalayer(cfg=cfg, cluster__compute___path=None)
 
     component = db.load(type_id, identifier)
     # TODO: Move the unpack method to the better place
@@ -92,7 +92,7 @@ def callable_job(
     # Set the compute as local since otherwise a new
     # Ray cluster would be created inside the job
     if db is None:
-        db = build_datalayer(cfg=cfg, cluster__compute__uri=None)
+        db = build_datalayer(cfg=cfg, cluster__compute___path=None)
 
     db.metadata.update_job(job_id, 'status', 'running')
     output = None

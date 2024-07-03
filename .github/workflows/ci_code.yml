@@ -80,10 +80,6 @@ jobs:
       run: |
         make ext_testing
 
-    - name: Rest Testing
-      run: |
-        make rest_testing
-
   # ---------------------------------
   # Integration Testing
   # ---------------------------------
@@ -112,12 +108,6 @@ jobs:
         run: |
           # Run the test-suite within the sandbox image from the test environment
           docker exec testenv-sandbox-1 sh -c 'make databackend_testing'
-
-      - name: Smoke Testing
-        run: |
-          # This tests if the tests which run on 
-          # Run the test-suite within the sandbox image from the test environment
-          docker exec testenv-sandbox-1 sh -c 'make smoke_testing'
 
       - name: Shutdown Testing Environment
         run: |

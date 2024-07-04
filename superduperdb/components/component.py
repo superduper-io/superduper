@@ -116,7 +116,7 @@ class Component(Leaf):
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
     plugins: t.Optional[t.List["Plugin"]] = None
-
+    upstream: t.Optional[t.List["Component"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @property

@@ -113,7 +113,7 @@ class Component(Leaf):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
-
+    upstream: t.Optional[t.List["Component"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
 
     @property

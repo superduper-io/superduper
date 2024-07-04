@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 
 - QueryTemplate component
+- Support for packaging application from the database.
 
 #### Bug Fixes
 

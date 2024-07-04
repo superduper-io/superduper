@@ -23,6 +23,7 @@ class BaseDataBackend(ABC):
         self.in_memory: bool = False
         self.in_memory_tables: t.Dict = {}
         self._datalayer = None
+        self.uri = uri
 
     @property
     def type(self):

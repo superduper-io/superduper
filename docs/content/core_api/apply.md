@@ -31,20 +31,20 @@ pre- and post-processing, and encoding/ decoding data into/ from the correct typ
 If additional configurations, such as training parameters, are added to the `Model` then the `db.apply` command
 will also train the component on data in SuperDuperDB.
 
-Read more about `Model` [here](../components/model).
+Read more about `Model` [here](../apply_api/model).
 
 ### `Listener`
 
 A `Listener` wraps a `Model`. The `db.apply(listener)` tells SuperDuperDB to "listen" for incoming data and to compute outputs on those data, saving them back in SuperDuperDB.
 
-Read more about `Listener` [here](../components/listener).
+Read more about `Listener` [here](../apply_api/listener).
 
 ### `VectorIndex`
 
 A `VectorIndex` wraps one or two `Listener` components, and tells SuperDuperDB that the outputs computed, should
 be made searchable via vector-search queries.
 
-Read more about `VectorIndex` [here](../components/vector_index).
+Read more about `VectorIndex` [here](../apply_api/vector_index).
 
 ## Connecting component: `Stack`
 
@@ -54,7 +54,7 @@ one pass to your data via SuperDuperDB.
 On `db.add(stack)` SuperDuperDB performs the heavy lifting of deciding which components need to be applied 
 first, which need to be modified on incoming data, and which outputs need to be made searchable.
 
-Read more about `Stack` [here](../components/stack).
+Read more about `Stack` [here](../apply_api/stack).
 
 ## View applied components
 

@@ -94,3 +94,13 @@ class Dataset(Component):
         return f'Dataset(identifier={self.identifier}, select={self.select})'
 
     __repr__ = __str__
+
+
+class DataInit(Component):
+    data: t.List[t.Dict]
+    table: str
+
+    def post_create(self, db: Datalayer) -> None:
+        super().post_create(db) 
+        self.init()
+        db[self.table].insert(self.data).execute()

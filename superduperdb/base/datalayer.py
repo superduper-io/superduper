@@ -741,6 +741,8 @@ class Datalayer:
             return G
 
         for listener in listeners:
+            from superduperdb import Listener
+            listener = t.cast(Listener, listener)
             G.add_node(
                 f'{listener.model.identifier}.predict_in_db({listener.uuid})',
                 job=ComponentJob(
@@ -748,9 +750,9 @@ class Datalayer:
                     kwargs={
                         'X': listener.key,
                         'ids': ids,
-                        'select': query.encode(),
+                        'select': listener.select.encode(),
                         'overwrite': overwrite,
-                        'predict_id': listener.uuid,
+                        'predict_id': listener.predict_id,
                         **listener.predict_kwargs,
                     },
                     method_name='predict_in_db',

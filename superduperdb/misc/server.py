@@ -42,7 +42,7 @@ def _request_server(
     elif service == 'vector_search':
         service_uri = CFG.cluster.vector_search.uri
     elif service == 'scheduler':
-        service_uri = 'http://localhost:8181'
+        service_uri = CFG.cluster.scheduler.uri
     else:
         raise NotImplementedError(f'Unknown service {service}')
 

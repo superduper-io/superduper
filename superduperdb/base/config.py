@@ -155,6 +155,15 @@ class CronTab(BaseConfig):
 
     uri: t.Optional[str] = None
 
+@dc.dataclass
+class SchedulerConfig(BaseConfig):
+    """Describes the configuration for scheduler service
+
+    :param uri: The URI for the scheduler service.
+    """
+
+    uri: t.Optional[str] = None # None implies local mode
+
 
 @dc.dataclass
 class Compute(BaseConfig):
@@ -196,7 +205,7 @@ class Cluster(BaseConfig):
     vector_search: VectorSearch = dc.field(default_factory=VectorSearch)
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
-
+    scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
 
 class LogLevel(str, Enum):
     """Enumerate log severity level # noqa."""

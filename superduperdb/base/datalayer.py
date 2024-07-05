@@ -742,6 +742,7 @@ class Datalayer:
 
         for listener in listeners:
             from superduperdb import Listener
+
             listener = t.cast(Listener, listener)
             G.add_node(
                 f'{listener.model.identifier}.predict_in_db({listener.uuid})',

@@ -39,7 +39,6 @@ def applies_to(*flavours):
 
 
 class _BaseQuery(Leaf):
-
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         super().__post_init__(db)
         if not self.identifier:
@@ -57,6 +56,7 @@ class _BaseQuery(Leaf):
         for i, v in enumerate(variables):
             identifier = identifier.replace(f'#{i}', v)
         return identifier
+
     def __getattr__(self, item):
         item = type(self).methods_mapping.get(item, item)
         return type(self)(
@@ -277,7 +277,6 @@ class Query(_BaseQuery):
                 'query': query,
             }
         )
-
 
     def __repr__(self):
         output, docs = self._dump_query()

@@ -21,6 +21,7 @@ class _BaseTemplate(Component):
     :param template_variables: Variables to be set.
     :param info: Additional information.
     :param blobs: Blob identifiers in `Template.component`.
+    :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
     """
 
@@ -99,7 +100,7 @@ class Template(_BaseTemplate):
         |_files/*
         ```
         """
-
+        assert isinstance(self.template, dict)
         blobs = self.template.pop(KEY_BLOBS, None)
         files = self.template.pop(KEY_FILES, None)
 
@@ -131,6 +132,18 @@ class Template(_BaseTemplate):
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):
+        """
+        Read a `Component` instance from a directory created with `.export`.
+
+        :param path: Path to the directory containing the component.
+
+        Expected directory structure:
+        ```
+        |_component.json/yaml
+        |_blobs/*
+        |_files/*
+        ```
+        """
         object = super(Template, Template).read(path, db)
         # Add blobs and files back to the template
         config_object = _build_info_from_path(path=path)

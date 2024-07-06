@@ -123,16 +123,6 @@ class FunctionJob(Job):
         d['_path'] = f'superduper/jobs/job/FunctionJob/{path}'
         return d
 
-    def submit_remote(self, dependencies=()):
-        """Submit job for remote execution.
-
-        :param dependencies: list of dependencies
-        """
-        self.future = self.db.compute.submit_remote(
-            self.identifier, dependencies=dependencies
-        )
-        return
-
     def submit(self, dependencies=(), update_job=True):
         """Submit job for execution.
 
@@ -164,10 +154,7 @@ class FunctionJob(Job):
         self.db = db
         db.metadata.create_job(self.dict())
 
-        if db.compute.remote is True:
-            self.submit_remote(dependencies=dependencies)
-        else:
-            self.submit(dependencies=dependencies)
+        self.submit(dependencies=dependencies)
 
         return self
 
@@ -221,18 +208,8 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def submit_remote(self, dependencies=()):
-        """Submit job for remote execution.
 
-        :param dependencies: list of dependencies
-        """
-        self.future = self.db.compute.submit_remote(
-            self.identifier,
-            dependencies=dependencies,
-        )
-        return
-
-    def submit(self, dependencies=(), update_job=True):
+    def submit(self, dependencies=()):
         """Submit job for execution.
 
         :param dependencies: list of dependencies
@@ -248,7 +225,6 @@ class ComponentJob(Job):
             kwargs=self.kwargs,
             dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
-            component = self.component
         )
         return self
 
@@ -266,14 +242,9 @@ class ComponentJob(Job):
         self.db = db
 
         db.metadata.create_job(self.dict())
-        if self.component is None:
-            self.component = db.load(self.type_id, self.component_identifier)
 
-        if db.compute.remote is True:
-            self.submit_remote(dependencies=dependencies)
-        else:
-            self.submit(dependencies=dependencies)
-        return self
+        self.submit(dependencies=dependencies)
+        return
 
     def dict(self):
         """Return a dictionary representation of the job."""

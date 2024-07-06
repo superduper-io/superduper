@@ -58,6 +58,7 @@ class ThreadBase(Runnable):
         """Pre-run the thread."""
         pass
 
+
     @_debug(after=True)
     def run(self):
         """Run the thread."""
@@ -132,3 +133,63 @@ class HasThread(ThreadBase):
     def thread(self) -> Thread:
         """Return the thread."""
         return self.new_thread()
+
+@dc.dataclass
+class CallbackLoopThread(HasThread):
+    """HasThread contains a thread, and is constructed with a callback.
+
+    :param callback: The callback to run in the thread.
+    :param daemon: Whether the thread is a daemon.
+    :param error: The error callback.
+    :param looping: Whether the thread should loop.
+    :param name: The name of the thread.
+    """
+
+    callback: Callback = print
+    daemon: bool = False
+    error: t.Callable = none
+    looping: bool = False
+    name: str = ''
+
+    def __post_init__(self):
+        super().__post_init__()
+
+    @_debug(after=True)
+    def join(self, timeout: t.Optional[float] = None):
+        """Join the thread.
+
+        :param timeout: Timeout in seconds
+        """
+        self.thread.join(timeout)
+
+    @_debug
+    def start(self):
+        """Start the thread."""
+        self.thread.start()
+
+    def new_thread(self) -> Thread:
+        """Return a new thread."""
+        return Thread(target=self.run, daemon=self.daemon)
+
+    @cached_property
+    def thread(self) -> Thread:
+        """Return the thread."""
+        return self.new_thread()
+
+    @_debug(after=True)
+    def run(self):
+        """Run the thread."""
+        self.pre_run()
+        self.running.set()
+
+        try:
+            self.callback(running=self.running)
+        except Exception as e:
+            exc = traceback.format_exc()
+            s.logging.error(f'{self}: Exception\n{exc}')
+
+            self.error(e)
+            self.stop()
+        if self.running:
+            self.running.clear()
+        self.stopped.set()

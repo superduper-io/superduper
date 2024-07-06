@@ -1,16 +1,17 @@
 import typing as t
 
+
 class LocalSequentialQueue:
     def __init__(self):
         self.queue = {}
-        self.components = {}
+        self.listeners= {}
         self._db = None
         self._component_map = {}
 
     def declare_component(self, component):
         identifier =f'{component.type_id}.{component.identifier}' 
         self.queue[identifier] = []
-        self.components[identifier] = component
+        self.listeners[identifier] = component
 
     @property
     def db(self):
@@ -29,11 +30,17 @@ class LocalSequentialQueue:
         self.consume()
 
     def consume(self):
-        for component in self.queue:
-            events  = self.queue[component]
+        from superduperdb.base.datalayer import Event
+        for listener in self.queue:
+            events  = self.queue[listener]
             if not events:
                 continue
-            self.queue[component] = []
+            self.queue[listener] = []
 
-            component = self.components[component]
-            component.on_db_event(self.db, events)
+            listener = self.listeners[listener]
+            
+            for event_type, type_events in Event.chunk_by_event(events).items():
+                ids = [event['identifier'] for event in type_events]
+                overwrite = True if event_type in [Event.insert, Event.upsert] else False
+                listener.run_jobs(db=self.db, ids=ids, overwrite=overwrite)
+

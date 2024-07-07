@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 
 
+### New Features & Functionality
+
+- 
+
+#### Bug Fixes
+
+-
+
+
+## [0.2.1](https://github.com/SuperDuperDB/superduperdb/compare/0.2.0...0.2.1])    (2024-Jul-07)
+
 #### New Features & Functionality
 
 - QueryTemplate component
@@ -25,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix exports
 - Fix model query
 
-## [0.2.0](https://github.com/SuperDuperDB/superduperdb/compare/0.1.3...0.2.0])    (2024-Jun-21)
 
+## [0.2.0](https://github.com/SuperDuperDB/superduperdb/compare/0.1.3...0.2.0])    (2024-Jun-21)
 
 #### Changed defaults / behaviours
 

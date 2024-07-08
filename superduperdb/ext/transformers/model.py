@@ -244,6 +244,7 @@ class LLM(BaseLLM, _Fittable):
         all the kwargs will pass to `transformers.AutoTokenizer.from_pretrained`
     :param prompt_template: prompt template, default is `"{input}"`
     :param prompt_func: prompt function, default is None
+    :param trainer: Trainer to use to handle training details
 
     All the `model_kwargs` will pass to
     `transformers.AutoModelForCausalLM.from_pretrained`.
@@ -260,7 +261,7 @@ class LLM(BaseLLM, _Fittable):
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"
     prompt_func: t.Optional[t.Callable] = None
-    signature: t.ClassVar[Signature] = 'singleton'
+    signature: Signature = 'singleton'
 
     # Save models and tokenizers cache for sharing when using multiple models
     _model_cache: t.ClassVar[dict] = {}

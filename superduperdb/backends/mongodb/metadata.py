@@ -12,8 +12,8 @@ class MongoMetaDataStore(MetaDataStore):
     """
     Metadata store for MongoDB.
 
-    :param conn: MongoDB client connection
-    :param name: Name of database to host filesystem
+    :param uri: URI to the databackend database.
+    :param flavour: Flavour of the databackend.
     :param callback: Optional callback to create connection.
     """
 

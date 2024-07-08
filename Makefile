@@ -25,15 +25,13 @@ help: ## Display this help
 # Release a new version of SuperDuperDB
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
-CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
+CURRENT_RELEASE=$(shell git tag -l | sort -V | tail -n 1)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
+CURRENT_BRANCH=$(shell git branch --show-current)
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
-	@ if [[ "$(RELEASE_VERSION)" == "v$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
-	# Switch to release branch
-	@echo "** Switching to branch release-$(RELEASE_VERSION)"
-	@git checkout -b release-$(RELEASE_VERSION)
+	@ if [[ "$(RELEASE_VERSION)" == "$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
 	# Update version in source code
 	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION)"
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
@@ -43,10 +41,8 @@ new_release: ## Release a new version of SuperDuperDB
 	@git add VERSION CHANGELOG.md
 	@git commit -m "Bump Version $(RELEASE_VERSION)"
 	@git tag $(RELEASE_VERSION)
-
 	# Push branch and set upstream
-	git push --set-upstream origin release-$(RELEASE_VERSION)
-
+	git push --set-upstream origin $(CURRENT_BRANCH)
 	# Push the specific tag
 	git push origin $(RELEASE_VERSION)
 

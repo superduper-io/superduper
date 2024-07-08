@@ -52,8 +52,8 @@ def _connection_callback(uri, flavour):
 class IbisDataBackend(BaseDataBackend):
     """Ibis data backend for the database.
 
-    :param conn: MongoDB client connection
-    :param name: Name of database to host filesystem
+    :param uri: URI to the databackend database.
+    :param flavour: Flavour of the databackend.
     """
 
     db_type = DBType.SQL

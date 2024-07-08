@@ -70,7 +70,8 @@ def check_class_docstring(cls, line):
 
     params = [k for k in inspect.signature(cls.__init__).parameters if k != 'self']
     doc_params = get_doc_string_params(doc_string)
-    if len(doc_params) != len(params):
+    doc_params_set = set(doc_params.keys())
+    if doc_params_set != set(params):
         diff = (set(params) - set(doc_params.keys())).union(
             set(doc_params.keys()) - set(params)
         )
@@ -79,7 +80,7 @@ def check_class_docstring(cls, line):
             name=cls.__name__,
             msg=(
                 f'Got {len(params)} parameters but doc-string has {len(doc_params)}.\n'
-                f'{params} vs. {list(doc_params.keys())}\n'
+                f'{params}\nvs.\n{list(doc_params.keys())}\n'
                 f'diff is {diff}'
             ),
             line=line,

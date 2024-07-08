@@ -26,8 +26,8 @@ class SQLAlchemyMetadata(MetaDataStore):
     """
     Abstraction for storing meta-data separately from primary data.
 
-    :param conn: connection to the meta-data store
-    :param name: Name to identify DB using the connection
+    :param uri: URI to the databackend database.
+    :param flavour: Flavour of the databackend.
     :param callback: Optional callback to create connection.
     """
 

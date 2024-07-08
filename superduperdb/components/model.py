@@ -229,7 +229,10 @@ class Validation(Component):
 
 @dc.dataclass(kw_only=True)
 class _Fittable:
-    """:param trainer: Trainer to use to handle training details"""
+    """Class to represent a fittable model.
+
+    :param trainer: Trainer to use to handle training details
+    """
 
     trainer: t.Optional[Trainer] = None
 

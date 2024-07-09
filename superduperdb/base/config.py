@@ -155,14 +155,15 @@ class CronTab(BaseConfig):
 
     uri: t.Optional[str] = None
 
+
 @dc.dataclass
 class SchedulerConfig(BaseConfig):
-    """Describes the configuration for scheduler service
+    """Describes the configuration for scheduler service.
 
     :param uri: The URI for the scheduler service.
     """
 
-    uri: t.Optional[str] = None # None implies local mode
+    uri: t.Optional[str] = None  # None implies local mode
 
 
 @dc.dataclass
@@ -174,7 +175,7 @@ class Compute(BaseConfig):
     :param _path: Compute backend path.
     """
 
-    uri: t.Optional[str] = None # None implies local mode
+    uri: t.Optional[str] = None  # None implies local mode
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     _path: t.Optional[str] = 'superduperdb.backends.local.compute.LocalComputeBackend'
 
@@ -198,6 +199,7 @@ class Cluster(BaseConfig):
                 then no cdc assumed)
                 None: Run cdc on local as a thread.
                 - `f"{http://{host}:{port}"`: Connect a remote cdc service
+    :param scheduler: The URI for the scheduler service
     """
 
     compute: Compute = dc.field(default_factory=Compute)
@@ -206,6 +208,7 @@ class Cluster(BaseConfig):
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
+
 
 class LogLevel(str, Enum):
     """Enumerate log severity level # noqa."""

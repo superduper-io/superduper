@@ -4,7 +4,7 @@ import uuid
 from abc import abstractmethod
 
 import superduperdb as s
-from superduperdb import CFG, logging
+from superduperdb import CFG
 from superduperdb.jobs.tasks import callable_job, method_job
 
 if t.TYPE_CHECKING:
@@ -101,6 +101,7 @@ class FunctionJob(Job):
     :param callable: function to be called
     :param args: positional arguments to be passed to the function
     :param kwargs: keyword arguments to be passed to the function
+    :param identifier: Job identifier.
     :param db: A datalayer instance.
     """
 
@@ -127,7 +128,9 @@ class FunctionJob(Job):
 
         :param dependencies: list of dependencies
         """
-        self.future = self.db.compute.submit_remote(self.identifier, dependencies=dependencies)
+        self.future = self.db.compute.submit_remote(
+            self.identifier, dependencies=dependencies
+        )
         return
 
     def submit(self, dependencies=(), update_job=True):
@@ -179,6 +182,7 @@ class ComponentJob(Job):
     :param args: positional arguments to be passed to the method
     :param kwargs: keyword arguments to be passed to the method
     :param compute_kwargs: Arguments to use for model predict computation
+    :param identifier: Job identifier.
     :param db: A Datalayer instance.
     """
 

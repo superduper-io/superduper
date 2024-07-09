@@ -143,6 +143,8 @@ def build_compute(compute):
     spath = path.split('.')
     path, cls = '.'.join(spath[:-1]), spath[-1]
 
+    import importlib
+
     module = importlib.import_module(path)
     compute_cls = getattr(module, cls)
 

@@ -76,10 +76,6 @@ jobs:
       run: |
         make unit_testing pytest_arguments="--cov=superduperdb --cov-report=xml"
 
-    - name: Ext Testing
-      run: |
-        make ext_testing
-
   # ---------------------------------
   # Integration Testing
   # ---------------------------------

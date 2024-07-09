@@ -4,7 +4,7 @@ import typing as t
 import numpy as np
 from overrides import override
 
-from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.datalayer import Datalayer, Event
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType
@@ -15,7 +15,7 @@ from superduperdb.jobs.job import FunctionJob
 from superduperdb.misc.annotations import component
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
-from superduperdb.vector_search.update_tasks import copy_vectors
+from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 KeyType = t.Union[str, t.List, t.Dict]
 if t.TYPE_CHECKING:
@@ -170,32 +170,6 @@ class VectorIndex(Component):
         db.fast_vector_searchers[self.identifier].drop()
         del db.fast_vector_searchers[self.identifier]
 
-    def on_db_event(self, db, events):
-        from superduperdb.vector_search.update_tasks import delete_vectors, copy_vectors
-        from superduperdb.base.datalayer import Event
-        def _schedule_jobs(ids, type=Event.insert):
-            if type in [Event.insert, Event.upsert]:
-
-                callable =  copy_vectors
-            elif type == Event.delete:
-                callable = delete_vectors
-            else:
-                return
-            job=FunctionJob(
-                callable=callable,
-                args=[],
-                kwargs=dict(
-                    vector_index=self.identifier,
-                    ids=ids,
-                    query=self.indexing_listener.select.encode()
-                ),
-            )
-            job(db=db)
-        
-        for type, events in Event.chunk_by_event(events).items():
-            ids = [event['identifier'] for event in events]
-            _schedule_jobs(ids, type=type)
-
     @override
     def post_create(self, db: "Datalayer") -> None:
         """Post-create hook.
@@ -203,7 +177,6 @@ class VectorIndex(Component):
         :param db: Data layer instance.
         """
         db.compute.queue.declare_component(self)
-
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
@@ -233,27 +206,57 @@ class VectorIndex(Component):
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
     @override
+    def run_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence['Job'] = (),
+        ids: t.List = [],
+        overwrite: bool = False,
+        event_type: str = Event.insert,
+    ) -> t.Sequence[t.Any]:
+        """Run jobs for the vector index.
+
+        :param db: The DB instance to process
+        :param dependencies: A list of dependencies
+        :param ids: List of ids.
+        :param event_type: Type of event.
+        """
+        if event_type in [Event.insert, Event.upsert]:
+            callable = copy_vectors
+        elif type == Event.delete:
+            callable = delete_vectors
+        else:
+            return []
+        job = FunctionJob(
+            callable=callable,
+            args=[],
+            kwargs=dict(
+                vector_index=self.identifier,
+                ids=ids,
+                query=self.indexing_listener.select.dict().encode(),
+            ),
+        )
+        job(db=db)
+        return [job]
+
+    @override
     def schedule_jobs(
         self,
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
     ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the listener.
+        """Schedule jobs for the vector index.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
         """
-        job = FunctionJob(
-            callable=copy_vectors,
-            args=[],
-            kwargs={
-                'vector_index': self.identifier,
-                'ids': [],
-                'query': self.indexing_listener.select.dict().encode(),
-            },
-        )
-        job(db, dependencies=dependencies)
-        return [job]
+        from superduperdb.base.datalayer import Event
+
+        ids = db.execute(self.indexing_listener.select.select_ids)
+        ids = [id[self.indexing_listener.select.primary_id] for id in ids]
+        events = [{'identifier': id, 'type': Event.insert} for id in ids]
+        to = {'type_id': self.type_id, 'identifier': self.identifier}
+        return db.compute.broadcast(events, to=to)
 
 
 class EncodeArray:

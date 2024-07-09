@@ -219,9 +219,6 @@ class Component(Leaf):
         self.db = self.db or db
         self.unpack(db=db)
 
-    def on_db_event(self, db, event):
-        pass
-
     def unpack(self, db=None):
         """Method to unpack the component.
 
@@ -547,12 +544,28 @@ class Component(Leaf):
             },
         )
 
+    def run_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        ids: t.Sequence = [],
+        event_type: str = 'insert',
+    ) -> t.Sequence[t.Any]:
+        """Run the job for this component.
+
+        :param db: The db to process.
+        :param dependencies: A sequence of dependencies.
+        :param ids: List of ids.
+        :param event_type: Type of event.
+        """
+        return []
+
     def schedule_jobs(
         self,
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
-        """Run the job for this listener.
+        """Schedule the job for this component.
 
         :param db: The db to process.
         :param dependencies: A sequence of dependencies.

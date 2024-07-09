@@ -17,7 +17,6 @@ class LocalComputeBackend(ComputeBackend):
         self.__outputs: t.Dict = {}
         self.queue = LocalSequentialQueue()
 
-
     @property
     def remote(self) -> bool:
         """Return if remote compute engine."""
@@ -37,12 +36,20 @@ class LocalComputeBackend(ComputeBackend):
         """Hook for component."""
         pass
 
-    def broadcast(self, ids: t.List, to: tuple = ()):
+    def broadcast(self, events: t.List, to: tuple = ()):
+        """Broadcast events to the corresponding component.
+
+        :param events: List of events.
+        :param to: Destination component.
+        """
+        jobs = []
         if isinstance(to, (list, tuple)):
             for dep in to:
-                self.queue.publish(ids, to=dep)
+                jobs.append(self.queue.publish(events, to=dep))
         else:
-            self.queue.publish(ids, to=to)
+            job = self.queue.publish(events, to=to)
+            jobs.append(job)
+        return jobs
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs

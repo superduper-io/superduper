@@ -58,7 +58,6 @@ class ThreadBase(Runnable):
         """Pre-run the thread."""
         pass
 
-
     @_debug(after=True)
     def run(self):
         """Run the thread."""
@@ -133,6 +132,7 @@ class HasThread(ThreadBase):
     def thread(self) -> Thread:
         """Return the thread."""
         return self.new_thread()
+
 
 @dc.dataclass
 class CallbackLoopThread(HasThread):

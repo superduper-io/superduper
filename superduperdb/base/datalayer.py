@@ -22,7 +22,6 @@ from superduperdb.base.config import Config
 from superduperdb.base.constant import KEY_BUILDS
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
-from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.datatype import DataType, _BaseEncodable
 from superduperdb.components.schema import Schema
@@ -104,7 +103,6 @@ class Datalayer:
         self.databackend = databackend
         self.databackend.datalayer = self
 
-        self.cdc = DatabaseChangeDataCapture(self)
 
         self.compute = compute
         self._server_mode = False
@@ -340,7 +338,8 @@ class Datalayer:
         :param delete: The delete query object specifying the data to be deleted.
         """
         result = delete.do_execute(self)
-        if refresh and not self.cdc.running:
+        cdc_status = s.CFG.cluster.cdc.uri is not None
+        if refresh and not cdc_status:
             return result, self.refresh_after_delete(delete, ids=result)
         return result, None
 
@@ -374,7 +373,7 @@ class Datalayer:
 
         inserted_ids = insert.do_execute(self)
 
-        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
+        cdc_status = s.CFG.cluster.cdc.uri is not None
 
         if refresh:
             if cdc_status:
@@ -445,7 +444,7 @@ class Datalayer:
         """
         write_result, updated_ids, deleted_ids = write.do_execute(self)
 
-        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
+        cdc_status = s.CFG.cluster.cdc.uri is not None
         if refresh:
             if cdc_status:
                 logging.warn('CDC service is active, skipping model/listener refresh')
@@ -485,7 +484,7 @@ class Datalayer:
         """
         updated_ids = update.do_execute(self)
 
-        cdc_status = self.cdc.running or s.CFG.cluster.cdc.uri is not None
+        cdc_status = s.CFG.cluster.cdc.uri is not None
         if refresh and updated_ids:
             if cdc_status:
                 logging.warn('CDC service is active, skipping model/listener refresh')
@@ -760,12 +759,14 @@ class Datalayer:
                 ),
             )
 
+        cdc_status = s.CFG.cluster.cdc.uri is not None
         for listener in listeners:
             G.add_edge(
                 f'{download_content.__name__}()',
                 f'{listener.model.identifier}.predict_in_db({listener.uuid})',
             )
-            if not self.cdc.running:
+
+            if not cdc_status:
                 deps = listener.dependencies
                 for dep in deps:
                     upstream = self.load(uuid=dep)

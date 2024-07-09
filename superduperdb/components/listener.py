@@ -98,8 +98,6 @@ class Listener(Component):
                     args={'name': self.identifier},
                     type='get',
                 )
-            else:
-                db.cdc.add(self)
 
     @classmethod
     def create_output_dest(cls, db: "Datalayer", uuid, model: Model):

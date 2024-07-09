@@ -39,7 +39,6 @@ class MongoMetaDataStore(MetaDataStore):
     def _setup(self):
         self.db = self.conn[self.name]
         self.meta_collection = self.db['_meta']
-        self.cdc_collection = self.db['_cdc_tables']
         self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']

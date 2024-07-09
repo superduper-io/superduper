@@ -470,6 +470,7 @@ class Component(Leaf):
             assert os.path.exists(file_path), f"File {file_path} not found"
             name = os.path.basename(file_path)
             save_path = os.path.join(path, "files", file_id, name)
+            os.makedirs(os.path.join(path, "files", file_id), exist_ok=True)
             if os.path.isdir(file_path):
                 shutil.copytree(file_path, save_path)
             else:

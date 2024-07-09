@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from test.db_config import DBConfig
 
 import pytest
 
@@ -162,3 +163,14 @@ def test_import(tmpdir):
 
     model = PModel("test")
     assert model.predict() == "import"
+
+
+@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
+def test_apply(db, tmpdir):
+    path = create_package_plugin(tmpdir, "apply")
+    plugin = Plugin(identifier="test", path=path)
+    db.apply(plugin)
+
+    plugin_reload = db.load("plugin", "test")
+
+    assert plugin_reload.path.startswith(os.path.expanduser("~"))

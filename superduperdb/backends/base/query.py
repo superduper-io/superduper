@@ -41,6 +41,8 @@ def applies_to(*flavours):
 class _BaseQuery(Leaf):
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         super().__post_init__(db)
+        self._is_output_query = False
+        self._updated_key = None
         if not self.identifier:
             self.identifier = self._build_hr_identifier()
 
@@ -202,6 +204,26 @@ class Query(_BaseQuery):
         self.parts = parts
 
     @property
+    def is_output_query(self):
+        """Check if query is of output type."""
+        return self._is_output_query
+
+    @is_output_query.setter
+    def is_output_query(self, b):
+        """Property setter."""
+        self._is_output_query = b
+
+    @property
+    def updated_key(self):
+        """Return query updated key."""
+        return self._updated_key
+
+    @updated_key.setter
+    def updated_key(self, update):
+        """Property setter."""
+        self._updated_key = update
+
+    @property
     def dependencies(
         self,
     ):
@@ -211,12 +233,7 @@ class Query(_BaseQuery):
         dependencies = []
 
         def _check_query_match(listener, query):
-            if (
-                listener.select.table_or_collection.identifier
-                == query.table_or_collection.identifier
-            ):
-                return True
-            return False
+            return listener.depends(query)
 
         for listener in listeners:
             listener = self.db.listeners[listener]

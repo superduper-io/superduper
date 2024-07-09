@@ -268,6 +268,8 @@ class MongoQuery(Query):
         operations = self.parts[0][1][0]
         for query in operations:
             assert isinstance(query, (BulkOp))
+
+            query.is_output_query = self.is_output_query
             if not query.kwargs.get('arg_ids', None):
                 raise ValueError(
                     'Please provided update/delete id in args',
@@ -601,6 +603,7 @@ class MongoQuery(Query):
             )
 
         document_embedded = kwargs.get('document_embedded', True)
+
         if document_embedded:
             outputs = [Document({"_base": output}).encode() for output in outputs]
             bulk_operations = []
@@ -621,7 +624,9 @@ class MongoQuery(Query):
                         update=update,
                     )
                 )
-            return self.table_or_collection.bulk_write(bulk_operations)
+            output_query = self.table_or_collection.bulk_write(
+                bulk_operations, output_query=True
+            )
 
         else:
             documents = []
@@ -636,7 +641,10 @@ class MongoQuery(Query):
             from superduperdb.base.datalayer import Datalayer
 
             assert isinstance(self.db, Datalayer)
-            return self.db[f'_outputs.{predict_id}'].insert_many(documents)
+            output_query = self.db[f'_outputs.{predict_id}'].insert_many(documents)
+        output_query.is_output_query = True
+        output_query.updated_key = predict_id
+        return output_query
 
 
 def InsertOne(**kwargs):

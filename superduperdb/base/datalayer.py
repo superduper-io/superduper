@@ -423,6 +423,8 @@ class Datalayer:
         :param ids: IDs that further reduce the scope of computations.
         """
         deps = query.dependencies
+        if not deps:
+            return
         events = [{'identifier': id, 'type': event_type} for id in ids]
         return self.compute.broadcast(events, to=deps)
 
@@ -441,23 +443,16 @@ class Datalayer:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
                 jobs = []
-                for u, d in zip(write_result['update'], write_result['delete']):
-                    q = u['query']
-                    ids = u['ids']
-                    # Overwrite should be true for update operation since updates
-                    # could be done on collections with already existing outputs
-                    # We need overwrite ouptuts on those select and recompute predict
-                    job_update = self.on_event(
-                        query=q, ids=ids, event_type=Event.upsert
+                if updated_ids:
+                    job = self.on_event(
+                        query=write, ids=updated_ids, event_type=Event.update
                     )
-                    jobs.append(job_update)
-
-                    q = d['query']
-                    ids = d['ids']
-                    job_update = self.on_event(
-                        query=q, ids=ids, event_type=Event.delete
+                    jobs.append(job)
+                if deleted_ids:
+                    job = self.on_event(
+                        query=write, ids=deleted_ids, event_type=Event.delete
                     )
-                    jobs.append(job_update)
+                    jobs.append(job)
 
                 return updated_ids, deleted_ids, jobs
         return updated_ids, deleted_ids, None
@@ -731,9 +726,11 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
 
+        deps = []
         for job in jobs:
-            if not isinstance(job, dict):
-                dependencies.append(job.job_id)
+            if isinstance(job, Job):
+                deps.append(job.job_id)
+        dependencies = [*deps, *dependencies]  # type: ignore[list-item]
 
         object.post_create(self)
         self._add_component_to_cache(object)

@@ -1,0 +1,233 @@
+interactions:
+- request:
+    body: fake_body
+    headers: {}
+    method: GET
+    uri: https://api.openai.com/v1/models
+  response:
+    content: "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"text-search-babbage-doc-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172509,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-16k-0613\",\n      \"object\":
+      \"model\",\n      \"created\": 1685474247,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"curie-search-query\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-3.5-turbo-16k\",\n      \"object\": \"model\",\n
+      \     \"created\": 1683758102,\n      \"owned_by\": \"openai-internal\"\n    },\n
+      \   {\n      \"id\": \"text-search-babbage-query-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"babbage\",\n      \"object\": \"model\",\n      \"created\":
+      1649358449,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"babbage-search-query\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172509,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"text-babbage-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1649364043,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"text-similarity-davinci-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"gpt-4-1106-preview\",\n      \"object\": \"model\",\n
+      \     \"created\": 1698957206,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"davinci-similarity\",\n      \"object\": \"model\",\n      \"created\":
+      1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n    {\n      \"id\":
+      \"code-davinci-edit-001\",\n      \"object\": \"model\",\n      \"created\":
+      1649880484,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie-similarity\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172510,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"babbage-search-document\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172510,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"curie-instruct-beta\",\n      \"object\":
+      \"model\",\n      \"created\": 1649364042,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"gpt-3.5-turbo\",\n      \"object\": \"model\",\n
+      \     \"created\": 1677610602,\n      \"owned_by\": \"openai\"\n    },\n    {\n
+      \     \"id\": \"gpt-3.5-turbo-1106\",\n      \"object\": \"model\",\n      \"created\":
+      1698959748,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"text-search-ada-doc-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172507,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"davinci-instruct-beta\",\n      \"object\":
+      \"model\",\n      \"created\": 1649364042,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"text-similarity-babbage-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"text-search-davinci-doc-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"babbage-similarity\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"text-embedding-ada-002\",\n      \"object\": \"model\",\n
+      \     \"created\": 1671217299,\n      \"owned_by\": \"openai-internal\"\n    },\n
+      \   {\n      \"id\": \"davinci-search-query\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-4-vision-preview\",\n      \"object\": \"model\",\n
+      \     \"created\": 1698894917,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"text-similarity-curie-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-4\",\n      \"object\": \"model\",\n      \"created\":
+      1687882411,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"text-davinci-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649364042,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"text-search-davinci-query-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172505,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"ada-search-document\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"ada-code-search-code\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"babbage-002\",\n      \"object\": \"model\",\n      \"created\":
+      1692634615,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"davinci-002\",\n
+      \     \"object\": \"model\",\n      \"created\": 1692634301,\n      \"owned_by\":
+      \"system\"\n    },\n    {\n      \"id\": \"davinci-search-document\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"curie-search-document\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172508,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"babbage-code-search-code\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"text-search-ada-query-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"code-search-ada-text-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"babbage-code-search-text\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"code-search-babbage-code-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"ada-search-query\",\n      \"object\": \"model\",\n      \"created\":
+      1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n    {\n      \"id\":
+      \"ada-code-search-text\",\n      \"object\": \"model\",\n      \"created\":
+      1651172510,\n      \"owned_by\": \"openai-dev\"\n    },\n    {\n      \"id\":
+      \"tts-1-hd\",\n      \"object\": \"model\",\n      \"created\": 1699046015,\n
+      \     \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"text-search-curie-query-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1651172509,\n      \"owned_by\":
+      \"openai-dev\"\n    },\n    {\n      \"id\": \"text-davinci-002\",\n      \"object\":
+      \"model\",\n      \"created\": 1649880484,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"text-davinci-edit-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1649809179,\n      \"owned_by\": \"openai\"\n    },\n    {\n
+      \     \"id\": \"code-search-babbage-text-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"tts-1-hd-1106\",\n      \"object\": \"model\",\n      \"created\":
+      1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"whisper-1\",\n
+      \     \"object\": \"model\",\n      \"created\": 1677532384,\n      \"owned_by\":
+      \"openai-internal\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n
+      \     \"object\": \"model\",\n      \"created\": 1694122472,\n      \"owned_by\":
+      \"system\"\n    },\n    {\n      \"id\": \"ada\",\n      \"object\": \"model\",\n
+      \     \"created\": 1649357491,\n      \"owned_by\": \"openai\"\n    },\n    {\n
+      \     \"id\": \"gpt-3.5-turbo-0613\",\n      \"object\": \"model\",\n      \"created\":
+      1686587434,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"text-ada-001\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649364042,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"canary-whisper\",\n      \"object\":
+      \"model\",\n      \"created\": 1699656801,\n      \"owned_by\": \"system\"\n
+      \   },\n    {\n      \"id\": \"ada-similarity\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"code-search-ada-code-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"text-similarity-ada-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-3.5-turbo-0301\",\n      \"object\": \"model\",\n
+      \     \"created\": 1677649963,\n      \"owned_by\": \"openai\"\n    },\n    {\n
+      \     \"id\": \"gpt-3.5-turbo-instruct\",\n      \"object\": \"model\",\n      \"created\":
+      1692901427,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-0613\",\n
+      \     \"object\": \"model\",\n      \"created\": 1686588896,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"text-search-curie-doc-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"text-davinci-003\",\n      \"object\": \"model\",\n
+      \     \"created\": 1669599635,\n      \"owned_by\": \"openai-internal\"\n    },\n
+      \   {\n      \"id\": \"text-curie-001\",\n      \"object\": \"model\",\n      \"created\":
+      1649364043,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"gpt-4-0314\",\n      \"object\":
+      \"model\",\n      \"created\": 1687882410,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"canary-tts\",\n      \"object\": \"model\",\n
+      \     \"created\": 1699492935,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1\",\n      \"object\": \"model\",\n      \"created\": 1681940951,\n
+      \     \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n
+      \     \"created\": 1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1-1106\",\n      \"object\": \"model\",\n      \"created\":
+      1699053241,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"dall-e-3\",\n
+      \     \"object\": \"model\",\n      \"created\": 1698785189,\n      \"owned_by\":
+      \"system\"\n    }\n  ]\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 82444518fdd15309-SLC
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 11 Nov 2023 05:52:34 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=FLxnzlx8DtlWZASpjsT.qGi2UVAsth0n113PetOwxP4-1699681954-0-AWEJMkOEly1Pc2Vknf4PTYgevWX3u2kcG7BhsZ3ICiMryzgJxrZVqvp0i+WMe1jIR+TS62/BUrzWUR+p9mns468=;
+        path=/; expires=Sat, 11-Nov-23 06:22:34 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-processing-ms:
+      - '122'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - 8378c590538af9488d12f7e09eb95def
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: fake_body
+    headers: {}
+    method: POST
+    uri: https://api.openai.com/v1/embeddings
+  response:
+    content: "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"object\":
+      \"embedding\",\n      \"index\": 0,\n      \"embedding\": \"3erMOl/YWzu2glG879oIveEEG7yaH5s7T/97vKul4DrTGkO7sZrMvEwQ9Dzqn+k7ubCJvMOAk7yOQio8A2cyu/9gzjyR/Ha8cao4PCjWMDy7qQa8ZLbruotnjDxNMcU7tXVqvMQ37ruf0mQ7DmKCvMhoGD1LLtO8TkghPD1i2rsUNp27CidjvBMfQTw4pZu869SkO661ObxTOps8saRBvBkeojtZDrY7/XFGO8VOyruvl9q8j1kGPJExsjucGBi8ba7Ju0B8qDxKVqc8lg9CvEwkXry6U/o7gYOYvBg8AbpaGx29nvDDPBnV/DwSKba8NLOhPB8dAzw5h7y8rskjPCXnKLxszKg70ApqPJ/SZDwj5La89ZDEPIlapTzri/86TTu6u6vam7tdCqU8ZPWbOaL2p7xqv8E7MpzFOVNEELzygOs8UEsTvVj3WbyODW88asm2PHhqaTsBZMC7Xva6POUAirxqlHu8VikjvKfKwjshtn4875FjPOy2xbx3flM8qsM/O3lW/zyt3Y25a+ASvT1iWrwlqHi7jkIqvBnpZrxi/J68SiHsOy2+NbyGfwe7kBDhPNoPrzr6gr68AoURPFrm4blQVQi968ovuwCWCbxewX+6RWQtPH19tDpKVqe8VTOYPOTprTxtpNQ7xFi/vFBVCDu0yIQ7gY0NvVQmsbw8S/67a7VMvGi8zzy0yAS7DGmFux8Tjjl8pQi9xjrgPLiPOLyfB6A8US20vCrjF7zBSGY6hD3lPE8qQjzPXQS7ix7nu7qSqjy2wYE7MY9evCLNWjy+Wd67Q2G7O5wYmDyOODU89157OyTQTDxcHg89QkDquqnXqTxVPY07BX6OvEohbDtu2Q+81v/VO9vxz7x3s448L8ucPHG+ojx0ozU8D0QjvJoVpryvq0S8lAxQO6TlL70XEbs8ellxvBL0ejzHfII7klKDPLV1arx6WfG8P1HivMV5EDytlGg7nc/yPIR8FTwW+l44+25UPDCtPbzUMZ87YsdjvK3dDTyJZBo92ALIPJJIjjzryi+/hVRBvH2Rnjz7mZo858TLOyrZIjzV6Pk7O54YPQpcnjlgxPE8atOrvOvAujzqn2m8Is3au+2O8bsqmnK87OuAO6effLydDqO7RzLkO2bDUrxRAu48zDnBvACWibz4iUE8BX4OPBYE1Dvkqn28bJdtvIh4BD39poG7qLZYPIw/uDsuqss7oN9LPYpxgTx6rAs7iEPJOhVDBDy/RfQ8D0SjvDSzoby/ei88Ao+GvLLFEjyTNKQ7+nhJOzmHvLv9poE7GenmO6ruhTyi7DK62tpzPLW0mjxBXkm63Mn7O9FWgTyHLG08zVAduB78sTt0mcA60i6tPP5T57q0k8k7NqyevA9OmDwRR5W8v0V0PAMyd7ub90a8JNBMvDGP3rsqmnK8Xw2XvDWLzTsESdM82fjSPO+RY7tPPqy76uiOPNktjjxw0ow84NnUuxz5v7zdH4g8SkK9vFbg/bwl+5K8TWYAOxNAkjvIaBg9rZToO7yLJ7wxe/S8b6fGPHxwzTsrsU688dMFu5kpkDyGdRK8bsUlPCXnKDq2wQE80kKXulJOhTy5e048Vh+uulgYKz0ysK88B0LQvAF4qru2lrs7vo4ZvR7HdjzwqD88tJPJvLqItTpRLbQ8pLD0PAgkcbxe9ro8i2cMvH2RHjwOYgI8gm8uO0//ezxMJF68GP3QO23jhLzp0bI7IgKWPJ3P8jv4tIc6prNmu0VuojvygOs7PEt+PIJlObz4dVc7upKqPHe9A7w/UWI7TifQORYE1Lp1sBw8HRCcvO+R47oChZE8Xva6O+y2xbtKIWw8vJ8RvIQ95bzqn+k82gU6vAV0Gbs5XPa7BEnTvC6g1rxW4P28SlYnPAV+jjw0nze84BiFO0FoPryJL9+8UTepvDmHvDyEfJU7Xva6vLiZrTuUIDq8tozGvIwKfbvVHTW7xGI0PB3vSrxxqri8UzqbuvK1prxzwZQ7klIDvDO9FrvNWpI8DxndPHuEN7uVNxY7KMy7PPp4ybybCzG8gY2NPK+rRDyGa528yGiYu76YDjueEZW8BWoku/lh7boMXxA8sMKgPGzMqDz/P/07UzCmPPGU1bxFbqK8REPcvFUIUrohtv68SFO1O36ehTxDYTs8jkKqOgCMlLl1xIY8R3GUPHmBxTyEaKu6p9S3vJ36uLwc+b87W9J3OztfaDzPXYS8DxnduzPHCzzAmwA9Wi8HPOvUJD2Cby48REPcvPmgnby8n5E8+IlBPLxWbDySUgO8gnkjuzRq/DpJNVa8OK8QPU4nUDwX5vS7UwVgPK+X2jyIbo+8QVRUu26G9Tx9h6k8+HXXu6+hTzvIKeg8Z9ouvDa2k7t/gKa63sxtvNL5cTz/P/28z1MPPHZnd7xxtK08YwkGPXOtqjyLZww81PxjO/h117vv2og7/WdRvKLssruEPWW8LciqO2moZbrLQ7a8b7E7vFrm4TzhBBu9p8rCO9vxTzsPTpi7NqIpvDF79Lu1tBo6JAUIvHpt27yuv646PWLaO58HoDtmw1K8v0X0vJBFHLyxrra7SiFsu3+KG7neFRM8YMTxO4ZA17zd9EE8mN14u8c90jyvoU87ECbEuoGXgryCOnM8aNC5PLtq1rsRR5W8uJmtOzF7dDlQFti7I+S2vCer6jvCNHy8ba7JO1z9PTtmw1K64hGCO0VkLTy8lZw66Jx3uu6vwjy/RfQ85cvOO9IN3DsYB8a6dpyyvHLLCbzXKpw92yaLOnifJDu0yIQ8DmKCvK3dDbxJNda8ZeGxvIxJrbyMPzi81DGfulUzGDvxyZC8SXQGPASIAzzx0wU8GyGUOxnVfLyfvvq7hHIgPNQ7FLwxxBk8Lcgqu5gSNDznxMs8t3hcOlMF4Dv2hk883R8IvLDCILxhBpQ7ET0gvItdlzxis/k6t3hcPJrgajym8ha8xDfuPBkULTw5kTG8AFfZO97gVztHcRS8gGw8u0J1JTwn6ho7oQoSvLln5DwFaiS7vlnevH19tDx8cM06fp4FvGS2a7wsnWS80PZ/PFbgfTsEiIO80vlxvHW6kbwFNem7pvKWvJc6iLzXKhy8HAO1vMos2rxNO7q8LNKfu/x7O7yHTb67Ks8tvBAwOb27qYa8FUOEu0CGnTzGJvY6u37AO6yyx7v5lqg7UFUIO8gpaLy+Wd68OHpVPExFL7zX62s8z12EOzqojbuk+Rk8N5i0vCEWAD34tAc7ijzGPKnNtDz3Xvs6ulP6Oy2J+jsTFUy6Fi+aup4Rlbzvxh66Skyyu5wiDbyXJp66HA0qvF7Bf7m0vg88KNYwPDKcxTxBk4S8GelmN1weDz3QK7u81DuUPECGHTvVJyo70vnxO7KG4jwz0QA9SWAcOr6iA70Ffg67EDC5vLtq1jsS9Ho8K7HOOyW84rnPSRq7lEuAvGPoNLz1mjm6qq/Vu0l0hjzEbCm74M/fu9UdtbueGwq8h2GovG+7MDyeG4q7ebaAvAV+jrzKNs+72SMZu8gpaLzf9zO9Z9ouvUwQ9Lsj+CC7NGr8uzuemDwNQTG7YsdjOi/LnLytlGi8Skyyun+AprzEN267YMRxuymu3Dwi1888JtO+PO2OcTzn+YY8ymsKOkxFL7pi/B68TFkZPDuUo7tvp0a8s3L4O9Y0kTws3JQ8vllevItnjDyTNKQ6QZMEvFbgfbxeADA81jSRvEKJj7zjvue84bv1uq3ngju7qYY7k+t+Ows+P7wMaYU8+nhJPCzSnzxW4H07g4YKPWPUyrzYAsg86O8RPLSJVDxfF4y8RWQtu/1xRrxKQr08XB6POza2kzxtuL489IPduw9OGLyFXrY6dXvhPFz9vbuAbDw7K7vDO7STybvdHwg7/n6tvBYlpbkW+l68cNKMO7bBgbxJYJy8uIVDPEKJj7zq6A69D0SjvP8/fTr8ezs9FUOEu9kjGTyUILo80D8lO/6IojoSKTY8csuJvESCjLtk9Rs9KfcBPA1BMby7ala8P1HiucJptzuBTl28hHyVvGi8T7qZCL88a+ASO1wohLyZ/sk7ix7nvA1BsTz5qhK7GRStvExPpLxY4+87xFi/vKruhTw5m6a8UFUIPTmHvDydz3K8Sy7Tu9g3gzug6UA696cgvAZMRbr2hs88vFZsu7S+DzrW/1U8qq/Vuu/aiLyZMwW8Jbziu6fKwjx7esK89G/zO72Bsrut0xg8YrN5OZrgajy3ZHK8GDyBvJfxYjvQKzu6SXQGPU80NzvMZIc6c8GUvGurV7wxj968nO1RvdsmC7pj6LS7YRAJvZAQYbyFKXu7Fi8aPPS4mDwTQJI8nQ4jvKPEXjynysI8gZeCvHmLuru3eNw8t2RyPFb057zSQpc8LqBWuxQsqLwWJaU6ow0EvJ0ELrxix+M7Y94/PC7VETyCeSO8g4YKPOat7zya4Oo8Z+6YPFTx9bs5mya8uIVDPavaG7yZ/sm4vJWcu+DjSbwynMU8kfz2u49ZhrzHfAI8Z+4Yva7Jo7tUHLy73erMu32RHjzupc28nfq4vF3V6bveFZO8/ogiOz2hCjzn+Ya8VwtEuzPHizw4pZs8AJaJu4tTIrrk3zi8QomPvI4Nb7w3mLS82tpzvNg3g7vVJyo9He9KPMJpN7zBfSG8afEKOwc427w1wAi9PWLauvCov7vLGPA6khNTPNgMPbsf6Ec8/pKXO63ngjpY91m879qIvPWkrjzb8U+7q+SQPKzGsTt2Z/e8F+b0uoh4BDupom48rLw8vLl7Tjzq3pm7u3RLvFkONrzk6S28lSOsNlolEjx2nLI8VQhSvBkeorsu3wY6MXv0u1cVuTuBgxi8ocFsPJ4RlbxQFlg8DUGxvHuOrLuHLO271EWJvCyd5DuhCpK8pQYBPB/oxzzgz186B20WPKT5mbut54I5odXWuyrjFzw4uYU5w0tYvJgSNDsCRmE7eKmZvHl30Lzh8LA7fJsTvWvgErz4dde7g4YKPbbBgTx/gKa84gcNvDSzobz2cuU4Ks8tPHybk7w0avw78H35u6DfyzuDUc88Uk6FvExFLzuZKZA8WPdZPAdC0Lt6bds83sxtPo8uQLz3nSs8On3HPODPXzyLZ4w87cMsPKmibrq+Y9M6QkBqPPK/G7ws0p+7TCReulvS9ztwyBc7+InBOsGHlryugH68Nm3uvHxc47x9kZ67kfz2vFgioLw/kJK82S2OPCrjF7xTBeC71hNAOwlwCD3b+8Q7wUjmu9rac7yJUDA8NYHYO+iw4bue8MO86vIDPfeTtjtdFBo9MXv0O3amJ7x8pYi8OZumu2DEcbxIUzU8bNYdPNscFjuGQNe8YRAJPOIHDT2Cby466OUcPJ7mTjws5gk9X+LQOREIZbxISUA89INdPJJSAzu2wYG7uIVDOBEI5Tz4tIe7EQjlPJgStLza2vM7T//7vH9La7phEAk8hHIgvEgeerwKXJ67hkBXPIw1w7sU9+y8/z99u1ECbjzRTIy79obPPLyfkTxoxkS7Ieu5O9Aru7sWL5q8d70DvfKA67y/hKQ7Lb41u1bgfbzd9MG8q9obvCjMO7ybC7G4roD+ul/Y2zxyoMM8GDIMu9frazxuml+8UFUIPFjj77sPOi47ouyyu2bDUjz9nIy7Ies5O8N2HrzJSrm2apR7uv9qw7y3ZPK8REPcu9ktjjtTBeC6DF8QvLCD8DqhAJ256ce9O0ddqrs8dkS86t4ZuzCjSLwW+l68OZExuePzortAcrO8RzLku2qUe7uJL188Pk7wvP2mgTyQRZy6l/HiPOqfaTw/UeK73/czPBnpZjwJRcK7S22DvAeBgLp0ozU795O2vHXEhjyNIdm7eGppvNgWMrzPUw89cozZvJssArkprtw7xXkQvUZQQ7xXNgq8XP09vJUC2zxfF4y8v3C6vD1i2rzbHBa7AWRAO4ZA17wVDkk8R3EUPQJG4bpc6dO8G+xYvEpWJ77JFX48reeCPPC8qbyjxN48lSMsPJ+++jx7jiw78Ki/u/5+rTyt5wI86t6ZvEJAarzs6wC8VT2NO5wYGLxkytW76O+RPK3nAj0/UeI8G+zYPECGnbxi8ik8UCBNu0FoPjxTOhu8inGBu8hoGD0s5om8VUcCvGvqh7wyprq8Xva6PKLiPTzZLY48ask2OeysUDwLSDS9Hx2DvAVqpDxyls48K7tDPEZQwzxjCYa8ulN6vJ4bCrwSM6s8UUGePCbJyTySPhm8XQolPCfqmruwg3A7rd2NvAon4zzQCuo8wUhmusV5kDzri385Vimjuyn3gblQVYi8Wwezuy/BJzug8zU8Hx0DvC/LnDuJL1887dcWusBcUDycIg28iEPJvI44Nbzri/+8M72WO9Mawzss5gm9GCiXPK2UaLyGQNe8eJ8kvDtf6DyJUDA5jg1vO7DMlbx5toA5MbqkO18Nlzxxdf28bsUlvSerajxa+ku8S20DvDKwr7yNIdk5d7OOPOX2lDw7ii48RIKMvPh1V7zMZAc7YRAJPJwYmLxTBWA8NLMhPfmWqLvAmwA81DuUO5n+yTwTC9e8Uk4FvXCJ5zuugH48ZrndPNnuXTx7esI8Y9RKux0akbzNG2I7RS9yvMosWj1k9Zu7gHYxvanXKTpDV0Y7lSMsvJExsr1rq9e85NXDuZofGzyVAts7ECZEPbaWuzuWGbc7NcAIukdnHzwMX5A7dmf3vI8ky7xh5UK8GRQtPQSIA734dVc8+aCdOqaz5rwRCGU87rm3u50OI7ra2nM6YwkGvJJIjrzd6kw81SeqvBnV/Dx6bVs72AJIvAZgr7w4cOC8cqBDvPi0B7zosGE7WQRBPOH6Jb2KcQE9pcdQPL+EJL0ESdM8qsM/PARJ07uSUoO9cXV9u8phlTzX6+u6OK8QPd/tPjz8jyW83uDXvINRz7xJNda8reeCOzuemDye5s67+6MPPKef/DxIHno7Y+g0POTfODzRTIw7eJ+kvDRqfDwX5vS75faUPP8/fbx0j8s8bbi+O4R8lTqLU6K8dpyyPGS26ztKIWw8JAUIve6lzbs9jaC8EjMrvDKwLzyLHme6i2cMvRNAkry5ppQ8gU5dulwejzwxuiQ8RENcvFE3KTsCjwa8RIIMvZP/6Lz0uBg7nfo4PARJ07vQPyU8MY/eO+qz07sm/oS5cMiXPIFYUjz7rQS9GgBDO2MJhr1npfM8BTVpvLbBAb1HZ5+5t2RyvElqETyR/Ha8r6tEOog5VLx6WXG83erMu+3XFjy3ZHI8VuD9vCbTvjsz0QA8r6FPPDSzITx+aco7uJktPFBLE70WOQ+8GR6iu9EhxrwZ1fw7YRAJvQV+DrvlwVm7ClIpvGmoZTyYHCm9qeEePJExsjzZGSQ8ZP8QvDa2kzv/dLg8UBZYuvp4yTz+U+e8zRvivBQsKDxr6oe89nLluz2hijtCf5q7yVSuOhgyDD14la885fYUvPa7Cj06sgK9gZeCvIkbdbz2cmW8rMaxu3LLiTtztx+71yocvT5O8Dxmud07+2TfPBz5v7sxj9479IPdOqrDv7zHUbw6UEuTvBAwubxi/B68M5JQvOH6pTuowM26RHiXPBQsqDwU9+y7UBZYPM48M70RRxU9SiFsPI1giTxFL/K8CTvNuj2NID0i1088zGQHvHacMryjxN66eXfQu++R47wzx4u8OVz2O6ul4Dxix2M7yVQuPG+7sDyHVzM8O4quPGHlwjxZDra7jWCJPH+Aprxmud275/mGvI5CKjzDS9i7taolvf8//TsGYC88MrAvPLyfET1TBWC6JtM+PABX2bweBie8wGbFPCrZojtTD9W8SkwyPYkvX7x5i7o7ika7PGLyqbzlAIo7le7wuaq5Sryl2zq8ijxGPCrjl7rv0JM8zUaoux/yvLzYN4O7tXXqt6nXqTzIKei7rajSPNzdZbxJNVY9ebYAvCW84rp5i7o8HAO1PJ/SZDxdFJo864t/PMF9Iby2wYG8QVTUu4RoKzy7atY7sobivFUI0rws0h87OZGxvKUGgboS9Hq8TFmZPEJ/mjxMJF48SiHsPF7sxTs3hMq8tXVqvABXWTvEN+47AUPvu8JfwrwEiIM8GCgXPK6/Lrw6fUe8xDduuHG0LTuVAlu8ulN6uwBXWbqRJ707KcLGPMhomDvi0tG8+HXXvHyliDs2oqk7LYn6vM1GKLtAhp28\"\n
+      \   }\n  ],\n  \"model\": \"text-embedding-ada-002-v2\",\n  \"usage\": {\n    \"prompt_tokens\":
+      4,\n    \"total_tokens\": 4\n  }\n}\n"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 824445206d5b090e-LAX
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 11 Nov 2023 05:52:36 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=ZwZ7jPlYJhE1XIIWs7hvJvpA3wiC4q4GfcNr5YEkniE-1699681956-0-AT+uwjIMnJvXMVkwmEvf/0mhCLNu0IHNdovtLCzCU8YAxjeuZ0QdVcAhZeQx1SSySj2L2bnH+NCaGAbztQiBF/U=;
+        path=/; expires=Sat, 11-Nov-23 06:22:36 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '15'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '1000000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '999997'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - a51511a7ac83b67cdaa98d277f0547b1
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

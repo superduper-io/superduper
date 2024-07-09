@@ -97,10 +97,22 @@ class Dataset(Component):
 
 
 class DataInit(Component):
+    """A data initialization component.
+
+    :param data: The data to initialize.
+    :param table: The table to insert the data.
+    """
+
     data: t.List[t.Dict]
     table: str
 
     def post_create(self, db: Datalayer) -> None:
-        super().post_create(db) 
+        """Called after the first time this component is created.
+
+        Generally used if ``self.version`` is important in this logic.
+
+        :param db: the db that creates the component.
+        """
+        super().post_create(db)
         self.init()
         db[self.table].insert(self.data).execute()

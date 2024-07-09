@@ -106,6 +106,7 @@ class Component(Leaf):
     that can be saved into a database.
 
     :param artifacts: A dictionary of artifacts paths and `DataType` objects
+    :param upstream: A list of upstream components
     """
 
     type_id: t.ClassVar[str] = 'component'

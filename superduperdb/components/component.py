@@ -543,12 +543,26 @@ class Component(Leaf):
             },
         )
 
+    def run_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        ids: t.Sequence = []
+    ) -> t.Sequence[t.Any]:
+        """Run the job for this component.
+
+        :param db: The db to process.
+        :param dependencies: A sequence of dependencies.
+        :param ids: List of ids.
+        """
+        return []
+
     def schedule_jobs(
         self,
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
     ) -> t.Sequence[t.Any]:
-        """Run the job for this listener.
+        """Schedule the job for this component.
 
         :param db: The db to process.
         :param dependencies: A sequence of dependencies.

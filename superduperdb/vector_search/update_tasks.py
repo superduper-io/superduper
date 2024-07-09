@@ -14,7 +14,7 @@ if t.TYPE_CHECKING:
 def delete_vectors(
     vector_index: str,
     ids: t.Sequence[str],
-    db=t.Optional['Datalayer'],
+    db: 'Datalayer',
     **kwargs
 ):
     """Delete vectors of a ``VectorIndex`` component in the fast_vector_search backend.
@@ -22,6 +22,7 @@ def delete_vectors(
     :param vector_index: A identifier of vector-index.
     :param ids: List of ids which were observed as deleted documents.
     :param db: Datalayer instance.
+    :param kwargs: Optinal **kwargs
     """
     return db.fast_vector_searchers[vector_index].delete(ids)
 
@@ -30,7 +31,7 @@ def copy_vectors(
     vector_index: str,
     query: t.Union[t.Dict, Query],
     ids: t.Sequence[str],
-    db=t.Optional['Datalayer'],
+    db: 'Datalayer',
 ):
     """Copy vectors of a ``VectorIndex`` component from the databackend to the fast_vector_search backend.
 

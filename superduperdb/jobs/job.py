@@ -171,6 +171,7 @@ class ComponentJob(Job):
     :param compute_kwargs: Arguments to use for model predict computation
     :param identifier: Job identifier.
     :param db: A Datalayer instance.
+    :param component: Cached component.
     """
 
     def __init__(
@@ -183,7 +184,7 @@ class ComponentJob(Job):
         compute_kwargs: t.Dict = {},
         identifier: t.Optional[str] = None,
         db: t.Optional['Datalayer'] = None,
-        component: 'Component' =None
+        component: 'Component' = None
     ):
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 

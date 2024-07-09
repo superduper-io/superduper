@@ -233,12 +233,14 @@ class VectorIndex(Component):
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
     @override
-    def schedule_jobs(
+    def run_jobs(
         self,
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
+        ids: t.List = [],
+        overwrite: bool = False
     ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the listener.
+        """Run jobs for the vector index.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
@@ -248,12 +250,30 @@ class VectorIndex(Component):
             args=[],
             kwargs={
                 'vector_index': self.identifier,
-                'ids': [],
+                'ids': ids,
                 'query': self.indexing_listener.select.dict().encode(),
             },
         )
         job(db, dependencies=dependencies)
         return [job]
+
+    @override
+    def schedule_jobs(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence['Job'] = (),
+    ) -> t.Sequence[t.Any]:
+        """Schedule jobs for the vector index.
+
+        :param db: The DB instance to process
+        :param dependencies: A list of dependencies
+        """
+        from superduperdb.base.datalayer import Event
+        ids = db.execute(self.indexing_listener.select.select_ids)
+        ids = [id[self.indexing_listener.select.primary_id] for id in ids]
+        events = [{'identifier': id, 'type': Event.insert} for id in ids]
+        to = {'type_id': self.type_id, 'identifier': self.identifier}
+        return db.compute.broadcast(events, to=to)
 
 
 class EncodeArray:

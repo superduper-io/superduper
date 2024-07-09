@@ -38,11 +38,14 @@ class LocalComputeBackend(ComputeBackend):
         pass
 
     def broadcast(self, ids: t.List, to: tuple = ()):
+        jobs = []
         if isinstance(to, (list, tuple)):
             for dep in to:
-                self.queue.publish(ids, to=dep)
+                jobs.append(self.queue.publish(ids, to=dep))
         else:
-            self.queue.publish(ids, to=to)
+            job = self.queue.publish(ids, to=to)
+            jobs.append(job)
+        return jobs
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs

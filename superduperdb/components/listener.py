@@ -100,8 +100,6 @@ class Listener(Component):
                     args={'name': self.identifier},
                     type='get',
                 )
-            else:
-                db.cdc.add(self)
 
         db.compute.queue.declare_component(self)
         db.compute.component_hook(self.identifier, type_id='listener')
@@ -176,9 +174,8 @@ class Listener(Component):
         ids = db.execute(self.select.select_ids)
         ids = [id[self.select.primary_id] for id in ids]
         events = [{'identifier': id, 'type': Event.insert} for id in ids]
-        to =   {'type_id': 'listener', 'identifier': self.identifier}
-        db.compute.broadcast(events, to=to)
-        return []
+        to =   {'type_id': self.type_id, 'identifier': self.identifier}
+        return db.compute.broadcast(events, to=to)
         
 
     def run_jobs(

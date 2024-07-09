@@ -45,12 +45,16 @@ UpdateResult = t.Any
 PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
-
+@dc.dataclass
 class Event:
-    insert= 'insert'
-    delete= 'delete'
-    update= 'update'
-    upsert= 'upsert'
+    """
+    Event to represent database events like insert,
+    delete, update etc.
+    """
+    insert = 'insert'
+    delete = 'delete'
+    update = 'update'
+    upsert = 'upsert'
 
     @staticmethod
     def chunk_by_event(lst):
@@ -734,7 +738,7 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
 
-        dependencies = [*[j.job_id for j in jobs], *dependencies]  # type: ignore[list-item]
+        dependencies = [*[j.job_id for j in jobs if not isinstance(j, dict)], *dependencies]  # type: ignore[list-item]
 
         object.post_create(self)
         self._add_component_to_cache(object)

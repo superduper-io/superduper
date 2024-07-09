@@ -1,6 +1,6 @@
 import pytest
 
-from superduperdb.misc.anonymize import anonymize_url
+from superduper.misc.anonymize import anonymize_url
 
 params = [
     (

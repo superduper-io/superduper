@@ -7,7 +7,7 @@
 ***Usage pattern***
 
 ```python
-from superduperdb import Stack
+from superduper import Stack
 
 stack = Stack(
     'my-stack',
@@ -42,10 +42,10 @@ based on those vectors and the label set.
 from sklearn.svm import SVC
 from my_models.vision import MyTorchModule, prepare_image
 
-from superduperdb.ext.numpy import array
-from superduperdb.ext.sklearn import Estimator, SklearnTrainer
-from superduperdb.ext.torch import TorchModel
-from superduperdb import Stack, VectorIndex, Listener
+from superduper.ext.numpy import array
+from superduper.ext.sklearn import Estimator, SklearnTrainer
+from superduper.ext.torch import TorchModel
+from superduper import Stack, VectorIndex, Listener
 
 
 my_listener=Listener(

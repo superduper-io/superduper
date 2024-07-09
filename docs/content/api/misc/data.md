@@ -1,6 +1,6 @@
-**`superduperdb.misc.data`** 
+**`superduper.misc.data`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/data.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/data.py)
 
 ## `ibatch` 
 

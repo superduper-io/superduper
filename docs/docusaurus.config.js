@@ -5,20 +5,20 @@ const darkCodeTheme = require('prism-react-renderer').themes.vsDark;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'SuperDuperDB documentation',
+  title: 'superduper.io documentation',
   tagline: 'Bringing AI to your data-store',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://docs.superduperdb.com',
+  url: 'https://docs.superduper.com',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'SuperDuperDB', // Usually your GitHub org/user name.
-  projectName: 'superduperdb', // Usually your repo name.
+  organizationName: 'superduper.io', // Usually your GitHub org/user name.
+  projectName: 'superduper', // Usually your repo name.
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -122,7 +122,7 @@ const config = {
     {
       src: 'https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js',
       id: 'my-api',
-      'data-api-key': 'superduperdb',
+      'data-api-key': 'superduper',
       async: true,
     },
     {
@@ -196,7 +196,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/SuperDuperDB/superduperdb/blob/main/docs/hr',
+            'https://github.com/superduper.io/superduper/blob/main/docs/hr',
         },
         blog: false,
         theme: {
@@ -223,10 +223,10 @@ const config = {
       navbar: {
         title: '',
         logo: {
-          alt: 'SuperDuperDB',
-          src: 'img/SuperDuperDB_logo_color_dark_noborder.svg',
-          srcDark: 'img/SuperDuperDB_logo_color.svg',
-          href: 'https://superduperdb.com',
+          alt: 'superduper.io',
+          src: 'img/superduper.io_logo_color_dark_noborder.svg',
+          srcDark: 'img/superduper.io_logo_color.svg',
+          href: 'https://superduper.com',
           target: '_self',
           // width: 250,
           // height: 34,
@@ -249,22 +249,22 @@ const config = {
             position: 'left',
           },
           {
-            to: 'https://blog.superduperdb.com/',
+            to: 'https://blog.superduper.com/',
             label: 'Blog',
             position: 'left',
           },
           {
-            href: 'https://github.com/SuperDuperDB/superduper-community-apps/',
+            href: 'https://github.com/superduper.io/superduper-community-apps/',
             label: 'Community Apps',
             position: 'left',
           },
           {
-            href: 'https://www.question-the-docs.superduperdb.com/',
+            href: 'https://www.question-the-docs.superduper.com/',
             label: 'Ask our docs',
             position: 'left',
           },
           {
-            href: 'https://github.com/SuperDuperDB/superduperdb',
+            href: 'https://github.com/superduper.io/superduper',
             position: 'right',
             className: 'header-github-link',
             'aria-label': 'GitHub repository',
@@ -279,7 +279,7 @@ const config = {
             items: [
               {
                 label: 'Website',
-                href: 'https://superduperdb.com',
+                href: 'https://superduper.com',
               },
               {
                 label: 'Documentation',
@@ -291,7 +291,7 @@ const config = {
               },
               {
                 label: 'Blog',
-                to: 'https://blog.superduperdb.com/',
+                to: 'https://blog.superduper.com/',
               },
             ],
           },
@@ -300,15 +300,15 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/SuperDuperDB/superduperdb',
+                href: 'https://github.com/superduper.io/superduper',
               },
               {
                 label: 'Issues',
-                href: 'https://github.com/SuperDuperDB/superduperdb/issues',
+                href: 'https://github.com/superduper.io/superduper/issues',
               },
               {
                 label: 'Discussions',
-                href: 'https://github.com/SuperDuperDB/superduperdb/discussions',
+                href: 'https://github.com/superduper.io/superduper/discussions',
               },
             ],
           },
@@ -317,24 +317,24 @@ const config = {
             items: [
               {
                 label: 'LinkedIn',
-                href: 'https://www.linkedin.com/company/superduperdb/',
+                href: 'https://www.linkedin.com/company/superduper/',
               },
               {
                 label: 'Slack',
-                href: 'https://superduperdb.slack.com/',
+                href: 'https://superduper.slack.com/',
               },
               {
                 label: 'X / Twitter',
-                href: 'https://twitter.com/superduperdb',
+                href: 'https://twitter.com/superduper',
               },
               {
                 label: 'Youtube',
-                href: 'https://www.youtube.com/@SuperDuperDB',
+                href: 'https://www.youtube.com/@superduper.io',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} SuperDuperDB, Inc.`,
+        copyright: `Copyright © ${new Date().getFullYear()} superduper.io, Inc.`,
       },
       prism: {
         theme: lightCodeTheme,
@@ -343,7 +343,7 @@ const config = {
       metadata: [
         {
           property: 'og:image',
-          content: 'https://docs.superduperdb.com/img/superDuperDB_img.png',
+          content: 'https://docs.superduper.com/img/superDuperDB_img.png',
         },
       ],
       announcementBar: {

@@ -5,17 +5,17 @@ from pprint import pprint
 
 import numpy as np
 
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.base.enums import DBType
-from superduperdb.components.component import Component
-from superduperdb.components.datatype import (
+from superduper.base.datalayer import Datalayer
+from superduper.base.document import Document
+from superduper.base.enums import DBType
+from superduper.components.component import Component
+from superduper.components.datatype import (
     DataType,
     Empty,
     _BaseEncodable,
 )
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 
 def assert_equal(expect, actual):

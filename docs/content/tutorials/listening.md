@@ -2,7 +2,7 @@
 # Listening for new data
 
 :::note
-In SuperDuperDB, AI models may be configured to listen for newly inserted data.
+In superduper, AI models may be configured to listen for newly inserted data.
 Outputs will be computed over that data and saved back to the data-backend.
 :::
 
@@ -28,22 +28,22 @@ You can read more about installing requirements on our docs [here](../get_starte
       Installing build dependencies ... [?25ldone
     [?25h  Getting requirements to build wheel ... [?25ldone
     [?25h  Preparing metadata (pyproject.toml) ... [?25ldone
-    [?25hRequirement already satisfied: ftfy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from clip==1.0) (6.2.0)
-    Requirement already satisfied: regex in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from clip==1.0) (2023.12.25)
-    Requirement already satisfied: tqdm in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from clip==1.0) (4.66.2)
-    Requirement already satisfied: torch in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from clip==1.0) (2.2.2)
-    Requirement already satisfied: torchvision in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from clip==1.0) (0.17.2)
-    Requirement already satisfied: wcwidth\<0.3.0,\>=0.2.12 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from ftfy-\>clip==1.0) (0.2.13)
-    Requirement already satisfied: filelock in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.13.3)
-    Requirement already satisfied: typing-extensions\>=4.8.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (4.11.0)
-    Requirement already satisfied: sympy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (1.12)
-    Requirement already satisfied: networkx in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.3)
-    Requirement already satisfied: jinja2 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.1.3)
-    Requirement already satisfied: fsspec in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (2024.2.0)
-    Requirement already satisfied: numpy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torchvision-\>clip==1.0) (1.26.4)
-    Requirement already satisfied: pillow!=8.3.*,\>=5.3.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from torchvision-\>clip==1.0) (10.3.0)
-    Requirement already satisfied: MarkupSafe\>=2.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from jinja2-\>torch-\>clip==1.0) (2.1.5)
-    Requirement already satisfied: mpmath\>=0.19 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages (from sympy-\>torch-\>clip==1.0) (1.3.0)
+    [?25hRequirement already satisfied: ftfy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from clip==1.0) (6.2.0)
+    Requirement already satisfied: regex in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from clip==1.0) (2023.12.25)
+    Requirement already satisfied: tqdm in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from clip==1.0) (4.66.2)
+    Requirement already satisfied: torch in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from clip==1.0) (2.2.2)
+    Requirement already satisfied: torchvision in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from clip==1.0) (0.17.2)
+    Requirement already satisfied: wcwidth\<0.3.0,\>=0.2.12 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from ftfy-\>clip==1.0) (0.2.13)
+    Requirement already satisfied: filelock in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.13.3)
+    Requirement already satisfied: typing-extensions\>=4.8.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (4.11.0)
+    Requirement already satisfied: sympy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (1.12)
+    Requirement already satisfied: networkx in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.3)
+    Requirement already satisfied: jinja2 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (3.1.3)
+    Requirement already satisfied: fsspec in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torch-\>clip==1.0) (2024.2.0)
+    Requirement already satisfied: numpy in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torchvision-\>clip==1.0) (1.26.4)
+    Requirement already satisfied: pillow!=8.3.*,\>=5.3.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from torchvision-\>clip==1.0) (10.3.0)
+    Requirement already satisfied: MarkupSafe\>=2.0 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from jinja2-\>torch-\>clip==1.0) (2.1.5)
+    Requirement already satisfied: mpmath\>=0.19 in /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages (from sympy-\>torch-\>clip==1.0) (1.3.0)
     
     [1m[[0m[34;49mnotice[0m[1;39;49m][0m[39;49m A new release of pip is available: [0m[31;49m23.2.1[0m[39;49m -\> [0m[32;49m24.0[0m
     [1m[[0m[34;49mnotice[0m[1;39;49m][0m[39;49m To update, run: [0m[32;49mpip install --upgrade pip[0m
@@ -56,7 +56,7 @@ We apply our setup to images from the
 for quick experimentation.
 
 ```python
-!curl -O https://superduperdb-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
+!curl -O https://superduper-public-demo.s3.amazonaws.com/images.zip && unzip images.zip
 from PIL import Image
 import os
 
@@ -73,7 +73,7 @@ Now that we've prepared these records we can insert this data "directly" into th
 a standard MongoDB insert statement. (Notice however the difference from `pymongo` with the `.execute()` call.)
 
 ```python
-from superduperdb import superduper, Document
+from superduper import superduper, Document
 
 db = superduper('mongomock://')
 
@@ -83,21 +83,21 @@ db['images'].insert_many([Document(r) for r in data[:-1]]).execute()
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-27 11:33:18.45| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
-    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
-    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:155  | Connecting to compute client: None
-    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:85   | Building Data Layer
-    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:220  | Configuration: 
+    2024-May-27 11:33:18.45| INFO     | Duncans-MBP.fritz.box| superduper.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
+    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduper.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
+    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduper.base.build:155  | Connecting to compute client: None
+    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduper.base.datalayer:85   | Building Data Layer
+    2024-May-27 11:33:18.47| INFO     | Duncans-MBP.fritz.box| superduper.base.build:220  | Configuration: 
      +---------------+--------------+
     | Configuration |    Value     |
     +---------------+--------------+
     |  Data Backend | mongomock:// |
     +---------------+--------------+
-    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduperdb.misc.annotations:117  | add is deprecated and will be removed in a future release.
-    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/e6eb888f0b0fbbab905029cb309537b9383919a6 already exists
-    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/ee1a946181f065af29a3c8637b2858b153d8fc8e already exists
-    2024-May-27 11:34:10.59| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x10cd4be20\>
-    2024-May-27 11:34:10.99| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function callable_job at 0x10cd4be20\> future:cc9d945c-c1d2-474f-a869-a96dac41a32a
+    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduper.misc.annotations:117  | add is deprecated and will be removed in a future release.
+    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/e6eb888f0b0fbbab905029cb309537b9383919a6 already exists
+    2024-May-27 11:33:18.49| WARNING  | Duncans-MBP.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/ee1a946181f065af29a3c8637b2858b153d8fc8e already exists
+    2024-May-27 11:34:10.59| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x10cd4be20\>
+    2024-May-27 11:34:10.99| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function callable_job at 0x10cd4be20\> future:cc9d945c-c1d2-474f-a869-a96dac41a32a
 
 </pre>
 <pre>
@@ -1100,7 +1100,7 @@ db['images'].insert_many([Document(r) for r in data[:-1]]).execute()
       ObjectId('665453924260c60bfe3e8468'),
       ObjectId('665453924260c60bfe3e8469'),
       ObjectId('665453924260c60bfe3e846a')],
-     TaskWorkflow(database=\<superduperdb.base.datalayer.Datalayer object at 0x13ed87e90\>, G=\<networkx.classes.digraph.DiGraph object at 0x13db43190\>))
+     TaskWorkflow(database=\<superduper.base.datalayer.Datalayer object at 0x13ed87e90\>, G=\<networkx.classes.digraph.DiGraph object at 0x13db43190\>))
 </pre>
 </details>
 
@@ -1135,7 +1135,7 @@ save the outputs correctly in the system, we add the `tensor` datatype to the mo
 ```python
 import clip
 import torch
-from superduperdb.ext.torch import TorchModel, tensor
+from superduper.ext.torch import TorchModel, tensor
 
 
 model, preprocess = clip.load("ViT-B/32", "cpu")
@@ -1301,8 +1301,8 @@ _ = db.apply(listener)
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-27 11:34:16.44| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/e1635b227a7f3787dc79524d812915c342701260 already exists
-    2024-May-27 11:34:17.37| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:34:16.44| WARNING  | Duncans-MBP.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/e1635b227a7f3787dc79524d812915c342701260 already exists
+    2024-May-27 11:34:17.37| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
@@ -1311,9 +1311,9 @@ _ = db.apply(listener)
 
 </pre>
 <pre>
-    2024-May-27 11:34:49.03| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 999 model outputs to `db`
-    2024-May-27 11:34:49.67| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:34:49.76| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:5d4a6013-900c-4582-9680-4043e1407519
+    2024-May-27 11:34:49.03| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 999 model outputs to `db`
+    2024-May-27 11:34:49.67| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:34:49.76| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:5d4a6013-900c-4582-9680-4043e1407519
 
 </pre>
 </details>
@@ -1328,7 +1328,7 @@ list(listener.outputs_select.limit(1).execute())[0][listener.outputs].unpack()
 <details>
 <summary>Outputs</summary>
 <pre>
-    /Users/dodo/SuperDuperDB/superduperdb/superduperdb/ext/torch/encoder.py:52: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:212.)
+    /Users/dodo/superduper/superduper/superduper/ext/torch/encoder.py:52: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:212.)
       return torch.from_numpy(array)
 
 </pre>
@@ -1443,7 +1443,7 @@ Downstream of this first model, we now can add another smaller model, to classif
 Since the dataset is concerned with cats and dogs we create 2 downstream models classifying the images in 2 different ways.
 
 ```python
-from superduperdb import ObjectModel
+from superduper import ObjectModel
 
 
 class Comparer:
@@ -1482,7 +1482,7 @@ db.apply(felines_vs_canines)
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-27 11:34:50.07| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:34:50.07| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
@@ -1490,10 +1490,10 @@ db.apply(felines_vs_canines)
 
 </pre>
 <pre>
-    2024-May-27 11:34:50.63| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 999 model outputs to `db`
-    2024-May-27 11:34:51.22| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:34:51.22| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:3c5da5ea-a4d2-4964-89ed-5691e0e80d4b
-    2024-May-27 11:34:51.23| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:34:50.63| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 999 model outputs to `db`
+    2024-May-27 11:34:51.22| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:34:51.22| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:3c5da5ea-a4d2-4964-89ed-5691e0e80d4b
+    2024-May-27 11:34:51.23| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
@@ -1501,13 +1501,13 @@ db.apply(felines_vs_canines)
 
 </pre>
 <pre>
-    2024-May-27 11:34:51.51| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 999 model outputs to `db`
-    2024-May-27 11:34:52.08| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:34:52.08| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:f46f6471-7895-482d-ab03-ec7344235512
+    2024-May-27 11:34:51.51| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 999 model outputs to `db`
+    2024-May-27 11:34:52.08| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:34:52.08| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:f46f6471-7895-482d-ab03-ec7344235512
 
 </pre>
 <pre>
-    ([\<superduperdb.jobs.job.ComponentJob at 0x142c03d90\>],
+    ([\<superduper.jobs.job.ComponentJob at 0x142c03d90\>],
      Listener(identifier='component/listener/felines_vs_canines/e92d248d-8ea8-4e2b-8254-5988acfea072', uuid='e92d248d-8ea8-4e2b-8254-5988acfea072', key='_outputs.b55cc5c5-9427-40ee-95a3-227e659cd783', model=ObjectModel(identifier='felines_vs_canines', uuid='65f2761b-9d4c-47fb-a5a9-f5e95c81bda9', signature='*args,**kwargs', datatype=None, output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, num_workers=0, object=\<__main__.Comparer object at 0x177f42bd0\>), select=images.find(), active=True, predict_kwargs=\{\}))
 </pre>
 </details>
@@ -1578,10 +1578,10 @@ db['images'].insert_one(Document({**data[-1], 'new': True})).execute()
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-27 11:36:59.83| WARNING  | Duncans-MBP.fritz.box| superduperdb.misc.annotations:117  | add is deprecated and will be removed in a future release.
-    2024-May-27 11:37:00.62| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x10cd4be20\>
-    2024-May-27 11:37:00.62| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function callable_job at 0x10cd4be20\> future:ce572425-a6bd-4170-bad9-6ff56598388d
-    2024-May-27 11:37:00.90| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:36:59.83| WARNING  | Duncans-MBP.fritz.box| superduper.misc.annotations:117  | add is deprecated and will be removed in a future release.
+    2024-May-27 11:37:00.62| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x10cd4be20\>
+    2024-May-27 11:37:00.62| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function callable_job at 0x10cd4be20\> future:ce572425-a6bd-4170-bad9-6ff56598388d
+    2024-May-27 11:37:00.90| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
@@ -1590,10 +1590,10 @@ db['images'].insert_one(Document({**data[-1], 'new': True})).execute()
 
 </pre>
 <pre>
-    2024-May-27 11:37:01.54| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 1 model outputs to `db`
-    2024-May-27 11:37:01.54| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:37:01.54| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:189c7a61-61f3-4fbc-837c-4bdd38d6241d
-    2024-May-27 11:37:01.54| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:37:01.54| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 1 model outputs to `db`
+    2024-May-27 11:37:01.54| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:37:01.54| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:189c7a61-61f3-4fbc-837c-4bdd38d6241d
+    2024-May-27 11:37:01.54| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
@@ -1601,19 +1601,19 @@ db['images'].insert_one(Document({**data[-1], 'new': True})).execute()
 
 </pre>
 <pre>
-    2024-May-27 11:37:01.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 1 model outputs to `db`
-    2024-May-27 11:37:01.55| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:37:01.55| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:1c603b81-4891-4d9b-8c1b-48039e77e27d
-    2024-May-27 11:37:01.55| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
+    2024-May-27 11:37:01.55| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 1 model outputs to `db`
+    2024-May-27 11:37:01.55| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:37:01.55| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:1c603b81-4891-4d9b-8c1b-48039e77e27d
+    2024-May-27 11:37:01.55| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x10cd4bec0\>
 
 </pre>
 <pre>
     1it [00:00, 322.39it/s]
 </pre>
 <pre>
-    2024-May-27 11:37:01.56| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 1 model outputs to `db`
-    2024-May-27 11:37:01.56| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-27 11:37:01.56| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:a5b04a66-feac-4270-8685-edb0de90142f
+    2024-May-27 11:37:01.56| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 1 model outputs to `db`
+    2024-May-27 11:37:01.56| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-27 11:37:01.56| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x13ecc76d0\>.  function:\<function method_job at 0x10cd4bec0\> future:a5b04a66-feac-4270-8685-edb0de90142f
 
 </pre>
 <pre>
@@ -1622,7 +1622,7 @@ db['images'].insert_one(Document({**data[-1], 'new': True})).execute()
 </pre>
 <pre>
     ([ObjectId('6654543b4260c60bfe3e8479')],
-     TaskWorkflow(database=\<superduperdb.base.datalayer.Datalayer object at 0x13ed87e90\>, G=\<networkx.classes.digraph.DiGraph object at 0x15c991d10\>))
+     TaskWorkflow(database=\<superduper.base.datalayer.Datalayer object at 0x13ed87e90\>, G=\<networkx.classes.digraph.DiGraph object at 0x15c991d10\>))
 </pre>
 </details>
 

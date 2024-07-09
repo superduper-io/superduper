@@ -11,7 +11,7 @@
 (Learn how to build a model [here](model))
 
 ```python
-from superduperdb import Application
+from superduper import Application
 
 template = db.load('template', 'my_template')
 

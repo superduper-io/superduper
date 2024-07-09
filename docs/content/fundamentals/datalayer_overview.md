@@ -4,35 +4,35 @@ sidebar_position: 3
 
 # Datalayer
 
-The `Datalayer` is the principle point of entry in `superduperdb` for:
+The `Datalayer` is the principle point of entry in `superduper` for:
 
 - Communicating with the database
 - Instructing models and other components to work together with the database
-- Accessing and storing meta-data about your `superduperdb` models and data
+- Accessing and storing meta-data about your `superduper` models and data
 
 Technically, the `Datalayer` "wires together" several important backends involved in the AI workflow:
 
 - Querying the database via the **databackend**
 - Storing and retrieving serialized model-weights and other artifacts from the **artifact store**
-- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `superduperdb`
+- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `superduper`
 - Performing computations over the data in the **databackend** using the models saved in the **artifact store**
 
 ```python
-from superduperdb import superduper
+from superduper import superduper
 
 db = superduper()
 
 db.databackend
-# <superduperdb.backends.mongodb.data_backend.MongoDataBackend at 0x1562815d0>
+# <superduper.backends.mongodb.data_backend.MongoDataBackend at 0x1562815d0>
 
 db.artifact_store
-# <superduperdb.backends.mongodb.artifacts.MongoArtifactStore at 0x156869f50>
+# <superduper.backends.mongodb.artifacts.MongoArtifactStore at 0x156869f50>
 
 db.metadata
-# <superduperdb.backends.mongodb.metadata.MongoMetaDataStore at 0x156866a10>
+# <superduper.backends.mongodb.metadata.MongoMetaDataStore at 0x156866a10>
 
 db.compute
-# <superduperdb.backends.local.LocalComputeBackend 0x152866a10>
+# <superduper.backends.local.LocalComputeBackend 0x152866a10>
 ```
 
 Our aim is to make it easy to set-up each aspect of the `Datalayer` with your preferred
@@ -40,9 +40,9 @@ connections/ engines.
 
 ### Data-backend
 
-The databackend typically connects to your database (although `superduperdb` also supports other databackends such as a directory of `pandas` dataframes), 
+The databackend typically connects to your database (although `superduper` also supports other databackends such as a directory of `pandas` dataframes), 
 and dispatches queries written in an query API which is compatible with that databackend, but which also includes additional aspects
-specific to `superduperdb`.
+specific to `superduper`.
 
 Read more [here](../data_integrations/supported_query_APIs.md).
 
@@ -152,12 +152,12 @@ db = superduper('sqlite://<my-database>.db')
 ...and
 
 ```python
-from superduperdb.backends.local.compute import LocalComputeBackend
+from superduper.backends.local.compute import LocalComputeBackend
 
 db = superduper(
     'sqlite://<my-database>.db',
     metadata_store='sqlite://<my-database>.db',
-    artifact_store='filesystem://.superduperdb/artifacts/',
+    artifact_store='filesystem://.superduper/artifacts/',
     compute=LocalComputeBackend(),
 )
 ```
@@ -196,4 +196,4 @@ Validate your components (mostly models)
 
 ### `db.predict`
 
-Infer predictions from models hosted by `superduperdb`. Read more about this and about models [here](../walkthrough/apply_models.md).
+Infer predictions from models hosted by `superduper`. Read more about this and about models [here](../walkthrough/apply_models.md).

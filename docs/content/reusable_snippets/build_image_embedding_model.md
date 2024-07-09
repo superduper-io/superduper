@@ -28,7 +28,7 @@ image_path = "CLIP.png"
         import torch
         import torchvision.models as models
         from torchvision import transforms
-        from superduperdb.ext.torch import TorchModel
+        from superduper.ext.torch import TorchModel
         
         class TorchVisionEmbedding:
             def __init__(self):
@@ -58,7 +58,7 @@ image_path = "CLIP.png"
         import torch
         import clip
         from torchvision import transforms
-        from superduperdb.ext.torch import TorchModel
+        from superduper.ext.torch import TorchModel
         
         class CLIPVisionEmbedding:
             def __init__(self):
@@ -80,7 +80,7 @@ image_path = "CLIP.png"
         import torch
         from transformers import AutoImageProcessor, AutoModel, AutoFeatureExtractor
         import torchvision.transforms as T
-        from superduperdb.ext.torch import TorchModel
+        from superduper.ext.torch import TorchModel
         
         
         class HuggingFaceEmbeddings(torch.nn.Module):

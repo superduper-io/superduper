@@ -1,6 +1,6 @@
-**`superduperdb.misc.runnable.queue_chunker`** 
+**`superduper.misc.runnable.queue_chunker`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/runnable/queue_chunker.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/runnable/queue_chunker.py)
 
 ## `QueueChunker` 
 

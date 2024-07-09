@@ -5,7 +5,7 @@
 Start a development version of the service on port 8002 with:
 
 ```bash
-superduperdb rest
+superduper rest
 ```
 
 To change the port and ip-range allowed configure:

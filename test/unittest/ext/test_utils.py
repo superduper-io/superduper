@@ -1,6 +1,6 @@
 import pytest
 
-from superduperdb.ext.utils import format_prompt, get_key
+from superduper.ext.utils import format_prompt, get_key
 
 
 def test_patch_environment_variable(monkeypatch):

@@ -1,6 +1,6 @@
-**`superduperdb.backends.mongodb.data_backend`** 
+**`superduper.backends.mongodb.data_backend`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/mongodb/data_backend.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/mongodb/data_backend.py)
 
 ## `MongoDataBackend` 
 

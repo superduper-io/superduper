@@ -1,6 +1,6 @@
-**`superduperdb.ext.jina.client`** 
+**`superduper.ext.jina.client`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/jina/client.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/jina/client.py)
 
 ## `JinaAPIClient` 
 

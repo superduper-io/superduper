@@ -14,7 +14,7 @@ import DownloadButton from '../downloadButton.js';
 <Tabs>
     <TabItem value="Scikit-Learn" label="Scikit-Learn" default>
         ```python
-        from superduperdb.ext.sklearn import Estimator, SklearnTrainer
+        from superduper.ext.sklearn import Estimator, SklearnTrainer
         from sklearn.svm import SVC
         
         model = Estimator(
@@ -32,8 +32,8 @@ import DownloadButton from '../downloadButton.js';
         ```python
         import torch
         from torch import nn
-        from superduperdb.ext.torch.model import TorchModel
-        from superduperdb.ext.torch.training import TorchTrainer
+        from superduper.ext.torch.model import TorchModel
+        from superduper.ext.torch.training import TorchTrainer
         from torch.nn.functional import cross_entropy
         
         

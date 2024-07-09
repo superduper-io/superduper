@@ -1,13 +1,13 @@
-**`superduperdb.jobs.task_workflow`** 
+**`superduper.jobs.task_workflow`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/jobs/task_workflow.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/jobs/task_workflow.py)
 
 ## `TaskWorkflow` 
 
 ```python
 TaskWorkflow(self,
      database: 'Datalayer',
-     G: 'DiGraph' = <factory>) -> None
+     G: 'DiGraph' = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

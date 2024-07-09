@@ -3,14 +3,14 @@ import random
 import lorem
 import PIL.Image
 
-from superduperdb import ObjectModel
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.superduper import superduper
-from superduperdb.components.application import Application
-from superduperdb.ext.numpy import array
-from superduperdb.ext.pillow.encoder import image_type
-from superduperdb.rest.app import build_app
-from superduperdb.server.app import SuperDuperApp
+from superduper import ObjectModel
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.superduper import superduper
+from superduper.components.application import Application
+from superduper.ext.numpy import array
+from superduper.ext.pillow.encoder import image_type
+from superduper.rest.app import build_app
+from superduper.server.app import SuperDuperApp
 
 m = Application(
     'test_stack',
@@ -28,7 +28,7 @@ m = Application(
     ],
 )
 
-from superduperdb.base.document import Document
+from superduper.base.document import Document
 
 collection = MongoQuery(table='documents')
 data = [
@@ -39,7 +39,7 @@ db = superduper('mongomock://test')
 db.execute(collection.insert_many(data))
 db.add(m)
 
-from superduperdb.ext.openai import OpenAIChatCompletion
+from superduper.ext.openai import OpenAIChatCompletion
 
 m = OpenAIChatCompletion(identifier='gpt-3.5-turbo')
 

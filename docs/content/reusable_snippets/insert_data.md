@@ -16,7 +16,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import Document, DataType
+        from superduper import Document, DataType
         
         def do_insert(data, schema = None):
             
@@ -34,7 +34,7 @@ In order to create data, we need to create a `Schema` for encoding our special `
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        from superduperdb import Document
+        from superduper import Document
         
         def do_insert(data):
             db.execute(table_or_collection.insert([Document({'id': str(idx), 'x': x['x'], 'y': x['y']}) if isinstance(x, dict) and 'x' in x and 'y' in x else Document({'id': str(idx), 'x': x}) for idx, x in enumerate(data)]))

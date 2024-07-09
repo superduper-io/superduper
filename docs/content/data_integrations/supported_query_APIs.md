@@ -27,7 +27,7 @@ query = db['products'].filter(products.brand == 'Nike').select('id').limit(10)
 
 ## Hybrid API
 
-On top of the native features of `pymongo` and `ibis`, `superduperdb` builds several novel features:
+On top of the native features of `pymongo` and `ibis`, `superduper` builds several novel features:
 
 - Additional ways to query the database with the outputs of machine learning models
   - Query model-outputs directly

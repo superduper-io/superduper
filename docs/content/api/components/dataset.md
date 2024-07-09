@@ -1,6 +1,6 @@
-**`superduperdb.components.dataset`** 
+**`superduper.components.dataset`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/dataset.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/dataset.py)
 
 ## `Dataset` 
 
@@ -8,7 +8,7 @@
 Dataset(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: None = <factory>,
+     uuid: None = None,
      *,
      upstream: "t.Optional[t.List['Component']]" = None,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
@@ -40,7 +40,7 @@ A dataset is an immutable collection of documents.
 DataInit(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: None = <factory>,
+     uuid: None = None,
      *,
      upstream: "t.Optional[t.List['Component']]" = None,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
@@ -54,5 +54,5 @@ DataInit(self,
 | uuid | UUID of the leaf. |
 | artifacts | A dictionary of artifacts paths and `DataType` objects |
 
-DataInit(identifier: str, db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None, uuid: None = <factory>, *, upstream: "t.Optional[t.List['Component']]" = None, artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None, data: 't.List[t.Dict]', table: 'str')
+DataInit(identifier: str, db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None, uuid: None = None, *, upstream: "t.Optional[t.List['Component']]" = None, artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None, data: 't.List[t.Dict]', table: 'str')
 

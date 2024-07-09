@@ -3,7 +3,7 @@ import os
 import pytest
 import vcr
 
-from superduperdb.ext.jina import JinaEmbedding
+from superduper.ext.jina import JinaEmbedding
 
 CASSETTE_DIR = 'test/integration/ext/jina/cassettes'
 

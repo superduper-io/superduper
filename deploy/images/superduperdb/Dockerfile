@@ -4,7 +4,7 @@
 # Global Parameters
 # ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
-ARG BUILD_ENV=superduperdb
+ARG BUILD_ENV=superduper
 ARG RUNNER=cpu
 
 # ---------------
@@ -54,7 +54,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 
-# Add SuperDuperDB User
+# Add superduper.io User
 # ---------------
 ENV NB_USER=superduper \
     NB_UID=1000 \
@@ -81,7 +81,7 @@ RUN python -m pip install --upgrade pip setuptools
 
 # Install jupyterlab dependencies
 # ---------------
-COPY ./deploy/images/superduperdb/jupyter_requirements.txt ./jupyter_requirements.txt
+COPY ./deploy/images/superduper/jupyter_requirements.txt ./jupyter_requirements.txt
 RUN python -m pip install -r ./jupyter_requirements.txt
 
 
@@ -93,7 +93,7 @@ FROM common-stage AS build_sandbox
 # Install the requirements. To be used in conjuction with "make testenv_init" for development.
 ONBUILD ARG EXTRA_REQUIREMENTS_FILE=deploy/installations/testenv_requirements.txt
 ONBUILD USER superduper
-ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD WORKDIR ${HOME}/superduper
 ONBUILD COPY --chown=superduper ./pyproject.toml ./pyproject.toml
 ONBUILD COPY --chown=superduper ./Makefile ./Makefile
 ONBUILD COPY --chown=superduper ./deploy/testenv/requirements.txt ./requirements.txt
@@ -109,8 +109,8 @@ ONBUILD RUN make install_devkit
 FROM common-stage AS build_nightly
 
 # Install the latest commit from local repo.
-ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
-ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD COPY --chown=superduper ./ ${HOME}/superduper
+ONBUILD WORKDIR ${HOME}/superduper
 ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip python -m pip install --user ./ \
     # Purge pip cache to reduce image size.
     && pip cache purge
@@ -124,11 +124,11 @@ ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pytho
 # -------------------------------
 # Build Release (Production)
 # -------------------------------
-FROM common-stage AS build_superduperdb
+FROM common-stage AS build_superduper
 
 # Install the latest release from pypi
 # TODO: to be updated when we create the release branch.
-ONBUILD RUN python -m pip install --user superduperdb \
+ONBUILD RUN python -m pip install --user superduper \
     # Purge pip cache to reduce image size.
     && pip cache purge
 

@@ -4,14 +4,14 @@ from test.db_config import DBConfig
 import numpy as np
 import pytest
 
-from superduperdb import Document
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.constant import KEY_BLOBS
-from superduperdb.components.listener import Listener
-from superduperdb.components.model import ObjectModel
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
+from superduper import Document
+from superduper.backends.ibis.field_types import dtype
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.constant import KEY_BLOBS
+from superduper.components.listener import Listener
+from superduper.components.model import ObjectModel
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 
 def test_listener_serializes_properly():

@@ -1,6 +1,6 @@
-**`superduperdb.vector_search.base`** 
+**`superduper.vector_search.base`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/base.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/base.py)
 
 ## `cosine` 
 

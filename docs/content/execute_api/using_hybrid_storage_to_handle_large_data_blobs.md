@@ -10,7 +10,7 @@ Some applications require large data-blobs and objects, which are either larger 
 - large audio
 - videos
 
-In order to handle such data, SuperDuperDB provides a few options when 
+In order to handle such data, superduper provides a few options when 
 creating a `DataType` via the `encodable` parameter.
 
 ## Artifact store reference with `encodable='artifact'`
@@ -24,7 +24,7 @@ For example, if you try the following snippet:
 ```python
 import pickle
 import uuid
-from superduperdb import DataType, Document, superduper
+from superduper import DataType, Document, superduper
 
 db = superduper('mongomock://test', artifact_store='filesystem://./artifacts')
 
@@ -78,7 +78,7 @@ You may verify that with this command:
 iconv -f ISO-8859-1 -t UTF-8 artifacts/866cf8526595d3620d6045172fb16d1efefac4b1
 ```
 
-The SuperDuperDB query reloads the data and passes it to the query result, 
+The superduper query reloads the data and passes it to the query result, 
 without any user intervention.
 
 ## Just-in-time loading with `encodable='lazy_artifact'`:
@@ -116,7 +116,7 @@ However, after calling `.unpack(db)`:
 'This is a test'
 ```
 
-This allows `superduperdb` to build efficient data-loaders and model loading mechanisms.
+This allows `superduper` to build efficient data-loaders and model loading mechanisms.
 For example, when saving model data to the artifact-store, the default `encodable` is `'lazy_artifact'`.
 
 ## Saving files and directories to the artifact store

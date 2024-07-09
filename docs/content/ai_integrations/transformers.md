@@ -1,18 +1,18 @@
 # Transformers
 
 [Transformers](https://huggingface.co/docs/transformers/index) is a popular AI framework, and we have incorporated native support for Transformers to provide essential Large Language Model (LLM) capabilities.
-`superduperdb` allows users to work with arbitrary `transformers` pipelines, with custom input/ output data-types.
+`superduper` allows users to work with arbitrary `transformers` pipelines, with custom input/ output data-types.
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |
-| `superduperdb.ext.transformers.model.TextClassification` | A pipeline for classifying text. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#textclassificationpipeline) |
-| `superduperdb.ext.transformers.model.LLM` | Work locally with the `transformers` implementations of LLM. | [Code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#llm) |
+| `superduper.ext.transformers.model.TextClassification` | A pipeline for classifying text. | [Code](https://github.com/superduper/superduper/blob/main/superduper/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#textclassificationpipeline) |
+| `superduper.ext.transformers.model.LLM` | Work locally with the `transformers` implementations of LLM. | [Code](https://github.com/superduper/superduper/blob/main/superduper/ext/transformers/model.py) | [Docs](/docs/api/ext/transformers/model#llm) |
 
 
 ### `TextClassification`
 
 One of the most commonly used pipelines in `transformers` is the `TextClassificationPipeline`.
-You may apply and train these pipelines with `superduperdb`.
+You may apply and train these pipelines with `superduper`.
 Read more in the [API documentation](/docs/api/ext/transformers/model#textclassificationpipeline).
 
 
@@ -21,7 +21,7 @@ Read more in the [API documentation](/docs/api/ext/transformers/model#textclassi
 You can quickly utilize LLM capabilities using the following Python function:
 
 ```python
-from superduperdb.ext.transformers import LLM
+from superduper.ext.transformers import LLM
 llm = LLM(model_name_or_path="facebook/opt-350m")
 llm.predict("What are we having for dinner?")
 ```
@@ -29,7 +29,7 @@ llm.predict("What are we having for dinner?")
 Or use a method similar to transformers’ from_pretrained, just need to supplement the identifier parameter.
 
 ```python
-from superduperdb.ext.transformers import LLM
+from superduper.ext.transformers import LLM
 llm = LLM.from_pretrained(
     "facebook/opt-350m", 
     load_in_8bit=True, 
@@ -50,7 +50,7 @@ For a fully worked out training/ fine-tuning use-case refer to the [use-cases se
 
 ### LLM fine-tuning
 
-SuperDuperDB provides a convenient fine-tuning method based on the [trl](https://huggingface.co/docs/trl/index) framework to help you train data in the database.
+superduper provides a convenient fine-tuning method based on the [trl](https://huggingface.co/docs/trl/index) framework to help you train data in the database.
 
 ### Supported Features
 

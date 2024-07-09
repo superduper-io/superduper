@@ -7,10 +7,10 @@ import PIL
 import pytest
 import torch
 
-from superduperdb.base.document import Document
-from superduperdb.base.exceptions import UnsupportedDatatype
-from superduperdb.components.table import Table
-from superduperdb.misc.auto_schema import infer_datatype, infer_schema
+from superduper.base.document import Document
+from superduper.base.exceptions import UnsupportedDatatype
+from superduper.components.table import Table
+from superduper.misc.auto_schema import infer_datatype, infer_schema
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ import pytest
 import vcr
 from vcr.stubs import httpx_stubs
 
-from superduperdb.ext.openai.model import (
+from superduper.ext.openai.model import (
     OpenAIAudioTranscription,
     OpenAIAudioTranslation,
     OpenAIChatCompletion,
@@ -160,7 +160,7 @@ def test_edit_url():
     )
     with open('test/material/data/rickroll.png', 'rb') as f:
         buffer = io.BytesIO(f.read())
-    resp = e.predict(buffer, context=['superduperdb'])
+    resp = e.predict(buffer, context=['superduper'])
     buffer.close()
 
     # PNG 8-byte signature
@@ -171,7 +171,7 @@ def test_edit_url():
 def test_edit_url_batch():
     e = OpenAIImageEdit(
         identifier='dall-e',
-        prompt='A celebration party at the launch of superduperdb',
+        prompt='A celebration party at the launch of superduper',
         response_format='url',
     )
     with open('test/material/data/rickroll.png', 'rb') as f:

@@ -1,6 +1,6 @@
 # Connect
 
-The standard way to connect to SuperDuperDB is via the `superduper` decorator:
+The standard way to connect to superduper is via the `superduper` decorator:
 
 ## Development mode
 
@@ -13,17 +13,17 @@ db = superduper('<database-uri>')
 For example if you are running a (not secure) MongoDB deployment locally, and you want to connect to the `"documents"` database, you might write:
 
 ```python
-from superduperdb import superduper
+from superduper import superduper
 db = superduper('mongodb://localhost:27017/documents')
 ```
 
 ### Complete connection guide
 
-For a semi-exhaustive list of possible connections see [here](../reusable_snippets/connect_to_superduperdb).
+For a semi-exhaustive list of possible connections see [here](../reusable_snippets/connect_to_superduper).
 
 ### Fine grained configuration
 
-SuperDuperDB chooses default `artifact_store` (file blob storage) and `metadata_store` (AI metadata) values for your connection. These defaults may be overridden directly:
+superduper chooses default `artifact_store` (file blob storage) and `metadata_store` (AI metadata) values for your connection. These defaults may be overridden directly:
 
 ```python
 db = superduper(
@@ -66,4 +66,4 @@ metadata_store: <metadata-store-uri>
 ## Next steps
 
 `db` is now your connection to your data, models, and model meta-data.
-Now that you have established this connection you are ready to build, deploy and manage AI with SuperDuperDB.
+Now that you have established this connection you are ready to build, deploy and manage AI with superduper.

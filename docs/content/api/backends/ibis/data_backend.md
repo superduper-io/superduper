@@ -1,6 +1,6 @@
-**`superduperdb.backends.ibis.data_backend`** 
+**`superduper.backends.ibis.data_backend`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/ibis/data_backend.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/ibis/data_backend.py)
 
 ## `IbisDataBackend` 
 

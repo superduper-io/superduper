@@ -1,6 +1,6 @@
-**`superduperdb.ext.sklearn.model`** 
+**`superduper.ext.sklearn.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/sklearn/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/sklearn/model.py)
 
 ## `Estimator` 
 
@@ -8,9 +8,9 @@
 Estimator(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
-     trainer: Optional[superduperdb.ext.sklearn.model.SklearnTrainer] = None,
+     trainer: Optional[superduper.ext.sklearn.model.SklearnTrainer] = None,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: Literal['*args',
      '**kwargs',
@@ -20,11 +20,11 @@ Estimator(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      object: sklearn.base.BaseEstimator,
      preprocess: Optional[Callable] = None,
      postprocess: Optional[Callable] = None) -> None
@@ -59,21 +59,21 @@ This is a model that can be trained and used for prediction.
 SklearnTrainer(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      key: 'ModelInputType',
      select: 'Query',
      transform: 't.Optional[t.Callable]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      signature: 'Signature' = '*args',
      data_prefetch: 'bool' = False,
      prefetch_size: 'int' = 1000,
      prefetch_factor: 'int' = 100,
      in_memory: 'bool' = True,
-     compute_kwargs: 't.Dict' = <factory>,
-     fit_params: Dict = <factory>,
-     predict_params: Dict = <factory>,
+     compute_kwargs: 't.Dict' = None,
+     fit_params: Dict = None,
+     predict_params: Dict = None,
      y_preprocess: Optional[Callable] = None) -> None
 ```
 | Parameter | Description |

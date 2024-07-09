@@ -15,7 +15,7 @@ import DownloadButton from '../downloadButton.js';
 The parameters of this LLM Trainer are basically the same as `transformers.TrainingArguments`, but some additional parameters have been added for easier training setup.
 
 ```python
-from superduperdb.ext.transformers import LLM, LLMTrainer
+from superduper.ext.transformers import LLM, LLMTrainer
 trainer = LLMTrainer(
     identifier="llm-finetune-trainer",
     output_dir="output/finetune",
@@ -103,7 +103,7 @@ There are two methods to load a trained model:
     </TabItem>
     <TabItem value="Use a specified checkpoint" label="Use a specified checkpoint" default>
         ```python
-        from superduperdb.ext.transformers import LLM, LLMTrainer
+        from superduper.ext.transformers import LLM, LLMTrainer
         experiment_id = db.show("checkpoint")[-1]
         version = None # None means the last checkpoint
         checkpoint = db.load("checkpoint", experiment_id, version=version)

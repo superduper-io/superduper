@@ -1,6 +1,6 @@
-**`superduperdb.vector_search.in_memory`** 
+**`superduper.vector_search.in_memory`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/in_memory.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/in_memory.py)
 
 ## `InMemoryVectorSearcher` 
 

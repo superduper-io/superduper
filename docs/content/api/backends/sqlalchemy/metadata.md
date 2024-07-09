@@ -1,6 +1,6 @@
-**`superduperdb.backends.sqlalchemy.metadata`** 
+**`superduper.backends.sqlalchemy.metadata`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/sqlalchemy/metadata.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/sqlalchemy/metadata.py)
 
 ## `SQLAlchemyMetadata` 
 

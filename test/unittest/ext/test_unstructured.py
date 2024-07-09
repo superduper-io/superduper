@@ -2,8 +2,8 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
 
 try:
     import unstructured
@@ -11,7 +11,7 @@ except ImportError:
     unstructured = None
 
 
-TEST_URL = "https://superduperdb.com"
+TEST_URL = "https://superduper.io"
 TEST_FILE = "file://test/material/data/rhymes.md"
 
 
@@ -20,7 +20,7 @@ TEST_FILE = "file://test/material/data/rhymes.md"
 def test_encoder_auto(db):
     from unstructured.documents.elements import Element
 
-    from superduperdb.ext.unstructured.encoder import unstructured_encoder
+    from superduper.ext.unstructured.encoder import unstructured_encoder
 
     db.add(unstructured_encoder)
 
@@ -38,7 +38,7 @@ def test_encoder_auto(db):
 def test_encoder_url(db):
     from unstructured.documents.elements import Element
 
-    from superduperdb.ext.unstructured.encoder import unstructured_encoder
+    from superduper.ext.unstructured.encoder import unstructured_encoder
 
     db.add(unstructured_encoder)
 

@@ -1,6 +1,6 @@
-**`superduperdb.ext.numpy.encoder`** 
+**`superduper.ext.numpy.encoder`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/numpy/encoder.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/numpy/encoder.py)
 
 ## `array` 
 

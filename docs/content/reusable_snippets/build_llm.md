@@ -15,7 +15,7 @@ import DownloadButton from '../downloadButton.js';
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
         !pip install openai
-        from superduperdb.ext.openai import OpenAIChatCompletion
+        from superduper.ext.openai import OpenAIChatCompletion
         
         llm = OpenAIChatCompletion(identifier='llm', model='gpt-3.5-turbo')        
         ```
@@ -23,7 +23,7 @@ import DownloadButton from '../downloadButton.js';
     <TabItem value="Anthropic" label="Anthropic" default>
         ```python
         !pip install anthropic
-        from superduperdb.ext.anthropic import AnthropicCompletions
+        from superduper.ext.anthropic import AnthropicCompletions
         import os
         
         os.environ["ANTHROPIC_API_KEY"] = "sk-xxx"
@@ -39,7 +39,7 @@ import DownloadButton from '../downloadButton.js';
     <TabItem value="vLLM" label="vLLM" default>
         ```python
         !pip install vllm
-        from superduperdb.ext.vllm import VllmModel
+        from superduper.ext.vllm import VllmModel
         
         predict_kwargs = {
             "max_tokens": 1024,
@@ -62,7 +62,7 @@ import DownloadButton from '../downloadButton.js';
     <TabItem value="Transformers" label="Transformers" default>
         ```python
         !pip install transformers datasets bitsandbytes accelerate
-        from superduperdb.ext.transformers import LLM
+        from superduper.ext.transformers import LLM
         
         llm = LLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", load_in_8bit=True, device_map="cuda", identifier="llm", predict_kwargs=dict(max_new_tokens=128))        
         ```
@@ -72,14 +72,14 @@ import DownloadButton from '../downloadButton.js';
         !pip install llama_cpp_python
         # !huggingface-cli download TheBloke/Mistral-7B-Instruct-v0.2-GGUF mistral-7b-instruct-v0.2.Q4_K_M.gguf --local-dir . --local-dir-use-symlinks False
         
-        from superduperdb.ext.llamacpp.model import LlamaCpp
+        from superduper.ext.llamacpp.model import LlamaCpp
         llm = LlamaCpp(identifier="llm", model_name_or_path="mistral-7b-instruct-v0.2.Q4_K_M.gguf")        
         ```
     </TabItem>
 </Tabs>
 ```python
 # test the llm model
-llm.predict("Tell me about the SuperDuperDB")
+llm.predict("Tell me about the superduper")
 ```
 
 <DownloadButton filename="build_llm.md" />

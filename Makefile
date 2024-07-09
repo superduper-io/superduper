@@ -1,10 +1,10 @@
-DIRECTORIES = superduperdb test
+DIRECTORIES = superduper test
 PYTEST_ARGUMENTS ?=
 BACKENDS ?= mongodb_community sqlite duckdb pandas
 
 # Export directories for data and artifacts
-export SUPERDUPERDB_DATA_DIR ?= ~/.cache/superduperdb/test_data
-export SUPERDUPERDB_ARTIFACTS_DIR ?= ~/.cache/superduperdb/artifacts
+export SUPERDUPER_DATA_DIR ?= ~/.cache/superduper/test_data
+export SUPERDUPER_ARTIFACTS_DIR ?= ~/.cache/superduper/artifacts
 
 
 ##@ General
@@ -19,22 +19,22 @@ help: ## Display this help
 
 ##@ Release Management
 
-# Release a new version of SuperDuperDB
+# Release a new version of superduper.io
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
 
-new_release: ## Release a new version of SuperDuperDB
+new_release: ## Release a new version of superduper.io
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "$(RELEASE_VERSION)" == "v$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
 	# Switch to release branch
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)
 	# Update version in source code
-	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION)"
-	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
-	@git add superduperdb/__init__.py
+	@echo "** Change superduper/__init__.py to version $(RELEASE_VERSION)"
+	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduper/__init__.py
+	@git add superduper/__init__.py
 	# Commit and tag release
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION CHANGELOG.md
@@ -76,9 +76,9 @@ lint-and-type-check: ## Lint and type-check the code
 	@echo "===> Static Typing Check <==="
 
 	@if [ -d .mypy_cache ]; then rm -rf .mypy_cache; fi
-	mypy superduperdb
+	mypy superduper
 	# Check for missing docstrings
-	# interrogate superduperdb
+	# interrogate superduper
 	# Check for unused dependencies
 	# deptry ./
 	# Check for deadcode
@@ -92,67 +92,67 @@ fix-and-check: ##  Lint the code before testing
 	# Linting
 
 	@if [ -d .mypy_cache ]; then rm -rf .mypy_cache; fi
-	mypy superduperdb
+	mypy superduper
 
 
 ##@ Image Management
 
-# superduperdb/superduperdb is a production image that includes the latest framework from pypi.
-# It can be used as "FROM superduper/superduperdb as base" for building custom Dockerfiles.
-build_superduperdb: ## Build a minimal Docker image for general use
-	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg BUILD_ENV="superduperdb"
+# superduper/superduper is a production image that includes the latest framework from pypi.
+# It can be used as "FROM superduper/superduper as base" for building custom Dockerfiles.
+build_superduper: ## Build a minimal Docker image for general use
+	echo "===> build superduper/superduper:$(RELEASE_VERSION:v%=%)"
+	docker build . -f ./deploy/images/superduper/Dockerfile -t superduper/superduper:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg BUILD_ENV="superduper"
 
 
-push_superduperdb: ## Push the superduperdb/superduperdb:<release> image
-	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
+push_superduper: ## Push the superduper/superduper:<release> image
+	@echo "===> release superduper/superduper:$(RELEASE_VERSION:v%=%)"
+	docker push superduper/superduper:$(RELEASE_VERSION:v%=%)
 
-	@echo "===> release superduperdb/superduperdb:latest"
-	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
-	docker push superduperdb/superduperdb:latest
+	@echo "===> release superduper/superduper:latest"
+	docker tag superduper/superduper:$(RELEASE_VERSION:v%=%) superduper/superduper:latest
+	docker push superduper/superduper:latest
 
-# superduperdb/sandbox is a development image with all dependencies pre-installed (framework + testenv)
-build_sandbox: ## Build superduperdb/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
+# superduper/sandbox is a development image with all dependencies pre-installed (framework + testenv)
+build_sandbox: ## Build superduper/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	# install dependencies.
 	python -m pip install toml
 	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
 
 	# build image
-	docker build . -f deploy/images/superduperdb/Dockerfile \
+	docker build . -f deploy/images/superduper/Dockerfile \
 	--build-arg BUILD_ENV="sandbox" \
 	--progress=plain \
 	--build-arg EXTRA_REQUIREMENTS_FILE="deploy/installations/testenv_requirements.txt" \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
-	-t $(if $(filter cuda,$(RUNNER)),superduperdb/sandbox_cuda:$(CURRENT_COMMIT),superduperdb/sandbox:$(CURRENT_COMMIT))
+	-t $(if $(filter cuda,$(RUNNER)),superduper/sandbox_cuda:$(CURRENT_COMMIT),superduper/sandbox:$(CURRENT_COMMIT))
 
 	# mark the image as the latest
-	docker tag $(if $(filter cuda,$(RUNNER)),superduperdb/sandbox_cuda:$(CURRENT_COMMIT),superduperdb/sandbox:$(CURRENT_COMMIT)) superduperdb/sandbox:latest
+	docker tag $(if $(filter cuda,$(RUNNER)),superduper/sandbox_cuda:$(CURRENT_COMMIT),superduper/sandbox:$(CURRENT_COMMIT)) superduper/sandbox:latest
 
 
-# superduperdb/nightly is a pre-release image with the latest code (and core dependencies) installed.
-build_nightly: ## Build superduperdb/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
-	docker build . -f ./deploy/images/superduperdb/Dockerfile \
+# superduper/nightly is a pre-release image with the latest code (and core dependencies) installed.
+build_nightly: ## Build superduper/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
+	docker build . -f ./deploy/images/superduper/Dockerfile \
 	--build-arg BUILD_ENV="nightly" \
         --platform linux/amd64 \
 	--progress=plain \
 	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),) \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
-	-t $(if $(filter cuda,$(RUNNER)),superduperdb/nightly_cuda:$(CURRENT_COMMIT),superduperdb/nightly:$(CURRENT_COMMIT))
+	-t $(if $(filter cuda,$(RUNNER)),superduper/nightly_cuda:$(CURRENT_COMMIT),superduper/nightly:$(CURRENT_COMMIT))
 
 
 
-push_nightly: ## Push the superduperdb/nightly:<commit> image
-	@echo "===> release superduperdb/nightly:$(CURRENT_COMMIT)"
-	docker push superduperdb/nightly:$(CURRENT_COMMIT)
+push_nightly: ## Push the superduper/nightly:<commit> image
+	@echo "===> release superduper/nightly:$(CURRENT_COMMIT)"
+	docker push superduper/nightly:$(CURRENT_COMMIT)
 
 
 ##@ Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> discover superduper/sandbox:latest"
-	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
+	@if docker image ls superduper/sandbox | grep -q "latest"; then \
         echo "superduper/sandbox:latest found";\
     else \
       	echo "superduper/sandbox:latest not found. Please run 'make build_sandbox'";\
@@ -163,11 +163,11 @@ testenv_init: ## Initialize a local Testing environment
 	@deploy/testenv/validate_hostnames.sh
 
 	@echo "===> Discover Paths"
-	echo "SUPERDUPERDB_DATA_DIR: $(SUPERDUPERDB_DATA_DIR)"
-	echo "SUPERDUPERDB_ARTIFACTS_DIR: $(SUPERDUPERDB_ARTIFACTS_DIR)"
+	echo "SUPERDUPER_DATA_DIR: $(SUPERDUPER_DATA_DIR)"
+	echo "SUPERDUPER_ARTIFACTS_DIR: $(SUPERDUPER_ARTIFACTS_DIR)"
 
-	@mkdir -p $(SUPERDUPERDB_DATA_DIR) && chmod -R 777 ${SUPERDUPERDB_DATA_DIR}
-	@mkdir -p $(SUPERDUPERDB_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPERDB_ARTIFACTS_DIR}
+	@mkdir -p $(SUPERDUPER_DATA_DIR) && chmod -R 777 ${SUPERDUPER_DATA_DIR}
+	@mkdir -p $(SUPERDUPER_ARTIFACTS_DIR) && chmod -R 777 ${SUPERDUPER_ARTIFACTS_DIR}
 	@mkdir -p deploy/testenv/cache && chmod -R 777 deploy/testenv/cache
 
 	@echo "===> Run TestEnv"
@@ -215,7 +215,7 @@ databackend_testing: ## Execute integration testing
 	@echo "TESTING BACKENDS"
 	@for backend in $(BACKENDS); do \
 		echo "TESTING $$backend"; \
-		SUPERDUPERDB_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
+		SUPERDUPER_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
 	done
 	@echo "TODO -- implement more backends integration testing..."
 

@@ -3,18 +3,18 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.model import TorchModel
+    from superduper.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
 from test.db_config import DBConfig
 
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.components.datatype import DataType
-from superduperdb.components.metric import Metric
-from superduperdb.components.model import Validation
-from superduperdb.ext.torch.training import TorchTrainer
+from superduper.backends.mongodb.data_backend import MongoDataBackend
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.components.datatype import DataType
+from superduper.components.metric import Metric
+from superduper.components.model import Validation
+from superduper.ext.torch.training import TorchTrainer
 
 
 class ToDict:

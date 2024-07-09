@@ -1,6 +1,6 @@
 # Key methods of `Model`
 
-All usage in `superduperdb` proceeds by changing or setting the attributes of a `Component`
+All usage in `superduper` proceeds by changing or setting the attributes of a `Component`
 and then calling `db.apply`. 
 
 However it may be useful to know that the following methods specific to `Model` play a key role.

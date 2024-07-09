@@ -1,8 +1,8 @@
 import pytest
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.backends.query_dataset import QueryDataset
-from superduperdb.components.model import Mapping
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.backends.query_dataset import QueryDataset
+from superduper.components.model import Mapping
 
 try:
     import torch

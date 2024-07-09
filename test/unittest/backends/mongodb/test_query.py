@@ -4,12 +4,12 @@ from test.db_config import DBConfig
 import numpy as np
 import pytest
 
-from superduperdb.backends.mongodb import query as q
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.config import BytesEncoding
-from superduperdb.base.document import Document
-from superduperdb.components.schema import Schema
-from superduperdb.ext.numpy.encoder import array
+from superduper.backends.mongodb import query as q
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.config import BytesEncoding
+from superduper.base.document import Document
+from superduper.components.schema import Schema
+from superduper.ext.numpy.encoder import array
 
 
 @pytest.fixture

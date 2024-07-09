@@ -1,6 +1,6 @@
-**`superduperdb.ext.pillow.encoder`** 
+**`superduper.ext.pillow.encoder`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/pillow/encoder.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/pillow/encoder.py)
 
 ## `encode_pil_image` 
 

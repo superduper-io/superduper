@@ -3,13 +3,13 @@ LLM model test cases.
 All the llm model can use the check_xxx func to test the intergration with db.
 """
 
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import Schema
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.components.listener import Listener
-from superduperdb.components.table import Table
+from superduper.backends.ibis.field_types import dtype
+from superduper.backends.ibis.query import Schema
+from superduper.backends.mongodb.data_backend import MongoDataBackend
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.components.listener import Listener
+from superduper.components.table import Table
 
 
 def check_predict(db, llm):
@@ -64,4 +64,4 @@ def check_llm_cdc(db, llm):
 
 
 # TODO: Expanded into a test tool class,
-# Used to test whether all model objects are normally compatible with superduperdb
+# Used to test whether all model objects are normally compatible with superduper

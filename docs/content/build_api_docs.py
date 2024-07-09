@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 
-from superduperdb.misc.annotations import extract_parameters, replace_parameters
+from superduper.misc.annotations import extract_parameters, replace_parameters
 from test.unittest.test_docstrings import FUNCTION_TEST_CASES, CLASS_TEST_CASES, TEST_CASES
 
 lookup = defaultdict(list)
@@ -80,7 +80,7 @@ def format_docstring(docstring):
 
 for k in lookup:
     content = f'**`{k}`** \n\n'
-    content += f"[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/{k.replace('.', '/')}.py)\n\n"
+    content += f"[Source code](https://github.com/superduper/superduper/blob/main/{k.replace('.', '/')}.py)\n\n"
     for node in lookup[k]:
         if node['::item'].startswith('_'):
             continue

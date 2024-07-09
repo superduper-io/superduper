@@ -1,6 +1,6 @@
-**`superduperdb.backends.local.artifacts`** 
+**`superduper.backends.local.artifacts`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/local/artifacts.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/local/artifacts.py)
 
 ## `FileSystemArtifactStore` 
 

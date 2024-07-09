@@ -8,23 +8,23 @@ from typing import Iterator
 
 import pytest
 
-import superduperdb as s
-from superduperdb import CFG, logging
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import MongoQuery
+import superduper as s
+from superduper import CFG, logging
+from superduper.backends.ibis.field_types import dtype
+from superduper.backends.mongodb.data_backend import MongoDataBackend
+from superduper.backends.mongodb.query import MongoQuery
 
 # ruff: noqa: E402
-from superduperdb.base import config as _config, superduper
-from superduperdb.base.build import build_datalayer
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.listener import Listener
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
-from superduperdb.components.vector_index import VectorIndex
-from superduperdb.ext.pillow.encoder import pil_image
+from superduper.base import config as _config, superduper
+from superduper.base.build import build_datalayer
+from superduper.base.datalayer import Datalayer
+from superduper.base.document import Document
+from superduper.components.dataset import Dataset
+from superduper.components.listener import Listener
+from superduper.components.schema import Schema
+from superduper.components.table import Table
+from superduper.components.vector_index import VectorIndex
+from superduper.ext.pillow.encoder import pil_image
 
 from .db_config import DBConfig
 
@@ -34,8 +34,8 @@ _config._CONFIG_IMMUTABLE = False
 try:
     import torch
 
-    from superduperdb.ext.torch.encoder import tensor
-    from superduperdb.ext.torch.model import TorchModel
+    from superduper.ext.torch.encoder import tensor
+    from superduper.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
@@ -85,7 +85,7 @@ def patch_mongomock(monkeypatch):
     import pymongo
     from mongomock import Collection, Database, MongoClient
 
-    from superduperdb.backends.base.backends import CONNECTIONS
+    from superduper.backends.base.backends import CONNECTIONS
 
     monkeypatch.setattr(gridfs, 'Collection', Collection)
     monkeypatch.setattr(gridfs.grid_file, 'Collection', Collection)
@@ -97,8 +97,8 @@ def patch_mongomock(monkeypatch):
 
 @pytest.fixture
 def test_db(request) -> Iterator[Datalayer]:
-    from superduperdb import CFG
-    from superduperdb.base.build import build_datalayer
+    from superduper import CFG
+    from superduper.base.build import build_datalayer
 
     # mongodb instead of localhost is required for CFG compatibility with docker-host
     db_name = CFG.data_backend.split('/')[-1]

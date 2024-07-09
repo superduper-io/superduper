@@ -3,8 +3,8 @@ from test.db_config import DBConfig
 import networkx as nx
 import pytest
 
-from superduperdb import ObjectModel
-from superduperdb.components.graph import Graph, document_node, input_node
+from superduper import ObjectModel
+from superduper.components.graph import Graph, document_node, input_node
 
 
 @pytest.fixture

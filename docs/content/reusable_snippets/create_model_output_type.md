@@ -19,7 +19,7 @@ import DownloadButton from '../downloadButton.js';
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        from superduperdb.backends.ibis.field_types import dtype
+        from superduper.backends.ibis.field_types import dtype
         chunked_model_datatype = dtype('str')        
         ```
     </TabItem>

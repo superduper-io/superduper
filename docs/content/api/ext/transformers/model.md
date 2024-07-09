@@ -1,13 +1,13 @@
-**`superduperdb.ext.transformers.model`** 
+**`superduper.ext.transformers.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/transformers/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/transformers/model.py)
 
 ## `LLM` 
 
 ```python
 LLM(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      trainer: 't.Optional[Trainer]' = None,
      identifier: str = '',
@@ -15,20 +15,20 @@ LLM(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      prompt: str = '{input}',
      prompt_func: Optional[Callable] = None,
      max_batch_size: Optional[int] = 4,
      model_name_or_path: Optional[str] = None,
      adapter_id: Union[str,
-     superduperdb.ext.transformers.training.Checkpoint,
+     superduper.ext.transformers.training.Checkpoint,
      NoneType] = None,
-     model_kwargs: Dict = <factory>,
-     tokenizer_kwargs: Dict = <factory>,
+     model_kwargs: Dict = None,
+     tokenizer_kwargs: Dict = None,
      prompt_template: str = '{input}') -> None
 ```
 | Parameter | Description |
@@ -70,7 +70,7 @@ will share the same base model and tokenizer cache.
 TextClassificationPipeline(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      preferred_devices: 't.Sequence[str]' = ('cuda',
      'mps',
@@ -86,17 +86,17 @@ TextClassificationPipeline(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      tokenizer_name: Optional[str] = None,
      tokenizer_cls: object = <class 'transformers.models.auto.tokenization_auto.AutoTokenizer'>,
-     tokenizer_kwargs: Dict = <factory>,
+     tokenizer_kwargs: Dict = None,
      model_name: Optional[str] = None,
      model_cls: object = <class 'transformers.models.auto.modeling_auto.AutoModelForSequenceClassification'>,
-     model_kwargs: Dict = <factory>,
+     model_kwargs: Dict = None,
      pipeline: Optional[transformers.pipelines.base.Pipeline] = None,
      task: str = 'text-classification') -> None
 ```

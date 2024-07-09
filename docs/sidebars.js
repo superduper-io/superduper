@@ -156,7 +156,7 @@ const sidebars = {
       collapsed: true,
       collapsible: true,
       items: [
-        'reusable_snippets/connect_to_superduperdb',
+        'reusable_snippets/connect_to_superduper',
         'reusable_snippets/create_datatype',
         'reusable_snippets/get_useful_sample_data',
         'reusable_snippets/insert_data',
@@ -270,7 +270,7 @@ const sidebars = {
       link: {
         type: 'generated-index',
         description:
-          'Inline documentation of the SuperDuperDB Python API',
+          'Inline documentation of the superduper.io Python API',
       },
     },
     {
@@ -282,7 +282,7 @@ const sidebars = {
       link: {
         type: 'generated-index',
         description:
-          'Common and useful use-cases implemented in SuperDuperDB with a walkthrough',
+          'Common and useful use-cases implemented in superduper.io with a walkthrough',
       },
     },
 
@@ -293,12 +293,12 @@ const sidebars = {
         {
           type: 'link',
           label: 'Change log',
-          href: 'https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/CHANGELOG.md',
+          href: 'https://raw.githubusercontent.com/superduper.io/superduper/main/CHANGELOG.md',
         },
         {
           type: 'link',
           label: 'Source on GitHub',
-          href: 'https://github.com/SuperDuperDB/superduperdb', 
+          href: 'https://github.com/superduper.io/superduper', 
         },
       ],
     },

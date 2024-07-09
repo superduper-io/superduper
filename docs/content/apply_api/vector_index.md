@@ -3,7 +3,7 @@
 - Wrap a `Listener` so that outputs are searchable
 - Can optionally take a second `Listener` for multimodal search
 - Applies to `Listener` instances containing `Model` instances which output vectors, arrays or tensors
-- Maybe leveraged in SuperDuperDB queries with the `.like` operator
+- Maybe leveraged in superduper queries with the `.like` operator
 
 ***Dependencies***
 
@@ -12,7 +12,7 @@
 ***Usage pattern***
 
 ```python
-from superduperdb import VectorIndex
+from superduper import VectorIndex
 
 vi = VectorIndex(
     'my-index',

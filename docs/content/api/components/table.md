@@ -1,6 +1,6 @@
-**`superduperdb.components.table`** 
+**`superduper.components.table`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/table.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/table.py)
 
 ## `Table` 
 
@@ -8,10 +8,10 @@
 Table(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
-     schema: superduperdb.components.schema.Schema,
+     schema: superduper.components.schema.Schema,
      primary_id: str = 'id') -> None
 ```
 | Parameter | Description |

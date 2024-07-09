@@ -20,8 +20,8 @@ import DownloadButton from '../downloadButton.js';
     </TabItem>
     <TabItem value="Prompt" label="Prompt" default>
         ```python
-        from superduperdb import model
-        from superduperdb.components.graph import Graph, input_node
+        from superduper import model
+        from superduper.components.graph import Graph, input_node
         
         @model
         def build_prompt(query):
@@ -36,8 +36,8 @@ import DownloadButton from '../downloadButton.js';
     </TabItem>
     <TabItem value="Context" label="Context" default>
         ```python
-        from superduperdb import model
-        from superduperdb.components.graph import Graph, input_node
+        from superduper import model
+        from superduper.components.graph import Graph, input_node
         
         prompt_template = (
             "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n"

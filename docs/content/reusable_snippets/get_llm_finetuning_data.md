@@ -17,7 +17,7 @@ The following are examples of training data in different formats.
     <TabItem value="Text" label="Text" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "timdettmers/openassistant-guanaco"
         dataset = load_dataset(dataset_name)
         
@@ -39,7 +39,7 @@ The following are examples of training data in different formats.
     <TabItem value="Prompt-Response" label="Prompt-Response" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "mosaicml/instruct-v3"
         dataset = load_dataset(dataset_name)
         
@@ -61,7 +61,7 @@ The following are examples of training data in different formats.
     <TabItem value="Chat" label="Chat" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "philschmid/dolly-15k-oai-style"
         dataset = load_dataset(dataset_name)['train'].train_test_split(0.9)
         

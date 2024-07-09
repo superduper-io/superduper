@@ -12,21 +12,21 @@ and is subclassed by:
 
 | class | framework |
 | --- | --- |
-| `superduperdb.ext.sklearn.Estimator` | [Scikit-Learn](https://scikit-learn.org/stable/) |
-| `superduperdb.ext.transformers.Pipeline` | [Hugging Face's `transformers`](https://huggingface.co/docs/transformers/index) |
-| `superduperdb.ext.torch.TorchModel` | [PyTorch](https://pytorch.org/) |
-| `superduperdb.ext.openai.OpenAI` | [OpenAI](https://api.openai.com) |
-| `superduperdb.ext.cohere.Cohere` | [Cohere](https://cohere.com) |
-| `superduperdb.ext.anthropic.Anthropic` | [Anthropic](https://anthropic.com) |
-| `superduperdb.ext.jina.Jina` | [Jina](https://jina.ai/embeddings) |
+| `superduper.ext.sklearn.Estimator` | [Scikit-Learn](https://scikit-learn.org/stable/) |
+| `superduper.ext.transformers.Pipeline` | [Hugging Face's `transformers`](https://huggingface.co/docs/transformers/index) |
+| `superduper.ext.torch.TorchModel` | [PyTorch](https://pytorch.org/) |
+| `superduper.ext.openai.OpenAI` | [OpenAI](https://api.openai.com) |
+| `superduper.ext.cohere.Cohere` | [Cohere](https://cohere.com) |
+| `superduper.ext.anthropic.Anthropic` | [Anthropic](https://anthropic.com) |
+| `superduper.ext.jina.Jina` | [Jina](https://jina.ai/embeddings) |
 
 The `Model` class is subclassed by:
 
 | class | framework |
 | --- | --- |
-| `superduperdb.ext.sklearn.Estimator` | [Scikit-Learn](https://scikit-learn.org/stable/) |
-| `superduperdb.ext.transformers.Pipeline` | [Hugging Face's `transformers`](https://huggingface.co/docs/transformers/index) |
-| `superduperdb.ext.torch.TorchModel` | [PyTorch](https://pytorch.org/) |
+| `superduper.ext.sklearn.Estimator` | [Scikit-Learn](https://scikit-learn.org/stable/) |
+| `superduper.ext.transformers.Pipeline` | [Hugging Face's `transformers`](https://huggingface.co/docs/transformers/index) |
+| `superduper.ext.torch.TorchModel` | [PyTorch](https://pytorch.org/) |
 
 `Model` instances implement `self.predict`, but also hold import data, such as model weights, parameters or hyperparameters.
 In addition, `Model` may implement `self.fit` functionality - model training and calibration.

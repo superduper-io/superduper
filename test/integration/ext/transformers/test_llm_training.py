@@ -3,10 +3,10 @@ import os
 import pytest
 import transformers
 
-from superduperdb import superduper
-from superduperdb.backends.mongodb import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.ext.transformers.model import LLM
+from superduper import superduper
+from superduper.backends.mongodb import MongoQuery
+from superduper.base.document import Document
+from superduper.ext.transformers.model import LLM
 
 try:
     import datasets
@@ -14,7 +14,7 @@ try:
     import torch
     import trl
 
-    from superduperdb.ext.transformers.training import LLMTrainer
+    from superduper.ext.transformers.training import LLMTrainer
 
     GPU_AVAILABLE = torch.cuda.is_available()
 except ImportError:

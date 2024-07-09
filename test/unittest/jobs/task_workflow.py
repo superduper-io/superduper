@@ -7,8 +7,8 @@ ibis.options.interactive = True
 import numpy as np
 import pytest
 
-from superduperdb import Document
-from superduperdb.components.model import ObjectModel
+from superduper import Document
+from superduper.components.model import ObjectModel
 
 EMPTY_CASES = [DBConfig.sqldb_empty, DBConfig.mongodb_empty]
 

@@ -1,6 +1,6 @@
-**`superduperdb.components.metric`** 
+**`superduper.components.metric`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/metric.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/metric.py)
 
 ## `Metric` 
 
@@ -8,7 +8,7 @@
 Metric(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      object: Callable) -> None

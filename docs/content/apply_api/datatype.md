@@ -9,7 +9,7 @@
 Default `DataTypes`, called "serializers":
 
 ```python
-from superduperdb.components.datatype import serializers
+from superduper.components.datatype import serializers
 
 pickle_serializer = serializers['pickle']
 ```
@@ -17,7 +17,7 @@ pickle_serializer = serializers['pickle']
 Build your own `DataType` which saves data directly in the database:
 
 ```python
-from superduperdb import DataType
+from superduper import DataType
 
 dt = DataType(
     'my-datatype',

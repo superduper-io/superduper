@@ -17,7 +17,7 @@ downloads:
   n_workers: 0
   timeout: null
 fold_probability: 0.05
-lance_home: .superduperdb/vector_indices
+lance_home: .superduper/vector_indices
 log_level: INFO
 logging_type: SYSTEM
 metadata_store: null

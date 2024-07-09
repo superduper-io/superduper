@@ -7,17 +7,17 @@ import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
-from superduperdb.backends.base.data_backend import BaseDataBackend
-from superduperdb.backends.base.query import Query
-from superduperdb.backends.ibis.field_types import FieldType
-from superduperdb.backends.local.compute import LocalComputeBackend
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.datatype import DataType, pickle_decode, pickle_encode
-from superduperdb.components.metric import Metric
-from superduperdb.components.model import (
+from superduper.backends.base.data_backend import BaseDataBackend
+from superduper.backends.base.query import Query
+from superduper.backends.ibis.field_types import FieldType
+from superduper.backends.local.compute import LocalComputeBackend
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.datalayer import Datalayer
+from superduper.base.document import Document
+from superduper.components.dataset import Dataset
+from superduper.components.datatype import DataType, pickle_decode, pickle_encode
+from superduper.components.metric import Metric
+from superduper.components.model import (
     Mapping,
     Model,
     ObjectModel,
@@ -27,7 +27,7 @@ from superduperdb.components.model import (
     Validation,
     _Fittable,
 )
-from superduperdb.jobs.job import ComponentJob
+from superduper.jobs.job import ComponentJob
 
 
 # ------------------------------------------
@@ -106,7 +106,7 @@ def test_pm_core_predict(predict_mixin):
         assert predict_mixin.predict(5) == return_self(5)
 
 
-@patch('superduperdb.components.model.ComponentJob')
+@patch('superduper.components.model.ComponentJob')
 def test_pm_create_predict_job(mock_job, predict_mixin):
     mock_db = MagicMock()
     mock_select = MagicMock()
@@ -211,7 +211,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = {'out': 2}
         # Check the base predict function with output_schema
-        from superduperdb.components.schema import Schema
+        from superduper.components.schema import Schema
 
         predict_mixin.datatype = None
         predict_mixin.output_schema = schema = MagicMock(spec=Schema)

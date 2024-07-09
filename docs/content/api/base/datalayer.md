@@ -1,15 +1,15 @@
-**`superduperdb.base.datalayer`** 
+**`superduper.base.datalayer`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/datalayer.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/datalayer.py)
 
 ## `Datalayer` 
 
 ```python
 Datalayer(self,
-     databackend: superduperdb.backends.base.data_backend.BaseDataBackend,
-     metadata: superduperdb.backends.base.metadata.MetaDataStore,
-     artifact_store: superduperdb.backends.base.artifacts.ArtifactStore,
-     compute: superduperdb.backends.base.compute.ComputeBackend = <superduperdb.backends.local.compute.LocalComputeBackend object at 0x291ee3510>)
+     databackend: superduper.backends.base.data_backend.BaseDataBackend,
+     metadata: superduper.backends.base.metadata.MetaDataStore,
+     artifact_store: superduper.backends.base.artifacts.ArtifactStore,
+     compute: superduper.backends.base.compute.ComputeBackend = <superduper.backends.local.compute.LocalComputeBackend object at 0x291ee3510>)
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -18,13 +18,13 @@ Datalayer(self,
 | artifact_store | Object containing connection to Artifactstore. |
 | compute | Object containing connection to ComputeBackend. |
 
-Base database connector for SuperDuperDB.
+Base database connector for superduper.
 
 ## `LoadDict` 
 
 ```python
 LoadDict(self,
-     database: superduperdb.base.datalayer.Datalayer,
+     database: superduper.base.datalayer.Datalayer,
      field: Optional[str] = None,
      callable: Optional[Callable] = None) -> None
 ```

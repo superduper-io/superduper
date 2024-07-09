@@ -1,6 +1,6 @@
-**`superduperdb.rest.utils`** 
+**`superduper.rest.utils`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/rest/utils.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/rest/utils.py)
 
 ## `parse_query` 
 

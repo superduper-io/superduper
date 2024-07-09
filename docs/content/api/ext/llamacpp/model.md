@@ -1,6 +1,6 @@
-**`superduperdb.ext.llamacpp.model`** 
+**`superduper.ext.llamacpp.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/llamacpp/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/llamacpp/model.py)
 
 ## `download_uri` 
 
@@ -21,23 +21,23 @@ Download file.
 LlamaCpp(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: str = 'singleton',
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      prompt: str = '{input}',
      prompt_func: Optional[Callable] = None,
      max_batch_size: Optional[int] = 4,
      model_name_or_path: str = 'facebook/opt-125m',
-     model_kwargs: Dict = <factory>,
+     model_kwargs: Dict = None,
      download_dir: str = '.llama_cpp') -> None
 ```
 | Parameter | Description |
@@ -70,23 +70,23 @@ Llama.cpp connector.
 LlamaCppEmbedding(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: str = 'singleton',
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      prompt: str = '{input}',
      prompt_func: Optional[Callable] = None,
      max_batch_size: Optional[int] = 4,
      model_name_or_path: str = 'facebook/opt-125m',
-     model_kwargs: Dict = <factory>,
+     model_kwargs: Dict = None,
      download_dir: str = '.llama_cpp') -> None
 ```
 | Parameter | Description |

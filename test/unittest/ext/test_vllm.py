@@ -5,7 +5,7 @@ from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predi
 import pytest
 import vcr
 
-from superduperdb.ext.vllm.model import VllmAPI
+from superduper.ext.vllm.model import VllmAPI
 
 CASSETTE_DIR = "test/unittest/ext/cassettes/vllm"
 

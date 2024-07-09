@@ -4,11 +4,11 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.metric import Metric
-from superduperdb.ext.transformers import LLM
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.components.dataset import Dataset
+from superduper.components.metric import Metric
+from superduper.ext.transformers import LLM
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
@@ -16,7 +16,7 @@ try:
     import peft
     import trl
 
-    from superduperdb.ext.transformers.training import LLMTrainer
+    from superduper.ext.transformers.training import LLMTrainer
 except ImportError:
     datasets = None
     peft = None
@@ -86,7 +86,7 @@ def test_training(db, tmpdir):
         ),
     ]
 
-    from superduperdb import Validation
+    from superduper import Validation
 
     validation = Validation(
         identifier="validation",

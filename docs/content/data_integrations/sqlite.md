@@ -3,7 +3,7 @@
 Connecting:
 
 ```python
-from superduperdb import superduper
+from superduper import superduper
 
 db = superduper('sqlite://<path-to-db>.db')
 ```

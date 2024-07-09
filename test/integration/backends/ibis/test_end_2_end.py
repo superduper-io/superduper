@@ -5,19 +5,19 @@ import pytest
 import torch.nn
 import torchvision
 
-from superduperdb import CFG
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.base.document import Document as D
-from superduperdb.components.listener import Listener
-from superduperdb.components.schema import Schema
-from superduperdb.ext.pillow.encoder import pil_image
-from superduperdb.ext.torch.encoder import tensor
-from superduperdb.ext.torch.model import TorchModel
+from superduper import CFG
+from superduper.backends.ibis.field_types import dtype
+from superduper.base.document import Document as D
+from superduper.components.listener import Listener
+from superduper.components.schema import Schema
+from superduper.ext.pillow.encoder import pil_image
+from superduper.ext.torch.encoder import tensor
+from superduper.ext.torch.model import TorchModel
 
 DO_SKIP = CFG.data_backend.startswith('mongo')
 
 
-from superduperdb import superduper
+from superduper import superduper
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def _end_2_end(db, memory_table=False):
         {'id': '4', 'health': 1, 'age': 28, 'image': im},
     ]
 
-    from superduperdb.components.table import Table
+    from superduper.components.table import Table
 
     t = Table(identifier='my_table', schema=schema, db=db)
 
@@ -177,7 +177,7 @@ def test_nested_query(clean_cache):
         },
     )
 
-    from superduperdb.components.table import Table
+    from superduper.components.table import Table
 
     t = Table(identifier='my_table', schema=schema)
 

@@ -15,17 +15,17 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of SuperDuperDB, then you should set the relevant 
+of superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with SuperDuperDB quickly.
+to get going with superduper quickly.
 :::
 
 ```python
 import os
 
-os.makedirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
+os.makedirs('.superduper', exist_ok=True)
+os.environ['SUPERDUPER_CONFIG'] = '.superduper/config.yaml'
 ```
 
 
@@ -151,7 +151,7 @@ os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
+with open(os.environ['SUPERDUPER_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -159,7 +159,7 @@ with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
 ## Start your cluster
 
 :::note
-Starting a SuperDuperDB cluster is useful in production and model development
+Starting a superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 
@@ -170,7 +170,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local-cluster up        
+        !python -m superduper local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to SuperDuperDB
+## Connect to superduper
 
 :::note
-Note that this is only relevant if you are running SuperDuperDB in development mode.
+Note that this is only relevant if you are running superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -192,20 +192,20 @@ Otherwise refer to "Configuring your production system".
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongodb://localhost:27017/documents')        
         ```
     </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
     <TabItem value="MySQL" label="MySQL" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'superduper'
         password = 'superduper'
@@ -218,7 +218,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Oracle" label="Oracle" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'sa'
         password = 'Superduper#1'
@@ -231,7 +231,7 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
         !pip install psycopg2
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'postgres'
         password = 'postgres'
@@ -245,7 +245,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = "superduperuser"
         password = "superduperpassword"
@@ -262,7 +262,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Clickhouse" label="Clickhouse" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'default'
         password = ''
@@ -274,21 +274,21 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="DuckDB" label="DuckDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('duckdb://mydb.duckdb')        
         ```
     </TabItem>
     <TabItem value="Pandas" label="Pandas" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper(['my.csv'], metadata_store=f'mongomock://meta')        
         ```
     </TabItem>
     <TabItem value="MongoMock" label="MongoMock" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongomock:///test_db')        
         ```
@@ -301,7 +301,7 @@ Otherwise refer to "Configuring your production system".
 <Tabs>
     <TabItem value="Text-Classification" label="Text-Classification" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text_classification.json
+        !curl -O https://superduper-public-demo.s3.amazonaws.com/text_classification.json
         import json
         
         with open("text_classification.json", "r") as f:
@@ -311,7 +311,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Image-Classification" label="Image-Classification" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/images_classification.zip && unzip images_classification.zip
+        !curl -O https://superduper-public-demo.s3.amazonaws.com/images_classification.zip && unzip images_classification.zip
         import json
         from PIL import Image
         
@@ -341,10 +341,10 @@ After obtaining the data, we insert it into the database.
 <!-- TABS -->
 ## Insert simple data
 
-After turning on auto_schema, we can directly insert data, and superduperdb will automatically analyze the data type, and match the construction of the table and datatype.
+After turning on auto_schema, we can directly insert data, and superduper will automatically analyze the data type, and match the construction of the table and datatype.
 
 ```python
-from superduperdb import Document
+from superduper import Document
 
 table_or_collection = db['documents']
 
@@ -361,8 +361,8 @@ select = table_or_collection.select()
         ```python
         key = 'txt'
         import sentence_transformers
-        from superduperdb import vector, Listener
-        from superduperdb.ext.sentence_transformers import SentenceTransformer
+        from superduper import vector, Listener
+        from superduper.ext.sentence_transformers import SentenceTransformer
         
         superdupermodel = SentenceTransformer(
             identifier="embedding",
@@ -385,8 +385,8 @@ select = table_or_collection.select()
         key = 'image'
         import torchvision.models as models
         from torchvision import transforms
-        from superduperdb.ext.torch import TorchModel
-        from superduperdb import Listener
+        from superduper.ext.torch import TorchModel
+        from superduper import Listener
         from PIL import Image
         
         class TorchVisionEmbedding:
@@ -453,7 +453,7 @@ feature_size = len(feature)
 <Tabs>
     <TabItem value="Scikit-Learn" label="Scikit-Learn" default>
         ```python
-        from superduperdb.ext.sklearn import Estimator, SklearnTrainer
+        from superduper.ext.sklearn import Estimator, SklearnTrainer
         from sklearn.svm import SVC
         
         model = Estimator(
@@ -471,8 +471,8 @@ feature_size = len(feature)
         ```python
         import torch
         from torch import nn
-        from superduperdb.ext.torch.model import TorchModel
-        from superduperdb.ext.torch.training import TorchTrainer
+        from superduper.ext.torch.model import TorchModel
+        from superduper.ext.torch.training import TorchTrainer
         from torch.nn.functional import cross_entropy
         
         
@@ -523,7 +523,7 @@ feature_size = len(feature)
 Define a validation for evaluating the effect after training.
 
 ```python
-from superduperdb import Dataset, Metric, Validation
+from superduper import Dataset, Metric, Validation
 
 def acc(x, y):
     return sum([xx == yy for xx, yy in zip(x, y)]) / len(x)

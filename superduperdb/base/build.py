@@ -200,8 +200,6 @@ def show_configuration(cfg):
         ('Metadata Store', anonymize_url(cfg.metadata_store)),
         ('Artifact Store', anonymize_url(cfg.artifact_store)),
         ('Compute', cfg.cluster.compute.uri),
-        ('CDC', cfg.cluster.cdc.uri),
-        ('Vector Search', cfg.cluster.vector_search.uri),
     ]
     for key, value in key_values:
         if value:

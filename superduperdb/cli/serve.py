@@ -50,6 +50,7 @@ def vector_search():
 
     app.start()
 
+
 @command(help='Start scheduler server')
 def scheduler():
     """Start scheduler server."""

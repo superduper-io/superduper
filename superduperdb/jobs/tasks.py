@@ -29,6 +29,7 @@ def method_job(
     :param job_id: unique identifier for this job
     :param dependencies: other jobs that this job depends on
     :param db: datalayer to use
+    :param component: component to run method on
     """
     import sys
 
@@ -44,10 +45,11 @@ def method_job(
     # Ray cluster would be created inside the job
     if db is None:
         db = build_datalayer(cfg=cfg, cluster__compute___path=None)
-    
+
     if not component:
         component = db.load(type_id, identifier)
         from superduperdb.components.component import Component
+
         component = t.cast(Component, component)
         component.unpack()
 

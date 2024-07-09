@@ -500,6 +500,7 @@ class Model(Component, metaclass=ModelMeta):
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
         from superduperdb import CFG
+
         compute_kwargs = CFG.cluster.compute.compute_kwargs
         self.compute_kwargs = self.compute_kwargs or compute_kwargs
         self._is_initialized = False
@@ -1024,7 +1025,12 @@ class Model(Component, metaclass=ModelMeta):
         db.replace(self, upsert=True)
 
     def post_create(self, db):
+        """Post create hook for the model.
+
+        :param db: Datalayer instance.
+        """
         db.compute.component_hook(self.identifier, compute_kwargs=self.compute_kwargs)
+        super().post_create(db)
 
 
 @dc.dataclass(kw_only=True)

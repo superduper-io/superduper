@@ -21,7 +21,7 @@ class Plugin(Component):
     _artifacts: t.ClassVar = (("path", file_lazy),)
     path: str
     identifier: str = ""
-    cache_path: str = ".superduperdb/plugins"
+    cache_path: str = "~/.superduperdb/plugins"
 
     def __post_init__(self, db, artifacts):
         if isinstance(self.path, LazyFile):
@@ -52,18 +52,24 @@ class Plugin(Component):
                 open(import_package_path, "w").close()
 
             logging.debug(f"Plugin {self.identifier} is a package")
-            self._pip_install(package_path)
+            self._pip_install(os.path.join(package_path, "requirements.txt"))
         else:
             module_name = module_name.split(".")[0]
             import_package_path = package_path
 
             if package_path.endswith(".py"):
                 logging.debug(f"Plugin {self.identifier} is a standalone Python file")
+
+            elif package_path.endswith("requirements.txt"):
+                os.environ[check_tag] = "1"
+                self._pip_install(package_path)
+                return
+
             else:
                 raise ValueError(
                     (
                         f"Plugin {self.identifier} path "
-                        "is not a valid Python file or directory"
+                        "is not a valid Python file or requirements file."
                     )
                 )
 
@@ -74,8 +80,7 @@ class Plugin(Component):
 
         os.environ[check_tag] = "1"
 
-    def _pip_install(self, package_path):
-        requirement_path = os.path.join(package_path, "requirements.txt")
+    def _pip_install(self, requirement_path):
         if not os.path.exists(requirement_path):
             logging.debug(f"No requirements file found for plugin {self.identifier}")
             return
@@ -88,7 +93,8 @@ class Plugin(Component):
     def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
         assert isinstance(self.path, LazyFile)
-        uuid_path = os.path.join(self.cache_path, self.uuid)
+        cache_path = os.path.expanduser(self.cache_path)
+        uuid_path = os.path.join(cache_path, self.uuid)
         # Check if plugin is already in cache
         if os.path.exists(uuid_path):
             names = os.listdir(uuid_path)
@@ -104,11 +110,15 @@ class Plugin(Component):
 
         # Pull the plugin to cache
         logging.info(f"Downloading plugin {self.identifier} to {self.path}")
-        dist = os.path.join(self.cache_path, self.uuid, os.path.basename(self.path))
+        dist = os.path.join(cache_path, self.uuid, os.path.basename(self.path))
         if os.path.exists(dist):
             logging.info(f"Plugin {self.identifier} already exists in cache : {dist}")
         else:
             logging.info(f"Copying plugin [{self.identifier}] to {dist}")
-            shutil.copytree(self.path, dist)
+            os.makedirs(os.path.dirname(dist), exist_ok=True)
+            if os.path.isdir(self.path):
+                shutil.copytree(self.path, dist)
+            else:
+                shutil.copy(self.path, dist)
 
         self.path = dist

@@ -1,6 +1,6 @@
-**`superduperdb.misc.serialization`** 
+**`superduper.misc.serialization`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/serialization.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/serialization.py)
 
 ## `asdict` 
 

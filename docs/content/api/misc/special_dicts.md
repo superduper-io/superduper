@@ -1,6 +1,6 @@
-**`superduperdb.misc.special_dicts`** 
+**`superduper.misc.special_dicts`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/special_dicts.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/special_dicts.py)
 
 ## `diff` 
 

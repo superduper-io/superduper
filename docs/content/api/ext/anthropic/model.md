@@ -1,6 +1,6 @@
-**`superduperdb.ext.anthropic.model`** 
+**`superduper.ext.anthropic.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/anthropic/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/anthropic/model.py)
 
 ## `AnthropicCompletions` 
 
@@ -8,7 +8,7 @@
 AnthropicCompletions(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: 'Signature' = '*args,
@@ -16,15 +16,15 @@ AnthropicCompletions(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      model: 't.Optional[str]' = None,
      max_batch_size: 'int' = 8,
      client_kwargs: Dict[str,
-     Any] = <factory>,
+     Any] = None,
      prompt: str = '') -> None
 ```
 | Parameter | Description |
@@ -55,7 +55,7 @@ Cohere completions (chat) predictor.
 Anthropic(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: 'Signature' = '*args,
@@ -63,15 +63,15 @@ Anthropic(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      model: 't.Optional[str]' = None,
      max_batch_size: 'int' = 8,
      client_kwargs: Dict[str,
-     Any] = <factory>) -> None
+     Any] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

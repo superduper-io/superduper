@@ -1,6 +1,6 @@
-**`superduperdb.base.config`** 
+**`superduper.base.config`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/config.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/config.py)
 
 ## `BaseConfig` 
 
@@ -17,8 +17,8 @@ with a dictionary of parameters.
 ```python
 CDCConfig(self,
      uri: Optional[str] = None,
-     strategy: Union[superduperdb.base.config.PollingStrategy,
-     superduperdb.base.config.LogBasedStrategy,
+     strategy: Union[superduper.base.config.PollingStrategy,
+     superduper.base.config.LogBasedStrategy,
      NoneType] = None) -> None
 ```
 | Parameter | Description |
@@ -44,10 +44,10 @@ Base CDC strategy dataclass.
 
 ```python
 Cluster(self,
-     compute: superduperdb.base.config.Compute = <factory>,
-     vector_search: superduperdb.base.config.VectorSearch = <factory>,
-     rest: superduperdb.base.config.Rest = <factory>,
-     cdc: superduperdb.base.config.CDCConfig = <factory>) -> None
+     compute: superduper.base.config.Compute = None,
+     vector_search: superduper.base.config.VectorSearch = None,
+     rest: superduper.base.config.Rest = None,
+     cdc: superduper.base.config.CDCConfig = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -63,7 +63,7 @@ Describes a connection to distributed work via Ray.
 ```python
 Compute(self,
      uri: Optional[str] = None,
-     compute_kwargs: Dict = <factory>) -> None
+     compute_kwargs: Dict = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -79,23 +79,23 @@ Config(self,
      envs: dataclasses.InitVar[typing.Optional[typing.Dict[str,
      str]]] = None,
      data_backend: str = 'mongodb://localhost:27017/test_db',
-     lance_home: str = '.superduperdb/vector_indices',
+     lance_home: str = '.superduper/vector_indices',
      artifact_store: Optional[str] = None,
      metadata_store: Optional[str] = None,
-     cluster: superduperdb.base.config.Cluster = <factory>,
-     retries: superduperdb.base.config.Retry = <factory>,
-     downloads: superduperdb.base.config.Downloads = <factory>,
+     cluster: superduper.base.config.Cluster = None,
+     retries: superduper.base.config.Retry = None,
+     downloads: superduper.base.config.Downloads = None,
      fold_probability: float = 0.05,
-     log_level: superduperdb.base.config.LogLevel = <LogLevel.INFO: 'INFO'>,
-     logging_type: superduperdb.base.config.LogType = <LogType.SYSTEM: 'SYSTEM'>,
-     bytes_encoding: superduperdb.base.config.BytesEncoding = <BytesEncoding.BYTES: 'Bytes'>,
+     log_level: superduper.base.config.LogLevel = <LogLevel.INFO: 'INFO'>,
+     logging_type: superduper.base.config.LogType = <LogType.SYSTEM: 'SYSTEM'>,
+     bytes_encoding: superduper.base.config.BytesEncoding = <BytesEncoding.BYTES: 'Bytes'>,
      auto_schema: bool = True) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
 | envs | The envs datas |
 | data_backend | The URI for the data backend |
-| lance_home | The home directory for the Lance vector indices, Default: .superduperdb/vector_indices |
+| lance_home | The home directory for the Lance vector indices, Default: .superduper/vector_indices |
 | artifact_store | The URI for the artifact store |
 | metadata_store | The URI for the metadata store |
 | cluster | Settings distributed computing and change data capture |
@@ -107,7 +107,7 @@ Config(self,
 | bytes_encoding | The encoding of bytes in the data backend |
 | auto_schema | Whether to automatically create the schema. If True, the schema will be created if it does not exist. |
 
-The data class containing all configurable superduperdb values.
+The data class containing all configurable superduper values.
 
 ## `Downloads` 
 
@@ -115,7 +115,7 @@ The data class containing all configurable superduperdb values.
 Downloads(self,
      folder: Optional[str] = None,
      n_workers: int = 0,
-     headers: Dict = <factory>,
+     headers: Dict = None,
      timeout: Optional[int] = None) -> None
 ```
 | Parameter | Description |

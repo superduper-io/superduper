@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from superduperdb.base.enums import DBType
-from superduperdb.components.datatype import (
+from superduper.base.enums import DBType
+from superduper.components.datatype import (
     DataType,
     pickle_encoder,
     pickle_lazy,

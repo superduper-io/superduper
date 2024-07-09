@@ -1,6 +1,6 @@
-**`superduperdb.jobs.job`** 
+**`superduper.jobs.job`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/jobs/job.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/jobs/job.py)
 
 ## `job` 
 

@@ -1,11 +1,11 @@
-**`superduperdb.backends.ibis.db_helper`** 
+**`superduper.backends.ibis.db_helper`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/ibis/db_helper.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/ibis/db_helper.py)
 
 ## `get_db_helper` 
 
 ```python
-get_db_helper(dialect) -> superduperdb.backends.ibis.db_helper.DBHelper
+get_db_helper(dialect) -> superduper.backends.ibis.db_helper.DBHelper
 ```
 | Parameter | Description |
 |-----------|-------------|

@@ -3,15 +3,15 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.encoder import tensor
+    from superduper.ext.torch.encoder import tensor
 except ImportError:
     torch = None
 from test.db_config import DBConfig
 
 from sklearn.svm import SVC
 
-from superduperdb.components.model import ObjectModel
-from superduperdb.ext.sklearn.model import Estimator
+from superduper.components.model import ObjectModel
+from superduper.ext.sklearn.model import Estimator
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

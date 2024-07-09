@@ -5,9 +5,9 @@ import typing as t
 
 import pytest
 
-from superduperdb import CFG
-from superduperdb.components.component import Component
-from superduperdb.components.datatype import (
+from superduper import CFG
+from superduper.components.component import Component
+from superduper.components.datatype import (
     DataType,
     file_serializer,
 )

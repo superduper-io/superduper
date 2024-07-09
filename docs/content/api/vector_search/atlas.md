@@ -1,6 +1,6 @@
-**`superduperdb.vector_search.atlas`** 
+**`superduper.vector_search.atlas`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/atlas.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/atlas.py)
 
 ## `MongoAtlasVectorSearcher` 
 

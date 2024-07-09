@@ -1,6 +1,6 @@
-**`superduperdb.ext.torch.model`** 
+**`superduper.ext.torch.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/torch/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/torch/model.py)
 
 ## `create_batch` 
 
@@ -79,7 +79,7 @@ out[1]['a']['b'].shape
 TorchModel(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      preferred_devices: 't.Sequence[str]' = ('cuda',
      'mps',
@@ -92,11 +92,11 @@ TorchModel(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      object: 'torch.nn.Module',
      preprocess: 't.Optional[t.Callable]' = None,
      preprocess_signature: 'Signature' = 'singleton',
@@ -110,7 +110,7 @@ TorchModel(self,
      train_preprocess_signature: 'Signature' = 'singleton',
      collate_fn: 't.Optional[t.Callable]' = None,
      optimizer_state: 't.Optional[t.Any]' = None,
-     loader_kwargs: 't.Dict' = <factory>) -> None
+     loader_kwargs: 't.Dict' = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

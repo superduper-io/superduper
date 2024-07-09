@@ -1,8 +1,8 @@
 import re
 
-import superduperdb as s
+import superduper as s
 
-CODE_ROOTS = s.ROOT / 'superduperdb', s.ROOT / 'test'
+CODE_ROOTS = s.ROOT / 'superduper', s.ROOT / 'test'
 
 # DEFECTS maps defect names to functions that match a defect in a line of code.
 # The last two patterns match their own definitions :-D so 1 is the lowest possible

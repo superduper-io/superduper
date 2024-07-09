@@ -1,6 +1,6 @@
-**`superduperdb.jobs.tasks`** 
+**`superduper.jobs.tasks`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/jobs/tasks.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/jobs/tasks.py)
 
 ## `callable_job` 
 

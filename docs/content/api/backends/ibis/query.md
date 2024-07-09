@@ -1,6 +1,6 @@
-**`superduperdb.backends.ibis.query`** 
+**`superduper.backends.ibis.query`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/ibis/query.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/ibis/query.py)
 
 ## `parse_query` 
 
@@ -23,7 +23,7 @@ Parse a string query into a query object.
 IbisQuery(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      parts: Sequence[Union[Tuple,
      str]] = ()) -> None

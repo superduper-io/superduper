@@ -15,17 +15,17 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of SuperDuperDB, then you should set the relevant 
+of superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with SuperDuperDB quickly.
+to get going with superduper quickly.
 :::
 
 ```python
 import os
 
-os.makedirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
+os.makedirs('.superduper', exist_ok=True)
+os.environ['SUPERDUPER_CONFIG'] = '.superduper/config.yaml'
 ```
 
 
@@ -151,7 +151,7 @@ os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
+with open(os.environ['SUPERDUPER_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -159,7 +159,7 @@ with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
 ## Start your cluster
 
 :::note
-Starting a SuperDuperDB cluster is useful in production and model development
+Starting a superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 
@@ -170,7 +170,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local-cluster up        
+        !python -m superduper local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to SuperDuperDB
+## Connect to superduper
 
 :::note
-Note that this is only relevant if you are running SuperDuperDB in development mode.
+Note that this is only relevant if you are running superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -192,20 +192,20 @@ Otherwise refer to "Configuring your production system".
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongodb://localhost:27017/documents')        
         ```
     </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
     <TabItem value="MySQL" label="MySQL" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'superduper'
         password = 'superduper'
@@ -218,7 +218,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Oracle" label="Oracle" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'sa'
         password = 'Superduper#1'
@@ -231,7 +231,7 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
         !pip install psycopg2
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'postgres'
         password = 'postgres'
@@ -245,7 +245,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = "superduperuser"
         password = "superduperpassword"
@@ -262,7 +262,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Clickhouse" label="Clickhouse" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'default'
         password = ''
@@ -274,21 +274,21 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="DuckDB" label="DuckDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('duckdb://mydb.duckdb')        
         ```
     </TabItem>
     <TabItem value="Pandas" label="Pandas" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper(['my.csv'], metadata_store=f'mongomock://meta')        
         ```
     </TabItem>
     <TabItem value="MongoMock" label="MongoMock" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongomock:///test_db')        
         ```
@@ -310,7 +310,7 @@ The following are examples of training data in different formats.
     <TabItem value="Text" label="Text" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "timdettmers/openassistant-guanaco"
         dataset = load_dataset(dataset_name)
         
@@ -332,7 +332,7 @@ The following are examples of training data in different formats.
     <TabItem value="Prompt-Response" label="Prompt-Response" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "mosaicml/instruct-v3"
         dataset = load_dataset(dataset_name)
         
@@ -354,7 +354,7 @@ The following are examples of training data in different formats.
     <TabItem value="Chat" label="Chat" default>
         ```python
         from datasets import load_dataset
-        from superduperdb.base.document import Document
+        from superduper.base.document import Document
         dataset_name = "philschmid/dolly-15k-oai-style"
         dataset = load_dataset(dataset_name)['train'].train_test_split(0.9)
         
@@ -449,10 +449,10 @@ Example input_text and output_text
 <!-- TABS -->
 ## Insert simple data
 
-After turning on auto_schema, we can directly insert data, and superduperdb will automatically analyze the data type, and match the construction of the table and datatype.
+After turning on auto_schema, we can directly insert data, and superduper will automatically analyze the data type, and match the construction of the table and datatype.
 
 ```python
-from superduperdb import Document
+from superduper import Document
 
 table_or_collection = db['documents']
 
@@ -482,7 +482,7 @@ tokenizer_kwargs = dict()
 The parameters of this LLM Trainer are basically the same as `transformers.TrainingArguments`, but some additional parameters have been added for easier training setup.
 
 ```python
-from superduperdb.ext.transformers import LLM, LLMTrainer
+from superduper.ext.transformers import LLM, LLMTrainer
 trainer = LLMTrainer(
     identifier="llm-finetune-trainer",
     output_dir="output/finetune",
@@ -570,7 +570,7 @@ There are two methods to load a trained model:
     </TabItem>
     <TabItem value="Use a specified checkpoint" label="Use a specified checkpoint" default>
         ```python
-        from superduperdb.ext.transformers import LLM, LLMTrainer
+        from superduper.ext.transformers import LLM, LLMTrainer
         experiment_id = db.show("checkpoint")[-1]
         version = None # None means the last checkpoint
         checkpoint = db.load("checkpoint", experiment_id, version=version)

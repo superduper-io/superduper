@@ -1,6 +1,6 @@
-**`superduperdb.ext.vllm.model`** 
+**`superduper.ext.vllm.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/vllm/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/vllm/model.py)
 
 ## `VllmAPI` 
 
@@ -8,7 +8,7 @@
 VllmAPI(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      api_url: str = '',
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
@@ -16,11 +16,11 @@ VllmAPI(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      prompt: str = '{input}',
      prompt_func: Optional[Callable] = None,
      max_batch_size: Optional[int] = 4) -> None
@@ -55,28 +55,28 @@ API Server format, started by `vllm.entrypoints.api_server`.
 VllmModel(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: str = 'singleton',
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      prompt: str = '{input}',
      prompt_func: Optional[Callable] = None,
      max_batch_size: Optional[int] = 4,
      model_name: str = '',
      tensor_parallel_size: int = 1,
      trust_remote_code: bool = True,
-     vllm_kwargs: dict = <factory>,
+     vllm_kwargs: dict = None,
      on_ray: bool = False,
      ray_address: Optional[str] = None,
-     ray_config: dict = <factory>) -> None
+     ray_config: dict = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

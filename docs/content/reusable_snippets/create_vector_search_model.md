@@ -15,7 +15,7 @@ item = {indexing_key: '<var:query>'}
 ```
 
 ```python
-from superduperdb.components.model import QueryModel
+from superduper.components.model import QueryModel
 
 vector_search_model = QueryModel(
     identifier="VectorSearch",

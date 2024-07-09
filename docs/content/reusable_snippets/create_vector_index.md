@@ -8,7 +8,7 @@ vector_index_name = 'my-vector-index'
 
 ```python
 # <tab: 1-Modality>
-from superduperdb import VectorIndex, Listener
+from superduper import VectorIndex, Listener
 
 jobs, _ = db.add(
     VectorIndex(
@@ -25,7 +25,7 @@ jobs, _ = db.add(
 
 ```python
 # <tab: 2-Modalities>
-from superduperdb import VectorIndex, Listener
+from superduper import VectorIndex, Listener
 
 jobs, _ = db.add(
     VectorIndex(

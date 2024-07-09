@@ -19,5 +19,5 @@ con = ibis.oracle.connect(
 #con = ibis.connect(f"oracle://{user}:{password}@{host}:{port}/{database}")
 
 # ERROR ModuleNotFoundError: No module named 'ibis.backends.base'
-# from superduperdb import superduper
+# from superduper import superduper
 #db = superduper(f"oracle://{user}:{password}@{host}:{port}/{database}")

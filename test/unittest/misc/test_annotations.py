@@ -1,7 +1,7 @@
 import pytest
 
-from superduperdb.base.exceptions import RequiredPackageVersionsNotFound
-from superduperdb.misc.annotations import requires_packages
+from superduper.base.exceptions import RequiredPackageVersionsNotFound
+from superduper.misc.annotations import requires_packages
 
 
 def test_basic_requires():

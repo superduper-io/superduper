@@ -1,6 +1,6 @@
-**`superduperdb.base.configs`** 
+**`superduper.base.configs`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/configs.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/configs.py)
 
 ## `ConfigError` 
 

@@ -1,6 +1,6 @@
-**`superduperdb.base.document`** 
+**`superduper.base.document`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/document.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/document.py)
 
 ## `Document` 
 

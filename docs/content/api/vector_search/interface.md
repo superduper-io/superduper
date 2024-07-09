@@ -1,6 +1,6 @@
-**`superduperdb.vector_search.interface`** 
+**`superduper.vector_search.interface`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/interface.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/interface.py)
 
 ## `FastVectorSearcher` 
 

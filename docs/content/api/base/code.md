@@ -1,13 +1,13 @@
-**`superduperdb.base.code`** 
+**`superduper.base.code`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/code.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/code.py)
 
 ## `Code` 
 
 ```python
 Code(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      identifier: str = '',
      code: str) -> None

@@ -8,12 +8,12 @@ There are 4 key AI `Model` sub classes, see [here](../apply_api/model) for detai
 
 | Path | Description |
 | --- | ---
-| `superduperdb.components.model.ObjectModel` | Wraps a Python object to compute outputs |
-| `superduperdb.components.model.APIModel` | Wraps a model hosted behind an API to compute outputs |
-| `superduperdb.components.model.QueryModel` | Maps a Database select query with a free variable over inputs |
-| `superduperdb.components.model.SequentialModel` | Computes outputs sequentially for a sequence of `Model` instances |
+| `superduper.components.model.ObjectModel` | Wraps a Python object to compute outputs |
+| `superduper.components.model.APIModel` | Wraps a model hosted behind an API to compute outputs |
+| `superduper.components.model.QueryModel` | Maps a Database select query with a free variable over inputs |
+| `superduper.components.model.SequentialModel` | Computes outputs sequentially for a sequence of `Model` instances |
 
-As well as these key sub-classes, we have classes in the `superduperdb.ext.*` subpackages:
+As well as these key sub-classes, we have classes in the `superduper.ext.*` subpackages:
 See [here](../ai_integrations/) for more information.
 
 Whenever one of these `Model` descendants is instantiated, and `db.apply(model)` is called, 
@@ -27,7 +27,7 @@ several things can (do) happen:
 <!-- ### Scikit-Learn
 
 ```python
-from superduperdb.ext.sklearn import Estimator
+from superduper.ext.sklearn import Estimator
 from sklearn.svm import SVC
 
 db.add(Estimator(SVC()))
@@ -36,8 +36,8 @@ db.add(Estimator(SVC()))
 ### Transformers
 
 ```pytho
-from superduperdb.ext.transformers import Pipeline
-from superduperdb import superduper
+from superduper.ext.transformers import Pipeline
+from superduper import superduper
 
 db.add(Pipeline(task='sentiment-analysis'))
 ```
@@ -46,7 +46,7 @@ There is also support for building the pipeline in separate stages with a high d
 The following is a speech-to-text model published by [facebook research](https://arxiv.org/abs/2010.05171) and shared [on Hugging-Face](https://huggingface.co/facebook/s2t-small-librispeech-asr):
 
 ```python
-from superduperdb.ext.transformers import Pipeline
+from superduper.ext.transformers import Pipeline
 from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
 
 model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-small-librispeech-asr")
@@ -69,7 +69,7 @@ db.add(transcriber)
 
 ```python
 import torch
-from superduperdb.ext.torch import Module
+from superduper.ext.torch import Module
 
 model = Module(
     identifier='my-classifier',
@@ -85,7 +85,7 @@ db.add(model)
   
 | Name | Function |
 | --- | --- |
-| `identifier` | A unique name for `superduperdb`, for later use and recall |
+| `identifier` | A unique name for `superduper`, for later use and recall |
 | `object` | The model-object, including parameters and hyper-parameters providing heavy lifting |
 | `preprocess` | `Callable` which processes individual rows/records/fields from the database prior to passing to the model |
 | `postprocess` | `Callable` applied to individual rows/items or output |
@@ -95,7 +95,7 @@ db.add(model)
 
 ## Using AI APIs 
 
-In SuperDuperDB, developers are able to interact with popular AI API providers, in a way very similar to 
+In superduper, developers are able to interact with popular AI API providers, in a way very similar to 
 [integrating with AI open-source or home-grown models](./ai_models.md). Instantiating a model from 
 these providers is similar to instantiating a `Model`:
 
@@ -114,7 +114,7 @@ these providers is similar to instantiating a `Model`:
 **Usage**
 
 ```python
-from superduperdb.ext.openai import OpenAI<ModelType> as ModelCls
+from superduper.ext.openai import OpenAI<ModelType> as ModelCls
 
 db.add(Modelcls(identifier='my-model', **kwargs))
 ```
@@ -131,7 +131,7 @@ db.add(Modelcls(identifier='my-model', **kwargs))
 **Usage**
 
 ```python
-from superduperdb.ext.cohere import Cohere<ModelType> as ModelCls
+from superduper.ext.cohere import Cohere<ModelType> as ModelCls
 
 db.add(Modelcls(identifier='my-model', **kwargs))
 ```
@@ -147,7 +147,7 @@ db.add(Modelcls(identifier='my-model', **kwargs))
 **Usage**
 
 ```python
-from superduperdb.ext.anthropic import Anthropic<ModelType> as ModelCls
+from superduper.ext.anthropic import Anthropic<ModelType> as ModelCls
 
 db.add(Modelcls(identifier='my-model', **kwargs))
 ```
@@ -163,7 +163,7 @@ db.add(Modelcls(identifier='my-model', **kwargs))
 **Usage**
 
 ```python
-from superduperdb.ext.jina import JinaEmbedding
+from superduper.ext.jina import JinaEmbedding
 
 db.add(JinaEmbedding(identifier='jina-embeddings-v2-base-en', api_key='JINA_API_KEY')) # You can also set JINA_API_KEY as environment variable
 ``` -->

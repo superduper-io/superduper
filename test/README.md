@@ -1,3 +1,3 @@
-# Testing SuperDuperDB
+# Testing superduper.io
 
 ...

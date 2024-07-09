@@ -11,8 +11,8 @@ import DownloadButton from '../downloadButton.js';
 # Setup tables or collections
 
 ```python
-from superduperdb.components.table import Table
-from superduperdb import Schema
+from superduper.components.table import Table
+from superduper import Schema
 
 schema = Schema(identifier="schema", fields={"x": datatype})
 table_or_collection = Table("documents", schema=schema)

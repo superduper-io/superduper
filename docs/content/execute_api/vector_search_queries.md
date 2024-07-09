@@ -26,8 +26,8 @@ table_or_collection
 ## MongoDB
 
 ```python
-from superduperdb.ext.pillow import pil_image
-from superduperdb import Document
+from superduper.ext.pillow import pil_image
+from superduper import Document
 
 my_image = PIL.Image.open('test/material/data/test_image.png')
 

@@ -13,7 +13,7 @@ services:
     image: mongo:6
     hostname: mongodb
     volumes:
-      - ${SUPERDUPERDB_DATA_DIR}:/data/db
+      - ${SUPERDUPER_DATA_DIR}:/data/db
     ports:
       - "27017:27017"
     command:
@@ -99,10 +99,10 @@ services:
         - ./configs/grafana:/app.cfg
 
 
-  #  Demo SuperDuperDB Notebooks
+  #  Demo superduper.io Notebooks
   #  ------------------------------
   sandbox:
-    image: superduperdb/sandbox
+    image: superduper/sandbox
     hostname: sandbox
     depends_on:
       mongo-init:
@@ -110,11 +110,11 @@ services:
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:
-        - ${SUPERDUPERDB_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
-        - ../../superduperdb:/home/superduper/superduperdb/superduperdb # shared between containers
-        - ../../test:/home/superduper/superduperdb/test # shared between containers
-        - ../../examples:/home/superduper/superduperdb/examples # shared between containers
-        - ../../deploy:/home/superduper/superduperdb/deploy # shared between containers
+        - ${SUPERDUPER_ARTIFACTS_DIR}:/artifacts:rw,z # shared between containers
+        - ../../superduper:/home/superduper/superduper/superduper # shared between containers
+        - ../../test:/home/superduper/superduper/test # shared between containers
+        - ../../examples:/home/superduper/superduper/examples # shared between containers
+        - ../../deploy:/home/superduper/superduper/deploy # shared between containers
     env_file: users.env
     command:
       - /bin/sh

@@ -1,6 +1,6 @@
-**`superduperdb.backends.base.artifacts`** 
+**`superduper.backends.base.artifacts`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/base/artifacts.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/base/artifacts.py)
 
 ## `ArtifactSavingError` 
 

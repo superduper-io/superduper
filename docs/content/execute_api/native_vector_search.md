@@ -16,10 +16,10 @@ cluster:
 export SUPERDUPER_CLUSTER_VECTOR_SEARCH_TYPE=native
 ```
 
-If `superduperdb` detects this configuration, it uses the inbuilt mechanism 
+If `superduper` detects this configuration, it uses the inbuilt mechanism 
 of your `db.databackend` to perform the vector-comparison.
 
-Currently `superduperdb` supports the native implementation of these databases:
+Currently `superduper` supports the native implementation of these databases:
 
 - MongoDB Atlas
 

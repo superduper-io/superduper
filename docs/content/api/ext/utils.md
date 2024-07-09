@@ -1,6 +1,6 @@
-**`superduperdb.ext.utils`** 
+**`superduper.ext.utils`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/utils.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/utils.py)
 
 ## `str_shape` 
 

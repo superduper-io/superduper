@@ -1,11 +1,11 @@
-**`superduperdb.ext.transformers.training`** 
+**`superduper.ext.transformers.training`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/transformers/training.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/transformers/training.py)
 
 ## `create_quantization_config` 
 
 ```python
-create_quantization_config(config: superduperdb.ext.transformers.training.LLMTrainer)
+create_quantization_config(config: superduper.ext.transformers.training.LLMTrainer)
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -34,7 +34,7 @@ Will save the checkpoint to db if db and llm provided.
 
 ```python
 prepare_lora_training(model,
-     config: superduperdb.ext.transformers.training.LLMTrainer)
+     config: superduper.ext.transformers.training.LLMTrainer)
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -48,7 +48,7 @@ Get the LoRA target modules and convert the model to peft model.
 ## `train_func` 
 
 ```python
-train_func(training_args: superduperdb.ext.transformers.training.LLMTrainer,
+train_func(training_args: superduper.ext.transformers.training.LLMTrainer,
      train_dataset: 'Dataset',
      eval_datasets: Union[ForwardRef('Dataset'),
      Dict[str,
@@ -92,7 +92,7 @@ Function to tokenize the example.
 ## `train` 
 
 ```python
-train(training_args: superduperdb.ext.transformers.training.LLMTrainer,
+train(training_args: superduper.ext.transformers.training.LLMTrainer,
      train_dataset: datasets.arrow_dataset.Dataset,
      eval_datasets: Union[datasets.arrow_dataset.Dataset,
      Dict[str,
@@ -137,7 +137,7 @@ The ray cluster must can access to db.
 Checkpoint(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      path: Optional[str],

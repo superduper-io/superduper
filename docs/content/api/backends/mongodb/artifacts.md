@@ -1,6 +1,6 @@
-**`superduperdb.backends.mongodb.artifacts`** 
+**`superduper.backends.mongodb.artifacts`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/mongodb/artifacts.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/mongodb/artifacts.py)
 
 ## `upload_folder` 
 

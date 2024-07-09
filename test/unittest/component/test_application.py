@@ -5,13 +5,13 @@ from test.db_config import DBConfig
 import numpy as np
 import pytest
 
-from superduperdb import ObjectModel, Schema, superduper
-from superduperdb.base.document import Document
-from superduperdb.components.datatype import pickle_encoder
-from superduperdb.components.table import Table
+from superduper import ObjectModel, Schema, superduper
+from superduper.base.document import Document
+from superduper.components.datatype import pickle_encoder
+from superduper.components.table import Table
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.datalayer import Datalayer
+    from superduper.base.datalayer import Datalayer
 
 
 @pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
@@ -62,7 +62,7 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
 
     pprint(db.show())
 
-    from superduperdb.components.application import Application
+    from superduper.components.application import Application
 
     app = Application.build_from_db(identifier="app", db=db)
 

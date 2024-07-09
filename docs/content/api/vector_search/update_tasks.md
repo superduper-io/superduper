@@ -1,13 +1,13 @@
-**`superduperdb.vector_search.update_tasks`** 
+**`superduper.vector_search.update_tasks`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/update_tasks.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/update_tasks.py)
 
 ## `copy_vectors` 
 
 ```python
 copy_vectors(vector_index: str,
      query: Union[Dict,
-     superduperdb.backends.base.query.Query],
+     superduper.backends.base.query.Query],
      ids: Sequence[str],
      db=typing.Optional[ForwardRef('Datalayer')])
 ```

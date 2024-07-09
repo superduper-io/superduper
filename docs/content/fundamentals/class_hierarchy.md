@@ -45,13 +45,13 @@ and the database.
 
 ## `_BaseEncodable`
 
-This is the base class, which allows `superduperdb` to decide how to save "special" data.
+This is the base class, which allows `superduper` to decide how to save "special" data.
 
 ## `Serializable`
 
 An extension of Python `dataclasses`, but easier to get the original class back 
 from the serialized dictionary form. This is the base class underlying 
-all `superduperdb` queries and predictions as well as mixing into `Component`.
+all `superduper` queries and predictions as well as mixing into `Component`.
 
 ## `Job`
 

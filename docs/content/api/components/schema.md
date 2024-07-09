@@ -1,13 +1,13 @@
-**`superduperdb.components.schema`** 
+**`superduper.components.schema`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/schema.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/schema.py)
 
 ## `get_schema` 
 
 ```python
 get_schema(db,
-     schema: Union[superduperdb.components.schema.Schema,
-     str]) -> Optional[superduperdb.components.schema.Schema]
+     schema: Union[superduper.components.schema.Schema,
+     str]) -> Optional[superduper.components.schema.Schema]
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -22,11 +22,11 @@ Handle schema caching and loading.
 Schema(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      fields: Mapping[str,
-     superduperdb.components.datatype.DataType]) -> None
+     superduper.components.datatype.DataType]) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

@@ -1,6 +1,6 @@
-**`superduperdb.backends.base.compute`** 
+**`superduper.backends.base.compute`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/base/compute.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/base/compute.py)
 
 ## `ComputeBackend` 
 

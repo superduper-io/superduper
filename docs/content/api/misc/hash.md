@@ -1,6 +1,6 @@
-**`superduperdb.misc.hash`** 
+**`superduper.misc.hash`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/hash.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/hash.py)
 
 ## `hash_string` 
 

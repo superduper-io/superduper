@@ -16,7 +16,7 @@ import DownloadButton from '../downloadButton.js';
 <Tabs>
     <TabItem value="Listener" label="Listener" default>
         ```python
-        from superduperdb import Listener
+        from superduper import Listener
         db.apply(
             Listener(
                 key='key_name',
@@ -41,7 +41,7 @@ import DownloadButton from '../downloadButton.js';
         # Model predict function definition: model.predict(x)
         # Data example in database: {"key_name": 10}
         # Then the listener will call model.predict(10)
-        from superduperdb import Listener
+        from superduper import Listener
         db.apply(
             Listener(
                 key='key_name',
@@ -56,7 +56,7 @@ import DownloadButton from '../downloadButton.js';
         # Model predict function definition: model.predict(x1, x2)
         # Data example in database: {"key_name_1": 10, "key_name_2": 100}
         # Then the listener will call model.predict(10, 100)
-        from superduperdb import Listener
+        from superduper import Listener
         db.apply(
             Listener(
                 key=['key_name_1', 'key_name_2'],
@@ -71,7 +71,7 @@ import DownloadButton from '../downloadButton.js';
         # Model predict function definition: model.predict(x1, x2)
         # Data example in database: {"key_name_1": 10, "key_name_2": 100}
         # Then the listener will call model.predict(x1=10, x2=100)
-        from superduperdb import Listener
+        from superduper import Listener
         db.apply(
             Listener(
                 key={"key_name_1": "x1", "key_name_2": "x2"},

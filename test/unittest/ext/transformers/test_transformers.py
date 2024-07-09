@@ -9,10 +9,10 @@ except ImportError:
 
 from test.db_config import DBConfig
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document as D
-from superduperdb.components.dataset import Dataset
-from superduperdb.ext.transformers.model import (
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document as D
+from superduper.components.dataset import Dataset
+from superduper.ext.transformers.model import (
     TextClassificationPipeline,
     TransformersTrainer,
 )

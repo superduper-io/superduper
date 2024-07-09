@@ -3,7 +3,7 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.utils import device_of, eval, set_device, to_device
+    from superduper.ext.torch.utils import device_of, eval, set_device, to_device
 except ImportError:
     torch = None
 

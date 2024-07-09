@@ -7,7 +7,7 @@ deployed to externalize vector-search from the databackend.
 Here's how to deploy it:
 
 ```python
-superduperdb vector-searcher
+superduper vector-searcher
 ```
 
 Here are the endpoints:

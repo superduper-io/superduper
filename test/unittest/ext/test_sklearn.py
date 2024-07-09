@@ -7,9 +7,9 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.ext.sklearn.model import Estimator, SklearnTrainer
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.ext.sklearn.model import Estimator, SklearnTrainer
 
 
 class Lookup(TransformerMixin):

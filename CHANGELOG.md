@@ -14,8 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 #### New Features & Functionality
-- Add plugin component.
 
+-
+
+#### Bug Fixes
+
+-
+
+## [0.3.0](https://github.com/SuperDuperDB/superduperdb/compare/0.3.0...0.2.0])    (2024-Jun-21)
+
+#### Changed defaults / behaviours
+
+- Renamed superduperdb -> superduper
+
+#### New Features & Functionality
+
+- Add plugin component.
 - QueryTemplate component
 - Support for packaging application from the database.
 - Added DataInit component
@@ -30,7 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix doc-strings
 
 ## [0.2.0](https://github.com/SuperDuperDB/superduperdb/compare/0.1.3...0.2.0])    (2024-Jun-21)
-
 
 #### Changed defaults / behaviours
 

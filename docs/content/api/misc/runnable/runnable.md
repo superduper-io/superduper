@@ -1,6 +1,6 @@
-**`superduperdb.misc.runnable.runnable`** 
+**`superduper.misc.runnable.runnable`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/runnable/runnable.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/runnable/runnable.py)
 
 ## `Event` 
 

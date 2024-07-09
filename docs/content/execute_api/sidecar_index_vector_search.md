@@ -1,6 +1,6 @@
 # Sidecar vector-comparison integration
 
-For databases which don't have their own vector-search implementation, `superduperdb` offers 
+For databases which don't have their own vector-search implementation, `superduper` offers 
 2 integrations:
 
 - In memory vector-search
@@ -22,4 +22,4 @@ export SUPERDUPER_CLUSTER_VECTOR_SEARCH_TYPE='in_memory|lance'
 
 In this case, whenever a developer executes a vector-search query including `.like`, 
 execution of the similarity and sorting computations of vectors is outsourced to 
-a sidecar implementation which is managed by `superduperdb`.
+a sidecar implementation which is managed by `superduper`.

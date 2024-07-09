@@ -1,19 +1,19 @@
-**`superduperdb.components.plugin`** 
+**`superduper.components.plugin`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/plugin.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/plugin.py)
 
 ## `Plugin` 
 
 ```python
 Plugin(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: None = <factory>,
+     uuid: None = None,
      *,
      identifier: str = '',
      plugins: "t.Optional[t.List['Plugin']]" = None,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      path: str,
-     cache_path: str = '.superduperdb/plugins') -> None
+     cache_path: str = '.superduper/plugins') -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

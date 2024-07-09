@@ -1,6 +1,6 @@
-**`superduperdb.vector_search.lance`** 
+**`superduper.vector_search.lance`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/vector_search/lance.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/vector_search/lance.py)
 
 ## `LanceVectorSearcher` 
 

@@ -4,10 +4,10 @@ import uuid
 import numpy as np
 import pytest
 
-from superduperdb import CFG
-from superduperdb.vector_search.base import VectorItem
-from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
-from superduperdb.vector_search.lance import LanceVectorSearcher
+from superduper import CFG
+from superduper.vector_search.base import VectorItem
+from superduper.vector_search.in_memory import InMemoryVectorSearcher
+from superduper.vector_search.lance import LanceVectorSearcher
 
 
 @pytest.fixture

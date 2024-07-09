@@ -1,6 +1,6 @@
-**`superduperdb.base.variables`** 
+**`superduper.base.variables`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/variables.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/variables.py)
 
 ## `Variable` 
 
@@ -8,7 +8,7 @@
 Variable(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>) -> None
+     uuid: str = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

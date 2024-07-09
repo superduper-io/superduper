@@ -1,14 +1,14 @@
 # `Checkpoint`
 
-- Save intermediate results of training via SuperDuperDB
+- Save intermediate results of training via superduper
 - Load a different point of the training process by specifying `Checkpoint` explicitly
 - Particularly useful with deep-learning models
 
 ***Usage pattern***
 
 ```python
-from superduperdb import Model
-from superduperdb.components.training import Checkpoint
+from superduper import Model
+from superduper.components.training import Checkpoint
 
 class MyModel(Model):
     checkpoints: t.List[Checkpoint]

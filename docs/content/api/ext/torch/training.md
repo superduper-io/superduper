@@ -1,6 +1,6 @@
-**`superduperdb.ext.torch.training`** 
+**`superduper.ext.torch.training`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/torch/training.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/torch/training.py)
 
 ## `TorchTrainer` 
 
@@ -8,28 +8,28 @@
 TorchTrainer(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      key: 'ModelInputType',
      select: 'Query',
      transform: 't.Optional[t.Callable]' = None,
-     metric_values: Dict = <factory>,
+     metric_values: Dict = None,
      signature: 'Signature' = '*args',
      data_prefetch: 'bool' = False,
      prefetch_size: 'int' = 1000,
      prefetch_factor: 'int' = 100,
      in_memory: 'bool' = True,
-     compute_kwargs: 't.Dict' = <factory>,
+     compute_kwargs: 't.Dict' = None,
      objective: Callable,
-     loader_kwargs: Dict = <factory>,
+     loader_kwargs: Dict = None,
      max_iterations: int = 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,
      no_improve_then_stop: int = 5,
      download: bool = False,
      validation_interval: int = 100,
      listen: str = 'objective',
      optimizer_cls: str = 'Adam',
-     optimizer_kwargs: Dict = <factory>,
+     optimizer_kwargs: Dict = None,
      optimizer_state: Optional[Dict] = None,
      collate_fn: Optional[Callable] = None) -> None
 ```

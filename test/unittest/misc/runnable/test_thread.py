@@ -1,4 +1,4 @@
-from superduperdb.misc.runnable import thread
+from superduper.misc.runnable import thread
 
 
 def test_has_thread():

@@ -5,22 +5,22 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.constant import KEY_BLOBS, KEY_BUILDS
-from superduperdb.components.datatype import Artifact, DataType
-from superduperdb.components.model import ObjectModel
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
-from superduperdb.ext.pillow.encoder import image_type, pil_image
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
+from superduper.components.datatype import Artifact, DataType
+from superduper.components.model import ObjectModel
+from superduper.components.schema import Schema
+from superduper.components.table import Table
+from superduper.ext.pillow.encoder import image_type, pil_image
 
 try:
     import torch
 
-    from superduperdb.ext.torch.encoder import tensor
+    from superduper.ext.torch.encoder import tensor
 except ImportError:
     torch = None
 
-from superduperdb.base.document import Document
+from superduper.base.document import Document
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def test_flat_query_encoding():
 def test_encode_decode_flattened_document():
     import PIL.Image
 
-    from superduperdb.ext.pillow.encoder import image_type
+    from superduper.ext.pillow.encoder import image_type
 
     schema = Schema(
         'my-schema', fields={'img': image_type(identifier='png', encodable='artifact')}
@@ -126,7 +126,7 @@ def test_encode_model():
 def test_decode_inline_data():
     import PIL.Image
 
-    from superduperdb.ext.pillow.encoder import image_type
+    from superduper.ext.pillow.encoder import image_type
 
     it = image_type(identifier='png', encodable='artifact')
 
@@ -216,7 +216,7 @@ def test_refer_to_system(db):
     r = {
         '_builds': {
             'my_artifact': {
-                '_path': 'superduperdb.components.datatype.LazyArtifact',
+                '_path': 'superduper.components.datatype.LazyArtifact',
                 'blob': '&:blob:12345',
                 'datatype': "&:component:datatype:image",
             }

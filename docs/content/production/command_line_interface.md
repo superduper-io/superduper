@@ -7,13 +7,13 @@ sidebar_position: 2
 **Start change-data-capture (CDC)**
 
 ```bash
-superduperdb cdc
+superduper cdc
 ```
 
 **Start vector-searcher service**
 
 ```bash
-superduperdb vector-searcher
+superduper vector-searcher
 ```
 
 **Operate a local cluster**
@@ -21,29 +21,29 @@ superduperdb vector-searcher
 Start the cluster:
 
 ```bash
-superduperdb local-cluster up
+superduper local-cluster up
 ```
 
 Attach to the cluster session:
 
 ```bash
-superduperdb local-cluster attach
+superduper local-cluster attach
 ```
 
 Stop the cluster:
 
 ```bash
-superduperdb local-cluster down
+superduper local-cluster down
 ```
 
 **Print important information about your installation**
 
 ```bash
-superduperdb info
+superduper info
 ```
 
 **Print the current configuration**
 
 ```bash
-superduperdb config
+superduper config
 ```

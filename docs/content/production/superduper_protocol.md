@@ -1,6 +1,6 @@
 # SuperDuper Protocol
 
-`superduperdb` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
+`superduper` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
 The mapping is fairly self-explanatory after reading the examples below.
 
 ## Writing in superduper-protocol directly
@@ -15,32 +15,32 @@ import TabItem from '@theme/TabItem';
         _base: "?my_vector_index"
         _leaves:
           postprocess:
-            _path: superduperdb/base/code/Code
+            _path: superduper/base/code/Code
             code: '
-              from superduperdb import code
+              from superduper import code
 
               @code
               def postprocess(x):
                   return x.tolist()
               '
           my_vector:
-            _path: superduperdb/components/vector_index/vector
+            _path: superduper.components/vector_index/vector
             shape: 384
           sentence_transformer:
-            _path: superduperdb/ext/sentence_transformers/model/SentenceTransformer
+            _path: superduper/ext/sentence_transformers/model/SentenceTransformer
             datatype: "?my_vector"
             model: "all-MiniLM-L6-v2"
             postprocess: "?postprocess"
           my_query:
-            _path: superduperdb/backends/mongodb/query/parse_query
+            _path: superduper/backends/mongodb/query/parse_query
             query: "documents.find()"
           my_listener:
-            _path: superduperdb/components/listener/Listener
+            _path: superduper.components/listener/Listener
             model: "?sentence_transformer"
             select: "?my_query"
             key: "X"
           my_vector_index:
-            _path: superduperdb/components/vector_index/VectorIndex
+            _path: superduper.components/vector_index/VectorIndex
             indexing_listener: "?my_listener"
             measure: cosine
         ```
@@ -48,7 +48,7 @@ import TabItem from '@theme/TabItem';
         Then from the commmand line:
 
         ```bash
-        superduperdb apply --manifest='<path_to_config>.yaml'
+        superduper apply --manifest='<path_to_config>.yaml'
         ```
 
     </TabItem>
@@ -59,30 +59,30 @@ import TabItem from '@theme/TabItem';
           "_base": "?my_vector_index",
           "_leaves": {
             "postprocess": {
-              "_path": "superduperdb/base/code/Code",
-              "code": "from superduperdb import code\n\n@code\ndef postprocess(x):\n    return x.tolist()"
+              "_path": "superduper/base/code/Code",
+              "code": "from superduper import code\n\n@code\ndef postprocess(x):\n    return x.tolist()"
             },
             "my_vector": {
-              "_path": "superduperdb/components/vector_index/vector",
+              "_path": "superduper.components/vector_index/vector",
               "shape": 384
             },
             "sentence_transformer": {
-              "_path": "superduperdb/ext/sentence_transformers/model/SentenceTransformer",
+              "_path": "superduper/ext/sentence_transformers/model/SentenceTransformer",
               "datatype": "?my_vector",
               "model": "all-MiniLM-L6-v2",
               "postprocess": "?postprocess"
             },
             "my_query": {
-              "_path": "superduperdb/backends/mongodb/query/parse_query",
+              "_path": "superduper/backends/mongodb/query/parse_query",
               "query": "documents.find()"
             },
             "my_listener": {
-              "_path": "superduperdb/components/listener/Listener",
+              "_path": "superduper.components/listener/Listener",
               "model": "?sentence_transformer",
               "select": "?my_query"
             },
             "my_vector_index": {
-              "_path": "superduperdb/components/vector_index/VectorIndex",
+              "_path": "superduper.components/vector_index/VectorIndex",
               "indexing_listener": "?my_listener",
               "measure": "cosine"
             }
@@ -93,20 +93,20 @@ import TabItem from '@theme/TabItem';
         Then from the command line:
 
         ```bash
-        superduperdb apply --manifest='<path_to_config>.json'
+        superduper apply --manifest='<path_to_config>.json'
         ```
 
     </TabItem>
     <TabItem value="Python" label="Python" default>
 
         ```python
-        from superduperdb import superduper
-        from superduperdb.components.vector_index import vector
-        from superduperdb.ext.sentence_transformers.model import SentenceTransformer
-        from superduperdb.components.listener import Listener
-        from superduperdb.components.vector_index import VectorIndex
-        from superduperdb.base.code import Code
-        from superduperdb import Stack
+        from superduper import superduper
+        from superduper.components.vector_index import vector
+        from superduper.ext.sentence_transformers.model import SentenceTransformer
+        from superduper.components.listener import Listener
+        from superduper.components.vector_index import VectorIndex
+        from superduper.base.code import Code
+        from superduper import Stack
 
 
         db = superduper('mongomock://')

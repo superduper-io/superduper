@@ -1,6 +1,6 @@
-**`superduperdb.cdc.cdc`** 
+**`superduper.cdc.cdc`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/cdc/cdc.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/cdc/cdc.py)
 
 ## `DatabaseChangeDataCapture` 
 
@@ -10,7 +10,7 @@ DatabaseChangeDataCapture(self,
 ```
 | Parameter | Description |
 |-----------|-------------|
-| db | A superduperdb datalayer instance. |
+| db | A superduper datalayer instance. |
 
 DatabaseChangeDataCapture (CDC).
 
@@ -30,13 +30,13 @@ BaseDatabaseListener(self,
      db: 'Datalayer',
      on: Union[ForwardRef('IbisQuery'),
      ForwardRef('TableOrCollection')],
-     stop_event: superduperdb.misc.runnable.runnable.Event,
+     stop_event: superduper.misc.runnable.runnable.Event,
      identifier: 'str' = '',
      timeout: Optional[float] = None)
 ```
 | Parameter | Description |
 |-----------|-------------|
-| db | A superduperdb instance. |
+| db | A superduper instance. |
 | on | A table or collection on which the listener is invoked. |
 | stop_event | A threading event flag to notify for stoppage. |
 | identifier | A identity given to the listener service. |
@@ -52,12 +52,12 @@ that needs to be implemented by the database listener.
 ```python
 CDCHandler(self,
      db: 'Datalayer',
-     stop_event: superduperdb.misc.runnable.runnable.Event,
+     stop_event: superduper.misc.runnable.runnable.Event,
      queue)
 ```
 | Parameter | Description |
 |-----------|-------------|
-| db | A superduperdb instance. |
+| db | A superduper instance. |
 | stop_event | A threading event flag to notify for stoppage. |
 | queue | A queue to hold the cdc packets. |
 
@@ -86,9 +86,9 @@ based on the database type.
 
 ```python
 DatabaseListenerThreadScheduler(self,
-     listener: superduperdb.cdc.cdc.BaseDatabaseListener,
-     stop_event: superduperdb.misc.runnable.runnable.Event,
-     start_event: superduperdb.misc.runnable.runnable.Event) -> None
+     listener: superduper.cdc.cdc.BaseDatabaseListener,
+     stop_event: superduper.misc.runnable.runnable.Event,
+     start_event: superduper.misc.runnable.runnable.Event) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -107,7 +107,7 @@ executing the following job.
 Packet(self,
      ids: Any,
      query: Optional[Any] = None,
-     event_type: superduperdb.cdc.cdc.DBEvent = <DBEvent.insert: 'insert'>) -> None
+     event_type: superduper.cdc.cdc.DBEvent = <DBEvent.insert: 'insert'>) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

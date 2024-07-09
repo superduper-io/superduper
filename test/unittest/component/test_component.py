@@ -7,17 +7,17 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb import ObjectModel
-from superduperdb.components.component import Component
-from superduperdb.components.datatype import (
+from superduper import ObjectModel
+from superduper.components.component import Component
+from superduper.components.datatype import (
     Artifact,
     DataType,
     Empty,
     LazyArtifact,
     dill_serializer,
 )
-from superduperdb.components.listener import Listener
-from superduperdb.ext.torch.encoder import tensor
+from superduper.components.listener import Listener
+from superduper.ext.torch.encoder import tensor
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ def test_set_variables(db):
         select=db['docs'].find(),
     )
 
-    from superduperdb import Document
+    from superduper import Document
 
     e = m.encode()
     recon = Document.decode(e).unpack()

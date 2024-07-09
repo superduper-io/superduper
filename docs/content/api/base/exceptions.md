@@ -1,6 +1,6 @@
-**`superduperdb.base.exceptions`** 
+**`superduper.base.exceptions`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/exceptions.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/exceptions.py)
 
 ## `DatabackendException` 
 

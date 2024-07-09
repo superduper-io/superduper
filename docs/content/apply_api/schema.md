@@ -18,7 +18,7 @@ Table can potentially include
 more columns which don't need encoding:
 
 ```python
-from superduperdb import Schema
+from superduper import Schema
 
 schema = Schema(
     'my-schema',
@@ -36,7 +36,7 @@ db.apply(schema)
 All columns should be flagged with either `DataType` or `dtype`:
 
 ```python
-from superduperdb.backends.ibis import dtype
+from superduper.backends.ibis import dtype
 
 schema = Schema(
     'my-schema',
@@ -74,7 +74,7 @@ need differential encoding. The `Schema` is applied to the columns of output,
 to get something which can be saved in the `db.databackend`.
 
 ```python
-from superduperdb import ObjectModel
+from superduper import ObjectModel
 
 m = Model(
     'my-model',

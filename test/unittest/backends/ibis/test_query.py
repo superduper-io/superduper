@@ -3,11 +3,11 @@ from test.db_config import DBConfig
 import numpy
 import pytest
 
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.base.document import Document
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
-from superduperdb.ext.pillow.encoder import pil_image
+from superduper.backends.ibis.field_types import dtype
+from superduper.base.document import Document
+from superduper.components.schema import Schema
+from superduper.components.table import Table
+from superduper.ext.pillow.encoder import pil_image
 
 try:
     import torch
@@ -80,7 +80,7 @@ def test_renamings(db):
     indirect=True,
 )
 def test_serialize_query(db):
-    from superduperdb.backends.ibis.query import IbisQuery
+    from superduper.backends.ibis.query import IbisQuery
 
     t = IbisQuery(db=db, table='documents', parts=[('select', ('id',), {})])
 

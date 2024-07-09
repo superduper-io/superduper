@@ -5,10 +5,10 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.components.plugin import Plugin
+from superduper.components.plugin import Plugin
 
 PYTHON_CODE = """
-from superduperdb import Model
+from superduper import Model
 
 class PModel(Model):
     def predict(self) -> int:
@@ -58,17 +58,17 @@ def create_import_plugin(tempdirname):
         "_base": "?plugin",
         "_builds": {
             "file_lazy": {
-                "_path": "superduperdb.components.datatype.get_serializer",
+                "_path": "superduper.components.datatype.get_serializer",
                 "method": "file",
                 "encodable": "lazy_file",
             },
             "file_id": {
-                "_path": "superduperdb.components.datatype.LazyFile",
+                "_path": "superduper.components.datatype.LazyFile",
                 "datatype": "?file_lazy",
                 "x": "&:file:p_import:file_id",
             },
             "plugin": {
-                "_path": "superduperdb.components.plugin.Plugin",
+                "_path": "superduper.components.plugin.Plugin",
                 "path": "?file_id",
             },
         },

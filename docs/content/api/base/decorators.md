@@ -1,6 +1,6 @@
-**`superduperdb.base.decorators`** 
+**`superduper.base.decorators`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/decorators.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/decorators.py)
 
 ## `code` 
 

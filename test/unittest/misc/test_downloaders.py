@@ -5,18 +5,18 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb import CFG
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.ext.pillow.encoder import pil_image
-from superduperdb.misc.download import Fetcher
+from superduper import CFG
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.ext.pillow.encoder import pil_image
+from superduper.misc.download import Fetcher
 
 remote = os.environ.get('SDDB_REMOTE_TEST', 'local')
 
 
 def test_s3_and_web():
     if remote == 'remote':
-        Fetcher()('s3://superduperdb-bucket/img/black.png')
+        Fetcher()('s3://superduper-bucket/img/black.png')
 
 
 @pytest.fixture

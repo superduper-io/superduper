@@ -1,4 +1,4 @@
-from superduperdb import superduper
+from superduper import superduper
 
 user = 'sa'
 password = 'Superduper#1'

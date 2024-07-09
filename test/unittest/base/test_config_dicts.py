@@ -2,7 +2,7 @@ import io
 
 import pytest
 
-from superduperdb.base import config_dicts
+from superduper.base import config_dicts
 
 
 def test_combine_config_dicts():

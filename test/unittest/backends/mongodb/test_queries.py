@@ -8,9 +8,9 @@ except ImportError:
 import random
 from test.db_config import DBConfig
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.components.datatype import DataType
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.components.datatype import DataType
 
 
 def get_new_data(encoder: DataType, n=10, update=False):
@@ -69,7 +69,7 @@ def test_replace(db):
 def test_insert_from_uris(db, image_url):
     import PIL
 
-    from superduperdb.ext.pillow.encoder import pil_image
+    from superduper.ext.pillow.encoder import pil_image
 
     if image_url.startswith('file://'):
         image_url = image_url[7:]
@@ -89,8 +89,8 @@ def test_insert_from_uris(db, image_url):
 def test_insert_from_uris_bytes_encoding(db, image_url):
     import PIL
 
-    from superduperdb.base.config import BytesEncoding
-    from superduperdb.ext.pillow.encoder import pil_image
+    from superduper.base.config import BytesEncoding
+    from superduper.ext.pillow.encoder import pil_image
 
     my_pil_image = DataType(
         'my_pil_image',

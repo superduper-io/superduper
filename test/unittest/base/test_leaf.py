@@ -2,12 +2,12 @@ import dataclasses as dc
 import typing as t
 from pprint import pprint
 
-from superduperdb import ObjectModel
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.constant import KEY_BUILDS
-from superduperdb.base.document import Document
-from superduperdb.base.leaf import Leaf
-from superduperdb.components.component import Component
+from superduper import ObjectModel
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.constant import KEY_BUILDS
+from superduper.base.document import Document
+from superduper.base.leaf import Leaf
+from superduper.components.component import Component
 
 
 class Test(Leaf):
@@ -116,8 +116,8 @@ def test_component_with_document():
 
 
 def test_find_variables():
-    from superduperdb import Document
-    from superduperdb.backends.mongodb import MongoQuery
+    from superduper import Document
+    from superduper.backends.mongodb import MongoQuery
 
     r = Document({'txt': '<var:test>'})
 

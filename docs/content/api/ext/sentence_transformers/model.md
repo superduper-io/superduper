@@ -1,6 +1,6 @@
-**`superduperdb.ext.sentence_transformers.model`** 
+**`superduper.ext.sentence_transformers.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/sentence_transformers/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/sentence_transformers/model.py)
 
 ## `SentenceTransformer` 
 
@@ -8,7 +8,7 @@
 SentenceTransformer(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      preferred_devices: 't.Sequence[str]' = ('cuda',
      'mps',
@@ -23,11 +23,11 @@ SentenceTransformer(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      object: Optional[sentence_transformers.SentenceTransformer.SentenceTransformer] = None,
      model: Optional[str] = None,
      preprocess: Optional[Callable] = None,

@@ -1,6 +1,6 @@
-**`superduperdb.base.cursor`** 
+**`superduper.base.cursor`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/cursor.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/cursor.py)
 
 ## `SelectResult` 
 

@@ -1,6 +1,6 @@
-**`superduperdb.backends.ibis.field_types`** 
+**`superduper.backends.ibis.field_types`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/ibis/field_types.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/ibis/field_types.py)
 
 ## `dtype` 
 
@@ -18,7 +18,7 @@ Ibis dtype to represent basic data types in ibis.
 ```python
 FieldType(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      identifier: Union[str,
      ibis.expr.datatypes.core.DataType]) -> None

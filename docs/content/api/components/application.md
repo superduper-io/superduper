@@ -1,6 +1,6 @@
-**`superduperdb.components.application`** 
+**`superduper.components.application`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/application.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/application.py)
 
 ## `Application` 
 
@@ -8,10 +8,10 @@
 Application(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
-     template: Union[superduperdb.components.template.Template,
+     template: Union[superduper.components.template.Template,
      str] = None,
      kwargs: Dict) -> None
 ```

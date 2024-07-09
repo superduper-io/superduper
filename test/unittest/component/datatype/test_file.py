@@ -4,7 +4,7 @@ from test.unittest.component.datatype import utils
 
 import pytest
 
-from superduperdb import DataType
+from superduper import DataType
 
 
 @pytest.fixture

@@ -16,8 +16,8 @@ import DownloadButton from '../downloadButton.js';
         ```python
         key = 'txt'
         import sentence_transformers
-        from superduperdb import vector, Listener
-        from superduperdb.ext.sentence_transformers import SentenceTransformer
+        from superduper import vector, Listener
+        from superduper.ext.sentence_transformers import SentenceTransformer
         
         superdupermodel = SentenceTransformer(
             identifier="embedding",
@@ -40,8 +40,8 @@ import DownloadButton from '../downloadButton.js';
         key = 'image'
         import torchvision.models as models
         from torchvision import transforms
-        from superduperdb.ext.torch import TorchModel
-        from superduperdb import Listener
+        from superduper.ext.torch import TorchModel
+        from superduper import Listener
         from PIL import Image
         
         class TorchVisionEmbedding:
@@ -81,8 +81,8 @@ import DownloadButton from '../downloadButton.js';
         import torch
         import clip
         from torchvision import transforms
-        from superduperdb import ObjectModel
-        from superduperdb import Listener
+        from superduper import ObjectModel
+        from superduper import Listener
         
         import torch
         import clip
@@ -125,7 +125,7 @@ import DownloadButton from '../downloadButton.js';
         key = 'random'
         
         import numpy as np
-        from superduperdb import superduper, ObjectModel, Listener
+        from superduper import superduper, ObjectModel, Listener
         
         def random(*args, **kwargs):
             return np.random.random(1024).tolist()
@@ -145,7 +145,7 @@ import DownloadButton from '../downloadButton.js';
     <TabItem value="Custom" label="Custom" default>
         ```python
         import numpy as np
-        from superduperdb import superduper, ObjectModel, Listener
+        from superduper import superduper, ObjectModel, Listener
         
         key = 'custom'
         

@@ -6,15 +6,15 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.encoder import tensor
-    from superduperdb.ext.torch.model import TorchModel
+    from superduper.ext.torch.encoder import tensor
+    from superduper.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.components.listener import Listener
-from superduperdb.components.vector_index import VectorIndex
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.components.listener import Listener
+from superduper.components.vector_index import VectorIndex
 
 # Set the seeds
 random.seed(42)

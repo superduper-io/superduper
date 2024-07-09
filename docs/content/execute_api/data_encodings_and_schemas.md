@@ -1,9 +1,9 @@
 # (Optional) Setting up tables and encodings
 
-`superduperdb` has flexible support for data-types. In both MongoDB and SQL databases,
-one can uses `superduperdb.DataType` to define one's own data-types.
+`superduper` has flexible support for data-types. In both MongoDB and SQL databases,
+one can uses `superduper.DataType` to define one's own data-types.
 
-If no-datatypes are provided, `superduperdb` [uses fallbacks](./auto_data_types.md) to encode and decode data.
+If no-datatypes are provided, `superduper` [uses fallbacks](./auto_data_types.md) to encode and decode data.
 To gain more-control, developers may use the `DataType` and `Schema` components.
 
 ## `DataType` abstraction
@@ -13,7 +13,7 @@ Here is an `DataType` which encodes `numpy.ndarray` instances to `bytes`:
 
 ```python
 import numpy
-from superduperdb import DataType
+from superduper import DataType
 
 my_array = DataType(
     'my-array',
@@ -59,12 +59,12 @@ audio_reloaded = db.load('datatype', 'audio')
 ```
 
 :::tip
-Many of the `superduperdb` extensions come with their own pre-built `DataType` instances.
+Many of the `superduper` extensions come with their own pre-built `DataType` instances.
 For example:
 
-- `superduperdb.ext.pillow.pil_image`
-- `superduperdb.ext.numpy.array`
-- `superduperdb.ext.torch.tensor`
+- `superduper.ext.pillow.pil_image`
+- `superduper.ext.numpy.array`
+- `superduper.ext.torch.tensor`
 :::
 
 Read more about `DataType` [here](../apply_api/datatype).
@@ -78,8 +78,8 @@ Here is a `Schema` with three columns, one of the columns is a standard data-typ
 The other 2 are given by the `DataType` instances defined above.
 
 ```python
-from superduperdb import Schema
-from superduperdb.ext.pillow import pil_image
+from superduper import Schema
+from superduper.ext.pillow import pil_image
 
 my_schema = Schema(
     'my-schema',
@@ -96,7 +96,7 @@ If a `Table` is created with a `Schema`, all data inserted to this
 table will use that `Schema`.
 
 ```python
-from superduperdb import Table
+from superduper import Table
 
 db.apply(Table('my-table', schema=my_schema))
 ```

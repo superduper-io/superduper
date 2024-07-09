@@ -6,17 +6,17 @@ tags:
 
 # Configure
 
-SuperDuperDB provides a range of configurable options for setting
+superduper provides a range of configurable options for setting
 up your environment:
 
 Configurations can either be injected:
 
-- in a YAML file specified by the `SUPERDUPERDB_CONFIG_FILE` environment variable or
-- through environment variables starting with `SUPERDUPERDB_`:
-- as `**kwargs` when calling the [`superduperdb.superduper`](./connecting.md) function (note this is only for development purposes).
+- in a YAML file specified by the `SUPERDUPER_CONFIG_FILE` environment variable or
+- through environment variables starting with `SUPERDUPER_`:
+- as `**kwargs` when calling the [`superduper.superduper`](./connecting.md) function (note this is only for development purposes).
 
 Here are the configurable settings and their project defaults 
-(remaining configurations can be viewed in [`superduperdb.base.config`](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/config.py)). Note that as much or as little of this configuration can be specified. The remaining 
+(remaining configurations can be viewed in [`superduper.base.config`](https://github.com/superduper/superduper/blob/main/superduper/base/config.py)). Note that as much or as little of this configuration can be specified. The remaining 
 configurations will then take on their default values.
 
 
@@ -79,7 +79,7 @@ downloads:
 fold_probability: 0.05
 
 # Where lance indexes will be saved
-lance_home: .superduperdb/vector_indices
+lance_home: .superduper/vector_indices
 
 # Log level to be shown to stdout
 log_level: INFO
@@ -99,7 +99,7 @@ retries:
 
 As an example, to reconfigure the URI of the data_backend we have two options:
 
-A configuration file `.superduperdb/config.yaml` with this content only:
+A configuration file `.superduper/config.yaml` with this content only:
 
 ```yaml
 data_backend: mongodb://localhost:27018/documents
@@ -108,11 +108,11 @@ data_backend: mongodb://localhost:27018/documents
 ... or
 
 ```bash
-$ export SUPERDUPERDB_DATA_BACKEND='mongodb://localhost:27018/documents'
+$ export SUPERDUPER_DATA_BACKEND='mongodb://localhost:27018/documents'
 ```
 
 You may view the configuration used by the system with:
 
 ```bash
-python -m superduperdb config
+python -m superduper config
 ```

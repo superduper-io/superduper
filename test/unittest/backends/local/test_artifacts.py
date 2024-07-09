@@ -6,9 +6,9 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.backends.local.artifacts import FileSystemArtifactStore
-from superduperdb.components.component import Component
-from superduperdb.components.datatype import (
+from superduper.backends.local.artifacts import FileSystemArtifactStore
+from superduper.components.component import Component
+from superduper.components.datatype import (
     DataType,
     file_lazy,
     serializers,

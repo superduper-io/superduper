@@ -1,13 +1,13 @@
-**`superduperdb.components.listener`** 
+**`superduper.components.listener`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/listener.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/listener.py)
 
 ## `Listener` 
 
 ```python
 Listener(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      identifier: str = '',
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
@@ -16,10 +16,10 @@ Listener(self,
      Tuple[List[str],
      Dict[str,
      str]]],
-     model: superduperdb.components.model.Model,
-     select: superduperdb.backends.base.query.Query,
+     model: superduper.components.model.Model,
+     select: superduper.backends.base.query.Query,
      active: bool = True,
-     predict_kwargs: Optional[Dict] = <factory>) -> None
+     predict_kwargs: Optional[Dict] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

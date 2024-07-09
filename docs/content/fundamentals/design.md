@@ -1,12 +1,12 @@
 # Architecture
 
-Here is a schematic of the `superduperdb` design.
+Here is a schematic of the `superduper` design.
 
 ![](/img/light.png)
 
 ### Explanation
 
-1. `superduperdb` expects data and components to be added/ updated from a range of client-side mechanisms: **scripts**, **apps**, **notebooks** or **third-party database clients** (possibly non-python).
+1. `superduper` expects data and components to be added/ updated from a range of client-side mechanisms: **scripts**, **apps**, **notebooks** or **third-party database clients** (possibly non-python).
 
 1. Users and programs can add **components** (**models**, data **encoders**, **vector-indexes** and more) from the client-side. These large items are stored in the **artifact-store** and are tracked via the **meta-data** store.
 

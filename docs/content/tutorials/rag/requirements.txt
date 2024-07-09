@@ -1,4 +1,0 @@
-superduperdb==0.1.1
-sentence-transformers>=2.2.2
-openai>=1.1.2
-httpx

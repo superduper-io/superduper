@@ -1,6 +1,6 @@
-**`superduperdb.ext.torch.utils`** 
+**`superduper.ext.torch.utils`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/torch/utils.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/torch/utils.py)
 
 ## `device_of` 
 

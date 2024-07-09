@@ -1,8 +1,8 @@
 # SQL select queries
 
-In order to support as many data-backends as possible, SuperDuperDB supports the `ibis` query API to build SQL queries.
+In order to support as many data-backends as possible, superduper supports the `ibis` query API to build SQL queries.
 
-With `superduperdb` one would write:
+With `superduper` one would write:
 
 ```python
 t = db['my_table']

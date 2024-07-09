@@ -5,9 +5,9 @@
 Since vector-search is all-the-rage right now, 
 here is the simplest possible iteration of semantic 
 text-search with a `sentence_transformers` model, 
-as an entrypoint to `superduperdb`.
+as an entrypoint to `superduper`.
 
-Note that `superduperdb` is much-much more than vector-search
+Note that `superduper` is much-much more than vector-search
 on text. Explore the docs to read about classical machine learning, 
 computer vision, LLMs, fine-tuning and much much more!
 :::
@@ -15,13 +15,13 @@ computer vision, LLMs, fine-tuning and much much more!
 
 First let's get some data. These data are the markdown files 
 of the very same documentation you are reading!
-You can download other sample data-sets for testing `superduperdb`
+You can download other sample data-sets for testing `superduper`
 by following [these lines of code](../reusable_snippets/get_useful_sample_data).
 
 ```python
 import json
 import requests 
-r = requests.get('https://superduperdb-public-demo.s3.amazonaws.com/text.json')
+r = requests.get('https://superduper-public-demo.s3.amazonaws.com/text.json')
 
 with open('text.json', 'wb') as f:
     f.write(r.content)
@@ -51,7 +51,7 @@ print(data[0])
     - **...bespoke in house data**
     
     Most databases don't support any data other than numbers and text.
-    SuperDuperDB enables the use of these more interesting data-types using the `Document` wrapper.
+    superduper enables the use of these more interesting data-types using the `Document` wrapper.
     
     ### `Document`
     
@@ -72,7 +72,7 @@ print(data[0])
     ```python
     import pickle
     import PIL.Image
-    from superduperdb import DataType, Document
+    from superduper import DataType, Document
     
     image = PIL.Image.open('my_image.jpg')
     
@@ -108,7 +108,7 @@ print(data[0])
     ```
     
     The `encodable` specifies the type of the output of the `__call__` method, 
-    which will be a subclass of `superduperdb.components.datatype._BaseEncodable`.
+    which will be a subclass of `superduper.components.datatype._BaseEncodable`.
     These encodables become leaves in the tree defines by a `Document`.
     
     ### `Schema`
@@ -130,12 +130,12 @@ print(data[0])
 </pre>
 </details>
 
-Now we connect to SuperDuperDB, using MongoMock as a databackend.
-Read more about connecting to SuperDuperDB [here](../core_api/connect) and
-a semi-exhaustive list of supported data-backends for connecting [here](../reusable_snippets/connect_to_superduperdb).
+Now we connect to superduper, using MongoMock as a databackend.
+Read more about connecting to superduper [here](../core_api/connect) and
+a semi-exhaustive list of supported data-backends for connecting [here](../reusable_snippets/connect_to_superduper).
 
 ```python
-from superduperdb import superduper, Document
+from superduper import superduper, Document
 
 db = superduper('mongomock://test')
 
@@ -145,18 +145,18 @@ _ = db['documents'].insert_many([Document({'txt': txt}) for txt in data]).execut
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-23 22:32:53.64| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
-    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
-    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:155  | Connecting to compute client: None
-    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:85   | Building Data Layer
-    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduperdb.base.build:220  | Configuration: 
+    2024-May-23 22:32:53.64| INFO     | Duncans-MBP.fritz.box| superduper.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
+    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduper.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
+    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduper.base.build:155  | Connecting to compute client: None
+    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduper.base.datalayer:85   | Building Data Layer
+    2024-May-23 22:32:53.66| INFO     | Duncans-MBP.fritz.box| superduper.base.build:220  | Configuration: 
      +---------------+------------------+
     | Configuration |      Value       |
     +---------------+------------------+
     |  Data Backend | mongomock://test |
     +---------------+------------------+
-    2024-May-23 22:32:53.67| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x1107caa20\>
-    2024-May-23 22:32:53.68| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:03704b18-e98c-4eb8-ab48-d257105c3e6f
+    2024-May-23 22:32:53.67| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x1107caa20\>
+    2024-May-23 22:32:53.68| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:03704b18-e98c-4eb8-ab48-d257105c3e6f
 
 </pre>
 </details>
@@ -174,7 +174,7 @@ db.show()
 
 We are going to make these data searchable by activating a [`Model`](../apply_api/model) instance 
 to compute vectors for each item inserted to the `"documents"` collection.
-For that we'll use the [sentence-transformers](https://sbert.net/) integration to `superduperdb`.
+For that we'll use the [sentence-transformers](https://sbert.net/) integration to `superduper`.
 Read more about the `sentence_transformers` integration [here](../ai_integrations/sentence_transformers)
 and [here](../../api/ext/sentence_transformers/).
 
@@ -188,7 +188,7 @@ and [here](../../api/ext/sentence_transformers/).
 </details>
 
 ```python
-from superduperdb.ext.sentence_transformers import SentenceTransformer
+from superduper.ext.sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer(
     identifier="test",
@@ -202,13 +202,13 @@ model = SentenceTransformer(
 <details>
 <summary>Outputs</summary>
 <pre>
-    /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+    /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
       warnings.warn(
 
 </pre>
 <pre>
-    2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing SentenceTransformer : test
-    2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  SentenceTransformer : test successfully
+    2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduper.components.component:386  | Initializing SentenceTransformer : test
+    2024-May-23 22:33:00.27| INFO     | Duncans-MBP.fritz.box| superduper.components.component:389  | Initialized  SentenceTransformer : test successfully
 
 </pre>
 <pre>
@@ -691,19 +691,19 @@ db.apply(vector_index)
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-23 22:33:06.79| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing DataType : dill_lazy
-    2024-May-23 22:33:06.79| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  DataType : dill_lazy successfully
-    2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing DataType : dill
-    2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  DataType : dill successfully
-    2024-May-23 22:33:08.42| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x1107caac0\>
+    2024-May-23 22:33:06.79| INFO     | Duncans-MBP.fritz.box| superduper.components.component:386  | Initializing DataType : dill_lazy
+    2024-May-23 22:33:06.79| INFO     | Duncans-MBP.fritz.box| superduper.components.component:389  | Initialized  DataType : dill_lazy successfully
+    2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduper.components.component:386  | Initializing DataType : dill
+    2024-May-23 22:33:08.38| INFO     | Duncans-MBP.fritz.box| superduper.components.component:389  | Initialized  DataType : dill successfully
+    2024-May-23 22:33:08.42| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x1107caac0\>
 
 </pre>
 <pre>
     204it [00:00, 142844.41it/s]
 </pre>
 <pre>
-    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:386  | Initializing SentenceTransformer : test
-    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduperdb.components.component:389  | Initialized  SentenceTransformer : test successfully
+    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduper.components.component:386  | Initializing SentenceTransformer : test
+    2024-May-23 22:33:08.55| INFO     | Duncans-MBP.fritz.box| superduper.components.component:389  | Initialized  SentenceTransformer : test successfully
 
 </pre>
 <pre>
@@ -714,19 +714,19 @@ db.apply(vector_index)
     Batches:   0%|          | 0/7 [00:00\<?, ?it/s]
 </pre>
 <pre>
-    2024-May-23 22:33:12.78| INFO     | Duncans-MBP.fritz.box| superduperdb.components.model:783  | Adding 204 model outputs to `db`
-    2024-May-23 22:33:12.89| WARNING  | Duncans-MBP.fritz.box| superduperdb.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
-    2024-May-23 22:33:12.89| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function method_job at 0x1107caac0\> future:3598065c-0bfb-4d94-9b25-6e7e82c09bd0
-    2024-May-23 22:33:12.90| INFO     | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x1107caa20\>
-    2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:170  | Loading vectors of vector-index: 'test:vector_index'
-    2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:180  | documents.find(documents[0], documents[1])
+    2024-May-23 22:33:12.78| INFO     | Duncans-MBP.fritz.box| superduper.components.model:783  | Adding 204 model outputs to `db`
+    2024-May-23 22:33:12.89| WARNING  | Duncans-MBP.fritz.box| superduper.backends.mongodb.query:254  | Some delete ids are not executed , hence halting execution Please note the partially executed operations wont trigger any `model/listeners` unless CDC is active.
+    2024-May-23 22:33:12.89| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function method_job at 0x1107caac0\> future:3598065c-0bfb-4d94-9b25-6e7e82c09bd0
+    2024-May-23 22:33:12.90| INFO     | Duncans-MBP.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x1107caa20\>
+    2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduper.base.datalayer:170  | Loading vectors of vector-index: 'test:vector_index'
+    2024-May-23 22:33:12.98| INFO     | Duncans-MBP.fritz.box| superduper.base.datalayer:180  | documents.find(documents[0], documents[1])
 
 </pre>
 <pre>
     Loading vectors into vector-table...: 204it [00:00, 3148.10it/s]
 </pre>
 <pre>
-    2024-May-23 22:33:13.05| SUCCESS  | Duncans-MBP.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:c355caeb-daab-4712-a269-6bfca8da2c09
+    2024-May-23 22:33:13.05| SUCCESS  | Duncans-MBP.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x15267d010\>.  function:\<function callable_job at 0x1107caa20\> future:c355caeb-daab-4712-a269-6bfca8da2c09
 
 </pre>
 <pre>
@@ -734,8 +734,8 @@ db.apply(vector_index)
 
 </pre>
 <pre>
-    ([\<superduperdb.jobs.job.ComponentJob at 0x28d6f95d0\>,
-      \<superduperdb.jobs.job.FunctionJob at 0x28d757850\>],
+    ([\<superduper.jobs.job.ComponentJob at 0x28d6f95d0\>,
+      \<superduper.jobs.job.FunctionJob at 0x28d757850\>],
      VectorIndex(identifier='test:vector_index', uuid='acd20227-14e2-4cee-9507-f738315f5d42', indexing_listener=Listener(identifier='component/listener/test/b335fc9c-ad9e-4495-8c39-6894c5b4f842', uuid='b335fc9c-ad9e-4495-8c39-6894c5b4f842', key='txt', model=SentenceTransformer(preferred_devices=('cuda', 'mps', 'cpu'), device='cpu', identifier='test', uuid='11063ea2-4afa-4cab-8a55-21d0c7ad2900', signature='singleton', datatype=DataType(identifier='test/datatype', uuid='e46268dc-5c88-48dd-8595-f774c35a8f09', encoder=None, decoder=None, info=None, shape=(384,), directory=None, encodable='native', bytes_encoding=\<BytesEncoding.BYTES: 'Bytes'\>, intermediate_type='bytes', media_type=None), output_schema=None, flatten=False, model_update_kwargs=\{\}, predict_kwargs=\{'show_progress_bar': True\}, compute_kwargs=\{\}, validation=None, metric_values=\{\}, object=SentenceTransformer(
        (0): Transformer(\{'max_seq_length': 256, 'do_lower_case': False\}) with Transformer model: BertModel 
        (1): Pooling(\{'word_embedding_dimension': 384, 'pooling_mode_cls_token': False, 'pooling_mode_mean_tokens': True, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False, 'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True\})
@@ -744,7 +744,7 @@ db.apply(vector_index)
 </pre>
 </details>
 
-The `db.apply` command is a universal command for activating AI components in SuperDuperDB.
+The `db.apply` command is a universal command for activating AI components in superduper.
 
 You will now see lots of output - the model-outputs/ vectors are computed 
 and the various parts of the `VectorIndex` are registered in the system.
@@ -772,7 +772,7 @@ db['documents'].find_one().execute().unpack()
 <details>
 <summary>Outputs</summary>
 <pre>
-    \{'txt': "---\nsidebar_position: 5\n---\n\n# Encoding data\n\nIn AI, typical types of data are:\n\n- **Numbers** (integers, floats, etc.)\n- **Text**\n- **Images**\n- **Audio**\n- **Videos**\n- **...bespoke in house data**\n\nMost databases don't support any data other than numbers and text.\nSuperDuperDB enables the use of these more interesting data-types using the `Document` wrapper.\n\n### `Document`\n\nThe `Document` wrapper, wraps dictionaries, and is the container which is used whenever \ndata is exchanged with your database. That means inputs, and queries, wrap dictionaries \nused with `Document` and also results are returned wrapped with `Document`.\n\nWhenever the `Document` contains data which is in need of specialized serialization,\nthen the `Document` instance contains calls to `DataType` instances.\n\n### `DataType`\n\nThe [`DataType` class](../apply_api/datatype), allows users to create and encoder custom datatypes, by providing \ntheir own encoder/decoder pairs.\n\nHere is an example of applying an `DataType` to add an image to a `Document`:\n\n```python\nimport pickle\nimport PIL.Image\nfrom superduperdb import DataType, Document\n\nimage = PIL.Image.open('my_image.jpg')\n\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n)\n\ndocument = Document(\{'img': my_image_encoder(image)\})\n```\n\nThe bare-bones dictionary may be exposed with `.unpack()`:\n\n```python\n\>\>\> document.unpack()\n\{'img': \<PIL.PngImagePlugin.PngImageFile image mode=P size=400x300\>\}\n```\n\nBy default, data encoded with `DataType` is saved in the database, but developers \nmay alternatively save data in the `db.artifact_store` instead. \n\nThis may be achiever by specifying the `encodable=...` parameter:\n\n```python\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n    encodable='artifact',    # saves to disk/ db.artifact_store\n    # encodable='lazy_artifact', # Just in time loading\n)\n```\n\nThe `encodable` specifies the type of the output of the `__call__` method, \nwhich will be a subclass of `superduperdb.components.datatype._BaseEncodable`.\nThese encodables become leaves in the tree defines by a `Document`.\n\n### `Schema`\n\nA `Schema` allows developers to connect named fields of dictionaries \nor columns of `pandas.DataFrame` objects with `DataType` instances.\n\nA `Schema` is used, in particular, for SQL databases/ tables, and for \nmodels that return multiple outputs.\n\nHere is an example `Schema`, which is used together with text and image \nfields:\n\n```python\ns = Schema('my-schema', fields=\{'my-text': 'str', 'my-image': my_image_encoder\})\n```\n",
+    \{'txt': "---\nsidebar_position: 5\n---\n\n# Encoding data\n\nIn AI, typical types of data are:\n\n- **Numbers** (integers, floats, etc.)\n- **Text**\n- **Images**\n- **Audio**\n- **Videos**\n- **...bespoke in house data**\n\nMost databases don't support any data other than numbers and text.\nsuperduper enables the use of these more interesting data-types using the `Document` wrapper.\n\n### `Document`\n\nThe `Document` wrapper, wraps dictionaries, and is the container which is used whenever \ndata is exchanged with your database. That means inputs, and queries, wrap dictionaries \nused with `Document` and also results are returned wrapped with `Document`.\n\nWhenever the `Document` contains data which is in need of specialized serialization,\nthen the `Document` instance contains calls to `DataType` instances.\n\n### `DataType`\n\nThe [`DataType` class](../apply_api/datatype), allows users to create and encoder custom datatypes, by providing \ntheir own encoder/decoder pairs.\n\nHere is an example of applying an `DataType` to add an image to a `Document`:\n\n```python\nimport pickle\nimport PIL.Image\nfrom superduper import DataType, Document\n\nimage = PIL.Image.open('my_image.jpg')\n\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n)\n\ndocument = Document(\{'img': my_image_encoder(image)\})\n```\n\nThe bare-bones dictionary may be exposed with `.unpack()`:\n\n```python\n\>\>\> document.unpack()\n\{'img': \<PIL.PngImagePlugin.PngImageFile image mode=P size=400x300\>\}\n```\n\nBy default, data encoded with `DataType` is saved in the database, but developers \nmay alternatively save data in the `db.artifact_store` instead. \n\nThis may be achiever by specifying the `encodable=...` parameter:\n\n```python\nmy_image_encoder = DataType(\n    identifier='my-pil',\n    encoder=lambda x: pickle.dumps(x),\n    decoder=lambda x: pickle.loads(x),\n    encodable='artifact',    # saves to disk/ db.artifact_store\n    # encodable='lazy_artifact', # Just in time loading\n)\n```\n\nThe `encodable` specifies the type of the output of the `__call__` method, \nwhich will be a subclass of `superduper.components.datatype._BaseEncodable`.\nThese encodables become leaves in the tree defines by a `Document`.\n\n### `Schema`\n\nA `Schema` allows developers to connect named fields of dictionaries \nor columns of `pandas.DataFrame` objects with `DataType` instances.\n\nA `Schema` is used, in particular, for SQL databases/ tables, and for \nmodels that return multiple outputs.\n\nHere is an example `Schema`, which is used together with text and image \nfields:\n\n```python\ns = Schema('my-schema', fields=\{'my-text': 'str', 'my-image': my_image_encoder\})\n```\n",
      '_fold': 'train',
      '_id': ObjectId('664fa7f5df381fe5ebf38405'),
      '_outputs': \{'b335fc9c-ad9e-4495-8c39-6894c5b4f842': [-0.0728381797671318,
@@ -1172,7 +1172,7 @@ cursor = query.execute()
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-23 22:33:16.62| INFO     | Duncans-MBP.fritz.box| superduperdb.base.datalayer:1095 | \{\}
+    2024-May-23 22:33:16.62| INFO     | Duncans-MBP.fritz.box| superduper.base.datalayer:1095 | \{\}
 
 </pre>
 <pre>
@@ -1200,12 +1200,12 @@ for r in cursor:
     
     # Vector-search
     
-    SuperDuperDB allows users to implement vector-search in their database by either 
+    superduper allows users to implement vector-search in their database by either 
     using in-database functionality, or via a sidecar implementation with `lance` and `FastAPI`.
     
     ## Philosophy
     
-    In `superduperdb`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
+    In `superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
     using the system:
     
     - The vector-preparation is exactly the same as preparing outputs with any model, 
@@ -1278,8 +1278,8 @@ for r in cursor:
     ## MongoDB
     
     ```python
-    from superduperdb.ext.pillow import pil_image
-    from superduperdb import Document
+    from superduper.ext.pillow import pil_image
+    from superduper import Document
     
     my_image = PIL.Image.open('test/material/data/test_image.png')
     
@@ -1303,7 +1303,7 @@ for r in cursor:
     ====================================================================================================
     # Sidecar vector-comparison integration
     
-    For databases which don't have their own vector-search implementation, `superduperdb` offers 
+    For databases which don't have their own vector-search implementation, `superduper` offers 
     2 integrations:
     
     - In memory vector-search
@@ -1325,7 +1325,7 @@ for r in cursor:
     
     In this case, whenever a developer executes a vector-search query including `.like`, 
     execution of the similarity and sorting computations of vectors is outsourced to 
-    a sidecar implementation which is managed by `superduperdb`.
+    a sidecar implementation which is managed by `superduper`.
     ====================================================================================================
 
 </pre>
@@ -1334,4 +1334,4 @@ for r in cursor:
 You should see that the documents returned are relevant to the `like` part of the 
 query.
 
-Learn more about building queries with `superduperdb` [here](../execute_api/overview.md).
+Learn more about building queries with `superduper` [here](../execute_api/overview.md).

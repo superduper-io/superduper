@@ -2,16 +2,16 @@
 # Basic RAG tutorial
 
 :::info
-In this tutorial we show you how to do retrieval augmented generation (RAG) with `superduperdb`.
-Note that this is just an example of the flexibility and power which `superduperdb` gives 
-to developers. `superduperdb` is about much more than RAG and LLMs. 
+In this tutorial we show you how to do retrieval augmented generation (RAG) with `superduper`.
+Note that this is just an example of the flexibility and power which `superduper` gives 
+to developers. `superduper` is about much more than RAG and LLMs. 
 :::
 
-As in the vector-search tutorial we'll use `superduperdb` documentation for the tutorial.
+As in the vector-search tutorial we'll use `superduper` documentation for the tutorial.
 We'll add this to a testing database by downloading the data snapshot:
 
 ```python
-!curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
+!curl -O https://superduper-public-demo.s3.amazonaws.com/text.json
 ```
 
 <details>
@@ -27,7 +27,7 @@ We'll add this to a testing database by downloading the data snapshot:
 ```python
 import json
 
-from superduperdb import superduper, Document
+from superduper import superduper, Document
 
 db = superduper('mongomock://test')
 
@@ -62,9 +62,9 @@ vector-search [here](./vector_search.md).
 ```python
 import requests 
 
-from superduperdb import Application, Document, VectorIndex, Listener, vector
-from superduperdb.ext.sentence_transformers.model import SentenceTransformer
-from superduperdb.base.code import Code
+from superduper import Application, Document, VectorIndex, Listener, vector
+from superduper.ext.sentence_transformers.model import SentenceTransformer
+from superduper.base.code import Code
 
 def postprocess(x):
     return x.tolist()
@@ -111,14 +111,14 @@ The `RetrievalPrompt` component takes a query with a "free" variable as input, s
 This gives users great flexibility with regard to how they fetch the context
 for their downstream models.
 
-We're using OpenAI, but you can use any type of LLm with `superduperdb`. We have several 
+We're using OpenAI, but you can use any type of LLm with `superduper`. We have several 
 native integrations (see [here](../ai_integraitons/)) but you can also [bring your own model](../models/bring_your_own_model.md).
 
 ```python
-from superduperdb.ext.llm.prompter import *
-from superduperdb import Document
-from superduperdb.components.model import SequentialModel
-from superduperdb.ext.openai import OpenAIChatCompletion
+from superduper.ext.llm.prompter import *
+from superduper import Document
+from superduper.components.model import SequentialModel
+from superduper.ext.openai import OpenAIChatCompletion
 
 q = db['docu'].like(Document({'txt': '<var:prompt>'}), vector_index='my-index', n=5).find().limit(10)
 
@@ -150,12 +150,12 @@ seq.predict('Tell be about vector-indexes')
 </details>
 
 :::tip
-Did you know you can use any tools from the Python ecosystem with `superduperdb`.
+Did you know you can use any tools from the Python ecosystem with `superduper`.
 That includes `langchain` and `llamaindex` which can be very useful for RAG applications.
 :::
 
 ```python
-from superduperdb import Application
+from superduper import Application
 
 app = Application('rag-app', components=[vector_index, seq, plugin_1, plugin_2])
 ```
@@ -193,7 +193,7 @@ app.export('rag-app')
 </details>
 
 ```python
-from superduperdb import *
+from superduper import *
 
 app = Component.read('rag-app')
 ```
@@ -201,7 +201,7 @@ app = Component.read('rag-app')
 <details>
 <summary>Outputs</summary>
 <pre>
-    /Users/dodo/.pyenv/versions/3.11.7/envs/superduperdb-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+    /Users/dodo/.pyenv/versions/3.11.7/envs/superduper-3.11/lib/python3.11/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
       warnings.warn(
 
 </pre>
@@ -214,17 +214,17 @@ app.info()
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.vector_index.VectorIndex'\> with identifier: my-index
-    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.listener.Listener'\> with identifier: my-listener
-    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.sentence_transformers.model.SentenceTransformer'\> with identifier: my-embedding
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.datatype.DataType'\> with identifier: my-vec
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.base.code.Code'\> with identifier: postprocess
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.backends.mongodb.query.MongoQuery'\> with identifier: docu-find
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.components.model.SequentialModel'\> with identifier: rag
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.llm.prompter.RetrievalPrompt'\> with identifier: my-prompt
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.base.code.Code'\> with identifier: get_output
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.backends.mongodb.query.MongoQuery'\> with identifier: docu-like-txt-var-prompt-vector-index-my-index-n-5-find-limit-10
-    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduperdb.base.document:362  | Building leaf \<class 'superduperdb.ext.openai.model.OpenAIChatCompletion'\> with identifier: gpt-3.5-turbo
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.components.vector_index.VectorIndex'\> with identifier: my-index
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.components.listener.Listener'\> with identifier: my-listener
+    2024-Jun-17 09:42:33.43| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.ext.sentence_transformers.model.SentenceTransformer'\> with identifier: my-embedding
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.components.datatype.DataType'\> with identifier: my-vec
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.base.code.Code'\> with identifier: postprocess
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.backends.mongodb.query.MongoQuery'\> with identifier: docu-find
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.components.model.SequentialModel'\> with identifier: rag
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.ext.llm.prompter.RetrievalPrompt'\> with identifier: my-prompt
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.base.code.Code'\> with identifier: get_output
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.backends.mongodb.query.MongoQuery'\> with identifier: docu-like-txt-var-prompt-vector-index-my-index-n-5-find-limit-10
+    2024-Jun-17 09:42:33.44| INFO     | Duncans-MBP.fritz.box| superduper.base.document:362  | Building leaf \<class 'superduper.ext.openai.model.OpenAIChatCompletion'\> with identifier: gpt-3.5-turbo
 
 </pre>
 <pre>
@@ -246,7 +246,7 @@ app.info()
     [1;32m│[0m [34m'pooling_mode_weightedmean_tokens': False, 'pooling_mode_lasttoken': False, 'include_prompt': True\})[0m            [1;32m│[0m
     [1;32m│[0m [34m  (2): Normalize()[0m                                                                                              [1;32m│[0m
     [1;32m│[0m [34m), model='all-MiniLM-L6-v2', preprocess=None, postprocess=Code(identifier='postprocess', [0m                       [1;32m│[0m
-    [1;32m│[0m [34muuid='fadfa78c-4c6b-4914-885a-e1372da93078', code='from superduperdb import code\n\n@code\ndef [0m                 [1;32m│[0m
+    [1;32m│[0m [34muuid='fadfa78c-4c6b-4914-885a-e1372da93078', code='from superduper import code\n\n@code\ndef [0m                 [1;32m│[0m
     [1;32m│[0m [34mpostprocess(x):\n    return x.tolist()\n')), select=docu.find(), active=True, predict_kwargs=\{'max_chunk_size':[0m [1;32m│[0m
     [1;32m│[0m [34m50\}), compatible_listener=None, measure=\<VectorIndexMeasureType.cosine: 'cosine'\>, metric_values=\{\}), [0m          [1;32m│[0m
     [1;32m│[0m [34mSequentialModel(identifier='rag', uuid='fa46eb15-112c-496f-965f-c935494825c5', signature='**kwargs', [0m           [1;32m│[0m
@@ -255,7 +255,7 @@ app.info()
     [1;32m│[0m [34muuid='ded3b9b8-828d-41a4-bc37-02217fe0bc08', signature='**kwargs', datatype=None, output_schema=None, [0m          [1;32m│[0m
     [1;32m│[0m [34mflatten=False, model_update_kwargs=\{\}, predict_kwargs=\{\}, compute_kwargs=\{\}, validation=None, metric_values=\{\},[0m [1;32m│[0m
     [1;32m│[0m [34mnum_workers=0, preprocess=None, postprocess=Code(identifier='get_output', [0m                                      [1;32m│[0m
-    [1;32m│[0m [34muuid='c1d6fb70-b6c7-42b4-8872-8bfd243ddf07', code="from superduperdb import code\n\n@code\ndef get_output(c):\n[0m [1;32m│[0m
+    [1;32m│[0m [34muuid='c1d6fb70-b6c7-42b4-8872-8bfd243ddf07', code="from superduper import code\n\n@code\ndef get_output(c):\n[0m [1;32m│[0m
     [1;32m│[0m [34mreturn [r['txt'] for r in c]\n"), select=docu.like(\{'txt': '\<var:prompt\>'\}, vector_index="my-index", [0m           [1;32m│[0m
     [1;32m│[0m [34mn=5).find().limit(10), prompt_explanation="HERE ARE SOME FACTS SEPARATED BY '---' IN OUR DATA REPOSITORY WHICH [0m [1;32m│[0m
     [1;32m│[0m [34mWILL HELP YOU ANSWER THE QUESTION.", prompt_introduction='HERE IS THE QUESTION WHICH YOU SHOULD ANSWER BASED [0m   [1;32m│[0m

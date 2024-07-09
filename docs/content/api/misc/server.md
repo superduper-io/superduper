@@ -1,6 +1,6 @@
-**`superduperdb.misc.server`** 
+**`superduper.misc.server`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/server.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/server.py)
 
 ## `request_server` 
 

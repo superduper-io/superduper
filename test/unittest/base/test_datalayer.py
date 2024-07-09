@@ -4,13 +4,13 @@ from typing import Any, ClassVar, Optional, Sequence
 import numpy
 import pytest
 
-from superduperdb.ext.torch.training import TorchTrainer
+from superduper.ext.torch.training import TorchTrainer
 
 try:
     import torch
 
-    from superduperdb.ext.torch.encoder import tensor
-    from superduperdb.ext.torch.model import TorchModel
+    from superduper.ext.torch.encoder import tensor
+    from superduper.ext.torch.model import TorchModel
 except ImportError:
     torch = None
 
@@ -19,14 +19,14 @@ import dataclasses as dc
 from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.components.component import Component
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.datatype import (
+from superduper.backends.ibis.field_types import dtype
+from superduper.backends.mongodb.data_backend import MongoDataBackend
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.datalayer import Datalayer
+from superduper.base.document import Document
+from superduper.components.component import Component
+from superduper.components.dataset import Dataset
+from superduper.components.datatype import (
     DataType,
     LazyArtifact,
     dill_serializer,
@@ -35,10 +35,10 @@ from superduperdb.components.datatype import (
     pickle_encoder,
     pickle_serializer,
 )
-from superduperdb.components.listener import Listener
-from superduperdb.components.model import ObjectModel, _Fittable
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
+from superduper.components.listener import Listener
+from superduper.components.model import ObjectModel, _Fittable
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 n_data_points = 250
 
@@ -630,7 +630,7 @@ def test_compound_component(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_reload_dataset(db):
-    from superduperdb.components.dataset import Dataset
+    from superduper.components.dataset import Dataset
 
     if isinstance(db.databackend.type, MongoDataBackend):
         select = db['documents'].find({'_fold': 'valid'})

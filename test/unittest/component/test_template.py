@@ -2,10 +2,10 @@ from test.db_config import DBConfig
 
 import pytest
 
-from superduperdb.components.component import Component
-from superduperdb.components.listener import Listener
-from superduperdb.components.model import ObjectModel
-from superduperdb.components.template import QueryTemplate, Template
+from superduper.components.component import Component
+from superduper.components.listener import Listener
+from superduper.components.model import ObjectModel
+from superduper.components.template import QueryTemplate, Template
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)

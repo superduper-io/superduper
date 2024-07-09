@@ -1,13 +1,13 @@
 # Training models directly on your datastore
 
 `Model` instances may be trained if a `trainer` is set on the `Model` when `db.apply` is called.
-When models are trained, if `CFG.cluster.compute` has been configured with a `ray` scheduler, then `superduperdb` deploys [a job on the connected `ray` cluster](../production_features/non_blocking_ray_jobs).
+When models are trained, if `CFG.cluster.compute` has been configured with a `ray` scheduler, then `superduper` deploys [a job on the connected `ray` cluster](../production_features/non_blocking_ray_jobs).
 
 ## Basic pattern
 
 ```python
-from superduperdb.ext.<framework> import <Framework>Trainer
-from superduperdb.ext.<framework> import <ModelCls>
+from superduper.ext.<framework> import <Framework>Trainer
+from superduper.ext.<framework> import <ModelCls>
 
 db.apply(
     <ModelCls>(
@@ -33,7 +33,7 @@ Not all `Model` types are trainable. We support training for the following frame
 See [here]
 
 ```python
-from superduperdb.ext.sklearn import Estimator
+from superduper.ext.sklearn import Estimator
 from sklearn.svm import SVC
 
 m = Estimator(SVC(C=0.05))
@@ -49,8 +49,8 @@ m.fit(
 ### Transformers
 
 ```python
-from superduperdb.ext.transformers import Pipeline
-from superduperdb import superduper
+from superduper.ext.transformers import Pipeline
+from superduper import superduper
 
 m = Pipeline(task='sentiment-analysis')
 
@@ -67,7 +67,7 @@ m.fit(
 
 ```python
 import torch
-from superduperdb.ext.torch import Module
+from superduper.ext.torch import Module
 
 model = Module(
     'my-classifier',
@@ -80,7 +80,7 @@ model.fit(
     X='<input>',
     db=db,
     select=<query>,  # MongoDB, Ibis or SQL query
-    batch_size=100,  # any **kwargs supported by `superduperdb.ext.torch.TorchTrainerConfiguration`
+    batch_size=100,  # any **kwargs supported by `superduper.ext.torch.TorchTrainerConfiguration`
     num_workers=4,
 )
 ``` -->

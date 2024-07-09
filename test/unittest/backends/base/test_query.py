@@ -3,12 +3,12 @@ from test.db_config import DBConfig
 import lorem
 import pytest
 
-from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.base.enums import DBType
-from superduperdb.components.schema import Schema
-from superduperdb.components.table import Table
+from superduper.backends.ibis.field_types import dtype
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.base.enums import DBType
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 
 @pytest.fixture
@@ -171,7 +171,7 @@ def test_model(db):
 
     m.predict(torch.randn(32))
 
-    from superduperdb.backends.base.query import Model
+    from superduper.backends.base.query import Model
 
     t = torch.randn(32)
 
@@ -194,7 +194,7 @@ other_thing.join(query[0]).filter(documents[0])"""
 
 
 def test_parse_and_dump():
-    from superduperdb.backends.base.query import parse_query
+    from superduper.backends.base.query import parse_query
 
     q = parse_query(
         documents=[], query='collection.find().limit(5)', builder_cls=MongoQuery
@@ -242,8 +242,8 @@ def test_execute(db):
 def test_serialize_with_image():
     import PIL.Image
 
-    from superduperdb.backends.mongodb import MongoQuery
-    from superduperdb.ext.pillow import pil_image
+    from superduper.backends.mongodb import MongoQuery
+    from superduper.ext.pillow import pil_image
 
     img = PIL.Image.open('test/material/data/test.png')
     img = img.resize((2, 2))
@@ -380,7 +380,7 @@ def test_auto_document_wrapping(db):
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_model_query(db):
-    from superduperdb.backends.base.query import Model
+    from superduper.backends.base.query import Model
 
     q = Model(table='my-model').predict('This is a test')
 

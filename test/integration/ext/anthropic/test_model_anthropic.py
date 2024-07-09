@@ -1,7 +1,7 @@
 import pytest
 import vcr
 
-from superduperdb.ext.anthropic import AnthropicCompletions
+from superduper.ext.anthropic import AnthropicCompletions
 
 CASSETTE_DIR = 'test/integration/ext/anthropic/cassettes'
 

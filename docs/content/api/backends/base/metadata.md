@@ -1,6 +1,6 @@
-**`superduperdb.backends.base.metadata`** 
+**`superduper.backends.base.metadata`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/base/metadata.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/base/metadata.py)
 
 ## `MetaDataStore` 
 

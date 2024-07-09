@@ -1,6 +1,6 @@
-**`superduperdb.components.datatype`** 
+**`superduper.components.datatype`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/datatype.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/datatype.py)
 
 ## `pickle_decode` 
 
@@ -177,7 +177,7 @@ Saves an object in torch format.
 Encoder(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      encoder: Optional[Callable] = None,
@@ -213,12 +213,12 @@ A data type component that defines how data is encoded and decoded.
 ```python
 Artifact(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Any = <EMPTY>,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```
@@ -252,13 +252,13 @@ Torch state dictionary decoder.
 ```python
 Encodable(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Any = <EMPTY>,
      blob: dataclasses.InitVar[typing.Optional[bytearray]] = None,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```
@@ -281,13 +281,13 @@ Class for encoding non-Python datatypes to the database.
 ```python
 File(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Any = <EMPTY>,
      file_name: Optional[str] = None,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```
@@ -310,12 +310,12 @@ Data to be saved on disk and passed as a file reference.
 ```python
 LazyArtifact(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Any = <EMPTY>,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```
@@ -337,13 +337,13 @@ Data to be saved and loaded only when needed.
 ```python
 LazyFile(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Any = <EMPTY>,
      file_name: Optional[str] = None,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```
@@ -366,12 +366,12 @@ Class is used to load a file only when needed.
 ```python
 Native(self,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      x: Optional[Any] = None,
      *,
      identifier: str = '',
      file_id: Optional[str] = None,
-     datatype: superduperdb.components.datatype.DataType,
+     datatype: superduper.components.datatype.DataType,
      uri: Optional[str] = None,
      sha1: Optional[str] = None) -> None
 ```

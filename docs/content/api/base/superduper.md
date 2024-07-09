@@ -1,6 +1,6 @@
-**`superduperdb.base.superduper`** 
+**`superduper.base.superduper`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/superduper.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/superduper.py)
 
 ## `superduper` 
 
@@ -15,6 +15,6 @@ superduper(item: Optional[Any] = None,
 
 Superduper API to automatically wrap an object to a db or a component.
 
-Attempts to automatically wrap an item in a superduperdb component by
+Attempts to automatically wrap an item in a superduper.ioponent by
 using duck typing to recognize it.
 

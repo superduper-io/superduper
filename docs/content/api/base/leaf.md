@@ -1,11 +1,11 @@
-**`superduperdb.base.leaf`** 
+**`superduper.base.leaf`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/base/leaf.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/base/leaf.py)
 
 ## `find_leaf_cls` 
 
 ```python
-find_leaf_cls(full_import_path) -> Type[superduperdb.base.leaf.Leaf]
+find_leaf_cls(full_import_path) -> Type[superduper.base.leaf.Leaf]
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -19,7 +19,7 @@ Find leaf class by class full import path.
 Leaf(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>) -> None
+     uuid: str = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

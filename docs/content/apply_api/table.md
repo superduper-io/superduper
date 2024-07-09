@@ -12,7 +12,7 @@
 (Learn how to build a `Schema` [here](schema))
 
 ```python
-from superduperdb.backends.ibis import Table
+from superduper.backends.ibis import Table
 
 table = Table(
     'my-table',

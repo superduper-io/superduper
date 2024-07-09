@@ -1,17 +1,17 @@
-**`superduperdb.misc.download`** 
+**`superduper.misc.download`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/download.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/download.py)
 
 ## `download_content` 
 
 ```python
 download_content(db,
-     query: Union[superduperdb.backends.base.query.Query,
+     query: Union[superduper.backends.base.query.Query,
      Dict],
      ids: Optional[Sequence[str]] = None,
-     documents: Optional[List[superduperdb.base.document.Document]] = None,
+     documents: Optional[List[superduper.base.document.Document]] = None,
      raises: bool = True,
-     n_workers: Optional[int] = None) -> Optional[Sequence[superduperdb.base.document.Document]]
+     n_workers: Optional[int] = None) -> Optional[Sequence[superduper.base.document.Document]]
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -40,7 +40,7 @@ download_content(None, None, ids=["0"], documents=[d]))
 ## `download_from_one` 
 
 ```python
-download_from_one(r: superduperdb.base.document.Document)
+download_from_one(r: superduper.base.document.Document)
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -53,7 +53,7 @@ This function will find all URIs in the document and download them.
 ## `gather_uris` 
 
 ```python
-gather_uris(documents: Sequence[superduperdb.base.document.Document],
+gather_uris(documents: Sequence[superduper.base.document.Document],
      gather_ids: bool = True) -> Tuple[List[str],
      List[str],
      List[Any],

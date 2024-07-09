@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
-from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 
 Base = declarative_base()
 
@@ -27,7 +27,7 @@ def test(metadata):
             'identifier': 'my-model',
             'type_id': 'model',
             'version': 0,
-            '_path': 'superduperdb.container.model.Model',
+            '_path': 'superduper.container.model.Model',
             'uuid': str(uuid.uuid4()),
         }
     )
@@ -40,7 +40,7 @@ def test(metadata):
             'identifier': 'other-model',
             'type_id': 'model',
             'version': 0,
-            '_path': 'superduperdb.container.model.Model',
+            '_path': 'superduper.container.model.Model',
             'uuid': str(uuid.uuid4()),
         }
     )

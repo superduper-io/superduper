@@ -1,6 +1,6 @@
-**`superduperdb.backends.sqlalchemy.db_helper`** 
+**`superduper.backends.sqlalchemy.db_helper`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/sqlalchemy/db_helper.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/sqlalchemy/db_helper.py)
 
 ## `create_clickhouse_config` 
 

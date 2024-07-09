@@ -1,6 +1,6 @@
-**`superduperdb.ext.cohere.model`** 
+**`superduper.ext.cohere.model`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/cohere/model.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/cohere/model.py)
 
 ## `CohereEmbed` 
 
@@ -8,22 +8,22 @@
 CohereEmbed(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: str = 'singleton',
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      model: 't.Optional[str]' = None,
      max_batch_size: 'int' = 8,
      client_kwargs: Dict[str,
-     Any] = <factory>,
+     Any] = None,
      shape: Optional[Sequence[int]] = None,
      batch_size: int = 100) -> None
 ```
@@ -56,7 +56,7 @@ Cohere embedding predictor.
 CohereGenerate(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: str = '*args,
@@ -64,15 +64,15 @@ CohereGenerate(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      model: 't.Optional[str]' = None,
      max_batch_size: 'int' = 8,
      client_kwargs: Dict[str,
-     Any] = <factory>,
+     Any] = None,
      takes_context: bool = True,
      prompt: str = '') -> None
 ```
@@ -105,7 +105,7 @@ Cohere realistic text generator (chat predictor).
 Cohere(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
      signature: 'Signature' = '*args,
@@ -113,15 +113,15 @@ Cohere(self,
      datatype: 'EncoderArg' = None,
      output_schema: 't.Optional[Schema]' = None,
      flatten: 'bool' = False,
-     model_update_kwargs: 't.Dict' = <factory>,
-     predict_kwargs: 't.Dict' = <factory>,
-     compute_kwargs: 't.Dict' = <factory>,
+     model_update_kwargs: 't.Dict' = None,
+     predict_kwargs: 't.Dict' = None,
+     compute_kwargs: 't.Dict' = None,
      validation: 't.Optional[Validation]' = None,
-     metric_values: 't.Dict' = <factory>,
+     metric_values: 't.Dict' = None,
      model: 't.Optional[str]' = None,
      max_batch_size: 'int' = 8,
      client_kwargs: Dict[str,
-     Any] = <factory>) -> None
+     Any] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

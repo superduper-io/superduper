@@ -5,7 +5,7 @@ To connect, one specifies a list of `.csv` files:
 
 ```python
 import glob
-from superduperdb import superduper
+from superduper import superduper
 
 db = superduper(glob.glob('*.csv'))
 ```

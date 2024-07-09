@@ -5,13 +5,13 @@ import lorem
 import pymongo
 import pytest
 
-import superduperdb as s
-from superduperdb import CFG, superduper
-from superduperdb.backends.mongodb.query import MongoQuery
-from superduperdb.base.document import Document
-from superduperdb.components.listener import Listener
-from superduperdb.components.model import ObjectModel
-from superduperdb.components.vector_index import VectorIndex, vector
+import superduper as s
+from superduper import CFG, superduper
+from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.document import Document
+from superduper.components.listener import Listener
+from superduper.components.model import ObjectModel
+from superduper.components.vector_index import VectorIndex, vector
 
 try:
     client = pymongo.MongoClient(CFG.data_backend)

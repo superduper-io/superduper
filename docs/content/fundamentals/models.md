@@ -6,7 +6,7 @@ sidebar_position: 5
 
 ## Predictors
 
-The base class which enables predictions in `superduperdb` is the `Predictor` mixin class.
+The base class which enables predictions in `superduper` is the `Predictor` mixin class.
 
 A `Predictor` is a class which implements the `.predict` method; this mimics `.predict` from 
 [Scikit-Learn](https://scikit-learn.org/stable/) and related frameworks, but has support
@@ -25,9 +25,9 @@ predictor.predict(
 
 Examples of `Predictor` classes are the AI-API classes in
 
-- `superduperdb.ext.openai.OpenAI*`
-- `superduperdb.ext.anthropic.Anthropic*`
-- `superduperdb.ext.cohere.Cohere*`
+- `superduper.ext.openai.OpenAI*`
+- `superduper.ext.anthropic.Anthropic*`
+- `superduper.ext.cohere.Cohere*`
 
 ## Models
 
@@ -37,8 +37,8 @@ of a deep learning architecture or similar important data.
 
 Examples of `Model` are:
 
-- `superduperdb.ext.torch.TorchModel`
-- `superduperdb.ext.sklearn.Estimator`
+- `superduper.ext.torch.TorchModel`
+- `superduper.ext.sklearn.Estimator`
 - `superdueprdb.ext.transformers.Pipeline`
 
 Each of these inheriting classes also implements the `.fit` method, which re-parametrizes the class in question, 

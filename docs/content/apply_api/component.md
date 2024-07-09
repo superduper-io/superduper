@@ -5,10 +5,10 @@ In this section we re-use the datalayer variable `db` without further explanatio
 Read more about how to build it [here](../core_api/connect) and what it is [here](../fundamentals/datalayer_overview).
 :::
 
-AI functionality in SuperDuperDB revolves around creating AI models, 
+AI functionality in superduper revolves around creating AI models, 
 and configuring them to interact with data via the datalayer.
 
-There are many decisions to be made and configured; for this SuperDuperDB
+There are many decisions to be made and configured; for this superduper
 provides the `Component` abstraction.
 
 The typical process is:
@@ -18,7 +18,7 @@ The typical process is:
 Build your components, potentially including other subcomponents.
 
 ```python
-from superduperdb import <ComponentClass>
+from superduper import <ComponentClass>
 
 component = <ComponentClass>(
     'identifier',
@@ -38,7 +38,7 @@ db.apply(component)
 ### 3. Reload the component (if necessary)
 
 The `.apply` command saves everything necessary to reload the component
-in the SuperDuperDB system.
+in the superduper system.
 
 ```python
 reloaded = db.load('type_id', 'identifier')   # `type_id`

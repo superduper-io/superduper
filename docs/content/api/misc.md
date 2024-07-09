@@ -1,6 +1,6 @@
-**`superduperdb.misc`** 
+**`superduper.misc`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc.py)
 
 ## `border_msg` 
 

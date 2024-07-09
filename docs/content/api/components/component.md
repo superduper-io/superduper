@@ -1,6 +1,6 @@
-**`superduperdb.components.component`** 
+**`superduper.components.component`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/component.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/component.py)
 
 ## `ensure_initialized` 
 
@@ -47,7 +47,7 @@ Helper function for importing component JSONs, YAMLs, etc.
 Component(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None) -> None
 ```
@@ -58,8 +58,8 @@ Component(self,
 | uuid | UUID of the leaf. |
 | artifacts | A dictionary of artifacts paths and `DataType` objects |
 
-Base class for all components in SuperDuperDB.
+Base class for all components in superduper.
 
-Class to represent SuperDuperDB serializable entities
+Class to represent superduper serializable entities
 that can be saved into a database.
 

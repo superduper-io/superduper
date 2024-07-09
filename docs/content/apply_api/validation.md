@@ -10,7 +10,7 @@
 ***Usage pattern***
 
 ```python
-from superduperdb import Validation
+from superduper import Validation
 
 validation = Validation(
     datasets=[dataset_1, ...],

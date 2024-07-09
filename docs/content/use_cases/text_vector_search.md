@@ -15,17 +15,17 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of SuperDuperDB, then you should set the relevant 
+of superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with SuperDuperDB quickly.
+to get going with superduper quickly.
 :::
 
 ```python
 import os
 
-os.makedirs('.superduperdb', exist_ok=True)
-os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
+os.makedirs('.superduper', exist_ok=True)
+os.environ['SUPERDUPER_CONFIG'] = '.superduper/config.yaml'
 ```
 
 
@@ -151,7 +151,7 @@ os.environ['SUPERDUPERDB_CONFIG'] = '.superduperdb/config.yaml'
     </TabItem>
 </Tabs>
 ```python
-with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
+with open(os.environ['SUPERDUPER_CONFIG'], 'w') as f:
     f.write(CFG)
 ```
 
@@ -159,7 +159,7 @@ with open(os.environ['SUPERDUPERDB_CONFIG'], 'w') as f:
 ## Start your cluster
 
 :::note
-Starting a SuperDuperDB cluster is useful in production and model development
+Starting a superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 
@@ -170,7 +170,7 @@ If you don't need this, then it is simpler to start in development mode.
 <Tabs>
     <TabItem value="Experimental Cluster" label="Experimental Cluster" default>
         ```python
-        !python -m superduperdb local-cluster up        
+        !python -m superduper local-cluster up        
         ```
     </TabItem>
     <TabItem value="Docker-Compose" label="Docker-Compose" default>
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to SuperDuperDB
+## Connect to superduper
 
 :::note
-Note that this is only relevant if you are running SuperDuperDB in development mode.
+Note that this is only relevant if you are running superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -192,20 +192,20 @@ Otherwise refer to "Configuring your production system".
 <Tabs>
     <TabItem value="MongoDB" label="MongoDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongodb://localhost:27017/documents')        
         ```
     </TabItem>
     <TabItem value="SQLite" label="SQLite" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         db = superduper('sqlite://my_db.db')        
         ```
     </TabItem>
     <TabItem value="MySQL" label="MySQL" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'superduper'
         password = 'superduper'
@@ -218,7 +218,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Oracle" label="Oracle" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'sa'
         password = 'Superduper#1'
@@ -231,7 +231,7 @@ Otherwise refer to "Configuring your production system".
     <TabItem value="PostgreSQL" label="PostgreSQL" default>
         ```python
         !pip install psycopg2
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'postgres'
         password = 'postgres'
@@ -245,7 +245,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Snowflake" label="Snowflake" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = "superduperuser"
         password = "superduperpassword"
@@ -262,7 +262,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="Clickhouse" label="Clickhouse" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         user = 'default'
         password = ''
@@ -274,21 +274,21 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="DuckDB" label="DuckDB" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('duckdb://mydb.duckdb')        
         ```
     </TabItem>
     <TabItem value="Pandas" label="Pandas" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper(['my.csv'], metadata_store=f'mongomock://meta')        
         ```
     </TabItem>
     <TabItem value="MongoMock" label="MongoMock" default>
         ```python
-        from superduperdb import superduper
+        from superduper import superduper
         
         db = superduper('mongomock:///test_db')        
         ```
@@ -301,7 +301,7 @@ Otherwise refer to "Configuring your production system".
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/text.json
+        !curl -O https://superduper-public-demo.s3.amazonaws.com/text.json
         import json
         
         with open('text.json', 'r') as f:
@@ -310,7 +310,7 @@ Otherwise refer to "Configuring your production system".
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        !curl -O https://superduperdb-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
+        !curl -O https://superduper-public-demo.s3.amazonaws.com/pdfs.zip && unzip -o pdfs.zip
         import os
         
         data = [f'pdfs/{x}' for x in os.listdir('./pdfs') if x.endswith('.pdf')]        
@@ -337,7 +337,7 @@ It also supports custom data conversion methods for transforming data, such as d
     </TabItem>
     <TabItem value="PDF" label="PDF" default>
         ```python
-        from superduperdb import DataType
+        from superduper import DataType
         
         # By creating a datatype and setting its encodable attribute to “file” for saving PDF files, 
         # all datatypes encoded as “file” will have their corresponding files uploaded to the artifact store. 
@@ -351,8 +351,8 @@ It also supports custom data conversion methods for transforming data, such as d
 ## Setup tables or collections
 
 ```python
-from superduperdb.components.table import Table
-from superduperdb import Schema
+from superduper.components.table import Table
+from superduper import Schema
 
 schema = Schema(identifier="schema", fields={"x": datatype})
 table_or_collection = Table("documents", schema=schema)
@@ -380,7 +380,7 @@ won't be necessary.
 <Tabs>
     <TabItem value="Text" label="Text" default>
         ```python
-        from superduperdb import model
+        from superduper import model
         
         CHUNK_SIZE = 200
         
@@ -394,7 +394,7 @@ won't be necessary.
     <TabItem value="PDF" label="PDF" default>
         ```python
         !pip install -q "unstructured[pdf]"
-        from superduperdb import model
+        from superduper import model
         from unstructured.partition.pdf import partition_pdf
         
         CHUNK_SIZE = 500
@@ -411,7 +411,7 @@ won't be necessary.
 Now we apply this chunker to the data by wrapping the chunker in `Listener`:
 
 ```python
-from superduperdb import Listener
+from superduper import Listener
 
 upstream_listener = Listener(
     model=chunker,
@@ -444,7 +444,7 @@ select = upstream_listener.outputs_select
     <TabItem value="OpenAI" label="OpenAI" default>
         ```python
         !pip install openai
-        from superduperdb.ext.openai import OpenAIEmbedding
+        from superduper.ext.openai import OpenAIEmbedding
         
         embedding_model = OpenAIEmbedding(identifier='text-embedding-ada-002')        
         ```
@@ -452,7 +452,7 @@ select = upstream_listener.outputs_select
     <TabItem value="JinaAI" label="JinaAI" default>
         ```python
         import os
-        from superduperdb.ext.jina import JinaEmbedding
+        from superduper.ext.jina import JinaEmbedding
         
         os.environ["JINA_API_KEY"] = "jina_xxxx"
          
@@ -463,9 +463,9 @@ select = upstream_listener.outputs_select
     <TabItem value="Sentence-Transformers" label="Sentence-Transformers" default>
         ```python
         !pip install sentence-transformers
-        from superduperdb import vector
+        from superduper import vector
         import sentence_transformers
-        from superduperdb.ext.sentence_transformers import SentenceTransformer
+        from superduper.ext.sentence_transformers import SentenceTransformer
         
         embedding_model = SentenceTransformer(
             identifier="embedding",
@@ -478,8 +478,8 @@ select = upstream_listener.outputs_select
     </TabItem>
     <TabItem value="Transformers" label="Transformers" default>
         ```python
-        from superduperdb import vector
-        from superduperdb.components.model import Model, ensure_initialized, Signature
+        from superduper import vector
+        from superduper.components.model import Model, ensure_initialized, Signature
         from transformers import AutoTokenizer, AutoModel
         import torch
         
@@ -514,7 +514,7 @@ select = upstream_listener.outputs_select
     </TabItem>
 </Tabs>
 ```python
-print(len(embedding_model.predict("What is SuperDuperDB")))
+print(len(embedding_model.predict("What is superduper")))
 ```
 
 ## Create vector-index
@@ -527,7 +527,7 @@ vector_index_name = 'my-vector-index'
 <Tabs>
     <TabItem value="1-Modality" label="1-Modality" default>
         ```python
-        from superduperdb import VectorIndex, Listener
+        from superduper import VectorIndex, Listener
         
         jobs, _ = db.add(
             VectorIndex(
@@ -549,9 +549,9 @@ query_table_or_collection = select.table_or_collection
 ## Perform a vector search
 
 ```python
-from superduperdb import Document
+from superduper import Document
 # Perform the vector search based on the query
-item = Document({indexing_key: "Tell me about the SuperDuperDB"})
+item = Document({indexing_key: "Tell me about the superduper"})
 ```
 
 ```python

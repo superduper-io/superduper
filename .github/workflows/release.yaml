@@ -67,7 +67,7 @@ jobs:
       - name: Set version for tagging
         id: set-version
         run: |
-          export PACKAGE_VERSION=$(python -c "import superduperdb as s; print(s.__version__)")
+          export PACKAGE_VERSION=$(python -c "import superduper as s; print(s.__version__)")
           echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT 
 
     outputs:
@@ -96,7 +96,7 @@ jobs:
 
 
   #---------------------------------------------------
-  # Publish SuperDuperDB in Pypi
+  # Publish SuperDuper on Pypi
   #---------------------------------------------------
   publish-pypi:
     needs: ['create-release']
@@ -118,7 +118,7 @@ jobs:
           packages-dir: artifact/
 
   #---------------------------------------------------
-  # Publish SuperDuperDB in DockerHub
+  # Publish SuperDuper on DockerHub
   #---------------------------------------------------
   publish-docker:
     needs: ['publish-pypi']
@@ -133,10 +133,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build SuperDuperDB Image
+      - name: Build SuperDuper Image
         run: |
-          make build_superduperdb
+          make build_superduper
 
-      - name: Release SuperDuperDB Image
+      - name: Release SuperDuper Image
         run: |
-          make push_superduperdb
+          make push_superduper

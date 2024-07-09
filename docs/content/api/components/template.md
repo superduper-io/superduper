@@ -1,6 +1,6 @@
-**`superduperdb.components.template`** 
+**`superduper.components.template`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/template.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/template.py)
 
 ## `Template` 
 
@@ -8,15 +8,15 @@
 Template(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
-     component: Union[superduperdb.components.component.Component,
+     component: Union[superduper.components.component.Component,
      Dict],
-     info: Optional[Dict] = <factory>,
+     info: Optional[Dict] = None,
      _component_blobs: Union[Dict,
      bytes,
-     NoneType] = <factory>) -> None
+     NoneType] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

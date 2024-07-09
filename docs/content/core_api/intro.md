@@ -1,12 +1,12 @@
-# Core SuperDuperDB usage
+# Core superduper usage
 
-In this section we walk through how to perform the key operations with SuperDuperDB.
+In this section we walk through how to perform the key operations with superduper.
 There are three key patterns C-A-E:
 
 ***Connect***
 
 ```python
-from superduperdb import superduper
+from superduper import superduper
 db = superduper('<data-connection>')
 ```
 

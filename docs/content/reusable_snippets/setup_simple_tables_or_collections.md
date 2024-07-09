@@ -16,9 +16,9 @@ import DownloadButton from '../downloadButton.js';
         ```python
         # If data is in a format natively supported by MongoDB, we don't need to do anything.
         # However to manually specify datatypes, do as below
-        from superduperdb import Schema
-        from superduperdb.ext.pillow import pil_image
-        from superduperdb.components.datatype import pickle_serializer
+        from superduper import Schema
+        from superduper.ext.pillow import pil_image
+        from superduper.components.datatype import pickle_serializer
         
         fields = {
             'serialized_content': pickle_serializer,
@@ -40,9 +40,9 @@ import DownloadButton from '../downloadButton.js';
     </TabItem>
     <TabItem value="SQL" label="SQL" default>
         ```python
-        from superduperdb import Table
-        from superduperdb import Schema, DataType
-        from superduperdb.backends.ibis.field_types import dtype
+        from superduper import Table
+        from superduper import Schema, DataType
+        from superduper.backends.ibis.field_types import dtype
         
         for index, data in enumerate(datas):
             data["id"] = str(index) 

@@ -1,6 +1,6 @@
-**`superduperdb.ext.torch.encoder`** 
+**`superduper.ext.torch.encoder`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/ext/torch/encoder.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/ext/torch/encoder.py)
 
 ## `tensor` 
 

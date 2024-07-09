@@ -1,6 +1,6 @@
-**`superduperdb.misc.annotations`** 
+**`superduper.misc.annotations`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/misc/annotations.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/misc/annotations.py)
 
 ## `merge_docstrings` 
 
@@ -79,10 +79,10 @@ replace_parameters(doc,
 
 Replace parameters in a doc-string with a placeholder.
 
-## `SuperDuperDBDeprecationWarning` 
+## `superduperDeprecationWarning` 
 
 ```python
-SuperDuperDBDeprecationWarning(self,
+superduperDeprecationWarning(self,
      /,
      *args,
      **kwargs)

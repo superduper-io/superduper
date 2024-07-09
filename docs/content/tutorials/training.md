@@ -1,8 +1,8 @@
 
-# Training and Managing MNIST Predictions with SuperDuperDB
+# Training and Managing MNIST Predictions with superduper
 
 :::note
-This tutorial guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using SuperDuperDB.
+This tutorial guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using superduper.
 :::
 
 This example makes it easy to connect any of your image recognition models directly to your database in real-time. 
@@ -16,10 +16,10 @@ This example makes it easy to connect any of your image recognition models direc
 
 </details>
 
-First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. 
+First, we need to establish a connection to a MongoDB datastore via superduper. 
 
 ```python
-from superduperdb import superduper
+from superduper import superduper
     
 db = superduper('mongomock://')
 ```
@@ -27,11 +27,11 @@ db = superduper('mongomock://')
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-24 16:42:04.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
-    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
-    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.base.build:155  | Connecting to compute client: None
-    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.base.datalayer:85   | Building Data Layer
-    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.base.build:220  | Configuration: 
+    2024-May-24 16:42:04.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.base.build:69   | Data Client is ready. mongomock.MongoClient('localhost', 27017)
+    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.base.build:42   | Connecting to Metadata Client with engine:  mongomock.MongoClient('localhost', 27017)
+    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.base.build:155  | Connecting to compute client: None
+    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.base.datalayer:85   | Building Data Layer
+    2024-May-24 16:42:04.30| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.base.build:220  | Configuration: 
      +---------------+--------------+
     | Configuration |    Value     |
     +---------------+--------------+
@@ -41,11 +41,11 @@ db = superduper('mongomock://')
 </pre>
 </details>
 
-After establishing a connection to MongoDB, the next step is to load the MNIST dataset. SuperDuperDB's strength lies in handling diverse data types, especially those that are not supported by standard databases. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
+After establishing a connection to MongoDB, the next step is to load the MNIST dataset. superduper's strength lies in handling diverse data types, especially those that are not supported by standard databases. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
 
 ```python
 import torchvision
-from superduperdb import Document
+from superduper import Document
 
 import random
 
@@ -66,15 +66,15 @@ db['mnist'].insert_many(data[:-100]).execute()
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduperdb.misc.annotations:117  | add is deprecated and will be removed in a future release.
-    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:386  | Initializing DataType : dill
-    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:389  | Initialized  DataType : dill successfully
-    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/e6eb888f0b0fbbab905029cb309537b9383919a6 already exists
-    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/ee1a946181f065af29a3c8637b2858b153d8fc8e already exists
-    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:386  | Initializing DataType : pil_image
-    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:389  | Initialized  DataType : pil_image successfully
-    2024-May-24 16:42:05.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x110261c60\>
-    2024-May-24 16:42:06.06| SUCCESS  | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x151f9e8d0\>.  function:\<function callable_job at 0x110261c60\> future:77cca682-2f87-4374-8f3a-097430cfc3b5
+    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduper.misc.annotations:117  | add is deprecated and will be removed in a future release.
+    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:386  | Initializing DataType : dill
+    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:389  | Initialized  DataType : dill successfully
+    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/e6eb888f0b0fbbab905029cb309537b9383919a6 already exists
+    2024-May-24 16:42:05.79| WARNING  | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/ee1a946181f065af29a3c8637b2858b153d8fc8e already exists
+    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:386  | Initializing DataType : pil_image
+    2024-May-24 16:42:05.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:389  | Initialized  DataType : pil_image successfully
+    2024-May-24 16:42:05.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function callable_job at 0x110261c60\>
+    2024-May-24 16:42:06.06| SUCCESS  | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x151f9e8d0\>.  function:\<function callable_job at 0x110261c60\> future:77cca682-2f87-4374-8f3a-097430cfc3b5
 
 </pre>
 <pre>
@@ -978,7 +978,7 @@ db['mnist'].insert_many(data[:-100]).execute()
       ObjectId('6650a73d310636ceeea3660e'),
       ObjectId('6650a73d310636ceeea3660f'),
       ObjectId('6650a73d310636ceeea36610')],
-     TaskWorkflow(database=\<superduperdb.base.datalayer.Datalayer object at 0x1520664d0\>, G=\<networkx.classes.digraph.DiGraph object at 0x155c58350\>))
+     TaskWorkflow(database=\<superduper.base.datalayer.Datalayer object at 0x1520664d0\>, G=\<networkx.classes.digraph.DiGraph object at 0x155c58350\>))
 </pre>
 </details>
 
@@ -995,12 +995,12 @@ r.unpack()['img'].resize((300, 300))
 <div>![](/training/8_0.png)</div>
 </details>
 
-Following that, we build our machine learning model. SuperDuperDB conveniently supports various frameworks, and for this example, we opt for PyTorch, a suitable choice for computer vision tasks. In this instance, we combine `torch` with `torchvision`.
+Following that, we build our machine learning model. superduper conveniently supports various frameworks, and for this example, we opt for PyTorch, a suitable choice for computer vision tasks. In this instance, we combine `torch` with `torchvision`.
 
-To facilitate communication with the SuperDuperDB `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then wrapped with the `TorchModel` wrapper to create a native SuperDuperDB object.
+To facilitate communication with the superduper `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then wrapped with the `TorchModel` wrapper to create a native superduper object.
 
 ```python
-from superduperdb.ext.torch import TorchModel
+from superduper.ext.torch import TorchModel
 
 import torch
 
@@ -1069,8 +1069,8 @@ model.predict(data[0]['img'])
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-24 16:42:15.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:386  | Initializing TorchModel : my-model
-    2024-May-24 16:42:15.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:389  | Initialized  TorchModel : my-model successfully
+    2024-May-24 16:42:15.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:386  | Initializing TorchModel : my-model
+    2024-May-24 16:42:15.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:389  | Initialized  TorchModel : my-model successfully
 
 </pre>
 <pre>
@@ -1078,15 +1078,15 @@ model.predict(data[0]['img'])
 </pre>
 </details>
 
-Now we are ready to "train" or "fit" the model. Trainable models in SuperDuperDB come with a sklearn-like `.fit` method,
+Now we are ready to "train" or "fit" the model. Trainable models in superduper come with a sklearn-like `.fit` method,
 which developers may implement for their specific model class. `torch` models come with a pre-configured
 `TorchTrainer` class and `.fit` method. These may be invoked simply by "applying" the model to `db`:
 
 ```python
 from torch.nn.functional import cross_entropy
 
-from superduperdb import Metric, Validation, Dataset
-from superduperdb.ext.torch import TorchTrainer
+from superduper import Metric, Validation, Dataset
+from superduper.ext.torch import TorchTrainer
 
 acc = lambda x, y: (sum([xx == yy for xx, yy in zip(x, y)]) / len(x))
 
@@ -1120,13 +1120,13 @@ _ = db.apply(model)
 <details>
 <summary>Outputs</summary>
 <pre>
-    2024-May-24 16:42:19.76| WARNING  | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.artifacts:82   | File /tmp/a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc already exists
-    2024-May-24 16:42:19.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x110261d00\>
-    2024-May-24 16:42:19.92| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 0; objective: 2.30452561378479; 
-    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:386  | Initializing Dataset : my-valid
-    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:389  | Initialized  Dataset : my-valid successfully
-    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:386  | Initializing TorchModel : my-model
-    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.components.component:389  | Initialized  TorchModel : my-model successfully
+    2024-May-24 16:42:19.76| WARNING  | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.artifacts:82   | File /tmp/a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc already exists
+    2024-May-24 16:42:19.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.compute:37   | Submitting job. function:\<function method_job at 0x110261d00\>
+    2024-May-24 16:42:19.92| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 0; objective: 2.30452561378479; 
+    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:386  | Initializing Dataset : my-valid
+    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:389  | Initialized  Dataset : my-valid successfully
+    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:386  | Initializing TorchModel : my-model
+    2024-May-24 16:42:19.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.components.component:389  | Initialized  TorchModel : my-model successfully
 
 </pre>
 <pre>
@@ -1134,12 +1134,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:19.99| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 0; my-valid/acc: 0.16279069767441862; objective: 2.3071595191955567; 
-    2024-May-24 16:42:20.01| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 1; objective: 2.290095806121826; 
-    2024-May-24 16:42:20.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 2; objective: 2.223555088043213; 
-    2024-May-24 16:42:20.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 3; objective: 2.3189988136291504; 
-    2024-May-24 16:42:20.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 4; objective: 2.1752736568450928; 
-    2024-May-24 16:42:20.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 5; objective: 2.207839250564575; 
+    2024-May-24 16:42:19.99| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 0; my-valid/acc: 0.16279069767441862; objective: 2.3071595191955567; 
+    2024-May-24 16:42:20.01| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 1; objective: 2.290095806121826; 
+    2024-May-24 16:42:20.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 2; objective: 2.223555088043213; 
+    2024-May-24 16:42:20.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 3; objective: 2.3189988136291504; 
+    2024-May-24 16:42:20.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 4; objective: 2.1752736568450928; 
+    2024-May-24 16:42:20.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 5; objective: 2.207839250564575; 
 
 </pre>
 <pre>
@@ -1147,12 +1147,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.09| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 5; my-valid/acc: 0.11627906976744186; objective: 2.2843324184417724; 
-    2024-May-24 16:42:20.11| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 6; objective: 2.282257318496704; 
-    2024-May-24 16:42:20.12| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 7; objective: 2.0524115562438965; 
-    2024-May-24 16:42:20.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 8; objective: 2.0606937408447266; 
-    2024-May-24 16:42:20.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 9; objective: 2.194944143295288; 
-    2024-May-24 16:42:20.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 10; objective: 2.29692006111145; 
+    2024-May-24 16:42:20.09| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 5; my-valid/acc: 0.11627906976744186; objective: 2.2843324184417724; 
+    2024-May-24 16:42:20.11| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 6; objective: 2.282257318496704; 
+    2024-May-24 16:42:20.12| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 7; objective: 2.0524115562438965; 
+    2024-May-24 16:42:20.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 8; objective: 2.0606937408447266; 
+    2024-May-24 16:42:20.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 9; objective: 2.194944143295288; 
+    2024-May-24 16:42:20.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 10; objective: 2.29692006111145; 
 
 </pre>
 <pre>
@@ -1160,12 +1160,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 10; my-valid/acc: 0.16279069767441862; objective: 2.2262439727783203; 
-    2024-May-24 16:42:20.25| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 11; objective: 2.1308627128601074; 
-    2024-May-24 16:42:20.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 12; objective: 2.155353307723999; 
-    2024-May-24 16:42:20.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 13; objective: 2.0958755016326904; 
-    2024-May-24 16:42:20.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 14; objective: 1.9480855464935303; 
-    2024-May-24 16:42:20.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 15; objective: 1.9860684871673584; 
+    2024-May-24 16:42:20.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 10; my-valid/acc: 0.16279069767441862; objective: 2.2262439727783203; 
+    2024-May-24 16:42:20.25| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 11; objective: 2.1308627128601074; 
+    2024-May-24 16:42:20.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 12; objective: 2.155353307723999; 
+    2024-May-24 16:42:20.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 13; objective: 2.0958755016326904; 
+    2024-May-24 16:42:20.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 14; objective: 1.9480855464935303; 
+    2024-May-24 16:42:20.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 15; objective: 1.9860684871673584; 
 
 </pre>
 <pre>
@@ -1173,12 +1173,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 15; my-valid/acc: 0.3953488372093023; objective: 2.1200345516204835; 
-    2024-May-24 16:42:20.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 16; objective: 2.0746865272521973; 
-    2024-May-24 16:42:20.39| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 17; objective: 2.2186732292175293; 
-    2024-May-24 16:42:20.40| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 18; objective: 2.0799942016601562; 
-    2024-May-24 16:42:20.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 19; objective: 1.7716232538223267; 
-    2024-May-24 16:42:20.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 20; objective: 1.8272186517715454; 
+    2024-May-24 16:42:20.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 15; my-valid/acc: 0.3953488372093023; objective: 2.1200345516204835; 
+    2024-May-24 16:42:20.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 16; objective: 2.0746865272521973; 
+    2024-May-24 16:42:20.39| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 17; objective: 2.2186732292175293; 
+    2024-May-24 16:42:20.40| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 18; objective: 2.0799942016601562; 
+    2024-May-24 16:42:20.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 19; objective: 1.7716232538223267; 
+    2024-May-24 16:42:20.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 20; objective: 1.8272186517715454; 
 
 </pre>
 <pre>
@@ -1186,12 +1186,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.50| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 20; my-valid/acc: 0.4186046511627907; objective: 1.9862218618392944; 
-    2024-May-24 16:42:20.52| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 21; objective: 1.957564353942871; 
-    2024-May-24 16:42:20.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 22; objective: 1.8028621673583984; 
-    2024-May-24 16:42:20.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 23; objective: 1.975327491760254; 
-    2024-May-24 16:42:20.54| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 24; objective: 1.807953119277954; 
-    2024-May-24 16:42:20.55| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 25; objective: 1.7858139276504517; 
+    2024-May-24 16:42:20.50| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 20; my-valid/acc: 0.4186046511627907; objective: 1.9862218618392944; 
+    2024-May-24 16:42:20.52| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 21; objective: 1.957564353942871; 
+    2024-May-24 16:42:20.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 22; objective: 1.8028621673583984; 
+    2024-May-24 16:42:20.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 23; objective: 1.975327491760254; 
+    2024-May-24 16:42:20.54| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 24; objective: 1.807953119277954; 
+    2024-May-24 16:42:20.55| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 25; objective: 1.7858139276504517; 
 
 </pre>
 <pre>
@@ -1199,12 +1199,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.64| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 25; my-valid/acc: 0.4883720930232558; objective: 1.8099432945251466; 
-    2024-May-24 16:42:20.66| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 26; objective: 1.5425803661346436; 
-    2024-May-24 16:42:20.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 27; objective: 1.4694782495498657; 
-    2024-May-24 16:42:20.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 28; objective: 1.8224706649780273; 
-    2024-May-24 16:42:20.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 29; objective: 1.5353931188583374; 
-    2024-May-24 16:42:20.69| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 30; objective: 1.9406465291976929; 
+    2024-May-24 16:42:20.64| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 25; my-valid/acc: 0.4883720930232558; objective: 1.8099432945251466; 
+    2024-May-24 16:42:20.66| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 26; objective: 1.5425803661346436; 
+    2024-May-24 16:42:20.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 27; objective: 1.4694782495498657; 
+    2024-May-24 16:42:20.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 28; objective: 1.8224706649780273; 
+    2024-May-24 16:42:20.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 29; objective: 1.5353931188583374; 
+    2024-May-24 16:42:20.69| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 30; objective: 1.9406465291976929; 
 
 </pre>
 <pre>
@@ -1212,12 +1212,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.78| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 30; my-valid/acc: 0.5116279069767442; objective: 1.6320355653762817; 
-    2024-May-24 16:42:20.80| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 31; objective: 1.4210201501846313; 
-    2024-May-24 16:42:20.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 32; objective: 1.8781251907348633; 
-    2024-May-24 16:42:20.82| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 33; objective: 1.166929841041565; 
-    2024-May-24 16:42:20.83| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 34; objective: 1.6172298192977905; 
-    2024-May-24 16:42:20.84| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 35; objective: 1.5352650880813599; 
+    2024-May-24 16:42:20.78| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 30; my-valid/acc: 0.5116279069767442; objective: 1.6320355653762817; 
+    2024-May-24 16:42:20.80| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 31; objective: 1.4210201501846313; 
+    2024-May-24 16:42:20.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 32; objective: 1.8781251907348633; 
+    2024-May-24 16:42:20.82| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 33; objective: 1.166929841041565; 
+    2024-May-24 16:42:20.83| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 34; objective: 1.6172298192977905; 
+    2024-May-24 16:42:20.84| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 35; objective: 1.5352650880813599; 
 
 </pre>
 <pre>
@@ -1225,12 +1225,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:20.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 35; my-valid/acc: 0.6744186046511628; objective: 1.450360083580017; 
-    2024-May-24 16:42:20.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 36; objective: 1.544428825378418; 
-    2024-May-24 16:42:20.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 37; objective: 1.4825594425201416; 
-    2024-May-24 16:42:20.95| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 38; objective: 1.481727957725525; 
-    2024-May-24 16:42:20.96| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 39; objective: 1.5011167526245117; 
-    2024-May-24 16:42:20.96| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 40; objective: 1.2468798160552979; 
+    2024-May-24 16:42:20.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 35; my-valid/acc: 0.6744186046511628; objective: 1.450360083580017; 
+    2024-May-24 16:42:20.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 36; objective: 1.544428825378418; 
+    2024-May-24 16:42:20.94| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 37; objective: 1.4825594425201416; 
+    2024-May-24 16:42:20.95| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 38; objective: 1.481727957725525; 
+    2024-May-24 16:42:20.96| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 39; objective: 1.5011167526245117; 
+    2024-May-24 16:42:20.96| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 40; objective: 1.2468798160552979; 
 
 </pre>
 <pre>
@@ -1238,12 +1238,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 40; my-valid/acc: 0.5813953488372093; objective: 1.3515176057815552; 
-    2024-May-24 16:42:21.06| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 41; objective: 1.137115240097046; 
-    2024-May-24 16:42:21.07| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 42; objective: 1.2611033916473389; 
-    2024-May-24 16:42:21.07| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 43; objective: 1.5822103023529053; 
-    2024-May-24 16:42:21.08| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 44; objective: 0.9167646169662476; 
-    2024-May-24 16:42:21.09| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 45; objective: 1.0554713010787964; 
+    2024-May-24 16:42:21.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 40; my-valid/acc: 0.5813953488372093; objective: 1.3515176057815552; 
+    2024-May-24 16:42:21.06| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 41; objective: 1.137115240097046; 
+    2024-May-24 16:42:21.07| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 42; objective: 1.2611033916473389; 
+    2024-May-24 16:42:21.07| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 43; objective: 1.5822103023529053; 
+    2024-May-24 16:42:21.08| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 44; objective: 0.9167646169662476; 
+    2024-May-24 16:42:21.09| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 45; objective: 1.0554713010787964; 
 
 </pre>
 <pre>
@@ -1251,12 +1251,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.17| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 45; my-valid/acc: 0.5813953488372093; objective: 1.2751734495162963; 
-    2024-May-24 16:42:21.19| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 46; objective: 1.5230745077133179; 
-    2024-May-24 16:42:21.20| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 47; objective: 0.9670822024345398; 
-    2024-May-24 16:42:21.21| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 48; objective: 1.2309763431549072; 
-    2024-May-24 16:42:21.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 49; objective: 1.4959913492202759; 
-    2024-May-24 16:42:21.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 50; objective: 1.019989013671875; 
+    2024-May-24 16:42:21.17| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 45; my-valid/acc: 0.5813953488372093; objective: 1.2751734495162963; 
+    2024-May-24 16:42:21.19| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 46; objective: 1.5230745077133179; 
+    2024-May-24 16:42:21.20| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 47; objective: 0.9670822024345398; 
+    2024-May-24 16:42:21.21| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 48; objective: 1.2309763431549072; 
+    2024-May-24 16:42:21.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 49; objective: 1.4959913492202759; 
+    2024-May-24 16:42:21.22| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 50; objective: 1.019989013671875; 
 
 </pre>
 <pre>
@@ -1264,12 +1264,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.31| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 50; my-valid/acc: 0.5813953488372093; objective: 1.1450695395469666; 
-    2024-May-24 16:42:21.33| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 51; objective: 0.9896019101142883; 
-    2024-May-24 16:42:21.33| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 52; objective: 1.0472078323364258; 
-    2024-May-24 16:42:21.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 53; objective: 0.6146770715713501; 
-    2024-May-24 16:42:21.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 54; objective: 1.223360300064087; 
-    2024-May-24 16:42:21.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 55; objective: 1.4324121475219727; 
+    2024-May-24 16:42:21.31| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 50; my-valid/acc: 0.5813953488372093; objective: 1.1450695395469666; 
+    2024-May-24 16:42:21.33| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 51; objective: 0.9896019101142883; 
+    2024-May-24 16:42:21.33| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 52; objective: 1.0472078323364258; 
+    2024-May-24 16:42:21.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 53; objective: 0.6146770715713501; 
+    2024-May-24 16:42:21.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 54; objective: 1.223360300064087; 
+    2024-May-24 16:42:21.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 55; objective: 1.4324121475219727; 
 
 </pre>
 <pre>
@@ -1277,12 +1277,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 55; my-valid/acc: 0.5116279069767442; objective: 1.1396703839302063; 
-    2024-May-24 16:42:21.47| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 56; objective: 0.8977691531181335; 
-    2024-May-24 16:42:21.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 57; objective: 1.013144850730896; 
-    2024-May-24 16:42:21.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 58; objective: 0.7408015131950378; 
-    2024-May-24 16:42:21.49| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 59; objective: 0.662105143070221; 
-    2024-May-24 16:42:21.49| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 60; objective: 0.5859256386756897; 
+    2024-May-24 16:42:21.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 55; my-valid/acc: 0.5116279069767442; objective: 1.1396703839302063; 
+    2024-May-24 16:42:21.47| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 56; objective: 0.8977691531181335; 
+    2024-May-24 16:42:21.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 57; objective: 1.013144850730896; 
+    2024-May-24 16:42:21.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 58; objective: 0.7408015131950378; 
+    2024-May-24 16:42:21.49| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 59; objective: 0.662105143070221; 
+    2024-May-24 16:42:21.49| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 60; objective: 0.5859256386756897; 
 
 </pre>
 <pre>
@@ -1290,12 +1290,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.57| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 60; my-valid/acc: 0.7209302325581395; objective: 0.8712847888469696; 
-    2024-May-24 16:42:21.59| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 61; objective: 0.8210352063179016; 
-    2024-May-24 16:42:21.60| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 62; objective: 0.8280698657035828; 
-    2024-May-24 16:42:21.61| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 63; objective: 0.6546609401702881; 
-    2024-May-24 16:42:21.62| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 64; objective: 0.6739475727081299; 
-    2024-May-24 16:42:21.63| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 65; objective: 0.5538802146911621; 
+    2024-May-24 16:42:21.57| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 60; my-valid/acc: 0.7209302325581395; objective: 0.8712847888469696; 
+    2024-May-24 16:42:21.59| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 61; objective: 0.8210352063179016; 
+    2024-May-24 16:42:21.60| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 62; objective: 0.8280698657035828; 
+    2024-May-24 16:42:21.61| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 63; objective: 0.6546609401702881; 
+    2024-May-24 16:42:21.62| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 64; objective: 0.6739475727081299; 
+    2024-May-24 16:42:21.63| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 65; objective: 0.5538802146911621; 
 
 </pre>
 <pre>
@@ -1303,12 +1303,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.71| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 65; my-valid/acc: 0.7441860465116279; objective: 0.8647180676460267; 
-    2024-May-24 16:42:21.73| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 66; objective: 0.8211454153060913; 
-    2024-May-24 16:42:21.74| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 67; objective: 0.7842769622802734; 
-    2024-May-24 16:42:21.75| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 68; objective: 0.5703445672988892; 
-    2024-May-24 16:42:21.76| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 69; objective: 0.8491142988204956; 
-    2024-May-24 16:42:21.77| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 70; objective: 0.8757203817367554; 
+    2024-May-24 16:42:21.71| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 65; my-valid/acc: 0.7441860465116279; objective: 0.8647180676460267; 
+    2024-May-24 16:42:21.73| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 66; objective: 0.8211454153060913; 
+    2024-May-24 16:42:21.74| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 67; objective: 0.7842769622802734; 
+    2024-May-24 16:42:21.75| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 68; objective: 0.5703445672988892; 
+    2024-May-24 16:42:21.76| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 69; objective: 0.8491142988204956; 
+    2024-May-24 16:42:21.77| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 70; objective: 0.8757203817367554; 
 
 </pre>
 <pre>
@@ -1316,12 +1316,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.85| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 70; my-valid/acc: 0.6744186046511628; objective: 0.8870090007781982; 
-    2024-May-24 16:42:21.86| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 71; objective: 0.5855669975280762; 
-    2024-May-24 16:42:21.87| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 72; objective: 0.3257257342338562; 
-    2024-May-24 16:42:21.89| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 73; objective: 0.807861328125; 
-    2024-May-24 16:42:21.89| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 74; objective: 0.6515744924545288; 
-    2024-May-24 16:42:21.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 75; objective: 0.9471737742424011; 
+    2024-May-24 16:42:21.85| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 70; my-valid/acc: 0.6744186046511628; objective: 0.8870090007781982; 
+    2024-May-24 16:42:21.86| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 71; objective: 0.5855669975280762; 
+    2024-May-24 16:42:21.87| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 72; objective: 0.3257257342338562; 
+    2024-May-24 16:42:21.89| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 73; objective: 0.807861328125; 
+    2024-May-24 16:42:21.89| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 74; objective: 0.6515744924545288; 
+    2024-May-24 16:42:21.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 75; objective: 0.9471737742424011; 
 
 </pre>
 <pre>
@@ -1329,12 +1329,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:21.98| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 75; my-valid/acc: 0.6976744186046512; objective: 0.7733974754810333; 
-    2024-May-24 16:42:22.01| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 76; objective: 0.31001508235931396; 
-    2024-May-24 16:42:22.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 77; objective: 0.672425389289856; 
-    2024-May-24 16:42:22.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 78; objective: 0.32893723249435425; 
-    2024-May-24 16:42:22.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 79; objective: 0.4878315031528473; 
-    2024-May-24 16:42:22.04| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 80; objective: 0.18520380556583405; 
+    2024-May-24 16:42:21.98| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 75; my-valid/acc: 0.6976744186046512; objective: 0.7733974754810333; 
+    2024-May-24 16:42:22.01| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 76; objective: 0.31001508235931396; 
+    2024-May-24 16:42:22.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 77; objective: 0.672425389289856; 
+    2024-May-24 16:42:22.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 78; objective: 0.32893723249435425; 
+    2024-May-24 16:42:22.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 79; objective: 0.4878315031528473; 
+    2024-May-24 16:42:22.04| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 80; objective: 0.18520380556583405; 
 
 </pre>
 <pre>
@@ -1342,12 +1342,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.12| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 80; my-valid/acc: 0.627906976744186; objective: 0.8145189821720124; 
-    2024-May-24 16:42:22.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 81; objective: 0.8917444348335266; 
-    2024-May-24 16:42:22.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 82; objective: 0.7088661193847656; 
-    2024-May-24 16:42:22.15| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 83; objective: 0.871364951133728; 
-    2024-May-24 16:42:22.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 84; objective: 0.565614640712738; 
-    2024-May-24 16:42:22.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 85; objective: 1.1912280321121216; 
+    2024-May-24 16:42:22.12| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 80; my-valid/acc: 0.627906976744186; objective: 0.8145189821720124; 
+    2024-May-24 16:42:22.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 81; objective: 0.8917444348335266; 
+    2024-May-24 16:42:22.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 82; objective: 0.7088661193847656; 
+    2024-May-24 16:42:22.15| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 83; objective: 0.871364951133728; 
+    2024-May-24 16:42:22.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 84; objective: 0.565614640712738; 
+    2024-May-24 16:42:22.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 85; objective: 1.1912280321121216; 
 
 </pre>
 <pre>
@@ -1355,12 +1355,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.24| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 85; my-valid/acc: 0.7674418604651163; objective: 0.6921847283840179; 
-    2024-May-24 16:42:22.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 86; objective: 0.8988658785820007; 
-    2024-May-24 16:42:22.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 87; objective: 0.25610730051994324; 
-    2024-May-24 16:42:22.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 88; objective: 0.4643763601779938; 
-    2024-May-24 16:42:22.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 89; objective: 0.4465492367744446; 
-    2024-May-24 16:42:22.29| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 90; objective: 0.3234078288078308; 
+    2024-May-24 16:42:22.24| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 85; my-valid/acc: 0.7674418604651163; objective: 0.6921847283840179; 
+    2024-May-24 16:42:22.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 86; objective: 0.8988658785820007; 
+    2024-May-24 16:42:22.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 87; objective: 0.25610730051994324; 
+    2024-May-24 16:42:22.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 88; objective: 0.4643763601779938; 
+    2024-May-24 16:42:22.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 89; objective: 0.4465492367744446; 
+    2024-May-24 16:42:22.29| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 90; objective: 0.3234078288078308; 
 
 </pre>
 <pre>
@@ -1368,12 +1368,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 90; my-valid/acc: 0.6744186046511628; objective: 0.8348591446876525; 
-    2024-May-24 16:42:22.39| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 91; objective: 0.39745527505874634; 
-    2024-May-24 16:42:22.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 92; objective: 0.8532809019088745; 
-    2024-May-24 16:42:22.42| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 93; objective: 0.47992992401123047; 
-    2024-May-24 16:42:22.43| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 94; objective: 0.0838661640882492; 
-    2024-May-24 16:42:22.43| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 95; objective: 0.49022263288497925; 
+    2024-May-24 16:42:22.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 90; my-valid/acc: 0.6744186046511628; objective: 0.8348591446876525; 
+    2024-May-24 16:42:22.39| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 91; objective: 0.39745527505874634; 
+    2024-May-24 16:42:22.41| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 92; objective: 0.8532809019088745; 
+    2024-May-24 16:42:22.42| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 93; objective: 0.47992992401123047; 
+    2024-May-24 16:42:22.43| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 94; objective: 0.0838661640882492; 
+    2024-May-24 16:42:22.43| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 95; objective: 0.49022263288497925; 
 
 </pre>
 <pre>
@@ -1381,12 +1381,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.52| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 95; my-valid/acc: 0.7209302325581395; objective: 0.7183641791343689; 
-    2024-May-24 16:42:22.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 96; objective: 0.5845873355865479; 
-    2024-May-24 16:42:22.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 97; objective: 0.9997395277023315; 
-    2024-May-24 16:42:22.54| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 98; objective: 0.2860856056213379; 
-    2024-May-24 16:42:22.55| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 99; objective: 0.18424224853515625; 
-    2024-May-24 16:42:22.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 100; objective: 0.14553338289260864; 
+    2024-May-24 16:42:22.52| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 95; my-valid/acc: 0.7209302325581395; objective: 0.7183641791343689; 
+    2024-May-24 16:42:22.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 96; objective: 0.5845873355865479; 
+    2024-May-24 16:42:22.53| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 97; objective: 0.9997395277023315; 
+    2024-May-24 16:42:22.54| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 98; objective: 0.2860856056213379; 
+    2024-May-24 16:42:22.55| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 99; objective: 0.18424224853515625; 
+    2024-May-24 16:42:22.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 100; objective: 0.14553338289260864; 
 
 </pre>
 <pre>
@@ -1394,12 +1394,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.64| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 100; my-valid/acc: 0.7906976744186046; objective: 0.5649376273155212; 
-    2024-May-24 16:42:22.66| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 101; objective: 0.6807511448860168; 
-    2024-May-24 16:42:22.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 102; objective: 0.4182300567626953; 
-    2024-May-24 16:42:22.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 103; objective: 0.5750024914741516; 
-    2024-May-24 16:42:22.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 104; objective: 0.3903711438179016; 
-    2024-May-24 16:42:22.69| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 105; objective: 0.15528497099876404; 
+    2024-May-24 16:42:22.64| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 100; my-valid/acc: 0.7906976744186046; objective: 0.5649376273155212; 
+    2024-May-24 16:42:22.66| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 101; objective: 0.6807511448860168; 
+    2024-May-24 16:42:22.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 102; objective: 0.4182300567626953; 
+    2024-May-24 16:42:22.67| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 103; objective: 0.5750024914741516; 
+    2024-May-24 16:42:22.68| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 104; objective: 0.3903711438179016; 
+    2024-May-24 16:42:22.69| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 105; objective: 0.15528497099876404; 
 
 </pre>
 <pre>
@@ -1407,12 +1407,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.76| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 105; my-valid/acc: 0.8372093023255814; objective: 0.4794299900531769; 
-    2024-May-24 16:42:22.78| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 106; objective: 0.4399721622467041; 
-    2024-May-24 16:42:22.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 107; objective: 0.9834358096122742; 
-    2024-May-24 16:42:22.80| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 108; objective: 0.3158140182495117; 
-    2024-May-24 16:42:22.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 109; objective: 0.26788243651390076; 
-    2024-May-24 16:42:22.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 110; objective: 0.38584303855895996; 
+    2024-May-24 16:42:22.76| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 105; my-valid/acc: 0.8372093023255814; objective: 0.4794299900531769; 
+    2024-May-24 16:42:22.78| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 106; objective: 0.4399721622467041; 
+    2024-May-24 16:42:22.79| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 107; objective: 0.9834358096122742; 
+    2024-May-24 16:42:22.80| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 108; objective: 0.3158140182495117; 
+    2024-May-24 16:42:22.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 109; objective: 0.26788243651390076; 
+    2024-May-24 16:42:22.81| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 110; objective: 0.38584303855895996; 
 
 </pre>
 <pre>
@@ -1420,12 +1420,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:22.90| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 110; my-valid/acc: 0.813953488372093; objective: 0.4963296115398407; 
-    2024-May-24 16:42:22.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 111; objective: 0.4139387011528015; 
-    2024-May-24 16:42:22.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 112; objective: 0.3234875798225403; 
-    2024-May-24 16:42:22.92| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 113; objective: 0.30029189586639404; 
-    2024-May-24 16:42:22.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 114; objective: 0.47261935472488403; 
-    2024-May-24 16:42:22.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 115; objective: 0.6491639614105225; 
+    2024-May-24 16:42:22.90| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 110; my-valid/acc: 0.813953488372093; objective: 0.4963296115398407; 
+    2024-May-24 16:42:22.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 111; objective: 0.4139387011528015; 
+    2024-May-24 16:42:22.91| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 112; objective: 0.3234875798225403; 
+    2024-May-24 16:42:22.92| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 113; objective: 0.30029189586639404; 
+    2024-May-24 16:42:22.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 114; objective: 0.47261935472488403; 
+    2024-May-24 16:42:22.93| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 115; objective: 0.6491639614105225; 
 
 </pre>
 <pre>
@@ -1433,12 +1433,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:23.00| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 115; my-valid/acc: 0.8372093023255814; objective: 0.46701614558696747; 
-    2024-May-24 16:42:23.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 116; objective: 0.5192955136299133; 
-    2024-May-24 16:42:23.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 117; objective: 0.1198667511343956; 
-    2024-May-24 16:42:23.04| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 118; objective: 0.8839007616043091; 
-    2024-May-24 16:42:23.05| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 119; objective: 0.6286594271659851; 
-    2024-May-24 16:42:23.06| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 120; objective: 0.2967942953109741; 
+    2024-May-24 16:42:23.00| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 115; my-valid/acc: 0.8372093023255814; objective: 0.46701614558696747; 
+    2024-May-24 16:42:23.02| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 116; objective: 0.5192955136299133; 
+    2024-May-24 16:42:23.03| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 117; objective: 0.1198667511343956; 
+    2024-May-24 16:42:23.04| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 118; objective: 0.8839007616043091; 
+    2024-May-24 16:42:23.05| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 119; objective: 0.6286594271659851; 
+    2024-May-24 16:42:23.06| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 120; objective: 0.2967942953109741; 
 
 </pre>
 <pre>
@@ -1446,12 +1446,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:23.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 120; my-valid/acc: 0.7674418604651163; objective: 0.5416155338287354; 
-    2024-May-24 16:42:23.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 121; objective: 0.3840293288230896; 
-    2024-May-24 16:42:23.15| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 122; objective: 0.26465147733688354; 
-    2024-May-24 16:42:23.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 123; objective: 0.20785360038280487; 
-    2024-May-24 16:42:23.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 124; objective: 0.5857481360435486; 
-    2024-May-24 16:42:23.17| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 125; objective: 0.2513807415962219; 
+    2024-May-24 16:42:23.13| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 120; my-valid/acc: 0.7674418604651163; objective: 0.5416155338287354; 
+    2024-May-24 16:42:23.14| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 121; objective: 0.3840293288230896; 
+    2024-May-24 16:42:23.15| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 122; objective: 0.26465147733688354; 
+    2024-May-24 16:42:23.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 123; objective: 0.20785360038280487; 
+    2024-May-24 16:42:23.16| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 124; objective: 0.5857481360435486; 
+    2024-May-24 16:42:23.17| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 125; objective: 0.2513807415962219; 
 
 </pre>
 <pre>
@@ -1459,12 +1459,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:23.24| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 125; my-valid/acc: 0.7441860465116279; objective: 0.6432130992412567; 
-    2024-May-24 16:42:23.25| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 126; objective: 0.48046112060546875; 
-    2024-May-24 16:42:23.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 127; objective: 0.1669985055923462; 
-    2024-May-24 16:42:23.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 128; objective: 0.2551296353340149; 
-    2024-May-24 16:42:23.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 129; objective: 0.39759451150894165; 
-    2024-May-24 16:42:23.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 130; objective: 0.12379683554172516; 
+    2024-May-24 16:42:23.24| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 125; my-valid/acc: 0.7441860465116279; objective: 0.6432130992412567; 
+    2024-May-24 16:42:23.25| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 126; objective: 0.48046112060546875; 
+    2024-May-24 16:42:23.26| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 127; objective: 0.1669985055923462; 
+    2024-May-24 16:42:23.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 128; objective: 0.2551296353340149; 
+    2024-May-24 16:42:23.27| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 129; objective: 0.39759451150894165; 
+    2024-May-24 16:42:23.28| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 130; objective: 0.12379683554172516; 
 
 </pre>
 <pre>
@@ -1472,12 +1472,12 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:23.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 130; my-valid/acc: 0.7674418604651163; objective: 0.594197279214859; 
-    2024-May-24 16:42:23.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 131; objective: 0.2534908354282379; 
-    2024-May-24 16:42:23.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 132; objective: 0.5093891620635986; 
-    2024-May-24 16:42:23.37| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 133; objective: 0.1864108145236969; 
-    2024-May-24 16:42:23.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 134; objective: 0.2897171080112457; 
-    2024-May-24 16:42:23.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 135; objective: 0.5396483540534973; 
+    2024-May-24 16:42:23.35| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 130; my-valid/acc: 0.7674418604651163; objective: 0.594197279214859; 
+    2024-May-24 16:42:23.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 131; objective: 0.2534908354282379; 
+    2024-May-24 16:42:23.36| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 132; objective: 0.5093891620635986; 
+    2024-May-24 16:42:23.37| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 133; objective: 0.1864108145236969; 
+    2024-May-24 16:42:23.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 134; objective: 0.2897171080112457; 
+    2024-May-24 16:42:23.38| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 135; objective: 0.5396483540534973; 
 
 </pre>
 <pre>
@@ -1485,21 +1485,21 @@ _ = db.apply(model)
 
 </pre>
 <pre>
-    2024-May-24 16:42:23.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 135; my-valid/acc: 0.813953488372093; objective: 0.5497540190815926; 
-    2024-May-24 16:42:23.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 136; objective: 0.25071924924850464; 
-    2024-May-24 16:42:23.46| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 137; objective: 0.5670820474624634; 
-    2024-May-24 16:42:23.47| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 138; objective: 0.31639617681503296; 
-    2024-May-24 16:42:23.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 139; objective: 0.20214490592479706; 
-    2024-May-24 16:42:23.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: TRAIN; iteration: 140; objective: 0.32829517126083374; 
+    2024-May-24 16:42:23.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 135; my-valid/acc: 0.813953488372093; objective: 0.5497540190815926; 
+    2024-May-24 16:42:23.45| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 136; objective: 0.25071924924850464; 
+    2024-May-24 16:42:23.46| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 137; objective: 0.5670820474624634; 
+    2024-May-24 16:42:23.47| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 138; objective: 0.31639617681503296; 
+    2024-May-24 16:42:23.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 139; objective: 0.20214490592479706; 
+    2024-May-24 16:42:23.48| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: TRAIN; iteration: 140; objective: 0.32829517126083374; 
 
 </pre>
 <pre>
     100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 43/43 [00:00\<00:00, 758.92it/s]
 </pre>
 <pre>
-    2024-May-24 16:42:23.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:220  | fold: VALID; iteration: 140; my-valid/acc: 0.813953488372093; objective: 0.5148731887340545; 
-    2024-May-24 16:42:23.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduperdb.ext.torch.training:194  | early stopping triggered!
-    2024-May-24 16:42:23.56| SUCCESS  | Duncans-MacBook-Pro.fritz.box| superduperdb.backends.local.compute:43   | Job submitted on \<superduperdb.backends.local.compute.LocalComputeBackend object at 0x151f9e8d0\>.  function:\<function method_job at 0x110261d00\> future:23a0532c-53bb-475a-a0a4-e9e3097b485b
+    2024-May-24 16:42:23.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:220  | fold: VALID; iteration: 140; my-valid/acc: 0.813953488372093; objective: 0.5148731887340545; 
+    2024-May-24 16:42:23.56| INFO     | Duncans-MacBook-Pro.fritz.box| superduper.ext.torch.training:194  | early stopping triggered!
+    2024-May-24 16:42:23.56| SUCCESS  | Duncans-MacBook-Pro.fritz.box| superduper.backends.local.compute:43   | Job submitted on \<superduper.backends.local.compute.LocalComputeBackend object at 0x151f9e8d0\>.  function:\<function method_job at 0x110261d00\> future:23a0532c-53bb-475a-a0a4-e9e3097b485b
 
 </pre>
 <pre>

@@ -1,6 +1,6 @@
-**`superduperdb.components.vector_index`** 
+**`superduper.components.vector_index`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/components/vector_index.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper.components/vector_index.py)
 
 ## `sqlvector` 
 
@@ -34,13 +34,13 @@ Create an encoder for a vector (list of ints/ floats) of a given shape.
 VectorIndex(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      artifacts: 'dc.InitVar[t.Optional[t.Dict]]' = None,
-     indexing_listener: superduperdb.components.listener.Listener,
-     compatible_listener: Optional[superduperdb.components.listener.Listener] = None,
-     measure: superduperdb.vector_search.base.VectorIndexMeasureType = <VectorIndexMeasureType.cosine: 'cosine'>,
-     metric_values: Optional[Dict] = <factory>) -> None
+     indexing_listener: superduper.components.listener.Listener,
+     compatible_listener: Optional[superduper.components.listener.Listener] = None,
+     measure: superduper.vector_search.base.VectorIndexMeasureType = <VectorIndexMeasureType.cosine: 'cosine'>,
+     metric_values: Optional[Dict] = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

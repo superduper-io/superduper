@@ -4,8 +4,8 @@ sidebar_position: 3
 
 # SQL
 
-`superduperdb` supports SQL databases via the [`ibis` project](https://ibis-project.org/).
-With `superduperdb`, queries may be built which conform to the `ibis` API, with additional 
+`superduper` supports SQL databases via the [`ibis` project](https://ibis-project.org/).
+With `superduper`, queries may be built which conform to the `ibis` API, with additional 
 support for complex data-types and vector-searches.
 
 ## Inserting data
@@ -28,7 +28,7 @@ t.insert(dataframe.to_dict(orient='records'))
 
 ## Selecting data
 
-`superduperdb` supports selecting data via the `ibis` query API.
+`superduper` supports selecting data via the `ibis` query API.
 For example:
 
 ```python
@@ -63,7 +63,7 @@ Vector-searches are either first or last in a chain of operations:
 
 ## Updating data
 
-Updates are not covered for `superduperdb` SQL integrations.
+Updates are not covered for `superduper` SQL integrations.
 
 ## Deleting data
 

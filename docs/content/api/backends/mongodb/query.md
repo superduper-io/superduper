@@ -1,6 +1,6 @@
-**`superduperdb.backends.mongodb.query`** 
+**`superduper.backends.mongodb.query`** 
 
-[Source code](https://github.com/SuperDuperDB/superduperdb/blob/main/superduperdb/backends/mongodb/query.py)
+[Source code](https://github.com/superduper/superduper/blob/main/superduper/backends/mongodb/query.py)
 
 ## `DeleteOne` 
 
@@ -67,7 +67,7 @@ Parse a string query into a query object.
 MongoQuery(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
      parts: Sequence[Union[Tuple,
      str]] = ()) -> None
@@ -89,9 +89,9 @@ This class is used to build and execute queries on a MongoDB database.
 BulkOp(self,
      identifier: str,
      db: dataclasses.InitVar[typing.Optional[ForwardRef('Datalayer')]] = None,
-     uuid: str = <factory>,
+     uuid: str = None,
      *,
-     kwargs: Dict = <factory>) -> None
+     kwargs: Dict = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|
@@ -107,8 +107,8 @@ A bulk operation for MongoDB.
 ```python
 ChangeStream(self,
      collection: str,
-     args: Sequence = <factory>,
-     kwargs: Dict = <factory>) -> None
+     args: Sequence = None,
+     kwargs: Dict = None) -> None
 ```
 | Parameter | Description |
 |-----------|-------------|

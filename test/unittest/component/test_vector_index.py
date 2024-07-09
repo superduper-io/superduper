@@ -1,4 +1,4 @@
-from superduperdb.base.datalayer import ibatch
+from superduper.base.datalayer import ibatch
 
 
 def test_ibatch():
@@ -7,4 +7,4 @@ def test_ibatch():
     assert actual == expected
 
 
-# TODO: test superduperdb.components.vector_index
+# TODO: test superduper.components.vector_index

@@ -42,14 +42,7 @@ class LocalComputeBackend(ComputeBackend):
         :param events: List of events.
         :param to: Destination component.
         """
-        jobs = []
-        if isinstance(to, (list, tuple)):
-            for dep in to:
-                jobs.append(self.queue.publish(events, to=dep))
-        else:
-            job = self.queue.publish(events, to=to)
-            jobs.append(job)
-        return jobs
+        return self.queue.publish(events, to=to)
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs

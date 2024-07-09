@@ -338,6 +338,9 @@ class IbisQuery(Query):
         :param flatten: Whether to flatten the outputs.
         :param kwargs: Additional keyword arguments.
         """
+        self.is_output_query = True
+        self.updated_key = predict_id
+
         if not flatten:
             return _model_update_impl(
                 db=self.db,

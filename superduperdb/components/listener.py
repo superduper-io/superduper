@@ -151,6 +151,28 @@ class Listener(Component):
         """Get predict ID."""
         return self.uuid
 
+    def depends(self, query):
+        """Check if query depends on the listener."""
+        if query.is_output_query:
+            if self.key.startswith('_outputs.'):
+                key = self.key.split('_outputs.')[-1]
+            else:
+                key = self.key
+
+            if key in query.updated_key:
+                if (
+                    self.select.table_or_collection.identifier
+                    == query.table_or_collection.identifier
+                ):
+                    return True
+        else:
+            if (
+                self.select.table_or_collection.identifier
+                == query.table_or_collection.identifier
+            ):
+                return True
+        return False
+
     @override
     def schedule_jobs(
         self,

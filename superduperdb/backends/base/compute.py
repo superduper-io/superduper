@@ -29,9 +29,13 @@ class ComputeBackend(ABC):
         """Returns a local version of self."""
         pass
 
-    def broadcast(self, ids: t.List, to: tuple = ()):
-        pass
+    def broadcast(self, events: t.List, to: tuple = ()):
+        """Broadcast events to the corresponding component.
 
+        :param events: List of events.
+        :param to: Destination component.
+        """
+        pass
 
     @abstractmethod
     def submit(self, function: t.Callable, **kwargs) -> t.Any:

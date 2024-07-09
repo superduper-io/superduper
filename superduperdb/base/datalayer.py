@@ -29,7 +29,7 @@ from superduperdb.jobs.job import Job
 from superduperdb.misc.annotations import deprecated
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
-from superduperdb.misc.download import download_content, download_from_one
+from superduperdb.misc.download import download_from_one
 from superduperdb.misc.retry import db_retry
 from superduperdb.misc.special_dicts import recursive_update
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
@@ -46,22 +46,27 @@ PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
 
+@dc.dataclass
 class Event:
-    insert= 'insert'
-    delete= 'delete'
-    update= 'update'
-    upsert= 'upsert'
+    """Event to represent database events."""
+
+    insert = 'insert'
+    delete = 'delete'
+    update = 'update'
+    upsert = 'upsert'
 
     @staticmethod
     def chunk_by_event(lst):
+        """Helper method to chunk events on type."""
         chunks = {}
         for item in lst:
             item_type = item['type']
-            
+
             if item_type not in chunks:
                 chunks[item_type] = []
             chunks[item_type].append(item)
         return chunks
+
 
 class Datalayer:
     """
@@ -409,13 +414,7 @@ class Datalayer:
         """
         return select.do_execute(db=self)
 
-
-    def on_event(
-        self,
-        query: Query,
-        ids: t.Sequence[str],
-        event_type: str = 'insert'
-    ):
+    def on_event(self, query: Query, ids: t.Sequence[str], event_type: str = 'insert'):
         """
         Trigger computation jobs after data insertion.
 
@@ -423,7 +422,7 @@ class Datalayer:
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
         """
-        deps = query.dependencies()
+        deps = query.dependencies
         events = [{'identifier': id, 'type': event_type} for id in ids]
         return self.compute.broadcast(events, to=deps)
 
@@ -456,9 +455,7 @@ class Datalayer:
                     q = d['query']
                     ids = d['ids']
                     job_update = self.on_event(
-                        query=q,
-                        ids=ids,
-                        event_type=Event.delete
+                        query=q, ids=ids, event_type=Event.delete
                     )
                     jobs.append(job_update)
 
@@ -734,7 +731,9 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
 
-        dependencies = [*[j.job_id for j in jobs], *dependencies]  # type: ignore[list-item]
+        for job in jobs:
+            if not isinstance(job, dict):
+                dependencies.append(job.job_id)
 
         object.post_create(self)
         self._add_component_to_cache(object)

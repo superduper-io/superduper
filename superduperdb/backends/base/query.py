@@ -201,10 +201,15 @@ class Query(_BaseQuery):
             parts.append((part, part_args, part_kwargs))
         self.parts = parts
 
-    def dependencies(self, ):
+    @property
+    def dependencies(
+        self,
+    ):
+        """List of dependencies."""
         listeners = self.db.show('listener')
         vector_indices = self.db.show('vector_index')
         dependencies = []
+
         def _check_query_match(listener, query):
             if (
                 listener.select.table_or_collection.identifier
@@ -213,18 +218,20 @@ class Query(_BaseQuery):
                 return True
             return False
 
-        
         for listener in listeners:
-
             listener = self.db.listeners[listener]
             if _check_query_match(listener, self):
-                dependencies.append({'type_id': 'listener', 'identifier': listener.identifier})
+                dependencies.append(
+                    {'type_id': 'listener', 'identifier': listener.identifier}
+                )
 
         for vi in vector_indices:
             vi = self.db.vector_indices[vi]
             listener = vi.indexing_listener
             if _check_query_match(listener, self):
-                dependencies.append({'type_id': 'vector_index', 'identifier': vi.identifier})
+                dependencies.append(
+                    {'type_id': 'vector_index', 'identifier': vi.identifier}
+                )
 
         return dependencies
 

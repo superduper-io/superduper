@@ -9,6 +9,7 @@ from superduperdb.jobs.tasks import callable_job, method_job
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.component import Component
 
 
 def job(f):
@@ -171,6 +172,7 @@ class ComponentJob(Job):
     :param compute_kwargs: Arguments to use for model predict computation
     :param identifier: Job identifier.
     :param db: A Datalayer instance.
+    :param component: Cached component.
     """
 
     def __init__(
@@ -183,7 +185,7 @@ class ComponentJob(Job):
         compute_kwargs: t.Dict = {},
         identifier: t.Optional[str] = None,
         db: t.Optional['Datalayer'] = None,
-        component: 'Component' =None
+        component: 'Component' = None,
     ):
         self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
 
@@ -207,7 +209,6 @@ class ComponentJob(Job):
         """
         self._component = value
         self.callable = getattr(self._component, self.method_name)
-
 
     def submit(self, dependencies=()):
         """Submit job for execution.

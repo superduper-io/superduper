@@ -2,45 +2,76 @@ import typing as t
 
 
 class LocalSequentialQueue:
+    """
+    LocalSequentialQueue for handling publisher and consumer process
+    in local queue.
+
+    Local queue which holds listeners, vector indices as queue which
+    consists of events to be consumed by the corresponding components.
+    """
+
     def __init__(self):
         self.queue = {}
-        self.listeners= {}
+        self.components = {}
         self._db = None
         self._component_map = {}
 
     def declare_component(self, component):
-        identifier =f'{component.type_id}.{component.identifier}' 
+        """Declare component and add it to queue."""
+        identifier = f'{component.type_id}.{component.identifier}'
         self.queue[identifier] = []
-        self.listeners[identifier] = component
+        self.components[identifier] = component
 
     @property
     def db(self):
+        """Instance of Datalayer."""
         return self._db
 
     @db.setter
     def db(self, db):
         self._db = db
 
-    def publish(self, events: t.List[t.Dict] , to: t.Dict[str, str]):
+    def publish(self, events: t.List[t.Dict], to: t.Dict[str, str]):
+        """
+        Publish events to local queue.
+
+        :param events: list of events
+        :param to: Component name for events to be published.
+        """
         identifier = to['identifier']
         type_id = to['type_id']
         self._component_map.update(to)
-        
+
         self.queue[f'{type_id}.{identifier}'].extend(events)
-        self.consume()
+        return self.consume()
 
     def consume(self):
+        """Consume the current queue and run jobs."""
         from superduperdb.base.datalayer import Event
-        for listener in self.queue:
-            events  = self.queue[listener]
+
+        queue_jobs = {}
+        for component_id in self.queue:
+            events = self.queue[component_id]
             if not events:
                 continue
-            self.queue[listener] = []
+            self.queue[component_id] = []
 
-            listener = self.listeners[listener]
-            
+            component = self.components[component_id]
+            jobs = []
+
             for event_type, type_events in Event.chunk_by_event(events).items():
                 ids = [event['identifier'] for event in type_events]
-                overwrite = True if event_type in [Event.insert, Event.upsert] else False
-                listener.run_jobs(db=self.db, ids=ids, overwrite=overwrite)
+                overwrite = (
+                    True if event_type in [Event.insert, Event.upsert] else False
+                )
+                job = component.run_jobs(
+                    db=self.db, ids=ids, overwrite=overwrite, event_type=event_type
+                )
+                jobs.append(job)
 
+            if component_id in queue_jobs:
+                queue_jobs[component_id].extend(jobs)
+            else:
+                queue_jobs[component_id] = jobs
+
+        return queue_jobs

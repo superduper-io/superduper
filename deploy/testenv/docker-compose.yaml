@@ -107,14 +107,6 @@ services:
     depends_on:
       mongo-init:
         condition: service_completed_successfully
-      vector-search-init:
-        condition: service_completed_successfully
-      cdc-init:
-        condition: service_completed_successfully
-      rest-init:
-        condition: service_completed_successfully
-      ray-head:
-        condition: service_started
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:

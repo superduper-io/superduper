@@ -1,9 +1,10 @@
-<div style="display: flex; align-items: center;">
-  <img width="60" height="60" src="docs/static/img/logo-icon.svg" style="margin-right: 10px;">
-  <h1 style="margin: 0;">superduper</h1>
-</div>
+<img align="left" width="100" height="100" src="docs/static/img/logo-icon.svg">
 
-<h2>Bring AI to your favorite database!</h2>
+# superduper
+
+## Bring AI to your favorite database!
+
+<br clear="left"/>
 
 <div align="center">
 

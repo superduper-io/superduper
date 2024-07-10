@@ -8,14 +8,14 @@ Additionally, the image is shipped with a variety of examples from the superdupe
 To build the image: 
 
 ```shell
-docker build -t superduper/superduper:latest   ./  --progress=plain
+docker build -t superduperio/superduper:latest   ./  --progress=plain
 ```
 
 
 To run the image:
 
 ```shell
-docker run -p 8888:8888 superduper/superduper:latest
+docker run -p 8888:8888 superduperio/superduper:latest
 ``` 
 
 

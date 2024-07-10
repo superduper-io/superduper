@@ -92,5 +92,5 @@ You will see something like these lines in `docker images`:
 
 ```bash
 REPOSITORY                    TAG             IMAGE ID       CREATED        SIZE
-superduper/sandbox          latest          88ddab334d17   5 days ago     2.69GB
+superduperio/sandbox          latest          88ddab334d17   5 days ago     2.69GB
 ```

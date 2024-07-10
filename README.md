@@ -275,8 +275,8 @@ pip install superduper
 #### # Option 2. superduper.io Container
 Ideal for learning basic superduper.io functionalities and testing notebooks.
 ```shell
-docker pull superduper/superduper
-docker run -p 8888:8888 superduper/superduper
+docker pull superduperio/superduper
+docker run -p 8888:8888 superduperio/superduper
 ```
 
 #### # Option 3. superduper.io Testenv

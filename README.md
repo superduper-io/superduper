@@ -1,9 +1,10 @@
-<p align="center">
-  <img width="60" height="60" src="docs/static/img/logo-icon.svg">
-  <h1 align="center">superduper</h1>
-</p>
+<img align="left" width="50" height="50" src="docs/static/img/logo-icon.svg">
 
-<h2 align="center">Bring AI to your favorite database!</h2>
+# superduper
+
+## Bring AI to your favorite database!
+
+<br clear="left"/>
 
 <div align="center">
 

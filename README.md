@@ -1,5 +1,5 @@
 
-<div align="center" style="font-size: 8rem">
+<div align="center" style="font-size: 6rem">
 <img width="30%" src="docs/static/img/logo-icon.svg">
 superduper
 </div>

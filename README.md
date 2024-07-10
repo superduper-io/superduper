@@ -1,13 +1,10 @@
 
-<div align="center">
-<img width="30%" src="docs/static/img/logo-icon.svg">
-</div>
-<div align="center">
-
-# superduper
-
-## Bring AI to your favorite database! 
-
+<div style="display: flex; align-items: center;">
+  <img width="5%" src="docs/static/img/logo-icon.svg" style="margin-right: 20px;">
+  <div>
+    <h1>superduper</h1>
+    <h2>Bring AI to your favorite database!</h2>
+  </div>
 </div>
 
 <div align="center">

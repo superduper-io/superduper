@@ -3,7 +3,7 @@
 
 Hello! :wave: 
 
-Thank you for considering contributing to `superduperdb`. There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+Thank you for considering contributing to `superduper`. There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
 - bug reports
 - documentation improvements
@@ -14,7 +14,7 @@ This project is intended to be a community effort, and it won't be possible with
 
 ## Where to Start? 
 
-If you're new to open-source development, we recommend going through the [GitHub “issues” tab](https://github.com/SuperDuperDB/superduperdb/issues) to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
+If you're new to open-source development, we recommend going through the [GitHub “issues” tab](https://github.com/superduper-io/superduper/issues) to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
 
 ## Installation and setup
 
@@ -23,9 +23,9 @@ Once you've 'forked' and 'cloned' the code to your local machine, please follow 
 Get the code on your local:
 
 ```shell
-# Clone and change location directory of the superduperdb repository, change the `<FORKED_NAME>` to your GitHub id
-git clone git@github.com:<FORKED_NAME>/superduperdb.git
-cd superduperdb
+# Clone and change location directory of the superduper repository, change the `<FORKED_NAME>` to your GitHub id
+git clone git@github.com:<FORKED_NAME>/superduper.git
+cd superduper
 ```
 
 Set up your python environment:
@@ -45,7 +45,7 @@ Install the dependencies:
 # Install pip-tools and latest version of pip
 python3 -m pip install --upgrade pip-tools
 
-# Install the superduperdb project in editable mode along with the developer tools
+# Install the superduper project in editable mode along with the developer tools
 python3 -m pip install -e '.'
 python3 -m pip install -r deploy/installations/testenv_requirements.txt
 make install_devkit
@@ -101,7 +101,7 @@ make smoke_testing
 ## Create an issue
 
 If you have an unsolvable problem or find a bug with the code, we
-would love it if you could create a useful [issue on GitHub](https://github.com/SuperDuperDB/superduperdb-stealth/issues).
+would love it if you could create a useful [issue on GitHub](https://github.com/superduper-io/superduper-stealth/issues).
 
 Creating a useful issue, is itself a useful skill. Think about following these pointers:
 
@@ -116,7 +116,7 @@ Creating a useful issue, is itself a useful skill. Think about following these p
 ## Getting Help 🙋
 
 [![Slack](https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack)](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)
-[![Issues](https://img.shields.io/badge/Issues-superduperdb-8A2BE2?logo=github)](https://github.com/SuperDuperDB/superduperdb-stealth/issues)
-[![Wiki](https://img.shields.io/badge/Project%20Wiki-superduperdb-8A2BE2?logo=github)](https://github.com/SuperDuperDB/superduperdb-stealth/wiki)
+[![Issues](https://img.shields.io/badge/Issues-superduperdb-8A2BE2?logo=github)](https://github.com/superduper-io/superduper-stealth/issues)
+[![Wiki](https://img.shields.io/badge/Project%20Wiki-superduperdb-8A2BE2?logo=github)](https://github.com/superduper-io/superduper-stealth/wiki)
 
 If you have any problems please contact a maintainer or community volunteer. The GitHub issues or the Slack channel are a great place to start. We look forward to seeing you there! :purple_heart:

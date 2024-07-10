@@ -1,4 +1,4 @@
-<img align="left" width="100" height="100" src="docs/static/img/logo-icon.svg">
+<img align="left" width="100" height="100" style="max-width: 40px" src="docs/static/img/logo-icon.svg">
 
 # superduper
 

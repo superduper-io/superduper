@@ -1,8 +1,9 @@
-<p align="center">
-  <a href="https://www.superduper.io">
-    <img width="70%" src="docs/static/img/SuperDuperDB_logo_color.svg">
-  </a>
-</p>
+
+<div align="center" style="font-size: 8rem">
+<img width="30%" src="docs/static/img/logo-icon.svg">
+superduper
+</div>
+
 <div align="center">
 
 # Bring AI to your favorite database! 

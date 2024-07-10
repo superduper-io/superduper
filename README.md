@@ -1,9 +1,9 @@
-<img align="left" width="100" height="100" src="docs/static/img/logo-icon.svg">
+<div align="center"><img align="left" width="50" height="50" src="docs/static/img/logo-icon.svg">
 
 # superduper
 
 ## Bring AI to your favorite database!
-
+</div>
 <br clear="left"/>
 
 <div align="center">

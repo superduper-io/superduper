@@ -102,7 +102,7 @@ services:
   #  Demo superduper.io Notebooks
   #  ------------------------------
   sandbox:
-    image: superduper/sandbox
+    image: superduperio/sandbox
     hostname: sandbox
     depends_on:
       mongo-init:

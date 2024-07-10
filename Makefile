@@ -97,8 +97,8 @@ fix-and-check: ##  Lint the code before testing
 
 ##@ Image Management
 
-# superduper/superduper is a production image that includes the latest framework from pypi.
-# It can be used as "FROM superduper/superduper as base" for building custom Dockerfiles.
+# superduperio/superduper is a production image that includes the latest framework from pypi.
+# It can be used as "FROM superduperio/superduper as base" for building custom Dockerfiles.
 build_superduper: ## Build a minimal Docker image for general use
 	echo "===> build superduperio/superduper:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduper/Dockerfile -t superduperio/superduper:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
@@ -131,31 +131,31 @@ build_sandbox: ## Build superduperio/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	docker tag $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT)) superduperio/sandbox:latest
 
 
-# superduper/nightly is a pre-release image with the latest code (and core dependencies) installed.
-build_nightly: ## Build superduper/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
+# superduperio/sandbox is a pre-release image with the latest code (and core dependencies) installed.
+build_nightly: ## Build superduperio/sandbox:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
 	docker build . -f ./deploy/images/superduper/Dockerfile \
 	--build-arg BUILD_ENV="nightly" \
         --platform linux/amd64 \
 	--progress=plain \
 	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),) \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
-	-t $(if $(filter cuda,$(RUNNER)),superduper/nightly_cuda:$(CURRENT_COMMIT),superduper/nightly:$(CURRENT_COMMIT))
+	-t $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT))
 
 
 
-push_nightly: ## Push the superduper/nightly:<commit> image
-	@echo "===> release superduper/nightly:$(CURRENT_COMMIT)"
-	docker push superduper/nightly:$(CURRENT_COMMIT)
+push_nightly: ## Push the superduperio/sandbox:<commit> image
+	@echo "===> release superduperio/sandbox:$(CURRENT_COMMIT)"
+	docker push superduperio/sandbox:$(CURRENT_COMMIT)
 
 
 ##@ Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	@echo "===> discover superduper/sandbox:latest"
-	@if docker image ls superduper/sandbox | grep -q "latest"; then \
-        echo "superduper/sandbox:latest found";\
+	@echo "===> discover superduperio/sandbox:latest"
+	@if docker image ls superduperio/sandbox | grep -q "latest"; then \
+        echo "superduperio/sandbox:latest found";\
     else \
-      	echo "superduper/sandbox:latest not found. Please run 'make build_sandbox'";\
+      	echo "superduperio/sandbox:latest not found. Please run 'make build_sandbox'";\
       	exit -1;\
     fi
 

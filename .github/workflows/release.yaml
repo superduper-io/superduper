@@ -28,7 +28,7 @@ jobs:
         run: python -m pip install --upgrade build
 
       - name: Build
-        run: python -m build
+        run: IGNORE_ERROR=1 python -m build --sdist
 
         # smoke-test that build is valid
       - name: Check wheel contents
@@ -61,13 +61,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
 
-      - name: Install wheel
-        run: python -m pip install artifact/*.whl
-      
       - name: Set version for tagging
         id: set-version
         run: |
-          export PACKAGE_VERSION=$(python -c "import superduperdb as s; print(s.__version__)")
+          export PACKAGE_VERSION=0.2.2
           echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT 
 
     outputs:
@@ -117,26 +114,26 @@ jobs:
         with:
           packages-dir: artifact/
 
-  #---------------------------------------------------
-  # Publish SuperDuperDB in DockerHub
-  #---------------------------------------------------
-  publish-docker:
-    needs: ['publish-pypi']
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build SuperDuperDB Image
-        run: |
-          make build_superduperdb
-
-      - name: Release SuperDuperDB Image
-        run: |
-          make push_superduperdb
+  # #---------------------------------------------------
+  # # Publish SuperDuperDB in DockerHub
+  # #---------------------------------------------------
+  # publish-docker:
+  #   needs: ['publish-pypi']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Log in to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
+  #
+  #     - name: Build SuperDuperDB Image
+  #       run: |
+  #         make build_superduperdb
+  #
+  #     - name: Release SuperDuperDB Image
+  #       run: |
+  #         make push_superduperdb

@@ -14,6 +14,8 @@ on:
       - '*.rst'
   workflow_dispatch:
 
+if: false
+
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true

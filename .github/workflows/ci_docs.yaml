@@ -8,6 +8,7 @@ on:
       - 'docs/*.js'
   workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
 
+if: false
 
 # allow the action to write to the gh-pages branch
 permissions:

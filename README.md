@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.superduper.io">
-    <img width="70%" src="https://raw.githubusercontent.com/superduper.io/superduper/main/docs/static/img/superduper.io_logo_color.svg">
+    <img width="70%" src="docs/static/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
 <div align="center">

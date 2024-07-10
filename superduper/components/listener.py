@@ -138,26 +138,31 @@ class Listener(Component):
 
         :param other: Another component.
         """
-        if not isinstance(other, Listener):
+        from superduper.backends.base.query import Query
+
+        if isinstance(other, Query):
+            return self.depends_on_query(other)
+        elif isinstance(other, Listener):
+            args, kwargs = self.mapping.mapping
+            all_ = list(args) + list(kwargs.values())
+
+            return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
+        else:
             return False
-
-        args, kwargs = self.mapping.mapping
-        all_ = list(args) + list(kwargs.values())
-
-        return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
 
     @property
     def predict_id(self):
         """Get predict ID."""
         return self.uuid
 
-    def depends(self, query):
+    def depends_on_query(self, query):
         """Check if query depends on the listener."""
-        if query.is_output_query:
-            if self.key.startswith('_outputs.'):
-                key = self.key.split('_outputs.')[-1]
+
+        def _check_key_match(key):
+            if key.startswith('_outputs.'):
+                key = key.split('_outputs.')[-1]
             else:
-                key = self.key
+                key = key
 
             if key in query.updated_key:
                 if (
@@ -165,6 +170,18 @@ class Listener(Component):
                     == query.table_or_collection.identifier
                 ):
                     return True
+            return False
+
+        if query.is_output_query:
+            key = self.key
+            if isinstance(key, str):
+                key = [self.key]
+            elif isinstance(key, dict):
+                key = list(key.keys())
+
+            if any(list(map(_check_key_match, key))):
+                return True
+
         else:
             if (
                 self.select.table_or_collection.identifier

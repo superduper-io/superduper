@@ -1,12 +1,12 @@
 
-<div align="center" style="font-size: 6rem">
+<div align="center">
 <img width="30%" src="docs/static/img/logo-icon.svg">
-superduper
 </div>
-
 <div align="center">
 
-# Bring AI to your favorite database! 
+# superduper
+
+## Bring AI to your favorite database! 
 
 </div>
 

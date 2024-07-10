@@ -100,21 +100,21 @@ fix-and-check: ##  Lint the code before testing
 # superduper/superduper is a production image that includes the latest framework from pypi.
 # It can be used as "FROM superduper/superduper as base" for building custom Dockerfiles.
 build_superduper: ## Build a minimal Docker image for general use
-	echo "===> build superduper/superduper:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduper/Dockerfile -t superduper/superduper:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	echo "===> build superduperio/superduper:$(RELEASE_VERSION:v%=%)"
+	docker build . -f ./deploy/images/superduper/Dockerfile -t superduperio/superduper:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="superduper"
 
 
-push_superduper: ## Push the superduper/superduper:<release> image
-	@echo "===> release superduper/superduper:$(RELEASE_VERSION:v%=%)"
-	docker push superduper/superduper:$(RELEASE_VERSION:v%=%)
+push_superduper: ## Push the superduperio/superduper:<release> image
+	@echo "===> release superduperio/superduper:$(RELEASE_VERSION:v%=%)"
+	docker push superduperio/superduper:$(RELEASE_VERSION:v%=%)
 
-	@echo "===> release superduper/superduper:latest"
-	docker tag superduper/superduper:$(RELEASE_VERSION:v%=%) superduper/superduper:latest
-	docker push superduper/superduper:latest
+	@echo "===> release superduperio/superduper:latest"
+	docker tag superduperio/superduper:$(RELEASE_VERSION:v%=%) superduperio/superduper:latest
+	docker push superduperio/superduper:latest
 
-# superduper/sandbox is a development image with all dependencies pre-installed (framework + testenv)
-build_sandbox: ## Build superduper/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
+# superduperio/sandbox is a development image with all dependencies pre-installed (framework + testenv)
+build_sandbox: ## Build superduperio/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	# install dependencies.
 	python -m pip install toml
 	python -c 'import toml; print("\n".join(toml.load(open("pyproject.toml"))["project"]["dependencies"]))' > deploy/testenv/requirements.txt
@@ -125,10 +125,10 @@ build_sandbox: ## Build superduper/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	--progress=plain \
 	--build-arg EXTRA_REQUIREMENTS_FILE="deploy/installations/testenv_requirements.txt" \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
-	-t $(if $(filter cuda,$(RUNNER)),superduper/sandbox_cuda:$(CURRENT_COMMIT),superduper/sandbox:$(CURRENT_COMMIT))
+	-t $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT))
 
 	# mark the image as the latest
-	docker tag $(if $(filter cuda,$(RUNNER)),superduper/sandbox_cuda:$(CURRENT_COMMIT),superduper/sandbox:$(CURRENT_COMMIT)) superduper/sandbox:latest
+	docker tag $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT)) superduperio/sandbox:latest
 
 
 # superduper/nightly is a pre-release image with the latest code (and core dependencies) installed.

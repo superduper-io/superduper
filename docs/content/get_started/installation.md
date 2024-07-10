@@ -63,7 +63,7 @@ python3 -m superduper requirements openai torch > requirements.txt
 If you prefer using Docker, you can pull a pre-built Docker image from Docker Hub and run it with Docker version 19.03 or later:
 
 ```bash
-docker run -p 8888:8888 superduper/superduper:latest
+docker run -p 8888:8888 superduperio/superduper:latest
 ```
 
 This command installs the base `superduper` image. If you want to run the ready-to-use examples, you'll need to download the required  dependencies at runtime. 

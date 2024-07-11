@@ -422,7 +422,7 @@ class Datalayer:
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
         """
-        deps = query.dependencies
+        deps = query.dependencies()
         if not deps:
             return
         events = [{'identifier': id, 'type': event_type} for id in ids]

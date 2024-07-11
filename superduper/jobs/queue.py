@@ -44,8 +44,17 @@ class LocalSequentialQueue:
             identifier = to['identifier']
             type_id = to['type_id']
             self._component_map.update(to)
+            identifier = f'{type_id}.{identifier}'
+            component = self.components[identifier]
 
-            self.queue[f'{type_id}.{identifier}'].extend(events)
+            ready_ids = component.ready_ids([e['identifier'] for e in events])
+            ready_events = []
+            for event in events:
+                id = event['identifier']
+                if id in ready_ids:
+                    ready_events.append(event)
+
+            self.queue[identifier].extend(ready_events)
 
         if isinstance(to, (tuple, list)):
             for dep in to:

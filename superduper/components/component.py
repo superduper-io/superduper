@@ -219,6 +219,10 @@ class Component(Leaf):
         self.db = self.db or db
         self.unpack(db=db)
 
+    def ready_ids(self, ids: t.List):
+        """Return ids that are ready."""
+        return ids
+
     def unpack(self, db=None):
         """Method to unpack the component.
 

@@ -155,6 +155,22 @@ class Listener(Component):
         """Get predict ID."""
         return self.uuid
 
+    def ready_ids(self, ids: t.List):
+        """Return ids that are ready."""
+
+        data = self.db.execute(self.select.select_using_ids(ids))
+        keys = self.key
+        if isinstance(self.key, str):
+            keys = [self.key]
+        elif isinstance(self.key, dict):
+            keys = list(self.key.keys())
+
+        ready_ids = []
+        for select in data:
+            if all([k in select for k in keys]):
+                ready_ids.append(select[self.select.primary_id])
+        return ready_ids
+
     def depends_on_query(self, query):
         """Check if query depends on the listener."""
 
@@ -188,6 +204,7 @@ class Listener(Component):
                 == query.table_or_collection.identifier
             ):
                 return True
+
         return False
 
     @override

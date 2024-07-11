@@ -412,10 +412,13 @@ class Mapping:
             r = Document(r)
         args = []
         kwargs = {}
-        for key in self.mapping[0]:
-            args.append(r[key])
-        for k, v in self.mapping[1].items():
-            kwargs[v] = r[k]
+        try:
+            for key in self.mapping[0]:
+                args.append(r[key])
+            for k, v in self.mapping[1].items():
+                kwargs[v] = r[k]
+        except KeyError as e:
+            raise KeyError(f'Key {e} not found in document {r}, mapping {self.mapping}')
         args = Document({'_base': args}).unpack()
         kwargs = Document(kwargs).unpack()
 
@@ -662,8 +665,8 @@ class Model(Component, metaclass=ModelMeta):
         :param overwrite: Overwrite all documents or only new documents
         """
         message = (
-            f'Requesting prediction in db\n'
-            f'{self.identifier} with predict_id {predict_id}\n'
+            f'Requesting prediction in db - '
+            f'[{self.identifier}] with predict_id {predict_id}\n'
             f'Using select {select} and ids {ids}'
         )
         logging.info(message)
@@ -838,6 +841,7 @@ class Model(Component, metaclass=ModelMeta):
             not self.db.cfg.auto_schema,
             self.datatype is not None,
             self.output_schema is not None,
+            len(outputs) == 0,
         ]
         if any(skip_conds):
             return

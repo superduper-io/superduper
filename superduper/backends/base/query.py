@@ -223,7 +223,9 @@ class Query(_BaseQuery):
         """Property setter."""
         self._updated_key = update
 
-    def dependencies(self):
+    def dependencies(
+        self,
+    ):
         """List of dependencies."""
         listeners = self.db.show('listener')
         vector_indices = self.db.show('vector_index')

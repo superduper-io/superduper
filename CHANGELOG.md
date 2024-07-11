@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - Renamed superduper -> superduper
+- Added data_pipeline_deps test case
 
 #### New Features & Functionality
 

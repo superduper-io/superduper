@@ -61,9 +61,9 @@ def _serialize_special_character(d, to='encode'):
         else:
             new_dict[new_key] = value
 
-    d.clear()
-    d.update(new_dict)
-    return d
+    if isinstance(d, Document):
+        return Document(new_dict)
+    return new_dict
 
 
 def parse_query(

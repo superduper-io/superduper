@@ -80,6 +80,10 @@ jobs:
       run: |
         make ext_testing
 
+    - name: Usecase Testing
+      run: |
+        make usecase_testing
+
   # ---------------------------------
   # Integration Testing
   # ---------------------------------

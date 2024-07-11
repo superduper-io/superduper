@@ -20,8 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
-- Fix support for keys in new queue handler.
-
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 
 #### Changed defaults / behaviours
@@ -44,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix exports
 - Fix model query
 - Fix doc-strings
+- Fix support for keys in new queue handler.
+- Fix the bug where the query itself changes after encoding
+- Fix the dependency error in copy_vectors within vector_index. 
+
 
 ## [0.2.0](https://github.com/superduper-io/superduper/compare/0.1.3...0.2.0])    (2024-Jun-21)
 

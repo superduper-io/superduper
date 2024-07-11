@@ -41,7 +41,7 @@ def test_graph_deps(db: "Datalayer"):
         select=db["documents"].select(),
         identifier="listener_a",
         uuid="a",
-        # predict_kwargs={"max_chunk_size": 1},
+        predict_kwargs={"max_chunk_size": 1},
     )
 
     def func_b(x, y, o_a):
@@ -53,7 +53,7 @@ def test_graph_deps(db: "Datalayer"):
         select=db["documents"].select(),
         identifier="listener_b",
         uuid="b",
-        # predict_kwargs={"max_chunk_size": 1},
+        predict_kwargs={"max_chunk_size": 1},
     )
 
     def func_c(x, y, z, o_a, o_b):
@@ -67,7 +67,7 @@ def test_graph_deps(db: "Datalayer"):
         select=db["documents"].select(),
         identifier="listener_c",
         uuid="c",
-        # predict_kwargs={"max_chunk_size": 1},
+        predict_kwargs={"max_chunk_size": 1},
     )
 
     db.apply(listener_a)

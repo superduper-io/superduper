@@ -77,7 +77,7 @@ def test_listener_chaining(db):
 
     docs = list(db.execute(MongoQuery(table=listener1.outputs).find({})))
 
-    assert all(listener2.predict_id in r["_outputs"] for r in docs)
+    assert all([listener2.predict_id in r["_outputs"] for r in docs])
 
     insert_random()
 

@@ -357,3 +357,7 @@ theme-darcula
 ipywidgets
 jupyterlab-lsp
 python-lsp-server[all]
+
+# JTW Authentication
+jupyterhub-jwtauthenticator
+

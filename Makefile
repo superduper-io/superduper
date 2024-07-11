@@ -131,21 +131,20 @@ build_sandbox: ## Build superduperio/sandbox:<commit> image  (RUNNER=<cpu|cuda>)
 	docker tag $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT)) superduperio/sandbox:latest
 
 
-# superduperio/sandbox is a pre-release image with the latest code (and core dependencies) installed.
-build_nightly: ## Build superduperio/sandbox:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
+# superduperio/nightly is a pre-release image with the latest code (and core dependencies) installed.
+build_nightly: ## Build superduperio/nightly:<commit> image (EXTRA_REQUIREMENTS_FILE=<path>) (RUNNER=<cpu|cuda>)
 	docker build . -f ./deploy/images/superduper/Dockerfile \
 	--build-arg BUILD_ENV="nightly" \
-        --platform linux/amd64 \
+    --platform linux/amd64 \
 	--progress=plain \
 	$(if $(EXTRA_REQUIREMENTS_FILE),--build-arg EXTRA_REQUIREMENTS_FILE=$(EXTRA_REQUIREMENTS_FILE),) \
 	$(if $(RUNNER),--build-arg RUNNER=$(RUNNER),) \
-	-t $(if $(filter cuda,$(RUNNER)),superduperio/sandbox_cuda:$(CURRENT_COMMIT),superduperio/sandbox:$(CURRENT_COMMIT))
+	-t $(if $(filter cuda,$(RUNNER)),superduperio/nightly_cuda:$(CURRENT_COMMIT),superduperio/nightly:$(CURRENT_COMMIT))
 
 
-
-push_nightly: ## Push the superduperio/sandbox:<commit> image
-	@echo "===> release superduperio/sandbox:$(CURRENT_COMMIT)"
-	docker push superduperio/sandbox:$(CURRENT_COMMIT)
+push_nightly: ## Push the superduperio/nightly:<commit> image
+	@echo "===> release superduperio/nightly:$(CURRENT_COMMIT)"
+	docker push superduperio/nightly:$(CURRENT_COMMIT)
 
 
 ##@ Testing Environment

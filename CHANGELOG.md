@@ -21,17 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -
 
-
-## [0.2.1](https://github.com/SuperDuperDB/superduperdb/compare/0.2.0...0.2.1])    (2024-Jul-07)
+## [0.2.2](https://github.com/SuperDuperDB/superduperdb/compare/0.2.1...0.2.2])    (2024-Jul-07)
 
 #### New Features & Functionality
 
-- 
-
-#### Bug Fixes
-
--
-
+- `superduperdb` is now `superduper`
+- We will not perform maintenance on `superduperdb` from this point onwards
 
 ## [0.2.1](https://github.com/SuperDuperDB/superduperdb/compare/0.2.0...0.2.1])    (2024-Jun-21)
 

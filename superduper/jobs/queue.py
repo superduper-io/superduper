@@ -1,5 +1,7 @@
 import typing as t
 
+from superduper import logging
+
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
 
@@ -82,6 +84,7 @@ class LocalSequentialQueue:
                 overwrite = (
                     True if event_type in [Event.insert, Event.upsert] else False
                 )
+                logging.info(f'Running jobs for {component_id} with ids: {ids}')
                 job = component.run_jobs(
                     db=self.db, ids=ids, overwrite=overwrite, event_type=event_type
                 )

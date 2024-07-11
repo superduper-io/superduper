@@ -1,4 +1,1 @@
-raise Exception(
-    '`superduperdb>0.2` is now superduper. '
-    'Install with `pip install superduper-framework`. '
-)
+__version__ = '0.2.2'

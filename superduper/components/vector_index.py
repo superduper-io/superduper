@@ -205,6 +205,10 @@ class VectorIndex(Component):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
+    def ready_ids(self, ids: t.List):
+        """Return ids that are ready."""
+        return self.indexing_listener.ready_ids(ids)
+
     @override
     def run_jobs(
         self,

@@ -223,17 +223,14 @@ class Query(_BaseQuery):
         """Property setter."""
         self._updated_key = update
 
-    @property
-    def dependencies(
-        self,
-    ):
+    def dependencies(self):
         """List of dependencies."""
         listeners = self.db.show('listener')
         vector_indices = self.db.show('vector_index')
         dependencies = []
 
         def _check_query_match(listener, query):
-            return listener.depends(query)
+            return listener.depends_on(query)
 
         for listener in listeners:
             listener = self.db.listeners[listener]

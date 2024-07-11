@@ -222,3 +222,7 @@ ext_testing: ## Execute integration testing
 	find ./test -type d -name __pycache__ -exec rm -r {} +
 	find ./test -type f -name "*.pyc" -delete
 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
+
+
+usecase_testing: ## Execute usecase testing
+	pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase

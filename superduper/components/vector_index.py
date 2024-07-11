@@ -207,7 +207,19 @@ class VectorIndex(Component):
 
     def ready_ids(self, ids: t.List):
         """Return ids that are ready."""
-        return self.indexing_listener.ready_ids(ids)
+        select = self.indexing_listener.outputs_select
+        data = self.db.execute(select.select_using_ids(ids))
+        key = self.indexing_listener.outputs_key
+
+        ready_ids = []
+        for d in data:
+            notfound = 0
+            try:
+                d[key]
+                ready_ids.append(d[select.primary_id])
+            except KeyError:
+                notfound += 1
+        return ready_ids
 
     @override
     def run_jobs(

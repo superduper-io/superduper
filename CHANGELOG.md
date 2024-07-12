@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
--
+- Change images docker superduper/<image> to superduperio/<image> 
+- Change the image's user from `/home/superduperdb` to `/home/superduper`
 
 #### New Features & Functionality
 
@@ -19,16 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
--
-
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 
 #### Changed defaults / behaviours
 
 - Renamed superduper -> superduper
 - Added data_pipeline_deps test case
-- Change images docker superduper/<image> to superduperio/<image> 
-- Change the image's user from `/home/superduperdb` to `/home/superduper`
 
 #### New Features & Functionality
 

@@ -193,3 +193,4 @@ test/sleep.json
 /.superduperdb
 /output/
 /deploy/testenv/requirements.txt
+/superduper/__init__.pye

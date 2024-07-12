@@ -282,7 +282,7 @@ class QueryUpdateDocument(Document):
 
         def substitute(x):
             if isinstance(x, str):
-                for k, v in substitutions:
+                for k, v in substitutions.items():
                     x = x.replace(k, f'<var:{v}>')
                 return x
             if isinstance(x, dict):

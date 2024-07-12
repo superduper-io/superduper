@@ -4,7 +4,7 @@ import typing as t
 
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
-from superduper.base.document import Document
+from superduper.base.document import Document, QueryUpdateDocument
 from superduper.base.leaf import Leaf
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component, _build_info_from_path
@@ -39,7 +39,9 @@ class _BaseTemplate(Component):
             self.template = self.template.encode(defaults=False, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
         if substitutions is not None:
-            self.template = self.template.to_template(**substitutions)
+            self.template = QueryUpdateDocument(self.template).to_template(
+                **substitutions
+            )
         if self.template_variables is None:
             self.template_variables = self.template.variables
         super().__post_init__(db, artifacts)

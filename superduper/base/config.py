@@ -167,6 +167,17 @@ class SchedulerConfig(BaseConfig):
 
 
 @dc.dataclass
+class BrokerConfig(BaseConfig):
+    """Describes the configuration for message broker service.
+
+    :param uri: The URI for the scheduler service.
+    """
+
+    uri: t.Optional[str] = None  # None implies local mode
+    broker: t.Optional[str] = 'naive'
+
+
+@dc.dataclass
 class Compute(BaseConfig):
     """Describes the configuration for distributed computing.
 
@@ -200,6 +211,7 @@ class Cluster(BaseConfig):
                 None: Run cdc on local as a thread.
                 - `f"{http://{host}:{port}"`: Connect a remote cdc service
     :param scheduler: The URI for the scheduler service
+    :param broker: The URI for the message broker service
     """
 
     compute: Compute = dc.field(default_factory=Compute)
@@ -208,6 +220,7 @@ class Cluster(BaseConfig):
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
+    broker: BrokerConfig = dc.field(default_factory=BrokerConfig)
 
 
 class LogLevel(str, Enum):

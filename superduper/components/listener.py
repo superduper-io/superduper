@@ -186,39 +186,6 @@ class Listener(Component):
             return True
         return False
 
-        def _check_key_match(key):
-            if key.startswith('_outputs.'):
-                key = key.split('_outputs.')[-1]
-            else:
-                key = key
-
-            if key in query.updated_key:
-                if (
-                    self.select.table_or_collection.identifier
-                    == query.table_or_collection.identifier
-                ):
-                    return True
-            return False
-
-        if query.is_output_query:
-            key = self.key
-            if isinstance(key, str):
-                key = [self.key]
-            elif isinstance(key, dict):
-                key = list(key.keys())
-
-            if any(list(map(_check_key_match, key))):
-                return True
-
-        else:
-            if (
-                self.select.table_or_collection.identifier
-                == query.table_or_collection.identifier
-            ):
-                return True
-
-        return False
-
     @override
     def schedule_jobs(
         self,

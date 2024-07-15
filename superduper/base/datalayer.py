@@ -123,6 +123,8 @@ class Datalayer:
         self.databackend = databackend
         self.databackend.datalayer = self
 
+        self._cdc = None
+
         self.compute = compute
         self.compute.queue.db = self
         self._server_mode = False
@@ -130,6 +132,14 @@ class Datalayer:
 
     def __getitem__(self, item):
         return self.databackend.get_query_builder(item)
+
+    @property
+    def cdc(self):
+        return self._cdc
+
+    @cdc.setter
+    def cdc(self, cdc):
+        self._cdc = cdc
 
     @property
     def server_mode(self):

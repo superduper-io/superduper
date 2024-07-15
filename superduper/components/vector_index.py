@@ -268,6 +268,8 @@ class VectorIndex(Component):
         """
         from superduper.base.datalayer import Event
 
+        assert self.indexing_listener.select
+
         ids = db.execute(self.indexing_listener.select.select_ids)
         ids = [id[self.indexing_listener.select.primary_id] for id in ids]
         events = [{'identifier': id, 'type': Event.insert} for id in ids]

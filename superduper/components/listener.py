@@ -178,6 +178,8 @@ class Listener(Component):
 
     def depends_on_query(self, query):
         """Check if query depends on the listener."""
+        if not self.select:
+            return False
         if (
             self.select.table_or_collection.identifier
             == query.table_or_collection.identifier
@@ -199,6 +201,9 @@ class Listener(Component):
         :param overwrite: Overwrite the existing data.
         """
         from superduper.base.datalayer import Event
+
+        if not self.active or self.select is None:
+            return []
 
         ids = db.execute(self.select.select_ids)
         ids = [id[self.select.primary_id] for id in ids]

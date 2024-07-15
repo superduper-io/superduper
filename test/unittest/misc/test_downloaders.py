@@ -1,6 +1,5 @@
 import os
 import tempfile
-import uuid
 from test.db_config import DBConfig
 
 import pytest
@@ -21,7 +20,6 @@ def test_s3_and_web():
 
 @pytest.fixture
 def patch_cfg_downloads(monkeypatch):
-    td = str(uuid.uuid4())
     with tempfile.TemporaryDirectory() as td:
         monkeypatch.setattr(CFG.downloads, 'folder', td)
         yield

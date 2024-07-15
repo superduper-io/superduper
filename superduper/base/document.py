@@ -493,9 +493,11 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
     if isinstance(r, dict):
         literals = r.get('_literals', [])
         return {
-            k: _deep_flat_decode(v, builds, getters=getters, db=db)
-            if k not in literals
-            else v
+            k: (
+                _deep_flat_decode(v, builds, getters=getters, db=db)
+                if k not in literals
+                else v
+            )
             for k, v in r.items()
         }
     if isinstance(r, str) and r.startswith('?'):

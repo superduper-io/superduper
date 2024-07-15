@@ -14,7 +14,7 @@ from functools import wraps
 import yaml
 
 from superduper import logging
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.leaf import Leaf
 from superduper.jobs.job import ComponentJob, Job
 
@@ -58,31 +58,6 @@ def _build_info_from_path(path: str):
         config_object[KEY_FILES] = files
 
     return config_object
-
-
-def import_(r=None, path=None, db=None):
-    """Helper function for importing component JSONs, YAMLs, etc.
-
-    :param r: Object to be imported.
-    :param path: Components directory.
-    :param db: Datalayer instance.
-    """
-    from superduper.base.document import _build_leaves
-
-    if r is None:
-        try:
-            with open(f'{path}/component.json') as f:
-                r = json.load(f)
-        except FileNotFoundError:
-            with open(f'{path}/component.yaml') as f:
-                r = yaml.safe_load(f)
-        for id_ in os.listdir(path):
-            if id_ == 'component.json' or id_ == 'component.yaml':
-                continue
-            with open(f'{path}/{id_}', 'rb') as f:
-                bytes[id_] = f.read()
-    r[KEY_BUILDS] = _build_leaves(r[KEY_BUILDS], db=db)[0]
-    return r[KEY_BUILDS][r['_base']]
 
 
 def getdeepattr(obj, attr):

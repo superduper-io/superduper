@@ -16,7 +16,7 @@ TABS_WRAPPER = """
 {body}
 </Tabs>
 """
-  
+
 TABS_ITEM = """    <TabItem value="{title}" label="{title}" default>
         {content}
     </TabItem>"""
@@ -43,9 +43,7 @@ def render_notebook_as_chunks(nb):
     chunks = []
     for cell in nb['cells']:
         if cell['cell_type'] == 'markdown':
-            chunks.append({
-                'content': cell['source'] + ['\n', '\n']
-            })
+            chunks.append({'content': cell['source'] + ['\n', '\n']})
 
         elif cell['cell_type'] == 'code':
             if not cell['source']:
@@ -57,22 +55,28 @@ def render_notebook_as_chunks(nb):
                 title = match.groups()[1].strip()
                 if 'tabs' not in chunks[-1]:
                     chunks.append({'tabs': []})
-                chunks[-1]['tabs'].append({
-                    'content': [CODE_BLOCK[0], *cell['source'][1:], CODE_BLOCK[-1]],
-                    'title': title,
-                })
+                chunks[-1]['tabs'].append(
+                    {
+                        'content': [CODE_BLOCK[0], *cell['source'][1:], CODE_BLOCK[-1]],
+                        'title': title,
+                    }
+                )
             elif match:  # testing not handled yet
                 continue
             else:
-                chunks.append({
-                    'content': [CODE_BLOCK[0], *cell['source'], CODE_BLOCK[-1].replace(' ', '') + '\n\n']
-                }
-            )
+                chunks.append(
+                    {
+                        'content': [
+                            CODE_BLOCK[0],
+                            *cell['source'],
+                            CODE_BLOCK[-1].replace(' ', '') + '\n\n',
+                        ]
+                    }
+                )
         else:
             raise Exception(f'Unknown source type {cell["cell_type"]}, {cell}')
 
     return chunks
-
 
 
 if __name__ == '__main__':
@@ -95,7 +99,7 @@ if __name__ == '__main__':
             chunks = render_notebook_as_chunks(content)
             md = render_chunks_as_md(chunks)
             target_filename = file.replace('.ipynb', '.md')
-                       
+
             md = f'---\nsidebar_label: {title}\nfilename: {target_filename}\n---\n' + md
 
             with open(f'{directory}/{target_filename}', 'w') as f:

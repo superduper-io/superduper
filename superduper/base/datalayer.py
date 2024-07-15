@@ -135,10 +135,12 @@ class Datalayer:
 
     @property
     def cdc(self):
+        """CDC property."""
         return self._cdc
 
     @cdc.setter
     def cdc(self, cdc):
+        """CDC property setter."""
         self._cdc = cdc
 
     @property

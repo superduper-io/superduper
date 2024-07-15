@@ -1,6 +1,6 @@
-import ibis
-
 from test.db_config import DBConfig
+
+import ibis
 
 ibis.options.interactive = True
 

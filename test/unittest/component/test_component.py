@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import typing as t
+from test.db_config import DBConfig
 
 import pytest
 
@@ -17,7 +18,6 @@ from superduper.components.datatype import (
 )
 from superduper.components.listener import Listener
 from superduper.ext.torch.encoder import tensor
-from test.db_config import DBConfig
 
 
 @pytest.fixture

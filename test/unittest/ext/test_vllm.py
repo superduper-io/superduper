@@ -1,11 +1,11 @@
 import os
+from test.db_config import DBConfig
+from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
 import pytest
 import vcr
 
 from superduper.ext.vllm.model import VllmAPI
-from test.db_config import DBConfig
-from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
 CASSETTE_DIR = "test/unittest/ext/cassettes/vllm"
 

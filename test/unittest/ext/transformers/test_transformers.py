@@ -7,6 +7,8 @@ try:
 except ImportError:
     torch = None
 
+from test.db_config import DBConfig
+
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document as D
 from superduper.components.dataset import Dataset
@@ -14,7 +16,6 @@ from superduper.ext.transformers.model import (
     TextClassificationPipeline,
     TransformersTrainer,
 )
-from test.db_config import DBConfig
 
 
 @pytest.fixture

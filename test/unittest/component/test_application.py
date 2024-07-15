@@ -1,5 +1,6 @@
 import typing as t
 from pprint import pprint
+from test.db_config import DBConfig
 
 import numpy as np
 import pytest
@@ -8,7 +9,6 @@ from superduper import ObjectModel, Schema, superduper
 from superduper.base.document import Document
 from superduper.components.datatype import pickle_encoder
 from superduper.components.table import Table
-from test.db_config import DBConfig
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

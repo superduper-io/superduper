@@ -39,8 +39,8 @@ def build_use_case(path):
 
     for cell in nb['cells']:
         if (
-            cell['cell_type'] == 'raw' 
-            and cell['source'] 
+            cell['cell_type'] == 'raw'
+            and cell['source']
             and cell['source'][0].startswith('<snippet:')
         ):
             snippet, tabs = re.match(
@@ -67,10 +67,9 @@ def build_use_cases():
         built = build_use_case(f'./use_cases/{file}')
         with open(f'./use_cases/{file[1:]}', 'w') as f:
             json.dump(built, f)
-        
+
 
 def get_snippet(snippet_nb_cells, snippet_tab):
-
     snippet_cells = []
     snippet_tab_cell = None
     for cell in snippet_nb_cells:
@@ -103,11 +102,10 @@ def build_notebook_from_tabs(path, selected_tabs):
 
     for cell in nb['cells']:
         if (
-            cell['cell_type'] == 'raw' 
-            and cell['source'] 
+            cell['cell_type'] == 'raw'
+            and cell['source']
             and cell['source'][0].startswith('<snippet:')
         ):
-            
             if non_snippet_group:
                 snippets_group.append(non_snippet_group)
                 non_snippet_group = []
@@ -131,13 +129,13 @@ def build_notebook_from_tabs(path, selected_tabs):
             if non_snippet_group:
                 snippets_group.append(non_snippet_group)
 
-            snippets_group.append((cell, ))
+            snippets_group.append((cell,))
             non_snippet_group = []
         else:
             if non_snippet_group:
                 snippets_group.append(non_snippet_group)
                 non_snippet_group = []
-            snippets_group.append((cell, ))
+            snippets_group.append((cell,))
 
     if non_snippet_group:
         snippets_group.append(non_snippet_group)
@@ -151,14 +149,13 @@ def build_notebook_from_tabs(path, selected_tabs):
                 built_nb['cells'].append(cell)
             ix += 1
 
-
-    notebook_bytes  = json.dumps(built_nb).encode('utf-8')
+    notebook_bytes = json.dumps(built_nb).encode('utf-8')
     return Response(content=notebook_bytes, media_type="application/octet-stream")
 
 
 def serve_notebook_builder():
     app = FastAPI()
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # Allows all origins
@@ -166,12 +163,14 @@ def serve_notebook_builder():
         allow_methods=["*"],  # Allows all methods
         allow_headers=["*"],  # Allows all headers
     )
+
     @app.post("/build_notebook")
     def build(usecase_path: str, tabs: t.List[str]):
         return build_notebook_from_tabs(usecase_path, tabs)
 
     if __name__ == "__main__":
         uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 if __name__ == '__main__':
     if not sys.argv[1:] or sys.argv[1] == 'build':

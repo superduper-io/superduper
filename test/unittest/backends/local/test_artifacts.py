@@ -2,6 +2,7 @@ import dataclasses as dc
 import filecmp
 import os
 import typing as t
+from test.db_config import DBConfig
 
 import pytest
 
@@ -12,7 +13,6 @@ from superduper.components.datatype import (
     file_lazy,
     serializers,
 )
-from test.db_config import DBConfig
 
 
 @dc.dataclass(kw_only=True)

@@ -1,5 +1,6 @@
 import os
 import random
+from test.db_config import DBConfig
 
 import pytest
 
@@ -8,7 +9,6 @@ from superduper.base.document import Document
 from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
 from superduper.ext.transformers import LLM
-from test.db_config import DBConfig
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:

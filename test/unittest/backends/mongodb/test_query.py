@@ -1,4 +1,5 @@
 import random
+from test.db_config import DBConfig
 
 import numpy as np
 import pytest
@@ -9,7 +10,6 @@ from superduper.base.config import BytesEncoding
 from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.ext.numpy.encoder import array
-from test.db_config import DBConfig
 
 
 @pytest.fixture

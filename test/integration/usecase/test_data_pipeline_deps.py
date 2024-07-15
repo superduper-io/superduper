@@ -1,11 +1,11 @@
 import time
 import typing as t
+from test.db_config import DBConfig
 
 import pytest
 
 from superduper import ObjectModel
 from superduper.base.document import Document
-from test.db_config import DBConfig
 
 
 class Tuple:

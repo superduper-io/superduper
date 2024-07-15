@@ -6,11 +6,11 @@ except ImportError:
     torch = None
 
 import random
+from test.db_config import DBConfig
 
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.datatype import DataType
-from test.db_config import DBConfig
 
 
 def get_new_data(encoder: DataType, n=10, update=False):

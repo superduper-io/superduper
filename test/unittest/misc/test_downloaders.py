@@ -1,5 +1,6 @@
 import os
 import tempfile
+from test.db_config import DBConfig
 
 import pytest
 
@@ -8,7 +9,6 @@ from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.ext.pillow.encoder import pil_image
 from superduper.misc.download import Fetcher
-from test.db_config import DBConfig
 
 remote = os.environ.get('SDDB_REMOTE_TEST', 'local')
 

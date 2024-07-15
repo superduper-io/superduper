@@ -1,6 +1,7 @@
 import dataclasses as dc
 import pprint
 import typing as t
+from test.db_config import DBConfig
 
 import pytest
 
@@ -11,7 +12,6 @@ from superduper.components.model import ObjectModel
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.ext.pillow.encoder import image_type, pil_image
-from test.db_config import DBConfig
 
 try:
     import torch

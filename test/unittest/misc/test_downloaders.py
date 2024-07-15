@@ -1,7 +1,5 @@
 import os
 import tempfile
-import uuid
-from test.db_config import DBConfig
 
 import pytest
 
@@ -10,6 +8,7 @@ from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.ext.pillow.encoder import pil_image
 from superduper.misc.download import Fetcher
+from test.db_config import DBConfig
 
 remote = os.environ.get('SDDB_REMOTE_TEST', 'local')
 
@@ -21,7 +20,6 @@ def test_s3_and_web():
 
 @pytest.fixture
 def patch_cfg_downloads(monkeypatch):
-    td = str(uuid.uuid4())
     with tempfile.TemporaryDirectory() as td:
         monkeypatch.setattr(CFG.downloads, 'folder', td)
         yield

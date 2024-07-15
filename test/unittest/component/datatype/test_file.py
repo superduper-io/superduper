@@ -1,10 +1,10 @@
 import os
-from test.db_config import DBConfig
-from test.unittest.component.datatype import utils
 
 import pytest
 
 from superduper import DataType
+from test.db_config import DBConfig
+from test.unittest.component.datatype import utils
 
 
 @pytest.fixture

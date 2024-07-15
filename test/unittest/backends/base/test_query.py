@@ -1,5 +1,3 @@
-from test.db_config import DBConfig
-
 import lorem
 import pytest
 
@@ -9,6 +7,7 @@ from superduper.base.document import Document
 from superduper.base.enums import DBType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+from test.db_config import DBConfig
 
 
 @pytest.fixture

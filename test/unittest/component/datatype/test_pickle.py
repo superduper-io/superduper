@@ -1,6 +1,3 @@
-from test.db_config import DBConfig
-from test.unittest.component.datatype import utils
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,6 +9,8 @@ from superduper.components.datatype import (
     pickle_lazy,
     pickle_serializer,
 )
+from test.db_config import DBConfig
+from test.unittest.component.datatype import utils
 
 
 @pytest.fixture

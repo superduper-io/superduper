@@ -1,11 +1,11 @@
 import json
 import os
 import sys
-from test.db_config import DBConfig
 
 import pytest
 
 from superduper.components.plugin import Plugin
+from test.db_config import DBConfig
 
 PYTHON_CODE = """
 from superduper import Model

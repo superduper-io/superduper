@@ -1,9 +1,8 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
+from test.db_config import DBConfig
 
 try:
     import unstructured

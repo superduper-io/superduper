@@ -1,10 +1,9 @@
-from test.db_config import DBConfig
-
 import networkx as nx
 import pytest
 
 from superduper import ObjectModel
 from superduper.components.graph import Graph, document_node, input_node
+from test.db_config import DBConfig
 
 
 @pytest.fixture

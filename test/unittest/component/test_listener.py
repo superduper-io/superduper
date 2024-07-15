@@ -1,5 +1,4 @@
 import random
-from test.db_config import DBConfig
 
 import numpy as np
 import pytest
@@ -12,6 +11,7 @@ from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+from test.db_config import DBConfig
 
 
 def test_listener_serializes_properly():

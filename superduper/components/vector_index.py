@@ -239,7 +239,7 @@ class VectorIndex(Component):
         """
         if event_type in [Event.insert, Event.upsert]:
             callable = copy_vectors
-        elif type == Event.delete:
+        elif type is Event.delete:
             callable = delete_vectors
         else:
             return []

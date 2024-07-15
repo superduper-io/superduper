@@ -1,5 +1,3 @@
-from test.db_config import DBConfig
-
 import numpy
 import pytest
 
@@ -8,6 +6,7 @@ from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.ext.pillow.encoder import pil_image
+from test.db_config import DBConfig
 
 try:
     import torch

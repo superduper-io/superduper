@@ -16,7 +16,6 @@ except ImportError:
 
 
 import dataclasses as dc
-from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
 from superduper.backends.ibis.field_types import dtype
@@ -39,6 +38,7 @@ from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel, _Fittable
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+from test.db_config import DBConfig
 
 n_data_points = 250
 

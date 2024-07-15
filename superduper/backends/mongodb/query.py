@@ -53,9 +53,11 @@ def _serialize_special_character(d, to='encode'):
             new_dict[new_key] = _serialize_special_character(value, to=to)
         elif isinstance(value, list):
             new_dict[new_key] = [
-                _serialize_special_character(item, to=to)
-                if isinstance(item, dict)
-                else item
+                (
+                    _serialize_special_character(item, to=to)
+                    if isinstance(item, dict)
+                    else item
+                )
                 for item in value
             ]
         else:

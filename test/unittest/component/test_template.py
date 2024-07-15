@@ -1,11 +1,10 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.components.component import Component
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.template import QueryTemplate, Template
+from test.db_config import DBConfig
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)

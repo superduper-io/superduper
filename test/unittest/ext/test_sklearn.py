@@ -1,5 +1,4 @@
 import random
-from test.db_config import DBConfig
 
 import numpy
 import pytest
@@ -10,6 +9,7 @@ from sklearn.svm import SVC
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.ext.sklearn.model import Estimator, SklearnTrainer
+from test.db_config import DBConfig
 
 
 class Lookup(TransformerMixin):

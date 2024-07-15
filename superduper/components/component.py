@@ -14,7 +14,7 @@ from functools import wraps
 import yaml
 
 from superduper import logging
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.leaf import Leaf
 from superduper.jobs.job import ComponentJob, Job
 

@@ -1,9 +1,8 @@
-from test.db_config import DBConfig
-from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
-
 import pytest
 
 from superduper.ext.transformers import LLM
+from test.db_config import DBConfig
+from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 

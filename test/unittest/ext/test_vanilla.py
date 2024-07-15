@@ -1,10 +1,9 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.model import ObjectModel
+from test.db_config import DBConfig
 
 
 @pytest.fixture()

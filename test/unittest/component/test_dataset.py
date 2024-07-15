@@ -1,8 +1,7 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.components.dataset import DataInit, Dataset
+from test.db_config import DBConfig
 
 
 @pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)

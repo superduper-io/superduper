@@ -6,12 +6,11 @@ try:
     from superduper.ext.torch.encoder import tensor
 except ImportError:
     torch = None
-from test.db_config import DBConfig
-
 from sklearn.svm import SVC
 
 from superduper.components.model import ObjectModel
 from superduper.ext.sklearn.model import Estimator
+from test.db_config import DBConfig
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

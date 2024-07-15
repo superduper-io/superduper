@@ -1,5 +1,4 @@
 import threading
-from test.db_config import DBConfig
 
 import numpy as np
 import pandas as pd
@@ -11,6 +10,7 @@ from superduper.base.document import Document
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.table import Table
 from superduper.misc.auto_schema import infer_datatype, infer_schema
+from test.db_config import DBConfig
 
 
 @pytest.fixture

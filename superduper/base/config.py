@@ -171,6 +171,8 @@ class BrokerConfig(BaseConfig):
     """Describes the configuration for message broker service.
 
     :param uri: The URI for the scheduler service.
+    :param broker: Message broker currently supporting
+                   naive, rabbitmq, etc.
     """
 
     uri: t.Optional[str] = None  # None implies local mode

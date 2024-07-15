@@ -13,12 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change images docker superduper/<image> to superduperio/<image> 
 - Change the image's user from `/home/superduperdb` to `/home/superduper`
+- Add message broker service config
 
 #### New Features & Functionality
 
 -
 
 #### Bug Fixes
+
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

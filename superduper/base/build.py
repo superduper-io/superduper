@@ -1,3 +1,4 @@
+import importlib
 import re
 import typing as t
 
@@ -132,23 +133,28 @@ def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
     return db
 
 
-def build_compute(compute):
+def build_compute(cfg):
     """
     Helper function to build compute backend.
 
-    :param compute: Compute uri.
+    :param cfg: SuperDuper config.
     """
+
+    def _local_component(path, **kwargs):
+        spath = path.split('.')
+        path, cls = '.'.join(spath[:-1]), spath[-1]
+        module = importlib.import_module(path)
+        component_cls = getattr(module, cls)
+        return component_cls(**kwargs)
+
+    compute = cfg.cluster.compute
+    queue = cfg.cluster.queue
     logging.info("Connecting to compute client:", compute)
     path = compute._path or 'superduper.backends.local.compute.LocalComputeBackend'
-    spath = path.split('.')
-    path, cls = '.'.join(spath[:-1]), spath[-1]
+    queue_path = queue._path or 'superduper.jobs.queue.LocalSequentialQueue'
+    queue = _local_component(queue_path, uri=queue.uri)
 
-    import importlib
-
-    module = importlib.import_module(path)
-    compute_cls = getattr(module, cls)
-
-    return compute_cls(compute.uri)
+    return _local_component(path, uri=compute.uri, queue=queue)
 
 
 def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
@@ -170,7 +176,7 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     assert metadata
 
     artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
-    compute = build_compute(cfg.cluster.compute)
+    compute = build_compute(cfg)
 
     datalayer = Datalayer(
         databackend=databackend,

@@ -1,29 +1,74 @@
 import typing as t
+from abc import ABC, abstractmethod
 
 from superduper import logging
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
 
-class LocalSequentialQueue:
+
+class BaseQueueConsumer(ABC):
     """
-    LocalSequentialQueue for handling publisher and consumer process.
+    Base class for handling consumer process.
 
-    Local queue which holds listeners, vector indices as queue which
-    consists of events to be consumed by the corresponding components.
+    This class is an implementation of message broker between
+    producers (superduper db client) and consumers i.e listeners.
+
+    :param uri: Uri to connect.
+    :param queue_name: Queue to consume.
+    :param callback: Callback for consumed messages.
     """
 
-    def __init__(self):
-        self.queue = {}
-        self.components = {}
+    def __init__(
+        self,
+        uri: t.Optional[str] = '',
+        queue_name: str = '',
+        callback: t.Optional[t.Callable] = None,
+    ):
+        self.uri = uri
+        self.callback = callback
+        self.queue_name = queue_name
+
+    @abstractmethod
+    def start_consuming(self):
+        """Abstract method to start consuming messages."""
+        pass
+
+    @abstractmethod
+    def close_connection(self):
+        """Abstract method to close connection."""
+        pass
+
+    def consume(self, *args, **kwargs):
+        """Start consuming messages from queue."""
+        logging.info(f"Started consuming on queue: {self.queue_name}")
+        try:
+            self.start_consuming()
+        except KeyboardInterrupt:
+            logging.info("KeyboardInterrupt: Stopping consumer...")
+        finally:
+            self.close_connection()
+            logging.info(f"Stopped consuming on queue: {self.queue_name}")
+
+
+class BaseQueuePublisher(ABC):
+    """
+    Base class for handling publisher and consumer process.
+
+    This class is an implementation of message broker between
+    producers (superduper db client) and consumers i.e listeners.
+
+    :param uri: Uri to connect.
+    """
+
+    def __init__(self, uri: t.Optional[str]):
+        self.queue: t.Dict = {}
+        self.components: t.Dict = {}
+        self.uri: t.Optional[str] = uri
         self._db = None
-        self._component_map = {}
-
-    def declare_component(self, component):
-        """Declare component and add it to queue."""
-        identifier = f'{component.type_id}.{component.identifier}'
-        self.queue[identifier] = []
-        self.components[identifier] = component
+        self._component_map: t.Dict = {}
 
     @property
     def db(self):
@@ -33,6 +78,48 @@ class LocalSequentialQueue:
     @db.setter
     def db(self, db):
         self._db = db
+
+    @abstractmethod
+    def build_consumer(self, **kwargs):
+        """Build a consumer instance."""
+
+    @abstractmethod
+    def publish(self, events: t.List[t.Dict], to: DependencyType):
+        """
+        Publish events to local queue.
+
+        :param events: list of events
+        :param to: Component name for events to be published.
+        """
+
+    @abstractmethod
+    def declare_component(self, component):
+        """Declare component and add it to queue."""
+
+
+class LocalQueuePublisher(BaseQueuePublisher):
+    """
+    LocalQueuePublisher for handling publisher and consumer process.
+
+    Local queue which holds listeners, vector indices as queue which
+    consists of events to be consumed by the corresponding components.
+
+    :param uri: uri to connect.
+    """
+
+    def __init__(self, uri: t.Optional[str] = None):
+        super().__init__(uri=uri)
+        self.consumer = self.build_consumer()
+
+    def build_consumer(self):
+        """Build consumer client."""
+        return LocalQueueConsumer()
+
+    def declare_component(self, component):
+        """Declare component and add it to queue."""
+        identifier = f'{component.type_id}.{component.identifier}'
+        self.queue[identifier] = []
+        self.components[identifier] = component
 
     def publish(self, events: t.List[t.Dict], to: DependencyType):
         """
@@ -63,20 +150,34 @@ class LocalSequentialQueue:
                 _publish(events, dep)
         else:
             _publish(events, to)
-        return self.consume()
+        return self.consumer.consume(
+            db=self.db, queue=self.queue, components=self.components
+        )
 
-    def consume(self):
+
+class LocalQueueConsumer(BaseQueueConsumer):
+    """LocalQueueConsumer for consuming message from queue.
+
+    :param uri: Uri to connect.
+    :param queue_name: Queue to consume.
+    :param callback: Callback for consumed messages.
+    """
+
+    def start_consuming(self):
+        """Start consuming."""
+
+    def consume(self, db: 'Datalayer', queue: t.Dict, components: t.Dict):
         """Consume the current queue and run jobs."""
         from superduper.base.datalayer import Event
 
-        queue_jobs = {}
-        for component_id in self.queue:
-            events = self.queue[component_id]
+        queue_jobs: t.Dict[str, t.List] = {}
+        for component_id in queue:
+            events = queue[component_id]
             if not events:
                 continue
-            self.queue[component_id] = []
+            queue[component_id] = []
 
-            component = self.components[component_id]
+            component = components[component_id]
             jobs = []
 
             for event_type, type_events in Event.chunk_by_event(events).items():
@@ -86,7 +187,7 @@ class LocalSequentialQueue:
                 )
                 logging.info(f'Running jobs for {component_id} with ids: {ids}')
                 job = component.run_jobs(
-                    db=self.db, ids=ids, overwrite=overwrite, event_type=event_type
+                    db=db, ids=ids, overwrite=overwrite, event_type=event_type
                 )
                 jobs.append(job)
 
@@ -96,3 +197,6 @@ class LocalSequentialQueue:
                 queue_jobs[component_id] = jobs
 
         return queue_jobs
+
+    def close_connection(self):
+        """Close connection to queue."""

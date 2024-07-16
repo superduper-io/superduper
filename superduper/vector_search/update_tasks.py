@@ -65,7 +65,6 @@ def copy_vectors(
     elif isinstance(db.databackend.type, IbisDataBackend):
         docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
         from superduper.backends.ibis.data_backend import INPUT_KEY
-
         vectors = []
         for doc in docs:
             doc = doc.unpack()

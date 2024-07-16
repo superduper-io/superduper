@@ -1,3 +1,4 @@
+from collections import defaultdict
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -21,6 +22,7 @@ class BaseQueueConsumer(ABC):
     :param callback: Callback for consumed messages.
     """
 
+<<<<<<< HEAD
     def __init__(
         self,
         uri: t.Optional[str] = '',
@@ -64,11 +66,16 @@ class BaseQueuePublisher(ABC):
     """
 
     def __init__(self, uri: t.Optional[str]):
-        self.queue: t.Dict = {}
-        self.components: t.Dict = {}
         self.uri: t.Optional[str] = uri
+        self.queue = defaultdict(lambda: [])
+        from superduper.misc.special_dicts import ArgumentDefaultDict
+        self.components = ArgumentDefaultDict(default_factory=lambda x: self.db.load(*x))
         self._db = None
-        self._component_map: t.Dict = {}
+        self._component_map = {}
+
+    def declare_component(self, component):
+        """Declare component and add it to queue."""
+        self.components[component.type_id, component.identifier] = component
 
     @property
     def db(self):
@@ -130,12 +137,8 @@ class LocalQueuePublisher(BaseQueuePublisher):
         """
 
         def _publish(events, to):
-            identifier = to['identifier']
-            type_id = to['type_id']
             self._component_map.update(to)
-            identifier = f'{type_id}.{identifier}'
-            component = self.components[identifier]
-
+            component = self.components[to['type_id'], to['identifier']]
             ready_ids = component.ready_ids([e['identifier'] for e in events])
             ready_events = []
             for event in events:
@@ -143,7 +146,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
                 if id in ready_ids:
                     ready_events.append(event)
 
-            self.queue[identifier].extend(ready_events)
+            self.queue[to['type_id'], to['identifier']].extend(ready_events)
 
         if isinstance(to, (tuple, list)):
             for dep in to:
@@ -170,32 +173,28 @@ class LocalQueueConsumer(BaseQueueConsumer):
         """Consume the current queue and run jobs."""
         from superduper.base.datalayer import Event
 
-        queue_jobs: t.Dict[str, t.List] = {}
-        for component_id in queue:
-            events = queue[component_id]
+        queue_jobs = defaultdict(lambda: [])
+        components = [('listener', x) for x in self.db.show('listener')]
+        components += [('vector_index', x) for x in self.db.show('vector_index')]
+        for type_id, identifier in components:
+            events = self.queue[type_id, identifier]
             if not events:
                 continue
-            queue[component_id] = []
-
-            component = components[component_id]
+            self.queue[type_id, identifier] = []
+            component = self.components[type_id, identifier]
             jobs = []
-
             for event_type, type_events in Event.chunk_by_event(events).items():
                 ids = [event['identifier'] for event in type_events]
                 overwrite = (
                     True if event_type in [Event.insert, Event.upsert] else False
                 )
-                logging.info(f'Running jobs for {component_id} with ids: {ids}')
+                logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
+                logging.debug(f'Using ids: {ids}')
                 job = component.run_jobs(
                     db=db, ids=ids, overwrite=overwrite, event_type=event_type
                 )
                 jobs.append(job)
-
-            if component_id in queue_jobs:
-                queue_jobs[component_id].extend(jobs)
-            else:
-                queue_jobs[component_id] = jobs
-
+            queue_jobs[type_id, identifier].extend(jobs)
         return queue_jobs
 
     def close_connection(self):

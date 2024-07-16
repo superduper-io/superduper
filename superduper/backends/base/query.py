@@ -236,7 +236,7 @@ class Query(_BaseQuery):
 
         for listener in listeners:
             listener = self.db.listeners[listener]
-            if _check_query_match(listener, self):
+            if listener.select is not None and _check_query_match(listener, self):
                 dependencies.append(
                     {'type_id': 'listener', 'identifier': listener.identifier}
                 )

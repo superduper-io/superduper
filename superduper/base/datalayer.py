@@ -998,3 +998,4 @@ class LoadDict(dict):
         :param key: Force load key
         """
         return self.__missing__(key)
+

@@ -248,8 +248,11 @@ class Component(Leaf):
                 continue
             if isinstance(getattr(self, f.name), Component):
                 continue
-            if callable(getattr(self, f.name)) and not isinstance(
-                getattr(self, f.name), Leaf
+            item = getattr(self, f.name)
+            if (
+                callable(item)
+                and not isinstance(item, Leaf) 
+                and not getattr(item, 'importable', False) == True
             ):
                 schema[f.name] = dill_serializer
         return Schema(identifier=f'serializer/{self.identifier}', fields=schema)

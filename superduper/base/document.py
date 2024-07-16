@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from superduper import logging
 from superduper.base.code import Code
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.base.leaf import Leaf, _import_item
+from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
 from superduper.components.datatype import (
@@ -385,6 +385,21 @@ def _deep_flat_encode(
     if isinstance(r, Native):
         return r.x
 
+    if getattr(r, 'importable', False) == True:
+        ref = r.__name__
+        r = dict(r.dict(metadata=metadata, defaults=defaults))
+        _deep_flat_encode(
+            r,
+            builds=builds,
+            blobs=blobs,
+            files=files,
+            leaves_to_keep=leaves_to_keep,
+            metadata=metadata,
+            defaults=defaults,
+        )
+        builds[ref] = r
+        return f'?{ref}'
+
     if isinstance(r, Leaf):
         if r.identifier in builds:
             logging.warn(f'Leaf {r.identifier} already exists')
@@ -480,7 +495,7 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
         module = '.'.join(parts[:-1])
         dict_ = {k: v for k, v in r.items() if k != '_path'}
         dict_ = _deep_flat_decode(dict_, builds, getters=getters, db=db)
-        instance = _import_item(cls=cls, module=module, dict=dict_, db=db)
+        instance = import_item(cls=cls, module=module, dict=dict_, db=db)
         return instance
     if isinstance(r, dict) and '_object' in r:
         dict_ = {k: v for k, v in r.items() if k != '_object'}
@@ -488,7 +503,7 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
         object = _deep_flat_decode(
             builds[r['_object'][1:]], builds, getters=getters, db=db
         )
-        instance = _import_item(object=object.unpack(), dict=dict_, db=db)
+        instance = import_item(object=object.unpack(), dict=dict_, db=db)
         return instance
     if isinstance(r, dict):
         literals = r.get('_literals', [])

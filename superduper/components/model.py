@@ -667,9 +667,14 @@ class Model(Component, metaclass=ModelMeta):
         message = (
             f'Requesting prediction in db - '
             f'[{self.identifier}] with predict_id {predict_id}\n'
-            f'Using select {select} and ids {ids}'
         )
         logging.info(message)
+
+        message = (
+            f'Using select {select} and ids {ids}'
+        )
+        logging.debug(message)
+    
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')

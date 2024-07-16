@@ -486,3 +486,16 @@ def recursive_find(data, check_function: t.Callable):
 
     recurse(data)
     return found_items
+
+
+class ArgumentDefaultDict(dict):
+    def __init__(self, *args, default_factory, **kwargs):
+        self.default_factory = default_factory
+        super().__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if key not in self:
+            self[key] = self.default_factory(key)
+        return super().__getitem__(key)
+
+

@@ -62,12 +62,13 @@ class Listener(Component):
     @property
     def outputs_key(self):
         """Model outputs key."""
-        # TODO: Conbine with outputs property after change the model output key
-        # from 'output' to '_output.predict_id'
-        if self.db.databackend.db_type == DBType.SQL:
-            return 'output'
-        else:
-            return self.outputs
+        logging.warn(
+            (
+                "listener.outputs_key is deprecated and will be removed"
+                "in a future release. Please use listener.outputs instead."
+            )
+        )
+        return self.outputs
 
     @property
     def outputs_select(self):

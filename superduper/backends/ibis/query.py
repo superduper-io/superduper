@@ -83,7 +83,9 @@ def _model_update_impl(
     for output, source_id in zip(outputs, ids):
         d = {
             '_source': str(source_id),
-            'output': output.x if isinstance(output, Encodable) else output,
+            f'_outputs.{predict_id}': output.x
+            if isinstance(output, Encodable)
+            else output,
             'id': str(uuid.uuid4()),
         }
         documents.append(Document(d))
@@ -412,7 +414,7 @@ class IbisQuery(Query):
 
             symbol_table = symbol_table.relabel(
                 # TODO: Check for folds
-                {'output': identifier, '_fold': f'fold.{identifier}'}
+                {'_fold': f'fold.{identifier}'}
             )
 
             attr = getattr(self, self.primary_id)
@@ -431,7 +433,6 @@ class IbisQuery(Query):
         assert isinstance(self.db, Datalayer)
 
         output_table = self.db[f'_outputs.{predict_id}']
-        output_table = output_table.relabel({'output': '_outputs.' + predict_id})
         return self.anti_join(
             output_table,
             output_table._source == getattr(self, self.primary_id),

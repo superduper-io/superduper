@@ -165,27 +165,15 @@ class IbisDataBackend(BaseDataBackend):
         else:
             output_type = datatype
 
-        if flatten:
-            fields = {
-                INPUT_KEY: dtype('string'),
-                'id': dtype('string'),
-                'output': output_type,
-            }
-            return Table(
-                primary_id='id',
-                identifier=f'_outputs.{predict_id}',
-                schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
-            )
-        else:
-            fields = {
-                INPUT_KEY: dtype('string'),
-                'output': output_type,
-                'id': dtype('string'),
-            }
-            return Table(
-                identifier=f'_outputs.{predict_id}',
-                schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
-            )
+        fields = {
+            INPUT_KEY: dtype('string'),
+            'id': dtype('string'),
+            f'_outputs.{predict_id}': output_type,
+        }
+        return Table(
+            identifier=f'_outputs.{predict_id}',
+            schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
+        )
 
     def check_output_dest(self, predict_id) -> bool:
         """Check if the output destination exists.

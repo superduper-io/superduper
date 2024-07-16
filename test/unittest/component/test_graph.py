@@ -130,7 +130,12 @@ def test_complex_graph_with_select(db):
 
     select = db["documents"].find({})
     g.predict_in_db(X='x', select=select, db=db, predict_id='test')
-    assert all(['test' in x['_outputs'] for x in list(db.execute(select))])
+    assert all(
+        [
+            'test' in x['_outputs']
+            for x in list(db.execute(db['_outputs.test'].select()))
+        ]
+    )
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 
 - Modify the field name output to _outputs.predict_id in the model results of Ibis.
+- Remove the document_embed function.
 
 #### Bug Fixes
 

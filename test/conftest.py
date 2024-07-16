@@ -237,21 +237,9 @@ def add_vector_index(
         select_z = db[collection_name].select('id', 'z')
     model = db.load('model', 'linear_a')
 
-    _, i_list = db.add(
-        Listener(
-            select=select_x,
-            key='x',
-            model=model,
-        )
-    )
+    _, i_list = db.add(Listener(select=select_x, key='x', model=model, uuid="vector-x"))
 
-    _, c_list = db.add(
-        Listener(
-            select=select_z,
-            key='z',
-            model=model,
-        )
-    )
+    _, c_list = db.add(Listener(select=select_z, key='z', model=model, uuid="vector-y"))
 
     vi = VectorIndex(
         identifier=identifier,
@@ -320,7 +308,7 @@ def db(request, monkeypatch) -> Iterator[Datalayer]:
 
     db_type = setup_config.get('db_type', 'mongodb')
     if db_type == "mongodb":
-        db.drop(force=True)
+        db.drop(force=True, data=True)
     elif db_type == "sqldb":
         db.artifact_store.drop(force=True)
         tables = db.databackend.conn.list_tables()

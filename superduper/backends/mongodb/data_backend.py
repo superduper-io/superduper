@@ -188,7 +188,7 @@ class MongoDataBackend(BaseDataBackend):
 
         :param predict_id: identifier of the prediction
         """
-        return True
+        return self.db[f'_outputs.{predict_id}'].find_one() is not None
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):

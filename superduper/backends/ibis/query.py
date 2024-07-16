@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import pandas
 
-from superduper import Document, logging
+from superduper import Document
 from superduper.backends.base.query import (
     Query,
     applies_to,
@@ -378,16 +378,12 @@ class IbisQuery(Query):
         """Return a query that selects ids."""
         return self.select(self.primary_id)
 
-    def drop_outputs(self, predict_id: str, embedded=False):
+    def drop_outputs(self, predict_id: str):
         """Return a query that removes output corresponding to the predict id.
 
         :param predict_ids: The ids of the predictions to select.
         """
-        if embedded:
-            logging.warn(
-                'Outputs cannot be emebedded in sql, dropping the entire output table.'
-            )
-        return self.db.databackend.conn.drop_table(predict_id)
+        return self.db.databackend.conn.drop_table(f'_outputs.{predict_id}')
 
     @applies_to('select')
     def outputs(self, *predict_ids):

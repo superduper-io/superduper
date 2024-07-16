@@ -75,12 +75,7 @@ class Listener(Component):
             return self.db[self.outputs].select()
 
         else:
-            model_update_kwargs = self.model.model_update_kwargs or {}
-            if model_update_kwargs.get('document_embedded', True):
-                collection_name = self.select.table
-            else:
-                collection_name = self.outputs
-            return self.db[collection_name].find()
+            return self.db[self.outputs].find()
 
     @override
     def post_create(self, db: "Datalayer") -> None:
@@ -264,7 +259,5 @@ class Listener(Component):
 
         :param db: Data layer instance to process.
         """
-        model_update_kwargs = self.model.model_update_kwargs or {}
-        embedded = model_update_kwargs.get('document_embedded', True)
         if self.select is not None:
-            self.db[self.select.table].drop_outputs(self.outputs, embedded=embedded)
+            self.db[self.select.table].drop_outputs(self.predict_id)

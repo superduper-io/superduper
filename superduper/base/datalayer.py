@@ -223,7 +223,7 @@ class Datalayer:
             for record in record_batch:
                 id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
-                h = record[f'_outputs.{vi.indexing_listener.predict_id}']
+                h = record[vi.indexing_listener.outputs_key]
                 if isinstance(h, _BaseEncodable):
                     h = h.unpack()
                 items.append(VectorItem.create(id=str(id), vector=h))

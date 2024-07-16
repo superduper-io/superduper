@@ -53,8 +53,10 @@ def test_basic_template(db):
     assert listener.model.object(3) == 5
 
     # Check listener outputs with key and model_id
+    # TODO: Need to support MongoDB query.outputs()
     r = db['documents'].find_one().execute()
-    assert r[listener.outputs_key] == r['y'] + 2
+    o = db[listener.outputs].find_one().execute()
+    assert o[listener.outputs_key] == r['y'] + 2
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)
@@ -95,8 +97,10 @@ def test_template_export(db):
 
         db.apply(listener)
         # Check listener outputs with key and model_id
+        # TODO: Need to support MongoDB query.outputs()
         r = db['documents'].find_one().execute()
-        assert r[listener.outputs_key] == r['y'] + 2
+        o = db[listener.outputs].find_one().execute()
+        assert o[listener.outputs_key] == r['y'] + 2
 
 
 @pytest.mark.parametrize('db', [DBConfig.mongodb], indirect=True)

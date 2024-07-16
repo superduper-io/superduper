@@ -360,15 +360,12 @@ class MongoQuery(Query):
         parent.update_many(filter, *trailing_args, **kwargs)
         return ids
 
-    def drop_outputs(self, predict_id: str, embedded=True):
+    def drop_outputs(self, predict_id: str):
         """Return a query that removes output corresponding to the predict id.
 
         :param predict_ids: The ids of the predictions to select.
         """
-        if not embedded:
-            return self.db.drop_table_or_collection(self.table)
-        parent = self._get_parent()
-        return parent.update_many({}, {"$unset": {predict_id: ""}})
+        return self.db.databackend.drop_table_or_collection(f'_outputs.{predict_id}')
 
     @applies_to('find')
     def outputs(self, *predict_ids):
@@ -554,11 +551,6 @@ class MongoQuery(Query):
         :param kwargs: Additional keyword arguments.
         """
         if flatten:
-            if kwargs.get('document_embedded', True):
-                raise AttributeError(
-                    'Flattened outputs cannot be stored along with input documents.'
-                    'Please use `document_embedded = False` option with flatten = True'
-                )
             flattened_outputs = []
             flattened_ids = []
             for output, id in zip(outputs, ids):
@@ -574,46 +566,19 @@ class MongoQuery(Query):
                 **kwargs,
             )
 
-        document_embedded = kwargs.get('document_embedded', True)
-
-        if document_embedded:
-            outputs = [Document({"_base": output}).encode() for output in outputs]
-            bulk_operations = []
-            for i, id in enumerate(ids):
-                mongo_filter = {'_id': ObjectId(id)}
-
-                output = outputs[i]
-
-                if isinstance(output, SuperDuperFlatEncode):
-                    output = output.get('_base', output)
-
-                update = {f'_outputs.{predict_id}': output}
-                update = QueryUpdateDocument._create_metadata_update(update, outputs[i])
-                update = Document(update)
-                bulk_operations.append(
-                    UpdateOne(
-                        filter=mongo_filter,
-                        update=update,
-                    )
-                )
-            output_query = self.table_or_collection.bulk_write(
-                bulk_operations, output_query=True
+        documents = []
+        for output, id in zip(outputs, ids):
+            documents.append(
+                {
+                    '_outputs': {predict_id: output},
+                    '_source': ObjectId(id),
+                }
             )
 
-        else:
-            documents = []
-            for output, id in zip(outputs, ids):
-                documents.append(
-                    {
-                        '_outputs': {predict_id: output},
-                        '_source': ObjectId(id),
-                    }
-                )
+        from superduper.base.datalayer import Datalayer
 
-            from superduper.base.datalayer import Datalayer
-
-            assert isinstance(self.db, Datalayer)
-            output_query = self.db[f'_outputs.{predict_id}'].insert_many(documents)
+        assert isinstance(self.db, Datalayer)
+        output_query = self.db[f'_outputs.{predict_id}'].insert_many(documents)
         output_query.is_output_query = True
         output_query.updated_key = predict_id
         return output_query

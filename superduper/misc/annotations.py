@@ -168,6 +168,33 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
+def importable(f):
+
+    f.importable = True
+
+    if inspect.isclass(f):
+
+        # TODO log *args, **kwargs of __init__
+        raise NotImplementedError('Classes are not supported yet')
+
+    else:
+        def to_dict(metadata: bool = True, defaults: bool = True):
+            path = f'{f.__module__}.{f.__name__}'
+            from superduper.base.document import Document
+            r = Document({'_path': 'superduper.misc.annotations.build_importable', 'importable': path})
+            return r
+
+        f.dict = to_dict
+        return f
+
+
+def build_importable(*, db=None, importable=None):
+    from superduper.base.leaf import import_item
+    attr = importable.split('.')[-1]
+    module = '.'.join(importable.split('.')[:-1])
+    return getattr(importlib.import_module(module), attr)
+
+
 def component(*schema: t.Dict):
     """Decorator for creating a component.
 

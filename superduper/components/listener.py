@@ -37,8 +37,7 @@ class Listener(Component):
 
     key: ModelInputType
     model: Model
-    select: Query
-    active: bool = True
+    select: t.Union[Query, None]
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     identifier: str = ''
 
@@ -91,7 +90,7 @@ class Listener(Component):
         :param db: Data layer instance.
         """
         self.create_output_dest(db, self.uuid, self.model)
-        if self.select is not None and self.active and not db.server_mode:
+        if self.select is not None and not db.server_mode:
             if CFG.cluster.cdc.uri:
                 request_server(
                     service='cdc',
@@ -99,7 +98,6 @@ class Listener(Component):
                     args={'name': self.identifier},
                     type='get',
                 )
-
         db.compute.queue.declare_component(self)
         db.compute.component_hook(self.identifier, type_id='listener')
 
@@ -201,11 +199,9 @@ class Listener(Component):
         :param dependencies: A list of dependencies.
         :param overwrite: Overwrite the existing data.
         """
-        from superduper.base.datalayer import Event
-
-        if not self.active or self.select is None:
+        if self.select is None:
             return []
-
+        from superduper.base.datalayer import Event
         ids = db.execute(self.select.select_ids)
         ids = [id[self.select.primary_id] for id in ids]
         events = [{'identifier': id, 'type': Event.insert} for id in ids]
@@ -227,7 +223,7 @@ class Listener(Component):
         :param overwrite: Overwrite the existing data.
         :param event_type: Type of event.
         """
-        if not self.active:
+        if self.select is None:
             return []
         assert not isinstance(self.model, str)
 

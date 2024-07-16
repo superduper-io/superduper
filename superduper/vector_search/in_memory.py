@@ -25,16 +25,17 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         dimensions: int,
         h: t.Optional[numpy.ndarray] = None,
         index: t.Optional[t.List[str]] = None,
-        measure: t.Union[str, t.Callable] = 'cosine',
+        measure: str = 'cosine',
     ):
         self.identifier = identifier
         self.dimensions = dimensions
         self._cache: t.Sequence[VectorItem] = []
         self._CACHE_SIZE = 10000
 
-        self.measure = measure
-        if isinstance(measure, str):
-            self.measure = measures[measure]
+        assert isinstance(measure, str)
+
+        self.measure_name = measure
+        self.measure = measures[measure]
 
         if h is not None:
             assert index is not None
@@ -55,7 +56,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
     def _setup(self, h, index):
         h = numpy.array(h) if not isinstance(h, numpy.ndarray) else h
 
-        if self.measure == 'cosine':
+        if self.measure_name == 'cosine':
             # Normalization is required for cosine, hence preparing
             # all vectors in advance.
             h = h / numpy.linalg.norm(h, axis=1)[:, None]

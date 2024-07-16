@@ -15,7 +15,7 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-def _import_item(
+def import_item(
     dict,
     cls: t.Optional[str] = None,
     module: t.Optional[str] = None,

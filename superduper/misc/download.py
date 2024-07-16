@@ -13,9 +13,11 @@ from tqdm import tqdm
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
+from superduper.backends.query_dataset import QueryDataset
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.datatype import _BaseEncodable
+from superduper.components.model import Model
 
 
 class TimeoutException(Exception):
@@ -454,3 +456,30 @@ def download_from_one(r: Document):
         r[key].x = r[key].datatype.decode_data(downloader.results[uri])
 
     return
+
+
+class DownloadFiles(Model):
+    num_workers: int =10,
+    postprocess: t.Optional[t.Callable] = None
+    timeout: t.Optional[int] = None
+    headers: t.Optional[t.Dict] = None
+    raises: bool = True
+    signature: str = 'singleton'
+
+    def predict(self, uri):
+        return self.predict_batches([uri])[0]
+
+    def predict_batches(self, dataset):
+        downloader = BaseDownloader(
+            uris=dataset,
+            n_workers=self.num_workers,
+            timeout=self.timeout,
+            headers=self.headers or {},
+            raises=self.raises,
+        )
+        downloader.go()
+        results = [downloader.results[uri] for uri in dataset]
+        results = [self.datatype.decoder(r) for r in results]
+        if self.postprocess:
+            results = [self.postprocess(r) for r in results]
+        return results

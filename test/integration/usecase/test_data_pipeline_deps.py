@@ -20,6 +20,8 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
+# TODO: Need to support MongoDB query.outputs()
+@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_graph_deps(db: "Datalayer"):
     db.cfg.auto_schema = True

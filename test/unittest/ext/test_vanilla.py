@@ -29,14 +29,9 @@ def test_function_predict_batches():
     assert function.predict_batches([1, 1]) == [1, 1]
 
 
-# TODO: use table to test the sqldb
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_function_predict_with_document_embedded(data_in_db):
-    function = ObjectModel(
-        object=lambda x: x,
-        identifier='test',
-        model_update_kwargs={'document_embedded': False},
-    )
+def test_function_predict_in_db(data_in_db):
+    function = ObjectModel(object=lambda x: x, identifier='test')
     function.predict_in_db(
         X='X',
         db=data_in_db,
@@ -48,24 +43,10 @@ def test_function_predict_with_document_embedded(data_in_db):
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_function_predict_without_document_embedded(data_in_db):
-    function = ObjectModel(object=lambda x: x, identifier='test')
-    function.predict_in_db(
-        X='X',
-        db=data_in_db,
-        select=MongoQuery(table='documents').find(),
-        predict_id='test',
-    )
-    out = data_in_db.execute(MongoQuery(table='documents').find({}))
-    assert [o['_outputs']['test'] for o in out] == [1, 2, 3, 4, 5]
-
-
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_flatten_outputs(data_in_db):
     function = ObjectModel(
         object=lambda x: [x, x, x] if x > 2 else [x, x],
         identifier='test',
-        model_update_kwargs={'document_embedded': False},
         flatten=True,
     )
     function.predict_in_db(
@@ -108,7 +89,6 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         object=lambda x: [x] if x < 2 else [x, x, x],
         identifier='test',
         flatten=True,
-        model_update_kwargs={'document_embedded': False},
     )
     function.predict_in_db(
         X='X',

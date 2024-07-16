@@ -53,9 +53,7 @@ def test_listener_chaining(db):
     # Insert data
     insert_random()
 
-    m1 = ObjectModel(
-        "m1", object=lambda x: x + 1, model_update_kwargs={"document_embedded": False}
-    )
+    m1 = ObjectModel("m1", object=lambda x: x + 1)
     m2 = ObjectModel("m2", object=lambda x: x + 2)
 
     listener1 = Listener(
@@ -77,11 +75,11 @@ def test_listener_chaining(db):
 
     docs = list(db.execute(MongoQuery(table=listener1.outputs).find({})))
 
-    assert all([listener2.predict_id in r["_outputs"] for r in docs])
+    assert all([listener1.predict_id in r["_outputs"] for r in docs])
 
     insert_random()
 
-    docs = list(db.execute(MongoQuery(table=listener1.outputs).find({})))
+    docs = list(db.execute(MongoQuery(table=listener2.outputs).find({})))
 
     assert all([listener2.predict_id in d["_outputs"] for d in docs])
 
@@ -99,21 +97,15 @@ def test_listener_chaining(db):
         np.array([[1, 2, 3], [4, 5, 6]]),
     ],
 )
-@pytest.mark.parametrize("document_embedded", [True, False])
 @pytest.mark.parametrize("flatten", [False, True])
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_create_output_dest_mongodb(db, data, flatten, document_embedded):
+def test_create_output_dest_mongodb(db, data, flatten):
     db.cfg.auto_schema = True
     collection = db["test"]
-
-    # Do not support flatten is True and document_embedded is True
-    if flatten is True and document_embedded is True:
-        return
 
     m1 = ObjectModel(
         "m1",
         object=lambda x: data if not flatten else [data] * 10,
-        model_update_kwargs={"document_embedded": document_embedded},
         flatten=flatten,
     )
     q = collection.insert_one(Document({"x": 1}))
@@ -228,8 +220,7 @@ def test_listener_cleanup(db, data):
         assert result == data
 
     db.remove('listener', listener1.identifier, force=True)
-    doc = db.execute(collection.find_one())
-    assert doc['_outputs'] == {}
+    assert not db.databackend.check_output_dest(listener1.predict_id)
 
 
 @pytest.mark.parametrize(

@@ -28,13 +28,8 @@ def assert_output_is_correct(data, output):
     ],
 )
 @pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
-@pytest.mark.parametrize("document_embedded", [False, True])
 @pytest.mark.parametrize("flatten", [True, False])
-def test_downstream_task_workflows_are_triggered(db, data, flatten, document_embedded):
-    # Do not support flatten is True and document_embedded is True
-    if flatten is True and document_embedded is True:
-        return
-
+def test_downstream_task_workflows_are_triggered(db, data, flatten):
     db.cfg.auto_schema = True
 
     db.execute(db["test"].insert([{"x": 10}]))
@@ -43,7 +38,6 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten, document_emb
         "m1",
         object=lambda x: data * x if not flatten else [data * x] * 10,
         flatten=flatten,
-        model_update_kwargs={"document_embedded": document_embedded},
     )
 
     upstream_listener = upstream_model.to_listener(

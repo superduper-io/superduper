@@ -167,16 +167,16 @@ class SchedulerConfig(BaseConfig):
 
 
 @dc.dataclass
-class BrokerConfig(BaseConfig):
+class QueueConfig(BaseConfig):
     """Describes the configuration for message broker service.
 
     :param uri: The URI for the scheduler service.
-    :param broker: Message broker currently supporting
+    :param _path: The pluggable message broker currently supporting
                    naive, rabbitmq, etc.
     """
 
     uri: t.Optional[str] = None  # None implies local mode
-    broker: t.Optional[str] = 'naive'
+    _path: t.Optional[str] = 'superduper.jobs.queue.LocalQueuePublisher'
 
 
 @dc.dataclass
@@ -213,7 +213,7 @@ class Cluster(BaseConfig):
                 None: Run cdc on local as a thread.
                 - `f"{http://{host}:{port}"`: Connect a remote cdc service
     :param scheduler: The URI for the scheduler service
-    :param broker: The URI for the message broker service
+    :param queue: The URI for the message broker service
     """
 
     compute: Compute = dc.field(default_factory=Compute)
@@ -222,7 +222,7 @@ class Cluster(BaseConfig):
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
-    broker: BrokerConfig = dc.field(default_factory=BrokerConfig)
+    queue: QueueConfig = dc.field(default_factory=QueueConfig)
 
 
 class LogLevel(str, Enum):

@@ -658,9 +658,9 @@ class Model(_BaseQuery):
         m = self.db.models[self.table]
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
-        if self.flatten:
+        if m.flatten:
             return [
-                Document({'_base': res}) if not isinstance(res, dict) else Document(res) 
+                Document({'_base': res}) if not isinstance(res, dict) else Document(res)
                 for res in r
             ]
         else:

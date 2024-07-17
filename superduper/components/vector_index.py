@@ -243,6 +243,8 @@ class VectorIndex(Component):
             callable = delete_vectors
         else:
             return []
+
+        assert self.indexing_listener.select is not None
         job = FunctionJob(
             callable=callable,
             args=[],
@@ -268,7 +270,7 @@ class VectorIndex(Component):
         """
         from superduper.base.datalayer import Event
 
-        assert self.indexing_listener.select
+        assert self.indexing_listener.select is not None
 
         ids = db.execute(self.indexing_listener.select.select_ids)
         ids = [id[self.indexing_listener.select.primary_id] for id in ids]

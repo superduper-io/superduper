@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.datatype import _BaseEncodable
@@ -459,7 +458,17 @@ def download_from_one(r: Document):
 
 
 class DownloadFiles(Model):
-    num_workers: int =10,
+    """Download files from a list of URIs.
+
+    :param num_workers: number of multiprocessing workers
+    :param postprocess: postprocess function to apply to the results
+    :param timeout: set seconds until request times out
+    :param headers: dictionary of request headers passed to``requests`` package
+    :param raises: raises error ``True``/``False``
+    :param signature: signature of the model
+    """
+
+    num_workers: int = (10,)
     postprocess: t.Optional[t.Callable] = None
     timeout: t.Optional[int] = None
     headers: t.Optional[t.Dict] = None
@@ -467,9 +476,17 @@ class DownloadFiles(Model):
     signature: str = 'singleton'
 
     def predict(self, uri):
+        """Predict a single URI.
+
+        :param uri: uri to predict
+        """
         return self.predict_batches([uri])[0]
 
     def predict_batches(self, dataset):
+        """Predict a batch of URIs.
+
+        :param dataset: list of uris/ file names to fetch
+        """
         downloader = BaseDownloader(
             uris=dataset,
             n_workers=self.num_workers,

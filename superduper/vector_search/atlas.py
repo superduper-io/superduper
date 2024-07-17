@@ -64,6 +64,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         from superduper.components.model import ObjectModel
 
         assert isinstance(vi.indexing_listener, Listener)
+        assert vi.indexing_listener.select is not None
         collection = vi.indexing_listener.select.table_or_collection.identifier
 
         indexing_key = vi.indexing_listener.key

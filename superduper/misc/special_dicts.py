@@ -489,6 +489,14 @@ def recursive_find(data, check_function: t.Callable):
 
 
 class ArgumentDefaultDict(dict):
+    """
+    Default-dictionary which takes the key as an argument to default factory.
+
+    :param args: *args for `dict`
+    :param default_factory: Callable used to create default dependent on key
+    :param kwargs: **kwargs for `dict`
+    """
+
     def __init__(self, *args, default_factory, **kwargs):
         self.default_factory = default_factory
         super().__init__(*args, **kwargs)
@@ -497,5 +505,3 @@ class ArgumentDefaultDict(dict):
         if key not in self:
             self[key] = self.default_factory(key)
         return super().__getitem__(key)
-
-

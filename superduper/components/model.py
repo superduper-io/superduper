@@ -670,11 +670,9 @@ class Model(Component, metaclass=ModelMeta):
         )
         logging.info(message)
 
-        message = (
-            f'Using select {select} and ids {ids}'
-        )
+        message = f'Using select {select} and ids {ids}'
         logging.debug(message)
-    
+
         select = self._prepare_select_for_predict(select, db)
         if self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')

@@ -30,7 +30,6 @@ class Listener(Component):
     :param key: Key to be bound to the model.
     :param model: Model for processing data.
     :param select: Object for selecting which data is processed.
-    :param active: Toggle to ``False`` to deactivate change data triggering.
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param identifier: A string used to identify the model.
     """
@@ -156,6 +155,7 @@ class Listener(Component):
 
     def ready_ids(self, ids: t.List):
         """Return ids that are ready."""
+        assert self.select is not None
         data = self.db.execute(self.select.select_using_ids(ids))
         keys = self.key
         if isinstance(self.key, str):
@@ -172,6 +172,7 @@ class Listener(Component):
                 except KeyError:
                     notfound += 1
             if notfound == 0:
+                assert self.select is not None
                 ready_ids.append(select[self.select.primary_id])
         return ready_ids
 
@@ -202,6 +203,7 @@ class Listener(Component):
         if self.select is None:
             return []
         from superduper.base.datalayer import Event
+
         ids = db.execute(self.select.select_ids)
         ids = [id[self.select.primary_id] for id in ids]
         events = [{'identifier': id, 'type': Event.insert} for id in ids]
@@ -264,4 +266,5 @@ class Listener(Component):
         """
         model_update_kwargs = self.model.model_update_kwargs or {}
         embedded = model_update_kwargs.get('document_embedded', True)
-        self.db[self.select.table].drop_outputs(self.outputs, embedded=embedded)
+        if self.select is not None:
+            self.db[self.select.table].drop_outputs(self.outputs, embedded=embedded)

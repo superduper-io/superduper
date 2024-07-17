@@ -387,7 +387,9 @@ def _deep_flat_encode(
     if isinstance(r, Native):
         return r.x
 
-    if getattr(r, 'importable', False) == True:
+    from superduper.backends.base.query import _BaseQuery
+
+    if not isinstance(r, _BaseQuery) and getattr(r, 'importable', False):
         ref = r.__name__
         r = dict(r.dict(metadata=metadata, defaults=defaults))
         _deep_flat_encode(
@@ -543,6 +545,7 @@ def _get_artifact_callback(db):
     def callback(path):
         def pull_bytes():
             return db.artifact_store.get_bytes(path), path
+
         return pull_bytes
 
     return callback

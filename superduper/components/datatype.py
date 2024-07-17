@@ -470,9 +470,12 @@ class Encodable(_BaseEncodable):
         return bytes_, sha1
 
     def to_artifact(self):
+        """Convert the encodable to an artifact."""
         r = self.dict()
         r['datatype'].encodable = 'artifact'
-        kwargs = {k: v for k, v in r.items() if k in inspect.signature(Artifact).parameters}
+        kwargs = {
+            k: v for k, v in r.items() if k in inspect.signature(Artifact).parameters
+        }
         return Artifact(**kwargs)
 
     def dict(self, metadata: bool = True, defaults: bool = True):

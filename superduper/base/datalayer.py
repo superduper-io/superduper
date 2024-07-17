@@ -174,6 +174,7 @@ class Datalayer:
 
         assert isinstance(vi, VectorIndex)
 
+        assert vi.indexing_listener.select is not None
         clt = vi.indexing_listener.select.table_or_collection
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
@@ -213,6 +214,7 @@ class Datalayer:
         id_field = query.table_or_collection.primary_id
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
+        all_items = []
         for record_batch in ibatch(
             self.execute(query),
             s.CFG.cluster.vector_search.backfill_batch_size,
@@ -226,6 +228,7 @@ class Datalayer:
                     h = h.unpack()
                 items.append(VectorItem.create(id=str(id), vector=h))
             searcher.add(items)
+            all_items.extend(items)
             progress.update(len(items))
 
         searcher.post_create()
@@ -998,4 +1001,3 @@ class LoadDict(dict):
         :param key: Force load key
         """
         return self.__missing__(key)
-

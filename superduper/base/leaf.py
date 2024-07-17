@@ -22,6 +22,14 @@ def import_item(
     object: t.Optional[type] = None,
     db: t.Optional['Datalayer'] = None,
 ):
+    """Import item from a cls and module specification.
+
+    :param dict: Dictionary of parameters.
+    :param cls: Class name.
+    :param module: Module name.
+    :param object: Object to instantiate.
+    :param db: Datalayer instance.
+    """
     if object is None:
         assert cls is not None
         assert module is not None

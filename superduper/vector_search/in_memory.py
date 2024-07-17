@@ -110,17 +110,17 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         _ids = [self.index[i] for i in ix]
         return _ids, scores
 
-    def add(self, items: t.Sequence[VectorItem]) -> None:
+    def add(self, items: t.Sequence[VectorItem] = ()) -> None:
         """Add vectors to the index.
 
         Only adds to cache if cache is not full.
 
         :param items: List of vectors to add
+        :param force: Flush the cache and add all vectors
         """
-        if len(self._cache) < self._CACHE_SIZE:
-            for item in items:
-                self._cache.append(item)
-        else:
+        for item in items:
+            self._cache.append(item)
+        if len(self._cache) == self._CACHE_SIZE:
             self._add(self._cache)
             self._cache = []
 

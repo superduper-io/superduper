@@ -1,6 +1,6 @@
-from collections import defaultdict
 import typing as t
 from abc import ABC, abstractmethod
+from collections import defaultdict
 
 from superduper import logging
 
@@ -22,7 +22,6 @@ class BaseQueueConsumer(ABC):
     :param callback: Callback for consumed messages.
     """
 
-<<<<<<< HEAD
     def __init__(
         self,
         uri: t.Optional[str] = '',
@@ -67,15 +66,15 @@ class BaseQueuePublisher(ABC):
 
     def __init__(self, uri: t.Optional[str]):
         self.uri: t.Optional[str] = uri
-        self.queue = defaultdict(lambda: [])
-        from superduper.misc.special_dicts import ArgumentDefaultDict
-        self.components = ArgumentDefaultDict(default_factory=lambda x: self.db.load(*x))
-        self._db = None
-        self._component_map = {}
+        self.queue: t.Dict = defaultdict(lambda: [])
 
-    def declare_component(self, component):
-        """Declare component and add it to queue."""
-        self.components[component.type_id, component.identifier] = component
+        from superduper.misc.special_dicts import ArgumentDefaultDict
+
+        self.components = ArgumentDefaultDict(
+            default_factory=lambda x: self.db.load(*x)
+        )
+        self._db = None
+        self._component_map: t.Dict = {}
 
     @property
     def db(self):
@@ -124,9 +123,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
 
     def declare_component(self, component):
         """Declare component and add it to queue."""
-        identifier = f'{component.type_id}.{component.identifier}'
-        self.queue[identifier] = []
-        self.components[identifier] = component
+        self.components[component.type_id, component.identifier] = component
 
     def publish(self, events: t.List[t.Dict], to: DependencyType):
         """
@@ -153,6 +150,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
                 _publish(events, dep)
         else:
             _publish(events, to)
+
         return self.consumer.consume(
             db=self.db, queue=self.queue, components=self.components
         )
@@ -174,21 +172,23 @@ class LocalQueueConsumer(BaseQueueConsumer):
         from superduper.base.datalayer import Event
 
         queue_jobs = defaultdict(lambda: [])
-        components = [('listener', x) for x in self.db.show('listener')]
-        components += [('vector_index', x) for x in self.db.show('vector_index')]
-        for type_id, identifier in components:
-            events = self.queue[type_id, identifier]
+        components_to_use = [('listener', x) for x in db.show('listener')]
+        components_to_use += [('vector_index', x) for x in db.show('vector_index')]
+        for type_id, identifier in components_to_use:
+            events = queue[type_id, identifier]
             if not events:
                 continue
-            self.queue[type_id, identifier] = []
-            component = self.components[type_id, identifier]
+            queue[type_id, identifier] = []
+            component = components[type_id, identifier]
             jobs = []
             for event_type, type_events in Event.chunk_by_event(events).items():
                 ids = [event['identifier'] for event in type_events]
                 overwrite = (
                     True if event_type in [Event.insert, Event.upsert] else False
                 )
-                logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
+                logging.info(
+                    f'Running jobs for {component.type_id}::{component.identifier}'
+                )
                 logging.debug(f'Using ids: {ids}')
                 job = component.run_jobs(
                     db=db, ids=ids, overwrite=overwrite, event_type=event_type
@@ -196,6 +196,15 @@ class LocalQueueConsumer(BaseQueueConsumer):
                 jobs.append(job)
             queue_jobs[type_id, identifier].extend(jobs)
         return queue_jobs
+
+    @property
+    def db(self):
+        """Instance of Datalayer."""
+        return self._db
+
+    @db.setter
+    def db(self, db):
+        self._db = db
 
     def close_connection(self):
         """Close connection to queue."""

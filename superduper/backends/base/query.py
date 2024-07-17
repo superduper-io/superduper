@@ -5,7 +5,7 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
-from superduper.base.document import Document
+from superduper.base.document import Document, _unpack
 from superduper.base.leaf import Leaf
 
 if t.TYPE_CHECKING:
@@ -45,6 +45,15 @@ class _BaseQuery(Leaf):
         self._updated_key = None
         if not self.identifier:
             self.identifier = self._build_hr_identifier()
+
+    def unpack(self):
+        parts = _unpack(self.parts)
+        return type(self)(
+            db=self.db,
+            table=self.table,
+            parts=parts,
+            identifier=self.identifier,
+        )
 
     def _build_hr_identifier(self):
         identifier = str(self).split('\n')[-1]
@@ -649,7 +658,16 @@ class Model(_BaseQuery):
         m = self.db.models[self.table]
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
-        return Document({'_base': r})
+        if self.flatten:
+            return [
+                Document({'_base': res}) if not isinstance(res, dict) else Document(res) 
+                for res in r
+            ]
+        else:
+            if isinstance(r, dict):
+                return Document(r)
+            else:
+                return Document({'_base': r})
 
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Return the query as a dictionary."""

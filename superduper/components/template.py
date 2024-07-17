@@ -188,7 +188,7 @@ class QueryTemplate(_BaseTemplate):
             **{
                 k: v
                 for k, v in self.template.items()
-                if k not in {'_builds', '_blobs', 'identifier', '_path'}
+                if k not in {'_blobs', 'identifier', '_path'}
             },
         }
 

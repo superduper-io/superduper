@@ -1,6 +1,7 @@
 import base64
 import dataclasses as dc
 import hashlib
+import inspect
 import io
 import json
 import os
@@ -467,6 +468,12 @@ class Encodable(_BaseEncodable):
         bytes_ = self.datatype.encode_data(self.x)
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
+
+    def to_artifact(self):
+        r = self.dict()
+        r['datatype'].encodable = 'artifact'
+        kwargs = {k: v for k, v in r.items() if k in inspect.signature(Artifact).parameters}
+        return Artifact(**kwargs)
 
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Get the dictionary representation of the object."""

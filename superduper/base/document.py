@@ -320,6 +320,8 @@ def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
         return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}
     elif isinstance(item, list):
         return [_unpack(x, leaves_to_keep=leaves_to_keep) for x in item]
+    elif isinstance(item, tuple):
+        return tuple([_unpack(x, leaves_to_keep=leaves_to_keep) for x in item])
     else:
         return item
 
@@ -541,7 +543,6 @@ def _get_artifact_callback(db):
     def callback(path):
         def pull_bytes():
             return db.artifact_store.get_bytes(path), path
-
         return pull_bytes
 
     return callback

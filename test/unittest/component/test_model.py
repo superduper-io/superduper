@@ -357,8 +357,6 @@ def postprocess(r):
     return r['_id']
 
 
-# TODO: Need to support MongoDB query.outputs()
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "db",
     [

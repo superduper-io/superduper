@@ -143,8 +143,6 @@ def test_insert_many(db):
     assert len(list(db.execute(db['_outputs.vector-y'].find()))) == 5 + 10
 
 
-# TODO: Need to support MongoDB query.outputs()
-@pytest.mark.skip
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_like(db):
     collection = MongoQuery(table='documents')

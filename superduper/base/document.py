@@ -233,6 +233,11 @@ class Document(MongoStyleDict):
             out = out['_base']
         return out
 
+    def __deepcopy__(self, momo):
+        new_doc = Document(**self)
+        momo[id(self)] = new_doc
+        return new_doc
+
 
 class QueryUpdateDocument(Document):
     """A document that is used to update a document in a database.

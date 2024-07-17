@@ -23,6 +23,7 @@ class SuperDuperCursor:
     :param schema: the schema to use to decode the documents
     :param _it: an iterator to keep track of the current position in the cursor,
             Default is 0.
+    :param process_func: a function to process the raw cursor output before
     """
 
     raw_cursor: t.Any
@@ -30,6 +31,7 @@ class SuperDuperCursor:
     db: t.Optional['Datalayer'] = None
     scores: t.Optional[t.Dict[str, float]] = None
     schema: t.Optional['Schema'] = None
+    process_func: t.Optional[t.Callable] = None
 
     _it: int = 0
 
@@ -63,6 +65,8 @@ class SuperDuperCursor:
     def __next__(self):
         """Get the next document from the cursor."""
         r = self.cursor_next()
+        if self.process_func is not None:
+            r = self.process_func(r)
         if self.scores is not None:
             try:
                 r['score'] = self.scores[str(r[self.id_field])]

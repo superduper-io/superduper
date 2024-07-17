@@ -14,11 +14,9 @@ from superduper.backends.base.query import (
     applies_to,
     parse_query as _parse_query,
 )
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document, QueryUpdateDocument
 from superduper.base.leaf import Leaf
-from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -63,8 +61,6 @@ def _serialize_special_character(d, to='encode'):
         else:
             new_dict[new_key] = value
 
-    if isinstance(d, Document):
-        return Document(new_dict)
     return new_dict
 
 
@@ -136,7 +132,7 @@ class MongoQuery(Query):
                 'bulk_write': 'write',
                 'insert_many': 'insert',
                 'insert_one': 'insert',
-                'outputs': 'outputs',
+                'outputs': 'select',
             },
         )[self.flavour]
 
@@ -373,30 +369,14 @@ class MongoQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        find_args, find_kwargs = self.parts[0][1:]
-        find_args = list(find_args)
-
-        if not find_args:
-            find_args = [{}]
-
-        if not find_args[1:]:
-            find_args.append({})
-        find_args = copy.deepcopy(find_args)
-        for identifier in predict_ids:
-            find_args[1][f'_outputs.{identifier}'] = 1
-            find_args[1][KEY_BUILDS] = 1
-            find_args[1][KEY_FILES] = 1
-            find_args[1][KEY_BLOBS] = 1
-            find_args[1]['_source'] = 1
-        x = type(self)(
+        return MongoOutputs(
             db=self.db,
             table=self.table,
             parts=[
-                ('find', tuple(find_args), find_kwargs),
-                *self.parts[1:],
+                *copy.deepcopy(self.parts),
+                ('outputs', (*predict_ids,), {}),
             ],
         )
-        return x
 
     @applies_to('find')
     def add_fold(self, fold: str):
@@ -463,7 +443,7 @@ class MongoQuery(Query):
             args, kwargs = (), {}
         else:
             args, kwargs = self.parts[0][1:]
-        args = list(args)[:]
+        args = copy.deepcopy(args)
         if not args:
             args = [{}]
         args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
@@ -484,7 +464,7 @@ class MongoQuery(Query):
         if self.parts[0][1]:
             filter_ = self.parts[0][1][0]
         projection = {'_id': 1}
-        coll = type(self)(table=self.table, db=self.db)
+        coll = MongoQuery(table=self.table, db=self.db)
         return coll.find(filter_, projection)
 
     @applies_to('find')
@@ -582,6 +562,131 @@ class MongoQuery(Query):
         output_query.is_output_query = True
         output_query.updated_key = predict_id
         return output_query
+
+
+class MongoOutputs(MongoQuery):
+    """A query class for MongoDB outputs.
+
+    Use aggregate to implement the outputs query
+    """
+
+    @applies_to('find')
+    def outputs(self, *predict_ids):
+        """Return a query that selects the outputs of the given predict ids.
+
+        :param predict_ids: The ids of the predictions to select.
+        """
+        x = MongoOutputs(
+            db=self.db,
+            table=self.table,
+            parts=[
+                *copy.deepcopy(self.parts),
+                ('outputs', (*predict_ids,), {}),
+            ],
+        )
+        return x
+
+    def _get_method_parameters(self, method):
+        args, kwargs = (), {}
+        for part in self.parts:
+            if part[0] == method:
+                assert not args, 'Multiple find operations found'
+                assert not kwargs, 'Multiple find operations found'
+                args, kwargs = part[1:]
+
+        return args, kwargs
+
+    def _execute(self, parent, method='encode'):
+        find_params, _ = self._get_method_parameters('find')
+        filter = {"$match": find_params[0]} if find_params else {}
+        project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {"*": 1}
+        project['_schema'] = 1
+        project['_builds'] = 1
+        project['_files'] = 1
+        project['_blobs'] = 1
+
+        limit_args, _ = self._get_method_parameters('limit')
+        limit = {"$limit": limit_args[0]} if limit_args else None
+
+        predict_ids = self.parts[-1][1]
+
+        pipeline = []
+        for predict_id in predict_ids:
+            # MongoMock does not support '.' in 'as', so we replace it with '__'
+            key = f'_outputs.{predict_id}'.replace('.', '__')
+            lookup = {
+                "$lookup": {
+                    "from": f'_outputs.{predict_id}',
+                    "localField": "_id",
+                    "foreignField": "_source",
+                    "as": key,
+                }
+            }
+
+            project[key] = 1
+            pipeline.append(lookup)
+            pipeline.append(
+                {"$unwind": {"path": f"${key}", "preserveNullAndEmptyArrays": True}}
+            )
+
+        if filter:
+            pipeline = [filter] + pipeline
+
+        if project:
+            pipeline.append({"$project": project})
+
+        if limit:
+            pipeline.append(limit)
+
+        return SuperDuperCursor(
+            raw_cursor=getattr(parent, 'aggregate')(pipeline),
+            db=self.db,
+            id_field='_id',
+            process_func=self._postprocess_result,
+        )
+
+    def _postprocess_result(self, result):
+        """Postprocess the result of the query.
+
+        Merge the outputs/_builds/_files/_blobs from the _outputs__* keys to the result
+
+        :param result: The result to postprocess.
+        """
+        merge_outputs = {}
+        merge_builds = result.get('_builds', {})
+        merge_files = result.get('_files', {})
+        merge_blobs = result.get('_blobs', {})
+
+        revert_outputs = {}
+        remove_keys = []
+        for key, values in result.items():
+            if key.startswith('_outputs__'):
+                remove_keys.append(key)
+                key = key.replace('__', '.')
+                new_key = key.replace('_outputs.', '')
+                revert_outputs[new_key] = values
+
+        if not revert_outputs:
+            return result
+
+        result['_outputs'] = revert_outputs
+        for key in remove_keys:
+            result.pop(key)
+
+        predict_ids = result.get('_outputs', {}).keys()
+        for predict_id in predict_ids:
+            output_data = result['_outputs'][predict_id]
+            output_result = output_data['_outputs'][predict_id]
+            merge_outputs[predict_id] = output_result
+            merge_builds.update(output_data['_builds'])
+            merge_files.update(output_data['_files'])
+            merge_blobs.update(output_data['_blobs'])
+
+        result['_outputs'] = merge_outputs
+        result['_builds'] = merge_builds
+        result['_files'] = merge_files
+        result['_blobs'] = merge_blobs
+        return result
 
 
 def InsertOne(**kwargs):

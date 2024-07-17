@@ -611,8 +611,8 @@ class Model(Component, metaclass=ModelMeta):
         overwrite: bool = False,
     ):
         if not db.databackend.check_output_dest(predict_id):
-            query = select.select_ids
-        elif not overwrite:
+            overwrite = True
+        if not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
             if '_outputs' in X:
@@ -637,6 +637,12 @@ class Model(Component, metaclass=ModelMeta):
         predict_ids = []
         for r in tqdm.tqdm(id_curr):
             predict_ids.append(str(r[id_field]))
+
+        if ids and len(predict_ids) > len(ids):
+            raise Exception(
+                f'Got {len(predict_ids)} ids from select,'
+                f'but {len(ids)} ids were provided'
+            )
         return predict_ids
 
     def predict_in_db(

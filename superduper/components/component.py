@@ -20,6 +20,7 @@ from superduper.jobs.job import ComponentJob, Job
 
 if t.TYPE_CHECKING:
     from superduper import Document
+    from superduper.backends.base.query import Query
     from superduper.base.datalayer import Datalayer
     from superduper.components.dataset import Dataset
     from superduper.components.datatype import DataType
@@ -194,9 +195,15 @@ class Component(Leaf):
         self.db = self.db or db
         self.unpack(db=db)
 
-    def ready_ids(self, ids: t.List):
-        """Return ids that are ready."""
-        return ids
+    def trigger_ids(self, query: "Query", primary_ids: t.Sequence):
+        """Get trigger IDs.
+
+        Only the ids returned by this function will trigger the component.
+
+        :param query: Query object.
+        :param primary_ids: Primary IDs.
+        """
+        return []
 
     def unpack(self, db=None):
         """Method to unpack the component.

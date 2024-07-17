@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 
 from superduper import logging
+from superduper.base.event import Event
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
@@ -90,7 +91,7 @@ class BaseQueuePublisher(ABC):
         """Build a consumer instance."""
 
     @abstractmethod
-    def publish(self, events: t.List[t.Dict], to: DependencyType):
+    def publish(self, events: t.List[Event]):
         """
         Publish events to local queue.
 
@@ -125,31 +126,17 @@ class LocalQueuePublisher(BaseQueuePublisher):
         """Declare component and add it to queue."""
         self.components[component.type_id, component.identifier] = component
 
-    def publish(self, events: t.List[t.Dict], to: DependencyType):
+    def publish(self, events: t.List[Event]):
         """
         Publish events to local queue.
 
         :param events: list of events
-        :param to: Component name for events to be published.
         """
-
-        def _publish(events, to):
-            self._component_map.update(to)
-            component = self.components[to['type_id'], to['identifier']]
-            ready_ids = component.ready_ids([e['identifier'] for e in events])
-            ready_events = []
-            for event in events:
-                id = event['identifier']
-                if id in ready_ids:
-                    ready_events.append(event)
-
-            self.queue[to['type_id'], to['identifier']].extend(ready_events)
-
-        if isinstance(to, (tuple, list)):
-            for dep in to:
-                _publish(events, dep)
-        else:
-            _publish(events, to)
+        for event in events:
+            identifier = event.identifier
+            type_id = event.type_id
+            self._component_map.update({'identifier': identifier, 'type_id': type_id})
+            self.queue[type_id, identifier].append(event)
 
         return self.consumer.consume(
             db=self.db, queue=self.queue, components=self.components
@@ -169,7 +156,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
 
     def consume(self, db: 'Datalayer', queue: t.Dict, components: t.Dict):
         """Consume the current queue and run jobs."""
-        from superduper.base.datalayer import Event
+        from superduper.base.datalayer import DBEvent
 
         queue_jobs = defaultdict(lambda: [])
         components_to_use = [('listener', x) for x in db.show('listener')]
@@ -181,10 +168,10 @@ class LocalQueueConsumer(BaseQueueConsumer):
             queue[type_id, identifier] = []
             component = components[type_id, identifier]
             jobs = []
-            for event_type, type_events in Event.chunk_by_event(events).items():
-                ids = [event['identifier'] for event in type_events]
+            for event_type, type_events in DBEvent.chunk_by_event(events).items():
+                ids = [event.id for event in type_events]
                 overwrite = (
-                    True if event_type in [Event.insert, Event.upsert] else False
+                    True if event_type in [DBEvent.insert, DBEvent.upsert] else False
                 )
                 logging.info(
                     f'Running jobs for {component.type_id}::{component.identifier}'

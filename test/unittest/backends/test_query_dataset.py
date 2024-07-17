@@ -10,25 +10,21 @@ except ImportError:
     torch = None
 
 
-# TODO: Need to support MongoDB query.outputs()
-@pytest.mark.skip
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_query_dataset(db):
     train_data = QueryDataset(
         db=db,
         mapping=Mapping('_base', signature='singleton'),
-        select=MongoQuery(table='documents', db=db).find(
+        select=MongoQuery(table='documents', db=db)
+        .find(
             {},
             {
                 '_id': 0,
                 'x': 1,
                 '_fold': 1,
-                '_outputs': 1,
-                '_builds': 1,
-                '_blobs': 1,
-                '_files': 1,
             },
-        ),
+        )
+        .outputs('vector-x'),
         fold='train',
     )
     r = train_data[0]
@@ -36,12 +32,7 @@ def test_query_dataset(db):
     assert r['_fold'] == 'train'
     assert 'y' not in r
 
-    key = [
-        k.split('/')[-1]
-        for k in db.show('listener')
-        if db.load('listener', k).key == 'x'
-    ][0]
-    assert r['_outputs'][key].shape[0] == 16
+    assert r['_outputs']['vector-x'].shape[0] == 16
 
     train_data = QueryDataset(
         db=db,

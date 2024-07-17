@@ -42,13 +42,13 @@ class LocalComputeBackend(ComputeBackend):
         """Hook for component."""
         pass
 
-    def broadcast(self, events: t.List, to: tuple = ()):
+    def broadcast(self, events: t.List):
         """Broadcast events to the corresponding component.
 
         :param events: List of events.
         :param to: Destination component.
         """
-        return self.queue.publish(events, to=to)
+        return self.queue.publish(events)
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs

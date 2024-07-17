@@ -181,7 +181,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         :param output_path: Path to the output
         """
         _, key, model, version = output_path.split('.')
-        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
+        if re.match(r'^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
 
         fields4 = {

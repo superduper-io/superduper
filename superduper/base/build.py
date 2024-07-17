@@ -83,9 +83,9 @@ def _build_artifact_store(
 
 class _MetaDataMatcher:
     patterns = {
-        '^mongodb:\/\/': ('mongodb', 'mongodb'),
-        '^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
-        '^mongomock:\/\/': ('mongodb', 'mongomock'),
+        r'^mongodb:\/\/': ('mongodb', 'mongodb'),
+        r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
+        r'^mongomock:\/\/': ('mongodb', 'mongomock'),
     }
     not_supported = [('sqlalchemy', 'pandas')]
 

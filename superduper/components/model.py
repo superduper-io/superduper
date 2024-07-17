@@ -1212,8 +1212,8 @@ class APIModel(APIBaseModel):
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
         self.params['model'] = self.model
-        env_variables = re.findall('{([A-Z0-9\_]+)}', self.url)
-        runtime_variables = re.findall('{([a-z0-9\_]+)}', self.url)
+        env_variables = re.findall(r'{([A-Z0-9\_]+)}', self.url)
+        runtime_variables = re.findall(r'{([a-z0-9\_]+)}', self.url)
         runtime_variables = [x for x in runtime_variables if x != 'model']
         self.envs = env_variables
         self.runtime_params = runtime_variables

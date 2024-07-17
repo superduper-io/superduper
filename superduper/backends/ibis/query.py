@@ -96,14 +96,14 @@ class IbisQuery(Query):
     """A query that can be executed on an Ibis database."""
 
     flavours: t.ClassVar[t.Dict[str, str]] = {
-        'pre_like': '^.*\.like\(.*\)\.select',
-        'post_like': '^.*\.([a-z]+)\(.*\)\.like(.*)$',
-        'insert': '^[^\(]+\.insert\(.*\)$',
-        'filter': '^[^\(]+\.filter\(.*\)$',
-        'delete': '^[^\(]+\.delete\(.*\)$',
-        'select': '^[^\(]+\.select\(.*\)$',
-        'join': '^.*\.join\(.*\)$',
-        'anti_join': '^[^\(]+\.anti_join\(.*\)$',
+        'pre_like': r'^.*\.like\(.*\)\.select',
+        'post_like': r'^.*\.([a-z]+)\(.*\)\.like(.*)$',
+        'insert': r'^[^\(]+\.insert\(.*\)$',
+        'filter': r'^[^\(]+\.filter\(.*\)$',
+        'delete': r'^[^\(]+\.delete\(.*\)$',
+        'select': r'^[^\(]+\.select\(.*\)$',
+        'join': r'^.*\.join\(.*\)$',
+        'anti_join': r'^[^\(]+\.anti_join\(.*\)$',
     }
 
     @property

@@ -582,7 +582,7 @@ def _parse_query_part(part, documents, query, builder_cls, db=None):
 
     current = builder_cls(table=table, parts=(), db=db)
     for comp in part:
-        match = re.match('^([a-zA-Z0-9_]+)\((.*)\)$', comp)
+        match = re.match(r'^([a-zA-Z0-9_]+)\((.*)\)$', comp)
         if match is None:
             current = getattr(current, comp)
             continue

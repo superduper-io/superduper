@@ -232,33 +232,35 @@ class Query(_BaseQuery):
         """Property setter."""
         self._updated_key = update
 
-    def dependencies(
+    def get_events(
         self,
+        ids: t.Sequence,
     ):
-        """List of dependencies."""
-        listeners = self.db.show('listener')
-        vector_indices = self.db.show('vector_index')
-        dependencies = []
+        """List of events.
 
-        def _check_query_match(listener, query):
-            return listener.depends_on(query)
+        :param ids: List of ids.
+        """
+        listeners = [
+            self.db.listeners[identifier] for identifier in self.db.show('listener')
+        ]
+        vector_indices = [
+            self.db.vector_indices[identifier]
+            for identifier in self.db.show('vector_index')
+        ]
 
-        for listener in listeners:
-            listener = self.db.listeners[listener]
-            if listener.select is not None and _check_query_match(listener, self):
-                dependencies.append(
-                    {'type_id': 'listener', 'identifier': listener.identifier}
+        events = []
+
+        for component in listeners + vector_indices:
+            trigger_ids = component.trigger_ids(self, ids)
+            if trigger_ids:
+                events.append(
+                    {
+                        'type_id': component.type_id,
+                        'identifier': component.identifier,
+                        'ids': trigger_ids,
+                    }
                 )
-
-        for vi in vector_indices:
-            vi = self.db.vector_indices[vi]
-            listener = vi.indexing_listener
-            if _check_query_match(listener, self):
-                dependencies.append(
-                    {'type_id': 'vector_index', 'identifier': vi.identifier}
-                )
-
-        return dependencies
+        return events
 
     def _get_flavour(self):
         _query_str = self._to_str()

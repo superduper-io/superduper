@@ -1,4 +1,3 @@
-import time
 import typing as t
 from test.db_config import DBConfig
 
@@ -20,8 +19,6 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-# TODO: Need to support MongoDB query.outputs()
-@pytest.mark.skip
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_graph_deps(db: "Datalayer"):
     db.cfg.auto_schema = True
@@ -52,21 +49,20 @@ def test_graph_deps(db: "Datalayer"):
     model_b = ObjectModel(identifier="model_b", object=func_b)
     listener_b = model_b.to_listener(
         key=("x", "y", "_outputs.a"),
-        select=db["documents"].select(),
+        select=db["documents"].find({}, {'x': 1, 'y': 1}).outputs('a'),
         identifier="listener_b",
         uuid="b",
         predict_kwargs={"max_chunk_size": 1},
     )
 
     def func_c(x, y, z, o_a, o_b):
-        time.sleep(1)
         return Tuple(x, y, z, o_a, o_b, "c")
 
     model_c = ObjectModel(identifier="model_c", object=func_c)
     listener_c = model_c.to_listener(
         # key={"x": "x", "y": "y", "z": "z", "_outputs.a": "o_a", "_outputs.b": "o_b"},
         key=("x", "y", "z", "_outputs.a", "_outputs.b"),
-        select=db["documents"].select(),
+        select=db["documents"].find({}, {'x': 1, 'y': 1, 'z': 1}).outputs('a', 'b'),
         identifier="listener_c",
         uuid="c",
         predict_kwargs={"max_chunk_size": 1},
@@ -76,7 +72,9 @@ def test_graph_deps(db: "Datalayer"):
     db.apply(listener_b)
     db.apply(listener_c)
 
-    data = Document(list(db["documents"].select().execute())[0].unpack())
+    data = Document(
+        list(db["documents"].select().outputs("a", "b", "c").execute())[0].unpack()
+    )
 
     output_a = data["_outputs.a"]
     output_b = data["_outputs.b"]
@@ -94,7 +92,9 @@ def test_graph_deps(db: "Datalayer"):
 
     db["documents"].insert(new_data).execute()
 
-    new_data = Document(list(db["documents"].select().execute())[-1].unpack())
+    new_data = Document(
+        list(db["documents"].select().outputs("a", "b", "c").execute())[-1].unpack()
+    )
 
     output_a = new_data["_outputs.a"]
     output_b = new_data["_outputs.b"]

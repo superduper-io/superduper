@@ -1,6 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
+from superduper.base.event import Event
+
 
 class ComputeBackend(ABC):
     """
@@ -32,7 +34,7 @@ class ComputeBackend(ABC):
         """Returns a local version of self."""
         pass
 
-    def broadcast(self, events: t.List, to: tuple = ()):
+    def broadcast(self, events: t.List[Event]):
         """Broadcast events to the corresponding component.
 
         :param events: List of events.

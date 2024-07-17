@@ -89,8 +89,6 @@ def test_execute_complex_query_sqldb_no_auto_schema(db, table):
     assert sorted(cur_this) == sorted(expected)
 
 
-# TODO: Need to support MongoDB query.outputs()
-@pytest.mark.skip
 def test_execute_like_queries_mongodb(db):
     collection = MongoQuery(table='documents', db=db)
     # Get a data point for testing

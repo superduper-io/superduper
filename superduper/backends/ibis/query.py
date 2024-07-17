@@ -410,7 +410,7 @@ class IbisQuery(Query):
 
             symbol_table = symbol_table.relabel(
                 # TODO: Check for folds
-                {'_fold': f'fold.{identifier}'}
+                {'_fold': f'fold.{identifier}', 'id': f'id.{identifier}'}
             )
 
             attr = getattr(self, self.primary_id)

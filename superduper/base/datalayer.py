@@ -2,7 +2,7 @@ import dataclasses as dc
 import random
 import typing as t
 import warnings
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 import click
 import networkx
@@ -22,6 +22,7 @@ from superduper.base.config import Config
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
+from superduper.base.event import Event
 from superduper.components.component import Component
 from superduper.components.datatype import DataType, _BaseEncodable
 from superduper.components.schema import Schema
@@ -47,7 +48,7 @@ ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
 
 @dc.dataclass
-class Event:
+class DBEvent:
     """Event to represent database events."""
 
     insert = 'insert'
@@ -56,14 +57,11 @@ class Event:
     upsert = 'upsert'
 
     @staticmethod
-    def chunk_by_event(lst):
+    def chunk_by_event(lst: t.List[Event]) -> t.Dict[str, t.List[Event]]:
         """Helper method to chunk events on type."""
-        chunks = {}
+        chunks = defaultdict(list)
         for item in lst:
-            item_type = item['type']
-
-            if item_type not in chunks:
-                chunks[item_type] = []
+            item_type = item.event_type
             chunks[item_type].append(item)
         return chunks
 
@@ -207,7 +205,7 @@ class Datalayer:
         if vi.indexing_listener.select.db is None:
             vi.indexing_listener.select.db = self
 
-        query = vi.indexing_listener.select.outputs(vi.indexing_listener.predict_id)
+        query = vi.indexing_listener.outputs_select
 
         logging.info(str(query))
 
@@ -375,7 +373,7 @@ class Datalayer:
         result = delete.do_execute(self)
         cdc_status = s.CFG.cluster.cdc.uri is not None
         if refresh and not cdc_status:
-            return result, self.on_event(delete, ids=result, event_type=Event.delete)
+            return result, self.on_event(delete, ids=result, event_type=DBEvent.delete)
         return result, None
 
     def _insert(
@@ -429,7 +427,7 @@ class Datalayer:
         """
         return select.do_execute(db=self)
 
-    def on_event(self, query: Query, ids: t.Sequence[str], event_type: str = 'insert'):
+    def on_event(self, query: Query, ids: t.List[str], event_type: str = 'insert'):
         """
         Trigger computation jobs after data insertion.
 
@@ -437,11 +435,20 @@ class Datalayer:
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
         """
-        deps = query.dependencies()
-        if not deps:
+        event_datas = query.get_events(ids)
+        if not event_datas:
             return
-        events = [{'identifier': id, 'type': event_type} for id in ids]
-        return self.compute.broadcast(events, to=deps)
+
+        from superduper.base.event import Event
+
+        events = []
+        for event_data in event_datas:
+            identifier = event_data['identifier']
+            type_id = event_data['type_id']
+            ids = event_data['ids']
+            events.extend([Event(type_id, identifier, id, event_type) for id in ids])
+
+        return self.compute.broadcast(events)
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
@@ -460,12 +467,12 @@ class Datalayer:
                 jobs = []
                 if updated_ids:
                     job = self.on_event(
-                        query=write, ids=updated_ids, event_type=Event.update
+                        query=write, ids=updated_ids, event_type=DBEvent.update
                     )
                     jobs.append(job)
                 if deleted_ids:
                     job = self.on_event(
-                        query=write, ids=deleted_ids, event_type=Event.delete
+                        query=write, ids=deleted_ids, event_type=DBEvent.delete
                     )
                     jobs.append(job)
 
@@ -493,7 +500,7 @@ class Datalayer:
                 # with already existing outputs.
                 # We need overwrite outputs on those select and recompute predict
                 return updated_ids, self.on_event(
-                    query=update, ids=updated_ids, event_type=Event.upsert
+                    query=update, ids=updated_ids, event_type=DBEvent.upsert
                 )
         return updated_ids, None
 

@@ -6,7 +6,6 @@ from overrides import override
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.document import _OUTPUTS_KEY
-from superduper.base.enums import DBType
 from superduper.components.model import Mapping
 from superduper.misc.server import request_server
 
@@ -70,12 +69,8 @@ class Listener(Component):
 
     @property
     def outputs_select(self):
-        """Get query reference to model outputs."""
-        if self.db.databackend.db_type == DBType.SQL:
-            return self.db[self.outputs].select()
-
-        else:
-            return self.db[self.outputs].find()
+        """Get select statement for outputs."""
+        return self.db[self.select.table].select().outputs(self.predict_id)
 
     @override
     def post_create(self, db: "Datalayer") -> None:
@@ -126,33 +121,43 @@ class Listener(Component):
                 out.append(listener_id)
         return out
 
-    def depends_on(self, other: Component):
-        """Check if the listener depends on another component.
-
-        :param other: Another component.
-        """
-        from superduper.backends.base.query import Query
-
-        if isinstance(other, Query):
-            return self.depends_on_query(other)
-        elif isinstance(other, Listener):
-            args, kwargs = self.mapping.mapping
-            all_ = list(args) + list(kwargs.values())
-
-            return any([x.startswith(f'_outputs.{other.uuid}') for x in all_])
-        else:
-            return False
-
     @property
     def predict_id(self):
         """Get predict ID."""
         return self.uuid
 
-    def ready_ids(self, ids: t.List):
-        """Return ids that are ready."""
-        assert self.select is not None
-        data = self.db.execute(self.select.select_using_ids(ids))
+    def trigger_ids(self, query: Query, primary_ids: t.Sequence):
+        """Get trigger IDs.
+
+        Only the ids returned by this function will trigger the listener.
+
+        :param query: Query object.
+        :param primary_ids: Primary IDs.
+        """
+        conditions = [
+            # trigger by main table
+            self.select and self.select.table == query.table,
+            # trigger by output table
+            query.table in self.key and query.table != self.outputs,
+        ]
+        if not any(conditions):
+            return []
+
+        if self.select is None:
+            return []
+
+        if self.select.table == query.table:
+            trigger_ids = list(primary_ids)
+
+        else:
+            trigger_ids = [
+                doc['_source'] for doc in query.documents if '_source' in doc
+            ]
+
+        # TODO: Use the better way to detect the keys exist in the trigger_ids
+        data = self.db.execute(self.select.select_using_ids(trigger_ids))
         keys = self.key
+
         if isinstance(self.key, str):
             keys = [self.key]
         elif isinstance(self.key, dict):
@@ -167,20 +172,8 @@ class Listener(Component):
                 except KeyError:
                     notfound += 1
             if notfound == 0:
-                assert self.select is not None
                 ready_ids.append(select[self.select.primary_id])
         return ready_ids
-
-    def depends_on_query(self, query):
-        """Check if query depends on the listener."""
-        if not self.select:
-            return False
-        if (
-            self.select.table_or_collection.identifier
-            == query.table_or_collection.identifier
-        ):
-            return True
-        return False
 
     @override
     def schedule_jobs(
@@ -197,13 +190,24 @@ class Listener(Component):
         """
         if self.select is None:
             return []
-        from superduper.base.datalayer import Event
+        from superduper.base.datalayer import DBEvent
+        from superduper.base.event import Event
 
+        events = []
         ids = db.execute(self.select.select_ids)
         ids = [id[self.select.primary_id] for id in ids]
-        events = [{'identifier': id, 'type': Event.insert} for id in ids]
-        to = {'type_id': self.type_id, 'identifier': self.identifier}
-        return db.compute.broadcast(events, to=to)
+
+        events = [
+            Event(
+                type_id=self.type_id,
+                identifier=self.identifier,
+                event_type=DBEvent.insert,
+                id=id,
+            )
+            for id in ids
+        ]
+
+        return db.compute.broadcast(events)
 
     def run_jobs(
         self,

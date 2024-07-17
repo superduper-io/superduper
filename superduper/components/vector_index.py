@@ -4,7 +4,8 @@ import typing as t
 import numpy as np
 from overrides import override
 
-from superduper.base.datalayer import Datalayer, Event
+from superduper.backends.base.query import Query
+from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
@@ -205,20 +206,31 @@ class VectorIndex(Component):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
-    def ready_ids(self, ids: t.List):
-        """Return ids that are ready."""
+    def trigger_ids(self, query: Query, primary_ids: t.Sequence):
+        """Get trigger IDs.
+
+        Only the ids returned by this function will trigger the vector_index.
+
+        :param query: Query object.
+        :param primary_ids: Primary IDs.
+        """
+        if not isinstance(self.indexing_listener.select, Query):
+            return []
+
+        if self.indexing_listener.select.table != query.table:
+            return []
+
         select = self.indexing_listener.outputs_select
-        data = self.db.execute(select.select_using_ids(ids))
+        data = self.db.execute(select.select_using_ids(primary_ids))
         key = self.indexing_listener.outputs_key
 
         ready_ids = []
         for d in data:
-            notfound = 0
             try:
                 d[key]
                 ready_ids.append(d[select.primary_id])
             except KeyError:
-                notfound += 1
+                continue
         return ready_ids
 
     @override
@@ -228,7 +240,7 @@ class VectorIndex(Component):
         dependencies: t.Sequence['Job'] = (),
         ids: t.List = [],
         overwrite: bool = False,
-        event_type: str = Event.insert,
+        event_type: str = DBEvent.insert,
     ) -> t.Sequence[t.Any]:
         """Run jobs for the vector index.
 
@@ -237,9 +249,9 @@ class VectorIndex(Component):
         :param ids: List of ids.
         :param event_type: Type of event.
         """
-        if event_type in [Event.insert, Event.upsert]:
+        if event_type in [DBEvent.insert, DBEvent.upsert]:
             callable = copy_vectors
-        elif type == Event.delete:
+        elif type == DBEvent.delete:
             callable = delete_vectors
         else:
             return []
@@ -251,7 +263,7 @@ class VectorIndex(Component):
             kwargs=dict(
                 vector_index=self.identifier,
                 ids=ids,
-                query=self.indexing_listener.select.dict().encode(),
+                query=self.indexing_listener.outputs_select.dict().encode(),
             ),
         )
         job(db=db)
@@ -268,15 +280,23 @@ class VectorIndex(Component):
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
         """
-        from superduper.base.datalayer import Event
+        from superduper.base.event import Event
 
         assert self.indexing_listener.select is not None
 
         ids = db.execute(self.indexing_listener.select.select_ids)
         ids = [id[self.indexing_listener.select.primary_id] for id in ids]
-        events = [{'identifier': id, 'type': Event.insert} for id in ids]
-        to = {'type_id': self.type_id, 'identifier': self.identifier}
-        return db.compute.broadcast(events, to=to)
+        events = [
+            Event(
+                type_id=self.type_id,
+                identifier=self.identifier,
+                event_type=DBEvent.insert,
+                id=id,
+            )
+            for id in ids
+        ]
+
+        return db.compute.broadcast(events)
 
 
 class EncodeArray:

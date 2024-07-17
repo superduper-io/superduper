@@ -1,5 +1,5 @@
 import typing as t
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 
 class ComputeBackend(ABC):

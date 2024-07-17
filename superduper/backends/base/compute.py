@@ -10,17 +10,20 @@ class ComputeBackend(ABC):
     :param kwargs: *kwargs for `ABC`
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def type(self) -> str:
         """Return the type of compute engine."""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def remote(self) -> bool:
         """Return if remote compute engine."""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self) -> str:
         """Return the name of current compute engine."""
         pass
@@ -47,7 +50,8 @@ class ComputeBackend(ABC):
         """
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def tasks(self) -> t.Any:
         """List for all tasks."""
         pass

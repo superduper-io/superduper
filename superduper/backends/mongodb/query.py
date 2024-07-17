@@ -116,18 +116,18 @@ class MongoQuery(Query):
     """
 
     flavours: t.ClassVar[t.Dict[str, str]] = {
-        'pre_like': '^.*\.like\(.*\)\.find',
-        'post_like': '^.*\.find\(.*\)\.like(.*)$',
-        'bulk_write': '^.*\.bulk_write\(.*\)$',
-        'find_one': '^.*\.find_one\(.*\)',
-        'find': '^.*\.find\(.*\)',
-        'insert_many': '^.*\.insert_many\(.*\)$',
-        'insert_one': '^.*\.insert_one\(.*\)$',
-        'replace_one': '^.*\.replace_one\(.*\)$',
-        'update_many': '^.*\.update_many\(.*\)$',
-        'update_one': '^.*\.update_one\(.*\)$',
-        'delete_many': '^.*\.delete_many\(.*\)$',
-        'delete_one': '^.*\.delete_one\(.*\)$',
+        'pre_like': r'^.*\.like\(.*\)\.find',
+        'post_like': r'^.*\.find\(.*\)\.like(.*)$',
+        'bulk_write': r'^.*\.bulk_write\(.*\)$',
+        'find_one': r'^.*\.find_one\(.*\)',
+        'find': r'^.*\.find\(.*\)',
+        'insert_many': r'^.*\.insert_many\(.*\)$',
+        'insert_one': r'^.*\.insert_one\(.*\)$',
+        'replace_one': r'^.*\.replace_one\(.*\)$',
+        'update_many': r'^.*\.update_many\(.*\)$',
+        'update_one': r'^.*\.update_one\(.*\)$',
+        'delete_many': r'^.*\.delete_many\(.*\)$',
+        'delete_one': r'^.*\.delete_one\(.*\)$',
         'other': '.*',
     }
 
@@ -275,7 +275,7 @@ class MongoQuery(Query):
             if not query.kwargs.get('arg_ids', None):
                 raise ValueError(
                     'Please provided update/delete id in args',
-                    'all ids selection e.g `\{\}` is not supported',
+                    r'all ids selection e.g `\{\}` is not supported',
                 )
 
         collection = self.db.databackend.get_table_or_collection(self.table)

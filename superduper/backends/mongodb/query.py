@@ -87,28 +87,6 @@ def parse_query(
     )
 
 
-@dc.dataclass
-class ChangeStream:
-    """Change stream class to watch for changes in specified collection.
-
-    :param collection: The collection to perform the query on
-    :param args: Positional query arguments to ``pymongo.Collection.watch``
-    :param kwargs: Named query arguments to ``pymongo.Collection.watch``
-    """
-
-    collection: str
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    def __call__(self, db):
-        """Watch for changes in the database in specified collection.
-
-        :param db: The datalayer instance
-        """
-        collection = db.databackend.get_table_or_collection(self.collection)
-        return collection.watch(**self.kwargs)
-
-
 class MongoQuery(Query):
     """A query class for MongoDB.
 
@@ -381,14 +359,6 @@ class MongoQuery(Query):
 
         parent.update_many(filter, *trailing_args, **kwargs)
         return ids
-
-    def change_stream(self, *args, **kwargs):
-        """Return a callable Mongodb change stream instance.
-
-        :param args: Arguments to pass to the change-stream
-        :param kwargs: The keyword arguments to pass to the change-stream
-        """
-        return ChangeStream(collection=self.table, args=args, kwargs=kwargs)
 
     def drop_outputs(self, predict_id: str, embedded=True):
         """Return a query that removes output corresponding to the predict id.

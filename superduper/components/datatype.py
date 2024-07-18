@@ -8,7 +8,7 @@ import os
 import pickle
 import re
 import typing as t
-from abc import abstractstaticmethod
+from abc import abstractmethod
 
 import dill
 
@@ -156,7 +156,8 @@ def base64_to_bytes(encoded):
 class DataTypeFactory:
     """Abstract class for creating a DataType # noqa."""
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def check(data: t.Any) -> bool:
         """Check if the data can be encoded by the DataType.
 
@@ -166,7 +167,8 @@ class DataTypeFactory:
         """
         raise NotImplementedError
 
-    @abstractstaticmethod
+    @staticmethod
+    @abstractmethod
     def create(data: t.Any) -> "DataType":
         """Create a DataType for the data.
 

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Vector-search vector-loading bug fixed
 - Bugs related to new queuing paradigm
+- Remove --user from make install_devkit as it supposed to run on a virtualenv.
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

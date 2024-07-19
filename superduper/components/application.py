@@ -1,5 +1,7 @@
 import typing as t
 
+from superduper import logging
+
 from .component import Component
 
 if t.TYPE_CHECKING:
@@ -49,6 +51,7 @@ class Application(Component):
         """
         components = []
         for component_info in db.show():
+            logging.info(f"Component info: {component_info}")
             if not all(
                 [
                     isinstance(component_info, dict),
@@ -76,23 +79,39 @@ class Application(Component):
                     and component.identifier.startswith("_schema/"),
                 ]
             ):
-                model_outputs_components.add(component.identifier)
+                logging.info(f"Delete the outputs of {component.identifier}")
+                model_outputs_components.add((component.type_id, component.identifier))
                 model_outputs_components.update(
-                    [c.identifier for c in component.children]
+                    [(c.type_id, c.identifier) for c in component.children]
                 )
 
         # Do not need to include components with parent
         components_with_parent = set()
         for component in components:
-            components_with_parent.update([c.identifier for c in component.children])
+            if component.children:
+                logging.info("\n" + "-" * 80)
+                logging.info(f"Delete the children of {component.identifier}:")
+                logging.info(f"Children: {[c.identifier for c in component.children]}")
+                components_with_parent.update(
+                    [(c.type_id, c.identifier) for c in component.children]
+                )
 
         remove_components = model_outputs_components | components_with_parent
 
-        components = [c for c in components if c.identifier not in remove_components]
+        logging.info(f"Remove components: {remove_components}")
+
+        components = [
+            c for c in components if (c.type_id, c.identifier) not in remove_components
+        ]
 
         if not components:
             raise ValueError("No components found.")
 
+        logging.info("Combine components to application.")
+        components_strings = "\n".join(
+            [f"{c.type_id}.{c.identifier}" for c in components]
+        )
+        logging.info(f"Components: \n{components_strings}")
         app = cls(identifier=identifier, components=components)
         app.init(db)
         return app

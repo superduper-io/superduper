@@ -16,3 +16,7 @@ class Event:
     identifier: str
     id: t.Any
     event_type: str
+
+    def dict(self):
+        """Convert to dict."""
+        return dc.asdict(self)

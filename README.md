@@ -57,68 +57,6 @@ superduper.io is a Python framework for integrating AI models, APIs, and vector 
 <a href="https://www.youtube.com/watch?v=dDJ_ktMtbw0"><img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/video.png" alt="How to get Started" width="500"></a>
 </div>
 
-## What's new in `v0.2`?
-
-We've been working hard improving the quality of the project and bringing new features at the intersection of AI and databasing.
-
-### New features
-
-- Full support for `ray` as a "compute" backend (inference and training)
-- The SuperDuper "protocol" for serializing compound AI-components
-- Support for self-hosting LLMs with integrations of v-LLM, Llama.cpp and `transformers` fine-tuning,
-  in particular leveraging `ray` features.
-- Restful server implementation
-
-### New integrations
-
-- `ray`
-- `jina`
-- `transformers` (fine-tuning)
-- `llama_cpp`
-- `vllm`
-
-### Developer contract
-
-- Easier path to integrating AI models and components. Developers only need to implement these methods:
-
-| Optional | Method | Description |
-| --- | --- | --- |
-| `False` | `Model.predict` | Predict on one datapoint |
-| `False` | `Model.predict_batches` | Predict on batches of datapoints |
-| `True` | `Model.fit` | Fit the model on datasets |
-
-- Easier path to integrating new databases and vector-search functionalities. Developers only need to implement:
-
-| Method | Description |
-| --- | --- |
-| `Query.documents` | Documents referred to by a query |
-| `Query.type` | `"insert"`<br />`"delete"`<br />`"select"`<br />`"update"` |
-| `Query._create_table_if_not_exists` | Create table in databackend if it doesn't exist |
-| `Query.primary_id` | Get primary-id of base table in query |
-| `Query.model_update` | Construct a model-update query |
-| `Query.add_fold` | Add a fold to a `select` query |
-| `Query.select_using_ids` | Select data using only ids |
-| `Query.select_ids` | Select the ids of some data |
-| `Query.select_ids_of_missing_outputs` | Select the ids of rows which haven't got outputs yet |
-
-***Better quality***
-
-- Fully re-vamped test-suite with separation into the following categories
-
-| Type | Description | Command |
-| --- | --- | --- | 
-| Unit | Unittest - isolated code unit functionality | `make unit_testing` |
-| AI integration | Test the installation together with external AI provider works | `make ext_testing` |
-| Databackend integration | Test the installation with a fully functioning database backend | `make databackend_testing` |
-| Smoke | Test the full integration with `ray`, vector-search service, data-backend, change-data capture | `make smoke_testing` |
-| Rest | Test the Rest-ful server implementation integrates with the rest of the project | `make rest_testing` |
-
-***Better documentation***
-
-- [Flexible and modular use-cases](https://docs.superduper.io/docs/category/use-cases/)
-- [Structure which reflects project structure and philosophy](https://docs.superduper.io/docs/intro)
-- [End-2-end docusaurus documentation, including utilities to build API documentation as docusaurus pages]()
-
 ## Example use-cases and apps (notebooks)
 
 The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 

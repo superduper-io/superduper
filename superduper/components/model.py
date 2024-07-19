@@ -8,6 +8,7 @@ import os
 import re
 import typing as t
 from abc import abstractmethod
+from collections import defaultdict
 from functools import wraps
 
 import requests
@@ -897,15 +898,22 @@ class Model(Component, metaclass=ModelMeta):
         outputs = encoded_outputs if encoded_outputs else outputs
         return outputs
 
-    def __call__(self, *args, outputs: t.Optional[str] = None, **kwargs):
+    def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.
 
         :param args: Arguments to be passed to the model.
         :param outputs: Identifier for the model outputs.
         :param kwargs: Keyword arguments to be passed to the model.
         """
+        from superduper.misc.eager import SuperDuperData
+
+        is_eager_mode, _ = SuperDuperData.detect_and_get_graph(*args, **kwargs)
+        if is_eager_mode:
+            return self._eager_call__(*args, **kwargs)
+
         from superduper.components.graph import IndexableNode
 
+        outputs = kwargs.pop('outputs', None)
         if args:
             predict_params = self.inputs
             assert len(args) <= len(predict_params), 'Too many arguments'
@@ -930,6 +938,65 @@ class Model(Component, metaclass=ModelMeta):
             parent_models=parent_models,
             identifier=outputs,
         )
+
+    def _eager_call__(self, *args, **kwargs):
+        from superduper.misc.eager import SuperDuperData, SuperDuperDataType, TrackData
+
+        have_sdd, graph = SuperDuperData.detect_and_get_graph(*args, **kwargs)
+
+        real_args = [
+            var.data if isinstance(var, SuperDuperData) else var for var in args
+        ]
+        real_kwargs = {
+            k: var.data if isinstance(var, SuperDuperData) else var
+            for k, var in kwargs.items()
+        }
+
+        result = self.predict(*real_args, **real_kwargs)
+        if not have_sdd:
+            return result
+
+        if self.flatten:
+            result = [
+                SuperDuperData(
+                    var, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self
+                )
+                for var in result
+            ]
+            track_results = result
+
+        else:
+            result = SuperDuperData(
+                result, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self
+            )
+            track_results = [result]
+
+        upstream_mapping = defaultdict(list)
+
+        for index, upstream_var in enumerate(args):
+            if not isinstance(upstream_var, SuperDuperData):
+                if not isinstance(upstream_var, SuperDuperData):
+                    # TODO: Support default key-value in listener.key
+                    upstream_var = SuperDuperData(
+                        upstream_var, type=SuperDuperDataType.CONSTANT
+                    )
+            upstream_mapping[upstream_var.source].append(
+                TrackData(index, upstream_var.key)
+            )
+
+        for k, upstream_var in kwargs.items():
+            if not isinstance(upstream_var, SuperDuperData):
+                upstream_var = SuperDuperData(
+                    upstream_var, type=SuperDuperDataType.CONSTANT
+                )
+
+            upstream_mapping[upstream_var.source].append(TrackData(k, upstream_var.key))
+
+        for track_result in track_results:
+            for upstream_node, track_datas in upstream_mapping.items():
+                graph.add_edge(upstream_node, track_result, track_datas)
+
+        return result
 
     def to_vector_index(
         self,

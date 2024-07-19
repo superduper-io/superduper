@@ -291,7 +291,7 @@ class VectorIndex(Component):
                 type_id=self.type_id,
                 identifier=self.identifier,
                 event_type=DBEvent.insert,
-                id=id,
+                id=str(id),
             )
             for id in ids
         ]

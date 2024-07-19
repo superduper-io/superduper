@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support MongoDB outputs query
 - Make "create a table" compulsory
 - All datatypes should be wrapped with a Schema
+- Support eager mode
 
 #### Bug Fixes
 

@@ -176,6 +176,27 @@ class Query(_BaseQuery):
         parts = self.parts[item]
         return type(self)(db=self.db, table=self.table, parts=parts)
 
+    def datas(self, n: int = 100, unpack=True):
+        """Return the data of the query.
+
+        :param n: The number of data to return.
+        :param unpack: Whether to unpack the data.
+        """
+        from superduper.misc.eager import SuperDuperData, SuperDuperDataType
+
+        assert self.db is not None, 'No datalayer (db) provided'
+        query = self
+        if not len(query.parts):
+            query = query.select()
+
+        datas = []
+        for data in query.limit(n).execute():
+            if unpack:
+                data = Document(data.unpack())
+            sdd = SuperDuperData(data, type=SuperDuperDataType.DATA, query=query)
+            datas.append(sdd)
+        return datas
+
     # TODO - not necessary: either `Document.decode(r, db=db)`
     # or `db['table'].select...`
     def set_db(self, db: 'Datalayer'):

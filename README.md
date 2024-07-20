@@ -208,7 +208,7 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
 #### # Option 1. superduper.io Library
 Ideal for building new AI applications.
 ```shell
-pip install superduper
+pip install superduper-framework
 ```
 
 #### # Option 2. superduper.io Container

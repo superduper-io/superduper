@@ -11,7 +11,7 @@ There are two ways to get started:
 
 ## Pip
 
-`superduper` is available on [PyPi.org](https://pypi.org/project/superduper/).
+`superduper` is available on [PyPi.org](https://pypi.org/project/superduper-framework/).
 
 ### Prerequisites
 
@@ -39,7 +39,7 @@ Your experience with `superduper` on Linux may vary depending on your system and
 To install `superduper` on your system using `pip`, open your terminal and run the following command:
 
 ```bash
-pip install superduper
+pip install superduper-framework
 ```
 
 This command will install `superduper` along with a minimal set of common dependencies required for running the framework.

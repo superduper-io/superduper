@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add message broker service config
 - Add helper dict method in Event.
 - Use declare_component from base class.
+- Use different colors to distinguish logs
 
 #### New Features & Functionality
 

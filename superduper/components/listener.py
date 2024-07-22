@@ -191,12 +191,14 @@ class Listener(Component):
         db: "Datalayer",
         dependencies: t.Sequence[Job] = (),
         overwrite: bool = False,
+        ids: t.Optional[t.List[t.Any]] = None,
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the listener.
 
         :param db: Data layer instance to process.
         :param dependencies: A list of dependencies.
         :param overwrite: Overwrite the existing data.
+        :param ids: Optional ids to schedule.
         """
         if self.select is None:
             return []
@@ -204,8 +206,9 @@ class Listener(Component):
         from superduper.base.event import Event
 
         events = []
-        ids = db.execute(self.select.select_ids)
-        ids = [id[self.select.primary_id] for id in ids]
+        if ids is None:
+            ids = db.execute(self.select.select_ids)
+            ids = [id[self.select.primary_id] for id in ids]
 
         events = [
             Event(
@@ -219,10 +222,28 @@ class Listener(Component):
 
         return db.compute.broadcast(events)
 
+    def listener_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
+        """List all dependent job ids of the listener."""
+        dependencies_ids: t.Sequence[str] = []
+        for predict_id in self.dependencies:
+            try:
+                upstream_listener = db.load(uuid=predict_id)
+                upstream_model = upstream_listener.model
+            except Exception:
+                logging.warn(
+                    f"Could not find the upstream listener with uuid {predict_id}"
+                )
+                continue
+            job_ids = upstream_model.jobs()
+            dependencies_ids.extend(job_ids)
+
+        dependencies = tuple([*dependencies_ids, *deps])
+        return dependencies
+
     def run_jobs(
         self,
         db: "Datalayer",
-        dependencies: t.Sequence[Job] = (),
+        dependencies: t.Sequence[str] = (),
         overwrite: bool = False,
         ids: t.Optional[t.List] = [],
         event_type: str = 'insert',
@@ -238,21 +259,7 @@ class Listener(Component):
             return []
         assert not isinstance(self.model, str)
 
-        dependencies_ids = []
-        for predict_id in self.dependencies:
-            try:
-                upstream_listener = db.load(uuid=predict_id)
-                upstream_model = upstream_listener.model
-            except Exception:
-                logging.warn(
-                    f"Could not find the upstream listener with uuid {predict_id}"
-                )
-                continue
-            jobs = self.db.metadata.show_jobs(upstream_model.identifier, 'model') or []
-            job_ids = [job['job_id'] for job in jobs]
-            dependencies_ids.extend(job_ids)
-
-        dependencies = {*dependencies_ids, *dependencies}
+        dependencies = self.listener_dependencies(db, dependencies)
 
         out = [
             self.model.predict_in_db_job(
@@ -261,11 +268,17 @@ class Listener(Component):
                 predict_id=self.uuid,
                 select=self.select,
                 ids=ids,
-                dependencies=tuple(dependencies),
+                dependencies=dependencies,
                 overwrite=overwrite,
                 **(self.predict_kwargs or {}),
             )
         ]
+
+        # Trigger corresponding vector indices
+        for vi in db.show('vector_index'):
+            vi = db.load('vector_index', vi)
+            if vi.indexing_listener.identifier == self.identifier:
+                vi.schedule_jobs(db=db, ids=ids)
         return out
 
     def cleanup(self, db: "Datalayer") -> None:

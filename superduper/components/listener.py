@@ -80,6 +80,7 @@ class Listener(Component):
         """
         self.create_output_dest(db, self.uuid, self.model)
         if self.select is not None and not db.server_mode:
+            logging.info('Requesting listener setup on CDC service')
             if CFG.cluster.cdc.uri:
                 request_server(
                     service='cdc',
@@ -87,6 +88,9 @@ class Listener(Component):
                     args={'name': self.identifier},
                     type='get',
                 )
+        else:
+            logging.info('Skipping listener setup on CDC service'
+                         f' since select is {self.select} or server mode is {db.server_mode}')
         db.compute.queue.declare_component(self)
 
     @classmethod

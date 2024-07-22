@@ -101,6 +101,7 @@ class BaseQueuePublisher(ABC):
 
     def declare_component(self, component):
         """Declare component and add it to queue."""
+        logging.info(f'Declaring component {component.type_id}/{component.identifier}')
         self.db.compute.component_hook(component.identifier, type_id=component.type_id)
 
 

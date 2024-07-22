@@ -88,7 +88,6 @@ class Listener(Component):
                     type='get',
                 )
         db.compute.queue.declare_component(self)
-        db.compute.component_hook(self.identifier, type_id='listener')
 
     @classmethod
     def create_output_dest(cls, db: "Datalayer", uuid, model: Model):

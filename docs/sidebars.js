@@ -64,7 +64,6 @@ const sidebars = {
         'apply_api/model',
         'apply_api/listener',
         'apply_api/vector_index',
-        'apply_api/stack',
         'apply_api/datatype',
         'apply_api/schema',
         'apply_api/table',

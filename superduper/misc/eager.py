@@ -54,8 +54,11 @@ class SuperDuperData:
 
         self._children_cache = {}
         self._predict_id = None
+        self._filter = {}
+        self._filter_nodes = set()
         self._listener_kwargs = {}
         self.source = self.source or self
+        self._compare = None
 
     def apply(self):
         """Apply the node to the graph."""
@@ -75,6 +78,8 @@ class SuperDuperData:
         """Set the predict id of the model output node."""
         assert isinstance(value, str), "Predict id must be a string."
         self._predict_id = value
+        if self is not self.source:
+            self.source._predict_id = value
 
     @property
     def listener_kwargs(self):
@@ -97,10 +102,18 @@ class SuperDuperData:
         return new_sdd
 
     def __str__(self):
-        return f"{self.data}"
+        if self._compare:
+            return self._compare_string()
+        return str(self.data)
 
     def __repr__(self):
-        return f"{repr(self.data)}"
+        if self._compare:
+            return self._compare_string()
+        return repr(self.data)
+
+    def _compare_string(self):
+        compare_string = "!=" if self._compare[0] == "eq" else "=="
+        return f"{self.key} {compare_string} {self._compare[1]}"
 
     @property
     def dict(self):
@@ -110,11 +123,11 @@ class SuperDuperData:
     @staticmethod
     def detect_and_get_graph(*args, **kwargs) -> t.Tuple[bool, t.Union["Graph", None]]:
         """Detect and get the graph object from the arguments."""
-        sdd_datas = [
+        sdd_data = [
             var for var in [*args, *kwargs.items()] if isinstance(var, SuperDuperData)
         ]
 
-        graph = sdd_datas[0].graph if sdd_datas else None
+        graph = sdd_data[0].graph if sdd_data else None
 
         return bool(graph), graph
 
@@ -123,7 +136,7 @@ class SuperDuperData:
 
     def copy(self):
         """Copy the SuperDuperData object."""
-        return SuperDuperData(
+        new_sdd = SuperDuperData(
             self.data,
             self.type,
             ops=self.ops.copy(),
@@ -132,6 +145,9 @@ class SuperDuperData:
             model=self.model,
             source=self.source,
         )
+        if self.model:
+            new_sdd.predict_id = self.predict_id
+        return new_sdd
 
     @property
     def key(self):
@@ -156,6 +172,39 @@ class SuperDuperData:
 
         return key
 
+    def __eq__(self, other):
+        if isinstance(other, SuperDuperData):
+            return self.data == other.data
+
+        new_sdd = self.copy()
+        new_sdd._compare = ("eq", other)
+        return new_sdd
+
+    def __ne__(self, other):
+        if isinstance(other, SuperDuperData):
+            return self.data != other.data
+
+        new_sdd = self.copy()
+        new_sdd._compare = ("ne", other)
+        return new_sdd
+
+    def set_condition(self, data: "SuperDuperData"):
+        """Set the condition for the query."""
+        if not data.ops and data.ops[-1] not in ("eq", "ne"):
+            raise ValueError("Condition must be set after a comparison operation")
+        self._filter[data.key] = data._compare
+        self._filter_nodes.add(data.source)
+
+    @property
+    def filter(self):
+        """Return the filter for building the query."""
+        return self._filter
+
+    @property
+    def filter_nodes(self):
+        """Return the filter nodes for building the query."""
+        return self._filter_nodes
+
 
 class Graph:
     """The graph object used to build the graph.
@@ -178,7 +227,7 @@ class Graph:
         self,
         upstream: SuperDuperData,
         downstream: SuperDuperData,
-        track_datas: t.List["TrackData"],
+        track_data: t.List["TrackData"],
     ):
         """Add an edge to the graph.
 
@@ -186,7 +235,7 @@ class Graph:
         :param downstream: The downstream node.
         :param track_data: The track data object.
         """
-        self._graph.add_edge(upstream, downstream, track_datas=track_datas)
+        self._graph.add_edge(upstream, downstream, track_data=track_data)
 
     def _find_upstream_nodes(self, node: SuperDuperData):
         """Returns all upstream nodes of the given node."""
@@ -195,16 +244,16 @@ class Graph:
     def _find_upstream_nodes_edges(self, node: SuperDuperData):
         """Returns all incoming edges for a given node.
 
-        This function will flatten the track datas.
+        This function will flatten the track data.
 
         :param node: The node to find the incoming edges.
         """
         relations = []
-        for upstream, downstream, track_datas in self._graph.in_edges(
-            node, data="track_datas"
+        for upstream, downstream, track_data in self._graph.in_edges(
+            node, data="track_data"
         ):
-            for track_data in track_datas:
-                relations.append((upstream, downstream, track_data))
+            for track in track_data:
+                relations.append((upstream, downstream, track))
         return relations
 
     def _find_nodes_for_apply(self, *nodes):
@@ -214,8 +263,13 @@ class Graph:
 
         apply_nodes = set(nodes)
         for node in nodes:
+            # Upstream nodes are used to query data from upstream sources.
             upstream_nodes = self._find_upstream_nodes(node)
             apply_nodes.update(upstream_nodes)
+
+            # filter_nodes are used to filter the upstream data
+            # Don't need to query the the data from upstream filter nodes
+            apply_nodes.update(node.filter_nodes)
 
         apply_nodes = sorted(apply_nodes, key=lambda x: sort_hash[x])
 
@@ -290,14 +344,14 @@ class Graph:
         args_keys = []
         for relation in arg_relations:
             upstream_node, _, track_data = relation
-            args_keys.append((track_data.key, track_data.value))
+            args_keys.append((track_data.key, track_data.value.key))
 
         args_keys = tuple([key for _, key in sorted(args_keys, key=lambda x: x[0])])
 
         kwargs_keys = {}
         for relation in kwarg_relations:
             upstream_node, _, track_data = relation
-            kwargs_keys[track_data.key] = track_data.value
+            kwargs_keys[track_data.key] = track_data.value.key
 
         key = args_keys, kwargs_keys
         if not kwargs_keys:
@@ -326,7 +380,7 @@ class Graph:
                 assert (
                     root_table == upstream_node.query.table
                 ), "Data node must have the same table as the root node."
-                main_table_keys.append(track_data.value)
+                main_table_keys.append(track_data.value.key)
                 continue
 
             elif upstream_node.type == SuperDuperDataType.MODEL_OUTPUT:
@@ -352,13 +406,32 @@ class Graph:
                         [KEY_BUILDS, KEY_FILES, KEY_BLOBS, "_schema"]
                     )
                 select = self.db[main_table].find({}, {k: 1 for k in main_table_keys})
+
+                if node.filter:
+                    filter = {}
+                    for key, value in node.filter.items():
+                        if value[0] == "ne":
+                            filter[key] = {"$ne": value[1]}
+                        else:
+                            filter[key] = value[1]
+                    select = select.filter(filter)
+
             else:
                 if "id" not in main_table_keys:
                     main_table_keys.insert(0, "id")
                 select = self.db[main_table].select(*main_table_keys)
 
+                # TODO: After nomalize the filter, we can optimize this part
+                if node.filter:
+                    for key, value in node.filter.items():
+                        if value[0] == "ne":
+                            select = select.filter(getattr(select, key) != value[1])
+                        else:
+                            select = select.filter(getattr(select, key) == value[1])
+
             if predict_ids:
                 select = select.outputs(*predict_ids)
+
         return select
 
 
@@ -369,11 +442,11 @@ class TrackData:
     :param value: The value of the track data.
     """
 
-    def __init__(self, key, value):
+    def __init__(self, key, value: SuperDuperData):
         self.key = key
         self.value = value
 
     def __str__(self):
-        return f"{self.key} -> {self.value}"
+        return f"{self.key} -> {self.value.key}"
 
     __repr__ = __str__

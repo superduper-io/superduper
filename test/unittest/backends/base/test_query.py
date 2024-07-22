@@ -189,7 +189,7 @@ def test_builder():
 
 
 multi_query = """something.find().limit(5)
-other_thing.join(query[0]).filter(documents[0])"""
+other_thing.join(query[0]).find_one(documents[0])"""
 
 
 def test_parse_and_dump():

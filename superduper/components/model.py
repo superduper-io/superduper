@@ -980,9 +980,7 @@ class Model(Component, metaclass=ModelMeta):
                     upstream_var = SuperDuperData(
                         upstream_var, type=SuperDuperDataType.CONSTANT
                     )
-            upstream_mapping[upstream_var.source].append(
-                TrackData(index, upstream_var.key)
-            )
+            upstream_mapping[upstream_var.source].append(TrackData(index, upstream_var))
 
         for k, upstream_var in kwargs.items():
             if not isinstance(upstream_var, SuperDuperData):
@@ -990,7 +988,7 @@ class Model(Component, metaclass=ModelMeta):
                     upstream_var, type=SuperDuperDataType.CONSTANT
                 )
 
-            upstream_mapping[upstream_var.source].append(TrackData(k, upstream_var.key))
+            upstream_mapping[upstream_var.source].append(TrackData(k, upstream_var))
 
         for track_result in track_results:
             for upstream_node, track_datas in upstream_mapping.items():

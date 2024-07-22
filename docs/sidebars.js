@@ -38,6 +38,7 @@ const sidebars = {
         'tutorials/rag',
         'tutorials/training',
         'tutorials/custom_serialization',
+        'tutorials/eager_mode',
       ]
     },
     {

@@ -26,7 +26,7 @@ from superduper.components.component import Component, ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
-from superduper.jobs.job import ComponentJob, Job
+from superduper.jobs.job import ComponentJob
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -258,7 +258,7 @@ class _Fittable:
     def fit_in_db_job(
         self,
         db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
+        dependencies: t.Sequence[str] = (),
     ):
         """Model fit job in database.
 
@@ -511,6 +511,12 @@ class Model(Component, metaclass=ModelMeta):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
+    def jobs(self, db):
+        """List jobs ids related to the model."""
+        jobs = db.metadata.show_jobs(self.identifier, 'model') or []
+        job_ids = [job['job_id'] for job in jobs]
+        return job_ids
+
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
@@ -564,7 +570,7 @@ class Model(Component, metaclass=ModelMeta):
         select: t.Optional[Query],
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
+        dependencies: t.Sequence[str] = (),
         in_memory: bool = True,
         overwrite: bool = False,
     ):
@@ -1070,7 +1076,7 @@ class Model(Component, metaclass=ModelMeta):
             results[m.identifier] = m(predictions, targets)
         return results
 
-    def validate_in_db_job(self, db, dependencies: t.Sequence[Job] = ()):
+    def validate_in_db_job(self, db, dependencies: t.Sequence[str] = ()):
         """Perform a validation job.
 
         :param db: DataLayer instance

@@ -237,7 +237,7 @@ class VectorIndex(Component):
     def run_jobs(
         self,
         db: Datalayer,
-        dependencies: t.Sequence['Job'] = (),
+        dependencies: t.Sequence[str] = (),
         ids: t.List = [],
         overwrite: bool = False,
         event_type: str = DBEvent.insert,
@@ -257,6 +257,9 @@ class VectorIndex(Component):
             return []
 
         assert self.indexing_listener.select is not None
+
+        dependencies = {*self.indexing_listener.model.jobs(db), *dependencies}
+
         job = FunctionJob(
             callable=callable,
             args=[],
@@ -266,7 +269,7 @@ class VectorIndex(Component):
                 query=self.indexing_listener.outputs_select.dict().encode(),
             ),
         )
-        job(db=db)
+        job(db=db, dependencies=dependencies)
         return [job]
 
     @override
@@ -274,18 +277,21 @@ class VectorIndex(Component):
         self,
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
+        ids: t.Optional[t.List[t.Any]] = None,
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the vector index.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
+        :param ids: Optional ids to schedule.
         """
         from superduper.base.event import Event
 
         assert self.indexing_listener.select is not None
 
-        ids = db.execute(self.indexing_listener.select.select_ids)
-        ids = [id[self.indexing_listener.select.primary_id] for id in ids]
+        if ids is None:
+            ids = db.execute(self.indexing_listener.select.select_ids)
+            ids = [id[self.indexing_listener.select.primary_id] for id in ids]
         events = [
             Event(
                 type_id=self.type_id,

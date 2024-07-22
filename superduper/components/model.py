@@ -414,12 +414,12 @@ class Mapping:
         args = []
         kwargs = {}
         try:
-            for key in self.mapping[0]:
-                args.append(r[key])
+            for k in self.mapping[0]:
+                args.append(r[k])
             for k, v in self.mapping[1].items():
                 kwargs[v] = r[k]
-        except KeyError as e:
-            raise KeyError(f'Key {e} not found in document {r}, mapping {self.mapping}')
+        except KeyError:
+            raise KeyError(f'Key `{k}` not found in document {r}.')
         args = Document({'_base': args}).unpack()
         kwargs = Document(kwargs).unpack()
 

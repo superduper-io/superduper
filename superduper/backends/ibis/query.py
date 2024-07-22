@@ -374,6 +374,8 @@ class IbisQuery(Query):
         if not find_args[1:]:
             find_args.append({})
 
+        query = self
+        attr = getattr(query, self.primary_id)
         for identifier in predict_ids:
             identifier = (
                 identifier if '_outputs' in identifier else f'_outputs.{identifier}'
@@ -384,11 +386,8 @@ class IbisQuery(Query):
                 # TODO: Check for folds
                 {'_fold': f'fold.{identifier}', 'id': f'id.{identifier}'}
             )
-
-            attr = getattr(self, self.primary_id)
-            other_query = self.join(symbol_table, symbol_table._source == attr)
-            other_query._get_schema()
-            return other_query
+            query = query.join(symbol_table, symbol_table._source == attr)
+        return query
 
     @applies_to('select', 'join')
     def select_ids_of_missing_outputs(self, predict_id: str):

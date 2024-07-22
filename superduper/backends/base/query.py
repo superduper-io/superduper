@@ -176,27 +176,6 @@ class Query(_BaseQuery):
         parts = self.parts[item]
         return type(self)(db=self.db, table=self.table, parts=parts)
 
-    def datas(self, n: int = 100, unpack=True):
-        """Return the data of the query.
-
-        :param n: The number of data to return.
-        :param unpack: Whether to unpack the data.
-        """
-        from superduper.misc.eager import SuperDuperData, SuperDuperDataType
-
-        assert self.db is not None, 'No datalayer (db) provided'
-        query = self
-        if not len(query.parts):
-            query = query.select()
-
-        datas = []
-        for data in query.limit(n).execute():
-            if unpack:
-                data = Document(data.unpack())
-            sdd = SuperDuperData(data, type=SuperDuperDataType.DATA, query=query)
-            datas.append(sdd)
-        return datas
-
     # TODO - not necessary: either `Document.decode(r, db=db)`
     # or `db['table'].select...`
     def set_db(self, db: 'Datalayer'):
@@ -492,14 +471,38 @@ class Query(_BaseQuery):
     def _create_table_if_not_exists(self):
         pass
 
-    def execute(self, db=None, **kwargs):
+    def execute(self, db=None, eager_mode=False, **kwargs):
         """
         Execute the query.
 
         :param db: Datalayer instance.
         """
         self.db = db or self.db
-        return self.db.execute(self, **kwargs)
+        results = self.db.execute(self, **kwargs)
+        if eager_mode and self.type == 'select':
+            results = self._convert_eager_mode_results(results)
+        return results
+
+    def _convert_eager_mode_results(self, results):
+        from superduper.base.cursor import SuperDuperCursor
+        from superduper.misc.eager import SuperDuperData, SuperDuperDataType
+
+        new_results = []
+        query = self
+        if not len(query.parts):
+            query = query.select()
+        if isinstance(results, (SuperDuperCursor, list)):
+            for r in results:
+                r = Document(r.unpack())
+                sdd = SuperDuperData(r, type=SuperDuperDataType.DATA, query=query)
+                new_results.append(sdd)
+
+            return new_results
+
+        elif isinstance(results, dict):
+            return SuperDuperData(results, type=SuperDuperDataType.DATA, query=query)
+
+        raise ValueError(f'Cannot convert {results} to eager mode results')
 
     def do_execute(self, db=None):
         """

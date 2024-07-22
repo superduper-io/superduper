@@ -544,28 +544,44 @@ class MongoQuery(Query):
         output_query.updated_key = predict_id
         return output_query
 
+    def _replace_part(self, part_name, replace_function):
+        parts = copy.deepcopy(self.parts)
+
+        for i, part in enumerate(parts):
+            if part[0] == part_name:
+                parts[i] = replace_function(part)
+                break
+
+        return type(self)(
+            db=self.db,
+            table=self.table,
+            parts=parts,
+        )
+
+    def filter(self, filter):
+        """Return a query that filters the documents.
+
+        :param filter: The filter to apply.
+        """
+
+        def replace_function(part):
+            find_params = part[1]
+            if not find_params:
+                find_params = ({},)
+
+            assert isinstance(find_params[0], dict)
+
+            find_params[0].update(filter)
+            return (part[0], tuple(find_params), part[2])
+
+        return self._replace_part('find', replace_function)
+
 
 class MongoOutputs(MongoQuery):
     """A query class for MongoDB outputs.
 
     Use aggregate to implement the outputs query
     """
-
-    @applies_to('find')
-    def outputs(self, *predict_ids):
-        """Return a query that selects the outputs of the given predict ids.
-
-        :param predict_ids: The ids of the predictions to select.
-        """
-        x = MongoOutputs(
-            db=self.db,
-            table=self.table,
-            parts=[
-                *copy.deepcopy(self.parts),
-                ('outputs', (*predict_ids,), {}),
-            ],
-        )
-        return x
 
     def _get_method_parameters(self, method):
         args, kwargs = (), {}
@@ -579,7 +595,6 @@ class MongoOutputs(MongoQuery):
 
     def _execute(self, parent, method='encode'):
         find_params, _ = self._get_method_parameters('find')
-        filter = {"$match": find_params[0]} if find_params else {}
         project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {"*": 1}
         project['_schema'] = 1
         project['_builds'] = 1
@@ -589,9 +604,20 @@ class MongoOutputs(MongoQuery):
         limit_args, _ = self._get_method_parameters('limit')
         limit = {"$limit": limit_args[0]} if limit_args else None
 
-        predict_ids = self.parts[-1][1]
+        outputs_parts = [p for p in self.parts if p[0] == 'outputs']
+        predict_ids = sum([p[1] for p in outputs_parts], ())
 
         pipeline = []
+        filter_mapping_base, filter_mapping_outptus = self._get_filter_mapping()
+        if filter_mapping_base:
+            pipeline.append({"$match": filter_mapping_base})
+            project.update({k: 1 for k in filter_mapping_base.keys()})
+
+        predict_ids_in_filter = list(filter_mapping_outptus.keys())
+
+        predict_ids = list(set(predict_ids).union(predict_ids_in_filter))
+        # After the join, the complete outputs data can be queried as
+        # _outputs__{predict_id}._outputs.{predict_id} : result.
         for predict_id in predict_ids:
             # MongoMock does not support '.' in 'as', so we replace it with '__'
             key = f'_outputs.{predict_id}'.replace('.', '__')
@@ -606,12 +632,16 @@ class MongoOutputs(MongoQuery):
 
             project[key] = 1
             pipeline.append(lookup)
+
+            if predict_id in filter_mapping_outptus:
+                filter_key, filter_value = list(
+                    filter_mapping_outptus[predict_id].items()
+                )[0]
+                pipeline.append({"$match": {f'{key}.{filter_key}': filter_value}})
+
             pipeline.append(
                 {"$unwind": {"path": f"${key}", "preserveNullAndEmptyArrays": True}}
             )
-
-        if filter:
-            pipeline = [filter] + pipeline
 
         if project:
             pipeline.append({"$project": project})
@@ -625,6 +655,26 @@ class MongoOutputs(MongoQuery):
             id_field='_id',
             process_func=self._postprocess_result,
         )
+
+    def _get_filter_mapping(self):
+        find_params, _ = self._get_method_parameters('find')
+        filter = find_params[0] if find_params else {}
+        if not filter:
+            return {}, {}
+
+        filter_mapping_base = {}
+        filter_mapping_outputs = defaultdict(dict)
+
+        for key, value in filter.items():
+            if '_outputs.' not in key:
+                filter_mapping_base[key] = value
+                continue
+
+            if key.startswith('_outputs.'):
+                predict_id = key.split('.')[1]
+                filter_mapping_outputs[predict_id] = {key: value}
+
+        return filter_mapping_base, filter_mapping_outputs
 
     def _postprocess_result(self, result):
         """Postprocess the result of the query.
@@ -668,6 +718,28 @@ class MongoOutputs(MongoQuery):
         result['_files'] = merge_files
         result['_blobs'] = merge_blobs
         return result
+
+    @property
+    @applies_to('find')
+    def select_ids(self):
+        """Select the ids of the documents."""
+
+        def replace_id(part):
+            find_params = part[1]
+            if not find_params:
+                find_params = ({}, {})
+
+            assert isinstance(find_params[1], dict)
+            find_params = list(find_params)
+            find_params[1]['_id'] = 1
+            return (part[0], tuple(find_params), part[2])
+
+        def replace_outputs(part):
+            return (part[0], (), part[2])
+
+        query = self._replace_part('find', replace_id)
+        query = query._replace_part('outputs', replace_outputs)
+        return query
 
 
 def InsertOne(**kwargs):

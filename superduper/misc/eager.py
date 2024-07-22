@@ -263,8 +263,10 @@ class Graph:
             key=key,
             select=select,
             uuid=predict_id,
+            identifier=predict_id,
             predict_kwargs=predict_kwargs,
         )
+        logging.info(f"Listener: {listener}")
 
         self.db.apply(listener)
         self._apply_cache.add(node.predict_id)
@@ -351,6 +353,8 @@ class Graph:
                     )
                 select = self.db[main_table].find({}, {k: 1 for k in main_table_keys})
             else:
+                if "id" not in main_table_keys:
+                    main_table_keys.insert(0, "id")
                 select = self.db[main_table].select(*main_table_keys)
 
             if predict_ids:

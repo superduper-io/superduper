@@ -10,7 +10,6 @@ except ImportError:
 from test.db_config import DBConfig
 
 from superduper.backends.mongodb.query import MongoQuery
-from superduper.base.document import Document as D
 from superduper.components.dataset import Dataset
 from superduper.ext.transformers.model import (
     TextClassificationPipeline,
@@ -19,18 +18,14 @@ from superduper.ext.transformers.model import (
 
 
 @pytest.fixture
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
 def transformers_model(db):
+    db.cfg.auto_schema = True
     data = [
         {'text': 'dummy text 1', 'label': 1},
         {'text': 'dummy text 2', 'label': 0},
         {'text': 'dummy text 1', 'label': 1},
     ]
-    data = [D(d) for d in data]
-    db.execute(MongoQuery(table='train_documents').insert_many(data))
-
+    db['train_documents'].insert(data).execute()
     model = TextClassificationPipeline(
         identifier='my-sentiment-analysis',
         model_name='distilbert-base-uncased',
@@ -40,6 +35,9 @@ def transformers_model(db):
     yield model
 
 
+@pytest.mark.parametrize(
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
+)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict('this is a test')

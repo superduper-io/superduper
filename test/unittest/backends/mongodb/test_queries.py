@@ -11,9 +11,11 @@ from test.db_config import DBConfig
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.datatype import DataType
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 
-def get_new_data(encoder: DataType, n=10, update=False):
+def get_new_data(n=10, update=False):
     data = []
     for _ in range(n):
         x = torch.randn(32)
@@ -22,9 +24,9 @@ def get_new_data(encoder: DataType, n=10, update=False):
         data.append(
             Document(
                 {
-                    'x': encoder(x),
+                    'x': x,
                     'y': y,
-                    'z': encoder(z),
+                    'z': z,
                     'update': update,
                 }
             )
@@ -48,9 +50,7 @@ def test_delete_many(db):
 def test_replace(db):
     collection = MongoQuery(table='documents')
     r = next(db.execute(collection.find()))
-    x = torch.randn(32)
-    t = db.datatypes['torch-float32[32]']
-    new_x = t(x)
+    new_x = torch.randn(32)
     r['x'] = new_x
     db.execute(
         collection.replace_one(
@@ -60,7 +60,7 @@ def test_replace(db):
     )
 
     new_r = db.execute(collection.find_one({'_id': r['_id']}))
-    assert new_r['x'].x.tolist() == new_x.x.tolist()
+    assert new_r['x'].tolist() == new_x.tolist()
 
 
 @pytest.mark.skipif(True, reason='URI not working')
@@ -99,30 +99,31 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
         bytes_encoding=BytesEncoding.BASE64,
     )
 
-    db.add(my_pil_image)
+    table = Table('documents', schema=Schema('documents', fields={'img': my_pil_image}))
+
+    db.add(table)
 
     if image_url.startswith('file://'):
         image_url = image_url[7:]
 
     collection = MongoQuery(table='documents')
-    to_insert = [Document({'img': my_pil_image(PIL.Image.open(image_url))})]
+    to_insert = [Document({'img': PIL.Image.open(image_url)})]
 
     db.execute(collection.insert_many(to_insert))
 
     r = db.execute(collection.find_one())
-    assert isinstance(r['img'].x, PIL.Image.Image)
+    assert isinstance(r['img'], PIL.Image.Image)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update_many(db):
     collection = MongoQuery(table='documents')
     to_update = torch.randn(32)
-    t = db.datatypes['torch-float32[32]']
-    db.execute(collection.update_many({}, Document({'$set': {'x': t(to_update)}})))
+    db.execute(collection.update_many({}, Document({'$set': {'x': to_update}})))
     cur = db.execute(collection.find())
     r = next(cur)
 
-    assert all(r['x'].x == to_update)
+    assert all(r['x'] == to_update)
 
     # TODO: Need to support Update result in predict_in_db
     # listener = db.load('listener', 'vector-x')
@@ -135,7 +136,7 @@ def test_update_many(db):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_many(db):
     collection = MongoQuery(table='documents')
-    an_update = get_new_data(db.datatypes['torch-float32[32]'], 10, update=True)
+    an_update = get_new_data(10, update=True)
     db.execute(collection.insert_many(an_update))
 
     assert len(list(db.execute(collection.find()))) == 5 + 10
@@ -159,14 +160,12 @@ def test_like(db):
 def test_insert_one(db):
     # MARK: empty Collection + a_single_insert
     collection = MongoQuery(table='documents')
-    a_single_insert = get_new_data(db.datatypes['torch-float32[32]'], 1, update=False)[
-        0
-    ]
+    a_single_insert = get_new_data(1, update=False)[0]
     q = collection.insert_one(a_single_insert)
     out, _ = db.execute(q)
     r = db.execute(collection.find({'_id': out[0]}))
     docs = list(r)
-    assert docs[0]['x'].x.tolist() == a_single_insert['x'].x.tolist()
+    assert docs[0]['x'].tolist() == a_single_insert['x'].tolist()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -199,10 +198,9 @@ def test_replace_one(db):
     collection = MongoQuery(table='documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
-    t = db.datatypes['torch-float32[32]']
     r = db.execute(collection.find_one())
-    r['x'] = t(new_x)
+    r['x'] = new_x
     db.execute(collection.replace_one({'_id': r['_id']}, r))
     doc = db.execute(collection.find_one({'_id': r['_id']}))
-    print(doc['x'].x)
+    print(doc['x'])
     assert doc.unpack()['x'].tolist() == new_x.tolist()

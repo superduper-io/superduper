@@ -27,44 +27,6 @@ def schema(request):
     return schema
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_mongo_without_schema(db):
-    collection_name = "documents"
-    array_tensor = array(dtype="float64", shape=(32,))
-    db.add(array_tensor)
-    data = []
-
-    for id_ in range(5):
-        x = np.random.rand(32)
-        y = int(random.random() > 0.5)
-        z = np.random.randn(32)
-        data.append(
-            Document(
-                {
-                    "id": id_,
-                    "x": array_tensor(x),
-                    "y": y,
-                    "z": array_tensor(z),
-                }
-            )
-        )
-
-    db.execute(
-        MongoQuery(table=collection_name).insert_many(data),
-    )
-    collection = MongoQuery(table=collection_name)
-    r = collection.find_one().do_execute(db)
-    rs = list(collection.find().do_execute(db))
-
-    rs = sorted(rs, key=lambda x: x['id'])
-
-    assert np.array_equal(r['x'].x, data[0]['x'].x)
-    assert np.array_equal(r['z'].x, data[0]['z'].x)
-
-    assert np.array_equal(rs[0]['x'].x, data[0]['x'].x)
-    assert np.array_equal(rs[0]['z'].x, data[0]['z'].x)
-
-
 @pytest.mark.parametrize(
     "db,schema",
     [

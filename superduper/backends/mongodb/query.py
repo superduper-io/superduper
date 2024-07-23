@@ -349,8 +349,14 @@ class MongoQuery(Query):
 
         filter['_id'] = {'$in': ids}
 
+        try:
+            table = self.db.tables[self.table]
+            schema = table.schema
+        except FileNotFoundError:
+            schema = None
+
         trailing_args.insert(
-            0, update.encode() if isinstance(update, Document) else update
+            0, update.encode(schema=schema) if isinstance(update, Document) else update
         )
 
         parent.update_many(filter, *trailing_args, **kwargs)

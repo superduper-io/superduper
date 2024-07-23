@@ -136,7 +136,7 @@ def valid_dataset(db):
     return d
 
 
-def add_random_data_to_sql_db(
+def add_random_data(
     db: Datalayer,
     table_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
@@ -164,34 +164,6 @@ def add_random_data_to_sql_db(
 
         data.append(Document({'id': str(i), 'x': x, 'y': y, 'z': z, '_fold': fold}))
     db[table_name].insert(data).execute()
-
-
-def add_random_data_to_mongo_db(
-    db: Datalayer,
-    collection_name: str = 'documents',
-    number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
-):
-    data = []
-
-    float_tensor = tensor(dtype='float', shape=(32,))
-    for i in range(number_data_points):
-        x = torch.randn(32)
-        y = int(random.random() > 0.5)
-        z = torch.randn(32)
-        data.append(
-            Document(
-                {
-                    'x': float_tensor(x),
-                    'y': y,
-                    'z': float_tensor(z),
-                }
-            )
-        )
-
-    db.execute(
-        MongoQuery(table=collection_name).insert_many(data),
-        refresh=False,
-    )
 
 
 def add_datatypes(db: Datalayer):
@@ -266,11 +238,8 @@ def create_db(CFG, **kwargs):
 
     # prepare data
     n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
+    add_random_data(db, number_data_points=n_data)
     is_mongodb_backend = isinstance(db.databackend.type, MongoDataBackend)
-    if is_mongodb_backend:
-        add_random_data_to_mongo_db(db, number_data_points=n_data)
-    else:
-        add_random_data_to_sql_db(db, number_data_points=n_data)
 
     # prepare models
     if kwargs.get('add_models', True):

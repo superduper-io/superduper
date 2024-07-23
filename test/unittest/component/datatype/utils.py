@@ -19,15 +19,17 @@ from superduper.components.table import Table
 
 
 def assert_equal(expect, actual):
+    if isinstance(actual, _BaseEncodable) and actual.lazy:
+        actual.init()
+        actual = actual.x
+
+    if isinstance(expect, _BaseEncodable) and expect.lazy:
+        expect.init()
+        expect = expect.x
+
     assert isinstance(expect, type(actual))
     if isinstance(expect, np.ndarray):
         assert np.array_equal(expect, actual)
-    elif isinstance(expect, _BaseEncodable):
-        if actual.lazy:
-            isinstance(actual.x, Empty)
-            actual.init()
-        expect = expect.x
-        actual = actual.x
 
     if isinstance(expect, str) and os.path.exists(expect):
         assert isinstance(actual, str) and os.path.exists(actual)
@@ -131,7 +133,14 @@ def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
     print("datatype", datatype)
     print("\n", "-" * 80, "\n")
 
-    document = Document({"x": datatype(data), "y": 1})
+    table = Table(
+        "documents",
+        schema=Schema(identifier="schema", fields={"x": datatype, "y": int}),
+    )
+
+    db.apply(table)
+
+    document = Document({"x": data, "y": 1})
     print(document)
     print("\n", "-" * 80, "\n")
     db["documents"].insert([document]).execute()

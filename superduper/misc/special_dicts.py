@@ -11,7 +11,6 @@ from rich.text import Text
 from rich.tree import Tree
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.base.leaf import Leaf
 from superduper.base.variables import _find_variables
 
 if t.TYPE_CHECKING:
@@ -55,21 +54,6 @@ class IndexableDict(OrderedDict):
             self[self._keys[index]] = value
         except IndexError:
             raise IndexError(f"Index {index} is out of range.")
-
-
-def _handle_list(lst):
-    handled_list = []
-    for item in lst:
-        if isinstance(item, Leaf):
-            if len(str(item)) > 50:
-                handled_list.append(str(item)[:50] + "...")
-            else:
-                handled_list.append(str(item))
-        elif isinstance(item, list):
-            handled_list.append(_handle_list(item))
-        else:
-            handled_list.append(str(item))
-    return handled_list
 
 
 def _highlight_references(yaml_str, pattern=r'(\?[\w/<>:.-]+|\&[\w/<>:.-]+)'):
@@ -420,7 +404,23 @@ def _component_metadata(obj):
 
 
 def _display_component(obj, verbosity=1):
+    from superduper.base.leaf import Leaf
+
     console = Console()
+
+    def _handle_list(lst):
+        handled_list = []
+        for item in lst:
+            if isinstance(item, Leaf):
+                if len(str(item)) > 50:
+                    handled_list.append(str(item)[:50] + "...")
+                else:
+                    handled_list.append(str(item))
+            elif isinstance(item, list):
+                handled_list.append(_handle_list(item))
+            else:
+                handled_list.append(str(item))
+        return handled_list
 
     def _component_info(obj):
         base_component = []

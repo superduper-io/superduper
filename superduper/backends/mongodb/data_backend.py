@@ -208,29 +208,3 @@ class MongoDataBackend(BaseDataBackend):
         :param identifier: The identifier for the table
         :param mapping: The mapping for the schema
         """
-
-    def auto_create_table_schema(self, db, table_name, documents):
-        """Auto create table schema.
-
-        For MongoDB, this will infer the schema and apply it to the documents.
-        We use inlined schema for MongoDB because it is schema-less.
-
-        :param db: The datalayer instanace
-        :param table_name: The table name
-        :param documents: The documents
-        """
-        try:
-            table = db.tables[table_name]
-            return table
-        except FileNotFoundError:
-            logging.info(f"Table {table_name} does not exist, auto creating...")
-        schema_dict = {}
-        for document in documents:
-            if document.schema is not None:
-                continue
-            schema = self.infer_schema(document)
-            if schema.fields:
-                schema_dict[schema.identifier] = schema
-                document.schema = schema
-        for component in schema_dict.values():
-            db.apply(component)

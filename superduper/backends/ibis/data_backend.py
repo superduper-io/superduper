@@ -8,7 +8,6 @@ import pandas
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
-from superduper import logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.ibis.db_helper import get_db_helper
@@ -242,28 +241,3 @@ class IbisDataBackend(BaseDataBackend):
         from superduper.misc.auto_schema import infer_schema
 
         return infer_schema(data, identifier=identifier, ibis=True)
-
-    def auto_create_table_schema(self, db, table_name, documents):
-        """Auto create table schema.
-
-        For Ibis, we need to create the table schema before inserting the data.
-        The function will infer the schema from the first document and create the table
-        if the table does not exist.
-
-        :param db: The datalayer instanace
-        :param table_name: The table name
-        :param documents: The documents
-        """
-        try:
-            table = db.tables[table_name]
-            return table
-        except FileNotFoundError:
-            logging.info(f"Table {table_name} does not exist, auto creating...")
-        # Should we need to check all the documents?
-        document = documents[0]
-        schema = document.schema or self.infer_schema(document)
-        table = Table(identifier=table_name, schema=schema)
-        if table.primary_id not in schema.fields:
-            table.schema.fields[table.primary_id] = dtype('str')
-        logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
-        db.apply(table)

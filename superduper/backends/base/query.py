@@ -310,10 +310,49 @@ class Query(_BaseQuery):
         return self._get_flavour()
 
     @property
-    @abstractmethod
-    def documents(self) -> t.List[Document]:
-        """Return the documents of the query."""
-        pass
+    def documents(self):
+        """Return the documents."""
+
+        def _wrap_document(document):
+            if not isinstance(document, Document):
+                if isinstance(document, dict):
+                    document = Document(document)
+                else:
+                    try:
+                        table = self.db.tables[self.table]
+                    except FileNotFoundError:
+                        raise FileNotFoundError(
+                            "Table not found. Please provide a document or a dictionary"
+                        )
+                    field = [
+                        k
+                        for k in table.schema.fields
+                        if k not in [self.primary_id, '_fold', '_outputs']
+                    ]
+                    assert len(field) == 1
+                    document = Document({field[0]: document})
+            return document
+
+        def _update_part(documents):
+            nonlocal self
+            doc_args = (documents, *self.parts[0][1][1:])
+            insert_part = (self.parts[0][0], doc_args, self.parts[0][2])
+            return [insert_part] + self.parts[1:]
+
+        documents = self.parts[0][1][0]
+        one_document = isinstance(documents, (dict, Document))
+        if one_document:
+            documents = [documents]
+        wrapped_documents = []
+        for document in documents:
+            document = _wrap_document(document)
+            wrapped_documents.append(document)
+
+        if one_document:
+            self.parts = _update_part(wrapped_documents[0])
+        else:
+            self.parts = _update_part(wrapped_documents)
+        return wrapped_documents
 
     @property
     @abstractmethod

@@ -6,7 +6,6 @@ import pytest
 from superduper.backends.ibis.field_types import dtype
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
-from superduper.base.enums import DBType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 
@@ -326,15 +325,9 @@ def test_insert_with_diff_schemas(db):
     datas = [Document(data)]
 
     # Do not support different schema in SQL
-    if db.databackend.db_type == DBType.SQL:
-        with pytest.raises(Exception):
-            table_or_collection.insert(datas).execute()
-    # Mongo can support different schema
-    else:
+    with pytest.raises(Exception):
         table_or_collection.insert(datas).execute()
-        datas_from_db = list(table_or_collection.select().execute())
-
-        assert datas[0]['img'].size == datas_from_db[-1]['img'].size
+    # Mongo can support different schema
 
 
 @pytest.mark.parametrize(
@@ -350,10 +343,7 @@ def test_auto_document_wrapping(db):
     table_or_collection.insert(datas).execute()
 
     def _check(n):
-        if db.databackend.db_type == DBType.SQL:
-            c = list(table_or_collection.select('x').execute())
-        else:
-            c = list(table_or_collection.find().execute())
+        c = list(table_or_collection.select().execute())
         assert len(c) == n
         return c
 
@@ -370,12 +360,8 @@ def test_auto_document_wrapping(db):
     gt = np.zeros((1))
 
     # Auto wrapped _base
-    if db.databackend.db_type == DBType.SQL:
-        assert 'x' in c[-1]
-        assert c[-1].unpack() == {'x': gt}
-    else:
-        assert '_base' in c[-1]
-        assert c[-1].unpack() == gt
+    assert 'x' in c[-1]
+    assert c[-1].unpack()['x'] == gt
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)

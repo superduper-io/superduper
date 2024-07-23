@@ -110,35 +110,7 @@ class IbisQuery(Query):
     @applies_to('insert')
     def documents(self):
         """Return the documents."""
-
-        def _wrap_document(document):
-            if not isinstance(document, Document):
-                if isinstance(document, dict):
-                    document = Document(document)
-                else:
-                    schema = self.db[self.table]._get_schema()
-                    field = [
-                        k
-                        for k in schema.fields
-                        if k not in [self.primary_id, '_fold', '_outputs']
-                    ]
-                    assert len(field) == 1
-                    document = Document({field[0]: document})
-            return document
-
-        def _update_part(documents):
-            nonlocal self
-            doc_args = (documents, *self.parts[0][1][1:])
-            insert_part = (self.parts[0][0], doc_args, self.parts[0][2])
-            return [insert_part] + self.parts[1:]
-
-        documents = self.parts[0][1][0]
-        wrapped_documents = []
-        for document in documents:
-            document = _wrap_document(document)
-            wrapped_documents.append(document)
-        self.parts = _update_part(wrapped_documents)
-        return wrapped_documents
+        return super().documents
 
     def _get_tables(self):
         out = {self.table: self.db.tables[self.table]}

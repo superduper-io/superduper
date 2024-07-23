@@ -131,15 +131,6 @@ class BaseDataBackend(ABC):
         :return: The inferred schema
         """
 
-    @abstractmethod
-    def auto_create_table_schema(self, db, table_name, documents):
-        """Auto create table schema.
-
-        :param db: The datalayer instanace
-        :param table_name: The table name
-        :param documents: The documents
-        """
-
 
 class DataBackendProxy:
     """

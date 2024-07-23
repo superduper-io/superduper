@@ -420,8 +420,6 @@ def _component_metadata(obj):
 
 
 def _display_component(obj, verbosity=1):
-    from superduper.base.leaf import Leaf
-
     console = Console()
 
     def _component_info(obj):

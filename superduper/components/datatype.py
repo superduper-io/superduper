@@ -570,7 +570,7 @@ class Artifact(_BaseEncodable):
         if isinstance(self._blob, bytes):
             blob = self._blob
             self.datatype.init()
-            self.x = self.datatype.decoder(blob)
+            self.x = self.datatype.decoder(blob, info=None)
             self._blob = None
 
         if not isinstance(self.x, Empty):

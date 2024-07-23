@@ -17,7 +17,7 @@ except ImportError:
 
 import dataclasses as dc
 from test.db_config import DBConfig
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from superduper.backends.ibis.field_types import dtype
 from superduper.backends.mongodb.data_backend import MongoDataBackend
@@ -689,22 +689,24 @@ def test_dataset(db):
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.mongodb_data, {'n_data': 6}),
-    ],
-    indirect=True,
-)
+@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_retry_on_token_expiry(db):
     # Mock the methods
-    db.cfg.auto_schema = True
-    db.databackend.reconnect = MagicMock()
-    db.databackend.auto_create_table_schema = MagicMock(
-        side_effect=[Exception("The connection token has been expired already"), None]
-    )
+    db.retry = 1
 
-    # Perform the insert operation
-    db.execute(MongoQuery(table='documents').insert([{'x': 1}]))
+    def test_retry():
+        if db.retry == 1:
+            db.retry = 0
+            raise Exception("The connection token has been expired already")
+        else:
+            return True
 
-    assert db.databackend.reconnect.call_count == 1
+    db.databackend._backend.test_retry = test_retry
+
+    with patch.object(db.databackend._backend, 'reconnect') as reconnect:
+        with patch.object(
+            db.databackend._backend, 'test_retry', side_effect=test_retry
+        ) as mock_test_retry:
+            db.databackend.test_retry()
+            assert reconnect.call_count == 1
+            assert mock_test_retry.call_count == 2

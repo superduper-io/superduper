@@ -1,6 +1,5 @@
 import typing as t
 
-from superduper.backends.ibis.field_types import dtype
 from superduper.components.component import Component
 from superduper.components.schema import Schema, _Native
 
@@ -27,6 +26,8 @@ class Table(Component):
         super().__post_init__(db, artifacts)
         fields = {}
         if '_fold' not in self.schema.fields:
+            from superduper.backends.ibis.field_types import dtype
+
             fields.update({'_fold': dtype('str')})
 
         for k, v in self.schema.fields.items():

@@ -29,6 +29,7 @@ from .components.model import (
 )
 from .components.plugin import Plugin
 from .components.schema import Schema
+from .components.table import Table
 from .components.template import Template
 from .components.vector_index import VectorIndex, vector
 from .misc.annotations import requires_packages
@@ -59,6 +60,7 @@ __all__ = (
     'Metric',
     'Plugin',
     'Schema',
+    'Table',
     'Application',
     'mongodb',
     'ibis',

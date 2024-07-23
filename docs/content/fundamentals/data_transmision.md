@@ -41,18 +41,22 @@ image = PIL.Image.open('my_image.jpg')
 
 my_image_encoder = DataType(
     identifier='my-pil',
-    encoder=lambda x: pickle.dumps(x),
-    decoder=lambda x: pickle.loads(x),
+    encoder=lambda x, info: pickle.dumps(x),
+    decoder=lambda x, info: pickle.loads(x),
 )
-
-document = Document({'img': my_image_encoder(image)})
 ```
 
-The bare-bones dictionary may be exposed with `.unpack()`:
+When all data is inserted into the database, each piece of data is encoded using the corresponding datatype. 
+```
+>> encoded_data = my_image_encoder.encode_data(image)
+>> encoded_data
+b'\x80\x04\x95[\x00\x00\x00\x00\x00\x00\x00\x8c\x12PIL.PngImagePlugin\x94\x8c\x0cPngImageFile\x94\x93\x94)\x81\x94]\x94(}\x94\x8c\x0ctransparency\x94K\x00s\x8c\x01P\x94K\x01K\x01\x86\x94]\x94(K\x00K\x00K\x00eC\x01\x00\x94eb.'
+```
 
+When the data is retrieved from the database, it is decoded accordingly.
 ```python
->>> document.unpack()
-{'img': <PIL.PngImagePlugin.PngImageFile image mode=P size=400x300>}
+>>> my_image_encoder.decode_data(encoded_data)
+<PIL.PngImagePlugin.PngImageFile image mode=P size=1x1>
 ```
 
 By default, data encoded with `DataType` is saved in the database, but developers 
@@ -63,16 +67,12 @@ This may be achiever by specifying the `encodable=...` parameter:
 ```python
 my_image_encoder = DataType(
     identifier='my-pil',
-    encoder=lambda x: pickle.dumps(x),
-    decoder=lambda x: pickle.loads(x),
+    encoder=lambda x, info: pickle.dumps(x),
+    decoder=lambda x, info: pickle.loads(x),
     encodable='artifact',    # saves to disk/ db.artifact_store
     # encodable='lazy_artifact', # Just in time loading
 )
 ```
-
-The `encodable` specifies the type of the output of the `__call__` method, 
-which will be a subclass of `superduper.components.datatype._BaseEncodable`.
-These encodables become leaves in the tree defines by a `Document`.
 
 ### `Schema`
 
@@ -86,5 +86,24 @@ Here is an example `Schema`, which is used together with text and image
 fields:
 
 ```python
-s = Schema('my-schema', fields={'my-text': 'str', 'my-image': my_image_encoder})
+schema = Schema('my-schema', fields={'my-text': 'str', 'my-img': my_image_encoder})
 ```
+
+All data is encoded using the schema when saved, and decoded using the schema when queried.
+
+```python
+>>> saved_data = Document({'my-img': image}).encode(schema)
+>>> saved_data
+{'my-img': b'\x80\x04\x95[\x00\x00\x00\x00\x00\x00\x00\x8c\x12PIL.PngImagePlugin\x94\x8c\x0cPngImageFile\x94\x93\x94)\x81\x94]\x94(}\x94\x8c\x0ctransparency\x94K\x00s\x8c\x01P\x94K\x01K\x01\x86\x94]\x94(K\x00K\x00K\x00eC\x01\x00\x94eb.',
+ '_schema': 'my-schema',
+ '_builds': {},
+ '_files': {},
+ '_blobs': {}}
+```
+
+```python
+>>> Document.decode(saved_data, schema=schema).unpack()
+{'my-img': <PIL.PngImagePlugin.PngImageFile image mode=P size=1x1>}
+```
+
+

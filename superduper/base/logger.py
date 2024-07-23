@@ -45,14 +45,6 @@ class Logging:
             "| <level>{message}</level>"
         )
 
-        # fmt = (
-        #     "{time:YYYY-MMM-DD HH:mm:ss.SS}"
-        #     "| {level: <8} "
-        #     "| {extra[hostname]: <8}"
-        #     "| {name}:{line: <4} "
-        #     "| {message}"
-        # )
-
         # DEBUG until WARNING are sent to stdout.
         logger.add(
             lambda msg: tqdm.write(msg, end=""),
@@ -60,7 +52,6 @@ class Logging:
             level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
             colorize=True,
-            # colorize=False,
         )
 
         # ERROR and above sent to stderr
@@ -70,7 +61,6 @@ class Logging:
             format=fmt,
             level=LogLevel.ERROR,
             colorize=True,
-            # colorize=False,
         )
 
     # Set Multi-Key loggers

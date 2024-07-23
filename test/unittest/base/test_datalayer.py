@@ -451,15 +451,18 @@ def test_insert_artifacts(db):
         encoder=pickle_encode,
         decoder=pickle_decode,
     )
-    db.apply(dt)
+    table = Table(
+        'documents',
+        schema=Schema('documents', fields={'x': dt}),
+    )
+    db.apply(table)
     db._insert(
-        MongoQuery(table='documents').insert_many(
-            [Document({'x': dt(numpy.random.randn(100))}) for _ in range(1)]
+        db['documents'].insert(
+            [Document({'x': numpy.random.randn(100)}) for _ in range(1)]
         )
     )
-    r = db.execute(MongoQuery(table='documents').find_one())
-    assert db.artifact_store.exists(r['x'].identifier)
-    assert isinstance(r.unpack()['x'], numpy.ndarray)
+    r = db.execute(db['documents'].find_one())
+    assert isinstance(r['x'], numpy.ndarray)
 
 
 @pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)

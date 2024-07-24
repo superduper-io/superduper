@@ -79,18 +79,25 @@ class Listener(Component):
         :param db: Data layer instance.
         """
         self.create_output_dest(db, self.uuid, self.model)
-        if self.select is not None and not db.server_mode:
+        if self.select is not None:  # and not db.server_mode:
             logging.info('Requesting listener setup on CDC service')
             if CFG.cluster.cdc.uri:
+                logging.info('Sending request to add listener')
                 request_server(
                     service='cdc',
                     endpoint='listener/add',
                     args={'name': self.identifier},
                     type='get',
                 )
+            else:
+                logging.info(
+                    'Skipping listener setup on CDC service since no URI is set'
+                )
         else:
-            logging.info('Skipping listener setup on CDC service'
-                         f' since select is {self.select} or server mode is {db.server_mode}')
+            logging.info(
+                'Skipping listener setup on CDC service'
+                f' since select is {self.select} or server mode is {db.server_mode}'
+            )
         db.compute.queue.declare_component(self)
 
     @classmethod

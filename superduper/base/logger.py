@@ -37,13 +37,8 @@ class Logging:
             }
         )
 
-        fmt = (
-            "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
-            "| <level>{level: <8}</level> "
-            "| <cyan>{extra[hostname]: <8}</cyan>"
-            "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
-            "| <level>{message}</level>"
-        )
+        fmt = CFG.log_config.get_format()
+        use_colors = CFG.log_config.should_use_colors()
 
         # DEBUG until WARNING are sent to stdout.
         logger.add(
@@ -51,7 +46,7 @@ class Logging:
             format=fmt,
             level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
-            colorize=True,
+            colorize=use_colors,
         )
 
         # ERROR and above sent to stderr
@@ -60,7 +55,7 @@ class Logging:
             stderr,
             format=fmt,
             level=LogLevel.ERROR,
-            colorize=True,
+            colorize=use_colors,
         )
 
     # Set Multi-Key loggers

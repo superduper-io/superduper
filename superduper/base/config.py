@@ -325,6 +325,7 @@ class Config(BaseConfig):
     :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
+    :param log_config: The configuration for logging
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None

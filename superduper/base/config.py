@@ -276,6 +276,7 @@ class LogConfig(BaseConfig):
 
     :param default_format: The default log format
     :param ray_format: The log format for Ray deployments
+    :param use_colors: Whether to use colors in the log output
     """
 
     default_format: str = (

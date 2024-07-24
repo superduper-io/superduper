@@ -271,6 +271,42 @@ class Downloads(BaseConfig):
 
 
 @dc.dataclass
+class LogConfig(BaseConfig):
+    """Describes the configuration for logging.
+
+    :param default_format: The default log format
+    :param ray_format: The log format for Ray deployments
+    """
+
+    default_format: str = (
+        "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
+        "| <level>{level: <8}</level> "
+        "| <cyan>{extra[hostname]: <8}</cyan>"
+        "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
+        "| <level>{message}</level>"
+    )
+    ray_format: str = (
+        "{time:YYYY-MMM-DD HH:mm:ss.SS}"
+        "| {level: <8} "
+        "| {name}:{line: <4} "
+        "| {message}"
+    )
+    use_colors: bool = True
+
+    def get_format(self):
+        """Retrieve the current format configuration."""
+        return (
+            self.ray_format
+            if os.environ.get("RAY_DEPLOYMENT") == "1"
+            else self.default_format
+        )
+
+    def should_use_colors(self):
+        """Determine whether to use color output."""
+        return self.use_colors and os.environ.get("RAY_DEPLOYMENT") != "1"
+
+
+@dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
@@ -302,6 +338,7 @@ class Config(BaseConfig):
     cluster: Cluster = dc.field(default_factory=Cluster)
     retries: Retry = dc.field(default_factory=Retry)
     downloads: Downloads = dc.field(default_factory=Downloads)
+    log_config: LogConfig = dc.field(default_factory=LogConfig)
 
     fold_probability: float = 0.05
 

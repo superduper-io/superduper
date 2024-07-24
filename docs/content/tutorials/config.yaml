@@ -20,6 +20,7 @@ fold_probability: 0.05
 lance_home: .superduper/vector_indices
 log_level: INFO
 logging_type: SYSTEM
+RAY_DEPLOYMENT: 1
 metadata_store: null
 retries:
   stop_after_attempt: 2

@@ -1,11 +1,11 @@
 from test.utils.database import metadata as metadata_utils
 
 import pytest
+from superduper_mongodb.metadata import MongoMetaDataStore
 
 from superduper import CFG
-from superduper.backends.mongodb.metadata import MongoMetaDataStore
 
-DATABASE_URL = CFG.metadata_store or "mongomock://test_db"
+DATABASE_URL = CFG.metadata_stort or "mongomock://test_db"
 
 
 @pytest.fixture

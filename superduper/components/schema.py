@@ -11,7 +11,7 @@ from superduper.misc.special_dicts import SuperDuperFlatEncode
 SCHEMA_KEY = '_schema'
 
 
-class _Native:
+class _Native(Component):
     _TYPES = {str: 'str', int: 'int', float: 'float'}
 
     def __init__(self, x):

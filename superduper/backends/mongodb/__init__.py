@@ -1,3 +1,1 @@
-from .query import MongoQuery
-
-__all__ = ['MongoQuery']
+from superduper_mongodb import * # noqa

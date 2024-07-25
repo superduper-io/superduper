@@ -23,10 +23,12 @@ class ArtifactStore(ABC):
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
     ):
         self.name = name
         self.conn = conn
         self._serializers = None
+        self.flavour = flavour
 
     @property
     def serializers(self):

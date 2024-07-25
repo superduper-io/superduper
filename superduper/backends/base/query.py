@@ -376,7 +376,7 @@ class Query(_BaseQuery):
         backend = self.__module__.split('.')[-2]
         return Document(
             {
-                '_path': f'superduper.backends.{backend}.query.parse_query',
+                '_path': f'{backend}.query.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,
@@ -818,7 +818,7 @@ class Model(_BaseQuery):
         backend = self.__module__.split('.')[-2]
         return Document(
             {
-                '_path': f'superduper.backends.{backend}.query.parse_query',
+                '_path': f'{backend}.query.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,

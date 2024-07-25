@@ -59,6 +59,36 @@ install_devkit: ## Add essential development tools
 	@echo "Download Code Testing dependencies"
 	python -m pip install pytest pytest-cov "nbval>=0.10.0"
 
+install_plugin:
+	@if [ "$(filter-out $@,$(MAKECMDGOALS))" = "all" ]; then \
+		$(MAKE) install_all_plugins; \
+	else \
+		echo "Error: Cannot find plugin '$(filter-out $@,$(MAKECMDGOALS))'"; \
+	fi
+
+install_named_plugin:
+	@if [ -f "plugins/$(PLUGIN)/pyproject.toml" ]; then \
+		python -m pip install -e "plugins/$(PLUGIN)"; \
+	else \
+		echo "Error: Plugin '$(PLUGIN)' not found."; \
+	fi
+
+install_all_plugins:
+	@plugins=""; \
+	for plugin in $$(ls plugins); do \
+		if [ "$$plugin" != "template" -a -d "plugins/$$plugin" -a -f "plugins/$$plugin/pyproject.toml" ]; then \
+			plugins="$$plugins $$plugin"; \
+		fi \
+	done; \
+	echo "Found plugins:$$plugins"; \
+	for plugin in $$plugins; do \
+		echo "Installing $$plugin..."; \
+		python -m pip install -e "plugins/$$plugin"; \
+	done
+%:
+	@:
+
+
 
 ##@ Code Quality
 

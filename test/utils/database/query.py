@@ -141,31 +141,6 @@ def test_like(db):
     assert [r["x"] for r in results] == [47, 49, 51, 53]
 
 
-def test_serialize_with_image():
-    import PIL.Image
-
-    from superduper.backends.base.query import Query
-    from superduper.ext.pillow import pil_image
-
-    img = PIL.Image.open("test/material/data/test.png")
-    img = img.resize((2, 2))
-
-    r = Document({"img": pil_image(img)})
-
-    q = Query(table="test_coll").like(r).find()
-    print(q)
-
-    s = q.encode()
-
-    import pprint
-
-    pprint.pprint(s)
-
-    decode_q = Document.decode(s).unpack()
-
-    print(decode_q)
-
-
 def test_insert_with_auto_schema(db):
     db.cfg.auto_schema = True
     import numpy as np
@@ -250,23 +225,22 @@ def test_model(db):
     from test.utils.setup.fake_data import add_models
 
     add_models(db)
-    import torch
+    t = np.random.rand(32)
 
     m = db.load("model", "linear_a")
 
-    m.predict(torch.randn(32))
+    out = m.predict(t)
+    assert isinstance(out, np.ndarray)
 
     from superduper.backends.base.query import Model
 
-    t = torch.randn(32)
-
-    m.predict(t)
+    out = m.predict(t)
+    assert isinstance(out, np.ndarray)
 
     q = Model(table="linear_a").predict(t)
 
     out = db.execute(q).unpack()
-
-    assert isinstance(out, torch.Tensor)
+    assert isinstance(out, np.ndarray)
 
 
 def test_model_query():

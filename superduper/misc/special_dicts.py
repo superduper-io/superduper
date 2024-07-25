@@ -408,15 +408,17 @@ def _display_component(obj, verbosity=1):
 
     console = Console()
 
+    MAX_STR_LENGTH = 50
+
     def _handle_list(lst):
         handled_list = []
         for item in lst:
             if isinstance(item, Leaf):
-                if len(str(item)) > 50:
-                    handled_list.append(str(item)[:50] + "...")
+                if len(str(item)) > MAX_STR_LENGTH:
+                    handled_list.append(str(item)[:MAX_STR_LENGTH] + "...")
                 else:
                     handled_list.append(str(item))
-            elif isinstance(item, list):
+            elif isinstance(item, (list, tuple)):
                 handled_list.append(_handle_list(item))
             else:
                 handled_list.append(str(item))
@@ -428,11 +430,11 @@ def _display_component(obj, verbosity=1):
             if value is None:
                 continue
             if isinstance(value, Leaf):
-                if len(str(value)) > 50:
-                    value = str(value)[:50] + "..."
+                if len(str(value)) > MAX_STR_LENGTH:
+                    value = str(value)[:MAX_STR_LENGTH] + "..."
                 else:
                     value = str(value)
-            elif isinstance(value, list):
+            elif isinstance(value, (tuple, list)):
                 value = _handle_list(value)
             base_component.append(f"[magenta]{key}[/magenta]: [blue]{value}[/blue]")
 

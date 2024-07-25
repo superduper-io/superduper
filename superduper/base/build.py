@@ -1,4 +1,3 @@
-import importlib
 import re
 import typing as t
 
@@ -6,158 +5,97 @@ from prettytable import PrettyTable
 
 import superduper as s
 from superduper import logging
-from superduper.backends.base.backends import data_backends, metadata_stores
-from superduper.backends.base.data_backend import BaseDataBackend, DataBackendProxy
+from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.backends.base.metadata import MetaDataStoreProxy
-from superduper.backends.local.artifacts import FileSystemArtifactStore
-from superduper.backends.mongodb.artifacts import MongoArtifactStore
+from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
+from superduper.misc.plugins import load_plugin
 
 
-def _get_metadata_store(cfg):
-    # try to connect to the metadata store specified in the configuration.
-    logging.info("Connecting to Metadata Client:", cfg.metadata_store)
-    return _build_databackend_impl(cfg.metadata_store, metadata_stores, type='metadata')
+class _Loader:
+    not_supported = []
+
+    @classmethod
+    def create(cls, uri):
+        """Helper method to create metadata backend."""
+        for pattern in cls.patterns:
+            if re.match(pattern, uri) is not None:
+                plugin, flavour = cls.patterns[pattern]
+                if cls.not_supported and (plugin, flavour) in cls.not_supported:
+                    raise ValueError(
+                        f"{plugin} with flavour {flavour} not supported "
+                        "to create metadata store."
+                    )
+                impl = getattr(load_plugin(plugin), cls.impl)
+                return impl(uri, flavour=flavour)
+        raise ValueError(f"{cls.__name__} No support for uri: {uri}")
 
 
-def _build_metadata(cfg, databackend: t.Optional['BaseDataBackend'] = None):
-    # Connect to metadata store.
-    # ------------------------------
-    # 1. try to connect to the metadata store specified in the configuration.
-    # 2. if that fails, try to connect to the data backend engine.
-    # 3. if that fails, try to connect to the data backend uri.
-    if cfg.metadata_store is not None:
-        return _get_metadata_store(cfg)
-    else:
-        try:
-            # try to connect to the data backend engine.
-            assert isinstance(databackend, DataBackendProxy)
-            logging.info(
-                "Connecting to Metadata Client with engine: ", databackend.conn
-            )
-            return databackend.build_metadata()
-        except Exception as e:
-            logging.warn("Error building metadata from DataBackend:", str(e))
-            metadata = None
-
-    if metadata is None:
-        # try to connect to the data backend uri.
-        logging.info("Connecting to Metadata Client with URI: ", cfg.data_backend)
-        return _build_databackend_impl(
-            cfg.data_backend, metadata_stores, type='metadata'
-        )
-
-
-def _build_databackend(cfg, databackend=None):
-    # Connect to data backend.
-    # ------------------------------
-    if not databackend:
-        databackend = _build_databackend_impl(cfg.data_backend, data_backends)
-    logging.info("Data Client is ready.", databackend.conn)
-    return databackend
-
-
-def _build_artifact_store(
-    artifact_store: t.Optional[str] = None,
-    databackend: t.Optional['BaseDataBackend'] = None,
-):
-    if not artifact_store:
-        assert isinstance(databackend, DataBackendProxy)
-        return databackend.build_artifact_store()
-
-    if artifact_store.startswith('mongodb://'):
-        import pymongo
-
-        conn: pymongo.MongoClient = pymongo.MongoClient(
-            '/'.join(artifact_store.split('/')[:-1])
-        )
-        name = artifact_store.split('/')[-1]
-        return MongoArtifactStore(conn, name)
-    elif artifact_store.startswith('filesystem://'):
-        directory = artifact_store.split('://')[1]
-        return FileSystemArtifactStore(directory)
-    else:
-        raise ValueError(f'Unknown artifact store: {artifact_store}')
-
-
-class _MetaDataMatcher:
+class _MetaDataLoader(_Loader):
+    impl = 'MetaDataStore'
     patterns = {
         r'^mongodb:\/\/': ('mongodb', 'mongodb'),
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
+        r'^sqlite:\/\/': ('sqlalchemy', 'base'),
+        r'^postgres:\/\/': ('sqlalchemy', 'base'),
+        r'^snowflake:\/\/': ('sqlalchemy', 'base'),
+        r'^duckdb:\/\/': ('sqlalchemy', 'base'),
+        r'^mssql:\/\/': ('sqlalchemy', 'base'),
+        r'^mysql:\/\/': ('sqlalchemy', 'base'),
     }
-    not_supported = [('sqlalchemy', 'pandas')]
-
-    @classmethod
-    def create(cls, uri, mapping: t.Dict):
-        """Helper method to create metadata backend."""
-        backend = 'sqlalchemy'
-        flavour = 'base'
-        for pattern in cls.patterns:
-            if re.match(pattern, uri) is not None:
-                backend, flavour = cls.patterns[pattern]
-                if (backend, flavour) in cls.not_supported:
-                    raise ValueError(
-                        f"{backend} with flavour {flavour} not supported "
-                        "to create metadata store."
-                    )
-                return mapping[backend](uri, flavour=flavour)
-
-        return mapping[backend](uri)
 
 
-class _DataBackendMatcher(_MetaDataMatcher):
-    patterns = {**_MetaDataMatcher.patterns, r'.*\.csv$': ('ibis', 'pandas')}
+class _DataBackendLoader(_Loader):
+    impl = 'DataBackend'
+    patterns = {
+        r'^mongodb:\/\/': ('mongodb', 'mongodb'),
+        r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
+        r'^mongomock:\/\/': ('mongodb', 'mongomock'),
+        r'^sqlite://': ('ibis', 'base'),
+        r'^postgres://': ('ibis', 'base'),
+        r'^duckdb://': ('ibis', 'base'),
+        r'^mssql://': ('ibis', 'base'),
+        r'^mysql://': ('ibis', 'base'),
+        r'.*\*.csv$': ('ibis', 'pandas'),
+    }
 
-    @classmethod
-    def create(cls, uri, mapping: t.Dict):
-        """Helper method to create databackend."""
-        backend = 'ibis'
-        for pattern in cls.patterns:
-            if re.match(pattern, uri) is not None:
-                backend, flavour = cls.patterns[pattern]
 
-                return mapping[backend](uri, flavour=flavour)
-
-        return mapping[backend](uri, flavour='base')
+class _ArtifactStoreLoader(_Loader):
+    impl = 'ArtifactStore'
+    patterns = {
+        r'^filesystem:\/\/': ('local', 'base'),
+        r'^mongomock:\/\/': ('local', 'base'),
+        r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
+        r'^mongodb:\/\/': ('mongodb', 'base'),
+    }
 
 
-# Helper function to build a data backend based on the URI.
-def _build_databackend_impl(uri, mapping, type: str = 'data_backend'):
-    logging.debug(f"Parsing data connection URI:{uri}")
-    if type == 'data_backend':
-        db = DataBackendProxy(_DataBackendMatcher.create(uri, mapping))
-    else:
-        db = MetaDataStoreProxy(_MetaDataMatcher.create(uri, mapping))
+def _build_artifact_store(uri):
+    return _ArtifactStoreLoader.create(uri)
+
+
+def _build_databackend(uri):
+    return DataBackendProxy(_DataBackendLoader.create(uri))
+
+
+def _build_metadata(uri):
+    db = MetaDataStoreProxy(_MetaDataLoader.create(uri))
     return db
 
 
-def build_compute(cfg):
+def _build_compute(cfg):
     """
     Helper function to build compute backend.
 
     :param cfg: SuperDuper config.
     """
-
-    def _local_component(path, **kwargs):
-        spath = path.split('.')
-        path, cls = '.'.join(spath[:-1]), spath[-1]
-        module = importlib.import_module(path)
-        component_cls = getattr(module, cls)
-        return component_cls(**kwargs)
-
-    compute = cfg.cluster.compute
-    queue = cfg.cluster.queue
-    logging.info("Connecting to compute client:", compute)
-    path = compute._path or 'superduper.backends.local.compute.LocalComputeBackend'
-    queue_path = queue._path or 'superduper.jobs.queue.LocalSequentialQueue'
-    queue = _local_component(queue_path, uri=queue.uri)
-
-    return _local_component(path, uri=compute.uri, queue=queue)
+    from superduper.backends.local.compute import LocalComputeBackend
+    return LocalComputeBackend()
 
 
-def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
+def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
 
@@ -170,17 +108,15 @@ def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
     cfg = (cfg or s.CFG)(**kwargs)
-
-    databackend = _build_databackend(cfg, databackend)
-    metadata = _build_metadata(cfg, databackend)
-    assert metadata
-
-    artifact_store = _build_artifact_store(cfg.artifact_store, databackend)
-    compute = build_compute(cfg)
+    cfg = t.cast(Config, cfg)
+    databackend_obj = _build_databackend(cfg.data_backend)
+    metadata_obj = _build_metadata(cfg.metadata_store or cfg.data_backend)
+    artifact_store = _build_artifact_store(cfg.artifact_store or cfg.data_backend)
+    compute = _build_compute(cfg)
 
     datalayer = Datalayer(
-        databackend=databackend,
-        metadata=metadata,
+        databackend=databackend_obj,
+        metadata=metadata_obj,
         artifact_store=artifact_store,
         compute=compute,
     )

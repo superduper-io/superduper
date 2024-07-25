@@ -1,3 +1,1 @@
-from .model import JinaEmbedding
-
-__all__ = ['JinaEmbedding']
+from superduper_jina import *  # noqa

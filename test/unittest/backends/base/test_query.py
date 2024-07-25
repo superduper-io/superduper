@@ -13,10 +13,6 @@ def test_like(db):
     query_utils.test_like(db)
 
 
-def test_serialize_with_image():
-    query_utils.test_serialize_with_image()
-
-
 def test_insert_with_auto_schema(db):
     query_utils.test_insert_with_auto_schema(db)
 

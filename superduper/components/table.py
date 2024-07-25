@@ -27,13 +27,15 @@ class Table(Component):
         super().__post_init__(db, artifacts)
         fields = {}
         if '_fold' not in self.schema.fields:
-            from superduper.backends.ibis.field_types import dtype
+            # from superduper.backends.ibis.field_types import dtype
 
-            fields.update({'_fold': dtype('str')})
+            # fields.update({'_fold': dtype('str')})
+            fields.update({'_fold': 'str'})
 
         for k, v in self.schema.fields.items():
             if isinstance(v, _Native):
-                fields[k] = dtype(v.identifier)
+                # fields[k] = dtype(v.identifier)
+                fields[k] = v.identifier
             else:
                 fields[k] = v
 

@@ -176,7 +176,6 @@ class QueueConfig(BaseConfig):
     """
 
     uri: t.Optional[str] = None  # None implies local mode
-    _path: t.Optional[str] = 'superduper.jobs.queue.LocalQueuePublisher'
 
 
 @dc.dataclass
@@ -188,9 +187,9 @@ class Compute(BaseConfig):
     :param _path: Compute backend path.
     """
 
-    uri: t.Optional[str] = None  # None implies local mode
+    uri: t.Optional[str] = None
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
-    _path: t.Optional[str] = 'superduper.backends.local.compute.LocalComputeBackend'
+    backend: str = 'local'
 
 
 @dc.dataclass
@@ -213,7 +212,6 @@ class Cluster(BaseConfig):
                 None: Run cdc on local as a thread.
                 - `f"{http://{host}:{port}"`: Connect a remote cdc service
     :param scheduler: The URI for the scheduler service
-    :param queue: The URI for the message broker service
     """
 
     compute: Compute = dc.field(default_factory=Compute)
@@ -222,7 +220,6 @@ class Cluster(BaseConfig):
     rest: Rest = dc.field(default_factory=Rest)
     cdc: CDCConfig = dc.field(default_factory=CDCConfig)
     scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
-    queue: QueueConfig = dc.field(default_factory=QueueConfig)
 
 
 class LogLevel(str, Enum):
@@ -296,6 +293,7 @@ class Config(BaseConfig):
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
     data_backend: str = 'mongodb://mongodb:27017/test_db'
+
     lance_home: str = os.path.join('.superduper', 'vector_indices')
 
     artifact_store: t.Optional[str] = None

@@ -217,7 +217,7 @@ class VectorIndex(Component):
         if not isinstance(self.indexing_listener.select, Query):
             return []
 
-        if self.indexing_listener.select.table != query.table:
+        if self.indexing_listener.outputs != query.table:
             return []
 
         select = self.indexing_listener.outputs_select

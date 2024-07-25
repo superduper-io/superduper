@@ -511,7 +511,7 @@ class Model(Component, metaclass=ModelMeta):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
-    def jobs(self, db):
+    def jobs(self, db: 'Datalayer'):
         """List jobs ids related to the model."""
         jobs = db.metadata.show_jobs(self.identifier, 'model') or []
         job_ids = [job['job_id'] for job in jobs]

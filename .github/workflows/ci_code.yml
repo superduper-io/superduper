@@ -10,7 +10,6 @@ on:
       - "plugins/**"
       - ".github/**"
       - 'docs/**'
-      - 'examples/**'
       - '*.md'
       - '*.rst'
   workflow_dispatch:

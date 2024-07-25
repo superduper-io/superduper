@@ -1,0 +1,62 @@
+name: Code Testing mongodb
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths: # Paths that may affect code quality
+      - "plugins/mongodb/**"
+
+jobs:
+  # ---------------------------------
+  # Unit Testing
+  # ---------------------------------
+  unit_testing_mongodb:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: ["3.11"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    #---------------------------------------------------
+    # Configuring Python environments.
+    #
+    # We cache both the pip packages and the installation dir.
+    # If the pyproject remains unchanged, we re-use the existing installation dir.
+    # If the pyproject has changed, we reinstall everything using the cached pip packages.
+    - name: Cache Pip Packages
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip' # caching pip dependencies
+
+    - name: Check for test directory
+      id: check_test_dir
+      run: |
+        if [ ! -d "plugins/mongodb/test" ]; then
+          echo "Test directory does not exist. Cancelling workflow."
+          exit 1
+        fi
+
+    - name: Cache Python Installation
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
+        key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
+      #---------------------------------------------------
+
+    - name: Install SuperDuperDB Project
+      run: |
+        # Install core and testsuite dependencies on the cached python environment.
+        python -m pip install .
+        cd plugins/mongodb && python -m pip install .
+
+    - name: Run tests
+      run: |
+        python -m pip install pytest
+        cd plugins/mongodb && pytest test

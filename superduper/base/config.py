@@ -271,43 +271,6 @@ class Downloads(BaseConfig):
 
 
 @dc.dataclass
-class LogConfig(BaseConfig):
-    """Describes the configuration for logging.
-
-    :param default_format: The default log format
-    :param ray_format: The log format for Ray deployments
-    :param use_colors: Whether to use colors in the log output
-    """
-
-    default_format: str = (
-        "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
-        "| <level>{level: <8}</level> "
-        "| <cyan>{extra[hostname]: <8}</cyan>"
-        "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
-        "| <level>{message}</level>"
-    )
-    ray_format: str = (
-        "{time:YYYY-MMM-DD HH:mm:ss.SS}"
-        "| {level: <8} "
-        "| {name}:{line: <4} "
-        "| {message}"
-    )
-    use_colors: bool = True
-
-    def get_format(self):
-        """Retrieve the current format configuration."""
-        return (
-            self.ray_format
-            if os.environ.get("RAY_DEPLOYMENT") == "1"
-            else self.default_format
-        )
-
-    def should_use_colors(self):
-        """Determine whether to use color output."""
-        return self.use_colors and os.environ.get("RAY_DEPLOYMENT") != "1"
-
-
-@dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
@@ -326,7 +289,6 @@ class Config(BaseConfig):
     :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
-    :param log_config: The configuration for logging
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
@@ -340,12 +302,12 @@ class Config(BaseConfig):
     cluster: Cluster = dc.field(default_factory=Cluster)
     retries: Retry = dc.field(default_factory=Retry)
     downloads: Downloads = dc.field(default_factory=Downloads)
-    log_config: LogConfig = dc.field(default_factory=LogConfig)
 
     fold_probability: float = 0.05
 
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
+    log_colorize: bool = True
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True

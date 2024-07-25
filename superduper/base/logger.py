@@ -37,16 +37,29 @@ class Logging:
             }
         )
 
-        fmt = CFG.log_config.get_format()
-        use_colors = CFG.log_config.should_use_colors()
-
+        colorize = CFG.log_colorize
+        if colorize:
+            fmt = (
+                "<green>{time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
+                "| <level>{level: <8}</level> "
+                "| <cyan>{extra[hostname]: <8}</cyan>"
+                "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
+                "| <level>{message}</level>"
+            )
+        else:
+            fmt = (
+                "{time:YYYY-MMM-DD HH:mm:ss.SS}"
+                "| {level: <8} "
+                "| {name}:{line: <4} "
+                "| {message}"
+            )
         # DEBUG until WARNING are sent to stdout.
         logger.add(
             lambda msg: tqdm.write(msg, end=""),
             format=fmt,
             level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
-            colorize=use_colors,
+            colorize=colorize,
         )
 
         # ERROR and above sent to stderr
@@ -55,7 +68,7 @@ class Logging:
             stderr,
             format=fmt,
             level=LogLevel.ERROR,
-            colorize=use_colors,
+            colorize=colorize,
         )
 
     # Set Multi-Key loggers

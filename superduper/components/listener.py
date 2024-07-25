@@ -234,7 +234,7 @@ class Listener(Component):
                     f"Could not find the upstream listener with uuid {predict_id}"
                 )
                 continue
-            job_ids = upstream_model.jobs()
+            job_ids = upstream_model.jobs(db=db)
             dependencies_ids.extend(job_ids)
 
         dependencies = tuple([*dependencies_ids, *deps])
@@ -273,12 +273,6 @@ class Listener(Component):
                 **(self.predict_kwargs or {}),
             )
         ]
-
-        # Trigger corresponding vector indices
-        for vi in db.show('vector_index'):
-            vi = db.load('vector_index', vi)
-            if vi.indexing_listener.identifier == self.identifier:
-                vi.schedule_jobs(db=db, ids=ids)
         return out
 
     def cleanup(self, db: "Datalayer") -> None:

@@ -7,7 +7,7 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.document import _OUTPUTS_KEY
 from superduper.components.model import Mapping
-from superduper.misc.server import request_server
+from superduper.misc.server import request_server, is_csn
 
 from ..jobs.job import Job
 from .component import Component
@@ -72,6 +72,10 @@ class Listener(Component):
         """Get select statement for outputs."""
         return self.db[self.select.table].select().outputs(self.predict_id)
 
+    @property
+    def cdc_table(self):
+        return self.select.table_or_collection.identifier
+
     @override
     def post_create(self, db: "Datalayer") -> None:
         """Post-create hook.
@@ -79,14 +83,14 @@ class Listener(Component):
         :param db: Data layer instance.
         """
         self.create_output_dest(db, self.uuid, self.model)
-        if self.select is not None:  # and not db.server_mode:
+        if self.select is not None:
             logging.info('Requesting listener setup on CDC service')
-            if CFG.cluster.cdc.uri:
+            if CFG.cluster.cdc.uri and not is_csn('cdc'):
                 logging.info('Sending request to add listener')
                 request_server(
                     service='cdc',
-                    endpoint='listener/add',
-                    args={'name': self.identifier},
+                    endpoint='component/add',
+                    args={'name': self.identifier, 'type_id': self.type_id},
                     type='get',
                 )
             else:
@@ -209,6 +213,8 @@ class Listener(Component):
         if ids is None:
             ids = db.execute(self.select.select_ids)
             ids = [id[self.select.primary_id] for id in ids]
+
+        # TODO: Check ready ids
 
         events = [
             Event(

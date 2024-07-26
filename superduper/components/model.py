@@ -1113,7 +1113,7 @@ class Model(Component, metaclass=ModelMeta):
 
         :param db: Datalayer instance.
         """
-        db.compute.component_hook(self.identifier, compute_kwargs=self.compute_kwargs)
+        db.compute.queue.declare_component(self)
         super().post_create(db)
 
 

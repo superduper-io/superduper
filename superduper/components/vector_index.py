@@ -4,6 +4,7 @@ import typing as t
 import numpy as np
 from overrides import override
 
+from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
@@ -17,6 +18,7 @@ from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType
 from superduper.vector_search.update_tasks import copy_vectors, delete_vectors
+from superduper.misc.server import request_server, is_csn
 
 KeyType = t.Union[str, t.List, t.Dict]
 if t.TYPE_CHECKING:
@@ -171,12 +173,29 @@ class VectorIndex(Component):
         db.fast_vector_searchers[self.identifier].drop()
         del db.fast_vector_searchers[self.identifier]
 
+    @property
+    def cdc_table(self):
+        return self.indexing_listener.outputs
+
     @override
     def post_create(self, db: "Datalayer") -> None:
         """Post-create hook.
 
         :param db: Data layer instance.
         """
+        logging.info('Requesting vector index setup on CDC service')
+        if CFG.cluster.cdc.uri and not is_csn('cdc'):
+            logging.info('Sending request to add vector index')
+            request_server(
+                service='cdc',
+                endpoint='component/add',
+                args={'name': self.identifier, 'type_id': self.type_id},
+                type='get',
+            )
+        else:
+            logging.info(
+                'Skipping vector index setup on CDC service since no URI is set'
+            )
         db.compute.queue.declare_component(self)
 
     @property
@@ -214,14 +233,27 @@ class VectorIndex(Component):
         :param query: Query object.
         :param primary_ids: Primary IDs.
         """
+        print('MMMMMMMMMMMMMMMMMMMMMMMMMMM')
+        print('Trigger ids')
         if not isinstance(self.indexing_listener.select, Query):
+            print('NOT PASSED')
             return []
 
         if self.indexing_listener.outputs != query.table:
+            print('NOT PASSED')
             return []
 
+        ids = self._ready_ids(primary_ids)
+        if ids:
+            print('PASSED')
+            return ids
+        else:
+            print('NOT PASSED from Outputs')
+            return []
+
+    def _ready_ids(self, ids: t.Sequence):
         select = self.indexing_listener.outputs_select
-        data = self.db.execute(select.select_using_ids(primary_ids))
+        data = self.db.execute(select.select_using_ids(ids))
         key = self.indexing_listener.outputs_key
 
         ready_ids = []
@@ -249,6 +281,7 @@ class VectorIndex(Component):
         :param ids: List of ids.
         :param event_type: Type of event.
         """
+
         if event_type in [DBEvent.insert, DBEvent.upsert]:
             callable = copy_vectors
         elif type == DBEvent.delete:
@@ -266,7 +299,7 @@ class VectorIndex(Component):
             kwargs=dict(
                 vector_index=self.identifier,
                 ids=ids,
-                query=self.indexing_listener.outputs_select.dict().encode(),
+                query=db[self.indexing_listener.outputs].dict().encode(),
             ),
         )
         job(db=db, dependencies=dependencies)
@@ -292,6 +325,8 @@ class VectorIndex(Component):
         if ids is None:
             ids = db.execute(self.indexing_listener.select.select_ids)
             ids = [id[self.indexing_listener.select.primary_id] for id in ids]
+
+        ids = self._ready_ids(ids)
         events = [
             Event(
                 type_id=self.type_id,

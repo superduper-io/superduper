@@ -22,17 +22,6 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
-        if CFG.cluster.vector_search.uri is not None:
-            if not db.server_mode:
-                request_server(
-                    service='vector_search',
-                    endpoint='create/search',
-                    args={
-                        'vector_index': self.vector_index,
-                    },
-                    type='get',
-                )
-
     @staticmethod
     def drop_remote(index):
         """Drop a vector index from the remote.
@@ -57,11 +46,12 @@ class FastVectorSearcher(BaseVectorSearcher):
     def __len__(self):
         return len(self.searcher)
 
-    def add(self, items: t.Sequence[VectorItem]) -> None:
+    def add(self, items: t.Sequence[VectorItem], cache: bool = False) -> None:
         """
         Add items to the index.
 
         :param items: t.Sequence of VectorItems
+        :param cache: Cache vectors.
         """
         vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
         if CFG.cluster.vector_search.uri is not None:
@@ -75,7 +65,7 @@ class FastVectorSearcher(BaseVectorSearcher):
             )
             return
 
-        return self.searcher.add(items)
+        return self.searcher.add(items, cache=cache)
 
     def delete(self, ids: t.Sequence[str]) -> None:
         """Remove items from the index.

@@ -69,10 +69,11 @@ class LanceVectorSearcher(BaseVectorSearcher):
         else:
             lance.write_dataset(_table, self.dataset_path, mode=mode)
 
-    def add(self, items: t.Sequence[VectorItem]) -> None:
+    def add(self, items: t.Sequence[VectorItem], cache: bool = False) -> None:
         """Add vectors to the index.
 
         :param items: List of vectors to add
+        :param cache: Cache vectors.
         """
         ids = [item.id for item in items]
         vectors = [item.vector for item in items]

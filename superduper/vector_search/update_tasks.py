@@ -39,14 +39,15 @@ def copy_vectors(
     if isinstance(query, dict):
         # ruff: noqa: E501
         query: Query = Document.decode(query).unpack()  # type: ignore[no-redef]
-        query.set_db(db)
     assert isinstance(query, Query)
     if not ids:
         select = query
     else:
         select = query.select_using_ids(ids)
+
     docs = db._select(select)
     docs = [doc.unpack() for doc in docs]
+
     key = vi.indexing_listener.key
     if '_outputs.' in key:
         key = key.split('.')[1]
@@ -58,7 +59,7 @@ def copy_vectors(
                 'vector': MongoStyleDict(doc)[
                     f'_outputs.{vi.indexing_listener.predict_id}'
                 ],
-                'id': str(doc['_id']),
+                'id': str(doc['_source']),
             }
             for doc in docs
         ]

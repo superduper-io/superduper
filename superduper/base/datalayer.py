@@ -33,6 +33,7 @@ from superduper.misc.colors import Colors
 from superduper.misc.data import ibatch
 from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
+from superduper.misc.server import is_csn
 from superduper.misc.special_dicts import recursive_update
 from superduper.vector_search.base import BaseVectorSearcher, VectorItem
 from superduper.vector_search.interface import FastVectorSearcher
@@ -158,7 +159,7 @@ class Datalayer:
         self._server_mode = is_server
 
     def initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None
+        self, identifier, searcher_type: t.Optional[str] = None, backfill: bool = False
     ) -> t.Optional[BaseVectorSearcher]:
         """
         Initialize vector searcher.
@@ -180,8 +181,8 @@ class Datalayer:
         vector_comparison = vector_search_cls.from_component(vi)
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
-
-        self.backfill_vector_search(vi, vector_comparison)
+        if backfill:
+            self.backfill_vector_search(vi, vector_comparison)
 
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
@@ -195,7 +196,7 @@ class Datalayer:
         if s.CFG.cluster.vector_search.type == 'native':
             return
 
-        if s.CFG.cluster.vector_search.uri and not self.server_mode:
+        if s.CFG.cluster.vector_search.uri and not is_csn('vector_search'):
             return
 
         logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
@@ -214,6 +215,7 @@ class Datalayer:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         all_items = []
+        nokeys = 0
         for record_batch in ibatch(
             self.execute(query),
             s.CFG.cluster.vector_search.backfill_batch_size,
@@ -222,13 +224,23 @@ class Datalayer:
             for record in record_batch:
                 id = record[id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
-                h = record[vi.indexing_listener.outputs_key]
+                try:
+                    h = record[vi.indexing_listener.outputs]
+                except KeyError:
+                    nokeys += 1
+                    continue
                 if isinstance(h, _BaseEncodable):
                     h = h.unpack()
                 items.append(VectorItem.create(id=str(id), vector=h))
-            searcher.add(items)
+            searcher.add(items, cache=True)
             all_items.extend(items)
             progress.update(len(items))
+        if nokeys:
+            logging.warn(
+                '{nokeys} ids were found without outputs populated yet,',
+                'hence skipped corresponding backfill',
+            )
+        logging.info('Vector search backfill successfully')
 
         searcher.post_create()
 

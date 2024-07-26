@@ -292,6 +292,7 @@ class Datalayer:
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
+        unfold: t.Optional[bool] = False,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -303,6 +304,7 @@ class Datalayer:
                        'vector_index', 'job'].
         :param identifier: Identifying string to component.
         :param version: (Optional) Numerical version - specify for full metadata.
+        :param unfold: Unfold the component.
         """
         if identifier is None and version is not None:
             raise ValueError(f"Must specify {identifier} to go with {version}")
@@ -325,14 +327,16 @@ class Datalayer:
             )
             return out
 
-        if version == -1:
-            return self.metadata.get_component(
-                type_id=type_id, identifier=identifier, version=None
-            )
-
-        return self.metadata.get_component(
-            type_id=type_id, identifier=identifier, version=version
+        component = self.metadata.get_component(
+            type_id=type_id,
+            identifier=identifier,
+            version=version if version != -1 else None,
         )
+
+        if unfold:
+            return self.metadata.unfold_component(component)
+
+        return component
 
     @db_retry(connector='databackend')
     def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:

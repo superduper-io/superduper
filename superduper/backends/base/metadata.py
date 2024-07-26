@@ -1,5 +1,7 @@
 import time
 import typing as t
+import copy
+import json
 from abc import ABC, abstractmethod
 
 from .data_backend import DataBackendProxy
@@ -257,6 +259,30 @@ class MetaDataStore(ABC):
         if r is None:
             raise FileNotFoundError(f'Object {identifier} does not exist in metadata')
         return r
+
+    def unfold_component(self, component: dict) -> dict:
+        """
+        Unfold a component, returning the fully serialized component data.
+
+        :param component: The component dictionary to unfold
+        :return: Fully serialized component data
+        """
+        unfolded = copy.deepcopy(component)
+
+        for key, value in unfolded.items():
+            if isinstance(value, str):
+                try:
+                    unfolded[key] = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+            elif isinstance(value, dict):
+                unfolded[key] = self.unfold_component(value)
+            elif isinstance(value, list):
+                unfolded[key] = [
+                    self.unfold_component(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+        return unfolded
 
     @abstractmethod
     def _update_object(

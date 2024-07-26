@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use declare_component from base class.
 - Use different colors to distinguish logs
 
+
 #### New Features & Functionality
 
 - Modify the field name output to _outputs.predict_id in the model results of Ibis.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make "create a table" compulsory
 - All datatypes should be wrapped with a Schema
 - Support eager mode
+- Add CSN env var
 
 #### Bug Fixes
 
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove --user from make install_devkit as it supposed to run on a virtualenv.
 - component info support list
 - Trigger downstream vector indices.
+- Fix vector_index function job.
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

@@ -575,6 +575,10 @@ class Component(Leaf):
 
         _display_component(self, verbosity=verbosity)
 
+    @property
+    def cdc_table(self):
+        return False
+
 
 def ensure_initialized(func):
     """Decorator to ensure that the model is initialized before calling the function.

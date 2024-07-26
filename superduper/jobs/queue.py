@@ -99,10 +99,9 @@ class BaseQueuePublisher(ABC):
         :param to: Component name for events to be published.
         """
 
+    @abstractmethod
     def declare_component(self, component):
         """Declare component and add it to queue."""
-        logging.info(f'Declaring component {component.type_id}/{component.identifier}')
-        self.db.compute.component_hook(component.identifier, type_id=component.type_id)
 
 
 class LocalQueuePublisher(BaseQueuePublisher):
@@ -125,7 +124,6 @@ class LocalQueuePublisher(BaseQueuePublisher):
 
     def declare_component(self, component):
         """Declare component and add it to queue."""
-        super().declare_component(component)
         self.components[component.type_id, component.identifier] = component
 
     def publish(self, events: t.List[Event]):

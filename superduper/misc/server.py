@@ -1,4 +1,5 @@
 import base64
+import os
 import json
 from functools import lru_cache
 
@@ -16,6 +17,10 @@ def _handshake(service: str):
     endpoint = 'handshake/config'
     cfg = json.dumps(CFG.comparables)
     _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
+
+
+def is_csn(service):
+    return os.environ.get('SUPERDUPER_CSN', 'Client') in (service, 'superduper_testing')
 
 
 def server_request_decoder(x):

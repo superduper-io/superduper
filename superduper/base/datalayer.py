@@ -6,7 +6,6 @@ from collections import defaultdict, namedtuple
 
 import click
 import networkx
-import tqdm
 
 import superduper as s
 from superduper import logging
@@ -24,18 +23,16 @@ from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.base.event import Event
 from superduper.components.component import Component
-from superduper.components.datatype import DataType, _BaseEncodable
+from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.jobs.job import Job
 from superduper.misc.annotations import deprecated
 from superduper.misc.colors import Colors
-from superduper.misc.data import ibatch
 from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
-from superduper.misc.server import is_csn
 from superduper.misc.special_dicts import recursive_update
-from superduper.vector_search.base import BaseVectorSearcher, VectorItem
+from superduper.vector_search.base import BaseVectorSearcher
 from superduper.vector_search.interface import FastVectorSearcher
 
 DBResult = t.Any
@@ -127,7 +124,6 @@ class Datalayer:
 
         self.compute = compute
         self.compute.queue.db = self
-        self._server_mode = False
         self._cfg = s.CFG
 
     def __getitem__(self, item):
@@ -143,23 +139,8 @@ class Datalayer:
         """CDC property setter."""
         self._cdc = cdc
 
-    @property
-    def server_mode(self):
-        """Property for server mode."""
-        return self._server_mode
-
-    @server_mode.setter
-    def server_mode(self, is_server: bool):
-        """
-        Set server mode property.
-
-        :param is_server: New boolean property.
-        """
-        assert isinstance(is_server, bool)
-        self._server_mode = is_server
-
     def initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None, backfill: bool = False
+        self, identifier, searcher_type: t.Optional[str] = None
     ) -> t.Optional[BaseVectorSearcher]:
         """
         Initialize vector searcher.
@@ -181,68 +162,7 @@ class Datalayer:
         vector_comparison = vector_search_cls.from_component(vi)
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
-        if backfill:
-            self.backfill_vector_search(vi, vector_comparison)
-
         return FastVectorSearcher(self, vector_comparison, vi.identifier)
-
-    def backfill_vector_search(self, vi, searcher):
-        """
-        Backfill vector search from model outputs of a given vector index.
-
-        :param vi: Identifier of vector index.
-        :param searcher: FastVectorSearch instance to load model outputs as vectors.
-        """
-        if s.CFG.cluster.vector_search.type == 'native':
-            return
-
-        if s.CFG.cluster.vector_search.uri and not is_csn('vector_search'):
-            return
-
-        logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
-
-        if vi.indexing_listener.select is None:
-            raise ValueError('.select must be set')
-
-        if vi.indexing_listener.select.db is None:
-            vi.indexing_listener.select.db = self
-
-        query = vi.indexing_listener.outputs_select
-
-        logging.info(str(query))
-
-        id_field = query.table_or_collection.primary_id
-
-        progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
-        all_items = []
-        nokeys = 0
-        for record_batch in ibatch(
-            self.execute(query),
-            s.CFG.cluster.vector_search.backfill_batch_size,
-        ):
-            items = []
-            for record in record_batch:
-                id = record[id_field]
-                assert not isinstance(vi.indexing_listener.model, str)
-                try:
-                    h = record[vi.indexing_listener.outputs]
-                except KeyError:
-                    nokeys += 1
-                    continue
-                if isinstance(h, _BaseEncodable):
-                    h = h.unpack()
-                items.append(VectorItem.create(id=str(id), vector=h))
-            searcher.add(items, cache=True)
-            all_items.extend(items)
-            progress.update(len(items))
-        if nokeys:
-            logging.warn(
-                '{nokeys} ids were found without outputs populated yet,',
-                'hence skipped corresponding backfill',
-            )
-        logging.info('Vector search backfill successfully')
-
-        searcher.post_create()
 
     # TODO - needed?
     def set_compute(self, new: ComputeBackend):

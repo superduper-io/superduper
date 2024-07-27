@@ -15,10 +15,10 @@ from superduper.components.model import Mapping, ModelInputType
 from superduper.ext.utils import str_shape
 from superduper.jobs.job import FunctionJob
 from superduper.misc.annotations import component
+from superduper.misc.server import is_csn, request_server
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType
 from superduper.vector_search.update_tasks import copy_vectors, delete_vectors
-from superduper.misc.server import request_server, is_csn
 
 KeyType = t.Union[str, t.List, t.Dict]
 if t.TYPE_CHECKING:
@@ -175,6 +175,7 @@ class VectorIndex(Component):
 
     @property
     def cdc_table(self):
+        """Get table for cdc."""
         return self.indexing_listener.outputs
 
     @override
@@ -233,23 +234,13 @@ class VectorIndex(Component):
         :param query: Query object.
         :param primary_ids: Primary IDs.
         """
-        print('MMMMMMMMMMMMMMMMMMMMMMMMMMM')
-        print('Trigger ids')
         if not isinstance(self.indexing_listener.select, Query):
-            print('NOT PASSED')
             return []
 
         if self.indexing_listener.outputs != query.table:
-            print('NOT PASSED')
             return []
 
-        ids = self._ready_ids(primary_ids)
-        if ids:
-            print('PASSED')
-            return ids
-        else:
-            print('NOT PASSED from Outputs')
-            return []
+        return self._ready_ids(primary_ids)
 
     def _ready_ids(self, ids: t.Sequence):
         select = self.indexing_listener.outputs_select
@@ -281,7 +272,6 @@ class VectorIndex(Component):
         :param ids: List of ids.
         :param event_type: Type of event.
         """
-
         if event_type in [DBEvent.insert, DBEvent.upsert]:
             callable = copy_vectors
         elif type == DBEvent.delete:
@@ -310,23 +300,20 @@ class VectorIndex(Component):
         self,
         db: Datalayer,
         dependencies: t.Sequence['Job'] = (),
-        ids: t.Optional[t.List[t.Any]] = None,
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the vector index.
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
-        :param ids: Optional ids to schedule.
         """
         from superduper.base.event import Event
 
         assert self.indexing_listener.select is not None
 
-        if ids is None:
-            ids = db.execute(self.indexing_listener.select.select_ids)
-            ids = [id[self.indexing_listener.select.primary_id] for id in ids]
+        outputs = db[self.indexing_listener.outputs]
+        ids = db.execute(outputs.select_ids)
+        ids = [id[outputs.primary_id] for id in ids]
 
-        ids = self._ready_ids(ids)
         events = [
             Event(
                 type_id=self.type_id,

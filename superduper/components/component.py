@@ -577,6 +577,7 @@ class Component(Leaf):
 
     @property
     def cdc_table(self):
+        """Get table for cdc."""
         return False
 
 

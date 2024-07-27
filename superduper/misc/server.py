@@ -1,6 +1,6 @@
 import base64
-import os
 import json
+import os
 from functools import lru_cache
 
 import requests
@@ -20,6 +20,10 @@ def _handshake(service: str):
 
 
 def is_csn(service):
+    """Helper function for checking current service name.
+
+    :param service: Name of service to check.
+    """
     return os.environ.get('SUPERDUPER_CSN', 'Client') in (service, 'superduper_testing')
 
 

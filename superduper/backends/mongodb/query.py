@@ -438,11 +438,10 @@ class MongoQuery(Query):
         )
 
     @property
-    @applies_to('find', 'update_many', 'delete_many', 'delete_one')
     def select_ids(self):
         """Select the ids of the documents."""
         filter_ = {}
-        if self.parts[0][1]:
+        if self.parts and self.parts[0][1]:
             filter_ = self.parts[0][1][0]
         projection = {'_id': 1}
         coll = MongoQuery(table=self.table, db=self.db)

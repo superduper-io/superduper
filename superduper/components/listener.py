@@ -7,7 +7,7 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.document import _OUTPUTS_KEY
 from superduper.components.model import Mapping
-from superduper.misc.server import request_server, is_csn
+from superduper.misc.server import is_csn, request_server
 
 from ..jobs.job import Job
 from .component import Component
@@ -74,6 +74,7 @@ class Listener(Component):
 
     @property
     def cdc_table(self):
+        """Get table for cdc."""
         return self.select.table_or_collection.identifier
 
     @override
@@ -98,10 +99,7 @@ class Listener(Component):
                     'Skipping listener setup on CDC service since no URI is set'
                 )
         else:
-            logging.info(
-                'Skipping listener setup on CDC service'
-                f' since select is {self.select} or server mode is {db.server_mode}'
-            )
+            logging.info('Skipping listener setup on CDC service')
         db.compute.queue.declare_component(self)
 
     @classmethod
@@ -176,7 +174,9 @@ class Listener(Component):
             keys = [self.key]
         elif isinstance(self.key, dict):
             keys = list(self.key.keys())
+        return self._ready_ids(data, keys)
 
+    def _ready_ids(self, data, keys):
         ready_ids = []
         for select in data:
             notfound = 0
@@ -195,14 +195,12 @@ class Listener(Component):
         db: "Datalayer",
         dependencies: t.Sequence[Job] = (),
         overwrite: bool = False,
-        ids: t.Optional[t.List[t.Any]] = None,
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the listener.
 
         :param db: Data layer instance to process.
         :param dependencies: A list of dependencies.
         :param overwrite: Overwrite the existing data.
-        :param ids: Optional ids to schedule.
         """
         if self.select is None:
             return []
@@ -210,11 +208,14 @@ class Listener(Component):
         from superduper.base.event import Event
 
         events = []
-        if ids is None:
-            ids = db.execute(self.select.select_ids)
-            ids = [id[self.select.primary_id] for id in ids]
+        data = db.execute(self.select)
+        keys = self.key
 
-        # TODO: Check ready ids
+        if isinstance(self.key, str):
+            keys = [self.key]
+        elif isinstance(self.key, dict):
+            keys = list(self.key.keys())
+        ids = self._ready_ids(data, keys)
 
         events = [
             Event(

@@ -2,8 +2,6 @@ import typing as t
 
 from superduper import Document
 from superduper.backends.base.query import Query
-from superduper.backends.ibis.data_backend import IbisDataBackend
-from superduper.backends.mongodb.data_backend import MongoDataBackend
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorItem
 
@@ -40,6 +38,8 @@ def copy_vectors(
         # ruff: noqa: E501
         query: Query = Document.decode(query).unpack()  # type: ignore[no-redef]
     assert isinstance(query, Query)
+    query.db = db
+
     if not ids:
         select = query
     else:
@@ -51,31 +51,15 @@ def copy_vectors(
     key = vi.indexing_listener.key
     if '_outputs.' in key:
         key = key.split('.')[1]
-    # TODO: Refactor the below logic
-    vectors = []
-    if isinstance(db.databackend.type, MongoDataBackend):
-        vectors = [
-            {
-                'vector': MongoStyleDict(doc)[
-                    f'_outputs.{vi.indexing_listener.predict_id}'
-                ],
-                'id': str(doc['_source']),
-            }
-            for doc in docs
-        ]
-    elif isinstance(db.databackend.type, IbisDataBackend):
-        docs = db.execute(select.outputs(vi.indexing_listener.predict_id))
-        from superduper.backends.ibis.data_backend import INPUT_KEY
-
-        vectors = []
-        for doc in docs:
-            doc = doc.unpack()
-            vectors.append(
-                {
-                    'vector': doc[f'_outputs.{vi.indexing_listener.predict_id}'],
-                    'id': str(doc[INPUT_KEY]),
-                }
-            )
+    vectors = [
+        {
+            'vector': MongoStyleDict(doc)[
+                f'_outputs.{vi.indexing_listener.predict_id}'
+            ],
+            'id': str(doc['_source']),
+        }
+        for doc in docs
+    ]
 
     for r in vectors:
         if hasattr(r['vector'], 'numpy'):

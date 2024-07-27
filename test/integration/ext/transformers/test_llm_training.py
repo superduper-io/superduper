@@ -86,6 +86,7 @@ def trainer():
     )
 
 
+@pytest.mark.skip(reason="Maintaince going on in huggingface datasets")
 @pytest.mark.skipif(
     not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
 )
@@ -114,6 +115,7 @@ def test_full_finetune(db, trainer):
     assert len(result) > 0
 
 
+@pytest.mark.skip(reason="Maintaince going on in huggingface datasets")
 @pytest.mark.skipif(
     not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
 )
@@ -135,6 +137,7 @@ def test_lora_finetune(db, trainer):
     assert len(result) > 0
 
 
+@pytest.mark.skip(reason="Maintaince going on in huggingface datasets")
 @pytest.mark.skipif(
     not (RUN_LLM_FINETUNE and GPU_AVAILABLE),
     reason="The peft, datasets and trl are not installed",
@@ -158,6 +161,7 @@ def test_qlora_finetune(db, trainer):
     assert len(result) > 0
 
 
+@pytest.mark.skip(reason="Maintaince going on in huggingface datasets")
 @pytest.mark.skipif(
     not (RUN_LLM_FINETUNE and GPU_AVAILABLE), reason="Deepspeed need GPU"
 )

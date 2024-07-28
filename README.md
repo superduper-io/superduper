@@ -35,6 +35,12 @@
 
 ---
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=dDJ_ktMtbw0"><img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/video.png" alt="How to get Started" width="500"></a>
+</div>
+
+
+
 ## What is superduper.io? 🔮 
 
 `superduper.io` is a Python framework for integrating AI models, APIs, and vector search engines directly with your existing databases. It includes hosting of your own models, streaming inference, and scalable model training/fine-tuning.
@@ -57,12 +63,6 @@
 | **[Support for Complex Data Types](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Directly work with a variety of data types, including images, video, audio, and byte-encoded data, within Python, ensuring comprehensive data handling capabilities. |
 | **[AI Feature Storage](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Transform your database into a structured repository for managing AI model inputs and outputs, facilitating efficient tracking and management of feature data. |
 | **[Multi-Modal Vector Search](https://docs.superduper.io/docs/docs/walkthrough/vector_search)** | Convert your database into a sophisticated multi-modal vector-search engine, generating and indexing vector embeddings with your chosen models and APIs for advanced search capabilities. |
-
-
-
-<div align="center">
-  <a href="https://www.youtube.com/watch?v=dDJ_ktMtbw0"><img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/video.png" alt="How to get Started" width="500"></a>
-</div>
 
 
 For more features, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).

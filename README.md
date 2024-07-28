@@ -37,7 +37,7 @@
 
 ## What is superduper.io? 🔮 
 
-superduper.io is a Python framework for integrating AI models, APIs, and vector search engines directly with your existing databases. It includes hosting of your own models, streaming inference, and scalable model training/fine-tuning.
+`superduper.io` is a Python framework for integrating AI models, APIs, and vector search engines directly with your existing databases. It includes hosting of your own models, streaming inference, and scalable model training/fine-tuning.
 
 <p align="center">
   <img width="70%" src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/superduper.gif">
@@ -59,18 +59,17 @@ superduper.io is a Python framework for integrating AI models, APIs, and vector 
 | **[Vector Search](https://docs.superduper.io/docs/docs/walkthrough/vector_search)** | Transform your database into a multi-modal vector-search database, generating vector embeddings and indexes with preferred models and APIs. |
 
 
-
-For more features and integrations, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).
-
 <div align="center">
   <a href="https://www.youtube.com/watch?v=dDJ_ktMtbw0"><img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/video.png" alt="How to get Started" width="500"></a>
 </div>
 
+
+For more features and integrations, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).
+
+
 ## Example Use-Cases and Apps (Notebooks)
 
-[Browse the re-usable snippets](https://docs.superduper.io/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality with few lines of code using superduper.io.
-
-The following notebooks demonstrate various frameworks, model providers, vector databases, and retrieval techniques. For more information, check our [Docs](https://docs.superduper.io/) and [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough).
+[Explore the reusable snippets](https://docs.superduper.io/docs/category/reusable-snippets) of superduper.io to learn how to achieve complex AI functionality with just a few lines of code. The following notebooks showcase different frameworks, model providers, vector databases, and retrieval techniques.
 
 <table>
   <tr>
@@ -95,7 +94,8 @@ The following notebooks demonstrate various frameworks, model providers, vector 
   </tr>
 </table>
 
-For more information about superduper.io and its benefits, [read this blog post](https://blog.superduper.io/superduper-the-open-source-framework-for-bringing-ai-to-your-datastore/).
+For more information, check our [Docs](https://docs.superduper.io/), our [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough), and [read this blog post](https://blog.superduper.io/superduper-the-open-source-framework-for-bringing-ai-to-your-datastore/).
+
 
 ## Installation
 

@@ -65,7 +65,7 @@
 </div>
 
 
-For more features and integrations, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).
+For more features, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).
 
 
 ## Example Use-Cases and Apps (Notebooks)
@@ -120,7 +120,9 @@ make build_sandbox
 make testenv_init
 ```
 
-## Supported Datastores (*more coming soon*):
+## Current Integrations 
+
+####  Datastores
 
 <table>
     <tr>
@@ -170,13 +172,8 @@ make testenv_init
     </tr>
 </table>
 
-**Transform your existing database into a Python-only AI development and deployment stack with one command:**
 
-```
-db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
-```
-
-## Supported AI Frameworks and Models (*more coming soon*):
+#### AI Frameworks and Models
 
 <table>
     <tr>
@@ -192,10 +189,8 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
     </tr>
 </table>
 
-**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
 
-
-## Pre-Integrated AI APIs (*more coming soon*):
+#### AI APIs
 
 <table >
     <tr>
@@ -214,7 +209,9 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
     </tr>
 </table>
 
-**Integrate externally hosted models accessible via API to work together with your other models with a simple Python command:**
+
+For more integrations, feel free to [contribute to our Roadmap for `v0.3`](https://github.com/superduper-io/superduper/discussions/1882).
+
 
 
 ## Community & Getting Help 

@@ -48,15 +48,16 @@
 
 | Feature | Description |
 |---------|-------------|
-| **[Integration of AI with your existing data infrastructure](https://docs.superduper.io/docs/docs/walkthrough/apply_models)** | Seamlessly integrate AI models and APIs with your databases without additional pre-processing steps, ETL, or boilerplate code. |
-| **[Inference via change-data-capture](https://docs.superduper.io/docs/docs/walkthrough/daemonizing_models_with_listeners)** | Automatically compute outputs as new data arrives, keeping your deployment up-to-date. |
-| **[Scalable Model Training](https://docs.superduper.io/docs/docs/walkthrough/training_models)** | Train AI models on large datasets by querying your training data, with built-in computational optimizations. |
-| **[Model Chaining](https://docs.superduper.io/docs/docs/walkthrough/linking_interdependent_models)** | Set up complex workflows by connecting models and APIs in an interdependent manner. |
-| **[Simple Python Interface](https://docs.superduper.io/docs/docs/fundamentals/procedural_vs_declarative_api)** | Replace extensive glue code with simple Python commands, while accessing detailed implementation layers. |
-| **[Python-First](https://docs.superduper.io/docs/docs/fundamentals/procedural_vs_declarative_api)** | Leverage any function, script, or algorithm from the Python ecosystem to enhance your workflows. |
-| **[Difficult Data-Types](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Work directly with images, video, audio, and any type encoded as bytes in Python. |
-| **[Feature Storing](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Turn your database into a repository for managing AI model inputs and outputs in a structured format. |
-| **[Vector Search](https://docs.superduper.io/docs/docs/walkthrough/vector_search)** | Transform your database into a multi-modal vector-search database, generating vector embeddings and indexes with preferred models and APIs. |
+| **[Seamless AI Integration with Existing Data Infrastructure](https://docs.superduper.io/docs/docs/walkthrough/apply_models)** | Effortlessly integrate AI models and APIs with your current databases, without requiring additional pre-processing steps, ETL, or boilerplate code. |
+| **[ Real-time Inference via Change-Data-Capture](https://docs.superduper.io/docs/docs/walkthrough/daemonizing_models_with_listeners)** | Enable automatic computation of outputs as new data is ingested, ensuring your AI deployment remains current and responsive. |
+| **[Scalable Model Training on Large Datasets](https://docs.superduper.io/docs/docs/walkthrough/training_models)** | Facilitate the training of AI models on extensive datasets by querying your data with integrated computational optimizations, ensuring efficient and scalable model training processes. |
+| **[Complex Model Chaining](https://docs.superduper.io/docs/docs/walkthrough/linking_interdependent_models)** | Establish intricate workflows by connecting multiple models and APIs in a dependent sequence, enabling sophisticated data processing and decision-making pipelines. |
+| **[Friendly Python Interface](https://docs.superduper.io/docs/docs/fundamentals/procedural_vs_declarative_api)** | Minimize the need for extensive glue code by utilizing simple Python commands while retaining access to detailed implementation layers for advanced customization. |
+| **[Python-First Approach](https://docs.superduper.io/docs/docs/fundamentals/procedural_vs_declarative_api)** | Leverage the full potential of the Python ecosystem, incorporating any function, script, or algorithm to enhance and extend your AI workflows seamlessly. |
+| **[Support for Complex Data Types](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Directly work with a variety of data types, including images, video, audio, and byte-encoded data, within Python, ensuring comprehensive data handling capabilities. |
+| **[AI Feature Storage](https://docs.superduper.io/docs/docs/walkthrough/encoding_special_data_types)** | Transform your database into a structured repository for managing AI model inputs and outputs, facilitating efficient tracking and management of feature data. |
+| **[Multi-Modal Vector Search](https://docs.superduper.io/docs/docs/walkthrough/vector_search)** | Convert your database into a sophisticated multi-modal vector-search engine, generating and indexing vector embeddings with your chosen models and APIs for advanced search capabilities. |
+
 
 
 <div align="center">

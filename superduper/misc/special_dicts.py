@@ -359,12 +359,13 @@ def _diff_impl(r1, r2):
 
 
 def _childrens(tree, object, nesting=1):
-    if not object.builds or not nesting:
+    if not object.get('_builds', False) or not nesting:
         return
     for name, child in object.builds.items():
-        child_text = f"{name}: {child.__class__}({child.identifier}): {str(child)[:50]}"
+        identifier = child.get('uuid', None)
+        child_text = f"{name}: {child['_path']}({identifier})"
         subtree = tree.add(Text(child_text, style="yellow"))
-        for key, value in child.__dict__.items():
+        for key, value in child.items():
             key_text = Text(f"{key}", style="magenta")
             value_text = Text(f": {value}", style="blue")
             subtree.add(Text.assemble(key_text, value_text))
@@ -453,7 +454,7 @@ def _display_component(obj, verbosity=1):
             Text(f'Component Map: {obj.identifier}', style="bold green"),
             guide_style="bold green",
         )
-        _childrens(tree, obj, nesting=verbosity - 1)
+        _childrens(tree, obj.encode(), nesting=verbosity - 1)
 
     additional_info_panel = Panel(
         base_component_metadata, title="Component Metadata", border_style="blue"

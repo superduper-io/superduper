@@ -1,5 +1,4 @@
 import threading
-from test.db_config import DBConfig
 
 import numpy as np
 import pandas as pd
@@ -31,6 +30,9 @@ def data():
 
 
 def test_infer_datatype():
+    from superduper.ext import pillow as pillow_ext, torch as torch_ext
+
+    print(torch_ext, pillow_ext)
     assert infer_datatype(1) is int
     assert infer_datatype(1.0) is float
     assert infer_datatype("1") is str
@@ -102,24 +104,7 @@ def test_infer_schema_ibis(data):
         assert str(data[key]) == str(decode_data[key])
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_mongo_schema(db, data):
-    collection = db['documents']
-    schema = db.infer_schema(data)
-
-    db.apply(schema)
-
-    db.execute(
-        collection.insert_one(Document(data, db=db, schema=schema)),
-    )
-    decode_data = collection.find_one().execute(db).unpack()
-    for key in data:
-        assert isinstance(data[key], type(decode_data[key]))
-        assert str(data[key]) == str(decode_data[key])
-
-
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_ibis_schema(db, data):
+def test_schema(db, data):
     schema = db.infer_schema(data)
 
     t = Table(identifier="my_table", schema=schema)
@@ -128,7 +113,7 @@ def test_ibis_schema(db, data):
 
     db.execute(db["my_table"].insert([Document(data)]))
 
-    select = db["my_table"].select(*data.keys()).limit(1)
+    select = db["my_table"].select().limit(1)
     decode_data = db.execute(select).next().unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))

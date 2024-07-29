@@ -1,4 +1,9 @@
-from test.db_config import DBConfig
+from test.utils.setup.fake_data import (
+    add_listener,
+    add_models,
+    add_random_data,
+    add_vector_index,
+)
 
 import numpy
 import pytest
@@ -54,17 +59,10 @@ def test_auto_inference_primary_id():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (
-            DBConfig.sqldb_data,
-            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
-        ),
-    ],
-    indirect=True,
-)
 def test_renamings(db):
+    add_random_data(db, n=5)
+    add_models(db)
+    add_listener(db)
     t = db['documents']
     listener_uuid = [k.split('/')[-1] for k in db.show('listener')][0]
     q = t.select('id', 'x', 'y').outputs(listener_uuid)
@@ -72,13 +70,6 @@ def test_renamings(db):
     assert torch.is_tensor(data[0].unpack()[f'_outputs__{listener_uuid}'])
 
 
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_empty),
-    ],
-    indirect=True,
-)
 def test_serialize_query(db):
     from superduper.backends.ibis.query import IbisQuery
 
@@ -90,14 +81,8 @@ def test_serialize_query(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_data, {'n_data': 10}),
-    ],
-    indirect=True,
-)
 def test_add_fold(db):
+    add_random_data(db, n=10)
     table = db['documents']
     select_train = table.select('id', 'x', '_fold').add_fold('train')
     result_train = db.execute(select_train)
@@ -110,27 +95,15 @@ def test_add_fold(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_data, {'n_data': 500}),
-    ],
-    indirect=True,
-)
 def test_get_data(db):
+    add_random_data(db, n=5)
     db['documents'].limit(2)
     db.metadata.get_component('table', 'documents')
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_data, {'n_data': 5}),
-    ],
-    indirect=True,
-)
 def test_insert_select(db):
+    add_random_data(db, n=5)
     q = db['documents'].select('id', 'x', 'y').limit(2)
     r = list(db.execute(q))
 
@@ -139,14 +112,8 @@ def test_insert_select(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_data, {'n_data': 5}),
-    ],
-    indirect=True,
-)
 def test_filter(db):
+    add_random_data(db, n=5)
     t = db['documents']
     q = t.select('id', 'y')
     r = list(db.execute(q))
@@ -159,17 +126,10 @@ def test_filter(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (
-            DBConfig.sqldb_data,
-            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
-        ),
-    ],
-    indirect=True,
-)
 def test_pre_like(db):
+    add_random_data(db, n=5)
+    add_models(db)
+    add_vector_index(db)
     r = list(db.execute(db['documents'].select('id', 'x')))[0]
     query = (
         db['documents']
@@ -184,17 +144,10 @@ def test_pre_like(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (
-            DBConfig.sqldb_data,
-            {'n_data': 5, 'add_vector_index': True, 'add_models': True},
-        ),
-    ],
-    indirect=True,
-)
 def test_post_like(db):
+    add_random_data(db, n=5)
+    add_models(db)
+    add_vector_index(db)
     r = list(db.execute(db['documents'].select('id', 'x')))[0]
     t = db['documents']
     query = (
@@ -209,3 +162,20 @@ def test_post_like(db):
     s = list(db.execute(query))
     assert len(s) == 2
     assert all([d['id'] in ['1', '2', '3'] for d in s])
+
+
+def test_execute_complex_query_sqldb_auto_schema(db):
+    import ibis
+
+    db.cfg.auto_schema = True
+
+    # db.add(table)
+    table = db['documents']
+    table.insert(
+        [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
+    ).execute()
+
+    cur = table.select('this').order_by(ibis.desc('this')).limit(10).execute(db)
+    expected = [f'is a test {i}' for i in range(99, 89, -1)]
+    cur_this = [r['this'] for r in cur]
+    assert sorted(cur_this) == sorted(expected)

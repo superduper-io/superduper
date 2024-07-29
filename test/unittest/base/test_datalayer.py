@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Any, ClassVar, Optional, Sequence
 
@@ -16,12 +17,10 @@ except ImportError:
 
 
 import dataclasses as dc
-from test.db_config import DBConfig
 from unittest.mock import patch
 
 from superduper.backends.ibis.field_types import dtype
 from superduper.backends.mongodb.data_backend import MongoDataBackend
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.component import Component
@@ -32,7 +31,6 @@ from superduper.components.datatype import (
     dill_serializer,
     pickle_decode,
     pickle_encode,
-    pickle_encoder,
     pickle_serializer,
 )
 from superduper.components.listener import Listener
@@ -41,6 +39,9 @@ from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 n_data_points = 250
+
+ibis_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('ibis.yaml')
+mongodb_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml')
 
 
 @dc.dataclass(kw_only=True)
@@ -79,25 +80,22 @@ class TestComponent(Component):
 
 
 def add_fake_model(db: Datalayer):
+    schema = Schema(
+        identifier='documents',
+        fields={
+            'id': dtype('str'),
+            'x': dtype('int'),
+        },
+    )
+    t = Table(identifier='documents', schema=schema)
+    db.apply(t)
+
     model = ObjectModel(
         object=lambda x: str(x),
         identifier='fake_model',
-        datatype=pickle_encoder,
     )
     db.apply(model)
-    if isinstance(db.databackend.type, MongoDataBackend):
-        select = MongoQuery(table='documents').find()
-    else:
-        schema = Schema(
-            identifier='documents',
-            fields={
-                'id': dtype('str'),
-                'x': dtype('int'),
-            },
-        )
-        t = Table(identifier='documents', schema=schema)
-        db.apply(t)
-        select = db['documents'].select('id', 'x')
+    select = db['documents'].select()
     listener = Listener(
         model=model,
         select=select,
@@ -107,10 +105,6 @@ def add_fake_model(db: Datalayer):
     return listener
 
 
-EMPTY_CASES = [DBConfig.mongodb_empty, DBConfig.sqldb_empty]
-
-
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_version(db: Datalayer):
     # Check the component functions are called
     component = TestComponent(identifier='test')
@@ -149,7 +143,6 @@ def test_add_version(db: Datalayer):
     assert db.show('test-component', 'test') == [0, 1, 2]
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_component_with_bad_artifact(db):
     artifact = {'data': lambda x: x}
     component = TestComponent(
@@ -159,7 +152,6 @@ def test_add_component_with_bad_artifact(db):
         db.apply(component)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = {'data': 1}
@@ -172,7 +164,6 @@ def test_add_artifact_auto_replace(db):
         serialized['_builds'][key]['blob'].startswith('&:blob:')
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add_child(db):
     child_component = TestComponent(identifier='child')
     component = TestComponent(identifier='test', child=child_component)
@@ -194,7 +185,6 @@ def test_add_child(db):
     assert parents == [component_3.uuid]
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_add(db):
     component = TestComponent(identifier='test')
     db.apply(component)
@@ -212,7 +202,6 @@ def test_add(db):
         db.apply('test')
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_add_with_artifact(db):
     m = ObjectModel(
         identifier='test',
@@ -231,13 +220,11 @@ def test_add_with_artifact(db):
     assert callable(m.object)
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_add_table(db):
     component = Table('test', schema=Schema('test-s', fields={'field': dtype('str')}))
     db.apply(component)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_version(db):
     for component in [
         TestComponent(identifier='test', version=0),
@@ -265,7 +252,6 @@ def test_remove_component_version(db):
     assert db.show('test-component', 'test') == []
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
     db.apply(
@@ -281,7 +267,6 @@ def test_remove_component_with_parent(db):
     assert 'is involved in other components' in str(e)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_clean_up(db):
     # Test clean up
     component_clean_up = TestComponent(
@@ -293,7 +278,6 @@ def test_remove_component_with_clean_up(db):
     assert 'cleanup' in str(e)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
     test_datatype = DataType(identifier='test_datatype')
@@ -303,7 +287,6 @@ def test_remove_component_from_data_layer_dict(db):
         db.datatypes['test_datatype']
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
     component_with_artifact = TestComponent(
@@ -323,7 +306,6 @@ def test_remove_component_with_artifact(db):
         mock_delete.assert_called_once_with(artifact_file_id)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_one_version(db):
     for component in [
         TestComponent(identifier='test', version=0),
@@ -338,7 +320,6 @@ def test_remove_one_version(db):
     assert db.show('test-component', 'test') == [0]
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_multi_version(db):
     for component in [
         TestComponent(identifier='test', version=0),
@@ -353,7 +334,6 @@ def test_remove_multi_version(db):
     assert db.show('test-component', 'test') == []
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_remove_not_exist_component(db):
     with pytest.raises(FileNotFoundError) as e:
         db.remove('test-component', 'test', 0, force=True)
@@ -362,7 +342,6 @@ def test_remove_not_exist_component(db):
     db.remove('test-component', 'test', force=True)
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_show(db):
     for component in [
         TestComponent(identifier='a1'),
@@ -397,7 +376,6 @@ def test_show(db):
     assert db.show('test-component', 'b', -1)['version'] == 2
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
 
@@ -426,24 +404,21 @@ def test_load(db):
     assert 'e1' in db.datatypes
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_insert_mongo_db(db):
+def test_insert(db):
+    db.cfg.auto_schema = True
     add_fake_model(db)
-    inserted_ids, _ = db._insert(
-        MongoQuery(table='documents').insert_many(
-            [{'x': i, 'update': True} for i in range(5)]
-        )
+    inserted_ids, _ = (
+        db['documents'].insert([{'x': i, 'update': True} for i in range(5)]).execute()
     )
     assert len(inserted_ids) == 5
 
     listener_uuid = db.show('listener')[0].split('/')[-1]
     key = f'_outputs__{listener_uuid}'
     new_docs = db[key].select().execute()
-    result = [doc[key].unpack() for doc in new_docs]
+    result = [doc[key] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert_artifacts(db):
     dt = DataType(
         'my_saveable',
@@ -461,38 +436,35 @@ def test_insert_artifacts(db):
             [Document({'x': numpy.random.randn(100)}) for _ in range(1)]
         )
     )
-    r = db.execute(db['documents'].find_one())
+    r = list(db.execute(db['documents'].select()))[0]
     assert isinstance(r['x'], numpy.ndarray)
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_sql_db(db):
+    db.cfg.auto_schema = True
     listener = add_fake_model(db)
-
     table = db['documents']
     inserted_ids, _ = db.execute(
         table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
     )
     assert len(inserted_ids) == 5
 
-    q = table.select('id', 'x').outputs(listener.outputs)
+    q = table.select().outputs(listener.predict_id)
     new_docs = db.execute(q)
     new_docs = list(new_docs)
 
-    result = [doc.unpack()[listener.outputs] for doc in new_docs]
+    result = [Document(doc.unpack())[listener.outputs] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.mark.skipif(not mongodb_config, reason='MongoDB not configured')
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    q = MongoQuery(table='documents').insert_many(
-        [Document({'x': i, 'update': True}) for i in range(5)]
-    )
+    q = db['documents'].insert([Document({'x': i, 'update': True}) for i in range(5)])
     db._insert(q)
     updated_ids, _ = db._update(
-        MongoQuery(table='documents').update_many({}, Document({'$set': {'x': 100}}))
+        db['documents'].update_many({}, Document({'$set': {'x': 100}}))
     )
     assert len(updated_ids) == 5
     listener_uuid = db.show('listener')[0].split('/')[-1]
@@ -506,21 +478,6 @@ def test_update_db(db):
         # assert doc[key] == '100'
 
 
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.mongodb_data, {'n_data': 6}),
-    ],
-    indirect=True,
-)
-def test_delete(db):
-    # TODO: add sqldb test after the delete method is implemented
-    db._delete(MongoQuery(table='documents').delete_one({}))
-    new_docs = list(db.execute(MongoQuery(table='documents').find()))
-    assert len(new_docs) == 5
-
-
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_replace(db):
     model = ObjectModel(
         object=lambda x: x + 1,
@@ -552,7 +509,6 @@ def test_replace(db):
     assert db.load('model', 'm').predict_batches([1]) == [4]
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_replace_with_child(db):
     db.apply(
         Table(
@@ -599,7 +555,6 @@ def test_replace_with_child(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_compound_component(db):
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
@@ -630,7 +585,6 @@ def test_compound_component(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_reload_dataset(db):
     from superduper.components.dataset import Dataset
 
@@ -664,18 +618,14 @@ def test_reload_dataset(db):
     assert new_d.sample_size == 100
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.sqldb_no_vector_index, {'n_data': n_data_points}),
-        (DBConfig.mongodb_no_vector_index, {'n_data': n_data_points}),
-    ],
-    indirect=True,
-)
+# TODO: Enable this test when select support filter
 def test_dataset(db):
+    db.cfg.auto_schema = True
+    from test.utils.setup.fake_data import add_random_data
+
+    add_random_data(db, n=6)
     if isinstance(db.databackend.type, MongoDataBackend):
-        select = MongoQuery(table='documents').find({'_fold': 'valid'})
+        select = db['documents'].find({'_fold': 'valid'})
     else:
         table = db['documents']
         select = table.select('id', '_fold', 'x', 'y', 'z').filter(
@@ -692,7 +642,6 @@ def test_dataset(db):
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 def test_retry_on_token_expiry(db):
     # Mock the methods
     db.retry = 1

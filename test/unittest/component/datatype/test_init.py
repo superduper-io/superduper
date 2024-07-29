@@ -1,11 +1,19 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.base.document import Document
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+@pytest.fixture
+def clean():
+    yield
+    import os
+
+    try:
+        os.remove('/tmp/test_db/32b6853dd2b2b45de723966dba17e23cece9f35c')
+    except FileNotFoundError:
+        pass
+
+
 def test_load_image_inside_query(db, clean):
     r = {
         '_path': 'superduper.backends.base.query.parse_query',
@@ -38,14 +46,3 @@ def test_load_image_inside_query(db, clean):
     q = Document.decode(r, db=db).unpack()
 
     print(q)
-
-
-@pytest.fixture
-def clean():
-    yield
-    import os
-
-    try:
-        os.remove('/tmp/test_db/32b6853dd2b2b45de723966dba17e23cece9f35c')
-    except FileNotFoundError:
-        pass

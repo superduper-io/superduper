@@ -1,10 +1,16 @@
+import os
 import typing as t
-from test.db_config import DBConfig
 
 import pytest
 
 from superduper import ObjectModel
 from superduper.base.document import Document
+
+skip = not os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml')
+
+if skip:
+    # TODO: Enable this when select support filter
+    pytest.skip("Skipping this file for now", allow_module_level=True)
 
 
 class Tuple:
@@ -19,7 +25,6 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_graph_deps(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [

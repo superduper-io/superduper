@@ -6,9 +6,13 @@ except ImportError:
     torch = None
 
 import random
-from test.db_config import DBConfig
+from test.utils.setup.fake_data import (
+    add_listener,
+    add_models,
+    add_random_data,
+    add_vector_index,
+)
 
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
@@ -36,7 +40,8 @@ def get_new_data(n=10, update=False):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_many(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    collection = db['documents']
     old_ids = {r['_id'] for r in db.execute(collection.find({}, {'_id': 1}))}
     deleted_ids = list(old_ids)[:2]
     db.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
@@ -48,7 +53,8 @@ def test_delete_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    collection = db['documents']
     r = next(db.execute(collection.find()))
     new_x = torch.randn(32)
     r['x'] = new_x
@@ -65,7 +71,6 @@ def test_replace(db):
 
 @pytest.mark.skipif(True, reason='URI not working')
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('db', [DBConfig.mongodb_empty], indirect=True)
 def test_insert_from_uris(db, image_url):
     import PIL
 
@@ -75,7 +80,7 @@ def test_insert_from_uris(db, image_url):
         image_url = image_url[7:]
 
     db.add(pil_image)
-    collection = MongoQuery(table='documents')
+    collection = db['documents']
     to_insert = [Document({'img': pil_image(uri=image_url)})]
 
     db.execute(collection.insert_many(to_insert))
@@ -85,7 +90,6 @@ def test_insert_from_uris(db, image_url):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('db', [DBConfig.mongodb_empty], indirect=True)
 def test_insert_from_uris_bytes_encoding(db, image_url):
     import PIL
 
@@ -106,7 +110,7 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
     if image_url.startswith('file://'):
         image_url = image_url[7:]
 
-    collection = MongoQuery(table='documents')
+    collection = db['documents']
     to_insert = [Document({'img': PIL.Image.open(image_url)})]
 
     db.execute(collection.insert_many(to_insert))
@@ -117,7 +121,8 @@ def test_insert_from_uris_bytes_encoding(db, image_url):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update_many(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    collection = db['documents']
     to_update = torch.randn(32)
     db.execute(collection.update_many({}, Document({'$set': {'x': to_update}})))
     cur = db.execute(collection.find())
@@ -135,9 +140,12 @@ def test_update_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_many(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    add_models(db)
+    add_listener(db)
+    collection = db['documents']
     an_update = get_new_data(10, update=True)
-    db.execute(collection.insert_many(an_update))
+    db.execute(collection.insert(an_update))
 
     assert len(list(db.execute(collection.find()))) == 5 + 10
     assert len(list(db.execute(db['_outputs__vector-x'].find()))) == 5 + 10
@@ -146,7 +154,10 @@ def test_insert_many(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_like(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    add_models(db)
+    add_vector_index(db)
+    collection = db['documents']
     r = db.execute(collection.find_one())
     query = collection.like(
         r=Document({'x': r['x']}),
@@ -158,8 +169,9 @@ def test_like(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_one(db):
+    add_random_data(db, n=5)
     # MARK: empty Collection + a_single_insert
-    collection = MongoQuery(table='documents')
+    collection = db['documents']
     a_single_insert = get_new_data(1, update=False)[0]
     q = collection.insert_one(a_single_insert)
     out, _ = db.execute(q)
@@ -170,17 +182,18 @@ def test_insert_one(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_one(db):
-    # MARK: random data (change)
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    collection = db['documents']
     r = db.execute(collection.find_one())
     db.execute(collection.delete_one({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(db.execute(MongoQuery(table='documents').find({'_id': r['_id']})))
+        next(db.execute(db['documents'].find({'_id': r['_id']})))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=10)
+    collection = db['documents']
     r = db.execute(collection.find().limit(1))
     assert len(list(r)) == 1
     r = db.execute(collection.find().limit(5))
@@ -189,13 +202,15 @@ def test_find(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find_one(db):
-    r = db.execute(MongoQuery(table='documents').find_one())
+    add_random_data(db, n=5)
+    r = db.execute(db['documents'].find_one())
     assert isinstance(r, Document)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace_one(db):
-    collection = MongoQuery(table='documents')
+    add_random_data(db, n=5)
+    collection = db['documents']
     # MARK: random data (change)
     new_x = torch.randn(32)
     r = db.execute(collection.find_one())

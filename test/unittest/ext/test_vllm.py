@@ -1,5 +1,4 @@
 import os
-from test.db_config import DBConfig
 from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
 import pytest
@@ -24,9 +23,6 @@ def openai_mock(monkeypatch):
     record_on_exception=False,
     ignore_localhost=False,
 )
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
 def test_predict_api(db):
     """Test chat."""
     check_predict(db, VllmAPI(identifier="llm", api_url=api_url, max_batch_size=1))
@@ -37,9 +33,6 @@ def test_predict_api(db):
     filter_headers=["authorization"],
     record_on_exception=False,
     ignore_localhost=False,
-)
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_llm_as_listener_model_api(db):
     # vcr does not support multiple requests in a single test, set max_batch_size to 1

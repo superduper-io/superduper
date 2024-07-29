@@ -1,20 +1,16 @@
-from test.db_config import DBConfig
-
 import pytest
 
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.model import ObjectModel
 
 
 @pytest.fixture()
 def data_in_db(db):
+    db.cfg.auto_schema = True
     X = [1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5]
     db.execute(
-        MongoQuery(table='documents').insert_many(
-            [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
-        )
+        db['documents'].insert([Document({'X': x, 'y': yy}) for x, yy in zip(X, y)])
     )
     yield db
 
@@ -29,20 +25,18 @@ def test_function_predict_batches():
     assert function.predict_batches([1, 1]) == [1, 1]
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_in_db(data_in_db):
     function = ObjectModel(object=lambda x: x, identifier='test')
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=MongoQuery(table='documents').find(),
+        select=data_in_db['documents'].select(),
         predict_id='test',
     )
-    out = data_in_db.execute(MongoQuery(table='_outputs__test').find({}))
-    assert [o['_outputs__test'] for o in out] == [1, 2, 3, 4, 5]
+    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
+    assert [Document(o)['_outputs__test'] for o in out] == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_flatten_outputs(data_in_db):
     function = ObjectModel(
         object=lambda x: [x, x, x] if x > 2 else [x, x],
@@ -52,12 +46,13 @@ def test_function_predict_with_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=MongoQuery(table='documents').find(),
+        select=data_in_db['documents'].select(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(MongoQuery(table='_outputs__test').find({})))
+    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
+    primary_id = data_in_db['documents'].primary_id
     input_ids = [
-        c['_id'] for c in data_in_db.execute(MongoQuery(table='documents').find())
+        c[primary_id] for c in data_in_db.execute(data_in_db['documents'].select())
     ]
     source_ids = []
     for i, id in enumerate(input_ids):
@@ -83,7 +78,6 @@ def test_function_predict_with_flatten_outputs(data_in_db):
     assert [o['_source'] for o in out] == source_ids
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function = ObjectModel(
         object=lambda x: [x] if x < 2 else [x, x, x],
@@ -93,12 +87,13 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function.predict_in_db(
         X='X',
         db=data_in_db,
-        select=MongoQuery(table='documents').find(),
+        select=data_in_db['documents'].select(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(MongoQuery(table='_outputs__test').find({})))
+    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
+    primary_id = data_in_db['documents'].primary_id
     input_ids = [
-        c['_id'] for c in data_in_db.execute(MongoQuery(table='documents').find())
+        c[primary_id] for c in data_in_db.execute(data_in_db['documents'].select())
     ]
     source_ids = []
     for i, id in enumerate(input_ids):

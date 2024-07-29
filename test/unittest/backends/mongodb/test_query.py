@@ -1,12 +1,10 @@
 import random
-from test.db_config import DBConfig
 
 import numpy as np
 import pytest
 
 from superduper.backends.mongodb import query as q
 from superduper.backends.mongodb.query import MongoQuery
-from superduper.base.config import BytesEncoding
 from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.ext.numpy.encoder import array
@@ -27,14 +25,6 @@ def schema(request):
     return schema
 
 
-@pytest.mark.parametrize(
-    "db,schema",
-    [
-        (DBConfig.mongodb_empty, BytesEncoding.BASE64),
-        (DBConfig.mongodb_empty, BytesEncoding.BYTES),
-    ],
-    indirect=True,
-)
 def test_mongo_schema(db, schema):
     collection_name = "documents"
     data = []
@@ -89,7 +79,6 @@ def test_select_missing_outputs(db):
     assert len(out) == (len(docs) - len(ids))
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_special_query_serialization(db):
     q2 = db['docs'].find({'x': {'$lt': 9}})
     encoded_query = q2.encode()
@@ -98,3 +87,19 @@ def test_special_query_serialization(db):
 
     rq2 = Document.decode(encoded_query).unpack()
     assert rq2.parts[0][1][0] == {'x': {'$lt': 9}}
+
+
+def test_execute_complex_query_mongodb(db):
+    t = db['documents']
+
+    insert_query = t.insert_many(
+        [Document({'this': f'is a test {i}'}) for i in range(100)]
+    )
+    db.execute(insert_query)
+
+    select_query = t.find().sort('this', -1).limit(10)
+    cur = db.execute(select_query)
+
+    expected = [f'is a test {i}' for i in range(99, 89, -1)]
+    cur_this = [r['this'] for r in cur]
+    assert sorted(cur_this) == sorted(expected)

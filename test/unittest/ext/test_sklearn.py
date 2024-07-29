@@ -1,5 +1,4 @@
 import random
-from test.db_config import DBConfig
 
 import numpy
 import pytest
@@ -7,7 +6,6 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.ext.sklearn.model import Estimator, SklearnTrainer
 
@@ -33,27 +31,14 @@ class TestPipeline:
         yield ['apple', 'orange', 'banana', 'toast']
 
     @pytest.fixture()
-    def pipeline(self, dictionary):
-        yield Estimator(
-            identifier='my-svc',
-            object=Pipeline([('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]),
-            trainer=SklearnTrainer(
-                'my-trainer',
-                key=('X', 'y'),
-                select=MongoQuery(table='documents').find(),
-            ),
-        )
-
-    @pytest.fixture()
     def X(self, dictionary):
         yield [random.choice(dictionary) for _ in range(100)]
 
     @pytest.fixture()
     def data_in_db(self, db, X, y):
+        db.cfg.auto_schema = True
         db.execute(
-            MongoQuery(table='documents').insert_many(
-                [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
-            )
+            db['documents'].insert([Document({'X': x, 'y': yy}) for x, yy in zip(X, y)])
         )
         yield db
 
@@ -61,7 +46,14 @@ class TestPipeline:
     def y(self):
         yield (numpy.random.rand(100) > 0.5).astype(int).tolist()
 
-    # TODO: Test the sqldb
-    @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-    def test_fit_db(self, pipeline, data_in_db):
+    def test_fit_db(self, dictionary, data_in_db):
+        pipeline = Estimator(
+            identifier='my-svc',
+            object=Pipeline([('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]),
+            trainer=SklearnTrainer(
+                'my-trainer',
+                key=('X', 'y'),
+                select=data_in_db['documents'].select(),
+            ),
+        )
         _ = data_in_db.apply(pipeline)

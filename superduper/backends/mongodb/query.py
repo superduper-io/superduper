@@ -594,7 +594,16 @@ class MongoOutputs(MongoQuery):
 
     def _execute(self, parent, method='encode'):
         find_params, _ = self._get_method_parameters('find')
-        project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {"*": 1}
+        project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {}
+        if not project:
+            try:
+                table = self.db.tables[self.table]
+                project = {key: 1 for key in table.schema.fields.keys()}
+            except FileNotFoundError:
+                logging.warn(
+                    'No schema found for table',
+                    f'{self.table}. Using default projection',
+                )
         project['_schema'] = 1
         project['_builds'] = 1
         project['_files'] = 1

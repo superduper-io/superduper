@@ -6,7 +6,6 @@ try:
     from superduper.ext.torch.encoder import tensor
 except ImportError:
     torch = None
-from test.db_config import DBConfig
 
 from sklearn.svm import SVC
 
@@ -27,10 +26,6 @@ def test_model():
     assert m_dict['datatype'].identifier == 'torch-float32[32]'
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
 def test_sklearn(db):
     m = Estimator(
         identifier='test',

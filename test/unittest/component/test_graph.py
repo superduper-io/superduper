@@ -1,5 +1,3 @@
-from test.db_config import DBConfig
-
 import networkx as nx
 import pytest
 
@@ -8,7 +6,6 @@ from superduper.components.graph import Graph, document_node, input_node
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model1(db):
     def model_object(x):
         return x + 1
@@ -19,7 +16,6 @@ def model1(db):
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model2(db):
     def model_object(x):
         return x + 2, x
@@ -30,7 +26,6 @@ def model2(db):
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model2_multi_dict(db):
     def model_object(x):
         return {'x': x + 2}
@@ -41,7 +36,6 @@ def model2_multi_dict(db):
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model2_multi(db):
     def model_object(x, y=1):
         return x + y + 2
@@ -52,7 +46,6 @@ def model2_multi(db):
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def model3(db):
     def model_object(x, y):
         return x + y + 3
@@ -123,19 +116,23 @@ def test_disconnected_edge(model1, model2_multi):
 
 
 def test_complex_graph_with_select(db):
+    db.cfg.auto_schema = True
+    from test.utils.setup.fake_data import add_models, add_random_data
+
+    add_random_data(db)
+    add_models(db)
     linear_a = db.load('model', 'linear_a')
     linear_b = db.load('model', 'linear_b')
-    g = Graph(identifier='complex-graph', input=linear_a, outputs=[linear_b])
+    g = Graph(identifier='complex-graph', input=linear_a, outputs=linear_b)
     g.connect(linear_a, linear_b)
 
-    select = db["documents"].find({})
+    select = db["documents"].select()
     g.predict_in_db(X='x', select=select, db=db, predict_id='test')
     assert all(
         ['_outputs__test' in x for x in list(db.execute(db['_outputs__test'].select()))]
     )
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_serialization(db, model1):
     g = Graph(identifier='complex-graph', input=model1)
     original_g = g.G

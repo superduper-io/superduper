@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All datatypes should be wrapped with a Schema
 - Support eager mode
 - Add CSN env var
+- Make tests configurable against backend
+
 
 #### Bug Fixes
 

@@ -1,12 +1,7 @@
 import os
 import random
-from test.db_config import DBConfig
 
-import pytest
-
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
-from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
 from superduper.ext.transformers import LLM
 
@@ -23,17 +18,17 @@ except ImportError:
     trl = None
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_training(db, tmpdir):
+    db.cfg.auto_schema = True
     datas = []
     for i in range(32 + 8):
         text = f"{i}+1={i+1}"
         fold = "train" if i < 32 else "valid"
         datas.append({"text": text, "id": str(i), "_fold": fold})
 
-    collection = MongoQuery(table="doc")
-    db.execute(collection.insert_many(list(map(Document, datas))))
-    select = collection.find()
+    collection = db['doc']
+    db.execute(collection.insert(list(map(Document, datas))))
+    select = collection.select()
 
     transform = None
     key = "text"
@@ -65,16 +60,17 @@ def test_training(db, tmpdir):
     def metric(predictions, targets):
         return random.random()
 
-    validation_sets = [
-        Dataset(
-            identifier="dataset_1",
-            select=collection.find({"_fold": "valid"}),
-        ),
-        Dataset(
-            identifier="dataset_2",
-            select=collection.find({"_fold": "valid"}),
-        ),
-    ]
+    # TODO: Enable this when select support filter
+    # validation_sets = [
+    #     Dataset(
+    #         identifier="dataset_1",
+    #         select=collection.find({"_fold": "valid"}),
+    #     ),
+    #     Dataset(
+    #         identifier="dataset_2",
+    #         select=collection.find({"_fold": "valid"}),
+    #     ),
+    # ]
     metrics = [
         Metric(
             identifier="metrics1",
@@ -90,7 +86,7 @@ def test_training(db, tmpdir):
 
     validation = Validation(
         identifier="validation",
-        datasets=validation_sets,
+        # datasets=validation_sets,
         metrics=metrics,
         key="text",
     )

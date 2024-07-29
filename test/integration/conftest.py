@@ -1,4 +1,5 @@
 import random
+from typing import Iterator
 
 import numpy as np
 import pytest
@@ -11,7 +12,10 @@ try:
 except ImportError:
     torch = None
 
+from superduper import logging
+from superduper.backends.mongodb.data_backend import MongoDataBackend
 from superduper.backends.mongodb.query import MongoQuery
+from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.listener import Listener
 from superduper.components.vector_index import VectorIndex
@@ -20,6 +24,30 @@ from superduper.components.vector_index import VectorIndex
 random.seed(42)
 torch and torch.manual_seed(42)
 np.random.seed(42)
+
+
+@pytest.fixture
+def test_db(request) -> Iterator[Datalayer]:
+    from superduper import CFG
+    from superduper.base.build import build_datalayer
+
+    # mongodb instead of localhost is required for CFG compatibility with docker-host
+    db_name = CFG.data_backend.split('/')[-1]
+
+    db = build_datalayer(CFG)
+
+    yield db
+
+    logging.info("Dropping database ", {db_name})
+
+    if isinstance(db.databackend.type, MongoDataBackend):
+        try:
+            db.databackend.conn.drop_database(db_name)
+            db.databackend.conn.drop_database(f'_filesystem:{db_name}')
+        except Exception as e:
+            logging.info(f"Error dropping databases: {e}")
+            for c in db.databackend.db.list_collection_names():
+                db.databackend.db.drop_collection(c)
 
 
 def add_models_encoders(test_db):

@@ -1,9 +1,7 @@
 import typing as t
 from pprint import pprint
-from test.db_config import DBConfig
 
 import numpy as np
-import pytest
 
 from superduper import ObjectModel, Schema, superduper
 from superduper.base.document import Document
@@ -14,7 +12,6 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_wrap_as_application_from_db(db: "Datalayer"):
     data = {"x": 1, "y": 2, "z": np.array([1, 2, 3])}
     db.cfg.auto_schema = True
@@ -75,7 +72,8 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
         table.identifier,
     }
 
-    db = superduper(db.databackend.uri)
+    db = superduper()
+    db.cfg.auto_schema = True
 
     db["documents"].insert([data]).execute()
 

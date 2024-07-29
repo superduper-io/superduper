@@ -1,6 +1,5 @@
 import os
 import tempfile
-from test.db_config import DBConfig
 
 import pytest
 
@@ -27,7 +26,6 @@ def patch_cfg_downloads(monkeypatch):
 
 # TODO: use table to test the sqldb
 @pytest.mark.skipif(True, reason='URI not working')
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_file_blobs(db, patch_cfg_downloads, image_url):
     db.apply(pil_image)
     to_insert = [Document({"item": pil_image(uri=image_url)}) for _ in range(2)]

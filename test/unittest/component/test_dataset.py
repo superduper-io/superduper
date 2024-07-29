@@ -1,11 +1,8 @@
-from test.db_config import DBConfig
-
 import pytest
 
 from superduper.components.dataset import DataInit, Dataset
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 @pytest.mark.parametrize("pin", [True, False])
 def test_dataset_pin(db, pin):
     db.cfg.auto_schema = True
@@ -34,7 +31,6 @@ def test_dataset_pin(db, pin):
         len(dataset.data) == 20
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_init_data(db):
     db.cfg.auto_schema = True
     data = [{"x": i, "y": [1, 2, 3]} for i in range(10)]

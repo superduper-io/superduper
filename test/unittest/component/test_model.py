@@ -1,8 +1,6 @@
 import dataclasses as dc
-from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
-import bson
 import numpy as np
 import pytest
 from sklearn.metrics import accuracy_score, f1_score
@@ -11,7 +9,6 @@ from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.query import Query
 from superduper.backends.ibis.field_types import FieldType
 from superduper.backends.local.compute import LocalComputeBackend
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.dataset import Dataset
@@ -279,16 +276,12 @@ def test_model_validate(mock_call):
     assert returned == {'acc': 0.75}
 
 
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.mongodb_data, {'n_data': 500}),
-        (DBConfig.sqldb_data, {'n_data': 500}),
-    ],
-    indirect=True,
-)
-def test_model_validate_in_db(valid_dataset, db):
+def test_model_validate_in_db(db):
     # Check the validation is done correctly
+    from test.utils.setup.fake_data import add_random_data, get_valid_dataset
+
+    add_random_data(db)
+    valid_dataset = get_valid_dataset(db)
 
     model_predict = ObjectModel(
         identifier='test',
@@ -315,12 +308,15 @@ class MyTrainer(Trainer):
         return
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_model_create_fit_job(db):
+    db.cfg.auto_schema = True
+    from test.utils.setup.fake_data import add_random_data
+
+    add_random_data(db)
     # Check the fit job is created correctly
     model = Validator('test', object=object())
     # TODO move these parameters into the `Trainer` (same thing for validation)
-    model.trainer = MyTrainer('test', select=MongoQuery(table='test').find(), key='x')
+    model.trainer = MyTrainer('test', select=db['documents'].select(), key='x')
     db.apply(model)
     with patch.object(ComponentJob, '__call__') as mock_call:
         mock_call.return_value = None
@@ -329,20 +325,24 @@ def test_model_create_fit_job(db):
     assert job.method_name == 'fit_in_db'
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_model_fit(db, valid_dataset):
+def test_model_fit(db):
     # Check the logic of the fit method, the mock method was tested above
+    from test.utils.setup.fake_data import add_random_data
+
+    add_random_data(db)
 
     class MyTrainer(Trainer):
         def fit(self, *args, **kwargs):
             return
 
+    from superduper.components.dataset import Dataset
+
+    valid_dataset = Dataset(identifier='test', select=db['documents'].select())
+
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer(
-            'my-trainer', key='x', select=MongoQuery(table='test').find()
-        ),
+        trainer=MyTrainer('my-trainer', key='x', select=db['documents'].select()),
         validation=Validation(
             'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
         ),
@@ -353,30 +353,29 @@ def test_model_fit(db, valid_dataset):
         model.fit.assert_called_once()
 
 
-def postprocess(r):
-    return r['_id']
-
-
-@pytest.mark.parametrize(
-    "db",
-    [
-        (DBConfig.mongodb, {'n_data': 10}),
-    ],
-    indirect=True,
-)
 def test_query_model(db):
+    from test.utils.setup.fake_data import add_models, add_random_data, add_vector_index
+
+    add_random_data(db)
+    add_models(db)
+    add_vector_index(db)
     q = (
-        MongoQuery(table='documents', db=db)
+        db['documents']
         .like(
             {'x': '<var:X>'},
             vector_index='test_vector_search',
             n=3,
         )
-        .find_one({}, {'_id': 1})
+        .select()
     )
 
     check = q.set_variables(db=db, X='test')
     assert not check.variables
+
+    primary_id = db['documents'].primary_id
+
+    def postprocess(r):
+        return list(r)[0][primary_id]
 
     m = QueryModel(
         identifier='test-query-model',
@@ -388,8 +387,6 @@ def test_query_model(db):
     import torch
 
     out = m.predict(X=torch.randn(32))
-
-    assert isinstance(out, bson.ObjectId)
 
     out = m.predict_batches([{'X': torch.randn(32)} for _ in range(4)])
 

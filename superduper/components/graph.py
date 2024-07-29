@@ -557,6 +557,10 @@ class Graph(Model):
 
         :param outputs: model outputs.
         """
+        if not isinstance(self.output_identifiers, list):
+            outputs = self.nodes[self.output_identifiers].encode_outputs(outputs)
+            return outputs
+
         encoded_outputs = []
         for o, n in zip(outputs, self.output_identifiers):
             encoded_outputs.append(self.nodes[n].encode_outputs(o))

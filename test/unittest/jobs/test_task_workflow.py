@@ -1,5 +1,3 @@
-from test.db_config import DBConfig
-
 import ibis
 
 ibis.options.interactive = True
@@ -9,8 +7,6 @@ import pytest
 
 from superduper import Document
 from superduper.components.model import ObjectModel
-
-EMPTY_CASES = [DBConfig.sqldb_empty, DBConfig.mongodb_empty]
 
 
 def assert_output_is_correct(data, output):
@@ -27,7 +23,6 @@ def assert_output_is_correct(data, output):
         np.array([[1, 1, 1], [1, 1, 1]]),
     ],
 )
-@pytest.mark.parametrize("db", EMPTY_CASES, indirect=True)
 @pytest.mark.parametrize("flatten", [True, False])
 def test_downstream_task_workflows_are_triggered(db, data, flatten):
     db.cfg.auto_schema = True

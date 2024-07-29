@@ -1,5 +1,4 @@
 import os
-from test.db_config import DBConfig
 from test.unittest.component.datatype import utils
 
 import pytest
@@ -37,7 +36,6 @@ def test_data_with_schema(datatype: DataType, random_data):
 
 
 @pytest.mark.parametrize("datatype", datatypes)
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_data_with_schema_and_db(datatype: DataType, random_data, db):
     utils.check_data_with_schema_and_db(random_data, datatype, db)
 
@@ -48,7 +46,6 @@ def test_data_without_schema(datatype: DataType, random_data):
 
 
 @pytest.mark.parametrize("datatype", datatypes)
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES[:1], indirect=True)
 def test_data_without_schema_and_db(datatype: DataType, random_data, db):
     utils.check_data_without_schema_and_db(random_data, datatype, db)
 
@@ -59,6 +56,5 @@ def test_component(random_data, datatype):
 
 
 @pytest.mark.parametrize("datatype", datatypes)
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_component_with_db(db, random_data, datatype):
     utils.check_component_with_db(random_data, datatype, db)

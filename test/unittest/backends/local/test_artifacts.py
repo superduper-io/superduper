@@ -2,7 +2,6 @@ import dataclasses as dc
 import filecmp
 import os
 import typing as t
-from test.db_config import DBConfig
 
 import pytest
 
@@ -64,7 +63,6 @@ def artifact_store(tmpdir) -> FileSystemArtifactStore:
     return artifact_strore
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_save_and_load_directory(
     db, artifact_store: FileSystemArtifactStore, random_directory
 ):
@@ -88,7 +86,6 @@ def test_save_and_load_directory(
     )
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     db.artifact_store = artifact_store
     # test save and load file
@@ -109,7 +106,6 @@ def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     assert filecmp.cmp(test_component.path, test_component_loaded.path)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_duplicate_artifact(capfd, db, artifact_store: FileSystemArtifactStore):
     db.artifact_store = artifact_store
 

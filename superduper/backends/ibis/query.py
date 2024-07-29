@@ -425,7 +425,12 @@ class IbisQuery(Query):
         :param kwargs: The keyword arguments to pass to the method.
         """
         assert isinstance(self.parts[-1], str)
-        if self.parts[-1] == 'select' and not args:
+        # TODO: Move to _execute
+        if (
+            self.parts[-1] == 'select'
+            and not args
+            and not self.table.startswith('<var:')
+        ):
             # support table.select() without column args
             table = self.db.databackend.get_table_or_collection(self.table)
             args = tuple(table.columns)

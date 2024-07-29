@@ -1,5 +1,3 @@
-from test.db_config import DBConfig
-
 import lorem
 import pytest
 
@@ -17,153 +15,63 @@ def table():
     return table
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_execute_insert_and_find_mongodb(db):
+def test_execute_insert_and_find(db, table):
+    db.add(table)
     t = db['documents']
-    insert_query = t.insert_many([Document({'this': 'is a test'})])
+    insert_query = t.insert([Document({'this': 'is a test'})])
     db.execute(insert_query)
-    select_query = t.find_one()
-    r = db.execute(select_query)
+    r = list(t.select().execute())[0]
     assert r['this'] == 'is a test'
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_execute_insert_and_find_sqldb(db, table):
-    db.add(table)
-    to_insert = [Document({'this': 'is a test', 'id': '1'})]
-    db[table.identifier].insert(to_insert).execute(db)
-    r = db[table.identifier].select('this').limit(1).execute(db).next()
-    assert r['this'] == 'is a test'
+def test_execute_like_queries(db):
+    from test.utils.setup.fake_data import add_models, add_random_data, add_vector_index
 
-
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_execute_complex_query_mongodb(db):
-    t = db['documents']
-
-    insert_query = t.insert_many(
-        [Document({'this': f'is a test {i}'}) for i in range(100)]
-    )
-    db.execute(insert_query)
-
-    select_query = t.find().sort('this', -1).limit(10)
-    cur = db.execute(select_query)
-
-    expected = [f'is a test {i}' for i in range(99, 89, -1)]
-    cur_this = [r['this'] for r in cur]
-    assert sorted(cur_this) == sorted(expected)
-
-
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_execute_complex_query_sqldb_auto_schema(db):
-    import ibis
-
-    db.cfg.auto_schema = True
-
-    # db.add(table)
+    add_random_data(db)
+    add_models(db)
+    add_vector_index(db)
     table = db['documents']
-    table.insert(
-        [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
-    ).execute()
-
-    cur = table.select('this').order_by(ibis.desc('this')).limit(10).execute(db)
-    expected = [f'is a test {i}' for i in range(99, 89, -1)]
-    cur_this = [r['this'] for r in cur]
-    assert sorted(cur_this) == sorted(expected)
-
-
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
-def test_execute_complex_query_sqldb_no_auto_schema(db, table):
-    import ibis
-
-    db.add(table)
-    table = db['documents']
-    table.insert(
-        [Document({'this': f'is a test {i}', 'id': str(i)}) for i in range(100)]
-    ).execute()
-
-    cur = table.select('this').order_by(ibis.desc('this')).limit(10).execute(db)
-    expected = [f'is a test {i}' for i in range(99, 89, -1)]
-    cur_this = [r['this'] for r in cur]
-    print(cur_this)
-    assert sorted(cur_this) == sorted(expected)
-
-
-def test_execute_like_queries_mongodb(db):
-    collection = MongoQuery(table='documents', db=db)
     # Get a data point for testing
-    r = collection.find_one({}).do_execute(db)
+    r = list(table.select().execute())[0]
 
     out = (
-        collection.like({'x': r['x']}, vector_index='test_vector_search', n=10)
-        .find()
+        table.like({'x': r['x']}, vector_index='test_vector_search', n=10)
+        .select()
         .do_execute(db)
     )
+    primary_id = table.primary_id
     scores = out.scores
-    ids = [o['_id'] for o in list(out)]
-    from bson import ObjectId
 
-    assert ObjectId(r['_id']) in ids
+    ids = [o[primary_id] for o in list(out)]
+
+    assert r[primary_id] in ids
     assert scores[str(ids[0])] > 0.999999
 
     # Pre-like
     result = (
-        collection.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
-        .find_one()
-        .do_execute(db)
+        table.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
+        .select()
+        .execute()
     )
 
-    assert result['_id'] == ObjectId(r['_id'])
+    result = list(result)[0]
+
+    assert result[primary_id] == r[primary_id]
 
     # Post-like
-    q = collection.find({}).like(
+    q = table.select().like(
         Document({'x': r['x']}), vector_index='test_vector_search', n=3
     )
     result = q.do_execute(db)
     result = list(result)
     assert len(result) == 3
-    assert result[0]['_id'] == ObjectId(r['_id'])
+    assert result[0][primary_id] == r[primary_id]
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb], indirect=True)
-def test_execute_like_queries_sqldb(db):
-    table = db.load('table', 'documents')
-    # get a data point for testing
-    table = db[table.identifier]
-
-    r = list(table.select('id', 'x', 'y', 'z').execute(db=db))[0]
-
-    out = (
-        table.like({'x': r['x']}, vector_index='test_vector_search', n=10)
-        .select('id')
-        .execute(db)
-    )
-    ids = list(out.scores.keys())
-    scores = out.scores
-
-    assert str(r['id']) in ids[:3]
-    assert scores[ids[0]] > 0.999999
-
-    # pre-like
-    result = (
-        table.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
-        .select('id')
-        .execute(db)
-    )
-
-    result = list(result)
-    assert result[0]['id'] == r['id']
-
-    # post-like
-    q = table.select('id').like(
-        Document({'x': r['x']}), vector_index='test_vector_search', n=3
-    )
-    result = list(q.execute(db))
-    assert len(result) == 3
-    assert result[0]['id'] == r['id']
-
-
-@pytest.mark.parametrize("db", [DBConfig.mongodb], indirect=True)
 def test_model(db):
+    from test.utils.setup.fake_data import add_models
+
+    add_models(db)
     import torch
 
     m = db.load('model', 'linear_a')
@@ -221,21 +129,15 @@ def test_parse_and_dump():
     pprint.pprint(r)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute(db):
-    q = db['test_coll'].insert_many([{'txt': lorem.sentence()} for _ in range(20)])
+    db.cfg.auto_schema = True
+    q = db['test_coll'].insert([{'txt': lorem.sentence()} for _ in range(20)])
 
     q.execute()
 
-    r = db['test_coll'].find_one().execute()
+    r = list(db['test_coll'].select().execute())[0]
 
     assert 'txt' in r
-
-    q = db['test_coll'].find_one()
-
-    print(q)
-
-    r = q.execute()
 
 
 def test_serialize_with_image():
@@ -263,20 +165,19 @@ def test_serialize_with_image():
     print(decode_q)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert(db):
+    db.cfg.auto_schema = True
     table_or_collection = db['documents']
     datas = [Document({'x': i, 'y': str(i)}) for i in range(10)]
-    table_or_collection.insert_many(datas).execute()
+    table_or_collection.insert(datas).execute()
 
-    datas_from_db = list(table_or_collection.find().execute())
+    datas_from_db = list(table_or_collection.select().execute())
 
     for d, d_db in zip(datas, datas_from_db):
         assert d['x'] == d_db['x']
         assert d['y'] == d_db['y']
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_with_schema(db):
     db.cfg.auto_schema = True
     import numpy as np
@@ -300,9 +201,6 @@ def test_insert_with_schema(db):
         assert np.all(d['array'] == d_db['array'])
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
-)
 def test_insert_with_diff_schemas(db):
     db.cfg.auto_schema = True
     import numpy as np
@@ -324,15 +222,11 @@ def test_insert_with_diff_schemas(db):
     }
     datas = [Document(data)]
 
-    # Do not support different schema in SQL
+    # Do not support different schema
     with pytest.raises(Exception):
         table_or_collection.insert(datas).execute()
-    # Mongo can support different schema
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.sqldb_empty, DBConfig.mongodb_empty], indirect=True
-)
 def test_auto_document_wrapping(db):
     db.cfg.auto_schema = True
     import numpy as np
@@ -364,8 +258,7 @@ def test_auto_document_wrapping(db):
     assert c[-1].unpack()['x'] == gt
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
-def test_model_query(db):
+def test_model_query():
     from superduper.backends.base.query import Model
 
     q = Model(table='my-model').predict('This is a test')

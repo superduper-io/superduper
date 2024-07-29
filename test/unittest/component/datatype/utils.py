@@ -145,12 +145,6 @@ def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
     print("\n", "-" * 80, "\n")
     db["documents"].insert([document]).execute()
 
-    if db.databackend.db_type == DBType.MONGODB:
-        encoded = db.databackend.conn["test_db"]["documents"].find_one()
-
-    pprint(encoded)
-    print("\n", "-" * 80, "\n")
-
     decoded = list(db["documents"].select().execute())[0]
     pprint(decoded)
     print("\n", "-" * 80, "\n")
@@ -158,7 +152,7 @@ def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
     assert_equal(document["x"], decoded["x"])
     assert_equal(document["y"], decoded["y"])
 
-    return document, encoded, decoded
+    return document, decoded
 
 
 @dc.dataclass(kw_only=True)

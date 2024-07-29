@@ -1,8 +1,5 @@
 import typing
 from pprint import pprint
-from test.db_config import DBConfig
-
-import pytest
 
 from superduper import Document, ObjectModel
 
@@ -19,7 +16,6 @@ if typing.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_graph_deps(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [
@@ -88,7 +84,6 @@ def test_graph_deps(db: "Datalayer"):
     assert output_c == Tuple(6, "7", Tuple(16, 17, 18), output_a, output_b, "c")
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_flatten(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [
@@ -120,7 +115,6 @@ def test_flatten(db: "Datalayer"):
     assert results.count("c") == 3
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_predict_id(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [
@@ -156,7 +150,6 @@ def test_predict_id(db: "Datalayer"):
     assert output["_outputs__C"] == "1->a->b->c"
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_condition(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [

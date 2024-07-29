@@ -208,7 +208,9 @@ testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb
 ##@ CI Testing Functions
 
 unit_testing: ## Execute unit testing
-	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
+	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
+	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
+	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
 
 databackend_testing: ## Execute integration testing
 	@echo "TESTING BACKENDS"
@@ -225,4 +227,6 @@ ext_testing: ## Execute integration testing
 
 
 usecase_testing: ## Execute usecase testing
-	pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
+	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase

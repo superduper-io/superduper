@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-from test.db_config import DBConfig
 
 import pytest
 
@@ -165,7 +164,6 @@ def test_import(tmpdir):
     assert model.predict() == "import"
 
 
-@pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
 def test_apply(db, tmpdir):
     path = create_package_plugin(tmpdir, "apply")
     plugin = Plugin(identifier="test", path=path)

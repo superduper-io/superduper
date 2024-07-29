@@ -1,7 +1,6 @@
 import dataclasses as dc
 import pprint
 import typing as t
-from test.db_config import DBConfig
 
 import pytest
 
@@ -143,7 +142,6 @@ def test_decode_inline_data():
     print(r)
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_refer_to_applied_item(db):
     dt = DataType(identifier='my-type', encodable='artifact')
     db.apply(dt)
@@ -170,7 +168,6 @@ def test_refer_to_applied_item(db):
     print(c)
 
 
-@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_column_encoding(db):
     import PIL
 
@@ -198,10 +195,9 @@ def test_column_encoding(db):
         ]
     ).execute()
 
-    db['test'].select("x", "y", "img").execute()
+    db['test'].select().execute()
 
 
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_refer_to_system(db):
     image = image_type(identifier='image', encodable='artifact')
     db.apply(image)

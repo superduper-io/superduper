@@ -614,7 +614,6 @@ class Query(_BaseQuery):
         documents = self.documents
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
-
         # TODO: Need to enable this check later
         # for doc in documents:
         #     from superduper.components.datatype import _BaseEncodable

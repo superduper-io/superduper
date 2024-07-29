@@ -7,8 +7,6 @@ try:
 except ImportError:
     torch = None
 
-from test.db_config import DBConfig
-
 from superduper.backends.mongodb.query import MongoQuery
 from superduper.components.dataset import Dataset
 from superduper.ext.transformers.model import (
@@ -35,9 +33,6 @@ def transformers_model(db):
     yield model
 
 
-@pytest.mark.parametrize(
-    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
-)
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict('this is a test')
@@ -56,12 +51,11 @@ def td():
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 # TODO: Test the sqldb
-@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_transformer_fit(transformers_model, db, td):
     repo_name = td
     trainer = TransformersTrainer(
         key={'text': 'text', 'label': 'label'},
-        select=MongoQuery(table='train_documents').find(),
+        select=db['train_documents'].select(),
         identifier=repo_name,
         learning_rate=2e-5,
         per_device_train_batch_size=1,

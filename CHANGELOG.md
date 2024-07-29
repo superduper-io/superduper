@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - component info support list
 - Trigger downstream vector indices.
 - Fix vector_index function job.
+- Fix verbosity in component info
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

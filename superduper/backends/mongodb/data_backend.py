@@ -107,7 +107,7 @@ class MongoDataBackend(BaseDataBackend):
     def drop_outputs(self):
         """Drop all outputs."""
         for collection in self.db.list_collection_names():
-            if collection.startswith('output_'):
+            if collection.startswith('_outputs__'):
                 self.db.drop_collection(collection)
             else:
                 self.db[collection].update_many({}, {'$unset': {'_outputs': ''}})
@@ -188,7 +188,7 @@ class MongoDataBackend(BaseDataBackend):
 
         :param predict_id: identifier of the prediction
         """
-        return self.db[f'_outputs.{predict_id}'].find_one() is not None
+        return self.db[f'_outputs__{predict_id}'].find_one() is not None
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):

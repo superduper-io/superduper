@@ -129,7 +129,7 @@ def test_update_many(db):
     # listener = db.load('listener', 'vector-x')
     # assert all(
     #     listener.model.predict(to_update)
-    #     == next(db['_outputs.vector-x'].find().execute())['_outputs.vector-x'].x
+    #     == next(db['_outputs__vector-x'].find().execute())['_outputs__vector-x'].x
     # )
 
 
@@ -140,8 +140,8 @@ def test_insert_many(db):
     db.execute(collection.insert_many(an_update))
 
     assert len(list(db.execute(collection.find()))) == 5 + 10
-    assert len(list(db.execute(db['_outputs.vector-x'].find()))) == 5 + 10
-    assert len(list(db.execute(db['_outputs.vector-y'].find()))) == 5 + 10
+    assert len(list(db.execute(db['_outputs__vector-x'].find()))) == 5 + 10
+    assert len(list(db.execute(db['_outputs__vector-y'].find()))) == 5 + 10
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

@@ -79,7 +79,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier
         indexing_version = vi.indexing_listener.model.version
-        output_path = f'_outputs.{indexing_key}.{indexing_model}.{indexing_version}'
+        output_path = f'_outputs__{indexing_key}.{indexing_model}.{indexing_version}'
 
         return MongoAtlasVectorSearcher(
             identifier=vi.identifier,

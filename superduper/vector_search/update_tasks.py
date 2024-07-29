@@ -49,12 +49,12 @@ def copy_vectors(
     docs = [doc.unpack() for doc in docs]
 
     key = vi.indexing_listener.key
-    if '_outputs.' in key:
+    if '_outputs__' in key:
         key = key.split('.')[1]
     vectors = [
         {
             'vector': MongoStyleDict(doc)[
-                f'_outputs.{vi.indexing_listener.predict_id}'
+                f'_outputs__{vi.indexing_listener.predict_id}'
             ],
             'id': str(doc['_source']),
         }

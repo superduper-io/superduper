@@ -615,16 +615,17 @@ class Query(_BaseQuery):
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 
-        for doc in documents:
-            from superduper.components.datatype import _BaseEncodable
-
-            for key, value in doc.items():
-                if isinstance(value, _BaseEncodable):
-                    raise ValueError(
-                        'Don\'t pass encodable objects to the query, '
-                        'Please use the original object and schema. '
-                        f'{doc}'
-                    )
+        # TODO: Need to enable this check later
+        # for doc in documents:
+        #     from superduper.components.datatype import _BaseEncodable
+        #
+        #     for key, value in doc.items():
+        #         if isinstance(value, _BaseEncodable):
+        #             raise ValueError(
+        #                 'Don\'t pass encodable objects to the query, '
+        #                 'Please use the original object and schema. '
+        #                 f'{doc}'
+        #             )
 
         if schema is None:
             try:
@@ -693,9 +694,11 @@ def parse_query(
     :param documents: The documents to query.
     :param db: The datalayer to use to execute the query.
     """
-    if isinstance(query, str) and query.split('\n')[-1].strip().split('.')[
-        1
-    ].startswith('predict'):
+    if (
+        isinstance(query, str)
+        and 'predict' in query
+        and query.split('\n')[-1].strip().split('.')[1].startswith('predict')
+    ):
         builder_cls = Model
         return _parse_query_part(query, documents, [], builder_cls, db=db)
 

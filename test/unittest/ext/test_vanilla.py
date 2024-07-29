@@ -38,8 +38,8 @@ def test_function_predict_in_db(data_in_db):
         select=MongoQuery(table='documents').find(),
         predict_id='test',
     )
-    out = data_in_db.execute(MongoQuery(table='_outputs.test').find({}))
-    assert [o['_outputs']['test'] for o in out] == [1, 2, 3, 4, 5]
+    out = data_in_db.execute(MongoQuery(table='_outputs__test').find({}))
+    assert [o['_outputs__test'] for o in out] == [1, 2, 3, 4, 5]
 
 
 @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
@@ -55,7 +55,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
         select=MongoQuery(table='documents').find(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(MongoQuery(table='_outputs.test').find({})))
+    out = list(data_in_db.execute(MongoQuery(table='_outputs__test').find({})))
     input_ids = [
         c['_id'] for c in data_in_db.execute(MongoQuery(table='documents').find())
     ]
@@ -65,7 +65,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
         source_ids.append([id] * ix)
     source_ids = sum(source_ids, [])
 
-    assert [o['_outputs']['test'] for o in out] == [
+    assert [o['_outputs__test'] for o in out] == [
         1,
         1,
         2,
@@ -96,7 +96,7 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         select=MongoQuery(table='documents').find(),
         predict_id='test',
     )
-    out = list(data_in_db.execute(MongoQuery(table='_outputs.test').find({})))
+    out = list(data_in_db.execute(MongoQuery(table='_outputs__test').find({})))
     input_ids = [
         c['_id'] for c in data_in_db.execute(MongoQuery(table='documents').find())
     ]
@@ -105,7 +105,7 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         source_ids.append(id if i + 1 < 2 else [id] * 3)
     source_ids = source_ids[:1] + sum(source_ids[1:], [])
 
-    assert [o['_outputs']['test'] for o in out] == [
+    assert [o['_outputs__test'] for o in out] == [
         1,
         2,
         2,

@@ -131,10 +131,7 @@ def test_complex_graph_with_select(db):
     select = db["documents"].find({})
     g.predict_in_db(X='x', select=select, db=db, predict_id='test')
     assert all(
-        [
-            'test' in x['_outputs']
-            for x in list(db.execute(db['_outputs.test'].select()))
-        ]
+        ['_outputs__test' in x for x in list(db.execute(db['_outputs__test'].select()))]
     )
 
 

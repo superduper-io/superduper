@@ -59,9 +59,9 @@ def test_graph_deps(db: "Datalayer"):
         list(db["documents"].select().outputs("a", "b", "c").execute())[0].unpack()
     )
 
-    output_a = data["_outputs.a"]
-    output_b = data["_outputs.b"]
-    output_c = data["_outputs.c"]
+    output_a = data["_outputs__a"]
+    output_b = data["_outputs__b"]
+    output_c = data["_outputs__c"]
 
     assert output_a == Tuple(1, "a")
     assert output_b == Tuple(1, "2", output_a, "b")
@@ -79,9 +79,9 @@ def test_graph_deps(db: "Datalayer"):
         list(db["documents"].select().outputs("a", "b", "c").execute())[-1].unpack()
     )
 
-    output_a = new_data["_outputs.a"]
-    output_b = new_data["_outputs.b"]
-    output_c = new_data["_outputs.c"]
+    output_a = new_data["_outputs__a"]
+    output_b = new_data["_outputs__b"]
+    output_c = new_data["_outputs__c"]
 
     assert output_a == Tuple(6, "a")
     assert output_b == Tuple(6, "7", output_a, "b")
@@ -110,10 +110,10 @@ def test_flatten(db: "Datalayer"):
     output_a.apply()
     pprint(output_a)
 
-    outputs = list(db['_outputs.flatten'].select().execute(eager_mode=True))
+    outputs = list(db['_outputs__flatten'].select().execute(eager_mode=True))
     assert len(outputs) == 6
 
-    results = [o['_outputs.flatten'].data for o in outputs]
+    results = [o['_outputs__flatten'].data for o in outputs]
 
     assert results.count("a") == 1
     assert results.count("b") == 2
@@ -151,9 +151,9 @@ def test_predict_id(db: "Datalayer"):
 
     output = list(db['documents'].select().outputs("A", "B", "C").execute())[0]
 
-    assert output["_outputs.A"] == "1->a"
-    assert output["_outputs.B"] == "1->a->b"
-    assert output["_outputs.C"] == "1->a->b->c"
+    assert output["_outputs__A"] == "1->a"
+    assert output["_outputs__B"] == "1->a->b"
+    assert output["_outputs__C"] == "1->a->b->c"
 
 
 @pytest.mark.parametrize("db", DBConfig.EMPTY_CASES, indirect=True)
@@ -177,7 +177,7 @@ def test_condition(db: "Datalayer"):
 
     output.apply()
 
-    outputs = list(db["_outputs.a"].select().execute())
+    outputs = list(db["_outputs__a"].select().execute())
     assert len(outputs) == 1
 
-    assert outputs[0]["_outputs.a"] == "1->a"
+    assert outputs[0]["_outputs__a"] == "1->a"

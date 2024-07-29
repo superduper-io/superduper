@@ -380,7 +380,7 @@ class Mapping:
         for arg in self.mapping[0]:
             outputs.append(arg)
         for key, value in self.mapping[1].items():
-            if key.startswith('_outputs.'):
+            if key.startswith('_outputs__'):
                 key = key.split('.')[1]
             outputs.append(f'{key}={value}')
         return ', '.join(outputs)

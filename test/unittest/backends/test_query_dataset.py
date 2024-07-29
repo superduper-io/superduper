@@ -32,7 +32,7 @@ def test_query_dataset(db):
     assert r['_fold'] == 'train'
     assert 'y' not in r
 
-    assert r['_outputs']['vector-x'].shape[0] == 16
+    assert r['_outputs__vector-x'].shape[0] == 16
 
     train_data = QueryDataset(
         db=db,

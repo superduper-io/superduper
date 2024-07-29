@@ -7,7 +7,7 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.document import _OUTPUTS_KEY
 from superduper.components.model import Mapping
-from superduper.misc.server import is_csn, request_server
+from superduper.misc.server import request_server
 
 from ..jobs.job import Job
 from .component import Component
@@ -86,7 +86,7 @@ class Listener(Component):
         self.create_output_dest(db, self.uuid, self.model)
         if self.select is not None:
             logging.info('Requesting listener setup on CDC service')
-            if CFG.cluster.cdc.uri and not is_csn('cdc'):
+            if CFG.cluster.cdc.uri:
                 logging.info('Sending request to add listener')
                 request_server(
                     service='cdc',

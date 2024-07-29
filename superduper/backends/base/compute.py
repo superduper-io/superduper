@@ -85,3 +85,9 @@ class ComputeBackend(ABC):
 
     def execute_task(self, job_id, dependencies, compute_kwargs={}):
         """Execute task function for distributed backends."""
+
+    def connect(self):
+        """Connect to address."""
+
+    def create_handler(self, *args, **kwargs):
+        """Create handler on component declare."""

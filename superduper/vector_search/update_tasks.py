@@ -1,6 +1,6 @@
 import typing as t
 
-from superduper import Document
+from superduper import Document, logging
 from superduper.backends.base.query import Query
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorItem
@@ -51,15 +51,27 @@ def copy_vectors(
     key = vi.indexing_listener.key
     if '_outputs__' in key:
         key = key.split('.')[1]
-    vectors = [
-        {
-            'vector': MongoStyleDict(doc)[
-                f'_outputs__{vi.indexing_listener.predict_id}'
-            ],
-            'id': str(doc['_source']),
-        }
-        for doc in docs
-    ]
+
+    vectors = []
+    nokeys = 0
+    for doc in docs:
+        try:
+            vector = MongoStyleDict(doc)[f'_outputs__{vi.indexing_listener.predict_id}']
+        except KeyError:
+            nokeys += 1
+            continue
+        vectors.append(
+            {
+                'vector': vector,
+                'id': str(doc['_source']),
+            }
+        )
+    if nokeys:
+        logging.warn(
+            f'{nokeys} outputs were missing. \n'
+            'Note: This might happen in case of `VectorIndex` schedule jobs '
+            'trigged before model outputs are yet to be computed.'
+        )
 
     for r in vectors:
         if hasattr(r['vector'], 'numpy'):

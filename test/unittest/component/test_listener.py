@@ -75,13 +75,13 @@ def test_listener_chaining(db):
 
     docs = list(db.execute(MongoQuery(table=listener1.outputs).find({})))
 
-    assert all([listener1.predict_id in r["_outputs"] for r in docs])
+    assert all([listener1.outputs in r for r in docs])
 
     insert_random()
 
     docs = list(db.execute(MongoQuery(table=listener2.outputs).find({})))
 
-    assert all([listener2.predict_id in d["_outputs"] for d in docs])
+    assert all([listener2.outputs in d for d in docs])
 
 
 @pytest.mark.parametrize(

@@ -162,7 +162,7 @@ class SuperDuperData:
         if self.type == SuperDuperDataType.DATA:
             key = ".".join(self.ops)
         elif self.type == SuperDuperDataType.MODEL_OUTPUT:
-            prefix = f"_outputs.{self.predict_id}"
+            prefix = f"_outputs__{self.predict_id}"
             if self.ops:
                 key = f"{prefix}.{'.'.join(self.ops)}"
             else:

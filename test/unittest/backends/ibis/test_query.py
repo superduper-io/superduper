@@ -69,7 +69,7 @@ def test_renamings(db):
     listener_uuid = [k.split('/')[-1] for k in db.show('listener')][0]
     q = t.select('id', 'x', 'y').outputs(listener_uuid)
     data = list(db.execute(q))
-    assert torch.is_tensor(data[0].unpack()[f'_outputs.{listener_uuid}'])
+    assert torch.is_tensor(data[0].unpack()[f'_outputs__{listener_uuid}'])
 
 
 @pytest.mark.parametrize(

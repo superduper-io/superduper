@@ -48,7 +48,7 @@ def test_graph_deps(db: "Datalayer"):
 
     model_b = ObjectModel(identifier="model_b", object=func_b)
     listener_b = model_b.to_listener(
-        key=("x", "y", "_outputs.a"),
+        key=("x", "y", "_outputs__a"),
         select=db["documents"].find({}, {'x': 1, 'y': 1}).outputs('a'),
         identifier="listener_b",
         uuid="b",
@@ -60,8 +60,7 @@ def test_graph_deps(db: "Datalayer"):
 
     model_c = ObjectModel(identifier="model_c", object=func_c)
     listener_c = model_c.to_listener(
-        # key={"x": "x", "y": "y", "z": "z", "_outputs.a": "o_a", "_outputs.b": "o_b"},
-        key=("x", "y", "z", "_outputs.a", "_outputs.b"),
+        key=("x", "y", "z", "_outputs__a", "_outputs__b"),
         select=db["documents"].find({}, {'x': 1, 'y': 1, 'z': 1}).outputs('a', 'b'),
         identifier="listener_c",
         uuid="c",
@@ -76,9 +75,9 @@ def test_graph_deps(db: "Datalayer"):
         list(db["documents"].select().outputs("a", "b", "c").execute())[0].unpack()
     )
 
-    output_a = data["_outputs.a"]
-    output_b = data["_outputs.b"]
-    output_c = data["_outputs.c"]
+    output_a = data["_outputs__a"]
+    output_b = data["_outputs__b"]
+    output_c = data["_outputs__c"]
 
     assert output_a == Tuple(1, "a")
     assert output_b == Tuple(1, "2", output_a, "b")
@@ -96,9 +95,9 @@ def test_graph_deps(db: "Datalayer"):
         list(db["documents"].select().outputs("a", "b", "c").execute())[-1].unpack()
     )
 
-    output_a = new_data["_outputs.a"]
-    output_b = new_data["_outputs.b"]
-    output_c = new_data["_outputs.c"]
+    output_a = new_data["_outputs__a"]
+    output_b = new_data["_outputs__b"]
+    output_c = new_data["_outputs__c"]
 
     assert output_a == Tuple(6, "a")
     assert output_b == Tuple(6, "7", output_a, "b")

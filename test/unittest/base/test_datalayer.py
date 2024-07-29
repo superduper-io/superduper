@@ -437,7 +437,7 @@ def test_insert_mongo_db(db):
     assert len(inserted_ids) == 5
 
     listener_uuid = db.show('listener')[0].split('/')[-1]
-    key = f'_outputs.{listener_uuid}'
+    key = f'_outputs__{listener_uuid}'
     new_docs = db[key].select().execute()
     result = [doc[key].unpack() for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
@@ -496,7 +496,7 @@ def test_update_db(db):
     )
     assert len(updated_ids) == 5
     listener_uuid = db.show('listener')[0].split('/')[-1]
-    key = f'_outputs.{listener_uuid}'
+    key = f'_outputs__{listener_uuid}'
     new_docs = db[key].select().execute()
     for doc in new_docs:
         assert doc[key]

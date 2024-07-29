@@ -80,7 +80,7 @@ def test_select_missing_outputs(db):
     db.execute(
         q.MongoQuery(table='documents').update_many(
             {'_id': {'$in': ids}},
-            Document({'$set': {'_outputs.x::test_model_output::0::0': 'test'}}),
+            Document({'$set': {'_outputs__x::test_model_output::0::0': 'test'}}),
         )
     )
     select = q.MongoQuery(table='documents').find({}, {'_id': 1})

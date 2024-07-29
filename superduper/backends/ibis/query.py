@@ -83,13 +83,13 @@ def _model_update_impl(
     for output, source_id in zip(outputs, ids):
         d = {
             '_source': str(source_id),
-            f'_outputs.{predict_id}': output.x
+            f'_outputs__{predict_id}': output.x
             if isinstance(output, Encodable)
             else output,
             'id': str(uuid.uuid4()),
         }
         documents.append(Document(d))
-    return db[f'_outputs.{predict_id}'].insert(documents)
+    return db[f'_outputs__{predict_id}'].insert(documents)
 
 
 class IbisQuery(Query):
@@ -355,7 +355,7 @@ class IbisQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        return self.db.databackend.conn.drop_table(f'_outputs.{predict_id}')
+        return self.db.databackend.conn.drop_table(f'_outputs__{predict_id}')
 
     @applies_to('select')
     def outputs(self, *predict_ids):
@@ -378,7 +378,7 @@ class IbisQuery(Query):
         attr = getattr(query, self.primary_id)
         for identifier in predict_ids:
             identifier = (
-                identifier if '_outputs' in identifier else f'_outputs.{identifier}'
+                identifier if '_outputs' in identifier else f'_outputs__{identifier}'
             )
             symbol_table = self.db[identifier]
 
@@ -399,7 +399,7 @@ class IbisQuery(Query):
 
         assert isinstance(self.db, Datalayer)
 
-        output_table = self.db[f'_outputs.{predict_id}']
+        output_table = self.db[f'_outputs__{predict_id}']
         return self.anti_join(
             output_table,
             output_table._source == getattr(self, self.primary_id),

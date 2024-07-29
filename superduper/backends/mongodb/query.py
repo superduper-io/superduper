@@ -367,7 +367,7 @@ class MongoQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        return self.db.databackend.drop_table_or_collection(f'_outputs.{predict_id}')
+        return self.db.databackend.drop_table_or_collection(f'_outputs__{predict_id}')
 
     @applies_to('find')
     def outputs(self, *predict_ids):
@@ -459,13 +459,13 @@ class MongoQuery(Query):
                 {
                     '$and': [
                         args[0],
-                        {f'_outputs.{predict_id}': {'$exists': 0}},
+                        {f'_outputs__{predict_id}': {'$exists': 0}},
                     ]
                 },
                 *args[1:],
             ]
         else:
-            args = [{f'_outputs.{predict_id}': {'$exists': 0}}]
+            args = [{f'_outputs__{predict_id}': {'$exists': 0}}]
 
         if len(args) == 1:
             args.append({})
@@ -530,7 +530,7 @@ class MongoQuery(Query):
         for output, id in zip(outputs, ids):
             documents.append(
                 {
-                    '_outputs': {predict_id: output},
+                    f'_outputs__{predict_id}': output,
                     '_source': ObjectId(id),
                 }
             )
@@ -538,7 +538,7 @@ class MongoQuery(Query):
         from superduper.base.datalayer import Datalayer
 
         assert isinstance(self.db, Datalayer)
-        output_query = self.db[f'_outputs.{predict_id}'].insert_many(documents)
+        output_query = self.db[f'_outputs__{predict_id}'].insert_many(documents)
         output_query.is_output_query = True
         output_query.updated_key = predict_id
         return output_query
@@ -618,11 +618,10 @@ class MongoOutputs(MongoQuery):
         # After the join, the complete outputs data can be queried as
         # _outputs__{predict_id}._outputs.{predict_id} : result.
         for predict_id in predict_ids:
-            # MongoMock does not support '.' in 'as', so we replace it with '__'
-            key = f'_outputs.{predict_id}'.replace('.', '__')
+            key = f'_outputs__{predict_id}'
             lookup = {
                 "$lookup": {
-                    "from": f'_outputs.{predict_id}',
+                    "from": key,
                     "localField": "_id",
                     "foreignField": "_source",
                     "as": key,
@@ -648,6 +647,8 @@ class MongoOutputs(MongoQuery):
         if limit:
             pipeline.append(limit)
 
+        print(pipeline)
+
         return SuperDuperCursor(
             raw_cursor=getattr(parent, 'aggregate')(pipeline),
             db=self.db,
@@ -665,12 +666,12 @@ class MongoOutputs(MongoQuery):
         filter_mapping_outputs = defaultdict(dict)
 
         for key, value in filter.items():
-            if '_outputs.' not in key:
+            if '_outputs__' not in key:
                 filter_mapping_base[key] = value
                 continue
 
-            if key.startswith('_outputs.'):
-                predict_id = key.split('.')[1]
+            if key.startswith('_outputs__'):
+                predict_id = key.split('__')[1]
                 filter_mapping_outputs[predict_id] = {key: value}
 
         return filter_mapping_base, filter_mapping_outputs
@@ -687,32 +688,16 @@ class MongoOutputs(MongoQuery):
         merge_files = result.get('_files', {})
         merge_blobs = result.get('_blobs', {})
 
-        revert_outputs = {}
-        remove_keys = []
-        for key, values in result.items():
-            if key.startswith('_outputs__'):
-                remove_keys.append(key)
-                key = key.replace('__', '.')
-                new_key = key.replace('_outputs.', '')
-                revert_outputs[new_key] = values
-
-        if not revert_outputs:
-            return result
-
-        result['_outputs'] = revert_outputs
-        for key in remove_keys:
-            result.pop(key)
-
-        predict_ids = result.get('_outputs', {}).keys()
-        for predict_id in predict_ids:
-            output_data = result['_outputs'][predict_id]
-            output_result = output_data['_outputs'][predict_id]
-            merge_outputs[predict_id] = output_result
+        output_keys = {key for key in result.keys() if key.startswith('_outputs__')}
+        for output_key in output_keys:
+            output_data = result[output_key]
+            output_result = output_data[output_key]
+            merge_outputs[output_key] = output_result
             merge_builds.update(output_data['_builds'])
             merge_files.update(output_data['_files'])
             merge_blobs.update(output_data['_blobs'])
 
-        result['_outputs'] = merge_outputs
+        result.update(merge_outputs)
         result['_builds'] = merge_builds
         result['_files'] = merge_files
         result['_blobs'] = merge_blobs

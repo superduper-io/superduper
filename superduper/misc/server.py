@@ -74,7 +74,7 @@ def _request_server(
         result = json.loads(response.content)
     else:
         response = requests.get(url, params=args)
-        result = None
+        result = json.loads(response.content)
     if response.status_code != 200:
         error = json.loads(response.content)
         msg = f'Server error at {service} with {response.status_code} :: {error}'

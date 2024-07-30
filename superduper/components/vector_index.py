@@ -4,7 +4,6 @@ import typing as t
 import numpy as np
 from overrides import override
 
-from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
@@ -15,7 +14,6 @@ from superduper.components.model import Mapping, ModelInputType
 from superduper.ext.utils import str_shape
 from superduper.jobs.job import FunctionJob
 from superduper.misc.annotations import component
-from superduper.misc.server import request_server
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType
 from superduper.vector_search.update_tasks import copy_vectors, delete_vectors
@@ -171,30 +169,12 @@ class VectorIndex(Component):
         db.fast_vector_searchers[self.identifier].drop()
         del db.fast_vector_searchers[self.identifier]
 
-    @property
-    def cdc_table(self):
-        """Get table for cdc."""
-        return self.indexing_listener.outputs
-
     @override
     def post_create(self, db: "Datalayer") -> None:
         """Post-create hook.
 
         :param db: Data layer instance.
         """
-        logging.info('Requesting vector index setup on CDC service')
-        if CFG.cluster.cdc.uri:
-            logging.info('Sending request to add vector index')
-            request_server(
-                service='cdc',
-                endpoint='component/add',
-                args={'name': self.identifier, 'type_id': self.type_id},
-                type='get',
-            )
-        else:
-            logging.info(
-                'Skipping vector index setup on CDC service since no URI is set'
-            )
         db.compute.queue.declare_component(self)
 
     @property

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use declare_component from base class.
 - Use different colors to distinguish logs
 - Change all the `_outputs.` to `_outputs__`
+- Disable cdc on output tables.
 
 
 #### New Features & Functionality

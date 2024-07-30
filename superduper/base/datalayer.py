@@ -338,9 +338,10 @@ class Datalayer:
         inserted_ids = insert.do_execute(self)
 
         cdc_status = s.CFG.cluster.cdc.uri is not None
+        is_output_table = insert.table.startswith('_outputs__')
 
         if refresh:
-            if cdc_status:
+            if cdc_status and not is_output_table:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
                 return inserted_ids, self.on_event(
@@ -391,7 +392,9 @@ class Datalayer:
             identifier = event_data['identifier']
             type_id = event_data['type_id']
             ids = event_data['ids']
-            events.extend([Event(type_id, identifier, id, event_type) for id in ids])
+            events.extend(
+                [Event(type_id, identifier, str(id), event_type) for id in ids]
+            )
 
         return self.compute.broadcast(events)
 
@@ -437,8 +440,9 @@ class Datalayer:
         updated_ids = update.do_execute(self)
 
         cdc_status = s.CFG.cluster.cdc.uri is not None
+        is_output_table = update.table.startswith('_outputs__')
         if refresh and updated_ids:
-            if cdc_status:
+            if cdc_status and not is_output_table:
                 logging.warn('CDC service is active, skipping model/listener refresh')
             else:
                 # Overwrite should be true since updates could be done on collections

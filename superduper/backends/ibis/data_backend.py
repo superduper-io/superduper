@@ -203,6 +203,7 @@ class IbisDataBackend(BaseDataBackend):
                 t = self.conn.table(identifier)
             else:
                 raise e
+
         return t
 
     def drop(self, force: bool = False):

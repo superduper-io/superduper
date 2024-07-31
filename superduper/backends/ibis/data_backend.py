@@ -3,12 +3,13 @@ import os
 import typing as t
 from warnings import warn
 
+import click
 import ibis
 import pandas
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.ibis.db_helper import get_db_helper
@@ -132,7 +133,10 @@ class IbisDataBackend(BaseDataBackend):
 
     def drop_outputs(self):
         """Drop the outputs."""
-        raise NotImplementedError
+        for table in self.conn.list_tables():
+            logging.info(f"Dropping table: {table}")
+            if CFG.output_prefix in table:
+                self.conn.drop_table(table)
 
     def drop_table_or_collection(self, name: str):
         """Drop the table or collection.
@@ -212,9 +216,13 @@ class IbisDataBackend(BaseDataBackend):
 
         :param force: Whether to force the drop.
         """
-        raise NotImplementedError(
-            "Dropping tables needs to be done in each DB natively"
-        )
+        if not force and not click.confirm("Are you sure you want to drop all tables?"):
+            logging.info("Aborting drop tables")
+            return
+
+        for table in self.conn.list_tables():
+            logging.info(f"Dropping table: {table}")
+            self.conn.drop_table(table)
 
     def get_table_or_collection(self, identifier):
         """Get a table or collection from the database.

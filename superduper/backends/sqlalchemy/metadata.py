@@ -142,9 +142,20 @@ class SQLAlchemyMetadata(MetaDataStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
-        self.job_table.drop(self.conn)
-        self.parent_child_association_table.drop(self.conn)
-        self.component_table.drop(self.conn)
+        try:
+            self.job_table.drop(self.conn)
+        except ProgrammingError as e:
+            logging.warn(f'Error dropping job table: {e}')
+
+        try:
+            self.parent_child_association_table.drop(self.conn)
+        except ProgrammingError as e:
+            logging.warn(f'Error dropping parent-child association table: {e}')
+
+        try:
+            self.component_table.drop(self.conn)
+        except ProgrammingError as e:
+            logging.warn(f'Error dropping component table {e}')
 
     @contextmanager
     def session_context(self):

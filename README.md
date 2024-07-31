@@ -16,7 +16,7 @@
 
 <div align="center">
 
-## <a href="https://docs.superduper.io"><strong>Docs</strong></a> | <a href="https://blog.superduper.io"><strong>Blog</strong></a> | <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://docs.superduper.io/docs/docs/get_started/installation"><strong> Installation</strong></a> | <a href="https://github.com/superduper-io/superduper-community-apps"><strong>Community Apps</strong></a> |  <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## <a href="https://docs.superduper.io"><strong>Docs</strong></a> | <a href="https://blog.superduper.io"><strong>Blog</strong></a> | <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://docs.superduper.io/docs/docs/get_started/installation"><strong> Installation</strong></a> | <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
 
 </div>
 

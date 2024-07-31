@@ -22,6 +22,8 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 _SPECIAL_CHRS: list = ['$', '.']
+_PRIMARY_ID = '_id'
+_SOURCE_ID = '_source'
 
 
 def _serialize_special_character(d, to='encode'):
@@ -147,19 +149,27 @@ class MongoQuery(Query):
 
     def _execute_delete_one(self, parent):
         r = next(self.select_ids.limit(1)._execute(parent))
-        self.table_or_collection.delete_one({'_id': r['_id']})._execute(parent)
-        return [str(r['_id'])]
+        self.table_or_collection.delete_one({_PRIMARY_ID: r[_PRIMARY_ID]})._execute(
+            parent
+        )
+        return [str(r[_PRIMARY_ID])]
 
     def _execute_delete_many(self, parent):
         id_cursor = self.select_ids._execute(parent)
-        ids = [r['_id'] for r in id_cursor]
+        ids = [r[_PRIMARY_ID] for r in id_cursor]
         if not ids:
             return {}
-        self.table_or_collection.delete_many({'_id': {'$in': ids}})._execute(parent)
+        self.table_or_collection.delete_many({_PRIMARY_ID: {'$in': ids}})._execute(
+            parent
+        )
         return [str(id) for id in ids]
 
     def _id_serializer(self, r):
-        r['_id'] = str(r['_id'])
+        if _PRIMARY_ID in r:
+            r[_PRIMARY_ID] = str(r[_PRIMARY_ID])
+
+        if _SOURCE_ID in r:
+            r[_SOURCE_ID] = str(r[_SOURCE_ID])
         return r
 
     def _execute(self, parent, method='encode'):
@@ -171,7 +181,7 @@ class MongoQuery(Query):
             return SuperDuperCursor(
                 raw_cursor=c,
                 db=self.db,
-                id_field='_id',
+                id_field=_PRIMARY_ID,
                 process_func=self._id_serializer,
             )
         return c
@@ -187,7 +197,7 @@ class MongoQuery(Query):
         if not find_args:
             find_args = ({},)
 
-        find_args[0]['_id'] = {'$in': [ObjectId(id) for id in similar_ids]}
+        find_args[0][_PRIMARY_ID] = {'$in': [ObjectId(id) for id in similar_ids]}
 
         q = type(self)(
             db=self.db,
@@ -218,7 +228,7 @@ class MongoQuery(Query):
         if range:
             parent_query = parent_query.limit(range)
 
-        relevant_ids = [str(r['_id']) for r in parent_query.do_execute()]
+        relevant_ids = [str(r[_PRIMARY_ID]) for r in parent_query.do_execute()]
 
         similar_ids, scores = self.db.select_nearest(
             like=r,
@@ -232,7 +242,7 @@ class MongoQuery(Query):
         final_args = find_args[:]
         if not final_args:
             final_args = [{}]
-        final_args[0]['_id'] = {'$in': similar_ids}
+        final_args[0][_PRIMARY_ID] = {'$in': similar_ids}
 
         final_query = self.table_or_collection.find(*final_args, **find_kwargs)
         result = final_query._execute(parent)
@@ -336,7 +346,7 @@ class MongoQuery(Query):
         return self._execute_insert_many(parent)
 
     def _execute_update_many(self, parent):
-        ids = [r['_id'] for r in self.select_ids._execute(parent)]
+        ids = [r[_PRIMARY_ID] for r in self.select_ids._execute(parent)]
         filter = self.parts[0][1][0]
         trailing_args = list(self.parts[0][1][1:])
         update = {}
@@ -352,7 +362,7 @@ class MongoQuery(Query):
                 del trailing_args[ix]
                 break
 
-        filter['_id'] = {'$in': ids}
+        filter[_PRIMARY_ID] = {'$in': ids}
 
         try:
             table = self.db.tables[self.table]
@@ -420,7 +430,7 @@ class MongoQuery(Query):
     @property
     def primary_id(self):
         """Return the primary id of the documents."""
-        return '_id'
+        return _PRIMARY_ID
 
     def select_using_ids(self, ids: t.Sequence[str]):
         """Return a query that selects using the given ids.
@@ -434,7 +444,7 @@ class MongoQuery(Query):
         args = copy.deepcopy(args)
         if not args:
             args = [{}]
-        args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
+        args[0][_PRIMARY_ID] = {'$in': [ObjectId(id) for id in ids]}
         return type(self)(
             db=self.db,
             table=self.table,
@@ -450,7 +460,7 @@ class MongoQuery(Query):
         filter_ = {}
         if self.parts and self.parts[0][1]:
             filter_ = self.parts[0][1][0]
-        projection = {'_id': 1}
+        projection = {_PRIMARY_ID: 1}
         coll = MongoQuery(table=self.table, db=self.db)
         return coll.find(filter_, projection)
 
@@ -476,7 +486,7 @@ class MongoQuery(Query):
 
         if len(args) == 1:
             args.append({})
-        args[1] = {'_id': 1}
+        args[1] = {_PRIMARY_ID: 1}
 
         return self.table_or_collection.find(*args, **kwargs)
 
@@ -491,7 +501,7 @@ class MongoQuery(Query):
         args = list(self.args)[:]
         if not args:
             args[0] = {}
-        args[0]['_id'] = ObjectId(id)
+        args[0][_PRIMARY_ID] = ObjectId(id)
         return type(self)(
             db=self.db, table=self.table, parts=[('find_one', args, kwargs)]
         )
@@ -538,7 +548,7 @@ class MongoQuery(Query):
             documents.append(
                 {
                     f'{CFG.output_prefix}{predict_id}': output,
-                    '_source': ObjectId(id),
+                    _SOURCE_ID: ObjectId(id),
                 }
             )
 
@@ -640,8 +650,8 @@ class MongoOutputs(MongoQuery):
             lookup = {
                 "$lookup": {
                     "from": key,
-                    "localField": "_id",
-                    "foreignField": "_source",
+                    "localField": _PRIMARY_ID,
+                    "foreignField": _SOURCE_ID,
                     "as": key,
                 }
             }
@@ -668,7 +678,7 @@ class MongoOutputs(MongoQuery):
         return SuperDuperCursor(
             raw_cursor=getattr(parent, 'aggregate')(pipeline),
             db=self.db,
-            id_field='_id',
+            id_field=_PRIMARY_ID,
             process_func=self._postprocess_result,
         )
 
@@ -733,7 +743,7 @@ class MongoOutputs(MongoQuery):
 
             assert isinstance(find_params[1], dict)
             find_params = list(find_params)
-            find_params[1]['_id'] = 1
+            find_params[1][_PRIMARY_ID] = 1
             return (part[0], tuple(find_params), part[2])
 
         def replace_outputs(part):
@@ -762,7 +772,7 @@ def UpdateOne(**kwargs):
     except Exception as e:
         raise KeyError('Filter not found in `UpdateOne`') from e
 
-    id = filter['_id']
+    id = filter[_PRIMARY_ID]
     if isinstance(id, ObjectId):
         ids = [id]
     else:

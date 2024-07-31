@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change all the `_outputs.` to `_outputs__`
 - Disable cdc on output tables.
 - Remove `-` from the uuid of the component.
+- Serialize mongodb id on select.
 
 
 #### New Features & Functionality

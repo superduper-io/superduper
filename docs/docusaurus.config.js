@@ -109,9 +109,7 @@ const config = {
           if (existingPath.includes('/docs')) {
             // Redirect from /docs/docs/X to /docs/X
             // This is to avoid broken links on existing sites that are pointing to superduper docs.
-            return [
-              existingPath.replace('/docs', '/docs/docs'),
-            ];
+            return [existingPath.replace('/docs', '/docs/docs')];
           }
           return undefined; // Return a falsy value: no redirect created
         },
@@ -119,12 +117,12 @@ const config = {
     ],
   ],
   scripts: [
-    {
-      src: 'https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js',
-      id: 'my-api',
-      'data-api-key': 'superduper',
-      async: true,
-    },
+    // {
+    //   src: 'https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js',
+    //   id: 'my-api',
+    //   'data-api-key': 'superduper',
+    //   async: true,
+    // },
     {
       src: 'https://tag.clearbitscripts.com/v1/pk_0beed107418c6889a934fd8a58e1054e/tags.js',
       referrerPolicy: 'strict-origin-when-cross-origin',
@@ -254,16 +252,6 @@ const config = {
             position: 'left',
           },
           {
-            href: 'https://github.com/superduper-io/superduper-community-apps/',
-            label: 'Community Apps',
-            position: 'left',
-          },
-          {
-            href: 'https://www.question-the-docs.superduper.com/',
-            label: 'Ask our docs',
-            position: 'left',
-          },
-          {
             href: 'https://github.com/superduper-io/superduper',
             position: 'right',
             className: 'header-github-link',
@@ -348,7 +336,8 @@ const config = {
       ],
       announcementBar: {
         id: 'support_us',
-        content: '🔮 SuperDuperDB is now Superduper! 🔮',
+        content:
+          '📣 SuperDuperDB is now Superduper! Check out our new website superduper.io 📣',
         backgroundColor: '#5D99D5',
         textColor: '#fff',
         isCloseable: true,

@@ -5,7 +5,7 @@ import click
 import mongomock
 import pymongo
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.ibis.field_types import FieldType
@@ -107,10 +107,8 @@ class MongoDataBackend(BaseDataBackend):
     def drop_outputs(self):
         """Drop all outputs."""
         for collection in self.db.list_collection_names():
-            if collection.startswith('_outputs__'):
+            if collection.startswith(CFG.output_prefix):
                 self.db.drop_collection(collection)
-            else:
-                self.db[collection].update_many({}, {'$unset': {'_outputs': ''}})
 
     def drop_table_or_collection(self, name: str):
         """Drop the table or collection.
@@ -188,7 +186,7 @@ class MongoDataBackend(BaseDataBackend):
 
         :param predict_id: identifier of the prediction
         """
-        return self.db[f'_outputs__{predict_id}'].find_one() is not None
+        return self.db[f'{CFG.output_prefix}{predict_id}'].find_one() is not None
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):

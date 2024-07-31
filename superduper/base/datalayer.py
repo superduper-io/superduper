@@ -8,7 +8,7 @@ import click
 import networkx
 
 import superduper as s
-from superduper import logging
+from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.backends import vector_searcher_implementations
 from superduper.backends.base.compute import ComputeBackend
@@ -338,7 +338,7 @@ class Datalayer:
         inserted_ids = insert.do_execute(self)
 
         cdc_status = s.CFG.cluster.cdc.uri is not None
-        is_output_table = insert.table.startswith('_outputs__')
+        is_output_table = insert.table.startswith(CFG.output_prefix)
 
         if refresh:
             if cdc_status and not is_output_table:
@@ -440,7 +440,7 @@ class Datalayer:
         updated_ids = update.do_execute(self)
 
         cdc_status = s.CFG.cluster.cdc.uri is not None
-        is_output_table = update.table.startswith('_outputs__')
+        is_output_table = update.table.startswith(CFG.output_prefix)
         if refresh and updated_ids:
             if cdc_status and not is_output_table:
                 logging.warn('CDC service is active, skipping model/listener refresh')

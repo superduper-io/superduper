@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use different colors to distinguish logs
 - Change all the `_outputs.` to `_outputs__`
 - Disable cdc on output tables.
+- Remove `-` from the uuid of the component.
 
 
 #### New Features & Functionality
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support eager mode
 - Add CSN env var
 - Make tests configurable against backend
+- Make the prefix of the output string configurable
 
 
 #### Bug Fixes

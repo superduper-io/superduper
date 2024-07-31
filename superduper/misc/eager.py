@@ -4,7 +4,7 @@ from enum import Enum
 
 import networkx as nx
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 
 if t.TYPE_CHECKING:
@@ -162,7 +162,7 @@ class SuperDuperData:
         if self.type == SuperDuperDataType.DATA:
             key = ".".join(self.ops)
         elif self.type == SuperDuperDataType.MODEL_OUTPUT:
-            prefix = f"_outputs__{self.predict_id}"
+            prefix = f"{CFG.output_prefix}{self.predict_id}"
             if self.ops:
                 key = f"{prefix}.{'.'.join(self.ops)}"
             else:
@@ -389,7 +389,7 @@ class Graph:
                 else:
                     if len(relations) != 1:
                         raise ValueError(_MIXED_FLATTEN_ERROR_MESSAGE)
-                    main_table = f"_outputs.{upstream_node.predict_id}"
+                    main_table = f"{CFG.output_prefix}{upstream_node.predict_id}"
                     predict_ids = []
             else:
                 raise ValueError(f"Unknown node type: {upstream_node.type}")

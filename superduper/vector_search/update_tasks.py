@@ -1,6 +1,6 @@
 import typing as t
 
-from superduper import Document, logging
+from superduper import CFG, Document, logging
 from superduper.backends.base.query import Query
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorItem
@@ -49,14 +49,16 @@ def copy_vectors(
     docs = [doc.unpack() for doc in docs]
 
     key = vi.indexing_listener.key
-    if '_outputs__' in key:
+    if CFG.output_prefix in key:
         key = key.split('.')[1]
 
     vectors = []
     nokeys = 0
     for doc in docs:
         try:
-            vector = MongoStyleDict(doc)[f'_outputs__{vi.indexing_listener.predict_id}']
+            vector = MongoStyleDict(doc)[
+                f'{CFG.output_prefix}{vi.indexing_listener.predict_id}'
+            ]
         except KeyError:
             nokeys += 1
             continue

@@ -36,7 +36,6 @@ _LEAF_TYPES = {
     'remote_code': Code,
 }
 _LEAF_TYPES.update(_ENCODABLES)
-_OUTPUTS_KEY = '_outputs'
 
 
 class _Getters:

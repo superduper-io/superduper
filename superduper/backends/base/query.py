@@ -5,6 +5,7 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
+from superduper import CFG
 from superduper.base.document import Document, _unpack
 from superduper.base.leaf import Leaf
 
@@ -327,7 +328,8 @@ class Query(_BaseQuery):
                     field = [
                         k
                         for k in table.schema.fields
-                        if k not in [self.primary_id, '_fold', '_outputs']
+                        if k not in [self.primary_id, '_fold']
+                        and not k.startswith(CFG.output_prefix)
                     ]
                     assert len(field) == 1
                     document = Document({field[0]: document})
@@ -648,12 +650,13 @@ class Query(_BaseQuery):
 
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):
-    key = part.split('.')
-    if key[0] == '_outputs':
-        table = f'{key[0]}.{key[1]}'
-        part = part.split('.')[2:]
+    if '.' in CFG.output_prefix and part.startswith(CFG.output_prefix):
+        rest_part = part[len(CFG.output_prefix) :].split('.')
+        table = f'{CFG.output_prefix}{rest_part[0]}'
+        part = rest_part[1:]
+
     else:
-        table = key[0]
+        table = part.split('.')[0]
         part = part.split('.')[1:]
 
     current = builder_cls(table=table, parts=(), db=db)

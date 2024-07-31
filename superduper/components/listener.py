@@ -5,7 +5,6 @@ from overrides import override
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.base.document import _OUTPUTS_KEY
 from superduper.components.model import Mapping
 from superduper.misc.server import request_server
 
@@ -54,7 +53,7 @@ class Listener(Component):
     @property
     def outputs(self):
         """Get reference to outputs of listener model."""
-        return f'{_OUTPUTS_KEY}__{self.uuid}'
+        return f'{CFG.output_prefix}{self.uuid}'
 
     @property
     def outputs_key(self):
@@ -128,8 +127,8 @@ class Listener(Component):
         all_ = list(args) + list(kwargs.values())
         out = []
         for x in all_:
-            if x.startswith('_outputs__'):
-                listener_id = x.split('__')[1]
+            if x.startswith(CFG.output_prefix):
+                listener_id = x[len(CFG.output_prefix) :]
                 out.append(listener_id)
         return out
 

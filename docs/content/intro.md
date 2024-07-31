@@ -1,9 +1,9 @@
 ---
-description: This description will override the default.
+description: Find detailed technical documentation for Superduper's AI and database integration solutions. Access comprehensive guides, API references, and tutorials to effectively implement and utilize SuperDuper technologies in your projects. (Formerly SuperDuperDB)
 ---
 
 <head>
-  <title>Head Metadata customized title!</title>
+  <title>Docs - Superduper</title>
 </head>
 
 # Introduction to Superduper!

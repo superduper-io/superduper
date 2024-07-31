@@ -128,7 +128,7 @@ class Leaf(metaclass=LeafMeta):
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
-    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()))
+    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
 
     @property
     def metadata(self):

@@ -267,7 +267,7 @@ const config = {
             items: [
               {
                 label: 'Website',
-                href: 'https://superduper.com',
+                href: 'https://superduper.io',
               },
               {
                 label: 'Documentation',
@@ -288,15 +288,15 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/superduper.io/superduper',
+                href: 'https://github.com/superduper-io/superduper',
               },
               {
                 label: 'Issues',
-                href: 'https://github.com/superduper.io/superduper/issues',
+                href: 'https://github.com/superduper-io/superduper/issues',
               },
               {
                 label: 'Discussions',
-                href: 'https://github.com/superduper.io/superduper/discussions',
+                href: 'https://github.com/superduper-io/superduper/discussions',
               },
             ],
           },
@@ -305,19 +305,19 @@ const config = {
             items: [
               {
                 label: 'LinkedIn',
-                href: 'https://www.linkedin.com/company/superduper/',
+                href: 'https://www.linkedin.com/company/superduper-io',
               },
               {
                 label: 'Slack',
-                href: 'https://superduper.slack.com/',
+                href: 'https://superduper-public.slack.com',
               },
               {
                 label: 'X / Twitter',
-                href: 'https://twitter.com/superduper',
+                href: 'https://twitter.com/superduperdb',
               },
               {
                 label: 'Youtube',
-                href: 'https://www.youtube.com/@superduper.io',
+                href: 'https://www.youtube.com/@superduper-io',
               },
             ],
           },

@@ -158,6 +158,10 @@ class MongoQuery(Query):
         self.table_or_collection.delete_many({'_id': {'$in': ids}})._execute(parent)
         return [str(id) for id in ids]
 
+    def _id_serializer(self, r):
+        r['_id'] = str(r['_id'])
+        return r
+
     def _execute(self, parent, method='encode'):
         c = super()._execute(parent, method=method)
         import mongomock
@@ -168,6 +172,7 @@ class MongoQuery(Query):
                 raw_cursor=c,
                 db=self.db,
                 id_field='_id',
+                process_func=self._id_serializer,
             )
         return c
 
@@ -659,8 +664,6 @@ class MongoOutputs(MongoQuery):
 
         if limit:
             pipeline.append(limit)
-
-        print(pipeline)
 
         return SuperDuperCursor(
             raw_cursor=getattr(parent, 'aggregate')(pipeline),

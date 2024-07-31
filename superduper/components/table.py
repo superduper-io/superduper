@@ -1,5 +1,6 @@
 import typing as t
 
+from superduper import CFG
 from superduper.components.component import Component
 from superduper.components.schema import Schema, _Native
 
@@ -51,7 +52,7 @@ class Table(Component):
         for e in self.schema.encoders:
             db.add(e)
         if db.databackend.in_memory:
-            if '_outputs' in self.identifier:
+            if self.identifier.startswith(CFG.output_prefix):
                 db.databackend.in_memory_tables[
                     self.identifier
                 ] = db.databackend.create_table_and_schema(self.identifier, self.schema)

@@ -1,6 +1,6 @@
 import typing as t
 
-from superduper import logging
+from superduper import CFG, logging
 
 from .component import Component
 
@@ -74,7 +74,7 @@ class Application(Component):
             if any(
                 [
                     component.type_id == "table"
-                    and component.identifier.startswith("_outputs"),
+                    and component.identifier.startswith(CFG.output_prefix),
                     component.type_id == "schema"
                     and component.identifier.startswith("_schema/"),
                 ]

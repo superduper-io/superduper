@@ -14,7 +14,7 @@ from functools import wraps
 import requests
 import tqdm
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.backends.ibis.field_types import FieldType
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
@@ -380,7 +380,7 @@ class Mapping:
         for arg in self.mapping[0]:
             outputs.append(arg)
         for key, value in self.mapping[1].items():
-            if key.startswith('_outputs__'):
+            if key.startswith(CFG.output_prefix):
                 key = key.split('.')[1]
             outputs.append(f'{key}={value}')
         return ', '.join(outputs)
@@ -622,8 +622,6 @@ class Model(Component, metaclass=ModelMeta):
         if not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
-            if '_outputs' in X:
-                X = X.split('.')[1]
             query = select.select_ids_of_missing_outputs(predict_id=predict_id)
         else:
             if ids:

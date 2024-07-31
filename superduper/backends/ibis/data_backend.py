@@ -8,6 +8,7 @@ import pandas
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
 
+from superduper import CFG
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.ibis.db_helper import get_db_helper
@@ -167,10 +168,10 @@ class IbisDataBackend(BaseDataBackend):
         fields = {
             INPUT_KEY: dtype('string'),
             'id': dtype('string'),
-            f'_outputs__{predict_id}': output_type,
+            f'{CFG.output_prefix}{predict_id}': output_type,
         }
         return Table(
-            identifier=f'_outputs__{predict_id}',
+            identifier=f'{CFG.output_prefix}{predict_id}',
             schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
         )
 
@@ -180,7 +181,7 @@ class IbisDataBackend(BaseDataBackend):
         :param predict_id: The identifier of the prediction.
         """
         try:
-            self.conn.table(f'_outputs__{predict_id}')
+            self.conn.table(f'{CFG.output_prefix}{predict_id}')
             return True
         except (NoSuchTableError, ibis.IbisError):
             return False

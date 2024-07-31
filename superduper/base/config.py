@@ -290,6 +290,7 @@ class Config(BaseConfig):
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
     :param log_colorize: Whether to colorize the logs
+    :param output_prefix: The prefix for the output table and output field key
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
@@ -312,6 +313,7 @@ class Config(BaseConfig):
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
+    output_prefix: str = '_outputs__'
 
     def __post_init__(self, envs):
         if envs is not None:

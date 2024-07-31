@@ -71,15 +71,17 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         assert isinstance(
             indexing_key, str
         ), 'Only single key is support for atlas search'
-        if indexing_key.startswith('_outputs'):
-            indexing_key = indexing_key.split('.')[1]
+        if indexing_key.startswith(CFG.output_prefix):
+            indexing_key = indexing_key[len(CFG.output_prefix) :]
         assert isinstance(vi.indexing_listener.model, ObjectModel) or isinstance(
             vi.indexing_listener.model, APIBaseModel
         )
         assert isinstance(collection, str), 'Collection is required to be a string'
         indexing_model = vi.indexing_listener.model.identifier
         indexing_version = vi.indexing_listener.model.version
-        output_path = f'_outputs__{indexing_key}.{indexing_model}.{indexing_version}'
+        output_path = (
+            f'{CFG.output_prefix}{indexing_key}.{indexing_model}.{indexing_version}'
+        )
 
         return MongoAtlasVectorSearcher(
             identifier=vi.identifier,
@@ -181,6 +183,7 @@ class MongoAtlasVectorSearcher(BaseVectorSearcher):
         :param output_path: Path to the output
         """
         _, key, model, version = output_path.split('.')
+        # TODO: Need to fix this and test it with CFG.output_prefix
         if re.match(r'^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
 

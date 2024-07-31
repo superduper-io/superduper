@@ -79,10 +79,7 @@ class VectorIndex(Component):
         """
         document = MongoStyleDict(like.unpack())
         if outputs is not None:
-            outputs = outputs or {}
-            if '_outputs' not in document:
-                document['_outputs'] = {}
-            document['_outputs'].update(outputs)
+            document.update(outputs)
             assert not isinstance(self.indexing_listener, str)
         available_keys = list(document.keys())
 

@@ -8,7 +8,7 @@ from collections import defaultdict
 import pymongo
 from bson import ObjectId
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.backends.base.query import (
     Query,
     applies_to,
@@ -367,7 +367,9 @@ class MongoQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        return self.db.databackend.drop_table_or_collection(f'_outputs__{predict_id}')
+        return self.db.databackend.drop_table_or_collection(
+            f'{CFG.output_prefix}{predict_id}'
+        )
 
     @applies_to('find')
     def outputs(self, *predict_ids):
@@ -459,13 +461,13 @@ class MongoQuery(Query):
                 {
                     '$and': [
                         args[0],
-                        {f'_outputs__{predict_id}': {'$exists': 0}},
+                        {f'{CFG.output_prefix}{predict_id}': {'$exists': 0}},
                     ]
                 },
                 *args[1:],
             ]
         else:
-            args = [{f'_outputs__{predict_id}': {'$exists': 0}}]
+            args = [{f'{CFG.output_prefix}{predict_id}': {'$exists': 0}}]
 
         if len(args) == 1:
             args.append({})
@@ -530,7 +532,7 @@ class MongoQuery(Query):
         for output, id in zip(outputs, ids):
             documents.append(
                 {
-                    f'_outputs__{predict_id}': output,
+                    f'{CFG.output_prefix}{predict_id}': output,
                     '_source': ObjectId(id),
                 }
             )
@@ -538,7 +540,9 @@ class MongoQuery(Query):
         from superduper.base.datalayer import Datalayer
 
         assert isinstance(self.db, Datalayer)
-        output_query = self.db[f'_outputs__{predict_id}'].insert_many(documents)
+        output_query = self.db[f'{CFG.output_prefix}{predict_id}'].insert_many(
+            documents
+        )
         output_query.is_output_query = True
         output_query.updated_key = predict_id
         return output_query
@@ -616,18 +620,18 @@ class MongoOutputs(MongoQuery):
         predict_ids = sum([p[1] for p in outputs_parts], ())
 
         pipeline = []
-        filter_mapping_base, filter_mapping_outptus = self._get_filter_mapping()
+        filter_mapping_base, filter_mapping_outputs = self._get_filter_mapping()
         if filter_mapping_base:
             pipeline.append({"$match": filter_mapping_base})
             project.update({k: 1 for k in filter_mapping_base.keys()})
 
-        predict_ids_in_filter = list(filter_mapping_outptus.keys())
+        predict_ids_in_filter = list(filter_mapping_outputs.keys())
 
         predict_ids = list(set(predict_ids).union(predict_ids_in_filter))
         # After the join, the complete outputs data can be queried as
-        # _outputs__{predict_id}._outputs.{predict_id} : result.
+        # {CFG.output_prefix}{predict_id}._outputs.{predict_id} : result.
         for predict_id in predict_ids:
-            key = f'_outputs__{predict_id}'
+            key = f'{CFG.output_prefix}{predict_id}'
             lookup = {
                 "$lookup": {
                     "from": key,
@@ -640,9 +644,9 @@ class MongoOutputs(MongoQuery):
             project[key] = 1
             pipeline.append(lookup)
 
-            if predict_id in filter_mapping_outptus:
+            if predict_id in filter_mapping_outputs:
                 filter_key, filter_value = list(
-                    filter_mapping_outptus[predict_id].items()
+                    filter_mapping_outputs[predict_id].items()
                 )[0]
                 pipeline.append({"$match": {f'{key}.{filter_key}': filter_value}})
 
@@ -675,11 +679,11 @@ class MongoOutputs(MongoQuery):
         filter_mapping_outputs = defaultdict(dict)
 
         for key, value in filter.items():
-            if '_outputs__' not in key:
+            if '{CFG.output_prefix}' not in key:
                 filter_mapping_base[key] = value
                 continue
 
-            if key.startswith('_outputs__'):
+            if key.startswith('{CFG.output_prefix}'):
                 predict_id = key.split('__')[1]
                 filter_mapping_outputs[predict_id] = {key: value}
 
@@ -688,7 +692,7 @@ class MongoOutputs(MongoQuery):
     def _postprocess_result(self, result):
         """Postprocess the result of the query.
 
-        Merge the outputs/_builds/_files/_blobs from the _outputs__* keys to the result
+        Merge the outputs/_builds/_files/_blobs from the output keys to the result
 
         :param result: The result to postprocess.
         """
@@ -697,7 +701,9 @@ class MongoOutputs(MongoQuery):
         merge_files = result.get('_files', {})
         merge_blobs = result.get('_blobs', {})
 
-        output_keys = {key for key in result.keys() if key.startswith('_outputs__')}
+        output_keys = {
+            key for key in result.keys() if key.startswith(CFG.output_prefix)
+        }
         for output_key in output_keys:
             output_data = result[output_key]
             output_result = output_data[output_key]

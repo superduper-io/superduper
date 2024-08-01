@@ -9,36 +9,28 @@
 </p>
 
 <div align="center">
+  <h1>Bring AI to your favorite database!</h1>
+  <p><h2>
+    <a href="https://docs.superduper.io"><strong>Docs</strong></a> |
+    <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
+    <a href="https://superduper.io"><strong>Website</strong></a> |
+    <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> |
+    <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong>Slack</strong></a> |
+    <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a>
+  </p></h2>
 
-## Bring AI to your favorite database!
-
+  <p>
+    <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/v/superduper-framework?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
+    <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/pyversions/superduper-framework" alt="Supported Python versions"></a>    
+    <a href="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml"><img src="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
+    <a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
+  </p>
 </div>
 
-<div align="center">
 
-## <a href="https://docs.superduper.io"><strong>Docs</strong></a> | <a href="https://blog.superduper.io"><strong>Blog</strong></a> | <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://docs.superduper.io/docs/docs/get_started/installation"><strong> Installation</strong></a> | <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## What is Superduper? 
 
-</div>
-
-
-<div align="center">
-	<a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/v/superduper-framework?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
-  	<a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/pyversions/superduper-framework" alt="Supported Python versions"></a>    
-	<a href="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml"><img src="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
-	<a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
-</div>
-
-
----
-
-### :mega:  ***We are in the middle of rebranding from [https://github.com/SuperDuperDB/superduperdb](https://github.com/SuperDuperDB/superduperdb) to [https://github.com/superduper-io/superduper](https://github.com/superduper-io/superduper), so bear with us if anything is broken!***
-
----
-
-
-## What is superduper.io? 🔮 
-
-superduper.io is a Python framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
+Superduper (formerly SuperDuperDB) is a Python framework for integrating AI models, APIs, and vector search engines with your existing databases including hosting of your own models, streaming inference and scalable model training/fine-tuning.
 
 
 ## Key Features:

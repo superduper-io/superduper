@@ -1,4 +1,4 @@
-<p align="center">
+<div align="center">
   <a href="https://www.superduper.io">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/SuperDuperDB_logo_white.svg">
@@ -6,14 +6,14 @@
       <img width="50%" alt="SuperDuper logo" src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/SuperDuperDB_logo_color.svg">
     </picture>
   </a>
-</p>
+</div>
 
-<p align="center">
-  <h1>Bring AI to your favourite database</h2>
-</p>
+<div align="center">
+  <h1>Bring AI to your favourite database</h1>
+</div>
 
-<p align="center">
-<h2>
+<div align="center">
+  <h2>
     <a href="https://docs.superduper.io"><strong>Docs</strong></a> |
     <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
     <a href="https://superduper.io"><strong>Website</strong></a> |
@@ -21,42 +21,70 @@
     <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg"><strong>Slack</strong></a> |
     <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a> |
     <a href="https://www.linkedin.com/company/superduper-io"><strong>LinkedIn</strong></a>
-</h2>
-</p>
+  </h2>
+</div>
 
-  <p align="center">
-    <h2>
+<div align="center">
+  <h2>
     <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/v/superduper-framework?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
     <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/pyversions/superduper-framework" alt="Supported Python versions"></a>    
     <a href="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml"><img src="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
-    <a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
+    <a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>  
   </h2>
-  </p>
+</div>
 
 
 
 ## What is Superduper? 
 
-Superduper (formerly SuperDuperDB) is a Python framework for integrating AI models and workflows with major databases. 
-Implement custom AI solutions without moving your data through complex pipelines and specialized vector databases, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
+Superduper (formerly SuperDuperDB) is a Python framework for integrating AI models and workflows with major databases. Implement custom AI solutions without moving your data through complex pipelines and specialized vector databases, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
 
-Run it anywhere, or [contact us](https://superduper.io/contact) to learn more about the Superduper platform for bringing your apps to production at scale. 
+Transform your existing database into an AI development and deployment stack with one command, streamlining your AI workflows in one environment instead of being spread across systems and environments:
+```
+db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
+```
+
+Run Superduper anywhere, or [contact us](https://superduper.io/contact) to learn more about the enterprise platform for bringing your apps to production at scale. 
+
+### Currently supported datastores:
+[MongoDB](https://www.mongodb.com),
+[MongoDB Atlas](https://www.mongodb.com/cloud/atlas),
+[Snowflake](https://www.snowflake.com),
+[PostgreSQL](https://www.postgresql.org), 
+[MySQL](https://www.mysql.com),
+[SQLite](https://www.sqlite.org),
+[DuckDB](https://duckdb.org),
+[Google BigQuery](https://cloud.google.com/bigquery),
+[Amazon S3](https://aws.amazon.com/s3/),
+[Microsoft SQL Server (MSSQL)](https://www.microsoft.com/en-us/sql-server),
+[ClickHouse](https://clickhouse.com),
+[Oracle](https://www.oracle.com/database/),
+[Trino](https://trino.io),
+[PySpark](https://spark.apache.org/docs/latest/api/python/),
+[Pandas](https://pandas.pydata.org),
+[Apache Druid](https://druid.apache.org),
+[Apache Impala](https://impala.apache.org),
+[Polars](https://www.pola.rs),
+[Apache Arrow DataFusion](https://arrow.apache.org/datafusion/),
 
 
-<p align="center">
-  <img width="80%" src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/superduper.gif">
-</p>
 
-## Key Features:
-- **[Integration of AI with your existing data infrastructure](https://docs.superduper.io/docs/apply_api/model):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
+```
+db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
+```
+
+
+## Key features:
+- **[Integration of AI with your existing data infrastructure](https://docs.superduper.io/docs/apply_api/model):** Integrate any AI models and APIs with your databases in a single environment, without the need for additional pre-processing steps, ETL or boilerplate code.
 - **[Inference via change-data-capture](https://docs.superduper.io/docs/models/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
-- **[Scalable Model Training](https://docs.superduper.io/docs/models/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
-- **[Model Chaining](https://docs.superduper.io/docs/models/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple Python Interface](https://docs.superduper.io/docs/core_api/intro)**: Replace writing thousand of lines of glue code with simple Python commands, while being able to drill down to any layer of implementation detail, like the inner workings of your models or your training details.
-- **[Python-First](https://docs.superduper.io/docs/fundamentals/class_hierarchy)**: Bring and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications.
-- **[Difficult Data-Types](https://docs.superduper.io/docs/reusable_snippets/create_datatype)**: Work directly with images, video, audio in your database, and any type which can be encoded as `bytes` in Python.
-- **[Feature Storing](https://docs.superduper.io/docs/execute_api/auto_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduper.io/docs/tutorials/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+- **[Scalable model hosting](https://docs.superduper.io/docs/category/ai-integrations):** Host your own (custom) models from i.e. form HuggingFace, PyTorch and scikit-learn and safeguard your data.
+- **[Scalable model training](https://docs.superduper.io/docs/models/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
+- **[Model chaining](https://docs.superduper.io/docs/models/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
+- **[Simple Python interface](https://docs.superduper.io/docs/core_api/intro)**: Replace writing thousand of lines of glue code with simple Python commands, while being able to drill down to any layer of implementation detail, like the inner workings of your models or your training details.
+- **[Python-first](https://docs.superduper.io/docs/fundamentals/class_hierarchy)**: Bring and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications.
+- **[Difficult data-types](https://docs.superduper.io/docs/reusable_snippets/create_datatype)**: Work directly with images, video, audio in your database, and any type which can be encoded as `bytes` in Python.
+- **[Feature storing](https://docs.superduper.io/docs/execute_api/auto_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
+- **[Vector search](https://docs.superduper.io/docs/tutorials/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
 
 ## Example use-cases and apps (notebooks)
@@ -75,84 +103,10 @@ The notebooks below are examples how to make use of different frameworks, model 
 </table >
 
 
-## Supported Datastores (*more coming soon*):
 
-<table>
-    <tr>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xmongodb.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xmongodb-atlas.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xaws-s3.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xpostgresql.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xmysql.png" width="139px" />
-        </td>
-    </tr>
-    <tr>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xsqlite.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xduckdb.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xsnowflake.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xbigquery.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xclickhouse.png" width="139px" />
-        </td>
-    </tr>
-    <tr>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xdatafusion.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xdruid.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Ximpala.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xmssql.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xoracle.png" width="139px" />
-        </td>
-    </tr>
-    <tr>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xpandas.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xpolars.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xpyspark.png" width="139px" />
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/databases/2Xtrino.png" width="139px" />
-        </td>
-    </tr>
 
-</table>
 
-**Transform your existing database into a Python-only AI development and deployment stack with one command:**
-
-```
-db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
-```
-
-## Supported AI Frameworks and Models (*more coming soon*):
+## Supported AI frameworks and models (*more coming soon*):
 
 <table>
     <tr>
@@ -171,7 +125,7 @@ db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>'
 **Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
 
 
-## Pre-Integrated AI APIs (*more coming soon*):
+## Pre-integrated AI APIs (*more coming soon*):
 
 <table >
     <tr>
@@ -220,7 +174,7 @@ make testenv_init
 [Browse the re-usable snippets](https://docs.superduper.io/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality
 with few lines of code using superduper.io.
 
-## Community & Getting Help 
+## Community & getting help 
 
 #### If you have any problems, questions, comments, or ideas:
 - Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg">our Slack</a> (we look forward to seeing you there).

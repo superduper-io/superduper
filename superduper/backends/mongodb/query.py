@@ -23,6 +23,16 @@ if t.TYPE_CHECKING:
 
 _SPECIAL_CHRS: list = ['$', '.']
 
+OPS_MAP = {
+    '__eq__': '$eq',
+    '__ne__': '$ne',
+    '__lt__': '$lt',
+    '__le__': '$lte',
+    '__gt__': '$gt',
+    '__ge__': '$gte',
+    'isin': '$in',
+}
+
 
 def _serialize_special_character(d, to='encode'):
     def extract_character(s):
@@ -90,13 +100,16 @@ class MongoQuery(Query):
     """
 
     flavours: t.ClassVar[t.Dict[str, str]] = {
-        'pre_like': r'^.*\.like\(.*\)\.find',
-        'post_like': r'^.*\.find\(.*\)\.like(.*)$',
+        'pre_like': r'^.*\.like\(.*\)\.(find|select)',
+        'post_like': r'^.*\.(find|select)\(.*\)\.like(.*)$',
         'bulk_write': r'^.*\.bulk_write\(.*\)$',
+        'outputs': r'^.*\.outputs\(.*\)',
         'find_one': r'^.*\.find_one\(.*\)',
         'find': r'^.*\.find\(.*\)',
-        'insert_many': r'^.*\.insert_many\(.*\)$',
+        'select': r'^.*\.select\(.*\)$',
         'insert_one': r'^.*\.insert_one\(.*\)$',
+        'insert_many': r'^.*\.insert_many\(.*\)$',
+        'insert': r'^.*\.insert\(.*\)$',
         'replace_one': r'^.*\.replace_one\(.*\)$',
         'update_many': r'^.*\.update_many\(.*\)$',
         'update_one': r'^.*\.update_one\(.*\)$',
@@ -105,9 +118,10 @@ class MongoQuery(Query):
         'other': '.*',
     }
 
-    methods_mapping: t.ClassVar[t.Dict[str, str]] = {
-        "insert": "insert_many",
-        "select": "find",
+    # Use to control the behavior in the class construction method within LeafMeta
+    __dataclass_params__: t.ClassVar[t.Dict[str, t.Any]] = {
+        'eq': False,
+        'order': False,
     }
 
     def _create_table_if_not_exists(self):
@@ -132,9 +146,14 @@ class MongoQuery(Query):
                 'bulk_write': 'write',
                 'insert_many': 'insert',
                 'insert_one': 'insert',
+                'insert': 'insert',
                 'outputs': 'select',
             },
         )[self.flavour]
+
+    @property
+    def _is_select_find(self):
+        return self.parts and any([p[0] == 'select' for p in self.parts])
 
     def _prepare_inputs(self, inputs):
         if isinstance(inputs, BulkOp):
@@ -173,29 +192,23 @@ class MongoQuery(Query):
 
     def _execute_pre_like(self, parent):
         assert self.parts[0][0] == 'like'
-        assert self.parts[1][0] in ['find', 'find_one']
+        assert self.parts[1][0] in ['find', 'find_one', 'select']
 
         similar_ids, similar_scores = self._prepare_pre_like(parent)
 
-        find_args = self.parts[1][1]
-        find_kwargs = self.parts[1][2]
-        if not find_args:
-            find_args = ({},)
-
-        find_args[0]['_id'] = {'$in': [ObjectId(id) for id in similar_ids]}
-
-        q = type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[(self.parts[1][0], tuple(find_args), find_kwargs), *self.parts[2:]],
-        )
-        result = q.do_execute(db=self.db)
+        ids = [ObjectId(id) for id in similar_ids]
+        query = self[1:]
+        query = query.filter(query['_id'].isin(ids))
+        result = query.execute()
         result.scores = similar_scores
         return result
 
     def _execute_post_like(self, parent):
         assert len(self.parts) == 2
-        assert self.parts[0][0] == 'find'
+        assert self.parts[0][0] in {
+            'find',
+            'select',
+        }, "Post like query must start with find/select"
         assert self.parts[1][0] == 'like'
 
         find_args = self.parts[0][1]
@@ -286,8 +299,44 @@ class MongoQuery(Query):
             )
         return bulk_result, bulk_update_ids, bulk_delete_ids
 
+    def filter(self, *args, **kwargs):
+        """Return a query that filters the documents.
+
+        :param args: The arguments to filter by.
+        :param kwargs: Additional keyword arguments.
+        """
+        filters = {}
+        for arg in args:
+            if isinstance(arg, dict):
+                filters.update(arg)
+                continue
+            if not isinstance(arg, Query):
+                raise ValueError(f'Filter arguments must be queries, but got: {arg}')
+            assert len(arg.parts) > 1, f'Invalid filter query: {arg}'
+            key, (op, op_args, _) = arg.parts[-2:]
+
+            if op not in OPS_MAP:
+                raise ValueError(
+                    f'Operation {op} not supported, '
+                    f'supported operations are: {OPS_MAP.keys()}'
+                )
+
+            if not op_args:
+                raise ValueError(f'No arguments found for operation {op}')
+
+            value = op_args[0]
+
+            filters[key] = {OPS_MAP[op]: value}
+
+        query = self if self.parts else self.select()
+        return type(self)(
+            db=self.db,
+            table=self.table,
+            parts=[*query.parts, ('filter', (filters,), kwargs)],
+        )
+
     def _execute_find(self, parent):
-        return self._execute(parent, method='unpack')
+        return self._execute_select(parent)
 
     def _execute_replace_one(self, parent):
         documents = self.parts[0][1][0]
@@ -305,7 +354,7 @@ class MongoQuery(Query):
         q._execute(parent)
 
     def _execute_find_one(self, parent):
-        r = self._execute(parent, method='unpack')
+        r = self._execute_select(parent)
         if r is None:
             return
         return Document.decode(r, db=self.db)
@@ -371,43 +420,16 @@ class MongoQuery(Query):
             f'{CFG.output_prefix}{predict_id}'
         )
 
-    @applies_to('find')
-    def outputs(self, *predict_ids):
-        """Return a query that selects the outputs of the given predict ids.
-
-        :param predict_ids: The ids of the predictions to select.
-        """
-        return MongoOutputs(
-            db=self.db,
-            table=self.table,
-            parts=[
-                *copy.deepcopy(self.parts),
-                ('outputs', (*predict_ids,), {}),
-            ],
-        )
-
-    @applies_to('find')
+    @applies_to('find', 'find_one', 'select', 'outputs')
     def add_fold(self, fold: str):
         """Return a query that adds a fold to the query.
 
         :param fold: The fold to add.
         """
-        find_args, find_kwargs = self.parts[0][1:]
-        find_args = list(find_args)
-        if not find_args:
-            find_args = [{}]
-        find_args[0]['_fold'] = fold
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[
-                ('find', tuple(find_args), find_kwargs),
-                *self.parts[1:],
-            ],
-        )
+        return self.filter(self['_fold'] == fold)
 
     @property
-    @applies_to('insert_many', 'insert_one')
+    @applies_to('insert_many', 'insert_one', 'insert')
     def documents(self):
         """Return the documents."""
         return super().documents
@@ -422,31 +444,26 @@ class MongoQuery(Query):
 
         :param ids: The ids to select.
         """
-        if self.parts == () or isinstance(self.parts[0], str):
-            args, kwargs = (), {}
-        else:
-            args, kwargs = self.parts[0][1:]
-        args = copy.deepcopy(args)
-        if not args:
-            args = [{}]
-        args[0]['_id'] = {'$in': [ObjectId(id) for id in ids]}
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[
-                ('find', args, kwargs),
-                *self.parts[1:],
-            ],
-        )
+        ids = [ObjectId(id) for id in ids]
+        return self.filter(self['_id'].isin(ids))
 
     @property
     def select_ids(self):
         """Select the ids of the documents."""
+        if self._is_select_find:
+            part = self.parts[0]
+            new_part = ('select', ('_id',), part[2])
+            return type(self)(
+                db=self.db,
+                table=self.table,
+                parts=[new_part, *self.parts[1:]],
+            )
+
         filter_ = {}
         if self.parts and self.parts[0][1]:
             filter_ = self.parts[0][1][0]
         projection = {'_id': 1}
-        coll = MongoQuery(table=self.table, db=self.db)
+        coll = type(self)(table=self.table, db=self.db)
         return coll.find(filter_, projection)
 
     @applies_to('find')
@@ -561,30 +578,60 @@ class MongoQuery(Query):
             parts=parts,
         )
 
-    def filter(self, filter):
-        """Return a query that filters the documents.
+    def _execute_select(self, parent):
+        parts = self._get_select_parts()
+        output = self._get_chain_native_query(parent, parts, method='unpack')
+        import mongomock
+        import pymongo
 
-        :param filter: The filter to apply.
-        """
+        if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
+            return SuperDuperCursor(
+                raw_cursor=output,
+                db=self.db,
+                id_field='_id',
+            )
+        return output
 
-        def replace_function(part):
-            find_params = part[1]
-            if not find_params:
-                find_params = ({},)
+    def _get_select_parts(self):
+        def process_select_part(part):
+            # Convert the select part to a find part
+            _, args, _ = part
+            projection = {key: 1 for key in args}
+            if projection and '_id' not in projection:
+                projection['_id'] = 0
+            return ('find', ({}, projection), {})
 
-            assert isinstance(find_params[0], dict)
+        def process_find_part(part):
+            method, args, kwargs = part
+            # args: (filter, projection, *args)
+            filter = copy.deepcopy(args[0]) if len(args) > 0 else {}
+            filter.update(self._get_filter_conditions())
+            args = tuple((filter, *args[1:]))
 
-            find_params[0].update(filter)
-            return (part[0], tuple(find_params), part[2])
+            return (method, args, kwargs)
 
-        return self._replace_part('find', replace_function)
+        parts = []
+        for part in self.parts:
+            if part[0] == 'select':
+                part = process_select_part(part)
 
+            if part[0] in {'find', 'find_one'}:
+                part = process_find_part(part)
 
-class MongoOutputs(MongoQuery):
-    """A query class for MongoDB outputs.
+            if part[0] == 'filter':
+                continue
+            parts.append(part)
 
-    Use aggregate to implement the outputs query
-    """
+        return parts
+
+    def _get_filter_conditions(self):
+        filters = {}
+        for part in self.parts:
+            if part[0] == 'filter':
+                sub_filters = part[1][0]
+                assert isinstance(sub_filters, dict)
+                filters.update(sub_filters)
+        return filters
 
     def _get_method_parameters(self, method):
         args, kwargs = (), {}
@@ -596,18 +643,8 @@ class MongoOutputs(MongoQuery):
 
         return args, kwargs
 
-    def _execute(self, parent, method='encode'):
-        find_params, _ = self._get_method_parameters('find')
-        project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {}
-        if not project:
-            try:
-                table = self.db.tables[self.table]
-                project = {key: 1 for key in table.schema.fields.keys()}
-            except FileNotFoundError:
-                logging.warn(
-                    'No schema found for table',
-                    f'{self.table}. Using default projection',
-                )
+    def _execute_outputs(self, parent, method='encode'):
+        project = self._get_project()
         project['_schema'] = 1
         project['_builds'] = 1
         project['_files'] = 1
@@ -660,8 +697,6 @@ class MongoOutputs(MongoQuery):
         if limit:
             pipeline.append(limit)
 
-        print(pipeline)
-
         return SuperDuperCursor(
             raw_cursor=getattr(parent, 'aggregate')(pipeline),
             db=self.db,
@@ -669,9 +704,31 @@ class MongoOutputs(MongoQuery):
             process_func=self._postprocess_result,
         )
 
+    def _get_project(self):
+        find_params, _ = self._get_method_parameters('find')
+        select_params, _ = self._get_method_parameters('select')
+        if self._is_select_find:
+            project = {key: 1 for key in select_params}
+        else:
+            project = copy.deepcopy(find_params[1]) if len(find_params) > 1 else {}
+
+        if not project:
+            try:
+                table = self.db.tables[self.table]
+                project = {key: 1 for key in table.schema.fields.keys()}
+            except FileNotFoundError:
+                logging.warn(
+                    'No schema found for table',
+                    f'{self.table}. Using default projection',
+                )
+
+        return project
+
     def _get_filter_mapping(self):
         find_params, _ = self._get_method_parameters('find')
         filter = find_params[0] if find_params else {}
+        filter.update(self._get_filter_conditions())
+
         if not filter:
             return {}, {}
 
@@ -717,28 +774,6 @@ class MongoOutputs(MongoQuery):
         result['_files'] = merge_files
         result['_blobs'] = merge_blobs
         return result
-
-    @property
-    @applies_to('find')
-    def select_ids(self):
-        """Select the ids of the documents."""
-
-        def replace_id(part):
-            find_params = part[1]
-            if not find_params:
-                find_params = ({}, {})
-
-            assert isinstance(find_params[1], dict)
-            find_params = list(find_params)
-            find_params[1]['_id'] = 1
-            return (part[0], tuple(find_params), part[2])
-
-        def replace_outputs(part):
-            return (part[0], (), part[2])
-
-        query = self._replace_part('find', replace_id)
-        query = query._replace_part('outputs', replace_outputs)
-        return query
 
 
 def InsertOne(**kwargs):

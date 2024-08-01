@@ -54,7 +54,8 @@ def test_basic_template(db):
     assert listener.model.object(3) == 5
 
     # Check listener outputs with key and model_id
-    r = db['documents'].select().outputs(listener.predict_id).execute()
+    primary_id = db['documents'].primary_id
+    r = db['documents'].select(primary_id, 'y').outputs(listener.predict_id).execute()
     r = Document(list(r)[0].unpack())
     assert r[listener.outputs_key] == r['y'] + 2
 
@@ -98,7 +99,13 @@ def test_template_export(db):
 
         db.apply(listener)
         # Check listener outputs with key and model_id
-        r = db['documents'].select().outputs(listener.predict_id).execute()
+        primary_id = db['documents'].primary_id
+        r = (
+            db['documents']
+            .select(primary_id, 'y')
+            .outputs(listener.predict_id)
+            .execute()
+        )
         r = Document(list(r)[0].unpack())
         assert r[listener.outputs_key] == r['y'] + 2
 

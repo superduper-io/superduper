@@ -84,16 +84,18 @@ class LeafMeta(type):
 
         # Determine if any bases are dataclasses and
         # apply the appropriate dataclass decorator
+        #
+        dataclass_params = namespace.get('__dataclass_params__', {})
         if bases and any(dc.is_dataclass(b) for b in bases):
+            dataclass_params['kw_only'] = True
+            dataclass_params['repr'] = not name.endswith('Query')
             # Derived classes: kw_only=True
-            cls = dc.dataclass(kw_only=True, repr=not name.endswith('Query'))(
-                super().__new__(mcs, name, bases, namespace)
-            )
         else:
             # Base class: kw_only=False
-            cls = dc.dataclass(kw_only=False)(
-                super().__new__(mcs, name, bases, namespace)
-            )
+            dataclass_params['kw_only'] = False
+        cls = dc.dataclass(**dataclass_params)(
+            super().__new__(mcs, name, bases, namespace)
+        )
 
         # Merge docstrings from parent classes
         parent_doc = next(

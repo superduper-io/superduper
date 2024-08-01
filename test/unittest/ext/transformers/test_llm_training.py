@@ -2,6 +2,7 @@ import os
 import random
 
 from superduper.base.document import Document
+from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
 from superduper.ext.transformers import LLM
 
@@ -60,17 +61,16 @@ def test_training(db, tmpdir):
     def metric(predictions, targets):
         return random.random()
 
-    # TODO: Enable this when select support filter
-    # validation_sets = [
-    #     Dataset(
-    #         identifier="dataset_1",
-    #         select=collection.find({"_fold": "valid"}),
-    #     ),
-    #     Dataset(
-    #         identifier="dataset_2",
-    #         select=collection.find({"_fold": "valid"}),
-    #     ),
-    # ]
+    validation_sets = [
+        Dataset(
+            identifier="dataset_1",
+            select=collection.filter(collection['_fold'] == "valid"),
+        ),
+        Dataset(
+            identifier="dataset_2",
+            select=collection.filter(collection['_fold'] == "valid"),
+        ),
+    ]
     metrics = [
         Metric(
             identifier="metrics1",
@@ -86,7 +86,7 @@ def test_training(db, tmpdir):
 
     validation = Validation(
         identifier="validation",
-        # datasets=validation_sets,
+        datasets=validation_sets,
         metrics=metrics,
         key="text",
     )

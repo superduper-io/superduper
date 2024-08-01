@@ -618,7 +618,6 @@ def test_reload_dataset(db):
     assert new_d.sample_size == 100
 
 
-# TODO: Enable this test when select support filter
 def test_dataset(db):
     db.cfg.auto_schema = True
     from test.utils.setup.fake_data import add_random_data
@@ -629,7 +628,7 @@ def test_dataset(db):
     else:
         table = db['documents']
         select = table.select('id', '_fold', 'x', 'y', 'z').filter(
-            table._fold == 'valid'
+            table['_fold'] == 'valid'
         )
 
     d = Dataset(

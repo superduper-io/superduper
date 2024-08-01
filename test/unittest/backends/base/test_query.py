@@ -37,7 +37,7 @@ def test_execute_like_queries(db):
     out = (
         table.like({'x': r['x']}, vector_index='test_vector_search', n=10)
         .select()
-        .do_execute(db)
+        .execute()
     )
     primary_id = table.primary_id
     scores = out.scores
@@ -265,3 +265,9 @@ def test_model_query():
 
     r = q.dict()
     assert r['query'] == 'my-model.predict("This is a test")'
+
+
+def test_query_select(db):
+    from test.utils.database.query import test_query_select
+
+    test_query_select(db)

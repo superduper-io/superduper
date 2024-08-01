@@ -74,8 +74,6 @@ The notebooks below are examples how to make use of different frameworks, model 
 
 </table >
 
-For more information about superduper.io and why we believe it is much needed, [read this blog post](https://blog.superduper.io/superduper-the-open-source-framework-for-bringing-ai-to-your-datastore/). 
-
 
 ## Supported Datastores (*more coming soon*):
 

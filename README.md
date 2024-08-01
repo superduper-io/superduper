@@ -58,6 +58,12 @@ Run Superduper anywhere, or [contact us](https://superduper.io/contact) to learn
 - **[Feature storing](https://docs.superduper.io/docs/execute_api/auto_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector search](https://docs.superduper.io/docs/tutorials/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
+## Preview
+
+[Browse the re-usable snippets](https://docs.superduper.io/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality
+with few lines of code using Superduper.
+
+
 
 ## Example use-cases and apps (notebooks)
 The notebooks below are examples how to make use of different frameworks, model providers, databases, retrieval techniques and more. To learn more about *how* to use Superduper with your database, please check our [Docs](https://docs.superduper.io).
@@ -129,12 +135,6 @@ Ideal for learning advanced Superduper functionalities and testing whole AI stac
 make build_sandbox
 make testenv_init
 ```
-
-
-## Preview
-
-[Browse the re-usable snippets](https://docs.superduper.io/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality
-with few lines of code using Superduper.
 
 
 ## Community & getting help 

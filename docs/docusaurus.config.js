@@ -304,6 +304,10 @@ const config = {
             title: 'Community',
             items: [
               {
+                label: 'Join.com / Careers',
+                href: 'https://join.com/companies/superduper',
+              },
+              {
                 label: 'LinkedIn',
                 href: 'https://www.linkedin.com/company/superduper-io',
               },

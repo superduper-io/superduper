@@ -1,16 +1,7 @@
-import os
 import typing as t
-
-import pytest
 
 from superduper import ObjectModel
 from superduper.base.document import Document
-
-skip = not os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml')
-
-if skip:
-    # TODO: Enable this when select support filter
-    pytest.skip("Skipping this file for now", allow_module_level=True)
 
 
 class Tuple:
@@ -38,6 +29,8 @@ def test_graph_deps(db: "Datalayer"):
     def func_a(x):
         return Tuple(x, "a")
 
+    primary_id = db["documents"].primary_id
+
     model_a = ObjectModel(identifier="model_a", object=func_a)
 
     listener_a = model_a.to_listener(
@@ -54,7 +47,7 @@ def test_graph_deps(db: "Datalayer"):
     model_b = ObjectModel(identifier="model_b", object=func_b)
     listener_b = model_b.to_listener(
         key=("x", "y", "_outputs__a"),
-        select=db["documents"].find({}, {'x': 1, 'y': 1}).outputs('a'),
+        select=db["documents"].select(primary_id, 'x', 'y').outputs('a'),
         identifier="listener_b",
         uuid="b",
         predict_kwargs={"max_chunk_size": 1},
@@ -66,7 +59,7 @@ def test_graph_deps(db: "Datalayer"):
     model_c = ObjectModel(identifier="model_c", object=func_c)
     listener_c = model_c.to_listener(
         key=("x", "y", "z", "_outputs__a", "_outputs__b"),
-        select=db["documents"].find({}, {'x': 1, 'y': 1, 'z': 1}).outputs('a', 'b'),
+        select=db["documents"].select(primary_id, 'x', 'y', 'z').outputs('a', 'b'),
         identifier="listener_c",
         uuid="c",
         predict_kwargs={"max_chunk_size": 1},

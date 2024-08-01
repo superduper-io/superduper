@@ -29,16 +29,15 @@ def test_listener_serializes_properly():
 def test_listener_chaining(db):
     db.cfg.auto_schema = True
     table = db['test']
-    data = []
 
-    def insert_random():
-        for _ in range(5):
+    def insert_random(start=0):
+        data = []
+        for i in range(5):
             y = int(random.random() > 0.5)
-            x = int(random.random() > 0.5)
             data.append(
                 Document(
                     {
-                        "x": x,
+                        "x": i + start,
                         "y": y,
                     }
                 )
@@ -57,6 +56,7 @@ def test_listener_chaining(db):
         select=table.select(),
         key="x",
         identifier="listener1",
+        uuid="listener1",
     )
     db.add(listener1)
 
@@ -65,19 +65,22 @@ def test_listener_chaining(db):
         select=listener1.outputs_select,
         key=listener1.outputs,
         identifier='listener2',
+        uuid='listener2',
     )
 
     db.add(listener2)
 
-    docs = list(db.execute(listener1.outputs_select))
+    def check_listener_output(listener, output_n):
+        docs = list(db.execute(listener.outputs_select))
+        assert len(docs) == output_n
+        assert all([listener.outputs in r for r in docs])
 
-    assert all([listener1.outputs in r for r in docs])
+    check_listener_output(listener1, 5)
+    check_listener_output(listener2, 5)
 
-    insert_random()
-
-    docs = list(db.execute(listener2.outputs_select))
-
-    assert all([listener2.outputs in d for d in docs])
+    insert_random(start=5)
+    check_listener_output(listener1, 10)
+    check_listener_output(listener2, 10)
 
 
 @pytest.mark.parametrize(

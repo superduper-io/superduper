@@ -5,7 +5,7 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.base.document import Document, _unpack
 from superduper.base.leaf import Leaf
 
@@ -70,7 +70,6 @@ class _BaseQuery(Leaf):
         return identifier
 
     def __getattr__(self, item):
-        item = type(self).methods_mapping.get(item, item)
         return type(self)(
             db=self.db,
             table=self.table,
@@ -164,15 +163,16 @@ class Query(_BaseQuery):
     """
 
     flavours: t.ClassVar[t.Dict[str, str]] = {}
-    methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
 
     table: str
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     identifier: str = ''
 
     def __getitem__(self, item):
+        if isinstance(item, str):
+            return getattr(self, item)
         if not isinstance(item, slice):
-            return super().__getitem__(item)
+            raise TypeError('Query index must be a string or a slice')
         assert isinstance(item, slice)
         parts = self.parts[item]
         return type(self)(db=self.db, table=self.table, parts=parts)
@@ -280,6 +280,9 @@ class Query(_BaseQuery):
 
     def _get_parent(self):
         return self.db.databackend.get_table_or_collection(self.table)
+
+    def _execute_select(self, parent):
+        raise NotImplementedError
 
     def _prepare_pre_like(self, parent):
         like_args, like_kwargs = self.parts[0][1:]
@@ -389,40 +392,37 @@ class Query(_BaseQuery):
             output = output.replace(f'documents[{i}]', doc_string)
         return output
 
-    def __eq__(self, other):
+    def _ops(self, op, other):
         return type(self)(
             db=self.db,
             table=self.table,
-            parts=self.parts + [('__eq__', (other,), {})],
+            parts=self.parts + [(op, (other,), {})],
         )
+
+    def __eq__(self, other):
+        return self._ops('__eq__', other)
+
+    def __ne__(self, other):
+        return self._ops('__ne__', other)
 
     def __lt__(self, other):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=self.parts + [('__lt__', (other,), {})],
-        )
+        return self._ops('__lt__', other)
 
     def __gt__(self, other):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=self.parts + [('__gt__', (other,), {})],
-        )
+        return self._ops('__gt__', other)
 
     def __le__(self, other):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=self.parts + [('__le__', (other,), {})],
-        )
+        return self._ops('__le__', other)
 
     def __ge__(self, other):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=self.parts + [('__ge__', (other,), {})],
-        )
+        return self._ops('__ge__', other)
+
+    def isin(self, other):
+        """Create an isin query.
+
+        :param other: The value to check against.
+        """
+        return self._ops('isin', other)
 
     def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
@@ -456,17 +456,25 @@ class Query(_BaseQuery):
         return r
 
     def _execute(self, parent, method='encode'):
-        for part in self.parts:
-            if isinstance(part, str):
-                parent = getattr(parent, part)
-                continue
-            args = self._encode_or_unpack_args(
-                part[1], self.db, method=method, parent=parent
-            )
-            kwargs = self._encode_or_unpack_args(
-                part[2], self.db, method=method, parent=parent
-            )
-            parent = getattr(parent, part[0])(*args, **kwargs)
+        return self._get_chain_native_query(parent, self.parts, method)
+
+    def _get_chain_native_query(self, parent, parts, method='encode'):
+        try:
+            for part in parts:
+                if isinstance(part, str):
+                    parent = getattr(parent, part)
+                    continue
+                args = self._encode_or_unpack_args(
+                    part[1], self.db, method=method, parent=parent
+                )
+                kwargs = self._encode_or_unpack_args(
+                    part[2], self.db, method=method, parent=parent
+                )
+                parent = getattr(parent, part[0])(*args, **kwargs)
+        except Exception as e:
+            logging.error(f'Error in executing query, parts: {parts}')
+            raise e
+
         return parent
 
     @abstractmethod
@@ -723,7 +731,6 @@ class Model(_BaseQuery):
     table: str
     identifier: str = ''
     parts: t.Sequence[t.Union[t.Tuple, str]] = ()
-    methods_mapping: t.ClassVar[t.Dict[str, str]] = {}
     type: t.ClassVar[str] = 'predict'
 
     def execute(self):

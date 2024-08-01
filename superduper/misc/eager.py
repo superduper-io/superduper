@@ -407,27 +407,17 @@ class Graph:
                     )
                 select = self.db[main_table].find({}, {k: 1 for k in main_table_keys})
 
-                if node.filter:
-                    filter = {}
-                    for key, value in node.filter.items():
-                        if value[0] == "ne":
-                            filter[key] = {"$ne": value[1]}
-                        else:
-                            filter[key] = value[1]
-                    select = select.filter(filter)
-
             else:
                 if "id" not in main_table_keys:
                     main_table_keys.insert(0, "id")
                 select = self.db[main_table].select(*main_table_keys)
 
-                # TODO: After nomalize the filter, we can optimize this part
-                if node.filter:
-                    for key, value in node.filter.items():
-                        if value[0] == "ne":
-                            select = select.filter(getattr(select, key) != value[1])
-                        else:
-                            select = select.filter(getattr(select, key) == value[1])
+            if node.filter:
+                for key, value in node.filter.items():
+                    if value[0] == "ne":
+                        select = select.filter(select[key] != value[1])
+                    else:
+                        select = select.filter(select[key] == value[1])
 
             if predict_ids:
                 select = select.outputs(*predict_ids)

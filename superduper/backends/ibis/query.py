@@ -1,4 +1,3 @@
-import copy
 import typing as t
 import uuid
 from collections import defaultdict
@@ -106,6 +105,12 @@ class IbisQuery(Query):
         'anti_join': r'^[^\(]+\.anti_join\(.*\)$',
     }
 
+    # Use to control the behavior in the class construction method within LeafMeta
+    __dataclass_params__: t.ClassVar[t.Dict[str, t.Any]] = {
+        'eq': False,
+        'order': False,
+    }
+
     @property
     @applies_to('insert')
     def documents(self):
@@ -183,15 +188,6 @@ class IbisQuery(Query):
         result = query.do_execute(db=self.db)
         result.scores = similar_scores
         return result
-
-    def __eq__(self, other):
-        return super().__eq__(other)
-
-    def __leq__(self, other):
-        return super().__leq__(other)
-
-    def __geq__(self, other):
-        return super().__geq__(other)
 
     def _execute_post_like(self, parent):
         pre_like_parts = []
@@ -363,17 +359,12 @@ class IbisQuery(Query):
 
         :param predict_ids: The predict ids.
         """
-        find_args = ()
-        if self.parts:
-            find_args, _ = self.parts[0][1:]
-        find_args = copy.deepcopy(list(find_args))
-
-        if not find_args:
-            find_args = [{}]
-
-        if not find_args[1:]:
-            find_args.append({})
-
+        for part in self.parts:
+            if part[0] == 'select':
+                args = part[1]
+                assert (
+                    self.primary_id in args
+                ), f'Primary id: `{self.primary_id}` not in select when using outputs'
         query = self
         attr = getattr(query, self.primary_id)
         for identifier in predict_ids:

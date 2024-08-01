@@ -9,37 +9,29 @@
 </p>
 
 <div align="center">
+  <h1>Bring AI to your favorite database!</h1>
+  <p><h2>
+    <a href="https://docs.superduper.io"><strong>Docs</strong></a> |
+    <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
+    <a href="https://superduper.io"><strong>Website</strong></a> |
+    <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> |
+    <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg"><strong>Slack</strong></a> |
+    <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a> |
+    <a href="https://www.linkedin.com/company/superduper-io"><strong>LinkedIn</strong></a>
+  </p></h2>
 
-## Bring AI to your favorite database!
-
+  <p>
+    <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/v/superduper-framework?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
+    <a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/pyversions/superduper-framework" alt="Supported Python versions"></a>    
+    <a href="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml"><img src="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
+    <a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
+  </p>
 </div>
 
-<div align="center">
 
-## <a href="https://docs.superduper.io"><strong>Docs</strong></a> | <a href="https://blog.superduper.io"><strong>Blog</strong></a> | <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> | <a href="https://docs.superduper.io/docs/docs/get_started/installation"><strong> Installation</strong></a> | <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong> Slack </strong></a> | <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong> Youtube </strong></a>
+## What is Superduper? 
 
-</div>
-
-
-<div align="center">
-	<a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/v/superduper-framework?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
-  	<a href="https://pypi.org/project/superduper-framework"><img src="https://img.shields.io/pypi/pyversions/superduper-framework" alt="Supported Python versions"></a>    
-	<a href="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml"><img src="https://github.com/superduper-io/superduper/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>
-	<a href="https://github.com/superduper-io/superduper/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
-	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @superduper.io"></a>
-</div>
-
-
----
-
-### :mega:  ***We are in the middle of rebranding from [https://github.com/SuperDuperDB/superduperdb](https://github.com/SuperDuperDB/superduperdb) to [https://github.com/superduper-io/superduper](https://github.com/superduper-io/superduper), so bear with us if anything is broken!***
-
----
-
-
-## What is superduper.io? 🔮 
-
-superduper.io is a Python framework for integrating AI models, APIs, and vector search engines **directly with your existing databases**, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
+Superduper (formerly SuperDuperDB) is a Python framework for integrating AI models, APIs, and vector search engines with your existing databases including hosting of your own models, streaming inference and scalable model training/fine-tuning.
 
 
 ## Key Features:
@@ -61,7 +53,7 @@ superduper.io is a Python framework for integrating AI models, APIs, and vector 
 
 The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
 
-To learn more about *how* to use superduper.io with your database, please check our [Docs](https://docs.superduper.io/) and official [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough).
+To learn more about *how* to use superduper.io with your database, please check our [Docs](https://docs.superduper.io) and official [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough).
 
 Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/superduper-io/superduper-community-apps).
 
@@ -233,11 +225,14 @@ with few lines of code using superduper.io.
 ## Community & Getting Help 
 
 #### If you have any problems, questions, comments, or ideas:
-- Join <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
+- Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/superduper-io/superduper/discussions">our GitHub Discussions</a>, or <a href="https://github.com/superduper-io/superduper/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/superduper-io/superduper/issues/">an existing issue</a> or create <a href="https://github.com/superduper-io/superduper/issues/new/choose">a new one</a>.
 - Help us to improve superduper.io by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
 - Email us at `gethelp@superduper.io`.
+- Visit our [YouTube channel](https://www.youtube.com/@superduper-io).
+- Follow us on [Twitter (now X)](https://twitter.com/superduperdb).
+- Connect with us on [LinkedIn](https://www.linkedin.com/company/superduper-io).
 - Feel free to contact a maintainer or community volunteer directly! 
 
 

@@ -15,8 +15,9 @@
     <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
     <a href="https://superduper.io"><strong>Website</strong></a> |
     <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> |
-    <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><strong>Slack</strong></a> |
-    <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a>
+    <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg"><strong>Slack</strong></a> |
+    <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a> |
+    <a href="https://www.linkedin.com/company/superduper-io"><strong>LinkedIn</strong></a>
   </p></h2>
 
   <p>
@@ -52,7 +53,7 @@ Superduper (formerly SuperDuperDB) is a Python framework for integrating AI mode
 
 The notebooks below are examples how to make use of different frameworks, model providers, vector databases, retrieval techniques and so on. 
 
-To learn more about *how* to use superduper.io with your database, please check our [Docs](https://docs.superduper.io/) and official [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough).
+To learn more about *how* to use superduper.io with your database, please check our [Docs](https://docs.superduper.io) and official [Tutorials](https://docs.superduper.io/docs/docs/walkthrough/tutorial_walkthrough).
 
 Also find use-cases and apps built by the community in the [superduper-community-apps repository](https://github.com/superduper-io/superduper-community-apps).
 
@@ -224,11 +225,14 @@ with few lines of code using superduper.io.
 ## Community & Getting Help 
 
 #### If you have any problems, questions, comments, or ideas:
-- Join <a href="https://join.slack.com/t/superduper/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
+- Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/superduper-io/superduper/discussions">our GitHub Discussions</a>, or <a href="https://github.com/superduper-io/superduper/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/superduper-io/superduper/issues/">an existing issue</a> or create <a href="https://github.com/superduper-io/superduper/issues/new/choose">a new one</a>.
 - Help us to improve superduper.io by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
 - Email us at `gethelp@superduper.io`.
+- Visit our [YouTube channel](https://www.youtube.com/@superduper-io).
+- Follow us on [Twitter (now X)](https://twitter.com/superduperdb).
+- Connect with us on [LinkedIn](https://www.linkedin.com/company/superduper-io).
 - Feel free to contact a maintainer or community volunteer directly! 
 
 

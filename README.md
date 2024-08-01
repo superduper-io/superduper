@@ -108,21 +108,11 @@ The notebooks below are examples how to make use of different frameworks, model 
 
 ## Supported AI frameworks and models (*more coming soon*):
 
-<table>
-    <tr>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/frameworks/2Xpytorch.png" width="139px"/>
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/frameworks/2Xscikit-learn.png" width="139px"/>
-        </td>
-        <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/icons/frameworks/2Xhuggingface-transformers.png" width="139px"/>
-        </td>
-    </tr>
-</table>
+**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs on incoming data with a single Python command:**
 
-**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
+[PyTorch](https://pytorch.org),
+[Scikit-learn](https://scikit-learn.org),
+[HuggingFace](https://huggingface.co) 
 
 
 ## Pre-integrated AI APIs (*more coming soon*):

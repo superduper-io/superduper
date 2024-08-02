@@ -215,21 +215,11 @@ class VectorIndex(Component):
         if self.indexing_listener.outputs != query.table:
             return []
 
-        return self._ready_ids(primary_ids)
-
-    def _ready_ids(self, ids: t.Sequence):
-        outputs = self.db[self.indexing_listener.outputs]
-        data = self.db.execute(outputs.select_using_ids(ids))
-        key = self.indexing_listener.outputs_key
-
-        ready_ids = []
-        for d in data:
-            try:
-                d[key]
-                ready_ids.append(d[outputs.primary_id])
-            except KeyError:
-                continue
-        return ready_ids
+        select = self.db[self.indexing_listener.outputs]
+        ids = self.db.databackend.check_ready_ids(
+            select, [self.indexing_listener.outputs], primary_ids
+        )
+        return ids
 
     @override
     def run_jobs(

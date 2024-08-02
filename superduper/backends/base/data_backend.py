@@ -3,6 +3,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduper import logging
+from superduper.backends.base.query import Query
 from superduper.backends.ibis.field_types import FieldType
 from superduper.components.datatype import DataType
 
@@ -130,6 +131,38 @@ class BaseDataBackend(ABC):
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
+
+    def check_ready_ids(
+        self, query: Query, keys: t.List[str], ids: t.Optional[t.List[t.Any]] = None
+    ):
+        """Check if all the keys are ready in the ids.
+
+        :param query: The query object.
+        :param keys: The keys to check.
+        :param ids: The ids to check.
+        """
+        if ids:
+            query = query.select_using_ids(ids)
+        data = query.execute()
+        ready_ids = []
+        for select in data:
+            notfound = 0
+            for k in keys:
+                try:
+                    select[k]
+                except KeyError:
+                    notfound += 1
+            if notfound == 0:
+                ready_ids.append(select[query.primary_id])
+        self._log_check_ready_ids_message(ids, ready_ids)
+        return ready_ids
+
+    def _log_check_ready_ids_message(self, input_ids, ready_ids):
+        if input_ids and len(ready_ids) != len(input_ids):
+            not_ready_ids = set(input_ids) - set(ready_ids)
+            logging.info(f"IDs {not_ready_ids} do not ready.")
+            logging.debug(f"Ready IDs: {ready_ids}")
+            logging.debug(f"Not ready IDs: {not_ready_ids}")
 
 
 class DataBackendProxy:

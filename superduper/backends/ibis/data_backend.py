@@ -131,6 +131,25 @@ class IbisDataBackend(BaseDataBackend):
             if self.conn.backend_table_type == DataFrame:
                 df.to_csv(os.path.join(self.name, table_name + '.csv'), index=False)
 
+    def check_ready_ids(
+        self, query: IbisQuery, keys: t.List[str], ids: t.Optional[t.List[t.Any]] = None
+    ):
+        """Check if all the keys are ready in the ids.
+
+        :param query: The query object.
+        :param keys: The keys to check.
+        :param ids: The ids to check.
+        """
+        if ids:
+            query = query.filter(query[query.primary_id].isin(ids))
+        conditions = []
+        for key in keys:
+            conditions.append(query[key].notnull())
+        docs = query.filter(*conditions).select(query.primary_id).execute()
+        ready_ids = [doc[query.primary_id] for doc in docs]
+        self._log_check_ready_ids_message(ids, ready_ids)
+        return ready_ids
+
     def drop_outputs(self):
         """Drop the outputs."""
         for table in self.conn.list_tables():

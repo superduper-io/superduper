@@ -165,28 +165,20 @@ class Listener(Component):
                 doc['_source'] for doc in query.documents if '_source' in doc
             ]
 
-        # TODO: Use the better way to detect the keys exist in the trigger_ids
-        data = self.db.execute(self.select.select_using_ids(trigger_ids))
+        return self.db.databackend.check_ready_ids(
+            self.select, self._ready_keys, trigger_ids
+        )
+
+    @property
+    def _ready_keys(self):
         keys = self.key
 
         if isinstance(self.key, str):
             keys = [self.key]
         elif isinstance(self.key, dict):
             keys = list(self.key.keys())
-        return self._ready_ids(data, keys)
 
-    def _ready_ids(self, data, keys):
-        ready_ids = []
-        for select in data:
-            notfound = 0
-            for k in keys:
-                try:
-                    select[k]
-                except KeyError:
-                    notfound += 1
-            if notfound == 0:
-                ready_ids.append(select[self.select.primary_id])
-        return ready_ids
+        return keys
 
     @override
     def schedule_jobs(
@@ -207,14 +199,9 @@ class Listener(Component):
         from superduper.base.event import Event
 
         events = []
-        data = db.execute(self.select)
-        keys = self.key
 
-        if isinstance(self.key, str):
-            keys = [self.key]
-        elif isinstance(self.key, dict):
-            keys = list(self.key.keys())
-        ids = self._ready_ids(data, keys)
+        self.select.db = db
+        ids = self.db.databackend.check_ready_ids(self.select, self._ready_keys)
 
         events = [
             Event(

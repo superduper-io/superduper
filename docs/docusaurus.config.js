@@ -5,7 +5,7 @@ const darkCodeTheme = require('prism-react-renderer').themes.vsDark;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'superduper.io documentation',
+  title: 'Docs - Superduper',
   tagline: 'Bringing AI to your data-store',
   favicon: 'img/favicon.ico',
 

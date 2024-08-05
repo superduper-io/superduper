@@ -335,7 +335,7 @@ const config = {
       metadata: [
         {
           name: 'og:image',
-          content: 'https://docs.superduper.com/img/og-image.png',
+          content: 'https://docs.superduper.io/img/og-image.png',
         },
         {
           name: 'title',

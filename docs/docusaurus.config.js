@@ -334,8 +334,22 @@ const config = {
       },
       metadata: [
         {
-          property: 'og:image',
+          name: 'og:image',
           content: 'https://docs.superduper.com/img/og-image.png',
+        },
+        {
+          name: 'title',
+          content: 'Docs - Superduper',
+        },
+        {
+          name: 'description',
+          content:
+            "Find detailed technical documentation for Superduper's AI and database integration solutions. Access comprehensive guides, API references, and tutorials to effectively implement and utilize SuperDuper technologies in your projects. (Formerly SuperDuperDB)",
+        },
+        {
+          name: 'keywords',
+          content:
+            'superduper docs, Superduper Docs, Superduper documentation, SuperduperDB documentation, SuperduperDB docs, SuperduperDB, Superduper, Superduper API, Superduper tutorials, Superduper guides, Superduper use cases',
         },
       ],
       announcementBar: {

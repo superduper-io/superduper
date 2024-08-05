@@ -188,6 +188,63 @@ class MongoDataBackend(BaseDataBackend):
         """
         return self.db[f'{CFG.output_prefix}{predict_id}'].find_one() is not None
 
+    def check_ready_ids(
+        self,
+        query: MongoQuery,
+        keys: t.List[str],
+        ids: t.Optional[t.List[t.Any]] = None,
+    ):
+        """Check if all the keys are ready in the ids.
+
+        Use this function to check if all the keys are ready in the ids.
+        Because the join operation is not very efficient in MongoDB, we use the
+        output keys to filter the ids first and then check the base keys.
+
+        This process only verifies the key and does not involve reading the real data.
+
+        :param query: The query object.
+        :param keys: The keys to check.
+        :param ids: The ids to check.
+        """
+
+        def is_output_key(key):
+            return key.startswith(CFG.output_prefix) and key != query.table
+
+        output_keys = [key for key in keys if is_output_key(key)]
+        input_ids = ready_ids = ids
+
+        # Filter the ids by the output keys first
+        for output_key in output_keys:
+            filter: dict[str, t.Any] = {}
+            filter[output_key] = {'$exists': 1}
+            if ready_ids is not None:
+                filter['_source'] = {'$in': ready_ids}
+            ready_ids = list(
+                self.get_table_or_collection(output_key).find(filter, {'_source': 1})
+            )
+            ready_ids = [doc['_source'] for doc in ready_ids]
+            if not ready_ids:
+                return []
+
+        # If we get the ready ids from the output keys, we can continue on these ids
+        ids = ready_ids or ids
+
+        base_keys = [key for key in keys if not is_output_key(key)]
+        base_filter: dict[str, t.Any] = {}
+        base_filter.update({key: {'$exists': 1} for key in base_keys})
+        if ready_ids is not None:
+            base_filter['_id'] = {'$in': ready_ids}
+
+        ready_ids = list(
+            self.get_table_or_collection(query.table).find(base_filter, {'_id': 1})
+        )
+        ready_ids = [doc['_id'] for doc in ready_ids]
+
+        if ids is not None:
+            ready_ids = [id for id in ids if id in ready_ids]
+        self._log_check_ready_ids_message(input_ids, ready_ids)
+        return ready_ids
+
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
         """Infer a schema from a given data object.

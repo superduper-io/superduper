@@ -335,7 +335,7 @@ const config = {
       metadata: [
         {
           property: 'og:image',
-          content: 'https://docs.superduper.com/img/superDuperDB_img.png',
+          content: 'https://docs.superduper.com/img/og-image.png',
         },
       ],
       announcementBar: {

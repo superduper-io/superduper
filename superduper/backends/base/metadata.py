@@ -149,8 +149,32 @@ class MetaDataStore(ABC):
         """
         pass
 
-    @abstractmethod
     def show_components(self, type_id: t.Optional[str] = None):
+        """
+        Show all components in the metadata store.
+
+        :param type_id: type of component
+        :param **kwargs: additional arguments
+        """
+        results = self._show_components(type_id)
+        if type_id is not None:
+            identifiers = [data['identifier'] for data in results]
+            identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
+            return identifiers
+        else:
+            components = [
+                {'identifier': data['identifier'], 'type_id': data['type_id']}
+                for data in results
+            ]
+            # Remove duplicates
+            components = [dict(t) for t in {tuple(d.items()) for d in components}]
+            components = sorted(
+                components, key=lambda x: (x['type_id'], x['identifier'])
+            )
+            return components
+
+    @abstractmethod
+    def _show_components(self, type_id: t.Optional[str] = None):
         """
         Show all components in the metadata store.
 

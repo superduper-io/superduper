@@ -20,6 +20,7 @@ from .query import MongoQuery
 
 
 def _connection_callback(uri, flavour):
+    flavour = uri.split(':')[0] if flavour is None else flavour
     if flavour == 'mongodb':
         name = uri.split('/')[-1]
         conn = get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)

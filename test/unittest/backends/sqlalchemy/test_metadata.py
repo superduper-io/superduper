@@ -1,58 +1,35 @@
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+import os
+from test.utils.database import metadata as metadata_utils
 
+import pytest
+
+from superduper import CFG
 from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 
-Base = declarative_base()
+DATABASE_URL = CFG.metadata_store or "sqlite:///:memory:"
 
-DATABASE_URL = "sqlite:///:memory:"
+
+# TODO: Remove skip when we move all the plugin tests to the new structure
+skip = not os.environ.get('SUPERDUPER_CONFIG', "").endswith('ibis.yaml')
+
+if skip:
+    pytest.skip("Skipping this file for now", allow_module_level=True)
 
 
 @pytest.fixture
 def metadata():
-    engine = create_engine(DATABASE_URL)
     store = SQLAlchemyMetadata(DATABASE_URL)
     yield store
     store.drop(force=True)
-    engine.dispose()
-    Base.metadata.drop_all(engine)
 
 
-def test(metadata):
-    import uuid
+def test_component(metadata):
+    metadata_utils.test_component(metadata)
 
-    metadata.create_component(
-        {
-            'identifier': 'my-model',
-            'type_id': 'model',
-            'version': 0,
-            '_path': 'superduper.container.model.Model',
-            'uuid': str(uuid.uuid4()),
-        }
-    )
 
-    comps = metadata.show_components('model')
-    assert comps == ['my-model']
+def test_parent_child(metadata):
+    metadata_utils.test_parent_child(metadata)
 
-    metadata.create_component(
-        {
-            'identifier': 'other-model',
-            'type_id': 'model',
-            'version': 0,
-            '_path': 'superduper.container.model.Model',
-            'uuid': str(uuid.uuid4()),
-        }
-    )
 
-    comps = metadata.show_components('model')
-
-    r = metadata.get_component(
-        type_id='model',
-        identifier='other-model',
-        version=0,
-        allow_hidden=True,
-    )
-
-    assert r['identifier'] == 'other-model'
-    assert r['version'] == 0
+def test_job(metadata):
+    metadata_utils.test_job(metadata)

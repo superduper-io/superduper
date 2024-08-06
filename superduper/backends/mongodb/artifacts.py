@@ -46,10 +46,10 @@ class MongoArtifactStore(ArtifactStore):
         return self.db.client.drop_database(self.db.name)
 
     def _exists(self, file_id):
-        return self.filesystem.find_one({'filename': file_id}) is not None
+        return self.filesystem.find_one({'file_id': file_id}) is not None
 
     def _delete_bytes(self, file_id: str):
-        r = self.filesystem.find({'metadata.file_id': file_id})
+        r = self.filesystem.find({'file_id': file_id})
         ids = [x._id for x in r]
         if not ids:
             raise FileNotFoundError(f'File not found in {file_id}')
@@ -62,7 +62,7 @@ class MongoArtifactStore(ArtifactStore):
 
         :param file_id: The file_id of the file to get
         """
-        cur = self.filesystem.find_one({'filename': file_id})
+        cur = self.filesystem.find_one({'file_id': file_id})
         if cur is None:
             raise FileNotFoundError(f'File not found in {file_id}')
         return cur.read()
@@ -95,12 +95,11 @@ class MongoArtifactStore(ArtifactStore):
         :param serialized: The bytes to save
         :param file_id: The file_id of the file
         """
-        cur = self.filesystem.find_one({'filename': file_id})
+        cur = self.filesystem.find_one({'file_id': file_id})
         if cur is not None:
-            return
-        return self.filesystem.put(
-            serialized, filename=file_id, metadata={"file_id": file_id}
-        )
+            logging.warn(f"File {file_id} already exists")
+            self._delete_bytes(file_id)
+        return self.filesystem.put(serialized, filename=file_id, file_id=file_id)
 
     def disconnect(self):
         """Disconnect the client."""
@@ -121,7 +120,8 @@ def _upload_file(path, file_id, fs):
         fs.put(
             file_to_upload,
             filename=path.name,
-            metadata={"file_id": file_id, "type": "file"},
+            file_id=file_id,
+            metadata={"type": "file"},
         )
 
 
@@ -143,7 +143,8 @@ def upload_folder(path, file_id, fs, parent_path=""):
         fs.put(
             b'',
             filename=os.path.join(parent_path, os.path.basename(path)),
-            metadata={"file_id": file_id, "is_empty_dir": True, 'type': 'dir'},
+            file_id=file_id,
+            metadata={"is_empty_dir": True, 'type': 'dir'},
         )
     else:
         for item in os.listdir(path):
@@ -155,7 +156,8 @@ def upload_folder(path, file_id, fs, parent_path=""):
                     fs.put(
                         file_to_upload,
                         filename=os.path.join(parent_path, item),
-                        metadata={"file_id": file_id, "type": "dir"},
+                        file_id=file_id,
+                        metadata={"type": "dir"},
                     )
 
 
@@ -177,7 +179,7 @@ def _download(file_id, fs):
     save_folder = os.path.join(download_folder, file_id)
     os.makedirs(save_folder, exist_ok=True)
 
-    file = fs.find_one({"metadata.file_id": file_id})
+    file = fs.find_one({"file_id": file_id})
     if file is None:
         raise FileNotFoundError(f"File not found in {file_id}")
 
@@ -192,7 +194,7 @@ def _download(file_id, fs):
         logging.info(f"Downloading file_id {file_id} to {save_path}")
         with open(save_path, 'wb') as f:
             f.write(file.read())
-        return save_folder
+        return save_path
 
     logging.info(f"Downloading folder with file_id {file_id} to {save_folder}")
     for grid_out in tqdm(

@@ -173,22 +173,19 @@ class MongoMetaDataStore(MetaDataStore):
             {'identifier': identifier}, {'$set': {key: value}}
         )
 
-    def show_components(self, type_id: t.Optional[str] = None):
+    def _show_components(self, type_id: t.Optional[str] = None):
         """Show components in the metadata store.
 
         :param type_id: type of component
         """
-        # TODO: Should this be sorted?
+        filter = {}
         if type_id is not None:
-            return self.component_collection.distinct(
-                'identifier', {'type_id': type_id}
+            filter['type_id'] = type_id
+        return list(
+            self.component_collection.find(
+                filter, {'identifier': 1, '_id': 0, 'type_id': 1}
             )
-        else:
-            return list(
-                self.component_collection.find(
-                    {}, {'identifier': 1, '_id': 0, 'type_id': 1}
-                )
-            )
+        )
 
     def show_component_versions(
         self, type_id: str, identifier: str
@@ -198,8 +195,10 @@ class MongoMetaDataStore(MetaDataStore):
         :param type_id: type of component
         :param identifier: identifier of component
         """
-        return self.component_collection.distinct(
-            'version', {'type_id': type_id, 'identifier': identifier}
+        return sorted(
+            self.component_collection.distinct(
+                'version', {'type_id': type_id, 'identifier': identifier}
+            )
         )
 
     def show_jobs(

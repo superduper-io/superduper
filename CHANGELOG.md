@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CSN env var
 - Make tests configurable against backend
 - Make the prefix of the output string configurable
+- Add testing utils for plugins
 
 
 #### Bug Fixes

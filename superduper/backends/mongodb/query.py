@@ -190,64 +190,6 @@ class MongoQuery(Query):
             )
         return c
 
-    def _execute_pre_like(self, parent):
-        assert self.parts[0][0] == 'like'
-        assert self.parts[1][0] in ['find', 'find_one', 'select']
-
-        similar_ids, similar_scores = self._prepare_pre_like(parent)
-
-        ids = [ObjectId(id) for id in similar_ids]
-        query = self[1:]
-        query = query.filter(query['_id'].isin(ids))
-        result = query.execute()
-        result.scores = similar_scores
-        return result
-
-    def _execute_post_like(self, parent):
-        assert len(self.parts) == 2
-        assert self.parts[0][0] in {
-            'find',
-            'select',
-        }, "Post like query must start with find/select"
-        assert self.parts[1][0] == 'like'
-
-        find_args = self.parts[0][1]
-        find_kwargs = self.parts[0][2]
-
-        like_args = self.parts[1][1]
-
-        like_kwargs = self.parts[1][2]
-        r = like_args[0] or like_kwargs.pop('r')
-        if isinstance(r, Document):
-            r = r.unpack()
-        range = like_kwargs.pop('range', None)
-
-        parent_query = self[:-1].select_ids
-        if range:
-            parent_query = parent_query.limit(range)
-
-        relevant_ids = [str(r['_id']) for r in parent_query.do_execute()]
-
-        similar_ids, scores = self.db.select_nearest(
-            like=r,
-            ids=relevant_ids,
-            vector_index=like_kwargs.pop('vector_index'),
-            n=like_kwargs.get('n', 100),
-        )
-        scores = dict(zip(similar_ids, scores))
-        similar_ids = [ObjectId(id) for id in similar_ids]
-
-        final_args = find_args[:]
-        if not final_args:
-            final_args = [{}]
-        final_args[0]['_id'] = {'$in': similar_ids}
-
-        final_query = self.table_or_collection.find(*final_args, **find_kwargs)
-        result = final_query._execute(parent)
-
-        result.scores = scores
-        return result
-
     def _execute_bulk_write(self, parent):
         """Execute the query.
 
@@ -632,6 +574,14 @@ class MongoQuery(Query):
                 assert isinstance(sub_filters, dict)
                 filters.update(sub_filters)
         return filters
+
+    def isin(self, other):
+        """Create an isin query.
+
+        :param other: The value to check against.
+        """
+        other = [ObjectId(o) for o in other]
+        return self._ops('isin', other)
 
     def _get_method_parameters(self, method):
         args, kwargs = (), {}

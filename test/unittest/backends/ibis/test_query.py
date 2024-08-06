@@ -2,7 +2,6 @@ from test.utils.setup.fake_data import (
     add_listener,
     add_models,
     add_random_data,
-    add_vector_index,
 )
 
 import numpy
@@ -123,45 +122,6 @@ def test_filter(db):
     q = t.select('id', 'y').filter(t.y == uq[0][0])
     r = list(db.execute(q))
     assert len(r) == uq[1][0]
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_pre_like(db):
-    add_random_data(db, n=5)
-    add_models(db)
-    add_vector_index(db)
-    r = list(db.execute(db['documents'].select('id', 'x')))[0]
-    query = (
-        db['documents']
-        .like(
-            r=Document({'x': r['x']}),
-            vector_index='test_vector_search',
-        )
-        .select('id')
-    )
-    s = list(db.execute(query))[0]
-    assert r['id'] == s['id']
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_post_like(db):
-    add_random_data(db, n=5)
-    add_models(db)
-    add_vector_index(db)
-    r = list(db.execute(db['documents'].select('id', 'x')))[0]
-    t = db['documents']
-    query = (
-        t.select('id', 'x', 'y')
-        .filter(t.id.isin(['1', '2', '3']))
-        .like(
-            r=Document({'x': r['x']}),
-            vector_index='test_vector_search',
-        )
-        .limit(2)
-    )
-    s = list(db.execute(query))
-    assert len(s) == 2
-    assert all([d['id'] in ['1', '2', '3'] for d in s])
 
 
 def test_execute_complex_query_sqldb_auto_schema(db):

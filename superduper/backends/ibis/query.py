@@ -170,65 +170,6 @@ class IbisQuery(Query):
                         query.renamings(r)
         return r
 
-    def _execute_pre_like(self, parent):
-        assert self.parts[0][0] == 'like'
-        assert self.parts[1][0] in ['select']
-        similar_ids, similar_scores = self._prepare_pre_like(parent)
-
-        t = self.db[self.table]
-        filter_query = t.select_using_ids(similar_ids)
-        query = type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[
-                *filter_query.parts,
-                *self.parts[1:],
-            ],
-        )
-        result = query.do_execute(db=self.db)
-        result.scores = similar_scores
-        return result
-
-    def _execute_post_like(self, parent):
-        pre_like_parts = []
-        like_part = []
-        like_part_index = 0
-        for i, part in enumerate(self.parts):
-            if not isinstance(part, str):
-                if part[0] == 'like':
-                    like_part = part
-                    like_part_index = i
-                    break
-            pre_like_parts.append(part)
-        post_like_parts = self.parts[like_part_index + 1 :]
-
-        like_args = like_part[1]
-        like_kwargs = like_part[2]
-        vector_index = like_kwargs['vector_index']
-        like = like_args[0] if like_args else like_kwargs['r']
-        if isinstance(like, Document):
-            like = like.unpack()
-        pre_like_query = IbisQuery(db=self.db, table=self.table, parts=pre_like_parts)
-        within_ids = [
-            r[self.primary_id] for r in pre_like_query.select_ids._execute(parent)
-        ]
-        similar_ids, similar_scores = self.db.select_nearest(
-            like, vector_index=vector_index, n=like_kwargs.get('n', 10), ids=within_ids
-        )
-        similar_scores = dict(zip(similar_ids, similar_scores))
-
-        t = self.db[pre_like_query._get_parent().get_name()]
-        filter_query = pre_like_query.filter(
-            getattr(t, self.primary_id).isin(similar_ids)
-        )
-
-        parts = filter_query.parts + post_like_parts
-
-        q = IbisQuery(db=self.db, table=self.table, parts=parts)
-        outputs = q._execute(parent)
-        outputs.scores = similar_scores
-        return outputs
-
     def _execute_select(self, parent):
         return self._execute(parent)
 

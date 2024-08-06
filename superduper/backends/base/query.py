@@ -540,6 +540,7 @@ class Query(_BaseQuery):
             handler = getattr(self, f'_execute_{flavour}')
             return handler(parent=parent)
         except TypeError as e:
+            logging.error(f'Error in executing query: {self}')
             if 'did not match' in str(e):
                 return self._execute(parent=parent)
 
@@ -656,6 +657,58 @@ class Query(_BaseQuery):
         """Return the table or collection to select from."""
         return type(self)(table=self.table, db=self.db)
 
+    def _execute_pre_like(self, parent):
+        assert self.parts[0][0] == 'like'
+        assert self.parts[1][0] in ['find', 'find_one', 'select']
+
+        similar_ids, similar_scores = self._prepare_pre_like(parent)
+
+        query = self[1:]
+        query = query.filter(query[self.primary_id].isin(similar_ids))
+        result = query.execute()
+        result.scores = similar_scores
+        return result
+
+    def _execute_post_like(self, parent):
+        assert self.parts[0][0] in {
+            'find',
+            'select',
+        }, "Post like query must start with find/select"
+        if self.parts[-1][0] != 'like':
+            raise ValueError('Post like query must end with like')
+        like_kwargs = self.parts[-1][2]
+        like_args = self.parts[-1][1]
+        assert 'vector_index' in like_kwargs
+
+        if not like_args and 'r' in like_kwargs:
+            like_args = (like_kwargs['r'],)
+
+        assert like_args
+
+        query = self[:-1]
+        result = list(query.execute())
+        ids = [str(r[self.primary_id]) for r in query.execute()]
+
+        similar_ids, scores = self.db.select_nearest(
+            like=like_args[0],
+            ids=ids,
+            vector_index=like_kwargs.get('vector_index'),
+            n=like_kwargs.get('n', 100),
+        )
+        scores = dict(zip(similar_ids, scores))
+
+        result = [r for r in result if str(r[self.primary_id]) in similar_ids]
+
+        from superduper.base.cursor import SuperDuperCursor
+
+        cursor = SuperDuperCursor(
+            raw_cursor=result,
+            db=self.db,
+            id_field=self.primary_id,
+        )
+        cursor.scores = scores
+        return cursor
+
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):
     if '.' in CFG.output_prefix and part.startswith(CFG.output_prefix):
@@ -712,6 +765,7 @@ def parse_query(
         builder_cls = Model
         return _parse_query_part(query, documents, [], builder_cls, db=db)
 
+    builder_cls = builder_cls or Query
     documents = [Document(r, db=db) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]

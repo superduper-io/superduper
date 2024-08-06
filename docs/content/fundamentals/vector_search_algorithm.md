@@ -50,4 +50,4 @@ The most similar `ids` are retrieved. The `select` part of the query is then tra
 a similar query which searches within the retrieved `ids`. The full set of results are returned
 to the client.
 
-Read [here](../walkthrough/vector_search.md) about setting up and detailed usage of vector-search.
+Read [here](../tutorials/vector_search.md) about setting up and detailed usage of vector-search.

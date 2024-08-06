@@ -1,6 +1,6 @@
 # Developer vs. production mode
 
-Please refer to the [architecture](../fundamentals/architecture.md) page for a detailed description of the `superduper` architecture.
+Please refer to the [architecture](../fundamentals/design.md) page for a detailed description of the `superduper` architecture.
 
 There are several important services in a `superduper` setup which may be run in-process, or in their 
 own micro-services and containers:

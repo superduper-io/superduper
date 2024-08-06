@@ -13,7 +13,7 @@ Configurations can either be injected:
 
 - in a YAML file specified by the `SUPERDUPER_CONFIG_FILE` environment variable or
 - through environment variables starting with `SUPERDUPER_`:
-- as `**kwargs` when calling the [`superduper.superduper`](./connecting.md) function (note this is only for development purposes).
+- as `**kwargs` when calling the [`superduper.superduper`](../core_api/connect.md) function (note this is only for development purposes).
 
 Here are the configurable settings and their project defaults 
 (remaining configurations can be viewed in [`superduper.base.config`](https://github.com/superduper/superduper/blob/main/superduper/base/config.py)). Note that as much or as little of this configuration can be specified. The remaining 

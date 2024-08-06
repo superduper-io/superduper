@@ -123,7 +123,7 @@ pip install superduper-framework
 ```
 
 #### # Option 2. Superduper Container
-Ideal for learning basic superduper.io functionalities and testing notebooks.
+Ideal for learning basic Superduper functionalities and testing notebooks.
 ```shell
 docker pull superduperio/superduper
 docker run -p 8888:8888 superduperio/superduper
@@ -143,7 +143,7 @@ If you have any problems, questions, comments, or ideas:
 - Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/superduper-io/superduper/discussions">our GitHub Discussions</a>, or <a href="https://github.com/superduper-io/superduper/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/superduper-io/superduper/issues/">an existing issue</a> or create <a href="https://github.com/superduper-io/superduper/issues/new/choose">a new one</a>.
-- Help us to improve superduper.io by providing your valuable feedback <a href="https://github.com/superduper-io/superduper/discussions/new/choose">here</a>!
+- Help us to improve Superduper by providing your valuable feedback <a href="https://github.com/superduper-io/superduper/discussions/new/choose">here</a>!
 - Email us at `gethelp@superduper.io`.
 - Visit our [YouTube channel](https://www.youtube.com/@superduper-io).
 - Follow us on [Twitter (now X)](https://twitter.com/superduperdb).
@@ -173,7 +173,7 @@ Thanks goes to these wonderful people:
 
 ## License  
 
-superduper.io is open-source and intended to be a community effort, and it wouldn't be possible without your support and enthusiasm.
+Superduper is open-source and intended to be a community effort, and it wouldn't be possible without your support and enthusiasm.
 It is distributed under the terms of the Apache 2.0 license. Any contribution made to this project will be subject to the same provisions.
 
 ## Join Us 

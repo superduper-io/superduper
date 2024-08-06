@@ -112,7 +112,7 @@ This gives users great flexibility with regard to how they fetch the context
 for their downstream models.
 
 We're using OpenAI, but you can use any type of LLm with `superduper`. We have several 
-native integrations (see [here](../ai_integraitons/)) but you can also [bring your own model](../models/bring_your_own_model.md).
+native integrations (see [here](../ai_integraitons/)) but you can also [bring your own model](../models/bring_your_own_models.md).
 
 ```python
 from superduper.ext.llm.prompter import *

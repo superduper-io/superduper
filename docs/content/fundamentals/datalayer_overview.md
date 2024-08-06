@@ -46,7 +46,7 @@ specific to `superduper`.
 
 Read more [here](../data_integrations/supported_query_APIs.md).
 
-The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../setup/configuration.md).
+The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../get_started/configuration.md).
 
 We support the same databackends as supported by the [`ibis` project](https://ibis-project.org/):
 
@@ -196,4 +196,4 @@ Validate your components (mostly models)
 
 ### `db.predict`
 
-Infer predictions from models hosted by `superduper`. Read more about this and about models [here](../walkthrough/apply_models.md).
+Infer predictions from models hosted by `superduper`. Read more about this and about models [here](../apply_api/model.md).

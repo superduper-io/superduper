@@ -69,7 +69,7 @@ my_component
   |_982378978978978798
 ```
 
-You can read about the serialization mechanism [here](../production/superduper_protocol.md.md).
+You can read about the serialization mechanism [here](../production/superduper_protocol.md).
 
 ## Read more
 

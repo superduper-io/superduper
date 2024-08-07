@@ -1,4 +1,5 @@
-llama_cpp_python>=0.2.39
+# TODO: The last version of llama_cpp_python is broken, so we need to pin it to 0.2.85
+llama_cpp_python==0.2.85
 ibis-framework[sqlite]>=5.1.0
 ibis-framework[duckdb]>=5.1.0
 ibis-framework[snowflake]>=5.1.0

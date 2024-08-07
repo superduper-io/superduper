@@ -55,3 +55,7 @@ def build_chain_listener(db: "Datalayer"):
     ]
 
     db["documents"].insert(data).execute()
+
+    assert db.databackend.check_output_dest('a')
+    assert db.databackend.check_output_dest('b')
+    assert db.databackend.check_output_dest('c')

@@ -86,53 +86,10 @@ def test_update(db):
     pass
 
 
-def _build_vector_index(db):
-    from superduper import ObjectModel, VectorIndex
-
-    db.cfg.auto_schema = True
-
-    datas = []
-    for i in range(100):
-        datas.append(
-            {
-                "x": i,
-                "label": int(i % 2 == 0),
-            }
-        )
-
-    db["documents"].insert(datas).execute()
-
-    def predict(x):
-        n = 100
-        vector = [0] * n
-        for offset in range(5):
-            if offset + x < n:
-                vector[offset + x] = 1
-
-            if x - offset >= 0:
-                vector[x - offset] = 1
-
-        return np.array(vector)
-
-    model = ObjectModel(
-        identifier="model",
-        object=predict,
-    )
-
-    listener = model.to_listener(
-        key="x", select=db["documents"].select(), uuid="vector"
-    )
-
-    vector_index = VectorIndex(
-        identifier="vector_index",
-        indexing_listener=listener,
-    )
-
-    db.apply(vector_index)
-
-
 def test_like(db):
-    _build_vector_index(db)
+    from test.utils.usecase.vector_search import build_vector_index
+
+    build_vector_index(db)
     table = db["documents"]
     primary_id = table.primary_id
     vector_index = "vector_index"

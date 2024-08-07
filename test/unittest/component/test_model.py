@@ -1,4 +1,5 @@
 import dataclasses as dc
+from test.utils.component import model as model_utils
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -458,3 +459,29 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
     # docs = [Document({'a': x, 'b': x}) for x in xs]
     # X = {'a': 'x', 'b': 'y'}
     # _test(X, docs)
+
+
+@pytest.fixture
+def object_model():
+    return ObjectModel('test', object=lambda x: x + 1, signature='singleton')
+
+
+def test_object_model_predict(object_model):
+    sample_data = np.zeros((10, 10))
+    result, results = model_utils.test_predict(object_model, sample_data)
+
+    assert np.allclose(result, sample_data + 1)
+    assert all(np.allclose(r, sample_data + 1) for r in results)
+
+
+def test_object_model_predict_in_db(db, object_model):
+    sample_data = np.zeros((10, 10))
+    results = model_utils.test_predict_in_db(object_model, sample_data, db)
+
+    assert all(np.allclose(r['_outputs__test'], sample_data + 1) for r in results)
+
+
+def test_object_model_as_a_listener(db, object_model):
+    sample_data = np.zeros((10, 10))
+    results = model_utils.test_model_as_a_listener(object_model, sample_data, db)
+    assert all(np.allclose(r['_outputs__test'], sample_data + 1) for r in results)

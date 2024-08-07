@@ -1,4 +1,4 @@
-from test.unittest.component.datatype import utils
+from test.utils.component import datatype as datatype_utils
 
 import numpy as np
 import pandas as pd
@@ -28,27 +28,27 @@ datatypes = [
 
 @pytest.mark.parametrize("datatype", datatypes)
 def test_data_with_schema(datatype: DataType, random_data: pd.DataFrame):
-    utils.check_data_with_schema(random_data, datatype)
+    datatype_utils.check_data_with_schema(random_data, datatype)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
 def test_data_with_schema_and_db(datatype: DataType, random_data: pd.DataFrame, db):
-    utils.check_data_with_schema_and_db(random_data, datatype, db)
+    datatype_utils.check_data_with_schema_and_db(random_data, datatype, db)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
 def test_data_without_schema(datatype: DataType, random_data: pd.DataFrame):
-    utils.check_data_without_schema(random_data, datatype)
+    datatype_utils.check_data_without_schema(random_data, datatype)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
 def test_data_without_schema_and_db(datatype: DataType, random_data: pd.DataFrame, db):
-    utils.check_data_without_schema_and_db(random_data, datatype, db)
+    datatype_utils.check_data_without_schema_and_db(random_data, datatype, db)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
 def test_component(random_data, datatype):
-    utils.check_component(random_data, datatype)
+    datatype_utils.check_component(random_data, datatype)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
@@ -57,4 +57,4 @@ def test_component_with_db(db, random_data, datatype):
     # Some bytes are not serializable, then can't be stored in SQL
     if datatype.encodable == "encodable" and db.databackend.db_type == DBType.SQL:
         return
-    utils.check_component_with_db(random_data, datatype, db)
+    datatype_utils.check_component_with_db(random_data, datatype, db)

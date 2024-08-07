@@ -1,5 +1,5 @@
 import unittest.mock as mock
-from test.utils.smoke.chain_listener import build_chain_listener
+from test.utils.usecase.chain_listener import build_chain_listener
 
 from superduper import CFG
 

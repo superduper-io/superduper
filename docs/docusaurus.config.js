@@ -356,7 +356,7 @@ const config = {
         id: 'support_us',
         content:
           '📣 SuperDuperDB is now Superduper! Check out our new website superduper.io 📣',
-        backgroundColor: '#5D99D5',
+        backgroundColor: '#3074B7',
         textColor: '#fff',
         isCloseable: true,
       },

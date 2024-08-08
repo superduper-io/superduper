@@ -236,6 +236,15 @@ class _Fittable:
 
     trainer: t.Optional[Trainer] = None
 
+    def upstream_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
+        """List all dependent job ids of the upstream."""
+        dependencies_ids: t.Sequence[str] = []
+        job_ids = self.upstream.model.jobs(db=db)
+        dependencies_ids.extend(job_ids)
+
+        dependencies = tuple([*dependencies_ids, *deps])
+        return dependencies
+
     def schedule_jobs(self, db, dependencies=()):
         """Database hook for scheduling jobs.
 
@@ -243,6 +252,9 @@ class _Fittable:
         :param dependencies: List of dependencies.
         """
         jobs = []
+
+        dependencies = self.upstream_dependencies(db, dependencies)
+
         if self.trainer is not None:
             assert isinstance(self.trainer, Trainer)
             assert self.trainer.select is not None
@@ -568,6 +580,7 @@ class Model(Component, metaclass=ModelMeta):
         predict_id: str,
         select: t.Optional[Query],
         ids: t.Optional[t.List[str]] = None,
+        job_id: t.Optional[str] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[str] = (),
         in_memory: bool = True,
@@ -589,6 +602,7 @@ class Model(Component, metaclass=ModelMeta):
         :param overwrite: Overwrite all documents or only new documents
         """
         job = ComponentJob(
+            identifier=job_id,
             component_identifier=self.identifier,
             method_name='predict_in_db',
             type_id='model',

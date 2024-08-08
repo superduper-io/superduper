@@ -172,3 +172,57 @@ def test_listener_cleanup(db, data):
 
     db.remove('listener', listener1.identifier, force=True)
     assert not db.databackend.check_output_dest(listener1.predict_id)
+
+
+def test_listener_chaining_with_trainer(db):
+    db.cfg.auto_schema = True
+    table = db['test']
+
+    def insert_random(start=0):
+        data = []
+        for i in range(5):
+            y = int(random.random() > 0.5)
+            data.append(
+                Document(
+                    {
+                        "x": i + start,
+                        "y": y,
+                    }
+                )
+            )
+
+        db.execute(table.insert(data))
+
+    # Insert data
+    insert_random()
+
+    class MyTrainer(Trainer):
+        def fit(self, *args, **kwargs):
+            ...
+
+    features = ObjectModel("features", object=lambda x: x + 1)
+    trainable_model = ObjectModel("model_training_on_features", object=lambda x: x + 2)
+
+    listener1 = Listener(
+        model=features,
+        select=table.select(),
+        key="x",
+        identifier="listener1",
+        uuid="listener1",
+    )
+    # db.add(listener1)
+
+    trainable_model.trainer = MyTrainer(
+        'test', select=listener1.outputs_select, key=listener1.outputs
+    )
+
+    listener2 = Listener(
+        upstream=listener1,
+        model=trainable_model,
+        select=listener1.outputs_select,
+        key=listener1.outputs,
+        identifier='listener2',
+        uuid='listener2',
+    )
+
+    db.add(listener2)

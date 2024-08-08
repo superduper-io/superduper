@@ -4,6 +4,7 @@ import typing as t
 from overrides import override
 
 from superduper import CFG, logging
+from superduper.base.event import Event
 from superduper.backends.base.query import Query
 from superduper.components.model import Mapping
 from superduper.misc.server import request_server
@@ -214,17 +215,15 @@ class Listener(Component):
         self.select.db = db
         ids = self.db.databackend.check_ready_ids(self.select, self._ready_keys)
 
-        events = [
-            Event(
-                type_id=self.type_id,
-                identifier=self.identifier,
-                event_type=DBEvent.insert,
-                id=str(id),
-            )
-            for id in ids
-        ]
+        event = Event(
+            dest={'type_id': self.type_id, 'identifier': self.identifier},
+            event_type=DBEvent.insert,
+            id=ids,
+            on='COMPONENT',
+        )
 
-        return db.compute.broadcast(events)
+        db.compute.broadcast([event])
+        return [event.uuid]
 
     def listener_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
         """List all dependent job ids of the listener."""
@@ -257,7 +256,7 @@ class Listener(Component):
         db: "Datalayer",
         dependencies: t.Sequence[str] = (),
         overwrite: bool = False,
-        ids: t.Optional[t.List] = [],
+        events: t.Optional[t.List] = [],
         event_type: str = 'insert',
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the listener.
@@ -272,20 +271,43 @@ class Listener(Component):
         assert not isinstance(self.model, str)
 
         dependencies = self.listener_dependencies(db, dependencies)
+        component_events, db_events = Event.chunk_by_type(events)
 
-        out = [
-            self.model.predict_in_db_job(
-                X=self.key,
+        # Create a startup job
+        jobs = []
+        for event in component_events:
+            jobs += [
+                self._create_predict_job(
+                    db=db,
+                    ids=event.id,
+                    deps=dependencies,
+                    overwrite=overwrite,
+                    job_id=event.uuid,
+                )
+            ]
+
+        jobs += [
+            self._create_predict_job(
                 db=db,
-                predict_id=self.predict_id,
-                select=self.select,
-                ids=ids,
-                dependencies=dependencies,
+                ids=[event.id for event in db_events],
+                deps=dependencies,
                 overwrite=overwrite,
-                **(self.predict_kwargs or {}),
             )
         ]
-        return out
+        return jobs
+
+    def _create_predict_job(self, db, ids, deps, overwrite, job_id=None):
+        return self.model.predict_in_db_job(
+            X=self.key,
+            db=db,
+            predict_id=self.uuid,
+            select=self.select,
+            ids=ids,
+            job_id=job_id,
+            dependencies=deps,
+            overwrite=overwrite,
+            **(self.predict_kwargs or {}),
+        )
 
     def cleanup(self, db: "Datalayer") -> None:
         """Clean up when the listener is deleted.

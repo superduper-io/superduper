@@ -311,12 +311,25 @@ class VectorIndex(Component):
         )
         return ids
 
+    def _create_predict_job(self, db, callable, deps, ids, job_id=None):
+        job = FunctionJob(
+            callable=callable,
+            args=[],
+            kwargs=dict(
+                vector_index=self.identifier,
+                ids=ids,
+                query=db[self.indexing_listener.outputs].dict().encode(),
+            ),
+        )
+        job(db=db, dependencies=deps)
+        return [job]
+
     @override
     def run_jobs(
         self,
         db: Datalayer,
         dependencies: t.Sequence[str] = (),
-        ids: t.List = [],
+        events: t.List = [],
         overwrite: bool = False,
         event_type: str = DBEvent.insert,
     ) -> t.Sequence[t.Any]:
@@ -324,7 +337,7 @@ class VectorIndex(Component):
 
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
-        :param ids: List of ids.
+        :param events: List of events.
         :param event_type: Type of event.
         """
         if event_type in [DBEvent.insert, DBEvent.upsert]:
@@ -338,17 +351,30 @@ class VectorIndex(Component):
 
         dependencies = {*self.indexing_listener.model.jobs(db), *dependencies}
 
-        job = FunctionJob(
-            callable=callable,
-            args=[],
-            kwargs=dict(
-                vector_index=self.identifier,
-                ids=ids,
-                query=db[self.indexing_listener.outputs].dict().encode(),
-            ),
-        )
-        job(db=db, dependencies=dependencies)
-        return [job]
+        component_events, db_events = Event.chunk_by_type(events)
+
+        # Create a startup job
+        jobs = []
+        for event in component_events:
+            jobs += [
+                self._create_predict_job(
+                    db=db,
+                    callable=callable,
+                    ids=event.id,
+                    deps=dependencies,
+                    job_id=event.uuid,
+                )
+            ]
+
+        jobs += [
+            self._create_predict_job(
+                db=db,
+                callable=callable,
+                ids=[event.id for event in db_events],
+                deps=dependencies,
+            )
+        ]
+        return jobs
 
     @override
     def schedule_jobs(
@@ -367,19 +393,17 @@ class VectorIndex(Component):
 
         outputs = db[self.indexing_listener.outputs]
         ids = db.execute(outputs.select_ids)
-        ids = [id[outputs.primary_id] for id in ids]
+        ids = [str(id[outputs.primary_id]) for id in ids]
 
-        events = [
-            Event(
-                type_id=self.type_id,
-                identifier=self.identifier,
-                event_type=DBEvent.insert,
-                id=str(id),
-            )
-            for id in ids
-        ]
+        event = Event(
+            dest={'type_id': self.type_id, 'identifier': self.identifier},
+            event_type=DBEvent.insert,
+            id=ids,
+            from_type='COMPONENT',
+        )
 
-        return db.compute.broadcast(events)
+        db.compute.broadcast([event])
+        return [event.uuid]
 
 
 class EncodeArray:

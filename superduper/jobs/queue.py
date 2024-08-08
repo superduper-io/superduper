@@ -133,8 +133,8 @@ class LocalQueuePublisher(BaseQueuePublisher):
         :param events: list of events
         """
         for event in events:
-            identifier = event.identifier
-            type_id = event.type_id
+            identifier = event.dest['identifier']
+            type_id = event.dest['type_id']
             self._component_map.update({'identifier': identifier, 'type_id': type_id})
             self.queue[type_id, identifier].append(event)
 
@@ -168,8 +168,9 @@ class LocalQueueConsumer(BaseQueueConsumer):
             queue[type_id, identifier] = []
             component = components[type_id, identifier]
             jobs = []
-            for event_type, type_events in DBEvent.chunk_by_event(events).items():
-                ids = [event.id for event in type_events]
+            for event_type, events in DBEvent.chunk_by_event(events).items():
+                ids = [event.id for event in events]
+
                 overwrite = (
                     True if event_type in [DBEvent.insert, DBEvent.upsert] else False
                 )
@@ -178,7 +179,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
                 )
                 logging.debug(f'Using ids: {ids}')
                 job = component.run_jobs(
-                    db=db, ids=ids, overwrite=overwrite, event_type=event_type
+                    db=db, events=events, overwrite=overwrite, event_type=event_type
                 )
                 jobs.append(job)
             queue_jobs[type_id, identifier].extend(jobs)

@@ -16,6 +16,7 @@ class MongoArtifactStore(ArtifactStore):
 
     :param conn: MongoDB client connection
     :param name: Name of database to host filesystem
+
     """
 
     def __init__(self, conn, name: str):

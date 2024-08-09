@@ -14,7 +14,7 @@ from superduper.misc.plugins import load_plugin
 
 
 class _Loader:
-    not_supported = []
+    not_supported: t.Tuple = ()
 
     @classmethod
     def create(cls, uri):

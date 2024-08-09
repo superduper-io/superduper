@@ -19,6 +19,12 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+    "anthropic>=0.25.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "vcrpy>=5.1.0",
 ]
 
 [project.urls]
@@ -30,7 +36,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_anthropic*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_anthropic.__version__"}
 
 [tool.black]
 skip-string-normalization = true

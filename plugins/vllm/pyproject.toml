@@ -21,6 +21,11 @@ dynamic = ["version"]
 dependencies = [
 ]
 
+[project.optional-dependencies]
+test = [
+    "vcrpy>=5.1.0",
+]
+
 [project.urls]
 homepage = "https://www.superduper.com/"
 documentation = "https://docs.superduper.com"
@@ -30,7 +35,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_vllm*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_vllm.__version__"}
 
 [tool.black]
 skip-string-normalization = true

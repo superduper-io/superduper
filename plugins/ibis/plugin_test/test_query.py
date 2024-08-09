@@ -4,26 +4,20 @@ from test.utils.setup.fake_data import (
     add_random_data,
 )
 
-import numpy
+import numpy as np
 import pytest
-from superduper.backends.ibis.field_types import dtype
 from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-
-try:
-    import torch
-except ImportError:
-    torch = None
 
 
 def test_serialize_table():
     schema = Schema(
         identifier='my_schema',
         fields={
-            'id': dtype('int64'),
-            'health': dtype('int32'),
-            'age': dtype('int32'),
+            'id': 'int64',
+            'health': 'int32',
+            'age': 'int32',
         },
     )
 
@@ -54,7 +48,6 @@ def test_auto_inference_primary_id():
     assert q.primary_id == 'other_id'
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_renamings(db):
     add_random_data(db, n=5)
     add_models(db)
@@ -63,7 +56,7 @@ def test_renamings(db):
     listener_uuid = [k.split('/')[-1] for k in db.show('listener')][0]
     q = t.select('id', 'x', 'y').outputs(listener_uuid)
     data = list(db.execute(q))
-    assert torch.is_tensor(data[0].unpack()[f'_outputs__{listener_uuid}'])
+    assert isinstance(data[0].unpack()[f'_outputs__{listener_uuid}'], np.ndarray)
 
 
 def test_serialize_query(db):
@@ -76,7 +69,6 @@ def test_serialize_query(db):
     print(Document.decode(q.encode()).unpack())
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_add_fold(db):
     add_random_data(db, n=10)
     table = db['documents']
@@ -90,14 +82,12 @@ def test_add_fold(db):
     assert len(result_train) + len(result_valid) == 10
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_get_data(db):
     add_random_data(db, n=5)
     db['documents'].limit(2)
     db.metadata.get_component('table', 'documents')
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_select(db):
     add_random_data(db, n=5)
     q = db['documents'].select('id', 'x', 'y').limit(2)
@@ -107,14 +97,13 @@ def test_insert_select(db):
     assert all(all([k in ['id', 'x', 'y'] for k in x.unpack().keys()]) for x in r)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_filter(db):
     add_random_data(db, n=5)
     t = db['documents']
     q = t.select('id', 'y')
     r = list(db.execute(q))
     ys = [x['y'] for x in r]
-    uq = numpy.unique(ys, return_counts=True)
+    uq = np.unique(ys, return_counts=True)
 
     q = t.select('id', 'y').filter(t.y == uq[0][0])
     r = list(db.execute(q))

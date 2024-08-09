@@ -19,6 +19,14 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+  "sentence-transformers>=2.2.2",
+  "datasets>=2.18.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "peft>=0.10.0",
+    "trl>=0.8.0",
 ]
 
 [project.urls]
@@ -30,7 +38,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_transformers*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_transformers.__version__"}
 
 [tool.black]
 skip-string-normalization = true

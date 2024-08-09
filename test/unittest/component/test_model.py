@@ -385,11 +385,9 @@ def test_query_model(db):
     )
     m.db = db
 
-    import torch
+    out = m.predict(X=np.random.randn(32))
 
-    out = m.predict(X=torch.randn(32))
-
-    out = m.predict_batches([{'X': torch.randn(32)} for _ in range(4)])
+    out = m.predict_batches([{'X': np.random.randn(32)} for _ in range(4)])
 
     assert len(out) == 4
 

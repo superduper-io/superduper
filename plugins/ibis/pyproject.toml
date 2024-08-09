@@ -19,6 +19,12 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+  "ibis-framework>=9.0.1"
+]
+
+[project.optional-dependencies]
+test = [
+    "ibis-framework[sqlite]>=5.1.0",
 ]
 
 [project.urls]
@@ -30,7 +36,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_ibis*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_ibis.__version__"}
 
 [tool.black]
 skip-string-normalization = true

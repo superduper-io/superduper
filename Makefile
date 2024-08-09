@@ -239,24 +239,26 @@ testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb
 
 unit_testing: ## Execute unit testing
 	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
-	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
-	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
+	# SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
+	# SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
+	SUPERDUPER_CONFIG=test/configs/default.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
 
-databackend_testing: ## Execute integration testing
-	@echo "TESTING BACKENDS"
-	@for backend in $(BACKENDS); do \
-		echo "TESTING $$backend"; \
-		SUPERDUPER_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
-	done
-	@echo "TODO -- implement more backends integration testing..."
+# databackend_testing: ## Execute integration testing
+# 	@echo "TESTING BACKENDS"
+# 	@for backend in $(BACKENDS); do \
+# 		echo "TESTING $$backend"; \
+# 		SUPERDUPER_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
+# 	done
+# 	@echo "TODO -- implement more backends integration testing..."
 
-ext_testing: ## Execute integration testing
-	find ./test -type d -name __pycache__ -exec rm -r {} +
-	find ./test -type f -name "*.pyc" -delete
-	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
+# ext_testing: ## Execute integration testing
+# 	find ./test -type d -name __pycache__ -exec rm -r {} +
+# 	find ./test -type f -name "*.pyc" -delete
+# 	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
 
 
 usecase_testing: ## Execute usecase testing
 	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
-	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
-	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	# SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	# SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	SUPERDUPER_CONFIG=test/configs/default.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase

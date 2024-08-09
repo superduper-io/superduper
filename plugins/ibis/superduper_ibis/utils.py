@@ -1,5 +1,6 @@
+from ibis.expr.datatypes import dtype
 from superduper.components.datatype import DataType
-from superduper.components.schema import Schema
+from superduper.components.schema import FieldType, Schema
 
 SPECIAL_ENCODABLES_FIELDS = {
     "file": "String",
@@ -19,7 +20,9 @@ def convert_schema_to_fields(schema: Schema):
     fields = {}
 
     for k, v in schema.fields.items():
-        if not isinstance(v, DataType):
+        if isinstance(v, FieldType):
+            fields[k] = dtype(v.identifier)
+        elif not isinstance(v, DataType):
             fields[k] = v.identifier
         else:
             if v.encodable_cls.leaf_type in SPECIAL_ENCODABLES_FIELDS:

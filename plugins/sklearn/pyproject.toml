@@ -30,7 +30,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_sklearn*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_sklearn.__version__"}
 
 [tool.black]
 skip-string-normalization = true

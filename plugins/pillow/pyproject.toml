@@ -30,7 +30,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_pillow*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_pillow.__version__"}
 
 [tool.black]
 skip-string-normalization = true

@@ -4,7 +4,6 @@ import typing as t
 
 import requests
 from llama_cpp import Llama
-
 from superduper.ext.llm.model import BaseLLM
 
 

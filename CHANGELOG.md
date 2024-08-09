@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `-` from the uuid of the component.
 - Add _execute_select and filter in the Query class.
 - Optimize the logic of ready_ids in trigger_ids.
+- Move all plugins superduperdb/ext/* to /plugins
 
 
 

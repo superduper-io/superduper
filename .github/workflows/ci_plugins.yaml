@@ -22,7 +22,7 @@ jobs:
           changed_files=(${{ steps.changed-files-specific.outputs.all_changed_files }})
           declare -A plugin_set
           for file in "${changed_files[@]}"; do
-            if [[ "$file" =~ ^plugins/ ]]; then
+            if [[ "$file" =~ ^plugins/ && ! "$file" =~ ^plugins/template/ ]]; then
               plugin_name=$(echo "$file" | cut -d '/' -f 2)
               plugin_set[$plugin_name]=1
             fi
@@ -44,23 +44,42 @@ jobs:
       fail-fast: false
       matrix: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Pip Packages
+        id: setup-python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip' # caching pip dependencies
 
-      - name: Create and activate virtual environment
+      - name: Install SuperDuperDB Project
         run: |
-          python -m venv ~/venv
-          source ~/venv/bin/activate
-
-      - name: Install package and plugin
-        run: |
+          # Install core and testsuite dependencies on the cached python environment.
           python -m pip install .
-          python -m pip install plugins/${{ matrix.plugin }}
-
-      - name: Run tests for changed plugin
+          python -m pip install -r deploy/installations/testenv_requirements.txt
+      - name: Install DevKit (docs, testing, etc)
         run: |
-          source ~/venv/bin/activate
-          pytest -s plugins/${{ matrix.plugin }}/plugin_test
+          make install_devkit
+      - name: Install Plugin
+        run: |
+          python -m pip install 'plugins/${{ matrix.plugin }}[test]'
+
+      - name: Optionally run custom CI script
+        run: |
+          if [ -f "plugins/${{ matrix.plugin }}/.ci_extend.sh" ]; then
+            echo "Running custom CI script..."
+            bash ./plugins/${{ matrix.plugin }}/.ci_extend.sh
+          else
+            echo "No custom CI script found, skipping..."
+          fi
+   
+      # - name: Lint and type-check
+      #   run: |
+      #     make lint-and-type-check
+
+      - name: Plugin Testing
+        run: |
+          export PYTHONPATH=./
+          pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test

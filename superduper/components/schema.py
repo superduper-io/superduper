@@ -26,6 +26,9 @@ class FieldType(Leaf):
         if isinstance(self.identifier, DataType):
             self.identifier = self.identifier.name
 
+        elif isinstance(self.identifier, self.__class__):
+            self.identifier = self.identifier.identifier
+
         elif isinstance(self.identifier, str):
             self.identifier = self.identifier
 

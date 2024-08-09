@@ -27,9 +27,6 @@ def data():
 
 
 def test_infer_datatype():
-    from superduper.ext import pillow as pillow_ext, torch as torch_ext
-
-    print(torch_ext, pillow_ext)
     assert infer_datatype(1) is int
     assert infer_datatype(1.0) is float
     assert infer_datatype("1") is str

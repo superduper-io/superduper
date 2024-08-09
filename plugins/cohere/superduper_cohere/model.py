@@ -4,13 +4,10 @@ import typing as t
 import cohere
 import tqdm
 from cohere.error import CohereAPIError, CohereConnectionError
-
-from superduper.backends.ibis.data_backend import IbisDataBackend
-from superduper.backends.ibis.field_types import dtype
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel
-from superduper.components.vector_index import sqlvector, vector
+from superduper.components.vector_index import vector
 from superduper.ext.utils import format_prompt, get_key
 from superduper.misc.retry import Retry
 
@@ -58,10 +55,7 @@ class CohereEmbed(Cohere):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend):
-            if self.datatype is None:
-                self.datatype = sqlvector(self.shape)
-        elif self.datatype is None:
+        if self.datatype is None:
             self.datatype = vector(shape=self.shape)
 
     @retry
@@ -115,8 +109,6 @@ class CohereGenerate(Cohere):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('str')
 
     @retry
     def predict(self, prompt: str, context: t.Optional[t.List[str]] = None):

@@ -171,8 +171,6 @@ class QueueConfig(BaseConfig):
     """Describes the configuration for message broker service.
 
     :param uri: The URI for the scheduler service.
-    :param _path: The pluggable message broker currently supporting
-                   naive, rabbitmq, etc.
     """
 
     uri: t.Optional[str] = None  # None implies local mode
@@ -184,7 +182,7 @@ class Compute(BaseConfig):
 
     :param uri: The URI for the compute service.
     :param compute_kwargs: The keyword arguments to pass to the compute service.
-    :param _path: Compute backend path.
+    :param backend: Compute backend.
     """
 
     uri: t.Optional[str] = None

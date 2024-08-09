@@ -31,15 +31,15 @@ def add_random_data(
     table_name: str = "documents",
     n: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_tensor = array(dtype="float", shape=(32,))
+    float_array = array(dtype="float", shape=(32,))
 
     schema = Schema(
         identifier=table_name,
         fields={
             "id": "str",
-            "x": float_tensor,
+            "x": float_array,
             "y": "int32",
-            "z": float_tensor,
+            "z": float_array,
         },
     )
     t = Table(identifier=table_name, schema=schema)

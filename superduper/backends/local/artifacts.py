@@ -16,6 +16,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
     :param conn: root directory of the artifact store
     :param name: subdirectory to use for this artifact store
+    :param flavour: Flavour of the artifact store
     """
 
     def __init__(

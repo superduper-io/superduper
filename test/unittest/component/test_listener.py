@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 from superduper import Document
-from superduper.backends.mongodb.query import MongoQuery
+from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 
 
 def test_listener_serializes_properly():
-    q = MongoQuery(table='test').find({}, {})
+    q = Query(table='test').find({}, {})
     listener = Listener(
         model=ObjectModel("test", object=lambda x: x),
         select=q,

@@ -1,5 +1,7 @@
 import pytest
 
+import random
+
 try:
     import torch
 
@@ -62,9 +64,20 @@ def model():
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_fit(db, model):
-    from test.utils.setup.fake_data import add_random_data, get_valid_dataset
+    from test.utils.setup.fake_data import get_valid_dataset
 
-    add_random_data(db, n=500)
+    data = []
+    for i in range(500):
+        x = torch.rand(32)
+        y = int(random.random() > 0.5)
+        z = torch.rand(32)
+        fold = int(random.random() > 0.5)
+        fold = "valid" if fold else "train"
+        data.append({"id": str(i), "x": x, "y": y, "z": z, "_fold": fold})
+
+    db.cfg.auto_schema = True
+    db['documents'].insert(data).execute()
+
     valid_dataset = get_valid_dataset(db)
     select = db['documents'].select()
     trainer = TorchTrainer(

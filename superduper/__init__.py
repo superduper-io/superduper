@@ -10,7 +10,7 @@ logging = logger.Logging
 
 __version__ = '0.2.0'
 
-from superduper.backends import ibis, mongodb
+# from superduper.backends import ibis, mongodb
 
 from .base.decorators import code
 from .base.document import Document

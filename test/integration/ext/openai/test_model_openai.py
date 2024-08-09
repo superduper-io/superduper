@@ -4,9 +4,7 @@ import os
 import openai
 import pytest
 import vcr
-from vcr.stubs import httpx_stubs
-
-from superduper.ext.openai.model import (
+from superduper_openai.model import (
     OpenAIAudioTranscription,
     OpenAIAudioTranslation,
     OpenAIChatCompletion,
@@ -15,6 +13,7 @@ from superduper.ext.openai.model import (
     OpenAIImageEdit,
     _available_models,
 )
+from vcr.stubs import httpx_stubs
 
 PNG_BYTE_SIGNATURE = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
 

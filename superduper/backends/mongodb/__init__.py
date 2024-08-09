@@ -1,1 +1,1 @@
-from superduper_mongodb import * # noqa
+from superduper_mongodb import *  # noqa

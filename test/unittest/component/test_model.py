@@ -8,7 +8,6 @@ from sklearn.metrics import accuracy_score, f1_score
 
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.query import Query
-from superduper.backends.ibis.field_types import FieldType
 from superduper.backends.local.compute import LocalComputeBackend
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
@@ -25,6 +24,7 @@ from superduper.components.model import (
     Validation,
     _Fittable,
 )
+from superduper.components.schema import FieldType
 from superduper.jobs.job import ComponentJob
 
 

@@ -5,7 +5,12 @@ from bson.objectid import ObjectId
 
 from superduper import logging
 from superduper.base.code import Code
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.constant import (
+    KEY_BLOBS,
+    KEY_BUILDS,
+    KEY_FILES,
+    KEY_SCHEMA,
+)
 from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
@@ -18,7 +23,7 @@ from superduper.components.datatype import (
     Native,
     _BaseEncodable,
 )
-from superduper.components.schema import SCHEMA_KEY, Schema, get_schema
+from superduper.components.schema import Schema, get_schema
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
 
@@ -156,7 +161,7 @@ class Document(MongoStyleDict):
             r = _replace_variables(
                 {k: v for k, v in r.items() if k != '_variables'}, **r['_variables']
             )
-        schema = schema or r.get(SCHEMA_KEY)
+        schema = schema or r.get(KEY_SCHEMA)
         schema = get_schema(db, schema)
 
         builds = r.get(KEY_BUILDS, {})
@@ -468,7 +473,7 @@ def _schema_decode(
         else:
             decoded[k] = field.decode_data(data[k])
 
-    decoded.pop(SCHEMA_KEY, None)
+    decoded.pop(KEY_SCHEMA, None)
     return decoded
 
 

@@ -3,9 +3,6 @@ import typing as t
 
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
-
-from superduper.backends.ibis.data_backend import IbisDataBackend
-from superduper.backends.ibis.field_types import dtype
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel
@@ -52,8 +49,6 @@ class AnthropicCompletions(Anthropic):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('str')
 
     @retry
     def predict(

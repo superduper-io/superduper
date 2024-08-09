@@ -189,8 +189,8 @@ class IbisDataBackend(BaseDataBackend):
             output_type = datatype
 
         fields = {
-            INPUT_KEY: dtype('string'),
-            'id': dtype('string'),
+            INPUT_KEY: 'string',
+            'id': 'string',
             f'{CFG.output_prefix}{predict_id}': output_type,
         }
         return Table(

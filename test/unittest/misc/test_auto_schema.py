@@ -2,14 +2,12 @@ import threading
 
 import numpy as np
 import pandas as pd
-import PIL
 import pytest
-import torch
 
 from superduper.base.document import Document
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.table import Table
-from superduper.misc.auto_schema import infer_datatype, infer_schema
+from superduper.misc.auto_schema import infer_datatype
 
 
 @pytest.fixture

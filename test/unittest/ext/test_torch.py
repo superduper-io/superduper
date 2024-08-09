@@ -1,6 +1,6 @@
-import pytest
-
 import random
+
+import pytest
 
 try:
     import torch

@@ -6,7 +6,6 @@ from overrides import override
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
-from superduper.misc.annotations import component
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 

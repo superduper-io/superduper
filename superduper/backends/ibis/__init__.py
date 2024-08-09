@@ -1,1 +1,1 @@
-from superduper_mongodb import * # noqa
+from superduper_ibis import *  # noqa

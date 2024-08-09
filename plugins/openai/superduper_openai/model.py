@@ -14,14 +14,10 @@ from openai import (
     RateLimitError,
 )
 from openai._types import NOT_GIVEN
-
-from superduper import CFG
-from superduper.backends.ibis.data_backend import IbisDataBackend
-from superduper.backends.ibis.field_types import dtype
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel, Inputs
-from superduper.components.vector_index import sqlvector, vector
+from superduper.components.vector_index import vector
 from superduper.misc.compat import cache
 from superduper.misc.retry import Retry
 
@@ -121,19 +117,12 @@ class OpenAIEmbedding(_OpenAI):
     def pre_create(self, db):
         """Pre creates the model.
 
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``sqlvector`` or ``vector``.
+        the datatype is set to ``vector``.
 
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend):
-            if self.datatype is None:
-                self.datatype = sqlvector(
-                    shape=self.shape, bytes_encoding=CFG.bytes_encoding
-                )
-        elif self.datatype is None:
-            self.datatype = vector(shape=self.shape)
+        self.datatype = self.datatype or vector(shape=self.shape)
 
     @retry
     def predict(self, X: str):
@@ -176,14 +165,10 @@ class OpenAIChatCompletion(_OpenAI):
     def pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``dtype('str')``.
-
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('str')
+        self.datatype = self.datatype or 'str'
 
     @retry
     def predict(self, X: str, context: t.Optional[str] = None, **kwargs):
@@ -237,14 +222,10 @@ class OpenAIImageCreation(_OpenAI):
     def pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``dtype('bytes')``.
-
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('bytes')
+        self.datatype = self.datatype or 'bytes'
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))
@@ -311,14 +292,10 @@ class OpenAIImageEdit(_OpenAI):
     def pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``dtype('bytes')``.
-
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('bytes')
+        self.datatype = self.datatype or 'bytes'
 
     @retry
     def predict(
@@ -396,14 +373,10 @@ class OpenAIAudioTranscription(_OpenAI):
     def pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
-        If the datatype is not set and the datalayer is an IbisDataBackend,
-        the datatype is set to ``dtype('str')``.
-
         :param db: The datalayer instance.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('str')
+        self.datatype = self.datatype or 'str'
 
     @retry
     def predict(self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None):
@@ -455,8 +428,7 @@ class OpenAIAudioTranslation(_OpenAI):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype('str')
+        self.datatype = self.datatype or 'str'
 
     @retry
     def predict(

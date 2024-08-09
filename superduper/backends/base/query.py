@@ -373,10 +373,9 @@ class Query(_BaseQuery):
         """Return the query as a dictionary."""
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
-        backend = self.__module__.split('.')[-2]
         return Document(
             {
-                '_path': f'{backend}.query.parse_query',
+                '_path': f'{self.__module__}.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,
@@ -815,10 +814,9 @@ class Model(_BaseQuery):
         """Return the query as a dictionary."""
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
-        backend = self.__module__.split('.')[-2]
         return Document(
             {
-                '_path': f'{backend}.query.parse_query',
+                '_path': f'{self.__module__}.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,

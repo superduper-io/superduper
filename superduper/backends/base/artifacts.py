@@ -17,6 +17,7 @@ class ArtifactStore(ABC):
 
     :param conn: connection to the meta-data store
     :param name: Name to identify DB using the connection
+    :param flavour: Flavour of the artifact store
     """
 
     def __init__(

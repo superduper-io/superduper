@@ -3,21 +3,37 @@ from functools import cached_property
 
 from overrides import override
 
+from superduper.base.leaf import Leaf
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
+from superduper.misc.annotations import component
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
-SCHEMA_KEY = '_schema'
 
+class FieldType(Leaf):
+    """Field type to represent the type of a field in a table.
 
-class _Native(Component):
-    _TYPES = {str: 'str', int: 'int', float: 'float'}
+    This is a wrapper around ibis.expr.datatypes.DataType to make it
+    serializable.
 
-    def __init__(self, x):
-        if x in self._TYPES:
-            x = self._TYPES[x]
-        self.identifier = x
+    :param identifier: The name of the data type.
+    """
+
+    identifier: t.Union[str, DataType]
+
+    def __post_init__(self, db):
+        super().__post_init__(db)
+        if isinstance(self.identifier, DataType):
+            self.identifier = self.identifier.name
+
+        elif isinstance(self.identifier, str):
+            self.identifier = self.identifier
+
+        elif self.identifier in (str, bool, int, float, bytes):
+            self.identifier = self.identifier.__name__
+        else:
+            raise ValueError(f'Invalid field type {self.identifier}')
 
 
 class Schema(Component):
@@ -35,10 +51,15 @@ class Schema(Component):
         super().__post_init__(db, artifacts)
 
         for k, v in self.fields.items():
-            if isinstance(v, str):
-                self.fields[k] = _Native(v)
-            elif v in (str, bool, int, float):
-                self.fields[k] = _Native(v)
+            if isinstance(v, (DataType, FieldType)):
+                continue
+
+            try:
+                v = FieldType(identifier=v)
+            except ValueError:
+                raise ValueError(f'Invalid field type {v} for field {k}')
+
+            self.fields[k] = v
 
     @override
     def pre_create(self, db) -> None:

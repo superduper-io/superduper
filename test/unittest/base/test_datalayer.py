@@ -19,8 +19,6 @@ except ImportError:
 import dataclasses as dc
 from unittest.mock import patch
 
-from superduper.backends.ibis.field_types import dtype
-from superduper.backends.mongodb.data_backend import MongoDataBackend
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.component import Component
@@ -83,8 +81,8 @@ def add_fake_model(db: Datalayer):
     schema = Schema(
         identifier='documents',
         fields={
-            'id': dtype('str'),
-            'x': dtype('int'),
+            'id': 'str',
+            'x': 'int',
         },
     )
     t = Table(identifier='documents', schema=schema)
@@ -221,7 +219,7 @@ def test_add_with_artifact(db):
 
 
 def test_add_table(db):
-    component = Table('test', schema=Schema('test-s', fields={'field': dtype('str')}))
+    component = Table('test', schema=Schema('test-s', fields={'field': 'str'}))
     db.apply(component)
 
 
@@ -377,13 +375,13 @@ def test_show(db):
 
 
 def test_load(db):
-    m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32'))
+    m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype='int32')
 
     components = [
         DataType(identifier='e1'),
         DataType(identifier='e2'),
         m1,
-        ObjectModel(object=lambda x: x, identifier='m1', datatype=dtype('int32')),
+        ObjectModel(object=lambda x: x, identifier='m1', datatype='int32'),
         m1,
     ]
     for component in components:
@@ -510,11 +508,7 @@ def test_replace(db):
 
 
 def test_replace_with_child(db):
-    db.apply(
-        Table(
-            'docs', schema=Schema('docs', fields={'X': dtype('int'), 'y': dtype('int')})
-        )
-    )
+    db.apply(Table('docs', schema=Schema('docs', fields={'X': 'int', 'y': 'int'})))
 
     trainer = TorchTrainer(
         identifier='trainer',
@@ -588,25 +582,7 @@ def test_compound_component(db):
 def test_reload_dataset(db):
     from superduper.components.dataset import Dataset
 
-    if isinstance(db.databackend.type, MongoDataBackend):
-        select = db['documents'].find({'_fold': 'valid'})
-    else:
-        db.apply(
-            Table(
-                'documents',
-                schema=Schema(
-                    'documents',
-                    fields={
-                        'id': dtype('str'),
-                        'x': dtype('int'),
-                        'y': dtype('int'),
-                        'z': dtype('int'),
-                    },
-                ),
-            )
-        )
-        condition = db['documents']._fold == 'valid'
-        select = db['documents'].select('id', 'x', 'y', 'z').filter(condition)
+    select = db['documents'].select().filter(db['documents']['_fold'] == 'valid')
 
     d = Dataset(
         identifier='my_valid',
@@ -623,13 +599,7 @@ def test_dataset(db):
     from test.utils.setup.fake_data import add_random_data
 
     add_random_data(db, n=6)
-    if isinstance(db.databackend.type, MongoDataBackend):
-        select = db['documents'].find({'_fold': 'valid'})
-    else:
-        table = db['documents']
-        select = table.select('id', '_fold', 'x', 'y', 'z').filter(
-            table['_fold'] == 'valid'
-        )
+    select = db['documents'].select().filter(db['documents']['_fold'] == 'valid')
 
     d = Dataset(
         identifier='test_dataset',

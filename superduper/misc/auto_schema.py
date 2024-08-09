@@ -117,10 +117,10 @@ def infer_schema(
         if data_type is not None:
             schema_data[k] = data_type
 
-    if ibis:
-        schema_data = updated_schema_data_for_ibis(schema_data)
-    else:
-        schema_data = updated_schema_data_for_mongodb(schema_data)
+    # if ibis:
+    #     schema_data = updated_schema_data_for_ibis(schema_data)
+    # else:
+    #     schema_data = updated_schema_data_for_mongodb(schema_data)
 
     if identifier is None:
         if not schema_data:
@@ -142,37 +142,37 @@ def infer_schema(
     return Schema(identifier=identifier, fields=schema_data)  # type: ignore
 
 
-def updated_schema_data_for_ibis(
-    schema_data,
-) -> t.Dict[str, DataType]:
-    """Update the schema data for Ibis backend.
-
-    Convert the basic data types to Ibis data types.
-
-    :param schema_data: The schema data
-    """
-    from superduper.backends.ibis.field_types import dtype
-
-    for k, v in schema_data.items():
-        if not isinstance(v, DataType):
-            schema_data[k] = dtype(v)
-
-    return schema_data
-
-
-def updated_schema_data_for_mongodb(schema_data) -> t.Dict[str, DataType]:
-    """Update the schema data for MongoDB backend.
-
-    Only keep the data types that can be stored directly in MongoDB.
-
-    :param schema_data: The schema data
-    """
-    schema_data = {k: v for k, v in schema_data.items() if isinstance(v, DataType)}
-
-    # MongoDB can store dict directly, so we don't need to serialize it.
-    schema_data = {k: v for k, v in schema_data.items() if v.identifier != "json"}
-
-    return schema_data
+# def updated_schema_data_for_ibis(
+#     schema_data,
+# ) -> t.Dict[str, DataType]:
+#     """Update the schema data for Ibis backend.
+#
+#     Convert the basic data types to Ibis data types.
+#
+#     :param schema_data: The schema data
+#     """
+#     from superduper.backends.ibis.field_types import dtype
+#
+#     for k, v in schema_data.items():
+#         if not isinstance(v, DataType):
+#             schema_data[k] = dtype(v)
+#
+#     return schema_data
+#
+#
+# def updated_schema_data_for_mongodb(schema_data) -> t.Dict[str, DataType]:
+#     """Update the schema data for MongoDB backend.
+#
+#     Only keep the data types that can be stored directly in MongoDB.
+#
+#     :param schema_data: The schema data
+#     """
+#     schema_data = {k: v for k, v in schema_data.items() if isinstance(v, DataType)}
+#
+#     # MongoDB can store dict directly, so we don't need to serialize it.
+#     schema_data = {k: v for k, v in schema_data.items() if v.identifier != "json"}
+#
+#     return schema_data
 
 
 class JsonDataTypeFactory(DataTypeFactory):

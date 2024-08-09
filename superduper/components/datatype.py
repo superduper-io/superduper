@@ -729,6 +729,7 @@ methods: t.Dict[str, t.Dict] = {
     'dill': {'encoder': dill_encode, 'decoder': dill_decode},
     'torch': {'encoder': torch_encode, 'decoder': torch_decode},
     'file': {'encoder': file_check, 'decoder': file_check},
+    'native': {'encoder': None, 'decoder': None},
 }
 
 

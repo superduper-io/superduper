@@ -1,12 +1,11 @@
 import typing as t
 
 import tqdm
-
-from superduper.backends.ibis.data_backend import IbisDataBackend
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
-from superduper.components.vector_index import sqlvector, vector
-from superduper.ext.jina.client import JinaAPIClient
+from superduper.components.vector_index import vector
+
+from superduper_jina.client import JinaAPIClient
 
 
 class Jina(APIBaseModel):
@@ -49,10 +48,7 @@ class JinaEmbedding(Jina):
         :param db: The datalayer to use for the model.
         """
         super().pre_create(db)
-        if isinstance(db.databackend.type, IbisDataBackend):
-            if self.datatype is None:
-                self.datatype = sqlvector(self.shape)
-        elif self.datatype is None:
+        if self.datatype is None:
             self.datatype = vector(shape=self.shape)
 
     def predict(self, X: str):

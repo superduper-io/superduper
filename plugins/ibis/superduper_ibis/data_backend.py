@@ -8,20 +8,20 @@ import ibis
 import pandas
 from pandas.core.frame import DataFrame
 from sqlalchemy.exc import NoSuchTableError
-
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
-from superduper.backends.ibis.db_helper import get_db_helper
-from superduper.backends.ibis.field_types import FieldType, dtype
-from superduper.backends.ibis.query import IbisQuery
-from superduper.backends.ibis.utils import convert_schema_to_fields
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduper.base.enums import DBType
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+
+from superduper_ibis.db_helper import get_db_helper
+from superduper_ibis.field_types import FieldType, dtype
+from superduper_ibis.query import IbisQuery
+from superduper_ibis.utils import convert_schema_to_fields
 
 BASE64_PREFIX = 'base64:'
 INPUT_KEY = '_source'

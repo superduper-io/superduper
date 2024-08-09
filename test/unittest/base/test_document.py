@@ -1,55 +1,36 @@
-import dataclasses as dc
 import pprint
-import typing as t
 
-import pytest
+import numpy as np
 
-from superduper.backends.mongodb.query import MongoQuery
+from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
-from superduper.components.datatype import Artifact, DataType
+from superduper.base.document import Document
+from superduper.components.datatype import (
+    Artifact,
+    DataType,
+    pickle_serializer,
+)
 from superduper.components.model import ObjectModel
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.ext.pillow.encoder import image_type, pil_image
-
-try:
-    import torch
-
-    from superduper.ext.torch.encoder import tensor
-except ImportError:
-    torch = None
-
-from superduper.base.document import Document
 
 
-@pytest.fixture
-def document():
-    t = tensor(dtype='float', shape=(20,))
-    yield Document({'x': t(torch.randn(20))})
-
-
-@dc.dataclass
-class _db:
-    datatypes: t.Dict
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_document_encoding(document):
-    t = tensor(dtype='float', shape=(20,))
+def test_document_encoding():
+    document = Document({'x': pickle_serializer(np.random.rand(20))})
     new_document = Document.decode(
-        document.encode(), getters={'component': lambda x: t}
+        document.encode(), getters={'component': lambda x: pickle_serializer}
     )
     assert (new_document['x'].x - document['x'].x).sum() == 0
 
 
 def test_flat_query_encoding():
-    q = MongoQuery(table='docs').find({'a': 1}).limit(2)
+    q = Query(table='docs').find({'a': 1}).limit(2)
 
     r = q._deep_flat_encode({}, {}, {})
 
     doc = Document({'x': 1})
 
-    q = MongoQuery(table='docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
+    q = Query(table='docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
 
     r = q._deep_flat_encode({}, {}, {})
 
@@ -57,20 +38,15 @@ def test_flat_query_encoding():
 
 
 def test_encode_decode_flattened_document():
-    import PIL.Image
+    data = np.array([1, 2, 3])
+    from superduper.components.datatype import pickle_serializer
 
-    from superduper.ext.pillow.encoder import image_type
-
-    schema = Schema(
-        'my-schema', fields={'img': image_type(identifier='png', encodable='artifact')}
-    )
-
-    img = PIL.Image.open('test/material/data/test.png')
+    schema = Schema('my-schema', fields={'data': pickle_serializer})
 
     r = Document(
         {
             'x': 2,
-            'img': img,
+            'data': data,
         },
         schema=schema,
     )
@@ -85,7 +61,7 @@ def test_encode_decode_flattened_document():
     assert isinstance(encoded_r, dict)
     assert KEY_BUILDS in encoded_r
     assert KEY_BLOBS in encoded_r
-    assert encoded_r['img'].startswith('&:blob:')
+    assert encoded_r['data'].startswith('&:blob:')
     assert isinstance(next(iter(encoded_r[KEY_BLOBS].values())), bytes)
 
 
@@ -123,19 +99,11 @@ def test_encode_model():
 
 
 def test_decode_inline_data():
-    import PIL.Image
-
-    from superduper.ext.pillow.encoder import image_type
-
-    it = image_type(identifier='png', encodable='artifact')
-
-    schema = Schema('my-schema', fields={'img': it})
-
-    img = PIL.Image.open('test/material/data/test.png')
+    schema = Schema('my-schema', fields={'data': pickle_serializer})
 
     r = {
         'x': 2,
-        'img': it.encoder(img),
+        'data': pickle_serializer.encode_data(np.random.randn(20)),
     }
 
     r = Document.decode(r, schema=schema).unpack()
@@ -169,29 +137,22 @@ def test_refer_to_applied_item(db):
 
 
 def test_column_encoding(db):
-    import PIL
-
-    img = PIL.Image.open('test/material/data/test.png')
     schema = Schema(
         'test',
         fields={
             'id': int,
             'x': int,
             'y': int,
-            'img': pil_image,
+            'data': pickle_serializer,
         },
     )
 
     db.apply(Table('test', schema=schema))
-
-    import PIL.Image
-
-    img = PIL.Image.open('test/material/data/test.png')
-
+    data = np.random.rand(20)
     db['test'].insert(
         [
-            Document({'id': 1, 'x': 1, 'y': 2, 'img': img}),
-            Document({'id': 2, 'x': 3, 'y': 4, 'img': img}),
+            Document({'id': 1, 'x': 1, 'y': 2, 'data': data}),
+            Document({'id': 2, 'x': 3, 'y': 4, 'data': data}),
         ]
     ).execute()
 
@@ -199,27 +160,23 @@ def test_column_encoding(db):
 
 
 def test_refer_to_system(db):
-    image = image_type(identifier='image', encodable='artifact')
-    db.apply(image)
+    db.apply(pickle_serializer)
 
-    import PIL.Image
-    import PIL.PngImagePlugin
-
-    img = PIL.Image.open('test/material/data/test.png')
-
-    db.artifact_store.put_bytes(db.datatypes['image'].encoder(img), file_id='12345')
+    db.artifact_store.put_bytes(
+        pickle_serializer.encode_data(np.random.rand(3)), file_id='12345'
+    )
 
     r = {
         '_builds': {
             'my_artifact': {
                 '_path': 'superduper.components.datatype.LazyArtifact',
                 'blob': '&:blob:12345',
-                'datatype': "&:component:datatype:image",
+                'datatype': "&:component:datatype:pickle",
             }
         },
-        'img': '?my_artifact',
+        'data': '?my_artifact',
     }
 
     r = Document.decode(r, db=db).unpack()
 
-    assert isinstance(r['img'], PIL.PngImagePlugin.PngImageFile)
+    assert isinstance(r['data'], np.ndarray)

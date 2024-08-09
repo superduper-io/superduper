@@ -495,17 +495,3 @@ class LLM(BaseLLM, _Fittable):
         else:
             # TODO where does this come from?
             self.model.load_adapter(model_id, adapter_name)
-
-    def post_create(self, db: "Datalayer") -> None:
-        """Post create hook for LLM model.
-
-        :param db: Datalayer instance
-        """
-        # TODO: Do not make sense to add this logic here,
-        # Need a auto DataType to handle this
-        from superduper.backends.ibis.data_backend import IbisDataBackend
-        from superduper.backends.ibis.field_types import dtype
-
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype("str")
-        super().post_create(db)

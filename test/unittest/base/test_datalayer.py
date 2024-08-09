@@ -580,7 +580,11 @@ def test_compound_component(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_reload_dataset(db):
+    from test.utils.setup.fake_data import add_random_data
+
     from superduper.components.dataset import Dataset
+
+    add_random_data(db, n=6)
 
     select = db['documents'].select().filter(db['documents']['_fold'] == 'valid')
 

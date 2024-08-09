@@ -69,6 +69,7 @@ class _ArtifactStoreLoader(_Loader):
         r'^mongomock:\/\/': ('local', 'base'),
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongodb:\/\/': ('mongodb', 'base'),
+        r'sqlite:': ('local', 'base'),
     }
 
 

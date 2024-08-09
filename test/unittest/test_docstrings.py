@@ -1,5 +1,4 @@
 import inspect
-import os
 import re
 
 import pytest
@@ -218,13 +217,13 @@ def extract_docstrings():
     import superduper
 
     members = list_all_members(package=superduper)
-    for subpackage in os.listdir('superduper/ext'):
-        if subpackage.startswith('_') or subpackage == 'utils.py':
-            continue
-        exec(f'import superduper.ext.{subpackage}')
-        package = eval(f'superduper.ext.{subpackage}')
-        tmp = list_all_members(package=package, prefix=f'superduper.ext.{subpackage}')
-        members.extend(tmp)
+    # for subpackage in os.listdir('superduper/ext'):
+    #     if subpackage.startswith('_') or subpackage == 'utils.py':
+    #         continue
+    #     exec(f'import superduper.ext.{subpackage}')
+    #     package = eval(f'superduper.ext.{subpackage}')
+    #     tmp = list_all_members(package=package, prefix=f'superduper.ext.{subpackage}')
+    #     members.extend(tmp)
     from superduper.misc.special_dicts import MongoStyleDict
 
     lookup = MongoStyleDict({})

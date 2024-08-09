@@ -19,6 +19,8 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+    "torch>=2.1.2",
+    "torchvision>=0.17.1",
 ]
 
 [project.urls]
@@ -30,7 +32,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_torch*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_torch.__version__"}
 
 [tool.black]
 skip-string-normalization = true

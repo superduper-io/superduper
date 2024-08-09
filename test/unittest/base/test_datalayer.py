@@ -1,23 +1,11 @@
+import dataclasses as dc
 import os
 import time
 from typing import Any, ClassVar, Optional, Sequence
+from unittest.mock import patch
 
 import numpy
 import pytest
-
-from superduper.ext.torch.training import TorchTrainer
-
-try:
-    import torch
-
-    from superduper.ext.torch.encoder import tensor
-    from superduper.ext.torch.model import TorchModel
-except ImportError:
-    torch = None
-
-
-import dataclasses as dc
-from unittest.mock import patch
 
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
@@ -32,9 +20,16 @@ from superduper.components.datatype import (
     pickle_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.components.model import ObjectModel, _Fittable
-from superduper.components.schema import Schema
+from superduper.components.model import Model, ObjectModel, Trainer, _Fittable
+from superduper.components.schema import FieldType, Schema
 from superduper.components.table import Table
+
+
+class FakeModel(Model, _Fittable):
+    """Fake model for testing."""
+
+    ...
+
 
 n_data_points = 250
 
@@ -509,16 +504,12 @@ def test_replace(db):
 
 def test_replace_with_child(db):
     db.apply(Table('docs', schema=Schema('docs', fields={'X': 'int', 'y': 'int'})))
-
-    trainer = TorchTrainer(
+    trainer = Trainer(
         identifier='trainer',
-        objective=lambda x, y: 2,
         key=('X', 'y'),
         select=db['docs'].select(),
-        max_iterations=1000,
     )
-    model = TorchModel(
-        object=torch.nn.Linear(16, 32),
+    model = FakeModel(
         identifier='m',
         trainer=trainer,
     )
@@ -533,14 +524,14 @@ def test_replace_with_child(db):
     assert 'm' in model_ids
     assert hasattr(reloaded, 'trainer')
 
-    assert isinstance(reloaded.trainer, TorchTrainer)
+    assert isinstance(reloaded.trainer, Trainer)
     assert not reloaded.metric_values
 
     model.trainer.metric_values['acc'] = [1, 2, 3]
     db.replace(model)
 
     rereloaded = db.load('model', model.identifier)
-    assert isinstance(rereloaded.trainer, TorchTrainer)
+    assert isinstance(rereloaded.trainer, Trainer)
     assert rereloaded.trainer.metric_values
 
     db.remove('table', 'docs', force=True)
@@ -548,12 +539,11 @@ def test_replace_with_child(db):
     db.metadata.get_component_version_parents(rereloaded.uuid)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_compound_component(db):
-    m = TorchModel(
-        object=torch.nn.Linear(16, 32),
+    m = ObjectModel(
+        object=lambda x: x + 1,
         identifier='my-test-module',
-        datatype=tensor(dtype='float', shape=(32,)),
+        datatype=FieldType(identifier='int'),
     )
 
     db.apply(m)
@@ -564,21 +554,20 @@ def test_compound_component(db):
     assert db.show('model', 'my-test-module') == [0]
 
     db.apply(
-        TorchModel(
-            object=torch.nn.Linear(16, 32),
+        ObjectModel(
+            object=lambda x: x + 1,
             identifier='my-test-module',
-            datatype=tensor(dtype='float', shape=(32,)),
+            datatype=FieldType(identifier='int'),
         )
     )
     assert db.show('model', 'my-test-module') == [0, 1]
 
     m = db.load(type_id='model', identifier='my-test-module')
-    assert isinstance(m.datatype, DataType)
+    assert isinstance(m.datatype, FieldType)
 
     db.remove('model', 'my-test-module', force=True)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_reload_dataset(db):
     from test.utils.setup.fake_data import add_random_data
 

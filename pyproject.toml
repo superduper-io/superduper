@@ -53,7 +53,6 @@ dependencies = [
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",
-    "ray[default]>=2.8.1",
     "uvicorn>=0.24.0",
     "fastapi>=0.103.2",
     "ibis-framework>=9.0.1",

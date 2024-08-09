@@ -19,6 +19,12 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+    "openai>=1.1.2",
+]
+
+[project.optional-dependencies]
+test = [
+    "vcrpy>=5.1.0",
 ]
 
 [project.urls]
@@ -30,7 +36,7 @@ source = "https://github.com/superduper.io/superduper/"
 include = ["superduper_openai*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
+version = {attr = "superduper_openai.__version__"}
 
 [tool.black]
 skip-string-normalization = true

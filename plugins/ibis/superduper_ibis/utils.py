@@ -5,8 +5,8 @@ from superduper.components.schema import FieldType, Schema
 SPECIAL_ENCODABLES_FIELDS = {
     "file": "String",
     "lazy_file": "String",
-    'artifact': 'String',
-    'lazy_artifact': 'String',
+    "artifact": "String",
+    "lazy_artifact": "String",
 }
 
 

@@ -13,6 +13,7 @@ def db() -> Iterator[Datalayer]:
     yield db
     db.drop(force=True, data=True)
 
+
 @pytest.fixture
 def clean():
     yield

@@ -1,3 +1,0 @@
-artifact_store: null
-data_backend: mongomock://test_db
-auto_schema: false

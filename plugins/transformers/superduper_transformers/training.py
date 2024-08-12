@@ -14,15 +14,6 @@ _, requirements = requires_packages(
 import torch
 import transformers
 from datasets import Dataset as NativeDataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    TrainerCallback,
-    TrainingArguments,
-)
-from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
-
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.build import build_datalayer
@@ -32,6 +23,14 @@ from superduper.components.dataset import Dataset
 from superduper.components.model import Trainer as SuperDuperTrainer
 from superduper.components.training import Checkpoint
 from superduper.misc.hash import random_sha1
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    TrainerCallback,
+    TrainingArguments,
+)
+from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 
 if t.TYPE_CHECKING:
     from superduper.ext.transformers.model import LLM

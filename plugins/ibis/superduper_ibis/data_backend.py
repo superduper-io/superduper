@@ -23,13 +23,13 @@ from superduper_ibis.field_types import FieldType, dtype
 from superduper_ibis.query import IbisQuery
 from superduper_ibis.utils import convert_schema_to_fields
 
-BASE64_PREFIX = 'base64:'
-INPUT_KEY = '_source'
+BASE64_PREFIX = "base64:"
+INPUT_KEY = "_source"
 
 
 def _connection_callback(uri, flavour):
-    if flavour == 'pandas':
-        uri = uri.split('://')[-1]
+    if flavour == "pandas":
+        uri = uri.split("://")[-1]
         csv_files = glob.glob(uri)
         dir_name = os.path.dirname(uri)
         tables = {}
@@ -39,12 +39,12 @@ def _connection_callback(uri, flavour):
                 df = pandas.DataFrame()
             else:
                 df = pandas.read_csv(csv_file)
-            tables[filename.split('.')[0]] = df
+            tables[filename.split(".")[0]] = df
         ibis_conn = ibis.pandas.connect(tables)
         in_memory = True
         return ibis_conn, dir_name, in_memory
     else:
-        name = uri.split('//')[0]
+        name = uri.split("//")[0]
         in_memory = False
         ibis_conn = ibis.connect(uri)
         return ibis_conn, name, in_memory
@@ -69,7 +69,7 @@ class IbisDataBackend(BaseDataBackend):
         self._setup(conn)
 
     def _setup(self, conn):
-        self.dialect = getattr(conn, 'name', 'base')
+        self.dialect = getattr(conn, "name", "base")
         self.db_helper = get_db_helper(self.dialect)
 
     def reconnect(self):
@@ -92,7 +92,7 @@ class IbisDataBackend(BaseDataBackend):
 
     def build_artifact_store(self):
         """Build artifact store for the database."""
-        return FileSystemArtifactStore(conn='.superduper/artifacts/', name='ibis')
+        return FileSystemArtifactStore(conn=".superduper/artifacts/", name="ibis")
 
     def build_metadata(self):
         """Build metadata for the database."""
@@ -129,7 +129,7 @@ class IbisDataBackend(BaseDataBackend):
                 self.conn.create_table(table_name, df)
 
             if self.conn.backend_table_type == DataFrame:
-                df.to_csv(os.path.join(self.name, table_name + '.csv'), index=False)
+                df.to_csv(os.path.join(self.name, table_name + ".csv"), index=False)
 
     def check_ready_ids(
         self, query: IbisQuery, keys: t.List[str], ids: t.Optional[t.List[t.Any]] = None
@@ -189,13 +189,13 @@ class IbisDataBackend(BaseDataBackend):
             output_type = datatype
 
         fields = {
-            INPUT_KEY: 'string',
-            'id': 'string',
-            f'{CFG.output_prefix}{predict_id}': output_type,
+            INPUT_KEY: "string",
+            "id": "string",
+            f"{CFG.output_prefix}{predict_id}": output_type,
         }
         return Table(
-            identifier=f'{CFG.output_prefix}{predict_id}',
-            schema=Schema(identifier=f'_schema/{predict_id}', fields=fields),
+            identifier=f"{CFG.output_prefix}{predict_id}",
+            schema=Schema(identifier=f"_schema/{predict_id}", fields=fields),
         )
 
     def check_output_dest(self, predict_id) -> bool:
@@ -204,7 +204,7 @@ class IbisDataBackend(BaseDataBackend):
         :param predict_id: The identifier of the prediction.
         """
         try:
-            self.conn.table(f'{CFG.output_prefix}{predict_id}')
+            self.conn.table(f"{CFG.output_prefix}{predict_id}")
             return True
         except (NoSuchTableError, ibis.IbisError):
             return False
@@ -216,13 +216,13 @@ class IbisDataBackend(BaseDataBackend):
         :param mapping: The mapping of the schema.
         """
         mapping = convert_schema_to_fields(schema)
-        if 'id' not in mapping:
-            mapping['id'] = 'string'
+        if "id" not in mapping:
+            mapping["id"] = "string"
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
         except Exception as e:
-            if 'exists' in str(e) or 'override' in str(e):
+            if "exists" in str(e) or "override" in str(e):
                 warn("Table already exists, skipping...")
                 t = self.conn.table(identifier)
             else:

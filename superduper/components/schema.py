@@ -13,8 +13,7 @@ from superduper.misc.special_dicts import SuperDuperFlatEncode
 class FieldType(Leaf):
     """Field type to represent the type of a field in a table.
 
-    This is a wrapper around ibis.expr.datatypes.DataType to make it
-    serializable.
+    This is a wrapper around native datatype
 
     :param identifier: The name of the data type.
     """

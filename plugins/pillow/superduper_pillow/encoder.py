@@ -4,7 +4,6 @@ import typing as t
 import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
-
 from superduper.components.datatype import DataType, DataTypeFactory
 from superduper.misc.annotations import component
 

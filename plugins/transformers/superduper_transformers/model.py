@@ -4,18 +4,6 @@ import typing as t
 import torch
 import transformers
 from datasets import Dataset as NativeDataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    Pipeline as BasePipeline,
-    Trainer as NativeTrainer,
-    TrainingArguments,
-    pipeline,
-    pipeline as _pipeline,
-)
-from transformers.pipelines.text_generation import ReturnType
-
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
@@ -35,6 +23,17 @@ from superduper.components.model import (
 from superduper.components.training import Checkpoint
 from superduper.ext.llm.model import BaseLLM
 from superduper.jobs.job import Job
+from transformers import (
+    AutoModelForCausalLM,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    Pipeline as BasePipeline,
+    Trainer as NativeTrainer,
+    TrainingArguments,
+    pipeline,
+    pipeline as _pipeline,
+)
+from transformers.pipelines.text_generation import ReturnType
 
 
 class _TrainerWithSaving(NativeTrainer):

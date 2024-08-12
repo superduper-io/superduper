@@ -1,8 +1,6 @@
 import typing as t
 from collections import defaultdict
 
-from bson.objectid import ObjectId
-
 from superduper import logging
 from superduper.base.code import Code
 from superduper.base.constant import (
@@ -32,7 +30,6 @@ if t.TYPE_CHECKING:
 
 
 ContentType = t.Union[t.Dict, Encodable]
-ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 LeafMetaType = t.Type['Leaf']
 
 _LEAF_TYPES = {

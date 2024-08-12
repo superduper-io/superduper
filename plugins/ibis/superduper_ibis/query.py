@@ -3,7 +3,6 @@ import uuid
 from collections import defaultdict
 
 import pandas
-
 from superduper import CFG, Document
 from superduper.backends.base.query import (
     Query,
@@ -22,7 +21,7 @@ if t.TYPE_CHECKING:
 
 
 def parse_query(
-    query, documents: t.Sequence[t.Dict] = (), db: t.Optional['Datalayer'] = None
+    query, documents: t.Sequence[t.Dict] = (), db: t.Optional["Datalayer"] = None
 ):
     """Parse a string query into a query object.
 
@@ -56,7 +55,7 @@ def _model_update_impl_flatten(
     flattened_outputs = []
     flattened_ids = []
     for output, id in zip(outputs, ids):
-        assert isinstance(output, (list, tuple)), 'Expected list or tuple'
+        assert isinstance(output, (list, tuple)), "Expected list or tuple"
         for o in output:
             flattened_outputs.append(o)
             flattened_ids.append(id)
@@ -81,38 +80,38 @@ def _model_update_impl(
     documents = []
     for output, source_id in zip(outputs, ids):
         d = {
-            '_source': str(source_id),
-            f'{CFG.output_prefix}{predict_id}': output.x
+            "_source": str(source_id),
+            f"{CFG.output_prefix}{predict_id}": output.x
             if isinstance(output, Encodable)
             else output,
-            'id': str(uuid.uuid4()),
+            "id": str(uuid.uuid4()),
         }
         documents.append(Document(d))
-    return db[f'{CFG.output_prefix}{predict_id}'].insert(documents)
+    return db[f"{CFG.output_prefix}{predict_id}"].insert(documents)
 
 
 class IbisQuery(Query):
     """A query that can be executed on an Ibis database."""
 
     flavours: t.ClassVar[t.Dict[str, str]] = {
-        'pre_like': r'^.*\.like\(.*\)\.select',
-        'post_like': r'^.*\.([a-z]+)\(.*\)\.like(.*)$',
-        'insert': r'^[^\(]+\.insert\(.*\)$',
-        'filter': r'^[^\(]+\.filter\(.*\)$',
-        'delete': r'^[^\(]+\.delete\(.*\)$',
-        'select': r'^[^\(]+\.select\(.*\)$',
-        'join': r'^.*\.join\(.*\)$',
-        'anti_join': r'^[^\(]+\.anti_join\(.*\)$',
+        "pre_like": r"^.*\.like\(.*\)\.select",
+        "post_like": r"^.*\.([a-z]+)\(.*\)\.like(.*)$",
+        "insert": r"^[^\(]+\.insert\(.*\)$",
+        "filter": r"^[^\(]+\.filter\(.*\)$",
+        "delete": r"^[^\(]+\.delete\(.*\)$",
+        "select": r"^[^\(]+\.select\(.*\)$",
+        "join": r"^.*\.join\(.*\)$",
+        "anti_join": r"^[^\(]+\.anti_join\(.*\)$",
     }
 
     # Use to control the behavior in the class construction method within LeafMeta
     __dataclass_params__: t.ClassVar[t.Dict[str, t.Any]] = {
-        'eq': False,
-        'order': False,
+        "eq": False,
+        "order": False,
     }
 
     @property
-    @applies_to('insert')
+    @applies_to("insert")
     def documents(self):
         """Return the documents."""
         return super().documents
@@ -149,7 +148,7 @@ class IbisQuery(Query):
             )
             fields.update(to_update)
 
-        return Schema(f'_tmp:{self.table}', fields=fields)
+        return Schema(f"_tmp:{self.table}", fields=fields)
 
     def renamings(self, r={}):
         """Return the renamings.
@@ -159,9 +158,9 @@ class IbisQuery(Query):
         for part in self.parts:
             if isinstance(part, str):
                 continue
-            if part[0] == 'rename':
+            if part[0] == "rename":
                 r[self.table] = part[1][0]
-            if part[0] == 'relabel':
+            if part[0] == "relabel":
                 r[self.table] = part[1][0]
             else:
                 queries = list(part[1]) + list(part[2].values())
@@ -179,7 +178,7 @@ class IbisQuery(Query):
             r.pop(KEY_BUILDS)
             r.pop(KEY_BLOBS)
             r.pop(KEY_FILES)
-            r.pop('_schema')
+            r.pop("_schema")
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid
@@ -196,17 +195,17 @@ class IbisQuery(Query):
             self._get_schema(),
         )
 
-    def _execute(self, parent, method='encode'):
+    def _execute(self, parent, method="encode"):
         q = super()._execute(parent, method=method)
         try:
             output = q.execute()
         except Exception as e:
             raise DatabackendException(
-                f'Error while executing ibis query {self}'
+                f"Error while executing ibis query {self}"
             ) from e
 
         assert isinstance(output, pandas.DataFrame)
-        output = output.to_dict(orient='records')
+        output = output.to_dict(orient="records")
         component_table = self.db.tables[self.table]
         return SuperDuperCursor(
             raw_cursor=output,
@@ -219,12 +218,12 @@ class IbisQuery(Query):
     def type(self):
         """Return the type of the query."""
         return defaultdict(
-            lambda: 'select',
+            lambda: "select",
             {
-                'replace': 'update',
-                'delete': 'delete',
-                'filter': 'select',
-                'insert': 'insert',
+                "replace": "update",
+                "delete": "delete",
+                "filter": "select",
+                "insert": "insert",
             },
         )[self.flavour]
 
@@ -292,38 +291,38 @@ class IbisQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        return self.db.databackend.conn.drop_table(f'{CFG.output_prefix}{predict_id}')
+        return self.db.databackend.conn.drop_table(f"{CFG.output_prefix}{predict_id}")
 
-    @applies_to('select')
+    @applies_to("select")
     def outputs(self, *predict_ids):
         """Return a query that selects outputs.
 
         :param predict_ids: The predict ids.
         """
         for part in self.parts:
-            if part[0] == 'select':
+            if part[0] == "select":
                 args = part[1]
                 assert (
                     self.primary_id in args
-                ), f'Primary id: `{self.primary_id}` not in select when using outputs'
+                ), f"Primary id: `{self.primary_id}` not in select when using outputs"
         query = self
         attr = getattr(query, self.primary_id)
         for identifier in predict_ids:
             identifier = (
                 identifier
                 if identifier.startswith(CFG.output_prefix)
-                else f'{CFG.output_prefix}{identifier}'
+                else f"{CFG.output_prefix}{identifier}"
             )
             symbol_table = self.db[identifier]
 
             symbol_table = symbol_table.relabel(
                 # TODO: Check for folds
-                {'_fold': f'fold.{identifier}', 'id': f'id.{identifier}'}
+                {"_fold": f"fold.{identifier}", "id": f"id.{identifier}"}
             )
             query = query.join(symbol_table, symbol_table._source == attr)
         return query
 
-    @applies_to('select', 'join')
+    @applies_to("select", "join")
     def select_ids_of_missing_outputs(self, predict_id: str):
         """Return a query that selects ids of missing outputs.
 
@@ -333,7 +332,7 @@ class IbisQuery(Query):
 
         assert isinstance(self.db, Datalayer)
 
-        output_table = self.db[f'{CFG.output_prefix}{predict_id}']
+        output_table = self.db[f"{CFG.output_prefix}{predict_id}"]
         return self.anti_join(
             output_table,
             output_table._source == getattr(self, self.primary_id),
@@ -344,7 +343,7 @@ class IbisQuery(Query):
 
         :param id: The id to select.
         """
-        filter_query = eval(f'table.{self.primary_id} == {id}')
+        filter_query = eval(f"table.{self.primary_id} == {id}")
         return self.filter(filter_query)
 
     @property
@@ -361,9 +360,9 @@ class IbisQuery(Query):
         assert isinstance(self.parts[-1], str)
         # TODO: Move to _execute
         if (
-            self.parts[-1] == 'select'
+            self.parts[-1] == "select"
             and not args
-            and not self.table.startswith('<var:')
+            and not self.table.startswith("<var:")
         ):
             # support table.select() without column args
             table = self.db.databackend.get_table_or_collection(self.table)

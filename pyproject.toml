@@ -43,23 +43,24 @@ dependencies = [
     "typer>=0.7.0",
     "pylance>=0.6.1,<=0.8.14",
     "pydantic>=1",
-    "pymongo>=4.3.3",
     "numpy>=1.24.3",
     "overrides>=7",
     "tenacity>=8.1.0,<=8.2.3",
-    "pillow>=9.4.0",
-    "mongomock>=4.1.2",
-    "sqlglot<=25.2",
     "PyYAML>=6.0.0",
     "prettytable",
     "python-dotenv",
     "uvicorn>=0.24.0",
     "fastapi>=0.103.2",
-    "ibis-framework>=9.0.1",
-    "sqlalchemy>=2.0.28",
     "ruamel.yaml>=0.18",
     "python-magic",
     "apscheduler",
+    "bson",
+]
+
+[project.optional-dependencies]
+test = [
+    "scikit-learn>=1.1.3",
+    "pandas",
 ]
 
 [project.urls]

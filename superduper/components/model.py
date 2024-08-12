@@ -4,6 +4,7 @@ import concurrent.futures
 import dataclasses as dc
 import inspect
 import multiprocessing
+from overrides import override
 import os
 import re
 import typing as t
@@ -213,6 +214,7 @@ class Trainer(Component):
         pass
 
 
+
 class Validation(Component):
     """component which represents Validation definition.
 
@@ -227,6 +229,7 @@ class Validation(Component):
     datasets: t.Sequence[Dataset] = ()
 
 
+
 @dc.dataclass(kw_only=True)
 class _Fittable:
     """Class to represent a fittable model.
@@ -236,35 +239,6 @@ class _Fittable:
 
     trainer: t.Optional[Trainer] = None
 
-    def upstream_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
-        """List all dependent job ids of the upstream."""
-        dependencies_ids: t.Sequence[str] = []
-        job_ids = self.upstream.model.jobs(db=db)
-        dependencies_ids.extend(job_ids)
-
-        dependencies = tuple([*dependencies_ids, *deps])
-        return dependencies
-
-    def schedule_jobs(self, db, dependencies=()):
-        """Database hook for scheduling jobs.
-
-        :param db: Datalayer instance.
-        :param dependencies: List of dependencies.
-        """
-        jobs = []
-
-        dependencies = self.upstream_dependencies(db, dependencies)
-
-        if self.trainer is not None:
-            assert isinstance(self.trainer, Trainer)
-            assert self.trainer.select is not None
-            jobs.append(
-                self.fit_in_db_job(
-                    db=db,
-                    dependencies=dependencies,
-                )
-            )
-        return jobs
 
     def fit_in_db_job(
         self,
@@ -288,6 +262,63 @@ class _Fittable:
         )
         job(db, dependencies)
         return job
+
+    def post_create(self, db):
+        """Post create hook for the model.
+
+        :param db: Datalayer instance.
+        """
+        db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
+        super().post_create(db)
+
+
+    def run_jobs(
+        self,
+        db: "Datalayer",
+        dependencies: t.Sequence[str] = (),
+        overwrite: bool = False,
+        events: t.Optional[t.List] = [],
+        event_type: str = 'insert',
+    ) -> t.Sequence[t.Any]:
+        """Schedule jobs for the training model.
+
+        :param db: Data layer instance to process.
+        :param dependencies: A list of dependencies.
+        :param overwrite: Overwrite the existing data.
+        :param event_type: Type of event.
+        """
+        dependencies = list(dependencies)
+        for event in events:
+            if event.from_type == 'COMPONENT':
+                dependencies.append(event.uuid)
+
+        self.fit_in_db_job(
+                    db=db,
+                    dependencies=list(set(dependencies)),
+                )
+
+
+    def schedule_jobs(self, db, dependencies=()):
+        """Database hook for scheduling jobs.
+
+        :param db: Datalayer instance.
+        :param dependencies: List of dependencies.
+        """
+        from superduper.base.event import Event
+        from superduper.base.datalayer import DBEvent
+        assert self.trainer.select is not None
+
+        data = list(self.trainer.select.execute())
+        ids = [d[self.trainer.select.primary_id] for d in data]
+        event = Event(
+            dest={'type_id': 'model.training', 'identifier': self.identifier},
+            event_type=DBEvent.insert,
+            id=ids,
+            from_type='COMPONENT',
+        )
+        
+        db.compute.broadcast([event])
+        return [event.uuid]
 
     def _create_datasets(self, X, db, select):
         train_dataset = self._create_dataset(
@@ -1121,13 +1152,6 @@ class Model(Component, metaclass=ModelMeta):
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
         db.replace(self, upsert=True)
 
-    def post_create(self, db):
-        """Post create hook for the model.
-
-        :param db: Datalayer instance.
-        """
-        db.compute.queue.declare_component(self)
-        super().post_create(db)
 
 
 @dc.dataclass(kw_only=True)

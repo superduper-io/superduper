@@ -2,7 +2,6 @@ import uuid
 import dataclasses as dc
 import typing as t
 
-from superduper.base.datalayer import DBEvent
 
 
 @dc.dataclass
@@ -26,7 +25,7 @@ class Event:
 
     src: t.Optional[_Component] = None
     from_type: str = 'DB'
-    event_type: str = DBEvent.insert
+    event_type: str = 'insert'
     uuid: str = str(uuid.uuid4())
 
     def __post_init__(self):

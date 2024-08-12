@@ -122,9 +122,9 @@ class LocalQueuePublisher(BaseQueuePublisher):
         """Build consumer client."""
         return LocalQueueConsumer()
 
-    def declare_component(self, component):
+    def declare_component(self, component, type_id: t.Optional[str] = None):
         """Declare component and add it to queue."""
-        self.components[component.type_id, component.identifier] = component
+        self.components[type_id or component.type_id, component.identifier] = component
 
     def publish(self, events: t.List[Event]):
         """
@@ -135,7 +135,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         for event in events:
             identifier = event.dest['identifier']
             type_id = event.dest['type_id']
-            self._component_map.update({'identifier': identifier, 'type_id': type_id})
+
             self.queue[type_id, identifier].append(event)
 
         return self.consumer.consume(
@@ -154,13 +154,46 @@ class LocalQueueConsumer(BaseQueueConsumer):
     def start_consuming(self):
         """Start consuming."""
 
+    def _get_components(self, db, components):
+        components = list(set(components.keys()))
+        components_to_use = []
+
+        for type_id, _ in components:
+            components_to_use+= [ (type_id, x) for x in db.show(type_id)]
+        return set(components_to_use + components)
+    
+
+    def _run_jobs(self, db, component, events, from_type='DB'):
+        from superduper.base.datalayer import DBEvent
+        jobs = []
+        for event_type, events in DBEvent.chunk_by_event(events).items():
+            if from_type == 'DB':
+                ids = [event.id for event in events]
+            else:
+                ids = []
+                for event in events:
+                    ids+=event.id
+
+            overwrite = (
+                True if event_type in [DBEvent.insert, DBEvent.upsert] else False
+            )
+            logging.info(
+                f'Running jobs for {component.type_id}::{component.identifier}'
+            )
+            logging.debug(f'Using ids: {ids}')
+            job = component.run_jobs(
+                db=db, events=events, overwrite=overwrite, event_type=event_type
+            )
+            jobs.append(job)
+        return jobs
+
+
+
     def consume(self, db: 'Datalayer', queue: t.Dict, components: t.Dict):
         """Consume the current queue and run jobs."""
-        from superduper.base.datalayer import DBEvent
 
         queue_jobs = defaultdict(lambda: [])
-        components_to_use = [('listener', x) for x in db.show('listener')]
-        components_to_use += [('vector_index', x) for x in db.show('vector_index')]
+        components_to_use = self._get_components(db, components)
         for type_id, identifier in components_to_use:
             events = queue[type_id, identifier]
             if not events:
@@ -168,20 +201,11 @@ class LocalQueueConsumer(BaseQueueConsumer):
             queue[type_id, identifier] = []
             component = components[type_id, identifier]
             jobs = []
-            for event_type, events in DBEvent.chunk_by_event(events).items():
-                ids = [event.id for event in events]
 
-                overwrite = (
-                    True if event_type in [DBEvent.insert, DBEvent.upsert] else False
-                )
-                logging.info(
-                    f'Running jobs for {component.type_id}::{component.identifier}'
-                )
-                logging.debug(f'Using ids: {ids}')
-                job = component.run_jobs(
-                    db=db, events=events, overwrite=overwrite, event_type=event_type
-                )
-                jobs.append(job)
+            component_events, db_events = Event.chunk_by_type(events)
+            jobs = self._run_jobs(db=db, component=component, events=component_events, from_type='COMPONENT')
+            jobs = self._run_jobs(db=db, component=component, events=db_events)
+
             queue_jobs[type_id, identifier].extend(jobs)
         return queue_jobs
 

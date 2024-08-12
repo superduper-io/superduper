@@ -2,14 +2,13 @@ import dataclasses as dc
 import typing as t
 
 import torch
-from torch.utils.data import DataLoader
-
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.dataset import Dataset
 from superduper.components.model import Trainer
 from superduper.ext.torch.model import TorchModel
+from torch.utils.data import DataLoader
 
 
 class TorchTrainer(Trainer):

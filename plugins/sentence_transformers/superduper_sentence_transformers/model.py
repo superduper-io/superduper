@@ -1,7 +1,6 @@
 import typing as t
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
-
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.enums import DBType
 from superduper.components.component import ensure_initialized

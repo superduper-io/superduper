@@ -3,8 +3,6 @@ import typing as t
 
 import numpy
 from sklearn.base import BaseEstimator
-from tqdm import tqdm
-
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
@@ -17,6 +15,7 @@ from superduper.components.model import (
     _Fittable,
 )
 from superduper.jobs.job import Job
+from tqdm import tqdm
 
 
 class SklearnTrainer(Trainer):

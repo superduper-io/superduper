@@ -2,7 +2,7 @@ import base64
 
 import pandas as pd
 
-BASE64_PREFIX = 'base64:'
+BASE64_PREFIX = "base64:"
 
 
 class Base64Mixin:
@@ -18,7 +18,7 @@ class Base64Mixin:
         :param data: The data to convert.
         """
         if isinstance(data, bytes):
-            return BASE64_PREFIX + base64.b64encode(data).decode('utf-8')
+            return BASE64_PREFIX + base64.b64encode(data).decode("utf-8")
         else:
             return data
 
@@ -38,8 +38,8 @@ class Base64Mixin:
         :param schema_mapping: The schema mapping to convert.
         """
         for key, value in schema_mapping.items():
-            if value == 'Bytes':
-                schema_mapping[key] = 'String'
+            if value == "Bytes":
+                schema_mapping[key] = "String"
         return schema_mapping
 
 
@@ -49,7 +49,7 @@ class DBHelper:
     :param dialect: The dialect of the database.
     """
 
-    match_dialect = 'base'
+    match_dialect = "base"
 
     def __init__(self, dialect):
         self.dialect = dialect
@@ -99,7 +99,7 @@ class ClickHouseHelper(Base64Mixin, DBHelper):
     :param dialect: The dialect of the database.
     """
 
-    match_dialect = 'clickhouse'
+    match_dialect = "clickhouse"
 
     def process_before_insert(self, table_name, datas, conn):
         """Convert byte data to base64 format for storage in the database.
@@ -108,7 +108,7 @@ class ClickHouseHelper(Base64Mixin, DBHelper):
         :param datas: The data to insert.
         """
         table_name, datas = super().process_before_insert(table_name, datas, conn)
-        return f'`{table_name}`', datas
+        return f"`{table_name}`", datas
 
 
 def get_db_helper(dialect) -> DBHelper:

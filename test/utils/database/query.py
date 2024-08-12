@@ -144,10 +144,10 @@ def test_like(db):
 def test_insert_with_auto_schema(db):
     db.cfg.auto_schema = True
     import numpy as np
-    import PIL.Image
+    import pandas as pd
 
     data = {
-        "img": PIL.Image.open("test/material/data/test.png"),
+        "df": pd.DataFrame(np.random.randn(10, 10)),
         "array": np.array([1, 2, 3]),
     }
 
@@ -160,14 +160,14 @@ def test_insert_with_auto_schema(db):
     datas_from_db = list(table_or_collection.select().execute())
 
     for d, d_db in zip(datas, datas_from_db):
-        assert d["img"].size == d_db["img"].size
+        assert d["df"].sum().sum() == d_db["df"].sum().sum()
         assert np.all(d["array"] == d_db["array"])
 
 
 def test_insert_with_diff_schemas(db):
     db.cfg.auto_schema = True
     import numpy as np
-    import PIL.Image
+    import pandas as pd
 
     table_or_collection = db["documents"]
     data = {
@@ -181,7 +181,7 @@ def test_insert_with_diff_schemas(db):
     assert np.all(datas[0]["array"] == datas_from_db[0]["array"])
 
     data = {
-        "img": PIL.Image.open("test/material/data/test.png"),
+        "df": pd.DataFrame(np.random.randn(10, 10)),
     }
     datas = [Document(data)]
 

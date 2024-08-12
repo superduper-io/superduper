@@ -54,14 +54,26 @@ jobs:
           python-version: '3.10'
           cache: 'pip' # caching pip dependencies
 
+      - name: Cache Python Installation
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
+          key: ${{ matrix.plugin }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
+
+
       - name: Install SuperDuperDB Project
         run: |
           # Install core and testsuite dependencies on the cached python environment.
-          python -m pip install .
-          python -m pip install -r deploy/installations/testenv_requirements.txt
+          python -m pip install '.[test]'
+
       - name: Install DevKit (docs, testing, etc)
         run: |
           make install_devkit
+
+      - name: Lint and type-check
+        run: |
+          make lint-and-type-check DIRECTORIES="plugins/${{ matrix.plugin }}"
+
       - name: Install Plugin
         run: |
           python -m pip install 'plugins/${{ matrix.plugin }}[test]'
@@ -75,11 +87,18 @@ jobs:
             echo "No custom CI script found, skipping..."
           fi
    
-      # - name: Lint and type-check
-      #   run: |
-      #     make lint-and-type-check
-
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./
           pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
+
+      - name: Optionally run the base testing
+        run: |
+          SUPERDUPER_CONFIG="plugins/${{ matrix.plugin }}/plugin_test/config.yaml"
+          if [ -f "$SUPERDUPER_CONFIG" ]; then
+            echo "Running the base testing..."
+            make unit_testing SUPERDUPER_CONFIG=$SUPERDUPER_CONFIG
+            make usecase_testing SUPERDUPER_CONFIG=$SUPERDUPER_CONFIG
+          else
+            echo "No config file found, skipping..."
+          fi

@@ -59,6 +59,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
     assert not vector_indexes
 
     import lorem
+
     db.execute(
         collection.insert_many(
             [Document({'text': lorem.sentence()}) for _ in range(50)]

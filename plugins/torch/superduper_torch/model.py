@@ -6,9 +6,6 @@ import typing as t
 from contextlib import contextmanager
 
 import torch
-from torch.utils import data
-from tqdm import tqdm
-
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.component import ensure_initialized
@@ -24,6 +21,8 @@ from superduper.components.model import (
     _Fittable,
 )
 from superduper.ext.torch.utils import device_of, eval, to_device
+from torch.utils import data
+from tqdm import tqdm
 
 if t.TYPE_CHECKING:
     from superduper.jobs.job import Job

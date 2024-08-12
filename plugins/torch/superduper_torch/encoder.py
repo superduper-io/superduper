@@ -2,7 +2,6 @@ import typing as t
 
 import numpy
 import torch
-
 from superduper.components.datatype import DataType, DataTypeFactory
 from superduper.ext.utils import str_shape
 from superduper.misc.annotations import component

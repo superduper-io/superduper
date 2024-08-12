@@ -13,13 +13,13 @@ CASSETTE_DIR = os.path.join(os.path.dirname(__file__), 'cassettes')
 api_url = "http://localhost:8000/generate"
 
 
-
 @pytest.fixture
 def db() -> Iterator[Datalayer]:
     db = superduper("mongomock://test_db")
 
     yield db
     db.drop(force=True, data=True)
+
 
 @pytest.fixture
 def openai_mock(monkeypatch):

@@ -61,10 +61,10 @@ jobs:
     - name: Install SuperDuperDB Project
       run: |
         # Install core and testsuite dependencies on the cached python environment.
-        python -m pip install .
+        python -m pip install '.[test]'
+        # TODO: We currently need a default plugin to run tests using MongoDB. 
+        # Once the local file database is complete, we may need to update this section.
         python -m pip install plugins/mongodb
-        python -m pip install -r deploy/installations/testenv_requirements.txt
-        
 
     - name: Install DevKit (docs, testing, etc)
       run: |
@@ -78,44 +78,6 @@ jobs:
       run: |
         make unit_testing pytest_arguments="--cov=superduper --cov-report=xml"
 
-    - name: Ext Testing
-      run: |
-        make ext_testing
-
     - name: Usecase Testing
       run: |
         make usecase_testing
-
-  # # ---------------------------------
-  # # Integration Testing
-  # # ---------------------------------
-  # integration-testing:
-  #   needs: [ 'unit_testing' ]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Build Docker Image
-  #       run: |
-  #         make build_sandbox
-  #
-  #     - name: Start Testing Environment
-  #       run: |
-  #         # Update hostnames
-  #         echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
-  #
-  #         # Run the integrated testing environment
-  #         make testenv_init
-  #         # To make sure that pytest etc. are installed in the container
-  #         docker exec testenv-sandbox-1 sh -c 'make install_devkit'
-  #
-  #     - name: Data-backend Testing
-  #       run: |
-  #         # Run the test-suite within the sandbox image from the test environment
-  #         docker exec testenv-sandbox-1 sh -c 'make databackend_testing'
-  #
-  #     - name: Shutdown Testing Environment
-  #       run: |
-  #         # Run the integrated testing environment
-  #         make testenv_shutdown

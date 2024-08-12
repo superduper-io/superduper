@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
-
 from superduper import logging
 from superduper.misc.anonymize import anonymize_url
 

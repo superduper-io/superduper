@@ -2,7 +2,6 @@ import dataclasses as dc
 import typing as t
 
 import requests
-
 from superduper import logging
 from superduper.ext.llm.model import BaseLLM, BaseLLMAPI
 

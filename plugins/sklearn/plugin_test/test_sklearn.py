@@ -22,6 +22,7 @@ def db() -> Iterator[Datalayer]:
     yield db
     db.drop(force=True, data=True)
 
+
 class Lookup(TransformerMixin):
     def __init__(self, dictionary):
         table = numpy.random.randn(len(dictionary), 32)
@@ -91,6 +92,7 @@ def test_encode_and_decode():
     assert decode_model.trainer.identifier == "my-trainer"
     assert decode_model.trainer.key == ("X", "y")
     assert decode_model.trainer.select.table == "document"
+
 
 def test_sklearn(db):
     m = Estimator(

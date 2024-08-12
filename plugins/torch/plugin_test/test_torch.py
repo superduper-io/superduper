@@ -20,6 +20,7 @@ def db() -> Iterator[Datalayer]:
     yield db
     db.drop(force=True, data=True)
 
+
 class ToDict:
     def __init__(self):
         self.dict = dict(zip(list('abcdefghiklmnopqrstuvwyz'), range(26)))

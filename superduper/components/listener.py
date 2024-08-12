@@ -209,8 +209,7 @@ class Listener(Component):
             return []
         from superduper.base.datalayer import DBEvent
         from superduper.base.event import Event
-
-        events = []
+        
 
         self.select.db = db
         ids = self.db.databackend.check_ready_ids(self.select, self._ready_keys)
@@ -219,7 +218,7 @@ class Listener(Component):
             dest={'type_id': self.type_id, 'identifier': self.identifier},
             event_type=DBEvent.insert,
             id=ids,
-            on='COMPONENT',
+            from_type='COMPONENT',
         )
 
         db.compute.broadcast([event])

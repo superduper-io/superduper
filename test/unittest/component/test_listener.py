@@ -2,13 +2,27 @@ import random
 
 import numpy as np
 import pytest
+import dataclasses as dc
 
 from superduper import Document
 from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
-from superduper.components.model import ObjectModel
+from superduper.components.model import ObjectModel, Trainer, _Fittable
+from superduper.components.dataset import Dataset
 
+class MyTrainer(Trainer):
+    training_done = False
+    def fit(self, *args, **kwargs):
+        MyTrainer.training_done = True
+
+@dc.dataclass
+class _Tmp(_Fittable, ObjectModel):
+    def schedule_jobs(self, *args, **kwargs):
+        return _Fittable.schedule_jobs(self, *args, **kwargs)
+
+    def post_create(self, *args, **kwargs):
+        return _Fittable.post_create(self, *args, **kwargs)
 
 def test_listener_serializes_properly():
     q = Query(table='test').find({}, {})
@@ -196,33 +210,32 @@ def test_listener_chaining_with_trainer(db):
     # Insert data
     insert_random()
 
-    class MyTrainer(Trainer):
-        def fit(self, *args, **kwargs):
-            ...
 
     features = ObjectModel("features", object=lambda x: x + 1)
-    trainable_model = ObjectModel("model_training_on_features", object=lambda x: x + 2)
 
-    listener1 = Listener(
+
+    trainable_model = _Tmp(identifier="trainable_model", object=lambda x: x + 2)
+
+    features_listener = Listener(
         model=features,
         select=table.select(),
         key="x",
         identifier="listener1",
         uuid="listener1",
     )
-    # db.add(listener1)
+    deps = db.apply(features_listener)
 
     trainable_model.trainer = MyTrainer(
-        'test', select=listener1.outputs_select, key=listener1.outputs
+        'test', select=features_listener.outputs_select, key=features_listener.outputs
     )
+    #trainable_model.validation = Validation(datasets=[Dataset('my-data', select=features_listener.outputs_select)])
 
     listener2 = Listener(
-        upstream=listener1,
         model=trainable_model,
-        select=listener1.outputs_select,
-        key=listener1.outputs,
+        select=features_listener.outputs_select,
+        key=features_listener.outputs,
         identifier='listener2',
         uuid='listener2',
     )
-
-    db.add(listener2)
+    db.apply(listener2, deps)
+    assert trainable_model.trainer.training_done is True

@@ -18,10 +18,12 @@ class LocalComputeBackend(ComputeBackend):
         self,
         uri: t.Optional[str] = None,
         queue: BaseQueuePublisher = LocalQueuePublisher(),
+        kwargs: t.Dict = {},
     ):
         self.__outputs: t.Dict = {}
         self.uri = uri
         self.queue = queue
+        self.kwargs = kwargs
 
     @property
     def remote(self) -> bool:

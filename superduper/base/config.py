@@ -186,7 +186,7 @@ class Compute(BaseConfig):
     """
 
     uri: t.Optional[str] = None
-    compute_kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: t.Dict = dc.field(default_factory=dict)
     backend: str = 'local'
 
 

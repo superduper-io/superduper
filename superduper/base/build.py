@@ -17,19 +17,33 @@ class _Loader:
     not_supported: t.Tuple = ()
 
     @classmethod
-    def create(cls, uri):
-        """Helper method to create metadata backend."""
+    def match(cls, uri):
+        """Check if the uri matches the pattern."""
+        plugin, flavour = None, None
         for pattern in cls.patterns:
             if re.match(pattern, uri) is not None:
-                plugin, flavour = cls.patterns[pattern]
-                if cls.not_supported and (plugin, flavour) in cls.not_supported:
-                    raise ValueError(
-                        f"{plugin} with flavour {flavour} not supported "
-                        "to create metadata store."
-                    )
-                impl = getattr(load_plugin(plugin), cls.impl)
-                return impl(uri, flavour=flavour)
-        raise ValueError(f"{cls.__name__} No support for uri: {uri}")
+                selection = cls.patterns[pattern]
+                if isinstance(selection, tuple):
+                    plugin, flavour = selection
+                else:
+                    assert isinstance(selection, str)
+                    plugin = selection
+                break
+        if plugin is None:
+            raise ValueError(f"{cls.__name__} No support for uri: {uri}")
+        return plugin, flavour
+
+    @classmethod
+    def create(cls, uri):
+        """Helper method to create metadata backend."""
+        plugin, flavour = cls.match(uri)
+        if cls.not_supported and (plugin, flavour) in cls.not_supported:
+            raise ValueError(
+                f"{plugin} with flavour {flavour} not supported "
+                "to create metadata store."
+            )
+        impl = getattr(load_plugin(plugin), cls.impl)
+        return impl(uri, flavour=flavour)
 
 
 class _MetaDataLoader(_Loader):
@@ -92,9 +106,12 @@ def _build_compute(cfg):
 
     :param cfg: SuperDuper config.
     """
-    from superduper.backends.local.compute import LocalComputeBackend
 
-    return LocalComputeBackend()
+    backend = getattr(load_plugin(cfg.cluster.compute.backend), 'ComputeBackend')
+    return backend(
+        uri=cfg.cluster.compute.uri,
+        **cfg.cluster.compute.kwargs
+    )
 
 
 def build_datalayer(cfg=None, **kwargs) -> Datalayer:

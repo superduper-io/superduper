@@ -1,6 +1,6 @@
 # Execute
 
-`db.execute` is superduper's wrapper around standard database queries:
+`db.execute` is Superduper's wrapper around standard database queries:
 
 - Inserts
 - Selects

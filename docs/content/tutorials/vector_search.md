@@ -5,9 +5,9 @@
 Since vector-search is all-the-rage right now, 
 here is the simplest possible iteration of semantic 
 text-search with a `sentence_transformers` model, 
-as an entrypoint to `superduper`.
+as an entrypoint to `Superduper`.
 
-Note that `superduper` is much-much more than vector-search
+Note that `Superduper` is much-much more than vector-search
 on text. Explore the docs to read about classical machine learning, 
 computer vision, LLMs, fine-tuning and much much more!
 :::
@@ -15,7 +15,7 @@ computer vision, LLMs, fine-tuning and much much more!
 
 First let's get some data. These data are the markdown files 
 of the very same documentation you are reading!
-You can download other sample data-sets for testing `superduper`
+You can download other sample data-sets for testing `Superduper`
 by following [these lines of code](../reusable_snippets/get_useful_sample_data).
 
 ```python

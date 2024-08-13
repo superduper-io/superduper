@@ -15,10 +15,10 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of superduper, then you should set the relevant 
+of Superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with superduper quickly.
+to get going with Superduper quickly.
 :::
 
 ```python
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to superduper
+## Connect to Superduper
 
 :::note
-Note that this is only relevant if you are running superduper in development mode.
+Note that this is only relevant if you are running Superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -324,7 +324,7 @@ datas = [{'x': d} for d in data]
 <!-- TABS -->
 ## Insert simple data
 
-After turning on auto_schema, we can directly insert data, and superduper will automatically analyze the data type, and match the construction of the table and datatype.
+After turning on auto_schema, we can directly insert data, and Superduper will automatically analyze the data type, and match the construction of the table and datatype.
 
 ```python
 from superduper import Document
@@ -508,7 +508,7 @@ query_table_or_collection = select.table_or_collection
 ```
 
 ```python
-query = "Tell me about the superduper"
+query = "Tell me about the Superduper"
 ```
 
 <!-- TABS -->
@@ -606,7 +606,7 @@ vector_search_model.predict(query=query)
 </Tabs>
 ```python
 # test the llm model
-llm.predict("Tell me about the superduper")
+llm.predict("Tell me about the Superduper")
 ```
 
 ## Answer question with LLM
@@ -655,7 +655,7 @@ You can now load the model elsewhere and make predictions using the following co
 
 ```python
 rag = db.load("model", 'context_llm')
-print(rag.predict("Tell me about the superduper")[0])
+print(rag.predict("Tell me about the Superduper")[0])
 ```
 
 <DownloadButton filename="retrieval_augmented_generation.md" />

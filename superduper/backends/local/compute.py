@@ -12,16 +12,19 @@ class LocalComputeBackend(ComputeBackend):
 
     :param uri: Optional uri param.
     :param queue: Optional pluggable queue.
+    :param kwargs: Optional kwargs.
     """
 
     def __init__(
         self,
         uri: t.Optional[str] = None,
         queue: BaseQueuePublisher = LocalQueuePublisher(),
+        kwargs: t.Dict = {},
     ):
         self.__outputs: t.Dict = {}
         self.uri = uri
         self.queue = queue
+        self.kwargs = kwargs
 
     @property
     def remote(self) -> bool:

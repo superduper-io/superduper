@@ -25,6 +25,8 @@ class FileSystemArtifactStore(ArtifactStore):
         name: t.Optional[str] = None,
         flavour: t.Optional[str] = None,
     ):
+        if conn.startswith('filesystem://'):
+            conn = conn.split('filesystem://')[-1]
         super().__init__(conn, name, flavour)
         if not os.path.exists(self.conn):
             logging.info('Creating artifact store directory')

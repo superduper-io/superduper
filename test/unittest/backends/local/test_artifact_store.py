@@ -7,7 +7,7 @@ from superduper.backends.local.artifacts import FileSystemArtifactStore
 
 @pytest.fixture
 def artifact_store(tmpdir):
-    artifact_store = FileSystemArtifactStore(tmpdir)
+    artifact_store = FileSystemArtifactStore(str(tmpdir))
     yield artifact_store
     artifact_store.drop(True)
 

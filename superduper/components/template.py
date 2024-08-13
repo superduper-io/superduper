@@ -190,6 +190,7 @@ class QueryTemplate(_BaseTemplate):
                 for k, v in self.template.items()
                 if k not in {'_blobs', 'identifier', '_path'}
             },
+            '_path': self.template['_path'],
         }
 
     def execute(self, **kwargs):

@@ -58,8 +58,8 @@ Component(self,
 | uuid | UUID of the leaf. |
 | artifacts | A dictionary of artifacts paths and `DataType` objects |
 
-Base class for all components in superduper.
+Base class for all components in `superduper`.
 
-Class to represent superduper serializable entities
+Class to represent `superduper` serializable entities
 that can be saved into a database.
 

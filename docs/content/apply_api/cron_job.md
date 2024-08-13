@@ -1,7 +1,7 @@
 # `Cron Job`
 
 - Iterate computations, queries and actions on a crontab
-- Can be deployed on superduper Enterprise
+- Can be deployed on Superduper Enterprise
 
 ***Usage pattern***
 

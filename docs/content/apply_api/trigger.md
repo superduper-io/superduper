@@ -2,7 +2,7 @@
 
 - Listen for update, inserts and deletes
 - Take a specific action contigent on these changes
-- Can be deployed on superduper Enterprise
+- Can be deployed on Superduper Enterprise
 
 ***Usage pattern***
 

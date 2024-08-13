@@ -1,6 +1,6 @@
 # Cohere
 
-`superduper` allows users to work with `cohere` API models.
+`Superduper` allows users to work with `cohere` API models.
 
 
 | Class | Description | GitHub | API-docs |

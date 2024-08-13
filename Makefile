@@ -1,6 +1,7 @@
 DIRECTORIES ?= superduper test
 SUPERDUPER_CONFIG ?= test/configs/default.yaml
 PYTEST_ARGUMENTS ?=
+PLUGIN_NAME ?=
 
 # Export directories for data and artifacts
 export SUPERDUPER_DATA_DIR ?= ~/.cache/superduper/test_data
@@ -46,49 +47,6 @@ new_release: ## Release a new version of superduper.io
 
 	# Push the specific tag
 	git push origin $(RELEASE_VERSION)
-
-
-install_devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	python -m pip install pre-commit
-
-	@echo "Download Code Quality dependencies"
-	python -m pip install black==23.3 ruff==0.4.4 mypy types-PyYAML types-requests interrogate
-
-	@echo "Download Code Testing dependencies"
-	python -m pip install pytest pytest-cov "nbval>=0.10.0"
-
-install_plugin:
-	@if [ "$(filter-out $@,$(MAKECMDGOALS))" = "all" ]; then \
-		$(MAKE) install_all_plugins; \
-	else \
-		echo "Error: Cannot find plugin '$(filter-out $@,$(MAKECMDGOALS))'"; \
-	fi
-
-install_named_plugin:
-	@if [ -f "plugins/$(PLUGIN)/pyproject.toml" ]; then \
-		python -m pip install -e "plugins/$(PLUGIN)"; \
-	else \
-		echo "Error: Plugin '$(PLUGIN)' not found."; \
-	fi
-
-install_all_plugins:
-	@plugins=""; \
-	for plugin in $$(ls plugins); do \
-		if [ "$$plugin" != "template" -a -d "plugins/$$plugin" -a -f "plugins/$$plugin/pyproject.toml" ]; then \
-			plugins="$$plugins $$plugin"; \
-		fi \
-	done; \
-	echo "Found plugins:$$plugins"; \
-	for plugin in $$plugins; do \
-		echo "Installing $$plugin..."; \
-		python -m pip install -e "plugins/$$plugin"; \
-	done
-%:
-	@:
-
-
 
 ##@ Code Quality
 

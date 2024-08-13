@@ -66,10 +66,6 @@ jobs:
         # Once the local file database is complete, we may need to update this section.
         python -m pip install plugins/mongodb
 
-    - name: Install DevKit (docs, testing, etc)
-      run: |
-        make install_devkit
-
     - name: Lint and type-check
       run: |
         make lint-and-type-check

@@ -160,7 +160,7 @@ def test_insert_with_auto_schema(db):
     datas_from_db = list(table_or_collection.select().execute())
 
     for d, d_db in zip(datas, datas_from_db):
-        assert d["df"].sum().sum() == d_db["df"].sum().sum()
+        assert d["df"].values.sum() == d_db["df"].values.sum()
         assert np.all(d["array"] == d_db["array"])
 
 

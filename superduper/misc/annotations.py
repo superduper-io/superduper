@@ -321,5 +321,19 @@ def replace_parameters(doc, placeholder: str = '!!!'):
     return '\n'.join(lines)
 
 
+def warn_plugin_deprecated(name):
+    """Warn that a plugin is deprecated.
+
+    :param name: name of the plugin
+    """
+    message = (
+        f'`superduper.ext.{name}` is deprecated '
+        'and will be removed in a future release. '
+        f'Please insteall `superduper_{name}` and use '
+        f'`from superduper_{name} import *` instead.'
+    )
+    logging.warn(message)
+
+
 if __name__ == '__main__':
     print(replace_parameters(extract_parameters.__doc__))

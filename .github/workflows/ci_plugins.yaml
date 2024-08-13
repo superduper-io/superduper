@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  prepare_matrix:
+  plugin_update_check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -38,11 +38,11 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
   test_plugin:
-    needs: prepare_matrix
+    needs: plugin_update_check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{fromJson(needs.prepare_matrix.outputs.matrix)}}
+      matrix: ${{fromJson(needs.plugin_update_check.outputs.matrix)}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -66,27 +66,22 @@ jobs:
           # Install core and testsuite dependencies on the cached python environment.
           python -m pip install '.[test]'
 
-      - name: Install DevKit (docs, testing, etc)
-        run: |
-          make install_devkit
-
       - name: Lint and type-check
         run: |
           make lint-and-type-check DIRECTORIES="plugins/${{ matrix.plugin }}"
 
       - name: Install Plugin
         run: |
-          python -m pip install 'plugins/${{ matrix.plugin }}[test]'
+          echo "Installing local plugin dependencies..."
+          grep -o '#\s*:CI:\s*plugins/.*' plugins/${{ matrix.plugin }}/pyproject.toml | while read line; do
+            dep_path=${line##*# :CI: }
+            dep_path=${dep_path%%[[:space:]]*}
+            echo "Installing $dep_path for testing..."
+            python -m pip install "$dep_path[test]"
+          done
+          echo "Installing plugin..."
+          python -m pip install "plugins/${{ matrix.plugin }}[test]"
 
-      - name: Optionally run custom CI script
-        run: |
-          if [ -f "plugins/${{ matrix.plugin }}/.ci_extend.sh" ]; then
-            echo "Running custom CI script..."
-            bash ./plugins/${{ matrix.plugin }}/.ci_extend.sh
-          else
-            echo "No custom CI script found, skipping..."
-          fi
-   
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./

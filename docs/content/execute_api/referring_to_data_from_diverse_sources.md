@@ -4,8 +4,8 @@ sidebar_position: 15
 
 # Working with external data sources
 
-superduper supports data added from external data-sources.
-When doing this, `superduper` supports:
+Superduper supports data added from external data-sources.
+When doing this, `Superduper` supports:
 
 - web URLs
 - URIs of objects in `s3` buckets

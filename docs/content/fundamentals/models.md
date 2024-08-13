@@ -6,7 +6,7 @@ sidebar_position: 5
 
 ## Predictors
 
-The base class which enables predictions in `superduper` is the `Predictor` mixin class.
+The base class which enables predictions in `Superduper` is the `Predictor` mixin class.
 
 A `Predictor` is a class which implements the `.predict` method; this mimics `.predict` from 
 [Scikit-Learn](https://scikit-learn.org/stable/) and related frameworks, but has support

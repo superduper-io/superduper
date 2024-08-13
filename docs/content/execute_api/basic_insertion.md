@@ -1,6 +1,6 @@
 # Basic insertion
 
-superduper supports inserting data wrapped as dictionaries in Python.
+Superduper supports inserting data wrapped as dictionaries in Python.
 These dictionaries may contain basic JSON-compatible data, but also 
 other data-types to be handled with `DataType` components. All data inserts are wrapped with the `Document` wrapper:
 

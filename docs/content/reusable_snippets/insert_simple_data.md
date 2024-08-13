@@ -10,7 +10,7 @@ import DownloadButton from '../downloadButton.js';
 <!-- TABS -->
 # Insert simple data
 
-After turning on auto_schema, we can directly insert data, and superduper will automatically analyze the data type, and match the construction of the table and datatype.
+After turning on auto_schema, we can directly insert data, and Superduper will automatically analyze the data type, and match the construction of the table and datatype.
 
 ```python
 from superduper import Document

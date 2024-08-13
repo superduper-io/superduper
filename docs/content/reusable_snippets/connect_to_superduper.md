@@ -8,10 +8,10 @@ import DownloadButton from '../downloadButton.js';
 
 
 <!-- TABS -->
-# Connect to superduper
+# Connect to Superduper
 
 :::note
-Note that this is only relevant if you are running superduper in development mode.
+Note that this is only relevant if you are running Superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 

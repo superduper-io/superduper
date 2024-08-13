@@ -23,6 +23,12 @@ dependencies = [
     "torchvision>=0.17.1",
 ]
 
+[project.optional-dependencies]
+test = [
+    # Annotation plugin dependencies will be installed in CI
+    # :CI: plugins/mongodb
+]
+
 [project.urls]
 homepage = "https://www.superduper.com/"
 documentation = "https://docs.superduper.com"

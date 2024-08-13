@@ -1,7 +1,7 @@
 # Llama.cpp
 
 
-`superduper` allows users to work with self-hosted LLM models via "[Llama.cpp](https://github.com/ggerganov/llama.cpp)".
+`Superduper` allows users to work with self-hosted LLM models via "[Llama.cpp](https://github.com/ggerganov/llama.cpp)".
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |

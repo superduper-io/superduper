@@ -1,7 +1,7 @@
 # vLLM
 
 
-`superduper` allows users to work with self-hosted LLM models via "[vLLM](https://github.com/vllm-project/vllm)".
+`Superduper` allows users to work with self-hosted LLM models via "[vLLM](https://github.com/vllm-project/vllm)".
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |

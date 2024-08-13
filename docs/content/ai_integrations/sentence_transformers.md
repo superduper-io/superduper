@@ -1,6 +1,6 @@
 # Sentence-Transformers
 
-`superduper` allows users to work with self-hosted embedding models via "[Sentence-Transformers](https://sbert.net/)".
+`Superduper` allows users to work with self-hosted embedding models via "[Sentence-Transformers](https://sbert.net/)".
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |

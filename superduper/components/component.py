@@ -85,6 +85,10 @@ class Component(Leaf):
     :param artifacts: A dictionary of artifacts paths and `DataType` objects
     :param upstream: A list of upstream components
     :param plugins: A list of plugins to be used in the component.
+    :param cache: (Optional) If set `true` the component will not be cached
+                  during primary job of the component i.e on a distributed
+                  cluster this component will be reloaded on every component
+                  task e.g model prediction.
     """
 
     type_id: t.ClassVar[str] = 'component'
@@ -95,6 +99,7 @@ class Component(Leaf):
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
+    cache: t.Optional[bool] = False
 
     @property
     def children(self):

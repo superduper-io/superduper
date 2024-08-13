@@ -19,7 +19,7 @@ class LocalComputeBackend(ComputeBackend):
         self,
         uri: t.Optional[str] = None,
         queue: BaseQueuePublisher = LocalQueuePublisher(),
-        kwargs: t.Dict = {},
+        **kwargs,
     ):
         self.__outputs: t.Dict = {}
         self.uri = uri

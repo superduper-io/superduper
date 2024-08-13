@@ -15,10 +15,10 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of superduper, then you should set the relevant 
+of Superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with superduper quickly.
+to get going with Superduper quickly.
 :::
 
 ```python
@@ -159,7 +159,7 @@ with open(os.environ['SUPERDUPER_CONFIG'], 'w') as f:
 ## Start your cluster
 
 :::note
-Starting a superduper cluster is useful in production and model development
+Starting a Superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to superduper
+## Connect to Superduper
 
 :::note
-Note that this is only relevant if you are running superduper in development mode.
+Note that this is only relevant if you are running Superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -449,7 +449,7 @@ Example input_text and output_text
 <!-- TABS -->
 ## Insert simple data
 
-After turning on auto_schema, we can directly insert data, and superduper will automatically analyze the data type, and match the construction of the table and datatype.
+After turning on auto_schema, we can directly insert data, and Superduper will automatically analyze the data type, and match the construction of the table and datatype.
 
 ```python
 from superduper import Document

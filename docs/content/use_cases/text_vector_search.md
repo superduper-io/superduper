@@ -15,10 +15,10 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of superduper, then you should set the relevant 
+of Superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with superduper quickly.
+to get going with Superduper quickly.
 :::
 
 ```python
@@ -159,7 +159,7 @@ with open(os.environ['SUPERDUPER_CONFIG'], 'w') as f:
 ## Start your cluster
 
 :::note
-Starting a superduper cluster is useful in production and model development
+Starting a Superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 
@@ -181,10 +181,10 @@ If you don't need this, then it is simpler to start in development mode.
     </TabItem>
 </Tabs>
 <!-- TABS -->
-## Connect to superduper
+## Connect to Superduper
 
 :::note
-Note that this is only relevant if you are running superduper in development mode.
+Note that this is only relevant if you are running Superduper in development mode.
 Otherwise refer to "Configuring your production system".
 :::
 
@@ -324,7 +324,7 @@ datas = [{'x': d} for d in data]
 <!-- TABS -->
 ## Create datatype
 
-SuperduperDB supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
+Superduper supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
 
 It also supports custom data conversion methods for transforming data, such as defining the following Datatype.
 
@@ -551,7 +551,7 @@ query_table_or_collection = select.table_or_collection
 ```python
 from superduper import Document
 # Perform the vector search based on the query
-item = Document({indexing_key: "Tell me about the superduper"})
+item = Document({indexing_key: "Tell me about the Superduper"})
 ```
 
 ```python

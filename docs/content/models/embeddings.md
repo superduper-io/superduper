@@ -1,6 +1,6 @@
 # Creating embeddings
 
-superduper supports a number of embedding models which may be used to create
+Superduper supports a number of embedding models which may be used to create
 vectors ready for downstream tasks, including vector-search
 
 Here is an overview of pre-packaged embedding models:

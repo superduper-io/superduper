@@ -1,6 +1,6 @@
 # Configuring models to ingest features from other models
 
-There are two ways to connect models in `superduper`:
+There are two ways to connect models in `Superduper`:
 
 - via interdependent `Listeners`
 - via the `Graph` component

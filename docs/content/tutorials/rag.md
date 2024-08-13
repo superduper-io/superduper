@@ -2,12 +2,12 @@
 # Basic RAG tutorial
 
 :::info
-In this tutorial we show you how to do retrieval augmented generation (RAG) with `uperduper`.
-Note that this is just an example of the flexibility and power which `superduper` gives 
-to developers. `superduper` is about much more than RAG and LLMs. 
+In this tutorial we show you how to do retrieval augmented generation (RAG) with `superduper`.
+Note that this is just an example of the flexibility and power which `Superduper` gives 
+to developers. `Superduper` is about much more than RAG and LLMs. 
 :::
 
-As in the vector-search tutorial we'll use `superduper` documentation for the tutorial.
+As in the vector-search tutorial we'll use `Superduper` documentation for the tutorial.
 We'll add this to a testing database by downloading the data snapshot:
 
 ```python
@@ -111,7 +111,7 @@ The `RetrievalPrompt` component takes a query with a "free" variable as input, s
 This gives users great flexibility with regard to how they fetch the context
 for their downstream models.
 
-We're using OpenAI, but you can use any type of LLm with `superduper`. We have several 
+We're using OpenAI, but you can use any type of LLm with `Superduper`. We have several 
 native integrations (see [here](../ai_integraitons/)) but you can also [bring your own model](../models/bring_your_own_models.md).
 
 ```python
@@ -150,7 +150,7 @@ seq.predict('Tell be about vector-indexes')
 </details>
 
 :::tip
-Did you know you can use any tools from the Python ecosystem with `superduper`.
+Did you know you can use any tools from the Python ecosystem with `Superduper`.
 That includes `langchain` and `llamaindex` which can be very useful for RAG applications.
 :::
 

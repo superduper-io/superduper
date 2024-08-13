@@ -1,6 +1,6 @@
-# Core superduper usage
+# Core Superduper usage
 
-In this section we walk through how to perform the key operations with superduper.
+In this section we walk through how to perform the key operations with Superduper.
 There are three key patterns C-A-E:
 
 ***Connect***

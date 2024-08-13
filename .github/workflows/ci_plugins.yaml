@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    paths:  # run this action only when the docs folder is changed
+      - 'plugins/**'
 
 jobs:
   plugin_update_check:
@@ -85,7 +87,11 @@ jobs:
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./
-          pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
+          if [ -f "plugins/${{ matrix.plugin }}/plugin_test" ]; then
+            pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
+          else
+            echo "Skipping tests for ${{ matrix.plugin }}, no test file found."
+          fi
 
       - name: Optionally run the base testing
         run: |

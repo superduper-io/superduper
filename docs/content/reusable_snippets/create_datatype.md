@@ -10,7 +10,7 @@ import DownloadButton from '../downloadButton.js';
 <!-- TABS -->
 # Create datatype
 
-SuperduperDB supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
+Superduper supports automatic data conversion, so users don’t need to worry about the compatibility of different data formats (`PIL.Image`, `numpy.array`, `pandas.DataFrame`, etc.) with the database.
 
 It also supports custom data conversion methods for transforming data, such as defining the following Datatype.
 

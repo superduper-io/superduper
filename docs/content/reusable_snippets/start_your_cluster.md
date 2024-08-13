@@ -11,7 +11,7 @@ import DownloadButton from '../downloadButton.js';
 # Start your cluster
 
 :::note
-Starting a superduper cluster is useful in production and model development
+Starting a Superduper cluster is useful in production and model development
 if you want to enable scalable compute, access to the models by multiple users for collaboration, 
 monitoring.
 

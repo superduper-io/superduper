@@ -12,10 +12,10 @@ import DownloadButton from '../downloadButton.js';
 
 :::note
 If you would like to use the production features 
-of superduper, then you should set the relevant 
+of Superduper, then you should set the relevant 
 connections and configurations in a configuration 
 file. Otherwise you are welcome to use "development" mode 
-to get going with superduper quickly.
+to get going with Superduper quickly.
 :::
 
 ```python

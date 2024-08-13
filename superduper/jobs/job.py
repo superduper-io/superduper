@@ -187,7 +187,7 @@ class ComponentJob(Job):
         db: t.Optional['Datalayer'] = None,
         component: 'Component' = None,
     ):
-        self.compute_kwargs = compute_kwargs or CFG.cluster.compute.compute_kwargs
+        self.compute_kwargs = compute_kwargs or CFG.cluster.compute.kwargs
 
         super().__init__(args=args, kwargs=kwargs, db=db, identifier=identifier)
 

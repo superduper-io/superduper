@@ -181,12 +181,12 @@ class Compute(BaseConfig):
     """Describes the configuration for distributed computing.
 
     :param uri: The URI for the compute service.
-    :param compute_kwargs: The keyword arguments to pass to the compute service.
+    :param kwargs: The keyword arguments to pass to the compute service.
     :param backend: Compute backend.
     """
 
     uri: t.Optional[str] = None
-    compute_kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: t.Dict = dc.field(default_factory=dict)
     backend: str = 'local'
 
 

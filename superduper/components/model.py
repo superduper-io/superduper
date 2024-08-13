@@ -504,7 +504,7 @@ class Model(Component, metaclass=ModelMeta):
         super().__post_init__(db, artifacts)
         from superduper import CFG
 
-        compute_kwargs = CFG.cluster.compute.compute_kwargs
+        compute_kwargs = CFG.cluster.compute.kwargs
         self.compute_kwargs = self.compute_kwargs or compute_kwargs
         self._is_initialized = False
         if not self.identifier:

@@ -25,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move all plugins superduperdb/ext/* to /plugins
 - Optimize the logic for file saving and retrieval in the artifact_store.
 
-
-
 #### New Features & Functionality
 
 - Modify the field name output to _outputs.predict_id in the model results of Ibis.
@@ -40,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the prefix of the output string configurable
 - Add testing utils for plugins
 - Add `cache` field in Component
-
 
 #### Bug Fixes
 

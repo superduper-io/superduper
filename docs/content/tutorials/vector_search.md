@@ -51,7 +51,7 @@ print(data[0])
     - **...bespoke in house data**
     
     Most databases don't support any data other than numbers and text.
-    superduper enables the use of these more interesting data-types using the `Document` wrapper.
+    Superduper enables the use of these more interesting data-types using the `Document` wrapper.
     
     ### `Document`
     
@@ -130,8 +130,8 @@ print(data[0])
 </pre>
 </details>
 
-Now we connect to superduper, using MongoMock as a databackend.
-Read more about connecting to superduper [here](../core_api/connect) and
+Now we connect to Superduper, using MongoMock as a databackend.
+Read more about connecting to Superduper [here](../core_api/connect) and
 a semi-exhaustive list of supported data-backends for connecting [here](../reusable_snippets/connect_to_superduper).
 
 ```python
@@ -174,7 +174,7 @@ db.show()
 
 We are going to make these data searchable by activating a [`Model`](../apply_api/model) instance 
 to compute vectors for each item inserted to the `"documents"` collection.
-For that we'll use the [sentence-transformers](https://sbert.net/) integration to `superduper`.
+For that we'll use the [sentence-transformers](https://sbert.net/) integration to `Superduper`.
 Read more about the `sentence_transformers` integration [here](../ai_integrations/sentence_transformers)
 and [here](../../api/ext/sentence_transformers/).
 
@@ -744,7 +744,7 @@ db.apply(vector_index)
 </pre>
 </details>
 
-The `db.apply` command is a universal command for activating AI components in superduper.
+The `db.apply` command is a universal command for activating AI components in Superduper.
 
 You will now see lots of output - the model-outputs/ vectors are computed 
 and the various parts of the `VectorIndex` are registered in the system.
@@ -1200,12 +1200,12 @@ for r in cursor:
     
     # Vector-search
     
-    superduper allows users to implement vector-search in their database by either 
+    Superduper allows users to implement vector-search in their database by either 
     using in-database functionality, or via a sidecar implementation with `lance` and `FastAPI`.
     
     ## Philosophy
     
-    In `superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
+    In `Superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
     using the system:
     
     - The vector-preparation is exactly the same as preparing outputs with any model, 
@@ -1303,7 +1303,7 @@ for r in cursor:
     ====================================================================================================
     # Sidecar vector-comparison integration
     
-    For databases which don't have their own vector-search implementation, `superduper` offers 
+    For databases which don't have their own vector-search implementation, `Superduper` offers 
     2 integrations:
     
     - In memory vector-search
@@ -1325,7 +1325,7 @@ for r in cursor:
     
     In this case, whenever a developer executes a vector-search query including `.like`, 
     execution of the similarity and sorting computations of vectors is outsourced to 
-    a sidecar implementation which is managed by `superduper`.
+    a sidecar implementation which is managed by `Superduper`.
     ====================================================================================================
 
 </pre>
@@ -1334,4 +1334,4 @@ for r in cursor:
 You should see that the documents returned are relevant to the `like` part of the 
 query.
 
-Learn more about building queries with `superduper` [here](../execute_api/overview.md).
+Learn more about building queries with `Superduper` [here](../execute_api/overview.md).

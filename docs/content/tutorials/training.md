@@ -2,7 +2,7 @@
 # Training and Managing MNIST Predictions with superduper
 
 :::note
-This tutorial guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using superduper.
+This tutorial guides you through the implementation of a classic machine learning task: MNIST handwritten digit recognition. The twist? We perform the task directly on data hosted in a database using Superduper.
 :::
 
 This example makes it easy to connect any of your image recognition models directly to your database in real-time. 
@@ -16,7 +16,7 @@ This example makes it easy to connect any of your image recognition models direc
 
 </details>
 
-First, we need to establish a connection to a MongoDB datastore via superduper. 
+First, we need to establish a connection to a MongoDB datastore via Superduper. 
 
 ```python
 from superduper import superduper
@@ -41,7 +41,7 @@ db = superduper('mongomock://')
 </pre>
 </details>
 
-After establishing a connection to MongoDB, the next step is to load the MNIST dataset. superduper's strength lies in handling diverse data types, especially those that are not supported by standard databases. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
+After establishing a connection to MongoDB, the next step is to load the MNIST dataset. Superduper's strength lies in handling diverse data types, especially those that are not supported by standard databases. To achieve this, we use an `Encoder` in conjunction with `Document` wrappers. These components allow Python dictionaries containing non-JSONable or bytes objects to be seamlessly inserted into the underlying data infrastructure.
 
 ```python
 import torchvision
@@ -995,9 +995,9 @@ r.unpack()['img'].resize((300, 300))
 <div>![](/training/8_0.png)</div>
 </details>
 
-Following that, we build our machine learning model. superduper conveniently supports various frameworks, and for this example, we opt for PyTorch, a suitable choice for computer vision tasks. In this instance, we combine `torch` with `torchvision`.
+Following that, we build our machine learning model. Superduper conveniently supports various frameworks, and for this example, we opt for PyTorch, a suitable choice for computer vision tasks. In this instance, we combine `torch` with `torchvision`.
 
-To facilitate communication with the superduper `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then wrapped with the `TorchModel` wrapper to create a native superduper object.
+To facilitate communication with the Superduper `Datalayer`, we design `postprocess` and `preprocess` functions. These functions are then wrapped with the `TorchModel` wrapper to create a native Superduper object.
 
 ```python
 from superduper.ext.torch import TorchModel
@@ -1078,7 +1078,7 @@ model.predict(data[0]['img'])
 </pre>
 </details>
 
-Now we are ready to "train" or "fit" the model. Trainable models in superduper come with a sklearn-like `.fit` method,
+Now we are ready to "train" or "fit" the model. Trainable models in Superduper come with a sklearn-like `.fit` method,
 which developers may implement for their specific model class. `torch` models come with a pre-configured
 `TorchTrainer` class and `.fit` method. These may be invoked simply by "applying" the model to `db`:
 

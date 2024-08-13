@@ -1,9 +1,9 @@
 # SuperDuper Protocol
 
-`superduper` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
+`Superduper` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
 The mapping is fairly self-explanatory after reading the examples below.
 
-## Writing in superduper-protocol directly
+## Writing in Superduper-protocol directly
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -152,9 +152,9 @@ import TabItem from '@theme/TabItem';
     </TabItem>
 </Tabs>
 
-## Converting a `Component` to superduper-protocol
+## Converting a `Component` to Superduper-protocol
 
-All components may be converted to *superduper-protocol* using the `Component.encode` method:
+All components may be converted to *Superduper-protocol* using the `Component.encode` method:
 
 ```python
 encoding = vector_index.encode()

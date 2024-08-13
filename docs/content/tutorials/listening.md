@@ -2,7 +2,7 @@
 # Listening for new data
 
 :::note
-In superduper, AI models may be configured to listen for newly inserted data.
+In Superduper, AI models may be configured to listen for newly inserted data.
 Outputs will be computed over that data and saved back to the data-backend.
 :::
 

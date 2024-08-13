@@ -2,7 +2,7 @@
 # Basic RAG tutorial
 
 :::info
-In this tutorial we show you how to do retrieval augmented generation (RAG) with `superduper`.
+In this tutorial we show you how to do retrieval augmented generation (RAG) with `uperduper`.
 Note that this is just an example of the flexibility and power which `superduper` gives 
 to developers. `superduper` is about much more than RAG and LLMs. 
 :::

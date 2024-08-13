@@ -6,7 +6,7 @@ tags:
 
 # Configure
 
-superduper provides a range of configurable options for setting
+Superduper provides a range of configurable options for setting
 up your environment:
 
 Configurations can either be injected:

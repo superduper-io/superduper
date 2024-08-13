@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Running non-blocking Ray computations in the background
 
-`superduper` offers the possiblity to run all long running blocking jobs in the background via `ray`.
+`Superduper` offers the possiblity to run all long running blocking jobs in the background via `ray`.
 Read about the `ray` project [here](https://www.ray.io/).
 
 To configure this feature, configure:

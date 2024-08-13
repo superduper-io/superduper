@@ -1,6 +1,6 @@
 # MongoDB select queries
 
-superduper supports the `pymongo` query API to build select queries.
+Superduper supports the `pymongo` query API to build select queries.
 There is one slight difference however, since queries built with `pymongo`'s formalism
 are executed lazily:
 

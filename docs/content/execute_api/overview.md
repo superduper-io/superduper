@@ -1,11 +1,11 @@
 # Execute API
 
-superduper implements 2 main classes of `db.databackend`:
+Superduper implements 2 main classes of `db.databackend`:
 
 - [MongoDB](../data_integrations/mongodb)
 - [SQL backends](../data_integrations/sql)
 
-Correspondingly, superduper currently has 2 flavours of query API:
+Correspondingly, Superduper currently has 2 flavours of query API:
 
 - [`pymongo`](https://pymongo.readthedocs.io/en/stable/)
 - [`ibis`](https://ibis-project.org/)

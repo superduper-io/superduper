@@ -4,12 +4,12 @@ sidebar_position: 7
 
 # Vector-search
 
-superduper allows users to implement vector-search in their database by either 
+Superduper allows users to implement vector-search in their database by either 
 using in-database functionality, or via a sidecar implementation with `lance` and `FastAPI`.
 
 ## Philosophy
 
-In `superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
+In `Superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
 using the system:
 
 - The vector-preparation is exactly the same as preparing outputs with any model, 

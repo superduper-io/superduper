@@ -4,17 +4,17 @@ sidebar_position: 3
 
 # Datalayer
 
-The `Datalayer` is the principle point of entry in `superduper` for:
+The `Datalayer` is the principle point of entry in `Superduper` for:
 
 - Communicating with the database
 - Instructing models and other components to work together with the database
-- Accessing and storing meta-data about your `superduper` models and data
+- Accessing and storing meta-data about your `Superduper` models and data
 
 Technically, the `Datalayer` "wires together" several important backends involved in the AI workflow:
 
 - Querying the database via the **databackend**
 - Storing and retrieving serialized model-weights and other artifacts from the **artifact store**
-- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `superduper`
+- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `Superduper`
 - Performing computations over the data in the **databackend** using the models saved in the **artifact store**
 
 ```python
@@ -40,9 +40,9 @@ connections/ engines.
 
 ### Data-backend
 
-The databackend typically connects to your database (although `superduper` also supports other databackends such as a directory of `pandas` dataframes), 
+The databackend typically connects to your database (although `Superduper` also supports other databackends such as a directory of `pandas` dataframes), 
 and dispatches queries written in an query API which is compatible with that databackend, but which also includes additional aspects
-specific to `superduper`.
+specific to `Superduper`.
 
 Read more [here](../data_integrations/supported_query_APIs.md).
 
@@ -196,4 +196,4 @@ Validate your components (mostly models)
 
 ### `db.predict`
 
-Infer predictions from models hosted by `superduper`. Read more about this and about models [here](../apply_api/model.md).
+Infer predictions from models hosted by `Superduper`. Read more about this and about models [here](../apply_api/model.md).

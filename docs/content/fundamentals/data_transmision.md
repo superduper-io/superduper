@@ -14,7 +14,7 @@ In AI, typical types of data are:
 - **...bespoke in house data**
 
 Most databases don't support any data other than numbers and text.
-superduper enables the use of these more interesting data-types using the `Document` wrapper.
+Superduper enables the use of these more interesting data-types using the `Document` wrapper.
 
 ### `Document`
 

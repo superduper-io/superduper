@@ -1,6 +1,6 @@
 # (Optional) Setting up tables and encodings
 
-`superduper` has flexible support for data-types. In both MongoDB and SQL databases,
+Superduper has flexible support for data-types. In both MongoDB and SQL databases,
 one can uses `superduper.DataType` to define one's own data-types.
 
 If no-datatypes are provided, `superduper` [uses fallbacks](./auto_data_types.md) to encode and decode data.

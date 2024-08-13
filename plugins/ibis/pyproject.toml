@@ -19,12 +19,14 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
-  "ibis-framework>=9.0.1"
+  "ibis-framework[sqlite]>=9.0.1",
+  "click",
+  'pandas',
+  "sqlalchemy"
 ]
 
 [project.optional-dependencies]
 test = [
-    "ibis-framework[sqlite]>=5.1.0",
     # Annotation plugin dependencies will be installed in CI
     # :CI: plugins/sqlalchemy
 ]

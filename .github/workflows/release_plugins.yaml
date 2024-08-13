@@ -1,0 +1,81 @@
+name: Release in Pypi/DockerHub
+on:
+  push:
+    branches:
+      - main
+    paths:  # run this action only when the docs folder is changed
+      - 'plugins/**'
+
+jobs:
+  plugin_update_check:
+    if: ${{ startsWith(github.event.head_commit.message, '[PLUGINS] Bump Version') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract plugin names from commit message
+        id: set-matrix
+        run: |
+          commit_message="${{ github.event.head_commit.message }}"
+          echo "Commit message: $commit_message"
+          plugin_names=$(echo "$commit_message" | grep -oP '\[PLUGINS\] Bump Version \[\K[^\]]+')
+          
+          if [[ "$plugin_names" == "all" ]]; then
+            echo "Processing all plugins..."
+            plugin_list=$(find plugins/* -maxdepth 0 -type d ! -name 'template' -exec basename {} \;)
+          else
+            # Remove spaces around '|', then split by '|'
+            plugin_names=$(echo "$plugin_names" | sed 's/ *| */|/g')
+            IFS='|' read -ra plugins <<< "$plugin_names"
+            plugin_list=("${plugins[@]}")
+          fi
+          matrix_json=$(printf '%s\n' "${plugin_list[@]}" | jq -R -s -c '{plugin: split("\n")[:-1]}')
+          echo "matrix_json=$matrix_json"
+          echo "Matrix JSON: $matrix_json"
+          echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  release_plugin:
+    needs: plugin_update_check
+    runs-on: ubuntu-latest
+    environment: publish-pypi
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.plugin_update_check.outputs.matrix)}}
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+ 
+      - name: Install dependencies
+        run: python -m pip install --upgrade build
+
+      - name: Build
+        run: python -m build plugins/${{ matrix.plugin }}
+
+
+      - name: Test package
+        run: |
+          python -m pip install '.'
+          python -m pip install plugins/${{ matrix.plugin }}/dist/*.whl
+          python -c "import superduper_${{ matrix.plugin }} as p; print(p.__version__)"
+
+      - uses: actions/download-artifact@v3
+      # Try uploading to Test PyPI first, in case something fails.
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: plugins/${{ matrix.plugin }}/dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: plugins/${{ matrix.plugin }}/dist/

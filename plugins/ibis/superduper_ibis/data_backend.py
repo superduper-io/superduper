@@ -12,7 +12,6 @@ from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.local.artifacts import FileSystemArtifactStore
-from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduper.base.enums import DBType
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
@@ -96,6 +95,7 @@ class IbisDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build metadata for the database."""
+        from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 
         def callback():
             return self.conn.con, self.name

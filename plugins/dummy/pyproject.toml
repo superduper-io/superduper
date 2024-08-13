@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "superduper_mongodb"
+name = "superduper_dummy"
 readme = "README.md"
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
@@ -19,9 +19,6 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
-    "mongomock",
-    "pymongo",
-    "click",
 ]
 
 [project.urls]
@@ -30,10 +27,10 @@ documentation = "https://docs.superduper.com"
 source = "https://github.com/superduper.io/superduper/"
 
 [tool.setuptools.packages.find]
-include = ["superduper_mongodb*"]
+include = ["superduper_dummy*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "superduper_mongodb.__version__"}
+version = {attr = "superduper_dummy.__version__"}
 
 [tool.black]
 skip-string-normalization = true

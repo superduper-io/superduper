@@ -23,7 +23,7 @@ For a semi-exhaustive list of possible connections see [here](../reusable_snippe
 
 ### Fine grained configuration
 
-Superduper chooses default `artifact_store` (file blob storage) and `metadata_store` (AI metadata) values for your connection. These defaults may be overridden directly:
+`superduper` chooses default `artifact_store` (file blob storage) and `metadata_store` (AI metadata) values for your connection. These defaults may be overridden directly:
 
 ```python
 db = superduper(

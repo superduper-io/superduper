@@ -2,7 +2,8 @@ from test.utils.database import metadata as metadata_utils
 
 import pytest
 from superduper import CFG
-from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+
+from superduper_sqlalchemy.metadata import SQLAlchemyMetadata
 
 DATABASE_URL = CFG.metadata_store or "sqlite:///:memory:"
 

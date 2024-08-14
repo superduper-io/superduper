@@ -8,9 +8,9 @@ from superduper.base.datalayer import Datalayer
 from superduper.components.datatype import DataType
 from superduper.components.metric import Metric
 from superduper.components.model import Validation
-from superduper.ext.torch.training import TorchTrainer
 
 from superduper_torch.model import TorchModel
+from superduper_torch.training import TorchTrainer
 
 
 @pytest.fixture

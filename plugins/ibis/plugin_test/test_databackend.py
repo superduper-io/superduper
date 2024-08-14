@@ -2,7 +2,8 @@ from test.utils.database import databackend as db_utils
 
 import pytest
 from superduper import CFG
-from superduper.backends.ibis.data_backend import IbisDataBackend
+
+from superduper_ibis.data_backend import IbisDataBackend
 
 
 @pytest.fixture

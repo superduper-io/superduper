@@ -7,8 +7,9 @@ from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.dataset import Dataset
 from superduper.components.model import Trainer
-from superduper.ext.torch.model import TorchModel
 from torch.utils.data import DataLoader
+
+from superduper_torch.model import TorchModel
 
 
 class TorchTrainer(Trainer):

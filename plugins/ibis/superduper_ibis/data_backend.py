@@ -95,12 +95,19 @@ class IbisDataBackend(BaseDataBackend):
 
     def build_metadata(self):
         """Build metadata for the database."""
-        from superduper.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+        from superduper_sqlalchemy.metadata import SQLAlchemyMetadata
 
-        def callback():
-            return self.conn.con, self.name
-
-        return MetaDataStoreProxy(SQLAlchemyMetadata(callback=callback))
+        try:
+            return MetaDataStoreProxy(
+                SQLAlchemyMetadata(callback=lambda: (self.conn.con, self.name))
+            )
+        except Exception as e:
+            logging.warn(
+                f"Unable to connect to the database with self.conn.con: "
+                f"{self.conn.con} and self.name: {self.name}. Error: {e}."
+            )
+            logging.warn(f"Falling back to using the uri: {self.uri}.")
+            return MetaDataStoreProxy(SQLAlchemyMetadata(uri=self.uri))
 
     def insert(self, table_name, raw_documents):
         """Insert data into the database.

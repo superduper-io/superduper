@@ -32,7 +32,7 @@ def test_load_image_inside_query(db, clean):
         'documents': [{'img': '?32b6853dd2b2b45de723966dba17e23cece9f35c'}],
         '_builds': {
             'jpg': {
-                '_path': 'superduper.ext.pillow.encoder.image_type',
+                '_path': 'superduper_pillow.encoder.image_type',
                 'encodable': 'artifact',
                 'media_type': 'image/jpeg',
                 'type_id': 'datatype',

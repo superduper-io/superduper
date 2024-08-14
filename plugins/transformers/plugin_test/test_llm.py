@@ -1,6 +1,6 @@
 from test.unittest.ext.llm.utils import check_llm_as_listener_model, check_predict
 
-from superduper.ext.transformers import LLM
+from superduper_transformers import LLM
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 

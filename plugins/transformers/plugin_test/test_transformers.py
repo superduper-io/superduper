@@ -7,9 +7,10 @@ try:
 except ImportError:
     torch = None
 
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.components.dataset import Dataset
-from superduper.ext.transformers.model import (
+from superduper_mongodb.query import MongoQuery
+
+from superduper_transformers.model import (
     TextClassificationPipeline,
     TransformersTrainer,
 )

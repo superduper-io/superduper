@@ -2,7 +2,8 @@ import os
 
 import pytest
 import vcr
-from superduper.ext.jina import JinaEmbedding
+
+from superduper_jina import JinaEmbedding
 
 CASSETTE_DIR = os.path.join(os.path.dirname(__file__), 'cassettes')
 

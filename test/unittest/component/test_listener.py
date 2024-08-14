@@ -13,6 +13,7 @@ from superduper.components.model import ObjectModel
 def test_listener_serializes_properly():
     q = Query(table='test').find({}, {})
     listener = Listener(
+        identifier="listener",
         model=ObjectModel("test", object=lambda x: x),
         select=q,
         key="test",
@@ -56,7 +57,7 @@ def test_listener_chaining(db):
         select=table.select(),
         key="x",
         identifier="listener1",
-        uuid="listener1",
+        predict_id="listener1",
     )
     db.add(listener1)
 
@@ -65,7 +66,7 @@ def test_listener_chaining(db):
         select=listener1.outputs_select,
         key=listener1.outputs,
         identifier='listener2',
-        uuid='listener2',
+        predict_id='listener2',
     )
 
     db.add(listener2)

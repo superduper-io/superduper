@@ -90,6 +90,7 @@ def add_fake_model(db: Datalayer):
     db.apply(model)
     select = db['documents'].select()
     listener = Listener(
+        identifier='x',
         model=model,
         select=select,
         key='x',

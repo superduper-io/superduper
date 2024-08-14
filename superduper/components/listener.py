@@ -30,6 +30,7 @@ class Listener(Component):
     :param select: Object for selecting which data is processed.
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param identifier: A string used to identify the model.
+    :param predict_id: A string used to identify the model's output.
     """
 
     key: ModelInputType
@@ -37,13 +38,18 @@ class Listener(Component):
     select: t.Union[Query, None]
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     identifier: str = ''
+    predict_id: str = ''
 
     type_id: t.ClassVar[str] = 'listener'
 
     def __post_init__(self, db, artifacts):
-        if self.identifier == '':
-            self.identifier = self.uuid
         super().__post_init__(db, artifacts)
+        if not self.predict_id:
+            self.predict_id = (
+                self.identifier
+                if self.version is None
+                else f"{self.identifier}::{self.version}"
+            )
 
     @property
     def mapping(self):
@@ -53,7 +59,7 @@ class Listener(Component):
     @property
     def outputs(self):
         """Get reference to outputs of listener model."""
-        return f'{CFG.output_prefix}{self.uuid}'
+        return f'{CFG.output_prefix}{self.predict_id}'
 
     @property
     def outputs_key(self):
@@ -82,7 +88,7 @@ class Listener(Component):
 
         :param db: Data layer instance.
         """
-        self.create_output_dest(db, self.uuid, self.model)
+        self.create_output_dest(db, self.predict_id, self.model)
         if self.select is not None:
             logging.info('Requesting listener setup on CDC service')
             if CFG.cluster.cdc.uri:
@@ -102,7 +108,7 @@ class Listener(Component):
         db.compute.queue.declare_component(self)
 
     @classmethod
-    def create_output_dest(cls, db: "Datalayer", uuid, model: Model):
+    def create_output_dest(cls, db: "Datalayer", predict_id, model: Model):
         """
         Create output destination.
 
@@ -113,7 +119,7 @@ class Listener(Component):
         if model.datatype is None and model.output_schema is None:
             return
         output_table = db.databackend.create_output_dest(
-            uuid,
+            predict_id,
             model.datatype,
             flatten=model.flatten,
         )
@@ -128,14 +134,9 @@ class Listener(Component):
         out = []
         for x in all_:
             if x.startswith(CFG.output_prefix):
-                listener_id = x[len(CFG.output_prefix) :]
+                listener_id = x[len(CFG.output_prefix) :].split(".")[0]
                 out.append(listener_id)
         return out
-
-    @property
-    def predict_id(self):
-        """Get predict ID."""
-        return self.uuid
 
     def trigger_ids(self, query: Query, primary_ids: t.Sequence):
         """Get trigger IDs.
@@ -178,7 +179,17 @@ class Listener(Component):
         elif isinstance(self.key, dict):
             keys = list(self.key.keys())
 
-        return keys
+        # Support multiple levels of nesting
+        clean_keys = []
+        for key in keys:
+            if key.startswith(CFG.output_prefix):
+                key = CFG.output_prefix + key[len(CFG.output_prefix) :].split(".")[0]
+            else:
+                key = key.split(".")[0]
+
+            clean_keys.append(key)
+
+        return clean_keys
 
     @override
     def schedule_jobs(
@@ -218,15 +229,23 @@ class Listener(Component):
     def listener_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
         """List all dependent job ids of the listener."""
         dependencies_ids: t.Sequence[str] = []
+        predict_id2uuid = {}
+        for listener_identifier in db.show('listener'):
+            listener_info = db.metadata.get_component(
+                type_id='listener',
+                identifier=listener_identifier,
+            )
+            predict_id2uuid[listener_info['predict_id']] = listener_info['uuid']
+
         for predict_id in self.dependencies:
-            try:
-                upstream_listener = db.load(uuid=predict_id)
-                upstream_model = upstream_listener.model
-            except Exception:
+            if predict_id not in predict_id2uuid:
                 logging.warn(
-                    f"Could not find the upstream listener with uuid {predict_id}"
+                    f"Could not find the upstream listener with predict_id {predict_id}"
                 )
                 continue
+            uuid = predict_id2uuid.get(predict_id)
+            upstream_listener = db.load(uuid=uuid)
+            upstream_model = upstream_listener.model
             job_ids = upstream_model.jobs(db=db)
             dependencies_ids.extend(job_ids)
 
@@ -258,7 +277,7 @@ class Listener(Component):
             self.model.predict_in_db_job(
                 X=self.key,
                 db=db,
-                predict_id=self.uuid,
+                predict_id=self.predict_id,
                 select=self.select,
                 ids=ids,
                 dependencies=dependencies,

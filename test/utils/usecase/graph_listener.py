@@ -49,7 +49,7 @@ def build_graph_listener(db: "Datalayer"):
         key="x",
         select=db["documents"].select(),
         identifier="listener_a",
-        uuid="a",
+        predict_id="a",
         predict_kwargs={"max_chunk_size": 1},
     )
 
@@ -61,7 +61,7 @@ def build_graph_listener(db: "Datalayer"):
         key=("x", "y", "_outputs__a"),
         select=db["documents"].select(primary_id, "x", "y").outputs("a"),
         identifier="listener_b",
-        uuid="b",
+        predict_id="b",
         predict_kwargs={"max_chunk_size": 1},
     )
 
@@ -73,7 +73,7 @@ def build_graph_listener(db: "Datalayer"):
         key=("x", "y", "z", "_outputs__a", "_outputs__b"),
         select=db["documents"].select(primary_id, "x", "y", "z").outputs("a", "b"),
         identifier="listener_c",
-        uuid="c",
+        predict_id="c",
         predict_kwargs={"max_chunk_size": 1},
     )
 

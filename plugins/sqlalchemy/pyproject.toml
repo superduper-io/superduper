@@ -22,6 +22,12 @@ dependencies = [
   "sqlalchemy>=1.4.0",
 ]
 
+[project.optional-dependencies]
+test = [
+    # Annotation plugin dependencies will be installed in CI
+    # :CI: plugins/ibis
+]
+
 [project.urls]
 homepage = "https://superduper.io"
 documentation = "https://docs.superduper.io/docs/intro"

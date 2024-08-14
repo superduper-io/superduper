@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the prefix of the output string configurable
 - Add testing utils for plugins
 - Add `cache` field in Component
+- Add predict_id in Listener
 
 #### Bug Fixes
 

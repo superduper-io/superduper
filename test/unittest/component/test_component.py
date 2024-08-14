@@ -100,6 +100,7 @@ def test_export_and_read():
 
 def test_set_variables(db):
     m = Listener(
+        identifier="test",
         model=ObjectModel(
             identifier="<var:test>",
             object=lambda x: x + 2,

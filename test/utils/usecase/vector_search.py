@@ -46,7 +46,7 @@ def build_vector_index(db: "Datalayer"):
     indexing_model = indexing_model.to_listener(
         key="x",
         select=db["documents"].select(),
-        uuid="vector",
+        predict_id="vector",
     )
 
     compatible_model = ObjectModel(

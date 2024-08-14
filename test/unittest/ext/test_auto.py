@@ -2,11 +2,12 @@ from superduper.components.model import ObjectModel
 
 
 def test_auto():
-    import torch as torch_native
+    import sklearn as sklearn_native
 
-    from superduper.ext.auto import torch
+    from superduper.ext.auto import sklearn
 
-    m = torch.nn.Linear(2, 4, identifier='my-linear')
+    m = sklearn.base.BaseEstimator(identifier='model')
 
     assert isinstance(m, ObjectModel)
-    assert isinstance(m.object, torch_native.nn.Module)
+    assert isinstance(m.object, sklearn_native.base.BaseEstimator)
+    assert m.identifier == 'model'

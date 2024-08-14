@@ -17,16 +17,19 @@ class ArtifactStore(ABC):
 
     :param conn: connection to the meta-data store
     :param name: Name to identify DB using the connection
+    :param flavour: Flavour of the artifact store
     """
 
     def __init__(
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
     ):
         self.name = name
         self.conn = conn
         self._serializers = None
+        self.flavour = flavour
 
     @property
     def serializers(self):
@@ -146,7 +149,7 @@ class ArtifactStore(ABC):
             r, lambda v: isinstance(v, str) and v.startswith('&:file:')
         )
         for file_path in files:
-            # file: &:file:file_name/file_id
+            # file: &:file:file_id
             try:
                 self._delete_bytes(file_path.split(':')[-1])
             except FileNotFoundError:

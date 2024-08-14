@@ -1,7 +1,3 @@
-import ibis
-
-ibis.options.interactive = True
-
 import numpy as np
 import pytest
 

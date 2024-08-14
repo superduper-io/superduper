@@ -16,7 +16,6 @@ import tqdm
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.backends.ibis.field_types import FieldType
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.document import Document
 from superduper.base.enums import DBType
@@ -33,7 +32,7 @@ if t.TYPE_CHECKING:
     from superduper.components.dataset import Dataset
 
 
-EncoderArg = t.Union[DataType, FieldType, None]
+EncoderArg = t.Union[DataType, str, None]
 ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 

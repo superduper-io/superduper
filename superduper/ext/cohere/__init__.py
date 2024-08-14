@@ -1,7 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_cohere import *  # noqa
 
-_, requirements = requires_packages(['cohere', '4.40'])
+from superduper.misc.annotations import warn_plugin_deprecated
 
-from .model import CohereEmbed, CohereGenerate
-
-__all__ = 'CohereEmbed', 'CohereGenerate'
+warn_plugin_deprecated('cohere')

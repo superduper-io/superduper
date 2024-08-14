@@ -1,7 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_openai import *  # noqa
 
-_, requirements = requires_packages(['openai', '1.1.2', None], ['httpx'])
+from superduper.misc.annotations import warn_plugin_deprecated
 
-from .model import OpenAIChatCompletion, OpenAIEmbedding
-
-__all__ = 'OpenAIChatCompletion', 'OpenAIEmbedding'
+warn_plugin_deprecated('openai')

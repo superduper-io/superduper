@@ -8,7 +8,6 @@ from sklearn.metrics import accuracy_score, f1_score
 
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.query import Query
-from superduper.backends.ibis.field_types import FieldType
 from superduper.backends.local.compute import LocalComputeBackend
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
@@ -25,6 +24,7 @@ from superduper.components.model import (
     Validation,
     _Fittable,
 )
+from superduper.components.schema import FieldType
 from superduper.jobs.job import ComponentJob
 
 
@@ -385,11 +385,9 @@ def test_query_model(db):
     )
     m.db = db
 
-    import torch
+    out = m.predict(X=np.random.randn(32))
 
-    out = m.predict(X=torch.randn(32))
-
-    out = m.predict_batches([{'X': torch.randn(32)} for _ in range(4)])
+    out = m.predict_batches([{'X': np.random.randn(32)} for _ in range(4)])
 
     assert len(out) == 4
 

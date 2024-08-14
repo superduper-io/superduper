@@ -11,9 +11,6 @@ from superduper.components.component import ensure_initialized
 from superduper.components.model import Model
 from superduper.ext.llm.prompter import Prompter
 
-if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
-
 # Disable httpx info level logging
 getLogger("httpx").setLevel(WARNING)
 
@@ -35,21 +32,6 @@ class BaseLLM(Model):
         super().__post_init__(db, artifacts)
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
-
-    def post_create(self, db: "Datalayer") -> None:
-        """Post create method for the model.
-
-        :param db: The datalayer to use for the model.
-        """
-        # TODO: Do not make sense to add this logic here,
-        # Need a auto DataType to handle this
-        from superduper.backends.ibis.data_backend import IbisDataBackend
-        from superduper.backends.ibis.field_types import dtype
-
-        if isinstance(db.databackend.type, IbisDataBackend) and self.datatype is None:
-            self.datatype = dtype("str")
-
-        super().post_create(db)
 
     def _generate(self, prompt: str, **kwargs: t.Any):
         raise NotImplementedError

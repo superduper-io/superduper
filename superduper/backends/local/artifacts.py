@@ -16,15 +16,16 @@ class FileSystemArtifactStore(ArtifactStore):
 
     :param conn: root directory of the artifact store
     :param name: subdirectory to use for this artifact store
+    :param flavour: Flavour of the artifact store
     """
 
     def __init__(
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
+        flavour: t.Optional[str] = None,
     ):
-        self.name = name
-        self.conn = conn
+        super().__init__(conn, name, flavour)
         if not os.path.exists(self.conn):
             logging.info('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
@@ -110,8 +111,8 @@ class FileSystemArtifactStore(ArtifactStore):
             shutil.copytree(file_path, save_path)
         else:
             shutil.copy(file_path, save_path)
-        # return the relative path {file_id}/{name}
-        return os.path.join(file_id, name)
+        # return the file_id
+        return file_id
 
     def get_file(self, file_id: str) -> str:
         """Return the path to the file in the artifact store.
@@ -119,7 +120,11 @@ class FileSystemArtifactStore(ArtifactStore):
         :param file_id: The id of the file.
         """
         logging.info(f"Loading file {file_id} from {self.conn}")
-        return os.path.join(self.conn, file_id)
+        path = os.path.join(self.conn, file_id)
+        files = os.listdir(path)
+        assert len(files) == 1, f"Expected 1 file, got {len(files)}"
+        name = files[0]
+        return os.path.join(path, name)
 
     def disconnect(self):
         """Disconnect the client."""

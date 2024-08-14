@@ -1,9 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_sklearn import *  # noqa
 
-_, requirements = requires_packages(
-    ['sklearn', '1.2.2', None, 'scikit-learn'],
-)
+from superduper.misc.annotations import warn_plugin_deprecated
 
-from .model import Estimator, SklearnTrainer
-
-__all__ = 'Estimator', 'SklearnTrainer'
+warn_plugin_deprecated('sklearn')

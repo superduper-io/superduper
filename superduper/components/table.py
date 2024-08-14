@@ -2,7 +2,7 @@ import typing as t
 
 from superduper import CFG
 from superduper.components.component import Component
-from superduper.components.schema import Schema, _Native
+from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -26,16 +26,10 @@ class Table(Component):
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
         fields = {}
+        fields.update(self.schema.fields)
+
         if '_fold' not in self.schema.fields:
-            from superduper.backends.ibis.field_types import dtype
-
-            fields.update({'_fold': dtype('str')})
-
-        for k, v in self.schema.fields.items():
-            if isinstance(v, _Native):
-                fields[k] = dtype(v.identifier)
-            else:
-                fields[k] = v
+            fields.update({'_fold': 'str'})
 
         self.schema = Schema(
             self.schema.identifier,

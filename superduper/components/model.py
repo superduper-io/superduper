@@ -4,7 +4,6 @@ import concurrent.futures
 import dataclasses as dc
 import inspect
 import multiprocessing
-from overrides import override
 import os
 import re
 import typing as t
@@ -214,7 +213,6 @@ class Trainer(Component):
         pass
 
 
-
 class Validation(Component):
     """component which represents Validation definition.
 
@@ -229,7 +227,6 @@ class Validation(Component):
     datasets: t.Sequence[Dataset] = ()
 
 
-
 @dc.dataclass(kw_only=True)
 class _Fittable:
     """Class to represent a fittable model.
@@ -238,7 +235,6 @@ class _Fittable:
     """
 
     trainer: t.Optional[Trainer] = None
-
 
     def fit_in_db_job(
         self,
@@ -269,8 +265,6 @@ class _Fittable:
         :param db: Datalayer instance.
         """
         db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
-        super().post_create(db)
-
 
     def run_jobs(
         self,
@@ -287,16 +281,17 @@ class _Fittable:
         :param overwrite: Overwrite the existing data.
         :param event_type: Type of event.
         """
+        # Note: DB events are not supported yet
+        # i.e if new data is added after model apply.
         dependencies = list(dependencies)
         for event in events:
             if event.from_type == 'COMPONENT':
                 dependencies.append(event.uuid)
 
         self.fit_in_db_job(
-                    db=db,
-                    dependencies=list(set(dependencies)),
-                )
-
+            db=db,
+            dependencies=list(set(dependencies)),
+        )
 
     def schedule_jobs(self, db, dependencies=()):
         """Database hook for scheduling jobs.
@@ -304,19 +299,22 @@ class _Fittable:
         :param db: Datalayer instance.
         :param dependencies: List of dependencies.
         """
-        from superduper.base.event import Event
         from superduper.base.datalayer import DBEvent
+        from superduper.base.event import Event
+
+        if self.trainer is None:
+            return []
         assert self.trainer.select is not None
 
         data = list(self.trainer.select.execute())
-        ids = [d[self.trainer.select.primary_id] for d in data]
+        ids = [str(d[self.trainer.select.primary_id]) for d in data]
         event = Event(
             dest={'type_id': 'model.training', 'identifier': self.identifier},
             event_type=DBEvent.insert,
             id=ids,
             from_type='COMPONENT',
         )
-        
+
         db.compute.broadcast([event])
         return [event.uuid]
 
@@ -1151,7 +1149,6 @@ class Model(Component, metaclass=ModelMeta):
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
         db.replace(self, upsert=True)
-
 
 
 @dc.dataclass(kw_only=True)

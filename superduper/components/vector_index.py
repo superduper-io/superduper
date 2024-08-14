@@ -10,6 +10,7 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
+from superduper.base.event import Event
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
@@ -366,6 +367,10 @@ class VectorIndex(Component):
                 )
             ]
 
+        # Create db events
+        if not db_events:
+            return jobs
+
         jobs += [
             self._create_predict_job(
                 db=db,
@@ -387,8 +392,6 @@ class VectorIndex(Component):
         :param db: The DB instance to process
         :param dependencies: A list of dependencies
         """
-        from superduper.base.event import Event
-
         assert self.indexing_listener.select is not None
 
         outputs = db[self.indexing_listener.outputs]

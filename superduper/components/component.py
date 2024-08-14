@@ -542,8 +542,8 @@ class Component(Leaf):
         self,
         db: Datalayer,
         dependencies: t.Sequence[Job] = (),
-        ids: t.Sequence = [],
-        event_type: str = 'insert',
+        overwrite: bool = False,
+        events: t.Sequence = [],
     ) -> t.Sequence[t.Any]:
         """Run the job for this component.
 

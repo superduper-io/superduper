@@ -1,7 +1,6 @@
-import uuid
 import dataclasses as dc
 import typing as t
-
+import uuid
 
 
 @dc.dataclass
@@ -14,10 +13,17 @@ class _Component(dict):
 class Event:
     """Event dataclass to store event data.
 
-    :param type_id: type id of the component.
-    :param identifier: Identifier of the component.
+    :param dest: Identifier of the destination component.
     :param id: Id/s of select table.
+    :param src: Identifier of the source component.
+    :param from_type: 'COMPONENT' or 'DB' type implying
+                      the event was created from a databas
+                      e or component event (initlization).
+
     :param event_type: Type of the event.
+    :param uuid: Unique identifier for the event.
+                 This id will be used as job id in
+                 startup events.
     """
 
     dest: _Component
@@ -46,6 +52,7 @@ class Event:
 
     @staticmethod
     def chunk_by_type(events):
+        """Chunk events by from type."""
         db_events = []
         component_events = []
         component_startup_flag = False

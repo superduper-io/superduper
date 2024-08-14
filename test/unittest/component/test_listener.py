@@ -1,20 +1,22 @@
+import dataclasses as dc
 import random
 
 import numpy as np
 import pytest
-import dataclasses as dc
 
 from superduper import Document
 from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel, Trainer, _Fittable
-from superduper.components.dataset import Dataset
+
 
 class MyTrainer(Trainer):
     training_done = False
+
     def fit(self, *args, **kwargs):
         MyTrainer.training_done = True
+
 
 @dc.dataclass
 class _Tmp(_Fittable, ObjectModel):
@@ -23,6 +25,7 @@ class _Tmp(_Fittable, ObjectModel):
 
     def post_create(self, *args, **kwargs):
         return _Fittable.post_create(self, *args, **kwargs)
+
 
 def test_listener_serializes_properly():
     q = Query(table='test').find({}, {})
@@ -210,9 +213,7 @@ def test_listener_chaining_with_trainer(db):
     # Insert data
     insert_random()
 
-
     features = ObjectModel("features", object=lambda x: x + 1)
-
 
     trainable_model = _Tmp(identifier="trainable_model", object=lambda x: x + 2)
 
@@ -228,7 +229,6 @@ def test_listener_chaining_with_trainer(db):
     trainable_model.trainer = MyTrainer(
         'test', select=features_listener.outputs_select, key=features_listener.outputs
     )
-    #trainable_model.validation = Validation(datasets=[Dataset('my-data', select=features_listener.outputs_select)])
 
     listener2 = Listener(
         model=trainable_model,

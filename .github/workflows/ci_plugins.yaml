@@ -7,6 +7,10 @@ on:
     paths:  # run this action only when the docs folder is changed
       - 'plugins/**'
 
+concurrency:
+  group: ${{ github.ref }}-plugin
+  cancel-in-progress: true
+
 jobs:
   plugin_update_check:
     runs-on: ubuntu-latest
@@ -60,7 +64,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
-          key: ${{ matrix.plugin }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
+          key: ${{ matrix.plugin }}_${{ hashFiles('pyproject.toml', 'plugins/${{ matrix.plugin }}/pyproject.toml') }}
 
 
       - name: Install SuperDuperDB Project

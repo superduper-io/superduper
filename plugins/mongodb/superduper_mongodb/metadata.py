@@ -28,9 +28,9 @@ class MongoMetaDataStore(MetaDataStore):
             self.connection_callback = callback
         else:
             assert uri
-            from .data_backend import _connection_callback
+            from .utils import connection_callback
 
-            self.connection_callback = lambda: _connection_callback(uri, flavour)
+            self.connection_callback = lambda: connection_callback(uri, flavour)
 
         self.conn, self.name = self.connection_callback()
         self._setup()

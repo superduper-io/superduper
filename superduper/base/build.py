@@ -68,7 +68,7 @@ class _ArtifactStoreLoader(_Loader):
         r'^filesystem:\/\/': ('local', 'base'),
         r'^mongomock:\/\/': ('local', 'base'),
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
-        r'^mongodb:\/\/': ('mongodb', 'base'),
+        r'^mongodb:\/\/': ('mongodb', 'mongodb'),
         r'sqlite:': ('local', 'base'),
     }
 
@@ -110,8 +110,15 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     cfg = (cfg or s.CFG)(**kwargs)
     cfg = t.cast(Config, cfg)
     databackend_obj = _build_databackend(cfg.data_backend)
-    metadata_obj = _build_metadata(cfg.metadata_store or cfg.data_backend)
-    artifact_store = _build_artifact_store(cfg.artifact_store or cfg.data_backend)
+    if cfg.metadata_store:
+        metadata_obj = _build_metadata(cfg.metadata_store)
+    else:
+        metadata_obj = databackend_obj.build_metadata()
+
+    if cfg.artifact_store:
+        artifact_store = _build_artifact_store(cfg.artifact_store)
+    else:
+        artifact_store = databackend_obj.build_artifact_store()
     compute = _build_compute(cfg)
 
     datalayer = Datalayer(

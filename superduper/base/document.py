@@ -388,7 +388,7 @@ def _deep_flat_encode(
 
     if isinstance(r, FileItem):
         files[r.identifier] = r.path
-        return '&:file:' + r.reference
+        return '&:file:' + r.identifier
 
     if isinstance(r, Native):
         return r.x

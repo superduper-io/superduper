@@ -1,5 +1,5 @@
-# ruff: noqa: F401
+from superduper_ibis import *  # noqa
 
-from .field_types import dtype
+from superduper.misc.annotations import warn_plugin_deprecated
 
-# from .query import Table
+warn_plugin_deprecated('ibis')

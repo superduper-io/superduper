@@ -1,7 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_sentence_transformers import *  # noqa
 
-from .model import SentenceTransformer
+from superduper.misc.annotations import warn_plugin_deprecated
 
-__all__ = ('SentenceTransformer',)
-
-_, requirements = requires_packages(['sentence-transformers', '2.2.2', None])
+warn_plugin_deprecated('sentence_transformers')

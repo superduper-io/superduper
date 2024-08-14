@@ -145,6 +145,7 @@ class MongoDbTyper(_DuckTyper):
         return build_datalayer(cfg=CFG, databackend=databackend, **kwargs)
 
 
+# TODO: Do we still need the DuckTyper for model now?
 class SklearnTyper(_DuckTyper):
     """A DuckTyper for scikit-learn estimators # noqa.
 
@@ -162,8 +163,7 @@ class SklearnTyper(_DuckTyper):
         :param item: A scikit-learn estimator.
         """
         from sklearn.base import BaseEstimator
-
-        from superduper.ext.sklearn.model import Estimator
+        from superduper_sklearn.model import Estimator
 
         if not isinstance(item, BaseEstimator):
             raise TypeError('Expected BaseEstimator but got {type(item)}')
@@ -188,9 +188,8 @@ class TorchTyper(_DuckTyper):
 
         :param item: A torch.nn.Module or torch.jit.ScriptModule.
         """
+        from superduper_torch.model import TorchModel
         from torch import jit, nn
-
-        from superduper.ext.torch.model import TorchModel
 
         if isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule):
             return TorchModel(identifier=_auto_identify(item), object=item, **kwargs)

@@ -1,7 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_anthropic import *  # noqa
 
-_, requirements = requires_packages(['anthropic', '0.25.0'])
+from superduper.misc.annotations import warn_plugin_deprecated
 
-from .model import AnthropicCompletions
-
-__all__ = ('AnthropicCompletions',)
+warn_plugin_deprecated('anthropic')

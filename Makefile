@@ -1,6 +1,7 @@
-DIRECTORIES = superduper test
+DIRECTORIES ?= superduper test
+SUPERDUPER_CONFIG ?= test/configs/default.yaml
 PYTEST_ARGUMENTS ?=
-BACKENDS ?= mongodb_community sqlite duckdb pandas
+PLUGIN_NAME ?=
 
 # Export directories for data and artifacts
 export SUPERDUPER_DATA_DIR ?= ~/.cache/superduper/test_data
@@ -47,19 +48,6 @@ new_release: ## Release a new version of superduper.io
 	# Push the specific tag
 	git push origin $(RELEASE_VERSION)
 
-
-install_devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	python -m pip install pre-commit
-
-	@echo "Download Code Quality dependencies"
-	python -m pip install black==23.3 ruff==0.4.4 mypy types-PyYAML types-requests interrogate
-
-	@echo "Download Code Testing dependencies"
-	python -m pip install pytest pytest-cov "nbval>=0.10.0"
-
-
 ##@ Code Quality
 
 gen_docs: ## Generate Docs and API
@@ -83,6 +71,22 @@ lint-and-type-check: ## Lint and type-check the code
 	# deptry ./
 	# Check for deadcode
 	# vulture ./
+
+install_all_plugins:
+	@plugins=""; \
+	for plugin in $$(ls plugins); do \
+		if [ "$$plugin" != "template" -a -d "plugins/$$plugin" -a -f "plugins/$$plugin/pyproject.toml" ]; then \
+			plugins="$$plugins $$plugin"; \
+		fi \
+	done; \
+	echo "Found plugins:$$plugins"; \
+	for plugin in $$plugins; do \
+		echo "Installing $$plugin..."; \
+		python -m pip install -e "plugins/$$plugin[test]"; \
+	done
+%:
+	@:
+
 
 fix-and-check: ##  Lint the code before testing
 	# Code formatting
@@ -208,25 +212,7 @@ testdb_shutdown: check_db_variable ## Shutdown Databases Containers (DB=<mongodb
 ##@ CI Testing Functions
 
 unit_testing: ## Execute unit testing
-	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
-	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
-	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/unittest
-
-databackend_testing: ## Execute integration testing
-	@echo "TESTING BACKENDS"
-	@for backend in $(BACKENDS); do \
-		echo "TESTING $$backend"; \
-		SUPERDUPER_CONFIG=deploy/testenv/env/integration/backends/$$backend.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/backends; \
-	done
-	@echo "TODO -- implement more backends integration testing..."
-
-ext_testing: ## Execute integration testing
-	find ./test -type d -name __pycache__ -exec rm -r {} +
-	find ./test -type f -name "*.pyc" -delete
-	pytest $(PYTEST_ARGUMENTS) ./test/integration/ext
-
+	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS) ./test/unittest
 
 usecase_testing: ## Execute usecase testing
-	# TODO After we have completed separating the plugins, we can run the tests only on default.yaml.
-	SUPERDUPER_CONFIG=test/configs/mongodb.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
-	SUPERDUPER_CONFIG=test/configs/ibis.yaml pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase
+	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase

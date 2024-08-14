@@ -1,7 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_llamacpp import *  # noqa
 
-_, requirements = requires_packages(['llama_cpp_python', '0.2.39'])
+from superduper.misc.annotations import warn_plugin_deprecated
 
-from .model import LlamaCpp, LlamaCppEmbedding
-
-__all__ = ['LlamaCpp', 'LlamaCppEmbedding']
+warn_plugin_deprecated('llamacpp')

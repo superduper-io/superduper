@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:  # run this action only when the docs folder is changed
+      - 'plugins/**'
+
+concurrency:
+  group: ${{ github.ref }}-plugin
+  cancel-in-progress: true
+
+jobs:
+  plugin_update_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get changed files for plugins
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v44
+
+      - name: Filter changed plugins and set output
+        id: set-matrix
+        run: |
+          IFS=$'\n'
+          changed_files=(${{ steps.changed-files-specific.outputs.all_changed_files }})
+          declare -A plugin_set
+          for file in "${changed_files[@]}"; do
+            if [[ "$file" =~ ^plugins/ && ! "$file" =~ ^plugins/template/ ]]; then
+              plugin_name=$(echo "$file" | cut -d '/' -f 2)
+              plugin_set[$plugin_name]=1
+            fi
+          done
+          plugins=("${!plugin_set[@]}")
+          matrix_json=$(printf '%s\n' "${plugins[@]}" | jq -R -s -c '{plugin: split("\n")[:-1]}')
+          echo "matrix_json=$matrix_json"
+          echo "Changed plugins: ${plugins[*]}"
+          echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+          echo "matrix_json: $matrix_json"
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  test_plugin:
+    needs: plugin_update_check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.plugin_update_check.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Pip Packages
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip' # caching pip dependencies
+
+      - name: Cache Python Installation
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }} # Cache the whole python installation dir.
+          key: ${{ matrix.plugin }}_${{ hashFiles('pyproject.toml', 'plugins/${{ matrix.plugin }}/pyproject.toml') }}
+
+
+      - name: Install SuperDuperDB Project
+        run: |
+          # Install core and testsuite dependencies on the cached python environment.
+          python -m pip install '.[test]'
+
+      - name: Lint and type-check
+        run: |
+          make lint-and-type-check DIRECTORIES="plugins/${{ matrix.plugin }}"
+
+      - name: Install Plugin
+        run: |
+          echo "Installing local plugin dependencies..."
+          grep -o '#\s*:CI:\s*plugins/.*' plugins/${{ matrix.plugin }}/pyproject.toml | while read line; do
+            dep_path=${line##*# :CI: }
+            dep_path=${dep_path%%[[:space:]]*}
+            echo "Installing $dep_path for testing..."
+            python -m pip install "$dep_path[test]"
+          done
+          echo "Installing plugin..."
+          python -m pip install "plugins/${{ matrix.plugin }}[test]"
+
+      - name: Plugin Testing
+        run: |
+          export PYTHONPATH=./
+          if [ -f "plugins/${{ matrix.plugin }}/plugin_test" ]; then
+            pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
+          else
+            echo "Skipping tests for ${{ matrix.plugin }}, no test file found."
+          fi
+
+      - name: Optionally run the base testing
+        run: |
+          SUPERDUPER_CONFIG="plugins/${{ matrix.plugin }}/plugin_test/config.yaml"
+          if [ -f "$SUPERDUPER_CONFIG" ]; then
+            echo "Running the base testing..."
+            make unit_testing SUPERDUPER_CONFIG=$SUPERDUPER_CONFIG
+            make usecase_testing SUPERDUPER_CONFIG=$SUPERDUPER_CONFIG
+          else
+            echo "No config file found, skipping..."
+          fi

@@ -1,10 +1,5 @@
-from superduper.misc.annotations import requires_packages
+from superduper_torch import *  # noqa
 
-from .training import TorchTrainer
+from superduper.misc.annotations import warn_plugin_deprecated
 
-_, requirements = requires_packages(['torch', '2.0.0'])
-
-from .encoder import tensor
-from .model import TorchModel, torchmodel
-
-__all__ = ('TorchModel', 'TorchTrainer', 'tensor', 'torchmodel')
+warn_plugin_deprecated('torch')

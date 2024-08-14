@@ -26,7 +26,7 @@ db.apply(component)
 A `Model` is a wrapper around a standard ML/ AI model. It may contain additional functionality, such as 
 pre- and post-processing, and encoding/ decoding data into/ from the correct type required by the database.
 
-`db.apply(model)` tells Superduper to store the model and its metadata in the system.
+`db.apply(model)` tells `superduper` to store the model and its metadata in the system.
 
 If additional configurations, such as training parameters, are added to the `Model` then the `db.apply` command
 will also train the component on data in Superduper.
@@ -35,7 +35,7 @@ Read more about `Model` [here](../apply_api/model).
 
 ### `Listener`
 
-A `Listener` wraps a `Model`. The `db.apply(listener)` tells Superduper to "listen" for incoming data and to compute outputs on those data, saving them back in Superduper.
+A `Listener` wraps a `Model`. The `db.apply(listener)` tells `superduper` to "listen" for incoming data and to compute outputs on those data, saving them back in `superduper`.
 
 Read more about `Listener` [here](../apply_api/listener).
 

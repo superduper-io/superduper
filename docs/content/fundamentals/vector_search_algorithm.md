@@ -9,7 +9,7 @@ using in-database functionality, or via a sidecar implementation with `lance` an
 
 ## Philosophy
 
-In `Superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
+In Superduper, from a user point-of-view vector-search isn't a completely different beast than other ways of 
 using the system:
 
 - The vector-preparation is exactly the same as preparing outputs with any model, 

@@ -1,6 +1,6 @@
 # `Model`
 
-- Wrap a standard AI model with functionality necessary for Superduper
+- Wrap a standard AI model with functionality necessary for `superduper`
 - Configure validation and training of a model on database data
 
 ***Dependencies***
@@ -28,7 +28,7 @@ by adding the parameters `datatype=...` or `output_schema=...`.
 
 ## Implementations
 
-Here are a few Superduper native implementations:
+Here are a few `superduper` native implementations:
 
 **`ObjectModel`**
 
@@ -47,7 +47,7 @@ db.apply(m)
 
 **`QueryModel`**
 
-Use a Superduper query to extract data from `db`
+Use a `superduper` query to extract data from `db`
 
 ```python
 from superduper.components.model import QueryModel

@@ -1,6 +1,6 @@
 # `Checkpoint`
 
-- Save intermediate results of training via Superduper
+- Save intermediate results of training via `superduper`
 - Load a different point of the training process by specifying `Checkpoint` explicitly
 - Particularly useful with deep-learning models
 

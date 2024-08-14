@@ -1,6 +1,6 @@
 # OpenAI
 
-`Superduper` allows users to work with `openai` API models.
+`superduper` allows users to work with `openai` API models.
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |

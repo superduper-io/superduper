@@ -4,8 +4,8 @@ sidebar_position: 3
 
 # PyTorch
 
-`Superduper` allows users to work with arbitrary `torch` models, with custom pre-, post-processing and input/ output data-types,
-as well as offering training with `Superduper`
+`superduper` allows users to work with arbitrary `torch` models, with custom pre-, post-processing and input/ output data-types,
+as well as offering training with `superduper`
 
 
 | Class | Description | GitHub | API-docs |

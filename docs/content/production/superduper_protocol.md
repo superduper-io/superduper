@@ -1,6 +1,6 @@
 # SuperDuper Protocol
 
-`Superduper` includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
+Superduper includes a protocol allowed developers to switch back and forth from Python and YAML/ JSON formats.
 The mapping is fairly self-explanatory after reading the examples below.
 
 ## Writing in Superduper-protocol directly

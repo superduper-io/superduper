@@ -1,6 +1,6 @@
 # Models
 
-A key `Component` type in `Superduper` is `Model` and its descendants.
+A key `Component` type in Superduper is `Model` and its descendants.
 The intended usage is that `Model` wraps classical AI and machine learning models, 
 AI APIs, as well as important processing steps involved in building such models, 
 such as feature-computation.

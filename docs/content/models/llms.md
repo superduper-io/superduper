@@ -1,8 +1,8 @@
 # LLMs
 
-`Superduper` allows users to work with LLM services and models
+Superduper allows users to work with LLM services and models
 
-Here is a table of LLMs supported in `Superduper`:
+Here is a table of LLMs supported in Superduper:
 
 | Class | Description |
 | --- | --- |

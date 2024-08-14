@@ -1,7 +1,7 @@
 # Transformers
 
 [Transformers](https://huggingface.co/docs/transformers/index) is a popular AI framework, and we have incorporated native support for Transformers to provide essential Large Language Model (LLM) capabilities.
-`Superduper` allows users to work with arbitrary `transformers` pipelines, with custom input/ output data-types.
+`superduper` allows users to work with arbitrary `transformers` pipelines, with custom input/ output data-types.
 
 | Class | Description | GitHub | API-docs |
 | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ For a fully worked out training/ fine-tuning use-case refer to the [use-cases se
 
 ### LLM fine-tuning
 
-Superduper provides a convenient fine-tuning method based on the [trl](https://huggingface.co/docs/trl/index) framework to help you train data in the database.
+`superduper` provides a convenient fine-tuning method based on the [trl](https://huggingface.co/docs/trl/index) framework to help you train data in the database.
 
 ### Supported Features
 

@@ -5,9 +5,9 @@
 Since vector-search is all-the-rage right now, 
 here is the simplest possible iteration of semantic 
 text-search with a `sentence_transformers` model, 
-as an entrypoint to `Superduper`.
+as an entrypoint to Superduper.
 
-Note that `Superduper` is much-much more than vector-search
+Note that Superduper is much-much more than vector-search
 on text. Explore the docs to read about classical machine learning, 
 computer vision, LLMs, fine-tuning and much much more!
 :::
@@ -15,7 +15,7 @@ computer vision, LLMs, fine-tuning and much much more!
 
 First let's get some data. These data are the markdown files 
 of the very same documentation you are reading!
-You can download other sample data-sets for testing `Superduper`
+You can download other sample data-sets for testing Superduper
 by following [these lines of code](../reusable_snippets/get_useful_sample_data).
 
 ```python
@@ -174,7 +174,7 @@ db.show()
 
 We are going to make these data searchable by activating a [`Model`](../apply_api/model) instance 
 to compute vectors for each item inserted to the `"documents"` collection.
-For that we'll use the [sentence-transformers](https://sbert.net/) integration to `Superduper`.
+For that we'll use the [sentence-transformers](https://sbert.net/) integration to Superduper.
 Read more about the `sentence_transformers` integration [here](../ai_integrations/sentence_transformers)
 and [here](../../api/ext/sentence_transformers/).
 
@@ -1205,7 +1205,7 @@ for r in cursor:
     
     ## Philosophy
     
-    In `Superduper`, from a user point-of-view vector-search isn't a completely different beast than other ways of 
+    In Superduper, from a user point-of-view vector-search isn't a completely different beast than other ways of 
     using the system:
     
     - The vector-preparation is exactly the same as preparing outputs with any model, 
@@ -1303,7 +1303,7 @@ for r in cursor:
     ====================================================================================================
     # Sidecar vector-comparison integration
     
-    For databases which don't have their own vector-search implementation, `Superduper` offers 
+    For databases which don't have their own vector-search implementation, Superduper offers 
     2 integrations:
     
     - In memory vector-search
@@ -1325,7 +1325,7 @@ for r in cursor:
     
     In this case, whenever a developer executes a vector-search query including `.like`, 
     execution of the similarity and sorting computations of vectors is outsourced to 
-    a sidecar implementation which is managed by `Superduper`.
+    a sidecar implementation which is managed by Superduper.
     ====================================================================================================
 
 </pre>
@@ -1334,4 +1334,4 @@ for r in cursor:
 You should see that the documents returned are relevant to the `like` part of the 
 query.
 
-Learn more about building queries with `Superduper` [here](../execute_api/overview.md).
+Learn more about building queries with Superduper [here](../execute_api/overview.md).

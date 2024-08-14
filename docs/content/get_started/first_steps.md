@@ -24,11 +24,11 @@ Follow these steps to get started with Superduper:
 
 4. **Read about production features**
 
-    `Superduper` was designed with production specifically in mind. Read more about this [here](../production/).
+    Superduper was designed with production specifically in mind. Read more about this [here](../production/).
 
 5. **Build understanding**
 
-    To understand more about how `Superduper` works, read through the [`Fundamentals`](../fundamentals/glossary) and refer to the [`API References`](https://docs.superduper.io/apidocs/source/superduper.html) for detailed information on API usage.
+    To understand more about how Superduper works, read through the [`Fundamentals`](../fundamentals/glossary) and refer to the [`API References`](https://docs.superduper.io/apidocs/source/superduper.html) for detailed information on API usage.
 
 6. **Create your own Superduper components**
 

@@ -112,7 +112,7 @@ are emitted, for consumption by the internal workings of the model
 If your model contains large data-artifacts or non-JSON-able content, then 
 these items should be labelled with [a `DataType`](../apply_api/datatype).
 
-On saving, this will allow `Superduper` to encode their values and save the result
+On saving, this will allow Superduper to encode their values and save the result
 in `db.artifact_store`.
 
 Here is an example which includes a `numpy.array`:

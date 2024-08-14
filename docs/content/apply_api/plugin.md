@@ -2,7 +2,7 @@
 
 - Supports a plugin system that dynamically loads Python modules and packages at runtime.
 - Supports functioning as subcomponents, providing dependency support for custom models and other local code.
-- Capable of applying to a database and storing in the artifact_store, exporting as a Superduper format package for sharing with others.
+- Capable of applying to a database and storing in the artifact_store, exporting as a `superduper` format package for sharing with others.
 - Supports automatic installation of dependencies listed in the requirements.txt file under the plugin.
 
 ***Usage pattern***
@@ -86,13 +86,13 @@ db.apply(model)
 
 Initialization and installation
 
-- During plugin initialization, Superduper loads the component’s Python module or package into `sys.modules`, allowing subsequent use of native import statements for plugin utilization.
+- During plugin initialization, `superduper` loads the component’s Python module or package into `sys.modules`, allowing subsequent use of native import statements for plugin utilization.
 - If the plugin package includes a `requirements.txt`, dependencies are installed prior to loading the Python code.
 - The plugin is installed only once per process; if it detects that the same plugin has already been installed in the current runtime, the installation is skipped.
 
 Usage
 
-- When exported locally, the plugin component saves all necessary dependency files for the plugins into the Superduper package, allowing for sharing to different locations.
+- When exported locally, the plugin component saves all necessary dependency files for the plugins into the `superduper` package, allowing for sharing to different locations.
 - When executing `db.apply(plugin)`, the necessary Python dependency environment files for the plugin are saved in the artifact_store. During `db.load("plugin", "plugin_identifier")`, these files are downloaded to the local `~/.superduper/plugin/` directory, followed by the initialization and installation of the plugin.
 - As a sub-component, Superduper’s encode and decode logic ensures that the plugin is loaded prior to the parent component to maintain dependency integrity.
 

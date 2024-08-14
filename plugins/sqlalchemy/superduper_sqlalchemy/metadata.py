@@ -17,8 +17,9 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 from superduper import logging
 from superduper.backends.base.metadata import MetaDataStore, NonExistentMetadataError
-from superduper.backends.sqlalchemy.db_helper import get_db_config
 from superduper.misc.colors import Colors
+
+from superduper_sqlalchemy.db_helper import get_db_config
 
 
 class SQLAlchemyMetadata(MetaDataStore):

@@ -20,9 +20,10 @@ from superduper.components.model import (
     _DeviceManaged,
     _Fittable,
 )
-from superduper.ext.torch.utils import device_of, eval, to_device
 from torch.utils import data
 from tqdm import tqdm
+
+from superduper_torch.utils import device_of, eval, to_device
 
 if t.TYPE_CHECKING:
     from superduper.jobs.job import Job

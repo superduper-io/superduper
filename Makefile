@@ -72,6 +72,22 @@ lint-and-type-check: ## Lint and type-check the code
 	# Check for deadcode
 	# vulture ./
 
+install_all_plugins:
+	@plugins=""; \
+	for plugin in $$(ls plugins); do \
+		if [ "$$plugin" != "template" -a -d "plugins/$$plugin" -a -f "plugins/$$plugin/pyproject.toml" ]; then \
+			plugins="$$plugins $$plugin"; \
+		fi \
+	done; \
+	echo "Found plugins:$$plugins"; \
+	for plugin in $$plugins; do \
+		echo "Installing $$plugin..."; \
+		python -m pip install -e "plugins/$$plugin[test]"; \
+	done
+%:
+	@:
+
+
 fix-and-check: ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)

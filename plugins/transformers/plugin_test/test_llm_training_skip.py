@@ -3,16 +3,18 @@ import os
 import pytest
 import transformers
 from superduper import superduper
-from superduper.backends.mongodb import MongoQuery
 from superduper.base.document import Document
-from superduper.ext.transformers.model import LLM
+from superduper_mongodb import MongoQuery
+
+from superduper_transformers.model import LLM
 
 try:
     import datasets
     import peft
     import torch
     import trl
-    from superduper.ext.transformers.training import LLMTrainer
+
+    from superduper_transformers.training import LLMTrainer
 
     GPU_AVAILABLE = torch.cuda.is_available()
 except ImportError:

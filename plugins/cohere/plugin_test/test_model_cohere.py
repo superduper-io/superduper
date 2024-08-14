@@ -2,7 +2,8 @@ import os
 
 import pytest
 import vcr
-from superduper.ext.cohere import CohereEmbed, CohereGenerate
+
+from superduper_cohere import CohereEmbed, CohereGenerate
 
 CASSETTE_DIR = os.path.join(os.path.dirname(__file__), 'cassettes')
 

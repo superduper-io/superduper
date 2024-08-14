@@ -4,14 +4,16 @@ import random
 from superduper.base.document import Document
 from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
-from superduper.ext.transformers import LLM
+
+from superduper_transformers import LLM
 
 TEST_MODEL_NAME = "facebook/opt-125m"
 try:
     import datasets
     import peft
     import trl
-    from superduper.ext.transformers.training import LLMTrainer
+
+    from superduper_transformers.training import LLMTrainer
 except ImportError:
     datasets = None
     peft = None

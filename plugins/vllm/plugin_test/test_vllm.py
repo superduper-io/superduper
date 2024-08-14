@@ -6,7 +6,8 @@ import pytest
 import vcr
 from superduper import superduper
 from superduper.base.datalayer import Datalayer
-from superduper.ext.vllm.model import VllmAPI
+
+from superduper_vllm.model import VllmAPI
 
 CASSETTE_DIR = os.path.join(os.path.dirname(__file__), 'cassettes')
 

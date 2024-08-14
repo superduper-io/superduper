@@ -5,11 +5,12 @@ import pymongo
 import pytest
 import superduper as s
 from superduper import CFG, superduper
-from superduper.backends.mongodb.query import MongoQuery
 from superduper.base.document import Document
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.vector_index import VectorIndex, vector
+
+from superduper_mongodb.query import MongoQuery
 
 try:
     client = pymongo.MongoClient(CFG.data_backend)

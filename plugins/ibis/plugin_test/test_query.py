@@ -56,7 +56,7 @@ def test_renamings(db):
 
 
 def test_serialize_query(db):
-    from superduper.backends.ibis.query import IbisQuery
+    from superduper_ibis.query import IbisQuery
 
     t = IbisQuery(db=db, table="documents", parts=[("select", ("id",), {})])
 

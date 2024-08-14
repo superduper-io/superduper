@@ -6,6 +6,6 @@ _, requirements = requires_packages(
 
 from .model import LLM, TextClassificationPipeline
 
-__version__ = "0.3.0"
+__version__ = "0.0.2"
 
 __all__ = ('TextClassificationPipeline', 'LLM')

@@ -28,9 +28,9 @@ test = [
 ]
 
 [project.urls]
-homepage = "https://www.superduper.com/"
-documentation = "https://docs.superduper.com"
-source = "https://github.com/superduper.io/superduper/"
+homepage = "https://superduper.io"
+documentation = "https://docs.superduper.io/docs/intro"
+source = "https://github.com/superduper-io/superduper"
 
 [tool.setuptools.packages.find]
 include = ["superduper_cohere*"]

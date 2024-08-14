@@ -23,7 +23,13 @@ def test_output_prefix(db):
             "sddb_outputs_c",
         ]
 
-        assert set(db.databackend.list_tables_or_collections()) == set(expect_tables)
+        tables = [
+            x
+            for x in db.databackend.list_tables_or_collections()
+            if not x.startswith("_")
+        ]
+
+        assert set(tables) == set(expect_tables)
 
         outputs_a = list(listener_a.outputs_select.execute())
         assert len(outputs_a) == 6

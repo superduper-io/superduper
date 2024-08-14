@@ -1,5 +1,6 @@
 import os
 import tempfile
+import typing as t
 from pathlib import Path
 
 import click
@@ -9,6 +10,8 @@ from superduper.backends.base.artifacts import ArtifactStore
 from superduper.misc.colors import Colors
 from tqdm import tqdm
 
+from superduper_mongodb.utils import connection_callback
+
 
 class MongoArtifactStore(ArtifactStore):
     """
@@ -16,11 +19,20 @@ class MongoArtifactStore(ArtifactStore):
 
     :param conn: MongoDB client connection
     :param name: Name of database to host filesystem
-
+    :param flavour: Flavour of the artifact store
     """
 
-    def __init__(self, conn, name: str):
+    def __init__(
+        self, conn, name: t.Optional[str] = None, flavour: t.Optional[str] = None
+    ):
         super().__init__(name=name, conn=conn)
+        if isinstance(conn, str):
+            self.conn, url_name = connection_callback(conn, flavour)
+            name = name or url_name
+            self.name = f"_filesystem:{name}"
+        else:
+            self.conn = conn
+            self.name = name
         self.db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(self.db)
 
@@ -194,12 +206,11 @@ def _download(file_id, fs):
         logging.info(f"Downloading file_id {file_id} to {save_path}")
         with open(save_path, 'wb') as f:
             f.write(file.read())
+        logging.info(f"Downloaded file_id {file_id} to {save_path}")
         return save_path
 
     logging.info(f"Downloading folder with file_id {file_id} to {save_folder}")
-    for grid_out in tqdm(
-        fs.find({"metadata.file_id": file_id, "metadata.type": "dir"})
-    ):
+    for grid_out in tqdm(fs.find({"file_id": file_id, "metadata.type": "dir"})):
         file_path = os.path.join(save_folder, grid_out.filename)
         if grid_out.metadata.get("is_empty_dir", False):
             if not os.path.exists(file_path):
@@ -215,4 +226,4 @@ def _download(file_id, fs):
     assert len(folders) == 1, f"Expected only one folder, got {folders}"
     folder_path = os.path.join(save_folder, folders[0])
     logging.info(f"Downloaded folder with file_id {file_id} to {folder_path}")
-    return save_folder
+    return folder_path

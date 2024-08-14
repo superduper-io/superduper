@@ -149,7 +149,7 @@ class ArtifactStore(ABC):
             r, lambda v: isinstance(v, str) and v.startswith('&:file:')
         )
         for file_path in files:
-            # file: &:file:file_name/file_id
+            # file: &:file:file_id
             try:
                 self._delete_bytes(file_path.split(':')[-1])
             except FileNotFoundError:

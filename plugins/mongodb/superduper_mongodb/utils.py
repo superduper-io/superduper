@@ -1,10 +1,11 @@
-from pymongo import MongoClient
+import mongomock
+import pymongo
 from pymongo.errors import ServerSelectionTimeoutError
 from superduper import logging
 from superduper.misc.anonymize import anonymize_url
 
 
-def get_avaliable_conn(uri: str, **kwargs):
+def _get_avaliable_conn(uri: str, **kwargs):
     """Get an available connection to the database.
 
     This can avoid some issues with database permission verification.
@@ -20,7 +21,7 @@ def get_avaliable_conn(uri: str, **kwargs):
     raise_e = None
 
     # Try to connect to the database with the given URI
-    client: MongoClient = MongoClient(uri, **kwargs)
+    client: pymongo.MongoClient = pymongo.MongoClient(uri, **kwargs)
     try:
         client[db_name].list_collection_names()
         return client
@@ -37,7 +38,7 @@ def get_avaliable_conn(uri: str, **kwargs):
         client.close()
 
     # Try to connect to the database with base URI without database name
-    client = MongoClient(base_uri, **kwargs)
+    client = pymongo.MongoClient(base_uri, **kwargs)
     base_uri_mask = anonymize_url(base_uri)
     try:
         logging.info(
@@ -55,3 +56,29 @@ def get_avaliable_conn(uri: str, **kwargs):
     if raise_e:
         logging.error("Failed to connect to the database")
         raise raise_e
+
+
+def connection_callback(uri, flavour):
+    """Get the connection to the database.
+
+    :param uri: The URI of the database.
+    :param flavour: The flavour of the database.
+    """
+    flavour = uri.split(":")[0] if flavour is None else flavour
+    if flavour == "mongodb":
+        name = uri.split("/")[-1]
+        conn = _get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)
+
+    elif flavour == "atlas":
+        name = uri.split("/")[-1]
+        conn = pymongo.MongoClient(
+            "/".join(uri.split("/")[:-1]),
+            serverSelectionTimeoutMS=5000,
+        )
+
+    elif flavour == "mongomock":
+        name = uri.split("/")[-1]
+        conn = mongomock.MongoClient()
+    else:
+        raise NotImplementedError
+    return conn, name

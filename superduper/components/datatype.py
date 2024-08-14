@@ -624,18 +624,10 @@ class FileItem(Leaf):
 
     :param identifier: The identifier of the file.
     :param path: The path of the file.
-    :param file_name: The name of the file.
     """
 
     identifier: str
     path: str
-    file_name: str
-
-    @property
-    def reference(self):
-        """Get the reference to the file."""
-        file_name = self.file_name.replace('.', '__')
-        return f'{file_name}:{self.identifier}'
 
 
 class File(_BaseEncodable):
@@ -652,15 +644,11 @@ class File(_BaseEncodable):
 
     def __post_init__(self, db):
         super().__post_init__(db)
-        self._file_name = None
         if isinstance(self.x, t.Callable):
             self._file = self.x
             self.x = Empty()
         else:
             self._file = None
-
-        if isinstance(self.x, str):
-            self._file_name = os.path.basename(self.x.rstrip('/'))
 
         if not self.lazy:
             self.init()
@@ -668,10 +656,8 @@ class File(_BaseEncodable):
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
         if isinstance(self._file, t.Callable):
-            file_path, reference_path = self._file()
-            file_name, self.identifier = reference_path.split(':')
-            self._file_name = file_name.replace('__', '.')
-            self.x = os.path.join(file_path, self._file_name)
+            file_path, self.identifier = self._file()
+            self.x = file_path
 
         if not isinstance(self.x, Empty):
             return
@@ -680,9 +666,7 @@ class File(_BaseEncodable):
         """Get the dictionary representation of the object."""
         self.identifier = self.identifier or hash_path(self.x)
         r = super().dict(metadata=metadata, defaults=defaults)
-        r['x'] = FileItem(
-            identifier=self.identifier, path=self.x, file_name=self._file_name
-        )
+        r['x'] = FileItem(identifier=self.identifier, path=self.x)
         return r
 
     def unpack(self):
@@ -696,10 +680,9 @@ class File(_BaseEncodable):
 
         :param identifier: The identifier of the file.
         :param source_data: The source data.
-        :return: The reference to the file. '?:file:{file_name}/{file_id}'
+        :return: The reference to the file. '?:file:{file_id}'
         """
-        file_name = os.path.basename(source_data.rstrip('/')).replace('.', '__')
-        return f"&:file:{file_name}:{identifier}"
+        return f"&:file:{identifier}"
 
 
 class LazyFile(File):

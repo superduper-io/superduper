@@ -13,30 +13,9 @@ from superduper.misc.colors import Colors
 
 from superduper_mongodb.artifacts import MongoArtifactStore
 from superduper_mongodb.metadata import MongoMetaDataStore
-from superduper_mongodb.utils import get_avaliable_conn
+from superduper_mongodb.utils import connection_callback
 
 from .query import MongoQuery
-
-
-def _connection_callback(uri, flavour):
-    flavour = uri.split(":")[0] if flavour is None else flavour
-    if flavour == "mongodb":
-        name = uri.split("/")[-1]
-        conn = get_avaliable_conn(uri, serverSelectionTimeoutMS=5000)
-
-    elif flavour == "atlas":
-        name = uri.split("/")[-1]
-        conn = pymongo.MongoClient(
-            "/".join(uri.split("/")[:-1]),
-            serverSelectionTimeoutMS=5000,
-        )
-
-    elif flavour == "mongomock":
-        name = uri.split("/")[-1]
-        conn = mongomock.MongoClient()
-    else:
-        raise NotImplementedError
-    return conn, name
 
 
 class MongoDataBackend(BaseDataBackend):
@@ -52,9 +31,9 @@ class MongoDataBackend(BaseDataBackend):
     id_field = "_id"
 
     def __init__(self, uri: str, flavour: t.Optional[str] = None):
-        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        self.connection_callback = lambda: connection_callback(uri, flavour)
         super().__init__(uri, flavour=flavour)
-        self.conn, self.name = _connection_callback(uri, flavour)
+        self.conn, self.name = connection_callback(uri, flavour)
 
         self._db = self.conn[self.name]
 

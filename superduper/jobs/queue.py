@@ -154,59 +154,26 @@ class LocalQueueConsumer(BaseQueueConsumer):
     def start_consuming(self):
         """Start consuming."""
 
-    def _get_components(self, db, components):
+    def _get_consumers(self, db, components):
         components = list(set(components.keys()))
         components_to_use = []
 
         for type_id, _ in components:
-            components_to_use+= [ (type_id, x) for x in db.show(type_id)]
+            components_to_use += [(type_id, x) for x in db.show(type_id)]
         return set(components_to_use + components)
-    
-
-    def _run_jobs(self, db, component, events, from_type='DB'):
-        from superduper.base.datalayer import DBEvent
-        jobs = []
-        for event_type, events in DBEvent.chunk_by_event(events).items():
-            if from_type == 'DB':
-                ids = [event.id for event in events]
-            else:
-                ids = []
-                for event in events:
-                    ids+=event.id
-
-            overwrite = (
-                True if event_type in [DBEvent.insert, DBEvent.upsert] else False
-            )
-            logging.info(
-                f'Running jobs for {component.type_id}::{component.identifier}'
-            )
-            logging.debug(f'Using ids: {ids}')
-            job = component.run_jobs(
-                db=db, events=events, overwrite=overwrite, event_type=event_type
-            )
-            jobs.append(job)
-        return jobs
-
-
 
     def consume(self, db: 'Datalayer', queue: t.Dict, components: t.Dict):
         """Consume the current queue and run jobs."""
-
         queue_jobs = defaultdict(lambda: [])
-        components_to_use = self._get_components(db, components)
-        for type_id, identifier in components_to_use:
-            events = queue[type_id, identifier]
-            if not events:
-                continue
-            queue[type_id, identifier] = []
-            component = components[type_id, identifier]
-            jobs = []
-
-            component_events, db_events = Event.chunk_by_type(events)
-            jobs = self._run_jobs(db=db, component=component, events=component_events, from_type='COMPONENT')
-            jobs = self._run_jobs(db=db, component=component, events=db_events)
-
-            queue_jobs[type_id, identifier].extend(jobs)
+        consumers = self._get_consumers(db, components)
+        # All consumer are executed one by one.
+        for consumer in consumers:
+            events = queue[consumer]
+            queue[consumer] = []
+            component = components[consumer]
+            # Consume
+            jobs = consume_events(db, component=component, events=events)
+            queue_jobs[consumer].extend(jobs)
         return queue_jobs
 
     @property
@@ -220,3 +187,41 @@ class LocalQueueConsumer(BaseQueueConsumer):
 
     def close_connection(self):
         """Close connection to queue."""
+
+
+def _run_jobs(db, component, events, from_type='DB'):
+    from superduper.base.datalayer import DBEvent
+
+    jobs = []
+    for event_type, events in DBEvent.chunk_by_event(events).items():
+        if from_type == 'DB':
+            ids = [event.id for event in events]
+        else:
+            ids = []
+            for event in events:
+                ids += event.id
+
+        overwrite = True if event_type in [DBEvent.insert, DBEvent.upsert] else False
+        logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
+        logging.debug(f'Using ids: {ids}')
+        job = component.run_jobs(db=db, events=events, overwrite=overwrite)
+        jobs.append(job)
+    return jobs
+
+
+def consume_events(db, component, events):
+    """Consume events from queue.
+
+    :param db: Datalayer instance.
+    :param component: Superduper component.
+    :param events: Events to be consumed.
+    """
+    if not events:
+        return []
+    jobs = []
+    component_events, db_events = Event.chunk_by_type(events)
+    jobs = _run_jobs(
+        db=db, component=component, events=component_events, from_type='COMPONENT'
+    )
+    jobs = _run_jobs(db=db, component=component, events=db_events)
+    return jobs

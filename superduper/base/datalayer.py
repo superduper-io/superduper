@@ -393,8 +393,9 @@ class Datalayer:
             identifier = event_data['identifier']
             type_id = event_data['type_id']
             ids = event_data['ids']
+            dest = {'identifier': identifier, 'type_id': type_id}
             events.extend(
-                [Event(type_id, identifier, str(id), event_type) for id in ids]
+                [Event(dest=dest, id=str(id), event_type=event_type) for id in ids]
             )
 
         return self.compute.broadcast(events)

@@ -15,6 +15,7 @@ def test_basic_template(db):
         return x + 2
 
     m = Listener(
+        identifier='lm',
         model=ObjectModel(
             object=model,
             identifier='<var:model_id>',
@@ -64,6 +65,7 @@ def test_template_export(db):
     db.cfg.auto_schema = True
     add_random_data(db)
     m = Listener(
+        identifier='lm',
         model=ObjectModel(
             object=lambda x: x + 2,
             identifier='<var:model_id>',
@@ -113,6 +115,7 @@ def test_template_export(db):
 def test_from_template(db):
     add_random_data(db)
     m = Listener(
+        identifier='my_id',
         model=ObjectModel(
             object=lambda x: x + 2,
             identifier='<var:model_id>',

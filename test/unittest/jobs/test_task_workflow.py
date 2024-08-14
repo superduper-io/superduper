@@ -34,7 +34,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     upstream_listener = upstream_model.to_listener(
         key="x",
         select=db["test"].select(),
-        uuid="upstream",
+        predict_id="upstream",
     )
 
     db.apply(upstream_listener)
@@ -47,7 +47,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     downstream_listener = downstream_model.to_listener(
         key=upstream_listener.outputs_key,
         select=upstream_listener.outputs_select,
-        uuid="downstream",
+        predict_id="downstream",
     )
 
     db.apply(downstream_listener)

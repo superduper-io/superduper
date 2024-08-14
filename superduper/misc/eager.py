@@ -316,7 +316,7 @@ class Graph:
         listener = node.model.to_listener(
             key=key,
             select=select,
-            uuid=predict_id,
+            predict_id=predict_id,
             identifier=predict_id,
             predict_kwargs=predict_kwargs,
         )

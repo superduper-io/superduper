@@ -1046,6 +1046,8 @@ class Model(Component, metaclass=ModelMeta):
         """
         from superduper.components.listener import Listener
 
+        identifier = identifier or kwargs.get('predict_id', self.identifier)
+
         listener = Listener(
             key=key,
             select=select,

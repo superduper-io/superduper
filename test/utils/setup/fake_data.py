@@ -81,9 +81,25 @@ def add_listener(db: Datalayer, collection_name="documents"):
     model = db.load("model", "linear_a")
     select = db[collection_name].select()
 
-    _, i_list = db.add(Listener(select=select, key="x", model=model, uuid="vector-x"))
+    _, i_list = db.add(
+        Listener(
+            identifier='vector-x',
+            select=select,
+            key="x",
+            model=model,
+            predict_id="vector-x",
+        )
+    )
 
-    _, c_list = db.add(Listener(select=select, key="z", model=model, uuid="vector-y"))
+    _, c_list = db.add(
+        Listener(
+            identifier='vector-y',
+            select=select,
+            key="z",
+            model=model,
+            predict_id="vector-y",
+        )
+    )
 
     return i_list, c_list
 

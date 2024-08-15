@@ -118,7 +118,7 @@ class MongoQuery(Query):
     }
 
     # Use to control the behavior in the class construction method within LeafMeta
-    __dataclass_params__: t.ClassVar[t.Dict[str, t.Any]] = {
+    _dataclass_params: t.ClassVar[t.Dict[str, t.Any]] = {
         'eq': False,
         'order': False,
     }

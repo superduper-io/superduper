@@ -85,7 +85,7 @@ class LeafMeta(type):
         # Determine if any bases are dataclasses and
         # apply the appropriate dataclass decorator
         #
-        dataclass_params = namespace.get('__dataclass_params__', {})
+        dataclass_params = namespace.get('_dataclass_params', {}).copy()
         if bases and any(dc.is_dataclass(b) for b in bases):
             dataclass_params['kw_only'] = True
             dataclass_params['repr'] = not name.endswith('Query')

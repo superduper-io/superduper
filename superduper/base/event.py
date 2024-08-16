@@ -33,6 +33,7 @@ class Event:
     from_type: str = 'DB'
     event_type: str = 'insert'
     uuid: str = str(uuid.uuid4())
+    dependencies: t.Optional[t.Sequence] = ()
 
     def __post_init__(self):
         if not self.src:

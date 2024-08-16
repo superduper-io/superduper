@@ -283,11 +283,6 @@ class _Fittable:
         """
         # Note: DB events are not supported yet
         # i.e if new data is added after model apply.
-        dependencies = list(dependencies)
-        for event in events:
-            if event.from_type == 'COMPONENT':
-                dependencies.append(event.uuid)
-
         self.fit_in_db_job(
             db=db,
             dependencies=list(set(dependencies)),
@@ -313,6 +308,7 @@ class _Fittable:
             event_type=DBEvent.insert,
             id=ids,
             from_type='COMPONENT',
+            dependencies=dependencies,
         )
 
         db.compute.broadcast([event])

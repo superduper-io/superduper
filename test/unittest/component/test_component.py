@@ -127,7 +127,7 @@ def test_upstream(db):
 
         def schedule_jobs(self, *args, **kwargs):
             self.triggered_schedule_jobs = True
-            return []
+            return ('my_dependency_listener',)
 
     c1 = MyComponent1(identifier='c1')
 
@@ -142,5 +142,10 @@ def test_upstream(db):
         select=db["docs"].find(),
     )
 
+    def mock_schedule_jobs(self, *args, **kwargs):
+        assert kwargs == {'dependencies': ['my_dependency_listener']}
+        return []
+
+    m.schedule_jobs = mock_schedule_jobs
     db.apply(m)
-    assert m.upstream.triggered_schedule_jobs == True
+    assert m.upstream.triggered_schedule_jobs == True  # noqa

@@ -155,11 +155,16 @@ class LocalQueueConsumer(BaseQueueConsumer):
         """Start consuming."""
 
     def _get_consumers(self, db, components):
-        components = list(set(components.keys()))
+        def _remove_duplicates(clist):
+            seen = set()
+            return [x for x in clist if not (x in seen or seen.add(x))]
+
+        components = list(_remove_duplicates(components.keys()))
         components_to_use = []
 
         for type_id, _ in components:
             components_to_use += [(type_id, x) for x in db.show(type_id)]
+
         return set(components_to_use + components)
 
     def consume(self, db: 'Datalayer', queue: t.Dict, components: t.Dict):

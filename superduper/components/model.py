@@ -283,7 +283,7 @@ class _Fittable:
         """
         # Note: DB events are not supported yet
         # i.e if new data is added after model apply.
-        self.fit_in_db_job(
+        return self.fit_in_db_job(
             db=db,
             dependencies=list(set(dependencies)),
         )

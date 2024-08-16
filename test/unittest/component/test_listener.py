@@ -224,7 +224,7 @@ def test_listener_chaining_with_trainer(db):
         identifier="listener1",
         uuid="listener1",
     )
-    deps = db.apply(features_listener)
+    deps, features = db.apply(features_listener)
 
     trainable_model.trainer = MyTrainer(
         'test', select=features_listener.outputs_select, key=features_listener.outputs

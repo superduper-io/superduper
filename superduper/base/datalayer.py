@@ -630,7 +630,6 @@ class Datalayer:
             )
             tmp = self._apply(component, parent=parent.uuid, dependencies=dependencies)
             jobs[n] = tmp
-
         return sum(list(jobs.values()), [])
 
     def _update_component(
@@ -683,12 +682,10 @@ class Datalayer:
         children = [
             v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
-
-        jobs.extend(
-            self._add_child_components(
-                children, parent=object, parent_deps=dependencies
-            )
+        child_jobs = self._add_child_components(
+            children, parent=object, parent_deps=dependencies
         )
+        jobs.extend(child_jobs)
 
         if children:
             serialized = self._change_component_reference_prefix(serialized)
@@ -707,6 +704,8 @@ class Datalayer:
         for job in jobs:
             if isinstance(job, Job):
                 deps.append(job.job_id)
+            else:
+                deps.append(job)
         dependencies = list(set([*deps, *dependencies]))  # type: ignore[list-item]
 
         object.post_create(self)

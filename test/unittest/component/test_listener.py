@@ -224,18 +224,19 @@ def test_listener_chaining_with_trainer(db):
         identifier="listener1",
         uuid="listener1",
     )
-    deps, features = db.apply(features_listener)
 
+    select = db[features_listener.outputs].select()
     trainable_model.trainer = MyTrainer(
-        'test', select=features_listener.outputs_select, key=features_listener.outputs
+        'test', select=select, key=features_listener.outputs
     )
 
     listener2 = Listener(
+        upstream=features_listener,
         model=trainable_model,
-        select=features_listener.outputs_select,
+        select=select,
         key=features_listener.outputs,
         identifier='listener2',
         uuid='listener2',
     )
-    db.apply(listener2, deps)
+    db.apply(listener2)
     assert trainable_model.trainer.training_done is True

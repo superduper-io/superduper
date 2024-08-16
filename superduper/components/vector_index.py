@@ -312,7 +312,7 @@ class VectorIndex(Component):
         )
         return ids
 
-    def _create_predict_job(self, db, callable, deps, ids, job_id=None):
+    def _create_vector_sync_job(self, db, callable, deps, ids, job_id=None):
         job = FunctionJob(
             callable=callable,
             args=[],
@@ -358,7 +358,7 @@ class VectorIndex(Component):
         jobs = []
         for event in component_events:
             jobs += [
-                self._create_predict_job(
+                self._create_vector_sync_job(
                     db=db,
                     callable=callable,
                     ids=event.id,
@@ -372,7 +372,7 @@ class VectorIndex(Component):
             return jobs
 
         jobs += [
-            self._create_predict_job(
+            self._create_vector_sync_job(
                 db=db,
                 callable=callable,
                 ids=[event.id for event in db_events],

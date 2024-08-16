@@ -24,9 +24,10 @@ class Event:
     :param uuid: Unique identifier for the event.
                  This id will be used as job id in
                  startup events.
+    :param dependencies: List of dependencies on the event.
     """
 
-    dest: _Component
+    dest: t.Union[_Component, t.Dict]
     id: t.Any
 
     src: t.Optional[_Component] = None

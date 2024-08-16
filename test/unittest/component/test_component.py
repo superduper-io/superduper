@@ -119,3 +119,28 @@ def test_set_variables(db):
     listener = m.set_variables(test="test_value", key="key_value", docs="docs_value")
     assert listener.model.identifier == "test_value"
     assert listener.key == "key_value"
+
+
+def test_upstream(db):
+    class MyComponent1(Component):
+        triggered_schedule_jobs = False
+
+        def schedule_jobs(self, *args, **kwargs):
+            self.triggered_schedule_jobs = True
+            return []
+
+    c1 = MyComponent1(identifier='c1')
+
+    m = Listener(
+        identifier='l1',
+        upstream=c1,
+        model=ObjectModel(
+            identifier="model1",
+            object=lambda x: x + 2,
+        ),
+        key="x",
+        select=db["docs"].find(),
+    )
+
+    db.apply(m)
+    assert m.upstream.triggered_schedule_jobs == True

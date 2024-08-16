@@ -302,7 +302,7 @@ class Listener(Component):
         return self.model.predict_in_db_job(
             X=self.key,
             db=db,
-            predict_id=self.uuid,
+            predict_id=self.predict_id,
             select=self.select,
             ids=ids,
             job_id=job_id,

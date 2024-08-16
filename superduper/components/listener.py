@@ -218,6 +218,7 @@ class Listener(Component):
             event_type=DBEvent.insert,
             id=[str(id) for id in ids],
             from_type='COMPONENT',
+            dependencies=dependencies,
         )
 
         db.compute.broadcast([event])

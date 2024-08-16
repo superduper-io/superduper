@@ -609,7 +609,7 @@ class Datalayer:
                 raise exceptions.ComponentException('%s not found in %s cache'.format())
         return m
 
-    def _add_child_components(self, components, parent):
+    def _add_child_components(self, components, parent, parent_deps):
         # TODO this is a bit of a mess
         # it handles the situation in `Stack` when
         # the components should be added in a certain order
@@ -626,7 +626,7 @@ class Datalayer:
         for n in nodes:
             component = lookup[n]
             dependencies = sum(
-                [jobs.get(d[:2], []) for d in component.dependencies], []
+                [jobs.get(d[:2], []) for d in component.dependencies], parent_deps
             )
             tmp = self._apply(component, parent=parent.uuid, dependencies=dependencies)
             jobs[n] = tmp
@@ -684,7 +684,11 @@ class Datalayer:
             v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
 
-        jobs.extend(self._add_child_components(children, parent=object))
+        jobs.extend(
+            self._add_child_components(
+                children, parent=object, parent_deps=dependencies
+            )
+        )
 
         if children:
             serialized = self._change_component_reference_prefix(serialized)
@@ -703,7 +707,7 @@ class Datalayer:
         for job in jobs:
             if isinstance(job, Job):
                 deps.append(job.job_id)
-        dependencies = [*deps, *dependencies]  # type: ignore[list-item]
+        dependencies = list(set([*deps, *dependencies]))  # type: ignore[list-item]
 
         object.post_create(self)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)

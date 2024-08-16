@@ -403,6 +403,7 @@ class VectorIndex(Component):
             event_type=DBEvent.insert,
             id=ids,
             from_type='COMPONENT',
+            dependencies=dependencies,
         )
 
         db.compute.broadcast([event])

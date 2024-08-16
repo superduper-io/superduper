@@ -204,7 +204,13 @@ def _run_jobs(db, component, events, from_type='DB'):
         overwrite = True if event_type in [DBEvent.insert, DBEvent.upsert] else False
         logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
         logging.debug(f'Using ids: {ids}')
-        job = component.run_jobs(db=db, events=events, overwrite=overwrite)
+        dependencies = []
+        for event in events:
+            if event.from_type == 'COMPONENT':
+                dependencies.extend(event.dependencies)
+        job = component.run_jobs(
+            db=db, events=events, overwrite=overwrite, dependencies=dependencies
+        )
         jobs.append(job)
     return jobs
 

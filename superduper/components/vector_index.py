@@ -1,9 +1,12 @@
 import dataclasses as dc
 import typing as t
 
+import tqdm
 import numpy as np
+import itertools
 from overrides import override
 
+from superduper import logging, CFG
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
@@ -15,10 +18,84 @@ from superduper.ext.utils import str_shape
 from superduper.jobs.job import FunctionJob
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
-from superduper.vector_search.base import VectorIndexMeasureType
+from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
 from superduper.vector_search.update_tasks import copy_vectors, delete_vectors
 
 KeyType = t.Union[str, t.List, t.Dict]
+
+T = t.TypeVar('T')
+
+
+def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
+    """Batch an iterable into chunks of size `batch_size`.
+
+    :param iterable: the iterable to batch
+    :param batch_size: the number of groups to write
+    """
+    iterator = iter(iterable)
+    while True:
+        batch = list(itertools.islice(iterator, batch_size))
+        if not batch:
+            break
+        yield batch
+
+
+def backfill_vector_search(db, vi, searcher):
+    """
+    Backfill vector search from model outputs of a given vector index.
+
+    :param db: Datalayer instance.
+    :param vi: Identifier of vector index.
+    :param searcher: FastVectorSearch instance to load model outputs as vectors.
+    """
+    from superduper.components.datatype import _BaseEncodable
+
+    logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
+
+    if vi.indexing_listener.select is None:
+        raise ValueError('.select must be set')
+
+    outputs_key = vi.indexing_listener.outputs
+    output_table = vi.indexing_listener.outputs
+    query = db[output_table].select()
+
+    logging.info(str(query))
+
+    id_field = query.table_or_collection.primary_id
+
+    progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
+    notfound = 0
+    found = 0
+    for record_batch in ibatch(
+        db.execute(query),
+        CFG.cluster.vector_search.backfill_batch_size,
+    ):
+        items = []
+        for record in record_batch:
+            id = record[id_field]
+            assert not isinstance(vi.indexing_listener.model, str)
+            try:
+                h = record[outputs_key]
+            except KeyError:
+                notfound += 1
+                continue
+            else:
+                found += 1
+            if isinstance(h, _BaseEncodable):
+                h = h.unpack()
+            items.append(VectorItem.create(id=str(id), vector=h))
+        if items:
+            searcher.add(items)
+        progress.update(len(items))
+
+    if notfound:
+        logging.warn(
+            f'{notfound} document/rows were missing outputs ',
+            'key hence skipping vector loading for those.',
+        )
+
+    searcher.post_create()
+    logging.info(f'Loaded {found} vectors into vector index succesfully')
 
 
 class VectorIndex(Component):
@@ -56,6 +133,22 @@ class VectorIndex(Component):
             self.compatible_listener = t.cast(
                 Listener, db.load('listener', self.compatible_listener)
             )
+
+        # Backfill vectors into vi
+        searcher = db.fast_vector_searchers[self]
+        if not searcher.is_initialized():
+            backfill_vector_search(db, self, searcher=searcher.searcher)
+            searcher.initialize()
+
+    def __hash__(self):
+        return hash((self.type_id, self.identifier))
+
+    def __eq__(self, other: Component):
+        if isinstance(other, Component):
+            return (
+                self.identifier == other.identifier and self.type_id and other.type_id
+            )
+        return False
 
     def get_vector(
         self,

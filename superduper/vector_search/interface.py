@@ -22,6 +22,31 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
+    def initialize(self):
+        if CFG.cluster.vector_search.uri is not None:
+            request_server(
+                service='vector_search',
+                endpoint='initialize',
+                args={
+                    'vector_index': self.vector_index,
+                },
+            )
+        else:
+            self.searcher.initialize(self.vector_index)
+
+    def is_initialized(self):
+        if CFG.cluster.vector_search.uri is not None:
+            response = request_server(
+                service='vector_search',
+                endpoint='is_initialized',
+                args={
+                    'vector_index': self.vector_index,
+                },
+            )
+            return response['status']
+        else:
+            return self.searcher.is_initialized(self.vector_index)
+
     @staticmethod
     def drop_remote(index):
         """Drop a vector index from the remote.
@@ -41,7 +66,6 @@ class FastVectorSearcher(BaseVectorSearcher):
         """Drop the vector index from the remote."""
         if CFG.cluster.vector_search.uri is not None:
             self.drop_remote(self.vector_index)
-            request_server
 
     def __len__(self):
         return len(self.searcher)

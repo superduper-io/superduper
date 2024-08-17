@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import defaultdict
 
 import enum
 import typing as t
@@ -31,7 +32,13 @@ class BaseVectorSearcher(ABC):
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        pass
+        self._init_vi = defaultdict(lambda: False)
+
+    def initialize(self, identifier):
+        self._init_vi[identifier] = True
+
+    def is_initialized(self, identifier):
+        return self._init_vi[identifier]
 
     @classmethod
     def from_component(cls, vi: 'VectorIndex'):

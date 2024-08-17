@@ -46,6 +46,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self.lookup = None
 
         self.identifier = identifier
+        super().__init__(
+            identifier=identifier, dimensions=dimensions, h=h, measure=measure
+        )
 
     def __len__(self):
         if self.h is not None:

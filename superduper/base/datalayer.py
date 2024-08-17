@@ -140,17 +140,18 @@ class Datalayer:
         self._cdc = cdc
 
     def initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None
+        self, vi, searcher_type: t.Optional[str] = None
     ) -> t.Optional[BaseVectorSearcher]:
         """
         Initialize vector searcher.
 
-        :param identifier: Identifying string to component.
+        :param vi: Identifying string to component.
         :param searcher_type: Searcher type (in_memory|native).
         """
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
 
-        vi = self.vector_indices.force_load(identifier)
+        if isinstance(vi, str):
+            vi = self.vector_indices.force_load(vi)
         from superduper import VectorIndex
 
         assert isinstance(vi, VectorIndex)
@@ -938,8 +939,9 @@ class LoadDict(dict):
     field: t.Optional[str] = None
     callable: t.Optional[t.Callable] = None
 
-    def __missing__(self, key: str):
+    def __missing__(self, key: t.Union[str, Component]):
         if self.field is not None:
+            key = key.identifier if isinstance(key, Component) else key
             value = self[key] = self.database.load(
                 self.field,
                 key,
@@ -947,7 +949,9 @@ class LoadDict(dict):
         else:
             msg = f'callable is ``None`` for {key}'
             assert self.callable is not None, msg
-            value = self[key] = self.callable(key)
+            value = self.callable(key)
+            key = key.identifier if isinstance(key, Component) else key
+            self[key] = value
         return value
 
     def force_load(self, key: str):

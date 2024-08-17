@@ -118,7 +118,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         super().__init__(uri=uri)
         self.consumer = self.build_consumer()
 
-    def build_consumer(self):
+    def build_consumer(self, **kwargs):
         """Build consumer client."""
         return LocalQueueConsumer()
 

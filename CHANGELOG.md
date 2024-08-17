@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize the logic of ready_ids in trigger_ids.
 - Move all plugins superduperdb/ext/* to /plugins
 - Optimize the logic for file saving and retrieval in the artifact_store.
+- Add backfill on load of vector index
 
 #### New Features & Functionality
 
@@ -52,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change default encoding to sqlvector
 - Fix some links in documentation 
 - Change `__dataclass_params__` to `_dataclass_params`
+- Make component reload after caching in apply
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

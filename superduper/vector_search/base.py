@@ -1,9 +1,9 @@
 from __future__ import annotations
-from collections import defaultdict
 
 import enum
 import typing as t
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass
 
 import numpy
@@ -32,12 +32,14 @@ class BaseVectorSearcher(ABC):
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        self._init_vi = defaultdict(lambda: False)
+        self._init_vi: t.Dict = defaultdict(lambda: False)
 
     def initialize(self, identifier):
+        """Initialize vector index."""
         self._init_vi[identifier] = True
 
     def is_initialized(self, identifier):
+        """Check if vector index initialized."""
         return self._init_vi[identifier]
 
     @classmethod

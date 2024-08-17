@@ -23,6 +23,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.vector_index = vector_index
 
     def initialize(self):
+        """Initialize vector index."""
         if CFG.cluster.vector_search.uri is not None:
             request_server(
                 service='vector_search',
@@ -35,6 +36,7 @@ class FastVectorSearcher(BaseVectorSearcher):
             self.searcher.initialize(self.vector_index)
 
     def is_initialized(self):
+        """Check if vector index initialized."""
         if CFG.cluster.vector_search.uri is not None:
             response = request_server(
                 service='vector_search',

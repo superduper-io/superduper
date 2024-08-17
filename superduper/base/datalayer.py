@@ -705,9 +705,10 @@ class Datalayer:
         dependencies = [*deps, *dependencies]  # type: ignore[list-item]
 
         object.post_create(self)
-        self._add_component_to_cache(object)
         these_jobs = object.schedule_jobs(self, dependencies=dependencies)
         jobs.extend(these_jobs)
+
+        self._add_component_to_cache(object)
         return jobs
 
     def _change_component_reference_prefix(self, serialized):
@@ -899,8 +900,11 @@ class Datalayer:
         """
         type_id = component.type_id
         if cm := self.type_id_to_cache_mapping.get(type_id):
+            # NOTE: We need to reload the object since in `schedule_jobs`
+            # of the object, `db.replace` might be performed.
+            # e.g model prediction object is replace with updated datatype.
+            self.load(type_id, component.identifier)
             getattr(self, cm)[component.identifier] = component
-        component.on_load(self)
 
     def infer_schema(
         self, data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None

@@ -1,12 +1,12 @@
 import dataclasses as dc
+import itertools
 import typing as t
 
-import tqdm
 import numpy as np
-import itertools
+import tqdm
 from overrides import override
 
-from superduper import logging, CFG
+from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer, DBEvent
 from superduper.base.document import Document
@@ -56,12 +56,10 @@ def backfill_vector_search(db, vi, searcher):
         raise ValueError('.select must be set')
 
     outputs_key = vi.indexing_listener.outputs
-    output_table = vi.indexing_listener.outputs
-    query = db[output_table].select()
+    query = db[outputs_key].select()
 
     logging.info(str(query))
-
-    id_field = query.table_or_collection.primary_id
+    id_field = '_source'
 
     progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
     notfound = 0
@@ -248,7 +246,6 @@ class VectorIndex(Component):
         )[0]
 
         searcher = db.fast_vector_searchers[self.identifier]
-
         return searcher.find_nearest_from_array(h, within_ids=within_ids, n=n)
 
     def cleanup(self, db: Datalayer):

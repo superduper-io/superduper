@@ -53,7 +53,7 @@ class _MetaDataLoader(_Loader):
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
         r'^sqlite:\/\/': ('sqlalchemy', 'base'),
-        r'^postgres:\/\/': ('sqlalchemy', 'base'),
+        r'^postgresql:\/\/': ('sqlalchemy', 'base'),
         r'^snowflake:\/\/': ('sqlalchemy', 'base'),
         r'^duckdb:\/\/': ('sqlalchemy', 'base'),
         r'^mssql:\/\/': ('sqlalchemy', 'base'),
@@ -68,7 +68,7 @@ class _DataBackendLoader(_Loader):
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
         r'^sqlite://': ('ibis', 'base'),
-        r'^postgres://': ('ibis', 'base'),
+        r'^postgresql://': ('ibis', 'base'),
         r'^duckdb://': ('ibis', 'base'),
         r'^mssql://': ('ibis', 'base'),
         r'^mysql://': ('ibis', 'base'),
@@ -82,8 +82,9 @@ class _ArtifactStoreLoader(_Loader):
         r'^filesystem:\/\/': ('local', 'base'),
         r'^mongomock:\/\/': ('local', 'base'),
         r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
-        r'^mongodb:\/\/': ('mongodb', 'mongodb'),
-        r'sqlite:': ('local', 'base'),
+        r'^mongodb:\/\/': ('mongodb', 'base'),
+        r'^sqlite:\/\/': ('local', 'base'),
+        r'^postgresql:\/\/': ('local', 'base'),
     }
 
 

@@ -397,6 +397,8 @@ class VectorIndex(Component):
         outputs = db[self.indexing_listener.outputs]
         ids = db.execute(outputs.select_ids)
         ids = [str(id[outputs.primary_id]) for id in ids]
+        if not ids:
+            return []
 
         event = Event(
             dest={'type_id': self.type_id, 'identifier': self.identifier},

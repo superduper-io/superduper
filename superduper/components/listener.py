@@ -212,6 +212,8 @@ class Listener(Component):
 
         self.select.db = db
         ids = self.db.databackend.check_ready_ids(self.select, self._ready_keys)
+        if not ids:
+            return []
 
         event = Event(
             dest={'type_id': self.type_id, 'identifier': self.identifier},

@@ -37,6 +37,14 @@ class MyComponent(Component):
     a: t.Callable
 
 
+class UpstreamComponent(Component):
+    triggered_schedule_jobs = False
+
+    def schedule_jobs(self, *args, **kwargs):
+        self.triggered_schedule_jobs = True
+        return ('my_dependency_listener',)
+
+
 def test_init(monkeypatch):
     from unittest.mock import MagicMock
 
@@ -122,14 +130,7 @@ def test_set_variables(db):
 
 
 def test_upstream(db):
-    class MyComponent1(Component):
-        triggered_schedule_jobs = False
-
-        def schedule_jobs(self, *args, **kwargs):
-            self.triggered_schedule_jobs = True
-            return ('my_dependency_listener',)
-
-    c1 = MyComponent1(identifier='c1')
+    c1 = UpstreamComponent(identifier='c1')
 
     m = Listener(
         identifier='l1',

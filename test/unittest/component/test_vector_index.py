@@ -21,3 +21,13 @@ def test_vector_index_recovery(db):
 
     ids = [o[primary_id] for o in list(out)]
     assert len(ids) == 10
+
+
+def test_vector_index_cleanup(db):
+    from test.utils.usecase.vector_search import build_vector_index
+
+    build_vector_index(db)
+    vector_index = "vector_index"
+
+    db.remove('vector_index', vector_index, force=True)
+    assert vector_index not in db.fast_vector_searchers

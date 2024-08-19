@@ -254,8 +254,7 @@ class VectorIndex(Component):
 
         :param db: The datalayer to cleanup
         """
-        db.fast_vector_searchers[self.identifier].drop()
-        del db.fast_vector_searchers[self.identifier]
+        db.fast_vector_searchers[self.identifier].drop(db)
 
     @override
     def post_create(self, db: "Datalayer") -> None:

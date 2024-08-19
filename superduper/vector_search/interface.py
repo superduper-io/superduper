@@ -64,10 +64,14 @@ class FastVectorSearcher(BaseVectorSearcher):
         )
         return
 
-    def drop(self):
+    def drop(self, db: t.Optional['Datalayer']):
         """Drop the vector index from the remote."""
         if CFG.cluster.vector_search.uri is not None:
             self.drop_remote(self.vector_index)
+        else:
+            assert db
+            if self.vector_index in db.fast_vector_searchers:
+                del db.fast_vector_searchers[self.vector_index]
 
     def __len__(self):
         return len(self.searcher)

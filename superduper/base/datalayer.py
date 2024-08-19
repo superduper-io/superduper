@@ -626,7 +626,7 @@ class Datalayer:
         for n in nodes:
             component = lookup[n]
             dependencies = sum(
-                [jobs.get(d[:2], []) for d in component.dependencies], parent_deps
+                [jobs.get(d[:2], []) for d in component.dependencies], list(parent_deps)
             )
             tmp = self._apply(component, parent=parent.uuid, dependencies=dependencies)
             jobs[n] = tmp

@@ -341,6 +341,9 @@ class Datalayer:
         cdc_status = s.CFG.cluster.cdc.uri is not None
         is_output_table = insert.table.startswith(CFG.output_prefix)
 
+        logging.info(f'Inserted {len(inserted_ids)} documents into {insert.table}')
+        logging.debug(f'Inserted IDs: {inserted_ids}')
+
         if refresh:
             if cdc_status and not is_output_table:
                 logging.warn('CDC service is active, skipping model/listener refresh')
@@ -398,6 +401,10 @@ class Datalayer:
                 [Event(dest=dest, id=str(id), event_type=event_type) for id in ids]
             )
 
+        logging.info(
+            f'Created {len(events)} events for {event_type} on [{query.table}]'
+        )
+        logging.info(f'Broadcasting {len(events)} events')
         return self.compute.broadcast(events)
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:

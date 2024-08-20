@@ -775,6 +775,10 @@ class Model(Component, metaclass=ModelMeta):
             )
 
         if len(X_data) > len(ids):
+            logging.error("Your select is returning more documents than unique ids.")
+            logging.error(f"X_data: {len(X_data)}; ids: {len(ids)}")
+            logging.error(f"ids: {ids}")
+            logging.error(f"select: {select}")
             raise Exception(
                 'You\'ve specified more documents than unique ids;'
                 f' Is it possible that {select.table_or_collection.primary_id}'

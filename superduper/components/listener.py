@@ -92,7 +92,7 @@ class Listener(Component):
         self.create_output_dest(db, self.predict_id, self.model)
         if self.select is not None:
             logging.info('Requesting listener setup on CDC service')
-            if CFG.cluster.cdc.uri:
+            if CFG.cluster.cdc.uri and not self.dependencies:
                 logging.info('Sending request to add listener')
                 request_server(
                     service='cdc',

@@ -52,6 +52,8 @@ def _request_server(
         service_uri = CFG.cluster.vector_search.uri
     elif service == 'scheduler':
         service_uri = CFG.cluster.scheduler.uri
+    elif service == 'crontab':
+        service_uri = CFG.cluster.crontab.uri
     else:
         raise NotImplementedError(f'Unknown service {service}')
 

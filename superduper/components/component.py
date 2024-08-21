@@ -128,6 +128,8 @@ class Component(Leaf):
         from superduper import Template
 
         if template_name:
+            from superduper.base.datalayer import Datalayer
+
             assert isinstance(db, Datalayer)
             template: Template = db.load('template', template_name)
         else:

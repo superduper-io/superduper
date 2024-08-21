@@ -62,6 +62,7 @@ class _BaseTemplate(Component):
                 k: f'<value-{i}>' for i, k in enumerate(self.template_variables)
             },
             **{k: v for k, v in self.template.items() if k != 'identifier'},
+            '_template_name': self.identifier,
         }
 
 

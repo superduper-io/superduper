@@ -48,10 +48,6 @@ def copy_vectors(
     docs = select.execute()
     docs = [doc.unpack() for doc in docs]
 
-    key = vi.indexing_listener.key
-    if CFG.output_prefix in key:
-        key = key.split('.')[1]
-
     vectors = []
     nokeys = 0
     for doc in docs:

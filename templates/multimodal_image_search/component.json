@@ -1,0 +1,138 @@
+{
+  "_base": "?image-vector-search",
+  "_builds": {
+    "image-vector-search": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?image-vector-search",
+        "_builds": {
+          "vector[1024]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1024
+            ]
+          },
+          "dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "75347bbb255301912d39cedb0694f549f8819abb": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:75347bbb255301912d39cedb0694f549f8819abb"
+          },
+          "e1635b227a7f3787dc79524d812915c342701260": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:e1635b227a7f3787dc79524d812915c342701260"
+          },
+          "6e99888088997261fb7a5634c403fc06c5fb6f9b": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:6e99888088997261fb7a5634c403fc06c5fb6f9b"
+          },
+          "clip_image": {
+            "_path": "superduper_torch.model.TorchModel",
+            "signature": "singleton",
+            "datatype": "?vector[1024]",
+            "object": "?75347bbb255301912d39cedb0694f549f8819abb",
+            "preprocess": "?e1635b227a7f3787dc79524d812915c342701260",
+            "postprocess": "?6e99888088997261fb7a5634c403fc06c5fb6f9b"
+          },
+          "<var:table>-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table>.select()"
+          },
+          "indexing-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "key": "img",
+            "model": "?clip_image",
+            "select": "?<var:table>-select",
+            "predict_id": "indexing-listener"
+          },
+          "38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3"
+          },
+          "68e3d68b08e34272c74c87c050a934ecaa20fbf7": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:68e3d68b08e34272c74c87c050a934ecaa20fbf7"
+          },
+          "89d6b1b6e00ddbac730818039f895c3533395a19": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:89d6b1b6e00ddbac730818039f895c3533395a19"
+          },
+          "clip_text": {
+            "_path": "superduper_torch.model.TorchModel",
+            "signature": "singleton",
+            "datatype": "?vector[1024]",
+            "object": "?38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3",
+            "preprocess": "?68e3d68b08e34272c74c87c050a934ecaa20fbf7",
+            "postprocess": "?89d6b1b6e00ddbac730818039f895c3533395a19",
+            "forward_method": "encode_text"
+          },
+          "compatible-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "key": "text",
+            "model": "?clip_text",
+            "select": null,
+            "predict_id": "compatible-listener"
+          },
+          "my-vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "indexing_listener": "?indexing-listener",
+            "compatible_listener": "?compatible-listener"
+          },
+          "image-vector-search": {
+            "_path": "superduper.components.application.Application",
+            "components": [
+              "?my-vector-index"
+            ],
+            "namespace": [
+              {
+                "type_id": "vector_index",
+                "identifier": "my-vector-index"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "indexing-listener"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "compatible-listener"
+              },
+              {
+                "type_id": "model",
+                "identifier": "clip_image"
+              },
+              {
+                "type_id": "datatype",
+                "identifier": "vector[1024]"
+              },
+              {
+                "type_id": "model",
+                "identifier": "clip_text"
+              }
+            ],
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "table"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

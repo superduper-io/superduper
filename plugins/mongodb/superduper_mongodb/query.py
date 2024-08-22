@@ -240,6 +240,24 @@ class MongoQuery(Query):
             )
         return bulk_result, bulk_update_ids, bulk_delete_ids
 
+    def __eq__(self, other):
+        return self._ops('__eq__', other)
+
+    def __ne__(self, other):
+        return self._ops('__ne__', other)
+
+    def __lt__(self, other):
+        return self._ops('__lt__', other)
+
+    def __gt__(self, other):
+        return self._ops('__gt__', other)
+
+    def __le__(self, other):
+        return self._ops('__le__', other)
+
+    def __ge__(self, other):
+        return self._ops('__ge__', other)
+
     def filter(self, *args, **kwargs):
         """Return a query that filters the documents.
 

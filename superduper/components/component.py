@@ -107,6 +107,9 @@ class Component(Leaf):
         r = self.dict().encode(leaves_to_keep=Leaf)
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         out.extend(sum([c.children for c in out], []))
+        # Remove duplicates
+        ids = set()
+        out = [c for c in out if id(c) not in ids and (ids.add(id(c)) or True)]
         return out
 
     @classmethod

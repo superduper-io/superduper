@@ -1,0 +1,133 @@
+{
+  "_base": "?vector-search",
+  "_builds": {
+    "vector-search": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?text-vector-search",
+        "_builds": {
+          "str": {
+            "_path": "superduper.components.schema.FieldType"
+          },
+          "schema": {
+            "_path": "superduper.components.schema.Schema",
+            "fields": {
+              "x": "?str",
+              "_fold": "?str"
+            }
+          },
+          "<var:table_name>": {
+            "_path": "superduper.components.table.Table",
+            "schema": "?schema"
+          },
+          "dill_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "lazy_artifact"
+          },
+          "03c2d3eed85dc1daff9b9ef78206e90a0f3e8f41": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?dill_lazy",
+            "blob": "&:blob:03c2d3eed85dc1daff9b9ef78206e90a0f3e8f41"
+          },
+          "chunker": {
+            "_path": "superduper.components.listener.Listener",
+            "uuid": "chunk",
+            "key": "x",
+            "model": "?chunker",
+            "select": "?<var:table_name>-select",
+            "predict_id": "chunker"
+          },
+          "<var:table_name>-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table_name>.select()"
+          },
+          "vector[1536]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1536
+            ]
+          },
+          "text-embedding-ada-002": {
+            "_path": "superduper_openai.model.OpenAIEmbedding",
+            "datatype": "?vector[1536]",
+            "model": "text-embedding-ada-002",
+            "shape": [
+              1536
+            ]
+          },
+          "-outputs-chunker-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "<var:table_name>": [],
+            "query": "_outputs__chunker.select()"
+          },
+          "text-embedding-ada-002-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": [
+              "?<var:table_name>",
+              "?chunker"
+            ],
+            "key": "_outputs__chunker",
+            "model": "?text-embedding-ada-002",
+            "select": "?-outputs-chunker-select",
+            "predict_id": "text-embedding-ada-002-listener"
+          },
+          "my-vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "indexing_listener": "?text-embedding-ada-002-listener"
+          },
+          "text-vector-search": {
+            "_path": "superduper.components.application.Application",
+            "components": [
+              "?<var:table_name>",
+              "?chunker",
+              "?my-vector-index"
+            ],
+            "namespace": [
+              {
+                "type_id": "table",
+                "identifier": "<var:table_name>"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "vector_index",
+                "identifier": "my-vector-index"
+              },
+              {
+                "type_id": "schema",
+                "identifier": "schema"
+              },
+              {
+                "type_id": "model",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "text-embedding-ada-002-listener"
+              },
+              {
+                "type_id": "model",
+                "identifier": "text-embedding-ada-002"
+              }
+            ],
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "table_name"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

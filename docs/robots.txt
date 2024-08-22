@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://docs.superduper.io/sitemap.xml

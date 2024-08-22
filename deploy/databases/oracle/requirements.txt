@@ -1,2 +1,0 @@
-pyodbc
-ibis-framework[oracle]>=5.1.0

@@ -65,7 +65,7 @@ class Job:
         return self.db.metadata.watch_job(identifier=self.identifier)
 
     @abstractmethod
-    def submit(self, compute, dependencies=(), update_job=True):
+    def submit(self, compute, dependencies=()):
         """Submit job for execution.
 
         :param compute: compute engine
@@ -124,7 +124,7 @@ class FunctionJob(Job):
         d['_path'] = f'superduper/jobs/job/FunctionJob/{path}'
         return d
 
-    def submit(self, dependencies=(), update_job=True):
+    def submit(self, dependencies=()):
         """Submit job for execution.
 
         :param dependencies: list of dependencies
@@ -153,9 +153,11 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         self.db = db
-        db.metadata.create_job(self.dict())
 
+        db.metadata.create_job(self.dict())
         self.submit(dependencies=dependencies)
+        if self.future:
+            db.metadata.update_job(self.job_id, 'job_id', self.future)
 
         return self
 
@@ -245,6 +247,8 @@ class ComponentJob(Job):
         db.metadata.create_job(self.dict())
 
         self.submit(dependencies=dependencies)
+        if self.future:
+            db.metadata.update_job(self.job_id, 'job_id', self.future)
         return
 
     def dict(self):

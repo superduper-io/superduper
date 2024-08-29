@@ -523,6 +523,8 @@ class Model(Component, metaclass=ModelMeta):
     :param validation: The validation ``Dataset`` instances to use.
     :param metric_values: The metrics to evaluate on.
     :param num_workers: Number of workers to use for parallel prediction.
+    :param serve: Creates an http endpoint and serves the model with
+                  ``compute_kwargs`` on a distributed cluster.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -536,6 +538,7 @@ class Model(Component, metaclass=ModelMeta):
     validation: t.Optional[Validation] = None
     metric_values: t.Dict = dc.field(default_factory=dict)
     num_workers: int = 0
+    serve: bool = False
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -561,6 +564,13 @@ class Model(Component, metaclass=ModelMeta):
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.predict(*args, **kwargs)
+
+    def post_create(self, db):
+        """Post create hook for the model.
+
+        :param db: Datalayer instance.
+        """
+        db.compute.queue.declare_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> int:

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimize the logic for file saving and retrieval in the artifact_store.
 - Add backfill on load of vector index
 - Add startup event to initialize db.apply jobs
+- Update job_id after job submission
 
 #### New Features & Functionality
 

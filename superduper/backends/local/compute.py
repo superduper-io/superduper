@@ -55,7 +55,7 @@ class LocalComputeBackend(ComputeBackend):
 
     def submit(
         self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
-    ) -> t.Tuple[str, str]:
+    ) -> str:
         """
         Submits a function for local execution.
 
@@ -73,7 +73,7 @@ class LocalComputeBackend(ComputeBackend):
         logging.success(
             f"Job submitted on {self}.  function:{function} future:{future_key}"
         )
-        return future_key, future_key
+        return future_key
 
     @property
     def tasks(self) -> t.Dict[str, t.Any]:

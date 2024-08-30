@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://www.superduper.io">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/SuperDuperDB_logo_white.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/SuperDuperDB_logo_color.svg">
-      <img width="50%" alt="SuperDuper logo" src="https://raw.githubusercontent.com/superduper-io/superduper/main/docs/static/img/SuperDuperDB_logo_color.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/superduper-io/superduper-docs/main/static/img/SuperDuperDB_logo_white.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/superduper-io/superduper-docs/main/static/img/SuperDuperDB_logo_color.svg">
+      <img width="50%" alt="SuperDuper logo" src="https://raw.githubusercontent.com/superduper-io/superduper-docs/main/static/img/SuperDuperDB_logo_color.svg">
     </picture>
   </a>
 </div>

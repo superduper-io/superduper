@@ -1,0 +1,62 @@
+{
+  "_base": "?llm-finetune",
+  "_builds": {
+    "llm-finetune": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?llm",
+        "_builds": {
+          "<var:collection>-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:collection>.select()"
+          },
+          "llm-finetune-trainer": {
+            "_path": "superduper_transformers.training.LLMTrainer",
+            "key": "text",
+            "select": "?<var:collection>-select",
+            "output_dir": "output/finetune",
+            "overwrite_output_dir": true,
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 2,
+            "logging_steps": 10,
+            "save_steps": 100,
+            "save_total_limit": 3,
+            "eval_steps": 100,
+            "evaluation_strategy": "steps",
+            "training_kwargs": {
+              "dataset_text_field": "text"
+            }
+          },
+          "dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "4a8dc14137b3a79a81256a795b266fe82bda52d9": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:4a8dc14137b3a79a81256a795b266fe82bda52d9"
+          },
+          "llm": {
+            "_path": "superduper_transformers.model.LLM",
+            "trainer": "?llm-finetune-trainer",
+            "model_name_or_path": "<var:model_name>",
+            "model_kwargs": "?4a8dc14137b3a79a81256a795b266fe82bda52d9",
+            "tokenizer_kwargs": "?4a8dc14137b3a79a81256a795b266fe82bda52d9"
+          }
+        }
+      },
+      "template_variables": [
+        "collection",
+        "model_name"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

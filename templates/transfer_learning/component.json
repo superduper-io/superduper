@@ -1,0 +1,80 @@
+{
+  "_base": "?transfer-learner",
+  "_builds": {
+    "transfer-learner": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?my-model",
+        "_builds": {
+          "<var:table>-select-outputs-features": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table>.select().outputs(\"features\")"
+          },
+          "my-trainer": {
+            "_path": "superduper_sklearn.model.SklearnTrainer",
+            "key": [
+              "_outputs__features",
+              "label"
+            ],
+            "select": "?<var:table>-select-outputs-features"
+          },
+          "dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "85f40a9ab4d99d2e5423f6d53af04361677af2f3": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:85f40a9ab4d99d2e5423f6d53af04361677af2f3"
+          },
+          "acc": {
+            "_path": "superduper.components.metric.Metric",
+            "object": "?85f40a9ab4d99d2e5423f6d53af04361677af2f3"
+          },
+          "my-valid": {
+            "_path": "superduper.components.dataset.Dataset"
+          },
+          "transfer_learning_performance": {
+            "_path": "superduper.components.model.Validation",
+            "metrics": [
+              "?acc"
+            ],
+            "key": [
+              "_outputs__features",
+              "label"
+            ],
+            "datasets": [
+              "?my-valid"
+            ]
+          },
+          "pickle": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "pickle",
+            "encodable": "artifact"
+          },
+          "11f4c3e68e30071c92163ece040096ea80e23755": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?pickle",
+            "blob": "&:blob:11f4c3e68e30071c92163ece040096ea80e23755"
+          },
+          "my-model": {
+            "_path": "superduper_sklearn.model.Estimator",
+            "trainer": "?my-trainer",
+            "validation": "?transfer_learning_performance",
+            "object": "?11f4c3e68e30071c92163ece040096ea80e23755"
+          }
+        }
+      },
+      "template_variables": [
+        "table"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

@@ -3,7 +3,7 @@ from .data_backend import MongoDataBackend as DataBackend
 from .metadata import MongoMetaDataStore as MetaDataStore
 from .query import MongoQuery
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 __all__ = [
     "ArtifactStore",

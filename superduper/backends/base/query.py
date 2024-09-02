@@ -1,3 +1,4 @@
+import dataclasses as dc
 import json
 import re
 import typing as t
@@ -40,6 +41,8 @@ def applies_to(*flavours):
 
 
 class _BaseQuery(Leaf):
+    parts: t.Sequence[t.Union[t.Tuple, str]] = dc.field(default_factory=list)
+
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         super().__post_init__(db)
         self._is_output_query = False
@@ -165,7 +168,6 @@ class Query(_BaseQuery):
     flavours: t.ClassVar[t.Dict[str, str]] = {}
 
     table: str
-    parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     identifier: str = ''
 
     def __getitem__(self, item):
@@ -783,7 +785,6 @@ class Model(_BaseQuery):
 
     table: str
     identifier: str = ''
-    parts: t.Sequence[t.Union[t.Tuple, str]] = ()
     type: t.ClassVar[str] = 'predict'
 
     def execute(self):

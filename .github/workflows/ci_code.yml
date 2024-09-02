@@ -65,6 +65,9 @@ jobs:
         # TODO: We currently need a default plugin to run tests using MongoDB. 
         # Once the local file database is complete, we may need to update this section.
         python -m pip install plugins/mongodb
+        python -m pip install plugins/ibis
+        python -m pip install plugins/sqlalchemy
+
 
     - name: Lint and type-check
       run: |
@@ -72,8 +75,10 @@ jobs:
 
     - name: Unit Testing
       run: |
-        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml"
+        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/default.yaml
+        make unit_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/sql.yaml
 
     - name: Usecase Testing
       run: |
-        make usecase_testing
+        make usecase_testing SUPERDUPER_CONFIG=test/configs/default.yaml
+        make usecase_testing SUPERDUPER_CONFIG=test/configs/sql.yaml

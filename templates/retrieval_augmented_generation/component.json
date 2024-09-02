@@ -1,0 +1,232 @@
+{
+  "_base": "?rag-template",
+  "_builds": {
+    "rag-template": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?rag-app",
+        "_builds": {
+          "dill_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "lazy_artifact"
+          },
+          "ba04b754e3e32ae207bfefba1f66aa824b15c7cc": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?dill_lazy",
+            "blob": "&:blob:ba04b754e3e32ae207bfefba1f66aa824b15c7cc"
+          },
+          "chunker": {
+            "_path": "superduper.components.listener.Listener",
+            "uuid": "chunker",
+            "key": "x",
+            "model": "?chunker",
+            "select": "?<var:collection>-select",
+            "predict_id": "chunker"
+          },
+          "<var:collection>-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:collection>.select()"
+          },
+          "vector[1536]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1536
+            ]
+          },
+          "text-embedding-ada-002": {
+            "_path": "superduper_openai.model.OpenAIEmbedding",
+            "datatype": "?vector[1536]",
+            "model": "text-embedding-ada-002",
+            "shape": [
+              1536
+            ]
+          },
+          "-outputs-chunker-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "_outputs__chunker.select()"
+          },
+          "embedding-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "uuid": "embedding-listener",
+            "upstream": [
+              "?chunker"
+            ],
+            "key": "_outputs__chunker",
+            "model": "?text-embedding-ada-002",
+            "select": "?-outputs-chunker-select",
+            "predict_id": "embedding-listener"
+          },
+          "vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "indexing_listener": "?embedding-listener"
+          },
+          "dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "25b1e70c882e7f05deb0640391059508b06b6e16": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:25b1e70c882e7f05deb0640391059508b06b6e16"
+          },
+          "-outputs-chunker-like-outputs-chunker-<var:query>-vector-index-vector-index-n-5-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [
+              {
+                "_outputs__chunker": "<var:query>"
+              }
+            ],
+            "query": "_outputs__chunker.like(documents[0], vector_index=\"vector-index\", n=5).select()"
+          },
+          "VectorSearch": {
+            "_path": "superduper.components.model.QueryModel",
+            "postprocess": "?25b1e70c882e7f05deb0640391059508b06b6e16",
+            "select": "?-outputs-chunker-like-outputs-chunker-<var:query>-vector-index-vector-index-n-5-select"
+          },
+          "_input": {
+            "_path": "superduper.components.graph.Input",
+            "signature": "singleton",
+            "spec": "query"
+          },
+          "9bedcf2d8f04df0dab1086e0c07470b1255f585a": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?dill_lazy",
+            "blob": "&:blob:9bedcf2d8f04df0dab1086e0c07470b1255f585a"
+          },
+          "build_prompt": {
+            "_path": "superduper.components.model.ObjectModel",
+            "object": "?9bedcf2d8f04df0dab1086e0c07470b1255f585a"
+          },
+          "llm": {
+            "_path": "superduper_openai.model.OpenAIChatCompletion",
+            "datatype": "str",
+            "model": "gpt-3.5-turbo"
+          },
+          "rag": {
+            "_path": "superduper.components.graph.Graph",
+            "signature": "singleton",
+            "models": [
+              "?_input",
+              "?VectorSearch",
+              "?build_prompt",
+              "?llm"
+            ],
+            "edges": [
+              [
+                "_input",
+                "VectorSearch",
+                [
+                  null,
+                  "query"
+                ]
+              ],
+              [
+                "_input",
+                "build_prompt",
+                [
+                  null,
+                  "query"
+                ]
+              ],
+              [
+                "VectorSearch",
+                "build_prompt",
+                [
+                  null,
+                  "<var:collection>"
+                ]
+              ],
+              [
+                "build_prompt",
+                "llm",
+                [
+                  null,
+                  "X"
+                ]
+              ]
+            ],
+            "input": "?_input",
+            "outputs": [
+              "?llm"
+            ]
+          },
+          "rag-app": {
+            "_path": "superduper.components.application.Application",
+            "components": [
+              "?chunker",
+              "?vector-index",
+              "?VectorSearch",
+              "?rag"
+            ],
+            "namespace": [
+              {
+                "type_id": "listener",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "vector_index",
+                "identifier": "vector-index"
+              },
+              {
+                "type_id": "model",
+                "identifier": "VectorSearch"
+              },
+              {
+                "type_id": "model",
+                "identifier": "rag"
+              },
+              {
+                "type_id": "model",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "embedding-listener"
+              },
+              {
+                "type_id": "model",
+                "identifier": "text-embedding-ada-002"
+              },
+              {
+                "type_id": "datatype",
+                "identifier": "vector[1536]"
+              },
+              {
+                "type_id": "model",
+                "identifier": "_input"
+              },
+              {
+                "type_id": "model",
+                "identifier": "VectorSearch"
+              },
+              {
+                "type_id": "model",
+                "identifier": "build_prompt"
+              },
+              {
+                "type_id": "model",
+                "identifier": "llm"
+              }
+            ],
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "collection",
+        "query"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

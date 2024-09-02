@@ -1,0 +1,207 @@
+{
+  "_base": "?video-search-template",
+  "_builds": {
+    "video-search-template": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?video-search",
+        "_builds": {
+          "video_on_file": {
+            "_path": "superduper.components.datatype.DataType",
+            "encodable": "file",
+            "bytes_encoding": "Bytes"
+          },
+          "str": {
+            "_path": "superduper.components.schema.FieldType"
+          },
+          "schema": {
+            "_path": "superduper.components.schema.Schema",
+            "fields": {
+              "x": "?video_on_file",
+              "_fold": "?str"
+            }
+          },
+          "<var:content_table>": {
+            "_path": "superduper.components.table.Table",
+            "schema": "?schema"
+          },
+          "dill_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "lazy_artifact"
+          },
+          "1dcc2f682a36ed9a5205526e6db3ba8d891a42d2": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?dill_lazy",
+            "blob": "&:blob:1dcc2f682a36ed9a5205526e6db3ba8d891a42d2"
+          },
+          "chunker": {
+            "_path": "superduper.components.listener.Listener",
+            "uuid": "chunker",
+            "upstream": [
+              "?<var:content_table>"
+            ],
+            "key": "x",
+            "model": "?chunker",
+            "select": "?<var:content_table>-select",
+            "predict_id": "chunker"
+          },
+          "<var:content_table>-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:content_table>.select()"
+          },
+          "vector[1024]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1024
+            ]
+          },
+          "dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "b167226edf11254e9911b099a9649f8d486c59a3": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:b167226edf11254e9911b099a9649f8d486c59a3"
+          },
+          "e1635b227a7f3787dc79524d812915c342701260": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:e1635b227a7f3787dc79524d812915c342701260"
+          },
+          "1c7776361d917bec4100537c80afd4c7283190e5": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:1c7776361d917bec4100537c80afd4c7283190e5"
+          },
+          "clip_image": {
+            "_path": "superduper_torch.model.TorchModel",
+            "signature": "singleton",
+            "datatype": "?vector[1024]",
+            "object": "?b167226edf11254e9911b099a9649f8d486c59a3",
+            "preprocess": "?e1635b227a7f3787dc79524d812915c342701260",
+            "postprocess": "?1c7776361d917bec4100537c80afd4c7283190e5"
+          },
+          "-outputs-chunker-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "_outputs__chunker.select()"
+          },
+          "clip_image-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "key": "_outputs__chunker.image",
+            "model": "?clip_image",
+            "select": "?-outputs-chunker-select",
+            "predict_id": "clip_image-listener"
+          },
+          "a63404539858e3f2ce4049e8cd74aa9312e56e55": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:a63404539858e3f2ce4049e8cd74aa9312e56e55"
+          },
+          "4909592f62c0c4b1374321961bfbcb3daee2f899": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:4909592f62c0c4b1374321961bfbcb3daee2f899"
+          },
+          "52821fa2cdbd806942770c765078687ef5b851b3": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?dill",
+            "blob": "&:blob:52821fa2cdbd806942770c765078687ef5b851b3"
+          },
+          "clip_text": {
+            "_path": "superduper_torch.model.TorchModel",
+            "signature": "singleton",
+            "datatype": "?vector[1024]",
+            "object": "?a63404539858e3f2ce4049e8cd74aa9312e56e55",
+            "preprocess": "?4909592f62c0c4b1374321961bfbcb3daee2f899",
+            "postprocess": "?52821fa2cdbd806942770c765078687ef5b851b3",
+            "forward_method": "encode_text"
+          },
+          "compatible-listener": {
+            "_path": "superduper.components.listener.Listener",
+            "key": "text",
+            "model": "?clip_text",
+            "select": null,
+            "predict_id": "compatible-listener"
+          },
+          "my-vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "upstream": [
+              "?chunker"
+            ],
+            "indexing_listener": "?clip_image-listener",
+            "compatible_listener": "?compatible-listener"
+          },
+          "video-search": {
+            "_path": "superduper.components.application.Application",
+            "components": [
+              "?chunker",
+              "?my-vector-index"
+            ],
+            "namespace": [
+              {
+                "type_id": "listener",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "vector_index",
+                "identifier": "my-vector-index"
+              },
+              {
+                "type_id": "table",
+                "identifier": "<var:content_table>"
+              },
+              {
+                "type_id": "model",
+                "identifier": "chunker"
+              },
+              {
+                "type_id": "schema",
+                "identifier": "schema"
+              },
+              {
+                "type_id": "datatype",
+                "identifier": "video_on_file"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "clip_image-listener"
+              },
+              {
+                "type_id": "listener",
+                "identifier": "compatible-listener"
+              },
+              {
+                "type_id": "model",
+                "identifier": "clip_image"
+              },
+              {
+                "type_id": "datatype",
+                "identifier": "vector[1024]"
+              },
+              {
+                "type_id": "model",
+                "identifier": "clip_text"
+              }
+            ],
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "content_table"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

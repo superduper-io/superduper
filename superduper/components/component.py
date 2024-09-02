@@ -365,6 +365,7 @@ class Component(Leaf):
         defaults: bool = False,
         metadata: bool = False,
         hr: bool = False,
+        component: str = 'component',
     ):
         """
         Save `self` to a directory using super-duper protocol.
@@ -373,7 +374,7 @@ class Component(Leaf):
 
         Created directory structure:
         ```
-        |_component.json/yaml
+        |_<component>.json/yaml
         |_blobs/*
         |_files/*
         ```
@@ -412,7 +413,7 @@ class Component(Leaf):
             r.pop(KEY_FILES)
 
         if format == "json":
-            with open(os.path.join(path, "component.json"), "w") as f:
+            with open(os.path.join(path, f"{component}.json"), "w") as f:
                 json.dump(r, f, indent=2)
 
         elif format == "yaml":
@@ -438,7 +439,7 @@ class Component(Leaf):
 
             output = str(stream.getvalue())
 
-            with open(os.path.join(path, "component.yaml"), "w") as f:
+            with open(os.path.join(path, f"{component}.yaml"), "w") as f:
                 f.write(output)
 
         from superduper import REQUIRES

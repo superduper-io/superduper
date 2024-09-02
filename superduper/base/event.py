@@ -33,7 +33,7 @@ class Event:
     src: t.Optional[_Component] = None
     from_type: str = 'DB'
     event_type: str = 'insert'
-    uuid: str = str(uuid.uuid4())
+    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
     dependencies: t.Optional[t.Sequence] = ()
 
     def __post_init__(self):

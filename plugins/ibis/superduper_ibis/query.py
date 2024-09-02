@@ -365,8 +365,7 @@ class IbisQuery(Query):
             and not self.table.startswith("<var:")
         ):
             # support table.select() without column args
-            table = self.db.databackend.get_table_or_collection(self.table)
-            args = tuple(table.columns)
+            args = (IbisQuery(table=self.table, db=self.db),)
         return super().__call__(*args, **kwargs)
 
     def compile(self, db):

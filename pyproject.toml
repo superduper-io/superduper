@@ -55,6 +55,7 @@ dependencies = [
     "python-magic",
     "apscheduler",
     "bson",
+    "qdrant-client"
 ]
 
 [project.optional-dependencies]

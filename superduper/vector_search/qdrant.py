@@ -74,7 +74,9 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         points = [
             models.PointStruct(
                 id=self._convert_id(item.id),
-                vector=item.vector.tolist(),
+                vector={self.vector_name: item.vector.tolist()}
+                if self.vector_name
+                else item.vector.tolist(),
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             for item in items
@@ -109,29 +111,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param n: Number of results to return
         :param within_ids: List of IDs to search within
         """
-        query_filter = None
-        if within_ids:
-            query_filter = models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key=ID_PAYLOAD_KEY, match=models.MatchAny(any=list(within_ids))
-                    )
-                ]
-            )
-
-        search_result = self.client.query_points(
-            collection_name=self.collection_name,
-            query=self._convert_id(_id),
-            limit=n,
-            query_filter=query_filter,
-            with_payload=[ID_PAYLOAD_KEY],
-            using=self.vector_name,
-        ).points
-
-        ids = [hit.payload[ID_PAYLOAD_KEY] for hit in search_result]  # type: ignore
-        scores = [hit.score for hit in search_result]
-
-        return ids, scores
+        return self._query_nearest(_id, n, within_ids)
 
     def find_nearest_from_array(
         self,
@@ -145,6 +125,14 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param n: Number of results to return
         :param within_ids: List of IDs to search within
         """
+        return self._query_nearest(h, n, within_ids)
+
+    def _query_nearest(
+        self,
+        query: t.Union[np.typing.ArrayLike, str],
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
         query_filter = None
         if within_ids:
             query_filter = models.Filter(
@@ -157,7 +145,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
         search_result = self.client.query_points(
             collection_name=self.collection_name,
-            query=h,
+            query=query,
             limit=n,
             query_filter=query_filter,
             with_payload=[ID_PAYLOAD_KEY],

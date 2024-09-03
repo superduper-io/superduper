@@ -23,6 +23,8 @@ class BaseVectorSearcher(ABC):
     :param measure: measure to assess similarity
     """
 
+    native_service: t.ClassVar[bool] = True
+
     @abstractmethod
     def __init__(
         self,
@@ -51,6 +53,11 @@ class BaseVectorSearcher(ABC):
         return cls(
             identifier=vi.identifier, dimensions=vi.dimensions, measure=vi.measure
         )
+
+    @property
+    def is_native(self):
+        """Check if the vector searcher is native."""
+        return self.native_service
 
     @abstractmethod
     def __len__(self):

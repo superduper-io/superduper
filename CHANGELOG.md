@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add startup event to initialize db.apply jobs
 - Update job_id after job submission
 - Fixed default event.uuid
+- Fixed atlas vector search
 
 #### New Features & Functionality
 

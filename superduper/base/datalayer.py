@@ -150,6 +150,7 @@ class Datalayer:
         """
         searcher_type = searcher_type or s.CFG.cluster.vector_search.type
 
+        logging.info(f"Initializing vector searcher with type {searcher_type}")
         if isinstance(vi, str):
             vi = self.vector_indices.force_load(vi)
         from superduper import VectorIndex
@@ -160,6 +161,7 @@ class Datalayer:
         clt = vi.indexing_listener.select.table_or_collection
 
         vector_search_cls = vector_searcher_implementations[searcher_type]
+        logging.info(f"Using vector searcher: {vector_search_cls}")
         vector_comparison = vector_search_cls.from_component(vi)
 
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
@@ -209,7 +211,7 @@ class Datalayer:
         ):
             logging.warn("Aborting...")
 
-        if self._cfg.cluster.vector_search.uri is not None:
+        if self._cfg.cluster.vector_search.uri:
             for vi in self.show('vector_index'):
                 FastVectorSearcher.drop_remote(vi)
 

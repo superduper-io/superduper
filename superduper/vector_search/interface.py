@@ -18,13 +18,18 @@ class FastVectorSearcher(BaseVectorSearcher):
     :param vector_index: Vector index name
     """
 
-    def __init__(self, db: 'Datalayer', vector_searcher, vector_index: str):
+    def __init__(
+        self, db: 'Datalayer', vector_searcher: BaseVectorSearcher, vector_index: str
+    ):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
+    def _check_request_native(self):
+        return CFG.cluster.vector_search.uri and self.searcher.is_native
+
     def initialize(self):
         """Initialize vector index."""
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             request_server(
                 service='vector_search',
                 endpoint='initialize',
@@ -37,7 +42,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
     def is_initialized(self):
         """Check if vector index initialized."""
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             response = request_server(
                 service='vector_search',
                 endpoint='is_initialized',
@@ -66,7 +71,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
     def drop(self, db: t.Optional['Datalayer']):
         """Drop the vector index from the remote."""
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             self.drop_remote(self.vector_index)
         else:
             assert db
@@ -84,7 +89,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param cache: Cache vectors.
         """
         vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             request_server(
                 service='vector_search',
                 data=vector_items,
@@ -102,7 +107,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param ids: t.Sequence of ids of vectors.
         """
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             request_server(
                 service='vector_search',
                 data=ids,
@@ -128,7 +133,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
         """
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             response = request_server(
                 service='vector_search',
                 endpoint='query/id/search',
@@ -151,7 +156,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
         """
-        if CFG.cluster.vector_search.uri is not None:
+        if self._check_request_native():
             response = request_server(
                 service='vector_search',
                 data=h,
@@ -164,7 +169,7 @@ class FastVectorSearcher(BaseVectorSearcher):
 
     def post_create(self):
         """Post create method for vector searcher."""
-        if CFG.cluster.is_remote_vector_search:
+        if self._check_request_native():
             request_server(
                 service='vector_search',
                 endpoint='query/post_create',

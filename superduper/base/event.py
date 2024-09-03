@@ -15,6 +15,7 @@ class Event:
 
     :param dest: Identifier of the destination component.
     :param id: Id/s of select table.
+    :param method: Method to be called on the destination
     :param src: Identifier of the source component.
     :param from_type: 'COMPONENT' or 'DB' type implying
                       the event was created from a databas
@@ -28,8 +29,9 @@ class Event:
     """
 
     dest: t.Union[_Component, t.Dict]
-    id: t.Any
-
+    id: t.Optional[t.Any] = None
+    method: t.Optional[str] = None
+    # where is this src attribute used?
     src: t.Optional[_Component] = None
     from_type: str = 'DB'
     event_type: str = 'insert'
@@ -57,15 +59,9 @@ class Event:
         """Chunk events by from type."""
         db_events = []
         component_events = []
-        component_startup_flag = False
         for event in events:
             if event.from_type == 'COMPONENT':
-                if component_startup_flag:
-                    raise ValueError(
-                        'Found {self.type} component initialization job more than once'
-                    )
                 component_events = [event]
-                component_startup_flag = True
             else:
                 db_events.append(event)
         return component_events, db_events

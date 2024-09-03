@@ -226,179 +226,6 @@ class Validation(Component):
     datasets: t.Sequence[Dataset] = ()
 
 
-@dc.dataclass(kw_only=True)
-class _Fittable:
-    """Class to represent a fittable model.
-
-    :param trainer: Trainer to use to handle training details
-    """
-
-    trainer: t.Optional[Trainer] = None
-
-    def fit_in_db_job(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[str] = (),
-    ):
-        """Model fit job in database.
-
-        :param db: Datalayer instance.
-        :param dependencies: List of dependent jobs
-        """
-        if self.trainer:
-            compute_kwargs = self.trainer.compute_kwargs or {}
-        else:
-            compute_kwargs = {}
-        job = ComponentJob(
-            component_identifier=self.identifier,
-            method_name='fit_in_db',
-            type_id='model',
-            compute_kwargs=compute_kwargs,
-        )
-        job(db, dependencies)
-        return job
-
-    def post_create(self, db):
-        """Post create hook for the model.
-
-        :param db: Datalayer instance.
-        """
-        logging.info(f'Adding model::{self.identifier} to queues.')
-        db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
-        logging.info(f'Done.')
-
-    def run_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[str] = (),
-        overwrite: bool = False,
-        events: t.Optional[t.List] = [],
-        event_type: str = 'insert',
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the training model.
-
-        :param db: Data layer instance to process.
-        :param dependencies: A list of dependencies.
-        :param overwrite: Overwrite the existing data.
-        :param event_type: Type of event.
-        """
-        # Note: DB events are not supported yet
-        # i.e if new data is added after model apply.
-        return self.fit_in_db_job(
-            db=db,
-            dependencies=list(set(dependencies)),
-        )
-
-    def schedule_jobs(self, db, dependencies=()):
-        """Database hook for scheduling jobs.
-
-        :param db: Datalayer instance.
-        :param dependencies: List of dependencies.
-        """
-        from superduper.base.datalayer import DBEvent
-        from superduper.base.event import Event
-
-        if self.trainer is None:
-            return []
-        assert self.trainer.select is not None
-
-        data = list(self.trainer.select.execute())
-        ids = [str(d[self.trainer.select.primary_id]) for d in data]
-        event = Event(
-            dest={'type_id': 'model.training', 'identifier': self.identifier},
-            event_type=DBEvent.insert,
-            id=ids,
-            from_type='COMPONENT',
-            dependencies=dependencies,
-        )
-
-        db.compute.broadcast([event])
-        return [event.uuid]
-
-    def _create_datasets(self, X, db, select):
-        train_dataset = self._create_dataset(
-            X=X,
-            db=db,
-            select=select,
-            fold='train',
-        )
-        valid_dataset = self._create_dataset(
-            X=X,
-            db=db,
-            select=select,
-            fold='valid',
-        )
-        return train_dataset, valid_dataset
-
-    def _create_dataset(self, X, db, select, fold=None, **kwargs):
-        kwargs = kwargs.copy()
-        if self.trainer.data_prefetch:
-            dataset_cls = CachedQueryDataset
-            kwargs['prefetch_size'] = self.prefetch_size
-        else:
-            dataset_cls = QueryDataset
-
-        dataset = dataset_cls(
-            select=select,
-            fold=fold,
-            db=db,
-            mapping=Mapping(X, signature=self.trainer.signature),
-            in_memory=self.trainer.in_memory,
-            transform=(
-                self.trainer.transform if self.trainer.transform is not None else None
-            ),
-            **kwargs,
-        )
-        return dataset
-
-    def fit(
-        self,
-        train_dataset: QueryDataset,
-        valid_dataset: QueryDataset,
-        db: Datalayer,
-    ):
-        """Fit the model on the training dataset with `valid_dataset` for validation.
-
-        :param train_dataset: The training ``Dataset`` instances to use.
-        :param valid_dataset: The validation ``Dataset`` instances to use.
-        :param db: The datalayer.
-        """
-        assert isinstance(self.trainer, Trainer)
-        if isinstance(self, Component) and self.identifier not in db.show('model'):
-            logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.add(self)
-        return self.trainer.fit(
-            self,
-            train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
-            db=db,
-        )
-
-    def fit_in_db(self, db: Datalayer):
-        """Fit the model on the given data.
-
-        :param db: The datalayer
-        """
-        assert isinstance(self.trainer, Trainer)
-        train_dataset, valid_dataset = self._create_datasets(
-            select=self.trainer.select,
-            X=self.trainer.key,
-            db=db,
-        )
-        return self.fit(
-            train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
-            db=db,
-        )
-
-    def append_metrics(self, d: t.Dict[str, float]) -> None:
-        assert self.trainer is not None
-        if self.trainer.metric_values is not None:
-            for k, v in d.items():
-                self.trainer.metric_values.setdefault(k, []).append(v)
-
-
 class Mapping:
     """Class to represent model inputs for mapping database collections or tables.
 
@@ -526,6 +353,7 @@ class Model(Component, metaclass=ModelMeta):
     :param num_workers: Number of workers to use for parallel prediction.
     :param serve: Creates an http endpoint and serves the model with
                   ``compute_kwargs`` on a distributed cluster.
+    :param trainer: Trainer instance to use for training.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -540,6 +368,7 @@ class Model(Component, metaclass=ModelMeta):
     metric_values: t.Dict = dc.field(default_factory=dict)
     num_workers: int = 0
     serve: bool = False
+    trainer: t.Optional[Trainer] = None
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -575,6 +404,8 @@ class Model(Component, metaclass=ModelMeta):
         :param db: Datalayer instance.
         """
         db.compute.queue.declare_component(self)
+        if self.trainer is not None:
+            db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> int:
@@ -626,7 +457,6 @@ class Model(Component, metaclass=ModelMeta):
         overwrite: bool = False,
     ):
         """Run a prediction job in the database.
-
         Execute a single prediction on the data points
         given by positional and keyword arguments as a job.
 
@@ -1117,6 +947,182 @@ class Model(Component, metaclass=ModelMeta):
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
         db.replace(self, upsert=True)
+
+    def fit_in_db_job(
+        self,
+        db: Datalayer,
+        dependencies: t.Sequence[str] = (),
+    ):
+        """Model fit job in database.
+
+        :param db: Datalayer instance.
+        :param dependencies: List of dependent jobs
+        """
+        if self.trainer:
+            compute_kwargs = self.trainer.compute_kwargs or {}
+        else:
+            compute_kwargs = {}
+        job = ComponentJob(
+            component_identifier=self.identifier,
+            method_name='fit_in_db',
+            type_id='model',
+            compute_kwargs=compute_kwargs,
+        )
+        job(db, dependencies)
+        return job
+
+    def run_jobs(
+        self,
+        db: "Datalayer",
+        dependencies: t.Sequence[str] = (),
+        overwrite: bool = False,
+        events: t.Optional[t.List] = [],
+        event_type: str = 'insert',
+    ) -> t.Sequence[t.Any]:
+        """Schedule jobs for the training model.
+
+        :param db: Data layer instance to process.
+        :param dependencies: A list of dependencies.
+        :param overwrite: Overwrite the existing data.
+        :param event_type: Type of event.
+        """
+        # Note: DB events are not supported yet
+        # i.e if new data is added after model apply.
+
+        jobs = []
+
+        if any(e.method == 'fit_in_db' for e in events):
+            jobs.append(self.fit_in_db_job(
+                db=db,
+                dependencies=list(set(dependencies)),
+            ))
+
+        if any(e.method == 'validate_in_db' for e in events):
+            jobs.append(self.validate_in_db_job(
+                db=db,
+                dependencies=list(set(dependencies)),
+            ))
+
+        return jobs
+
+    def schedule_jobs(self, db, dependencies=()):
+        """Database hook for scheduling jobs.
+
+        :param db: Datalayer instance.
+        :param dependencies: List of dependencies.
+        """
+        from superduper.base.datalayer import DBEvent
+        from superduper.base.event import Event
+
+        if self.trainer is None:
+            return []
+
+        events = []
+        if self.trainer is not None:
+            event = Event(
+                dest={'type_id': 'model', 'identifier': self.identifier},
+                event_type=DBEvent.insert,
+                from_type='COMPONENT',
+                dependencies=dependencies,
+                method='fit_in_db',
+            )
+            events.append(event)
+
+        if self.validation is not None:
+            event = Event(
+                dest={'type_id': 'model', 'identifier': self.identifier},
+                event_type=DBEvent.insert,
+                from_type='COMPONENT',
+                dependencies=dependencies,
+                method='validate_in_db',
+            )
+            events.append(event)
+
+        db.compute.broadcast(events)
+        return [e.uuid for e in events]
+
+    def _create_datasets(self, X, db, select):
+        train_dataset = self._create_dataset(
+            X=X,
+            db=db,
+            select=select,
+            fold='train',
+        )
+        valid_dataset = self._create_dataset(
+            X=X,
+            db=db,
+            select=select,
+            fold='valid',
+        )
+        return train_dataset, valid_dataset
+
+    def _create_dataset(self, X, db, select, fold=None, **kwargs):
+        kwargs = kwargs.copy()
+        if self.trainer.data_prefetch:
+            dataset_cls = CachedQueryDataset
+            kwargs['prefetch_size'] = self.prefetch_size
+        else:
+            dataset_cls = QueryDataset
+
+        dataset = dataset_cls(
+            select=select,
+            fold=fold,
+            db=db,
+            mapping=Mapping(X, signature=self.trainer.signature),
+            in_memory=self.trainer.in_memory,
+            transform=(
+                self.trainer.transform if self.trainer.transform is not None else None
+            ),
+            **kwargs,
+        )
+        return dataset
+
+    def fit(
+        self,
+        train_dataset: QueryDataset,
+        valid_dataset: QueryDataset,
+        db: Datalayer,
+    ):
+        """Fit the model on the training dataset with `valid_dataset` for validation.
+
+        :param train_dataset: The training ``Dataset`` instances to use.
+        :param valid_dataset: The validation ``Dataset`` instances to use.
+        :param db: The datalayer.
+        """
+        assert isinstance(self.trainer, Trainer)
+        if isinstance(self, Component) and self.identifier not in db.show('model'):
+            logging.info(f'Adding model {self.identifier} to db')
+            assert isinstance(self, Component)
+            db.add(self)
+        return self.trainer.fit(
+            self,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            db=db,
+        )
+
+    def fit_in_db(self, db: Datalayer):
+        """Fit the model on the given data.
+
+        :param db: The datalayer
+        """
+        assert isinstance(self.trainer, Trainer)
+        train_dataset, valid_dataset = self._create_datasets(
+            select=self.trainer.select,
+            X=self.trainer.key,
+            db=db,
+        )
+        return self.fit(
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            db=db,
+        )
+
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
+        assert self.trainer is not None
+        if self.trainer.metric_values is not None:
+            for k, v in d.items():
+                self.trainer.metric_values.setdefault(k, []).append(v)
 
 
 @dc.dataclass(kw_only=True)

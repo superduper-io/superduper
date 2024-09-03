@@ -199,16 +199,8 @@ def _run_jobs(db, component, events, from_type='DB'):
 
     jobs = []
     for event_type, events in DBEvent.chunk_by_event(events).items():
-        if from_type == 'DB':
-            ids = [event.id for event in events]
-        else:
-            ids = []
-            for event in events:
-                ids += event.id
-
         overwrite = True if event_type in [DBEvent.insert, DBEvent.upsert] else False
         logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
-        logging.debug(f'Using ids: {ids}')
         dependencies = []
         for event in events:
             if event.from_type == 'COMPONENT':

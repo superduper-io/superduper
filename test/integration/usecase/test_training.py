@@ -16,42 +16,18 @@ class MyTrainer(Trainer):
         db.replace(model)
 
 
-class MyModel(Model, _Fittable):
+class MyModel(Model):
     _artifacts: t.ClassVar[t.Any] = (
         ('estimator', pickle_serializer),
     )
     estimator: t.Any
     signature: str = 'singleton'
 
-    def post_create(self, db):
-        _Fittable.post_create(self, db)
-        return super().post_create(db)
-
     def predict(self, x):
         return self.estimator.predict(x[None, :]).tolist()[0]
 
     def predict_batches(self, dataset):
         return self.estimator.predict(dataset).tolist()
-
-    def schedule_jobs(self, db, dependencies):
-        return _Fittable.schedule_jobs(self, db, dependencies)
-
-    def run_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[str] = (),
-        overwrite: bool = False,
-        events: t.Optional[t.List] = [],
-        event_type: str = 'insert',
-    ) -> t.Sequence[t.Any]:
-        return _Fittable.run_jobs(
-            self,
-            db,
-            dependencies,
-            overwrite,
-            events,
-            event_type,
-        )
 
 
 def test_training(db: "Datalayer"):

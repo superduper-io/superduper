@@ -70,7 +70,7 @@ def model():
 
 # TODO: The training task is not executed, but it was not tested.
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_fit(db, model):
+def test_fit(db, model, capfd):
     from test.utils.setup.fake_data import get_valid_dataset
 
     data = []
@@ -85,7 +85,6 @@ def test_fit(db, model):
     db.cfg.auto_schema = True
     db['documents'].insert(data).execute()
 
-    valid_dataset = get_valid_dataset(db)
     select = db['documents'].select()
     trainer = TorchTrainer(
         key=('x', 'y'),
@@ -98,9 +97,9 @@ def test_fit(db, model):
     )
 
     model.trainer = trainer
-    model.validation = Validation(
-        'my_valid',
-        metrics=[Metric(identifier='acc', object=acc)],
-        datasets=[valid_dataset],
-    )
     db.apply(model)
+
+    captured = capfd.readouterr()
+
+    # check that the training actually happened
+    assert 'TRAIN; iteration:' in captured.out

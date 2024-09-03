@@ -263,7 +263,9 @@ class _Fittable:
 
         :param db: Datalayer instance.
         """
+        logging.info(f'Adding model::{self.identifier} to queues.')
         db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
+        logging.info(f'Done.')
 
     def run_jobs(
         self,
@@ -1170,13 +1172,14 @@ class ObjectModel(Model):
 
     :param num_workers: Number of workers to use for parallel processing
     :param object: Model/ computation object
-
+    :param method: Method to call on the object
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
     )
     object: t.Callable
+    method: t.Optional[str] = None
 
     @staticmethod
     def _infer_signature(object):
@@ -1232,7 +1235,9 @@ class ObjectModel(Model):
         :param args: Positional arguments of model
         :param kwargs: Keyword arguments of model
         """
-        return self.object(*args, **kwargs)
+        if self.method is None:
+            return self.object(*args, **kwargs)
+        return getattr(self.object, self.method)(*args, **kwargs)
 
 
 class APIBaseModel(Model):

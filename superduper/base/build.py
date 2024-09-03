@@ -69,6 +69,7 @@ class _DataBackendLoader(_Loader):
         r'^mongomock:\/\/': ('mongodb', 'mongomock'),
         r'^sqlite://': ('ibis', 'base'),
         r'^postgresql://': ('ibis', 'base'),
+        r'^snowflake:\/\/': ('ibis', 'base'),
         r'^duckdb://': ('ibis', 'base'),
         r'^mssql://': ('ibis', 'base'),
         r'^mysql://': ('ibis', 'base'),
@@ -85,6 +86,7 @@ class _ArtifactStoreLoader(_Loader):
         r'^mongodb:\/\/': ('mongodb', 'base'),
         r'^sqlite:\/\/': ('local', 'base'),
         r'^postgresql:\/\/': ('local', 'base'),
+        r'^snowflake:\/\/': ('local', 'base'),
     }
 
 

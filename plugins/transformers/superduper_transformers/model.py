@@ -18,7 +18,6 @@ from superduper.components.model import (
     Signature,
     Trainer,
     _DeviceManaged,
-    _Fittable,
 )
 from superduper.components.training import Checkpoint
 from superduper.ext.llm.model import BaseLLM
@@ -163,7 +162,7 @@ class TransformersTrainer(TrainingArguments, Trainer):
         trainer.train()
 
 
-class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
+class TextClassificationPipeline(Model, _DeviceManaged):
     """A wrapper for ``transformers.Pipeline``.
 
     :param tokenizer_name: tokenizer name
@@ -237,7 +236,7 @@ class TextClassificationPipeline(Model, _Fittable, _DeviceManaged):
         return self.pipeline(text)
 
 
-class LLM(BaseLLM, _Fittable):
+class LLM(BaseLLM):
     """
     LLM model based on `transformers` library.
 
@@ -465,23 +464,6 @@ class LLM(BaseLLM, _Fittable):
         )
         results = [output[0]["generated_text"] for output in outputs]
         return results
-
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for LLM model.
-
-        :param db: Datalayer instance
-        :param dependencies: dependencies
-        """
-        jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
-        if self.validation is not None:
-            jobs = self.validation.schedule_jobs(
-                db, dependencies=[*dependencies, *jobs]
-            )
-        return jobs
 
     def add_adapter(self, model_id, adapter_name: str):
         """Add adapter to the model.

@@ -20,12 +20,12 @@ from superduper.components.datatype import (
     pickle_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.components.model import Model, ObjectModel, Trainer, _Fittable
+from superduper.components.model import Model, ObjectModel, Trainer 
 from superduper.components.schema import FieldType, Schema
 from superduper.components.table import Table
 
 
-class FakeModel(Model, _Fittable):
+class FakeModel(Model):
     """Fake model for testing."""
 
     ...
@@ -516,7 +516,7 @@ def test_replace_with_child(db):
         trainer=trainer,
     )
 
-    with patch.object(_Fittable, 'fit'):
+    with patch.object(FakeModel, 'fit'):
         db.apply(model)
 
     model_ids = db.show('model')

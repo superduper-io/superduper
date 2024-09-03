@@ -8,7 +8,7 @@ from superduper import Document
 from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
-from superduper.components.model import ObjectModel, Trainer, _Fittable
+from superduper.components.model import ObjectModel, Trainer 
 
 
 class MyTrainer(Trainer):
@@ -19,12 +19,8 @@ class MyTrainer(Trainer):
 
 
 @dc.dataclass
-class _Tmp(_Fittable, ObjectModel):
-    def schedule_jobs(self, *args, **kwargs):
-        return _Fittable.schedule_jobs(self, *args, **kwargs)
-
-    def post_create(self, *args, **kwargs):
-        return _Fittable.post_create(self, *args, **kwargs)
+class _Tmp(ObjectModel):
+    ...
 
 
 def test_listener_serializes_properly():

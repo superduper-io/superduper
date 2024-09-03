@@ -12,7 +12,6 @@ from superduper.components.model import (
     ModelInputType,
     Signature,
     Trainer,
-    _Fittable,
 )
 from superduper.jobs.job import Job
 from tqdm import tqdm
@@ -98,7 +97,7 @@ class SklearnTrainer(Trainer):
         db.replace(model, upsert=True)
 
 
-class Estimator(Model, _Fittable):
+class Estimator(Model):
     """Estimator model.
 
     This is a model that can be trained and used for prediction.
@@ -118,40 +117,6 @@ class Estimator(Model, _Fittable):
     preprocess: t.Optional[t.Callable] = None
     postprocess: t.Optional[t.Callable] = None
     signature: Signature = 'singleton'
-
-    def post_create(self, db: Datalayer):
-        _Fittable.post_create(self, db)
-        super().post_create(db)
-
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the model.
-
-        :param db: The datalayer to use.
-        :param dependencies: The dependencies to wait for.
-        """
-        jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
-        return jobs
-
-    def run_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[str] = (),
-        overwrite: bool = False,
-        events: t.Optional[t.List] = [],
-        event_type: str = 'insert',
-    ) -> t.Sequence[t.Any]:
-        return _Fittable.run_jobs(
-            self,
-            db,
-            dependencies,
-            overwrite,
-            events,
-            event_type,
-        )
 
     def predict(self, X):
         """Predict on a single input.

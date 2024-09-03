@@ -18,7 +18,6 @@ from superduper.components.model import (
     Model,
     Signature,
     _DeviceManaged,
-    _Fittable,
 )
 from torch.utils import data
 from tqdm import tqdm
@@ -99,7 +98,7 @@ class BasicDataset(data.Dataset):
         return out
 
 
-class TorchModel(Model, _Fittable, _DeviceManaged):
+class TorchModel(Model, _DeviceManaged):
     """Torch model. This class is a wrapper around a PyTorch model.
 
     :param object: Torch model, e.g. `torch.nn.Module`
@@ -149,10 +148,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
 
         self._validation_set_cache = {}
 
-    def post_create(self, db):
-        _Fittable.post_create(self, db)
-        return super().post_create(db)
-
     @property
     def signature(self):
         """Get the signature of the model."""
@@ -170,36 +165,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
             self.preprocess_signature = signature
         else:
             self.forward_signature = signature
-
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence['Job'] = (),
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the model.
-
-        :param db: Datalayer
-        :param dependencies: Dependencies
-        """
-        jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
-        return jobs
-
-    def run_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        overwrite: bool = False,
-        events: t.Sequence = [],
-    ) -> t.Sequence[t.Any]:
-        """Run the job for this component.
-
-        :param db: The db to process.
-        :param dependencies: A sequence of dependencies.
-        :param ids: List of ids.
-        :param event_type: Type of event.
-        """
-        return _Fittable.run_jobs(self, db=db, dependencies=dependencies, overwrite=overwrite, events=events)
-    
 
     @property
     def inputs(self) -> CallableInputs:

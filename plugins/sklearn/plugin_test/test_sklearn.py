@@ -71,6 +71,11 @@ class TestPipeline:
         )
         _ = data_in_db.apply(pipeline)
 
+        r = next(data_in_db['documents'].select().limit(1).execute())
+        reloaded = data_in_db.load(type_id="model", identifier="my-svc")
+        prediction = reloaded.predict([r['X']])
+        assert prediction in {0, 1}
+
 
 def test_encode_and_decode():
     model = Estimator(

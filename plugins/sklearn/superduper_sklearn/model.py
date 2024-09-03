@@ -129,6 +129,10 @@ class Estimator(Model, _Fittable):
     postprocess: t.Optional[t.Callable] = None
     signature: Signature = 'singleton'
 
+    def post_create(self, db: Datalayer):
+        _Fittable.post_create(self, db)
+        super().post_create(db)
+
     def schedule_jobs(
         self,
         db: Datalayer,
@@ -140,18 +144,32 @@ class Estimator(Model, _Fittable):
         :param dependencies: The dependencies to wait for.
         """
         jobs = _Fittable.schedule_jobs(self, db, dependencies=dependencies)
-        if self.validation is not None:
-            jobs = self.validation.schedule_jobs(
-                db, dependencies=[*dependencies, *jobs]
-            )
         return jobs
+
+    def run_jobs(
+        self,
+        db: "Datalayer",
+        dependencies: t.Sequence[str] = (),
+        overwrite: bool = False,
+        events: t.Optional[t.List] = [],
+        event_type: str = 'insert',
+    ) -> t.Sequence[t.Any]:
+        return _Fittable.run_jobs(
+            self,
+            db,
+            dependencies,
+            overwrite,
+            events,
+            event_type,
+        )
 
     def predict(self, X):
         """Predict on a single input.
 
         :param X: The input to predict on.
         """
-        X = X[None, :]
+        if isinstance(X, numpy.ndarray):
+            X = X[None, :]
         if self.preprocess is not None:
             X = self.preprocess(X)
         X = self.object.predict(X, **self.predict_kwargs)[0]

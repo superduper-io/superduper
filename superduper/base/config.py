@@ -120,28 +120,6 @@ class CDCConfig(BaseConfig):
 
 
 @dc.dataclass
-class QdrantConfig(BaseConfig):
-    """Describes the configuration for Qdrant.
-
-    :param location: The location for the Qdrant service.
-    :param prefer_grpc: Whether to prefer gRPC for the Qdrant service.
-    :param https: Whether to use HTTPS for the Qdrant service.
-    :param api_key: The API key for the Qdrant service.
-    :param prefix: The prefix for the Qdrant service.
-    :param timeout: The timeout for the Qdrant service.
-    :param vector_name: The name of the vector in the collection.
-    """
-
-    location: t.Optional[str] = ":memory:"
-    prefer_grpc: bool = False
-    https: t.Optional[bool] = None
-    api_key: t.Optional[str] = None
-    prefix: t.Optional[str] = None
-    timeout: t.Optional[int] = None
-    vector_name: t.Optional[str] = None
-
-
-@dc.dataclass
 class VectorSearch(BaseConfig):
     """Describes the configuration for vector search.
 
@@ -153,8 +131,6 @@ class VectorSearch(BaseConfig):
     uri: t.Optional[str] = None  # None implies local mode
     type: str = "in_memory"  # in_memory|lance|qdrant
     backfill_batch_size: int = 100
-
-    qdrant_config: QdrantConfig = dc.field(default_factory=QdrantConfig)
 
 
 @dc.dataclass
@@ -310,6 +286,7 @@ class Config(BaseConfig):
                         If True, the schema will be created if it does not exist.
     :param log_colorize: Whether to colorize the logs
     :param output_prefix: The prefix for the output table and output field key
+    :param vector_search_kwargs: The keyword arguments to pass to the vector search
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
@@ -334,6 +311,8 @@ class Config(BaseConfig):
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
     output_prefix: str = "_outputs__"
+
+    vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, envs):
         if envs is not None:

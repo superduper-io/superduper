@@ -1,5 +1,6 @@
 import typing as t
 import uuid
+from copy import deepcopy
 
 import numpy as np
 from qdrant_client import QdrantClient, models
@@ -34,8 +35,11 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         measure: t.Optional[str] = None,
     ):
         super().__init__(identifier, dimensions, h, index, measure)
-        config_dict = CFG.cluster.vector_search.qdrant_config.dict()
-        self.vector_name: t.Optional[str] = config_dict.pop("vector_name")
+        config_dict = deepcopy(CFG.vector_search_kwargs)
+        self.vector_name: t.Optional[str] = config_dict.pop("vector_name", None)
+        # Use an in-memory instance by default
+        # https://github.com/qdrant/qdrant-client#local-mode
+        config_dict = config_dict or {"location": ":memory:"}
         self.client = QdrantClient(**config_dict)
 
         self.collection_name = identifier

@@ -214,6 +214,20 @@ class MongoMetaDataStore(MetaDataStore):
             )
         )
 
+    def show_job_ids(
+        self,
+        uuids: t.Optional[str] = None,
+        status: str = 'running'
+    ):
+        """Show all jobs in the metadata store.
+
+        :param component_identifier: identifier of component
+        :param type_id: type of component
+        """
+        if uuids:
+            return self.job_collection.distinct('job_id', {'status': status, 'uuid': {'$in': uuids}})
+        return self.job_collection.distinct('job_id', {'status': status})
+
     def show_jobs(
         self,
         component_identifier: t.Optional[str] = None,

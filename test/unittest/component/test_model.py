@@ -477,14 +477,19 @@ def test_object_model_predict_in_db(db, object_model):
     sample_data = np.zeros((10, 10))
     results = model_utils.test_predict_in_db(object_model, sample_data, db)
 
+    r = results[0].unpack()
+    key = next(k for k in r.keys() if k.startswith('_outputs__test'))
+
     assert all(
-        np.allclose(r.unpack()['_outputs__test'], sample_data + 1) for r in results
+        np.allclose(r.unpack()[key], sample_data + 1) for r in results
     )
 
 
 def test_object_model_as_a_listener(db, object_model):
     sample_data = np.zeros((10, 10))
     results = model_utils.test_model_as_a_listener(object_model, sample_data, db)
+    r = results[0].unpack()
+    key = next(k for k in r.keys() if k.startswith('_outputs__test'))
     assert all(
-        np.allclose(r.unpack()['_outputs__test'], sample_data + 1) for r in results
+        np.allclose(r.unpack()[key], sample_data + 1) for r in results
     )

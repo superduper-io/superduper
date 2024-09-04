@@ -227,6 +227,7 @@ class Datalayer:
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
+        uuid: t.Optional[str] = None,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -239,6 +240,10 @@ class Datalayer:
         :param identifier: Identifying string to component.
         :param version: (Optional) Numerical version - specify for full metadata.
         """
+
+        if uuid is not None:
+            return self.metadata.get_component_by_uuid(uuid)
+
         if identifier is None and version is not None:
             raise ValueError(f"Must specify {identifier} to go with {version}")
 

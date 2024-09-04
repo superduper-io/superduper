@@ -2,7 +2,7 @@ import typing as t
 from superduper.base.datalayer import Datalayer
 from superduper.jobs.job import Job
 from test.utils.setup.fake_data import add_random_data
-from superduper.components.model import _Fittable, Trainer, Model
+from superduper.components.model import Trainer, Model
 from superduper.components.datatype import pickle_serializer
 
 if t.TYPE_CHECKING:

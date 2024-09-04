@@ -120,8 +120,7 @@ class FunctionJob(Job):
     def dict(self):
         """Return a dictionary representation of the job."""
         d = super().dict()
-        path = self.callable.__module__ + ';' + self.callable.__name__
-        d['_path'] = f'superduper/jobs/job/FunctionJob/{path}'
+        d['_path'] = f'superduper.jobs.job.FunctionJob'
         return d
 
     def submit(self, dependencies=()):
@@ -166,7 +165,8 @@ class ComponentJob(Job):
     """
     Job for running a class method of a component.
 
-    :param component_identifier: unique identifier of the component
+    :param component_identifier: identifier of the component
+    :param component_uuid: unique random identifier of the component
     :param type_id: type of the component
     :param method_name: name of the method to be called
     :param args: positional arguments to be passed to the method
@@ -180,6 +180,7 @@ class ComponentJob(Job):
     def __init__(
         self,
         component_identifier: str,
+        component_uuid: str,
         type_id: str,
         method_name: str,
         args: t.Optional[t.Sequence] = None,
@@ -194,6 +195,7 @@ class ComponentJob(Job):
         super().__init__(args=args, kwargs=kwargs, db=db, identifier=identifier)
 
         self.component_identifier = component_identifier
+        self.component_uuid = component_uuid
         self.method_name = method_name
         self.type_id = type_id
         self._component = component
@@ -259,7 +261,8 @@ class ComponentJob(Job):
                 'method_name': self.method_name,
                 'component_identifier': self.component_identifier,
                 'type_id': self.type_id,
-                '_path': 'superduper/jobs/job/ComponentJob',
+                'component_uuid': self.component_uuid,
+                '_path': 'superduper.jobs.job.ComponentJob',
             }
         )
         return d

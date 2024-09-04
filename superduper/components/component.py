@@ -553,6 +553,7 @@ class Component(Leaf):
         assert self.identifier is not None
         return ComponentJob(
             component_identifier=self.identifier,
+            component_uuid=self.uuid,
             method_name='predict',
             type_id='model',
             kwargs={

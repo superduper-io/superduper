@@ -225,7 +225,7 @@ def test_listener_chaining_with_trainer(db):
     )
 
     listener2 = Listener(
-        upstream=features_listener,
+        upstream=[features_listener],
         model=trainable_model,
         select=select,
         key=features_listener.outputs,
@@ -236,5 +236,30 @@ def test_listener_chaining_with_trainer(db):
     assert trainable_model.trainer.training_done is True
 
 
-def test_upstream_serializes():
-    ...
+def test_upstream_serializes(db):
+
+    upstream_component = ObjectModel("upstream", object=lambda x: x)
+
+    dependent_listener = Listener(
+        identifier="dependent",
+        model=upstream_component,
+        select=db['other'].select(),
+        key='y',
+        upstream=[upstream_component],
+    )
+
+    db.apply(dependent_listener)
+
+    listener = Listener(
+        identifier="test-listener",
+        model=ObjectModel("test", object=lambda x: x),
+        select=db[dependent_listener.outputs].select(),
+        key=dependent_listener.outputs,
+        upstream=[upstream_component],
+    )
+
+    db.apply(listener)
+
+    assert 'upstream' in db.show('model')
+
+    r = db.show('listener', listener.identifier, -1)

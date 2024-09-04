@@ -258,7 +258,6 @@ class Query(_BaseQuery):
         ]
 
         events = []
-
         for component in listeners + vector_indices:
             trigger_ids = component.trigger_ids(self, ids)
             if trigger_ids:

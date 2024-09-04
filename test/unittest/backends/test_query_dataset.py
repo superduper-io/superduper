@@ -17,10 +17,13 @@ def test_query_dataset(db):
     add_models(db)
     add_vector_index(db)
     primary_id = db["documents"].primary_id
+
+    listener_uuid = db.show('listener', 'vector-x', -1)['uuid']
+
     train_data = QueryDataset(
         db=db,
         mapping=Mapping("_base", signature="singleton"),
-        select=db["documents"].select(primary_id, 'x', '_fold').outputs("vector-x"),
+        select=db["documents"].select(primary_id, 'x', '_fold').outputs("vector-x__" + listener_uuid),
         fold="train",
     )
     r = train_data[0]
@@ -28,7 +31,8 @@ def test_query_dataset(db):
     assert "y" not in r
     assert "x" in r
 
-    assert r['_outputs__vector-x'].shape[0] == 16
+    db["documents"].select(primary_id, 'x', '_fold').outputs("vector-x__" + listener_uuid)
+    assert r['_outputs__vector-x__' + listener_uuid].shape[0] == 16
 
     train_data = QueryDataset(
         db=db,

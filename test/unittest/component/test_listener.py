@@ -74,7 +74,6 @@ def test_listener_chaining(db):
         select=table.select(),
         key="x",
         identifier="listener1",
-        predict_id="listener1",
     )
     db.add(listener1)
 
@@ -83,7 +82,6 @@ def test_listener_chaining(db):
         select=listener1.outputs_select,
         key=listener1.outputs,
         identifier='listener2',
-        predict_id='listener2',
     )
 
     db.add(listener2)
@@ -240,3 +238,7 @@ def test_listener_chaining_with_trainer(db):
     )
     db.apply(listener2)
     assert trainable_model.trainer.training_done is True
+
+
+def test_upstream_serializes():
+    ...

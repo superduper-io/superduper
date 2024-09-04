@@ -6,6 +6,7 @@ import networkx as nx
 
 from superduper import CFG, logging
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.leaf import build_uuid
 
 if t.TYPE_CHECKING:
     from superduper.backends.base.query import Query
@@ -69,7 +70,7 @@ class SuperDuperData:
         """The predict id of the model output node."""
         if self._predict_id is None:
             assert self.model is not None, "Model is required."
-            self._predict_id = self.model.identifier
+            self._predict_id = self.model.identifier + '__' + build_uuid()
 
         return self._predict_id
 
@@ -316,8 +317,8 @@ class Graph:
         listener = node.model.to_listener(
             key=key,
             select=select,
-            predict_id=predict_id,
-            identifier=predict_id,
+            identifier=predict_id.split('__')[0],
+            uuid=predict_id.split('__')[1],
             predict_kwargs=predict_kwargs,
         )
         logging.info(f"Listener: {listener}")

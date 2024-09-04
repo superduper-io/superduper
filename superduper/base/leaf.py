@@ -117,6 +117,10 @@ class LeafMeta(type):
         return cls
 
 
+def build_uuid():
+    return str(uuid.uuid4()).replace('-', '')
+
+
 class Leaf(metaclass=LeafMeta):
     """Base class for all leaf classes.
 
@@ -130,7 +134,7 @@ class Leaf(metaclass=LeafMeta):
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
-    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
+    uuid: str = dc.field(default_factory=build_uuid)
 
     @property
     def metadata(self):

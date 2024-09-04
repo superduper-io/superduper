@@ -101,6 +101,7 @@ class Component(Leaf):
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = False
 
+    # TODO needed still?
     @property
     def children(self):
         """Get all the child components of the component."""

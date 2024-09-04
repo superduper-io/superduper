@@ -27,7 +27,6 @@ def build_chain_listener(db: "Datalayer"):
     listener_a = model_a.to_listener(
         select=db["documents"].select(),
         key="x",
-        predict_id="a",
         identifier="a",
     )
     db.apply(listener_a)
@@ -35,7 +34,6 @@ def build_chain_listener(db: "Datalayer"):
     listener_b = model_b.to_listener(
         select=listener_a.outputs_select,
         key=listener_a.outputs,
-        predict_id="b",
         identifier="b",
     )
     db.apply(listener_b)
@@ -43,7 +41,6 @@ def build_chain_listener(db: "Datalayer"):
     listener_c = model_c.to_listener(
         select=listener_b.outputs_select,
         key=listener_b.outputs,
-        predict_id="c",
         identifier="c",
     )
     db.apply(listener_c)
@@ -56,6 +53,6 @@ def build_chain_listener(db: "Datalayer"):
 
     db["documents"].insert(data).execute()
 
-    assert db.databackend.check_output_dest('a')
-    assert db.databackend.check_output_dest('b')
-    assert db.databackend.check_output_dest('c')
+    assert db.databackend.check_output_dest(listener_a.predict_id)
+    assert db.databackend.check_output_dest(listener_b.predict_id)
+    assert db.databackend.check_output_dest(listener_c.predict_id)

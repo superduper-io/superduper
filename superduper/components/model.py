@@ -1043,7 +1043,7 @@ class Model(Component, metaclass=ModelMeta):
         self,
         key: ModelInputType,
         select: Query,
-        identifier='',
+        identifier,
         predict_kwargs: t.Optional[dict] = None,
         **kwargs,
     ):
@@ -1056,8 +1056,6 @@ class Model(Component, metaclass=ModelMeta):
         :param kwargs: Additional keyword arguments to pass to `Listener`
         """
         from superduper.components.listener import Listener
-
-        identifier = identifier or kwargs.get('predict_id', self.identifier)
 
         listener = Listener(
             key=key,

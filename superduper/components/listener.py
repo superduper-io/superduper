@@ -38,8 +38,16 @@ class Listener(Component):
     model: Model
     select: t.Union[Query, None]
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
     type_id: t.ClassVar[str] = 'listener'
+
+    def __post_init__(self, db, artifacts):
+        deps = self.dependencies
+        if deps:
+            if not self.upstream:
+                self.upstream = []
+            for identifier, uuid in self.dependencies:
+                self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
+        return super().__post_init__(db, artifacts)
 
     @property
     def predict_id(self):
@@ -133,11 +141,9 @@ class Listener(Component):
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
         out = []
-        # TODO why do we still have '.' in here?
         for x in all_:
             if x.startswith(CFG.output_prefix):
-                listener_id = x[len(CFG.output_prefix) :].split(".")[0]
-                out.append(listener_id)
+                out.append(tuple(x[len(CFG.output_prefix):].split('__')))
         return out
 
     def trigger_ids(self, query: Query, primary_ids: t.Sequence):
@@ -222,6 +228,7 @@ class Listener(Component):
             id=[str(id) for id in ids],
             from_type='COMPONENT',
             dependencies=dependencies,
+            method='run'
         )
 
         db.compute.broadcast([event])
@@ -268,7 +275,8 @@ class Listener(Component):
         assert not isinstance(self.model, str)
 
 
-        dependencies = self.listener_dependencies(db, dependencies)
+        upstream_uuids = [up.split(':')[-1] for up in dependencies]
+        upstream_jobs = db.metadata.show_job_ids(uuids=upstream_uuids, status='running')
         component_events, db_events = Event.chunk_by_type(events)
 
         # Create a startup job
@@ -278,7 +286,7 @@ class Listener(Component):
                 self._create_predict_job(
                     db=db,
                     ids=event.id,
-                    deps=dependencies,
+                    deps=[*upstream_jobs, *dependencies],
                     overwrite=overwrite,
                     job_id=event.uuid,
                 )
@@ -292,11 +300,21 @@ class Listener(Component):
             self._create_predict_job(
                 db=db,
                 ids=[event.id for event in db_events],
-                deps=dependencies,
+                deps=[*upstream_jobs, *dependencies],
                 overwrite=overwrite,
             )
         ]
         return jobs
+
+    def run(self, ids, db: t.Optional["Datalayer"] = None):
+        return self.model.predict_in_db(
+            X=self.key,
+            db=self.db or db,
+            predict_id=self.predict_id,
+            select=self.select,
+            ids=ids,
+            **(self.predict_kwargs or {}),
+        )
 
     def _create_predict_job(self, db, ids, deps, overwrite, job_id=None):
         return self.model.predict_in_db_job(

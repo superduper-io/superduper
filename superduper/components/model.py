@@ -471,6 +471,7 @@ class Model(Component, metaclass=ModelMeta):
         job = ComponentJob(
             identifier=job_id,
             component_identifier=self.identifier,
+            component_uuid=self.uuid,
             method_name='predict_in_db',
             type_id='model',
             kwargs={
@@ -966,6 +967,7 @@ class Model(Component, metaclass=ModelMeta):
         """
         job = ComponentJob(
             component_identifier=self.identifier,
+            component_uuid=self.uuid,
             method_name='validate_in_db',
             type_id='model',
             kwargs={},
@@ -1006,6 +1008,7 @@ class Model(Component, metaclass=ModelMeta):
             compute_kwargs = {}
         job = ComponentJob(
             component_identifier=self.identifier,
+            component_uuid=self.uuid,
             method_name='fit_in_db',
             type_id='model',
             compute_kwargs=compute_kwargs,
@@ -1019,7 +1022,6 @@ class Model(Component, metaclass=ModelMeta):
         dependencies: t.Sequence[str] = (),
         overwrite: bool = False,
         events: t.Optional[t.List] = [],
-        event_type: str = 'insert',
     ) -> t.Sequence[t.Any]:
         """Schedule jobs for the training model.
 

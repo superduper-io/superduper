@@ -125,6 +125,7 @@ def test_pm_create_predict_job(mock_job, predict_mixin):
     mock_job.assert_called_once_with(
         identifier=None,
         component_identifier=predict_mixin.identifier,  # Adjust according to your setup
+        component_uuid=predict_mixin.uuid,
         method_name='predict_in_db',
         type_id='model',
         kwargs={

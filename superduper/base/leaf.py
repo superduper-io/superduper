@@ -118,6 +118,7 @@ class LeafMeta(type):
 
 
 def build_uuid():
+    """Build UUID."""
     return str(uuid.uuid4()).replace('-', '')
 
 

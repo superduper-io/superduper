@@ -52,16 +52,16 @@ def test_graph_deps(db: "Datalayer"):
     output_c.apply()
 
     data = Document(
-        list(db["documents"].select().outputs("a", "b", "c").execute())[0].unpack()
+        list(db["documents"].select().outputs(output_a.predict_id, output_b.predict_id, output_c.predict_id).execute())[0].unpack()
     )
 
-    output_a = data["_outputs__a"]
-    output_b = data["_outputs__b"]
-    output_c = data["_outputs__c"]
+    result_a = data[f"_outputs__{output_a.predict_id}"]
+    result_b = data[f"_outputs__{output_b.predict_id}"]
+    result_c = data[f"_outputs__{output_c.predict_id}"]
 
-    assert output_a == Tuple(1, "a")
-    assert output_b == Tuple(1, "2", output_a, "b")
-    assert output_c == Tuple(1, "2", Tuple(1, 2, 3), output_a, output_b, "c")
+    assert result_a == Tuple(1, "a")
+    assert result_b == Tuple(1, "2", result_a, "b")
+    assert result_c == Tuple(1, "2", Tuple(1, 2, 3), result_a, result_b, "c")
 
     new_data = [
         {"x": 4, "y": "5", "z": Tuple(10, 11, 12)},
@@ -72,16 +72,16 @@ def test_graph_deps(db: "Datalayer"):
     db["documents"].insert(new_data).execute()
 
     new_data = Document(
-        list(db["documents"].select().outputs("a", "b", "c").execute())[-1].unpack()
+        list(db["documents"].select().outputs(output_a.predict_id, output_b.predict_id, output_c.predict_id).execute())[-1].unpack()
     )
 
-    output_a = new_data["_outputs__a"]
-    output_b = new_data["_outputs__b"]
-    output_c = new_data["_outputs__c"]
+    result_a = new_data[f"_outputs__{output_a.predict_id}"]
+    result_b = new_data[f"_outputs__{output_b.predict_id}"]
+    result_c = new_data[f"_outputs__{output_c.predict_id}"]
 
-    assert output_a == Tuple(6, "a")
-    assert output_b == Tuple(6, "7", output_a, "b")
-    assert output_c == Tuple(6, "7", Tuple(16, 17, 18), output_a, output_b, "c")
+    assert result_a == Tuple(6, "a")
+    assert result_b == Tuple(6, "7", result_a, "b")
+    assert result_c == Tuple(6, "7", Tuple(16, 17, 18), result_a, result_b, "c")
 
 
 def test_flatten(db: "Datalayer"):
@@ -105,10 +105,10 @@ def test_flatten(db: "Datalayer"):
     output_a.apply()
     pprint(output_a)
 
-    outputs = list(db['_outputs__flatten'].select().execute(eager_mode=True))
+    outputs = list(db[f'_outputs__{output_a.predict_id}'].select().execute(eager_mode=True))
     assert len(outputs) == 6
 
-    results = [o['_outputs__flatten'].data for o in outputs]
+    results = [o[f'_outputs__{output_a.predict_id}'].data for o in outputs]
 
     assert results.count("a") == 1
     assert results.count("b") == 2
@@ -137,17 +137,12 @@ def test_predict_id(db: "Datalayer"):
 
     output_c = model_c(output_b)
 
-    output_a.predict_id = "A"
-    output_b.predict_id = "B"
-    output_c.predict_id = "C"
-
     output_c.apply()
 
-    output = list(db['documents'].select().outputs("A", "B", "C").execute())[0]
-
-    assert output["_outputs__A"] == "1->a"
-    assert output["_outputs__B"] == "1->a->b"
-    assert output["_outputs__C"] == "1->a->b->c"
+    output = list(db['documents'].select().outputs(output_a.predict_id, output_b.predict_id, output_c.predict_id).execute())[0]
+    assert output[f"_outputs__{output_a.predict_id}"] == "1->a"
+    assert output[f"_outputs__{output_b.predict_id}"] == "1->a->b"
+    assert output[f"_outputs__{output_c.predict_id}"] == "1->a->b->c"
 
 
 def test_condition(db: "Datalayer"):
@@ -170,7 +165,7 @@ def test_condition(db: "Datalayer"):
 
     output.apply()
 
-    outputs = list(db["_outputs__a"].select().execute())
+    outputs = list(db[f"_outputs__{output.predict_id}"].select().execute())
     assert len(outputs) == 1
 
-    assert outputs[0]["_outputs__a"] == "1->a"
+    assert outputs[0][f"_outputs__{output.predict_id}"] == "1->a"

@@ -40,11 +40,11 @@ def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer"):
     listener = model.to_listener(
         key="data",
         select=db["datas"].select(),
-        uuid="test",
+        identifier="test",
     )
 
     db.apply(listener)
 
-    results = list(db["_outputs__test"].select().execute())
+    results = list(db["_outputs__" + listener.predict_id].select().execute())
     assert len(results) == 10
     return results

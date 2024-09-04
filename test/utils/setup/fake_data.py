@@ -87,7 +87,7 @@ def add_listener(db: Datalayer, collection_name="documents"):
             select=select,
             key="x",
             model=model,
-            predict_id="vector-x",
+            # predict_id="vector-x",
         )
     )
 
@@ -97,7 +97,7 @@ def add_listener(db: Datalayer, collection_name="documents"):
             select=select,
             key="z",
             model=model,
-            predict_id="vector-y",
+            # predict_id="vector-y",
         )
     )
 

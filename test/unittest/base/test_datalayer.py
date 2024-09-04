@@ -90,7 +90,7 @@ def add_fake_model(db: Datalayer):
     db.apply(model)
     select = db['documents'].select()
     listener = Listener(
-        identifier='x',
+        identifier='listener-x',
         model=model,
         select=select,
         key='x',
@@ -406,8 +406,9 @@ def test_insert(db):
     )
     assert len(inserted_ids) == 5
 
-    listener_uuid = db.show('listener')[0].split('/')[-1]
-    key = f'_outputs__{listener_uuid}'
+    uuid = db.show('listener', 'listener-x', 0)['uuid']
+
+    key = f'_outputs__listener-x__{uuid}'
     new_docs = db[key].select().execute()
     result = [doc[key] for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']

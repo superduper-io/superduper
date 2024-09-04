@@ -5,6 +5,7 @@ from overrides import override
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
+from superduper.base.datalayer import Datalayer
 from superduper.base.event import Event
 from superduper.components.model import Mapping
 from superduper.misc.server import request_server
@@ -30,33 +31,29 @@ class Listener(Component):
     :param model: Model for processing data.
     :param select: Object for selecting which data is processed.
     :param predict_kwargs: Keyword arguments to self.model.predict().
-    :param identifier: A string used to identify the model.
-    :param predict_id: A string used to identify the model's output.
+    :param identifier: A string used to identify the listener and it's outputs.
     """
 
     key: ModelInputType
     model: Model
     select: t.Union[Query, None]
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    identifier: str = ''
-    predict_id: str = ''
 
     type_id: t.ClassVar[str] = 'listener'
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
-        if not self.predict_id:
-            self.predict_id = (
-                self.identifier
-                if self.version is None
-                else f"{self.identifier}::{self.version}"
-            )
+    @property
+    def predict_id(self):
+        return f'{self.identifier}__{self.uuid}'
+
+    def pre_create(self, db: Datalayer) -> None:
+        return super().pre_create(db)
 
     @property
     def mapping(self):
         """Mapping property."""
         return Mapping(self.key, signature=self.model.signature)
 
+    # TODO - do we need the outputs-prefix?
     @property
     def outputs(self):
         """Get reference to outputs of listener model."""
@@ -119,27 +116,24 @@ class Listener(Component):
         """
         if model.datatype is None:
             return
-        from superduper.components.schema import ID, Schema
-        from superduper.components.table import Table
-
-        fields = {
-            "_source": ID,
-            "id": ID,
-            f"{CFG.output_prefix}{predict_id}": model.datatype,
-        }
-        output_table = Table(
-            identifier=f"{CFG.output_prefix}{predict_id}",
-            schema=Schema(identifier=f"_schema/{predict_id}", fields=fields),
+        # TODO make this universal over databackends
+        # not special e.g. MongoDB vs. Ibis creating a table or not
+        output_table = db.databackend.create_output_dest(
+            predict_id,
+            model.datatype,
+            flatten=model.flatten,
         )
 
         db.apply(output_table)
 
+    # TODO rename
     @property
     def dependencies(self):
         """Listener model dependencies."""
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
         out = []
+        # TODO why do we still have '.' in here?
         for x in all_:
             if x.startswith(CFG.output_prefix):
                 listener_id = x[len(CFG.output_prefix) :].split(".")[0]
@@ -233,31 +227,27 @@ class Listener(Component):
         db.compute.broadcast([event])
         return [event.uuid]
 
-    def listener_dependencies(self, db, deps: t.Sequence[str]) -> t.Sequence[str]:
+    def listener_dependencies(self, db: 'Datalayer', deps: t.Sequence[str]) -> t.Sequence[str]:
         """List all dependent job ids of the listener."""
-        dependencies_ids: t.Sequence[str] = []
-        predict_id2uuid = {}
-        for listener_identifier in db.show('listener'):
-            listener_info = db.metadata.get_component(
-                type_id='listener',
-                identifier=listener_identifier,
-            )
-            predict_id2uuid[listener_info['predict_id']] = listener_info['uuid']
+        these_deps = self.dependencies
+        if not these_deps:
+            return deps
 
-        for predict_id in self.dependencies:
-            if predict_id not in predict_id2uuid:
-                logging.warn(
-                    f"Could not find the upstream listener with predict_id {predict_id}"
-                )
-                continue
-            uuid = predict_id2uuid.get(predict_id)
-            upstream_listener = db.load(uuid=uuid)
-            upstream_model = upstream_listener.model
-            job_ids = upstream_model.jobs(db=db)
-            dependencies_ids.extend(job_ids)
+        deps = list(deps)
 
-        dependencies = tuple([*dependencies_ids, *deps])
-        return dependencies
+        for dep in these_deps:
+            # TODO this logic is wrong
+            # we should only get the jobs of the specific version
+            identifier = db.show(type_id='listener', identifier=dep, uuid=dep.split('_')[-1])['identifier']
+            jobs = db.metadata.show_jobs(type_id='listener', component_identifier=identifier)
+            if not jobs:
+                # Currently listener jobs are registered as belonging to the model
+                # This is wrong and should be fixed
+                # These dependencies won't work until this is fixed
+                logging.warn(f'No jobs found for listener {dep}; something is wrong. Is this because we haven\'t refactored'
+                             ' as listener jobs yet?')
+            deps.extend(jobs)
+        return list(set(deps))
 
     def run_jobs(
         self,
@@ -276,6 +266,7 @@ class Listener(Component):
         if self.select is None:
             return []
         assert not isinstance(self.model, str)
+
 
         dependencies = self.listener_dependencies(db, dependencies)
         component_events, db_events = Event.chunk_by_type(events)

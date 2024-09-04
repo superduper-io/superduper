@@ -48,8 +48,7 @@ def build_graph_listener(db: "Datalayer"):
     listener_a = model_a.to_listener(
         key="x",
         select=db["documents"].select(),
-        identifier="listener_a",
-        predict_id="a",
+        identifier="a",
         predict_kwargs={"max_chunk_size": 1},
     )
 
@@ -58,22 +57,20 @@ def build_graph_listener(db: "Datalayer"):
 
     model_b = ObjectModel(identifier="model_b", object=func_b)
     listener_b = model_b.to_listener(
-        key=("x", "y", "_outputs__a"),
-        select=db["documents"].select(primary_id, "x", "y").outputs("a"),
-        identifier="listener_b",
-        predict_id="b",
+        key=("x", "y", listener_a.outputs),
+        select=db["documents"].select(primary_id, "x", "y").outputs(listener_a.predict_id),
+        identifier="b",
         predict_kwargs={"max_chunk_size": 1},
-    )
+)
 
     def func_c(x, y, z, o_a, o_b):
         return {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
 
     model_c = ObjectModel(identifier="model_c", object=func_c)
     listener_c = model_c.to_listener(
-        key=("x", "y", "z", "_outputs__a", "_outputs__b"),
-        select=db["documents"].select(primary_id, "x", "y", "z").outputs("a", "b"),
-        identifier="listener_c",
-        predict_id="c",
+        key=("x", "y", "z", listener_a.outputs, listener_b.outputs),
+        select=db["documents"].select(primary_id, "x", "y", "z").outputs(listener_a.predict_id, listener_b.predict_id),
+        identifier="c",
         predict_kwargs={"max_chunk_size": 1},
     )
 
@@ -82,12 +79,12 @@ def build_graph_listener(db: "Datalayer"):
     db.apply(listener_c)
 
     data = Document(
-        list(db["documents"].select().outputs("a", "b", "c").execute())[0].unpack()
+        list(db["documents"].select().outputs(listener_a.predict_id, listener_b.predict_id, listener_c.predict_id).execute())[0].unpack()
     )
 
-    output_a = data["_outputs__a"]
-    output_b = data["_outputs__b"]
-    output_c = data["_outputs__c"]
+    output_a = data[listener_a.outputs]
+    output_b = data[listener_b.outputs]
+    output_c = data[listener_c.outputs]
 
     assert _check_equal(output_a, {"x": 1, "model": "a"})
     assert _check_equal(output_b, {"x": 1, "y": "2", "o_a": output_a, "model": "b"})
@@ -112,12 +109,12 @@ def build_graph_listener(db: "Datalayer"):
     db["documents"].insert(new_data).execute()
 
     new_data = Document(
-        list(db["documents"].select().outputs("a", "b", "c").execute())[-1].unpack()
+        list(db["documents"].select().outputs(listener_a.predict_id, listener_b.predict_id, listener_c.predict_id).execute())[-1].unpack()
     )
 
-    output_a = new_data["_outputs__a"]
-    output_b = new_data["_outputs__b"]
-    output_c = new_data["_outputs__c"]
+    output_a = new_data[listener_a.outputs]
+    output_b = new_data[listener_b.outputs]
+    output_c = new_data[listener_c.outputs]
 
     assert _check_equal(output_a, {"x": 6, "model": "a"})
     assert _check_equal(output_b, {"x": 6, "y": "7", "o_a": output_a, "model": "b"})

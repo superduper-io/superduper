@@ -347,17 +347,17 @@ class Component(Leaf):
         else:
 
             def load_blob(blob, loader=None):
-                from superduper.misc.download import hash_uri
+                from superduper.misc.hash import hash_string
 
                 def _read_blob(blob_path):
                     with open(blob_path, 'rb') as f:
                         return f.read()
 
-                key = hash_uri(blob)
+                key = hash_string(blob)[:32]  # uuid length
                 cached_path = path + '/blobs/' + key
                 if os.path.exists(cached_path):
                     return _read_blob(cached_path)
-                elif loader.is_uri(blob):
+                elif loader and loader.is_uri(blob):
                     with open(path + '/blobs/' + key, 'wb') as f:
                         data = loader(blob)
                         f.write(data)

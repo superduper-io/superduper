@@ -1,6 +1,7 @@
 import typing as t
 
-from superduper import Component
+from superduper import Component, logging
+from superduper.backends.base.query import Query
 
 
 class Trigger(Component):
@@ -8,14 +9,14 @@ class Trigger(Component):
 
     ***Note that this feature deploys on superduper.io Enterprise.***
 
-    :param on: When to trigger the function `{'insert', 'update', 'delete'}`.
-    :param condition: Additional condition to trigger the function.
+    :param select: Query to select the trigger.
     """
+    type_id: t.ClassVar[str] = 'trigger'
+    select: t.Union[Query, None]
 
-    table: str
-    on: str = 'insert'
-    condition: t.Optional[t.Callable] = None
-
-    def pull(self, ids):
-        """Pull the trigger."""
-        raise NotImplementedError
+    def trigger_ids(self, query, primary_ids):
+        if query.table == self.select.table:
+            query: Query = query.select_using_ids(primary_ids)
+            query = query.select_ids
+            return [r[query.primary_id] for r in query.execute()]
+        return []

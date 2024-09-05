@@ -4,7 +4,12 @@ import uuid
 
 
 @dc.dataclass
-class _Component(dict):
+class ComponentPlaceholder(dict):
+    """Component placeholder to store component data.
+
+    :param type_id: Type id of the component.
+    :param identifier: Identifier of the component.
+    """
     type_id: str
     identifier: str
 
@@ -28,11 +33,12 @@ class Event:
     :param dependencies: List of dependencies on the event.
     """
 
-    dest: t.Union[_Component, t.Dict]
+    dest: t.Union[ComponentPlaceholder, t.Dict]
     id: t.Optional[t.Any] = None
     method: t.Optional[str] = None
     # where is this src attribute used?
-    src: t.Optional[_Component] = None
+    src: t.Optional[ComponentPlaceholder] = None
+    # TODO - replace with distinct classes
     from_type: str = 'DB'
     event_type: str = 'insert'
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))

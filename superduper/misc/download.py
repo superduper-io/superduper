@@ -1,3 +1,4 @@
+import hashlib
 import re
 import signal
 import sys
@@ -59,6 +60,8 @@ class Fetcher:
     :param n_workers: number of download workers
     """
 
+    DIALECTS = ('http', 's3', 'file')
+
     def __init__(self, headers: t.Optional[t.Dict] = None, n_workers: int = 0):
         session = boto3.Session()
         self.headers = headers
@@ -71,6 +74,13 @@ class Fetcher:
         )
         self.request_session.mount("http://", self.request_adapter)
         self.request_session.mount("https://", self.request_adapter)
+
+    def is_uri(self, uri: str):
+        """Helper function to check if uri is one of the dialects.
+
+        :param uri: uri string.
+        """
+        return uri.split('://')[0] in self.DIALECTS
 
     def _download_s3_object(self, uri):
         f = BytesIO()
@@ -500,3 +510,17 @@ class DownloadFiles(Model):
         if self.postprocess:
             results = [self.postprocess(r) for r in results]
         return results
+
+
+def hash_uri(uri: str) -> str:
+    """Return a hash for uri.
+
+    :param uri: uri string.
+    """
+    uri_bytes = uri.encode('utf-8')
+    hash_object = hashlib.sha256()
+    hash_object.update(uri_bytes)
+
+    hash_hex = hash_object.hexdigest()[:32]
+
+    return hash_hex

@@ -1,5 +1,6 @@
 import typing as t
 from collections import defaultdict
+from functools import partial
 
 from superduper import logging
 from superduper.base.code import Code
@@ -40,6 +41,21 @@ _LEAF_TYPES = {
 _LEAF_TYPES.update(_ENCODABLES)
 
 
+def _blob_getter(uri: str, getter: t.Callable):
+    from superduper.misc.download import Fetcher
+
+    dialect = uri.split('://')[0]
+    if dialect not in Fetcher.DIALECTS:
+        return getter(uri)
+    else:
+        loader = Fetcher()
+        return getter(uri, loader=loader)
+
+
+def _build_blob_getter(base_getter):
+    return partial(_blob_getter, getter=base_getter)
+
+
 class _Getters:
     """A class to manage getters for decoding documents.
 
@@ -59,7 +75,10 @@ class _Getters:
 
     def add_getter(self, name: str, getter: t.Callable):
         """Add a getter for a reference type."""
-        self._getters[name].append(getter)
+        if name == 'blob':
+            self._getters[name].append(_build_blob_getter(getter))
+        else:
+            self._getters[name].append(getter)
 
     def run(self, name, data):
         """Run the getters one by one until one returns a value."""

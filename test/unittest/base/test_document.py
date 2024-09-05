@@ -1,4 +1,6 @@
+import os
 import pprint
+import tempfile
 
 import numpy as np
 
@@ -63,6 +65,35 @@ def test_encode_decode_flattened_document():
     assert KEY_BLOBS in encoded_r
     assert encoded_r['data'].startswith('&:blob:')
     assert isinstance(next(iter(encoded_r[KEY_BLOBS].values())), bytes)
+
+
+def test_encode_model_with_remote_blob():
+    m = ObjectModel(
+        identifier='test',
+        object=lambda x: x + 2,
+    )
+
+    encoded_r = m.encode()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        blob_key = [k for k in encoded_r['_builds'] if k not in ('test', 'dill_lazy')][
+            0
+        ]
+
+        blob = encoded_r['_blobs'][blob_key]
+        temp_file_path = os.path.join(temp_dir, blob_key)
+        with open(temp_file_path, 'wb') as f:
+            f.write(blob)
+
+        encoded_r['_builds'][blob_key]['blob'] = f'&:blob:file://{temp_file_path}'
+
+        def local_blob(x, loader=None):
+            return loader(x)
+
+        decoded_r = Document.decode(encoded_r, getters={'blob': local_blob})
+
+    m = decoded_r.unpack()
+    m.object.init()
+    assert m.object.x(1) == 3
 
 
 def test_encode_model():

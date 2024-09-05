@@ -1,4 +1,3 @@
-import hashlib
 import re
 import signal
 import sys
@@ -510,17 +509,3 @@ class DownloadFiles(Model):
         if self.postprocess:
             results = [self.postprocess(r) for r in results]
         return results
-
-
-def hash_uri(uri: str) -> str:
-    """Return a hash for uri.
-
-    :param uri: uri string.
-    """
-    uri_bytes = uri.encode('utf-8')
-    hash_object = hashlib.sha256()
-    hash_object.update(uri_bytes)
-
-    hash_hex = hash_object.hexdigest()[:32]
-
-    return hash_hex

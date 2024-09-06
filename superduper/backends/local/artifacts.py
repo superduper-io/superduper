@@ -67,7 +67,9 @@ class FileSystemArtifactStore(ArtifactStore):
             ):
                 logging.warn('Aborting...')
         shutil.rmtree(self.conn, ignore_errors=force)
-        os.makedirs(self.conn)
+        if os.path.exists(self.conn):
+            logging.warn('Failed to drop artifact store')
+        os.makedirs(self.conn, exist_ok=True)
 
     def put_bytes(
         self,

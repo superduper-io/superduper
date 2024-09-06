@@ -567,10 +567,11 @@ class Graph(Model):
         outputs = self._transpose(outputs=encoded_outputs or outputs)
 
         # Set the schema at runtime
-        self.output_schema = Schema(
-            identifier=self.identifier,
-            fields={k.identifier: k.datatype for k in self.outputs},
-        )
+        if not self.datatype:
+            self.output_schema = Schema(
+                identifier=self.identifier,
+                fields={k.identifier: k.datatype for k in self.outputs},
+            )
 
         return self.encode_with_schema(outputs)
 

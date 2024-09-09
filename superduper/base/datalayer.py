@@ -2,7 +2,7 @@ import dataclasses as dc
 import random
 import typing as t
 import warnings
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 import click
 import networkx
@@ -21,7 +21,7 @@ from superduper.base.config import Config
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
-from superduper.base.event import Event
+from superduper.base.event import ComponentPlaceholder, Event, EventType
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
@@ -44,25 +44,6 @@ SelectResult = SuperDuperCursor
 UpdateResult = t.Any
 PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
-
-
-@dc.dataclass
-class DBEvent:
-    """Event to represent database events."""
-
-    insert = 'insert'
-    delete = 'delete'
-    update = 'update'
-    upsert = 'upsert'
-
-    @staticmethod
-    def chunk_by_event(lst: t.List[Event]) -> t.Dict[str, t.List[Event]]:
-        """Helper method to chunk events on type."""
-        chunks = defaultdict(list)
-        for item in lst:
-            item_type = item.event_type
-            chunks[item_type].append(item)
-        return chunks
 
 
 class Datalayer:
@@ -314,7 +295,7 @@ class Datalayer:
         result = delete.do_execute(self)
         cdc_status = s.CFG.cluster.cdc.uri is not None
         if refresh and not cdc_status:
-            return result, self.on_event(delete, ids=result, event_type=DBEvent.delete)
+            return result, self.on_event(delete, ids=result, event_type=EventType.delete)
         return result, None
 
     def _insert(
@@ -403,9 +384,9 @@ class Datalayer:
             identifier = event_data['identifier']
             type_id = event_data['type_id']
             ids = event_data['ids']
-            dest = {'identifier': identifier, 'type_id': type_id}
+            dest = ComponentPlaceholder(identifier=identifier, type_id=type_id)
             events.extend(
-                [Event(dest=dest, id=str(id), event_type=event_type) for id in ids]
+                [Event(dest=dest, ids=[str(id)], event_type=event_type) for id in ids]
             )
 
         logging.info(
@@ -431,12 +412,12 @@ class Datalayer:
                 jobs = []
                 if updated_ids:
                     job = self.on_event(
-                        query=write, ids=updated_ids, event_type=DBEvent.update
+                        query=write, ids=updated_ids, event_type=EventType.update
                     )
                     jobs.append(job)
                 if deleted_ids:
                     job = self.on_event(
-                        query=write, ids=deleted_ids, event_type=DBEvent.delete
+                        query=write, ids=deleted_ids, event_type=EventType.delete
                     )
                     jobs.append(job)
 
@@ -465,12 +446,12 @@ class Datalayer:
                 # with already existing outputs.
                 # We need overwrite outputs on those select and recompute predict
                 return updated_ids, self.on_event(
-                    query=update, ids=updated_ids, event_type=DBEvent.upsert
+                    query=update, ids=updated_ids, event_type=EventType.upsert
                 )
         return updated_ids, None
 
     @deprecated
-    def add(self, object: t.Any, dependencies: t.Sequence[Job] = ()):
+    def add(self, object: t.Any):
         """
         Note: The use of `add` is deprecated, use `apply` instead.
 
@@ -478,12 +459,11 @@ class Datalayer:
         :param dependencies: List of jobs which should execute before component
                              initialization begins.
         """
-        return self.apply(object, dependencies=dependencies)
+        return self.apply(object)
 
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
-        dependencies: t.Sequence[Job] = (),
     ):
         """
         Add functionality in the form of components.
@@ -498,7 +478,7 @@ class Datalayer:
         """
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
-        return self._apply(object=object, dependencies=dependencies), object
+        return self._apply(object=object), object
 
     def remove(
         self,
@@ -623,7 +603,7 @@ class Datalayer:
                 raise exceptions.ComponentException('%s not found in %s cache'.format())
         return m
 
-    def _add_child_components(self, components, parent, parent_deps):
+    def _add_child_components(self, components, parent):
         # TODO this is a bit of a mess
         # it handles the situation in `Stack` when
         # the components should be added in a certain order
@@ -631,23 +611,16 @@ class Datalayer:
         lookup = {(c.type_id, c.identifier): c for c in components}
         for k in lookup:
             G.add_node(k)
-            for d in lookup[k].dependencies:
+            for d in lookup[k].get_children_refs(): #dependencies:
                 if d[:2] in lookup:
                     G.add_edge(d, lookup[k].id_tuple)
 
         nodes = networkx.topological_sort(G)
-        jobs = {}
         for n in nodes:
-            component = lookup[n]
-            dependencies = sum(
-                [jobs.get(d[:2], []) for d in component.dependencies], list(parent_deps)
-            )
-            tmp = self._apply(component, parent=parent.uuid, dependencies=dependencies)
-            jobs[n] = tmp
-        return sum(list(jobs.values()), [])
+            self._apply(lookup[n], parent=parent.uuid)
 
     def _update_component(
-        self, object, dependencies: t.Sequence[Job] = (), parent: t.Optional[str] = None
+        self, object, parent: t.Optional[str] = None
     ):
         # TODO add update logic here to check changed attributes
         s.logging.debug(
@@ -658,11 +631,9 @@ class Datalayer:
     def _apply(
         self,
         object: Component,
-        dependencies: t.Sequence[Job] = (),
         parent: t.Optional[str] = None,
         artifacts: t.Optional[t.Dict[str, bytes]] = None,
     ):
-        jobs = list(dependencies)
         object.db = self
         object.pre_create(self)
         assert hasattr(object, 'identifier')
@@ -676,7 +647,7 @@ class Datalayer:
 
         if already_exists:
             return self._update_component(
-                object, dependencies=dependencies, parent=parent
+                object, parent=parent
             )
 
         if object.version is None:
@@ -688,6 +659,7 @@ class Datalayer:
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
         for k, v in serialized[KEY_BUILDS].items():
+            # TODO What is this "inline"?
             if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
                 r = dict(v.dict())
                 del r['identifier']
@@ -696,11 +668,9 @@ class Datalayer:
         children = [
             v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
-        child_jobs = self._add_child_components(
-            children, parent=object, parent_deps=dependencies
+        self._add_child_components(
+            children, parent=object,
         )
-        jobs.extend(child_jobs)
-
         if children:
             serialized = self._change_component_reference_prefix(serialized)
 
@@ -714,20 +684,14 @@ class Datalayer:
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
 
-        deps = []
-        for job in jobs:
-            if isinstance(job, Job):
-                deps.append(job.job_id)
-            else:
-                deps.append(job)
-        dependencies = list(set([*deps, *dependencies]))  # type: ignore[list-item]
-
         object.post_create(self)
-        these_jobs = object.schedule_jobs(self, dependencies=dependencies)
-        jobs.extend(these_jobs)
 
+        event = Event(
+            event_type='apply',
+            dest=ComponentPlaceholder(type_id=object.type_id, identifier=object.identifier),
+        )
+        self.compute.broadcast([event])
         self._add_component_to_cache(object)
-        return jobs
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""

@@ -25,6 +25,7 @@ from superduper.components.component import Component, ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
+from superduper.jobs.annotations import trigger
 from superduper.jobs.job import ComponentJob
 
 if t.TYPE_CHECKING:
@@ -164,6 +165,7 @@ class CallableInputs(Inputs):
         self.params = params
 
 
+# TODO migrate this to its own module
 class Trainer(Component):
     """Trainer component to train a model.
 
@@ -181,6 +183,7 @@ class Trainer(Component):
     :param prefetch_factor: Prefetch factor for data prefetching.
     :param in_memory: If training in memory.
     :param compute_kwargs: Kwargs for compute backend.
+    :param validation: Validation object to measure training performance
     """
 
     type_id: t.ClassVar[str] = 'trainer'
@@ -194,11 +197,12 @@ class Trainer(Component):
     prefetch_factor: int = 100
     in_memory: bool = True
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
+    validation: t.Optional[Validation] = None
 
     @abstractmethod
     def fit(
         self,
-        model: _Fittable,
+        model: Model,
         db: Datalayer,
         train_dataset: QueryDataset,
         valid_dataset: QueryDataset,
@@ -223,7 +227,7 @@ class Validation(Component):
 
     type_id: t.ClassVar[str] = 'validation'
     metrics: t.Sequence[Metric] = ()
-    key: t.Optional[ModelInputType] = None
+    key: ModelInputType
     datasets: t.Sequence[Dataset] = ()
 
 
@@ -352,9 +356,9 @@ class Model(Component, metaclass=ModelMeta):
     :param validation: The validation ``Dataset`` instances to use.
     :param metric_values: The metrics to evaluate on.
     :param num_workers: Number of workers to use for parallel prediction.
-    :param serve: Creates an http endpoint and serves the model with
+    :param serve: Creates an http endpoint and serve the model with
                   ``compute_kwargs`` on a distributed cluster.
-    :param trainer: Trainer instance to use for training.
+    :param trainer: `Trainer` instance to use for training.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -381,12 +385,6 @@ class Model(Component, metaclass=ModelMeta):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
-    def jobs(self, db: 'Datalayer'):
-        """List jobs ids related to the model."""
-        jobs = db.metadata.show_jobs(self.identifier, 'model') or []
-        job_ids = [job['job_id'] for job in jobs]
-        return job_ids
-
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
@@ -395,15 +393,6 @@ class Model(Component, metaclass=ModelMeta):
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.predict(*args, **kwargs)
-
-    def post_create(self, db):
-        """Post create hook for the model.
-
-        :param db: Datalayer instance.
-        """
-        db.compute.queue.declare_component(self)
-        if self.trainer is not None:
-            db.compute.queue.declare_component(self, type_id=f'{self.type_id}.training')
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> int:
@@ -441,84 +430,38 @@ class Model(Component, metaclass=ModelMeta):
         select.set_db(db)
         return select
 
-    def predict_in_db_job(
-        self,
-        X: ModelInputType,
-        db: Datalayer,
-        predict_id: str,
-        select: t.Optional[Query],
-        ids: t.Optional[t.List[str]] = None,
-        job_id: t.Optional[str] = None,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[str] = (),
-        in_memory: bool = True,
-        overwrite: bool = False,
-    ):
-        """Run a prediction job in the database.
-        Execute a single prediction on the data points
-        given by positional and keyword arguments as a job.
-
-        :param X: combination of input keys to be mapped to the model
-        :param db: Datalayer instance
-        :param predict_id: Model outputs identifier
-        :param select: CompoundSelect query
-        :param ids: Iterable of ids
-        :param max_chunk_size: Chunks of data
-        :param dependencies: List of dependencies (jobs)
-        :param in_memory: Load data into memory or not
-        :param overwrite: Overwrite all documents or only new documents
-        """
-        job = ComponentJob(
-            identifier=job_id,
-            component_identifier=self.identifier,
-            component_uuid=self.uuid,
-            method_name='predict_in_db',
-            type_id='model',
-            kwargs={
-                'select': select.encode() if select else None,
-                'predict_id': predict_id,
-                'ids': ids,
-                'max_chunk_size': max_chunk_size,
-                'in_memory': in_memory,
-                'overwrite': overwrite,
-                'X': X,
-            },
-            compute_kwargs=self.compute_kwargs,
-        )
-        job(db, dependencies=dependencies)
-        return job
-
     def _get_ids_from_select(
         self,
         *,
         X,
         select,
-        db: 'Datalayer',
-        ids,
+        ids: t.Sequence[str] | None = None,
         predict_id: str,
         overwrite: bool = False,
     ):
-        if not db.databackend.check_output_dest(predict_id):
+        if not self.db.databackend.check_output_dest(predict_id):
             overwrite = True
+
         if not overwrite:
             if ids:
                 select = select.select_using_ids(ids)
+            # TODO - this is broken
             query = select.select_ids_of_missing_outputs(predict_id=predict_id)
         else:
             if ids:
                 return ids
             query = select.select_ids
         try:
-            id_field = db.databackend.id_field
+            id_field = self.db.databackend.id_field
         except AttributeError:
             id_field = query.table_or_collection.primary_id
 
         # TODO: Find better solution to support in-memory (pandas)
         # Since pandas has a bug, it cannot join on empty table.
         try:
-            id_curr = db.execute(query)
+            id_curr = self.db.execute(query)
         except DatabackendException:
-            id_curr = db.execute(select.select(id_field))
+            id_curr = self.db.execute(select.select(id_field))
 
         predict_ids = []
         for r in tqdm.tqdm(id_curr):
@@ -534,13 +477,12 @@ class Model(Component, metaclass=ModelMeta):
     def predict_in_db(
         self,
         X: ModelInputType,
-        db: Datalayer,
         predict_id: str,
         select: Query,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
-        overwrite: bool = False,
+        overwrite: bool = True,
     ) -> t.Any:
         """Predict on the data points in the database.
 
@@ -548,7 +490,6 @@ class Model(Component, metaclass=ModelMeta):
         given by positional and keyword arguments as a job.
 
         :param X: combination of input keys to be mapped to the model
-        :param db: Datalayer instance
         :param predict_id: Identifier for saving outputs.
         :param select: CompoundSelect query
         :param ids: Iterable of ids
@@ -565,19 +506,10 @@ class Model(Component, metaclass=ModelMeta):
         message = f'Using select {select} and ids {ids}'
         logging.debug(message)
 
-        select = self._prepare_select_for_predict(select, db)
-        if self.identifier not in db.show('model'):
-            logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.apply(self)
-
-        assert isinstance(
-            self.version, int
-        ), 'Something has gone wrong setting `self.version`'
+        select = self._prepare_select_for_predict(select, self.db)
         predict_ids = self._get_ids_from_select(
             X=X,
             select=select,
-            db=db,
             ids=ids,
             overwrite=overwrite,
             predict_id=predict_id,
@@ -587,7 +519,6 @@ class Model(Component, metaclass=ModelMeta):
             predict_id=predict_id,
             select=select,
             ids=predict_ids,
-            db=db,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
         )
@@ -595,7 +526,6 @@ class Model(Component, metaclass=ModelMeta):
     def _prepare_inputs_from_select(
         self,
         X: ModelInputType,
-        db: Datalayer,
         select: Query,
         ids,
         in_memory: bool = True,
@@ -603,16 +533,14 @@ class Model(Component, metaclass=ModelMeta):
         X_data: t.Any
         mapping = Mapping(X, self.signature)
         if in_memory:
-            if db is None:
-                raise ValueError('db cannot be None')
-            docs = list(db.execute(select.select_using_ids(ids)))
+            docs = list(self.db.execute(select.select_using_ids(ids)))
             X_data = list(map(lambda x: mapping(x), docs))
         else:
             X_data = QueryDataset(
                 select=select,
                 ids=ids,
                 fold=None,
-                db=db,
+                db=self.db,
                 in_memory=False,
                 mapping=mapping,
             )
@@ -655,7 +583,6 @@ class Model(Component, metaclass=ModelMeta):
         self,
         X: t.Any,
         predict_id: str,
-        db: Datalayer,
         select: Query,
         ids: t.List[str],
         in_memory: bool = True,
@@ -670,7 +597,6 @@ class Model(Component, metaclass=ModelMeta):
                 logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
                 self._predict_with_select_and_ids(
                     X=X,
-                    db=db,
                     ids=ids[i : i + max_chunk_size],
                     select=select,
                     max_chunk_size=None,
@@ -682,7 +608,6 @@ class Model(Component, metaclass=ModelMeta):
 
         dataset, mapping = self._prepare_inputs_from_select(
             X=X,
-            db=db,
             select=select,
             ids=ids,
             in_memory=in_memory,
@@ -700,7 +625,7 @@ class Model(Component, metaclass=ModelMeta):
         ), 'Version has not been set, can\'t save outputs...'
 
         update = select.model_update(
-            db=db,
+            db=self.db,
             predict_id=predict_id,
             outputs=outputs,
             ids=ids,
@@ -710,9 +635,9 @@ class Model(Component, metaclass=ModelMeta):
         if update:
             # Don't use auto_schema for inserting model outputs
             if update.type == 'insert':
-                update.execute(db=db, auto_schema=False)
+                update.execute(db=self.db, auto_schema=False)
             else:
-                update.execute(db=db)
+                update.execute(db=self.db)
 
     def encode_outputs(self, outputs):
         """Method that encodes outputs of a model for saving in the database.
@@ -959,23 +884,8 @@ class Model(Component, metaclass=ModelMeta):
             results[m.identifier] = m(predictions, targets)
         return results
 
-    def validate_in_db_job(self, db, dependencies: t.Sequence[str] = ()):
-        """Perform a validation job.
-
-        :param db: DataLayer instance
-        :param dependencies: dependencies on the job
-        """
-        job = ComponentJob(
-            component_identifier=self.identifier,
-            component_uuid=self.uuid,
-            method_name='validate_in_db',
-            type_id='model',
-            kwargs={},
-        )
-        job(db, dependencies)
-        return job
-
-    def validate_in_db(self, db: Datalayer):
+    @trigger('apply', depends='fit_in_db', requires='validation')
+    def validate_in_db(self):
         """Validation job in database.
 
         :param db: DataLayer instance.
@@ -983,107 +893,14 @@ class Model(Component, metaclass=ModelMeta):
         assert isinstance(self.validation, Validation)
         for dataset in self.validation.datasets:
             logging.info(f'Validating on {dataset.identifier}...')
-            db.apply(dataset)
+            self.db.apply(dataset)
             results = self.validate(
                 key=self.validation.key,
                 dataset=dataset,
                 metrics=self.validation.metrics,
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
-        db.replace(self, upsert=True)
-
-    def fit_in_db_job(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[str] = (),
-    ):
-        """Model fit job in database.
-
-        :param db: Datalayer instance.
-        :param dependencies: List of dependent jobs
-        """
-        if self.trainer:
-            compute_kwargs = self.trainer.compute_kwargs or {}
-        else:
-            compute_kwargs = {}
-        job = ComponentJob(
-            component_identifier=self.identifier,
-            component_uuid=self.uuid,
-            method_name='fit_in_db',
-            type_id='model',
-            compute_kwargs=compute_kwargs,
-        )
-        job(db, dependencies)
-        return job
-
-    def run_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[str] = (),
-        overwrite: bool = False,
-        events: t.Optional[t.List] = [],
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the training model.
-
-        :param db: Data layer instance to process.
-        :param dependencies: A list of dependencies.
-        :param overwrite: Overwrite the existing data.
-        :param event_type: Type of event.
-        """
-        # Note: DB events are not supported yet
-        # i.e if new data is added after model apply.
-
-        jobs = []
-
-        if any(e.method == 'fit_in_db' for e in events):
-            jobs.append(self.fit_in_db_job(
-                db=db,
-                dependencies=list(set(dependencies)),
-            ))
-
-        if any(e.method == 'validate_in_db' for e in events):
-            jobs.append(self.validate_in_db_job(
-                db=db,
-                dependencies=list(set(dependencies)),
-            ))
-
-        return jobs
-
-    def schedule_jobs(self, db, dependencies=()):
-        """Database hook for scheduling jobs.
-
-        :param db: Datalayer instance.
-        :param dependencies: List of dependencies.
-        """
-        from superduper.base.datalayer import DBEvent
-        from superduper.base.event import Event
-
-        if self.trainer is None:
-            return []
-
-        events = []
-        if self.trainer is not None:
-            event = Event(
-                dest={'type_id': 'model', 'identifier': self.identifier},
-                event_type=DBEvent.insert,
-                from_type='COMPONENT',
-                dependencies=dependencies,
-                method='fit_in_db',
-            )
-            events.append(event)
-
-        if self.validation is not None:
-            event = Event(
-                dest={'type_id': 'model', 'identifier': self.identifier},
-                event_type=DBEvent.insert,
-                from_type='COMPONENT',
-                dependencies=dependencies,
-                method='validate_in_db',
-            )
-            events.append(event)
-
-        db.compute.broadcast(events)
-        return [e.uuid for e in events]
+        self.db.replace(self, upsert=True)
 
     def _create_datasets(self, X, db, select):
         train_dataset = self._create_dataset(
@@ -1145,7 +962,8 @@ class Model(Component, metaclass=ModelMeta):
             db=db,
         )
 
-    def fit_in_db(self, db: Datalayer):
+    @trigger('apply', requires='trainer')
+    def fit_in_db(self):
         """Fit the model on the given data.
 
         :param db: The datalayer
@@ -1154,12 +972,12 @@ class Model(Component, metaclass=ModelMeta):
         train_dataset, valid_dataset = self._create_datasets(
             select=self.trainer.select,
             X=self.trainer.key,
-            db=db,
+            db=self.db,
         )
         return self.fit(
             train_dataset=train_dataset,
             valid_dataset=valid_dataset,
-            db=db,
+            db=self.db,
         )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:

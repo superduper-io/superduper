@@ -71,7 +71,7 @@ def test_listener_chaining(db):
         key="x",
         identifier="listener1",
     )
-    db.add(listener1)
+    db.apply(listener1)
 
     listener2 = Listener(
         model=m2,
@@ -80,7 +80,7 @@ def test_listener_chaining(db):
         identifier='listener2',
     )
 
-    db.add(listener2)
+    db.apply(listener2)
 
     def check_listener_output(listener, output_n):
         docs = list(db.execute(listener.outputs_select))

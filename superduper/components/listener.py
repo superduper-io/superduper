@@ -9,6 +9,7 @@ from superduper.base.datalayer import Datalayer
 from superduper.base.event import Event
 from superduper.components.model import Mapping
 from superduper.components.trigger import Trigger
+from superduper.jobs.annotations import trigger
 from superduper.misc.server import request_server
 
 from ..jobs.job import Job
@@ -110,7 +111,7 @@ class Listener(Trigger):
                 )
         else:
             logging.info('Skipping listener setup on CDC service')
-        db.compute.queue.declare_component(self)
+        super().post_create(db)
 
     @classmethod
     def create_output_dest(cls, db: "Datalayer", predict_id, model: Model):
@@ -198,133 +199,13 @@ class Listener(Trigger):
 
         return clean_keys
 
-    @override
-    def schedule_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[Job] = (),
-        overwrite: bool = False,
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the listener.
-
-        :param db: Data layer instance to process.
-        :param dependencies: A list of dependencies.
-        :param overwrite: Overwrite the existing data.
-        """
-        if self.select is None:
-            return []
-        from superduper.base.datalayer import DBEvent
-        from superduper.base.event import Event
-
-        self.select.db = db
-        ids = self.db.databackend.check_ready_ids(self.select, self._ready_keys)
-        if not ids:
-            return []
-
-        event = Event(
-            dest={'type_id': self.type_id, 'identifier': self.identifier},
-            event_type=DBEvent.insert,
-            id=[str(id) for id in ids],
-            from_type='COMPONENT',
-            dependencies=dependencies,
-            method='run'
-        )
-
-        db.compute.broadcast([event])
-        return [event.uuid]
-
-    def listener_dependencies(self, db: 'Datalayer', deps: t.Sequence[str]) -> t.Sequence[str]:
-        """List all dependent job ids of the listener."""
-        these_deps = self.dependencies
-        if not these_deps:
-            return deps
-
-        deps = list(deps)
-
-        for dep in these_deps:
-            # TODO this logic is wrong
-            # we should only get the jobs of the specific version
-            identifier = db.show(type_id='listener', identifier=dep, uuid=dep.split('_')[-1])['identifier']
-            jobs = db.metadata.show_jobs(type_id='listener', component_identifier=identifier)
-            if not jobs:
-                # Currently listener jobs are registered as belonging to the model
-                # This is wrong and should be fixed
-                # These dependencies won't work until this is fixed
-                logging.warn(f'No jobs found for listener {dep}; something is wrong. Is this because we haven\'t refactored'
-                             ' as listener jobs yet?')
-            deps.extend(jobs)
-        return list(set(deps))
-
-    def run_jobs(
-        self,
-        db: "Datalayer",
-        dependencies: t.Sequence[str] = (),
-        overwrite: bool = False,
-        events: t.Optional[t.List] = [],
-    ) -> t.Sequence[t.Any]:
-        """Schedule jobs for the listener.
-
-        :param db: Data layer instance to process.
-        :param dependencies: A list of dependencies.
-        :param overwrite: Overwrite the existing data.
-        :param event_type: Type of event.
-        """
-        if self.select is None:
-            return []
-        assert not isinstance(self.model, str)
-
-
-        upstream_uuids = [up.split(':')[-1] for up in dependencies]
-        upstream_jobs = db.metadata.show_job_ids(uuids=upstream_uuids, status='running')
-        component_events, db_events = Event.chunk_by_type(events)
-
-        # Create a startup job
-        jobs = []
-        for event in component_events:
-            jobs += [
-                self._create_predict_job(
-                    db=db,
-                    ids=event.id,
-                    deps=[*upstream_jobs, *dependencies],
-                    overwrite=overwrite,
-                    job_id=event.uuid,
-                )
-            ]
-
-        # Create db events
-        if not db_events:
-            return jobs
-
-        jobs += [
-            self._create_predict_job(
-                db=db,
-                ids=[event.id for event in db_events],
-                deps=[*upstream_jobs, *dependencies],
-                overwrite=overwrite,
-            )
-        ]
-        return jobs
-
-    def run(self, ids, db: t.Optional["Datalayer"] = None):
+    @trigger('apply', 'insert', 'update', requires='select')
+    def run(self, ids: t.Sequence[str] | None):
         return self.model.predict_in_db(
             X=self.key,
-            db=self.db or db,
             predict_id=self.predict_id,
             select=self.select,
             ids=ids,
-            **(self.predict_kwargs or {}),
-        )
-
-    def _create_predict_job(self, db, ids, deps, overwrite, job_id=None):
-        return self.model.predict_in_db_job(
-            X=self.key,
-            db=db,
-            predict_id=self.predict_id,
-            select=self.select,
-            ids=ids,
-            job_id=job_id,
-            dependencies=deps,
-            overwrite=overwrite,
             **(self.predict_kwargs or {}),
         )
 

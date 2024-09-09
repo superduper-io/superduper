@@ -27,9 +27,10 @@ def test_function_predict_batches():
 
 def test_function_predict_in_db(data_in_db):
     function = ObjectModel(object=lambda x: x, identifier='test')
+    function.db = data_in_db
+    data_in_db.apply(function)
     function.predict_in_db(
         X='X',
-        db=data_in_db,
         select=data_in_db['documents'].select(),
         predict_id='test',
     )
@@ -43,9 +44,10 @@ def test_function_predict_with_flatten_outputs(data_in_db):
         identifier='test',
         flatten=True,
     )
+    function.db = data_in_db
+    data_in_db.apply(function)
     function.predict_in_db(
         X='X',
-        db=data_in_db,
         select=data_in_db['documents'].select(),
         predict_id='test',
     )
@@ -84,12 +86,15 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         identifier='test',
         flatten=True,
     )
+    function.db = data_in_db
+    data_in_db.apply(function)
+
     function.predict_in_db(
         X='X',
-        db=data_in_db,
         select=data_in_db['documents'].select(),
         predict_id='test',
     )
+
     out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
     primary_id = data_in_db['documents'].primary_id
     input_ids = [

@@ -31,7 +31,7 @@ class Application(Component):
         :param db: Datalayer instance
         """
         self.namespace = [
-            {"type_id": c.type_id, "identifier": c.identifier} for c in self.children
+            {"type_id": c.type_id, "identifier": c.identifier} for c in self.get_children(deep=True)
         ]
         return super().pre_create(db)
 

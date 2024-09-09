@@ -16,6 +16,7 @@ from superduper.components.datatype import (
     dill_serializer,
 )
 from superduper.components.listener import Listener
+from superduper.jobs.annotations import trigger
 
 
 @pytest.fixture
@@ -35,14 +36,6 @@ class MyComponent(Component):
     my_dict: t.Dict
     nested_list: t.List
     a: t.Callable
-
-
-class UpstreamComponent(Component):
-    triggered_schedule_jobs = False
-
-    def schedule_jobs(self, *args, **kwargs):
-        self.triggered_schedule_jobs = True
-        return ('my_dependency_listener',)
 
 
 def test_init(monkeypatch):
@@ -129,12 +122,34 @@ def test_set_variables(db):
     assert listener.key == "key_value"
 
 
-def test_upstream(db):
+class UpstreamComponent(Component):
+    @trigger('apply')
+    def a_job(self):
+        with open(f'upstream_{self.uuid}.txt', 'w') as f:
+            pass
+
+
+class MyListener(Listener):
+
+    @trigger('apply')
+    def my_trigger(self):
+        uuid = self.upstream[0].uuid
+        assert os.path.exists(f'upstream_{uuid}.txt')
+        return []
+
+
+@pytest.fixture
+def clean():
+    yield
+    os.system('rm upstream_*.txt')
+
+
+def test_upstream(db, clean):
     c1 = UpstreamComponent(identifier='c1')
 
-    m = Listener(
+    m = MyListener(
         identifier='l1',
-        upstream=c1,
+        upstream=[c1],
         model=ObjectModel(
             identifier="model1",
             object=lambda x: x + 2,
@@ -143,10 +158,4 @@ def test_upstream(db):
         select=db["docs"].find(),
     )
 
-    def mock_schedule_jobs(self, *args, **kwargs):
-        assert kwargs == {'dependencies': ['my_dependency_listener']}
-        return []
-
-    m.schedule_jobs = mock_schedule_jobs
     db.apply(m)
-    assert m.upstream.triggered_schedule_jobs == True  # noqa

@@ -43,7 +43,7 @@ def add_random_data(
         },
     )
     t = Table(identifier=table_name, schema=schema)
-    db.add(t)
+    db.apply(t)
     data = []
     for i in range(n):
         x = np.random.rand(32)

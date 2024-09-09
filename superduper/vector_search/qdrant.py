@@ -156,7 +156,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             using=self.vector_name,
         ).points
 
-        ids = [hit.payload[ID_PAYLOAD_KEY] for hit in search_result]  # type: ignore
+        ids = [hit.payload[ID_PAYLOAD_KEY] for hit in search_result if hit.payload]
         scores = [hit.score for hit in search_result]
 
         return ids, scores

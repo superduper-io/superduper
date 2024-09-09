@@ -17,7 +17,7 @@ from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import EventType
 from superduper.base.leaf import Leaf
-from superduper.jobs.job import ComponentJob, Job
+from superduper.jobs.job import Job
 
 if t.TYPE_CHECKING:
     from superduper import Document
@@ -200,7 +200,7 @@ class Component(Leaf):
         
         :param event_type: EventType.
         """
-        # Get all of the methods in the class which have the `@apply` decorator
+        # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
         d = set(dir(self)) - {'get_triggers', 'triggers'}
         return [
@@ -252,10 +252,10 @@ class Component(Leaf):
                 local_dependencies = [lookup[f] for f in depends] + job_dependencies
 
                 if 'ids' in inspect.signature(attr).parameters:
-                    job: ComponentJob = attr(ids=event.ids, job=True)
+                    job: Job = attr(ids=event.ids, job=True)
                 else:
                     # 'apply'
-                    job: ComponentJob = attr(job=True)
+                    job: Job = attr(job=True)
 
                 # log the dependencies
                 lookup[attr_name] = job.job_id
@@ -454,6 +454,7 @@ class Component(Leaf):
         assert db
         if self.triggers:
             db.compute.queue.declare_component(self)
+            db.compute.declare_component(self)
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store.
@@ -688,29 +689,6 @@ class Component(Leaf):
         r = r['_content']
         assert r['version'] is not None
         return db.load(r['type_id'], r['identifier'], r['version'], allow_hidden=True)
-
-    def create_validation_job(
-        self,
-        validation_set: t.Union[str, Dataset],
-        metrics: t.Sequence[str],
-    ) -> ComponentJob:
-        """Method to create a validation job with `validation_set` and `metrics`.
-
-        :param validation_set: Kwargs for the `predict` method of `Model`.
-        :param metrics: Kwargs for the `predict` method of `Model` to set
-                        metrics for the validation job.
-        """
-        assert self.identifier is not None
-        return ComponentJob(
-            component_identifier=self.identifier,
-            component_uuid=self.uuid,
-            method_name='predict',
-            type_id='model',
-            kwargs={
-                'validation_set': validation_set,
-                'metrics': metrics,
-            },
-        )
 
     def __setattr__(self, k, v):
         if k in dc.fields(self):

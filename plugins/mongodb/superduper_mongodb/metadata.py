@@ -41,6 +41,7 @@ class MongoMetaDataStore(MetaDataStore):
         self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
+        self.artifact_relations = self.db['_artifact_relations']
 
     def reconnect(self):
         """Reconnect to metdata store."""
@@ -69,6 +70,7 @@ class MongoMetaDataStore(MetaDataStore):
         self.db.drop_collection(self.component_collection.name)
         self.db.drop_collection(self.job_collection.name)
         self.db.drop_collection(self.parent_child_mappings.name)
+        self.db.drop_collection(self.artifact_relations.name)
 
     def delete_parent_child(self, parent: str, child: str) -> None:
         """
@@ -96,6 +98,18 @@ class MongoMetaDataStore(MetaDataStore):
                 'child': child,
             }
         )
+
+    def _create_data(self, table_name, datas):
+        collection = self.db[table_name]
+        collection.insert_many(datas)
+
+    def _delete_data(self, table_name, filter):
+        collection = self.db[table_name]
+        collection.delete_many(filter)
+
+    def _get_data(self, table_name, filter):
+        collection = self.db[table_name]
+        return list(collection.find(filter))
 
     def create_component(self, info: t.Dict) -> InsertOneResult:
         """Create a component in the metadata store.

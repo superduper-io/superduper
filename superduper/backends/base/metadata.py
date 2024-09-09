@@ -76,6 +76,77 @@ class MetaDataStore(ABC):
         """
         pass
 
+    def create_artifact_relation(self, uuid, artifact_ids):
+        """
+        Create a relation between an artifact and a component version.
+
+        :param uuid: UUID of component version
+        :param artifact: artifact
+        """
+        artifact_ids = (
+            [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
+        )
+        data = []
+        for artifact_id in artifact_ids:
+            data.append({'uuid': uuid, 'artifact_id': artifact_id})
+
+        if data:
+            self._create_data('_artifact_relations', data)
+
+    def delete_artifact_relation(self, uuid, artifact_ids):
+        """
+        Delete a relation between an artifact and a component version.
+
+        :param uuid: UUID of component version
+        :param artifact: artifact
+        """
+        artifact_ids = (
+            [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
+        )
+        for artifact_id in artifact_ids:
+            self._delete_data(
+                '_artifact_relations',
+                {
+                    'uuid': uuid,
+                    'artifact_id': artifact_id,
+                },
+            )
+
+    def get_artifact_relations(self, uuid=None, artifact_id=None):
+        """
+        Get all relations between an artifact and a component version.
+
+        :param artifact_id: artifact
+        """
+        if uuid is None and artifact_id is None:
+            raise ValueError('Either `uuid` or `artifact_id` must be provided')
+        elif uuid:
+            relations = self._get_data(
+                '_artifact_relations',
+                {'uuid': uuid},
+            )
+            ids = [relation['artifact_id'] for relation in relations]
+        else:
+            relations = self._get_data(
+                '_artifact_relations',
+                {'artifact_id': artifact_id},
+            )
+            ids = [relation['uuid'] for relation in relations]
+        return ids
+
+    # TODO: Refactor to use _create_data, _delete_data, _get_data
+    @abstractmethod
+    def _create_data(self, table_name, datas):
+        pass
+
+    @abstractmethod
+    def _delete_data(self, table_name, filter):
+        pass
+
+    @abstractmethod
+    def _get_data(self, table_name, filter):
+        pass
+
     @abstractmethod
     def drop(self, force: bool = False):
         """

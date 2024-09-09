@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update job_id after job submission
 - Fixed default event.uuid
 - Fixed atlas vector search
+- Fix the bug where shared artifacts are deleted when removing a component.
 
 #### New Features & Functionality
 

@@ -25,7 +25,6 @@ from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
 from superduper.jobs.annotations import trigger
-from superduper.jobs.job import ComponentJob
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

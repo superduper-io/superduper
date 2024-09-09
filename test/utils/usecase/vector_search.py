@@ -9,6 +9,11 @@ VECTOR_SIZE = 300
 
 
 def add_data(db: "Datalayer", start: int, end: int):
+    """
+    :param db: Datalayer 
+    :param start: int to start assigning to `x` column
+    :param end: int to stop assigning to `x` column
+    """
     data = []
     for i in range(start, end):
         data.append(
@@ -20,12 +25,12 @@ def add_data(db: "Datalayer", start: int, end: int):
     db["documents"].insert(data).execute()
 
 
-def build_vector_index(db: "Datalayer"):
+def build_vector_index(db: "Datalayer", n: int = 100):
     from superduper import ObjectModel, VectorIndex
 
     db.cfg.auto_schema = True
 
-    add_data(db, 0, 100)
+    add_data(db, 0, n)
 
     def predict(x):
         vector = [0] * VECTOR_SIZE

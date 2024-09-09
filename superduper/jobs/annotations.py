@@ -2,7 +2,7 @@ import inspect
 import typing as t
 
 from superduper.base.event import EventType
-from superduper.jobs.job import ComponentJob
+from superduper.jobs.job import Job
 
 
 def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (), requires: t.Sequence[str] | str = ()):
@@ -22,8 +22,7 @@ def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (),
         requires = [requires]
 
     def decorator(f):
-        """Decorator to trigger a method when an event of type.
-        """
+        """Decorator to trigger a method when an event of type."""
         takes_ids = 'ids' in inspect.signature(f).parameters
         if events != ('apply',):
             assert takes_ids, (
@@ -32,15 +31,14 @@ def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (),
             )
 
         def decorated(self, ids: t.List[str] | None = None, job: bool = False):
-
             if job:
-                return ComponentJob(
-                    component_identifier=self.identifier,
-                    component_uuid=self.uuid,
+                return Job(
                     type_id=self.type_id,
-                    method_name=f.__name__,
+                    identifier=self.identifier,
+                    uuid=self.uuid,
+                    method=f.__name__,
                     args=(ids,) if takes_ids else (),
-                    db=self.db,
+                    db=self.db
                 )
             else:
                 return f(self, ids) if takes_ids else f(self)

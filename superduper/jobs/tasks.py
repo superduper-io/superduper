@@ -13,9 +13,9 @@ def method_job(
     args,
     kwargs,
     job_id,
-    dependencies=(),
-    db: t.Optional['Datalayer'] = None,
     component: 'Component' = None,
+    db: t.Optional['Datalayer'] = None,
+    dependencies=(),
 ):
     """
     Run a method on a component in the database.
@@ -27,9 +27,9 @@ def method_job(
     :param args: positional arguments to pass to the method
     :param kwargs: keyword arguments to pass to the method
     :param job_id: unique identifier for this job
-    :param dependencies: other jobs that this job depends on
-    :param db: datalayer to use
     :param component: component to run method on
+    :param db: datalayer to use
+    :param dependencies: other jobs that this job depends on
     """
     import sys
 
@@ -47,10 +47,7 @@ def method_job(
         db = build_datalayer(cfg=cfg, cluster__compute___path=None)
 
     if not component:
-        component = db.load(type_id, identifier)
-        from superduper.components.component import Component
-
-        component = t.cast(Component, component)
+        component: 'Component' = db.load(type_id, identifier)
         component.unpack()
 
     component.unpack()
@@ -59,7 +56,7 @@ def method_job(
     db.metadata.update_job(job_id, 'status', 'running')
 
     try:
-        method(*args, db=db, **kwargs)
+        method(*args, **kwargs)
     except Exception as e:
         db.metadata.update_job(job_id, 'status', 'failed')
         raise e
@@ -72,8 +69,8 @@ def callable_job(
     args,
     kwargs,
     job_id,
-    dependencies=(),
     db: t.Optional['Datalayer'] = None,
+    dependencies=(),
 ):
     """Run a function in the database.
 
@@ -82,8 +79,8 @@ def callable_job(
     :param args: positional arguments to pass to the function
     :param kwargs: keyword arguments to pass to the function
     :param job_id: unique identifier for this job
-    :param dependencies: other jobs that this job depends on
     :param db: datalayer to use
+    :param dependencies: other jobs that this job depends on
     """
     import sys
 

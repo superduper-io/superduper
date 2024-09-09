@@ -127,7 +127,9 @@ def test_complex_graph_with_select(db):
     g.connect(linear_a, linear_b)
 
     select = db["documents"].select()
-    g.predict_in_db(X='x', select=select, db=db, predict_id='test')
+    g.db = db
+    db.apply(g)
+    g.predict_in_db(X='x', select=select, predict_id='test')
     assert all(
         ['_outputs__test' in x for x in list(db.execute(db['_outputs__test'].select()))]
     )

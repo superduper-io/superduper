@@ -1,8 +1,9 @@
 """The component module provides the base class for all components in superduper.io."""
-
+# TODO: why do I need this? Aren't we already in the future?
 from __future__ import annotations
 
 import dataclasses as dc
+import inspect
 import json
 import os
 import shutil
@@ -10,21 +11,21 @@ import typing as t
 import uuid
 from collections import namedtuple
 from functools import wraps
-
 import yaml
 
 from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
+from superduper.base.event import EventType
 from superduper.base.leaf import Leaf
 from superduper.jobs.job import ComponentJob, Job
 
 if t.TYPE_CHECKING:
     from superduper import Document
-    from superduper.backends.base.query import Query
     from superduper.base.datalayer import Datalayer
     from superduper.components.dataset import Dataset
     from superduper.components.datatype import DataType
     from superduper.components.plugin import Plugin
+    from superduper.base.event import Event
 
 
 def _build_info_from_path(path: str):
@@ -96,22 +97,178 @@ class Component(Leaf):
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
     changed: t.ClassVar[set] = set([])
+
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = False
 
-    # TODO needed still?
-    @property
-    def children(self):
-        """Get all the child components of the component."""
-        r = self.dict().encode(leaves_to_keep=Leaf)
-        out = [v for v in r['_builds'].values() if isinstance(v, Component)]
-        out.extend(sum([c.children for c in out], []))
+    def get_children_refs(self, deep: bool = False):
+        """Get all the children of the component."""
+        r = self.dict().encode(leaves_to_keep=Leaf if deep else Component)
+        out = [
+            (v.type_id, v.identifier, v.uuid) for v in r['_builds'].values() if isinstance(v, Component)
+        ]
+        def _find_refs(r):
+            if isinstance(r, str) and r.startswith('&:component:'):
+                return [tuple(r.split(':')[2:])]
+            if isinstance(r, dict):
+                return sum([_find_refs(v) for v in r.values()], [])
+            if isinstance(r, list):
+                return sum([_find_refs(x) for x in r], [])
+            return []
+        out =  out + _find_refs(r)
+
         # Remove duplicates
         ids = set()
         out = [c for c in out if id(c) not in ids and (ids.add(id(c)) or True)]
         return out
+
+    def get_children(self, deep: bool = False):
+        """Get all the children of the component."""
+        r = self.dict().encode(leaves_to_keep=Leaf if deep else Component)
+        out = [v for v in r['_builds'].values() if isinstance(v, Component)]
+        # Remove duplicates
+        ids = set()
+        out = [c for c in out if id(c) not in ids and (ids.add(id(c)) or True)]
+        return out
+
+    @property
+    def children(self):
+        """Get all the child components of the component."""
+        return self.get_children(deep=False)
+
+    @property
+    def dependencies(self):
+        return []
+
+    def _job_dependencies(self) -> t.Sequence[str]:
+        """List all job ids of component-children."""
+        refs = self.get_children_refs(deep=False)
+        if not refs:
+            return []
+        deps = []
+        for type_id, identifier, uuid in refs:
+            # TODO this logic is wrong
+            # we should only get the jobs of the specific version
+            # TODO add version to jobs system
+            # (this is not technically wrong, but overkill)
+            jobs = self.db.metadata.show_jobs(
+                type_id=type_id,
+                component_identifier=identifier,
+            )
+            job_ids = [r['job_id'] for r in jobs]
+            if job_ids:
+                # Currently listener jobs are registered as belonging to the model
+                # This is wrong and should be fixed
+                # These dependencies won't work until this is fixed
+                logging.warn(f'Upstream jobs found for component {f"&:component:{type_id}:{identifier}:{uuid}"};')
+            deps.extend(job_ids)
+        return list(set(deps))
+
+    def _filter_trigger(self, name, event_type):
+        try:
+            attr = getattr(self, name, None)
+        except Exception as e:
+            logging.warn(f'Error getting attribute {name} for component {self.identifier}: {e}')
+            return False
+
+        # Must exist as a method
+        if not attr:
+            return False
+
+        # Must be a method
+        if not callable(attr): 
+            return False
+
+        try:
+            if event_type not in getattr(attr, 'events', ()):
+                return False
+        except Exception as e:
+            logging.warn(f'Error getting attribute {name} for component {self.identifier}: {e}')
+            return False
+
+        for item in attr.requires:
+            if not getattr(self, item, None):
+                return False
+
+        return True
+
+    def get_triggers(self, event_type):
+        """
+        Get all the triggers for the component.
+        
+        :param event_type: EventType.
+        """
+        # Get all of the methods in the class which have the `@apply` decorator
+        # and which match the event type
+        d = set(dir(self)) - {'get_triggers', 'triggers'}
+        return [
+            attr_name for attr_name in d
+            if self._filter_trigger(attr_name, event_type)
+        ]
+
+    @property
+    def triggers(self):
+        out = []
+        for event_type in EventType:
+            out.extend(self.get_triggers(event_type))
+        return sorted(list(set(out)))
+
+    def run_jobs(
+        self,
+        event: 'Event',
+    ) -> t.Sequence[str]:
+        """Deploy apply jobs for the component."""
+
+        from superduper.base.event import EventType
+
+        if event.event_type == EventType.apply:
+            assert event.ids is None
+        else:
+            assert event.ids is not None
+
+        lookup = {}
+        # TODO replace this with a DAG check
+        max_it = 100
+        it = 0
+
+        triggers = self.get_triggers(event.event_type)
+
+        while True:
+            for attr_name in triggers:
+                attr = getattr(self, attr_name)
+
+                depends = [d for d in attr.depends if d in triggers]
+
+                # Check that the dependencies of the job are ready
+                # If not skip until the next round
+                if not all(f in lookup for f in depends):
+                    continue
+
+                # Dependencies come from these local jobs
+                # plus the jobs from the child components
+                job_dependencies = self._job_dependencies()
+                local_dependencies = [lookup[f] for f in depends] + job_dependencies
+
+                if 'ids' in inspect.signature(attr).parameters:
+                    job: ComponentJob = attr(ids=event.ids, job=True)
+                else:
+                    # 'apply'
+                    job: ComponentJob = attr(job=True)
+
+                # log the dependencies
+                lookup[attr_name] = job.job_id
+
+                # TODO rename the call method to execute or deploy
+                job(dependencies=local_dependencies)
+                
+            it += 1
+            if it > max_it:
+                raise Exception('Circular job dependency detected')
+            if len(lookup) == len(triggers):
+                break
+        return list(lookup.values())
 
     @classmethod
     def from_template(
@@ -206,16 +363,7 @@ class Component(Leaf):
         self.db = self.db or db
         self.unpack(db=db)
 
-    def trigger_ids(self, query: "Query", primary_ids: t.Sequence):
-        """Get trigger IDs.
-
-        Only the ids returned by this function will trigger the component.
-
-        :param query: Query object.
-        :param primary_ids: Primary IDs.
-        """
-        return []
-
+    # TODO Why both methods?
     def unpack(self, db=None):
         """Method to unpack the component.
 
@@ -304,6 +452,8 @@ class Component(Leaf):
         :param db: the db that creates the component.
         """
         assert db
+        if self.triggers:
+            db.compute.queue.declare_component(self)
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store.
@@ -561,34 +711,6 @@ class Component(Leaf):
                 'metrics': metrics,
             },
         )
-
-    def run_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-        overwrite: bool = False,
-        events: t.Sequence = [],
-    ) -> t.Sequence[t.Any]:
-        """Run the job for this component.
-
-        :param db: The db to process.
-        :param dependencies: A sequence of dependencies.
-        :param ids: List of ids.
-        :param event_type: Type of event.
-        """
-        return []
-
-    def schedule_jobs(
-        self,
-        db: Datalayer,
-        dependencies: t.Sequence[Job] = (),
-    ) -> t.Sequence[t.Any]:
-        """Schedule the job for this component.
-
-        :param db: The db to process.
-        :param dependencies: A sequence of dependencies.
-        """
-        return []
 
     def __setattr__(self, k, v):
         if k in dc.fields(self):

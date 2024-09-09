@@ -1,4 +1,6 @@
+from collections import defaultdict
 import dataclasses as dc
+from enum import Enum
 import typing as t
 import uuid
 
@@ -14,43 +16,55 @@ class ComponentPlaceholder(dict):
     identifier: str
 
 
+
+class EventType(str, Enum):
+    """Event to represent database events. # noqa """
+    insert = 'insert'
+    delete = 'delete'
+    update = 'update'
+    upsert = 'upsert'     # TODO why do we need this?
+    apply = 'apply'
+
+
 @dc.dataclass
 class Event:
     """Event dataclass to store event data.
 
-    :param dest: Identifier of the destination component.
-    :param id: Id/s of select table.
-    :param method: Method to be called on the destination
-    :param src: Identifier of the source component.
-    :param from_type: 'COMPONENT' or 'DB' type implying
-                      the event was created from a databas
-                      e or component event (initlization).
-
     :param event_type: Type of the event.
+    :param dest: Identifier of the destination component.
+    :param ids: List of ids for the event.
     :param uuid: Unique identifier for the event.
                  This id will be used as job id in
                  startup events.
-    :param dependencies: List of dependencies on the event.
     """
-
+    event_type: EventType
     dest: t.Union[ComponentPlaceholder, t.Dict]
-    id: t.Optional[t.Any] = None
-    method: t.Optional[str] = None
-    # where is this src attribute used?
-    src: t.Optional[ComponentPlaceholder] = None
-    # TODO - replace with distinct classes
-    from_type: str = 'DB'
-    event_type: str = 'insert'
+    ids: t.Sequence[str] | None = None
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
-    dependencies: t.Optional[t.Sequence] = ()
-
-    def __post_init__(self):
-        if not self.src:
-            self.src = self.dest
 
     def dict(self):
         """Convert to dict."""
-        return dc.asdict(self)
+        return {**dc.asdict(self), '_path': f'superduper.base.event.{self.__class__.__name__}'}
+
+    def __add__(self, other: 'Event'):
+        """Add two events."""
+        if self.event_type == 'apply':
+            assert self.ids is None
+            assert other.ids is None
+            return self
+        assert self.event_type != 'apply'
+        assert self.ids is not None
+        assert other.ids is not None
+        r = self.dict()
+        s = other.dict()
+        for k in r.keys():
+            if k not in {'ids', 'uuid'}:
+                assert r[k] == s[k]
+        return Event(
+            event_type=self.event_type,
+            dest=self.dest,
+            ids=self.ids + other.ids,
+        )
 
     @staticmethod
     def get_job_ids(events: t.List['Event']):
@@ -61,13 +75,14 @@ class Event:
         return ids
 
     @staticmethod
-    def chunk_by_type(events):
+    def chunk_by_type(events: t.Sequence['Event']): 
         """Chunk events by from type."""
-        db_events = []
-        component_events = []
+        out = defaultdict(list)
         for event in events:
-            if event.from_type == 'COMPONENT':
-                component_events = [event]
-            else:
-                db_events.append(event)
-        return component_events, db_events
+            out[event.event_type].append(event)
+        chunked = {}
+        for k in out:
+            chunked[k] = out[k][0]
+            for i in range(1, len(out[k])):
+                chunked[k] += out[k][i]
+        return chunked

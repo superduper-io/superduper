@@ -103,44 +103,6 @@ def test_pm_core_predict(predict_mixin):
         assert predict_mixin.predict(5) == return_self(5)
 
 
-@patch('superduper.components.model.ComponentJob')
-def test_pm_create_predict_job(mock_job, predict_mixin):
-    mock_db = MagicMock()
-    mock_select = MagicMock()
-    mock_select.dict().encode.return_value = b'encoded_select'
-    mock_select.encode.return_value = b'encoded_select'
-    X = 'model_input'
-    ids = ['id1', 'id2']
-    max_chunk_size = 100
-    in_memory = True
-    overwrite = False
-    predict_mixin.predict_in_db_job(
-        X=X,
-        db=mock_db,
-        select=mock_select,
-        ids=ids,
-        max_chunk_size=max_chunk_size,
-        predict_id='test',
-    )
-    mock_job.assert_called_once_with(
-        identifier=None,
-        component_identifier=predict_mixin.identifier,  # Adjust according to your setup
-        component_uuid=predict_mixin.uuid,
-        method_name='predict_in_db',
-        type_id='model',
-        kwargs={
-            'X': X,
-            'select': b'encoded_select',
-            'ids': ids,
-            'predict_id': 'test',
-            'max_chunk_size': max_chunk_size,
-            'in_memory': in_memory,
-            'overwrite': overwrite,
-        },
-        compute_kwargs={},
-    )
-
-
 def test_pm_predict_batches(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
@@ -154,7 +116,7 @@ def test_pm_predict_batches(predict_mixin):
         predict_mixin, '_get_ids_from_select'
     ) as get_ids:
         get_ids.return_value = [1]
-        predict_mixin.predict_in_db('x', db=db, select=select, predict_id='test')
+        predict_mixin.predict_in_db('x', select=select, predict_id='test')
         predict_func.assert_called_once()
 
 
@@ -180,7 +142,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             select, 'model_update'
         ) as model_update:
             predict_mixin._predict_with_select_and_ids(
-                X=X, db=db, select=select, ids=ids, predict_id='test'
+                X=X, select=select, ids=ids, predict_id='test'
             )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
@@ -200,7 +162,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             DataType(identifier='test', encoder=pickle_encode, decoder=pickle_decode),
         )
         predict_mixin._predict_with_select_and_ids(
-            X=X, db=db, select=select, ids=ids, predict_id='test'
+            X=X, select=select, ids=ids, predict_id='test'
         )
         select_using_id.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
@@ -214,12 +176,13 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
 
         predict_mixin.datatype = None
         predict_mixin.output_schema = schema = MagicMock(spec=Schema)
+        predict_mixin.db = db
         schema.side_effect = str
         with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
             select, 'model_update'
         ) as model_update:
             predict_mixin._predict_with_select_and_ids(
-                X=X, db=db, select=select, ids=ids, predict_id='test'
+                X=X, select=select, ids=ids, predict_id='test'
             )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
@@ -238,7 +201,7 @@ def test_model_append_metrics():
     model = _Tmp(
         'test',
         object=object(),
-        validation=Validation('test'),
+        validation=Validation('test', key=('x', 'y')),
         trainer=MyTrainer('test', key='x', select='1'),
     )
 
@@ -287,7 +250,7 @@ def test_model_validate_in_db(db):
 
     model_predict = ObjectModel(
         identifier='test',
-        object=lambda x: x,
+        object=lambda x: sum(x) > 0.5,
         datatype=FieldType(identifier='str'),
         validation=Validation(
             identifier='my-valid',
@@ -296,12 +259,14 @@ def test_model_validate_in_db(db):
                 Metric('acc', object=accuracy_score),
             ],
             datasets=[valid_dataset],
+            key=('x', 'y'),
         ),
     )
 
     with patch.object(model_predict, 'validate') as mock_validate:
         mock_validate.return_value = {'acc': 0.7, 'f1': 0.2}
-        model_predict.validate_in_db(db)
+        model_predict.db = db
+        model_predict.validate_in_db()
         assert model_predict.metric_values == {'my_valid/0': {'acc': 0.7, 'f1': 0.2}}
 
 
@@ -322,7 +287,8 @@ def test_model_create_fit_job(db):
     db.apply(model)
     with patch.object(ComponentJob, '__call__') as mock_call:
         mock_call.return_value = None
-    job = model.fit_in_db_job(db=db)
+    model.db = db
+    job = model.fit_in_db(job=True)
     assert job.component_identifier == model.identifier
     assert job.method_name == 'fit_in_db'
 
@@ -346,13 +312,21 @@ def test_model_fit(db):
         object=object(),
         trainer=MyTrainer('my-trainer', key='x', select=db['documents'].select()),
         validation=Validation(
-            'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)]
+            'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)],
+            key=('x', 'y'),
         ),
     )
 
+    model.db = db
     with patch.object(model, 'fit'):
-        model.fit_in_db(db)
+        model.fit_in_db()
         model.fit.assert_called_once()
+
+    with patch.object(model, 'validate'):
+        with patch.object(db, 'replace'):
+            model.validate_in_db()
+            model.validate.assert_called_once()
+            model.db.replace.assert_called_once()
 
 
 def test_query_model(db):
@@ -440,7 +414,7 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
             select, 'model_update'
         ) as model_update:
             predict_mixin_multikey._predict_with_select_and_ids(
-                X=X, predict_id='test', db=db, select=select, ids=ids
+                X=X, predict_id='test', select=select, ids=ids
             )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
@@ -475,6 +449,7 @@ def test_object_model_predict(object_model):
 
 def test_object_model_predict_in_db(db, object_model):
     sample_data = np.zeros((10, 10))
+
     results = model_utils.test_predict_in_db(object_model, sample_data, db)
 
     r = results[0].unpack()

@@ -24,7 +24,7 @@ from superduper.components.model import (
     Validation,
 )
 from superduper.components.schema import FieldType
-from superduper.jobs.job import ComponentJob
+from superduper.jobs.job import Job
 
 
 # ------------------------------------------
@@ -285,12 +285,12 @@ def test_model_create_fit_job(db):
     # TODO move these parameters into the `Trainer` (same thing for validation)
     model.trainer = MyTrainer('test', select=db['documents'].select(), key='x')
     db.apply(model)
-    with patch.object(ComponentJob, '__call__') as mock_call:
+    with patch.object(Job, '__call__') as mock_call:
         mock_call.return_value = None
     model.db = db
     job = model.fit_in_db(job=True)
-    assert job.component_identifier == model.identifier
-    assert job.method_name == 'fit_in_db'
+    assert job.identifier == model.identifier
+    assert job.method == 'fit_in_db'
 
 
 def test_model_fit(db):

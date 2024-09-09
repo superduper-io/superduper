@@ -37,6 +37,7 @@ def copy_vectors(
     if isinstance(query, dict):
         # ruff: noqa: E501
         query: Query = Document.decode(query).unpack()  # type: ignore[no-redef]
+
     assert isinstance(query, Query)
     query.db = db
 
@@ -44,6 +45,13 @@ def copy_vectors(
         select = query
     else:
         select = query.select_using_ids(ids)
+
+    # primary_id = query.primary_id
+    # ids_in_db = []
+    # for r in query.select_ids.execute():
+    #     ids_in_db.append(str(r[primary_id]))
+
+    # intersection = set(ids_in_db) & set([str(x) for x in ids])
 
     docs = select.execute()
     docs = [doc.unpack() for doc in docs]
@@ -64,6 +72,7 @@ def copy_vectors(
                 'id': str(doc['_source']),
             }
         )
+
     if nokeys:
         logging.warn(
             f'{nokeys} outputs were missing. \n'

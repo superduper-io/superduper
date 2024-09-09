@@ -10,14 +10,12 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
-from superduper.base.event import Event, EventType
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
 from superduper.ext.utils import str_shape
 from superduper.jobs.annotations import trigger
-from superduper.jobs.job import FunctionJob
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
@@ -143,21 +141,26 @@ class VectorIndex(Component):
     def __hash__(self):
         return hash((self.type_id, self.identifier))
 
-    def __eq__(self, other: Component):
+    def __eq__(self, other: t.Any):
         if isinstance(other, Component):
             return (
                 self.identifier == other.identifier and self.type_id and other.type_id
             )
         return False
 
-    @trigger('insert', 'apply', 'update')
+    @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None):
         if ids is None:
             primary_id = self.indexing_listener.select.primary_id
             cur = self.indexing_listener.select.select_ids.execute()
             ids = [r[primary_id] for r in cur]
         # TODO copy logic of this into here - not necessary to have both functions
-        return copy_vectors(self.identifier, self.indexing_listener.select, ids, self.db)
+        return copy_vectors(
+            self.identifier,
+            query=self.db[self.indexing_listener.outputs].select(),
+            ids=ids,
+            db=self.db,
+        )
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None):
@@ -317,105 +320,6 @@ class VectorIndex(Component):
             select, [self.indexing_listener.outputs], primary_ids
         )
         return ids
-
-    def _create_vector_sync_job(self, db, callable, deps, ids, job_id=None):
-        job = FunctionJob(
-            callable=callable,
-            args=[],
-            kwargs=dict(
-                vector_index=self.identifier,
-                ids=ids,
-                query=db[self.indexing_listener.outputs].dict().encode(),
-            ),
-        )
-        job(db=db, dependencies=deps)
-        return [job]
-
-    # @override
-    # def run_jobs(
-    #     self,
-    #     db: Datalayer,
-    #     dependencies: t.Sequence[str] = (),
-    #     events: t.List = [],
-    #     overwrite: bool = False,
-    #     event_type: str = EventType.insert,
-    # ) -> t.Sequence[t.Any]:
-    #     """Run jobs for the vector index.
-
-    #     :param db: The DB instance to process
-    #     :param dependencies: A list of dependencies
-    #     :param events: List of events.
-    #     :param event_type: Type of event.
-    #     """
-    #     if event_type in [EventType.insert, EventType.upsert]:
-    #         callable = copy_vectors
-    #     elif type == EventType.delete:
-    #         callable = delete_vectors
-    #     else:
-    #         return []
-
-    #     assert self.indexing_listener.select is not None
-
-    #     dependencies = {*self.indexing_listener.model.jobs(db), *dependencies}
-
-    #     component_events, db_events = Event.chunk_by_type(events)
-
-    #     # Create a startup job
-    #     jobs = []
-    #     for event in component_events:
-    #         jobs += [
-    #             self._create_vector_sync_job(
-    #                 db=db,
-    #                 callable=callable,
-    #                 ids=event.id,
-    #                 deps=dependencies,
-    #                 job_id=event.uuid,
-    #             )
-    #         ]
-
-    #     # Create db events
-    #     if not db_events:
-    #         return jobs
-
-    #     jobs += [
-    #         self._create_vector_sync_job(
-    #             db=db,
-    #             callable=callable,
-    #             ids=[event.id for event in db_events],
-    #             deps=dependencies,
-    #         )
-    #     ]
-    #     return jobs
-
-    # @override
-    # def schedule_jobs(
-    #     self,
-    #     db: Datalayer,
-    #     dependencies: t.Sequence[str] = (),
-    # ) -> t.Sequence[t.Any]:
-    #     """Schedule jobs for the vector index.
-
-    #     :param db: The DB instance to process
-    #     :param dependencies: A list of dependencies
-    #     """
-    #     assert self.indexing_listener.select is not None
-
-    #     outputs = db[self.indexing_listener.outputs]
-    #     ids = db.execute(outputs.select_ids)
-    #     ids = [str(id[outputs.primary_id]) for id in ids]
-    #     if not ids:
-    #         return []
-
-    #     event = Event(
-    #         dest={'type_id': self.type_id, 'identifier': self.identifier},
-    #         event_type=EventType.insert,
-    #         id=ids,
-    #         from_type='COMPONENT',
-    #         dependencies=dependencies,
-    #     )
-
-    #     db.compute.broadcast([event])
-    #     return [event.uuid]
 
 
 class EncodeArray:

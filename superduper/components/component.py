@@ -609,3 +609,25 @@ def ensure_initialized(func):
         return func(self, *args, **kwargs)
 
     return wrapper
+
+
+def compute_func(func):
+    """Decorator to compute the function on the remote.
+
+    :param func: Decorator function.
+    """
+    assert func.__name__ in ['predict', 'predict_batches']
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        is_compute_predict = kwargs.pop('_is_compute_predict', False)
+        func_name = func.__name__
+        if self.serve and not is_compute_predict and self.db:
+            logging.info(f"Computing {self.identifier}.{func_name} on remote")
+            remote_func = getattr(self.db.compute, func_name)
+            result = remote_func(self, *args, **kwargs)
+        else:
+            result = func(self, *args, **kwargs)
+        return result
+
+    return wrapper

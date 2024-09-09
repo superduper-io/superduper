@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 from superduper.base.event import Event
 
+if t.TYPE_CHECKING:
+    from superduper.components.model import Model
+
 
 class ComputeBackend(ABC):
     """
@@ -91,3 +94,11 @@ class ComputeBackend(ABC):
 
     def create_handler(self, *args, **kwargs):
         """Create handler on component declare."""
+
+    def predict(self, model: "Model", *args, **kwargs) -> t.Any:
+        """Predict using the model."""
+        return model.predict(*args, **kwargs, _is_compute_predict=True)
+
+    def predict_batches(self, model: "Model", *args, **kwargs) -> t.Any:
+        """Predict using the model in batches."""
+        return model.predict_batches(*args, **kwargs, _is_compute_predict=True)

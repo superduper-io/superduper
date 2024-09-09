@@ -6,7 +6,7 @@ import networkx as nx
 from superduper import Schema
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
-from superduper.components.model import Model, Signature, ensure_initialized
+from superduper.components.model import Model, Signature
 
 
 def input_node(*args):
@@ -474,7 +474,6 @@ class Graph(Model):
             return cache[node]
         return cache[node]
 
-    @ensure_initialized
     def predict(self, *args, **kwargs):
         """Predict on single data point.
 
@@ -524,7 +523,6 @@ class Graph(Model):
             args_dataset.append(data)
         return args_dataset
 
-    @ensure_initialized
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on dataset i.e. series of datapoints.
 

@@ -7,7 +7,6 @@ from datasets import Dataset as NativeDataset
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
-from superduper.components.component import ensure_initialized
 from superduper.components.datatype import (
     DataType,
     dill_serializer,
@@ -401,7 +400,6 @@ class LLM(BaseLLM, _Fittable):
 
         self.pipeline = self.init_pipeline(real_adapter_id)
 
-    @ensure_initialized
     def predict(self, X, **kwargs):
         """Generate text from a single prompt.
 
@@ -413,7 +411,6 @@ class LLM(BaseLLM, _Fittable):
         results = self._batch_generate([X], **kwargs)
         return results[0]
 
-    @ensure_initialized
     def predict_batches(
         self, dataset: t.Union[t.List, QueryDataset], **kwargs
     ) -> t.List:

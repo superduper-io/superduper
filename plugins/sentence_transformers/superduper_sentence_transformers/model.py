@@ -3,7 +3,6 @@ import typing as t
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.enums import DBType
-from superduper.components.component import ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.model import Model, Signature, _DeviceManaged
 
@@ -70,7 +69,6 @@ class SentenceTransformer(Model, _DeviceManaged):
         self.object = self.object.to(device)
         self.object._target_device = device
 
-    @ensure_initialized
     def predict(self, X, *args, **kwargs):
         """Predict on a single input.
 
@@ -88,7 +86,6 @@ class SentenceTransformer(Model, _DeviceManaged):
         return result
 
     @t.no_type_check
-    @ensure_initialized
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 

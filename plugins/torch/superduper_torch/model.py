@@ -8,7 +8,6 @@ from contextlib import contextmanager
 import torch
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
-from superduper.components.component import ensure_initialized
 from superduper.components.datatype import (
     DataType,
     dill_serializer,
@@ -260,7 +259,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
                     io.BytesIO(state.pop('object_bytes'))
                 )
 
-    @ensure_initialized
     def predict(self, *args, **kwargs):
         """Predict on a single input.
 
@@ -283,7 +281,6 @@ class TorchModel(Model, _Fittable, _DeviceManaged):
                 args = self.postprocess(args)
             return args
 
-    @ensure_initialized
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 

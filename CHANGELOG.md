@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add predict_id in Listener
 - Add serve in Model
 - Added templates directory with OSS templates
+- Support remote predict on Compute backend
 
 #### Bug Fixes
 

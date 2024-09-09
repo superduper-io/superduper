@@ -21,7 +21,11 @@ from superduper.base.document import Document
 from superduper.base.enums import DBType
 from superduper.base.exceptions import DatabackendException
 from superduper.base.leaf import LeafMeta
-from superduper.components.component import Component, ensure_initialized
+from superduper.components.component import (
+    Component,
+    compute_func,
+    ensure_initialized,
+)
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
@@ -498,9 +502,11 @@ class ModelMeta(LeafMeta):
         """Create a new class with merged docstrings # noqa."""
         # Ensure the instance is initialized before calling predict/predict_batches
         if 'predict' in dct:
-            dct['predict'] = ensure_initialized(dct['predict'])
+            dct['predict'] = compute_func(ensure_initialized(dct['predict']))
         if 'predict_batches' in dct:
-            dct['predict_batches'] = ensure_initialized(dct['predict_batches'])
+            dct['predict_batches'] = compute_func(
+                ensure_initialized(dct['predict_batches'])
+            )
         # If instance call init method, set _is_initialized to True
         if 'init' in dct:
             dct['init'] = init_decorator(dct['init'])

@@ -16,7 +16,12 @@ def test_vector_index(db: "Datalayer"):
         assert sample_data[primary_id] in ids
         assert scores[str(sample_data[primary_id])] > 0.999999
 
-    build_vector_index(db)
+    build_vector_index(db, n=100)
+
+    searcher = db.fast_vector_searchers['vector_index']
+
+    assert searcher.searcher.h.shape[0] == 100
+
     vector_index = "vector_index"
     table = db["documents"]
     primary_id = table.primary_id
@@ -44,7 +49,10 @@ def test_vector_index(db: "Datalayer"):
 
     assert sum(out.scores.values()) == 0
 
+    # TODO - this is not triggering the update of the component
     add_data(db, 100, 200)
+
+    assert searcher.searcher.h.shape[0] == 200
 
     out = table.like({"x": 150}, vector_index=vector_index, n=1).select().execute()
     result = next(out)

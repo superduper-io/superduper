@@ -2,6 +2,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduper.base.event import Event
+from superduper.jobs.job import Job
 
 
 class ComputeBackend(ABC):
@@ -43,7 +44,7 @@ class ComputeBackend(ABC):
         pass
 
     @abstractmethod
-    def submit(self, function: t.Callable, **kwargs) -> t.Any:
+    def submit(self, job: Job, dependences: t.Sequence[t.Any]) -> t.Any:
         """
         Submits a function to the server for execution.
 

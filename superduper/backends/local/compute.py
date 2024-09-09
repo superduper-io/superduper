@@ -3,6 +3,7 @@ import uuid
 
 from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
+from superduper.jobs.job import Job
 from superduper.jobs.queue import BaseQueuePublisher, LocalQueuePublisher
 
 
@@ -21,10 +22,10 @@ class LocalComputeBackend(ComputeBackend):
         queue: BaseQueuePublisher = LocalQueuePublisher(),
         **kwargs,
     ):
-        self.__outputs: t.Dict = {}
         self.uri = uri
         self.queue = queue
         self.kwargs = kwargs
+        self._cache = {}
 
     @property
     def remote(self) -> bool:
@@ -41,6 +42,9 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
+    def declare_component(self, component: t.Any) -> None:
+        self._cache[component.type_id, component.identifier, component.uuid] = component
+
     def component_hook(self, *args, **kwargs):
         """Hook for component."""
         pass
@@ -53,26 +57,19 @@ class LocalComputeBackend(ComputeBackend):
         """
         return self.queue.publish(events)
 
-    def submit(
-        self, function: t.Callable, *args, compute_kwargs: t.Dict = {}, **kwargs
-    ) -> str:
+    def submit(self, job: Job, dependencies: t.Sequence[str]) -> str:
         """
         Submits a function for local execution.
 
-        :param function: The function to be executed.
-        :param args: Positional arguments to be passed to the function.
-        :param compute_kwargs: Do not use this parameter.
-        :param kwargs: Keyword arguments to be passed to the function.
+        :param job: The `Job` to be executed.
+        :param dependencies: List of `job_ids`
         """
-        logging.info(f"Submitting job. function:{function}")
-        future = function(*args, **kwargs)
-
+        component = self._cache[job.type_id, job.identifier, job.uuid]
+        method = getattr(component, job.method)
+        logging.info(f"Submitting job: {job}")
+        method(*job.args, **job.kwargs)
         future_key = str(uuid.uuid4())
-        self.__outputs[future_key] = future
-
-        logging.success(
-            f"Job submitted on {self}.  function:{function} future:{future_key}"
-        )
+        logging.success("Done")
         return future_key
 
     @property

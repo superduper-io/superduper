@@ -60,6 +60,7 @@ class Job:
         self.job_id = self.identifier
         self.db = db
 
+    # TODO no longer needed
     def watch(self):
         """Watch the stdout of the job."""
         return self.db.metadata.watch_job(identifier=self.identifier)
@@ -71,7 +72,6 @@ class Job:
         :param compute: compute engine
         :param dependencies: list of dependencies
         """
-        raise NotImplementedError
 
     def dict(self):
         """Return a dictionary representation of the job."""
@@ -86,14 +86,13 @@ class Job:
             'job_id': self.job_id,
         }
 
-    def __call__(self, db: t.Any = None, dependencies=()):
+    @abstractmethod
+    def __call__(self, dependencies=()):
         """
         Run the job.
 
-        :param db: DB instance to be used
         :param dependencies: list of dependencies
         """
-        raise NotImplementedError
 
 
 class FunctionJob(Job):
@@ -177,6 +176,7 @@ class ComponentJob(Job):
     :param component: Cached component.
     """
 
+    # TODO add version information to a Job
     def __init__(
         self,
         component_identifier: str,
@@ -214,7 +214,7 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def submit(self, dependencies=()):
+    def submit(self, dependencies: t.Sequence[str] = ()):
         """Submit job for execution.
 
         :param dependencies: list of dependencies
@@ -228,29 +228,18 @@ class ComponentJob(Job):
             job_id=self.identifier,
             args=self.args,
             kwargs=self.kwargs,
-            dependencies=dependencies,
             db=self.db if self.db.compute.type == 'local' else None,
+            dependencies=dependencies
         )
         return self
 
-    def __call__(self, db: t.Union['Datalayer', None] = None, dependencies=()):
+    def __call__(self, dependencies=()):
         """Run the job.
-
-        :param db: Datalayer instance to use
-        :param dependencies: list of dependencies
         """
-        if db is None:
-            from superduper.base.build import build_datalayer
-
-            db = build_datalayer()
-
-        self.db = db
-
-        db.metadata.create_job(self.dict())
-
+        self.db.metadata.create_job(self.dict())
         self.submit(dependencies=dependencies)
         if self.future:
-            db.metadata.update_job(self.job_id, 'job_id', self.future)
+            self.db.metadata.update_job(self.job_id, 'job_id', self.future)
         return
 
     def dict(self):

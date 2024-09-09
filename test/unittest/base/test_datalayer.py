@@ -44,7 +44,6 @@ class TestComponent(Component):
     type_id: str = 'test-component'
     is_on_create: bool = False
     is_after_create: bool = False
-    is_schedule_jobs: bool = False
     check_clean_up: bool = False
     child: Optional['TestComponent'] = None
     artifact: Any = None
@@ -54,10 +53,6 @@ class TestComponent(Component):
 
     def post_create(self, db):
         self.is_after_create = True
-
-    def schedule_jobs(self, db, dependencies):
-        self.is_schedule_jobs = True
-        return []
 
     def cleanup(self, db):
         if self.check_clean_up:
@@ -105,7 +100,6 @@ def test_add_version(db: Datalayer):
     db.apply(component)
     assert component.is_on_create is True
     assert component.is_after_create is True
-    assert component.is_schedule_jobs is True
     assert component.version == 0
     assert db.show('test-component', 'test') == [0]
 
@@ -512,7 +506,7 @@ def test_replace_with_child(db):
         select=db['docs'].select(),
     )
     model = FakeModel(
-        identifier='m',
+        identifier='m123',
         trainer=trainer,
     )
 
@@ -523,7 +517,7 @@ def test_replace_with_child(db):
 
     reloaded = db.load('model', model.identifier)
 
-    assert 'm' in model_ids
+    assert 'm123' in model_ids
     assert hasattr(reloaded, 'trainer')
 
     assert isinstance(reloaded.trainer, Trainer)

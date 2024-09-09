@@ -9,6 +9,7 @@ DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+    from superduper.components.component import Component
 
 
 class BaseQueueConsumer(ABC):
@@ -122,6 +123,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         """Build consumer client."""
         return LocalQueueConsumer()
 
+    # TODO why do we need this type_id?
     def declare_component(self, component, type_id: t.Optional[str] = None):
         """Declare component and add it to queue."""
         self.components[type_id or component.type_id, component.identifier] = component
@@ -133,9 +135,8 @@ class LocalQueuePublisher(BaseQueuePublisher):
         :param events: list of events
         """
         for event in events:
-            identifier = event.dest['identifier']
-            type_id = event.dest['type_id']
-
+            identifier = event.dest.identifier
+            type_id = event.dest.type_id
             self.queue[type_id, identifier].append(event)
 
         return self.consumer.consume(
@@ -177,7 +178,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
             queue[consumer] = []
             component = components[consumer]
             # Consume
-            jobs = consume_events(db, component=component, events=events)
+            jobs = consume_events(component=component, events=events)
             queue_jobs[consumer].extend(jobs)
         return queue_jobs
 
@@ -194,37 +195,17 @@ class LocalQueueConsumer(BaseQueueConsumer):
         """Close connection to queue."""
 
 
-def _run_jobs(db, component, events, from_type='DB'):
-    from superduper.base.datalayer import DBEvent
-
-    jobs = []
-    for event_type, events in DBEvent.chunk_by_event(events).items():
-        overwrite = True if event_type in [DBEvent.insert, DBEvent.upsert] else False
-        logging.info(f'Running jobs for {component.type_id}::{component.identifier}')
-        dependencies = []
-        for event in events:
-            if event.from_type == 'COMPONENT':
-                dependencies.extend(event.dependencies)
-        job = component.run_jobs(
-            db=db, events=events, overwrite=overwrite, dependencies=dependencies
-        )
-        jobs.append(job)
-    return jobs
-
-
-def consume_events(db, component, events):
+def consume_events(component: 'Component', events: t.Sequence[Event]):
     """Consume events from queue.
 
-    :param db: Datalayer instance.
     :param component: Superduper component.
     :param events: Events to be consumed.
     """
     if not events:
         return []
-    jobs = []
-    component_events, db_events = Event.chunk_by_type(events)
-    jobs = _run_jobs(
-        db=db, component=component, events=component_events, from_type='COMPONENT'
-    )
-    jobs = _run_jobs(db=db, component=component, events=db_events)
-    return jobs
+    # Why do we need to chunk events by type?
+    events = Event.chunk_by_type(events)
+    for type in events:
+        logging.info(f"Running jobs for {type}")
+        component.run_jobs(event=events[type])
+    return []

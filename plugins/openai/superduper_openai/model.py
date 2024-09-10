@@ -59,6 +59,7 @@ class _OpenAI(APIBaseModel):
             self.client_kwargs['api_key'] = self.openai_api_key
         if self.openai_api_base is not None:
             self.client_kwargs['base_url'] = self.openai_api_base
+            self.client_kwargs['default_headers'] = self.openai_api_base
 
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if self.model not in (

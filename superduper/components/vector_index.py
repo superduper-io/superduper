@@ -149,8 +149,9 @@ class VectorIndex(Component):
 
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None):
-
+        """Copy vectors to the vector index."""
         if ids is None:
+            assert self.indexing_listener.select is not None
             primary_id = self.indexing_listener.select.primary_id
             cur = self.indexing_listener.select.select_ids.execute()
             ids = [r[primary_id] for r in cur]
@@ -199,6 +200,7 @@ class VectorIndex(Component):
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None):
+        """Delete vectors from the vector index."""
         self.db.fast_vector_searchers[self.identifier].delete(ids)
 
     def get_vector(

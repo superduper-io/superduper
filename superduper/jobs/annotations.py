@@ -1,20 +1,21 @@
 import inspect
 import typing as t
 
-from superduper.base.event import EventType
 from superduper.jobs.job import Job
 
 
-def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (), requires: t.Sequence[str] | str = ()):
-    """Decorator to trigger a method when an event of type 
-    {'update', 'insert', 'delete', 'apply'} are called.
+def trigger(
+    *event_types: t.Sequence[str],
+    depends: t.Sequence[str] | str = (),
+    requires: t.Sequence[str] | str = (),
+):
+    """Decorator to trigger a method when an event is detected.
 
-    :param events: Event to trigger the method.
+    :param event_types: Event to trigger the method.
     :param depends: Triggers which should run before this method.
-    :param requires: Dataclass parameters/ attributes which should be 
+    :param requires: Dataclass parameters/ attributes which should be
                      available to trigger the method
     """
-
     if isinstance(depends, str):
         depends = [depends]
 
@@ -24,7 +25,7 @@ def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (),
     def decorator(f):
         """Decorator to trigger a method when an event of type."""
         takes_ids = 'ids' in inspect.signature(f).parameters
-        if events != ('apply',):
+        if event_types != ('apply',):
             assert takes_ids, (
                 f"Method {f.__name__} must take an 'ids' argument"
                 " to be triggered by anything apart from 'apply'"
@@ -38,12 +39,12 @@ def trigger(*events: t.Sequence[EventType], depends: t.Sequence[str] | str = (),
                     uuid=self.uuid,
                     method=f.__name__,
                     args=(ids,) if takes_ids else (),
-                    db=self.db
+                    db=self.db,
                 )
             else:
                 return f(self, ids) if takes_ids else f(self)
 
-        decorated.events = events
+        decorated.events = event_types
         decorated.depends = depends
         decorated.requires = requires
         return decorated

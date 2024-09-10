@@ -125,12 +125,11 @@ def test_set_variables(db):
 class UpstreamComponent(Component):
     @trigger('apply')
     def a_job(self):
-        with open(f'upstream_{self.uuid}.txt', 'w') as f:
+        with open(f'upstream_{self.uuid}.txt', 'w'):
             pass
 
 
 class MyListener(Listener):
-
     @trigger('apply')
     def my_trigger(self):
         uuid = self.upstream[0].uuid

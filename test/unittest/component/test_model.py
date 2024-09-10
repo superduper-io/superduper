@@ -312,7 +312,9 @@ def test_model_fit(db):
         object=object(),
         trainer=MyTrainer('my-trainer', key='x', select=db['documents'].select()),
         validation=Validation(
-            'my-valid', datasets=[valid_dataset], metrics=[MagicMock(spec=Metric)],
+            'my-valid',
+            datasets=[valid_dataset],
+            metrics=[MagicMock(spec=Metric)],
             key=('x', 'y'),
         ),
     )
@@ -455,9 +457,7 @@ def test_object_model_predict_in_db(db, object_model):
     r = results[0].unpack()
     key = next(k for k in r.keys() if k.startswith('_outputs__test'))
 
-    assert all(
-        np.allclose(r.unpack()[key], sample_data + 1) for r in results
-    )
+    assert all(np.allclose(r.unpack()[key], sample_data + 1) for r in results)
 
 
 def test_object_model_as_a_listener(db, object_model):
@@ -465,6 +465,4 @@ def test_object_model_as_a_listener(db, object_model):
     results = model_utils.test_model_as_a_listener(object_model, sample_data, db)
     r = results[0].unpack()
     key = next(k for k in r.keys() if k.startswith('_outputs__test'))
-    assert all(
-        np.allclose(r.unpack()[key], sample_data + 1) for r in results
-    )
+    assert all(np.allclose(r.unpack()[key], sample_data + 1) for r in results)

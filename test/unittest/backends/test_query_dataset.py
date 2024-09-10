@@ -23,7 +23,9 @@ def test_query_dataset(db):
     train_data = QueryDataset(
         db=db,
         mapping=Mapping("_base", signature="singleton"),
-        select=db["documents"].select(primary_id, 'x', '_fold').outputs("vector-x__" + listener_uuid),
+        select=db["documents"]
+        .select(primary_id, 'x', '_fold')
+        .outputs("vector-x__" + listener_uuid),
         fold="train",
     )
     r = train_data[0]
@@ -31,7 +33,9 @@ def test_query_dataset(db):
     assert "y" not in r
     assert "x" in r
 
-    db["documents"].select(primary_id, 'x', '_fold').outputs("vector-x__" + listener_uuid)
+    db["documents"].select(primary_id, 'x', '_fold').outputs(
+        "vector-x__" + listener_uuid
+    )
     assert r['_outputs__vector-x__' + listener_uuid].shape[0] == 16
 
     train_data = QueryDataset(

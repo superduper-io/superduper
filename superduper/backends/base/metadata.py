@@ -66,18 +66,6 @@ class MetaDataStore(ABC):
         """
         pass
 
-    def get_dependent_jobs(self, uuid: str):
-        """
-        Get the dependent jobs of a component.
-
-        :param uuid: unique identifier of component
-        """
-        r = self.get_component_by_uuid(uuid)
-        if not r['upstream']:
-            return []
-        upstream_uuids = [up.split(':')[-1] for  up in r['upstream']]
-        self.show_jobs(component_identifier=upstream_uuids, type_id='job')
-
     @abstractmethod
     def create_parent_child(self, parent: str, child: str):
         """
@@ -222,12 +210,12 @@ class MetaDataStore(ABC):
     @abstractmethod
     def show_jobs(
         self,
-        component_identifier: t.Optional[str],
+        identifier: t.Optional[str],
         type_id: t.Optional[str],
     ):
         """Show all jobs in the metadata store.
 
-        :param component_identifier: identifier of component
+        :param identifier: identifier of component
         :param type_id: type of component
         """
         pass

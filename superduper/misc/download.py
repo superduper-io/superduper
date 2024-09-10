@@ -1,6 +1,8 @@
+import os
 import re
 import signal
 import sys
+import tempfile
 import typing as t
 import warnings
 from contextlib import contextmanager
@@ -81,6 +83,27 @@ class Fetcher:
         """
         return uri.split('://')[0] in self.DIALECTS
 
+    def _download_s3_folder(self, uri):
+        folder_objects = []
+        path = uri.split('s3://')[-1]
+        bucket_name = path.split('/')[0]
+        prefix = uri.split(bucket_name + '/')[-1]
+
+        objects = self.s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+
+        if 'Contents' in objects:
+            for obj in objects['Contents']:
+                s3_key = obj['Key']
+                if not s3_key.endswith('/'):
+                    data = self._download_s3_object(uri + s3_key)
+                    info = {
+                        'file': s3_key,
+                        'data': data,
+                        'folder': prefix.split('/')[-1],
+                    }
+                    folder_objects.append(info)
+        return folder_objects
+
     def _download_s3_object(self, uri):
         f = BytesIO()
         path = uri.split('s3://')[-1]
@@ -105,11 +128,47 @@ class Fetcher:
         if uri.startswith('file://'):
             return self._download_file(uri)
         elif uri.startswith('s3://'):
+            if uri.endswith('/'):
+                return self._download_s3_folder(uri)
             return self._download_s3_object(uri)
         elif uri.startswith('http://') or uri.startswith('https://'):
             return self._download_from_uri(uri)
         else:
             raise NotImplementedError(f'unknown type of URI "{uri}"')
+
+    def save(self, uri: str, contents: t.Union[t.List, bytes], file_id: str):
+        """Save downloaded bytes to a cached directory."""
+        download_folder = CFG.downloads.folder
+
+        if not download_folder:
+            download_folder = os.path.join(
+                tempfile.gettempdir(), "superduper", "ArtifactStore"
+            )
+
+        save_folder = os.path.join(download_folder, file_id)
+        os.makedirs(save_folder, exist_ok=True)
+
+        if isinstance(contents, list):
+            folder_path = None
+            for content in contents:
+                name = content['file']
+                folder = content['folder']
+                data = content['data']
+                folder_path = os.path.join(save_folder, folder)
+                os.makedirs(folder_path, exist_ok=True)
+
+                path = os.path.join(folder_path, name)
+                with open(path, 'wb') as f:
+                    f.write(data)
+            return folder_path
+
+        else:
+            base_name = uri.split('/')[-1]
+
+            path = os.path.join(save_folder, base_name)
+            with open(path, 'wb') as f:
+                f.write(contents)
+            return path
 
 
 class BaseDownloader:

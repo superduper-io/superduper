@@ -83,7 +83,11 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             )
             point = models.PointStruct(
                 id=self._convert_id(item.id),
-                vector={self.vector_name: vector} if self.vector_name else vector,
+                vector=(
+                    {self.vector_name: item.vector.tolist()}
+                    if self.vector_name
+                    else item.vector.tolist()
+                ),
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             points.append(point)

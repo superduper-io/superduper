@@ -19,13 +19,14 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
+  # "vllm"
 ]
 
-[project.optional-dependencies]
+ [project.optional-dependencies]
 test = [
-    "vcrpy>=5.1.0",
+    "pytest-asyncio"
     # Annotation plugin dependencies will be installed in CI
-    # :CI: plugins/mongodb
+    # :CI: plugins/sqlalchemy
 ]
 
 [project.urls]

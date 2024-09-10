@@ -1,3 +1,4 @@
+import inspect
 import typing as t
 from collections import defaultdict
 from functools import partial
@@ -45,7 +46,9 @@ def _blob_getter(uri: str, getter: t.Callable):
     from superduper.misc.download import Fetcher
 
     dialect = uri.split('://')[0]
-    if dialect not in Fetcher.DIALECTS:
+
+    is_loader = 'loader' in inspect.signature(getter).parameters
+    if dialect not in Fetcher.DIALECTS or not is_loader:
         return getter(uri)
     else:
         loader = Fetcher()
@@ -85,9 +88,9 @@ class _Getters:
         if name not in self._getters:
             return data
         for getter in self._getters[name]:
-            data = getter(data)
-            if data is not None:
-                break
+            out = getter(data)
+            if out is not None:
+                return out
         return data
 
 
@@ -207,6 +210,10 @@ class Document(MongoStyleDict):
 
         if r.get(KEY_FILES):
             getters.add_getter('file', lambda x: r[KEY_FILES].get(x.split(':')[-1]))
+
+        # Add a remote file getter
+        getters.add_getter('file', _get_file_remote_callback)
+        getters.add_getter('blob', _get_local_blob)
 
         if db is not None:
             getters.add_getter('component', lambda x: _get_component(db, x))
@@ -589,6 +596,27 @@ def _get_artifact_callback(db):
     return callback
 
 
+def _get_file_remote_callback(path):
+    from superduper.misc.download import Fetcher
+
+    fetcher = Fetcher()
+
+    if not fetcher.is_uri(path):
+        return None
+
+    def pull_file():
+        uri = path.split(':file:')[-1]
+        from superduper.misc.files import get_file_from_uri
+
+        content = fetcher(uri)
+        file_id = get_file_from_uri(uri)
+
+        file_path = fetcher.save(uri, content, file_id)
+        return file_path, path
+
+    return pull_file
+
+
 def _get_file_callback(db):
     def callback(path):
         def pull_file():
@@ -598,3 +626,8 @@ def _get_file_callback(db):
         return pull_file
 
     return callback
+
+
+def _get_local_blob(x, loader=None):
+    if x.split('://')[0].startswith('file'):
+        return loader(x)

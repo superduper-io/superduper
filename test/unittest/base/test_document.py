@@ -67,6 +67,39 @@ def test_encode_decode_flattened_document():
     assert isinstance(next(iter(encoded_r[KEY_BLOBS].values())), bytes)
 
 
+def test_encode_model_with_remote_file(db):
+    r = {
+        '_base': '?20d76167d4a6ad7fe00250e8359d0dca',
+        '_builds': {
+            'file': {
+                '_path': 'superduper.components.datatype.get_serializer',
+                'method': 'file',
+                'encodable': 'file',
+                'type_id': 'datatype',
+                'version': None,
+                'uuid': '1ef3aaae626a45aa836b82f493acc874',
+            },
+            '20d76167d4a6ad7fe00250e8359d0dca': {
+                '_path': 'superduper.components.datatype.File',
+                'uuid': '43d651a7990241f3accbd4b67b77b069',
+                'datatype': '?file',
+                'uri': None,
+                'x': '&:file:file://./README.md',
+            },
+        },
+        '_blobs': {},
+        '_files': {},
+    }
+
+    r = Document.decode(r, db=db).unpack()
+    assert os.path.exists(r)
+    with open(r, 'rb') as r:
+        read = r.readlines()
+
+    with open('./README.md', 'rb') as r:
+        assert r.readlines() == read
+
+
 def test_encode_model_with_remote_blob():
     m = ObjectModel(
         identifier='test',
@@ -75,9 +108,9 @@ def test_encode_model_with_remote_blob():
 
     encoded_r = m.encode()
     with tempfile.TemporaryDirectory() as temp_dir:
-        blob_key = [k for k in encoded_r['_builds'] if k not in ('test', 'dill_lazy')][
-            0
-        ]
+        blob_key = [
+            k for k in encoded_r['_builds'] if k not in ('test', 'datatype:dill_lazy')
+        ][0]
 
         blob = encoded_r['_blobs'][blob_key]
         temp_file_path = os.path.join(temp_dir, blob_key)
@@ -85,11 +118,7 @@ def test_encode_model_with_remote_blob():
             f.write(blob)
 
         encoded_r['_builds'][blob_key]['blob'] = f'&:blob:file://{temp_file_path}'
-
-        def local_blob(x, loader=None):
-            return loader(x)
-
-        decoded_r = Document.decode(encoded_r, getters={'blob': local_blob})
+        decoded_r = Document.decode(encoded_r)
 
     m = decoded_r.unpack()
     m.object.init()

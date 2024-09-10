@@ -10,7 +10,7 @@ VECTOR_SIZE = 300
 
 def add_data(db: "Datalayer", start: int, end: int):
     """
-    :param db: Datalayer 
+    :param db: Datalayer
     :param start: int to start assigning to `x` column
     :param end: int to stop assigning to `x` column
     """

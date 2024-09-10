@@ -58,10 +58,12 @@ def build_graph_listener(db: "Datalayer"):
     model_b = ObjectModel(identifier="model_b", object=func_b)
     listener_b = model_b.to_listener(
         key=("x", "y", listener_a.outputs),
-        select=db["documents"].select(primary_id, "x", "y").outputs(listener_a.predict_id),
+        select=db["documents"]
+        .select(primary_id, "x", "y")
+        .outputs(listener_a.predict_id),
         identifier="b",
         predict_kwargs={"max_chunk_size": 1},
-)
+    )
 
     def func_c(x, y, z, o_a, o_b):
         return {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
@@ -69,7 +71,9 @@ def build_graph_listener(db: "Datalayer"):
     model_c = ObjectModel(identifier="model_c", object=func_c)
     listener_c = model_c.to_listener(
         key=("x", "y", "z", listener_a.outputs, listener_b.outputs),
-        select=db["documents"].select(primary_id, "x", "y", "z").outputs(listener_a.predict_id, listener_b.predict_id),
+        select=db["documents"]
+        .select(primary_id, "x", "y", "z")
+        .outputs(listener_a.predict_id, listener_b.predict_id),
         identifier="c",
         predict_kwargs={"max_chunk_size": 1},
     )
@@ -79,7 +83,14 @@ def build_graph_listener(db: "Datalayer"):
     db.apply(listener_c)
 
     data = Document(
-        list(db["documents"].select().outputs(listener_a.predict_id, listener_b.predict_id, listener_c.predict_id).execute())[0].unpack()
+        list(
+            db["documents"]
+            .select()
+            .outputs(
+                listener_a.predict_id, listener_b.predict_id, listener_c.predict_id
+            )
+            .execute()
+        )[0].unpack()
     )
 
     output_a = data[listener_a.outputs]
@@ -109,7 +120,14 @@ def build_graph_listener(db: "Datalayer"):
     db["documents"].insert(new_data).execute()
 
     new_data = Document(
-        list(db["documents"].select().outputs(listener_a.predict_id, listener_b.predict_id, listener_c.predict_id).execute())[-1].unpack()
+        list(
+            db["documents"]
+            .select()
+            .outputs(
+                listener_a.predict_id, listener_b.predict_id, listener_c.predict_id
+            )
+            .execute()
+        )[-1].unpack()
     )
 
     output_a = new_data[listener_a.outputs]

@@ -477,7 +477,7 @@ class Model(Component, metaclass=ModelMeta):
         X: ModelInputType,
         predict_id: str,
         select: Query,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Sequence[str] | None = None,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = True,
@@ -935,6 +935,7 @@ class Model(Component, metaclass=ModelMeta):
         )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
+        """Append metrics to the model."""
         assert self.trainer is not None
         if self.trainer.metric_values is not None:
             for k, v in d.items():
@@ -995,6 +996,7 @@ class ObjectModel(Model):
     :param num_workers: Number of workers to use for parallel processing
     :param object: Model/ computation object
     :param method: Method to call on the object
+
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (

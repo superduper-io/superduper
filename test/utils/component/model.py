@@ -7,7 +7,10 @@ if t.TYPE_CHECKING:
 
 
 import uuid
-random_id = lambda: str(uuid.uuid4())
+
+
+def random_id():
+    return str(uuid.uuid4())
 
 
 def test_predict(model: Model, sample_data: t.Any):
@@ -19,7 +22,6 @@ def test_predict(model: Model, sample_data: t.Any):
 
 
 def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
-
     model.identifier = random_id()
 
     db.apply(model)
@@ -35,14 +37,13 @@ def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
         predict_id='test',
     )
 
-    results = list(db[f"_outputs__test"].select().execute())
+    results = list(db["_outputs__test"].select().execute())
     assert len(results) == 10
 
     return results
 
 
 def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer"):
-
     db.cfg.auto_schema = True
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)]).execute()

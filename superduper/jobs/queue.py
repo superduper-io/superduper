@@ -204,8 +204,8 @@ def consume_events(component: 'Component', events: t.Sequence[Event]):
     if not events:
         return []
     # Why do we need to chunk events by type?
-    events = Event.chunk_by_type(events)
-    for type in events:
+    event_lookup = Event.chunk_by_type(events)
+    for type in event_lookup:
         logging.info(f"Running jobs for {type}")
-        component.run_jobs(event=events[type])
+        component.run_jobs(event=event_lookup[type])
     return []

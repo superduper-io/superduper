@@ -214,23 +214,21 @@ class MongoMetaDataStore(MetaDataStore):
             )
         )
 
-    def show_job_ids(
-        self,
-        uuids: t.Optional[str] = None,
-        status: str = 'running'
-    ):
+    def show_job_ids(self, uuids: t.Optional[str] = None, status: str = 'running'):
         """Show all jobs in the metadata store.
 
-        :param component_identifier: identifier of component
-        :param type_id: type of component
+        :param uuids: list of uuids
+        :param status: status of the job
         """
         if uuids:
-            return self.job_collection.distinct('job_id', {'status': status, 'uuid': {'$in': uuids}})
+            return self.job_collection.distinct(
+                'job_id', {'status': status, 'uuid': {'$in': uuids}}
+            )
         return self.job_collection.distinct('job_id', {'status': status})
 
     def show_jobs(
         self,
-        component_identifier: t.Optional[str] = None,
+        identifier: t.Optional[str] = None,
         type_id: t.Optional[str] = None,
     ):
         """Show jobs in the metadata store.
@@ -239,8 +237,8 @@ class MongoMetaDataStore(MetaDataStore):
         :param type_id: type of component
         """
         filter_ = {}
-        if component_identifier is not None:
-            filter_['component_identifier'] = component_identifier
+        if identifier is not None:
+            filter_['identifier'] = identifier
         if type_id is not None:
             filter_['type_id'] = type_id
         return list(self.job_collection.find(filter_))

@@ -1,8 +1,8 @@
-from collections import defaultdict
 import dataclasses as dc
-from enum import Enum
 import typing as t
 import uuid
+from collections import defaultdict
+from enum import Enum
 
 
 @dc.dataclass
@@ -12,17 +12,21 @@ class ComponentPlaceholder(dict):
     :param type_id: Type id of the component.
     :param identifier: Identifier of the component.
     """
+
     type_id: str
     identifier: str
 
 
-
 class EventType(str, Enum):
-    """Event to represent database events. # noqa """
+    """Event to represent database events.
+
+    # noqa
+    """
+
     insert = 'insert'
     delete = 'delete'
     update = 'update'
-    upsert = 'upsert'     # TODO why do we need this?
+    upsert = 'upsert'  # TODO why do we need this?
     apply = 'apply'
 
 
@@ -37,14 +41,18 @@ class Event:
                  This id will be used as job id in
                  startup events.
     """
-    event_type: EventType
-    dest: t.Union[ComponentPlaceholder, t.Dict]
+
+    event_type: EventType | str
+    dest: ComponentPlaceholder
     ids: t.Sequence[str] | None = None
     uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
 
     def dict(self):
         """Convert to dict."""
-        return {**dc.asdict(self), '_path': f'superduper.base.event.{self.__class__.__name__}'}
+        return {
+            **dc.asdict(self),
+            '_path': f'superduper.base.event.{self.__class__.__name__}',
+        }
 
     def __add__(self, other: 'Event'):
         """Add two events."""
@@ -63,7 +71,7 @@ class Event:
         return Event(
             event_type=self.event_type,
             dest=self.dest,
-            ids=self.ids + other.ids,
+            ids=list(self.ids) + list(other.ids),
         )
 
     @staticmethod
@@ -75,7 +83,7 @@ class Event:
         return ids
 
     @staticmethod
-    def chunk_by_type(events: t.Sequence['Event']): 
+    def chunk_by_type(events: t.Sequence['Event']):
         """Chunk events by from type."""
         out = defaultdict(list)
         for event in events:

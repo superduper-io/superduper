@@ -1,8 +1,9 @@
 import typing as t
-from superduper.base.datalayer import Datalayer
 from test.utils.setup.fake_data import add_random_data
-from superduper.components.model import Trainer, Model
+
+from superduper.base.datalayer import Datalayer
 from superduper.components.datatype import pickle_serializer
+from superduper.components.model import Model, Trainer
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -16,9 +17,7 @@ class MyTrainer(Trainer):
 
 
 class MyModel(Model):
-    _artifacts: t.ClassVar[t.Any] = (
-        ('estimator', pickle_serializer),
-    )
+    _artifacts: t.ClassVar[t.Any] = (('estimator', pickle_serializer),)
     estimator: t.Any
     signature: str = 'singleton'
 
@@ -30,7 +29,6 @@ class MyModel(Model):
 
 
 def test_training(db: "Datalayer"):
-
     add_random_data(db, 'documents', 100)
 
     from sklearn.svm import SVC

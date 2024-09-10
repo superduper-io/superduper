@@ -25,7 +25,7 @@ class LocalComputeBackend(ComputeBackend):
         self.uri = uri
         self.queue = queue
         self.kwargs = kwargs
-        self._cache = {}
+        self._cache: t.Dict = {}
 
     @property
     def remote(self) -> bool:
@@ -43,6 +43,7 @@ class LocalComputeBackend(ComputeBackend):
         return "local"
 
     def declare_component(self, component: t.Any) -> None:
+        """Delcare a component."""
         self._cache[component.type_id, component.identifier, component.uuid] = component
 
     def component_hook(self, *args, **kwargs):

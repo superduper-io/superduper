@@ -24,9 +24,6 @@ from tqdm import tqdm
 
 from superduper_torch.utils import device_of, eval, to_device
 
-if t.TYPE_CHECKING:
-    from superduper.jobs.job import Job
-
 
 def torchmodel(class_obj):
     """A decorator to convert a `torch.nn.Module` into a `TorchModel`.

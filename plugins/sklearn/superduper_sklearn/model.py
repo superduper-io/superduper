@@ -13,7 +13,6 @@ from superduper.components.model import (
     Signature,
     Trainer,
 )
-from superduper.jobs.job import Job
 from tqdm import tqdm
 
 

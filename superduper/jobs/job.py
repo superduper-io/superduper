@@ -3,7 +3,6 @@ import datetime
 import typing as t
 import uuid
 
-
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
@@ -23,6 +22,7 @@ class Job:
     :param db: A datalayer instance
     :param time: Time of job creation
     """
+
     type_id: str
     identifier: str
     uuid: str
@@ -31,7 +31,7 @@ class Job:
     args: t.Sequence = dc.field(default_factory=tuple)
     kwargs: t.Dict = dc.field(default_factory=dict)
     db: dc.InitVar['Datalayer'] = None
-    time: datetime.datetime = dc.field(default_factory=lambda: str(datetime.datetime.now()))
+    time: datetime.datetime = dc.field(default_factory=datetime.datetime.now)
 
     def __post_init__(self, db):
         self.db: 'Datalayer' = db

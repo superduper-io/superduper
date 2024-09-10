@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add serve in Model
 - Added templates directory with OSS templates
 - Qdrant vector search support
+- Add `@trigger` decorator to improve developer experience
 
 #### Bug Fixes
 
@@ -67,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix form_template
 - Fix the duplicate children in the component.
 - Fix datatype for graph models
+- Fix the ordering and sequencing of jobs initiated on `db.apply`
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

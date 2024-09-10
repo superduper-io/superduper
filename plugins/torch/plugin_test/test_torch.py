@@ -6,8 +6,6 @@ import torch
 from superduper import superduper
 from superduper.base.datalayer import Datalayer
 from superduper.components.datatype import DataType
-from superduper.components.metric import Metric
-from superduper.components.model import Validation
 
 from superduper_torch.model import TorchModel
 from superduper_torch.training import TorchTrainer
@@ -70,7 +68,6 @@ def model():
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_fit(db, model, capfd):
-    from test.utils.setup.fake_data import get_valid_dataset
 
     data = []
     for i in range(500):

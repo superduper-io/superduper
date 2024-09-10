@@ -6,13 +6,11 @@ from overrides import override
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
-from superduper.base.event import Event
 from superduper.components.model import Mapping
 from superduper.components.trigger import Trigger
 from superduper.jobs.annotations import trigger
 from superduper.misc.server import request_server
 
-from ..jobs.job import Job
 from .model import Model, ModelInputType
 
 if t.TYPE_CHECKING:
@@ -50,9 +48,11 @@ class Listener(Trigger):
 
     @property
     def predict_id(self):
+        """Predict ID property."""
         return f'{self.identifier}__{self.uuid}'
 
     def pre_create(self, db: Datalayer) -> None:
+        """Pre-create hook."""
         return super().pre_create(db)
 
     @property
@@ -134,7 +134,6 @@ class Listener(Trigger):
         if output_table is not None:
             db.add(output_table)
 
-    # TODO rename
     @property
     def dependencies(self):
         """Listener model dependencies."""
@@ -143,7 +142,7 @@ class Listener(Trigger):
         out = []
         for x in all_:
             if x.startswith(CFG.output_prefix):
-                out.append(tuple(x[len(CFG.output_prefix):].split('__')))
+                out.append(tuple(x[len(CFG.output_prefix) :].split('__')))
         return out
 
     def trigger_ids(self, query: Query, primary_ids: t.Sequence):
@@ -201,6 +200,8 @@ class Listener(Trigger):
 
     @trigger('apply', 'insert', 'update', requires='select')
     def run(self, ids: t.Sequence[str] | None):
+        """Run the listener."""
+        assert self.select is not None
         return self.model.predict_in_db(
             X=self.key,
             predict_id=self.predict_id,

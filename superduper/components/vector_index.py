@@ -19,7 +19,6 @@ from superduper.jobs.annotations import trigger
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
-from superduper.vector_search.update_tasks import copy_vectors, delete_vectors
 
 KeyType = t.Union[str, t.List, t.Dict]
 
@@ -132,7 +131,7 @@ class VectorIndex(Component):
                 Listener, db.load('listener', self.compatible_listener)
             )
 
-        # Backfill vectors into vi
+        # Backfill vectors into index
         searcher = db.fast_vector_searchers[self]
         if not searcher.is_initialized():
             backfill_vector_search(db, self, searcher=searcher.searcher)
@@ -150,22 +149,57 @@ class VectorIndex(Component):
 
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None):
+
         if ids is None:
             primary_id = self.indexing_listener.select.primary_id
             cur = self.indexing_listener.select.select_ids.execute()
             ids = [r[primary_id] for r in cur]
-        # TODO copy logic of this into here - not necessary to have both functions
-        return copy_vectors(
-            self.identifier,
-            query=self.db[self.indexing_listener.outputs].select(),
-            ids=ids,
-            db=self.db,
-        )
+
+        query = self.db[self.indexing_listener.outputs].select()
+
+        if not ids:
+            select = query
+        else:
+            select = query.select_using_ids(ids)
+
+        docs = [doc.unpack() for doc in select.execute()]
+
+        vectors = []
+        nokeys = 0
+        for doc in docs:
+            try:
+                vector = MongoStyleDict(doc)[
+                    f'{CFG.output_prefix}{self.indexing_listener.predict_id}'
+                ]
+            except KeyError:
+                nokeys += 1
+                continue
+            vectors.append(
+                {
+                    'vector': vector,
+                    'id': str(doc['_source']),
+                }
+            )
+
+        if nokeys:
+            logging.warn(
+                f'{nokeys} outputs were missing. \n'
+                'Note: This might happen in case of `VectorIndex` schedule jobs '
+                'trigged before model outputs are yet to be computed.'
+            )
+
+        for r in vectors:
+            if hasattr(r['vector'], 'numpy'):
+                r['vector'] = r['vector'].numpy()
+
+        if vectors:
+            self.db.fast_vector_searchers[self.identifier].add(
+                [VectorItem(**vector) for vector in vectors]
+            )
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None):
-        # TODO copy logic of this into here - not necessary to have both functions
-        return delete_vectors(self.identifier, ids, self.db)
+        self.db.fast_vector_searchers[self.identifier].delete(ids)
 
     def get_vector(
         self,

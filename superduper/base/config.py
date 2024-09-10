@@ -18,7 +18,7 @@ def _dataclass_from_dict(data_class: t.Any, data: dict):
     for f in data:
         if (
             f in field_types
-            and hasattr(field_types[f], '__dataclass_fields__')
+            and hasattr(field_types[f], "__dataclass_fields__")
             and not isinstance(data[f], field_types[f])
         ):
             params[f] = _dataclass_from_dict(field_types[f], data[f])
@@ -39,10 +39,10 @@ class BaseConfig:
         """Update the configuration with the given parameters."""
         parameters = self.dict()
         for k, v in kwargs.items():
-            if '__' in k:
-                parts = k.split('__')
+            if "__" in k:
+                parts = k.split("__")
                 parent = parts[0]
-                child = '__'.join(parts[1:])
+                child = "__".join(parts[1:])
                 parameters[parent] = getattr(self, parent)(**{child: v})
             else:
                 parameters[k] = v
@@ -89,8 +89,8 @@ class PollingStrategy(CDCStrategy):
     """
 
     auto_increment_field: t.Optional[str] = None
-    frequency: str = '30'
-    type: str = 'incremental'
+    frequency: str = "30"
+    type: str = "incremental"
 
 
 @dc.dataclass
@@ -102,7 +102,7 @@ class LogBasedStrategy(CDCStrategy):
     """
 
     resume_token: t.Optional[t.Dict[str, str]] = None
-    type: str = 'logbased'
+    type: str = "logbased"
 
 
 @dc.dataclass
@@ -129,7 +129,7 @@ class VectorSearch(BaseConfig):
     """
 
     uri: t.Optional[str] = None  # None implies local mode
-    type: str = 'in_memory'  # in_memory|lance
+    type: str = "in_memory"  # in_memory|lance|qdrant
     backfill_batch_size: int = 100
 
 
@@ -187,7 +187,7 @@ class Compute(BaseConfig):
 
     uri: t.Optional[str] = None
     kwargs: t.Dict = dc.field(default_factory=dict)
-    backend: str = 'local'
+    backend: str = "local"
 
 
 @dc.dataclass
@@ -223,11 +223,11 @@ class Cluster(BaseConfig):
 class LogLevel(str, Enum):
     """Enumerate log severity level # noqa."""
 
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
+    DEBUG = "DEBUG"
+    INFO = "INFO"
     SUCCESS = "SUCCESS"
-    WARN = 'WARN'
-    ERROR = 'ERROR'
+    WARN = "WARN"
+    ERROR = "ERROR"
 
 
 class LogType(str, Enum):
@@ -245,8 +245,8 @@ class LogType(str, Enum):
 class BytesEncoding(str, Enum):
     """Enumerate the encoding of bytes in the data backend # noqa."""
 
-    BYTES = 'Bytes'
-    BASE64 = 'Str'
+    BYTES = "Bytes"
+    BASE64 = "Str"
 
 
 @dc.dataclass
@@ -261,7 +261,7 @@ class Downloads(BaseConfig):
 
     folder: t.Optional[str] = None
     n_workers: int = 0
-    headers: t.Dict = dc.field(default_factory=lambda: {'User-Agent': 'me'})
+    headers: t.Dict = dc.field(default_factory=lambda: {"User-Agent": "me"})
     timeout: t.Optional[int] = None
 
 
@@ -286,13 +286,14 @@ class Config(BaseConfig):
                         If True, the schema will be created if it does not exist.
     :param log_colorize: Whether to colorize the logs
     :param output_prefix: The prefix for the output table and output field key
+    :param vector_search_kwargs: The keyword arguments to pass to the vector search
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
-    data_backend: str = 'mongodb://mongodb:27017/test_db'
+    data_backend: str = "mongodb://mongodb:27017/test_db"
 
-    lance_home: str = os.path.join('.superduper', 'vector_indices')
+    lance_home: str = os.path.join(".superduper", "vector_indices")
 
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
@@ -309,7 +310,9 @@ class Config(BaseConfig):
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
-    output_prefix: str = '_outputs__'
+    output_prefix: str = "_outputs__"
+
+    vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, envs):
         if envs is not None:
@@ -325,7 +328,7 @@ class Config(BaseConfig):
     def comparables(self):
         """A dict of `self` excluding some defined attributes."""
         _dict = dc.asdict(self)
-        list(map(_dict.pop, ('cluster', 'retries', 'downloads')))
+        list(map(_dict.pop, ("cluster", "retries", "downloads")))
         return _dict
 
     def match(self, cfg: t.Dict):
@@ -350,7 +353,7 @@ class Config(BaseConfig):
         import yaml
 
         def enum_representer(dumper, data):
-            return dumper.represent_scalar('tag:yaml.org,2002:str', str(data.value))
+            return dumper.represent_scalar("tag:yaml.org,2002:str", str(data.value))
 
         yaml.SafeDumper.add_representer(BytesEncoding, enum_representer)
         yaml.SafeDumper.add_representer(LogLevel, enum_representer)
@@ -370,7 +373,7 @@ def _diff(r1, r2):
     d = _diff_impl(r1, r2)
     out = {}
     for path, left, right in d:
-        out['.'.join(path)] = (left, right)
+        out[".".join(path)] = (left, right)
     return out
 
 

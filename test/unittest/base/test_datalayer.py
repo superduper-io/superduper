@@ -20,7 +20,7 @@ from superduper.components.datatype import (
     pickle_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.components.model import Model, ObjectModel, Trainer 
+from superduper.components.model import Model, ObjectModel, Trainer
 from superduper.components.schema import FieldType, Schema
 from superduper.components.table import Table
 

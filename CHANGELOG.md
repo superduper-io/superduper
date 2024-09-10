@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add placeholder for web app link in Application
 - Add support for remote artifacts
 - Add basic rest server
+- Add `@trigger` decorator to improve developer experience
 
 #### Bug Fixes
 
@@ -83,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix datatype for graph models
 - Fix bug in variables
 - Fix Qdrant collection name
+- Fix the ordering and sequencing of jobs initiated on `db.apply`
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

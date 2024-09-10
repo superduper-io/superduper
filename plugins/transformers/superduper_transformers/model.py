@@ -21,7 +21,6 @@ from superduper.components.model import (
 )
 from superduper.components.training import Checkpoint
 from superduper.ext.llm.model import BaseLLM
-from superduper.jobs.job import Job
 from transformers import (
     AutoModelForCausalLM,
     AutoModelForSequenceClassification,

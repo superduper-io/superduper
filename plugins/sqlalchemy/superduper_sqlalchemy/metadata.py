@@ -86,19 +86,16 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.job_table = Table(
             'JOB',
             metadata,
-            Column('identifier', type_string, primary_key=True),
-            Column('component_identifier', type_string),
+            Column('job_id', type_string, primary_key=True),
+            Column('identifier', type_string),
+            Column('uuid', type_string),
             Column('type_id', type_string),
             Column('info', type_json_as_string),
             Column('time', type_datetime),
             Column('status', type_string),
             Column('args', type_json_as_string),
             Column('kwargs', type_json_as_text),
-            Column('method_name', type_string),
-            Column('stdout', type_json_as_string),
-            Column('stderr', type_json_as_string),
-            Column('_path', type_string),
-            Column('job_id', type_string),
+            Column('method', type_string),
             *job_table_args,
         )
 
@@ -538,9 +535,26 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.job_table, stmt, session)
             return res[0] if res else None
 
+    def show_job_ids(self, uuids: str | None = None, status: str = 'running'):
+        """Show all job ids in the database."""
+
+        with self.session_context() as session:
+            # Start building the select statement
+            stmt = select(self.job_table)
+
+            # If a component_identifier is provided, add a where clause to filter by it
+            if uuids is not None:
+                stmt = stmt.where(
+                    self.job_table.c.uuid.in_(uuids)
+                )
+
+            # Execute the query and collect results
+            res = self.query_results(self.job_table, stmt, session)
+        return [r['job_id'] for r in res]
+
     def show_jobs(
         self,
-        component_identifier: t.Optional[str] = None,
+        identifier: t.Optional[str] = None,
         type_id: t.Optional[str] = None,
     ):
         """Show all jobs in the database.
@@ -553,10 +567,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = select(self.job_table)
 
             # If a component_identifier is provided, add a where clause to filter by it
-            if component_identifier is not None:
+            if identifier is not None:
                 stmt = stmt.where(
                     and_(
-                        self.job_table.c.component_identifier == component_identifier,
+                        self.job_table.c.identifier == identifier,
                         self.job_table.c.type_id == type_id,
                     )
                 )

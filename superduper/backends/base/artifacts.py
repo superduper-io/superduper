@@ -126,34 +126,16 @@ class ArtifactStore(ABC):
 
         return r
 
-    def delete_artifact(self, r: t.Dict):
+    def delete_artifact(self, artifact_ids: t.List[str]):
         """Delete artifact from artifact store.
 
         :param r: dictionary with mandatory fields
         """
-        from superduper.misc.special_dicts import recursive_find
-
-        # find all blobs with `&:blob:` prefix,
-        blobs = recursive_find(
-            r, lambda v: isinstance(v, str) and v.startswith('&:blob:')
-        )
-
-        for blob in blobs:
+        for artifact_id in artifact_ids:
             try:
-                self._delete_bytes(blob.split(':')[-1])
+                self._delete_bytes(artifact_id)
             except FileNotFoundError:
-                logging.warn(f'Blob {blob} not found in artifact store')
-
-        # find all files with `&:file:` prefix
-        files = recursive_find(
-            r, lambda v: isinstance(v, str) and v.startswith('&:file:')
-        )
-        for file_path in files:
-            # file: &:file:file_id
-            try:
-                self._delete_bytes(file_path.split(':')[-1])
-            except FileNotFoundError:
-                logging.warn(f'File {file_path} not found in artifact store')
+                logging.warn(f'Blob {artifact_id} not found in artifact store')
 
     @abstractmethod
     def get_bytes(self, file_id: str) -> bytes:

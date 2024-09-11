@@ -5,7 +5,7 @@ from superduper import CFG
 
 from superduper_mongodb.metadata import MongoMetaDataStore
 
-DATABASE_URL = CFG.metadata_store or "mongomock://test_db"
+DATABASE_URL = CFG.metadata_store or CFG.data_backend or "mongomock://test_db"
 
 
 @pytest.fixture
@@ -25,3 +25,7 @@ def test_parent_child(metadata):
 
 def test_job(metadata):
     metadata_utils.test_job(metadata)
+
+
+def test_artifact_relation(metadata):
+    metadata_utils.test_artifact_relation(metadata)

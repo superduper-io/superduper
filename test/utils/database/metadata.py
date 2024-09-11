@@ -90,6 +90,29 @@ def test_job(metadata: MetaDataStore):
     assert job_get["status"] == "running"
 
 
+def test_artifact_relation(metadata: MetaDataStore):
+    uuid_1 = str(uuid.uuid4())
+    artifact_ids_1 = ["artifact-1", "artifact-2"]
+    uuid_2 = str(uuid.uuid4())
+    artifact_ids_2 = ["artifact-3", "artifact-4"]
+
+    metadata.create_artifact_relation(uuid_1, artifact_ids_1)
+    metadata.create_artifact_relation(uuid_2, artifact_ids_2)
+
+    assert metadata.get_artifact_relations(uuid=uuid_1) == artifact_ids_1
+    assert metadata.get_artifact_relations(artifact_id="artifact-1") == [uuid_1]
+    assert metadata.get_artifact_relations(artifact_id="artifact-2") == [uuid_1]
+
+    assert metadata.get_artifact_relations(uuid=uuid_2) == artifact_ids_2
+    assert metadata.get_artifact_relations(artifact_id="artifact-3") == [uuid_2]
+    assert metadata.get_artifact_relations(artifact_id="artifact-4") == [uuid_2]
+
+    metadata.delete_artifact_relation(uuid_1, artifact_ids_1[0])
+    assert metadata.get_artifact_relations(uuid=uuid_1) == [artifact_ids_1[1]]
+
+    assert metadata.get_artifact_relations(uuid=uuid_2) == artifact_ids_2
+
+
 def _create_components(type_ids, identifiers, versions, metadata):
     versions = versions or [0]
     uuid2component = {}

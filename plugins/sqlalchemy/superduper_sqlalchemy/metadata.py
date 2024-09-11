@@ -123,7 +123,43 @@ class SQLAlchemyMetadata(MetaDataStore):
             *component_table_args,
         )
 
+        self.artifact_table = Table(
+            'ARTIFACT_RELATIONS',
+            metadata,
+            Column('uuid', type_string),
+            Column('artifact_id', type_integer),
+            *component_table_args,
+        )
+
+        self._table_mapping = {
+            '_artifact_relations': self.artifact_table,
+        }
+
         metadata.create_all(self.conn)
+
+    def _create_data(self, table_name, datas):
+        table = self._table_mapping[table_name]
+        with self.session_context() as session:
+            for data in datas:
+                stmt = insert(table).values(**data)
+                session.execute(stmt)
+
+    def _delete_data(self, table_name, filter):
+        table = self._table_mapping[table_name]
+
+        with self.session_context() as session:
+            conditions = [getattr(table.c, k) == v for k, v in filter.items()]
+            stmt = delete(table).where(*conditions)
+            session.execute(stmt)
+
+    def _get_data(self, table_name, filter):
+        table = self._table_mapping[table_name]
+
+        with self.session_context() as session:
+            conditions = [getattr(table.c, k) == v for k, v in filter.items()]
+            stmt = select(table).where(*conditions)
+            res = self.query_results(table, stmt, session)
+            return res
 
     def url(self):
         """Return the URL of the metadata store."""
@@ -142,6 +178,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
+
         try:
             self.job_table.drop(self.conn)
         except ProgrammingError as e:
@@ -156,6 +193,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             self.component_table.drop(self.conn)
         except ProgrammingError as e:
             logging.warn(f'Error dropping component table {e}')
+
+        try:
+            self.artifact_table.drop(self.conn)
+        except ProgrammingError as e:
+            logging.warn(f'Error dropping artifact table {e}')
 
     @contextmanager
     def session_context(self):

@@ -17,30 +17,22 @@ class LanceVectorSearcher(BaseVectorSearcher):
     """
     Implementation of a vector index using the ``lance`` library.
 
-    :param identifier: Unique string identifier of index
+    :param uuid: Unique string identifier of index
     :param dimensions: Dimension of the vector embeddings in the Lance dataset
-    :param h: Seed vectors ``numpy.ndarray``
-    :param index: list of IDs
     :param measure: measure to assess similarity
     """
 
     def __init__(
         self,
-        identifier: str,
+        uuid: str,
         dimensions: int,
-        h: t.Optional[np.ndarray] = None,
-        index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        self.dataset_path = os.path.join(CFG.lance_home, f'{identifier}.lance')
+        self.dataset_path = os.path.join(CFG.lance_home, f'{uuid}.lance')
         self.dimensions = dimensions
         self.measure = (
             measure.name if isinstance(measure, VectorIndexMeasureType) else measure
         )
-        if h is not None:
-            if not os.path.exists(self.dataset_path):
-                os.makedirs(self.dataset_path, exist_ok=True)
-                self._create_or_append_to_dataset(h, index, mode='create')
 
     @property
     def dataset(self):

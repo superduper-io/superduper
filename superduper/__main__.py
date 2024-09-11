@@ -3,7 +3,6 @@ import sys
 import click
 
 from superduper.cli import app, apply, info
-from superduper.cli.serve import cdc, local_cluster, ray_serve, vector_search
 
 __all__ = (
     'apply',

@@ -18,7 +18,7 @@ import yaml
 from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import EventType
-from superduper.base.leaf import Leaf
+from superduper.base.leaf import Leaf, LeafMeta
 from superduper.jobs.job import Job
 
 if t.TYPE_CHECKING:
@@ -27,6 +27,8 @@ if t.TYPE_CHECKING:
     from superduper.base.event import Event
     from superduper.components.datatype import DataType
     from superduper.components.plugin import Plugin
+
+
 
 
 def _build_info_from_path(path: str):
@@ -78,7 +80,31 @@ ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version
 ComponentTuple.__doc__ = 'noqa'
 
 
-class Component(Leaf):
+class ComponentMeta(LeafMeta):
+    """Metaclass for the `Component` class.
+    
+    This component is used to aggregate all the triggers
+    from the base classes. # noqa
+    """
+    def __new__(cls, name, bases, dct):
+        # Create the new class using type.__new__
+        new_cls = super().__new__(cls, name, bases, dct)
+        # Initialize the trigger registry
+        new_cls.triggers = set()
+
+        for base in bases:
+            if hasattr(base, 'triggers'):
+                new_cls.triggers.update(base.triggers)
+        
+        # Register new triggers from current class definition
+        for attr_name, attr_value in dct.items():
+            if hasattr(attr_value, 'events'):
+                new_cls.triggers.add(attr_name)
+
+        return new_cls
+
+
+class Component(Leaf, metaclass=ComponentMeta):
     """Base class for all components in superduper.io.
 
     Class to represent superduper.io serializable entities
@@ -93,16 +119,26 @@ class Component(Leaf):
                   task e.g model prediction.
     """
 
+    triggers: t.ClassVar[t.List] = []
+    trigger: t.ClassVar[bool] = False
     type_id: t.ClassVar[str] = 'component'
+    # TODO is this used for anything?
     leaf_type: t.ClassVar[str] = 'component'
+    # TODO do something more elegant than this
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
+    # TODO what is this for?
     changed: t.ClassVar[set] = set([])
 
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = False
+
+    def set_db(self, value):
+        self.db = value
+        for child in self.get_children():
+            child.set_db(value)
 
     def get_children_refs(self, deep: bool = False):
         """Get all the children of the component."""
@@ -168,33 +204,12 @@ class Component(Leaf):
         return list(set(deps))
 
     def _filter_trigger(self, name, event_type):
-        try:
-            attr = getattr(self, name, None)
-        except Exception as e:
-            logging.warn(
-                f'Error getting attribute {name} for component {self.identifier}: {e}'
-            )
-            return False
-
-        # Must exist as a method
-        if not attr:
-            return False
-
-        # Must be a method
-        if not callable(attr):
-            return False
-
-        try:
-            if event_type not in getattr(attr, 'events', ()):
-                return False
-        except Exception as e:
-            logging.warn(
-                f'Error getting attribute {name} for component {self.identifier}: {e}'
-            )
+        attr = getattr(self, name)
+        if event_type not in getattr(attr, 'events', ()):
             return False
 
         for item in attr.requires:
-            if not getattr(self, item, None):
+            if getattr(self, item) is None:
                 return False
 
         return True
@@ -207,18 +222,9 @@ class Component(Leaf):
         """
         # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
-        d = set(dir(self)) - {'get_triggers', 'triggers'}
         return [
-            attr_name for attr_name in d if self._filter_trigger(attr_name, event_type)
+            attr_name for attr_name in self.triggers if self._filter_trigger(attr_name, event_type)
         ]
-
-    @property
-    def triggers(self):
-        """Get all the triggers for the component."""
-        out = []
-        for event_type in EventType:
-            out.extend(self.get_triggers(event_type))
-        return sorted(list(set(out)))
 
     def run_jobs(
         self,
@@ -429,20 +435,6 @@ class Component(Leaf):
                 schema[f.name] = dill_serializer
         return Schema(identifier=f'serializer/{self.identifier}', fields=schema)
 
-    @property
-    def db(self) -> Datalayer:
-        """Datalayer instance."""
-        return self._db
-
-    @db.setter
-    def db(self, value: Datalayer):
-        """Datalayer instance property setter.
-
-        :param value: Datalayer instance to set.
-
-        """
-        self._db = value
-
     def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created.
 
@@ -458,9 +450,13 @@ class Component(Leaf):
         :param db: the db that creates the component.
         """
         assert db
+        self.declare_component(db.cluster)
+
+    def declare_component(self, cluster):
         if self.triggers:
-            db.compute.queue.declare_component(self)
-            db.compute.declare_component(self)
+            cluster.queue.put(self)
+        if self.cache:
+            cluster.cache.put(self)
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store.
@@ -468,6 +464,7 @@ class Component(Leaf):
         :param db: the db that loaded the component.
         """
         assert db
+        self.declare_component(db.cluster)
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):

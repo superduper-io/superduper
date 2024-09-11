@@ -11,6 +11,7 @@ import superduper as s
 from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.backends import vector_searcher_implementations
+from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStore
@@ -32,7 +33,6 @@ from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
 from superduper.misc.special_dicts import recursive_update
 from superduper.vector_search.base import BaseVectorSearcher
-from superduper.vector_search.interface import FastVectorSearcher
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -52,25 +52,15 @@ class Datalayer:
     :param databackend: Object containing connection to Datastore.
     :param metadata: Object containing connection to Metadatastore.
     :param artifact_store: Object containing connection to Artifactstore.
-    :param compute: Object containing connection to ComputeBackend.
+    :param cluster: Cluster object containing connections to infrastructure.
     """
-
-    type_id_to_cache_mapping = {
-        'model': 'models',
-        'metric': 'metrics',
-        'datatype': 'datatypes',
-        'vector_index': 'vector_indices',
-        'schema': 'schemas',
-        'listener': 'listeners',
-    }
-    cache_to_type_id_mapping = {v: k for k, v in type_id_to_cache_mapping.items()}
 
     def __init__(
         self,
         databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
-        compute: ComputeBackend = LocalComputeBackend(),
+        cluster: Cluster,
     ):
         """
         Initialize Data Layer.
@@ -82,28 +72,17 @@ class Datalayer:
         """
         logging.info("Building Data Layer")
 
-        self.metrics = LoadDict(self, field='metric')
-        self.models = LoadDict(self, field='model')
-        self.datatypes = LoadDict(self, field='datatype')
-        self.listeners = LoadDict(self, field='listener')
-        self.vector_indices = LoadDict(self, field='vector_index')
-        self.schemas = LoadDict(self, field='schema')
-        self.tables = LoadDict(self, field='table')
-
-        self.fast_vector_searchers = LoadDict(
-            self, callable=self.initialize_vector_searcher
-        )
         self.metadata = metadata
+
         self.artifact_store = artifact_store
-        self.artifact_store.serializers = self.datatypes
+        self.artifact_store.db = self
 
         self.databackend = databackend
         self.databackend.datalayer = self
 
-        self._cdc = None
+        self.cluster = cluster
+        self.cluster.db = self
 
-        self.compute = compute
-        self.compute.queue.db = self
         self._cfg = s.CFG
 
     def __getitem__(self, item):
@@ -118,34 +97,6 @@ class Datalayer:
     def cdc(self, cdc):
         """CDC property setter."""
         self._cdc = cdc
-
-    def initialize_vector_searcher(
-        self, vi, searcher_type: t.Optional[str] = None
-    ) -> t.Optional[BaseVectorSearcher]:
-        """
-        Initialize vector searcher.
-
-        :param vi: Identifying string to component.
-        :param searcher_type: Searcher type (in_memory|native).
-        """
-        searcher_type = searcher_type or s.CFG.cluster.vector_search.type
-
-        logging.info(f"Initializing vector searcher with type {searcher_type}")
-        if isinstance(vi, str):
-            vi = self.vector_indices.force_load(vi)
-        from superduper import VectorIndex
-
-        assert isinstance(vi, VectorIndex)
-
-        assert vi.indexing_listener.select is not None
-        clt = vi.indexing_listener.select.table_or_collection
-
-        vector_search_cls = vector_searcher_implementations[searcher_type]
-        logging.info(f"Using vector searcher: {vector_search_cls}")
-        vector_comparison = vector_search_cls.from_component(vi)
-
-        assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
-        return FastVectorSearcher(self, vector_comparison, vi.identifier)
 
     # TODO - needed?
     def set_compute(self, new: ComputeBackend):
@@ -169,10 +120,7 @@ class Datalayer:
         logging.info(f"Connecting to compute engine: {new.name}")
         self.compute = new
 
-    def disconnect(self):
-        """Disconnect from the compute engine."""
-        self.compute.disconnect()
-
+    # TODO needed?
     def get_compute(self):
         """Get compute."""
         return self.compute
@@ -191,15 +139,15 @@ class Datalayer:
         ):
             logging.warn("Aborting...")
 
-        if self._cfg.cluster.vector_search.uri:
-            for vi in self.show('vector_index'):
-                FastVectorSearcher.drop_remote(vi)
+        # drop the cache, vector-indexes, triggers, queues
+        self.cluster.drop(force=True)
 
         if data:
             self.databackend.drop(force=True)
             self.artifact_store.drop(force=True)
         else:
             self.databackend.drop_outputs()
+
         self.metadata.drop(force=True)
 
     def show(
@@ -291,11 +239,10 @@ class Datalayer:
         :param delete: The delete query object specifying the data to be deleted.
         """
         result = delete.do_execute(self)
-        cdc_status = s.CFG.cluster.cdc.uri is not None
-        if refresh and not cdc_status:
-            return result, self.on_event(
-                delete, ids=result, event_type=EventType.delete
-            )
+        # TODO - do we need this refresh?
+        # If the handle-event works well, then we should not need this 
+        if refresh:
+            self.cluster.cdc.handle_event(event_type=EventType.delete, query=delete, ids=result)
         return result, None
 
     def _insert(
@@ -326,26 +273,26 @@ class Datalayer:
 
         inserted_ids = insert.do_execute(self)
 
-        cdc_status = s.CFG.cluster.cdc.uri is not None
-        is_output_table = insert.table.startswith(CFG.output_prefix)
-
         logging.info(f'Inserted {len(inserted_ids)} documents into {insert.table}')
         logging.debug(f'Inserted IDs: {inserted_ids}')
 
-        if refresh:
-            if cdc_status and not is_output_table:
-                logging.warn('CDC service is active, skipping model/listener refresh')
-            else:
-                return inserted_ids, self.on_event(
-                    insert,
-                    ids=inserted_ids,
-                )
+        # Do we want to hide this
+        self.cluster.cdc.handle_event(event_type=EventType.insert, query=insert, ids=inserted_ids)
+
+        # if refresh:
+            # if cdc_status and not is_output_table:
+            #     logging.warn('CDC service is active, skipping model/listener refresh')
+            # else:
+            #     return inserted_ids, self.on_event(
+            #         insert,
+            #         ids=inserted_ids,
+            #     )
 
         return inserted_ids, None
 
     def _auto_create_table(self, table_name, documents):
         try:
-            table = self.tables[table_name]
+            table = self.load('table', table_name)
             return table
         except FileNotFoundError:
             logging.info(f"Table {table_name} does not exist, auto creating...")
@@ -374,6 +321,7 @@ class Datalayer:
         :param ids: IDs that further reduce the scope of computations.
         """
         event_datas = query.get_events(ids)
+
         if not event_datas:
             return
 
@@ -392,8 +340,8 @@ class Datalayer:
         logging.info(
             f'Created {len(events)} events for {event_type} on [{query.table}]'
         )
-        logging.info(f'Broadcasting {len(events)} events')
-        return self.compute.broadcast(events)
+        logging.info(f'Publishing {len(events)} events')
+        return self.cluster.queue.publish(events)
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
@@ -402,26 +350,16 @@ class Datalayer:
         :param write: The update query object specifying the data to be written.
         :param refresh: Boolean indicating whether to refresh the task group on write.
         """
-        write_result, updated_ids, deleted_ids = write.do_execute(self)
+        _, updated_ids, deleted_ids = write.do_execute(self)
 
-        cdc_status = s.CFG.cluster.cdc.uri is not None
         if refresh:
-            if cdc_status:
-                logging.warn('CDC service is active, skipping model/listener refresh')
-            else:
-                jobs = []
-                if updated_ids:
-                    job = self.on_event(
-                        query=write, ids=updated_ids, event_type=EventType.update
-                    )
-                    jobs.append(job)
-                if deleted_ids:
-                    job = self.on_event(
-                        query=write, ids=deleted_ids, event_type=EventType.delete
-                    )
-                    jobs.append(job)
 
-                return updated_ids, deleted_ids, jobs
+            if updated_ids:
+                self.cluster.cdc.handle_event(event_type=EventType.update, query=write, ids=updated_ids)
+
+            if deleted_ids:
+                self.cluster.cdc.handle_event(event_type=EventType.delete, query=write, ids=deleted_ids)
+                
         return updated_ids, deleted_ids, None
 
     def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
@@ -436,18 +374,22 @@ class Datalayer:
         """
         updated_ids = update.do_execute(self)
 
-        cdc_status = s.CFG.cluster.cdc.uri is not None
-        is_output_table = update.table.startswith(CFG.output_prefix)
-        if refresh and updated_ids:
-            if cdc_status and not is_output_table:
-                logging.warn('CDC service is active, skipping model/listener refresh')
-            else:
-                # Overwrite should be true since updates could be done on collections
-                # with already existing outputs.
-                # We need overwrite outputs on those select and recompute predict
-                return updated_ids, self.on_event(
-                    query=update, ids=updated_ids, event_type=EventType.upsert
-                )
+        # cdc_status = s.CFG.cluster.cdc.uri is not None
+        # is_output_table = update.table.startswith(CFG.output_prefix)
+
+        if refresh:
+            self.cluster.cdc.handle_event(event_type=EventType.update, query=update, ids=updated_ids)
+
+        # if refresh and updated_ids:
+        #     if cdc_status and not is_output_table:
+        #         logging.warn('CDC service is active, skipping model/listener refresh')
+        #     else:
+        #         # Overwrite should be true since updates could be done on collections
+        #         # with already existing outputs.
+        #         # We need overwrite outputs on those select and recompute predict
+        #         return updated_ids, self.on_event(
+        #             query=update, ids=updated_ids, event_type=EventType.upsert
+        #         )
         return updated_ids, None
 
     @deprecated
@@ -565,6 +507,7 @@ class Datalayer:
                              of deprecated components.
         :param uuid: [Optional] UUID of the component to load.
         """
+
         if type_id == 'encoder':
             logging.warn(
                 '"encoder" has moved to "datatype" this functionality will not work'
@@ -591,16 +534,21 @@ class Datalayer:
             )
             assert info is not None
             type_id = info['type_id']
+
+        if info.get('cache', False):
+            try:
+                return self.cluster.cache[info['type_id'], info['identifier']]
+            except KeyError:
+                logging.info(f'Component {info["uuid"]} not found in cache, loading from db')
+
         m = Document.decode(info, db=self)
         m.db = self
         m.on_load(self)
 
         assert type_id is not None
-        if cm := self.type_id_to_cache_mapping.get(type_id):
-            try:
-                getattr(self, cm)[m.identifier] = m
-            except KeyError:
-                raise exceptions.ComponentException('%s not found in %s cache'.format())
+        if m.cache:
+            logging.info(f'Adding component {info["uuid"]} to cache.')
+            self.cluster.cache.put(m)
         return m
 
     def _add_child_components(self, components, parent):
@@ -689,8 +637,7 @@ class Datalayer:
                 type_id=object.type_id, identifier=object.identifier
             ),
         )
-        self.compute.broadcast([event])
-        self._add_component_to_cache(object)
+        self.cluster.queue.publish([event])
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""
@@ -738,6 +685,7 @@ class Datalayer:
             f'You are about to delete {type_id}/{identifier}{version}, are you sure?',
             default=False,
         ):
+            # TODO - make this less I/O intensive
             component = self.load(
                 type_id, identifier, version=version, allow_hidden=force
             )
@@ -745,14 +693,10 @@ class Datalayer:
                 type_id, identifier, version=version, allow_hidden=force
             )
             component.cleanup(self)
-
-            if type_id in self.type_id_to_cache_mapping:
-                try:
-                    del getattr(self, self.type_id_to_cache_mapping[type_id])[
-                        identifier
-                    ]
-                except KeyError:
-                    pass
+            try:
+                del self.cluster.cache[component.uuid]
+            except KeyError:
+                pass
 
             self._delete_artifacts(r['uuid'], info)
             self.metadata.delete_component_version(type_id, identifier, version=version)
@@ -826,6 +770,19 @@ class Datalayer:
             type_id=object.type_id,
             version=object.version,
         )
+        self.expire(object.uuid)
+
+    def expire(self, uuid):
+        parents = True
+        self.cluster.cache.expire(uuid)
+        parents = self.metadata.get_component_version_parents(uuid)
+        while parents:
+            for uuid in parents:
+                self.cluster.cache.expire(uuid)
+            parents = sum(
+                [self.metadata.get_component_version_parents(uuid) for uuid in parents],
+                [],
+            )
 
     def _save_artifact(self, uuid, info: t.Dict):
         """
@@ -888,7 +845,7 @@ class Datalayer:
             assert isinstance(like, dict)
             like = Document(like)
         like = self._get_content_for_filter(like)
-        vi = self.vector_indices[vector_index]
+        vi = self.load('vector_index', vector_index)
         if outputs is None:
             outs: t.Dict = {}
         else:
@@ -898,7 +855,7 @@ class Datalayer:
         logging.info(str(outs))
         return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
-    def close(self):
+    def disconnect(self):
         """Gracefully shutdown the Datalayer."""
         logging.info("Disconnect from Data Store")
         self.databackend.disconnect()
@@ -909,22 +866,8 @@ class Datalayer:
         logging.info("Disconnect from Artifact Store")
         self.artifact_store.disconnect()
 
-        logging.info("Disconnect from Compute Engine")
-        self.compute.disconnect()
-
-    def _add_component_to_cache(self, component: Component):
-        """
-        Add component to cache when it is added to the db.
-
-        Avoiding the need to load it from the db again.
-        """
-        type_id = component.type_id
-        if cm := self.type_id_to_cache_mapping.get(type_id):
-            # NOTE: We need to reload the object since in `schedule_jobs`
-            # of the object, `db.replace` might be performed.
-            # e.g model prediction object is replace with updated datatype.
-            self.load(type_id, component.identifier)
-            getattr(self, cm)[component.identifier] = component
+        logging.info("Disconnect from Cluster")
+        self.cluster.disconnect()
 
     def infer_schema(
         self, data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None
@@ -947,41 +890,3 @@ class Datalayer:
         """Set the configuration object for the datalayer."""
         assert isinstance(cfg, Config)
         self._cfg = cfg
-
-
-@dc.dataclass
-class LoadDict(dict):
-    """
-    Helper class to load component identifiers with on-demand loading from the database.
-
-    :param database: Instance of Datalayer.
-    :param field: (optional) Component type identifier.
-    :param callable: (optional) Callable function on key.
-    """
-
-    database: Datalayer
-    field: t.Optional[str] = None
-    callable: t.Optional[t.Callable] = None
-
-    def __missing__(self, key: t.Union[str, Component]):
-        if self.field is not None:
-            key = key.identifier if isinstance(key, Component) else key
-            value = self[key] = self.database.load(
-                self.field,
-                key,
-            )
-        else:
-            msg = f'callable is ``None`` for {key}'
-            assert self.callable is not None, msg
-            value = self.callable(key)
-            key = key.identifier if isinstance(key, Component) else key
-            self[key] = value
-        return value
-
-    def force_load(self, key: str):
-        """
-        Force load the component from database.
-
-        :param key: Force load key
-        """
-        return self.__missing__(key)

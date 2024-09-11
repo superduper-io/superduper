@@ -24,7 +24,8 @@ def _dataclass_from_dict(data_class: t.Any, data: dict):
             params[f] = _dataclass_from_dict(field_types[f], data[f])
         else:
             params[f] = data[f]
-    return data_class(**params)
+    valid_params = {k: v for k, v in params.items() if k in field_types}
+    return data_class(**valid_params)
 
 
 @dc.dataclass
@@ -46,7 +47,10 @@ class BaseConfig:
                 parameters[parent] = getattr(self, parent)(**{child: v})
             else:
                 parameters[k] = v
-        return _dataclass_from_dict(type(self), parameters)
+        out = _dataclass_from_dict(type(self), parameters)
+        if hasattr(self, 'cluster'):
+            out.cluster = self.cluster
+        return out
 
     def dict(self):
         """Return the configuration as a dictionary."""
@@ -67,157 +71,6 @@ class Retry(BaseConfig):
     wait_max: float = 10.0
     wait_min: float = 4.0
     wait_multiplier: float = 1.0
-
-
-@dc.dataclass
-class CDCStrategy:
-    """Base CDC strategy dataclass.
-
-    :param type: The type of CDC strategy
-    """
-
-    type: str
-
-
-@dc.dataclass
-class PollingStrategy(CDCStrategy):
-    """Describes a polling strategy for change data capture.
-
-    :param auto_increment_field: The field to use for auto-incrementing
-    :param frequency: The frequency to poll for changes
-    :param type: The type of CDC strategy
-    """
-
-    auto_increment_field: t.Optional[str] = None
-    frequency: str = "30"
-    type: str = "incremental"
-
-
-@dc.dataclass
-class LogBasedStrategy(CDCStrategy):
-    """Describes a log-based strategy for change data capture.
-
-    :param resume_token: The resume token to use for log-based CDC
-    :param type: The type of CDC strategy
-    """
-
-    resume_token: t.Optional[t.Dict[str, str]] = None
-    type: str = "logbased"
-
-
-@dc.dataclass
-class CDCConfig(BaseConfig):
-    """Describes the configuration for change data capture.
-
-    :param uri: The URI for the CDC service
-    :param strategy: The strategy to use for CDC
-    """
-
-    uri: t.Optional[str] = None  # None implies local mode
-    strategy: t.Union[PollingStrategy, LogBasedStrategy] = dc.field(
-        default_factory=PollingStrategy
-    )
-
-
-@dc.dataclass
-class VectorSearch(BaseConfig):
-    """Describes the configuration for vector search.
-
-    :param uri: The URI for the vector search service
-    :param type: The type of vector search service
-    :param backfill_batch_size: The size of the backfill batch
-    """
-
-    uri: t.Optional[str] = None  # None implies local mode
-    type: str = "in_memory"  # in_memory|lance|qdrant
-    backfill_batch_size: int = 100
-
-
-@dc.dataclass
-class Rest(BaseConfig):
-    """Describes the configuration for the REST service.
-
-    :param uri: The URI for the REST service
-    :param config: The path to the config yaml file
-        for the REST service
-    """
-
-    uri: t.Optional[str] = None
-    config: t.Optional[str] = None
-
-
-@dc.dataclass
-class CronTab(BaseConfig):
-    """Describes the configuration for the crontab service.
-
-    :param uri: The URI for the crontab service
-    """
-
-    uri: t.Optional[str] = None
-
-
-@dc.dataclass
-class SchedulerConfig(BaseConfig):
-    """Describes the configuration for scheduler service.
-
-    :param uri: The URI for the scheduler service.
-    """
-
-    uri: t.Optional[str] = None  # None implies local mode
-
-
-@dc.dataclass
-class QueueConfig(BaseConfig):
-    """Describes the configuration for message broker service.
-
-    :param uri: The URI for the scheduler service.
-    """
-
-    uri: t.Optional[str] = None  # None implies local mode
-
-
-@dc.dataclass
-class Compute(BaseConfig):
-    """Describes the configuration for distributed computing.
-
-    :param uri: The URI for the compute service.
-    :param kwargs: The keyword arguments to pass to the compute service.
-    :param backend: Compute backend.
-    """
-
-    uri: t.Optional[str] = None
-    kwargs: t.Dict = dc.field(default_factory=dict)
-    backend: str = "local"
-
-
-@dc.dataclass
-class Cluster(BaseConfig):
-    """Describes a connection to distributed work via Ray.
-
-    :param compute: The URI for compute
-                    - None: run all jobs in local mode i.e. simple function call
-                    - "ray://host:port": Run all jobs on a remote ray cluster
-    :param crontab: The URI for the crontab service
-    :param vector_search: The URI for the vector search service
-                          - None: Run vector search on local
-                          - `f"http://{host}:{port}"`:
-                            Connect a remote vector search service
-    :param rest: The URI for the REST service
-                          - `f"http://{host}:{port}"`:
-                            Connect a remote vector search service
-    :param cdc: The URI for the change data capture service (if "None"
-                then no cdc assumed)
-                None: Run cdc on local as a thread.
-                - `f"{http://{host}:{port}"`: Connect a remote cdc service
-    :param scheduler: The URI for the scheduler service
-    """
-
-    compute: Compute = dc.field(default_factory=Compute)
-    crontab: CronTab = dc.field(default_factory=CronTab)
-    vector_search: VectorSearch = dc.field(default_factory=VectorSearch)
-    rest: Rest = dc.field(default_factory=Rest)
-    cdc: CDCConfig = dc.field(default_factory=CDCConfig)
-    scheduler: SchedulerConfig = dc.field(default_factory=SchedulerConfig)
 
 
 class LogLevel(str, Enum):
@@ -275,7 +128,8 @@ class Config(BaseConfig):
                        Default: .superduper/vector_indices
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
-    :param cluster: Settings distributed computing and change data capture
+    :param vector_search_engine: The engine to use for vector search
+    :param cluster_engine: The engine to use for operating a distributed cluster
     :param retries: Settings for retrying failed operations
     :param downloads: Settings for downloading files
     :param fold_probability: The probability of validation fold
@@ -297,8 +151,9 @@ class Config(BaseConfig):
 
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
+    vector_search_engine: str = 'local'
+    cluster_engine: str = 'local'
 
-    cluster: Cluster = dc.field(default_factory=Cluster)
     retries: Retry = dc.field(default_factory=Retry)
     downloads: Downloads = dc.field(default_factory=Downloads)
 

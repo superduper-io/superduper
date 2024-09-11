@@ -28,22 +28,22 @@ class ArtifactStore(ABC):
     ):
         self.name = name
         self.conn = conn
-        self._serializers = None
+        self._db = None
         self.flavour = flavour
 
     @property
-    def serializers(self):
-        """Return the serializers."""
-        assert self._serializers is not None, 'Serializers not initialized!'
-        return self._serializers
+    def db(self):
+        """Return the db."""
+        assert self._db is not None, 'db not initialized!'
+        return self._db
 
-    @serializers.setter
-    def serializers(self, value):
-        """Set the serializers.
+    @db.setter
+    def db(self, value):
+        """Set the db.
 
-        :param value: The serializers.
+        :param value: The db.
         """
-        self._serializers = value
+        self._db = value
 
     @abstractmethod
     def url(self):
@@ -85,7 +85,7 @@ class ArtifactStore(ABC):
         if file_id is None:
             assert uri is not None, "if file_id is None, uri can\'t be None"
             file_id = _construct_file_id_from_uri(uri)
-            if self.serializers[datatype].directory:
+            if self.load('datatype', datatype).directory:
                 assert datatype is not None
                 file_id = os.path.join(datatype.directory, file_id)
         return self._exists(file_id)

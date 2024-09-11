@@ -15,12 +15,15 @@ class Application(Component):
     :param components: List of components to group together and apply to `superduper`.
     :param namespace: List of tuples with type_id and identifier of components to
         assist in managing application.
+    :param link: A reference link to web app serving the application
+                 i.e. streamlit, gradio, etc
     """
 
     literals: t.ClassVar[t.Sequence[str]] = ("template",)
     type_id: t.ClassVar[str] = "application"
     components: t.Sequence[Component]
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
+    link: t.Optional[str] = None
 
     def pre_create(self, db: "Datalayer"):
         """Pre-create hook.

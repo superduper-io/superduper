@@ -223,6 +223,7 @@ class MongoDataBackend(BaseDataBackend):
 
         if ids is not None:
             ready_ids = [id for id in ids if id in ready_ids]
+
         self._log_check_ready_ids_message(input_ids, ready_ids)
         return ready_ids
 

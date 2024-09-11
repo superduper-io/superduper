@@ -6,10 +6,11 @@ def test_vector_index_recovery(db):
     table = db["documents"]
     primary_id = table.primary_id
     vector_index = "vector_index"
+    uuid = db.show('vector_index', vector_index, -1)['uuid']
     sample_data = list(table.select().execute())[50]
 
     # Simulate restart
-    del db.fast_vector_searchers[vector_index]
+    del db.cluster.vector_search[vector_index]
 
     db.load('vector_index', vector_index)
 
@@ -29,5 +30,10 @@ def test_vector_index_cleanup(db):
     build_vector_index(db)
     vector_index = "vector_index"
 
+    uuid = db.show('vector_index', vector_index, -1)['uuid']
+
+    assert vector_index, uuid in db.cluster.vector_search.list()
+
     db.remove('vector_index', vector_index, force=True)
-    assert vector_index not in db.fast_vector_searchers
+
+    assert vector_index, uuid not in db.cluster.vector_search.list()

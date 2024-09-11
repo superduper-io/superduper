@@ -145,7 +145,6 @@ def clean():
 
 def test_upstream(db, clean):
     c1 = UpstreamComponent(identifier='c1')
-
     m = MyListener(
         identifier='l1',
         upstream=[c1],
@@ -158,3 +157,25 @@ def test_upstream(db, clean):
     )
 
     db.apply(m)
+
+
+def test_set_db_deep(db):
+    c1 = UpstreamComponent(identifier='c1')
+    m = MyListener(
+        identifier='l1',
+        upstream=[c1],
+        model=ObjectModel(
+            identifier="model1",
+            object=lambda x: x + 2,
+        ),
+        key="x",
+        select=db["docs"].find(),
+    )
+
+    assert m.upstream[0].db is None
+    assert m.model.db is None
+
+    m.set_db(db)
+
+    assert m.upstream[0].db is not None
+    assert m.model.db is not None

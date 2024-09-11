@@ -19,8 +19,7 @@ from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.document import Document
 from superduper.base.exceptions import DatabackendException
-from superduper.base.leaf import LeafMeta
-from superduper.components.component import Component, ensure_initialized
+from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
@@ -322,7 +321,7 @@ def init_decorator(func):
     return wrapper
 
 
-class ModelMeta(LeafMeta):
+class ModelMeta(ComponentMeta):
     """Metaclass for the `Model` class and descendants # noqa."""
 
     def __new__(mcls, name, bases, dct):
@@ -377,8 +376,6 @@ class Model(Component, metaclass=ModelMeta):
         super().__post_init__(db, artifacts)
         from superduper import CFG
 
-        compute_kwargs = CFG.cluster.compute.kwargs
-        self.compute_kwargs = self.compute_kwargs or compute_kwargs
         self._is_initialized = False
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
@@ -425,7 +422,7 @@ class Model(Component, metaclass=ModelMeta):
     def _prepare_select_for_predict(self, select, db):
         if isinstance(select, dict):
             select = Document.decode(select).unpack()
-        select.set_db(db)
+        select.db = db
         return select
 
     def _get_ids_from_select(
@@ -645,6 +642,7 @@ class Model(Component, metaclass=ModelMeta):
             self.datatype is not None,
             len(outputs) == 0,
         ]
+
         if any(skip_conds):
             return
 
@@ -654,7 +652,19 @@ class Model(Component, metaclass=ModelMeta):
             assert isinstance(output, list), 'Flatten is set but output is not list'
             output = output[0]
 
-        self.datatype = self.db.infer_schema({"data": output}).fields.get("data", None)
+        # TODO we should remove this MongoDB specific logic
+        # An idea is to make `Schema` a subclass of `Datatype`, but change
+        # The way encoding works
+        # Output schema only for mongodb
+        if isinstance(output, dict) and self.db.databackend.db_type == DBType.MONGODB:
+            output_schema = self.db.infer_schema(output)
+            if output_schema.fields:
+                self.output_schema = output_schema
+                self.db.apply(self.output_schema)
+        else:
+            self.datatype = self.db.infer_schema({"data": output}).fields.get(
+                "data", None
+            )
 
         if self.datatype is not None and not self.db.databackend.check_output_dest(
             predict_id

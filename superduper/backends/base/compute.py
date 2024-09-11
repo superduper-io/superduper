@@ -1,16 +1,18 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduper.base.event import Event
+from superduper.backends.base.backends import BaseBackend
 from superduper.jobs.job import Job
 
 
-class ComputeBackend(ABC):
+class ComputeBackend(BaseBackend):
     """
     Abstraction for sending jobs to a distributed compute platform.
 
     :param args: *args for `ABC`
     :param kwargs: *kwargs for `ABC`
+
+    # noqa
     """
 
     @property
@@ -33,14 +35,6 @@ class ComputeBackend(ABC):
 
     def get_local_client(self):
         """Returns a local version of self."""
-        pass
-
-    def broadcast(self, events: t.List[Event]):
-        """Broadcast events to the corresponding component.
-
-        :param events: List of events.
-        :param to: Destination component.
-        """
         pass
 
     @abstractmethod

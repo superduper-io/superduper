@@ -461,7 +461,7 @@ def download_content(
     if isinstance(query, dict):
         query = Document.decode(query).unpack()
         query = t.cast(Query, query)
-        query.set_db(db)
+        query.db = db
 
     if documents is not None:
         pass

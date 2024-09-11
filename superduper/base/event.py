@@ -26,7 +26,6 @@ class EventType(str, Enum):
     insert = 'insert'
     delete = 'delete'
     update = 'update'
-    upsert = 'upsert'  # TODO why do we need this?
     apply = 'apply'
 
 

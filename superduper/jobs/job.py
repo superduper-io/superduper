@@ -41,7 +41,7 @@ class Job:
 
         :param dependencies: list of dependencies
         """
-        return self.db.compute.submit(self, dependencies=dependencies)
+        return self.db.cluster.compute.submit(self, dependencies=dependencies)
 
     def dict(self):
         """Return a dictionary representation of the job."""

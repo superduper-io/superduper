@@ -9,7 +9,6 @@ from superduper.base.datalayer import Datalayer
 from superduper.components.model import Mapping
 from superduper.components.trigger import Trigger
 from superduper.jobs.annotations import trigger
-from superduper.misc.server import request_server
 
 from .model import Model, ModelInputType
 
@@ -95,22 +94,6 @@ class Listener(Trigger):
         :param db: Data layer instance.
         """
         self.create_output_dest(db, self.predict_id, self.model)
-        if self.select is not None:
-            logging.info('Requesting listener setup on CDC service')
-            if CFG.cluster.cdc.uri and not self.dependencies:
-                logging.info('Sending request to add listener')
-                request_server(
-                    service='cdc',
-                    endpoint='component/add',
-                    args={'name': self.identifier, 'type_id': self.type_id},
-                    type='get',
-                )
-            else:
-                logging.info(
-                    'Skipping listener setup on CDC service since no URI is set'
-                )
-        else:
-            logging.info('Skipping listener setup on CDC service')
         super().post_create(db)
 
     @classmethod
@@ -167,15 +150,15 @@ class Listener(Trigger):
 
         if self.select.table == query.table:
             trigger_ids = list(primary_ids)
-
         else:
             trigger_ids = [
                 doc['_source'] for doc in query.documents if '_source' in doc
             ]
 
-        return self.db.databackend.check_ready_ids(
+        out = self.db.databackend.check_ready_ids(
             self.select, self._ready_keys, trigger_ids
         )
+        return out
 
     @property
     def _ready_keys(self):

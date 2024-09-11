@@ -187,27 +187,28 @@ class Query(_BaseQuery):
 
     # TODO - not necessary: either `Document.decode(r, db=db)`
     # or `db['table'].select...`
-    def set_db(self, db: 'Datalayer'):
+    
+    def set_db(self, value: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
         :param db: The datalayer to use to execute the query.
         """
 
-        def _set_db(r, db):
+        def _set_the_db(r, db):
             if isinstance(r, (tuple, list)):
-                out = [_set_db(x, db) for x in r]
+                out = [_set_the_db(x, db) for x in r]
                 return out
             if isinstance(r, Document):
-                return Document({k: _set_db(v, db) for k, v in r.items()})
+                return Document({k: _set_the_db(v, db) for k, v in r.items()})
             if isinstance(r, dict):
-                return {k: _set_db(v, db) for k, v in r.items()}
+                return {k: _set_the_db(v, db) for k, v in r.items()}
             if isinstance(r, Query):
                 r.db = db
                 return r
 
             return r
 
-        self.db = db
+        self._db = value
 
         # Recursively set db
         parts: t.List[t.Union[str, tuple]] = []
@@ -215,10 +216,11 @@ class Query(_BaseQuery):
             if isinstance(part, str):
                 parts.append(part)
                 continue
-            part_args = tuple(_set_db(part[1], db))
-            part_kwargs = _set_db(part[2], db)
+            part_args = tuple(_set_the_db(part[1], value))
+            part_kwargs = _set_the_db(part[2], value)
             part = part[0]
             parts.append((part, part_args, part_kwargs))
+
         self.parts = parts
 
     @property
@@ -249,18 +251,13 @@ class Query(_BaseQuery):
 
         :param ids: List of ids.
         """
-        listeners = [
-            self.db.listeners[identifier] for identifier in self.db.show('listener')
-        ]
-        vector_indices = [
-            self.db.vector_indices[identifier]
-            for identifier in self.db.show('vector_index')
-        ]
-
+        components = self.db.cluster.cdc.triggers
         events = []
-        for component in listeners + vector_indices:
+        for type_id, identifier in components:
+            component = self.db.load(type_id=type_id, identifier=identifier)
             trigger_ids = component.trigger_ids(self, ids)
             if trigger_ids:
+                # TODO wrap these dictionaries with `Event`
                 events.append(
                     {
                         'type_id': component.type_id,
@@ -330,7 +327,7 @@ class Query(_BaseQuery):
                     document = Document(document)
                 else:
                     try:
-                        table = self.db.tables[self.table]
+                        table = self.db.load('table', self.table)
                     except FileNotFoundError:
                         raise FileNotFoundError(
                             "Table not found. Please provide a document or a dictionary"
@@ -549,7 +546,6 @@ class Query(_BaseQuery):
             logging.error(f'Error in executing query: {self}')
             if 'did not match' in str(e):
                 return self._execute(parent=parent)
-
             else:
                 raise e
         except AssertionError:
@@ -634,7 +630,7 @@ class Query(_BaseQuery):
 
         if schema is None:
             try:
-                table = self.db.tables[self.table]
+                table = self.db.load('table', self.table)
                 schema = table.schema
             except FileNotFoundError:
                 pass
@@ -801,7 +797,7 @@ class Model(_BaseQuery):
         :param db: Datalayer instance.
         """
         self.db = db
-        m = self.db.models[self.table]
+        m = self.db.load('model', self.table)
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
         if m.flatten:

@@ -1,10 +1,13 @@
 # ruff: noqa: E402
-from .base import config, configs, logger
+import os
+
+from .base import config, configs, config_settings, logger
 from .base.superduper import superduper
 
 ICON = '🔮'
+
 CFG = configs.CFG
-ROOT = configs.ROOT
+ROOT = config_settings.ROOT
 
 logging = logger.Logging
 

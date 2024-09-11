@@ -1,11 +1,13 @@
 import inspect
+import sys
 import typing as t
 
+from superduper.base.event import EventType
 from superduper.jobs.job import Job
 
 
 def trigger(
-    *event_types: t.Sequence[str],
+    *event_types: t.Sequence[EventType],
     depends: t.Sequence[str] | str = (),
     requires: t.Sequence[str] | str = (),
 ):
@@ -25,6 +27,7 @@ def trigger(
     def decorator(f):
         """Decorator to trigger a method when an event of type."""
         takes_ids = 'ids' in inspect.signature(f).parameters
+
         if event_types != ('apply',):
             assert takes_ids, (
                 f"Method {f.__name__} must take an 'ids' argument"
@@ -32,6 +35,11 @@ def trigger(
             )
 
         def decorated(self, ids: t.List[str] | None = None, job: bool = False):
+            if event_types != ('apply',):
+                msg = 'Method must be a `Trigger` instance to take non-applying events'
+                from superduper.components.trigger import Trigger
+                assert isinstance(self, Trigger), msg
+
             if job:
                 return Job(
                     type_id=self.type_id,
@@ -42,6 +50,7 @@ def trigger(
                     db=self.db,
                 )
             else:
+                self.init()
                 return f(self, ids) if takes_ids else f(self)
 
         decorated.events = event_types

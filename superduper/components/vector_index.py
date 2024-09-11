@@ -14,11 +14,15 @@ from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
+from superduper.components.trigger import Trigger
 from superduper.ext.utils import str_shape
 from superduper.jobs.annotations import trigger
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
+
+if t.TYPE_CHECKING:
+    from superduper.backends.base.cluster import Cluster
 
 KeyType = t.Union[str, t.List, t.Dict]
 
@@ -95,7 +99,7 @@ def backfill_vector_search(db, vi, searcher):
     logging.info(f'Loaded {found} vectors into vector index succesfully')
 
 
-class VectorIndex(Component):
+class VectorIndex(Trigger):
     """
     A component carrying the information to apply a vector index.
 
@@ -111,31 +115,26 @@ class VectorIndex(Component):
     compatible_listener: t.Optional[Listener] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    select: t.Optional[Query] = None
 
-    @override
-    def on_load(self, db: Datalayer) -> None:
+    def __post_init__(self, db, artifacts):
+        return super().__post_init__(db, artifacts)
+
+    def post_create(self, db: Datalayer) -> None:
+        self.indexing_listener.model = db.load(uuid=self.indexing_listener.model.uuid)
+        super().post_create(db)
+
+    def declare_component(self, cluster: 'Cluster'):
+        super().declare_component(cluster)
+        cluster.vector_search.put(self)
+
+    def pre_create(self, db: Datalayer) -> None:
+        """Called the first time this component is created.
+
+        :param db: the db that creates the component.
         """
-        On load hook to perform indexing and compatible listenernd compatible listener.
-
-        Automatically loads the listeners if they are not already loaded.
-
-        :param db: A DataLayer instance
-        """
-        if isinstance(self.indexing_listener, str):
-            self.indexing_listener = t.cast(
-                Listener, db.load('listener', self.indexing_listener)
-            )
-
-        if isinstance(self.compatible_listener, str):
-            self.compatible_listener = t.cast(
-                Listener, db.load('listener', self.compatible_listener)
-            )
-
-        # Backfill vectors into index
-        searcher = db.fast_vector_searchers[self]
-        if not searcher.is_initialized():
-            backfill_vector_search(db, self, searcher=searcher.searcher)
-            searcher.initialize()
+        super().pre_create(db)  
+        self.select = db[self.indexing_listener.outputs].select()
 
     def __hash__(self):
         return hash((self.type_id, self.identifier))
@@ -150,20 +149,16 @@ class VectorIndex(Component):
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None):
         """Copy vectors to the vector index."""
+
+        # TODO do this using the backfill_vector_search functionality here
         if ids is None:
             assert self.indexing_listener.select is not None
-            primary_id = self.indexing_listener.select.primary_id
-            cur = self.indexing_listener.select.select_ids.execute()
+            primary_id = self.select.primary_id
+            cur = self.select.select_ids.execute()
             ids = [r[primary_id] for r in cur]
-
-        query = self.db[self.indexing_listener.outputs].select()
-
-        if not ids:
-            select = query
+            docs = [r.unpack() for r in self.select.execute()]
         else:
-            select = query.select_using_ids(ids)
-
-        docs = [doc.unpack() for doc in select.execute()]
+            docs = [r.unpack() for r in self.select.select_using_ids(ids).execute()]
 
         vectors = []
         nokeys = 0
@@ -175,6 +170,7 @@ class VectorIndex(Component):
             except KeyError:
                 nokeys += 1
                 continue
+
             vectors.append(
                 {
                     'vector': vector,
@@ -192,16 +188,19 @@ class VectorIndex(Component):
         for r in vectors:
             if hasattr(r['vector'], 'numpy'):
                 r['vector'] = r['vector'].numpy()
-
+        
+        # TODO combine logic from backfill
         if vectors:
-            self.db.fast_vector_searchers[self.identifier].add(
+            searcher = self.db.cluster.vector_search[self.identifier]
+            searcher.add(
                 [VectorItem(**vector) for vector in vectors]
             )
+
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None):
         """Delete vectors from the vector index."""
-        self.db.fast_vector_searchers[self.identifier].delete(ids)
+        self.db.cluster.vector_search[self.uuid].delete(ids)
 
     def get_vector(
         self,
@@ -253,7 +252,7 @@ class VectorIndex(Component):
                     f'VectorIndex keys: {keys}, with model: {models}'
                 )
 
-        model = db.models[model_name]
+        model = db.load('model', model_name)
         data = Mapping(key, model.signature)(document)
         args, kwargs = model.handle_input_type(data, model.signature)
         return (
@@ -288,10 +287,13 @@ class VectorIndex(Component):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
         within_ids = ids or ()
 
+        searcher = db.cluster.vector_search[self.identifier]
+
         if isinstance(like, dict) and id_field in like:
-            return db.fast_vector_searchers[self.identifier].find_nearest_from_id(
+            return searcher.find_nearest_from_id(
                 str(like[id_field]), within_ids=within_ids, limit=n
             )
+
         h = self.get_vector(
             like=like,
             models=models,
@@ -300,7 +302,6 @@ class VectorIndex(Component):
             outputs=outputs,
         )[0]
 
-        searcher = db.fast_vector_searchers[self.identifier]
         return searcher.find_nearest_from_array(h, within_ids=within_ids, n=n)
 
     def cleanup(self, db: Datalayer):
@@ -308,7 +309,7 @@ class VectorIndex(Component):
 
         :param db: The datalayer to cleanup
         """
-        db.fast_vector_searchers[self.identifier].drop(db)
+        db.cluster.vector_search.drop(self.identifier)
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
@@ -337,27 +338,34 @@ class VectorIndex(Component):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
-    def trigger_ids(self, query: Query, primary_ids: t.Sequence):
-        """Get trigger IDs.
+    # def trigger_ids(self, query: Query, primary_ids: t.Sequence):
+    #     """Get trigger IDs.
 
-        Only the ids returned by this function will trigger the vector_index.
+    #     Only the ids returned by this function will trigger the vector_index.
 
-        :param query: Query object.
-        :param primary_ids: Primary IDs.
-        """
-        if not isinstance(self.indexing_listener.select, Query):
-            return []
+    #     :param query: Query object.
+    #     :param primary_ids: Primary IDs.
+    #     """
 
-        if self.indexing_listener.outputs != query.table:
-            return []
+    #             conditions = [
+    #         # trigger by main table
+    #         self.select and self.select.table == query.table,
+    #         # trigger by output table
+    #         query.table in self.key and query.table != self.outputs,
+    #     ]
+    #     if not isinstance(self.select, Query):
+    #         return []
 
-        select = self.db[self.indexing_listener.outputs]
-        ids = self.db.databackend.check_ready_ids(
-            select, [self.indexing_listener.outputs], primary_ids
-        )
-        return ids
+    #     if self.indexing_listener.outputs != query.table:
+    #         return []
+
+    #     ids = self.db.databackend.check_ready_ids(
+    #         self.select, [self.indexing_listener.outputs], primary_ids
+    #     )
+    #     return ids
 
 
+# TODO what is this?
 class EncodeArray:
     """Class to encode an array.
 

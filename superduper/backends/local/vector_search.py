@@ -3,32 +3,68 @@ import typing as t
 import numpy
 
 from superduper import logging
-from superduper.vector_search.base import BaseVectorSearcher, VectorItem, measures
+from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem, measures, VectorSearchBackend
+
+
+class LocalVectorSearchBackend(VectorSearchBackend):
+    """Local vector search backend.
+    
+    :param searcher_impl: class to use for requesting similarities
+    """
+    def __init__(self, searcher_impl: BaseVectorSearcher):
+        self._cache = {}
+        self.searcher_impl = searcher_impl
+        self._identifier_uuid_map = {}
+
+    def _put(self, vector_index):
+        searcher = self.searcher_impl.from_component(vector_index)
+        self._cache[vector_index.identifier] = searcher
+        self._identifier_uuid_map[vector_index.identifier] = vector_index.uuid
+
+    def initialize(self):
+        for identifier in self.db.show('vector_index'):
+            vector_index = self.db.load('vector_index', identifier=identifier)
+            self._put(vector_index)
+            vector_index.copy_vectors()
+
+    def list_components(self):
+        return list(self._cache.keys())
+
+    def list_uuids(self):
+        return list(self._identifier_uuid_map.values())
+
+    def __delitem__(self, identifier):
+        del self._cache[identifier]
+        del self._identifier_uuid_map[identifier]
+
+    def __getitem__(self, identifier):
+        return self._cache[identifier]
+
+    def drop(self, identifier=None):
+        if identifier is None:
+            self._cache = {}
+        del self._cache[identifier]
+        del self._identifier_uuid_map[identifier]
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):
     """
     Simple hash-set for looking up with vector similarity.
 
-    :param identifier: Unique string identifier of index
+    :param uuid: Unique string identifier of index
     :param dimensions: Dimension of the vector embeddings
-    :param h: array/ tensor of vectors
-    :param index: list of IDs
     :param measure: measure to assess similarity
     """
 
-    name = 'vanilla'
-
     def __init__(
         self,
-        identifier: str,
+        uuid: str,
         dimensions: int,
-        h: t.Optional[numpy.ndarray] = None,
-        index: t.Optional[t.List[str]] = None,
         measure: str = 'cosine',
     ):
-        self.identifier = identifier
+        self.uuid = uuid
         self.dimensions = dimensions
+
         self._cache: t.Sequence[VectorItem] = []
         self._CACHE_SIZE = 10000
 
@@ -37,18 +73,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.measure_name = measure
         self.measure = measures[measure]
 
-        if h is not None:
-            assert index is not None
-            self._setup(h, index)
-        else:
-            self.h = None
-            self.index = None
-            self.lookup = None
-
-        self.identifier = identifier
-        super().__init__(
-            identifier=identifier, dimensions=dimensions, h=h, measure=measure
-        )
+        self.h = None
+        self.index = None
+        self.lookup = None
 
     def __len__(self):
         if self.h is not None:
@@ -112,6 +139,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         scores = scores.tolist()
         _ids = [self.index[i] for i in ix]
         return _ids, scores
+
+    def initialize(self, vector_index):
+        vector_index.copy_vectors()
 
     def add(self, items: t.Sequence[VectorItem] = (), cache: bool = False) -> None:
         """Add vectors to the index.

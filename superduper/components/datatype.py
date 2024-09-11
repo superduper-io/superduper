@@ -206,6 +206,7 @@ class DataType(Component):
     intermediate_type: t.Optional[str] = IntermediateType.BYTES
     media_type: t.Optional[str] = None
     registered_types: t.ClassVar[t.Dict[str, "DataType"]] = {}
+    cache: bool = True
 
     def __post_init__(self, db, artifacts):
         """Post-initialization hook.

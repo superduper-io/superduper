@@ -265,7 +265,7 @@ def test_model_validate_in_db(db):
 
     with patch.object(model_predict, 'validate') as mock_validate:
         mock_validate.return_value = {'acc': 0.7, 'f1': 0.2}
-        model_predict.db = db
+        model_predict.set_db(db)
         model_predict.validate_in_db()
         assert model_predict.metric_values == {'my_valid/0': {'acc': 0.7, 'f1': 0.2}}
 
@@ -314,12 +314,12 @@ def test_model_fit(db):
         validation=Validation(
             'my-valid',
             datasets=[valid_dataset],
-            metrics=[MagicMock(spec=Metric)],
+            metrics=[Metric('metric', object=lambda x, y: True)],
             key=('x', 'y'),
         ),
     )
 
-    model.db = db
+    model.set_db(db)
     with patch.object(model, 'fit'):
         model.fit_in_db()
         model.fit.assert_called_once()

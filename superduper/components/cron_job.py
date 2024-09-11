@@ -1,10 +1,9 @@
 import typing as t
 
-from superduper import CFG, Component, logging
+from superduper import Component
 from superduper.base.datalayer import Datalayer
 from superduper.components.component import ensure_initialized
 from superduper.components.datatype import dill_serializer
-from superduper.misc.server import request_server
 
 
 class CronJob(Component):
@@ -25,15 +24,7 @@ class CronJob(Component):
         :param db: Datalayer instance.
         """
         super().post_create(db)
-        if CFG.cluster.crontab.uri is not None:
-            request_server(
-                service='crontab',
-                endpoint='add',
-                args={'identifier': self.identifier},
-                type='post',
-            )
-        else:
-            logging.warn('No crontab service found - cron-job will not schedule')
+        db.cluster.crontab.put(self)
 
     @ensure_initialized
     def run(self):

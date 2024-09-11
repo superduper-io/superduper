@@ -19,30 +19,27 @@ class QdrantVectorSearcher(BaseVectorSearcher):
     """
     Implementation of a vector index using [Qdrant](https://qdrant.tech/).
 
-    :param identifier: Unique string identifier of index
+    :param uuid: Unique string identifier of index
     :param dimensions: Dimension of the vector embeddings
-    :param h: Seed vectors ``numpy.ndarray``
-    :param index: list of IDs
     :param measure: measure to assess similarity
     """
 
     def __init__(
         self,
-        identifier: str,
+        uuid: str,
         dimensions: int,
-        h: t.Optional[np.ndarray] = None,
-        index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        super().__init__(identifier, dimensions, h, index, measure)
+        super().__init__(uuid, dimensions, measure)
         config_dict = deepcopy(CFG.vector_search_kwargs)
         self.vector_name: t.Optional[str] = config_dict.pop("vector_name", None)
         # Use an in-memory instance by default
         # https://github.com/qdrant/qdrant-client#local-mode
         config_dict = config_dict or {"location": ":memory:"}
+        self.dimensions = dimensions
         self.client = QdrantClient(**config_dict)
+        self.collection_name = uuid
 
-        self.collection_name = identifier
         if not self.client.collection_exists(self.collection_name):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure
@@ -53,21 +50,20 @@ class QdrantVectorSearcher(BaseVectorSearcher):
                 vectors_config=models.VectorParams(size=dimensions, distance=distance),
             )
 
-        self.initialize(identifier)
-
-        if h is not None and index is not None:
-            self.add(
-                [
-                    VectorItem(
-                        id=_id,
-                        vector=vector,
-                    )
-                    for _id, vector in zip(index, h)
-                ]
-            )
+        self.initialize(uuid)
 
     def __len__(self):
         return self.client.get_collection(self.collection_name).vectors_count
+
+    def _create_collection(self):
+        measure = (
+            measure.name if isinstance(measure, VectorIndexMeasureType) else measure
+        )
+        distance = self._distance_mapping(measure)
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(size=self.dimensions, distance=distance),
+        )
 
     def add(self, items: t.Sequence[VectorItem], cache: bool = False) -> None:
         """Add vectors to the index.
@@ -75,6 +71,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param items: List of vectors to add
         :param cache: Cache vectors (not used in Qdrant implementation).
         """
+        if not self.client.collection_exists(self.collection_name):
+            self._create_collection()
         points = [
             models.PointStruct(
                 id=self._convert_id(item.id),

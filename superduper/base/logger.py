@@ -7,8 +7,7 @@ from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerH
 from tqdm import tqdm
 
 from superduper.base.config import LogLevel, LogType
-
-from .configs import CFG
+from superduper.base.configs import CFG
 
 __all__ = ('Logging',)
 

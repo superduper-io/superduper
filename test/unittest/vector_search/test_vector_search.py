@@ -6,8 +6,8 @@ import pytest
 
 from superduper import CFG
 from superduper.vector_search.base import VectorItem
-from superduper.vector_search.in_memory import InMemoryVectorSearcher
 from superduper.vector_search.lance import LanceVectorSearcher
+from superduper.backends.local.vector_search import InMemoryVectorSearcher
 from superduper.vector_search.qdrant import QdrantVectorSearcher
 
 
@@ -26,10 +26,11 @@ def index_data(monkeypatch):
 )
 @pytest.mark.parametrize("measure", ["l2", "dot", "cosine"])
 def test_index(index_data, measure, vector_index_cls):
-    h, ids, ud = index_data
+    vectors, ids, ud = index_data
     h = vector_index_cls(
-        identifier="my-index", h=h, index=ids, measure=measure, dimensions=3
+        uuid="123456", measure=measure, dimensions=3
     )
+    h.add(items=[VectorItem(id=id_, vector=hh) for hh, id_ in zip(vectors, ids)])
     y = np.array([0, 0, 1])
     res, _ = h.find_nearest_from_array(y, 1)
     assert res[0] == ids[0]

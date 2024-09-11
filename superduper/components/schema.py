@@ -170,5 +170,4 @@ def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:
         raise ValueError(
             f'A Datalayer instance is required for encoding with schema {schema}'
         )
-
-    return db.schemas[schema]
+    return db.load('schema', schema)

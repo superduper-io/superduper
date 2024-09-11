@@ -34,6 +34,7 @@ if t.TYPE_CHECKING:
 ContentType = t.Union[t.Dict, Encodable]
 LeafMetaType = t.Type['Leaf']
 
+# TODO is this used for anything?
 _LEAF_TYPES = {
     'component': Component,
     'leaf': Leaf,

@@ -1,3 +1,4 @@
+# TODO move to services
 import base64
 import json
 import os
@@ -43,6 +44,7 @@ def _server_request_encoder(x):
     return {'_b64data': base64.b64encode(x).decode()}
 
 
+# TODO doesn't seem to be used
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):

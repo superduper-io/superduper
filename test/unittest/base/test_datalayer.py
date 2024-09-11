@@ -272,7 +272,7 @@ def test_remove_component_from_data_layer_dict(db):
     db.apply(test_datatype)
     db._remove_component_version('datatype', 'test_datatype', 0, force=True)
     with pytest.raises(FileNotFoundError):
-        db.datatypes['test_datatype']
+        db.load('datatype', 'test_datatype')
 
 
 def test_remove_component_with_artifact(db):
@@ -389,7 +389,7 @@ def test_load(db):
     datatype = db.load('datatype', 'e1')
     assert isinstance(datatype, DataType)
 
-    assert 'e1' in db.datatypes
+    assert datatype.type_id, datatype.identifier in db.cluster.cache
 
 
 def test_insert(db):
@@ -626,18 +626,18 @@ def test_retry_on_token_expiry(db):
     # Mock the methods
     db.retry = 1
 
-    def test_retry():
+    def check_retry():
         if db.retry == 1:
             db.retry = 0
             raise Exception("The connection token has been expired already")
         else:
             return True
 
-    db.databackend._backend.test_retry = test_retry
+    db.databackend._backend.test_retry = check_retry
 
     with patch.object(db.databackend._backend, 'reconnect') as reconnect:
         with patch.object(
-            db.databackend._backend, 'test_retry', side_effect=test_retry
+            db.databackend._backend, 'test_retry', side_effect=check_retry,
         ) as mock_test_retry:
             db.databackend.test_retry()
             assert reconnect.call_count == 1

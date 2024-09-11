@@ -15,7 +15,8 @@ class MyTrainer(Trainer):
     training_done = False
 
     def fit(self, *args, **kwargs):
-        MyTrainer.training_done = True
+        with open('_training_done.txt', 'w') as f:
+            pass
 
 
 @dc.dataclass
@@ -185,7 +186,17 @@ def test_listener_cleanup(db, data):
     assert not db.databackend.check_output_dest(listener1.predict_id)
 
 
-def test_listener_chaining_with_trainer(db):
+@pytest.fixture
+def cleanup():
+    yield
+    import os
+    try:
+        os.remove('_training_done.txt')
+    except FileNotFoundError:
+        pass
+
+
+def test_listener_chaining_with_trainer(db, cleanup):
     db.cfg.auto_schema = True
     table = db['test']
 
@@ -232,8 +243,11 @@ def test_listener_chaining_with_trainer(db):
         identifier='listener2',
         uuid='listener2',
     )
+
     db.apply(listener2)
-    assert trainable_model.trainer.training_done is True
+
+    import os
+    assert os.path.exists('_training_done.txt')
 
 
 def test_upstream_serializes(db):

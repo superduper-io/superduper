@@ -8,9 +8,9 @@ def test_output_prefix(db):
     with mock.patch.object(CFG, "output_prefix", "sddb_outputs_"):
         # Mock CFG.output_prefix
         build_chain_listener(db)
-        listener_a = db.listeners["a"]
-        listener_b = db.listeners["b"]
-        listener_c = db.listeners["c"]
+        listener_a = db.load('listener', 'a')
+        listener_b = db.load('listener', 'b')
+        listener_c = db.load('listener', 'c')
 
         assert listener_a.outputs.startswith("sddb_outputs_a")
         assert listener_b.outputs.startswith("sddb_outputs_b")

@@ -270,6 +270,7 @@ class MongoQuery(Query):
             filters[key] = {OPS_MAP[op]: value}
 
         query = self if self.parts else self.select()
+
         return type(self)(
             db=self.db,
             table=self.table,
@@ -386,7 +387,8 @@ class MongoQuery(Query):
         :param ids: The ids to select.
         """
         ids = [ObjectId(id) for id in ids]
-        return self.filter(self['_id'].isin(ids))
+        q = self.filter(self['_id'].isin(ids))
+        return q
 
     @property
     def select_ids(self):
@@ -691,7 +693,7 @@ class MongoQuery(Query):
 
         if not project:
             try:
-                table = self.db.tables[self.table]
+                table = self.db.load('table', self.table)
                 project = {key: 1 for key in table.schema.fields.keys()}
             except FileNotFoundError:
                 logging.warn(

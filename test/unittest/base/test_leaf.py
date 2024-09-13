@@ -87,6 +87,13 @@ def test_save_variables_2():
     assert [x for x in query.variables] == ['X']
 
 
+def test_save_non_string_variables():
+    query = Query(table='documents').find().limit('<var:limit>')
+
+    assert str(query) == 'documents.find().limit("<var:limit>")'
+    assert [x for x in query.variables] == ['limit']
+
+
 def test_saveable():
     s = MySer(identifier='sr', a=1, b='test', c=OtherSer(identifier='other', d='test'))
     r = Document(s.dict()).encode()

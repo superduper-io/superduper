@@ -1,3 +1,4 @@
+import re
 import typing as t
 import uuid
 from copy import deepcopy
@@ -42,7 +43,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         config_dict = config_dict or {"location": ":memory:"}
         self.client = QdrantClient(**config_dict)
 
-        self.collection_name = identifier
+        self.collection_name = re.sub('\W+', '', identifier)
         if not self.client.collection_exists(self.collection_name):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure
@@ -78,9 +79,9 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         points = [
             models.PointStruct(
                 id=self._convert_id(item.id),
-                vector={self.vector_name: item.vector.tolist()}
+                vector={self.vector_name: item.vector}
                 if self.vector_name
-                else item.vector.tolist(),
+                else item.vector,
                 payload={ID_PAYLOAD_KEY: item.id},
             )
             for item in items

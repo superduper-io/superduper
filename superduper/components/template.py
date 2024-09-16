@@ -33,6 +33,7 @@ class _BaseTemplate(Component):
     blobs: t.Optional[t.List[str]] = None
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
+    defaults: t.Optional[t.Dict] = None
 
     def __post_init__(self, db, artifacts, substitutions):
         if isinstance(self.template, Leaf):
@@ -59,7 +60,8 @@ class _BaseTemplate(Component):
         return {
             'identifier': '<enter-a-unique-identifier>',
             '_variables': {
-                k: f'<value-{i}>' for i, k in enumerate(self.template_variables)
+                k: (f'<value-{i}>' if k not in self.defaults else self.defaults[k])
+                for i, k in enumerate(self.template_variables)
             },
             **{k: v for k, v in self.template.items() if k != 'identifier'},
             '_template_name': self.identifier,

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed default event.uuid
 - Fixed atlas vector search
 - Fix the bug where shared artifacts are deleted when removing a component.
+- Fix compatibility issues with the latest version of pymongo.
 
 #### New Features & Functionality
 

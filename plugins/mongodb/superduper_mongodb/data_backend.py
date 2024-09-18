@@ -4,6 +4,7 @@ import typing as t
 import click
 import mongomock
 import pymongo
+import pymongo.collection
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy

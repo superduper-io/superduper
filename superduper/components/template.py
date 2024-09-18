@@ -23,6 +23,7 @@ class _BaseTemplate(Component):
     :param blobs: Blob identifiers in `Template.component`.
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
+    :param default_values: Default values for the variables.
     """
 
     literals: t.ClassVar[t.Tuple[str]] = ('template',)
@@ -61,7 +62,11 @@ class _BaseTemplate(Component):
         return {
             'identifier': '<enter-a-unique-identifier>',
             '_variables': {
-                k: (f'<value-{i}>' if k not in self.default_values else self.default_values[k])
+                k: (
+                    f'<value-{i}>'
+                    if k not in self.default_values
+                    else self.default_values[k]
+                )
                 for i, k in enumerate(self.template_variables)
             },
             **{k: v for k, v in self.template.items() if k != 'identifier'},
@@ -187,7 +192,11 @@ class QueryTemplate(_BaseTemplate):
         """Form to be diplayed to user."""
         return {
             '_variables': {
-                k: (f'<value-{i}>' if k not in self.default_values else self.default_values[k])
+                k: (
+                    f'<value-{i}>'
+                    if k not in self.default_values
+                    else self.default_values[k]
+                )
                 for i, k in enumerate(self.template_variables)
             },
             **{

@@ -159,7 +159,7 @@ class Config(BaseConfig):
 
     fold_probability: float = 0.05
 
-    log_level: LogLevel = LogLevel.INFO
+    log_level: LogLevel = LogLevel.DEBUG
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
 

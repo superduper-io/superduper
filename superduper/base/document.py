@@ -163,13 +163,20 @@ class Document(MongoStyleDict):
 
         builds = r.get(KEY_BUILDS, {})
 
-        # Important: Leaf.identifier is used as the key, but must be set if not present.
+        # Important: Leaf.identifier or Component.type_id:Component.identifierare
+        # are used as the key, but must be set if not present.
         for k in builds:
             if isinstance(builds[k], dict) and (
                 '_path' in builds[k] or '_object' in builds[k]
             ):
                 if 'identifier' not in builds[k]:
-                    builds[k]['identifier'] = k
+                    # Component.type_id:Component.identifier
+                    if ":" in k:
+                        _, identifier = k.split(':', 1)
+                    # Leaf.identifier
+                    else:
+                        identifier = k
+                    builds[k]['identifier'] = identifier
 
         if not isinstance(getters, _Getters):
             getters = _Getters(getters)
@@ -411,14 +418,18 @@ def _deep_flat_encode(
         return f'?{ref}'
 
     if isinstance(r, Leaf):
-        if r.identifier in builds:
-            logging.warn(f'Leaf {r.identifier} already exists')
+        # If the leaf is component, we need to store the type_id
+        type_id = r.type_id if isinstance(r, Component) else None
+        key = f"{type_id}:{r.identifier}" if type_id else r.identifier
+
+        if key in builds:
+            logging.warn(f'Leaf {key} already exists')
 
         logging.debug(f'Decoding leaf {type(r)} with identifier: {r.identifier}')
 
         if isinstance(r, leaves_to_keep):
-            builds[r.identifier] = r
-            return '?' + r.identifier
+            builds[key] = r
+            return '?' + key
 
         r = r.dict(metadata=metadata, defaults=defaults)
         r = _deep_flat_encode(
@@ -432,8 +443,10 @@ def _deep_flat_encode(
         )
 
         identifier = r.pop('identifier')
-        builds[identifier] = r
-        return f'?{identifier}'
+        # Rebuild the key with the identifier
+        key = f"{type_id}:{identifier}" if type_id else identifier
+        builds[key] = r
+        return f'?{key}'
 
     return r
 

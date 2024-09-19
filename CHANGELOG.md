@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix compatibility issues with the latest version of pymongo.
 - Fix the query parser incompatibility with '.' symbol.
 - Fix the post like in the service vector_search.
+- Fix the conflict of the same identifier during encoding.
 
 #### New Features & Functionality
 

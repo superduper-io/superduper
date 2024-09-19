@@ -98,6 +98,7 @@ class JobFutureException(Exception):
     ...
 
 
+
 def consume_streaming_events(events, table, db):
     """
     Consumer work from streaming events.

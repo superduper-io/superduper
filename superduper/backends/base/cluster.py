@@ -9,7 +9,6 @@ from superduper.backends.base.queue import BaseQueuePublisher
 from superduper.backends.base.vector_search import VectorSearchBackend
 
 from superduper import CFG
-from superduper.misc.plugins import load_plugin
 
 
 @dc.dataclass(kw_only=True)
@@ -64,4 +63,4 @@ class Cluster(ABC):
         self.vector_search.db = value
         self.crontab.db = value
         self.cdc.db = value
-        self.vector_search.initialize()
+        #self.vector_search.initialize()

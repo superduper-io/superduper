@@ -46,14 +46,22 @@ class BaseBackend(ABC):
         """To be called on program start."""
         pass
 
-    def put(self, component: 'Component'):
+    def put(self, component: 'Component', **kwargs):
         # This is to make sure that we only have 1 version 
         # of each component implemented at any given time
-        if component.uuid in self.list_uuids():
+        # TODO: get identifier in string component argument.
+        identifier = ''
+        if isinstance(component, str):
+            uuid = component
+        else:
+            uuid = component.uuid
+            identifier = component.identifier
+
+        if uuid in self.list_uuids():
             return
-        if component.identifier in self.list_components():
+        if identifier in self.list_components():
             del self[component.identifier]
-        self._put(component)
+        self._put(component, **kwargs)
 
     @property
     def db(self) -> 'Datalayer':

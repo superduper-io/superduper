@@ -38,7 +38,7 @@ class BaseConfig:
 
     def __call__(self, **kwargs):
         """Update the configuration with the given parameters."""
-        parameters = self.dict()
+        parameters = dc.asdict(self)
         for k, v in kwargs.items():
             if "__" in k:
                 parts = k.split("__")
@@ -187,6 +187,8 @@ class Config(BaseConfig):
     def comparables(self):
         """A dict of `self` excluding some defined attributes."""
         _dict = dc.asdict(self)
+        if hasattr(self, 'cluster'):
+            _dict.update({'cluster': dc.asdict(self.cluster)})
         list(map(_dict.pop, ("cluster", "retries", "downloads")))
         return _dict
 

@@ -538,6 +538,7 @@ class Datalayer:
         allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
+        on_load: bool = True
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -597,10 +598,10 @@ class Datalayer:
                 return self.cluster.cache[info['type_id'], info['identifier']]
             except KeyError:
                 logging.info(f'Component {info["uuid"]} not found in cache, loading from db')
-
         m = Document.decode(info, db=self)
         m.db = self
-        m.on_load(self)
+        if on_load:
+            m.on_load(self)
 
         assert type_id is not None
         if m.cache:

@@ -390,6 +390,10 @@ class Model(Component, metaclass=ModelMeta):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.predict(*args, **kwargs)
 
+    def declare_component(self, cluster):
+        """Declare model on compute."""
+        cluster.compute.put(self)
+
     @abstractmethod
     def predict(self, *args, **kwargs) -> int:
         """Predict on a single data point.
@@ -1269,6 +1273,11 @@ class SequentialModel(Model):
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
         return self.models[0].inputs
+
+    def declare_component(self, cluster):
+        """Declare model on compute."""
+        cluster.compute.put(self)
+
 
     def post_create(self, db: Datalayer):
         """Post create hook.

@@ -6,7 +6,6 @@ from rich.console import Console
 from rich.tree import Tree
 from rich.text import Text
 import typing as t
-import uuid
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

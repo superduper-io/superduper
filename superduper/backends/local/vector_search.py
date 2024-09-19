@@ -27,6 +27,9 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             self._put(vector_index)
             vector_index.copy_vectors()
 
+    def __contains__(self, item):
+        return item in self._cache 
+
     def list_components(self):
         return list(self._cache.keys())
 

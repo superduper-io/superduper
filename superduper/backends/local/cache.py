@@ -7,25 +7,29 @@ from superduper.components.component import Component
 class LocalCache(Cache):
     """Local cache for caching components."""
 
-    def __init__(self):
+    def __init__(self, init_cache: bool = True):
         super().__init__()
+        self.init_cache = init_cache
         self._cache = {}
-        self._cache_to_uuids = {}
+        self._cache_uuid = {}
         self._db = None
 
     def list_components(self):
         return list(self._cache.keys())
 
     def list_uuids(self):
-        return list(self._cache_to_uuids.values())
+        return list(self._cache_uuid.keys())
 
     def __getitem__(self, *item):
         return self._cache[item]
 
+    def get_by_id(self, *item):
+        return self._cache[*item]
+
     def _put(self, component: Component):
         """Put a component in the cache."""
         self._cache[component.type_id, component.identifier] = component
-        self._cache_to_uuids[component.type_id, component.identifier] = component.uuid
+        self._cache_uuid[component.uuid] = component
 
     def __delitem__(self, name: str):
         del self._cache[name]
@@ -51,14 +55,20 @@ class LocalCache(Cache):
 
     def init(self):
         """Initialize the cache."""
-        for _, _, _, uuid in self.db.show():
-            if self.db.show(uuid=uuid).get('cache', False):
+        if not self.init_cache:
+            return
+        for component in self.db.show():
+            if 'version' not in component:
+                component['version'] = -1
+
+            show = self.db.show(**component)
+            uuid = show.get('uuid')
+            if show.get('cache', False):
                 self._cache[uuid] = self.db.load(uuid=uuid)
 
     def __getitem__(self, uuid: str):
         """Get a component from the cache."""
-        return self._cache[uuid]
-
+        return self._cache_uuid[uuid]
 
     def __iter__(self):
         return iter(self._cache.keys())

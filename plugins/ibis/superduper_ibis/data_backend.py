@@ -152,7 +152,15 @@ class IbisDataBackend(BaseDataBackend):
         conditions = []
         for key in keys:
             conditions.append(query[key].notnull())
-        docs = query.filter(*conditions).select(query.primary_id).execute()
+
+        # TODO: Hotfix, will be removed by the refactor PR
+        try:
+            docs = query.filter(*conditions).select(query.primary_id).execute()
+        except Exception as e:
+            if "Table not found" in str(e) or "Can't find table" in str(e):
+                return []
+            else:
+                raise e
         ready_ids = [doc[query.primary_id] for doc in docs]
         self._log_check_ready_ids_message(ids, ready_ids)
         return ready_ids

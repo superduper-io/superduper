@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the bug where shared artifacts are deleted when removing a component.
 - Fix compatibility issues with the latest version of pymongo.
 - Fix the query parser incompatibility with '.' symbol.
+- Fix the post like in the service vector_search.
 
 #### New Features & Functionality
 

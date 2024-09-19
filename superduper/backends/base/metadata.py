@@ -6,6 +6,8 @@ from .data_backend import DataBackendProxy
 
 if t.TYPE_CHECKING:
     from superduper.backends.base.query import Select
+    from superduper.components.component import Status
+
 
 
 class NonExistentMetadataError(Exception):
@@ -85,7 +87,11 @@ class MetaDataStore(ABC):
         """
         pass
 
-    # ------------------ COMPONENTS ------------------
+    @abstractmethod
+    def set_component_status(self, uuid: str, status: 'Status'):
+        pass
+
+    # ------------------ JOBS ------------------
 
     @abstractmethod
     def get_job(self, job_id: str):
@@ -181,6 +187,27 @@ class MetaDataStore(ABC):
                 components, key=lambda x: (x['type_id'], x['identifier'])
             )
             return components
+
+    @abstractmethod
+    def show_cdc_tables(self):
+        pass
+
+    def show_cdcs(self, table):
+        results = self._show_cdcs(table)
+        lookup = {}
+        results = list(results)
+        # Forces the latest versions out
+        results = sorted(results, key=lambda r: r['version'])
+        for r in results:
+            lookup[r['type_id'], r['identifier']] = r['uuid']
+        return list(lookup.values())
+
+    @abstractmethod
+    def _show_cdcs(self, table):
+        pass
+
+    def show_cdc_tables(self):
+        ...
 
     @abstractmethod
     def _show_components(self, type_id: t.Optional[str] = None):

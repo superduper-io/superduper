@@ -7,7 +7,7 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import Mapping
-from superduper.components.trigger import Trigger
+from superduper.components.cdc import CDC
 from superduper.jobs.annotations import trigger
 
 from .model import Model, ModelInputType
@@ -19,7 +19,7 @@ if t.TYPE_CHECKING:
 SELECT_TEMPLATE = {'documents': [], 'query': '<collection_name>.find()'}
 
 
-class Listener(Trigger):
+class Listener(CDC):
     """Listener component.
 
     Listener object which is used to process a column/key of a collection or table,
@@ -28,15 +28,21 @@ class Listener(Trigger):
     :param key: Key to be bound to the model.
     :param model: Model for processing data.
     :param predict_kwargs: Keyword arguments to self.model.predict().
+    :param select: Query to "listen" for input on.
     :param identifier: A string used to identify the listener and it's outputs.
     """
+
+    type_id: t.ClassVar[str] = 'listener'
 
     key: ModelInputType
     model: Model
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    type_id: t.ClassVar[str] = 'listener'
+    select: t.Optional[Query] = None
+    cdc_table: str = ''
 
     def __post_init__(self, db, artifacts):
+        if not self.cdc_table and self.select:
+            self.cdc_table = self.select.table
         deps = self.dependencies
         if deps:
             if not self.upstream:
@@ -59,12 +65,12 @@ class Listener(Trigger):
         """Mapping property."""
         return Mapping(self.key, signature=self.model.signature)
 
-    # TODO - do we need the outputs-prefix?
     @property
     def outputs(self):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
 
+    # TODO remove
     @property
     def outputs_key(self):
         """Model outputs key."""
@@ -80,12 +86,6 @@ class Listener(Trigger):
     def outputs_select(self):
         """Get select statement for outputs."""
         return self.db[self.select.table].select().outputs(self.predict_id)
-
-    # TODO do we need this?
-    @property
-    def cdc_table(self):
-        """Get table for cdc."""
-        return self.select.table_or_collection.identifier
 
     @override
     def post_create(self, db: "Datalayer") -> None:
@@ -128,70 +128,72 @@ class Listener(Trigger):
                 out.append(tuple(x[len(CFG.output_prefix) :].split('__')))
         return out
 
-    def trigger_ids(self, query: Query, primary_ids: t.Sequence):
-        """Get trigger IDs.
+    # def triggerz_ids(self, query: Query, primary_ids: t.Sequence):
+    #     """Get trigger IDs.
 
-        Only the ids returned by this function will trigger the listener.
+    #     Only the ids returned by this function will trigger the listener.
 
-        :param query: Query object.
-        :param primary_ids: Primary IDs.
-        """
-        conditions = [
-            # trigger by main table
-            self.select and self.select.table == query.table,
-            # trigger by output table
-            query.table in self.key and query.table != self.outputs,
-        ]
-        if not any(conditions):
-            return []
+    #     :param query: Query object.
+    #     :param primary_ids: Primary IDs.
+    #     """
+    #     conditions = [
+    #         # trigger by main table
+    #         self.select and self.select.table == query.table,
+    #         # trigger by output table
+    #         query.table in self.key and query.table != self.outputs,
+    #     ]
+    #     if not any(conditions):
+    #         return []
 
-        if self.select is None:
-            return []
+    #     if self.select is None:
+    #         return []
 
-        if self.select.table == query.table:
-            trigger_ids = list(primary_ids)
-        else:
-            trigger_ids = [
-                doc['_source'] for doc in query.documents if '_source' in doc
-            ]
+    #     if self.select.table == query.table:
+    #         triggerz_ids = list(primary_ids)
+    #     else:
+    #         triggerz_ids = [
+    #             doc['_source'] for doc in query.documents if '_source' in doc
+    #         ]
 
-        out = self.db.databackend.check_ready_ids(
-            self.select, self._ready_keys, trigger_ids
-        )
-        return out
+    #     out = self.db.databackend.check_ready_ids(
+    #         self.select, self._ready_keys, triggerz_ids
+    #     )
+    #     return out
 
-    @property
-    def _ready_keys(self):
-        keys = self.key
+    # @property
+    # def _ready_keys(self):
+    #     keys = self.key
 
-        if isinstance(self.key, str):
-            keys = [self.key]
-        elif isinstance(self.key, dict):
-            keys = list(self.key.keys())
+    #     if isinstance(self.key, str):
+    #         keys = [self.key]
+    #     elif isinstance(self.key, dict):
+    #         keys = list(self.key.keys())
 
-        # Support multiple levels of nesting
-        clean_keys = []
-        for key in keys:
-            if key.startswith(CFG.output_prefix):
-                key = CFG.output_prefix + key[len(CFG.output_prefix) :].split(".")[0]
-            else:
-                key = key.split(".")[0]
+    #     # Support multiple levels of nesting
+    #     clean_keys = []
+    #     for key in keys:
+    #         if key.startswith(CFG.output_prefix):
+    #             key = CFG.output_prefix + key[len(CFG.output_prefix) :].split(".")[0]
+    #         else:
+    #             key = key.split(".")[0]
 
-            clean_keys.append(key)
+    #         clean_keys.append(key)
 
-        return clean_keys
+    #     return clean_keys
 
     @trigger('apply', 'insert', 'update', requires='select')
-    def run(self, ids: t.Sequence[str] | None):
+    def run(self, ids: t.Sequence[str] | None = None) -> t.List[str]:
         """Run the listener."""
         assert self.select is not None
-        return self.model.predict_in_db(
+        # Returns a list of ids where the outputs were inserted
+        out = self.model.predict_in_db(
             X=self.key,
             predict_id=self.predict_id,
             select=self.select,
             ids=ids,
             **(self.predict_kwargs or {}),
         )
+        return out
 
     def cleanup(self, db: "Datalayer") -> None:
         """Clean up when the listener is deleted.

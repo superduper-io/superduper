@@ -23,7 +23,7 @@ from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.base.event import ComponentPlaceholder, Event, EventType
-from superduper.components.component import Component
+from superduper.components.component import Component, Status
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
@@ -241,9 +241,14 @@ class Datalayer:
         result = delete.do_execute(self)
         # TODO - do we need this refresh?
         # If the handle-event works well, then we should not need this 
-        if refresh:
-            self.cluster.cdc.handle_event(event_type=EventType.delete, query=delete, ids=result)
-        return result, None
+
+        if not refresh:
+            return
+
+        call_cdc = delete.query.table in self.metadata.show_cdc_tables() and delete.query.table.startswith(CFG.output_prefix)
+        if call_cdc:
+            self.cluster.cdc.handle_event(event_type=EventType.delete, table=delete.table, ids=result)
+        return result
 
     def _insert(
         self,
@@ -276,19 +281,13 @@ class Datalayer:
         logging.info(f'Inserted {len(inserted_ids)} documents into {insert.table}')
         logging.debug(f'Inserted IDs: {inserted_ids}')
 
-        # Do we want to hide this
-        self.cluster.cdc.handle_event(event_type=EventType.insert, query=insert, ids=inserted_ids)
+        if not refresh:
+            return
 
-        # if refresh:
-            # if cdc_status and not is_output_table:
-            #     logging.warn('CDC service is active, skipping model/listener refresh')
-            # else:
-            #     return inserted_ids, self.on_event(
-            #         insert,
-            #         ids=inserted_ids,
-            #     )
+        if insert.table in self.metadata.show_cdc_tables() and not insert.table.startswith(CFG.output_prefix):
+            self.cluster.cdc.handle_event(event_type=EventType.insert, table=insert.table, ids=inserted_ids)
 
-        return inserted_ids, None
+        return inserted_ids
 
     def _auto_create_table(self, table_name, documents):
         try:
@@ -312,7 +311,7 @@ class Datalayer:
         """
         return select.do_execute(db=self)
 
-    def on_event(self, query: Query, ids: t.List[str], event_type: str = 'insert'):
+    def on_event(self, table: str, ids: t.List[str], event_type: EventType):
         """
         Trigger computation jobs after data insertion.
 
@@ -320,25 +319,12 @@ class Datalayer:
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
         """
-        event_datas = query.get_events(ids)
-
-        if not event_datas:
-            return
-
         from superduper.base.event import Event
-
         events = []
-        for event_data in event_datas:
-            identifier = event_data['identifier']
-            type_id = event_data['type_id']
-            ids = event_data['ids']
-            dest = ComponentPlaceholder(identifier=identifier, type_id=type_id)
-            events.extend(
-                [Event(dest=dest, ids=[str(id)], event_type=event_type) for id in ids]
-            )
-
+        for id in ids:
+            events.append(Event(ids=[str(id)], event_type=event_type, source=table))
         logging.info(
-            f'Created {len(events)} events for {event_type} on [{query.table}]'
+            f'Created {len(events)} events for {event_type} on [{table}]'
         )
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)
@@ -352,15 +338,17 @@ class Datalayer:
         """
         _, updated_ids, deleted_ids = write.do_execute(self)
 
-        if refresh:
+        if not refresh:
+            return
 
+        call_cdc = write.table in self.metadata.show_cdc_tables() and write.table.startswith(CFG.output_prefix)
+        if call_cdc:
             if updated_ids:
-                self.cluster.cdc.handle_event(event_type=EventType.update, query=write, ids=updated_ids)
-
+                self.cluster.cdc.handle_event(event_type=EventType.update, table=write.table, ids=updated_ids)
             if deleted_ids:
-                self.cluster.cdc.handle_event(event_type=EventType.delete, query=write, ids=deleted_ids)
+                self.cluster.cdc.handle_event(event_type=EventType.delete, table=write.table, ids=deleted_ids)
                 
-        return updated_ids, deleted_ids, None
+        return updated_ids + deleted_ids
 
     def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
         """
@@ -374,23 +362,15 @@ class Datalayer:
         """
         updated_ids = update.do_execute(self)
 
-        # cdc_status = s.CFG.cluster.cdc.uri is not None
-        # is_output_table = update.table.startswith(CFG.output_prefix)
+        if not refresh:
+            return updated_ids
 
-        if refresh:
-            self.cluster.cdc.handle_event(event_type=EventType.update, query=update, ids=updated_ids)
+        table = update.table
 
-        # if refresh and updated_ids:
-        #     if cdc_status and not is_output_table:
-        #         logging.warn('CDC service is active, skipping model/listener refresh')
-        #     else:
-        #         # Overwrite should be true since updates could be done on collections
-        #         # with already existing outputs.
-        #         # We need overwrite outputs on those select and recompute predict
-        #         return updated_ids, self.on_event(
-        #             query=update, ids=updated_ids, event_type=EventType.upsert
-        #         )
-        return updated_ids, None
+        if table in self.metadata.show_cdc_tables() and not table.startswith(CFG.output_prefix):
+            self.cluster.cdc.handle_event(event_type=EventType.update, table=update.table, ids=updated_ids)
+
+        return updated_ids
 
     @deprecated
     def add(self, object: t.Any):
@@ -420,7 +400,19 @@ class Datalayer:
         """
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
-        return self._apply(object=object), object
+        # context allows us to track the origin of the component creation
+        already_exists = self._apply(object=object, context=object.uuid), object
+        # this flags that the context is not needed anymore
+        if not already_exists:
+            self.cluster.queue.publish([
+                Event(
+                    event_type='apply',
+                    source=object.huuid,
+                    context=object.huuid,
+                    msg='done',
+                )
+            ])
+        return object
 
     def remove(
         self,
@@ -579,11 +571,9 @@ class Datalayer:
         object: Component,
         parent: t.Optional[str] = None,
         artifacts: t.Optional[t.Dict[str, bytes]] = None,
+        context: t.Optional[str] = None,
     ):
         object.db = self
-        object.pre_create(self)
-        assert hasattr(object, 'identifier')
-        assert hasattr(object, 'version')
 
         existing_versions = self.show(object.type_id, object.identifier)
 
@@ -592,13 +582,21 @@ class Datalayer:
         )
 
         if already_exists:
-            return self._update_component(object, parent=parent)
+            self._update_component(object, parent=parent)
+            return True
+
+        object.pre_create(self)
+        assert hasattr(object, 'identifier')
+        assert hasattr(object, 'version')
 
         if object.version is None:
             if existing_versions:
                 object.version = max(existing_versions) + 1
             else:
                 object.version = 0
+
+        if object.get_triggers('apply') == ['set_status']:
+            object.status = Status.ready
 
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
@@ -631,13 +629,16 @@ class Datalayer:
 
         object.post_create(self)
 
-        event = Event(
-            event_type='apply',
-            dest=ComponentPlaceholder(
-                type_id=object.type_id, identifier=object.identifier
-            ),
-        )
-        self.cluster.queue.publish([event])
+        # TODO events should be at the method, not at the object level
+        # TODO compile a list of events for approval
+        if object.get_triggers('apply') != ['set_status']:
+            event = Event(
+                event_type='apply',
+                source=object.huuid,
+                context=context,
+            )
+            self.cluster.queue.publish([event])
+        return False
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""

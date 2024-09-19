@@ -6,6 +6,6 @@ class CDCBackend(BaseBackend):
     """Base backend for CDC."""
 
     @abstractmethod
-    def handle_event(self, event_type, query, ids):
+    def handle_event(self, event_type, table, ids):
         pass
 

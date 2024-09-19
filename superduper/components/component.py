@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import dataclasses as dc
+from enum import Enum
 import inspect
 import json
 import os
@@ -16,9 +17,11 @@ from functools import wraps
 import yaml
 
 from superduper import logging
+from superduper.backends.base.queue import JobFutureException
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import EventType
 from superduper.base.leaf import Leaf, LeafMeta
+from superduper.jobs.annotations import trigger
 from superduper.jobs.job import Job
 
 if t.TYPE_CHECKING:
@@ -29,6 +32,12 @@ if t.TYPE_CHECKING:
     from superduper.components.plugin import Plugin
 
 
+class Status(str, Enum):
+    """Status enum.
+    # noqa
+    """
+    initializing = 'initializing'
+    ready = 'ready'
 
 
 def _build_info_from_path(path: str):
@@ -117,10 +126,10 @@ class Component(Leaf, metaclass=ComponentMeta):
                   during primary job of the component i.e on a distributed
                   cluster this component will be reloaded on every component
                   task e.g model prediction.
+    :param status: What part of the lifecycle the component is in.
     """
 
     triggers: t.ClassVar[t.List] = []
-    trigger: t.ClassVar[bool] = False
     type_id: t.ClassVar[str] = 'component'
     # TODO is this used for anything?
     leaf_type: t.ClassVar[str] = 'component'
@@ -134,31 +143,34 @@ class Component(Leaf, metaclass=ComponentMeta):
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = False
+    status: t.Optional[Status] = None
+
+    @property
+    def huuid(self):
+        return f'{self.type_id}:{self.identifier}:{self.uuid}'
 
     def set_db(self, value):
         self.db = value
         for child in self.get_children():
             child.set_db(value)
 
-    def get_children_refs(self, deep: bool = False):
+    def get_children_refs(self, deep: bool = False, only_initializing: bool = False):
         """Get all the children of the component."""
-        r = self.dict().encode(leaves_to_keep=(Leaf,) if deep else (Component,))
-        out = [
-            (v.type_id, v.identifier, v.uuid)
-            for v in r['_builds'].values()
-            if isinstance(v, Component)
-        ]
-
+        r = self.dict()
         def _find_refs(r):
-            if isinstance(r, str) and r.startswith('&:component:'):
-                return [tuple(r.split(':')[2:])]
+            if isinstance(r, str) and r.startswith('&:component:') and not only_initializing:
+                return [':'.join(r.split(':')[2:])]
             if isinstance(r, dict):
                 return sum([_find_refs(v) for v in r.values()], [])
             if isinstance(r, list):
                 return sum([_find_refs(x) for x in r], [])
+            if isinstance(r, Component):
+                if only_initializing and r.status != Status.initializing:
+                    return []
+                else:
+                    return [r.huuid]
             return []
-
-        out = out + _find_refs(r)
+        out = _find_refs(r)
         return sorted(list(set(out)))
 
     def get_children(self, deep: bool = False):
@@ -226,26 +238,39 @@ class Component(Leaf, metaclass=ComponentMeta):
             attr_name for attr_name in self.triggers if self._filter_trigger(attr_name, event_type)
         ]
 
+    def _get_futures(self, futures):
+        these_futures = {}
+        refs = self.get_children_refs(deep=False, only_initializing=True)
+        for key in refs:
+            try:
+                these_futures[key] = futures[key]
+            except KeyError as e:
+                raise JobFutureException(str(e)) from e
+        return these_futures
+
+    @trigger('apply')
+    def set_status(self, status: Status):
+        return self.db.metadata.set_component_status(self.uuid, status)
+
     def run_jobs(
         self,
-        event: 'Event',
+        event_type: EventType,
+        ids: t.List[str] | None = None, 
+        futures: t.List[Job] | None = None,
     ) -> t.Sequence[str]:
         """Deploy apply jobs for the component."""
         from superduper.base.event import EventType
 
-        if event.event_type == EventType.apply:
-            assert event.ids is None
-        else:
-            assert event.ids is not None
-
-        lookup: t.Dict = {}
         # TODO replace this with a DAG check
         max_it = 100
         it = 0
 
-        triggers = self.get_triggers(event.event_type)
+        triggers = self.get_triggers(event_type)
+        triggers = list(set(triggers) - {'set_status'})
 
-        while True:
+        out_futures: t.Dict = {}
+
+        while triggers:
             for attr_name in triggers:
                 attr = getattr(self, attr_name)
 
@@ -253,34 +278,38 @@ class Component(Leaf, metaclass=ComponentMeta):
 
                 # Check that the dependencies of the job are ready
                 # If not skip until the next round
-                if not all(f in lookup for f in depends):
+                if not all(f in out_futures for f in depends):
                     continue
 
                 # Dependencies come from these local jobs
                 # plus the jobs from the child components
-                job_dependencies = self._job_dependencies()
-                local_dependencies = [lookup[f] for f in depends] + list(
-                    job_dependencies
-                )
+                local_futures = self._get_futures(futures)
+                these_futures = {
+                    f: out_futures[f] for f in depends if f in out_futures
+                }
+                these_futures = {**local_futures, **these_futures}
 
-                if 'ids' in inspect.signature(attr).parameters:
-                    job: Job = attr(ids=event.ids, job=True)
+                if event_type in {'update', 'delete', 'insert'}:
+                    job: Job = attr(ids=ids, job=True)
                 else:
                     # 'apply'
                     job: Job = attr(job=True)  # type: ignore[no-redef]
 
-                # log the dependencies
-                lookup[attr_name] = job.job_id
-
                 # TODO rename the call method to execute or deploy
-                job(dependencies=local_dependencies)
+                # This adds the promised output "future" to the saved outputs
+                out_futures[attr_name] = job(dependencies=futures)
 
             it += 1
             if it > max_it:
                 raise Exception('Circular job dependency detected')
-            if len(lookup) == len(triggers):
+            if len(out_futures) == len(triggers):
                 break
-        return list(lookup.values())
+
+        if event_type == EventType.apply:
+            status_update: Job = self.set_status(status=Status.ready, job=True)
+            out_futures['set_status'] = status_update(dependencies=out_futures)
+
+        return out_futures
 
     @classmethod
     def from_template(
@@ -440,6 +469,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         :param db: the db that creates the component.
         """
+        self.status = Status.initializing
         assert db
 
     def post_create(self, db: Datalayer) -> None:
@@ -453,8 +483,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         self.declare_component(db.cluster)
 
     def declare_component(self, cluster):
-        if self.triggers:
-            cluster.queue.put(self)
         if self.cache:
             cluster.cache.put(self)
 
@@ -661,7 +689,6 @@ class Component(Leaf, metaclass=ComponentMeta):
             r['type_id'] = self.type_id
             r['version'] = self.version
             r['identifier'] = self.identifier
-            r['hidden'] = False
         return Document(r)
 
     @classmethod

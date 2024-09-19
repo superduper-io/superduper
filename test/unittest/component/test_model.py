@@ -263,11 +263,9 @@ def test_model_validate_in_db(db):
         ),
     )
 
-    with patch.object(model_predict, 'validate') as mock_validate:
-        mock_validate.return_value = {'acc': 0.7, 'f1': 0.2}
-        model_predict.set_db(db)
-        model_predict.validate_in_db()
-        assert model_predict.metric_values == {'my_valid/0': {'acc': 0.7, 'f1': 0.2}}
+    db.apply(model_predict)
+    reloaded = db.load('model', model_predict.identifier)
+    assert next(iter(reloaded.metric_values.keys())) == 'my_valid/0'
 
 
 class MyTrainer(Trainer):

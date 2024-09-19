@@ -81,7 +81,7 @@ def add_listener(db: Datalayer, collection_name="documents"):
     model = db.load("model", "linear_a")
     select = db[collection_name].select()
 
-    _, i_list = db.add(
+    i_list = db.apply(
         Listener(
             identifier='vector-x',
             select=select,
@@ -91,7 +91,7 @@ def add_listener(db: Datalayer, collection_name="documents"):
         )
     )
 
-    _, c_list = db.add(
+    c_list = db.apply(
         Listener(
             identifier='vector-y',
             select=select,
@@ -114,8 +114,8 @@ def add_vector_index(
     except FileNotFoundError:
         i_list, c_list = add_listener(db)
 
-        db.add(i_list)
-        db.add(c_list)
+        db.apply(i_list)
+        db.apply(c_list)
 
     vi = VectorIndex(
         identifier=identifier,
@@ -123,4 +123,4 @@ def add_vector_index(
         compatible_listener=c_list,
     )
 
-    db.add(vi)
+    db.apply(vi)

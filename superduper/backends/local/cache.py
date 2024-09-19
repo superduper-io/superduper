@@ -20,7 +20,7 @@ class LocalCache(Cache):
         return list(self._cache_to_uuids.values())
 
     def __getitem__(self, *item):
-        return self._cache[*item]
+        return self._cache[item]
 
     def _put(self, component: Component):
         """Put a component in the cache."""

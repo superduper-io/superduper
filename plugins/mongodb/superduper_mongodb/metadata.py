@@ -4,6 +4,7 @@ import click
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 from superduper import logging
 from superduper.backends.base.metadata import MetaDataStore
+from superduper.components.component import Status
 from superduper.misc.colors import Colors
 
 
@@ -170,6 +171,17 @@ class MongoMetaDataStore(MetaDataStore):
         """
         return self.job_collection.update_one(
             {'identifier': identifier}, {'$set': {key: value}}
+        )
+
+    def show_cdc_tables(self):
+        return self.component_collection.distinct('cdc_table')
+
+    def _show_cdcs(self, table):
+        return list(
+            self.component_collection.find(
+                {'cdc_table': table}, 
+                {'identifier': 1, '_id': 0, 'type_id': 1, 'version': 1, 'uuid': 1}
+            )
         )
 
     def _show_components(self, type_id: t.Optional[str] = None):
@@ -384,3 +396,6 @@ class MongoMetaDataStore(MetaDataStore):
         """Disconnect the client."""
 
         # TODO: implement me
+
+    def set_component_status(self, uuid, status: Status):
+        return self.component_collection.update_one({'uuid': uuid}, {'$set': {'status': status}})

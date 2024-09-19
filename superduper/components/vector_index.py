@@ -14,7 +14,7 @@ from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
-from superduper.components.trigger import Trigger
+from superduper.components.cdc import CDC
 from superduper.ext.utils import str_shape
 from superduper.jobs.annotations import trigger
 from superduper.misc.annotations import component
@@ -99,7 +99,7 @@ def backfill_vector_search(db, vi, searcher):
     logging.info(f'Loaded {found} vectors into vector index succesfully')
 
 
-class VectorIndex(Trigger):
+class VectorIndex(CDC):
     """
     A component carrying the information to apply a vector index.
 
@@ -115,7 +115,7 @@ class VectorIndex(Trigger):
     compatible_listener: t.Optional[Listener] = None
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    select: t.Optional[Query] = None
+    cdc_table: str = ''
 
     def __post_init__(self, db, artifacts):
         return super().__post_init__(db, artifacts)
@@ -134,7 +134,7 @@ class VectorIndex(Trigger):
         :param db: the db that creates the component.
         """
         super().pre_create(db)  
-        self.select = db[self.indexing_listener.outputs].select()
+        self.cdc_table = self.indexing_listener.outputs
 
     def __hash__(self):
         return hash((self.type_id, self.identifier))
@@ -147,18 +147,19 @@ class VectorIndex(Trigger):
         return False
 
     @trigger('apply', 'insert', 'update')
-    def copy_vectors(self, ids: t.Sequence[str] | None):
+    def copy_vectors(self, ids: t.Sequence[str] | None = None):
         """Copy vectors to the vector index."""
+
+        select = self.db[self.cdc_table].select()
 
         # TODO do this using the backfill_vector_search functionality here
         if ids is None:
             assert self.indexing_listener.select is not None
-            primary_id = self.select.primary_id
-            cur = self.select.select_ids.execute()
-            ids = [r[primary_id] for r in cur]
-            docs = [r.unpack() for r in self.select.execute()]
+            cur = select.select_ids.execute()
+            ids = [r[select.primary_id] for r in cur]
+            docs = [r.unpack() for r in select.execute()]
         else:
-            docs = [r.unpack() for r in self.select.select_using_ids(ids).execute()]
+            docs = [r.unpack() for r in select.select_using_ids(ids).execute()]
 
         vectors = []
         nokeys = 0
@@ -196,9 +197,8 @@ class VectorIndex(Trigger):
                 [VectorItem(**vector) for vector in vectors]
             )
 
-
     @trigger('delete')
-    def delete_vectors(self, ids: t.Sequence[str] | None):
+    def delete_vectors(self, ids: t.Sequence[str] | None = None):
         """Delete vectors from the vector index."""
         self.db.cluster.vector_search[self.uuid].delete(ids)
 
@@ -338,7 +338,7 @@ class VectorIndex(Trigger):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
-    # def trigger_ids(self, query: Query, primary_ids: t.Sequence):
+    # def triggerz_ids(self, query: Query, primary_ids: t.Sequence):
     #     """Get trigger IDs.
 
     #     Only the ids returned by this function will trigger the vector_index.

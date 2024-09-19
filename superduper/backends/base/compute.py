@@ -38,7 +38,7 @@ class ComputeBackend(BaseBackend):
         pass
 
     @abstractmethod
-    def submit(self, job: Job, dependences: t.Sequence[t.Any]) -> t.Any:
+    def submit(self, job: Job, dependencies: t.Sequence[t.Any]) -> t.Any:
         """
         Submits a function to the server for execution.
 

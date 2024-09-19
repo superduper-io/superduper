@@ -127,7 +127,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             'ARTIFACT_RELATIONS',
             metadata,
             Column('uuid', type_string),
-            Column('artifact_id', type_integer),
+            Column('artifact_id', type_string),
             *component_table_args,
         )
 

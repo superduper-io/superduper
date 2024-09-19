@@ -161,7 +161,11 @@ class FastVectorSearcher(BaseVectorSearcher):
                 service='vector_search',
                 data=h,
                 endpoint='query/search',
-                args={'vector_index': self.vector_index, 'n': n},
+                args={
+                    'vector_index': self.vector_index,
+                    'n': n,
+                    "within_ids": ",".join(within_ids) if within_ids else "",
+                },
             )
             return response['ids'], response['scores']
 

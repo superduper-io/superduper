@@ -151,7 +151,7 @@ def test_encode_model():
     r = m.dict()
 
     assert isinstance(r, Document)
-    assert {'version', 'hidden', 'type_id', '_path'}.issubset(set(r.keys()))
+    assert {'version', 'status', 'type_id', '_path'}.issubset(set(r.keys()))
 
     print(r)
 

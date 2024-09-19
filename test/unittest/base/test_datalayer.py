@@ -395,7 +395,7 @@ def test_load(db):
 def test_insert(db):
     db.cfg.auto_schema = True
     add_fake_model(db)
-    inserted_ids, _ = (
+    inserted_ids = (
         db['documents'].insert([{'x': i, 'update': True} for i in range(5)]).execute()
     )
     assert len(inserted_ids) == 5
@@ -433,7 +433,7 @@ def test_insert_sql_db(db):
     db.cfg.auto_schema = True
     listener = add_fake_model(db)
     table = db['documents']
-    inserted_ids, _ = db.execute(
+    inserted_ids = db.execute(
         table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
     )
     assert len(inserted_ids) == 5

@@ -188,6 +188,7 @@ class Query(_BaseQuery):
     # TODO - not necessary: either `Document.decode(r, db=db)`
     # or `db['table'].select...`
     
+    # TODO why necessary?
     def set_db(self, value: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
@@ -223,6 +224,7 @@ class Query(_BaseQuery):
 
         self.parts = parts
 
+    # TODO need this?
     @property
     def is_output_query(self):
         """Check if query is of output type."""
@@ -233,6 +235,7 @@ class Query(_BaseQuery):
         """Property setter."""
         self._is_output_query = b
 
+    # TODO necessary?
     @property
     def updated_key(self):
         """Return query updated key."""
@@ -243,29 +246,29 @@ class Query(_BaseQuery):
         """Property setter."""
         self._updated_key = update
 
-    def get_events(
-        self,
-        ids: t.Sequence,
-    ):
-        """List of events.
+    # def get_events(
+    #     self,
+    #     ids: t.Sequence,
+    # ):
+    #     """List of events.
 
-        :param ids: List of ids.
-        """
-        components = self.db.cluster.cdc.triggers
-        events = []
-        for type_id, identifier in components:
-            component = self.db.load(type_id=type_id, identifier=identifier)
-            trigger_ids = component.trigger_ids(self, ids)
-            if trigger_ids:
-                # TODO wrap these dictionaries with `Event`
-                events.append(
-                    {
-                        'type_id': component.type_id,
-                        'identifier': component.identifier,
-                        'ids': trigger_ids,
-                    }
-                )
-        return events
+    #     :param ids: List of ids.
+    #     """
+    #     components = self.db.cluster.cdc.triggers
+    #     events = []
+    #     for type_id, identifier in components:
+    #         component = self.db.load(type_id=type_id, identifier=identifier)
+    #         triggerz_ids = component.triggerz_ids(self, ids)
+    #         if triggerz_ids:
+    #             # TODO wrap these dictionaries with `Event`
+    #             events.append(
+    #                 {
+    #                     'type_id': component.type_id,
+    #                     'identifier': component.identifier,
+    #                     'ids': triggerz_ids,
+    #                 }
+    #             )
+    #     return events
 
     def _get_flavour(self):
         _query_str = self._to_str()

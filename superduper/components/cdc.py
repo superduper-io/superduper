@@ -7,28 +7,25 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-class Trigger(Component):
+class CDC(Component):
     """Trigger a function when a condition is met.
 
     ***Note that this feature deploys on superduper.io Enterprise.***
 
-    :param select: Query to select the trigger.
+    :param cdc_table: Table which fires the triggers.
     """
 
     triggers: t.ClassVar[t.Set] = set()
-    trigger: t.ClassVar[bool] = True
-    type_id: t.ClassVar[str] = 'trigger'
-    select: t.Union[Query, None]
+    type_id: t.ClassVar[str] = 'cdc'
+    cdc_table: str 
+
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
 
     def post_create(self, db: 'Datalayer') -> None:
         super().post_create(db)
 
     def declare_component(self, cluster):
         super().declare_component(cluster)
+        self.db.cluster.queue.put(self)
         self.db.cluster.cdc.put(self)
-
-    def trigger_ids(self, query, primary_ids):
-        """Find relevant ids to trigger a function."""
-        if query.table == self.select.table:
-            return primary_ids
-        return []

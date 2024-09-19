@@ -1,13 +1,18 @@
+import importlib
 import typing as t
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from superduper import logging
+from superduper import logging, CFG
 from superduper.backends.base.backends import BaseBackend
-from superduper.base.event import Event
-from superduper.components.component import Component
+from superduper.base.event import Event, EventType
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
+
+if t.TYPE_CHECKING:
+    from superduper.components.component import Component
+    from superduper.components.cdc import CDC
+    from superduper.base.datalayer import Datalayer
 
 
 class BaseQueueConsumer(ABC):
@@ -31,6 +36,7 @@ class BaseQueueConsumer(ABC):
         self.uri = uri
         self.callback = callback
         self.queue_name = queue_name
+        self.futures = defaultdict(lambda: {})
 
     @abstractmethod
     def start_consuming(self):
@@ -83,17 +89,119 @@ class BaseQueuePublisher(BaseBackend):
         """
 
 
-def consume_events(component: 'Component', events: t.Sequence[Event]):
-    """Consume events from queue.
-
-    :param component: Superduper component.
-    :param events: Events to be consumed.
+class JobFutureException(Exception):
+    """Exception when futures are not ready.
+    
+    # noqa
     """
-    if not events:
-        return []
-    # Why do we need to chunk events by type?
-    event_lookup = Event.chunk_by_type(events)
-    for type in event_lookup:
-        logging.info(f"Running jobs for {type}")
-        component.run_jobs(event=event_lookup[type])
-    return []
+    ...
+
+
+def _get_cdcs_on_table(table, db: 'Datalayer'):
+    cdcs = db.metadata.show_cdcs(table)
+    out = []
+    for uuid in cdcs:
+        out.append(
+            db.load(uuid=uuid)
+        )
+    return out
+
+
+def _get_parent_cdcs_of_component(component, db: 'Datalayer'):
+    parents = db.metadata.get_component_version_parents(component.uuid)
+    out = []
+    for uuid in parents:
+        r = db.metadata.get_component_by_uuid(uuid)
+        if r.get('cdc_table'):
+            out.append(db.load(uuid=uuid))
+    return {c.uuid: c for c in out}
+
+
+def _get_parent_cdcs_of_components(components, db):
+    out = {}
+    for component in components:
+        out.update(
+            _get_parent_cdcs_of_component(component, db=db)
+        )
+    return list(out.values())
+
+
+def consume_apply_event(event, db, futures: t.Dict = {}):
+    """
+    Consume work from apply event.
+
+    :param event: event type to consume
+    :param db: Datalayer instance
+    :param futures: lookup of job futures
+    """
+    component: 'Component' = db.load(uuid=event.source.split(':')[-1])
+    these_futures = component.run_jobs(
+        EventType.apply,
+        futures=futures,
+    )
+    futures.update(these_futures)
+    return futures
+
+
+def consume_streaming_events(events, table, db):
+    """
+    Consumer work from streaming events.
+
+    Streaming event-types are {'insert', 'update', 'delete'}.
+
+    :param events: list of events
+    :param table: table on which events were found
+    :param db: Datalayer instance
+    """
+    out = defaultdict(lambda: [])
+    for event in events:
+        out[event.event_type].append(event)
+
+    for event_type, events in out.items():
+        ids = None
+        if event_type != EventType.apply:
+            ids = sum([event.ids for event in events], [])
+        _consume_event_type(
+            event_type,
+            ids=ids,
+            table=table,
+            db=db,
+        )
+
+
+def _consume_event_type(event_type, ids, table, db):
+    # contains all components triggered by the table
+    # and all components triggered by the output of these components etc.
+    # "uuid" -> dict("trigger_method": future)
+    logging.debug(table)
+    futures = {}
+    components: t.List['CDC'] = _get_cdcs_on_table(table, db)
+
+    while components:
+        retry = []
+        for component in components:
+            # this is a dictionary/ mapping method_name -> future
+            # try this until the dependencies are there
+            input_table = component.cdc_table
+            if input_table.startswith(CFG.output_prefix):
+                input_uuid = input_table.split('__')[-1]
+                # Maybe think about generalizing this
+                # This is getting the "run" method from `Listener`
+                input_ids = futures[input_uuid]['run']
+            else:
+                input_ids = ids
+
+            try:
+                futures[component.uuid] = component.run_jobs(
+                    event_type,
+                    ids=input_ids,
+                    futures=futures,
+                )
+            except JobFutureException as e:
+                retry.append(component)
+
+        components = _get_parent_cdcs_of_components(
+            components=[c for c in components if c not in retry],
+            db=db
+        )
+        components.extend(retry)

@@ -34,17 +34,18 @@ class Event:
     """Event dataclass to store event data.
 
     :param event_type: Type of the event.
-    :param dest: Identifier of the destination component.
+    :param source: Identifier of the destination component.
     :param ids: List of ids for the event.
-    :param uuid: Unique identifier for the event.
-                 This id will be used as job id in
-                 startup events.
+    :param context: Optional context identifier.
+    :param msg: Msg to broadcast.
     """
 
     event_type: EventType | str
-    dest: ComponentPlaceholder
+    source: str | None = None
     ids: t.Sequence[str] | None = None
-    uuid: str = dc.field(default_factory=lambda: str(uuid.uuid4()).replace('-', ''))
+    # TODO uuid needed?
+    context: str | None = None
+    msg: t.Optional[str] = None
 
     def dict(self):
         """Convert to dict."""
@@ -69,7 +70,7 @@ class Event:
                 assert r[k] == s[k]
         return Event(
             event_type=self.event_type,
-            dest=self.dest,
+            source=self.source,
             ids=list(self.ids) + list(other.ids),
         )
 
@@ -80,16 +81,3 @@ class Event:
         for e in events:
             ids.append(e.uuid)
         return ids
-
-    @staticmethod
-    def chunk_by_type(events: t.Sequence['Event']):
-        """Chunk events by from type."""
-        out = defaultdict(list)
-        for event in events:
-            out[event.event_type].append(event)
-        chunked = {}
-        for k in out:
-            chunked[k] = out[k][0]
-            for i in range(1, len(out[k])):
-                chunked[k] += out[k][i]
-        return chunked

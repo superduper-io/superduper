@@ -6,13 +6,12 @@ def test_vector_index_recovery(db):
     table = db["documents"]
     primary_id = table.primary_id
     vector_index = "vector_index"
-    uuid = db.show('vector_index', vector_index, -1)['uuid']
     sample_data = list(table.select().execute())[50]
 
     # Simulate restart
     del db.cluster.vector_search[vector_index]
 
-    db.load('vector_index', vector_index)
+    db.cluster.vector_search.initialize()
 
     out = (
         table.like({"x": sample_data["x"]}, vector_index=vector_index, n=10)

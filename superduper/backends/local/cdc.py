@@ -1,5 +1,5 @@
 from superduper.backends.base.cdc import CDCBackend
-from superduper.components.trigger import Trigger
+from superduper.components.cdc import CDC
 
 
 class LocalCDCBackend(CDCBackend):
@@ -9,8 +9,8 @@ class LocalCDCBackend(CDCBackend):
         self.triggers = set()
         self._trigger_uuid_mapping = {}
 
-    def handle_event(self, query, ids, event_type):
-        return self.db.on_event(query=query, ids=ids, event_type=event_type)
+    def handle_event(self, table, ids, event_type):
+        return self.db.on_event(table=table, ids=ids, event_type=event_type)
 
     def list_components(self):
         return sorted(list(self.triggers))
@@ -19,7 +19,7 @@ class LocalCDCBackend(CDCBackend):
         return list(self._trigger_uuid_mapping.values())
 
     def _put(self, item):
-        assert isinstance(item, Trigger)
+        assert isinstance(item, CDC)
         self.triggers.add((item.type_id, item.identifier))
 
     def __delitem__(self, item):

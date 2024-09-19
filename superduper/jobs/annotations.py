@@ -34,11 +34,13 @@ def trigger(
                 " to be triggered by anything apart from 'apply'"
             )
 
-        def decorated(self, ids: t.List[str] | None = None, job: bool = False):
+        def decorated(self, job: bool = False, **kwargs):
+            # the futures kwargs is a placeholder to allow for pinning 
+            # dependencies according to the readiness of upstream jobs
             if event_types != ('apply',):
                 msg = 'Method must be a `Trigger` instance to take non-applying events'
-                from superduper.components.trigger import Trigger
-                assert isinstance(self, Trigger), msg
+                from superduper.components.cdc import CDC
+                assert isinstance(self, CDC), msg
 
             if job:
                 return Job(
@@ -46,12 +48,12 @@ def trigger(
                     identifier=self.identifier,
                     uuid=self.uuid,
                     method=f.__name__,
-                    args=(ids,) if takes_ids else (),
+                    kwargs=kwargs,
                     db=self.db,
                 )
             else:
                 self.init()
-                return f(self, ids) if takes_ids else f(self)
+                return f(self, **kwargs)
 
         decorated.events = event_types
         decorated.depends = depends

@@ -72,6 +72,7 @@ def test_listener_chaining(db):
         key="x",
         identifier="listener1",
     )
+
     db.apply(listener1)
 
     listener2 = Listener(
@@ -92,6 +93,7 @@ def test_listener_chaining(db):
     check_listener_output(listener2, 5)
 
     insert_random(start=5)
+
     check_listener_output(listener1, 10)
     check_listener_output(listener2, 10)
 

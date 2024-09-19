@@ -110,6 +110,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.component_table = Table(
             'COMPONENT',
             metadata,
+            # TODO rename with id -> uuid
             Column('id', type_string, primary_key=True),
             Column('identifier', type_string),
             Column('version', type_integer),
@@ -117,6 +118,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('type_id', type_string),
             Column('_path', type_string),
             Column('dict', type_json_as_text),
+            Column('cdc_table', type_string),
             *component_table_args,
         )
 
@@ -394,8 +396,8 @@ class SQLAlchemyMetadata(MetaDataStore):
     def _refactor_component_info(cls, info):
         if 'hidden' not in info:
             info['hidden'] = False
-        component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path']
-        new_info = {k: info[k] for k in component_fields}
+        component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path', 'cdc_table']
+        new_info = {k: info.get(k) for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['id'] = new_info['dict']['uuid']
         return new_info
@@ -461,6 +463,17 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .values(**info)
             )
             session.execute(stmt)
+
+    def _show_cdcs(self, table):
+        """Show all triggers in the database.
+
+        :param type_id: the type of the component
+        """
+        with self.session_context() as session:
+            stmt = select(self.component_table)
+            stmt = stmt.where(self.component_table.c.cdc_table == table)
+            res = self.query_results(self.component_table, stmt, session)
+        return res
 
     def _show_components(self, type_id: t.Optional[str] = None):
         """Show all components in the database.

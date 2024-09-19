@@ -53,10 +53,9 @@ class LocalComputeBackend(ComputeBackend):
         component = self.db.load(uuid=job.uuid)
         method = getattr(component, job.method)
         logging.info(f"Submitting job: {job}")
-        method(*job.args, **job.kwargs)
-        future_key = str(uuid.uuid4())
-        logging.success("Done")
-        return future_key
+        # TODO for distributed computation this is a future
+        # which gets returned
+        return method(*job.args, **job.kwargs)
 
     def __delitem__(self, item):
         pass

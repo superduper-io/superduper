@@ -502,6 +502,7 @@ class Model(Component, metaclass=ModelMeta):
         logging.debug(message)
 
         select = self._prepare_select_for_predict(select, self.db)
+        # TODO ids are not propagated on trigger
         predict_ids = self._get_ids_from_select(
             X=X,
             select=select,
@@ -509,7 +510,7 @@ class Model(Component, metaclass=ModelMeta):
             overwrite=overwrite,
             predict_id=predict_id,
         )
-        return self._predict_with_select_and_ids(
+        out = self._predict_with_select_and_ids(
             X=X,
             predict_id=predict_id,
             select=select,
@@ -517,6 +518,7 @@ class Model(Component, metaclass=ModelMeta):
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
         )
+        return out
 
     def _prepare_inputs_from_select(
         self,
@@ -584,22 +586,23 @@ class Model(Component, metaclass=ModelMeta):
         max_chunk_size: t.Optional[int] = None,
     ):
         if not ids:
-            return
+            return []
 
         if max_chunk_size is not None:
             it = 0
+            output_ids = []
             for i in range(0, len(ids), max_chunk_size):
                 logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
-                self._predict_with_select_and_ids(
+                output_ids.extend(self._predict_with_select_and_ids(
                     X=X,
                     ids=ids[i : i + max_chunk_size],
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
                     predict_id=predict_id,
-                )
+                ))
                 it += 1
-            return
+            return output_ids
 
         dataset, mapping = self._prepare_inputs_from_select(
             X=X,
@@ -624,12 +627,14 @@ class Model(Component, metaclass=ModelMeta):
             flatten=self.flatten,
             **self.model_update_kwargs,
         )
+        output_ids = []
         if update:
             # Don't use auto_schema for inserting model outputs
             if update.type == 'insert':
-                update.execute(db=self.db, auto_schema=False)
+                output_ids = update.execute(db=self.db, auto_schema=False)
             else:
-                update.execute(db=self.db)
+                output_ids = update.execute(db=self.db)
+        return output_ids
 
     def _infer_auto_schema(self, outputs, predict_id):
         """
@@ -857,7 +862,6 @@ class Model(Component, metaclass=ModelMeta):
         assert isinstance(self.validation, Validation)
         for dataset in self.validation.datasets:
             logging.info(f'Validating on {dataset.identifier}...')
-            self.db.apply(dataset)
             results = self.validate(
                 key=self.validation.key,
                 dataset=dataset,

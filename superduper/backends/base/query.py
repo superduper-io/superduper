@@ -626,17 +626,6 @@ class Query(_BaseQuery):
         documents = self.documents
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
-        # TODO: Need to enable this check later
-        # for doc in documents:
-        #     from superduper.components.datatype import _BaseEncodable
-        #
-        #     for key, value in doc.items():
-        #         if isinstance(value, _BaseEncodable):
-        #             raise ValueError(
-        #                 'Don\'t pass encodable objects to the query, '
-        #                 'Please use the original object and schema. '
-        #                 f'{doc}'
-        #             )
 
         if schema is None:
             try:

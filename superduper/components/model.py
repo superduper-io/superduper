@@ -18,7 +18,6 @@ from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.document import Document
-from superduper.base.enums import DBType
 from superduper.base.exceptions import DatabackendException
 from superduper.base.leaf import LeafMeta
 from superduper.components.component import Component, ensure_initialized
@@ -858,7 +857,7 @@ class Model(Component, metaclass=ModelMeta):
         outputs = self.predict_batches(dataset)
         self._infer_auto_schema(outputs, predict_id)
         # TODO implement this so that we can toggle between different ibis/ mongodb
-        outputs = self.encode_outputs(outputs)
+        # outputs = self.encode_outputs(outputs)
 
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
@@ -918,16 +917,7 @@ class Model(Component, metaclass=ModelMeta):
             assert isinstance(output, list), 'Flatten is set but output is not list'
             output = output[0]
 
-        # Output schema only for mongodb
-        if isinstance(output, dict) and self.db.databackend.db_type == DBType.MONGODB:
-            output_schema = self.db.infer_schema(output)
-            if output_schema.fields:
-                self.output_schema = output_schema
-                self.db.apply(self.output_schema)
-        else:
-            self.datatype = self.db.infer_schema({"data": output}).fields.get(
-                "data", None
-            )
+        self.datatype = self.db.infer_schema({"data": output}).fields.get("data", None)
 
         if self.datatype is not None and not self.db.databackend.check_output_dest(
             predict_id

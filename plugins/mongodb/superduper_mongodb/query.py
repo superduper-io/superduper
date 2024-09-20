@@ -651,7 +651,29 @@ class MongoQuery(Query):
             db=self.db,
             id_field='_id',
             process_func=self._postprocess_result,
+            schema=self._get_schema(),
         )
+
+    def _get_schema(self):
+        table = self.db.tables[self.table]
+        fields = table.schema.fields
+
+        outputs_parts = [p for p in self.parts if p[0] == 'outputs']
+        predict_ids = sum([p[1] for p in outputs_parts], ())
+        for predict_id in predict_ids:
+            key = f'{CFG.output_prefix}{predict_id}'
+            try:
+                output_table = self.db.tables[key]
+            except FileNotFoundError:
+                logging.warn(
+                    f'No schema found for table {key}. Using default projection'
+                )
+                continue
+            fields[key] = output_table.schema.fields[key]
+
+        from superduper.components.schema import Schema
+
+        return Schema(f"_tmp:{self.table}", fields=fields)
 
     def _get_project(self):
         find_params, _ = self._get_method_parameters('find')

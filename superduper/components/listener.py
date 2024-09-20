@@ -119,13 +119,20 @@ class Listener(Component):
         """
         if model.datatype is None and model.output_schema is None:
             return
-        output_table = db.databackend.create_output_dest(
-            predict_id,
-            model.datatype,
-            flatten=model.flatten,
+        from superduper.components.schema import ID, Schema
+        from superduper.components.table import Table
+
+        fields = {
+            "_source": ID,
+            "id": ID,
+            f"{CFG.output_prefix}{predict_id}": model.datatype,
+        }
+        output_table = Table(
+            identifier=f"{CFG.output_prefix}{predict_id}",
+            schema=Schema(identifier=f"_schema/{predict_id}", fields=fields),
         )
-        if output_table is not None:
-            db.add(output_table)
+
+        db.apply(output_table)
 
     @property
     def dependencies(self):

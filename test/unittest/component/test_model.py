@@ -204,7 +204,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         )
         select_using_id.assert_called_once_with(ids)
         _, kwargs = model_update.call_args
-        kwargs_output_ids = [o.x for o in kwargs.get('outputs')]
+        kwargs_output_ids = [o for o in kwargs.get('outputs')]
         assert kwargs_output_ids == [2] * 10
 
     with patch.object(predict_mixin, 'object') as my_object:
@@ -223,7 +223,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             )
             select_using_ids.assert_called_once_with(ids)
             _, kwargs = model_update.call_args
-            assert kwargs.get('outputs') == [str({'out': 2}) for _ in range(10)]
+            assert kwargs.get('outputs') == [{'out': 2} for _ in range(10)]
 
 
 def test_model_append_metrics():

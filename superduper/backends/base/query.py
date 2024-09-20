@@ -712,17 +712,23 @@ class Query(_BaseQuery):
 
 
 def _parse_query_part(part, documents, query, builder_cls, db=None):
-    if '.' in CFG.output_prefix and part.startswith(CFG.output_prefix):
-        rest_part = part[len(CFG.output_prefix) :].split('.')
-        table = f'{CFG.output_prefix}{rest_part[0]}'
-        part = rest_part[1:]
-
+    if part.startswith(CFG.output_prefix):
+        predict_id = part[len(CFG.output_prefix) :].split('.')[0]
+        table = f'{CFG.output_prefix}{predict_id}'
+        rest_part = part[len(table) + 1 :]
     else:
-        table = part.split('.')[0]
-        part = part.split('.')[1:]
+        table = part.split('.', 1)[0]
+        rest_part = part[len(table) + 1 :]
+
+    # The format of the rest part should be a chain of '.method(args, kwargs)'
+    parts = re.findall(r'\.([a-zA-Z0-9_]+)(\(.*?\))?', "." + rest_part)
+    recheck_part = ".".join(p[0] + p[1] for p in parts)
+    if recheck_part != rest_part:
+        raise ValueError(f'Invalid query part: {part} != {recheck_part}')
 
     current = builder_cls(table=table, parts=(), db=db)
-    for comp in part:
+    for part in parts:
+        comp = part[0] + part[1]
         match = re.match(r'^([a-zA-Z0-9_]+)\((.*)\)$', comp)
         if match is None:
             current = getattr(current, comp)

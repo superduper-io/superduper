@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed atlas vector search
 - Fix the bug where shared artifacts are deleted when removing a component.
 - Fix compatibility issues with the latest version of pymongo.
+- Fix the query parser incompatibility with '.' symbol.
 
 #### New Features & Functionality
 
@@ -325,3 +326,5 @@ Test release before v0.2
 ## [0.0.5](https://github.com/superduper-io/superduper/compare/0.0.5...0.0.4])      (2023-Aug-15)
 
 ## 0.0.4      (2023-Aug-03)
+
+

@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the query parser incompatibility with '.' symbol.
 - Fix the post like in the service vector_search.
 - Fix the conflict of the same identifier during encoding.
+- Fix the issue where MongoDB did not create the output table.
 
 #### New Features & Functionality
 

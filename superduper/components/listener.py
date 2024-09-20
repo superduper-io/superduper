@@ -117,7 +117,7 @@ class Listener(Component):
         :param uuid: UUID of the listener.
         :param model: Model instance.
         """
-        if model.datatype is None and model.output_schema is None:
+        if model.datatype is None:
             return
         from superduper.components.schema import ID, Schema
         from superduper.components.table import Table

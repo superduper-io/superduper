@@ -3,7 +3,6 @@ import typing as t
 
 import networkx as nx
 
-from superduper import Schema
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import Model, Signature, ensure_initialized
@@ -551,29 +550,6 @@ class Graph(Model):
             )
         # TODO: check if output schema and datatype required
         return outputs
-
-    def encode_outputs(self, outputs):
-        """Encode outputs for serialization in the database.
-
-        :param outputs: model outputs.
-        """
-        if not isinstance(self.output_identifiers, list):
-            outputs = self.nodes[self.output_identifiers].encode_outputs(outputs)
-            return outputs
-
-        encoded_outputs = []
-        for o, n in zip(outputs, self.output_identifiers):
-            encoded_outputs.append(self.nodes[n].encode_outputs(o))
-        outputs = self._transpose(outputs=encoded_outputs or outputs)
-
-        # Set the schema at runtime
-        if not self.datatype:
-            self.output_schema = Schema(
-                identifier=self.identifier,
-                fields={k.identifier: k.datatype for k in self.outputs},
-            )
-
-        return self.encode_with_schema(outputs)
 
     @staticmethod
     def _transpose(outputs):

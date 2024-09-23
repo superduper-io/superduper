@@ -11,7 +11,7 @@ import os
 import shutil
 import typing as t
 import uuid
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import wraps
 
 import yaml
@@ -19,15 +19,13 @@ import yaml
 from superduper import logging
 from superduper.backends.base.queue import JobFutureException
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
-from superduper.base.event import EventType
 from superduper.base.leaf import Leaf, LeafMeta
-from superduper.jobs.annotations import trigger
-from superduper.jobs.job import Job
+from superduper.base.annotations import trigger
+from superduper.base.event import Job
 
 if t.TYPE_CHECKING:
     from superduper import Document
     from superduper.base.datalayer import Datalayer
-    from superduper.base.event import Event
     from superduper.components.datatype import DataType
     from superduper.components.plugin import Plugin
 
@@ -230,7 +228,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         """
         Get all the triggers for the component.
 
-        :param event_type: EventType.
+        :param event_type: event_type
         """
         # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
@@ -238,37 +236,37 @@ class Component(Leaf, metaclass=ComponentMeta):
             attr_name for attr_name in self.triggers if self._filter_trigger(attr_name, event_type)
         ]
 
-    def _get_futures(self, futures):
-        these_futures = {}
+    def _get_dependencies(self, dependencies):
+        these_dependencies = {}
         refs = self.get_children_refs(deep=False, only_initializing=True)
         for key in refs:
             try:
-                these_futures[key] = futures[key]
+                these_dependencies[key] = dependencies[key]
             except KeyError as e:
                 raise JobFutureException(str(e)) from e
-        return these_futures
+        return these_dependencies
 
     @trigger('apply')
     def set_status(self, status: Status):
         return self.db.metadata.set_component_status(self.uuid, status)
 
-    def run_jobs(
-        self,
-        event_type: EventType,
-        ids: t.List[str] | None = None, 
-        futures: t.List[Job] | None = None,
-    ) -> t.Sequence[str]:
+    def create_jobs(self, context: str, event_type: str, ids: t.Sequence[str] | None = None, jobs: t.Sequence[Job] = ()) -> t.Sequence[str]:
         """Deploy apply jobs for the component."""
-        from superduper.base.event import EventType
 
         # TODO replace this with a DAG check
         max_it = 100
         it = 0
 
-        triggers = self.get_triggers(event_type)
+        triggers = self.get_triggers('apply')
         triggers = list(set(triggers) - {'set_status'})
 
-        out_futures: t.Dict = {}
+        # local_job_lookup is {j.method_name: j.job_id for j in local_jobs}
+        local_job_lookup = {}
+        local_jobs = []
+        # component_to_job_lookup is {c.uuid: <list-of-job-ids-for-component>}
+        component_to_job_lookup = defaultdict(list)
+        for j in jobs:
+            component_to_job_lookup[j.uuid].append(j.job_id)
 
         while triggers:
             for attr_name in triggers:
@@ -278,38 +276,62 @@ class Component(Leaf, metaclass=ComponentMeta):
 
                 # Check that the dependencies of the job are ready
                 # If not skip until the next round
-                if not all(f in out_futures for f in depends):
+                if not all(f in jobs for f in depends):
                     continue
 
                 # Dependencies come from these local jobs
                 # plus the jobs from the child components
-                local_futures = self._get_futures(futures)
-                these_futures = {
-                    f: out_futures[f] for f in depends if f in out_futures
-                }
-                these_futures = {**local_futures, **these_futures}
+                inter_component_dependencies = []   # list of job-ids
+                for child in self.get_children_refs():
+                    child_uuid = child.split(':')[-1]
+                    if child_uuid in component_to_job_lookup:
+                        try:
+                            inter_component_dependencies.extend(
+                                component_to_job_lookup[child_uuid]
+                            )
+                        except KeyError as e:
+                            r = self.db.metadata.get_component_by_uuid(uuid=child_uuid)
+                            huuid = f'{r["type_id"]}:{r["identifier"]}:{r["uuid"]}'
+                            if event_type == 'apply':
+                                if r['status'] == 'initializing':
+                                    raise Exception(f'Component required component {huuid} still initializing')
+                                elif r['status'] == 'ready':
+                                    logging.info(f'Detected a ready component dependency {huuid}')
+                            else:
+                                if r.get('cdc_table') is not None:
+                                    raise Exception(
+                                        f"Missing an upstream dependency {huuid} on table {r['cdc_table']}"
+                                    ) from e
 
-                if event_type in {'update', 'delete', 'insert'}:
-                    job: Job = attr(ids=ids, job=True)
+                intra_component_dependencies = [
+                    local_jobs[f] for f in depends if f in local_jobs
+                ]
+                dependencies = inter_component_dependencies + intra_component_dependencies
+
+                # 'apply' event doesn't need inputs
+                if event_type == 'apply':
+                    job: Job = attr(job=True, context=context)  # type: ignore[no-redef]
                 else:
-                    # 'apply'
-                    job: Job = attr(job=True)  # type: ignore[no-redef]
+                    job: Job = attr(ids=ids, job=True, context=context)  # type: ignore[no-redef]
+                job.dependencies = dependencies
 
                 # TODO rename the call method to execute or deploy
                 # This adds the promised output "future" to the saved outputs
-                out_futures[attr_name] = job(dependencies=futures)
+                # out_futures[attr_name] = job(dependencies=dependencies)
+                local_job_lookup[attr_name] = job
+                local_jobs.append(job)
 
             it += 1
             if it > max_it:
                 raise Exception('Circular job dependency detected')
-            if len(out_futures) == len(triggers):
+            if len(local_jobs) == len(triggers):
                 break
 
-        if event_type == EventType.apply:
-            status_update: Job = self.set_status(status=Status.ready, job=True)
-            out_futures['set_status'] = status_update(dependencies=out_futures)
-
-        return out_futures
+        if event_type == 'apply':
+            status_update: Job = self.set_status(status=Status.ready, job=True, context=context)
+            status_update.dependencies = [j.job_id for j in local_jobs]
+            local_jobs.append(status_update)
+        return local_jobs
 
     @classmethod
     def from_template(
@@ -729,7 +751,6 @@ def ensure_initialized(func):
 
     :param func: Decorator function.
     """
-
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not getattr(self, "_is_initialized", False):
@@ -739,5 +760,4 @@ def ensure_initialized(func):
             self._is_initialized = True
             logging.debug(f"Initialized  {model_message} successfully")
         return func(self, *args, **kwargs)
-
     return wrapper

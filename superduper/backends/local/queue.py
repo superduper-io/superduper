@@ -1,8 +1,6 @@
-from collections import defaultdict
 import typing as t
 
-from superduper import logging
-from superduper.backends.base.queue import consume_apply_event, consume_streaming_events
+from superduper.backends.base.queue import consume_streaming_events
 from superduper.base.event import Event
 from superduper.backends.base.queue import BaseQueueConsumer, BaseQueuePublisher
 from superduper.components.cdc import CDC
@@ -68,10 +66,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         :param events: list of events
         """
         for event in events:
-            if event.event_type == 'apply':
-                self.queue['_apply'].append(event)
-            else:
-                self.queue[event.source].append(event)
+            self.queue[event.queue].append(event)
         self.consumer.consume(db=self.db, queue=self.queue)
 
 
@@ -88,20 +83,15 @@ class LocalQueueConsumer(BaseQueueConsumer):
 
     def consume(self, db: 'Datalayer', queue: t.Dict[str, Event]):
         """Consume the current queue and run jobs."""
-        for q in queue:
-            if q != '_apply':
-                consume_streaming_events(events=queue[q], table=q, db=db)
-                queue[q] = []
+        keys = list(queue.keys())[:]
+        for k in keys:
+            if k != '_apply':
+                consume_streaming_events(events=queue[k], table=k, db=db)
+                queue[k] = []
             else:
                 while queue['_apply']:
                     event = queue['_apply'].pop()
-                    if event.msg == 'done':
-                        try:
-                            del self.futures[event.context]
-                        except KeyError:
-                            logging.info(f'No futures saved for {event.context}')
-                    else:
-                        consume_apply_event(event=event, db=db, futures=self.futures[event.source])
+                    event.execute(db)
 
     @property
     def db(self):

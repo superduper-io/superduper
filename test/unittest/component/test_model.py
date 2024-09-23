@@ -1,4 +1,5 @@
 import dataclasses as dc
+from superduper.base.event import Job
 from test.utils.component import model as model_utils
 from unittest.mock import MagicMock, patch
 
@@ -24,7 +25,6 @@ from superduper.components.model import (
     Validation,
 )
 from superduper.components.schema import FieldType
-from superduper.jobs.job import Job
 
 
 # ------------------------------------------
@@ -283,8 +283,6 @@ def test_model_create_fit_job(db):
     # TODO move these parameters into the `Trainer` (same thing for validation)
     model.trainer = MyTrainer('test', select=db['documents'].select(), key='x')
     db.apply(model)
-    with patch.object(Job, '__call__') as mock_call:
-        mock_call.return_value = None
     model.db = db
     job = model.fit_in_db(job=True)
     assert job.identifier == model.identifier

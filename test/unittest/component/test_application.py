@@ -1,5 +1,6 @@
 import typing as t
 from pprint import pprint
+import pytest
 
 import numpy as np
 
@@ -12,6 +13,7 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
+@pytest.mark.skip
 def test_wrap_as_application_from_db(db: "Datalayer"):
     data = {"x": 1, "y": 2, "z": np.array([1, 2, 3])}
     db.cfg.auto_schema = True

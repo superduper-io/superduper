@@ -22,7 +22,7 @@ from superduper.base.config import Config
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
-from superduper.base.event import ComponentPlaceholder, Event, EventType
+from superduper.base.event import Create, Signal
 from superduper.components.component import Component, Status
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
@@ -32,7 +32,10 @@ from superduper.misc.colors import Colors
 from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
 from superduper.misc.special_dicts import recursive_update
-from superduper.vector_search.base import BaseVectorSearcher
+
+if t.TYPE_CHECKING:
+    from superduper.base.event import Job
+
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -247,7 +250,7 @@ class Datalayer:
 
         call_cdc = delete.query.table in self.metadata.show_cdc_tables() and delete.query.table.startswith(CFG.output_prefix)
         if call_cdc:
-            self.cluster.cdc.handle_event(event_type=EventType.delete, table=delete.table, ids=result)
+            self.cluster.cdc.handle_event(event_type='delete', table=delete.table, ids=result)
         return result
 
     def _insert(
@@ -285,7 +288,7 @@ class Datalayer:
             return
 
         if insert.table in self.metadata.show_cdc_tables() and not insert.table.startswith(CFG.output_prefix):
-            self.cluster.cdc.handle_event(event_type=EventType.insert, table=insert.table, ids=inserted_ids)
+            self.cluster.cdc.handle_event(event_type='insert', table=insert.table, ids=inserted_ids)
 
         return inserted_ids
 
@@ -311,7 +314,7 @@ class Datalayer:
         """
         return select.do_execute(db=self)
 
-    def on_event(self, table: str, ids: t.List[str], event_type: EventType):
+    def on_event(self, table: str, ids: t.List[str], event_type: 'str'):
         """
         Trigger computation jobs after data insertion.
 
@@ -319,10 +322,10 @@ class Datalayer:
                       the scope of computations.
         :param ids: IDs that further reduce the scope of computations.
         """
-        from superduper.base.event import Event
+        from superduper.base.event import Change
         events = []
         for id in ids:
-            events.append(Event(ids=[str(id)], event_type=event_type, source=table))
+            events.append(Change(ids=[str(id)], queue=table, type=event_type))
         logging.info(
             f'Created {len(events)} events for {event_type} on [{table}]'
         )
@@ -344,9 +347,9 @@ class Datalayer:
         call_cdc = write.table in self.metadata.show_cdc_tables() and write.table.startswith(CFG.output_prefix)
         if call_cdc:
             if updated_ids:
-                self.cluster.cdc.handle_event(event_type=EventType.update, table=write.table, ids=updated_ids)
+                self.cluster.cdc.handle_event(event_type='update', table=write.table, ids=updated_ids)
             if deleted_ids:
-                self.cluster.cdc.handle_event(event_type=EventType.delete, table=write.table, ids=deleted_ids)
+                self.cluster.cdc.handle_event(event_type='delete', table=write.table, ids=deleted_ids)
                 
         return updated_ids + deleted_ids
 
@@ -368,7 +371,7 @@ class Datalayer:
         table = update.table
 
         if table in self.metadata.show_cdc_tables() and not table.startswith(CFG.output_prefix):
-            self.cluster.cdc.handle_event(event_type=EventType.update, table=update.table, ids=updated_ids)
+            self.cluster.cdc.handle_event(event_type='update', table=update.table, ids=updated_ids)
 
         return updated_ids
 
@@ -386,6 +389,7 @@ class Datalayer:
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
+        approve: bool = False,
     ):
         """
         Add functionality in the form of components.
@@ -401,18 +405,40 @@ class Datalayer:
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
         # context allows us to track the origin of the component creation
-        already_exists, events = self._apply(object=object, context=object.uuid)
+        create_events, job_events = self._apply(
+            object=object,
+            context=object.uuid,
+            job_events=[],
+        )
         # this flags that the context is not needed anymore
-        if not already_exists:
-            done = Event(
-                event_type='apply',
-                source=object.huuid,
-                context=object.huuid,
-                msg='done',
-            )
-            events.append(done)
-        apply_events = [e for e in events if e.event_type == EventType.apply]
-        self.cluster.queue.publish(apply_events[::-1])
+        if not create_events:
+            return object
+
+        # TODO for some reason the events get created multiple times
+        # we need to fix that to prevent inefficiencies
+        unique_create_ids = []
+        unique_create_events = []
+        for e in create_events:
+            if e.component['uuid'] not in unique_create_ids:
+                unique_create_ids.append(e.component['uuid'])
+                unique_create_events.append(e)
+
+        unique_job_ids = []
+        unique_job_events = []
+        for e in job_events:
+            if e.huuid not in unique_job_ids:
+                unique_job_ids.append(e.huuid)
+                unique_job_events.append(e)
+
+        events = [
+            *unique_create_events,
+            *unique_job_events,
+            Signal(context=object.uuid, msg='done'),
+        ]
+        for event in events:
+            logging.info(f'Creating event {event}')
+
+        self.cluster.queue.publish(events=events[::-1])
         return object
 
     def remove(
@@ -484,6 +510,7 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
+        huuid: t.Optional[str] = None,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -507,7 +534,7 @@ class Datalayer:
                 ' after version 0.2.0'
             )
             type_id = 'datatype'
-        if uuid is None:
+        if uuid is None and huuid is None:
             if type_id is None or identifier is None:
                 raise ValueError(
                     'Must specify `type_id` and `identifier` to load a component '
@@ -521,10 +548,20 @@ class Datalayer:
                 allow_hidden=allow_hidden,
             )
         else:
-            info = self.metadata.get_component_by_uuid(
-                uuid=uuid,
-                allow_hidden=allow_hidden,
-            )
+            if huuid:
+                uuid = huuid.split(':')[-1]
+            try:
+                info = self.metadata.get_component_by_uuid(
+                    uuid=uuid,
+                    allow_hidden=allow_hidden,
+                )
+            except FileNotFoundError as e:
+                if huuid is not None:
+                    raise FileNotFoundError(
+                        f'Could not find {huuid} in metadata.'
+                    ) from e
+                raise e
+
             assert info is not None
             type_id = info['type_id']
 
@@ -544,7 +581,7 @@ class Datalayer:
             self.cluster.cache.put(m)
         return m
 
-    def _add_child_components(self, components, parent):
+    def _add_child_components(self, components, parent, job_events, context):
         # TODO this is a bit of a mess
         # it handles the situation in `Stack` when
         # the components should be added in a certain order
@@ -557,10 +594,13 @@ class Datalayer:
                     G.add_edge(d, lookup[k].id_tuple)
 
         nodes = networkx.topological_sort(G)
-        events = []
+        create_events = []
+        job_events = []
         for n in nodes:
-            events += self._apply(lookup[n], parent=parent.uuid)[1]
-        return events
+            c, j = self._apply(lookup[n], parent=parent.uuid, job_events=job_events, context=context)
+            create_events += c
+            job_events += j
+        return create_events, job_events
 
     def _update_component(self, object, parent: t.Optional[str] = None):
         # TODO add update logic here to check changed attributes
@@ -575,19 +615,19 @@ class Datalayer:
         parent: t.Optional[str] = None,
         artifacts: t.Optional[t.Dict[str, bytes]] = None,
         context: t.Optional[str] = None,
+        job_events: t.Sequence['Job'] = (),
     ):
         object.db = self
-
         existing_versions = self.show(object.type_id, object.identifier)
-
         already_exists = (
             isinstance(object.version, int) and object.version in existing_versions
         )
-
         if already_exists:
             self._update_component(object, parent=parent)
-            return True, []
+            return [], []
 
+        # This populates the component with data fetched
+        # from `db` if necessary
         object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
@@ -604,7 +644,9 @@ class Datalayer:
         serialized = object.dict().encode(leaves_to_keep=(Component,))
 
         for k, v in serialized[KEY_BUILDS].items():
-            # TODO What is this "inline"?
+            # TODO this is from the `@component` decorator.
+            # Can be handled with a single @leaf decorator around a function
+            # or a class
             if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
                 r = dict(v.dict())
                 del r['identifier']
@@ -613,10 +655,13 @@ class Datalayer:
         children = [
             v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
-        events = self._add_child_components(
+        create_events, j = self._add_child_components(
             children,
             parent=object,
+            job_events=job_events,
+            context=context,
         )
+        job_events += j
         if children:
             serialized = self._change_component_reference_prefix(serialized)
 
@@ -625,31 +670,15 @@ class Datalayer:
             for file_id, bytes in artifacts.items():
                 self.artifact_store.put_bytes(bytes, file_id)
 
-        self.metadata.create_component(serialized)
-        event = Event(
-            'db',
-            source=object.huuid,
+        event = Create(
             context=context,
-            msg=serialized,
+            component=serialized,
+            parent=parent,
         )
-        events.append(event)
+        create_events.append(event)
 
-        if parent is not None:
-            self.metadata.create_parent_child(parent, object.uuid)
-
-        object.post_create(self)
-
-        # TODO events should be at the method, not at the object level
-        # TODO compile a list of events for approval
-        if object.get_triggers('apply') != ['set_status']:
-            event = Event(
-                event_type='apply',
-                source=object.huuid,
-                context=context,
-            )
-            events.append(event)
-            # self.cluster.queue.publish([event])
-        return False, events
+        job_events += object.create_jobs(event_type='apply', jobs=job_events, context=context)
+        return create_events, job_events
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""

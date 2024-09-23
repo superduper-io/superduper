@@ -1,8 +1,9 @@
 import dataclasses as dc
 import typing as t
-import uuid
-from collections import defaultdict
 from enum import Enum
+
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -27,6 +28,7 @@ class EventType(str, Enum):
     delete = 'delete'
     update = 'update'
     apply = 'apply'
+    db = 'db'
 
 
 @dc.dataclass
@@ -81,3 +83,26 @@ class Event:
         for e in events:
             ids.append(e.uuid)
         return ids
+
+    def execute(self, db: 'Datalayer'):
+        db.cluster.queue.publish([self])
+
+
+class StreamingEvent(Event):
+    """
+    Class for streaming events.
+
+    # noqa
+    """
+    def execute(self):
+        ...
+
+
+class DBEvent(Event):
+    """
+    Class for datalayer events. 
+
+    # noqa
+    """
+    def execute(self, db: 'Datalayer'):
+        return db.metadata.create_component(self.msg)

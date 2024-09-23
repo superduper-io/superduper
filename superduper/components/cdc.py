@@ -22,9 +22,6 @@ class CDC(Component):
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
 
-    def post_create(self, db: 'Datalayer') -> None:
-        super().post_create(db)
-
     def declare_component(self, cluster):
         super().declare_component(cluster)
         self.db.cluster.queue.put(self)

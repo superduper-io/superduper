@@ -1,11 +1,14 @@
 import typing as t
 
-from superduper.backends.base.queue import consume_streaming_events
+from superduper.backends.base.queue import (
+    BaseQueueConsumer,
+    BaseQueuePublisher,
+    consume_streaming_events,
+)
 from superduper.base.event import Event
-from superduper.backends.base.queue import BaseQueueConsumer, BaseQueuePublisher
 from superduper.components.cdc import CDC
 
-if t.TYPE_CHECKING: 
+if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
@@ -44,14 +47,16 @@ class LocalQueuePublisher(BaseQueuePublisher):
         msg = 'Table name "_apply" collides with Superduper namespace'
         assert component.cdc_table != '_apply', msg
         assert isinstance(component, CDC)
-        self._component_uuid_mapping[component.type_id, component.identifier] = component.uuid
+        self._component_uuid_mapping[
+            component.type_id, component.identifier
+        ] = component.uuid
         if component.cdc_table in self.queue:
             return
         self.queue[component.cdc_table] = []
 
     def list_components(self):
         return list(self._component_uuid_mapping.keys())
-    
+
     def list_uuids(self):
         return list(self._component_uuid_mapping.values())
 

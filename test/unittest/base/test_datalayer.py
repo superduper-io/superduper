@@ -639,7 +639,9 @@ def test_retry_on_token_expiry(db):
 
     with patch.object(db.databackend._backend, 'reconnect') as reconnect:
         with patch.object(
-            db.databackend._backend, 'test_retry', side_effect=check_retry,
+            db.databackend._backend,
+            'test_retry',
+            side_effect=check_retry,
         ) as mock_test_retry:
             db.databackend.test_retry()
             assert reconnect.call_count == 1

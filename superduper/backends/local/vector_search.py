@@ -3,18 +3,25 @@ import typing as t
 import numpy
 
 from superduper import logging
-from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem, measures, VectorSearchBackend
+from superduper.backends.base.vector_search import (
+    BaseVectorSearcher,
+    VectorItem,
+    VectorSearchBackend,
+    measures,
+)
 
 
 class LocalVectorSearchBackend(VectorSearchBackend):
     """Local vector search backend.
-    
+
     :param searcher_impl: class to use for requesting similarities
     """
+
     def __init__(self, searcher_impl: BaseVectorSearcher):
         self._cache = {}
         self.searcher_impl = searcher_impl
         self._identifier_uuid_map = {}
+        self._db = None
 
     def _put(self, vector_index):
         searcher = self.searcher_impl.from_component(vector_index)
@@ -26,6 +33,9 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             vector_index = self.db.load('vector_index', identifier=identifier)
             self._put(vector_index)
             vector_index.copy_vectors()
+
+    def __contains__(self, item):
+        return item in self._cache
 
     def list_components(self):
         return list(self._cache.keys())
@@ -41,10 +51,12 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         return self._cache[identifier]
 
     def drop(self, identifier=None):
+        # TODO: drop actual vector search not the cache
         if identifier is None:
             self._cache = {}
-        del self._cache[identifier]
-        del self._identifier_uuid_map[identifier]
+        else:
+            del self._cache[identifier]
+            del self._identifier_uuid_map[identifier]
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):

@@ -4,24 +4,23 @@
 from __future__ import annotations
 
 import dataclasses as dc
-from enum import Enum
-import inspect
 import json
 import os
 import shutil
 import typing as t
 import uuid
 from collections import defaultdict, namedtuple
+from enum import Enum
 from functools import wraps
 
 import yaml
 
 from superduper import logging
 from superduper.backends.base.queue import JobFutureException
-from superduper.base.constant import KEY_BLOBS, KEY_FILES
-from superduper.base.leaf import Leaf, LeafMeta
 from superduper.base.annotations import trigger
+from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
+from superduper.base.leaf import Leaf, LeafMeta
 
 if t.TYPE_CHECKING:
     from superduper import Document
@@ -34,6 +33,7 @@ class Status(str, Enum):
     """Status enum.
     # noqa
     """
+
     initializing = 'initializing'
     ready = 'ready'
 
@@ -89,10 +89,11 @@ ComponentTuple.__doc__ = 'noqa'
 
 class ComponentMeta(LeafMeta):
     """Metaclass for the `Component` class.
-    
+
     This component is used to aggregate all the triggers
     from the base classes. # noqa
     """
+
     def __new__(cls, name, bases, dct):
         # Create the new class using type.__new__
         new_cls = super().__new__(cls, name, bases, dct)
@@ -102,7 +103,7 @@ class ComponentMeta(LeafMeta):
         for base in bases:
             if hasattr(base, 'triggers'):
                 new_cls.triggers.update(base.triggers)
-        
+
         # Register new triggers from current class definition
         for attr_name, attr_value in dct.items():
             if hasattr(attr_value, 'events'):
@@ -155,8 +156,13 @@ class Component(Leaf, metaclass=ComponentMeta):
     def get_children_refs(self, deep: bool = False, only_initializing: bool = False):
         """Get all the children of the component."""
         r = self.dict()
+
         def _find_refs(r):
-            if isinstance(r, str) and r.startswith('&:component:') and not only_initializing:
+            if (
+                isinstance(r, str)
+                and r.startswith('&:component:')
+                and not only_initializing
+            ):
                 return [':'.join(r.split(':')[2:])]
             if isinstance(r, dict):
                 return sum([_find_refs(v) for v in r.values()], [])
@@ -168,6 +174,7 @@ class Component(Leaf, metaclass=ComponentMeta):
                 else:
                     return [r.huuid]
             return []
+
         out = _find_refs(r)
         return sorted(list(set(out)))
 
@@ -233,7 +240,9 @@ class Component(Leaf, metaclass=ComponentMeta):
         # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
         return [
-            attr_name for attr_name in self.triggers if self._filter_trigger(attr_name, event_type)
+            attr_name
+            for attr_name in self.triggers
+            if self._filter_trigger(attr_name, event_type)
         ]
 
     def _get_dependencies(self, dependencies):
@@ -250,9 +259,14 @@ class Component(Leaf, metaclass=ComponentMeta):
     def set_status(self, status: Status):
         return self.db.metadata.set_component_status(self.uuid, status)
 
-    def create_jobs(self, context: str, event_type: str, ids: t.Sequence[str] | None = None, jobs: t.Sequence[Job] = ()) -> t.Sequence[str]:
+    def create_jobs(
+        self,
+        context: str,
+        event_type: str,
+        ids: t.Sequence[str] | None = None,
+        jobs: t.Sequence[Job] = (),
+    ) -> t.Sequence[str]:
         """Deploy apply jobs for the component."""
-
         # TODO replace this with a DAG check
         max_it = 100
         it = 0
@@ -281,7 +295,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
                 # Dependencies come from these local jobs
                 # plus the jobs from the child components
-                inter_component_dependencies = []   # list of job-ids
+                inter_component_dependencies = []  # list of job-ids
                 for child in self.get_children_refs():
                     child_uuid = child.split(':')[-1]
                     if child_uuid in component_to_job_lookup:
@@ -294,9 +308,13 @@ class Component(Leaf, metaclass=ComponentMeta):
                             huuid = f'{r["type_id"]}:{r["identifier"]}:{r["uuid"]}'
                             if event_type == 'apply':
                                 if r['status'] == 'initializing':
-                                    raise Exception(f'Component required component {huuid} still initializing')
+                                    raise Exception(
+                                        f'Component required component {huuid} still initializing'
+                                    )
                                 elif r['status'] == 'ready':
-                                    logging.info(f'Detected a ready component dependency {huuid}')
+                                    logging.info(
+                                        f'Detected a ready component dependency {huuid}'
+                                    )
                             else:
                                 if r.get('cdc_table') is not None:
                                     raise Exception(
@@ -306,7 +324,9 @@ class Component(Leaf, metaclass=ComponentMeta):
                 intra_component_dependencies = [
                     local_jobs[f] for f in depends if f in local_jobs
                 ]
-                dependencies = inter_component_dependencies + intra_component_dependencies
+                dependencies = (
+                    inter_component_dependencies + intra_component_dependencies
+                )
 
                 # 'apply' event doesn't need inputs
                 if event_type == 'apply':
@@ -328,7 +348,9 @@ class Component(Leaf, metaclass=ComponentMeta):
                 break
 
         if event_type == 'apply':
-            status_update: Job = self.set_status(status=Status.ready, job=True, context=context)
+            status_update: Job = self.set_status(
+                status=Status.ready, job=True, context=context
+            )
             status_update.dependencies = [j.job_id for j in local_jobs]
             local_jobs.append(status_update)
         return local_jobs
@@ -506,7 +528,9 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def declare_component(self, cluster):
         if self.cache:
+            logging.debug(f'Declaring {self.type_id}: {self.identifier} to cache')
             cluster.cache.put(self)
+            cluster.compute.put(self)
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store.
@@ -514,7 +538,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param db: the db that loaded the component.
         """
         assert db
-        self.declare_component(db.cluster)
+        #self.declare_component(db.cluster)
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):

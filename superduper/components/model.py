@@ -17,13 +17,13 @@ import tqdm
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
+from superduper.base.annotations import trigger
 from superduper.base.document import Document
 from superduper.base.exceptions import DatabackendException
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
-from superduper.base.annotations import trigger
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -374,7 +374,6 @@ class Model(Component, metaclass=ModelMeta):
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
-        from superduper import CFG
 
         self._is_initialized = False
         if not self.identifier:
@@ -388,6 +387,10 @@ class Model(Component, metaclass=ModelMeta):
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.predict(*args, **kwargs)
+
+    def declare_component(self, cluster):
+        """Declare model on compute."""
+        cluster.compute.put(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> int:
@@ -593,14 +596,16 @@ class Model(Component, metaclass=ModelMeta):
             output_ids = []
             for i in range(0, len(ids), max_chunk_size):
                 logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
-                output_ids.extend(self._predict_with_select_and_ids(
-                    X=X,
-                    ids=ids[i : i + max_chunk_size],
-                    select=select,
-                    max_chunk_size=None,
-                    in_memory=in_memory,
-                    predict_id=predict_id,
-                ))
+                output_ids.extend(
+                    self._predict_with_select_and_ids(
+                        X=X,
+                        ids=ids[i : i + max_chunk_size],
+                        select=select,
+                        max_chunk_size=None,
+                        in_memory=in_memory,
+                        predict_id=predict_id,
+                    )
+                )
                 it += 1
             return output_ids
 
@@ -1233,6 +1238,10 @@ class SequentialModel(Model):
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
         return self.models[0].inputs
+
+    def declare_component(self, cluster):
+        """Declare model on compute."""
+        cluster.compute.put(self)
 
     def post_create(self, db: Datalayer):
         """Post create hook.

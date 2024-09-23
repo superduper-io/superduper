@@ -33,11 +33,12 @@ def trigger(
             )
 
         def decorated(self, *, context: str = '', job: bool = False, **kwargs):
-            # the futures kwargs is a placeholder to allow for pinning 
+            # the futures kwargs is a placeholder to allow for pinning
             # dependencies according to the readiness of upstream jobs
             if event_types != ('apply',):
                 msg = 'Method must be a `Trigger` instance to take non-applying events'
                 from superduper.components.cdc import CDC
+
                 assert isinstance(self, CDC), msg
 
             if job:
@@ -51,7 +52,11 @@ def trigger(
                 )
             else:
                 self.init()
-                kwargs = {k: v for k, v in kwargs.items() if k in inspect.signature(f).parameters}
+                kwargs = {
+                    k: v
+                    for k, v in kwargs.items()
+                    if k in inspect.signature(f).parameters
+                }
                 return f(self, **kwargs)
 
         decorated.events = event_types

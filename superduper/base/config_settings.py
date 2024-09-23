@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 from . import config_dicts
-from .config import Config, _dataclass_from_dict
+from .config import _dataclass_from_dict
 
 File = t.Union[Path, str]
 
@@ -35,7 +35,7 @@ class ConfigSettings:
 
     :param cls: The Pydantic class to read.
     :param environ: The environment variables to read from.
-    :param base: The base field of a loaded config file to use 
+    :param base: The base field of a loaded config file to use
                  (e.g. "cluster" loads from r["cluster"])
     """
 

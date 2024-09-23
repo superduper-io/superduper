@@ -17,6 +17,7 @@ def _find_variables(r):
 
 def _replace_variables(x, **kwargs):
     from .document import Document
+
     if isinstance(x, dict):
         return {
             _replace_variables(k, **kwargs): _replace_variables(v, **kwargs)

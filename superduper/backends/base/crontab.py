@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from superduper.backends.base.backends import BaseBackend
 
 

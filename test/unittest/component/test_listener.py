@@ -192,6 +192,7 @@ def test_listener_cleanup(db, data):
 def cleanup():
     yield
     import os
+
     try:
         os.remove('_training_done.txt')
     except FileNotFoundError:
@@ -249,6 +250,7 @@ def test_listener_chaining_with_trainer(db, cleanup):
     db.apply(listener2)
 
     import os
+
     assert os.path.exists('_training_done.txt')
 
 

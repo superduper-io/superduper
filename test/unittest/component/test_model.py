@@ -1,5 +1,4 @@
 import dataclasses as dc
-from superduper.base.event import Job
 from test.utils.component import model as model_utils
 from unittest.mock import MagicMock, patch
 

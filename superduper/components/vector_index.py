@@ -4,19 +4,17 @@ import typing as t
 
 import numpy as np
 import tqdm
-from overrides import override
 
 from superduper import CFG, logging
-from superduper.backends.base.query import Query
+from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
+from superduper.components.cdc import CDC
 from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
-from superduper.components.cdc import CDC
 from superduper.ext.utils import str_shape
-from superduper.base.annotations import trigger
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
@@ -132,7 +130,7 @@ class VectorIndex(CDC):
 
         :param db: the db that creates the component.
         """
-        super().pre_create(db)  
+        super().pre_create(db)
         self.cdc_table = self.indexing_listener.outputs
 
     def __hash__(self):
@@ -145,8 +143,8 @@ class VectorIndex(CDC):
             )
         return False
 
-    # TODO consider a flag such as depends='*' 
-    # so that an "apply" trigger runs after all of the other 
+    # TODO consider a flag such as depends='*'
+    # so that an "apply" trigger runs after all of the other
     # triggers
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None = None):
@@ -191,13 +189,11 @@ class VectorIndex(CDC):
         for r in vectors:
             if hasattr(r['vector'], 'numpy'):
                 r['vector'] = r['vector'].numpy()
-        
+
         # TODO combine logic from backfill
         if vectors:
             searcher = self.db.cluster.vector_search[self.identifier]
-            searcher.add(
-                [VectorItem(**vector) for vector in vectors]
-            )
+            searcher.add([VectorItem(**vector) for vector in vectors])
 
     @trigger('delete')
     def delete_vectors(self, ids: t.Sequence[str] | None = None):

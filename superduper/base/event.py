@@ -245,10 +245,3 @@ events = {
     'create': Create,
     'job': Job,
 }
-
-
-if __name__ == '__main__':
-    job1 = DummyJob(job_id='job1') 
-    job2 = DummyJob(job_id='job2', dependencies=['job1']) 
-    plan = DeploymentPlan(create_events=[], jobs=[job1, job2])
-    plan.show(style=False)

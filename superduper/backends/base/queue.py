@@ -1,16 +1,17 @@
-import importlib
+import dataclasses as dc
+import networkx as nx
 import typing as t
 from abc import ABC, abstractmethod
 from collections import defaultdict
+import uuid
 
 from superduper import logging, CFG
 from superduper.backends.base.backends import BaseBackend
-from superduper.base.event import Event, EventType
+from superduper.base.event import Event
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
 if t.TYPE_CHECKING:
-    from superduper.components.component import Component
     from superduper.components.cdc import CDC
     from superduper.base.datalayer import Datalayer
 
@@ -97,13 +98,27 @@ class JobFutureException(Exception):
     ...
 
 
+# def _get_cdcs_on_table(table, db: 'Datalayer'):
+#     cdcs = db.metadata.show_cdcs(table)
+#     out = []
+#     for uuid in cdcs:
+#         out.append(
+#             db.load(uuid=uuid)
+#         )
+#     return out
+
+
 def _get_cdcs_on_table(table, db: 'Datalayer'):
     cdcs = db.metadata.show_cdcs(table)
+    from superduper.components.listener import Listener
     out = []
     for uuid in cdcs:
-        out.append(
-            db.load(uuid=uuid)
-        )
+        component = db.load(uuid=uuid)
+        if isinstance(component, Listener):
+            if len(component.select.tables) > 1:
+                continue
+            out.append(component)
+        out.append(component)
     return out
 
 
@@ -126,23 +141,6 @@ def _get_parent_cdcs_of_components(components, db):
     return list(out.values())
 
 
-def consume_apply_event(event, db, futures: t.Dict = {}):
-    """
-    Consume work from apply event.
-
-    :param event: event type to consume
-    :param db: Datalayer instance
-    :param futures: lookup of job futures
-    """
-    component: 'Component' = db.load(uuid=event.source.split(':')[-1])
-    these_futures = component.run_jobs(
-        EventType.apply,
-        futures=futures,
-    )
-    futures.update(these_futures)
-    return futures
-
-
 def consume_streaming_events(events, table, db):
     """
     Consumer work from streaming events.
@@ -155,12 +153,10 @@ def consume_streaming_events(events, table, db):
     """
     out = defaultdict(lambda: [])
     for event in events:
-        out[event.event_type].append(event)
+        out[event.type].append(event)
 
     for event_type, events in out.items():
-        ids = None
-        if event_type != EventType.apply:
-            ids = sum([event.ids for event in events], [])
+        ids = sum([event.ids for event in events], [])
         _consume_event_type(
             event_type,
             ids=ids,
@@ -169,39 +165,55 @@ def consume_streaming_events(events, table, db):
         )
 
 
-def _consume_event_type(event_type, ids, table, db):
+@dc.dataclass
+class Future:
+    """
+    Future output
+
+    :param job_id: job identifier
+    """
+    job_id: str
+
+
+def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     # contains all components triggered by the table
     # and all components triggered by the output of these components etc.
     # "uuid" -> dict("trigger_method": future)
     logging.debug(table)
-    futures = {}
-    components: t.List['CDC'] = _get_cdcs_on_table(table, db)
+    # components: t.List['CDC'] = _get_cdcs_on_table(table, db)
+    context = str(uuid.uuid4())
+    jobs = []
+    job_lookup = defaultdict(dict)
 
-    while components:
-        retry = []
-        for component in components:
-            # this is a dictionary/ mapping method_name -> future
-            # try this until the dependencies are there
-            input_table = component.cdc_table
-            if input_table.startswith(CFG.output_prefix):
-                input_uuid = input_table.split('__')[-1]
-                # Maybe think about generalizing this
-                # This is getting the "run" method from `Listener`
-                input_ids = futures[input_uuid]['run']
-            else:
-                input_ids = ids
+    from superduper.components.cdc import build_streaming_graph
+    G, components = build_streaming_graph(table, db)
 
-            try:
-                futures[component.uuid] = component.run_jobs(
-                    event_type,
-                    ids=input_ids,
-                    futures=futures,
-                )
-            except JobFutureException as e:
-                retry.append(component)
+    for huuid in nx.topological_sort(G):
+        component = components[huuid]
+        # this is a dictionary/ mapping method_name -> future
+        # try this until the dependencies are there
+        input_table = component.cdc_table
+        if input_table.startswith(CFG.output_prefix):
+            input_uuid = input_table.split('__')[-1]
+            # Maybe think about generalizing this
+            # This is getting the "run" method from `Listener`
+            input_ids = Future(job_lookup[input_uuid]['run'])
+        else:
+            input_ids = ids
 
-        components = _get_parent_cdcs_of_components(
-            components=[c for c in components if c not in retry],
-            db=db
+        # For example for "Listener" this will create 
+        # the Listener.run job only
+        sub_jobs = component.create_jobs(
+            context=context,
+            ids=input_ids,
+            jobs=jobs,
+            event_type=event_type,
         )
-        components.extend(retry)
+        for job in sub_jobs:
+            job_lookup[component.uuid][job.method] = job.job_id
+        jobs += sub_jobs
+        print(f'Streaming with {component.type_id}:{component.identifier}')
+
+    for job in jobs:
+        db.cluster.compute.submit(job)
+    db.cluster.compute.release_futures(context)

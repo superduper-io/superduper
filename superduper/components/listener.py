@@ -8,7 +8,7 @@ from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import Mapping
 from superduper.components.cdc import CDC
-from superduper.jobs.annotations import trigger
+from superduper.base.annotations import trigger
 
 from .model import Model, ModelInputType
 
@@ -127,59 +127,6 @@ class Listener(CDC):
             if x.startswith(CFG.output_prefix):
                 out.append(tuple(x[len(CFG.output_prefix) :].split('__')))
         return out
-
-    # def triggerz_ids(self, query: Query, primary_ids: t.Sequence):
-    #     """Get trigger IDs.
-
-    #     Only the ids returned by this function will trigger the listener.
-
-    #     :param query: Query object.
-    #     :param primary_ids: Primary IDs.
-    #     """
-    #     conditions = [
-    #         # trigger by main table
-    #         self.select and self.select.table == query.table,
-    #         # trigger by output table
-    #         query.table in self.key and query.table != self.outputs,
-    #     ]
-    #     if not any(conditions):
-    #         return []
-
-    #     if self.select is None:
-    #         return []
-
-    #     if self.select.table == query.table:
-    #         triggerz_ids = list(primary_ids)
-    #     else:
-    #         triggerz_ids = [
-    #             doc['_source'] for doc in query.documents if '_source' in doc
-    #         ]
-
-    #     out = self.db.databackend.check_ready_ids(
-    #         self.select, self._ready_keys, triggerz_ids
-    #     )
-    #     return out
-
-    # @property
-    # def _ready_keys(self):
-    #     keys = self.key
-
-    #     if isinstance(self.key, str):
-    #         keys = [self.key]
-    #     elif isinstance(self.key, dict):
-    #         keys = list(self.key.keys())
-
-    #     # Support multiple levels of nesting
-    #     clean_keys = []
-    #     for key in keys:
-    #         if key.startswith(CFG.output_prefix):
-    #             key = CFG.output_prefix + key[len(CFG.output_prefix) :].split(".")[0]
-    #         else:
-    #             key = key.split(".")[0]
-
-    #         clean_keys.append(key)
-
-    #     return clean_keys
 
     @trigger('apply', 'insert', 'update', requires='select')
     def run(self, ids: t.Sequence[str] | None = None) -> t.List[str]:

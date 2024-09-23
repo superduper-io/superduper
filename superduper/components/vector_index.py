@@ -16,7 +16,7 @@ from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
 from superduper.components.cdc import CDC
 from superduper.ext.utils import str_shape
-from superduper.jobs.annotations import trigger
+from superduper.base.annotations import trigger
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem

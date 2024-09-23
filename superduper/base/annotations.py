@@ -1,13 +1,11 @@
 import inspect
-import sys
 import typing as t
 
-from superduper.base.event import EventType
-from superduper.jobs.job import Job
+from superduper.base.event import Job
 
 
 def trigger(
-    *event_types: t.Sequence[EventType],
+    *event_types: t.Sequence[str],
     depends: t.Sequence[str] | str = (),
     requires: t.Sequence[str] | str = (),
 ):
@@ -34,7 +32,7 @@ def trigger(
                 " to be triggered by anything apart from 'apply'"
             )
 
-        def decorated(self, job: bool = False, **kwargs):
+        def decorated(self, *, context: str = '', job: bool = False, **kwargs):
             # the futures kwargs is a placeholder to allow for pinning 
             # dependencies according to the readiness of upstream jobs
             if event_types != ('apply',):
@@ -49,10 +47,11 @@ def trigger(
                     uuid=self.uuid,
                     method=f.__name__,
                     kwargs=kwargs,
-                    db=self.db,
+                    context=context,
                 )
             else:
                 self.init()
+                kwargs = {k: v for k, v in kwargs.items() if k in inspect.signature(f).parameters}
                 return f(self, **kwargs)
 
         decorated.events = event_types

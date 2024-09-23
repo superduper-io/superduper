@@ -23,7 +23,7 @@ from superduper.components.component import Component, ComponentMeta, ensure_ini
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
-from superduper.jobs.annotations import trigger
+from superduper.base.annotations import trigger
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -783,8 +783,8 @@ class Model(Component, metaclass=ModelMeta):
         self,
         key: ModelInputType,
         select: Query,
-        identifier: t.Optional[str] = None,
         predict_kwargs: t.Optional[dict] = None,
+        identifier: t.Optional[str] = None,
         **kwargs,
     ):
         """
@@ -792,28 +792,26 @@ class Model(Component, metaclass=ModelMeta):
 
         :param key: Key to be bound to the model
         :param select: Object for selecting which data is processed
-        :param identifier: A string used to identify the model.
         :param predict_kwargs: Keyword arguments to self.model.predict
         :param kwargs: Additional keyword arguments
         """
-        identifier = identifier or f'{self.identifier}:vector_index'
         from superduper.components.vector_index import VectorIndex
 
         listener = self.to_listener(
             key=key,
             select=select,
-            identifier='',
             predict_kwargs=predict_kwargs,
+            identifier=identifier or self.identifier,
             **kwargs,
         )
-        return VectorIndex(identifier=identifier, indexing_listener=listener)
+        return VectorIndex(identifier=self.identifier, indexing_listener=listener)
 
     def to_listener(
         self,
         key: ModelInputType,
         select: Query,
-        identifier,
         predict_kwargs: t.Optional[dict] = None,
+        identifier: t.Optional[str] = None,
         **kwargs,
     ):
         """Convert the model to a listener.
@@ -830,7 +828,7 @@ class Model(Component, metaclass=ModelMeta):
             key=key,
             select=select,
             model=self,
-            identifier=identifier,
+            identifier=identifier or self.identifier,
             predict_kwargs=predict_kwargs or {},
             **kwargs,
         )

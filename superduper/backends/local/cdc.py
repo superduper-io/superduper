@@ -4,6 +4,7 @@ from superduper.components.cdc import CDC
 
 class LocalCDCBackend(CDCBackend):
     """Local CDC backend."""
+
     def __init__(self):
         super().__init__()
         self.triggers = set()

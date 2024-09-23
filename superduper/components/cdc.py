@@ -4,7 +4,7 @@ import typing as t
 from superduper import Component, CFG
 
 if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
+    pass
 
 
 class CDC(Component):
@@ -17,7 +17,7 @@ class CDC(Component):
 
     triggers: t.ClassVar[t.Set] = set()
     type_id: t.ClassVar[str] = 'cdc'
-    cdc_table: str 
+    cdc_table: str
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)

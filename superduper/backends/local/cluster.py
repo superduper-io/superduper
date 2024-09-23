@@ -1,22 +1,27 @@
-import click 
-import numpy
 import typing as t
+
+import click
+import numpy
 
 from superduper import logging
 from superduper.backends.base.cluster import Cluster
+from superduper.backends.base.vector_search import (
+    BaseVectorSearcher,
+    VectorItem,
+    measures,
+)
 from superduper.backends.local.cache import LocalCache
+from superduper.backends.local.cdc import LocalCDCBackend
 from superduper.backends.local.compute import LocalComputeBackend
 from superduper.backends.local.crontab import LocalCrontabBackend
-from superduper.backends.local.vector_search import LocalVectorSearchBackend
-from superduper.backends.local.cdc import LocalCDCBackend
 from superduper.backends.local.queue import LocalQueuePublisher
+from superduper.backends.local.vector_search import LocalVectorSearchBackend
 from superduper.misc.plugins import load_plugin
-from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem, measures
 
 
 class LocalCluster(Cluster):
     """Local cluster for running infra locally.
-    
+
     :param compute: The compute backend.
     :param cache: The cache backend.
     :param queue: The queue backend.
@@ -40,7 +45,6 @@ class LocalCluster(Cluster):
 
     def drop(self, force: bool = False):
         """Drop the cluster."""
-
         if not force:
             if not click.confirm(
                 "Are you sure you want to drop the cache? ",
@@ -90,9 +94,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             self.lookup = None
 
         self.identifier = identifier
-        super().__init__(
-            uuid=identifier, dimensions=dimensions, h=h, measure=measure
-        )
+        super().__init__(uuid=identifier, dimensions=dimensions, h=h, measure=measure)
 
     def __len__(self):
         if self.h is not None:

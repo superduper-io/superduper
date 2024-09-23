@@ -5,10 +5,10 @@ from overrides import override
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.base.datalayer import Datalayer
-from superduper.components.model import Mapping
-from superduper.components.cdc import CDC
 from superduper.base.annotations import trigger
+from superduper.base.datalayer import Datalayer
+from superduper.components.cdc import CDC
+from superduper.components.model import Mapping
 
 from .model import Model, ModelInputType
 

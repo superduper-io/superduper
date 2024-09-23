@@ -1,8 +1,8 @@
 import typing as t
 from pprint import pprint
-import pytest
 
 import numpy as np
+import pytest
 
 from superduper import ObjectModel, Schema, superduper
 from superduper.base.document import Document

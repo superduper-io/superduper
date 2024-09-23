@@ -1,7 +1,6 @@
 import typing as t
 
 from superduper import Component
-from superduper.base.datalayer import Datalayer
 from superduper.components.component import ensure_initialized
 from superduper.components.datatype import dill_serializer
 

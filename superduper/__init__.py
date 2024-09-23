@@ -1,7 +1,7 @@
 # ruff: noqa: E402
 import os
 
-from .base import config, configs, config_settings, logger
+from .base import config, config_settings, configs, logger
 from .base.superduper import superduper
 
 ICON = '🔮'

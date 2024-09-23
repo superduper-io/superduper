@@ -115,7 +115,7 @@ class Listener(CDC):
             flatten=model.flatten,
         )
         if output_table is not None:
-            db.add(output_table)
+            db.apply(output_table)
 
     @property
     def dependencies(self):

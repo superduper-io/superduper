@@ -401,17 +401,18 @@ class Datalayer:
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
         # context allows us to track the origin of the component creation
-        already_exists = self._apply(object=object, context=object.uuid), object
+        already_exists, events = self._apply(object=object, context=object.uuid)
         # this flags that the context is not needed anymore
         if not already_exists:
-            self.cluster.queue.publish([
-                Event(
-                    event_type='apply',
-                    source=object.huuid,
-                    context=object.huuid,
-                    msg='done',
-                )
-            ])
+            done = Event(
+                event_type='apply',
+                source=object.huuid,
+                context=object.huuid,
+                msg='done',
+            )
+            events.append(done)
+        apply_events = [e for e in events if e.event_type == EventType.apply]
+        self.cluster.queue.publish(apply_events[::-1])
         return object
 
     def remove(
@@ -556,8 +557,10 @@ class Datalayer:
                     G.add_edge(d, lookup[k].id_tuple)
 
         nodes = networkx.topological_sort(G)
+        events = []
         for n in nodes:
-            self._apply(lookup[n], parent=parent.uuid)
+            events += self._apply(lookup[n], parent=parent.uuid)[1]
+        return events
 
     def _update_component(self, object, parent: t.Optional[str] = None):
         # TODO add update logic here to check changed attributes
@@ -583,7 +586,7 @@ class Datalayer:
 
         if already_exists:
             self._update_component(object, parent=parent)
-            return True
+            return True, []
 
         object.pre_create(self)
         assert hasattr(object, 'identifier')
@@ -610,7 +613,7 @@ class Datalayer:
         children = [
             v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
         ]
-        self._add_child_components(
+        events = self._add_child_components(
             children,
             parent=object,
         )
@@ -623,6 +626,13 @@ class Datalayer:
                 self.artifact_store.put_bytes(bytes, file_id)
 
         self.metadata.create_component(serialized)
+        event = Event(
+            'db',
+            source=object.huuid,
+            context=context,
+            msg=serialized,
+        )
+        events.append(event)
 
         if parent is not None:
             self.metadata.create_parent_child(parent, object.uuid)
@@ -637,8 +647,9 @@ class Datalayer:
                 source=object.huuid,
                 context=context,
             )
-            self.cluster.queue.publish([event])
-        return False
+            events.append(event)
+            # self.cluster.queue.publish([event])
+        return False, events
 
     def _change_component_reference_prefix(self, serialized):
         """Replace '?' to '&' in the serialized object."""

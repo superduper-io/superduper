@@ -17,14 +17,8 @@ class CronJob(Component):
     type_id: t.ClassVar[str] = 'cronjob'
     schedule: str = '0 0 * * *'
 
-    def post_create(self, db: Datalayer) -> None:
-        """
-        Post-create hook.
-
-        :param db: Datalayer instance.
-        """
-        super().post_create(db)
-        db.cluster.crontab.put(self)
+    def declare_component(self, cluster):
+        cluster.crontab.put(self)
 
     @ensure_initialized
     def run(self):

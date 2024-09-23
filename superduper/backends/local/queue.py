@@ -1,6 +1,7 @@
 from collections import defaultdict
 import typing as t
 
+from superduper import logging
 from superduper.backends.base.queue import consume_apply_event, consume_streaming_events
 from superduper.base.event import Event
 from superduper.backends.base.queue import BaseQueueConsumer, BaseQueuePublisher
@@ -71,7 +72,6 @@ class LocalQueuePublisher(BaseQueuePublisher):
                 self.queue['_apply'].append(event)
             else:
                 self.queue[event.source].append(event)
-
         self.consumer.consume(db=self.db, queue=self.queue)
 
 
@@ -96,7 +96,10 @@ class LocalQueueConsumer(BaseQueueConsumer):
                 while queue['_apply']:
                     event = queue['_apply'].pop()
                     if event.msg == 'done':
-                        del self.futures[event.context]
+                        try:
+                            del self.futures[event.context]
+                        except KeyError:
+                            logging.info(f'No futures saved for {event.context}')
                     else:
                         consume_apply_event(event=event, db=db, futures=self.futures[event.source])
 

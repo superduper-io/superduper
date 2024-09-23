@@ -126,7 +126,6 @@ class VectorIndex(CDC):
 
     def declare_component(self, cluster: 'Cluster'):
         super().declare_component(cluster)
-        cluster.vector_search.put(self)
 
     def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created.
@@ -146,10 +145,13 @@ class VectorIndex(CDC):
             )
         return False
 
+    # TODO consider a flag such as depends='*' 
+    # so that an "apply" trigger runs after all of the other 
+    # triggers
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None = None):
         """Copy vectors to the vector index."""
-
+        self.db.cluster.vector_search.put(self)
         select = self.db[self.cdc_table].select()
 
         # TODO do this using the backfill_vector_search functionality here

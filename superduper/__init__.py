@@ -13,8 +13,6 @@ logging = logger.Logging
 
 __version__ = '0.3.0'
 
-# from superduper.backends import ibis, mongodb
-
 from .base.decorators import code
 from .base.document import Document
 from .components.application import Application
@@ -65,8 +63,6 @@ __all__ = (
     'Schema',
     'Table',
     'Application',
-    'mongodb',
-    'ibis',
     'Template',
     'Application',
     'Component',

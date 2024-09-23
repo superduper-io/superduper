@@ -2,7 +2,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduper.backends.base.backends import BaseBackend
-from superduper.jobs.job import Job
+from superduper.base.event import Job
 
 
 class ComputeBackend(BaseBackend):
@@ -19,6 +19,10 @@ class ComputeBackend(BaseBackend):
     @abstractmethod
     def type(self) -> str:
         """Return the type of compute engine."""
+        pass
+
+    @abstractmethod
+    def release_futures(self, context: str):
         pass
 
     @property
@@ -38,7 +42,7 @@ class ComputeBackend(BaseBackend):
         pass
 
     @abstractmethod
-    def submit(self, job: Job, dependencies: t.Sequence[t.Any]) -> t.Any:
+    def submit(self, job: Job) -> t.Any:
         """
         Submits a function to the server for execution.
 

@@ -1,9 +1,8 @@
+from collections import defaultdict
 import typing as t
-import uuid
 
-from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
-from superduper.jobs.job import Job
+from superduper.base.event import Job
 
 
 class LocalComputeBackend(ComputeBackend):
@@ -23,6 +22,7 @@ class LocalComputeBackend(ComputeBackend):
         self.kwargs = kwargs
         self._cache: t.Dict = {}
         self._db = None
+        self.futures = defaultdict(lambda: {})
 
     @property
     def remote(self) -> bool:
@@ -39,23 +39,28 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
+    def release_futures(self, context: str):
+        try:
+            del self.futures[context]
+        except KeyError:
+            pass
+
     def component_hook(self, *args, **kwargs):
         """Hook for component."""
         pass
 
-    def submit(self, job: Job, dependencies: t.Sequence[str]) -> str:
+    def submit(self, job: Job) -> str:
         """
         Submits a function for local execution.
 
         :param job: The `Job` to be executed.
         :param dependencies: List of `job_ids`
         """
-        component = self.db.load(uuid=job.uuid)
-        method = getattr(component, job.method)
-        logging.info(f"Submitting job: {job}")
-        # TODO for distributed computation this is a future
-        # which gets returned
-        return method(*job.args, **job.kwargs)
+        output = job(
+            db=self.db,
+            futures=self.futures[job.context],
+        )
+        self.futures[job.context][job.job_id] = output
 
     def __delitem__(self, item):
         pass

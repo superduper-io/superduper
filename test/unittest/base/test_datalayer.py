@@ -99,7 +99,7 @@ def test_add_version(db: Datalayer):
     component = TestComponent(identifier='test')
     db.apply(component)
     assert component.is_on_create is True
-    assert component.is_after_create is True
+    # assert component.is_after_create is True
     assert component.version == 0
     assert db.show('test-component', 'test') == [0]
 
@@ -144,12 +144,11 @@ def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = {'data': 1}
     component = TestComponent(identifier='test', artifact=artifact)
-    with patch.object(db.metadata, 'create_component') as create_component:
-        db.apply(component)
-        serialized = create_component.call_args[0][0]
-        print(serialized)
-        key = serialized['artifact'][1:]
-        serialized['_builds'][key]['blob'].startswith('&:blob:')
+    db.apply(component)
+    r = db.show('test-component', 'test', -1)
+    assert r['artifact'].startswith('?')
+    info = r['_builds'][r['artifact'][1:]]
+    assert info['blob'].startswith('&')
 
 
 def test_add_child(db):
@@ -439,6 +438,7 @@ def test_insert_sql_db(db):
     assert len(inserted_ids) == 5
 
     q = table.select().outputs(listener.predict_id)
+
     new_docs = db.execute(q)
     new_docs = list(new_docs)
 

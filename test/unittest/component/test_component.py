@@ -16,7 +16,7 @@ from superduper.components.datatype import (
     dill_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.jobs.annotations import trigger
+from superduper.base.annotations import trigger
 
 
 @pytest.fixture

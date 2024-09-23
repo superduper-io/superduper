@@ -176,6 +176,15 @@ class Query(_BaseQuery):
     table: str
     identifier: str = ''
 
+    @property
+    def tables(self):
+        out = []
+        for part in self.parts:
+            if part[0] == 'outputs':
+                out.extend([f'{CFG.output_prefix}{x}' for x in part[1]])
+        out.append(self.table)
+        return list(set(out))
+
     def __getitem__(self, item):
         if isinstance(item, str):
             return getattr(self, item)

@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+
 from superduper.backends.base.backends import BaseBackend
 
 
@@ -8,4 +9,3 @@ class CDCBackend(BaseBackend):
     @abstractmethod
     def handle_event(self, event_type, table, ids):
         pass
-

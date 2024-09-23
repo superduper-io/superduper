@@ -1,5 +1,5 @@
 import typing as t
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.event import Job

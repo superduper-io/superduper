@@ -1,5 +1,5 @@
-from collections import defaultdict
 import typing as t
+from collections import defaultdict
 
 from superduper.backends.base.compute import ComputeBackend
 from superduper.base.event import Job

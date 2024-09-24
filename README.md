@@ -18,7 +18,7 @@
     <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
     <a href="https://superduper.io"><strong>Website</strong></a> |
     <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> |
-    <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg"><strong>Slack</strong></a> |
+    <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-1yodhtx8y-KxzECued5QBtT6JFnsSNrQ"><strong>Slack</strong></a> |
     <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a> |
     <a href="https://www.linkedin.com/company/superduper-io"><strong>LinkedIn</strong></a>
   </h2>

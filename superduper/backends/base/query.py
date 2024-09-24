@@ -190,7 +190,7 @@ class Query(_BaseQuery):
 
     # TODO - not necessary: either `Document.decode(r, db=db)`
     # or `db['table'].select...`
-    
+
     # TODO why necessary?
     def set_db(self, value: 'Datalayer'):
         """Set the datalayer to use to execute the query.

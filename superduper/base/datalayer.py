@@ -1,4 +1,3 @@
-import dataclasses as dc
 import random
 import typing as t
 import warnings
@@ -10,13 +9,11 @@ import networkx
 import superduper as s
 from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
-from superduper.backends.base.backends import vector_searcher_implementations
 from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStore
 from superduper.backends.base.query import Query
-from superduper.backends.local.compute import LocalComputeBackend
 from superduper.base import exceptions
 from superduper.base.config import Config
 from superduper.base.constant import KEY_BUILDS
@@ -243,14 +240,19 @@ class Datalayer:
         """
         result = delete.do_execute(self)
         # TODO - do we need this refresh?
-        # If the handle-event works well, then we should not need this 
+        # If the handle-event works well, then we should not need this
 
         if not refresh:
             return
 
-        call_cdc = delete.query.table in self.metadata.show_cdc_tables() and delete.query.table.startswith(CFG.output_prefix)
+        call_cdc = (
+            delete.query.table in self.metadata.show_cdc_tables()
+            and delete.query.table.startswith(CFG.output_prefix)
+        )
         if call_cdc:
-            self.cluster.cdc.handle_event(event_type='delete', table=delete.table, ids=result)
+            self.cluster.cdc.handle_event(
+                event_type='delete', table=delete.table, ids=result
+            )
         return result
 
     def _insert(
@@ -287,8 +289,13 @@ class Datalayer:
         if not refresh:
             return
 
-        if insert.table in self.metadata.show_cdc_tables() and not insert.table.startswith(CFG.output_prefix):
-            self.cluster.cdc.handle_event(event_type='insert', table=insert.table, ids=inserted_ids)
+        if (
+            insert.table in self.metadata.show_cdc_tables()
+            and not insert.table.startswith(CFG.output_prefix)
+        ):
+            self.cluster.cdc.handle_event(
+                event_type='insert', table=insert.table, ids=inserted_ids
+            )
 
         return inserted_ids
 
@@ -323,12 +330,11 @@ class Datalayer:
         :param ids: IDs that further reduce the scope of computations.
         """
         from superduper.base.event import Change
+
         events = []
         for id in ids:
             events.append(Change(ids=[str(id)], queue=table, type=event_type))
-        logging.info(
-            f'Created {len(events)} events for {event_type} on [{table}]'
-        )
+        logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)
 
@@ -344,13 +350,20 @@ class Datalayer:
         if not refresh:
             return
 
-        call_cdc = write.table in self.metadata.show_cdc_tables() and write.table.startswith(CFG.output_prefix)
+        call_cdc = (
+            write.table in self.metadata.show_cdc_tables()
+            and write.table.startswith(CFG.output_prefix)
+        )
         if call_cdc:
             if updated_ids:
-                self.cluster.cdc.handle_event(event_type='update', table=write.table, ids=updated_ids)
+                self.cluster.cdc.handle_event(
+                    event_type='update', table=write.table, ids=updated_ids
+                )
             if deleted_ids:
-                self.cluster.cdc.handle_event(event_type='delete', table=write.table, ids=deleted_ids)
-                
+                self.cluster.cdc.handle_event(
+                    event_type='delete', table=write.table, ids=deleted_ids
+                )
+
         return updated_ids + deleted_ids
 
     def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
@@ -370,8 +383,12 @@ class Datalayer:
 
         table = update.table
 
-        if table in self.metadata.show_cdc_tables() and not table.startswith(CFG.output_prefix):
-            self.cluster.cdc.handle_event(event_type='update', table=update.table, ids=updated_ids)
+        if table in self.metadata.show_cdc_tables() and not table.startswith(
+            CFG.output_prefix
+        ):
+            self.cluster.cdc.handle_event(
+                event_type='update', table=update.table, ids=updated_ids
+            )
 
         return updated_ids
 
@@ -538,7 +555,7 @@ class Datalayer:
         allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
-        on_load: bool = True
+        on_load: bool = True,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -555,7 +572,6 @@ class Datalayer:
                              of deprecated components.
         :param uuid: [Optional] UUID of the component to load.
         """
-
         if type_id == 'encoder':
             logging.warn(
                 '"encoder" has moved to "datatype" this functionality will not work'
@@ -597,7 +613,9 @@ class Datalayer:
             try:
                 return self.cluster.cache[info['type_id'], info['identifier']]
             except KeyError:
-                logging.info(f'Component {info["uuid"]} not found in cache, loading from db')
+                logging.info(
+                    f'Component {info["uuid"]} not found in cache, loading from db'
+                )
         m = Document.decode(info, db=self)
         m.db = self
         if on_load:
@@ -625,7 +643,9 @@ class Datalayer:
         create_events = []
         job_events = []
         for n in nodes:
-            c, j = self._apply(lookup[n], parent=parent.uuid, job_events=job_events, context=context)
+            c, j = self._apply(
+                lookup[n], parent=parent.uuid, job_events=job_events, context=context
+            )
             create_events += c
             job_events += j
         return create_events, job_events
@@ -707,7 +727,9 @@ class Datalayer:
         )
         create_events.append(event)
 
-        job_events += object.create_jobs(event_type='apply', jobs=job_events, context=context)
+        job_events += object.create_jobs(
+            event_type='apply', jobs=job_events, context=context
+        )
         return create_events, job_events
 
     def _change_component_reference_prefix(self, serialized):

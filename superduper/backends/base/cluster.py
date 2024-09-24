@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import dataclasses as dc
+from abc import ABC, abstractmethod
 
 from superduper.backends.base.cache import Cache
 from superduper.backends.base.cdc import CDCBackend
@@ -8,13 +8,11 @@ from superduper.backends.base.crontab import CrontabBackend
 from superduper.backends.base.queue import BaseQueuePublisher
 from superduper.backends.base.vector_search import VectorSearchBackend
 
-from superduper import CFG
-
 
 @dc.dataclass(kw_only=True)
 class Cluster(ABC):
     """Cluster object for managing the backend.
-    
+
     :param compute: The compute backend.
     :param cache: The cache backend.
     :param queue: The queue backend.
@@ -22,6 +20,7 @@ class Cluster(ABC):
     :param cdc: The change data capture backend.
     :param crontab: The crontab backend.
     """
+
     compute: ComputeBackend
     cache: Cache
     queue: BaseQueuePublisher
@@ -63,4 +62,4 @@ class Cluster(ABC):
         self.vector_search.db = value
         self.crontab.db = value
         self.cdc.db = value
-        #self.vector_search.initialize()
+        # self.vector_search.initialize()

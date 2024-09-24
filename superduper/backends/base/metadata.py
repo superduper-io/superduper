@@ -9,7 +9,6 @@ if t.TYPE_CHECKING:
     from superduper.components.component import Status
 
 
-
 class NonExistentMetadataError(Exception):
     """NonExistentMetadataError.
 

@@ -14,6 +14,9 @@ DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 if t.TYPE_CHECKING:
     from superduper.components.cdc import CDC
     from superduper.base.datalayer import Datalayer
+    from superduper.components.component import Component
+    from superduper.components.cdc import CDC
+    from superduper.base.datalayer import Datalayer
 
 
 class BaseQueueConsumer(ABC):
@@ -175,3 +178,10 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     for job in jobs:
         db.cluster.compute.submit(job)
     db.cluster.compute.release_futures(context)
+
+def consume_events(events, table: str, db=None):
+    if table != '_apply':
+        consume_streaming_events(events=events, table=table, db=db)
+    else:
+        for event in events:
+            event.execute(db)

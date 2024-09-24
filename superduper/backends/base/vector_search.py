@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
 import enum
 import typing as t
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import numpy
@@ -14,7 +14,8 @@ if t.TYPE_CHECKING:
 
 class VectorSearchBackend(BaseBackend):
     """Base vector-search backend."""
-    def __init__(self): 
+
+    def __init__(self):
         self._cache = {}
 
     @abstractmethod
@@ -30,7 +31,7 @@ class VectorSearchBackend(BaseBackend):
 
 class VectorSearcherInterface(ABC):
     """Interface for vector searchers.
-    
+
     # noqa
     """
 
@@ -112,9 +113,7 @@ class BaseVectorSearcher(VectorSearcherInterface):
 
         :param vi: VectorIndex instance
         """
-        return cls(
-            uuid=index.uuid, dimensions=index.dimensions, measure=index.measure
-        )
+        return cls(uuid=index.uuid, dimensions=index.dimensions, measure=index.measure)
 
     @abstractmethod
     def initialize(self, db):
@@ -149,7 +148,6 @@ class BaseVectorSearcher(VectorSearcherInterface):
         if isinstance(h, list):
             return h
         raise ValueError(str(h))
-
 
 
 class VectorIndexMeasureType(str, enum.Enum):

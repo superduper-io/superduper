@@ -1,13 +1,14 @@
 # TODO deprecate the implementations in favour of the plugin paradigm
-from abc import ABC, abstractmethod
 import typing as t
+from abc import ABC, abstractmethod
+
 from superduper.vector_search.atlas import MongoAtlasVectorSearcher
 from superduper.vector_search.lance import LanceVectorSearcher
 from superduper.vector_search.qdrant import QdrantVectorSearcher
 
 if t.TYPE_CHECKING:
-    from superduper.components.component import Component
     from superduper.base.datalayer import Datalayer
+    from superduper.components.component import Component
 
 vector_searcher_implementations = {
     "lance": LanceVectorSearcher,
@@ -18,6 +19,7 @@ vector_searcher_implementations = {
 
 class BaseBackend(ABC):
     """Base backend class for cluster client."""
+
     def __init__(self):
         self._db = None
 
@@ -47,7 +49,7 @@ class BaseBackend(ABC):
         pass
 
     def put(self, component: 'Component', **kwargs):
-        # This is to make sure that we only have 1 version 
+        # This is to make sure that we only have 1 version
         # of each component implemented at any given time
         # TODO: get identifier in string component argument.
         identifier = ''
@@ -70,5 +72,3 @@ class BaseBackend(ABC):
     @db.setter
     def db(self, value: 'Datalayer'):
         self._db = value
-
-    

@@ -5,7 +5,6 @@ from prettytable import PrettyTable
 
 import superduper as s
 from superduper import logging
-from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.config import Config
@@ -137,14 +136,14 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     else:
         artifact_store = databackend_obj.build_artifact_store()
 
-    backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')    
+    backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')
     cluster = backend.build(cfg, **kwargs)
 
     datalayer = Datalayer(
         databackend=databackend_obj,
         metadata=metadata_obj,
         artifact_store=artifact_store,
-        cluster=cluster
+        cluster=cluster,
     )
     # Keep the real configuration in the datalayer object.
     datalayer.cfg = cfg

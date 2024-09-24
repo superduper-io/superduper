@@ -7,6 +7,7 @@ import typing as t
 import pytest
 
 from superduper import ObjectModel
+from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.datatype import (
     Artifact,
@@ -16,7 +17,6 @@ from superduper.components.datatype import (
     dill_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.base.annotations import trigger
 
 
 @pytest.fixture

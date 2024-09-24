@@ -1,4 +1,3 @@
-from abc import abstractmethod, ABC
 import dataclasses as dc
 import datetime
 import networkx as nx
@@ -6,6 +5,7 @@ from rich.console import Console
 from rich.tree import Tree
 from rich.text import Text
 import typing as t
+from abc import ABC, abstractmethod
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -91,16 +91,24 @@ class DeploymentPlan:
 
 @dc.dataclass(kw_only=True)
 class Event(ABC):
-    """Event dataclass to store event data.
-    """
+    """Event dataclass to store event data."""
 
     def dict(self):
         """Convert to dict."""
+        _base_dict = dc.asdict(self)
+        if 'time' in _base_dict:
+            _base_dict['time'] = str(_base_dict['time'])
         return {
-            **dc.asdict(self),
+            **_base_dict,
             'genus': self.genus,
             'queue': self.queue,
         }
+
+    @classmethod
+    def create(cls, kwargs):
+        kwargs.pop('genus')
+        kwargs.pop('queue')
+        return cls(**kwargs)
 
     @abstractmethod
     def execute(self, db: 'Datalayer'):
@@ -115,6 +123,7 @@ class Signal(Event):
     :param msg: signal to send
     :param context: the context of component creation
     """
+
     genus: t.ClassVar[str] = 'signal'
     queue: t.ClassVar[str] = '_apply'
     msg: str
@@ -135,10 +144,16 @@ class Change(Event):
     :param queue: which table was affected
     :param ids: the ids affected
     """
-    type_id: t.ClassVar[str] = 'change'
+
+    genus: t.ClassVar[str] = 'change'
     type: str
     queue: str
     ids: t.Sequence[str]
+
+    @classmethod
+    def create(cls, kwargs):
+        kwargs.pop('genus')
+        return cls(**kwargs)
 
     def execute(self, db: 'Datalayer'):
         raise NotImplementedError('Not relevant for this event class')
@@ -147,12 +162,13 @@ class Change(Event):
 @dc.dataclass(kw_only=True)
 class Create(Event):
     """
-    Class for component creation events. 
+    Class for component creation events.
 
     :param context: the component context of creation.
     :param component: the component to be created
     :param parent: the parent of the component (if any)
     """
+
     genus: t.ClassVar[str] = 'create'
     queue: t.ClassVar[str] = '_apply'
 
@@ -194,6 +210,7 @@ class Job(Event):
     :param status: status of job
     :param dependencies: list of job_id dependencies
     """
+
     genus: t.ClassVar[str] = 'job'
     queue: t.ClassVar[str] = '_apply'
 
@@ -234,7 +251,9 @@ class Job(Event):
         return args, kwargs
 
     def execute(self, db: 'Datalayer'):
-        db.metadata.create_job({k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}})
+        db.metadata.create_job(
+            {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
+        )
         return db.cluster.compute.submit(self)
 
 
@@ -244,3 +263,8 @@ events = {
     'create': Create,
     'job': Job,
 }
+
+
+def unpack_event(dict):
+    event_type = events[dict.get('genus')]
+    return event_type.create(dict)

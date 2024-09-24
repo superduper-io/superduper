@@ -648,7 +648,7 @@ class Query(_BaseQuery):
             r.pop(KEY_BUILDS)
             r.pop(KEY_BLOBS)
             r.pop(KEY_FILES)
-            r.pop(KEY_SCHEMA)
+            r.pop(KEY_SCHEMA, None)
         return documents
 
     # TODO deprecate (self.table)

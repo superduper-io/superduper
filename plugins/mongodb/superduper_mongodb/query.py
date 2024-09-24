@@ -298,7 +298,7 @@ class MongoQuery(Query):
         r = self._execute_select(parent)
         if r is None:
             return
-        return Document.decode(r, db=self.db)
+        return Document.decode(r, db=self.db, schema=self._get_schema())
 
     def _execute_insert_one(self, parent):
         insert_part = self.parts[0]

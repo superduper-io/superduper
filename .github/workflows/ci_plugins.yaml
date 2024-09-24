@@ -91,7 +91,7 @@ jobs:
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./
-          if [ -f "plugins/${{ matrix.plugin }}/plugin_test" ]; then
+          if [ -d "plugins/${{ matrix.plugin }}/plugin_test" ]; then
             pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
           else
             echo "Skipping tests for ${{ matrix.plugin }}, no test file found."

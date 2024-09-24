@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from superduper.base.document import Document
 from superduper.components.schema import Schema
+from superduper.components.table import Table
 from superduper.ext.numpy.encoder import array
 
 from superduper_mongodb.query import MongoQuery
@@ -41,16 +42,14 @@ def test_mongo_schema(db, schema):
                     "z": z,
                 },
                 db=db,
-                schema=schema,
             )
         )
 
-    db.add(schema)
+    table = Table(identifier=collection_name, schema=schema)
+    db.add(table)
     gt = data[0]
 
-    db.execute(
-        MongoQuery(db=db, table=collection_name).insert_many(data),
-    )
+    db[collection_name].insert_many(data).execute()
     r = db[collection_name].find_one().execute()
     rs = list(db[collection_name].find().execute())
 

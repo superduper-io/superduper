@@ -140,7 +140,7 @@ make testenv_init
 ## Community & getting help 
 
 If you have any problems, questions, comments, or ideas:
-- Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-2ntiwsc8l-tLnhgW0wnpLlZL800~rqAg">our Slack</a> (we look forward to seeing you there).
+- Join <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-1yodhtx8y-KxzECued5QBtT6JFnsSNrQ">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/superduper-io/superduper/discussions">our GitHub Discussions</a>, or <a href="https://github.com/superduper-io/superduper/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/superduper-io/superduper/issues/">an existing issue</a> or create <a href="https://github.com/superduper-io/superduper/issues/new/choose">a new one</a>.
 - Help us to improve Superduper by providing your valuable feedback <a href="https://github.com/superduper-io/superduper/discussions/new/choose">here</a>!

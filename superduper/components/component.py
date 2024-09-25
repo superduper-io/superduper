@@ -538,7 +538,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param db: the db that loaded the component.
         """
         assert db
-        #self.declare_component(db.cluster)
+        # self.declare_component(db.cluster)
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):
@@ -775,6 +775,7 @@ def ensure_initialized(func):
 
     :param func: Decorator function.
     """
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not getattr(self, "_is_initialized", False):
@@ -784,4 +785,5 @@ def ensure_initialized(func):
             self._is_initialized = True
             logging.debug(f"Initialized  {model_message} successfully")
         return func(self, *args, **kwargs)
+
     return wrapper

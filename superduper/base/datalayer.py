@@ -482,7 +482,7 @@ class Datalayer:
             ):
                 return object
 
-        self.cluster.queue.publish(events=events[::-1])
+        self.cluster.queue.publish(events=events)
         return object
 
     def remove(

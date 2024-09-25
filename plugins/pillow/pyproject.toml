@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_pillow"
 readme = "README.md"
+description = "SuperDuper Pillow is a plugin for SuperDuper that provides support for Pillow."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

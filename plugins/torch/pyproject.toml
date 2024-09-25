@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_torch"
 readme = "README.md"
+description = "Superduper allows users to work with arbitrary `torch` models, with custom pre-, post-processing and input/ output data-types, as well as offering training with superduper"
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

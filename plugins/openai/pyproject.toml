@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_openai"
 readme = "README.md"
+description = "Superduper allows users to work with openai API models."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

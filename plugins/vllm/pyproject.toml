@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_vllm"
 readme = "README.md"
+description = "Superduper allows users to work with self-hosted LLM models via [vLLM](https://github.com/vllm-project/vllm)."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

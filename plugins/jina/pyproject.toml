@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_jina"
 readme = "README.md"
+description = "Superduper allows users to work with Jina Embeddings models through the Jina Embedding API."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

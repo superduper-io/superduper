@@ -5,6 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_transformers"
 readme = "README.md"
+description = """
+Transformers is a popular AI framework, and we have incorporated native support for Transformers to provide essential Large Language Model (LLM) capabilities. 
+
+Superduper allows users to work with arbitrary transformers pipelines, with custom input/ output data-types.
+"""
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

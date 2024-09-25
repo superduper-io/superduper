@@ -28,6 +28,13 @@ class JinaEmbedding(Jina):
     :param batch_size: The batch size to use for the predictor.
     :param shape: The shape of the embedding as ``tuple``.
         If not provided, it will be obtained by sending a simple query to the API
+
+    Example:
+    -------
+    >>> from superduper_jina.model import JinaEmbedding
+    >>> model = JinaEmbedding(identifier='jina-embeddings-v2-base-en')
+    >>> model.predict('Hello world')
+
     """
 
     batch_size: int = 100

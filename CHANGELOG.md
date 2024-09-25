@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the issue where MongoDB did not create the output table.
 - Fix the bug in the CI where plugins are skipping tests.
 - Updated CONTRIBUTING.md
+- Add README.md files for the plugins.
 
 #### New Features & Functionality
 

@@ -37,7 +37,7 @@ if t.TYPE_CHECKING:
 
 
 class LLMCallback(TrainerCallback):
-    """LLM Callback for logging training process to db.
+    """LLM Callback for logging training process to db # noqa.
 
     This callback will save the checkpoint to db after each epoch.
     If the save_total_limit is set, will remove the oldest checkpoint.

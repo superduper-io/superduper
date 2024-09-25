@@ -22,6 +22,21 @@ class SentenceTransformer(Model, _DeviceManaged):
     :param postprocess: The postprocessing function to apply to the output.
     :param signature: The signature of the model.
     :param preferred_devices: A list of devices to prefer, in that order.
+
+    Example:
+    -------
+    >>> from superduper import vector
+    >>> from superduper_sentence_transformers import SentenceTransformer
+    >>> import sentence_transformers
+    >>> model = SentenceTransformer(
+    >>>     identifier="embedding",
+    >>>     object=sentence_transformers.SentenceTransformer("BAAI/bge-small-en"),
+    >>>     datatype=vector(shape=(1024,)),
+    >>>     postprocess=lambda x: x.tolist(),
+    >>>     predict_kwargs={"show_progress_bar": True},
+    >>> )
+    >>> model.predict("What is superduper")
+
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (

@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_sentence_transformers"
 readme = "README.md"
+description = "superduper allows users to work with self-hosted embedding models via [Sentence-Transformers](https://sbert.net)."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

@@ -5,6 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_sqlalchemy"
 readme = "README.md"
+description = """
+Superduper sqlalchemy is a metadata plugin for Superduper that allows you to store metadata in a SQL database.
+
+This plugin cannot be used independently; it must be used together with superduper_ibis.
+"""
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

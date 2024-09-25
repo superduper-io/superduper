@@ -25,7 +25,7 @@ def encode_pil_image(x, info: t.Optional[t.Dict] = None):
 
 
 class DecoderPILImage:
-    """Decoder to convert `bytes` back into a `PIL.Image` class.
+    """Decoder to convert `bytes` back into a `PIL.Image` class # noqa.
 
     :param handle_exceptions: return a blank image if failure
     """

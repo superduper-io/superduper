@@ -98,49 +98,6 @@ class JobFutureException(Exception):
     ...
 
 
-# def _get_cdcs_on_table(table, db: 'Datalayer'):
-#     cdcs = db.metadata.show_cdcs(table)
-#     out = []
-#     for uuid in cdcs:
-#         out.append(
-#             db.load(uuid=uuid)
-#         )
-#     return out
-
-
-def _get_cdcs_on_table(table, db: 'Datalayer'):
-    cdcs = db.metadata.show_cdcs(table)
-    from superduper.components.listener import Listener
-    out = []
-    for uuid in cdcs:
-        component = db.load(uuid=uuid)
-        if isinstance(component, Listener):
-            if len(component.select.tables) > 1:
-                continue
-            out.append(component)
-        out.append(component)
-    return out
-
-
-def _get_parent_cdcs_of_component(component, db: 'Datalayer'):
-    parents = db.metadata.get_component_version_parents(component.uuid)
-    out = []
-    for uuid in parents:
-        r = db.metadata.get_component_by_uuid(uuid)
-        if r.get('cdc_table'):
-            out.append(db.load(uuid=uuid))
-    return {c.uuid: c for c in out}
-
-
-def _get_parent_cdcs_of_components(components, db):
-    out = {}
-    for component in components:
-        out.update(
-            _get_parent_cdcs_of_component(component, db=db)
-        )
-    return list(out.values())
-
-
 def consume_streaming_events(events, table, db):
     """
     Consumer work from streaming events.

@@ -255,30 +255,6 @@ class Query(_BaseQuery):
         """Property setter."""
         self._updated_key = update
 
-    # def get_events(
-    #     self,
-    #     ids: t.Sequence,
-    # ):
-    #     """List of events.
-
-    #     :param ids: List of ids.
-    #     """
-    #     components = self.db.cluster.cdc.triggers
-    #     events = []
-    #     for type_id, identifier in components:
-    #         component = self.db.load(type_id=type_id, identifier=identifier)
-    #         triggerz_ids = component.triggerz_ids(self, ids)
-    #         if triggerz_ids:
-    #             # TODO wrap these dictionaries with `Event`
-    #             events.append(
-    #                 {
-    #                     'type_id': component.type_id,
-    #                     'identifier': component.identifier,
-    #                     'ids': triggerz_ids,
-    #                 }
-    #             )
-    #     return events
-
     def _get_flavour(self):
         _query_str = self._to_str()
         repr_ = _query_str[0]

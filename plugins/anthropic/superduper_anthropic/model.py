@@ -36,6 +36,17 @@ class AnthropicCompletions(Anthropic):
     """Cohere completions (chat) predictor.
 
     :param prompt: The prompt to use to seed the response.
+
+    Example:
+    -------
+    >>> from superduper_anthropic.model import AnthropicCompletions
+    >>>
+    >>> model = AnthropicCompletions(
+    >>>     identifier="claude-2.1",
+    >>>     predict_kwargs={"max_tokens": 64},
+    >>> )
+    >>> model.predict_batches(["Hello, world!"])
+
     """
 
     prompt: str = ''

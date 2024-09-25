@@ -28,6 +28,17 @@ class LlamaCpp(BaseLLM):
     :param model_name_or_path: path or name of model
     :param model_kwargs: dictionary of init-kwargs
     :param download_dir: local caching directory
+
+    Example:
+    -------
+    >>> from superduper_llama_cpp.model import LlamaCpp
+    >>>
+    >>> model = LlamaCpp(
+    >>>     identifier="llm",
+    >>>     model_name_or_path="mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+    >>> )
+    >>> model.predict("Hello world")
+
     """
 
     model_name_or_path: str = "facebook/opt-125m"

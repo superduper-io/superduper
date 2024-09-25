@@ -196,7 +196,33 @@ class _VLLMCore(Model):
 
 
 class VllmChat(_VLLMCore):
-    """VLLM model for chatting."""
+    """VLLM model for chatting.
+
+    Example:
+    -------
+    >>> from superduper_vllm import VllmChat
+    >>> vllm_params = dict(
+    >>>     model="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    >>>     quantization="awq",
+    >>>     dtype="auto",
+    >>>     max_model_len=1024,
+    >>>     tensor_parallel_size=1,
+    >>> )
+    >>> model = VllmChat(identifier="model", vllm_params=vllm_params)
+    >>> messages = [
+    >>>     {"role": "system", "content": "You are a helpful assistant."},
+    >>>     {"role": "user", "content": "hello"},
+    >>> ]
+
+    Chat with chat format messages
+
+    >>> model.predict(messages)
+
+    Chat with text format messages
+
+    >>> model.predict("hello")
+
+    """
 
     def predict(
         self,
@@ -230,7 +256,22 @@ class VllmChat(_VLLMCore):
 
 
 class VllmCompletion(_VLLMCore):
-    """VLLM model for generating completions."""
+    """VLLM model for generating completions.
+
+    Example:
+    -------
+    >>> from superduper_vllm import VllmCompletion
+    >>> vllm_params = dict(
+    >>>     model="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    >>>     quantization="awq",
+    >>>     dtype="auto",
+    >>>     max_model_len=1024,
+    >>>     tensor_parallel_size=1,
+    >>> )
+    >>> model = VllmCompletion(identifier="model", vllm_params=vllm_params)
+    >>> model.predict("hello")
+
+    """
 
     def predict(
         self,

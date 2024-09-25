@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_llamacpp"
 readme = "README.md"
+description = "Superduper allows users to work with self-hosted LLM models via [Llama.cpp](https://github.com/ggerganov/llama.cpp)."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

@@ -97,6 +97,13 @@ class OpenAIEmbedding(_OpenAI):
 
     :param shape: The shape as ``tuple`` of the embedding.
     :param batch_size: The batch size to use.
+
+    Example:
+    -------
+    >>> from superduper_openai.model import OpenAIEmbedding
+    >>> model = OpenAIEmbedding(identifier='text-embedding-ada-002')
+    >>> model.predict('Hello, world!')
+
     """
 
     shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
@@ -149,6 +156,13 @@ class OpenAIChatCompletion(_OpenAI):
 
     :param batch_size: The batch size to use.
     :param prompt: The prompt to use to seed the response.
+
+    Example:
+    -------
+    >>> from superduper_openai.model import OpenAIChatCompletion
+    >>> model = OpenAIChatCompletion(model='gpt-3.5-turbo', prompt='Hello, {context}')
+    >>> model.predict('Hello, world!')
+
     """
 
     signature: str = 'singleton'
@@ -212,6 +226,18 @@ class OpenAIImageCreation(_OpenAI):
     :param prompt: The prompt to use to seed the response.
     :param n: The number of images to generate.
     :param response_format: The response format to use.
+
+    Example:
+    -------
+    >>> from superduper_openai.model import OpenAIImageCreation
+    >>>
+    >>> model = OpenAIImageCreation(
+    >>>     model="dall-e",
+    >>>     prompt="a close up, studio photographic portrait of a {context}",
+    >>>     response_format="url",
+    >>> )
+    >>> model.predict("cat")
+
     """
 
     signature: str = 'singleton'
@@ -279,6 +305,22 @@ class OpenAIImageEdit(_OpenAI):
     :param prompt: The prompt to use to seed the response.
     :param response_format: The response format to use.
     :param n: The number of images to generate.
+
+    Example:
+    -------
+    >>> import io
+    >>>
+    >>> from superduper_openai.model import OpenAIImageEdit
+    >>>
+    >>> model = OpenAIImageEdit(
+    >>>     model="dall-e",
+    >>>     prompt="A celebration party at the launch of {context}",
+    >>>     response_format="url",
+    >>> )
+    >>> with open("test/material/data/rickroll.png", "rb") as f:
+    >>>     buffer = io.BytesIO(f.read())
+    >>> model.predict(buffer, context=["superduper"])
+
     """
 
     takes_context: bool = True
@@ -366,6 +408,21 @@ class OpenAIAudioTranscription(_OpenAI):
     :param prompt: The prompt to guide the model's style.
 
     The prompt should contain the `"context"` format variable.
+
+    Example:
+    -------
+    >>> import io
+    >>> from superduper_openai.model import OpenAIAudioTranscription
+    >>> with open('test/material/data/test.wav', 'rb') as f:
+    >>>     buffer = io.BytesIO(f.read())
+    >>> buffer.name = 'test.wav'
+    >>> prompt = (
+    >>>     'i have some advice for you. write all text in lower-case.'
+    >>>     'only make an exception for the following words: {context}'
+    >>> )
+    >>> model = OpenAIAudioTranscription(identifier='whisper-1', prompt=prompt)
+    >>> model.predict(buffer, context=['United States'])
+
     """
 
     takes_context: bool = True
@@ -415,6 +472,22 @@ class OpenAIAudioTranslation(_OpenAI):
     :param batch_size: The batch size to use.
 
     The prompt should contain the `"context"` format variable.
+
+    Example:
+    -------
+    >>> import io
+    >>> from superduper_openai.model import OpenAIAudioTranslation
+    >>> with open('test/material/data/german.wav', 'rb') as f:
+    >>>     buffer = io.BytesIO(f.read())
+    >>> buffer.name = 'test.wav'
+    >>> prompt = (
+    >>>     'i have some advice for you. write all text in lower-case.'
+    >>>     'only make an exception for the following words: {context}'
+    >>> )
+    >>> e = OpenAIAudioTranslation(identifier='whisper-1', prompt=prompt)
+    >>> resp = e.predict(buffer, context=['Emmerich'])
+    >>> buffer.close()
+
     """
 
     signature: str = 'singleton'

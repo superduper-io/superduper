@@ -34,6 +34,13 @@ class CohereEmbed(Cohere):
 
     :param shape: The shape as ``tuple`` of the embedding.
     :param batch_size: The batch size to use for the predictor.
+
+    Example:
+    -------
+    >>> from superduper_cohere.model import CohereEmbed
+    >>> model = CohereEmbed(identifier='embed-english-v2.0', batch_size=1)
+    >>> model..predict('Hello world')
+
     """
 
     shapes: t.ClassVar[t.Dict] = {'embed-english-v2.0': (4096,)}
@@ -94,6 +101,13 @@ class CohereGenerate(Cohere):
 
     :param takes_context: Whether the model takes context into account.
     :param prompt: The prompt to use to seed the response.
+
+    Example:
+    -------
+    >>> from superduper_cohere.model import CohereGenerate
+    >>> model = CohereGenerate(identifier='base-light', prompt='Hello, {context}')
+    >>> model.predict('', context=['world!'])
+
     """
 
     signature: str = '*args,**kwargs'

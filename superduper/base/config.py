@@ -135,6 +135,7 @@ class Config(BaseConfig):
     :param fold_probability: The probability of validation fold
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
+    :param force_apply: Whether to force apply the configuration
     :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
@@ -162,6 +163,8 @@ class Config(BaseConfig):
     log_level: LogLevel = LogLevel.DEBUG
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
+
+    force_apply: bool = True
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True

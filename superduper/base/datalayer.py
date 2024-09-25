@@ -22,7 +22,7 @@ from superduper.base.config import Config
 from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
-from superduper.base.event import Create, Signal
+from superduper.base.event import Create, DeploymentPlan, Signal
 from superduper.components.component import Component, Status
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
@@ -389,7 +389,7 @@ class Datalayer:
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
-        approve: bool = False,
+        force: bool = CFG.force_apply,
     ):
         """
         Add functionality in the form of components.
@@ -404,6 +404,7 @@ class Datalayer:
         """
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
+
         # context allows us to track the origin of the component creation
         create_events, job_events = self._apply(
             object=object,
@@ -426,17 +427,43 @@ class Datalayer:
         unique_job_ids = []
         unique_job_events = []
         for e in job_events:
-            if e.huuid not in unique_job_ids:
-                unique_job_ids.append(e.huuid)
+            if e.job_id not in unique_job_ids:
+                unique_job_ids.append(e.job_id)
                 unique_job_events.append(e)
+
+        print('\n----------------')
+        print('CREATION EVENTS:')
+        print('----------------')
+        steps = {c.component['uuid'] : str(i) for i, c in enumerate(unique_create_events)}
+        for i, c in enumerate(unique_create_events):
+            if c.parent:
+                print(f'[{i}]: {c.huuid}: create ~ [{steps[c.parent]}]')
+            else:
+                print(f'[{i}]: {c.huuid}: create')
+
+        print('\n------------')
+        print('JOBS EVENTS:')
+        print('------------')
+        steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
+        for i, j in enumerate(unique_job_events):
+            if j.dependencies:
+                print(f'[{i}]: {j.huuid}: {j.method} ~ [{",".join([steps[d] for d in j.dependencies])}]')
+            else:
+                print(f'[{i}]: {j.huuid}: {j.method}')
+        print('\n')
 
         events = [
             *unique_create_events,
             *unique_job_events,
             Signal(context=object.uuid, msg='done'),
         ]
-        for event in events:
-            logging.info(f'Creating event {event}')
+
+        if not force:
+            if not click.confirm(
+                'Please approve this deployment plan.',
+                default=False,
+            ):
+                return object
 
         self.cluster.queue.publish(events=events[::-1])
         return object
@@ -617,6 +644,8 @@ class Datalayer:
         context: t.Optional[str] = None,
         job_events: t.Sequence['Job'] = (),
     ):
+        job_events = list(job_events)
+
         object.db = self
         existing_versions = self.show(object.type_id, object.identifier)
         already_exists = (

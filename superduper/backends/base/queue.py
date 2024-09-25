@@ -95,11 +95,10 @@ class BaseQueuePublisher(BaseBackend):
 
 class JobFutureException(Exception):
     """Exception when futures are not ready.
-    
+
     # noqa
     """
     ...
-
 
 
 def consume_streaming_events(events, table, db):
@@ -133,6 +132,7 @@ class Future:
 
     :param job_id: job identifier
     """
+
     job_id: str
 
 
@@ -147,6 +147,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     job_lookup = defaultdict(dict)
 
     from superduper.components.cdc import build_streaming_graph
+
     G, components = build_streaming_graph(table, db)
 
     for huuid in nx.topological_sort(G):
@@ -162,7 +163,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         else:
             input_ids = ids
 
-        # For example for "Listener" this will create 
+        # For example for "Listener" this will create
         # the Listener.run job only
         sub_jobs = component.create_jobs(
             context=context,
@@ -178,6 +179,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     for job in jobs:
         db.cluster.compute.submit(job)
     db.cluster.compute.release_futures(context)
+
 
 def consume_events(events, table: str, db=None):
     if table != '_apply':

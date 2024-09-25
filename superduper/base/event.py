@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.tree import Tree
 from rich.text import Text
 import typing as t
+import uuid
 from abc import ABC, abstractmethod
 
 if t.TYPE_CHECKING:
@@ -184,7 +185,7 @@ class Create(Event):
             db.metadata.create_parent_child(self.parent, component.uuid)
 
         if hasattr(component, 'dependencies') and component.dependencies:
-            for _, dep in component.dependencies:
+            for dep in component.dependencies:
                 db.metadata.create_parent_child(component.uuid, dep)
         component.post_create(db=db)
 

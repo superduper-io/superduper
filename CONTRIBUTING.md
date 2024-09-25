@@ -115,7 +115,7 @@ Creating a useful issue, is itself a useful skill. Think about following these p
 
 ## Getting Help 🙋
 
-[![Slack](https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack)](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)
+[![Slack](https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack)](https://join.slack.com/t/superduper-public/shared_invite/zt-1yodhtx8y-KxzECued5QBtT6JFnsSNrQ)
 [![Issues](https://img.shields.io/badge/Issues-superduperdb-8A2BE2?logo=github)](https://github.com/superduper-io/superduper-stealth/issues)
 [![Wiki](https://img.shields.io/badge/Project%20Wiki-superduperdb-8A2BE2?logo=github)](https://github.com/superduper-io/superduper-stealth/wiki)
 

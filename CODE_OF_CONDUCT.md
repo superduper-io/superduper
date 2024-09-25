@@ -30,6 +30,6 @@ In the Superduper community, we go the extra step to look out for each other. St
 
 If someone raises concerns about something you said or did, resist the urge to be defensive. Stop the behavior in question and apologize. Even if you believe you were misunderstood or unfairly accused, consider that there might be room for better communication. Remember, it's your responsibility to make your fellow Superduper community members comfortable.
 
-The enforcement policies mentioned above apply to all official Superduper venues, including [Slack channels](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA), GitHub repositories under the Superduper organization, and all forums under Superduper, Inc.
+The enforcement policies mentioned above apply to all official Superduper venues, including [Slack channels](https://join.slack.com/t/superduper-public/shared_invite/zt-1yodhtx8y-KxzECued5QBtT6JFnsSNrQ), GitHub repositories under the Superduper organization, and all forums under Superduper, Inc.
 
 Adapted with inspiration from the [Rust Code of Conduct](https://github.com/rust-lang/rust/blob/master/CODE_OF_CONDUCT.md), the [Node.js Policy on Trolling](https://blog.izs.me/2012/08/policy-on-trolling/), and the [Contributor Covenant v1.3.0](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/).

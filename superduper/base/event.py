@@ -1,11 +1,93 @@
 from abc import abstractmethod, ABC
 import dataclasses as dc
 import datetime
+import networkx as nx
+from rich.console import Console
+from rich.tree import Tree
+from rich.text import Text
 import typing as t
 import uuid
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+
+
+@dc.dataclass
+class DummyJob:
+    """
+    Dummy job dataclass to store job data.
+
+    # noqa
+    """
+    job_id: str
+    dependencies: t.List[str] = dc.field(default_factory=list)
+    method: str = 'dummy'
+
+    @property
+    def huuid(self):
+        return f'{self.job_id}'
+
+
+@dc.dataclass(kw_only=True)
+class DeploymentPlan:
+    """
+    Deployment plan dataclass to store deployment plan data.
+
+    :param create_events: list of create events
+    :param jobs: list of job events
+
+    >>> job1 = DummyJob(job_id='job1') 
+    >>> job2 = DummyJob(job_id='job2', dependencies=['job1']) 
+    >>> plan = DeploymentPlan(create_events=[], jobs=[job1, job2])
+    >>> plan.show(False)
+    DEPLOYMENT PLAN
+    ├── CREATE
+    └── JOBS
+        └── msg-job2: dummy
+            └── msg-job1: dummy
+    """
+    create_events: t.List['Create']
+    jobs: t.List['Job']
+
+    @staticmethod
+    def add_nodes_to_tree(tree, node, G, lookup, style=True):
+        node_label = Text()
+
+        node_label.append(lookup[node].huuid, style='bold magenta' if style else None)
+        node_label.append(": ", style='bold white' if style else None)
+        node_label.append(lookup[node].method, style='dim' if style else None)
+
+        subtree = tree.add(node_label)
+        
+        for child in G.successors(node):
+            DeploymentPlan.add_nodes_to_tree(subtree, child, G, lookup, style=style)
+
+    def show(self, style=True):
+        create_tree = Tree('CREATE')
+
+        lookup = {job.job_id: job for job in self.jobs}
+
+        G = nx.DiGraph()
+        for job in self.jobs:
+            for dep in job.dependencies:
+                G.add_edge(job.job_id, dep)
+
+        root = next(n for n, d in G.in_degree() if d == 0)
+        if style:
+            job_tree = Tree("JOBS", guide_style='bold bright_blue')
+        else:
+            job_tree = Tree("JOBS")
+
+        assert all([job.job_id in lookup for job in self.jobs])
+        self.add_nodes_to_tree(job_tree, root, G, lookup, style=style)
+
+        merged_tree = Tree('DEPLOYMENT PLAN')
+        merged_tree.add(create_tree)
+        merged_tree.add(job_tree)
+
+        console = Console()
+        console.print(merged_tree)
+
 
 
 @dc.dataclass(kw_only=True)
@@ -91,6 +173,10 @@ class Create(Event):
                 db.metadata.create_parent_child(component.uuid, dep)
         component.post_create(db=db)
 
+    @property
+    def huuid(self):
+        return f'{self.component["type_id"]}:{self.component["identifier"]}:{self.component["uuid"]}'
+
 
 @dc.dataclass(kw_only=True)
 class Job(Event):
@@ -161,3 +247,10 @@ events = {
     'create': Create,
     'job': Job,
 }
+
+
+if __name__ == '__main__':
+    job1 = DummyJob(job_id='job1') 
+    job2 = DummyJob(job_id='job2', dependencies=['job1']) 
+    plan = DeploymentPlan(create_events=[], jobs=[job1, job2])
+    plan.show(style=False)

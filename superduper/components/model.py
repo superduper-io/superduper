@@ -801,10 +801,10 @@ class Model(Component, metaclass=ModelMeta):
             key=key,
             select=select,
             predict_kwargs=predict_kwargs,
-            identifier=identifier or self.identifier,
             **kwargs,
         )
-        return VectorIndex(identifier=self.identifier, indexing_listener=listener)
+        identifier = identifier or f'{self.identifier}/vector_index'
+        return VectorIndex(identifier=identifier, indexing_listener=listener)
 
     def to_listener(
         self,
@@ -828,7 +828,7 @@ class Model(Component, metaclass=ModelMeta):
             key=key,
             select=select,
             model=self,
-            identifier=identifier or self.identifier,
+            identifier=identifier or f'{self.identifier}/listener',
             predict_kwargs=predict_kwargs or {},
             **kwargs,
         )

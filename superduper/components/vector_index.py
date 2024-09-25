@@ -340,32 +340,6 @@ class VectorIndex(CDC):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
 
-    # def triggerz_ids(self, query: Query, primary_ids: t.Sequence):
-    #     """Get trigger IDs.
-
-    #     Only the ids returned by this function will trigger the vector_index.
-
-    #     :param query: Query object.
-    #     :param primary_ids: Primary IDs.
-    #     """
-
-    #             conditions = [
-    #         # trigger by main table
-    #         self.select and self.select.table == query.table,
-    #         # trigger by output table
-    #         query.table in self.key and query.table != self.outputs,
-    #     ]
-    #     if not isinstance(self.select, Query):
-    #         return []
-
-    #     if self.indexing_listener.outputs != query.table:
-    #         return []
-
-    #     ids = self.db.databackend.check_ready_ids(
-    #         self.select, [self.indexing_listener.outputs], primary_ids
-    #     )
-    #     return ids
-
 
 # TODO what is this?
 class EncodeArray:

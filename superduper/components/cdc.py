@@ -30,7 +30,7 @@ class CDC(Component):
     @property
     def dependencies(self):
         """Get dependencies of this component."""
-        if self.cdc_table.startswith(CFG.outputs_prefix):
+        if self.cdc_table.startswith(CFG.output_prefix):
             return [tuple(self.cdc_table.split('__'))]
         return []
 
@@ -47,6 +47,7 @@ def _get_parent_cdcs_of_component(component, db: 'Datalayer'):
 
 def _get_cdcs_on_table(table, db: 'Datalayer'):
     from superduper.components.listener import Listener
+
     cdcs = db.metadata.show_cdcs(table)
     out = []
     for uuid in cdcs:
@@ -62,10 +63,10 @@ def _get_cdcs_on_table(table, db: 'Datalayer'):
 def build_streaming_graph(table, db: 'Datalayer'):
     """Build a streaming graph from a table.
 
-    The graph has as each node a component which 
-    ingests from the table, or ingests from 
+    The graph has as each node a component which
+    ingests from the table, or ingests from
     a component which ingests from the table (etc.).
-    
+
     :param table: The table to build the graph from.
     :param db: Datalayer instance
     """
@@ -79,7 +80,7 @@ def build_streaming_graph(table, db: 'Datalayer'):
         for component in components:
             parents = _get_parent_cdcs_of_component(component, db=db)
             for parent in parents:
-                deps = [x[1] for x in parents[parent].dependencies]
+                deps = [x[-1] for x in parents[parent].dependencies]
                 if component.uuid not in deps:
                     continue
                 G.add_edge(component.huuid, parents[parent].huuid)
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     db = superduper('mongomock://test')
 
     db['documents'].insert([{'x': i} for i in range(10)]).execute()
-    
+
     m = ObjectModel('test', object=lambda x: x)
     m2 = ObjectModel('test', object=lambda x, y: x)
 
@@ -113,7 +114,12 @@ if __name__ == '__main__':
 
     db.apply(l3)
 
-    l4 = Listener('l4', model=m2, select=db['documents'].select().outputs(l1.predict_id, l3.predict_id), key=(l1.outputs, l3.outputs))
+    l4 = Listener(
+        'l4',
+        model=m2,
+        select=db['documents'].select().outputs(l1.predict_id, l3.predict_id),
+        key=(l1.outputs, l3.outputs),
+    )
 
     db.apply(l4)
 
@@ -125,7 +131,7 @@ if __name__ == '__main__':
 
         while nodes_to_explore:
             current_node = nodes_to_explore.pop()
-            
+
             for parent in graph.successors(current_node):
                 if parent not in visited:
                     yield current_node, parent

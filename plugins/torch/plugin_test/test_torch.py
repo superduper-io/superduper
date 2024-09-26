@@ -68,6 +68,7 @@ def model():
     )
 
 
+# TODO: The training task is not executed, but it was not tested.
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_fit(db, model):
     from test.utils.setup.fake_data import get_valid_dataset

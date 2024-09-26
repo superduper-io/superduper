@@ -28,6 +28,7 @@ test = [
     "ibis-framework[sqlite]>=5.1.0",
     # Annotation plugin dependencies will be installed in CI
     # :CI: plugins/sqlalchemy
+    # :CI: plugins/mongodb
 ]
 
 [project.urls]

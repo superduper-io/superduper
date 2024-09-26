@@ -7,8 +7,8 @@ try:
 except ImportError:
     GPU_AVAILABLE = False
 
-if not GPU_AVAILABLE:
-    pytest.skip("Skipping tests requiring GPU", allow_module_level=True)
+# if not GPU_AVAILABLE:
+#     pytest.skip("Skipping tests requiring GPU", allow_module_level=True)
 
 
 from test.utils.component import utils as component_utils
@@ -36,6 +36,7 @@ def test_encode_and_decode(model_cls):
     component_utils.test_encode_and_decode(model)
 
 
+@pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available")
 def test_chat():
     model = VllmChat(identifier="model", vllm_params=vllm_params)
 
@@ -56,6 +57,7 @@ def test_chat():
 # TODO: Fixed the issue where asynchronous tests caused
 # GPU memory shortage by starting without
 # waiting for the previous task to release the GPU.
+@pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available")
 @pytest.mark.asyncio
 async def test_chat_async():
     model = VllmChat(identifier="model", vllm_params=vllm_params)
@@ -74,6 +76,7 @@ async def test_chat_async():
     assert isinstance(result, str)
 
 
+@pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available")
 def test_completion():
     model = VllmCompletion(identifier="model", vllm_params=vllm_params)
 
@@ -87,6 +90,7 @@ def test_completion():
     assert isinstance(result, list)
 
 
+@pytest.mark.skipif(not GPU_AVAILABLE, reason="GPU not available")
 @pytest.mark.asyncio
 async def test_completion_async():
     model = VllmCompletion(identifier="model", vllm_params=vllm_params)

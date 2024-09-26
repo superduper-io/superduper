@@ -56,11 +56,18 @@ class LocalComputeBackend(ComputeBackend):
         :param job: The `Job` to be executed.
         :param dependencies: List of `job_ids`
         """
-        output = job(
-            db=self.db,
-            futures=self.futures[job.context],
-        )
+        args, kwargs = job.get_args_kwargs(self.futures[job.context])
+        component = self.db.load(uuid=job.uuid)
+        method = getattr(component, job.method)
+        output = method(*args, **kwargs)
         self.futures[job.context][job.job_id] = output
+
+    # def ray_submit(self, job: Job):
+    #     args, kwargs = job.get_args_kwargs(self.futures[job.context])
+    #     actor_or_component = compute_backend.load(uuid=job.uuid)
+    #     method = getattr(actor_or_component, job.method)
+    #     output = method.remote(*args, **kwargs)
+    #     self.futures[job.context][job.job_id] = output
 
     def __delitem__(self, item):
         pass

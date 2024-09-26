@@ -23,6 +23,7 @@ class _BaseTemplate(Component):
     :param blobs: Blob identifiers in `Template.component`.
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
+    :param default_values: Default values for the variables.
     """
 
     literals: t.ClassVar[t.Tuple[str]] = ('template',)
@@ -33,6 +34,7 @@ class _BaseTemplate(Component):
     blobs: t.Optional[t.List[str]] = None
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
+    default_values: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, db, artifacts, substitutions):
         if isinstance(self.template, Leaf):
@@ -49,6 +51,7 @@ class _BaseTemplate(Component):
     @ensure_initialized
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
+        kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
         assert set(kwargs.keys()) == set(self.template_variables)
         component = _replace_variables(self.template, **kwargs)
         return Document.decode(component, db=self.db).unpack()
@@ -59,7 +62,12 @@ class _BaseTemplate(Component):
         return {
             'identifier': '<enter-a-unique-identifier>',
             '_variables': {
-                k: f'<value-{i}>' for i, k in enumerate(self.template_variables)
+                k: (
+                    f'<value-{i}>'
+                    if k not in self.default_values
+                    else self.default_values[k]
+                )
+                for i, k in enumerate(self.template_variables)
             },
             **{k: v for k, v in self.template.items() if k != 'identifier'},
             '_template_name': self.identifier,
@@ -184,7 +192,12 @@ class QueryTemplate(_BaseTemplate):
         """Form to be diplayed to user."""
         return {
             '_variables': {
-                k: f'<value-{i}>' for i, k in enumerate(self.template_variables)
+                k: (
+                    f'<value-{i}>'
+                    if k not in self.default_values
+                    else self.default_values[k]
+                )
+                for i, k in enumerate(self.template_variables)
             },
             **{
                 k: v

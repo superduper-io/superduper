@@ -71,6 +71,7 @@ class BasicDataset(data.Dataset):
     """
     Basic database iterating over a list of documents and applying a transformation.
 
+    # noqa
     :param items: items, typically documents
     :param transform: function, typically a preprocess function
     :param signature: signature of the transform function
@@ -116,6 +117,21 @@ class TorchModel(Model, _DeviceManaged):
     :param trainer: `Trainer` object to train the model
     :param preferred_devices: The order of devices to use
     :param device: The device to be used
+
+
+    Example:
+    -------
+    >>> import torch
+    >>> from superduper_torch.model import TorchModel
+    >>>
+    >>> model = TorchModel(
+    >>>     object=torch.nn.Linear(32, 1),
+    >>>     identifier="test",
+    >>>     preferred_devices=("cpu",),
+    >>>     postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
+    >>> )
+    >>> model.predict(torch.randn(32))
+
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (

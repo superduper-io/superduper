@@ -125,7 +125,7 @@ class VectorIndex(CDC):
 
     def declare_component(self, cluster: 'Cluster'):
         """Declare component.
-        
+
         :param cluster: Instance of Cluster.
         """
         super().declare_component(cluster)

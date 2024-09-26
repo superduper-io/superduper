@@ -105,6 +105,16 @@ class Estimator(Model):
     :param trainer: The trainer to use.
     :param preprocess: The preprocessing function to use.
     :param postprocess: The postprocessing function to use.
+
+    Example:
+    -------
+    >>> from superduper_sklearn import Estimator
+    >>> from sklearn.svm import SVC
+    >>> model = Estimator(
+    >>>     identifier='test',
+    >>>     object=SVC(),
+    >>> )
+
     """
 
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (

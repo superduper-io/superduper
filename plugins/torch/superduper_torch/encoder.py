@@ -11,7 +11,7 @@ if t.TYPE_CHECKING:
 
 
 class EncodeTensor:
-    """Encode a tensor to bytes.
+    """Encode a tensor to bytes # noqa.
 
     :param dtype: The dtype of the tensor, eg. torch.float32
     """
@@ -31,7 +31,7 @@ class EncodeTensor:
 
 
 class DecodeTensor:
-    """Decode a tensor from bytes.
+    """Decode a tensor from bytes # noqa.
 
     :param dtype: The dtype of the tensor, eg. torch.float32
     :param shape: The shape of the tensor, eg. (3, 4)

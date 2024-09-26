@@ -180,3 +180,16 @@ def test_refer_to_system(db):
     r = Document.decode(r, db=db).unpack()
 
     assert isinstance(r['data'], np.ndarray)
+
+
+def test_encode_same_identifier():
+    datatype = DataType(identifier="a")
+    model = ObjectModel(identifier="a", object=lambda x: x, datatype=datatype)
+    listener = model.to_listener(identifier="a", key="a", select=None)
+
+    encode_data = listener.encode()
+    listener = Document.decode(encode_data).unpack()
+
+    assert listener.identifier == "a"
+    assert listener.model.identifier == "a"
+    assert listener.model.datatype.identifier == "a"

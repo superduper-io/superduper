@@ -178,7 +178,15 @@ class TextClassificationPipeline(Model, _DeviceManaged):
 
     Example:
     -------
-    >>> model = TextClassificationPipeline(...)
+    >>> from superduper_transformers.model import TextClassificationPipeline
+    >>>
+    >>> model = TextClassificationPipeline(
+    >>>     identifier="my-sentiment-analysis",
+    >>>     model_name="distilbert-base-uncased",
+    >>>     model_kwargs={"num_labels": 2},
+    >>>     device="cpu",
+    >>> )
+    >>> model.predict("Hello, world!")
 
     """
 
@@ -249,6 +257,13 @@ class LLM(BaseLLM):
     `transformers.AutoTokenizer.from_pretrained`.
     When `model_name_or_path`, `bits`, `model_kwargs`, `tokenizer_kwargs` are the same,
     will share the same base model and tokenizer cache.
+
+    Example:
+    -------
+    >>> from superduper_transformers import LLM
+    >>> model = LLM(identifier="llm", model_name_or_path="facebook/opt-125m")
+    >>> model.predict("Hello, world!")
+
     """
 
     identifier: str = ""

@@ -26,6 +26,7 @@ def check_llm_as_listener_model(db, llm):
     select = db[collection_name].select("id", "question")
 
     listener = Listener(
+        identifier="listener",
         select=select,
         key="question",
         model=llm,

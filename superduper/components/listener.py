@@ -105,17 +105,22 @@ class Listener(CDC):
         :param uuid: UUID of the listener.
         :param model: Model instance.
         """
-        if model.datatype is None and model.output_schema is None:
+        if model.datatype is None:
             return
-        # TODO make this universal over databackends
-        # not special e.g. MongoDB vs. Ibis creating a table or not
-        output_table = db.databackend.create_output_dest(
-            predict_id,
-            model.datatype,
-            flatten=model.flatten,
+        from superduper.components.schema import ID, Schema
+        from superduper.components.table import Table
+
+        fields = {
+            "_source": ID,
+            "id": ID,
+            f"{CFG.output_prefix}{predict_id}": model.datatype,
+        }
+        output_table = Table(
+            identifier=f"{CFG.output_prefix}{predict_id}",
+            schema=Schema(identifier=f"_schema/{predict_id}", fields=fields),
         )
-        if output_table is not None:
-            db.apply(output_table)
+
+        db.apply(output_table)
 
     @property
     def dependencies(self):

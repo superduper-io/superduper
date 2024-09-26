@@ -1,3 +1,4 @@
+import re
 import typing as t
 import uuid
 from copy import deepcopy
@@ -41,6 +42,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         self.collection_name = uuid
         self.measure = measure
 
+        self.collection_name = re.sub("\W+", "", identifier)
         if not self.client.collection_exists(self.collection_name):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure
@@ -58,7 +60,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def _create_collection(self):
         measure = (
-            self.measure.name if isinstance(self.measure, VectorIndexMeasureType) 
+            self.measure.name
+            if isinstance(self.measure, VectorIndexMeasureType)
             else self.measure
         )
         distance = self._distance_mapping(measure)
@@ -73,20 +76,17 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         :param items: List of vectors to add
         :param cache: Cache vectors (not used in Qdrant implementation).
         """
-        if not self.client.collection_exists(self.collection_name):
-            self._create_collection()
-        points = [
-            models.PointStruct(
+        points = []
+        for item in items:
+            vector = (
+                item.vector.tolist() if hasattr(item.vector, "tolist") else item.vector
+            )
+            point = models.PointStruct(
                 id=self._convert_id(item.id),
-                vector=(
-                    {self.vector_name: item.vector.tolist()}
-                    if self.vector_name
-                    else item.vector.tolist()
-                ),
+                vector={self.vector_name: vector} if self.vector_name else vector,
                 payload={ID_PAYLOAD_KEY: item.id},
             )
-            for item in items
-        ]
+            points.append(point)
         self.client.upsert(collection_name=self.collection_name, points=points)
 
     def delete(self, ids: t.Sequence[str]) -> None:

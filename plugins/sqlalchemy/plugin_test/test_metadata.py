@@ -25,3 +25,7 @@ def test_parent_child(metadata):
 
 def test_job(metadata):
     metadata_utils.test_job(metadata)
+
+
+def test_artifact_relation(metadata):
+    metadata_utils.test_artifact_relation(metadata)

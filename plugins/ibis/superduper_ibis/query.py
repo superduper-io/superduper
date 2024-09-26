@@ -9,7 +9,6 @@ from superduper.backends.base.query import (
     applies_to,
     parse_query as _parse_query,
 )
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.exceptions import DatabackendException
 from superduper.components.datatype import Encodable
@@ -175,10 +174,6 @@ class IbisQuery(Query):
     def _execute_insert(self, parent):
         documents = self._prepare_documents()
         for r in documents:
-            r.pop(KEY_BUILDS)
-            r.pop(KEY_BLOBS)
-            r.pop(KEY_FILES)
-            r.pop("_schema")
             if self.primary_id not in r:
                 pid = str(uuid.uuid4())
                 r[self.primary_id] = pid

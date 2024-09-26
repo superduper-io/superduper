@@ -5,6 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_ibis"
 readme = "README.md"
+description = """
+Superduper ibis is a plugin for ibis-framework that allows you to use Superduper as a backend for your ibis queries.
+
+This plugin cannot be used independently; it must be used together with `superduper_ibis`.
+
+Superduper supports SQL databases via the ibis project. With superduper, queries may be built which conform to the ibis API, with additional support for complex data-types and vector-searches.
+"""
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

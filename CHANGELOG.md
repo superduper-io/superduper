@@ -29,6 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update job_id after job submission
 - Fixed default event.uuid
 - Fixed atlas vector search
+- Fix the bug where shared artifacts are deleted when removing a component.
+- Fix compatibility issues with the latest version of pymongo.
+- Fix the query parser incompatibility with '.' symbol.
+- Fix the post like in the service vector_search.
+- Fix the conflict of the same identifier during encoding.
+- Fix the issue where MongoDB did not create the output table.
+- Fix the bug in the CI where plugins are skipping tests.
+- Updated CONTRIBUTING.md
+- Add README.md files for the plugins.
 
 #### New Features & Functionality
 
@@ -48,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added templates directory with OSS templates
 - Qdrant vector search support
 - Add `@trigger` decorator to improve developer experience
+- Add placeholder for web app link in Application
 
 #### Bug Fixes
 
@@ -69,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the duplicate children in the component.
 - Fix datatype for graph models
 - Fix the ordering and sequencing of jobs initiated on `db.apply`
+- Fix bug in variables
+- Fix Qdrant collection name
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 
@@ -323,3 +335,5 @@ Test release before v0.2
 ## [0.0.5](https://github.com/superduper-io/superduper/compare/0.0.5...0.0.4])      (2023-Aug-15)
 
 ## 0.0.4      (2023-Aug-03)
+
+

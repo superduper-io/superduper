@@ -1,171 +1,306 @@
 import dataclasses as dc
+import inspect
 import typing as t
 
-import requests
 from superduper import logging
-from superduper.ext.llm.model import BaseLLM, BaseLLMAPI
+from superduper.components.model import Model
 
-__all__ = ["VllmAPI", "VllmModel"]
-
-VLLM_INFERENCE_PARAMETERS_LIST = [
-    "n",
-    "best_of",
-    "presence_penalty",
-    "frequency_penalty",
-    "repetition_penalty",
-    "temperature",
-    "top_p",
-    "top_k",
-    "min_p",
-    "use_beam_search",
-    "length_penalty",
-    "early_stopping",
-    "stop",
-    "stop_token_ids",
-    "include_stop_str_in_output",
-    "ignore_eos",
-    "max_tokens",
-    "logprobs",
-    "prompt_logprobs",
-    "skip_special_tokens",
-    "spaces_between_special_tokens",
-    "logits_processors",
-]
+if t.TYPE_CHECKING:
+    from vllm import RequestOutput
+    from vllm.entrypoints.chat_utils import ChatCompletionMessageParam
+    from vllm.entrypoints.openai.protocol import ChatCompletionResponse
 
 
-class VllmAPI(BaseLLMAPI):
-    """Wrapper for requesting the vLLM API service.
+class _VLLMCore(Model):
+    """Base class for VLLM models.
 
-    API Server format, started by `vllm.entrypoints.api_server`.
+    :param vllm_params: Parameters for VLLM model
     """
 
-    def _generate(self, prompt: str, **kwargs) -> t.Union[str, t.List[str]]:
-        """Batch generate text from a prompt."""
-        post_data = self.build_post_data(prompt, **kwargs)
-        response = requests.post(self.api_url, json=post_data)
-        results = []
-        for result in response.json()["text"]:
-            results.append(result[len(prompt) :])
-        n = kwargs.get("n", 1)
-        return results[0] if n == 1 else results
-
-    def build_post_data(
-        self, prompt: str, **kwargs: dict[str, t.Any]
-    ) -> dict[str, t.Any]:
-        """Build the post data for the API request.
-
-        :param prompt: The prompt to use.
-        :param kwargs: The keyword arguments to use.
-        """
-        total_kwargs = {}
-        for key, value in {**self.predict_kwargs, **kwargs}.items():
-            if key in VLLM_INFERENCE_PARAMETERS_LIST:
-                total_kwargs[key] = value
-        return {"prompt": prompt, **total_kwargs}
-
-
-class _VllmCore:
-    def __init__(self, **kwargs) -> None:
-        # Use kwargs to avoid incompatibility after vllm version upgrade
-        from vllm import LLM
-
-        # Roll back to using the sync engine, otherwise it will no
-        # longer be available on Jupyter notebooks
-        self.engine = LLM(**kwargs)
-
-    def batch_predict(self, prompts: t.List[str], **kwargs):
-        from vllm.sampling_params import SamplingParams
-
-        sampling_params = SamplingParams(**kwargs)
-        results = self.engine.generate(prompts, sampling_params)
-        n = sampling_params.n
-        texts_outputs = []
-        for result in results:
-            text_outputs = [output.text for output in result.outputs]
-            if n == 1:
-                texts_outputs.append(text_outputs[0])
-            else:
-                texts_outputs.append(text_outputs)
-        return texts_outputs
-
-
-class VllmModel(BaseLLM):
-    """
-    Load a large language model from VLLM.
-
-    :param model_name: The name of the model to use.
-    :param tensor_parallel_size: The number of tensor parallelism.
-    :param trust_remote_code: Whether to trust remote code.
-    :param vllm_kwargs: Additional arguments to pass to the VLLM
-    :param on_ray: Whether to use Ray for parallelism.
-    :param ray_address: The address of the Ray cluster.
-    :param ray_config: The configuration for Ray.
-    """
-
-    model_name: str = dc.field(default="")
-    tensor_parallel_size: int = 1
-    trust_remote_code: bool = True
-    vllm_kwargs: dict = dc.field(default_factory=dict)
-    on_ray: bool = False
-    ray_address: t.Optional[str] = None
-    ray_config: dict = dc.field(default_factory=dict)
+    vllm_params: dict = dc.field(default_factory=dict)
 
     def __post_init__(self, db, artifacts):
-        self.on_ray = self.on_ray or bool(self.ray_address)
-        if "tensor_parallel_size" not in self.vllm_kwargs:
-            self.vllm_kwargs["tensor_parallel_size"] = self.tensor_parallel_size
-
-        if "trust_remote_code" not in self.vllm_kwargs:
-            self.vllm_kwargs["trust_remote_code"] = self.trust_remote_code
-
-        if "model" not in self.vllm_kwargs:
-            self.vllm_kwargs["model"] = self.model_name
-
         super().__post_init__(db, artifacts)
+        assert "model" in self.vllm_params, "model is required in vllm_params"
+        self._async_llm = None
+        self._sync_llm = None
+        tensor_parallel_size = self.vllm_params.get("tensor_parallel_size", 1)
+        pipeline_parallel_size = self.vllm_params.get("pipeline_parallel_size", 1)
+        parallel_size = max(tensor_parallel_size, pipeline_parallel_size)
+        self.compute_kwargs["num_gpus"] = parallel_size
+        logging.info(f"Setting num_gpus to {parallel_size}")
 
-    def init(self):
-        """Initialize the model."""
-        if self.on_ray:
-            import ray
+    def _init_sync_llm(self):
+        if self._sync_llm is not None:
+            return
+        assert self._async_llm is None, "Cannot initialize both sync and async LLMs"
+        from vllm import LLM
 
-            if not ray.is_initialized():
-                ray.init(address=self.ray_address, ignore_reinit_error=True)
+        self._sync_llm = LLM(**self.vllm_params)
 
-            # fix num_gpus for tensor parallel when using ray
-            if self.tensor_parallel_size == 1:
-                if self.ray_config.get("num_gpus", 1) != 1:
-                    logging.warn(
-                        "tensor_parallel_size == 1, num_gpus will be set to 1. "
-                        "If you want to use more gpus, "
-                        "please set tensor_parallel_size > 1."
-                    )
-                self.ray_config["num_gpus"] = self.tensor_parallel_size
-            else:
-                if "num_gpus" in self.ray_config:
-                    logging.warn("tensor_parallel_size > 1, num_gpus will be ignored.")
-                    self.ray_config.pop("num_gpus", None)
+    async def _init_async_llm(self):
+        if self._async_llm is not None:
+            return
+        assert self._sync_llm is None, "Cannot initialize both sync and async LLMs"
+        from vllm import AsyncEngineArgs, AsyncLLMEngine
 
-            LLM = ray.remote(**self.ray_config)(_VllmCore).remote
+        async_engine_args = AsyncEngineArgs(**self.vllm_params)
+        self._async_llm = AsyncLLMEngine.from_engine_args(async_engine_args)
+
+        if async_engine_args.served_model_name is not None:
+            served_model_names = async_engine_args.served_model_name
         else:
-            LLM = _VllmCore
+            served_model_names = [async_engine_args.model]
 
-        self.llm = LLM(**self.vllm_kwargs)
+        model_config = self._async_llm.engine.get_model_config()
 
-    def _generate(self, prompt: str, **kwargs: t.Any) -> str:
-        return self._batch_generate([prompt], **kwargs)[0]
-
-    def _batch_generate(self, prompts: t.List[str], **kwargs: t.Any) -> t.List[str]:
-        total_kwargs = {}
-        for key, value in {**self.predict_kwargs, **kwargs}.items():
-            if key in VLLM_INFERENCE_PARAMETERS_LIST:
-                total_kwargs[key] = value
-
-        if self.on_ray:
-            import ray
-
-            # https://docs.ray.io/en/latest/ray-core/actors/async_api.html#asyncio-for-actors
-            results = ray.get(self.llm.batch_predict.remote(prompts, **total_kwargs))
+        if async_engine_args.disable_log_requests:
+            request_logger = None
         else:
-            results = self.llm.batch_predict(prompts, **total_kwargs)
+            from vllm.entrypoints.logger import RequestLogger
 
-        return results
+            max_log_len = self.vllm_params.get("max_log_len", 100)
+            request_logger = RequestLogger(max_log_len=max_log_len)
+
+        global openai_serving_chat
+        global openai_serving_completion
+
+        response_role = self.vllm_params.get("response_role", "assistant")
+        lora_modules = self.vllm_params.get("lora_modules", None)
+        prompt_adapters = self.vllm_params.get("prompt_adapters", None)
+        chat_template = self.vllm_params.get("chat_template", None)
+        return_tokens_as_token_ids = self.vllm_params.get(
+            "return_tokens_as_token_ids", None
+        )
+
+        from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+        from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+
+        self.openai_serving_chat = OpenAIServingChat(
+            self._async_llm,
+            model_config,
+            served_model_names,
+            response_role,
+            lora_modules=lora_modules,
+            prompt_adapters=prompt_adapters,
+            request_logger=request_logger,
+            chat_template=chat_template,
+            return_tokens_as_token_ids=return_tokens_as_token_ids,
+        )
+        self.openai_serving_completion = OpenAIServingCompletion(
+            self._async_llm,
+            model_config,
+            served_model_names,
+            lora_modules=lora_modules,
+            prompt_adapters=prompt_adapters,
+            request_logger=request_logger,
+            return_tokens_as_token_ids=return_tokens_as_token_ids,
+        )
+
+    def _chat(
+        self,
+        messages: list["ChatCompletionMessageParam"],
+        **kwargs,
+    ) -> list["RequestOutput"]:
+        self._init_sync_llm()
+        messages = self._preprocess(messages)
+        from vllm import SamplingParams
+
+        sampling_params, kwargs = self._parse_args(SamplingParams, **kwargs)
+        outputs = self._sync_llm.chat(
+            messages=messages,
+            sampling_params=sampling_params,
+            **kwargs,
+        )
+        return self._postprocess_request_output(outputs)
+
+    async def _async_chat(
+        self,
+        messages: list["ChatCompletionMessageParam"],
+        **kwargs,
+    ):
+        messages = self._preprocess(messages)
+        await self._init_async_llm()
+        kwargs["model"] = self.vllm_params["model"]
+        kwargs["messages"] = messages
+        from vllm.entrypoints.openai.protocol import ChatCompletionRequest
+
+        request, kwargs = self._parse_args(ChatCompletionRequest, **kwargs)
+        outputs = await self.openai_serving_chat.create_chat_completion(request)
+        return self._postprcess_chat_completion_output(outputs)
+
+    def _generate(
+        self,
+        prompt: str,
+        **kwargs,
+    ) -> "RequestOutput":
+        self._init_sync_llm()
+        from vllm import SamplingParams
+
+        sampling_params, kwargs = self._parse_args(SamplingParams, **kwargs)
+        outputs = self._sync_llm.generate(
+            prompts=prompt,
+            sampling_params=sampling_params,
+            **kwargs,
+        )
+        outputs = self._postprocess_request_output(outputs)
+        return outputs
+
+    async def _async_generate(
+        self,
+        prompt: str,
+        **kwargs,
+    ):
+        await self._init_async_llm()
+        kwargs["model"] = self.vllm_params["model"]
+        kwargs["prompt"] = prompt
+        from vllm.entrypoints.openai.protocol import CompletionRequest
+
+        request, kwargs = self._parse_args(CompletionRequest, **kwargs)
+        # TODO: Need to handle raw_request
+        assert "raw_request" in kwargs
+        outputs = await self.openai_serving_completion.create_completion(
+            request, **kwargs
+        )
+        return self._postprocess_request_output(outputs)
+
+    def _preprocess(self, messages: list["ChatCompletionMessageParam"]):
+        if isinstance(messages, str):
+            messages = [{"role": "user", "content": messages}]
+        return messages
+
+    def _postprocess_request_output(self, outputs: list["RequestOutput"]):
+        output = outputs[0]
+        result = []
+        for completion_output in output.outputs:
+            result.append(completion_output.text)
+
+        if len(result) == 1:
+            return result[0]
+        return result
+
+    def _postprcess_chat_completion_output(self, output: "ChatCompletionResponse"):
+        result = []
+        for choice in output.choices:
+            result.append(choice.message.content)
+        if len(result) == 1:
+            return result[0]
+        return result
+
+    def _parse_args(self, param_cls, **kwargs):
+        parameters = inspect.signature(param_cls).parameters
+        sampling_kwargs = {k: v for k, v in kwargs.items() if k in parameters}
+        kwargs = {k: v for k, v in kwargs.items() if k not in parameters}
+        sampling_params = param_cls(**sampling_kwargs)
+        return sampling_params, kwargs
+
+
+class VllmChat(_VLLMCore):
+    """VLLM model for chatting.
+
+    Example:
+    -------
+    >>> from superduper_vllm import VllmChat
+    >>> vllm_params = dict(
+    >>>     model="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    >>>     quantization="awq",
+    >>>     dtype="auto",
+    >>>     max_model_len=1024,
+    >>>     tensor_parallel_size=1,
+    >>> )
+    >>> model = VllmChat(identifier="model", vllm_params=vllm_params)
+    >>> messages = [
+    >>>     {"role": "system", "content": "You are a helpful assistant."},
+    >>>     {"role": "user", "content": "hello"},
+    >>> ]
+
+    Chat with chat format messages
+
+    >>> model.predict(messages)
+
+    Chat with text format messages
+
+    >>> model.predict("hello")
+
+    """
+
+    def predict(
+        self,
+        messages: list["ChatCompletionMessageParam"],
+        **kwargs,
+    ) -> list["RequestOutput"]:
+        """Chat with the model.
+
+        :param messages: List of messages to chat with the model
+        :param kwargs: Additional keyword arguments,
+                       see vllm.SamplingParams for more details
+        """
+        return self._chat(
+            messages=messages,
+            **kwargs,
+        )
+
+    async def async_predict(
+        self,
+        messages: list["ChatCompletionMessageParam"],
+        *args,
+        **kwargs,
+    ):
+        """Chat with the model asynchronously.
+
+        :param messages: List of messages to chat with the model
+        :param kwargs: Additional keyword arguments,
+                       see vllm.SamplingParams for more details
+        """
+        return await self._async_chat(messages, *args, **kwargs)
+
+
+class VllmCompletion(_VLLMCore):
+    """VLLM model for generating completions.
+
+    Example:
+    -------
+    >>> from superduper_vllm import VllmCompletion
+    >>> vllm_params = dict(
+    >>>     model="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    >>>     quantization="awq",
+    >>>     dtype="auto",
+    >>>     max_model_len=1024,
+    >>>     tensor_parallel_size=1,
+    >>> )
+    >>> model = VllmCompletion(identifier="model", vllm_params=vllm_params)
+    >>> model.predict("hello")
+
+    """
+
+    def predict(
+        self,
+        prompt: str,
+        **kwargs,
+    ) -> "RequestOutput":
+        """Generate completion for the given prompt.
+
+        :param prompt: Prompt to generate completion for the model
+        :param kwargs: Additional keyword arguments,
+                       see vllm.SamplingParams for more details
+        """
+        return self._generate(
+            prompt=prompt,
+            **kwargs,
+        )
+
+    async def async_predict(
+        self,
+        prompt: str,
+        **kwargs,
+    ):
+        """Generate completion for the given prompt asynchronously.
+
+        :param prompt: Prompt to generate completion for the model
+        :param kwargs: Additional keyword arguments,
+                       see vllm.SamplingParams for more details
+        """
+        return await self._async_generate(
+            prompt=prompt,
+            **kwargs,
+        )

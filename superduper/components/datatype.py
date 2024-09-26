@@ -419,8 +419,10 @@ class _BaseEncodable(Leaf):
             bytes_ = data.encode()
         elif isinstance(data, bytes):
             bytes_ = data
+        elif isinstance(data, Native):
+            bytes_ = str([type(data), data.x]).encode()
         else:
-            raise ValueError(f'Unsupported data type: {type(data)}')
+            bytes_ = str(id(data)).encode()
         return hashlib.sha1(bytes_).hexdigest()
 
     @staticmethod

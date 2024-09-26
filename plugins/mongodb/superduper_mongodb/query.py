@@ -299,7 +299,7 @@ class MongoQuery(Query):
         r = self._execute_select(parent)
         if r is None:
             return
-        return Document.decode(r, db=self.db)
+        return Document.decode(r, db=self.db, schema=self._get_schema())
 
     def _execute_insert_one(self, parent):
         insert_part = self.parts[0]
@@ -532,6 +532,7 @@ class MongoQuery(Query):
                 raw_cursor=output,
                 db=self.db,
                 id_field='_id',
+                schema=self._get_schema(),
             )
         return output
 
@@ -596,10 +597,6 @@ class MongoQuery(Query):
 
     def _execute_outputs(self, parent, method='encode'):
         project = self._get_project()
-        project['_schema'] = 1
-        project['_builds'] = 1
-        project['_files'] = 1
-        project['_blobs'] = 1
 
         limit_args, _ = self._get_method_parameters('limit')
         limit = {"$limit": limit_args[0]} if limit_args else None
@@ -653,7 +650,38 @@ class MongoQuery(Query):
             db=self.db,
             id_field='_id',
             process_func=self._postprocess_result,
+            schema=self._get_schema(),
         )
+
+    def _get_schema(self):
+        outputs_parts = [p for p in self.parts if p[0] == 'outputs']
+        predict_ids = sum([p[1] for p in outputs_parts], ())
+
+        try:
+            table = self.db.tables[self.table]
+            if not predict_ids:
+                return table.schema
+            fields = table.schema.fields
+        except FileNotFoundError:
+            fields = {}
+
+        for predict_id in predict_ids:
+            key = f'{CFG.output_prefix}{predict_id}'
+            try:
+                output_table = self.db.tables[key]
+            except FileNotFoundError:
+                logging.warn(
+                    f'No schema found for table {key}. Using default projection'
+                )
+                continue
+            fields[key] = output_table.schema.fields[key]
+
+        from superduper.components.datatype import DataType
+        from superduper.components.schema import Schema
+
+        fields = {k: v for k, v in fields.items() if isinstance(v, DataType)}
+
+        return Schema(f"_tmp:{self.table}", fields=fields)
 
     def _get_project(self):
         find_params, _ = self._get_method_parameters('find')
@@ -700,14 +728,11 @@ class MongoQuery(Query):
     def _postprocess_result(self, result):
         """Postprocess the result of the query.
 
-        Merge the outputs/_builds/_files/_blobs from the output keys to the result
+        Merge the outputs from the output keys to the result
 
         :param result: The result to postprocess.
         """
         merge_outputs = {}
-        merge_builds = result.get('_builds', {})
-        merge_files = result.get('_files', {})
-        merge_blobs = result.get('_blobs', {})
 
         output_keys = {
             key for key in result.keys() if key.startswith(CFG.output_prefix)
@@ -716,14 +741,8 @@ class MongoQuery(Query):
             output_data = result[output_key]
             output_result = output_data[output_key]
             merge_outputs[output_key] = output_result
-            merge_builds.update(output_data['_builds'])
-            merge_files.update(output_data['_files'])
-            merge_blobs.update(output_data['_blobs'])
 
         result.update(merge_outputs)
-        result['_builds'] = merge_builds
-        result['_files'] = merge_files
-        result['_blobs'] = merge_blobs
         return result
 
 

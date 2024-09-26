@@ -19,7 +19,6 @@ from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
-from superduper.base.enums import DBType
 from superduper.base.exceptions import DatabackendException
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.datatype import DataType, dill_lazy
@@ -380,6 +379,15 @@ class Model(Component, metaclass=ModelMeta):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
+        if self.output_schema is not None:
+            logging.warn("Output schema is deprecated. Use datatype instead.")
+
+    def jobs(self, db: 'Datalayer'):
+        """List jobs ids related to the model."""
+        jobs = db.metadata.show_jobs(self.identifier, 'model') or []
+        job_ids = [job['job_id'] for job in jobs]
+        return job_ids
+
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""
@@ -619,9 +627,6 @@ class Model(Component, metaclass=ModelMeta):
 
         outputs = self.predict_batches(dataset)
         self._infer_auto_schema(outputs, predict_id)
-        # TODO implement this so that we can toggle between different ibis/ mongodb
-        outputs = self.encode_outputs(outputs)
-
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
@@ -645,22 +650,6 @@ class Model(Component, metaclass=ModelMeta):
                 output_ids = update.execute(db=self.db)
         return output_ids
 
-    def encode_outputs(self, outputs):
-        """Method that encodes outputs of a model for saving in the database.
-
-        :param outputs: outputs to encode.
-        """
-        # TODO: Fallback when output schema not provided in ibis.
-
-        if isinstance(self.output_schema, Schema):
-            return self.encode_with_schema(outputs)
-        if isinstance(self.datatype, DataType):
-            if self.flatten:
-                return [[self.datatype(x) for x in output] for output in outputs]
-            else:
-                return [self.datatype(x) for x in outputs]
-        return outputs
-
     def _infer_auto_schema(self, outputs, predict_id):
         """
         Infer datatype from outputs of the model.
@@ -670,7 +659,6 @@ class Model(Component, metaclass=ModelMeta):
         skip_conds = [
             not self.db.cfg.auto_schema,
             self.datatype is not None,
-            self.output_schema is not None,
             len(outputs) == 0,
         ]
 
@@ -704,23 +692,8 @@ class Model(Component, metaclass=ModelMeta):
 
             Listener.create_output_dest(self.db, predict_id, self)
 
-        if self.datatype is not None or self.output_schema is not None:
+        if self.datatype:
             self.db.replace(self)
-
-    def encode_with_schema(self, outputs):
-        """Encode model outputs corresponding to the provided `output_schema`.
-
-        :param outputs: Encode the outputs with the given schema.
-        """
-        encoded_outputs = []
-        for output in outputs:
-            if isinstance(output, dict):
-                encoded_outputs.append(self.output_schema(output))
-            elif self.flatten:
-                encoded_output = [self.output_schema(x) for x in output]
-                encoded_outputs.append(encoded_output)
-        outputs = encoded_outputs if encoded_outputs else outputs
-        return outputs
 
     def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.

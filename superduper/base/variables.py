@@ -23,18 +23,21 @@ def _replace_variables(x, **kwargs):
             _replace_variables(k, **kwargs): _replace_variables(v, **kwargs)
             for k, v in x.items()
         }
-    if isinstance(x, str) and re.match(r'^<var:(.*?)>$', x) is not None:
+    if (
+        isinstance(x, str)
+        and re.match(r'^<var:(.*?)>$', x) is not None
+        and '<' not in x[1:-1]
+    ):
         return kwargs.get(x[5:-1], x)
     if isinstance(x, str):
         variables = re.findall(r'<var:(.*?)>', x)
+        if variables:
+            print(x)
         variables = list(map(lambda v: v.strip(), variables))
-        for k, v in kwargs.items():
-            if k in variables:
-                if isinstance(v, str):
-                    x = x.replace(f'<var:{k}>', v)
-                else:
-                    x = re.sub('[<>:]', '-', x)
-                    x = re.sub('[-]+', '-', x)
+        for k in variables:
+            if k not in kwargs:
+                continue
+            x = x.replace(f'<var:{k}>', str(kwargs[k]))
         return x
     if isinstance(x, (list, tuple)):
         return [_replace_variables(v, **kwargs) for v in x]

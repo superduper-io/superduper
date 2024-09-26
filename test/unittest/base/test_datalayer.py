@@ -600,6 +600,28 @@ def test_dataset(db):
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
+def test_delete_componet_with_same_artifact(db):
+    from superduper import ObjectModel
+
+    model1 = ObjectModel(
+        object=lambda x: x + 1,
+        identifier='model1',
+    )
+
+    model2 = ObjectModel(
+        object=model1.object,
+        identifier='model2',
+    )
+
+    db.apply(model1)
+    db.apply(model2)
+
+    db.remove('model', 'model1', force=True)
+    model2 = db.load('model', 'model2')
+    model2.init()
+    assert model2.predict(1) == 2
+
+
 def test_retry_on_token_expiry(db):
     # Mock the methods
     db.retry = 1

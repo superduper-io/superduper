@@ -1,4 +1,4 @@
-name: CI
+name: Plugin Testing
 
 on:
   pull_request:
@@ -30,7 +30,10 @@ jobs:
           for file in "${changed_files[@]}"; do
             if [[ "$file" =~ ^plugins/ && ! "$file" =~ ^plugins/template/ ]]; then
               plugin_name=$(echo "$file" | cut -d '/' -f 2)
-              plugin_set[$plugin_name]=1
+              # Check if the plugin has a pyproject.toml file
+              if [[ -f "plugins/$plugin_name/pyproject.toml" ]]; then
+                plugin_set[$plugin_name]=1
+              fi
             fi
           done
           plugins=("${!plugin_set[@]}")
@@ -91,7 +94,7 @@ jobs:
       - name: Plugin Testing
         run: |
           export PYTHONPATH=./
-          if [ -f "plugins/${{ matrix.plugin }}/plugin_test" ]; then
+          if [ -d "plugins/${{ matrix.plugin }}/plugin_test" ]; then
             pytest --cov=superduper --cov-report=xml plugins/${{ matrix.plugin }}/plugin_test
           else
             echo "Skipping tests for ${{ matrix.plugin }}, no test file found."

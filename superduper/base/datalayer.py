@@ -718,7 +718,7 @@ class Datalayer:
         if children:
             serialized = self._change_component_reference_prefix(serialized)
 
-        serialized = self.artifact_store.save_artifact(serialized)
+        serialized = self._save_artifact(object.uuid, serialized)
         if artifacts:
             for file_id, bytes in artifacts.items():
                 self.artifact_store.put_bytes(bytes, file_id)
@@ -794,7 +794,7 @@ class Datalayer:
             except KeyError:
                 pass
 
-            self.artifact_store.delete_artifact(info)
+            self._delete_artifacts(r['uuid'], info)
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _get_content_for_filter(self, filter) -> Document:
@@ -856,9 +856,9 @@ class Datalayer:
         if children:
             serialized = self._change_component_reference_prefix(serialized)
 
-        self.artifact_store.delete_artifact(info)
+        self._delete_artifacts(object.uuid, info)
 
-        serialized = self.artifact_store.save_artifact(serialized)
+        serialized = self._save_artifact(object.uuid, serialized)
 
         self.metadata.replace_object(
             serialized,
@@ -879,6 +879,45 @@ class Datalayer:
                 [self.metadata.get_component_version_parents(uuid) for uuid in parents],
                 [],
             )
+
+    def _save_artifact(self, uuid, info: t.Dict):
+        """
+        Save an artifact to the artifact store.
+
+        :param artifact: The artifact to save.
+        """
+        artifact_ids, _ = self._find_artifacts(info)
+        self.metadata.create_artifact_relation(uuid, artifact_ids)
+        return self.artifact_store.save_artifact(info)
+
+    def _delete_artifacts(self, uuid, info: t.Dict):
+        artifact_ids, artifacts = self._find_artifacts(info)
+        for artifact_id in artifact_ids:
+            relation_uuids = self.metadata.get_artifact_relations(
+                artifact_id=artifact_id
+            )
+            if len(relation_uuids) == 1 and relation_uuids[0] == uuid:
+                self.artifact_store.delete_artifact([artifact_id])
+                self.metadata.delete_artifact_relation(
+                    uuid=uuid, artifact_ids=artifact_id
+                )
+
+    def _find_artifacts(self, info: t.Dict):
+        from superduper.misc.special_dicts import recursive_find
+
+        # find all blobs with `&:blob:` prefix,
+        blobs = recursive_find(
+            info, lambda v: isinstance(v, str) and v.startswith('&:blob:')
+        )
+
+        # find all files with `&:file:` prefix
+        files = recursive_find(
+            info, lambda v: isinstance(v, str) and v.startswith('&:file:')
+        )
+        artifact_ids: list[str] = []
+        artifact_ids.extend(a.split(":")[-1] for a in blobs)
+        artifact_ids.extend(a.split(":")[-1] for a in files)
+        return artifact_ids, {'blobs': blobs, 'files': files}
 
     def select_nearest(
         self,

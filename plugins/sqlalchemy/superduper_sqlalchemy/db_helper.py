@@ -14,7 +14,7 @@ DEFAULT_LENGTH = 255
 
 
 class JsonMixin:
-    """Mixin for JSON type columns.
+    """Mixin for JSON type columns # noqa.
 
     Converts dict to JSON strings before saving to database
     and converts JSON strings to dict when loading from database.

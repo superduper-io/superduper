@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "superduper_sklearn"
 readme = "README.md"
+description = "superduper allows users to work with arbitrary sklearn estimators, with additional support for pre-, post-processing and input/ output data-types."
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
 keywords = [

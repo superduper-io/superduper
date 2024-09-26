@@ -122,7 +122,43 @@ class SQLAlchemyMetadata(MetaDataStore):
             *component_table_args,
         )
 
+        self.artifact_table = Table(
+            'ARTIFACT_RELATIONS',
+            metadata,
+            Column('uuid', type_string),
+            Column('artifact_id', type_string),
+            *component_table_args,
+        )
+
+        self._table_mapping = {
+            '_artifact_relations': self.artifact_table,
+        }
+
         metadata.create_all(self.conn)
+
+    def _create_data(self, table_name, datas):
+        table = self._table_mapping[table_name]
+        with self.session_context() as session:
+            for data in datas:
+                stmt = insert(table).values(**data)
+                session.execute(stmt)
+
+    def _delete_data(self, table_name, filter):
+        table = self._table_mapping[table_name]
+
+        with self.session_context() as session:
+            conditions = [getattr(table.c, k) == v for k, v in filter.items()]
+            stmt = delete(table).where(*conditions)
+            session.execute(stmt)
+
+    def _get_data(self, table_name, filter):
+        table = self._table_mapping[table_name]
+
+        with self.session_context() as session:
+            conditions = [getattr(table.c, k) == v for k, v in filter.items()]
+            stmt = select(table).where(*conditions)
+            res = self.query_results(table, stmt, session)
+            return res
 
     def url(self):
         """Return the URL of the metadata store."""
@@ -141,6 +177,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
+
         try:
             self.job_table.drop(self.conn)
         except ProgrammingError as e:
@@ -155,6 +192,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             self.component_table.drop(self.conn)
         except ProgrammingError as e:
             logging.warn(f'Error dropping component table {e}')
+
+        try:
+            self.artifact_table.drop(self.conn)
+        except ProgrammingError as e:
+            logging.warn(f'Error dropping artifact table {e}')
 
     @contextmanager
     def session_context(self):
@@ -354,7 +396,14 @@ class SQLAlchemyMetadata(MetaDataStore):
     def _refactor_component_info(cls, info):
         if 'hidden' not in info:
             info['hidden'] = False
-        component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path', 'cdc_table']
+        component_fields = [
+            'identifier',
+            'version',
+            'hidden',
+            'type_id',
+            '_path',
+            'cdc_table',
+        ]
         new_info = {k: info.get(k) for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['id'] = new_info['dict']['uuid']
@@ -515,9 +564,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
             # If a component_identifier is provided, add a where clause to filter by it
             if uuids is not None:
-                stmt = stmt.where(
-                    self.job_table.c.uuid.in_(uuids)
-                )
+                stmt = stmt.where(self.job_table.c.uuid.in_(uuids))
 
             # Execute the query and collect results
             res = self.query_results(self.job_table, stmt, session)

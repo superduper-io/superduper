@@ -37,6 +37,9 @@ class FieldType(Leaf):
             raise ValueError(f'Invalid field type {self.identifier}')
 
 
+ID = FieldType(identifier='ID')
+
+
 class Schema(Component):
     """A component carrying the `DataType` of columns.
 

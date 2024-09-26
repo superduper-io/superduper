@@ -9,3 +9,12 @@ class CDCBackend(BaseBackend):
     @abstractmethod
     def handle_event(self, event_type, table, ids):
         pass
+
+    @property
+    def db(self) -> 'Datalayer':
+        return self._db
+
+    @db.setter
+    def db(self, value: 'Datalayer'):
+        self._db = value
+        self.initialize()

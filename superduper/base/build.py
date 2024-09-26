@@ -148,6 +148,9 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Keep the real configuration in the datalayer object.
     datalayer.cfg = cfg
 
+    if kwargs.get('initialize_cluster', True):
+        datalayer.cluster.initialize()
+
     show_configuration(cfg)
     return datalayer
 

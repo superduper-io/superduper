@@ -85,8 +85,17 @@ class ComputeBackend(BaseBackend):
     def execute_task(self, job_id, dependencies, compute_kwargs={}):
         """Execute task function for distributed backends."""
 
-    def connect(self):
+    def initialize(self):
         """Connect to address."""
 
     def create_handler(self, *args, **kwargs):
         """Create handler on component declare."""
+
+    @property
+    def db(self) -> 'Datalayer':
+        return self._db
+
+    @db.setter
+    def db(self, value: 'Datalayer'):
+        self._db = value
+        self.initialize()

@@ -39,6 +39,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         self.dimensions = dimensions
         self.client = QdrantClient(**config_dict)
         self.collection_name = uuid
+        self.measure = measure
 
         if not self.client.collection_exists(self.collection_name):
             measure = (
@@ -57,7 +58,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def _create_collection(self):
         measure = (
-            measure.name if isinstance(measure, VectorIndexMeasureType) else measure
+            self.measure.name if isinstance(self.measure, VectorIndexMeasureType) 
+            else self.measure
         )
         distance = self._distance_mapping(measure)
         self.client.create_collection(

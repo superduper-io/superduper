@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the conflict of the same identifier during encoding.
 - Fix the issue where MongoDB did not create the output table.
 - Fix the bug in the CI where plugins are skipping tests.
+- Updated CONTRIBUTING.md
 
 #### New Features & Functionality
 

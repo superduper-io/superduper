@@ -1,4 +1,4 @@
-name: Release in Pypi/DockerHub
+name: Release plugins
 on:
   push:
     branches:

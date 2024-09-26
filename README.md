@@ -7,17 +7,17 @@
     </picture>
   </a>
 </div>
-
 <div align="center">
-  <h1>Bring AI to your favourite database</h1>
+  <h1>Build end-to-end AI-data workflows and applications with your favourite database</h1>
 </div>
+
 
 <div align="center">
   <h2>
     <a href="https://docs.superduper.io"><strong>Docs</strong></a> |
     <a href="https://blog.superduper.io"><strong>Blog</strong></a> |
     <a href="https://superduper.io"><strong>Website</strong></a> |
-    <a href="https://docs.superduper.io/docs/category/use-cases"><strong>Use-Cases</strong></a> |
+    <a href="https://docs.superduper.io/docs/category/templates"><strong>Templates</strong></a> |
     <a href="https://join.slack.com/t/superduper-public/shared_invite/zt-1yodhtx8y-KxzECued5QBtT6JFnsSNrQ"><strong>Slack</strong></a> |
     <a href="https://www.youtube.com/channel/UC-clq9x8EGtQc6MHW0GF73g"><strong>Youtube</strong></a> |
     <a href="https://www.linkedin.com/company/superduper-io"><strong>LinkedIn</strong></a>
@@ -33,109 +33,194 @@
   </h2>
 </div>
 
-## What is Superduper? 
 
-Superduper (formerly SuperDuperDB) is a Python framework for integrating AI models and workflows with major databases. Implement custom AI solutions without moving your data through complex pipelines and specialized vector databases, including hosting of your own models, streaming inference and scalable model training/fine-tuning.
+## What is Superduper?
 
-Transform your existing database into an AI development and deployment stack with one command, streamlining your AI workflows in one environment instead of being spread across systems and environments:
-```
+Superduper is a Python based framework for building **end-2-end AI-data workflows and applications** on your own data, integrating with major databases. It supports the latest technologies and techniques, including LLMs, vector-search, RAG, multimodality as well as classical AI and ML paradigms.
+
+Developers may leverage Superduper by building **compositional and declarative objects** which out-source the details of deployment, orchestration and versioning, and more to the Superduper engine. This allows developers to completely avoid implementing MLOps, ETL pipelines, model deployment, data migration and synchronization.
+
+Using Superduper is simply "**CAPE**": **Connect** to your data, **apply** arbitrary AI to that data, **package** and reuse the application on arbitrary data, and **execute** AI-database queries and predictions on the resulting AI outputs and data.
+
+- **Connect**
+- **Apply**
+- **Package**
+- **Execute**
+
+**Connect**
+
+```python
 db = superduper('mongodb|postgres|mysql|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-Run Superduper anywhere, or [contact us](https://superduper.io/contact) to learn more about the enterprise platform for bringing your apps to production at scale. 
+**Apply**
 
+```python
+listener = MyLLM('self_hosted_llm', architecture='llama-3.2', postprocess=my_postprocess).to_listener('documents', key='txt')
+db.apply(listener)
+```
 
+**Package**
 
-## Key features
-- **[Integration of AI with your existing data infrastructure](https://docs.superduper.io/docs/apply_api/model):** Integrate any AI models and APIs with your databases in a single environment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Inference via change-data-capture](https://docs.superduper.io/docs/models/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
-- **[Scalable model hosting](https://docs.superduper.io/docs/category/ai-integrations):** Host your own models from form HuggingFace, PyTorch and scikit-learn and safeguard your data.
-- **[Scalable model training](https://docs.superduper.io/docs/models/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
-- **[Model chaining](https://docs.superduper.io/docs/models/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple Python interface](https://docs.superduper.io/docs/core_api/intro)**: Replace writing thousand of lines of glue code with simple Python commands, while being able to drill down to any layer of implementation detail, like the inner workings of your models or your training details.
-- **[Python-first](https://docs.superduper.io/docs/fundamentals/class_hierarchy)**: Bring and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications.
-- **[Difficult data-types](https://docs.superduper.io/docs/reusable_snippets/create_datatype)**: Work directly with images, video, audio in your database, and any type which can be encoded as `bytes` in Python.
-- **[Feature storing](https://docs.superduper.io/docs/execute_api/auto_data_types):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector search](https://docs.superduper.io/docs/tutorials/vector_search):** No need to duplicate and migrate your data to additional specialized vector databases - turn your existing battle-tested database into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+```python
+application = Application('my-analysis-app', components=[listener, vector_index])
+template = Template('my-analysis', component=app, substitutions={'documents': 'table'})
+template.export('my-analysis')
+```
 
-## Preview
+**Execute**
 
-[Browse the re-usable snippets](https://docs.superduper.io/docs/category/reusable-snippets) to understand how to accomplish difficult AI end-functionality
-with few lines of code using Superduper.
+```python
+query = db['documents'].like({'txt', 'Tell me about Superduper'}, vector_index='my-index').select()
+query.execute()
+```
 
+Superduper may be run anywhere; you can also [contact us](https://superduper.io/contact) to learn more about the enterprise platform for bringing your Superduper workflows to production at scale. 
 
+## What's new in the `main` branch?
 
-## Example use-cases and apps (notebooks)
-The notebooks below are examples how to make use of different frameworks, model providers, databases, retrieval techniques and more. To learn more about *how* to use Superduper with your database, please check our [Docs](https://docs.superduper.io).
+We are working on an upcoming release of `0.4.0`. In this release we have:
 
-<table >
+### Revamped how `Component` triggers initial computations and data dependent computations using `@trigger`
 
-| Name                                            | Link                                                                                                                                              |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| Multimodal vector-search with a range of models and datatypes | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/superduper-io/superduper/blob/main/docs/content/use_cases/multimodal_vector_search_image.ipynb) |
-| RAG with self-hosted LLM                        | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/superduper-io/superduper/blob/main/docs/content/use_cases/retrieval_augmented_generation.ipynb)                     |
-| Fine-tune an LLM on your database               | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/superduper-io/superduper/blob/main/docs/content/use_cases/fine_tune_llm_on_database.ipynb)                        |
-| Featurization and transfer learning             | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/superduper-io/superduper/blob/main/docs/content/use_cases/transfer_learning.ipynb)                               |
+This will enable a large diversity of `Component` types in addition to the well established `Model`, `Listener`, `VectorIndex`.
 
-</table >
-</div>
+### Created a general `CDC` (change-data-capture) base class
 
+This will allow developers to create a range of functionality which reacts to incoming data changes
 
-## Currently supported datastores:
-Superduper your: [MongoDB](https://www.mongodb.com),
-[MongoDB Atlas](https://www.mongodb.com/cloud/atlas),
-[Snowflake](https://www.snowflake.com),
-[PostgreSQL](https://www.postgresql.org), 
-[MySQL](https://www.mysql.com),
-[SQLite](https://www.sqlite.org),
-[DuckDB](https://duckdb.org),
-[Google BigQuery](https://cloud.google.com/bigquery),
-[Amazon S3](https://aws.amazon.com/s3/),
-[Microsoft SQL Server (MSSQL)](https://www.microsoft.com/en-us/sql-server),
-[ClickHouse](https://clickhouse.com),
-[Oracle](https://www.oracle.com/database/),
-[Trino](https://trino.io),
-[PySpark](https://spark.apache.org/docs/latest/api/python/),
-[Pandas](https://pandas.pydata.org),
-[Apache Druid](https://druid.apache.org),
-[Apache Impala](https://impala.apache.org),
-[Polars](https://www.pola.rs),
-[Apache Arrow DataFusion](https://arrow.apache.org/datafusion/),
+### Developed the concept of `Template` to enable re-usable units of complete functionality
 
+Components saved as `Template` instances, will allow users to easily redeploy their already deployed and tested `Component` and `Application` implementations, on alternative data sources, and with key parameters toggled to cater to operational requirements.
 
+### Added concrete `Template` implementations to the project
 
-## Supported AI frameworks, models and APIs (*more coming soon*):
+These `Template` instances may be applied with Superduper with a simple single command
 
-Integrate and self-hosted your own models (whether from open-source, commercial or self-developed) with a simple Python command from: [PyTorch](https://pytorch.org), [Scikit-learn](https://scikit-learn.org), [HuggingFace](https://huggingface.co) 
+```
+superduper apply <template> '{"variable_1": "value_1",  "variable_2": ...}'
+```
 
+or:
 
-## Preconfigured API integrations (*more coming soon*):
+```python
+from superduper import templates
 
-Integrate externally hosted models accessible via API to work side-by-side or together with your other models a simple Python command: [OpenAI](https://www.openai.com), [Cohere](https://cohere.ai), [Anthropic](https://www.anthropic.com), [Jina AI](https://jina.ai)
+app = template(variable_1='value_1', variable_2='value_2', ...)
 
+db.apply(app)
+```
 
-## Installation
+### Added a user interface and new REST implementation
 
-#### # Option 1. Superduper Library
-Ideal for building new AI applications.
-```shell
+Now you may view your `Component`, `Application` and `Template` instances in the user-interface, and execute queries using `QueryTemplate` instances, directly against the REST server.
+
+```
+superduper start
+```
+
+## What does Superduper support?
+
+Superduper is flexible enough to support a huge range of AI techniques and paradigms. We have a range of pre-built functionality in the `plugins` and `templates` directories. In particular, Superduper excels when AI and data need to interact in a continuous and tightly integrated fashion. Here are some illustrative examples, which you may try out from our templates:
+
+- Semantic multimodal vector search ([images](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_image_search), [text](https://github.com/superduper-io/superduper/tree/main/templates/text_vector_search), [video](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_video_search))
+- [Retrieval augmented generation](https://github.com/superduper-io/superduper/tree/main/templates/retrieval_augmented_generation) with specialized requirements (data fetching involves semantic search as well as business rules and pre-processing)
+- Object detection directly on database hosted images
+- [LLM finetuning on database hosted data](https://github.com/superduper-io/superduper/tree/main/templates/llm_finetuning)
+- [Transfer learning using multimodal data](https://github.com/superduper-io/superduper/tree/main/templates/transfer_learning)
+
+We're looking to connect with enthusiastic developers to contribute to the repertoire of amazing pre-built templates and workflows available in Superduper open-source. Please join the discussion, by contributing issues and pull requests!
+
+## Core features
+
+- Create a Superduper data-AI connection/ datalayer consisting of your own
+  - databackend (database/ datalake/ datawarehouse)
+  - metadata store (same or other as databackend)
+  - artifact store (to store big objects)
+  - compute implementation
+- Build complex units of functionality (`Component`) using a declarative programming model, which integrate closely with data in your databackend, using a simple set of primitives and base classes.
+- Build larger units of functionality wrapping several interrelated `Component` instances into an AI-data `Application`
+- Reuse battle-tested `Component`, `Model` and `Application` instances using `Template`, giving developers an easy point to start with difficult AI implementations
+- A transparent, human-readable, web-friendly and highly portable serialization protocol, "Superduper-protocol", to communicate results of experimentation, make `Application` lineage and versioning easy to follow, and create an elegant segway from the AI world to the databasing/ typed-data worlds.
+- Execute queries using a combination of outputs of `Model` instances as well as primary databackend data, to enable the latest generation of AI-data applications, including all flavours of vector-search, RAG, and much, much more.
+
+## Key benefits
+
+**Massive flexibility**
+
+Combine any Python based AI model, API from the ecosystem with the most established, battle tested databases and warehouses;  Snowflake, MongoDB, Postgres, MySQL, SQL Server, SQLite, BigQuery, and Clickhouse are all supported.
+
+**Seamless integration avoiding MLOps**
+
+Remove the need to implement MLOps, using the declarative and compositional Superduper components, which specify the end state that the models and data should reach.
+
+**Promote code reusablity and portabiity**
+
+Package components as templates, exposing the key parameters required to reuse and communicate AI applications in your community and organization.
+
+**Cost savings**
+
+Implement vector search and embedding generation without requiring a dedicated vector database. Effortlessly toggle between self hosted models and API hosted models, without major code changes.
+
+**Move to production without any additional effort**
+
+Superduper's REST API, allows installed models to be served without addiitonal development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
+
+## Key classes
+
+| Name | Description |
+| --- | --- |
+| `superduper.base.datalayer.Datalayer` | connector to all `superduper` functionality |
+| `superduper.Component` | base class for models, triggers, event listeners, vector-indices etc. |
+| `superduper.Model` | base class for all model implementations |
+| `superduper.components.cdc.CDC` | base class for all change-data-capture implementations |
+| `superduper.backends.base.query.Query` | base class for all query implementations |
+
+## Getting started
+
+**Installation**:
+
+```bash
 pip install superduper-framework
 ```
 
-#### # Option 2. Superduper Container
-Ideal for learning basic Superduper functionalities and testing notebooks.
-```shell
-docker pull superduperio/superduper
-docker run -p 8888:8888 superduperio/superduper
+**Connect** and **apply** a pre-built template:
+
+```bash
+git clone https://github.com/superduper-io/superduper && cd superduper
+superduper apply templates/retrieval_augmented_generation.zip 'mongodb://localhost:27017/test_db' data=docu
 ```
 
-#### # Option 3. Superduper Testenv
-Ideal for learning advanced Superduper functionalities and testing whole AI stacks.
-```shell
-make build_sandbox
-make testenv_init
+**Execute** a query or prediction on the results:
+
+```python
+from superduper import superduper
+db = superduper('mongodb://localhost:27017/test_db')
+db['rag'].predict('Tell me about superduper')
 ```
 
+<!-- to be uncommented after we include the interface
+**View** and **monitor** everything in the Superduper interface. From the command line:
+
+```bash
+superduper start
+```
+-->
+
+***After doing this you are ready to build your own components, applications and templates!***
+
+## Currently supported datastores
+
+- [MongoDB](https://www.mongodb.com)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- [Snowflake](https://www.snowflake.com)
+- [PostgreSQL](https://www.postgresql.org)
+- [MySQL](https://www.mysql.com)
+- [SQLite](https://www.sqlite.org)
+- [DuckDB](https://duckdb.org)
+- [Google BigQuery](https://cloud.google.com/bigquery)
+- [Microsoft SQL Server (MSSQL)](https://www.microsoft.com/en-us/sql-server)
+- [ClickHouse](https://clickhouse.com)
 
 ## Community & getting help 
 

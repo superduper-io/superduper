@@ -51,7 +51,7 @@ class TestComponent(Component):
     def pre_create(self, db):
         self.is_on_create = True
 
-    def post_create(self, db):
+    def on_create(self, db):
         self.is_after_create = True
 
     def cleanup(self, db):
@@ -81,6 +81,7 @@ def add_fake_model(db: Datalayer):
     model = ObjectModel(
         object=lambda x: str(x),
         identifier='fake_model',
+        example=((1,), {}),
     )
     db.apply(model)
     select = db['documents'].select()

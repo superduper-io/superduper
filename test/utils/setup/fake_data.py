@@ -63,22 +63,36 @@ def add_datatypes(db: Datalayer):
 def add_models(db: Datalayer):
     # identifier, weight_shape, encoder
     params = [
-        ["linear_a", (32, 16), array(dtype="float", shape=(16,))],
-        ["linear_b", (16, 8), array(dtype="float", shape=(8,))],
+        ["linear_a", (32, 16), array(dtype="float", shape=(16,)), False],
+        ["linear_a_multi", (32, 16), array(dtype="float", shape=(16,)), True],
+        ["linear_b", (16, 8), array(dtype="float", shape=(8,)), False],
+        ["linear_b_multi", (16, 8), array(dtype="float", shape=(8,)), True],
     ]
-    for identifier, weight_shape, datatype in params:
-        weight = np.random.randn(*weight_shape)
-        m = ObjectModel(
-            object=lambda x: np.dot(x, weight),
-            identifier=identifier,
-            datatype=datatype,
-        )
+    for identifier, weight_shape, datatype, flatten in params:
+        if flatten:
+            weight = np.random.randn(weight_shape[1])
+            m = ObjectModel(
+                object=lambda x: list(np.outer(x, weight)),
+                identifier=identifier,
+                datatype=datatype,
+                example=np.random.randn(weight_shape[0]),
+                flatten=True,
+            )
+        else:
+            weight = np.random.randn(*weight_shape)
+            m = ObjectModel(
+                object=lambda x: np.dot(x, weight),
+                identifier=identifier,
+                datatype=datatype,
+                example=np.random.randn(weight_shape[0]),
+            )
         db.add(m)
 
 
-def add_listener(db: Datalayer, collection_name="documents"):
+def add_listeners(db: Datalayer, collection_name="documents"):
     add_models(db)
     model = db.load("model", "linear_a")
+    model.example = np.random.randn(32)
     select = db[collection_name].select()
 
     i_list = db.apply(
@@ -87,7 +101,6 @@ def add_listener(db: Datalayer, collection_name="documents"):
             select=select,
             key="x",
             model=model,
-            # predict_id="vector-x",
         )
     )
 
@@ -97,11 +110,21 @@ def add_listener(db: Datalayer, collection_name="documents"):
             select=select,
             key="z",
             model=model,
-            # predict_id="vector-y",
         )
     )
 
-    return i_list, c_list
+    model = db.load("model", "linear_a_multi")
+
+    i_list_flat = db.apply(
+        Listener(
+            identifier='vector-x-flat',
+            select=select,
+            key="x",
+            model=model,
+        )
+    )
+
+    return i_list, c_list, i_list_flat
 
 
 def add_vector_index(
@@ -112,7 +135,7 @@ def add_vector_index(
         i_list = db.load("listener", "vector-x")
         c_list = db.load("listener", "vector-y")
     except FileNotFoundError:
-        i_list, c_list = add_listener(db)
+        i_list, c_list, _ = add_listeners(db)
 
         db.apply(i_list)
         db.apply(c_list)

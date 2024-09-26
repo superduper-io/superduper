@@ -9,6 +9,7 @@ from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.components.cdc import CDC
 from superduper.components.model import Mapping
+from superduper.components.table import Table
 
 from .model import Model, ModelInputType
 
@@ -30,6 +31,7 @@ class Listener(CDC):
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param select: Query to "listen" for input on.
     :param identifier: A string used to identify the listener and it's outputs.
+    :param output_table: Table to store the outputs.
     """
 
     type_id: t.ClassVar[str] = 'listener'
@@ -39,6 +41,7 @@ class Listener(CDC):
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     select: t.Optional[Query] = None
     cdc_table: str = ''
+    output_table: t.Optional[Table] = None
 
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
@@ -56,9 +59,72 @@ class Listener(CDC):
         """Predict ID property."""
         return f'{self.identifier}__{self.uuid}'
 
-    def pre_create(self, db: Datalayer) -> None:
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
         """Pre-create hook."""
-        return super().pre_create(db)
+        if self.select is None:
+            return
+        if not db.cfg.auto_schema:
+            return
+        if self.output_table is not None:
+            return
+
+        from superduper import Schema
+        if self.model.datatype is not None:
+            schema = Schema(
+                f'_schema/{self.outputs}',
+                fields={self.outputs: self.model.datatype}
+            )
+        elif self.model.output_schema is not None:
+            schema = self.model.output_schema
+        else:
+            if self.model.example is not None:
+                input = self.model.example
+            else:
+                try:
+                    if self.dependencies:
+                        try:
+                            r = next(self.select.limit(1).execute())
+                        except StopIteration as e:
+                            try:
+                                if not self.cdc_table.startswith(CFG.output_prefix):
+                                    r = next(db[self.select.table].select().limit(1).execute())
+                                    r = {**r, **startup_cache}
+                                else:
+                                    r = startup_cache
+                            except StopIteration as e:
+                                raise Exception(
+                                    f'Couldn\'t retrieve outputs to determine schema; {self.cdc_table} returned 0 results.'
+                                ) from e
+                    else:
+                        r = next(self.select.limit(1).execute())
+                except StopIteration as e:
+                    raise Exception(
+                        f'Couldn\'t retrieve outputs to determine schema; {self.select} returned 0 results.'
+                    ) from e
+
+                mapping = Mapping(self.key, self.model.signature)
+                input = mapping(r)
+
+            if self.model.signature == 'singleton':
+                prediction = self.model.predict(input)
+            elif self.model.signature == '*args':
+                prediction = self.model.predict(*input)
+            elif self.model.signature == '**kwargs':
+                prediction = self.model.predict(**input)
+            else:
+                assert self.model.signature == '*args,**kwargs'
+                prediction = self.model.predict(*input[0], **input[1])
+
+            if self.model.flatten:
+                prediction = prediction[0]
+
+            startup_cache[self.outputs] = prediction
+            schema = db.infer_schema({'data': prediction}, identifier=self.outputs + '/schema')
+            datatype = schema.fields['data']
+            self.model.datatype = datatype
+            schema=Schema(f'_schema/{self.outputs}', fields={'_source': 'ID', 'id': 'ID', self.outputs: datatype})
+        
+        self.output_table = Table(self.outputs, schema=schema)
 
     @property
     def mapping(self):
@@ -86,36 +152,6 @@ class Listener(CDC):
     def outputs_select(self):
         """Get select statement for outputs."""
         return self.db[self.select.table].select().outputs(self.predict_id)
-
-    @override
-    def post_create(self, db: "Datalayer") -> None:
-        """Post-create hook.
-
-        :param db: Data layer instance.
-        """
-        self.create_output_dest(db, self.predict_id, self.model)
-        super().post_create(db)
-
-    @classmethod
-    def create_output_dest(cls, db: "Datalayer", predict_id, model: Model):
-        """
-        Create output destination.
-
-        :param db: Data layer instance.
-        :param uuid: UUID of the listener.
-        :param model: Model instance.
-        """
-        if model.datatype is None:
-            return
-        # TODO make this universal over databackends
-        # not special e.g. MongoDB vs. Ibis creating a table or not
-        output_table = db.databackend.create_output_dest(
-            predict_id,
-            model.datatype,
-            flatten=model.flatten,
-        )
-        if output_table is not None:
-            db.apply(output_table)
 
     @property
     def dependencies(self):

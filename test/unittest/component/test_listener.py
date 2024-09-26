@@ -132,7 +132,7 @@ def test_create_output_dest(db, data, flatten):
         identifier="listener1",
     )
 
-    db.add(listener1)
+    db.apply(listener1)
 
     doc = list(db.execute(listener1.outputs_select))[0]
     result = Document(doc.unpack())[listener1.outputs]
@@ -230,7 +230,6 @@ def test_listener_chaining_with_trainer(db, cleanup):
         select=table.select(),
         key="x",
         identifier="listener1",
-        uuid="listener1",
     )
 
     select = db[features_listener.outputs].select()
@@ -244,7 +243,6 @@ def test_listener_chaining_with_trainer(db, cleanup):
         select=select,
         key=features_listener.outputs,
         identifier='listener2',
-        uuid='listener2',
     )
 
     db.apply(listener2)

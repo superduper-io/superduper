@@ -1,6 +1,6 @@
 import random
 from test.utils.setup.fake_data import (
-    add_listener,
+    add_listeners,
     add_models,
     add_random_data,
     add_vector_index,
@@ -95,10 +95,117 @@ def test_update_many(db):
     # )
 
 
+def test_outputs_query_2(db):
+    import numpy
+    from superduper import model
+
+    db.cfg.auto_schema = True
+
+    @model
+    def test(x):
+        return numpy.random.randn(32)
+
+    db['example'].insert([{'x': f'test {i}', 'y': f'other {i}'} for i in range(5)]).execute()
+
+    l1 = test.to_listener(key='x', select=db['example'].select(), identifier='l-x')
+    l2 = test.to_listener(key='y', select=db['example'].select(), identifier='l-y')
+
+    db.apply(l1)
+    db.apply(l2)
+
+    @model(flatten=True)
+    def test_flat(x):
+        return [numpy.random.randn(32) for _ in range(3)]
+
+    l3 = test_flat.to_listener(key='x', select=db['example'].select(), identifier='l-x-flat')
+
+    db.apply(l3)    
+
+    ########
+
+    q = db['example'].outputs(l1.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 5
+
+    #######
+
+    q = db['example'].outputs(l2.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 5
+
+    #######
+
+    q = db['example'].outputs(l1.predict_id, l2.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 5
+
+    #######
+
+    q = db['example'].outputs(l3.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 15
+
+    #######
+
+    q = db['example'].outputs(l1.predict_id, l3.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 15
+
+    #######
+
+    q = db['example'].outputs(l1.predict_id, l2.predict_id, l3.predict_id)
+
+    results = q.execute().tolist()
+
+    assert len(results) == 15
+
+
+def test_outputs_query(db):
+    db.cfg.auto_schema = True
+
+    add_random_data(db, n=5)
+    add_models(db)
+
+    import numpy
+
+    l1, l2, l1_flat = add_listeners(db)
+    
+    sample1 = db[l1.outputs].find_one().execute()
+    sample2 = db[l2.outputs].find_one().execute()
+
+    outputs_1 = list(db['documents'].outputs(l1.predict_id).execute())
+    assert len(outputs_1) == 5
+    outputs_2 = list(db['documents'].outputs(l2.predict_id).execute())
+    assert len(outputs_2) == 5
+    outputs_1_2 = next(db['documents'].outputs(l1.predict_id, l2.predict_id).execute())
+    assert len(outputs_1_2) == 5
+
+    # outputs_1_flat = list(db['documents'].outputs(l1_flat.predict_id).execute())
+    # # TODO this output seems to be far too big
+    # # the question is what is the expected output when we have multiple listeners?
+    # outputs_1_flat_2 = next(db['documents'].outputs(l1_flat.predict_id, l2.predict_id).execute())
+
+    # assert isinstance(outputs_1[l1.outputs], np.ndarray)
+    # assert isinstance(outputs_2[l2.outputs], np.ndarray)
+
+    # assert isinstance(outputs_1_2[l1.outputs], np.ndarray)
+    # assert isinstance(outputs_1_2[l2.outputs], np.ndarray)
+
+
 def test_insert_many(db):
     add_random_data(db, n=5)
     add_models(db)
-    add_listener(db)
+    add_listeners(db)
     collection = db['documents']
     an_update = get_new_data(10, update=True)
     db.execute(collection.insert(an_update))

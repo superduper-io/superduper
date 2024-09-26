@@ -1,4 +1,4 @@
-name: CI
+name: Plugin Testing
 
 on:
   pull_request:

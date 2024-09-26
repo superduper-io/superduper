@@ -65,14 +65,6 @@ class Schema(Component):
 
             self.fields[k] = v
 
-    @override
-    def pre_create(self, db) -> None:
-        """Database pre-create hook to add datatype to the database.
-
-        :param db: Datalayer instance.
-        """
-        return super().pre_create(db)
-
     @cached_property
     def encoded_types(self):
         """List of fields of type DataType."""

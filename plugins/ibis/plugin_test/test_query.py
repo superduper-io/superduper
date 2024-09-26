@@ -1,4 +1,4 @@
-from test.utils.setup.fake_data import add_listener, add_models, add_random_data
+from test.utils.setup.fake_data import add_listeners, add_models, add_random_data
 
 import numpy as np
 import pytest
@@ -47,7 +47,7 @@ def test_auto_inference_primary_id():
 def test_renamings(db):
     add_random_data(db, n=5)
     add_models(db)
-    add_listener(db)
+    add_listeners(db)
     t = db["documents"]
     listener_uuid = [k.split("/")[-1] for k in db.show("listener")][0]
     q = t.select("id", "x", "y").outputs(listener_uuid)

@@ -14,6 +14,7 @@ from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
+from superduper.components.table import Table
 from superduper.ext.utils import str_shape
 from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
@@ -116,27 +117,8 @@ class VectorIndex(CDC):
     cdc_table: str = ''
 
     def __post_init__(self, db, artifacts):
+        self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         return super().__post_init__(db, artifacts)
-
-    def post_create(self, db: Datalayer) -> None:
-        """Post create hook."""
-        self.indexing_listener.model = db.load(uuid=self.indexing_listener.model.uuid)
-        super().post_create(db)
-
-    def declare_component(self, cluster: 'Cluster'):
-        """Declare component.
-        
-        :param cluster: Instance of Cluster.
-        """
-        super().declare_component(cluster)
-
-    def pre_create(self, db: Datalayer) -> None:
-        """Called the first time this component is created.
-
-        :param db: the db that creates the component.
-        """
-        super().pre_create(db)
-        self.cdc_table = self.indexing_listener.outputs
 
     def __hash__(self):
         return hash((self.type_id, self.identifier))
@@ -148,12 +130,28 @@ class VectorIndex(CDC):
             )
         return False
 
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+        assert isinstance(self.indexing_listener, Listener)
+        assert hasattr(self.indexing_listener, 'output_table')
+        assert hasattr(self.indexing_listener.output_table, 'schema')
+        try:
+            dt = next(
+                v for v in self.indexing_listener.output_table.schema.fields.values()
+                if hasattr(v, 'shape') and v.shape is not None
+            )
+        except StopIteration:
+            raise Exception(
+                f'Couldn\'t get a vector shape for {self.indexing_listener.output_table.schema.huuid}'
+            )
+
     # TODO consider a flag such as depends='*'
     # so that an "apply" trigger runs after all of the other
     # triggers
     @trigger('apply', 'insert', 'update')
     def copy_vectors(self, ids: t.Sequence[str] | None = None):
         """Copy vectors to the vector index."""
+        if not hasattr(self.indexing_listener.model, 'datatype'):
+            self.indexing_listener.model = self.db.load(uuid=self.indexing_listener.model.uuid)
         self.db.cluster.vector_search.put(self)
         select = self.db[self.cdc_table].select()
 
@@ -335,11 +333,21 @@ class VectorIndex(CDC):
 
         This dimension will be used to prepare vectors in the vector database.
         """
-        assert not isinstance(self.indexing_listener, str)
-        assert not isinstance(self.indexing_listener.model, str)
-        if shape := getattr(self.indexing_listener.model.datatype, 'shape', None):
-            return shape[-1]
-        raise ValueError('Couldn\'t get shape of model outputs from model encoder')
+
+        msg = f'Couldn\'t find an output table for {self.indexing_listener.huuid}'
+        assert isinstance(self.indexing_listener.output_table, Table), msg
+        msg = f'Couldn\'t find an output table schema for {self.indexing_listener.output_table.huuid}'
+        assert hasattr(self.indexing_listener.output_table, 'schema')
+        msg = f'Couldn\'t get a vector shape for {self.indexing_listener.output_table.schema.huuid}'
+
+        dt = next(
+            v for v in self.indexing_listener.output_table.schema.fields.values()
+            if hasattr(v, 'shape') and v.shape is not None
+        )
+        try:
+            return dt.shape[-1]
+        except IndexError as e:
+            raise Exception(f'Couldn\'t get a vector shape for {dt.huuid} due to empty shape') from e
 
 
 # TODO what is this?

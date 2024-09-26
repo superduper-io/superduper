@@ -2,19 +2,9 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduper.vector_search.atlas import MongoAtlasVectorSearcher
-from superduper.vector_search.lance import LanceVectorSearcher
-from superduper.vector_search.qdrant import QdrantVectorSearcher
-
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.components.component import Component
-
-vector_searcher_implementations = {
-    "lance": LanceVectorSearcher,
-    "mongodb+srv": MongoAtlasVectorSearcher,
-    "qdrant": QdrantVectorSearcher,
-}
 
 
 class BaseBackend(ABC):

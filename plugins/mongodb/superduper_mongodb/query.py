@@ -5,6 +5,7 @@ import re
 import typing as t
 from collections import defaultdict
 
+import numpy
 import pymongo
 from bson import ObjectId
 from superduper import CFG, logging
@@ -341,7 +342,7 @@ class MongoQuery(Query):
         filter['_id'] = {'$in': ids}
 
         try:
-            table = self.db.tables[self.table]
+            table = self.db.load('table', self.table)
             schema = table.schema
         except FileNotFoundError:
             schema = None
@@ -645,8 +646,10 @@ class MongoQuery(Query):
         if limit:
             pipeline.append(limit)
 
+        raw_cursor = getattr(parent, 'aggregate')(pipeline)
+
         return SuperDuperCursor(
-            raw_cursor=getattr(parent, 'aggregate')(pipeline),
+            raw_cursor=raw_cursor,
             db=self.db,
             id_field='_id',
             process_func=self._postprocess_result,
@@ -658,7 +661,7 @@ class MongoQuery(Query):
         predict_ids = sum([p[1] for p in outputs_parts], ())
 
         try:
-            table = self.db.tables[self.table]
+            table = self.db.load('table', self.table)
             if not predict_ids:
                 return table.schema
             fields = table.schema.fields
@@ -668,7 +671,7 @@ class MongoQuery(Query):
         for predict_id in predict_ids:
             key = f'{CFG.output_prefix}{predict_id}'
             try:
-                output_table = self.db.tables[key]
+                output_table = self.db.load('table', key)
             except FileNotFoundError:
                 logging.warn(
                     f'No schema found for table {key}. Using default projection'

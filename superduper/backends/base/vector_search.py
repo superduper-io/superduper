@@ -28,6 +28,15 @@ class VectorSearchBackend(BaseBackend):
     def delete(self, identifier, ids):
         self.get(identifier).delete(ids)
 
+    @property
+    def db(self) -> 'Datalayer':
+        return self._db
+
+    @db.setter
+    def db(self, value: 'Datalayer'):
+        self._db = value
+        self.initialize()
+
 
 class VectorSearcherInterface(ABC):
     """Interface for vector searchers.

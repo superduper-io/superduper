@@ -1,12 +1,13 @@
 import dataclasses as dc
 import datetime
-import networkx as nx
-from rich.console import Console
-from rich.tree import Tree
-from rich.text import Text
 import typing as t
 import uuid
 from abc import ABC, abstractmethod
+
+import networkx as nx
+from rich.console import Console
+from rich.text import Text
+from rich.tree import Tree
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -19,6 +20,7 @@ class DummyJob:
 
     # noqa
     """
+
     job_id: str
     dependencies: t.List[str] = dc.field(default_factory=list)
     method: str = 'dummy'
@@ -36,8 +38,8 @@ class DeploymentPlan:
     :param create_events: list of create events
     :param jobs: list of job events
 
-    >>> job1 = DummyJob(job_id='job1') 
-    >>> job2 = DummyJob(job_id='job2', dependencies=['job1']) 
+    >>> job1 = DummyJob(job_id='job1')
+    >>> job2 = DummyJob(job_id='job2', dependencies=['job1'])
     >>> plan = DeploymentPlan(create_events=[], jobs=[job1, job2])
     >>> plan.show(False)
     DEPLOYMENT PLAN
@@ -46,6 +48,7 @@ class DeploymentPlan:
         └── msg-job2: dummy
             └── msg-job1: dummy
     """
+
     create_events: t.List['Create']
     jobs: t.List['Job']
 
@@ -58,7 +61,7 @@ class DeploymentPlan:
         node_label.append(lookup[node].method, style='dim' if style else None)
 
         subtree = tree.add(node_label)
-        
+
         for child in G.successors(node):
             DeploymentPlan.add_nodes_to_tree(subtree, child, G, lookup, style=style)
 
@@ -87,7 +90,6 @@ class DeploymentPlan:
 
         console = Console()
         console.print(merged_tree)
-
 
 
 @dc.dataclass(kw_only=True)
@@ -233,6 +235,7 @@ class Job(Event):
 
     def get_args_kwargs(self, futures):
         from superduper.backends.base.queue import Future
+
         dependencies = []
         if self.dependencies:
             dependencies = [futures[k] for k in self.dependencies if k in futures]
@@ -267,5 +270,11 @@ events = {
 
 
 def unpack_event(dict):
+    """
+    Helper function to deserialize event
+    into Event class.
+
+    :param dict: Serialized event.
+    """
     event_type = events[dict.get('genus')]
     return event_type.create(dict)

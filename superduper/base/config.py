@@ -169,8 +169,6 @@ class Config(BaseConfig):
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
     output_prefix: str = "_outputs__"
-    approve: bool = False
-
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, envs):

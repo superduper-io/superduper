@@ -1,5 +1,6 @@
 import typing as t
 
+from superduper.components.listener import Listener
 from superduper.components.model import Model
 
 if t.TYPE_CHECKING:
@@ -29,15 +30,20 @@ def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
     db.cfg.auto_schema = True
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)]).execute()
-    model.db = db
 
-    model.predict_in_db(
-        X="data",
+    rid = random_id()
+
+    listener = Listener(
+        key="data",
+        model=model,
         select=db["datas"].select(),
-        predict_id='test',
+        identifier='test',
+        uuid=rid,
     )
 
-    results = list(db["_outputs__test"].select().execute())
+    db.apply(listener)
+
+    results = list(db[listener.outputs].select().execute())
     assert len(results) == 10
 
     return results

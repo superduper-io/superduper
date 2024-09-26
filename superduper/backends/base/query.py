@@ -6,6 +6,8 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
+import numpy
+
 from superduper import CFG, logging
 from superduper.base.constant import (
     KEY_BLOBS,

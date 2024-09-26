@@ -10,6 +10,7 @@ from superduper.backends.base.backends import BaseBackend
 
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex
+    from superduper.base.datalayer import Datalayer
 
 
 class VectorSearchBackend(BaseBackend):

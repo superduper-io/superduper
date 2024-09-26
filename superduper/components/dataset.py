@@ -66,7 +66,7 @@ class Dataset(Component):
             self._data = self._load_data(db)
 
     @override
-    def pre_create(self, db: 'Datalayer') -> None:
+    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict) -> None:
         """Pre-create hook for database operations.
 
         :param db: The database to use for the operation.
@@ -76,7 +76,7 @@ class Dataset(Component):
             self.raw_data = [r.encode() for r in data]
 
     def _load_data(self, db: 'Datalayer'):
-        assert self.db is not None, 'Database must be set'
+        assert db is not None, 'Database must be set'
         assert self.select is not None, 'Select must be set'
         data = list(db.execute(self.select))
         if self.sample_size is not None and self.sample_size < len(data):
@@ -106,13 +106,13 @@ class DataInit(Component):
     data: t.List[t.Dict]
     table: str
 
-    def post_create(self, db: Datalayer) -> None:
+    def on_create(self, db: Datalayer) -> None:
         """Called after the first time this component is created.
 
         Generally used if ``self.version`` is important in this logic.
 
         :param db: the db that creates the component.
         """
-        super().post_create(db)
+        super().on_create(db)
         self.init()
         db[self.table].insert(self.data).execute()

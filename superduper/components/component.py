@@ -178,7 +178,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         out = _find_refs(r)
         return sorted(list(set(out)))
 
-    def get_children(self, deep: bool = False):
+    def get_children(self, deep: bool = False) -> t.List["Component"]:
         """Get all the children of the component."""
         r = self.dict().encode(leaves_to_keep=(Leaf,) if deep else (Component,))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
@@ -508,15 +508,22 @@ class Component(Leaf, metaclass=ComponentMeta):
                 schema[f.name] = dill_serializer
         return Schema(identifier=f'serializer/{self.identifier}', fields=schema)
 
-    def pre_create(self, db: Datalayer) -> None:
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+        self.status = Status.initializing
+
+    def pre_create(self, db: Datalayer, startup_cache: t.Dict | None = None):
         """Called the first time this component is created.
 
         :param db: the db that creates the component.
         """
-        self.status = Status.initializing
         assert db
+        if startup_cache is None:
+            startup_cache = {}
+        for child in self.get_children():
+            child.pre_create(db, startup_cache=startup_cache)
+        self._pre_create(db, startup_cache=startup_cache)
 
-    def post_create(self, db: Datalayer) -> None:
+    def on_create(self, db: Datalayer) -> None:
         """Called after the first time this component is created.
 
         Generally used if ``self.version`` is important in this logic.

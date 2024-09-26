@@ -167,8 +167,8 @@ class Input(Model):
     identifier: str = '_input'
     signature: Signature = '*args'
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         if isinstance(self.spec, str):
             self.signature = 'singleton'
 
@@ -199,8 +199,8 @@ class DocumentInput(Model):
     identifier: str = '_input'
     signature: Signature = 'singleton'
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
 
     def predict(self, r):
         """Single prediction.
@@ -255,7 +255,7 @@ class Graph(Model):
     outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
     signature: Signature = '*args,**kwargs'
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db, artifacts, example):
         self.G = nx.DiGraph()
         self.nodes = {}
         self.version = 0
@@ -284,7 +284,7 @@ class Graph(Model):
                     on=on,
                     update_edge=False,
                 )
-        super().__post_init__(db, artifacts=artifacts)
+        super().__post_init__(db, artifacts=artifacts, example=example)
 
     def connect(
         self,

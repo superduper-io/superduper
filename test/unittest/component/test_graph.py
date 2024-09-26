@@ -3,6 +3,7 @@ import pytest
 
 from superduper import ObjectModel
 from superduper.components.graph import Graph, document_node, input_node
+from superduper.components.listener import Listener
 
 
 @pytest.fixture
@@ -129,9 +130,17 @@ def test_complex_graph_with_select(db):
     select = db["documents"].select()
     g.db = db
     db.apply(g)
-    g.predict_in_db(X='x', select=select, predict_id='test')
+
+    listener = Listener(
+        key='x',
+        select=select,
+        uuid='test',
+        model=g,
+        identifier='test',
+    )
+    db.apply(listener)
     assert all(
-        ['_outputs__test' in x for x in list(db.execute(db['_outputs__test'].select()))]
+        ['_outputs__test__test' in x for x in list(db.execute(db['_outputs__test__test'].select()))]
     )
 
 

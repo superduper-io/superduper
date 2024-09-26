@@ -36,22 +36,17 @@ class Table(Component):
             fields={**fields},
         )
 
-    def pre_create(self, db: 'Datalayer'):
-        """Pre-create the table.
+    def on_create(self, db: 'Datalayer'):
+        """Create the table, on creation of the component.
 
         :param db: The Datalayer instance
         """
         assert self.schema is not None, "Schema must be set"
-        # TODO why? This is done already
-        for e in self.schema.encoders:
-            db.add(e)
         if db.databackend.in_memory:
             if self.identifier.startswith(CFG.output_prefix):
                 db.databackend.in_memory_tables[
                     self.identifier
                 ] = db.databackend.create_table_and_schema(self.identifier, self.schema)
-
-                return
 
         try:
             db.databackend.create_table_and_schema(self.identifier, self.schema)

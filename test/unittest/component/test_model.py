@@ -328,6 +328,7 @@ def test_model_fit(db):
 
 def test_query_model(db):
     from test.utils.setup.fake_data import add_models, add_random_data, add_vector_index
+    db.cfg.auto_schema = True
 
     add_random_data(db)
     add_models(db)

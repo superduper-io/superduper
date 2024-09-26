@@ -422,6 +422,14 @@ class Datalayer:
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
 
+        # This populates the component with data fetched
+        # from `db` if necessary
+        # We need pre as well as post-create, since the order 
+        # between parents and children are reversed in each
+        # sometimes parents might need to grab things from children
+        # and vice-versa
+        object.pre_create(self)
+
         # context allows us to track the origin of the component creation
         create_events, job_events = self._apply(
             object=object,
@@ -679,9 +687,7 @@ class Datalayer:
             self._update_component(object, parent=parent)
             return [], []
 
-        # This populates the component with data fetched
-        # from `db` if necessary
-        object.pre_create(self)
+        # object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
@@ -974,7 +980,8 @@ class Datalayer:
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
-        return self.databackend.infer_schema(data, identifier)
+        out = self.databackend.infer_schema(data, identifier)
+        return out
 
     @property
     def cfg(self) -> Config:

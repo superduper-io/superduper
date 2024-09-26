@@ -1,6 +1,7 @@
 import typing as t
 from collections import defaultdict
 
+from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 from superduper.base.event import Job
 
@@ -43,7 +44,7 @@ class LocalComputeBackend(ComputeBackend):
         try:
             del self.futures[context]
         except KeyError:
-            pass
+            logging.warn(f'Could not release futures for context {context}')
 
     def component_hook(self, *args, **kwargs):
         """Hook for component."""
@@ -61,13 +62,6 @@ class LocalComputeBackend(ComputeBackend):
         method = getattr(component, job.method)
         output = method(*args, **kwargs)
         self.futures[job.context][job.job_id] = output
-
-    # def ray_submit(self, job: Job):
-    #     args, kwargs = job.get_args_kwargs(self.futures[job.context])
-    #     actor_or_component = compute_backend.load(uuid=job.uuid)
-    #     method = getattr(actor_or_component, job.method)
-    #     output = method.remote(*args, **kwargs)
-    #     self.futures[job.context][job.job_id] = output
 
     def __delitem__(self, item):
         pass

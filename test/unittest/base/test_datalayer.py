@@ -1,8 +1,6 @@
 import dataclasses as dc
 import os
-from superduper import model
 import time
-
 from typing import Any, ClassVar, Optional, Sequence
 from unittest.mock import patch
 

@@ -1,21 +1,18 @@
 import dataclasses as dc
-import networkx as nx
 import typing as t
+import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
-import uuid
 
-from superduper import logging, CFG
+import networkx as nx
+
+from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.event import Event
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
 if t.TYPE_CHECKING:
-    from superduper.components.cdc import CDC
-    from superduper.base.datalayer import Datalayer
-    from superduper.components.component import Component
-    from superduper.components.cdc import CDC
     from superduper.base.datalayer import Datalayer
 
 
@@ -92,12 +89,22 @@ class BaseQueuePublisher(BaseBackend):
         :param to: Component name for events to be published.
         """
 
+    @property
+    def db(self) -> 'Datalayer':
+        return self._db
+
+    @db.setter
+    def db(self, value: 'Datalayer'):
+        self._db = value
+        self.initialize()
+
 
 class JobFutureException(Exception):
     """Exception when futures are not ready.
 
     # noqa
     """
+
     ...
 
 
@@ -182,6 +189,13 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
 
 
 def consume_events(events, table: str, db=None):
+    """
+    Consume events from table queue.
+
+    :param events: List of events to be consumed.
+    :param table: Queue Table.
+    :param db: Datalayer instance.
+    """
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:

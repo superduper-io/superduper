@@ -30,7 +30,10 @@ jobs:
           for file in "${changed_files[@]}"; do
             if [[ "$file" =~ ^plugins/ && ! "$file" =~ ^plugins/template/ ]]; then
               plugin_name=$(echo "$file" | cut -d '/' -f 2)
-              plugin_set[$plugin_name]=1
+              # Check if the plugin has a pyproject.toml file
+              if [[ -f "plugins/$plugin_name/pyproject.toml" ]]; then
+                plugin_set[$plugin_name]=1
+              fi
             fi
           done
           plugins=("${!plugin_set[@]}")

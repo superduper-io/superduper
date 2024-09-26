@@ -17,6 +17,7 @@ class CronJob(Component):
     schedule: str = '0 0 * * *'
 
     def declare_component(self, cluster):
+        """Declare component."""
         cluster.crontab.put(self)
 
     @ensure_initialized

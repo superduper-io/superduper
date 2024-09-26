@@ -119,10 +119,15 @@ class VectorIndex(CDC):
         return super().__post_init__(db, artifacts)
 
     def post_create(self, db: Datalayer) -> None:
+        """Post create hook."""
         self.indexing_listener.model = db.load(uuid=self.indexing_listener.model.uuid)
         super().post_create(db)
 
     def declare_component(self, cluster: 'Cluster'):
+        """Declare component.
+        
+        :param cluster: Instance of Cluster.
+        """
         super().declare_component(cluster)
 
     def pre_create(self, db: Datalayer) -> None:

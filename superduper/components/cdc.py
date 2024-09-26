@@ -1,7 +1,8 @@
-import networkx as nx
 import typing as t
 
-from superduper import Component, CFG
+import networkx as nx
+
+from superduper import CFG, Component
 
 if t.TYPE_CHECKING:
     pass
@@ -91,9 +92,8 @@ def build_streaming_graph(table, db: 'Datalayer'):
 
 
 if __name__ == '__main__':
+    from superduper import Listener, superduper
     from superduper.components.model import ObjectModel
-    from superduper import Listener
-    from superduper import superduper
 
     db = superduper('mongomock://test')
 

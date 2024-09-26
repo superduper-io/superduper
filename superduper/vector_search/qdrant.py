@@ -42,6 +42,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         # https://github.com/qdrant/qdrant-client#local-mode
         config_dict = config_dict or {"location": ":memory:"}
         self.client = QdrantClient(**config_dict)
+        self.collection_name = uuid
+        self.measure = measure
 
         self.collection_name = re.sub("\W+", "", identifier)
         if not self.client.collection_exists(self.collection_name):
@@ -69,6 +71,17 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def __len__(self):
         return self.client.get_collection(self.collection_name).vectors_count
+
+    def _create_collection(self):
+        measure = (
+            self.measure.name if isinstance(self.measure, VectorIndexMeasureType) 
+            else self.measure
+        )
+        distance = self._distance_mapping(measure)
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(size=self.dimensions, distance=distance),
+        )
 
     def add(self, items: t.Sequence[VectorItem], cache: bool = False) -> None:
         """Add vectors to the index.

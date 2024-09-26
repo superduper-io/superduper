@@ -29,18 +29,22 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         self._identifier_uuid_map[vector_index.identifier] = vector_index.uuid
 
     def initialize(self):
+        """Initialize component."""
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load('vector_index', identifier=identifier)
             self._put(vector_index)
             vector_index.copy_vectors()
 
     def __contains__(self, item):
+        """Python contains dunder."""
         return item in self._cache
 
     def list_components(self):
+        """List components."""
         return list(self._cache.keys())
 
     def list_uuids(self):
+        """List uuids."""
         return list(self._identifier_uuid_map.values())
 
     def __delitem__(self, identifier):
@@ -51,6 +55,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         return self._cache[identifier]
 
     def drop(self, identifier=None):
+        """Drop vector search."""
         # TODO: drop actual vector search not the cache
         if identifier is None:
             self._cache = {}
@@ -153,6 +158,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         return _ids, scores
 
     def initialize(self, vector_index):
+        """Initialize vector search."""
         vector_index.copy_vectors()
 
     def add(self, items: t.Sequence[VectorItem] = (), cache: bool = False) -> None:

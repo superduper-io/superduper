@@ -9,6 +9,7 @@ import numpy.typing
 from superduper.backends.base.backends import BaseBackend
 
 if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
     from superduper.components.vector_index import VectorIndex
 
 
@@ -23,17 +24,21 @@ class VectorSearchBackend(BaseBackend):
         pass
 
     def add(self, identifier, vectors):
+        """Add vectors to vector index."""
         self.get(identifier).add(vectors)
 
     def delete(self, identifier, ids):
+        """Delete vectors in vector index by ids."""
         self.get(identifier).delete(ids)
 
     @property
     def db(self) -> 'Datalayer':
+        """Get Datalayer instance."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Database setter."""
         self._db = value
         self.initialize()
 
@@ -126,7 +131,7 @@ class BaseVectorSearcher(VectorSearcherInterface):
 
     @abstractmethod
     def initialize(self, db):
-        pass
+        """Initialze abstract method."""
 
     @abstractmethod
     def __len__(self):

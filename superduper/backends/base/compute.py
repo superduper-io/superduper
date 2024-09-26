@@ -4,6 +4,9 @@ from abc import abstractmethod
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.event import Job
 
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
+
 
 class ComputeBackend(BaseBackend):
     """
@@ -23,6 +26,7 @@ class ComputeBackend(BaseBackend):
 
     @abstractmethod
     def release_futures(self, context: str):
+        """Abstract method for release futures."""
         pass
 
     @property
@@ -93,9 +97,11 @@ class ComputeBackend(BaseBackend):
 
     @property
     def db(self) -> 'Datalayer':
+        """Get Datalayer instance."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Datalayer setter."""
         self._db = value
         self.initialize()

@@ -159,7 +159,7 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def set_component_status(self, uuid: str, status: 'Status'):
-        pass
+        """Set component status abstractmethod."""
 
     # ------------------ JOBS ------------------
 
@@ -260,9 +260,10 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def show_cdc_tables(self):
-        pass
+        """Show cdc tables."""
 
     def show_cdcs(self, table):
+        """Show components registered for cdc."""
         results = self._show_cdcs(table)
         lookup = {}
         results = list(results)
@@ -275,9 +276,6 @@ class MetaDataStore(ABC):
     @abstractmethod
     def _show_cdcs(self, table):
         pass
-
-    def show_cdc_tables(self):
-        ...
 
     @abstractmethod
     def _show_components(self, type_id: t.Optional[str] = None):

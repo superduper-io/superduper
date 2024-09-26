@@ -17,15 +17,15 @@ class LocalCache(Cache):
         self._db = None
 
     def list_components(self):
+        """List components."""
         return list(self._cache.keys())
 
     def list_uuids(self):
+        """List registered UUIDs of components."""
         return list(self._cache_uuid.keys())
 
-    def __getitem__(self, *item):
-        return self._cache[item]
-
     def get_by_id(self, *item):
+        """Get item with id."""
         return self._cache[*item]
 
     def _put(self, component: Component):
@@ -37,6 +37,7 @@ class LocalCache(Cache):
         del self._cache[name]
 
     def initialize(self):
+        """Initialize cache with existing components."""
         for type_id, identifier in self.db.show():
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
             if r.get('cache', False):
@@ -45,14 +46,17 @@ class LocalCache(Cache):
                 self.db.cluster.compute.put(component)
 
     def drop(self):
+        """Drop all components in cache."""
         self._cache = {}
 
     @property
     def db(self):
+        """Datalayer instance."""
         return self._db
 
     @db.setter
     def db(self, value):
+        """Set Datalayer instance."""
         self._db = value
         self.init()
 

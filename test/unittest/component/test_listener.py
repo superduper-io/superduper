@@ -16,7 +16,7 @@ class MyTrainer(Trainer):
 
     def fit(self, *args, **kwargs):
         with open('_training_done.txt', 'w') as f:
-            pass
+            assert f
 
 
 @dc.dataclass

@@ -1,4 +1,3 @@
-import re
 import typing as t
 import uuid
 from copy import deepcopy
@@ -27,11 +26,13 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def __init__(
         self,
-        uuid: str,
+        identifier: str,
         dimensions: int,
+        h: t.Optional[np.ndarray] = None,
+        index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        super().__init__(uuid, dimensions, measure)
+        super().__init__(identifier, dimensions, h, index, measure)
         config_dict = deepcopy(CFG.vector_search_kwargs)
         self.vector_name: t.Optional[str] = config_dict.pop("vector_name", None)
         # Use an in-memory instance by default
@@ -42,7 +43,6 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         self.collection_name = uuid
         self.measure = measure
 
-        self.collection_name = re.sub("\W+", "", identifier)
         if not self.client.collection_exists(self.collection_name):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure

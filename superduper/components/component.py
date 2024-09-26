@@ -30,7 +30,9 @@ if t.TYPE_CHECKING:
 
 
 class Status(str, Enum):
-    """Status enum.
+    """
+    Status enum.
+
     # noqa
     """
 
@@ -95,6 +97,7 @@ class ComponentMeta(LeafMeta):
     """
 
     def __new__(cls, name, bases, dct):
+        """Component Meta class new method."""
         # Create the new class using type.__new__
         new_cls = super().__new__(cls, name, bases, dct)
         # Initialize the trigger registry
@@ -146,9 +149,11 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     @property
     def huuid(self):
+        """Get Huuid."""
         return f'{self.type_id}:{self.identifier}:{self.uuid}'
 
     def set_db(self, value):
+        """Set databse."""
         self.db = value
         for child in self.get_children():
             child.set_db(value)
@@ -257,6 +262,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     @trigger('apply')
     def set_status(self, status: Status):
+        """Set status."""
         return self.db.metadata.set_component_status(self.uuid, status)
 
     def create_jobs(
@@ -309,7 +315,8 @@ class Component(Leaf, metaclass=ComponentMeta):
                             if event_type == 'apply':
                                 if r['status'] == 'initializing':
                                     raise Exception(
-                                        f'Component required component {huuid} still initializing'
+                                        "Component required component ",
+                                        f"{huuid} still initializing",
                                     )
                                 elif r['status'] == 'ready':
                                     logging.info(
@@ -318,7 +325,8 @@ class Component(Leaf, metaclass=ComponentMeta):
                             else:
                                 if r.get('cdc_table') is not None:
                                     raise Exception(
-                                        f"Missing an upstream dependency {huuid} on table {r['cdc_table']}"
+                                        "Missing an upstream dependency ",
+                                        f"{huuid} on table {r['cdc_table']}",
                                     ) from e
 
                 intra_component_dependencies = [
@@ -527,6 +535,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         self.declare_component(db.cluster)
 
     def declare_component(self, cluster):
+        """Declare component."""
         if self.cache:
             logging.debug(f'Declaring {self.type_id}: {self.identifier} to cache')
             cluster.cache.put(self)

@@ -467,7 +467,8 @@ class Datalayer:
         for i, j in enumerate(unique_job_events):
             if j.dependencies:
                 print(
-                    f'[{i}]: {j.huuid}: {j.method} ~ [{",".join([steps[d] for d in j.dependencies])}]'
+                    f'[{i}]: {j.huuid}: {j.method} ~ ',
+                    '[{",".join([steps[d] for d in j.dependencies])}]',
                 )
             else:
                 print(f'[{i}]: {j.huuid}: {j.method}')
@@ -869,6 +870,7 @@ class Datalayer:
         self.expire(object.uuid)
 
     def expire(self, uuid):
+        """Make uuid expire."""
         parents = True
         self.cluster.cache.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)

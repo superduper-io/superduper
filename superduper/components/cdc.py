@@ -5,7 +5,7 @@ import networkx as nx
 from superduper import CFG, Component
 
 if t.TYPE_CHECKING:
-    pass
+    from superduper.base.datalayer import Datalayer
 
 
 class CDC(Component):
@@ -24,6 +24,7 @@ class CDC(Component):
         super().__post_init__(db, artifacts)
 
     def declare_component(self, cluster):
+        """Declare component."""
         super().declare_component(cluster)
         self.db.cluster.queue.put(self)
         self.db.cluster.cdc.put(self)
@@ -126,6 +127,7 @@ if __name__ == '__main__':
     G, components = build_streaming_graph('documents', db)
 
     def iterate_upwards(graph, start_nodes):
+        """Iterate upwards method."""
         visited = set()
         nodes_to_explore = list(start_nodes)
 

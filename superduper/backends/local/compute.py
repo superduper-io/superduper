@@ -41,6 +41,7 @@ class LocalComputeBackend(ComputeBackend):
         return "local"
 
     def release_futures(self, context: str):
+        """Release future from futures collection."""
         try:
             del self.futures[context]
         except KeyError:
@@ -79,9 +80,11 @@ class LocalComputeBackend(ComputeBackend):
         return []
 
     def initialize(self):
+        """Initialize compute."""
         pass
 
     def drop(self):
+        """Drop compute."""
         pass
 
     @property

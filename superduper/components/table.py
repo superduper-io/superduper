@@ -22,6 +22,8 @@ class Table(Component):
 
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID
+    cache: bool = True
+
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)

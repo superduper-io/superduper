@@ -658,18 +658,19 @@ class MongoQuery(Query):
         predict_ids = sum([p[1] for p in outputs_parts], ())
 
         try:
-            table = self.db.tables[self.table]
+            table = self.db.cluster.cache[self.table]
             if not predict_ids:
                 return table.schema
             fields = table.schema.fields
-        except FileNotFoundError:
+        except (FileNotFoundError, KeyError):
             fields = {}
 
         for predict_id in predict_ids:
             key = f'{CFG.output_prefix}{predict_id}'
+            predict_id = predict_id.split('__')[-1]
             try:
-                output_table = self.db.tables[key]
-            except FileNotFoundError:
+                output_table = self.db.cluster.cache[predict_id]
+            except (FileNotFoundError, KeyError):
                 logging.warn(
                     f'No schema found for table {key}. Using default projection'
                 )

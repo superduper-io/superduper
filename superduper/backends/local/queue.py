@@ -32,12 +32,14 @@ class LocalQueuePublisher(BaseQueuePublisher):
         return self.queues.keys()
 
     def drop(self):
+        """Drop queue."""
         self.queues = {}
 
     def __delitem__(self, item):
         del self.queues[item]
 
     def initialize(self):
+        """Initialize queue."""
         for type_id, identifier in self.db.show():
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
             if r['trigger']:
@@ -55,9 +57,11 @@ class LocalQueuePublisher(BaseQueuePublisher):
         self.queue[component.cdc_table] = []
 
     def list_components(self):
+        """List components."""
         return list(self._component_uuid_mapping.keys())
 
     def list_uuids(self):
+        """List uuids."""
         return list(self._component_uuid_mapping.values())
 
     def build_consumer(self, **kwargs):

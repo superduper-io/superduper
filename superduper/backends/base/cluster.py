@@ -28,10 +28,8 @@ class Cluster(ABC):
     cdc: CDCBackend
     crontab: CrontabBackend
 
-    def __post_init__(self):
-        self._db = None
-
     def drop(self, force: bool = False):
+        """Drop services registered under the cluster."""
         self.compute.drop()
         self.queue.drop()
         self.vector_search.drop()
@@ -39,27 +37,32 @@ class Cluster(ABC):
         self.crontab.drop()
 
     def disconnect(self):
-        pass
+        """Disconnect from the cluster."""
 
     def __post_init__(self):
+        """Dataclass post init."""
         self._db = None
 
     @classmethod
     @abstractmethod
     def build(cls, CFG, **kwargs):
+        """Abstract method build method."""
         pass
 
     @property
     def db(self):
+        """Datalayer instance property."""
         return self._db
 
     @db.setter
     def db(self, value):
+        """Get Datalayer instance."""
         self._db = value
 
     def initialize(
         self,
     ):
+        """Initialze all services registered in cluster."""
         assert self.db
         self.compute.db = self.db
         self.cache.db = self.db

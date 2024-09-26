@@ -116,7 +116,8 @@ class IbisQuery(Query):
         return super().documents
 
     def _get_tables(self):
-        out = {self.table: self.db.tables[self.table]}
+        breakpoint()
+        out = {self.table: self.db.cache[self.table.uuid]}
 
         for part in self.parts:
             if isinstance(part, str):
@@ -137,7 +138,7 @@ class IbisQuery(Query):
 
         table_renamings = self.renamings({})
         if len(tables) == 1 and not table_renamings:
-            return self.db.tables[self.table].schema
+            return self.db.cache[self.table].schema
         for identifier, c in tables.items():
             renamings = table_renamings.get(identifier, {})
 
@@ -201,7 +202,8 @@ class IbisQuery(Query):
 
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient="records")
-        component_table = self.db.tables[self.table]
+        breakpoint()
+        component_table = self.db.cache[self.table]
         return SuperDuperCursor(
             raw_cursor=output,
             db=self.db,

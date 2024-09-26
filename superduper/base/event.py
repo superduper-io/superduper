@@ -27,6 +27,7 @@ class DummyJob:
 
     @property
     def huuid(self):
+        """Get huuid."""
         return f'{self.job_id}'
 
 
@@ -53,7 +54,8 @@ class DeploymentPlan:
     jobs: t.List['Job']
 
     @staticmethod
-    def add_nodes_to_tree(tree, node, G, lookup, style=True):
+    def _add_nodes_to_tree(tree, node, G, lookup, style=True):
+        """Get huuid."""
         node_label = Text()
 
         node_label.append(lookup[node].huuid, style='bold magenta' if style else None)
@@ -63,9 +65,10 @@ class DeploymentPlan:
         subtree = tree.add(node_label)
 
         for child in G.successors(node):
-            DeploymentPlan.add_nodes_to_tree(subtree, child, G, lookup, style=style)
+            DeploymentPlan._add_nodes_to_tree(subtree, child, G, lookup, style=style)
 
     def show(self, style=True):
+        """Show event plan."""
         create_tree = Tree('CREATE')
 
         lookup = {job.job_id: job for job in self.jobs}
@@ -82,7 +85,7 @@ class DeploymentPlan:
             job_tree = Tree("JOBS")
 
         assert all([job.job_id in lookup for job in self.jobs])
-        self.add_nodes_to_tree(job_tree, root, G, lookup, style=style)
+        self._add_nodes_to_tree(job_tree, root, G, lookup, style=style)
 
         merged_tree = Tree('DEPLOYMENT PLAN')
         merged_tree.add(create_tree)
@@ -109,12 +112,14 @@ class Event(ABC):
 
     @classmethod
     def create(cls, kwargs):
+        """Create Event."""
         kwargs.pop('genus')
         kwargs.pop('queue')
         return cls(**kwargs)
 
     @abstractmethod
     def execute(self, db: 'Datalayer'):
+        """Execute abstract method."""
         pass
 
 
@@ -133,6 +138,7 @@ class Signal(Event):
     context: str
 
     def execute(self, db: 'Datalayer'):
+        """Execute signal event."""
         if self.msg.lower() == 'done':
             db.cluster.compute.release_futures(self.context)
 
@@ -155,10 +161,12 @@ class Change(Event):
 
     @classmethod
     def create(cls, kwargs):
+        """Create event class."""
         kwargs.pop('genus')
         return cls(**kwargs)
 
     def execute(self, db: 'Datalayer'):
+        """Execute Change event."""
         raise NotImplementedError('Not relevant for this event class')
 
 
@@ -180,6 +188,7 @@ class Create(Event):
     parent: str | None = None
 
     def execute(self, db: 'Datalayer'):
+        """Execute create event."""
         # TODO decide where to assign version
         db.metadata.create_component(self.component)
         component = db.load(uuid=self.component['uuid'])
@@ -193,7 +202,13 @@ class Create(Event):
 
     @property
     def huuid(self):
-        return f'{self.component["type_id"]}:{self.component["identifier"]}:{self.component["uuid"]}'
+        """Get huuid."""
+        type_id = self.component["type_id"]
+        uuid = self.component["uuid"]
+        identifier = self.component["identifier"]
+
+        huuid = f"{type_id}:{identifier}:{uuid}"
+        return huuid
 
 
 @dc.dataclass(kw_only=True)
@@ -231,9 +246,11 @@ class Job(Event):
 
     @property
     def huuid(self):
+        """Get huuid."""
         return f'{self.type_id}:{self.identifier}:{self.uuid}'
 
     def get_args_kwargs(self, futures):
+        """Retrive args kwargs from futures."""
         from superduper.backends.base.queue import Future
 
         dependencies = []
@@ -255,6 +272,7 @@ class Job(Event):
         return args, kwargs
 
     def execute(self, db: 'Datalayer'):
+        """Execute Job event."""
         db.metadata.create_job(
             {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
         )
@@ -271,8 +289,7 @@ events = {
 
 def unpack_event(dict):
     """
-    Helper function to deserialize event
-    into Event class.
+    Helper function to deserialize event.
 
     :param dict: Serialized event.
     """

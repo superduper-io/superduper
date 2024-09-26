@@ -25,14 +25,15 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def drop(self):
-        pass
+        """Drop components registered in backend."""
 
     @abstractmethod
     def list_uuids(self):
-        pass
+        """List uuids of all components registered."""
 
     @abstractmethod
     def list_components(self):
+        """List all registered components."""
         pass
 
     @abstractmethod
@@ -49,6 +50,7 @@ class BaseBackend(ABC):
         pass
 
     def put(self, component: 'Component', **kwargs):
+        """Register component under the backend."""
         # This is to make sure that we only have 1 version
         # of each component implemented at any given time
         # TODO: get identifier in string component argument.
@@ -67,6 +69,7 @@ class BaseBackend(ABC):
 
     @property
     def db(self) -> 'Datalayer':
+        """Datalayer instance property."""
         return self._db
 
     @db.setter

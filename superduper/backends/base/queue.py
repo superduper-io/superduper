@@ -91,10 +91,12 @@ class BaseQueuePublisher(BaseBackend):
 
     @property
     def db(self) -> 'Datalayer':
+        """Get Datalayer instance."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Datalayer instance Setter."""
         self._db = value
         self.initialize()
 
@@ -135,7 +137,7 @@ def consume_streaming_events(events, table, db):
 @dc.dataclass
 class Future:
     """
-    Future output
+    Future output.
 
     :param job_id: job identifier
     """

@@ -24,6 +24,7 @@ from superduper.components.component import Component, ComponentMeta, ensure_ini
 from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
+from superduper.base.enums import DBType
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

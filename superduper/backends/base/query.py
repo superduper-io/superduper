@@ -178,6 +178,7 @@ class Query(_BaseQuery):
 
     @property
     def tables(self):
+        """Get tables defined in the query."""
         out = []
         for part in self.parts:
             if part[0] == 'outputs':

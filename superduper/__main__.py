@@ -7,10 +7,6 @@ from superduper.cli import app, apply, info
 __all__ = (
     'apply',
     'info',
-    'local_cluster',
-    'vector_search',
-    'cdc',
-    'ray_serve',
 )
 
 

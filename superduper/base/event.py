@@ -214,11 +214,8 @@ class Job(Event):
     def huuid(self):
         return f'{self.type_id}:{self.identifier}:{self.uuid}'
 
-    def __call__(self, db: 'Datalayer', futures: t.Dict, agent: t.Any | None = None):
+    def get_args_kwargs(self, futures):
         from superduper.backends.base.queue import Future
-        if agent is None:
-            agent = db.load(huuid=f'{self.type_id}:{self.identifier}:{self.uuid}')
-        method = getattr(agent, self.method)
         dependencies = []
         if self.dependencies:
             dependencies = [futures[k] for k in self.dependencies if k in futures]
@@ -234,7 +231,8 @@ class Job(Event):
                 kwargs[k] = futures[v.job_id]
             else:
                 kwargs[k] = v
-        return method(*args, **kwargs, dependencies=dependencies, context=self.context)
+        kwargs['dependencies'] = dependencies
+        return args, kwargs
 
     def execute(self, db: 'Datalayer'):
         db.metadata.create_job({k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}})

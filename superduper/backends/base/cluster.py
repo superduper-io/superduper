@@ -46,7 +46,7 @@ class Cluster(ABC):
 
     @classmethod
     @abstractmethod
-    def build(cls, CFG):
+    def build(cls, CFG, **kwargs):
         pass
 
     @property
@@ -56,10 +56,14 @@ class Cluster(ABC):
     @db.setter
     def db(self, value):
         self._db = value
-        self.cache.db = value
-        self.queue.db = value
-        self.compute.db = value
-        self.vector_search.db = value
-        self.crontab.db = value
-        self.cdc.db = value
-        # self.vector_search.initialize()
+
+    def initialize(
+        self,
+    ):
+        assert self.db
+        self.compute.db = self.db
+        self.cache.db = self.db
+        self.queue.db = self.db
+        self.vector_search.db = self.db
+        self.crontab.db = self.db
+        self.cdc.db = self.db

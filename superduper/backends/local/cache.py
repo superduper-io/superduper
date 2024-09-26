@@ -4,7 +4,10 @@ from superduper.components.component import Component
 
 # TODO - doesn't need to be local, could work for services too
 class LocalCache(Cache):
-    """Local cache for caching components."""
+    """Local cache for caching components.
+
+    :param init_cache: Initialize cache
+    """
 
     def __init__(self, init_cache: bool = True):
         super().__init__()
@@ -39,6 +42,7 @@ class LocalCache(Cache):
             if r.get('cache', False):
                 component = self.db.load(type_id=type_id, identifier=identifier)
                 self.put(component)
+                self.db.cluster.compute.put(component)
 
     def drop(self):
         self._cache = {}

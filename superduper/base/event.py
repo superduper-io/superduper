@@ -189,7 +189,7 @@ class Create(Event):
         if hasattr(component, 'dependencies') and component.dependencies:
             for dep in component.dependencies:
                 db.metadata.create_parent_child(component.uuid, dep)
-        component.post_create(db=db)
+        component.on_create(db=db)
 
     @property
     def huuid(self):

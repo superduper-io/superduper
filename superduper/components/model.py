@@ -356,6 +356,7 @@ class Model(Component, metaclass=ModelMeta):
     :param serve: Creates an http endpoint and serve the model with
                   ``compute_kwargs`` on a distributed cluster.
     :param trainer: `Trainer` instance to use for training.
+    :param example: An example to auto-determine the schema/ datatype.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -371,9 +372,11 @@ class Model(Component, metaclass=ModelMeta):
     num_workers: int = 0
     serve: bool = False
     trainer: t.Optional[Trainer] = None
+    example: dc.InitVar[t.Any | None] = None
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db, artifacts, example):
         super().__post_init__(db, artifacts)
+        self.example = example
 
         self._is_initialized = False
         if not self.identifier:
@@ -617,7 +620,7 @@ class Model(Component, metaclass=ModelMeta):
         )
 
         outputs = self.predict_batches(dataset)
-        self._infer_auto_schema(outputs, predict_id)
+        # self._infer_auto_schema(outputs, predict_id)
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(
@@ -641,50 +644,41 @@ class Model(Component, metaclass=ModelMeta):
                 output_ids = update.execute(db=self.db)
         return output_ids
 
-    def _infer_auto_schema(self, outputs, predict_id):
-        """
-        Infer datatype from outputs of the model.
+    # def _infer_auto_schema(self, outputs, predict_id):
+    #     """
+    #     Infer datatype from outputs of the model.
 
-        :param outputs: Outputs to infer datatype from.
-        """
-        skip_conds = [
-            not self.db.cfg.auto_schema,
-            self.datatype is not None,
-            len(outputs) == 0,
-        ]
+    #     :param outputs: Outputs to infer datatype from.
+    #     """
+    #     skip_conds = [
+    #         not self.db.cfg.auto_schema,
+    #         self.datatype is not None,
+    #         len(outputs) == 0,
+    #     ]
 
-        if any(skip_conds):
-            return
+    #     if any(skip_conds):
+    #         return
 
-        output = outputs[0]
+    #     output = outputs[0]
 
-        if self.flatten:
-            assert isinstance(output, list), 'Flatten is set but output is not list'
-            output = output[0]
+    #     if self.flatten:
+    #         assert isinstance(output, list), 'Flatten is set but output is not list'
+    #         output = output[0]
 
-        # TODO we should remove this MongoDB specific logic
-        # An idea is to make `Schema` a subclass of `Datatype`, but change
-        # The way encoding works
-        # Output schema only for mongodb
-        if isinstance(output, dict) and self.db.databackend.db_type == DBType.MONGODB:
-            output_schema = self.db.infer_schema(output)
-            if output_schema.fields:
-                self.output_schema = output_schema
-                self.db.apply(self.output_schema)
-        else:
-            self.datatype = self.db.infer_schema({"data": output}).fields.get(
-                "data", None
-            )
+    #     self.datatype = self.db.infer_schema({"data": output}).fields.get(
+    #         "data", None
+    #     )
+    #     # import pdb; pdb.set_trace()
 
-        if self.datatype is not None and not self.db.databackend.check_output_dest(
-            predict_id
-        ):
-            from superduper.components.listener import Listener
+    #     if self.datatype is not None and not self.db.databackend.check_output_dest(
+    #         predict_id
+    #     ):
+    #         from superduper.components.listener import Listener
+    #         Listener.create_output_dest(self.db, predict_id, self)
 
-            Listener.create_output_dest(self.db, predict_id, self)
+    #     if self.datatype:
+    #         self.db.replace(self)
 
-        if self.datatype:
-            self.db.replace(self)
 
     def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.
@@ -1229,10 +1223,10 @@ class SequentialModel(Model):
 
     models: t.List[Model]
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db, artifacts, example):
         self.signature = self.models[0].signature
         self.datatype = self.models[-1].datatype
-        return super().__post_init__(db, artifacts)
+        return super().__post_init__(db, artifacts, example)
 
     @property
     def inputs(self) -> Inputs:
@@ -1243,7 +1237,7 @@ class SequentialModel(Model):
         """Declare model on compute."""
         cluster.compute.put(self)
 
-    def post_create(self, db: Datalayer):
+    def on_create(self, db: Datalayer):
         """Post create hook.
 
         :param db: Datalayer instance.
@@ -1251,7 +1245,7 @@ class SequentialModel(Model):
         for p in self.models:
             if isinstance(p, str):
                 continue
-            p.post_create(db)
+            p.on_create(db)
         self.on_load(db)
 
     def predict(self, *args, **kwargs):

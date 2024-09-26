@@ -117,12 +117,6 @@ def infer_schema(
         if data_type is not None:
             schema_data[k] = data_type
 
-    # TODO why are these lines still here?
-    # if ibis:
-    #     schema_data = updated_schema_data_for_ibis(schema_data)
-    # else:
-    #     schema_data = updated_schema_data_for_mongodb(schema_data)
-
     if identifier is None:
         if not schema_data:
             identifier = "empty"

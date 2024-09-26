@@ -7,10 +7,11 @@ import numpy as np
 from qdrant_client import QdrantClient, models
 
 from superduper import CFG
-from superduper.vector_search.base import (
+
+from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
-    VectorIndexMeasureType,
     VectorItem,
+    VectorIndexMeasureType,
 )
 
 ID_PAYLOAD_KEY = "_id"
@@ -29,13 +30,10 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def __init__(
         self,
-        identifier: str,
+        uuid: str,
         dimensions: int,
-        h: t.Optional[np.ndarray] = None,
-        index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        super().__init__(identifier, dimensions, h, index, measure)
         config_dict = deepcopy(CFG.vector_search_kwargs)
         self.vector_name: t.Optional[str] = config_dict.pop("vector_name", None)
         # Use an in-memory instance by default
@@ -45,7 +43,7 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         self.collection_name = uuid
         self.measure = measure
 
-        self.collection_name = re.sub("\W+", "", identifier)
+        self.collection_name = re.sub("\W+", "", uuid)
         if not self.client.collection_exists(self.collection_name):
             measure = (
                 measure.name if isinstance(measure, VectorIndexMeasureType) else measure
@@ -56,18 +54,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
                 vectors_config=models.VectorParams(size=dimensions, distance=distance),
             )
 
-        self.initialize(identifier)
-
-        if h is not None and index is not None:
-            self.add(
-                [
-                    VectorItem(
-                        id=_id,
-                        vector=vector,
-                    )
-                    for _id, vector in zip(index, h)
-                ]
-            )
+    def initialize(self, db):
+        pass
 
     def __len__(self):
         return self.client.get_collection(self.collection_name).vectors_count
@@ -91,9 +79,6 @@ class QdrantVectorSearcher(BaseVectorSearcher):
         """
         points = []
         for item in items:
-            vector = (
-                item.vector.tolist() if hasattr(item.vector, "tolist") else item.vector
-            )
             point = models.PointStruct(
                 id=self._convert_id(item.id),
                 vector=(

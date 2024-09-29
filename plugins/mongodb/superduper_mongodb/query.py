@@ -596,14 +596,17 @@ class MongoQuery(Query):
 
         return args, kwargs
 
+    def _get_predict_ids(self):
+        outputs_parts = [p for p in self.parts if p[0] == 'outputs']
+        predict_ids = sum([p[1] for p in outputs_parts], ())
+        return predict_ids
+
     def _execute_outputs(self, parent, method='encode'):
         project = self._get_project()
 
         limit_args, _ = self._get_method_parameters('limit')
         limit = {"$limit": limit_args[0]} if limit_args else None
 
-        outputs_parts = [p for p in self.parts if p[0] == 'outputs']
-        predict_ids = sum([p[1] for p in outputs_parts], ())
 
         pipeline = []
         filter_mapping_base, filter_mapping_outputs = self._get_filter_mapping()
@@ -613,6 +616,7 @@ class MongoQuery(Query):
 
         predict_ids_in_filter = list(filter_mapping_outputs.keys())
 
+        predict_ids = self._get_predict_ids()
         predict_ids = list(set(predict_ids).union(predict_ids_in_filter))
         # After the join, the complete outputs data can be queried as
         # {CFG.output_prefix}{predict_id}._outputs.{predict_id} : result.
@@ -736,10 +740,8 @@ class MongoQuery(Query):
         :param result: The result to postprocess.
         """
         merge_outputs = {}
-
-        output_keys = {
-            key for key in result.keys() if key.startswith(CFG.output_prefix)
-        }
+        predict_ids = self._get_predict_ids()
+        output_keys = [f"{CFG.output_prefix}{predict_id}" for predict_id in predict_ids]
         for output_key in output_keys:
             output_data = result[output_key]
             output_result = output_data[output_key]

@@ -151,7 +151,7 @@ class Listener(CDC):
     @property
     def outputs_select(self):
         """Get select statement for outputs."""
-        return self.db[self.select.table].select().outputs(self.predict_id)
+        return self.db[self.outputs].select()
 
     @property
     def dependencies(self):

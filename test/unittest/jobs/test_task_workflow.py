@@ -44,34 +44,21 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
         object=lambda x: x / 2,
     )
 
-    # TODO work out what went wrong with ids here
-    # Something is very wrong with the "outputs" query
-    # for MongoDB
-    # downstream_listener = downstream_model.to_listener(
-    #     key=upstream_listener.outputs_key,
-    #     select=upstream_listener.outputs_select,
-    #     identifier="downstream",
-    # )
-
     downstream_listener = downstream_model.to_listener(
         key=upstream_listener.outputs_key,
-        select=db[upstream_listener.outputs].select(),
+        select=upstream_listener.outputs_select,
         identifier="downstream",
     )
 
+
     db.apply(downstream_listener)
 
-    outputs1 = list(db[upstream_listener.outputs].select().execute())
+    outputs1 = list(upstream_listener.outputs_select.execute())
     outputs1 = [r[upstream_listener.outputs] for r in outputs1]
 
-    # outputs1 = list(upstream_listener.outputs_select.execute())
-    # outputs1 = [r[upstream_listener.outputs] for r in outputs1]
 
-    outputs2 = list(db[downstream_listener.outputs].select().execute())
+    outputs2 = list(downstream_listener.outputs_select.execute())
     outputs2 = [r[downstream_listener.outputs] for r in outputs2]
-
-    # outputs2 = list(downstream_listener.outputs_select.execute())
-    # outputs2 = [r[downstream_listener.outputs] for r in outputs2]
 
     assert len(outputs1) == 1 if not flatten else 10
     assert len(outputs2) == 1 if not flatten else 10
@@ -80,25 +67,16 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     assert_output_is_correct(data * 10 / 2, outputs2[0])
 
     db["test"].insert([{"x": 20}]).execute()
-    return
 
     # Check that the listeners are triggered when data is inserted later
-    # outputs1 = [
-    #     Document(d.unpack())[upstream_listener.outputs_key]
-    #     for d in db.execute(upstream_listener.outputs_select)
-    # ]
     outputs1 = [
         Document(d.unpack())[upstream_listener.outputs_key]
-        for d in db[upstream_listener.outputs].select()
+        for d in db.execute(upstream_listener.outputs_select)
     ]
 
-    # outputs2 = [
-    #     Document(d.unpack())[downstream_listener.outputs_key]
-    #     for d in db.execute(downstream_listener.outputs_select())
-    # ]
     outputs2 = [
         Document(d.unpack())[downstream_listener.outputs_key]
-        for d in db[downstream_listener.outputs].select()
+        for d in db.execute(downstream_listener.outputs_select)
     ]
 
     assert len(outputs1) == 2 if not flatten else 20

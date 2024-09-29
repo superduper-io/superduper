@@ -125,6 +125,7 @@ class Listener(CDC):
             schema=Schema(f'_schema/{self.outputs}', fields={'_source': 'ID', 'id': 'ID', self.outputs: datatype})
         
         self.output_table = Table(self.outputs, schema=schema)
+        # TODO: need to handle cases where the key and select lack the UUID for the upstream listener’s predict_id.
 
     @property
     def mapping(self):
@@ -185,3 +186,9 @@ class Listener(CDC):
         """
         if self.select is not None:
             self.db[self.select.table].drop_outputs(self.predict_id)
+
+    @property
+    def metadata(self):
+        metadata = super().metadata
+        metadata.pop('uuid', None)
+        return metadata

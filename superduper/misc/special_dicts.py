@@ -295,7 +295,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
 
     def __getitem__(self, key: str) -> t.Any:
         # TODO - handle numeric keys
-        if key == '_base':
+        if key == '_base' and '_base' not in self:
             return self
         if '.' not in key:
             return super().__getitem__(key)

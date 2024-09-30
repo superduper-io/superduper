@@ -1085,8 +1085,8 @@ class APIBaseModel(Model):
     model: t.Optional[str] = None
     max_batch_size: int = 8
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         if self.model is None:
             assert self.identifier is not None
             self.model = self.identifier

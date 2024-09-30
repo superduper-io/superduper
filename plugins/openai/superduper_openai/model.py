@@ -50,8 +50,8 @@ class _OpenAI(APIBaseModel):
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
 
         assert isinstance(self.client_kwargs, dict)
 
@@ -117,8 +117,8 @@ class OpenAIEmbedding(_OpenAI):
         """The inputs of the model."""
         return Inputs(['input'])
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         if self.shape is None:
             self.shape = self.shapes[self.model]
 

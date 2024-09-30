@@ -278,3 +278,50 @@ def test_upstream_serializes(db):
     assert 'upstream' in db.show('model')
 
     _ = db.show('listener', listener.identifier, -1)
+
+
+# TODO: Need to fix this test case
+@pytest.mark.skip("This test is not working")
+def test_predict_id_utils(db):
+    db.cfg.auto_schema = True
+    table = db["test"]
+
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: x + 0,
+    )
+    q = table.insert(
+        [
+            {"x": 1},
+            {"x": 2},
+            {"x": 3},
+        ]
+    )
+
+    db.execute(q)
+
+    listener1 = Listener(
+        model=m1,
+        select=table.select(),
+        key="x",
+        identifier="listener1",
+    )
+
+    db.add(listener1)
+
+    outputs = "_outputs__listener1"
+    # Listener identifier is set as the table name
+    select = db[outputs].select()
+    docs = list(db.execute(select))
+    assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]
+
+    # Listener identifier is set as the table name and filter is applied
+    table = db[outputs].select()
+    select = table.filter(table[outputs] > 1)
+    docs = list(db.execute(select))
+    assert [doc[listener1.outputs] for doc in docs] == [2, 3]
+
+    # Listener identifier is set as the predict_id in outputs()
+    select = db["test"].select().outputs('listener1')
+    docs = list(db.execute(select))
+    assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]

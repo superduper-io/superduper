@@ -95,7 +95,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
                 queue[k] = []
             else:
                 while queue['_apply']:
-                    event = queue['_apply'].pop()
+                    event = queue['_apply'].pop(0)
                     event.execute(db)
 
     @property

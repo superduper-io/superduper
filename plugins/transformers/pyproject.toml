@@ -26,12 +26,12 @@ dynamic = ["version"]
 dependencies = [
   "sentence-transformers>=2.2.2",
   "datasets>=2.18.0",
+  "peft>=0.10.0",
+  "trl>=0.8.0",
 ]
 
 [project.optional-dependencies]
 test = [
-    "peft>=0.10.0",
-    "trl>=0.8.0",
     # Annotation plugin dependencies will be installed in CI
     # :CI: plugins/mongodb
 ]

@@ -6,6 +6,6 @@ _, requirements = requires_packages(
 
 from .model import Estimator, SklearnTrainer
 
-__version__ = "0.0.2"
+__version__ = "0.0.5"
 
 __all__ = 'Estimator', 'SklearnTrainer'

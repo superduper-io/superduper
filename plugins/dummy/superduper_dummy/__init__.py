@@ -1,3 +1,3 @@
-__version__ = "0.0.2"
+__version__ = "0.0.5"
 
 print("This is a dummy package.")

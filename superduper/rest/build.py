@@ -8,12 +8,12 @@ from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.components.component import Component
 
-from superduper.rest.base import app as superduperapp
+from superduper.rest.base import SuperDuperApp
 
 from .utils import rewrite_artifacts
 
 
-def build_rest_app(app: superduperapp.SuperDuperApp):
+def build_rest_app(app: SuperDuperApp):
     """
     Add the key endpoints to the FastAPI app.
 

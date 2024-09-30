@@ -2,7 +2,7 @@ import yaml
 from superduper import CFG, logging
 
 from superduper.rest.build import build_rest_app
-from superduper.rest.base import app as superduperapp
+from superduper.rest.base import SuperDuperApp 
 
 assert isinstance(
     CFG.cluster.rest.uri, str
@@ -17,6 +17,6 @@ if CFG.cluster.rest.config is not None:
         logging.warn("cluster.rest.config should be set with a valid path")
         CONFIG = {}
 
-app = superduperapp.SuperDuperApp('rest', port=port)
+app = SuperDuperApp('rest', port=port)
 
 build_rest_app(app)

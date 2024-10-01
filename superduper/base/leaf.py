@@ -137,10 +137,13 @@ class Leaf(metaclass=LeafMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=build_uuid)
 
+    def _get_metadata(self):
+        return {'uuid': self.uuid}
+
     @property
     def metadata(self):
         """Get metadata of the object."""
-        return {'uuid': self.uuid}
+        return self._get_metadata()
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
@@ -167,6 +170,7 @@ class Leaf(metaclass=LeafMeta):
         builds: t.Dict = {}
         blobs: t.Dict = {}
         files: t.Dict = {}
+        uuids_to_keys: t.Dict = {}
         r = _deep_flat_encode(
             self.dict(
                 metadata=metadata,
@@ -178,10 +182,22 @@ class Leaf(metaclass=LeafMeta):
             leaves_to_keep=leaves_to_keep,
             metadata=metadata,
             defaults=defaults,
+            uuids_to_keys=uuids_to_keys,
         )
         if self.identifier in builds:
             raise ValueError(f'Identifier {self.identifier} already exists in builds.')
         builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
+
+        def _replace_uuids_with_keys(record):
+            import json
+            dump = json.dumps(record)
+            for k, v in uuids_to_keys.items():
+                dump = dump.replace(v, f'?({k}.uuid)')
+            return json.loads(dump)
+
+        if not metadata:
+            builds = _replace_uuids_with_keys(builds)
+
         return SuperDuperFlatEncode(
             {
                 '_base': f'?{self.identifier}',
@@ -201,8 +217,8 @@ class Leaf(metaclass=LeafMeta):
         from superduper.base.variables import _replace_variables
 
         r = self.encode()
-        r = _replace_variables(r, **kwargs)
-        return Document.decode(r).unpack()
+        rr = _replace_variables(r, **kwargs)
+        return Document.decode(rr).unpack()
 
     @property
     def variables(self) -> t.List[str]:

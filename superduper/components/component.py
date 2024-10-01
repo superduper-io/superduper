@@ -423,19 +423,13 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Method to clean the component."""
         pass
 
-    @property
-    def metadata(self):
+    def _get_metadata(self):
         """Get metadata of the component."""
         metadata = {
             'type_id': self.type_id,
             'version': self.version,
+            'uuid': self.uuid,
         }
-
-        try:
-            uuid.UUID(self.uuid)
-            metadata['uuid'] = self.uuid
-        except ValueError:
-            pass
         return metadata
 
     @property
@@ -750,7 +744,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         for k in s.fields:
             attr = getattr(self, k)
             if isinstance(attr, (Artifact, File)):
-                r[k] = attr
+               r[k] = attr
             else:
                 r[k] = s.fields[k](x=attr)  # artifact or file
 

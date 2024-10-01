@@ -26,7 +26,7 @@ class LocalCache(Cache):
         return self._cache[item]
 
     def get_by_id(self, *item):
-        return self._cache[*item]
+        return self._cache[item]
 
     def _put(self, component: Component):
         """Put a component in the cache."""

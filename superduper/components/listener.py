@@ -46,28 +46,103 @@ class Listener(CDC):
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
+        self._set_upstream()
+        return super().__post_init__(db, artifacts)
+
+    def dict(self, metadata: bool = True, defaults: bool = True) -> t.Dict:
+        """Convert to dictionary."""
+        out = super().dict(metadata=metadata, defaults=defaults)
+        if not metadata:
+            del out['output_table']
+        return out
+
+    def _set_upstream(self):
         deps = self.dependencies
         if deps:
             if not self.upstream:
                 self.upstream = []
-            for identifier, uuid in self.dependencies:
-                self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
-        return super().__post_init__(db, artifacts)
+            try:
+                it = 0
+                for identifier, uuid in deps:
+                    self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
+                    it += 1
+            except ValueError as e:
+                if 'not enough values' in str(e):
+                    logging.warn(
+                        'Deferring dependencies to pre_create based on '
+                        f'dependency {deps[it]}'
+                    )
 
     @property
     def predict_id(self):
         """Predict ID property."""
         return f'{self.identifier}__{self.uuid}'
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
-        """Pre-create hook."""
-        if self.select is None:
-            return
-        if not db.cfg.auto_schema:
-            return
-        if self.output_table is not None:
-            return
+    @staticmethod
+    def _complete_key(key, db, listener_uuids=()):
+        if isinstance(key, str) and key.startswith(CFG.output_prefix):
+            if len(key[len(CFG.output_prefix):].split('__')) == 2:
+                return key
+            identifier = key[len(CFG.output_prefix):]
+            try:
+                uuid = listener_uuids[identifier]
+            except KeyError as e:
+                try:
+                    uuid = db.show('listener', identifier, -1)['uuid']
+                except FileNotFoundError as e:
+                    raise Exception(
+                        'Couldn\'t complete `Listener` key ' 
+                        f'based on ellipsis {key}__????????????????. '
+                        'Please specify using upstream_listener.outputs'
+                    )
+            return key + '__' + uuid
+        elif isinstance(key, str):
+            return key
+        elif isinstance(key, list):
+            return [Listener._complete_key(k, db, listener_uuids) for k in key]
+        elif isinstance(key, tuple):
+            return tuple([Listener._complete_key(k, db, listener_uuids) for k in key])
+        elif isinstance(key, dict):
+            return {
+                Listener._complete_key(k, db, listener_uuids): v for k, v in key.items()
+            }
+        raise Exception(f'Invalid key type: {type(key)}')
+    
+    def _auto_fill_data(self, db: Datalayer, startup_cache: t.Dict):
+        listener_keys = [k for k in startup_cache if k.startswith(CFG.output_prefix)]
+        listener_predict_ids = [k[len(CFG.output_prefix) :] for k in listener_keys]
+        lookup = dict(tuple(x.split('__')) for x in listener_predict_ids)
+        self.select = self.select.complete_uuids(db, listener_uuids=lookup)
+        if CFG.output_prefix in str(self.key):
+            self.key = self._complete_key(self.key, db, listener_uuids=lookup)
+    
+    def _get_sample_input(self, db: Datalayer, startup_cache: t.Dict):
+        msg = 'Couldn\'t retrieve outputs to determine schema; {table} returned 0 results.'
+        if self.model.example is not None:
+            input = self.model.example
+        else:
+            if self.dependencies:
+                try:
+                    r = next(self.select.limit(1).execute())
+                except StopIteration as e:
+                    try:
+                        if not self.cdc_table.startswith(CFG.output_prefix):
+                            r = next(db[self.select.table].select().limit(1).execute())
+                            r = {**r, **startup_cache}
+                        else:
+                            r = startup_cache
+                    except StopIteration as e:
+                        raise Exception(msg.format(table=self.cdc_table)) from e
+            else:
+                try:
+                    r = next(self.select.limit(1).execute())
+                except StopIteration as e:
+                    raise Exception(msg.format(table=self.select)) from e
+            mapping = Mapping(self.key, self.model.signature)
+            input = mapping(r)
+        return input
 
+    def _determine_table_and_schema(self, db: Datalayer, startup_cache: t.Dict):
         from superduper import Schema
         if self.model.datatype is not None:
             schema = Schema(
@@ -77,33 +152,7 @@ class Listener(CDC):
         elif self.model.output_schema is not None:
             schema = self.model.output_schema
         else:
-            if self.model.example is not None:
-                input = self.model.example
-            else:
-                try:
-                    if self.dependencies:
-                        try:
-                            r = next(self.select.limit(1).execute())
-                        except StopIteration as e:
-                            try:
-                                if not self.cdc_table.startswith(CFG.output_prefix):
-                                    r = next(db[self.select.table].select().limit(1).execute())
-                                    r = {**r, **startup_cache}
-                                else:
-                                    r = startup_cache
-                            except StopIteration as e:
-                                raise Exception(
-                                    f'Couldn\'t retrieve outputs to determine schema; {self.cdc_table} returned 0 results.'
-                                ) from e
-                    else:
-                        r = next(self.select.limit(1).execute())
-                except StopIteration as e:
-                    raise Exception(
-                        f'Couldn\'t retrieve outputs to determine schema; {self.select} returned 0 results.'
-                    ) from e
-
-                mapping = Mapping(self.key, self.model.signature)
-                input = mapping(r)
+            input = self._get_sample_input(db, startup_cache)
 
             if self.model.signature == 'singleton':
                 prediction = self.model.predict(input)
@@ -126,6 +175,24 @@ class Listener(CDC):
         
         self.output_table = Table(self.outputs, schema=schema)
         # TODO: need to handle cases where the key and select lack the UUID for the upstream listener’s predict_id.
+
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+        """Pre-create hook."""
+    
+
+        if self.select is None:
+            return
+        if not db.cfg.auto_schema:
+            startup_cache[self.outputs] = None
+            return
+
+        self._auto_fill_data(db, startup_cache)
+
+        if self.output_table is not None:
+            return
+
+        self._determine_table_and_schema(db, startup_cache)
+
 
     @property
     def mapping(self):
@@ -186,9 +253,3 @@ class Listener(CDC):
         """
         if self.select is not None:
             self.db[self.select.table].drop_outputs(self.predict_id)
-
-    @property
-    def metadata(self):
-        metadata = super().metadata
-        metadata.pop('uuid', None)
-        return metadata

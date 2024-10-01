@@ -3,7 +3,7 @@ import typing as t
 from collections import defaultdict
 from functools import partial
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.base.code import Code
 from superduper.base.constant import (
     KEY_BLOBS,
@@ -162,6 +162,17 @@ class Document(MongoStyleDict):
         out.update({KEY_BUILDS: builds, KEY_FILES: files, KEY_BLOBS: blobs})
         out = SuperDuperFlatEncode(out)
         return out
+
+    def __getitem__(self, key: str) -> t.Any:
+        if CFG.output_prefix not in key:
+            return super().__getitem__(key)
+
+        import re
+        if re.match(f'{CFG.output_prefix}[^_]{1,}__[a-z0-9]{10,}', key):
+            return super().__getitem__(key)
+
+        key = next(k for k in self.keys() if k.startswith(key))
+        return super().__getitem__(key)
 
     @classmethod
     def decode(
@@ -374,6 +385,7 @@ def _deep_flat_encode(
     leaves_to_keep=(),
     metadata: bool = True,
     defaults: bool = True,
+    uuids_to_keys: t.Dict | None = None,
 ):
     if isinstance(r, dict):
         tmp = {}
@@ -386,6 +398,7 @@ def _deep_flat_encode(
                 leaves_to_keep=leaves_to_keep,
                 metadata=metadata,
                 defaults=defaults,
+                uuids_to_keys=uuids_to_keys,
             )
         return tmp
 
@@ -400,6 +413,7 @@ def _deep_flat_encode(
                     leaves_to_keep=leaves_to_keep,
                     metadata=metadata,
                     defaults=defaults,
+                    uuids_to_keys=uuids_to_keys,
                 )
                 for x in r
             ]
@@ -414,6 +428,7 @@ def _deep_flat_encode(
             leaves_to_keep=leaves_to_keep,
             metadata=metadata,
             defaults=defaults,
+            uuids_to_keys=uuids_to_keys,
         )
 
     if isinstance(r, Blob):
@@ -440,6 +455,7 @@ def _deep_flat_encode(
             leaves_to_keep=leaves_to_keep,
             metadata=metadata,
             defaults=defaults,
+            uuids_to_keys=uuids_to_keys,
         )
         builds[ref] = r
         return f'?{ref}'
@@ -448,6 +464,7 @@ def _deep_flat_encode(
         # If the leaf is component, we need to store the type_id
         type_id = r.type_id if isinstance(r, Component) else None
         key = f"{type_id}:{r.identifier}" if type_id else r.identifier
+        uuid = r.uuid
 
         if key in builds:
             logging.warn(f'Leaf {key} already exists')
@@ -467,12 +484,15 @@ def _deep_flat_encode(
             leaves_to_keep=leaves_to_keep,
             metadata=metadata,
             defaults=defaults,
+            uuids_to_keys=uuids_to_keys,
         )
 
         identifier = r.pop('identifier')
         # Rebuild the key with the identifier
         key = f"{type_id}:{identifier}" if type_id else identifier
         builds[key] = r
+        if isinstance(uuids_to_keys, dict):
+            uuids_to_keys[key] = uuid
         return f'?{key}'
 
     return r
@@ -517,18 +537,46 @@ def _schema_decode(
 def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None):
     if reference := parse_reference(f'?{k}'):
         if reference.name in getters:
-            return getters[reference.name](reference.path)
+            out = getters[reference.name](reference.path)
+            if reference.attribute is not None:
+                return getattr(out, reference.attribute)
+
+    attribute = None
+    if '.' in k:
+        k, attribute = k.split('.')
 
     if isinstance(builds[k], Leaf):
         leaf = builds[k]
         if not leaf.db:
             leaf.db = db
+        if attribute is not None:
+            return getattr(leaf, attribute)
         return leaf
+
     leaf = _deep_flat_decode(builds[k], builds, getters=getters, db=db)
+
     builds[k] = leaf
+    to_del = []
+    keys = list(builds.keys())
+    for other in keys:
+        import re
+        matches = re.findall(f'.*\?\(({k}\..*)\)', other)
+        old_other = other[:]
+        if matches:
+            for match in matches:
+                got = _get_leaf_from_cache(match, builds, getters, db=db)
+                other = other.replace(f'?({match})', got)
+            builds[other] = leaf
+            to_del.append(old_other)
+
+    for other in to_del:
+        del builds[other]
+        
     if isinstance(leaf, Leaf):
         if not leaf.db:
             leaf.db = db
+    if attribute is not None:
+        return getattr(leaf, attribute)
     return leaf
 
 
@@ -565,8 +613,14 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
             )
             for k, v in r.items()
         }
+    if isinstance(r, str) and '?(' in r:
+        import re
+        matches = re.findall(r'\?\((.*?)\)', r)
+        for match in matches:
+            r = r.replace(f'?({match})', _get_leaf_from_cache(match, builds, getters, db=db))
     if isinstance(r, str) and r.startswith('?'):
-        return _get_leaf_from_cache(r[1:], builds, getters=getters, db=db)
+        out = _get_leaf_from_cache(r[1:], builds, getters=getters, db=db)
+        return out
     if isinstance(r, str) and r.startswith('&'):
         assert getters is not None
         reference = parse_reference(r)

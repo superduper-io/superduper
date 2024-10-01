@@ -4,7 +4,7 @@ import random
 import numpy as np
 import pytest
 
-from superduper import Document
+from superduper import Application, Document
 from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
@@ -281,7 +281,7 @@ def test_upstream_serializes(db):
 
 
 # TODO: Need to fix this test case
-@pytest.mark.skip("This test is not working")
+# @pytest.mark.skip("This test is not working")
 def test_predict_id_utils(db):
     db.cfg.auto_schema = True
     table = db["test"]
@@ -307,21 +307,104 @@ def test_predict_id_utils(db):
         identifier="listener1",
     )
 
-    db.add(listener1)
+    db.apply(listener1)
 
     outputs = "_outputs__listener1"
     # Listener identifier is set as the table name
     select = db[outputs].select()
-    docs = list(db.execute(select))
+    docs = select.tolist()
+    # docs = list(db.execute(select))
     assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]
 
     # Listener identifier is set as the table name and filter is applied
     table = db[outputs].select()
     select = table.filter(table[outputs] > 1)
-    docs = list(db.execute(select))
+    docs = select.tolist()
     assert [doc[listener1.outputs] for doc in docs] == [2, 3]
 
     # Listener identifier is set as the predict_id in outputs()
     select = db["test"].select().outputs('listener1')
-    docs = list(db.execute(select))
+    docs = select.tolist()
     assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]
+
+
+def test_complete_uuids(db):
+    
+    db.cfg.auto_schema = True
+    
+    m1 = ObjectModel(
+        "m1",
+        object=lambda x: x + 0,
+    )
+
+    q = db['test'].insert(
+        [
+            {"x": 1},
+            {"x": 2},
+            {"x": 3},
+        ]
+    )
+
+    db.execute(q)
+
+    l1 = Listener(
+        model=m1,
+        select=db['test'].select(),
+        key="x",
+        identifier="l1",
+    )
+
+    db.apply(l1)
+    
+    q = db['test'].outputs('l1')
+
+    qq = q.complete_uuids(db)
+
+    assert f'"{l1.predict_id}"' in str(qq)
+
+    results = q.tolist()
+
+    assert results[0]['_outputs__l1'] == results[0][l1.outputs]
+
+
+def test_autofill_data_listener(db):
+
+    db.cfg.auto_schema = True
+    
+    m = ObjectModel(
+        "m1",
+        object=lambda x: x + 2,
+    )
+
+    db['test'].insert(
+        [
+            {"x": 1},
+            {"x": 2},
+            {"x": 3},
+        ]
+    ).execute()
+
+    l1 = m.to_listener(select=db['test'].select(), key='x', identifier='l1')
+    l2 = m.to_listener(select=db['_outputs__l1'].select(), key='_outputs__l1', identifier='l2')
+
+    db.apply(l1)
+    db.apply(l2)
+
+    assert l2.key == l1.outputs
+    assert l1.outputs in str(l2.select)
+
+    app = Application('my-app', components=[l1, l2])
+
+    r = app.encode(metadata=False)
+
+    import pprint
+    pprint.pprint({k: v for k, v in r.items() if k not in {'_blobs', '_files'}})
+
+    out = Document.decode(r, db=db).unpack()
+
+    assert isinstance(out, Application)
+
+    assert isinstance(out.components[0], Listener)
+    assert isinstance(out.components[1], Listener)
+
+    assert isinstance(out.components[0].model, ObjectModel)

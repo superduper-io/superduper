@@ -1,4 +1,5 @@
 import dataclasses as dc
+import importlib
 import json
 import re
 import typing as t
@@ -57,6 +58,8 @@ class _BaseQuery(Leaf):
         self._updated_key = None
         if not self.identifier:
             self.identifier = self._build_hr_identifier()
+        self.identifier = re.sub('[^a-zA-Z0-9\-]', '-', self.identifier)
+        self.identifier = re.sub('[\-]+', '-', self.identifier)
 
     def unpack(self):
         parts = _unpack(self.parts)
@@ -76,6 +79,7 @@ class _BaseQuery(Leaf):
         identifier = re.sub(r'[^a-zA-Z0-9#]', '-', identifier)
         identifier = re.sub('[-]+$', '', identifier)
         identifier = re.sub('[-]+', '-', identifier)
+        identifier = re.sub('^[-]+', '', identifier)
         for i, v in enumerate(variables):
             identifier = identifier.replace(f'#{i}', v)
         return identifier
@@ -474,12 +478,95 @@ class Query(_BaseQuery):
     def _create_table_if_not_exists(self):
         pass
 
-    def execute(self, db=None, eager_mode=False, **kwargs):
+    def complete_uuids(self, db, listener_uuids: t.Optional[t.Dict] = None):
+        listener_uuids = listener_uuids or {}
+        import copy
+        r = copy.deepcopy(self.dict())
+        lines = r['query'].split('\n')
+        parser = importlib.import_module(self.__module__).parse_query
+
+        def get_uuid(identifier):
+            msg = (
+                'Couldn\'t complete `Listener` key '
+                'based on ellipsis {predict_id}__????????????????. '
+                'Please specify using upstream_listener.outputs'
+            )
+            try:
+                return listener_uuids[identifier]
+            except KeyError:
+                pass
+
+            try:
+                return db.show('listener', identifier, -1)['uuid']
+            except FileNotFoundError as e:
+                pass
+
+            raise Exception(msg.format(predict_id=identifier))
+
+
+        for i, line in enumerate(lines):
+            output_query_groups = re.findall('\.outputs\((.*?)\)', line)
+
+            for group in output_query_groups:
+                predict_ids = [eval(x.strip()) for x in group.split(',')]
+                replace_ids = []
+                for predict_id in predict_ids:
+                    if re.match(r'^.*__([0-9a-z]{15,})$', predict_id):
+                        replace_ids.append(f'"{predict_id}"')
+                        continue
+                    listener_uuid = get_uuid(predict_id)
+                    replace_ids.append(f'"{predict_id}__{listener_uuid}"')
+                new_group = ', '.join(replace_ids)
+                lines[i] = lines[i].replace(group, new_group)
+
+            output_table_groups = re.findall(f'^{CFG.output_prefix}.*?\.', line)
+
+            for group in output_table_groups:
+                if re.match(f'^{CFG.output_prefix}[^\.]+__([0-9a-z]{{15,}})\.$', group):
+                    continue
+                identifier = group[len(CFG.output_prefix):-1]
+                listener_uuid = get_uuid(identifier)
+                new_group = f'{CFG.output_prefix}{identifier}__{listener_uuid}.'
+                lines[i] = lines[i].replace(group, new_group)
+
+        def swap_keys(r: str | list | dict):
+            if isinstance(r, str):
+                if r.startswith(CFG.output_prefix) and '__' not in r[len(CFG.output_prefix):]:
+                    parts = [r]
+                    if '.' in r:
+                        parts = list(r.split('.'))
+                    parts[0] += '__' + get_uuid(r[len(CFG.output_prefix):])
+                    return '.'.join(parts)
+                return r
+            if isinstance(r, list):
+                return [swap_keys(x) for x in r]
+            if isinstance(r, dict):
+                return {
+                    swap_keys(k): swap_keys(v)
+                    for k, v in r.items()
+                }
+            return r
+
+        r['query'] = '\n'.join(lines)
+        r['documents'] = swap_keys(r['documents'])
+
+        del r['_path']
+        del r['identifier']
+        out = parser(**r, db=db)
+        return out
+
+    def tolist(self, db=None, eager_mode=False, **kwargs):
+        return self.execute(db=db, eager_mode=eager_mode, **kwargs).tolist()
+
+    def execute(self, db=None, eager_mode=False, handle_outputs=True, **kwargs):
         """
         Execute the query.
 
         :param db: Datalayer instance.
         """
+        if self.type == 'select' and handle_outputs and 'outputs' in str(self):
+            query = self.complete_uuids(db=db or self.db)
+            return query.execute(db=db, eager_mode=eager_mode, **kwargs, handle_outputs=False)
         self.db = db or self.db
         results = self.db.execute(self, **kwargs)
         if eager_mode and self.type == 'select':

@@ -31,14 +31,11 @@ def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)]).execute()
 
-    rid = random_id()
-
     listener = Listener(
         key="data",
         model=model,
         select=db["datas"].select(),
         identifier='test',
-        uuid=rid,
     )
 
     db.apply(listener)

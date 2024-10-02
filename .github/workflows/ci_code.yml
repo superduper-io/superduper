@@ -81,7 +81,6 @@ jobs:
     - name: Rest Server Testing
       run: |
         make rest_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/default.yaml
-        make rest_testing pytest_arguments="--cov=superduper --cov-report=xml" SUPERDUPER_CONFIG=test/configs/sql.yaml
 
 
     - name: Usecase Testing

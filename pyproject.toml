@@ -55,6 +55,7 @@ dependencies = [
     "python-magic",
     "apscheduler",
     "bson",
+    "python-multipart>=0.0.9",
     "qdrant-client>=1.10.0,<2"
 ]
 

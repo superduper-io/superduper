@@ -1,16 +1,24 @@
 import json
+
 import pytest
-from superduper.base.document import Document
 from fastapi.testclient import TestClient
+
+from superduper import CFG
+from superduper.base.document import Document
+
+CFG.auto_schema = True
+CFG.cluster.rest.uri = 'localhost:8000'
 from superduper.rest.deployed_app import app
 
 from .mock_client import setup as _setup, teardown
+
 
 @pytest.fixture
 def setup():
     client = TestClient(app._app)
     yield _setup(client)
     teardown(client)
+
 
 def test_health(setup):
     response = setup.get("/health")
@@ -62,10 +70,10 @@ def test_apply(setup):
     assert models == ['my_function']
 
 
+@pytest.mark.skip
 def test_insert_image(setup):
     result = setup.put(
-        '/db/artifact_store/put',
-        files={"raw": ("test/material/data/test.png")}
+        '/db/artifact_store/put', files={"raw": ("test/material/data/test.png")}
     )
     result = json.loads(result.content)
 

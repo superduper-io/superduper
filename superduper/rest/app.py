@@ -1,8 +1,8 @@
 import yaml
-from superduper import CFG, logging
 
+from superduper import CFG, logging
+from superduper.rest.base import SuperDuperApp
 from superduper.rest.build import build_rest_app
-from superduper.rest.base import SuperDuperApp 
 
 assert isinstance(
     CFG.cluster.rest.uri, str

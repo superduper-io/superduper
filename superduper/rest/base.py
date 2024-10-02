@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prettytable import PrettyTable
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from superduper import logging
 from superduper.base.build import build_datalayer
 from superduper.base.config import Config
@@ -204,6 +205,7 @@ class SuperDuperApp:
 
         :param function: function to run on shutdown
         """
+
         @self._app.on_event('shutdown')
         def shutdown_db_client():
             try:
@@ -223,7 +225,6 @@ def database(request: Request) -> Datalayer:
 def DatalayerDependency():
     """Dependency for injecting datalayer instance into endpoint implementation."""
     return Depends(database)
-
 
 
 class Server(uvicorn.Server):

@@ -3,11 +3,11 @@ import typing as t
 
 import magic
 from fastapi import File, Response
+
 from superduper import logging
 from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.components.component import Component
-
 from superduper.rest.base import SuperDuperApp
 
 from .utils import rewrite_artifacts

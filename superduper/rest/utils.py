@@ -5,6 +5,7 @@ from superduper.components.datatype import Artifact, Encodable
 
 
 def rewrite_artifacts(r, db):
+    """Helper function to rewrite artifacts."""
     if isinstance(r, Encodable):
         kwargs = r.dict()
         kwargs['datatype'].encodable = 'artifact'

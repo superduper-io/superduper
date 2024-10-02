@@ -1,6 +1,6 @@
-import json
 import os
 from urllib.parse import urlencode
+
 from superduper import CFG
 
 HOST = CFG.cluster.rest.uri
@@ -9,7 +9,6 @@ VERBOSE = os.environ.get('SUPERDUPER_VERBOSE', '1')
 
 def make_params(params):
     return '?' + urlencode(params)
-
 
 
 def insert(client, data):
@@ -31,7 +30,9 @@ def remove(client, type_id, identifier):
 
 def setup(client):
     from superduper.base.build import build_datalayer
+
     db = build_datalayer()
+    db.cfg.auto_schema = True
     client.app.state.pool = db
     data = [
         {"x": [1, 2, 3, 4, 5], "y": 'test'},

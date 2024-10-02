@@ -169,8 +169,8 @@ class OpenAIChatCompletion(_OpenAI):
     batch_size: int = 1
     prompt: str = ''
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         self.takes_context = True
 
     def _format_prompt(self, context, X):

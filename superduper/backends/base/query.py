@@ -711,7 +711,6 @@ class Query(_BaseQuery):
                 schema = table.schema
             except FileNotFoundError:
                 pass
-
         documents = [
             r.encode(schema) if isinstance(r, Document) else r for r in documents
         ]

@@ -124,19 +124,19 @@ class Listener(CDC):
             if self.dependencies:
                 try:
                     r = next(self.select.limit(1).execute())
-                except StopIteration as e:
+                except (StopIteration, KeyError) as e:
                     try:
                         if not self.cdc_table.startswith(CFG.output_prefix):
                             r = next(db[self.select.table].select().limit(1).execute())
                             r = {**r, **startup_cache}
                         else:
                             r = startup_cache
-                    except StopIteration as e:
+                    except (StopIteration, KeyError) as e:
                         raise Exception(msg.format(table=self.cdc_table)) from e
             else:
                 try:
                     r = next(self.select.limit(1).execute())
-                except StopIteration as e:
+                except (StopIteration, KeyError) as e:
                     raise Exception(msg.format(table=self.select)) from e
             mapping = Mapping(self.key, self.model.signature)
             input = mapping(r)

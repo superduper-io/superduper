@@ -288,7 +288,6 @@ class Mapping:
             raise KeyError(f'Key `{k}` not found in document {r}.')
         args = Document({'_base': args}).unpack()
         kwargs = Document(kwargs).unpack()
-
         if self.signature == '**kwargs':
             return kwargs
         elif self.signature == '*args':
@@ -611,7 +610,6 @@ class Model(Component, metaclass=ModelMeta):
                 )
                 it += 1
             return output_ids
-
         dataset, mapping = self._prepare_inputs_from_select(
             X=X,
             select=select,

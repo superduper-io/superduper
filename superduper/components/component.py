@@ -514,7 +514,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         if startup_cache is None:
             startup_cache = {}
         for child in self.get_children():
-            child.pre_create(db)
+            child.pre_create(db, startup_cache=startup_cache)
         self._pre_create(db, startup_cache=startup_cache)
 
     def on_create(self, db: Datalayer) -> None:

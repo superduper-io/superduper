@@ -79,6 +79,9 @@ homepage = "https://superduper.io"
 documentation = "https://docs.superduper.io/docs/intro"
 source = "https://github.com/superduper-io/superduper"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 include = ["superduper*"]
 

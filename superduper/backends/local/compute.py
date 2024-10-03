@@ -59,8 +59,15 @@ class LocalComputeBackend(ComputeBackend):
         """
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
         component = self.db.load(uuid=job.uuid)
-        method = getattr(component, job.method)
-        output = method(*args, **kwargs)
+        self.db.metadata.update_job(job.identifier, 'status', 'running')
+
+        try:
+            method = getattr(component, job.method)
+            output = method(*args, **kwargs)
+        except Exception as e:
+            self.db.metadata.update_job(job.identifier, 'status', 'failed')
+            raise e
+        self.db.metadata.update_job(job.identifier, 'status', 'success')
         self.futures[job.context][job.job_id] = output
 
     def __delitem__(self, item):

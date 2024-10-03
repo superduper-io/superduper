@@ -406,6 +406,8 @@ class MongoQuery(Query):
         filter_ = {}
         if self.parts and self.parts[0][1]:
             filter_ = self.parts[0][1][0]
+            if isinstance(filter_, str):
+                filter_ = {}
         projection = {'_id': 1}
         coll = type(self)(table=self.table, db=self.db)
         return coll.find(filter_, projection)
@@ -550,10 +552,7 @@ class MongoQuery(Query):
             method, args, kwargs = part
             # args: (filter, projection, *args)
             filter = copy.deepcopy(args[0]) if len(args) > 0 else {}
-            try:
-                filter.update(self._get_filter_conditions())
-            except:
-                breakpoint()
+            filter.update(self._get_filter_conditions())
             args = tuple((filter, *args[1:]))
 
             return (method, args, kwargs)

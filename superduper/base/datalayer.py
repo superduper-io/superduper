@@ -606,6 +606,7 @@ class Datalayer:
             if huuid:
                 uuid = huuid.split(':')[-1]
             try:
+                uuid = uuid.split('.')[0]
                 info = self.metadata.get_component_by_uuid(
                     uuid=uuid,
                     allow_hidden=allow_hidden,

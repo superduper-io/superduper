@@ -164,8 +164,9 @@ class Document(MongoStyleDict):
         return out
 
     def __getitem__(self, key: str) -> t.Any:
-        if CFG.output_prefix not in key:
+        if not key.startswith(CFG.output_prefix) or '.' in key:
             return super().__getitem__(key)
+
 
         import re
         if re.match(f'{CFG.output_prefix}[^_]{1,}__[a-z0-9]{10,}', key):

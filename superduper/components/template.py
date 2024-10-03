@@ -156,6 +156,10 @@ class Template(_BaseTemplate):
         ```
         """
         object = super(Template, Template).read(path, db)
+        if not hasattr(object, 'variables'):
+            raise Exception(
+                f"Expected a `Template` object, got {object.__class__.__name__}"
+            )
         # Add blobs and files back to the template
         config_object = _build_info_from_path(path=path)
         object.template.update(

@@ -28,13 +28,13 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     upstream_model = ObjectModel(
         "m1",
         object=lambda x: data * x if not flatten else [data * x] * 10,
-        flatten=flatten,
     )
 
     upstream_listener = upstream_model.to_listener(
         key="x",
         select=db["test"].select(),
         identifier="upstream",
+        flatten=flatten,
     )
 
     db.apply(upstream_listener)
@@ -50,12 +50,10 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
         identifier="downstream",
     )
 
-
     db.apply(downstream_listener)
 
     outputs1 = list(upstream_listener.outputs_select.execute())
     outputs1 = [r[upstream_listener.outputs] for r in outputs1]
-
 
     outputs2 = list(downstream_listener.outputs_select.execute())
     outputs2 = [r[downstream_listener.outputs] for r in outputs2]

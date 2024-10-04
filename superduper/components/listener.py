@@ -42,6 +42,7 @@ class Listener(CDC):
     select: t.Optional[Query] = None
     cdc_table: str = ''
     output_table: t.Optional[Table] = None
+    flatten: bool = False
 
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
@@ -251,6 +252,7 @@ class Listener(CDC):
             select=self.select,
             ids=ids,
             **(self.predict_kwargs or {}),
+            flatten=self.flatten,
         )
         return out
 

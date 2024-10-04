@@ -483,6 +483,7 @@ class Model(Component, metaclass=ModelMeta):
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = True,
+        flatten: bool = False,
     ) -> t.Any:
         """Predict on the data points in the database.
 
@@ -522,6 +523,7 @@ class Model(Component, metaclass=ModelMeta):
             ids=predict_ids,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
+            flatten=flatten,
         )
         return out
 
@@ -547,7 +549,17 @@ class Model(Component, metaclass=ModelMeta):
                 mapping=mapping,
             )
 
-        if len(X_data) > len(ids):
+
+        flat = False
+        if 'outputs' in str(select):
+            sample = next(select.limit(1).execute())
+            upstream_predict_ids = [k for k in sample if k.startswith(CFG.output_prefix)]
+            for pid in upstream_predict_ids:
+                if self.db.show(uuid=pid.split('__')[-1])['flatten']:
+                    flat = True
+                    break
+
+        if not flat and len(X_data) > len(ids):
             logging.error("Your select is returning more documents than unique ids.")
             logging.error(f"X_data: {len(X_data)}; ids: {len(ids)}")
             logging.error(f"ids: {ids}")
@@ -589,6 +601,7 @@ class Model(Component, metaclass=ModelMeta):
         ids: t.List[str],
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
+        flatten: bool = False,
     ):
         if not ids:
             return []
@@ -610,7 +623,7 @@ class Model(Component, metaclass=ModelMeta):
                 )
                 it += 1
             return output_ids
-        dataset, mapping = self._prepare_inputs_from_select(
+        dataset, _ = self._prepare_inputs_from_select(
             X=X,
             select=select,
             ids=ids,
@@ -630,7 +643,7 @@ class Model(Component, metaclass=ModelMeta):
             predict_id=predict_id,
             outputs=outputs,
             ids=ids,
-            flatten=self.flatten,
+            flatten=flatten,
             **self.model_update_kwargs,
         )
         output_ids = []
@@ -641,42 +654,6 @@ class Model(Component, metaclass=ModelMeta):
             else:
                 output_ids = update.execute(db=self.db)
         return output_ids
-
-    # def _infer_auto_schema(self, outputs, predict_id):
-    #     """
-    #     Infer datatype from outputs of the model.
-
-    #     :param outputs: Outputs to infer datatype from.
-    #     """
-    #     skip_conds = [
-    #         not self.db.cfg.auto_schema,
-    #         self.datatype is not None,
-    #         len(outputs) == 0,
-    #     ]
-
-    #     if any(skip_conds):
-    #         return
-
-    #     output = outputs[0]
-
-    #     if self.flatten:
-    #         assert isinstance(output, list), 'Flatten is set but output is not list'
-    #         output = output[0]
-
-    #     self.datatype = self.db.infer_schema({"data": output}).fields.get(
-    #         "data", None
-    #     )
-    #     # import pdb; pdb.set_trace()
-
-    #     if self.datatype is not None and not self.db.databackend.check_output_dest(
-    #         predict_id
-    #     ):
-    #         from superduper.components.listener import Listener
-    #         Listener.create_output_dest(self.db, predict_id, self)
-
-    #     if self.datatype:
-    #         self.db.replace(self)
-
 
     def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.

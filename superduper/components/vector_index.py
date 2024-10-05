@@ -342,7 +342,7 @@ class VectorIndex(Component):
         """
         if event_type in [DBEvent.insert, DBEvent.upsert]:
             callable = copy_vectors
-        elif type == DBEvent.delete:
+        elif event_type == DBEvent.delete:
             callable = delete_vectors
         else:
             return []

@@ -26,7 +26,7 @@ def test_encode_and_decode(component: Component):
     load_component = Document.decode(encode_data).unpack()
     load_component.init()
 
-    assert type(load_component) == type(component)
+    assert type(load_component) is type(component)
     assert load_component.metadata == component.metadata
 
     return load_component

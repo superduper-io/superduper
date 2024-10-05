@@ -1,4 +1,3 @@
-import typing as t
 import json
 import os
 
@@ -18,6 +17,25 @@ def apply(name: str, variables: str | None = None):
     _apply(name, variables)
 
 
+@command(help='Start rest server and user interface')
+def start(port: int = 8000, host: str = 'localhost'):
+    """Start the rest server and user interface."""
+    ...
+
+
+@command(help='Apply a template or application to a `superduper` deployment')
+def ls():
+    """Apply a serialized component.
+
+    :param name: Path or name of the template/ component.
+    :param values: JSON string of values to apply to the template.
+    """
+    from superduper.templates import ls
+
+    for r in ls():
+        print(r)
+
+
 @command(help='`superduper` deployment')
 def drop(data: bool = False, force: bool = False):
     """Apply a serialized component.
@@ -30,7 +48,6 @@ def drop(data: bool = False, force: bool = False):
 
 
 def _apply(name: str, variables: str | None = None):
-
     def _build_from_template(t):
         assert variables is not None, 'Variables must be provided for templates'
         loaded = json.loads(variables)
@@ -45,6 +62,7 @@ def _apply(name: str, variables: str | None = None):
                 c = Component.read(name)
     else:
         from superduper import templates
+
         t = getattr(templates, name)
         c = _build_from_template(t)
 

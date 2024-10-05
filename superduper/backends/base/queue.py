@@ -189,7 +189,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         print(f'Streaming with {component.type_id}:{component.identifier}')
 
     for job in jobs:
-        db.cluster.compute.submit(job)
+        job.execute(db)
     db.cluster.compute.release_futures(context)
 
 

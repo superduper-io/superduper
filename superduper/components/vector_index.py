@@ -131,7 +131,8 @@ class VectorIndex(CDC):
             )
         return False
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
+        assert isinstance(self.indexing_listener, Listener)
         assert hasattr(self.indexing_listener, 'output_table')
         assert hasattr(self.indexing_listener.output_table, 'schema')
         assert isinstance(self.indexing_listener, Listener)

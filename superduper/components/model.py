@@ -477,7 +477,6 @@ class Model(Component, metaclass=ModelMeta):
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = True,
-        flatten: bool = False,
     ) -> t.Any:
         """Predict on the data points in the database.
 
@@ -517,7 +516,7 @@ class Model(Component, metaclass=ModelMeta):
             ids=predict_ids,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
-            flatten=flatten,
+            flatten=self.flatten,
         )
         return out
 
@@ -551,7 +550,7 @@ class Model(Component, metaclass=ModelMeta):
                 k for k in sample if k.startswith(CFG.output_prefix)
             ]
             for pid in upstream_predict_ids:
-                if self.db.show(uuid=pid.split('__')[-1])['flatten']:
+                if self.db.show(uuid=pid.split('__')[-1]).get('flatten', False):
                     flat = True
                     break
 
@@ -615,6 +614,7 @@ class Model(Component, metaclass=ModelMeta):
                         max_chunk_size=None,
                         in_memory=in_memory,
                         predict_id=predict_id,
+                        flatten=flatten
                     )
                 )
                 it += 1

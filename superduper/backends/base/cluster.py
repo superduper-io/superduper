@@ -70,12 +70,20 @@ class Cluster(ABC):
         """
         self._db = value
 
-    def initialize(self):
-        """Initialize the cluster."""
+    def initialize(
+        self, with_compute: bool = False
+    ):
+        """Initialize the cluster.
+        
+        :param with_compute: Boolean to init 
+                             compute.
+        """
         assert self.db
-        self.compute.db = self.db
         self.cache.db = self.db
         self.queue.db = self.db
         self.vector_search.db = self.db
         self.crontab.db = self.db
+        self.compute.db = self.db
         self.cdc.db = self.db
+        if with_compute:
+            self.compute.initialize()

@@ -133,7 +133,8 @@ class MongoMetaDataStore(MetaDataStore):
 
         :param identifier: identifier of job
         """
-        return self.job_collection.find_one({'identifier': identifier})
+        return self.job_collection.find_one({'job_id': identifier})
+
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
@@ -176,7 +177,7 @@ class MongoMetaDataStore(MetaDataStore):
         except IndexError:
             raise FileNotFoundError(f'Can\'t find {type_id}: {identifier} in metadata')
 
-    def update_job(self, identifier: str, key: str, value: t.Any) -> UpdateResult:
+    def update_job(self, identifier: str, key: str, value: t.Any, upsert=False) -> UpdateResult:
         """Update a job in the metadata store.
 
         :param identifier: identifier of job
@@ -184,7 +185,7 @@ class MongoMetaDataStore(MetaDataStore):
         :param value: value to be updated
         """
         return self.job_collection.update_one(
-            {'identifier': identifier}, {'$set': {key: value}}
+            {'job_id': identifier}, {'$set': {key: value}}, upsert=upsert
         )
 
     def show_cdc_tables(self):

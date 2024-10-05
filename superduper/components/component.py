@@ -529,7 +529,7 @@ class Component(Leaf, metaclass=ComponentMeta):
                 schema[f.name] = dill_serializer
         return Schema(identifier=f'serializer/{self.identifier}', fields=schema)
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict= {}):
         self.status = Status.initializing
 
     def pre_create(self, db: Datalayer, startup_cache: t.Dict | None = None):
@@ -541,8 +541,8 @@ class Component(Leaf, metaclass=ComponentMeta):
         if startup_cache is None:
             startup_cache = {}
         for child in self.get_children():
-            child.pre_create(db, startup_cache=startup_cache)
-        self._pre_create(db, startup_cache=startup_cache)
+            child.pre_create(db)
+        self._pre_create(db)
 
     def on_create(self, db: Datalayer) -> None:
         """Called after the first time this component is created.

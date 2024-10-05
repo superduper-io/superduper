@@ -1,5 +1,6 @@
 import dataclasses as dc
 import typing as t
+from copy import copy
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -41,7 +42,6 @@ class Listener(CDC):
     select: t.Optional[Query] = None
     cdc_table: str = ''
     output_table: t.Optional[Table] = None
-    flatten: bool = False
 
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
@@ -107,21 +107,17 @@ class Listener(CDC):
                 Listener._complete_key(k, db, listener_uuids): v for k, v in key.items()
             }
         raise Exception(f'Invalid key type: {type(key)}')
-
-    def _auto_fill_data(self, db: Datalayer, startup_cache: t.Dict):
-        listener_keys = [k for k in startup_cache if k.startswith(CFG.output_prefix)]
+    def _auto_fill_data(self, db: Datalayer):
+        listener_keys = [k for k in db.startup_cache if k.startswith(CFG.output_prefix)]
         listener_predict_ids = [k[len(CFG.output_prefix) :] for k in listener_keys]
         lookup = dict(tuple(x.split('__')) for x in listener_predict_ids)
         assert self.select is not None
         self.select = self.select.complete_uuids(db, listener_uuids=lookup)
         if CFG.output_prefix in str(self.key):
             self.key = self._complete_key(self.key, db, listener_uuids=lookup)
-
-    def _get_sample_input(self, db: Datalayer, startup_cache: t.Dict):
-        msg = (
-            'Couldn\'t retrieve outputs to determine schema; '
-            '{table} returned 0 results.'
-        )
+    
+    def _get_sample_input(self, db: Datalayer):
+        msg = 'Couldn\'t retrieve outputs to determine schema; {table} returned 0 results.'
         if self.model.example is not None:
             input = self.model.example
         else:
@@ -132,9 +128,9 @@ class Listener(CDC):
                     try:
                         if not self.cdc_table.startswith(CFG.output_prefix):
                             r = next(db[self.select.table].select().limit(1).execute())
-                            r = {**r, **startup_cache}
+                            r = {**r, **db.startup_cache}
                         else:
-                            r = startup_cache
+                            r = copy(db.startup_cache)
                     except (StopIteration, KeyError) as e:
                         raise Exception(msg.format(table=self.cdc_table)) from e
             else:
@@ -146,7 +142,7 @@ class Listener(CDC):
             input = mapping(r)
         return input
 
-    def _determine_table_and_schema(self, db: Datalayer, startup_cache: t.Dict):
+    def _determine_table_and_schema(self, db: Datalayer):
         from superduper import Schema
 
         if self.model.datatype is not None:
@@ -156,7 +152,7 @@ class Listener(CDC):
         elif self.model.output_schema is not None:
             schema = self.model.output_schema
         else:
-            input = self._get_sample_input(db, startup_cache)
+            input = self._get_sample_input(db)
 
             if self.model.signature == 'singleton':
                 prediction = self.model.predict(input)
@@ -171,7 +167,7 @@ class Listener(CDC):
             if self.flatten:
                 prediction = prediction[0]
 
-            startup_cache[self.outputs] = prediction
+            db.startup_cache[self.outputs] = prediction
             schema = db.infer_schema(
                 {'data': prediction}, identifier=self.outputs + '/schema'
             )
@@ -184,20 +180,20 @@ class Listener(CDC):
 
         self.output_table = Table(self.outputs, schema=schema)
 
-    def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
+    def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         """Pre-create hook."""
         if self.select is None:
             return
         if not db.cfg.auto_schema:
-            startup_cache[self.outputs] = None
+            db.startup_cache[self.outputs] = None
             return
 
-        self._auto_fill_data(db, startup_cache)
+        self._auto_fill_data(db)
 
         if self.output_table is not None:
             return
 
-        self._determine_table_and_schema(db, startup_cache)
+        self._determine_table_and_schema(db)
 
     @property
     def mapping(self):
@@ -256,7 +252,6 @@ class Listener(CDC):
             select=self.select,
             ids=ids,
             **(self.predict_kwargs or {}),
-            flatten=self.flatten,
         )
         return out
 

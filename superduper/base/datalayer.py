@@ -84,6 +84,7 @@ class Datalayer:
         self.cluster.db = self
 
         self._cfg = s.CFG
+        self.startup_cache = {}
 
     def __getitem__(self, item):
         return self.databackend.get_query_builder(item)
@@ -333,7 +334,8 @@ class Datalayer:
 
         events = []
         for id in ids:
-            events.append(Change(ids=[str(id)], queue=table, type=event_type))
+            event = Change(ids=[str(id)], queue=table, type=event_type)
+            events.append(event)
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)  # type: ignore[arg-type]

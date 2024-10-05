@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Qdrant vector search support
 - Add placeholder for web app link in Application
 - Add basic rest server
+- Add support for remote artifacts
 
 #### Bug Fixes
 

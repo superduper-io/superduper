@@ -1,5 +1,7 @@
+import inspect
 import typing as t
 from collections import defaultdict
+from functools import partial
 
 from superduper import logging
 from superduper.base.code import Code
@@ -40,6 +42,23 @@ _LEAF_TYPES = {
 _LEAF_TYPES.update(_ENCODABLES)
 
 
+def _blob_getter(uri: str, getter: t.Callable):
+    from superduper.misc.download import Fetcher
+
+    dialect = uri.split('://')[0]
+
+    is_loader = 'loader' in inspect.signature(getter).parameters
+    if dialect not in Fetcher.DIALECTS or not is_loader:
+        return getter(uri)
+    else:
+        loader = Fetcher()
+        return getter(uri, loader=loader)
+
+
+def _build_blob_getter(base_getter):
+    return partial(_blob_getter, getter=base_getter)
+
+
 class _Getters:
     """A class to manage getters for decoding documents.
 
@@ -59,16 +78,19 @@ class _Getters:
 
     def add_getter(self, name: str, getter: t.Callable):
         """Add a getter for a reference type."""
-        self._getters[name].append(getter)
+        if name == 'blob':
+            self._getters[name].append(_build_blob_getter(getter))
+        else:
+            self._getters[name].append(getter)
 
     def run(self, name, data):
         """Run the getters one by one until one returns a value."""
         if name not in self._getters:
             return data
         for getter in self._getters[name]:
-            data = getter(data)
-            if data is not None:
-                break
+            out = getter(data)
+            if out is not None:
+                return out
         return data
 
 
@@ -188,6 +210,10 @@ class Document(MongoStyleDict):
 
         if r.get(KEY_FILES):
             getters.add_getter('file', lambda x: r[KEY_FILES].get(x.split(':')[-1]))
+
+        # Add a remote file getter
+        getters.add_getter('file', _get_file_remote_callback)
+        getters.add_getter('blob', _get_local_blob)
 
         if db is not None:
             getters.add_getter('component', lambda x: _get_component(db, x))
@@ -570,6 +596,27 @@ def _get_artifact_callback(db):
     return callback
 
 
+def _get_file_remote_callback(path):
+    from superduper.misc.download import Fetcher
+
+    fetcher = Fetcher()
+
+    if not fetcher.is_uri(path):
+        return None
+
+    def pull_file():
+        uri = path.split(':file:')[-1]
+        from superduper.misc.files import get_file_from_uri
+
+        content = fetcher(uri)
+        file_id = get_file_from_uri(uri)
+
+        file_path = fetcher.save(uri, content, file_id)
+        return file_path, path
+
+    return pull_file
+
+
 def _get_file_callback(db):
     def callback(path):
         def pull_file():
@@ -579,3 +626,8 @@ def _get_file_callback(db):
         return pull_file
 
     return callback
+
+
+def _get_local_blob(x, loader=None):
+    if x.split('://')[0].startswith('file'):
+        return loader(x)

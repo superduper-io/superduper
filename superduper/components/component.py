@@ -340,15 +340,31 @@ class Component(Leaf):
         if db is not None:
             for blob in os.listdir(path + '/' + 'blobs'):
                 with open(path + '/blobs/' + blob, 'rb') as f:
-                    bytes = f.read()
-                    db.artifact_store.put_bytes(bytes, blob)
+                    data = f.read()
+                    db.artifact_store.put_bytes(data, blob)
 
             out = Document.decode(config_object, db=db).unpack()
         else:
 
-            def load_blob(blob):
-                with open(path + '/blobs/' + blob, 'rb') as f:
-                    return f.read()
+            def load_blob(blob, loader=None):
+                from superduper.misc.hash import hash_string
+
+                def _read_blob(blob_path):
+                    with open(blob_path, 'rb') as f:
+                        return f.read()
+
+                key = hash_string(blob)[:32]  # uuid length
+                cached_path = path + '/blobs/' + key
+                if os.path.exists(cached_path):
+                    return _read_blob(cached_path)
+                elif loader and loader.is_uri(blob):
+                    with open(path + '/blobs/' + key, 'wb') as f:
+                        data = loader(blob)
+                        f.write(data)
+                        return data
+                else:
+                    blob_path = path + '/blobs/' + blob
+                    return _read_blob(blob_path=blob_path)
 
             getters = {'blob': load_blob}
 

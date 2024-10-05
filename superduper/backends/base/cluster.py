@@ -58,12 +58,14 @@ class Cluster(ABC):
         self._db = value
 
     def initialize(
-        self,
+        self, with_compute: bool = False
     ):
         assert self.db
-        self.compute.db = self.db
         self.cache.db = self.db
         self.queue.db = self.db
         self.vector_search.db = self.db
         self.crontab.db = self.db
+        self.compute.db = self.db
         self.cdc.db = self.db
+        if with_compute:
+            self.compute.initialize()

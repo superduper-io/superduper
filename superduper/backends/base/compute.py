@@ -98,4 +98,3 @@ class ComputeBackend(BaseBackend):
     @db.setter
     def db(self, value: 'Datalayer'):
         self._db = value
-        self.initialize()

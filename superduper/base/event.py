@@ -254,6 +254,7 @@ class Job(Event):
         kwargs['dependencies'] = dependencies
         return args, kwargs
 
+
     def execute(self, db: 'Datalayer'):
         db.metadata.create_job(
             {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}

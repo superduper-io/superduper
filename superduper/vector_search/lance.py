@@ -129,7 +129,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
             if isinstance(within_ids, (list, set)):
                 within_ids = tuple(within_ids)
             assert (
-                type(within_ids) == tuple
+                type(within_ids) is tuple
             ), 'within_ids must be a [tuple | list | set] for lance sql parser'
             result = self.dataset.to_table(
                 columns=['id'],

@@ -7,7 +7,12 @@ PARENT = Path(__file__).resolve().parent.parent.parent
 
 
 def ls():
-    return [x.split('.')[0] for x in os.listdir(PARENT / "templates") if str(x).endswith("zip")] 
+    """List all available templates."""
+    return [
+        x.split('.')[0]
+        for x in os.listdir(PARENT / "templates")
+        if not x.startswith('.')
+    ]
 
 
 def __getattr__(name: str):

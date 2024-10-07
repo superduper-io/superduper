@@ -5,7 +5,7 @@ import networkx as nx
 from superduper import CFG, Component
 
 if t.TYPE_CHECKING:
-    pass
+    from superduper.base.datalayer import Datalayer
 
 
 class CDC(Component):
@@ -24,6 +24,10 @@ class CDC(Component):
         super().__post_init__(db, artifacts)
 
     def declare_component(self, cluster):
+        """Declare the component to the cluster.
+
+        :param cluster: The cluster to declare the component to.
+        """
         super().declare_component(cluster)
         self.db.cluster.queue.put(self)
         self.db.cluster.cdc.put(self)
@@ -53,11 +57,11 @@ def _get_cdcs_on_table(table, db: 'Datalayer'):
     out = []
     for uuid in cdcs:
         component = db.load(uuid=uuid)
-        if isinstance(component, Listener):
+        if isinstance(component, Listener) and component.select is not None:
             if len(component.select.tables) > 1:
                 continue
             out.append(component)
-        out.append(component)
+        out.append(component)  # type: ignore[arg-type]
     return out
 
 
@@ -89,57 +93,3 @@ def build_streaming_graph(table, db: 'Datalayer'):
             new.extend(list(parents.values()))
         components = list({x.huuid: x for x in new}.values())
     return G, out_cache
-
-
-if __name__ == '__main__':
-    from superduper import Listener, superduper
-    from superduper.components.model import ObjectModel
-
-    db = superduper('mongomock://test')
-
-    db['documents'].insert([{'x': i} for i in range(10)]).execute()
-
-    m = ObjectModel('test', object=lambda x: x)
-    m2 = ObjectModel('test', object=lambda x, y: x)
-
-    l1 = Listener('l1', model=m, select=db['documents'].select(), key='x')
-
-    db.apply(l1)
-
-    l2 = Listener('l2', model=m, key=l1.outputs, select=l1.outputs_select)
-
-    db.apply(l2)
-
-    l3 = Listener('l3', model=m, select=db['documents'].select(), key='x')
-
-    db.apply(l3)
-
-    l4 = Listener(
-        'l4',
-        model=m2,
-        select=db['documents'].select().outputs(l1.predict_id, l3.predict_id),
-        key=(l1.outputs, l3.outputs),
-    )
-
-    db.apply(l4)
-
-    G, components = build_streaming_graph('documents', db)
-
-    def iterate_upwards(graph, start_nodes):
-        visited = set()
-        nodes_to_explore = list(start_nodes)
-
-        while nodes_to_explore:
-            current_node = nodes_to_explore.pop()
-
-            for parent in graph.successors(current_node):
-                if parent not in visited:
-                    yield current_node, parent
-                    visited.add(parent)
-                    nodes_to_explore.append(parent)
-
-    root_nodes = [n for n, d in G.in_degree() if d == 0]
-    print(root_nodes)
-
-    for child, parent in iterate_upwards(G, root_nodes):
-        print(f"Step: Moving from {child} to {parent}")

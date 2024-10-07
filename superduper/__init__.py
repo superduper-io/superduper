@@ -1,6 +1,4 @@
 # ruff: noqa: E402
-import os
-
 from .base import config, config_settings, configs, logger
 from .base.superduper import superduper
 

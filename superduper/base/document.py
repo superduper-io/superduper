@@ -167,8 +167,8 @@ class Document(MongoStyleDict):
         if not key.startswith(CFG.output_prefix) or '.' in key:
             return super().__getitem__(key)
 
-
         import re
+
         if re.match(f'{CFG.output_prefix}[^_]{1,}__[a-z0-9]{10,}', key):
             return super().__getitem__(key)
 
@@ -561,6 +561,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     keys = list(builds.keys())
     for other in keys:
         import re
+
         matches = re.findall(f'.*\?\(({k}\..*)\)', other)
         old_other = other[:]
         if matches:
@@ -572,7 +573,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
 
     for other in to_del:
         del builds[other]
-        
+
     if isinstance(leaf, Leaf):
         if not leaf.db:
             leaf.db = db
@@ -616,9 +617,12 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
         }
     if isinstance(r, str) and '?(' in r:
         import re
+
         matches = re.findall(r'\?\((.*?)\)', r)
         for match in matches:
-            r = r.replace(f'?({match})', _get_leaf_from_cache(match, builds, getters, db=db))
+            r = r.replace(
+                f'?({match})', _get_leaf_from_cache(match, builds, getters, db=db)
+            )
     if isinstance(r, str) and r.startswith('?'):
         out = _get_leaf_from_cache(r[1:], builds, getters=getters, db=db)
         return out

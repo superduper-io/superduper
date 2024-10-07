@@ -48,6 +48,7 @@ class SuperDuperData:
     query: t.Optional["Query"] = None
     model: t.Optional["Model"] = None
     source: t.Optional["SuperDuperData"] = None
+    flatten: bool = False
 
     def __post_init__(self):
         if self.type == SuperDuperDataType.DATA and self.graph is None:
@@ -320,6 +321,7 @@ class Graph:
             identifier=predict_id.split('__')[0],
             uuid=predict_id.split('__')[1],
             predict_kwargs=predict_kwargs,
+            flatten=node.flatten,
         )
         logging.info(f"Listener: {listener}")
 
@@ -385,7 +387,7 @@ class Graph:
                 continue
 
             elif upstream_node.type == SuperDuperDataType.MODEL_OUTPUT:
-                if not upstream_node.model.flatten:
+                if not upstream_node.flatten:
                     predict_ids.append(upstream_node.predict_id)
                 else:
                     if len(relations) != 1:

@@ -40,7 +40,6 @@ def model(
     identifier: t.Optional[str] = None,
     datatype=None,
     model_update_kwargs: t.Optional[t.Dict] = None,
-    flatten: bool = False,
     output_schema: t.Optional[Schema] = None,
     num_workers: int = 0,
 ):
@@ -53,7 +52,6 @@ def model(
     :param identifier: Identifier for the `ObjectModel`.
     :param datatype: Datatype for the model outputs.
     :param model_update_kwargs: Dictionary to define update kwargs.
-    :param flatten: If `True`, flatten the outputs and save.
     :param output_schema: Schema for the model outputs.
     :param num_workers: Number of workers to use for parallel processing
     """
@@ -86,7 +84,6 @@ def model(
                         object=object_,
                         datatype=datatype,
                         model_update_kwargs=model_update_kwargs or {},
-                        flatten=flatten,
                         output_schema=output_schema,
                         num_workers=num_workers,
                     )
@@ -99,7 +96,6 @@ def model(
                     object=item,
                     datatype=datatype,
                     model_update_kwargs=model_update_kwargs or {},
-                    flatten=flatten,
                     output_schema=output_schema,
                     num_workers=num_workers,
                 )
@@ -343,7 +339,6 @@ class Model(Component, metaclass=ModelMeta):
     :param signature: Model signature.
     :param datatype: DataType instance.
     :param output_schema: Output schema (mapping of encoders).
-    :param flatten: Flatten the model outputs.
     :param model_update_kwargs: The kwargs to use for model update.
     :param predict_kwargs: Additional arguments to use at prediction time.
     :param compute_kwargs: Kwargs used for compute backend job submit.
@@ -362,7 +357,6 @@ class Model(Component, metaclass=ModelMeta):
     signature: Signature = '*args,**kwargs'
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
-    flatten: bool = False
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
     predict_kwargs: t.Dict = dc.field(default_factory=dict)
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -395,7 +389,7 @@ class Model(Component, metaclass=ModelMeta):
         cluster.compute.put(self)
 
     @abstractmethod
-    def predict(self, *args, **kwargs) -> int:
+    def predict(self, *args, **kwargs) -> t.Any:
         """Predict on a single data point.
 
         Execute a single prediction on a data point
@@ -540,6 +534,7 @@ class Model(Component, metaclass=ModelMeta):
             docs = list(self.db.execute(select.select_using_ids(ids)))
             X_data = list(map(lambda x: mapping(x), docs))
         else:
+            assert isinstance(self.db, Datalayer)
             X_data = QueryDataset(
                 select=select,
                 ids=ids,
@@ -549,11 +544,12 @@ class Model(Component, metaclass=ModelMeta):
                 mapping=mapping,
             )
 
-
         flat = False
         if 'outputs' in str(select):
             sample = next(select.limit(1).execute())
-            upstream_predict_ids = [k for k in sample if k.startswith(CFG.output_prefix)]
+            upstream_predict_ids = [
+                k for k in sample if k.startswith(CFG.output_prefix)
+            ]
             for pid in upstream_predict_ids:
                 if self.db.show(uuid=pid.split('__')[-1])['flatten']:
                     flat = True
@@ -696,7 +692,7 @@ class Model(Component, metaclass=ModelMeta):
             identifier=outputs,
         )
 
-    def _eager_call__(self, *args, **kwargs):
+    def _eager_call__(self, *args, flatten: bool = False, **kwargs):
         from superduper.misc.eager import SuperDuperData, SuperDuperDataType, TrackData
 
         have_sdd, graph = SuperDuperData.detect_and_get_graph(*args, **kwargs)
@@ -713,10 +709,11 @@ class Model(Component, metaclass=ModelMeta):
         if not have_sdd:
             return result
 
-        if self.flatten:
+        if flatten:
             result = [
                 SuperDuperData(
-                    var, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self
+                    var, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self,
+                    flatten=flatten,
                 )
                 for var in result
             ]
@@ -724,7 +721,8 @@ class Model(Component, metaclass=ModelMeta):
 
         else:
             result = SuperDuperData(
-                result, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self
+                result, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self,
+                flatten=flatten,
             )
             track_results = [result]
 
@@ -735,14 +733,16 @@ class Model(Component, metaclass=ModelMeta):
                 if not isinstance(upstream_var, SuperDuperData):
                     # TODO: Support default key-value in listener.key
                     upstream_var = SuperDuperData(
-                        upstream_var, type=SuperDuperDataType.CONSTANT
+                        upstream_var, type=SuperDuperDataType.CONSTANT,
+                        flatten=flatten,
                     )
             upstream_mapping[upstream_var.source].append(TrackData(index, upstream_var))
 
         for k, upstream_var in kwargs.items():
             if not isinstance(upstream_var, SuperDuperData):
                 upstream_var = SuperDuperData(
-                    upstream_var, type=SuperDuperDataType.CONSTANT
+                    upstream_var, type=SuperDuperDataType.CONSTANT,
+                    flatten=flatten,
                 )
 
             upstream_mapping[upstream_var.source].append(TrackData(k, upstream_var))

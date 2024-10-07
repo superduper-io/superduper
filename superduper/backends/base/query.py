@@ -7,8 +7,6 @@ import uuid
 from abc import abstractmethod
 from functools import wraps
 
-import numpy
-
 from superduper import CFG, logging
 from superduper.base.constant import (
     KEY_BLOBS,
@@ -184,6 +182,7 @@ class Query(_BaseQuery):
 
     @property
     def tables(self):
+        """Tables contained in the ``Query`` object."""
         out = []
         for part in self.parts:
             if part[0] == 'outputs':
@@ -478,14 +477,22 @@ class Query(_BaseQuery):
     def _create_table_if_not_exists(self):
         pass
 
-    def complete_uuids(self, db, listener_uuids: t.Optional[t.Dict] = None):
+    def complete_uuids(
+        self, db: 'Datalayer', listener_uuids: t.Optional[t.Dict] = None
+    ):
+        """Complete the UUIDs with have been omitted from output-tables.
+
+        :param db: ``db`` instance.
+        :param listener_uuids: identifier to UUIDs of listeners lookup
+        """
         listener_uuids = listener_uuids or {}
         import copy
+
         r = copy.deepcopy(self.dict())
         lines = r['query'].split('\n')
         parser = importlib.import_module(self.__module__).parse_query
 
-        def get_uuid(identifier):
+        def _get_uuid(identifier):
             msg = (
                 'Couldn\'t complete `Listener` key '
                 'based on ellipsis {predict_id}__????????????????. '
@@ -498,11 +505,10 @@ class Query(_BaseQuery):
 
             try:
                 return db.show('listener', identifier, -1)['uuid']
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 pass
 
             raise Exception(msg.format(predict_id=identifier))
-
 
         for i, line in enumerate(lines):
             output_query_groups = re.findall('\.outputs\((.*?)\)', line)
@@ -514,7 +520,7 @@ class Query(_BaseQuery):
                     if re.match(r'^.*__([0-9a-z]{15,})$', predict_id):
                         replace_ids.append(f'"{predict_id}"')
                         continue
-                    listener_uuid = get_uuid(predict_id)
+                    listener_uuid = _get_uuid(predict_id)
                     replace_ids.append(f'"{predict_id}__{listener_uuid}"')
                 new_group = ', '.join(replace_ids)
                 lines[i] = lines[i].replace(group, new_group)
@@ -524,27 +530,27 @@ class Query(_BaseQuery):
             for group in output_table_groups:
                 if re.match(f'^{CFG.output_prefix}[^\.]+__([0-9a-z]{{15,}})\.$', group):
                     continue
-                identifier = group[len(CFG.output_prefix):-1]
-                listener_uuid = get_uuid(identifier)
+                identifier = group[len(CFG.output_prefix) : -1]
+                listener_uuid = _get_uuid(identifier)
                 new_group = f'{CFG.output_prefix}{identifier}__{listener_uuid}.'
                 lines[i] = lines[i].replace(group, new_group)
 
         def swap_keys(r: str | list | dict):
             if isinstance(r, str):
-                if r.startswith(CFG.output_prefix) and '__' not in r[len(CFG.output_prefix):]:
+                if (
+                    r.startswith(CFG.output_prefix)
+                    and '__' not in r[len(CFG.output_prefix) :]
+                ):
                     parts = [r]
                     if '.' in r:
                         parts = list(r.split('.'))
-                    parts[0] += '__' + get_uuid(r[len(CFG.output_prefix):])
+                    parts[0] += '__' + _get_uuid(r[len(CFG.output_prefix) :])
                     return '.'.join(parts)
                 return r
             if isinstance(r, list):
                 return [swap_keys(x) for x in r]
             if isinstance(r, dict):
-                return {
-                    swap_keys(k): swap_keys(v)
-                    for k, v in r.items()
-                }
+                return {swap_keys(k): swap_keys(v) for k, v in r.items()}
             return r
 
         r['query'] = '\n'.join(lines)
@@ -556,6 +562,7 @@ class Query(_BaseQuery):
         return out
 
     def tolist(self, db=None, eager_mode=False, **kwargs):
+        """Execute and convert to list."""
         return self.execute(db=db, eager_mode=eager_mode, **kwargs).tolist()
 
     def execute(self, db=None, eager_mode=False, handle_outputs=True, **kwargs):
@@ -566,7 +573,9 @@ class Query(_BaseQuery):
         """
         if self.type == 'select' and handle_outputs and 'outputs' in str(self):
             query = self.complete_uuids(db=db or self.db)
-            return query.execute(db=db, eager_mode=eager_mode, **kwargs, handle_outputs=False)
+            return query.execute(
+                db=db, eager_mode=eager_mode, **kwargs, handle_outputs=False
+            )
         self.db = db or self.db
         results = self.db.execute(self, **kwargs)
         if eager_mode and self.type == 'select':
@@ -876,16 +885,10 @@ class Model(_BaseQuery):
         m = self.db.load('model', self.table)
         method = getattr(m, self.parts[-1][0])
         r = method(*self.parts[-1][1], **self.parts[-1][2])
-        if m.flatten:
-            return [
-                Document({'_base': res}) if not isinstance(res, dict) else Document(res)
-                for res in r
-            ]
+        if isinstance(r, dict):
+            return Document(r)
         else:
-            if isinstance(r, dict):
-                return Document(r)
-            else:
-                return Document({'_base': r})
+            return Document({'_base': r})
 
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Return the query as a dictionary."""

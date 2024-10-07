@@ -159,6 +159,12 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def set_component_status(self, uuid: str, status: 'Status'):
+        """
+        Set the status of a component.
+
+        :param uuid: ``Component.uuid``
+        :param status: ``Status`` to set
+        """
         pass
 
     # ------------------ JOBS ------------------
@@ -258,11 +264,18 @@ class MetaDataStore(ABC):
             )
             return components
 
+    # TODO is this used?
     @abstractmethod
     def show_cdc_tables(self):
+        """List the tables used for CDC."""
         pass
 
     def show_cdcs(self, table):
+        """
+        Show the ``CDC`` components running on a given table.
+
+        :param table: ``Table`` to consider.
+        """
         results = self._show_cdcs(table)
         lookup = {}
         results = list(results)
@@ -275,9 +288,6 @@ class MetaDataStore(ABC):
     @abstractmethod
     def _show_cdcs(self, table):
         pass
-
-    def show_cdc_tables(self):
-        ...
 
     @abstractmethod
     def _show_components(self, type_id: t.Optional[str] = None):

@@ -14,6 +14,7 @@ from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
+from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.ext.utils import str_shape
 from superduper.misc.annotations import component
@@ -21,7 +22,7 @@ from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
 
 if t.TYPE_CHECKING:
-    from superduper.backends.base.cluster import Cluster
+    pass
 
 KeyType = t.Union[str, t.List, t.Dict]
 
@@ -131,17 +132,24 @@ class VectorIndex(CDC):
         return False
 
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict):
-        assert isinstance(self.indexing_listener, Listener)
         assert hasattr(self.indexing_listener, 'output_table')
         assert hasattr(self.indexing_listener.output_table, 'schema')
+        assert isinstance(self.indexing_listener, Listener)
+        assert isinstance(self.indexing_listener.output_table, Table)
         try:
-            dt = next(
-                v for v in self.indexing_listener.output_table.schema.fields.values()
+            assert isinstance(
+                self.indexing_listener.output_table.schema,
+                Schema,
+            )
+            next(
+                v
+                for v in self.indexing_listener.output_table.schema.fields.values()
                 if hasattr(v, 'shape') and v.shape is not None
             )
         except StopIteration:
             raise Exception(
-                f'Couldn\'t get a vector shape for {self.indexing_listener.output_table.schema.huuid}'
+                f'Couldn\'t get a vector shape for '
+                f'{self.indexing_listener.output_table.schema.huuid}'
             )
 
     # TODO consider a flag such as depends='*'
@@ -151,7 +159,10 @@ class VectorIndex(CDC):
     def copy_vectors(self, ids: t.Sequence[str] | None = None):
         """Copy vectors to the vector index."""
         if not hasattr(self.indexing_listener.model, 'datatype'):
-            self.indexing_listener.model = self.db.load(uuid=self.indexing_listener.model.uuid)
+            self.indexing_listener.model = self.db.load(
+                uuid=self.indexing_listener.model.uuid
+            )
+        assert isinstance(self.db, Datalayer)
         self.db.cluster.vector_search.put(self)
         select = self.db[self.cdc_table].select()
 
@@ -333,21 +344,30 @@ class VectorIndex(CDC):
 
         This dimension will be used to prepare vectors in the vector database.
         """
-
         msg = f'Couldn\'t find an output table for {self.indexing_listener.huuid}'
         assert isinstance(self.indexing_listener.output_table, Table), msg
-        msg = f'Couldn\'t find an output table schema for {self.indexing_listener.output_table.huuid}'
+        msg = (
+            f'Couldn\'t find an output table schema for '
+            f'{self.indexing_listener.output_table.huuid}'
+        )
         assert hasattr(self.indexing_listener.output_table, 'schema')
-        msg = f'Couldn\'t get a vector shape for {self.indexing_listener.output_table.schema.huuid}'
+        msg = (
+            f'Couldn\'t get a vector shape for '
+            f'{self.indexing_listener.output_table.schema.huuid}'
+        )
 
         dt = next(
-            v for v in self.indexing_listener.output_table.schema.fields.values()
+            v
+            for v in self.indexing_listener.output_table.schema.fields.values()
             if hasattr(v, 'shape') and v.shape is not None
         )
         try:
+            assert dt.shape is not None, msg
             return dt.shape[-1]
         except IndexError as e:
-            raise Exception(f'Couldn\'t get a vector shape for {dt.huuid} due to empty shape') from e
+            raise Exception(
+                f'Couldn\'t get a vector shape for {dt.huuid} due to empty shape'
+            ) from e
 
 
 # TODO what is this?

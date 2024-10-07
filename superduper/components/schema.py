@@ -1,8 +1,6 @@
 import typing as t
 from functools import cached_property
 
-from overrides import override
-
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
 from superduper.components.datatype import DataType

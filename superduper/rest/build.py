@@ -1,4 +1,5 @@
 import hashlib
+import shutil
 import typing as t
 
 import magic
@@ -132,3 +133,78 @@ def build_rest_app(app: SuperDuperApp):
             if 'score' in result[0][0]:
                 result = sorted(result, key=lambda x: -x[0]['score'])
         return result
+
+
+def build_frontend(app: SuperDuperApp, host: str = 'localhost', port: int = 8000):
+    """Add the frontend to the FastAPI app.
+
+    :param app: app instance SuperDuperApp
+    :param host: host address
+    :param port: port number
+    """
+    import os
+
+    from fastapi import HTTPException, Request
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    ROOT = os.path.dirname(os.path.abspath(__file__))
+
+    try:
+        shutil.rmtree(f"{ROOT}/superdupertmp")
+    except FileNotFoundError:
+        pass
+
+    shutil.copytree(f"{ROOT}/out", f"{ROOT}/superdupertmp")
+
+    DIRECTORY = f"{ROOT}/superdupertmp"
+
+    if host != 'localhost' or port != 8000:
+        for root, _, files in os.walk(DIRECTORY):
+            for file in files:
+                if file.endswith('.js'):
+                    with open(os.path.join(root, file), "r") as f:
+                        content = f.read()
+                    content = content.replace("localhost:8000", f"{ host }:{ port }")
+                    with open(os.path.join(root, file), "w") as f:
+                        f.write(content)
+
+    app.app.mount("/static", StaticFiles(directory=DIRECTORY), name="static")
+
+    @app.app.get("/{path:path}")
+    async def serve_file(request: Request, path: str):
+        """Serve files from the default 'out' directory.
+
+        :param request: Request
+        :param path: path to file
+        """
+        # Special case: if path is 'webui', serve the 'index.html'
+        # from the 'out' directory
+        if path == "webui":
+            webui_index = os.path.join(DIRECTORY, "index.html")
+            if os.path.exists(webui_index):
+                return FileResponse(webui_index)
+            else:
+                raise HTTPException(
+                    status_code=404, detail="index.html not found for /webui"
+                )
+
+        # Normal case: serve files from the 'out' directory
+        requested_path = os.path.join(DIRECTORY, path.lstrip("/"))
+
+        # If the path is a directory, attempt to serve index.html
+        if os.path.isdir(requested_path):
+            index_file = os.path.join(requested_path, "index.html")
+            if os.path.exists(index_file):
+                return FileResponse(index_file)
+
+        if os.path.exists(requested_path):
+            return FileResponse(requested_path)
+
+        # Try appending .html to the requested path
+        path_with_html = f"{requested_path}.html"
+        if os.path.exists(path_with_html):
+            return FileResponse(path_with_html)
+
+        # If file not found, raise a 404 error
+        raise HTTPException(status_code=404, detail="File not found")

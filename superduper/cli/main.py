@@ -19,8 +19,25 @@ def apply(name: str, variables: str | None = None):
 
 @command(help='Start rest server and user interface')
 def start(port: int = 8000, host: str = 'localhost'):
-    """Start the rest server and user interface."""
-    ...
+    """Start the rest server and user interface.
+
+    :param port: Port to run the server on.
+    :param host: Host to run the server on.
+    """
+    from superduper.rest.base import SuperDuperApp
+    from superduper.rest.build import build_frontend, build_rest_app
+
+    app = SuperDuperApp('rest', port=port)
+
+    if host == 'localhost':
+        # host frontend and server together
+        build_rest_app(app)
+        app.add_default_endpoints()
+    else:
+        logging.warn('Frontend pointing to remote server!')
+
+    build_frontend(app, port=port, host=host)
+    app.start()
 
 
 @command(help='Apply a template or application to a `superduper` deployment')

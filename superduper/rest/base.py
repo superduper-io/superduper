@@ -138,8 +138,9 @@ class SuperDuperApp:
         - /health: Health check endpoint
         - /handshake/config: Handshake endpoint
         """
+        logging.info(f"Adding default endpoints to '{self.service}' app")
 
-        @self.router.get('/health')
+        @self.add('/health', method='get')
         def health():
             return {'status': 200}
 
@@ -152,7 +153,10 @@ class SuperDuperApp:
 
         # Add rows to the table
         for route in self._app.routes:
-            table.add_row([route.path, ", ".join(route.methods), route.name])
+            try:
+                table.add_row([route.path, ", ".join(route.methods), route.name])
+            except AttributeError:
+                logging.warn(f"Route {route} has no name")
 
         logging.info(f"Routes for '{self.service}' app: \n{table}")
 

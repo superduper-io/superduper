@@ -109,9 +109,9 @@ def test_flatten(db: "Datalayer"):
     def func_a(n, x):
         return [x] * n
 
-    model_a = ObjectModel(identifier="flatten", object=func_a, flatten=True)
+    model_a = ObjectModel(identifier="flatten", object=func_a)
 
-    output_a = model_a(data['n'], data['x'])[0]
+    output_a = model_a(data['n'], data['x'], flatten=True)[0]
     output_a.apply()
     pprint(output_a)
 

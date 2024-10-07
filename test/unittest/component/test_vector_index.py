@@ -1,5 +1,6 @@
-from superduper import model
 from test.utils.usecase.vector_search import add_data
+
+from superduper import model
 
 
 def test_vector_index_recovery(db):
@@ -56,11 +57,10 @@ def test_initialize_output_datatype_with_dimensions(db):
     vector_index.pre_create(db)
 
     from superduper import Table
+
     assert isinstance(
         vector_index.indexing_listener.output_table,
         Table,
     )
 
     assert vector_index.dimensions == 32
-
-

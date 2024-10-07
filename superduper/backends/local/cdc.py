@@ -11,12 +11,20 @@ class LocalCDCBackend(CDCBackend):
         self._trigger_uuid_mapping = {}
 
     def handle_event(self, table, ids, event_type):
+        """Handle an event.
+
+        :param table: The table.
+        :param ids: The IDs.
+        :param event_type: The event type.
+        """
         return self.db.on_event(table=table, ids=ids, event_type=event_type)
 
     def list_components(self):
+        """List components."""
         return sorted(list(self.triggers))
 
     def list_uuids(self):
+        """List UUIDs of components."""
         return list(self._trigger_uuid_mapping.values())
 
     def _put(self, item):
@@ -27,6 +35,7 @@ class LocalCDCBackend(CDCBackend):
         self.triggers.remove(item)
 
     def initialize(self):
+        """Initialize the CDC."""
         for type_id, identifier in self.db.show():
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
             if r['trigger']:
@@ -34,5 +43,6 @@ class LocalCDCBackend(CDCBackend):
             # TODO consider re-initialzing CDC jobs since potentially failure
 
     def drop(self):
+        """Drop the CDC."""
         self.triggers = set()
         self._trigger_uuid_mapping = {}

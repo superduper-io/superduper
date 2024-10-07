@@ -76,6 +76,7 @@ class SuperDuperCursor:
         return Document.decode(r, db=self.db, schema=self.schema)
 
     def tolist(self):
+        """Return the cursor as a list."""
         return list(self)
 
     next = __next__

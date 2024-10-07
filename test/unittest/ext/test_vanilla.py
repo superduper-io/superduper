@@ -42,7 +42,6 @@ def test_function_predict_with_flatten_outputs(data_in_db):
     function = ObjectModel(
         object=lambda x: [x, x, x] if x > 2 else [x, x],
         identifier='test',
-        flatten=True,
     )
     function.db = data_in_db
     data_in_db.apply(function)
@@ -50,6 +49,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
         X='X',
         select=data_in_db['documents'].select(),
         predict_id='test',
+        flatten=True,
     )
     out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
     primary_id = data_in_db['documents'].primary_id
@@ -84,7 +84,6 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function = ObjectModel(
         object=lambda x: [x] if x < 2 else [x, x, x],
         identifier='test',
-        flatten=True,
     )
     function.db = data_in_db
     data_in_db.apply(function)
@@ -93,6 +92,7 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         X='X',
         select=data_in_db['documents'].select(),
         predict_id='test',
+        flatten=True,
     )
 
     out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))

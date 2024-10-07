@@ -69,6 +69,8 @@ def add_models(db: Datalayer):
         ["linear_b_multi", (16, 8), array(dtype="float", shape=(8,)), True],
     ]
     for identifier, weight_shape, datatype, flatten in params:
+        weight = np.random.randn(weight_shape[1])
+
         if flatten:
             weight = np.random.randn(weight_shape[1])
             m = ObjectModel(
@@ -76,7 +78,6 @@ def add_models(db: Datalayer):
                 identifier=identifier,
                 datatype=datatype,
                 example=np.random.randn(weight_shape[0]),
-                flatten=True,
             )
         else:
             weight = np.random.randn(*weight_shape)
@@ -86,7 +87,7 @@ def add_models(db: Datalayer):
                 datatype=datatype,
                 example=np.random.randn(weight_shape[0]),
             )
-        db.add(m)
+        db.apply(m)
 
 
 def add_listeners(db: Datalayer, collection_name="documents"):
@@ -121,6 +122,7 @@ def add_listeners(db: Datalayer, collection_name="documents"):
             select=select,
             key="x",
             model=model,
+            flatten=True,
         )
     )
 

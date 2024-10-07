@@ -15,14 +15,17 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def drop(self):
+        """Drop the backend."""
         pass
 
     @abstractmethod
     def list_uuids(self):
+        """List uuids deployed."""
         pass
 
     @abstractmethod
     def list_components(self):
+        """List type_ids, and identifiers deployed."""
         pass
 
     @abstractmethod
@@ -39,6 +42,11 @@ class BaseBackend(ABC):
         pass
 
     def put(self, component: 'Component', **kwargs):
+        """Add a component to the deployment.
+
+        :param component: ``Component`` to put.
+        :param kwargs: kwargs dictionary.
+        """
         # This is to make sure that we only have 1 version
         # of each component implemented at any given time
         # TODO: get identifier in string component argument.
@@ -57,8 +65,13 @@ class BaseBackend(ABC):
 
     @property
     def db(self) -> 'Datalayer':
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Set the ``db``.
+
+        :param value: ``Datalayer`` instance.
+        """
         self._db = value

@@ -119,6 +119,14 @@ class Downloads(BaseConfig):
 
 
 @dc.dataclass
+class RestConfig(BaseConfig):
+    """Configuratin for basic rest server."""
+
+    uri: str = 'localhost:8000'
+    config: t.Optional[str] = None
+
+
+@dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
 
@@ -170,6 +178,7 @@ class Config(BaseConfig):
     auto_schema: bool = True
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
+    rest: RestConfig = dc.field(default_factory=RestConfig)
 
     def __post_init__(self, envs):
         if envs is not None:

@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 from superduper import CFG
 
-HOST = CFG.cluster.rest.uri
+HOST = CFG.rest.uri
 VERBOSE = os.environ.get('SUPERDUPER_VERBOSE', '1')
 
 

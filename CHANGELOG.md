@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated CONTRIBUTING.md
 - Add README.md files for the plugins.
 - Add templates to project
+- Add frontend to project
 
 #### New Features & Functionality
 

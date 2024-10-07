@@ -1,1 +1,2 @@
-recursive-include templates *.zip
+recursive-include templates *
+recursive-include superduper/rest/out *

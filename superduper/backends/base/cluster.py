@@ -31,7 +31,12 @@ class Cluster(ABC):
     def __post_init__(self):
         self._db = None
 
+    # TODO use the `force` parameter.
     def drop(self, force: bool = False):
+        """Drop all of the backends.
+
+        :param force: Skip confirmation.
+        """
         self.compute.drop()
         self.queue.drop()
         self.vector_search.drop()
@@ -39,27 +44,34 @@ class Cluster(ABC):
         self.crontab.drop()
 
     def disconnect(self):
+        """Disconnect from the cluster."""
         pass
-
-    def __post_init__(self):
-        self._db = None
 
     @classmethod
     @abstractmethod
     def build(cls, CFG, **kwargs):
+        """Build the cluster from configuration.
+
+        :param CFG: configuration object
+        :param kwargs: additional parameters
+        """
         pass
 
     @property
     def db(self):
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value):
+        """Set the ``db``.
+
+        :param value: ``Datalayer`` instance.
+        """
         self._db = value
 
-    def initialize(
-        self,
-    ):
+    def initialize(self):
+        """Initialize the cluster."""
         assert self.db
         self.compute.db = self.db
         self.cache.db = self.db

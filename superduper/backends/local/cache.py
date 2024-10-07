@@ -1,3 +1,5 @@
+import typing as t
+
 from superduper.backends.base.cache import Cache
 from superduper.components.component import Component
 
@@ -12,21 +14,21 @@ class LocalCache(Cache):
     def __init__(self, init_cache: bool = True):
         super().__init__()
         self.init_cache = init_cache
-        self._cache = {}
-        self._cache_uuid = {}
+        self._cache: t.Dict = {}
+        self._cache_uuid: t.Dict = {}
         self._db = None
 
     def list_components(self):
+        """List components by (type_id, identifier) in the cache."""
         return list(self._cache.keys())
 
     def list_uuids(self):
+        """List UUIDs in the cache."""
         return list(self._cache_uuid.keys())
 
-    def __getitem__(self, *item):
-        return self._cache[item]
-
-    def get_by_id(self, *item):
-        return self._cache[item]
+    # TODO which of these is the correct one?
+    # def __getitem__(self, *item):
+    #     return self._cache[item]
 
     def _put(self, component: Component):
         """Put a component in the cache."""
@@ -37,6 +39,7 @@ class LocalCache(Cache):
         del self._cache[name]
 
     def initialize(self):
+        """Initialize the cache."""
         for type_id, identifier in self.db.show():
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
             if r.get('cache', False):
@@ -45,29 +48,35 @@ class LocalCache(Cache):
                 self.db.cluster.compute.put(component)
 
     def drop(self):
+        """Drop the cache."""
         self._cache = {}
 
     @property
     def db(self):
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value):
+        """Set the ``db``.
+
+        :param value: The value to set the ``db`` to.
+        """
         self._db = value
-        self.init()
+        self.initialize()
 
-    def init(self):
-        """Initialize the cache."""
-        if not self.init_cache:
-            return
-        for component in self.db.show():
-            if 'version' not in component:
-                component['version'] = -1
+    # def init(self):
+    #     """Initialize the cache."""
+    #     if not self.init_cache:
+    #         return
+    #     for component in self.db.show():
+    #         if 'version' not in component:
+    #             component['version'] = -1
 
-            show = self.db.show(**component)
-            uuid = show.get('uuid')
-            if show.get('cache', False):
-                self._cache[uuid] = self.db.load(uuid=uuid)
+    #         show = self.db.show(**component)
+    #         uuid = show.get('uuid')
+    #         if show.get('cache', False):
+    #             self._cache[uuid] = self.db.load(uuid=uuid)
 
     def __getitem__(self, uuid: str):
         """Get a component from the cache."""

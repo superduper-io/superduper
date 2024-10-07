@@ -23,7 +23,7 @@ class LocalComputeBackend(ComputeBackend):
         self.kwargs = kwargs
         self._cache: t.Dict = {}
         self._db = None
-        self.futures = defaultdict(lambda: {})
+        self.futures: t.DefaultDict = defaultdict(lambda: {})
 
     @property
     def remote(self) -> bool:
@@ -40,12 +40,16 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
+    # TODO needed?
     def release_futures(self, context: str):
+        """Release futures for a given context."""
         try:
             del self.futures[context]
         except KeyError:
             logging.warn(f'Could not release futures for context {context}')
 
+    # TODO needed? (we have .put)
+    # TODO hook to do what?
     def component_hook(self, *args, **kwargs):
         """Hook for component."""
         pass
@@ -69,6 +73,8 @@ class LocalComputeBackend(ComputeBackend):
             raise e
         self.db.metadata.update_job(job.identifier, 'status', 'success')
         self.futures[job.context][job.job_id] = output
+        assert job.job_id is not None
+        return job.job_id
 
     def __delitem__(self, item):
         pass
@@ -86,9 +92,11 @@ class LocalComputeBackend(ComputeBackend):
         return []
 
     def initialize(self):
+        """Initialize the compute."""
         pass
 
     def drop(self):
+        """Drop the compute."""
         pass
 
     @property

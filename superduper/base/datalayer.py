@@ -38,9 +38,9 @@ DBResult = t.Any
 TaskGraph = t.Any
 
 DeleteResult = DBResult
-InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
+InsertResult = t.List[str]
 SelectResult = SuperDuperCursor
-UpdateResult = t.Any
+UpdateResult = t.List[str]
 PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
@@ -287,7 +287,7 @@ class Datalayer:
         logging.debug(f'Inserted IDs: {inserted_ids}')
 
         if not refresh:
-            return
+            return []
 
         if (
             insert.table in self.metadata.show_cdc_tables()
@@ -336,7 +336,7 @@ class Datalayer:
             events.append(Change(ids=[str(id)], queue=table, type=event_type))
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
-        return self.cluster.queue.publish(events)
+        return self.cluster.queue.publish(events)  # type: ignore[arg-type]
 
     def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
         """
@@ -348,7 +348,7 @@ class Datalayer:
         _, updated_ids, deleted_ids = write.do_execute(self)
 
         if not refresh:
-            return
+            return []
 
         call_cdc = (
             write.table in self.metadata.show_cdc_tables()
@@ -424,7 +424,7 @@ class Datalayer:
 
         # This populates the component with data fetched
         # from `db` if necessary
-        # We need pre as well as post-create, since the order 
+        # We need pre as well as post-create, since the order
         # between parents and children are reversed in each
         # sometimes parents might need to grab things from children
         # and vice-versa
@@ -475,7 +475,8 @@ class Datalayer:
         for i, j in enumerate(unique_job_events):
             if j.dependencies:
                 print(
-                    f'[{i}]: {j.huuid}: {j.method} ~ [{",".join([steps[d] for d in j.dependencies])}]'
+                    f'[{i}]: {j.huuid}: {j.method} ~ '
+                    f'[{",".join([steps[d] for d in j.dependencies])}]'
                 )
             else:
                 print(f'[{i}]: {j.huuid}: {j.method}')
@@ -606,6 +607,7 @@ class Datalayer:
             if huuid:
                 uuid = huuid.split(':')[-1]
             try:
+                assert uuid is not None
                 uuid = uuid.split('.')[0]
                 info = self.metadata.get_component_by_uuid(
                     uuid=uuid,
@@ -730,6 +732,7 @@ class Datalayer:
             for file_id, bytes in artifacts.items():
                 self.artifact_store.put_bytes(bytes, file_id)
 
+        assert context is not None
         event = Create(
             context=context,
             component=serialized,
@@ -876,6 +879,7 @@ class Datalayer:
         self.expire(object.uuid)
 
     def expire(self, uuid):
+        """Expire a component from the cache."""
         parents = True
         self.cluster.cache.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)

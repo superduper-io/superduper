@@ -15,7 +15,7 @@ class MyTrainer(Trainer):
     training_done = False
 
     def fit(self, *args, **kwargs):
-        with open('_training_done.txt', 'w') as f:
+        with open('_training_done.txt', 'w'):
             pass
 
 
@@ -119,7 +119,6 @@ def test_create_output_dest(db, data, flatten):
     m1 = ObjectModel(
         "m1",
         object=lambda x: data if not flatten else [data] * 10,
-        flatten=flatten,
     )
     q = table.insert([{"x": 1}])
 
@@ -130,6 +129,7 @@ def test_create_output_dest(db, data, flatten):
         select=table.select(),
         key="x",
         identifier="listener1",
+        flatten=flatten,
     )
 
     db.apply(listener1)
@@ -329,9 +329,8 @@ def test_predict_id_utils(db):
 
 
 def test_complete_uuids(db):
-    
     db.cfg.auto_schema = True
-    
+
     m1 = ObjectModel(
         "m1",
         object=lambda x: x + 0,
@@ -355,7 +354,7 @@ def test_complete_uuids(db):
     )
 
     db.apply(l1)
-    
+
     q = db['test'].outputs('l1')
 
     qq = q.complete_uuids(db)
@@ -368,9 +367,8 @@ def test_complete_uuids(db):
 
 
 def test_autofill_data_listener(db):
-
     db.cfg.auto_schema = True
-    
+
     m = ObjectModel(
         "m1",
         object=lambda x: x + 2,
@@ -385,7 +383,9 @@ def test_autofill_data_listener(db):
     ).execute()
 
     l1 = m.to_listener(select=db['test'].select(), key='x', identifier='l1')
-    l2 = m.to_listener(select=db['_outputs__l1'].select(), key='_outputs__l1', identifier='l2')
+    l2 = m.to_listener(
+        select=db['_outputs__l1'].select(), key='_outputs__l1', identifier='l2'
+    )
 
     db.apply(l1)
     db.apply(l2)
@@ -398,6 +398,7 @@ def test_autofill_data_listener(db):
     r = app.encode(metadata=False)
 
     import pprint
+
     pprint.pprint({k: v for k, v in r.items() if k not in {'_blobs', '_files'}})
 
     out = Document.decode(r, db=db).unpack()

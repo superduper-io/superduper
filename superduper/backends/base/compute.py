@@ -4,6 +4,9 @@ from abc import abstractmethod
 from superduper.backends.base.backends import BaseBackend
 from superduper.base.event import Job
 
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
+
 
 class ComputeBackend(BaseBackend):
     """
@@ -21,8 +24,10 @@ class ComputeBackend(BaseBackend):
         """Return the type of compute engine."""
         pass
 
+    # TODO is this used anywhere?
     @abstractmethod
     def release_futures(self, context: str):
+        """Release futures from backend."""
         pass
 
     @property
@@ -46,22 +51,24 @@ class ComputeBackend(BaseBackend):
         """
         Submits a function to the server for execution.
 
-        :param function: The function to be executed.
-        :param kwargs: Additional keyword arguments to be passed to the function.
+        :param job: The ``Job`` to be executed.
         """
         pass
 
+    # TODO is this used?
     @property
     @abstractmethod
     def tasks(self) -> t.Any:
         """List for all tasks."""
         pass
 
+    # TODO is this used?
     @abstractmethod
     def wait_all(self) -> None:
         """Waits for all pending tasks to complete."""
         pass
 
+    # TODO is this used?
     @abstractmethod
     def result(self, identifier: str) -> t.Any:
         """Retrieves the result of a previously submitted task.
@@ -93,9 +100,14 @@ class ComputeBackend(BaseBackend):
 
     @property
     def db(self) -> 'Datalayer':
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Set the ``db``.
+
+        :param value: ``Datalayer`` instance.
+        """
         self._db = value
         self.initialize()

@@ -9,8 +9,8 @@ import numpy.typing
 from superduper.backends.base.backends import BaseBackend
 
 if t.TYPE_CHECKING:
-    from superduper.components.vector_index import VectorIndex
     from superduper.base.datalayer import Datalayer
+    from superduper.components.vector_index import VectorIndex
 
 
 class VectorSearchBackend(BaseBackend):
@@ -24,17 +24,32 @@ class VectorSearchBackend(BaseBackend):
         pass
 
     def add(self, identifier, vectors):
+        """Add vectors to a vector-index.
+
+        :param identifier: Identifier of index.
+        :param vectors: Vectors.
+        """
         self.get(identifier).add(vectors)
 
     def delete(self, identifier, ids):
+        """Delete ids from index.
+
+        :param identifier: Identifier of index.
+        :param ids: Ids to delete.
+        """
         self.get(identifier).delete(ids)
 
     @property
     def db(self) -> 'Datalayer':
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Set the ``db``.
+
+        :param value: ``Datalayer`` instance.
+        """
         self._db = value
         self.initialize()
 
@@ -121,12 +136,16 @@ class BaseVectorSearcher(VectorSearcherInterface):
     def from_component(cls, index: 'VectorIndex'):
         """Create a vector searcher from a vector index.
 
-        :param vi: VectorIndex instance
+        :param vi: ``VectorIndex`` instance
         """
         return cls(uuid=index.uuid, dimensions=index.dimensions, measure=index.measure)
 
     @abstractmethod
     def initialize(self, db):
+        """Initialize the vector-searcher.
+
+        :param db: ``Datalayer`` instance.
+        """
         pass
 
     @abstractmethod

@@ -13,7 +13,6 @@ def _decorator(f):
         identifier=None,
         datatype=None,
         model_update_kwargs: t.Optional[t.Dict] = None,
-        flatten: bool = False,
         output_schema: t.Optional[Schema] = None,
         **kwargs,
     ):
@@ -22,7 +21,6 @@ def _decorator(f):
             identifier=identifier or f.__name__,
             object=f(*args, **kwargs),
             datatype=datatype,
-            flatten=flatten,
             model_update_kwargs=model_update_kwargs,
             output_schema=output_schema,
         )

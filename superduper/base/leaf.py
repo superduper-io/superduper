@@ -190,6 +190,7 @@ class Leaf(metaclass=LeafMeta):
 
         def _replace_uuids_with_keys(record):
             import json
+
             dump = json.dumps(record)
             for k, v in uuids_to_keys.items():
                 dump = dump.replace(v, f'?({k}.uuid)')

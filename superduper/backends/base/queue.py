@@ -8,7 +8,7 @@ import networkx as nx
 
 from superduper import CFG, logging
 from superduper.backends.base.backends import BaseBackend
-from superduper.base.event import Event
+from superduper.base.event import Event, Job
 
 DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 
@@ -37,7 +37,7 @@ class BaseQueueConsumer(ABC):
         self.uri = uri
         self.callback = callback
         self.queue_name = queue_name
-        self.futures = defaultdict(lambda: {})
+        self.futures: t.DefaultDict = defaultdict(lambda: {})
 
     @abstractmethod
     def start_consuming(self):
@@ -91,10 +91,15 @@ class BaseQueuePublisher(BaseBackend):
 
     @property
     def db(self) -> 'Datalayer':
+        """Get the ``db``."""
         return self._db
 
     @db.setter
     def db(self, value: 'Datalayer'):
+        """Set the ``db``.
+
+        :param value: ``Datalayer`` instance.
+        """
         self._db = value
         self.initialize()
 
@@ -135,7 +140,7 @@ def consume_streaming_events(events, table, db):
 @dc.dataclass
 class Future:
     """
-    Future output
+    Future output.
 
     :param job_id: job identifier
     """
@@ -150,8 +155,8 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     logging.debug(table)
     # components: t.List['CDC'] = _get_cdcs_on_table(table, db)
     context = str(uuid.uuid4())
-    jobs = []
-    job_lookup = defaultdict(dict)
+    jobs: t.List[Job] = []
+    job_lookup: t.DefaultDict = defaultdict(dict)
 
     from superduper.components.cdc import build_streaming_graph
 

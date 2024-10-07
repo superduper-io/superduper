@@ -16,7 +16,7 @@ class Reference:
 
     type: str
     name: str
-    path: str 
+    path: str
 
     @property
     def is_in_document(self):

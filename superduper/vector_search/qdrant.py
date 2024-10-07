@@ -7,11 +7,10 @@ import numpy as np
 from qdrant_client import QdrantClient, models
 
 from superduper import CFG
-
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
-    VectorItem,
     VectorIndexMeasureType,
+    VectorItem,
 )
 
 ID_PAYLOAD_KEY = "_id"
@@ -55,6 +54,10 @@ class QdrantVectorSearcher(BaseVectorSearcher):
             )
 
     def initialize(self, db):
+        """Initialize the vector index.
+
+        :param db: Datalayer instance
+        """
         pass
 
     def __len__(self):
@@ -62,7 +65,8 @@ class QdrantVectorSearcher(BaseVectorSearcher):
 
     def _create_collection(self):
         measure = (
-            self.measure.name if isinstance(self.measure, VectorIndexMeasureType) 
+            self.measure.name
+            if isinstance(self.measure, VectorIndexMeasureType)
             else self.measure
         )
         distance = self._distance_mapping(measure)

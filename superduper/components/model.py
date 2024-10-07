@@ -712,7 +712,10 @@ class Model(Component, metaclass=ModelMeta):
         if flatten:
             result = [
                 SuperDuperData(
-                    var, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self,
+                    var,
+                    type=SuperDuperDataType.MODEL_OUTPUT,
+                    graph=graph,
+                    model=self,
                     flatten=flatten,
                 )
                 for var in result
@@ -721,7 +724,10 @@ class Model(Component, metaclass=ModelMeta):
 
         else:
             result = SuperDuperData(
-                result, type=SuperDuperDataType.MODEL_OUTPUT, graph=graph, model=self,
+                result,
+                type=SuperDuperDataType.MODEL_OUTPUT,
+                graph=graph,
+                model=self,
                 flatten=flatten,
             )
             track_results = [result]
@@ -733,7 +739,8 @@ class Model(Component, metaclass=ModelMeta):
                 if not isinstance(upstream_var, SuperDuperData):
                     # TODO: Support default key-value in listener.key
                     upstream_var = SuperDuperData(
-                        upstream_var, type=SuperDuperDataType.CONSTANT,
+                        upstream_var,
+                        type=SuperDuperDataType.CONSTANT,
                         flatten=flatten,
                     )
             upstream_mapping[upstream_var.source].append(TrackData(index, upstream_var))
@@ -741,7 +748,8 @@ class Model(Component, metaclass=ModelMeta):
         for k, upstream_var in kwargs.items():
             if not isinstance(upstream_var, SuperDuperData):
                 upstream_var = SuperDuperData(
-                    upstream_var, type=SuperDuperDataType.CONSTANT,
+                    upstream_var,
+                    type=SuperDuperDataType.CONSTANT,
                     flatten=flatten,
                 )
 

@@ -48,6 +48,7 @@ class Listener(CDC):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         self._set_upstream()
+
         return super().__post_init__(db, artifacts)
 
     def dict(self, metadata: bool = True, defaults: bool = True) -> t.Dict:
@@ -64,7 +65,8 @@ class Listener(CDC):
                 self.upstream = []
             try:
                 it = 0
-                for identifier, uuid in deps:
+                for dep in deps:
+                    identifier, uuid = dep
                     self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
                     it += 1
             except ValueError as e:
@@ -129,7 +131,7 @@ class Listener(CDC):
             if self.dependencies:
                 try:
                     r = next(self.select.limit(1).execute())
-                except (StopIteration, KeyError):
+                except (StopIteration, KeyError, FileNotFoundError):
                     try:
                         if not self.cdc_table.startswith(CFG.output_prefix):
                             r = next(db[self.select.table].select().limit(1).execute())
@@ -141,7 +143,7 @@ class Listener(CDC):
             else:
                 try:
                     r = next(self.select.limit(1).execute())
-                except (StopIteration, KeyError) as e:
+                except (StopIteration, KeyError, FileNotFoundError) as e:
                     raise Exception(msg.format(table=self.select)) from e
             mapping = Mapping(self.key, self.model.signature)
             input = mapping(r)
@@ -152,7 +154,8 @@ class Listener(CDC):
 
         if self.model.datatype is not None:
             schema = Schema(
-                f'_schema/{self.outputs}', fields={self.outputs: self.model.datatype}
+                f'_schema/{self.outputs}',
+                fields={'_source': 'ID', self.outputs: self.model.datatype},
             )
         elif self.model.output_schema is not None:
             schema = self.model.output_schema
@@ -243,6 +246,7 @@ class Listener(CDC):
         out = []
         for x in all_:
             if x.startswith(CFG.output_prefix):
+                # out.append(x[len(CFG.output_prefix) :].split('__')[-1])
                 out.append(tuple(x[len(CFG.output_prefix) :].split('__')))
         return out
 

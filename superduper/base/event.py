@@ -125,6 +125,9 @@ class Create(Event):
 
         if hasattr(component, 'dependencies') and component.dependencies:
             for dep in component.dependencies:
+                if isinstance(dep, (tuple, list)):
+                    dep = dep[-1]
+
                 db.metadata.create_parent_child(component.uuid, dep)
         component.on_create(db=db)
 

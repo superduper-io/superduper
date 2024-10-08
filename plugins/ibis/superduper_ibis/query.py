@@ -116,7 +116,8 @@ class IbisQuery(Query):
         return super().documents
 
     def _get_tables(self):
-        out = {self.table: self.db.tables[self.table]}
+        table = self.db.load('table', self.table)
+        out = {self.table: table}
 
         for part in self.parts:
             if isinstance(part, str):
@@ -137,7 +138,8 @@ class IbisQuery(Query):
 
         table_renamings = self.renamings({})
         if len(tables) == 1 and not table_renamings:
-            return self.db.tables[self.table].schema
+            table = self.db.load('table', self.table)
+            return table.schema
         for identifier, c in tables.items():
             renamings = table_renamings.get(identifier, {})
 
@@ -173,11 +175,12 @@ class IbisQuery(Query):
 
     def _execute_insert(self, parent):
         documents = self._prepare_documents()
+        table = self.db.load('table', self.table)
         for r in documents:
-            if self.primary_id not in r:
+            if table.primary_id not in r:
                 pid = str(uuid.uuid4())
-                r[self.primary_id] = pid
-        ids = [r[self.primary_id] for r in documents]
+                r[table.primary_id] = pid
+        ids = [r[table.primary_id] for r in documents]
         self.db.databackend.insert(self.table, raw_documents=documents)
         return ids
 
@@ -201,7 +204,7 @@ class IbisQuery(Query):
 
         assert isinstance(output, pandas.DataFrame)
         output = output.to_dict(orient="records")
-        component_table = self.db.tables[self.table]
+        component_table = self.db.load('table', self.table)
         return SuperDuperCursor(
             raw_cursor=output,
             db=self.db,
@@ -225,7 +228,8 @@ class IbisQuery(Query):
     @property
     def primary_id(self):
         """Return the primary id."""
-        return self.db.tables[self.table].primary_id
+        table = self.db.load('table', self.table)
+        return table.primary_id
 
     def model_update(
         self,

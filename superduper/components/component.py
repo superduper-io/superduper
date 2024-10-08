@@ -532,14 +532,12 @@ class Component(Leaf, metaclass=ComponentMeta):
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         self.status = Status.initializing
 
-    def pre_create(self, db: Datalayer, startup_cache: t.Dict | None = None):
+    def pre_create(self, db: Datalayer):
         """Called the first time this component is created.
 
         :param db: the db that creates the component.
         """
         assert db
-        if startup_cache is None:
-            startup_cache = {}
         for child in self.get_children():
             child.pre_create(db)
         self._pre_create(db)

@@ -278,7 +278,6 @@ class Datalayer:
                 '_fold',
                 'train' if random.random() >= s.CFG.fold_probability else 'valid',
             )
-
         if auto_schema and self.cfg.auto_schema:
             self._auto_create_table(insert.table, insert.documents)
 
@@ -632,6 +631,7 @@ class Datalayer:
                 logging.info(
                     f'Component {info["uuid"]} not found in cache, loading from db'
                 )
+
         m = Document.decode(info, db=self)
         m.db = self
         if on_load:

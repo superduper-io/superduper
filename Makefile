@@ -102,7 +102,7 @@ rest_testing: ## Execute rest unit tests
 	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS) ./test/rest
 
 unit_testing: ## Execute unit testing
-	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS) ./test/unittest
+	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS)  test/unittest/
 
 usecase_testing: ## Execute usecase testing
 	SUPERDUPER_CONFIG=$(SUPERDUPER_CONFIG) pytest $(PYTEST_ARGUMENTS) ./test/integration/usecase

@@ -435,16 +435,20 @@ class Model(Component, metaclass=ModelMeta):
     ):
         if not self.db.databackend.check_output_dest(predict_id):
             overwrite = True
-
-        if not overwrite:
-            if ids:
-                select = select.select_using_ids(ids)
-            # TODO - this is broken
-            query = select.select_ids_of_missing_outputs(predict_id=predict_id)
-        else:
-            if ids:
-                return ids
-            query = select.select_ids
+        try:
+            if not overwrite:
+                if ids:
+                    select = select.select_using_ids(ids)
+                # TODO - this is broken
+                query = select.select_ids_of_missing_outputs(predict_id=predict_id)
+            else:
+                if ids:
+                    return ids
+                query = select.select_ids
+        except FileNotFoundError:
+            # This is case for sql where Table is not created yet
+            # and we try to access `db.load('table', name)`.
+            return []
         try:
             id_field = self.db.databackend.id_field
         except AttributeError:
@@ -648,7 +652,7 @@ class Model(Component, metaclass=ModelMeta):
         if update:
             # Don't use auto_schema for inserting model outputs
             if update.type == 'insert':
-                output_ids = update.execute(db=self.db, auto_schema=False)
+                output_ids = update.execute(db=self.db, auto_schema=True)
             else:
                 output_ids = update.execute(db=self.db)
         return output_ids

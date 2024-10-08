@@ -70,12 +70,10 @@ class Cluster(ABC):
         """
         self._db = value
 
-    def initialize(
-        self, with_compute: bool = False
-    ):
+    def initialize(self, with_compute: bool = False):
         """Initialize the cluster.
-        
-        :param with_compute: Boolean to init 
+
+        :param with_compute: Boolean to init
                              compute.
         """
         assert self.db

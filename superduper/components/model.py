@@ -477,7 +477,7 @@ class Model(Component, metaclass=ModelMeta):
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = True,
-        flatten: bool = False
+        flatten: bool = False,
     ) -> t.Any:
         """Predict on the data points in the database.
 
@@ -616,7 +616,7 @@ class Model(Component, metaclass=ModelMeta):
                         max_chunk_size=None,
                         in_memory=in_memory,
                         predict_id=predict_id,
-                        flatten=flatten
+                        flatten=flatten,
                     )
                 )
                 it += 1

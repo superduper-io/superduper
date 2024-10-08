@@ -42,6 +42,7 @@ class Listener(CDC):
     select: t.Optional[Query] = None
     cdc_table: str = ''
     output_table: t.Optional[Table] = None
+    flatten: bool = False
 
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
@@ -163,7 +164,7 @@ class Listener(CDC):
             else:
                 assert self.model.signature == '*args,**kwargs'
                 prediction = self.model.predict(*input[0], **input[1])
-
+            
             if self.flatten:
                 prediction = prediction[0]
 
@@ -251,6 +252,7 @@ class Listener(CDC):
             predict_id=self.predict_id,
             select=self.select,
             ids=ids,
+            flatten=self.flatten,
             **(self.predict_kwargs or {}),
         )
         return out

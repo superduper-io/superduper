@@ -121,6 +121,7 @@ class Downloads(BaseConfig):
 @dc.dataclass
 class RestConfig(BaseConfig):
     """Configuratin for basic rest server.
+
     :param uri: Rest server uri.
     :param config: Path configuration file.
     """

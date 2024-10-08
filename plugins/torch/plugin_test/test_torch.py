@@ -69,7 +69,6 @@ def model():
 # TODO: The training task is not executed, but it was not tested.
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_fit(db, model, capfd):
-
     data = []
     for i in range(500):
         x = torch.rand(32)

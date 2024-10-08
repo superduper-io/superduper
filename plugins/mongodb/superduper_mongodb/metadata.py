@@ -135,7 +135,6 @@ class MongoMetaDataStore(MetaDataStore):
         """
         return self.job_collection.find_one({'job_id': identifier})
 
-
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
     ) -> int:
@@ -177,7 +176,9 @@ class MongoMetaDataStore(MetaDataStore):
         except IndexError:
             raise FileNotFoundError(f'Can\'t find {type_id}: {identifier} in metadata')
 
-    def update_job(self, identifier: str, key: str, value: t.Any, upsert=False) -> UpdateResult:
+    def update_job(
+        self, identifier: str, key: str, value: t.Any, upsert=False
+    ) -> UpdateResult:
         """Update a job in the metadata store.
 
         :param identifier: identifier of job
@@ -189,13 +190,14 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def show_cdc_tables(self):
+        """Show tables to be consumed with cdc."""
         return self.component_collection.distinct('cdc_table')
 
     def _show_cdcs(self, table):
         return list(
             self.component_collection.find(
-                {'cdc_table': table}, 
-                {'identifier': 1, '_id': 0, 'type_id': 1, 'version': 1, 'uuid': 1}
+                {'cdc_table': table},
+                {'identifier': 1, '_id': 0, 'type_id': 1, 'version': 1, 'uuid': 1},
             )
         )
 
@@ -413,4 +415,7 @@ class MongoMetaDataStore(MetaDataStore):
         # TODO: implement me
 
     def set_component_status(self, uuid, status: Status):
-        return self.component_collection.update_one({'uuid': uuid}, {'$set': {'status': status}})
+        """Set status of component with `status`."""
+        return self.component_collection.update_one(
+            {'uuid': uuid}, {'$set': {'status': status}}
+        )

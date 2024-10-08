@@ -17,6 +17,7 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
 from superduper import logging
 from superduper.backends.base.metadata import MetaDataStore, NonExistentMetadataError
+from superduper.components.component import Status
 from superduper.misc.colors import Colors
 
 from superduper_sqlalchemy.db_helper import get_db_config
@@ -64,6 +65,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         # a reconnect.
         self._init_tables()
 
+
     def _init_tables(self):
         # Get the DB config for the given dialect
         DBConfig = get_db_config(self.dialect)
@@ -72,7 +74,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         type_json_as_string = DBConfig.type_json_as_string
         type_json_as_text = DBConfig.type_json_as_text
         type_integer = DBConfig.type_integer
-        type_datetime = DBConfig.type_datetime
         type_boolean = DBConfig.type_boolean
 
         job_table_args = DBConfig.job_table_args
@@ -86,16 +87,17 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.job_table = Table(
             'JOB',
             metadata,
-            Column('job_id', type_string, primary_key=True),
+            Column('context', type_string),
+            Column('type_id', type_string),
             Column('identifier', type_string),
             Column('uuid', type_string),
-            Column('type_id', type_string),
-            Column('info', type_json_as_string),
-            Column('time', type_datetime),
-            Column('status', type_string),
             Column('args', type_json_as_string),
             Column('kwargs', type_json_as_text),
+            Column('time', type_string),
+            Column('job_id', type_string, primary_key=True),
             Column('method', type_string),
+            Column('status', type_string),
+            Column('dependencies', type_string),
             *job_table_args,
         )
 
@@ -113,8 +115,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             # TODO rename with id -> uuid
             Column('id', type_string, primary_key=True),
             Column('identifier', type_string),
+            Column('uuid', type_string),
             Column('version', type_integer),
             Column('hidden', type_boolean),
+            Column('status', type_string),
             Column('type_id', type_string),
             Column('_path', type_string),
             Column('dict', type_json_as_text),
@@ -288,11 +292,15 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param parent_id: the parent component
         :param child_id: the child component
         """
-        with self.session_context() as session:
-            stmt = insert(self.parent_child_association_table).values(
-                parent_id=parent_id, child_id=child_id
-            )
-            session.execute(stmt)
+        import sqlalchemy
+        try:
+            with self.session_context() as session:
+                stmt = insert(self.parent_child_association_table).values(
+                    parent_id=parent_id, child_id=child_id
+                )
+                session.execute(stmt)
+        except sqlalchemy.exc.IntegrityError:
+            logging.warn(f'Skipping {parent_id} {child_id} since they already exists')
 
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         """Delete a component from the metadata store.
@@ -407,6 +415,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         new_info = {k: info.get(k) for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['id'] = new_info['dict']['uuid']
+        new_info['uuid'] = new_info['dict']['uuid']
         return new_info
 
     def get_latest_version(
@@ -470,6 +479,27 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .values(**info)
             )
             session.execute(stmt)
+
+    def show_cdc_tables(self):
+        """Show tables to be consumed with cdc."""
+        with self.session_context() as session:
+            stmt = select(self.component_table)
+            res = self.query_results(self.component_table, stmt, session)
+        res = [r['identifier'] for r in res]
+        return res
+
+    def set_component_status(self, uuid, status: Status):
+        """Set status of component with `status`."""
+        with self.session_context() as session:
+            stmt = (
+                self.component_table.update()
+                .where(
+                    self.component_table.c.uuid == uuid,
+                )
+                .values({'status': status.value})
+            )
+            session.execute(stmt)
+
 
     def _show_cdcs(self, table):
         """Show all triggers in the database.
@@ -537,6 +567,9 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         :param info: The information used to create the job
         """
+        if 'dependencies' in info:
+            import json
+            info['dependencies'] = json.dumps(info['dependencies'])
         with self.session_context() as session:
             stmt = insert(self.job_table).values(**info)
             session.execute(stmt)

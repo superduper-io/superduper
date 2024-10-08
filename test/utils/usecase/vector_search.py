@@ -14,6 +14,7 @@ def add_data(db: "Datalayer", start: int, end: int):
     :param start: int to start assigning to `x` column
     :param end: int to stop assigning to `x` column
     """
+    db.cfg.auto_schema = True
     data = []
     for i in range(start, end):
         data.append(

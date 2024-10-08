@@ -108,6 +108,7 @@ class Listener(CDC):
                 Listener._complete_key(k, db, listener_uuids): v for k, v in key.items()
             }
         raise Exception(f'Invalid key type: {type(key)}')
+
     def _auto_fill_data(self, db: Datalayer):
         listener_keys = [k for k in db.startup_cache if k.startswith(CFG.output_prefix)]
         listener_predict_ids = [k[len(CFG.output_prefix) :] for k in listener_keys]
@@ -116,9 +117,12 @@ class Listener(CDC):
         self.select = self.select.complete_uuids(db, listener_uuids=lookup)
         if CFG.output_prefix in str(self.key):
             self.key = self._complete_key(self.key, db, listener_uuids=lookup)
-    
+
     def _get_sample_input(self, db: Datalayer):
-        msg = 'Couldn\'t retrieve outputs to determine schema; {table} returned 0 results.'
+        msg = (
+            'Couldn\'t retrieve outputs to determine schema; '
+            '{table} returned 0 results.'
+        )
         if self.model.example is not None:
             input = self.model.example
         else:
@@ -164,7 +168,7 @@ class Listener(CDC):
             else:
                 assert self.model.signature == '*args,**kwargs'
                 prediction = self.model.predict(*input[0], **input[1])
-            
+
             if self.flatten:
                 prediction = prediction[0]
 

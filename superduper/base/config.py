@@ -120,7 +120,10 @@ class Downloads(BaseConfig):
 
 @dc.dataclass
 class RestConfig(BaseConfig):
-    """Configuratin for basic rest server."""
+    """Configuratin for basic rest server.
+    :param uri: Rest server uri.
+    :param config: Path configuration file.
+    """
 
     uri: str = 'localhost:8000'
     config: t.Optional[str] = None
@@ -150,6 +153,7 @@ class Config(BaseConfig):
     :param log_colorize: Whether to colorize the logs
     :param output_prefix: The prefix for the output table and output field key
     :param vector_search_kwargs: The keyword arguments to pass to the vector search
+    :param rest: Settings for rest server.
     """
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None

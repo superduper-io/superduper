@@ -75,7 +75,8 @@ def parse_example(docstring: str) -> Optional[List[Dict[str, str]]]:
 
     Returns:
     -------
-        Optional[List[Dict[str, str]]]: A list of example parts, each part is a dict with 'type' and 'content'.
+        Optional[List[Dict[str, str]]]: A list of example parts, each part is a
+                                        dict with 'type' and 'content'.
 
     """
     lines = docstring.split('\n')
@@ -155,7 +156,8 @@ def get_classes_with_docstrings(
 
     Returns:
     -------
-        List[Dict[str, Union[str, List[Dict[str, str]]]]]: A list of dictionaries with class information.
+        List[Dict[str, Union[str, List[Dict[str, str]]]]]: A list of dictionaries
+                                                           with class information.
 
     """
     classes_info = []
@@ -201,15 +203,8 @@ def generate_readme_content(
     """
     Generate the README.md content based on extracted information.
 
-    Args:
-    ----
-        info (Dict[str, str]): Extracted information from pyproject.toml.
-        classes_info (List[Dict[str, Union[str, List[Dict[str, str]]]]]): Extracted classes and their docstrings.
-
-    Returns:
-    -------
-        str: The generated README.md content.
-
+    :param info: Extracted information from pyproject.toml.
+    :param classes_info: Extracted classes and their docstrings.
     """
     plugin_name = info["name"]
     # Replace plugin name in the template
@@ -322,7 +317,7 @@ def process_plugin(plugin_dir: Path) -> None:
 
 
 def main():
-    """Main function to process all plugins in the plugins directory or a specific plugin."""
+    """Main function to process all plugins in the plugins directory."""
     parser = argparse.ArgumentParser(
         description="Generate or update README.md files for plugins."
     )

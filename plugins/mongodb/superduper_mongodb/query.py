@@ -5,7 +5,6 @@ import re
 import typing as t
 from collections import defaultdict
 
-import numpy
 import pymongo
 from bson import ObjectId
 from superduper import CFG, logging
@@ -608,7 +607,6 @@ class MongoQuery(Query):
 
         limit_args, _ = self._get_method_parameters('limit')
         limit = {"$limit": limit_args[0]} if limit_args else None
-
 
         pipeline = []
         filter_mapping_base, filter_mapping_outputs = self._get_filter_mapping()

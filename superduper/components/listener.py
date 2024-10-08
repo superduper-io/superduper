@@ -111,7 +111,7 @@ class Listener(CDC):
     def _auto_fill_data(self, db: Datalayer):
         listener_keys = [k for k in db.startup_cache if k.startswith(CFG.output_prefix)]
         listener_predict_ids = [k[len(CFG.output_prefix) :] for k in listener_keys]
-        lookup = dict(tuple(x.split('__')) for x in listener_predict_ids)
+        lookup: t.Dict = dict(tuple(x.split('__')) for x in listener_predict_ids)
         assert self.select is not None
         self.select = self.select.complete_uuids(db, listener_uuids=lookup)
         if CFG.output_prefix in str(self.key):

@@ -84,7 +84,7 @@ class Datalayer:
         self.cluster.db = self
 
         self._cfg = s.CFG
-        self.startup_cache = {}
+        self.startup_cache: t.Dict[str, t.Any] = {}
 
     def __getitem__(self, item):
         return self.databackend.get_query_builder(item)

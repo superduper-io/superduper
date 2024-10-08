@@ -307,7 +307,8 @@ def test_predict_id_utils(db):
 
     db.apply(listener1)
 
-    outputs = "_outputs__listener1"
+    # outputs = "_outputs__listener1"
+    outputs = listener1.outputs
     # Listener identifier is set as the table name
     select = db[outputs].select()
     docs = select.tolist()
@@ -364,7 +365,6 @@ def test_complete_uuids(db):
     assert results[0]['_outputs__l1'] == results[0][l1.outputs]
 
 
-@pytest.mark.skip
 def test_autofill_data_listener(db):
     db.cfg.auto_schema = True
 
@@ -380,7 +380,6 @@ def test_autofill_data_listener(db):
             {"x": 3},
         ]
     ).execute()
-
     l1 = m.to_listener(select=db['test'].select(), key='x', identifier='l1')
     l2 = m.to_listener(select=db[l1.outputs].select(), key=l1.outputs, identifier='l2')
 
@@ -389,15 +388,13 @@ def test_autofill_data_listener(db):
 
     assert l2.key == l1.outputs
     assert l1.outputs in str(l2.select)
-
     app = Application('my-app', components=[l1, l2])
 
-    r = app.encode(metadata=False)
+    r = app.encode(metadata=True)
 
     import pprint
 
     pprint.pprint({k: v for k, v in r.items() if k not in {'_blobs', '_files'}})
-
     out = Document.decode(r, db=db).unpack()
 
     assert isinstance(out, Application)

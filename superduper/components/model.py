@@ -477,6 +477,7 @@ class Model(Component, metaclass=ModelMeta):
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = True,
+        flatten: bool = False
     ) -> t.Any:
         """Predict on the data points in the database.
 
@@ -490,6 +491,7 @@ class Model(Component, metaclass=ModelMeta):
         :param max_chunk_size: Chunks of data
         :param in_memory: Load data into memory or not
         :param overwrite: Overwrite all documents or only new documents
+        :param flatten: Flatten outputs.
         """
         message = (
             f'Requesting prediction in db - '
@@ -516,7 +518,7 @@ class Model(Component, metaclass=ModelMeta):
             ids=predict_ids,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
-            flatten=self.flatten,
+            flatten=flatten,
         )
         return out
 

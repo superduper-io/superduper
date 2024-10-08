@@ -756,7 +756,7 @@ class Model(Component, metaclass=ModelMeta):
                 )
 
             upstream_mapping[upstream_var.source].append(TrackData(k, upstream_var))
-
+        assert graph is not None
         for track_result in track_results:
             for upstream_node, track_datas in upstream_mapping.items():
                 graph.add_edge(upstream_node, track_result, track_datas)

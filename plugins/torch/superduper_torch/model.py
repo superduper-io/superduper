@@ -153,8 +153,8 @@ class TorchModel(Model, _DeviceManaged):
     optimizer_state: t.Optional[t.Any] = None
     loader_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts=artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts=artifacts, example=example)
 
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state)

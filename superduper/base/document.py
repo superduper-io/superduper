@@ -198,7 +198,7 @@ class Document(MongoStyleDict):
 
         builds = r.get(KEY_BUILDS, {})
 
-        # Important: Leaf.identifier or Component.type_id:Component.identifierare
+        # Important: Leaf.identifier or Component.type_id:Component.identifier are
         # are used as the key, but must be set if not present.
         for k in builds:
             if isinstance(builds[k], dict) and (

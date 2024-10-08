@@ -144,6 +144,9 @@ def clean():
 
 
 def test_upstream(db, clean):
+    from superduper import Schema, Table
+
+    db.apply(Table('docs', schema=Schema('docs/schema', fields={'id': str, 'x': str})))
     c1 = UpstreamComponent(identifier='c1')
     m = MyListener(
         identifier='l1',
@@ -153,7 +156,7 @@ def test_upstream(db, clean):
             object=lambda x: x + 2,
         ),
         key="x",
-        select=db["docs"].find(),
+        select=db["docs"].select(),
     )
 
     db.apply(m)

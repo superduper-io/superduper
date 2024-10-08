@@ -235,7 +235,6 @@ class Query(_BaseQuery):
             part_kwargs = _set_the_db(part[2], value)
             part = part[0]
             parts.append((part, part_args, part_kwargs))
-
         self.parts = parts
 
     # TODO need this?

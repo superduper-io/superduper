@@ -205,6 +205,7 @@ class IbisDataBackend(BaseDataBackend):
 
         fields = {
             INPUT_KEY: "string",
+            "_source": "string",
             "id": "string",
             f"{CFG.output_prefix}{predict_id}": output_type,
         }

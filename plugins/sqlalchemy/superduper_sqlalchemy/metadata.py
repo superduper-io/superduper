@@ -396,7 +396,14 @@ class SQLAlchemyMetadata(MetaDataStore):
     def _refactor_component_info(cls, info):
         if 'hidden' not in info:
             info['hidden'] = False
-        component_fields = ['identifier', 'version', 'hidden', 'type_id', '_path', 'cdc_table']
+        component_fields = [
+            'identifier',
+            'version',
+            'hidden',
+            'type_id',
+            '_path',
+            'cdc_table',
+        ]
         new_info = {k: info.get(k) for k in component_fields}
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['id'] = new_info['dict']['uuid']
@@ -550,16 +557,13 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def show_job_ids(self, uuids: str | None = None, status: str = 'running'):
         """Show all job ids in the database."""
-
         with self.session_context() as session:
             # Start building the select statement
             stmt = select(self.job_table)
 
             # If a component_identifier is provided, add a where clause to filter by it
             if uuids is not None:
-                stmt = stmt.where(
-                    self.job_table.c.uuid.in_(uuids)
-                )
+                stmt = stmt.where(self.job_table.c.uuid.in_(uuids))
 
             # Execute the query and collect results
             res = self.query_results(self.job_table, stmt, session)

@@ -105,7 +105,8 @@ def test_outputs_query_2(db):
     def test(x):
         return numpy.random.randn(32)
 
-    db['example'].insert([{'x': f'test {i}', 'y': f'other {i}'} for i in range(5)]).execute()
+    data = [{'x': f'test {i}', 'y': f'other {i}'} for i in range(5)]
+    db['example'].insert(data).execute()
 
     l1 = test.to_listener(key='x', select=db['example'].select(), identifier='l-x')
     l2 = test.to_listener(key='y', select=db['example'].select(), identifier='l-y')
@@ -117,9 +118,10 @@ def test_outputs_query_2(db):
     def test_flat(x):
         return [numpy.random.randn(32) for _ in range(3)]
 
-    l3 = test_flat.to_listener(key='x', select=db['example'].select(), identifier='l-x-flat')
+    select = db['example'].select()
+    l3 = test_flat.to_listener(key='x', select=select, identifier='l-x-flat')
 
-    db.apply(l3)    
+    db.apply(l3)
 
     ########
 
@@ -176,12 +178,7 @@ def test_outputs_query(db):
     add_random_data(db, n=5)
     add_models(db)
 
-    import numpy
-
     l1, l2, l1_flat = add_listeners(db)
-    
-    sample1 = db[l1.outputs].find_one().execute()
-    sample2 = db[l2.outputs].find_one().execute()
 
     outputs_1 = list(db['documents'].outputs(l1.predict_id).execute())
     assert len(outputs_1) == 5
@@ -189,17 +186,6 @@ def test_outputs_query(db):
     assert len(outputs_2) == 5
     outputs_1_2 = next(db['documents'].outputs(l1.predict_id, l2.predict_id).execute())
     assert len(outputs_1_2) == 5
-
-    # outputs_1_flat = list(db['documents'].outputs(l1_flat.predict_id).execute())
-    # # TODO this output seems to be far too big
-    # # the question is what is the expected output when we have multiple listeners?
-    # outputs_1_flat_2 = next(db['documents'].outputs(l1_flat.predict_id, l2.predict_id).execute())
-
-    # assert isinstance(outputs_1[l1.outputs], np.ndarray)
-    # assert isinstance(outputs_2[l2.outputs], np.ndarray)
-
-    # assert isinstance(outputs_1_2[l1.outputs], np.ndarray)
-    # assert isinstance(outputs_1_2[l2.outputs], np.ndarray)
 
 
 def test_insert_many(db):

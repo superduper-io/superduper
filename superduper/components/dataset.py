@@ -66,7 +66,7 @@ class Dataset(Component):
             self._data = self._load_data(db)
 
     @override
-    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict) -> None:
+    def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict = {}) -> None:
         """Pre-create hook for database operations.
 
         :param db: The database to use for the operation.

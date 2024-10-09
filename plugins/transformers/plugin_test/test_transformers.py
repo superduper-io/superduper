@@ -73,4 +73,4 @@ def test_transformer_fit(transformers_model, db, td):
             select=MongoQuery(table='train_documents').find({'_fold': 'valid'}),
         )
     ]
-    transformers_model.fit_in_db(db)
+    transformers_model.fit_in_db()

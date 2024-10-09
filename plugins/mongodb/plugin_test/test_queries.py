@@ -199,9 +199,9 @@ def test_insert_many(db):
     an_update = get_new_data(10, update=True)
     db.execute(collection.insert(an_update))
     assert len(list(db.execute(collection.find()))) == 5 + 10
-    for l in db.show('listener'):
-        if 'flat' not in l:
-            l = db.load('listener', l)
+    for lid in db.show('listener'):
+        if 'flat' not in lid:
+            l = db.load('listener', lid)
             outputs = l.outputs
             assert len(list(db.execute(db[outputs].find()))) == 5 + 10
 

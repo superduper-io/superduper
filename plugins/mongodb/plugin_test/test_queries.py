@@ -119,7 +119,9 @@ def test_outputs_query_2(db):
         return [numpy.random.randn(32) for _ in range(3)]
 
     select = db['example'].select()
-    l3 = test_flat.to_listener(key='x', select=select, identifier='l-x-flat', flatten=True)
+    l3 = test_flat.to_listener(
+        key='x', select=select, identifier='l-x-flat', flatten=True
+    )
 
     db.apply(l3)
 

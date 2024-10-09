@@ -65,7 +65,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         # a reconnect.
         self._init_tables()
 
-
     def _init_tables(self):
         # Get the DB config for the given dialect
         DBConfig = get_db_config(self.dialect)
@@ -96,6 +95,8 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('time', type_string),
             Column('job_id', type_string, primary_key=True),
             Column('method', type_string),
+            Column('genus', type_string),
+            Column('queue', type_string),
             Column('status', type_string),
             Column('dependencies', type_string),
             *job_table_args,
@@ -293,6 +294,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param child_id: the child component
         """
         import sqlalchemy
+
         try:
             with self.session_context() as session:
                 stmt = insert(self.parent_child_association_table).values(
@@ -500,7 +502,6 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-
     def _show_cdcs(self, table):
         """Show all triggers in the database.
 
@@ -569,6 +570,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         """
         if 'dependencies' in info:
             import json
+
             info['dependencies'] = json.dumps(info['dependencies'])
         with self.session_context() as session:
             stmt = insert(self.job_table).values(**info)

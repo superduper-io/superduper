@@ -45,14 +45,15 @@ def test_auto_inference_primary_id():
 
 
 def test_renamings(db):
+    db.cfg.auto_schema = True
     add_random_data(db, n=5)
     add_models(db)
     add_listeners(db)
     t = db["documents"]
-    listener_uuid = [k.split("/")[-1] for k in db.show("listener")][0]
+    listener_uuid = [db.load('listener', k).outputs for k in db.show("listener")][0]
     q = t.select("id", "x", "y").outputs(listener_uuid)
     data = list(db.execute(q))
-    assert isinstance(data[0].unpack()[f"_outputs__{listener_uuid}"], np.ndarray)
+    assert isinstance(data[0].unpack()[listener_uuid], np.ndarray)
 
 
 def test_serialize_query(db):

@@ -183,6 +183,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
             jobs=jobs,
             event_type=event_type,
         )
+
         for job in sub_jobs:
             job_lookup[component.uuid][job.method] = job.job_id
         jobs += sub_jobs

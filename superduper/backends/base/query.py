@@ -383,7 +383,10 @@ class Query(_BaseQuery):
         for i, doc in enumerate(docs):
             doc_string = str(doc)
             if isinstance(doc, Document):
-                doc_string = str(doc.unpack())
+                r = doc.unpack()
+                if '_base' in r:
+                    r = r['_base']
+                doc_string = str(r)
             output = output.replace(f'documents[{i}]', doc_string)
         return output
 
@@ -428,6 +431,9 @@ class Query(_BaseQuery):
                 out.pop_builds()
                 out.pop_files()
                 out.pop_blobs()
+
+            if '_base' in out:
+                return out['_base']
             return out
 
         if isinstance(r, (tuple, list)):

@@ -122,3 +122,47 @@ def test_execute_complex_query_sqldb_auto_schema(db):
     expected = [f"is a test {i}" for i in range(99, 89, -1)]
     cur_this = [r["this"] for r in cur]
     assert sorted(cur_this) == sorted(expected)
+
+
+def test_select_using_ids(db):
+    db.cfg.auto_schema = True
+
+    table = db["documents"]
+    table.insert(
+        [Document({"this": f"is a test {i}", "id": str(i)}) for i in range(4)]
+    ).execute()
+
+    basic_select = db['documents'].select()
+
+    assert len(basic_select.tolist()) == 4
+    assert len(basic_select.select_using_ids(['1', '2']).tolist()) == 2
+
+
+def test_select_using_ids_of_outputs(db):
+    from superduper import model
+
+    @model
+    def my_func(x):
+        return x + ' ' + x
+
+    db.cfg.auto_schema = True
+
+    table = db["documents"]
+    table.insert(
+        [Document({"this": f"is a test {i}", "id": str(i)}) for i in range(4)]
+    ).execute()
+
+    listener = my_func.to_listener(key='this', select=db['documents'].select())
+    db.apply(listener)
+
+    q1 = db[listener.outputs].select()
+    r1 = q1.tolist()
+
+    assert len(r1) == 4
+
+    ids = [x['id'] for x in r1]
+
+    q2 = q1.select_using_ids(ids[:2])
+    r2 = q2.tolist()
+
+    assert len(r2) == 2

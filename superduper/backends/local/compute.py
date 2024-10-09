@@ -62,6 +62,7 @@ class LocalComputeBackend(ComputeBackend):
         :param dependencies: List of `job_ids`
         """
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
+
         component = self.db.load(uuid=job.uuid)
         self.db.metadata.update_job(job.identifier, 'status', 'running')
 
@@ -71,6 +72,7 @@ class LocalComputeBackend(ComputeBackend):
         except Exception as e:
             self.db.metadata.update_job(job.identifier, 'status', 'failed')
             raise e
+
         self.db.metadata.update_job(job.identifier, 'status', 'success')
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None

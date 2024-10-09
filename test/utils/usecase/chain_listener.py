@@ -32,14 +32,14 @@ def build_chain_listener(db: "Datalayer"):
     db.apply(listener_a)
 
     listener_b = model_b.to_listener(
-        select=listener_a.outputs_select,
+        select=db[listener_a.outputs].select(),
         key=listener_a.outputs,
         identifier="b",
     )
     db.apply(listener_b)
 
     listener_c = model_c.to_listener(
-        select=listener_b.outputs_select,
+        select=db[listener_b.outputs].select(),
         key=listener_b.outputs,
         identifier="c",
     )
@@ -56,3 +56,7 @@ def build_chain_listener(db: "Datalayer"):
     assert db.databackend.check_output_dest(listener_a.predict_id)
     assert db.databackend.check_output_dest(listener_b.predict_id)
     assert db.databackend.check_output_dest(listener_c.predict_id)
+
+    assert len(list(db[listener_a.outputs].select().execute())) == 6
+    assert len(list(db[listener_b.outputs].select().execute())) == 6
+    assert len(list(db[listener_c.outputs].select().execute())) == 6

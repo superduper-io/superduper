@@ -239,7 +239,7 @@ class Listener(CDC):
         out = []
         for x in all_:
             if x.startswith(CFG.output_prefix):
-                out.append(tuple(x[len(CFG.output_prefix) :].split('__')))
+                out.append(tuple(x[len(CFG.output_prefix) :].split('.')[0].split('__')))
         return out
 
     @trigger('apply', 'insert', 'update', requires='select')

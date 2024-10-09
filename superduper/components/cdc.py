@@ -9,7 +9,7 @@ if t.TYPE_CHECKING:
 
 
 class CDC(Component):
-    """Trigger a function when a condition is met.
+    """Trigger a ion when a condition is met.
 
     ***Note that this feature deploys on superduper.io Enterprise.***
 
@@ -61,6 +61,7 @@ def _get_cdcs_on_table(table, db: 'Datalayer'):
             if len(component.select.tables) > 1:
                 continue
             out.append(component)
+            continue
         out.append(component)  # type: ignore[arg-type]
     return out
 

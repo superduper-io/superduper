@@ -3,7 +3,7 @@ import uuid
 import pytest
 
 from superduper.backends.base.metadata import MetaDataStore
-from superduper.jobs.job import Job
+from superduper.base.event import Job
 
 
 def test_component(metadata: MetaDataStore):
@@ -64,8 +64,13 @@ def test_job(metadata: MetaDataStore):
     for i in range(5):
         job = Job(
             identifier=str(i),
+            job_id=str(i),
             args=(1, 2),
             kwargs={"message": str(i)},
+            uuid='myuuid',
+            type_id='listener',
+            method='run',
+            context='mycontenxt',
         )
         metadata.create_job(job.dict())
 

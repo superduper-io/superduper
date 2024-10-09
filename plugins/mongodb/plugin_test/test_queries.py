@@ -114,12 +114,12 @@ def test_outputs_query_2(db):
     db.apply(l1)
     db.apply(l2)
 
-    @model(flatten=True)
+    @model()
     def test_flat(x):
         return [numpy.random.randn(32) for _ in range(3)]
 
     select = db['example'].select()
-    l3 = test_flat.to_listener(key='x', select=select, identifier='l-x-flat')
+    l3 = test_flat.to_listener(key='x', select=select, identifier='l-x-flat', flatten=True)
 
     db.apply(l3)
 
@@ -184,24 +184,28 @@ def test_outputs_query(db):
     assert len(outputs_1) == 5
     outputs_2 = list(db['documents'].outputs(l2.predict_id).execute())
     assert len(outputs_2) == 5
-    outputs_1_2 = next(db['documents'].outputs(l1.predict_id, l2.predict_id).execute())
+    outputs_1_2 = list(db['documents'].outputs(l1.predict_id, l2.predict_id).execute())
     assert len(outputs_1_2) == 5
 
 
 def test_insert_many(db):
+    db.cfg.auto_schema = True
     add_random_data(db, n=5)
     add_models(db)
     add_listeners(db)
     collection = db['documents']
     an_update = get_new_data(10, update=True)
     db.execute(collection.insert(an_update))
-
     assert len(list(db.execute(collection.find()))) == 5 + 10
-    assert len(list(db.execute(db['_outputs__vector-x'].find()))) == 5 + 10
-    assert len(list(db.execute(db['_outputs__vector-y'].find()))) == 5 + 10
+    for l in db.show('listener'):
+        if 'flat' not in l:
+            l = db.load('listener', l)
+            outputs = l.outputs
+            assert len(list(db.execute(db[outputs].find()))) == 5 + 10
 
 
 def test_like(db):
+    db.cfg.auto_schema = True
     add_random_data(db, n=5)
     add_models(db)
     add_vector_index(db)
@@ -216,12 +220,13 @@ def test_like(db):
 
 
 def test_insert_one(db):
+    db.cfg.auto_schema = True
     add_random_data(db, n=5)
     # MARK: empty Collection + a_single_insert
     collection = db['documents']
     a_single_insert = get_new_data(1, update=False)[0]
     q = collection.insert_one(a_single_insert)
-    out, _ = db.execute(q)
+    out = db.execute(q)
     r = db.execute(collection.find({'_id': out[0]}))
     docs = list(r)
     assert docs[0]['x'].tolist() == a_single_insert['x'].tolist()

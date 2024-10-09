@@ -201,8 +201,8 @@ def test_insert_many(db):
     assert len(list(db.execute(collection.find()))) == 5 + 10
     for lid in db.show('listener'):
         if 'flat' not in lid:
-            l = db.load('listener', lid)
-            outputs = l.outputs
+            component = db.load('listener', lid)
+            outputs = component.outputs
             assert len(list(db.execute(db[outputs].find()))) == 5 + 10
 
 

@@ -86,7 +86,14 @@ class Listener(CDC):
         if isinstance(key, str) and key.startswith(CFG.output_prefix):
             if len(key[len(CFG.output_prefix) :].split('__')) == 2:
                 return key
-            identifier = key[len(CFG.output_prefix) :]
+            identifier_and_sub_key = key[len(CFG.output_prefix) :].split('.', 1)
+            if len(identifier_and_sub_key) == 2:
+                identifier, sub_key = identifier_and_sub_key
+            else:
+                identifier = identifier_and_sub_key[0]
+                sub_key = ''
+
+            key = CFG.output_prefix + identifier
             try:
                 uuid = listener_uuids[identifier]
             except KeyError:
@@ -98,7 +105,11 @@ class Listener(CDC):
                         f'based on ellipsis {key}__????????????????. '
                         'Please specify using upstream_listener.outputs'
                     )
-            return key + '__' + uuid
+
+            complete_key = key + '__' + uuid
+            if sub_key:
+                complete_key += '.' + sub_key
+            return complete_key
         elif isinstance(key, str):
             return key
         elif isinstance(key, list):

@@ -620,9 +620,12 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
 
         matches = re.findall(r'\?\((.*?)\)', r)
         for match in matches:
-            r = r.replace(
-                f'?({match})', _get_leaf_from_cache(match, builds, getters, db=db)
-            )
+            try:
+                r = r.replace(
+                    f'?({match})', _get_leaf_from_cache(match, builds, getters, db=db)
+                )
+            except Exception:
+                return r
     if isinstance(r, str) and r.startswith('?'):
         out = _get_leaf_from_cache(r[1:], builds, getters=getters, db=db)
         return out
@@ -659,12 +662,15 @@ def _get_artifact_callback(db):
 def _get_file_remote_callback(path):
     from superduper.misc.download import Fetcher
 
-    fetcher = Fetcher()
-
-    if not fetcher.is_uri(path):
+    if not Fetcher.is_uri(path):
         return None
 
+    fetcher = None
+
     def pull_file():
+        nonlocal fetcher
+        if fetcher is None:
+            fetcher = Fetcher()
         uri = path.split(':file:')[-1]
         from superduper.misc.files import get_file_from_uri
 

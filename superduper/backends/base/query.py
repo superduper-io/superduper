@@ -498,6 +498,8 @@ class Query(_BaseQuery):
         parser = importlib.import_module(self.__module__).parse_query
 
         def _get_uuid(identifier):
+            if '.' in identifier:
+                identifier = identifier.split('.')[0]
             msg = (
                 'Couldn\'t complete `Listener` key '
                 'based on ellipsis {predict_id}__????????????????. '

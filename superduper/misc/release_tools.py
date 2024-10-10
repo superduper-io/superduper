@@ -3,6 +3,7 @@ import os
 
 
 def get_tags():
+    "21" "Get all tags from the repository." ""
     os.system('git fetch upstream --tags')
     tags = [x for x in os.popen('git tag').read().split('\n') if x.strip()]
     return [Tag.parse(t) for t in tags]
@@ -11,12 +12,13 @@ def get_tags():
 @dataclasses.dataclass
 class Tag:
     """A class to represent a version tag.
-    
+
     :param major: The major version number.
     :param minor: The minor version number.
     :param patch: The patch version number.
     :param dev: A boolean indicating if this is a development version.
     """
+
     major: int
     minor: int
     patch: int
@@ -30,13 +32,13 @@ class Tag:
 
     @classmethod
     def parse(cls, tag: str):
-        
         import re
+
         release = re.match('^[0-9]+.[0-9]+.[0-9]+$', tag)
         dev = re.match('^[0-9]+.[0-9]+.[0-9]+.dev$', tag)
 
         msg = f'Unknown VERSION format: allowed x.y.z and x.y.z.dev; got {tag}'
-        assert release is not None or dev is not None, msg 
+        assert release is not None or dev is not None, msg
 
         split = tag.split('.')
 
@@ -45,42 +47,59 @@ class Tag:
             if split[-1] == 'dev':
                 parts.append(True)
             else:
-                raise ValueError(f'Unknown VERSION format: allowed x.y.z and x.y.z.dev; got {tag}')
+                raise ValueError(
+                    f'Unknown VERSION format: allowed x.y.z and x.y.z.dev; got {tag}'
+                )
         else:
             parts.append(False)
-        return cls(*parts)
+        return cls(*parts)  # type: ignore
 
     def __lt__(self, other):
         return other > self
 
     def __gt__(self, other):
         return (
-            self.major == other.major and self.minor == other.minor and self.patch == other.patch and (not self.dev and other.dev)
-            or self.major == other.major and self.minor == other.minor and self.patch > other.patch
-            or self.major == other.major and self.minor > other.minor
+            self.major == other.major
+            and self.minor == other.minor
+            and self.patch == other.patch
+            and (not self.dev and other.dev)
+            or self.major == other.major
+            and self.minor == other.minor
+            and self.patch > other.patch
+            or self.major == other.major
+            and self.minor > other.minor
             or self.major > other.major
         )
 
     def __eq__(self, value):
-        return self.major == value.major and self.minor == value.minor and self.patch == value.patch
+        return (
+            self.major == value.major
+            and self.minor == value.minor
+            and self.patch == value.patch
+        )
 
 
 def check_committed():
+    """Check if there are any uncommitted changes in the repository."""
     lines = [x for x in os.popen('git status --porcelain').readlines() if x]
     lines = ''.join(lines)
     assert not lines, f'Uncommitted changes: \n{lines}'
 
+
 def get_current_version():
+    """Get the current version from the VERSION file."""
     with open('VERSION') as f:
         return Tag.parse(f.readlines()[0].strip())
 
 
 def check_release(package='superduper'):
+    """Check if a release can be made."""
     check_committed()
 
     import importlib
+
     package = importlib.import_module(package)
-    version= get_current_version()
+    version = get_current_version()
     imported_version = Tag.parse(package.__version__)
 
     msg = f'Imported version {version} doesn\'t match VERSION file {imported_version}'
@@ -102,4 +121,3 @@ def check_release(package='superduper'):
 
 if __name__ == '__main__':
     check_release('superduper')
-

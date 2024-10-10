@@ -1,0 +1,187 @@
+{
+  "_base": "?pdf-rag",
+  "_builds": {
+    "pdf-rag": {
+      "_path": "superduper.components.template.Template",
+      "template": {
+        "_base": "?pdf-rag",
+        "_builds": {
+          "datatype:dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "ae90ee2e4a12c31a549802e530ae6e9fb85c5f50": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "blob": "&:blob:ae90ee2e4a12c31a549802e530ae6e9fb85c5f50"
+          },
+          "e397326fecf4ebb7825bd4512873abba01207881": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "blob": "&:blob:e397326fecf4ebb7825bd4512873abba01207881"
+          },
+          "datatype:json": {
+            "_path": "superduper.components.datatype.DataType",
+            "status": "ready",
+            "encoder": "?ae90ee2e4a12c31a549802e530ae6e9fb85c5f50",
+            "decoder": "?e397326fecf4ebb7825bd4512873abba01207881",
+            "bytes_encoding": "Str",
+            "intermediate_type": "string"
+          },
+          "datatype:dill_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "lazy_artifact"
+          },
+          "db534b19d947562f185f21b9ed5b11a9d32767a4": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?datatype:dill_lazy",
+            "blob": "&:blob:db534b19d947562f185f21b9ed5b11a9d32767a4"
+          },
+          "model:chunk": {
+            "_path": "superduper.components.model.ObjectModel",
+            "status": "ready",
+            "datatype": "?datatype:json",
+            "object": "?db534b19d947562f185f21b9ed5b11a9d32767a4"
+          },
+          "listener:chunk": {
+            "_path": "superduper.components.listener.Listener",
+            "status": "ready",
+            "cdc_table": "pdfs",
+            "key": "file",
+            "model": "?model:chunk",
+            "flatten": true
+          },
+          "datatype:file_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "file",
+            "encodable": "lazy_file"
+          },
+          "9af59c4b4d8090ba6ef9aac466c74c21c344de21": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?datatype:dill_lazy",
+            "blob": "&:blob:9af59c4b4d8090ba6ef9aac466c74c21c344de21"
+          },
+          "model:split_image": {
+            "_path": "superduper.components.model.ObjectModel",
+            "status": "ready",
+            "datatype": "?datatype:file_lazy",
+            "object": "?9af59c4b4d8090ba6ef9aac466c74c21c344de21"
+          },
+          "listener:split_image": {
+            "_path": "superduper.components.listener.Listener",
+            "status": "ready",
+            "cdc_table": "pdfs",
+            "key": "file",
+            "model": "?model:split_image",
+            "flatten": true
+          },
+          "a527ccca0f459b53035600b6e785d01c0570d1dc": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "blob": "&:blob:a527ccca0f459b53035600b6e785d01c0570d1dc"
+          },
+          "model:llm": {
+            "_path": "superduper_openai.model.OpenAIChatCompletion",
+            "status": "ready",
+            "datatype": "str",
+            "model": "gpt-3.5-turbo"
+          },
+          "1e91d496d47fa50b2d37c9910dc7f3f0": {
+            "_path": "superduper.components.datatype.LazyFile",
+            "datatype": "?datatype:file_lazy",
+            "x": "&:file:1e91d496d47fa50b2d37c9910dc7f3f0"
+          },
+          "plugin:plugin-utils_py": {
+            "_path": "superduper.components.plugin.Plugin",
+            "status": "ready",
+            "path": "?1e91d496d47fa50b2d37c9910dc7f3f0"
+          },
+          "model:processor": {
+            "_path": "utils.Processer",
+            "plugins": [
+              "?plugin:plugin-utils_py"
+            ],
+            "status": "ready"
+          },
+          "model:rag": {
+            "_object": "?a527ccca0f459b53035600b6e785d01c0570d1dc",
+            "status": "ready",
+            "llm_model": "?model:llm",
+            "prompt_template": "<var:prompt_template>",
+            "processor": "?model:processor"
+          },
+          "str": {
+            "_path": "superduper.components.schema.FieldType"
+          },
+          "schema:myschema": {
+            "_path": "superduper.components.schema.Schema",
+            "fields": {
+              "url": "?str",
+              "file": "?datatype:file_lazy",
+              "_fold": "?str"
+            }
+          },
+          "table:pdfs": {
+            "_path": "superduper.components.table.Table",
+            "status": "ready",
+            "schema": "?schema:myschema"
+          },
+          "datatype:vector[1536]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1536
+            ]
+          },
+          "model:embedding": {
+            "_path": "superduper_openai.model.OpenAIEmbedding",
+            "status": "ready",
+            "datatype": "?datatype:vector[1536]",
+            "model": "text-embedding-ada-002",
+            "shape": [
+              1536
+            ]
+          },
+          "listener:embedding": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": [
+              "&:component:listener:chunk:?(listener:chunk.uuid)"
+            ],
+            "status": "ready",
+            "cdc_table": "_outputs__chunk",
+            "key": "_outputs__chunk__?(listener:chunk.uuid).txt",
+            "model": "?model:embedding"
+          },
+          "vector_index:vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "status": "ready",
+            "cdc_table": "_outputs__embedding__?(listener:embedding.uuid)",
+            "indexing_listener": "?listener:embedding"
+          },
+          "pdf-rag": {
+            "_path": "superduper.components.application.Application",
+            "components": [
+              "?listener:chunk",
+              "?listener:split_image",
+              "?model:rag",
+              "?table:pdfs",
+              "?vector_index:vector-index"
+            ],
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "prompt_template"
+      ],
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

@@ -26,25 +26,13 @@ CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
 
 new_release: ## Release a new version of superduper.io
-	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
-	@ if [[ "$(RELEASE_VERSION)" == "v$(CURRENT_RELEASE)" ]]; then echo "No new release version. Please update VERSION file."; exit 1; fi
-	# Switch to release branch
+	@python3 superduper/misc/release_tools.py
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)
-	# Update version in source code
-	@echo "** Change superduper/__init__.py to version $(RELEASE_VERSION)"
-	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduper/__init__.py
-	@git add superduper/__init__.py
-	# Commit and tag release
 	@echo "** Commit Bump Version and Tags"
-	@git add VERSION CHANGELOG.md
-	@git commit -m "Bump Version $(RELEASE_VERSION)"
+	@git commit -m "Bump Version $(RELEASE_VERSION)" --amend
 	@git tag $(RELEASE_VERSION)
-
-	# Push branch and set upstream
-	git push --set-upstream origin release-$(RELEASE_VERSION)
-
-	# Push the specific tag
+	git push origin release-$(RELEASE_VERSION)
 	git push origin $(RELEASE_VERSION)
 
 ##@ Code Quality

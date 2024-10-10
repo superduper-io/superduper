@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add README.md files for the plugins.
 - Add templates to project 
 - Add frontend to project 
-- Change comptue init order in cluster initialize.
+- Change compute init order in cluster initialize
 
 #### New Features & Functionality
 

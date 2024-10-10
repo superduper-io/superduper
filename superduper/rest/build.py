@@ -53,10 +53,10 @@ def build_rest_app(app: SuperDuperApp):
                 db=app.db,
                 **variables,
             )
-            app.db.apply(component)
+            app.db.apply(component, force=True)
             return {'status': 'ok'}
         component = Document.decode(info).unpack()
-        app.db.apply(component)
+        app.db.apply(component, force=True)
         return {'status': 'ok'}
 
     @app.add('/db/show', method='get')

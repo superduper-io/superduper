@@ -838,7 +838,7 @@ class Model(Component, metaclass=ModelMeta):
             key=key,
             select=select,
             model=self,
-            identifier=identifier or f'{self.identifier}/listener',
+            identifier=identifier or self.identifier,
             predict_kwargs=predict_kwargs or {},
             **kwargs,
         )

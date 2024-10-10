@@ -28,7 +28,7 @@ class Plugin(Component):
             self._prepare_plugin()
         else:
             path_name = os.path.basename(self.path.rstrip("/"))
-            self.identifier = self.identifier or f"plugin-{path_name}"
+            self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
         self._install()
         super().__post_init__(db, artifacts)
 
@@ -98,6 +98,7 @@ class Plugin(Component):
         # Check if plugin is already in cache
         if os.path.exists(uuid_path):
             names = os.listdir(uuid_path)
+            names = [name for name in names if name != "__pycache__"]
             assert len(names) == 1, f"Multiple plugins found in {uuid_path}"
             self.path = os.path.join(uuid_path, names[0])
             return

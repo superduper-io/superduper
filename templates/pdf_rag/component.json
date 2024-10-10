@@ -1,0 +1,355 @@
+{
+  "_base": "?pdf-rag",
+  "_builds": {
+    "pdf-rag": {
+      "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": false,
+      "status": null,
+      "template": {
+        "_base": "?pdf-rag",
+        "_builds": {
+          "datatype:dill": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "artifact"
+          },
+          "ae90ee2e4a12c31a549802e530ae6e9fb85c5f50": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:ae90ee2e4a12c31a549802e530ae6e9fb85c5f50"
+          },
+          "e397326fecf4ebb7825bd4512873abba01207881": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:e397326fecf4ebb7825bd4512873abba01207881"
+          },
+          "datatype:json": {
+            "_path": "superduper.components.datatype.DataType",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "ready",
+            "encoder": "?ae90ee2e4a12c31a549802e530ae6e9fb85c5f50",
+            "decoder": "?e397326fecf4ebb7825bd4512873abba01207881",
+            "info": null,
+            "shape": null,
+            "directory": null,
+            "encodable": "encodable",
+            "bytes_encoding": "Str",
+            "intermediate_type": "string",
+            "media_type": null
+          },
+          "datatype:dill_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "dill",
+            "encodable": "lazy_artifact"
+          },
+          "bef876441de20d4aa98593603489839328a63cc3": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?datatype:dill_lazy",
+            "uri": null,
+            "blob": "&:blob:bef876441de20d4aa98593603489839328a63cc3"
+          },
+          "model:chunk": {
+            "_path": "superduper.components.model.ObjectModel",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "*args,**kwargs",
+            "datatype": "?datatype:json",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?bef876441de20d4aa98593603489839328a63cc3",
+            "method": null
+          },
+          "pdfs-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "pdfs.select()"
+          },
+          "listener:chunk": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "cdc_table": "",
+            "key": "file",
+            "model": "?model:chunk",
+            "predict_kwargs": {},
+            "select": "?pdfs-select",
+            "flatten": true
+          },
+          "datatype:file_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "file",
+            "encodable": "lazy_file"
+          },
+          "b1b2e134884fcf84feeff3f667863400dcaf7342": {
+            "_path": "superduper.components.datatype.LazyArtifact",
+            "datatype": "?datatype:dill_lazy",
+            "uri": null,
+            "blob": "&:blob:b1b2e134884fcf84feeff3f667863400dcaf7342"
+          },
+          "model:split_image": {
+            "_path": "superduper.components.model.ObjectModel",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "*args,**kwargs",
+            "datatype": "?datatype:file_lazy",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?b1b2e134884fcf84feeff3f667863400dcaf7342",
+            "method": null
+          },
+          "pdfs-find": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "pdfs.find()"
+          },
+          "listener:split_image": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "cdc_table": "",
+            "key": "file",
+            "model": "?model:split_image",
+            "predict_kwargs": {},
+            "select": "?pdfs-find",
+            "flatten": true
+          },
+          "a8474097190f702a81d315074ba117191bde0e3b": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:a8474097190f702a81d315074ba117191bde0e3b"
+          },
+          "model:llm": {
+            "_path": "superduper_openai.model.OpenAIChatCompletion",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "singleton",
+            "datatype": "str",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "model": "gpt-3.5-turbo",
+            "max_batch_size": 8,
+            "openai_api_key": null,
+            "openai_api_base": null,
+            "client_kwargs": {},
+            "batch_size": 1,
+            "prompt": ""
+          },
+          "ec044a0f4982a07604e3382503f13f8f": {
+            "_path": "superduper.components.datatype.LazyFile",
+            "datatype": "?datatype:file_lazy",
+            "uri": null,
+            "x": "&:file:ec044a0f4982a07604e3382503f13f8f"
+          },
+          "plugin:plugin-utils_py": {
+            "_path": "superduper.components.plugin.Plugin",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "path": "?ec044a0f4982a07604e3382503f13f8f",
+            "cache_path": "~/.superduper/plugins"
+          },
+          "model:processor": {
+            "_path": "utils.Processer",
+            "upstream": null,
+            "plugins": [
+              "?plugin:plugin-utils_py"
+            ],
+            "cache": false,
+            "status": "ready",
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null
+          },
+          "model:rag": {
+            "_object": "?a8474097190f702a81d315074ba117191bde0e3b",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "llm_model": "?model:llm",
+            "prompt_template": "<var:prompt_template>",
+            "processor": "?model:processor"
+          },
+          "str": {
+            "_path": "superduper.components.schema.FieldType"
+          },
+          "schema:myschema": {
+            "_path": "superduper.components.schema.Schema",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "fields": {
+              "url": "?str",
+              "file": "?datatype:file_lazy",
+              "_fold": "?str"
+            }
+          },
+          "table:pdfs": {
+            "_path": "superduper.components.table.Table",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "schema": "?schema:myschema",
+            "primary_id": "id"
+          },
+          "datatype:vector[1536]": {
+            "_path": "superduper.components.vector_index.vector",
+            "shape": [
+              1536
+            ]
+          },
+          "model:embedding": {
+            "_path": "superduper_openai.model.OpenAIEmbedding",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "singleton",
+            "datatype": "?datatype:vector[1536]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "model": "text-embedding-ada-002",
+            "max_batch_size": 8,
+            "openai_api_key": null,
+            "openai_api_base": null,
+            "client_kwargs": {},
+            "shape": [
+              1536
+            ],
+            "batch_size": 100
+          },
+          "outputs-chunk-?(listener:chunk.uuid)-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "_outputs__chunk__?(listener:chunk.uuid).select()"
+          },
+          "listener:embedding": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": [
+              "?listener:chunk"
+            ],
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "cdc_table": "",
+            "key": "_outputs__chunk__?(listener:chunk.uuid).txt",
+            "model": "?model:embedding",
+            "predict_kwargs": {},
+            "select": "?outputs-chunk-?(listener:chunk.uuid)-select",
+            "flatten": false
+          },
+          "vector_index:vector-index": {
+            "_path": "superduper.components.vector_index.VectorIndex",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "cdc_table": "_outputs__embedding__?(listener:embedding.uuid)",
+            "indexing_listener": "?listener:embedding",
+            "compatible_listener": null,
+            "measure": "cosine",
+            "metric_values": {}
+          },
+          "pdf-rag": {
+            "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "components": [
+              "?listener:chunk",
+              "?listener:split_image",
+              "?model:rag",
+              "?table:pdfs",
+              "?vector_index:vector-index"
+            ],
+            "namespace": null,
+            "link": null,
+            "_literals": [
+              "template"
+            ]
+          }
+        }
+      },
+      "template_variables": [
+        "prompt_template"
+      ],
+      "types": {},
+      "blobs": null,
+      "files": null,
+      "data": null,
+      "_literals": [
+        "template"
+      ]
+    }
+  },
+  "_blobs": {},
+  "_files": {}
+}

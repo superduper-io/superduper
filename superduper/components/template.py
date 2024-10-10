@@ -46,6 +46,7 @@ class _BaseTemplate(Component):
             )
         if self.template_variables is None:
             self.template_variables = self.template.variables
+        logging.info(f"Template variables: {self.template_variables}")
         super().__post_init__(db, artifacts)
 
     @ensure_initialized

@@ -44,7 +44,7 @@ def _end_2_end(db, memory_table=False):
 
     t = Table(identifier="my_table", schema=schema, db=db)
 
-    db.add(t)
+    db.apply(t)
     t = db["my_table"]
 
     insert = t.insert(
@@ -103,7 +103,7 @@ def _end_2_end(db, memory_table=False):
         predict_kwargs={"max_chunk_size": 3000},
         identifier="listener1",
     )
-    db.add(listener1)
+    db.apply(listener1)
 
     # also add a vectorizing model
     vectorize = TorchModel(
@@ -124,7 +124,7 @@ def _end_2_end(db, memory_table=False):
         predict_kwargs={"max_chunk_size": 3000},
         identifier="listener2",
     )
-    db.add(listener2)
+    db.apply(listener2)
 
     # Build query to get the results back
     q = t.outputs(listener2.outputs).select("id", "image", "age").filter(t.age > 25)
@@ -143,9 +143,7 @@ def _end_2_end(db, memory_table=False):
     assert listener2.outputs in result[0].unpack()
 
 
-def test_nested_query():
-    db = superduper()
-
+def test_nested_query(db):
     memory_table = False
     if CFG.data_backend.endswith("csv"):
         memory_table = True
@@ -162,7 +160,7 @@ def test_nested_query():
 
     t = Table(identifier="my_table", schema=schema)
 
-    db.add(t)
+    db.apply(t)
 
     t = db["my_table"]
     q = t.filter(t.age >= 10)

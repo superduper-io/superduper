@@ -61,7 +61,7 @@ class Fetcher:
     :param n_workers: number of download workers
     """
 
-    DIALECTS = ('http', 's3', 'file')
+    DIALECTS: t.ClassVar = ('http', 's3', 'file')
 
     def __init__(self, headers: t.Optional[t.Dict] = None, n_workers: int = 0):
         session = boto3.Session()
@@ -76,12 +76,13 @@ class Fetcher:
         self.request_session.mount("http://", self.request_adapter)
         self.request_session.mount("https://", self.request_adapter)
 
-    def is_uri(self, uri: str):
+    @classmethod
+    def is_uri(cls, uri: str):
         """Helper function to check if uri is one of the dialects.
 
         :param uri: uri string.
         """
-        return uri.split('://')[0] in self.DIALECTS
+        return uri.split('://')[0] in cls.DIALECTS
 
     def _download_s3_folder(self, uri):
         folder_objects = []

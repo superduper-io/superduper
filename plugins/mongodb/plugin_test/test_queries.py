@@ -67,7 +67,7 @@ def test_insert_from_uris(db, image_url):
     if image_url.startswith('file://'):
         image_url = image_url[7:]
 
-    db.add(pil_image)
+    db.apply(pil_image)
     collection = db['documents']
     to_insert = [Document({'img': pil_image(uri=image_url)})]
 

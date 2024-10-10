@@ -46,7 +46,7 @@ def test_mongo_schema(db, schema):
         )
 
     table = Table(identifier=collection_name, schema=schema)
-    db.add(table)
+    db.apply(table)
     gt = data[0]
 
     db[collection_name].insert_many(data).execute()

@@ -484,7 +484,7 @@ class Query(_BaseQuery):
 
     def complete_uuids(
         self, db: 'Datalayer', listener_uuids: t.Optional[t.Dict] = None
-    ):
+    ) -> 'Query':
         """Complete the UUIDs with have been omitted from output-tables.
 
         :param db: ``db`` instance.
@@ -498,6 +498,8 @@ class Query(_BaseQuery):
         parser = importlib.import_module(self.__module__).parse_query
 
         def _get_uuid(identifier):
+            if '.' in identifier:
+                identifier = identifier.split('.')[0]
             msg = (
                 'Couldn\'t complete `Listener` key '
                 'based on ellipsis {predict_id}__????????????????. '

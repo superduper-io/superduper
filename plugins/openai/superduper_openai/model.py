@@ -122,14 +122,13 @@ class OpenAIEmbedding(_OpenAI):
         if self.shape is None:
             self.shape = self.shapes[self.model]
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
         the datatype is set to ``vector``.
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or vector(shape=self.shape)
 
     @retry
@@ -177,12 +176,11 @@ class OpenAIChatCompletion(_OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer) -> None:
         """Pre creates the model.
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or 'str'
 
     @retry
@@ -246,12 +244,11 @@ class OpenAIImageCreation(_OpenAI):
     n: int = 1
     response_format: str = 'b64_json'
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer):
         """Pre creates the model.
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or 'bytes'
 
     def _format_prompt(self, context, X):
@@ -332,12 +329,11 @@ class OpenAIImageEdit(_OpenAI):
         prompt = self.prompt.format(context='\n'.join(context))
         return prompt
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer):
         """Pre creates the model.
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or 'bytes'
 
     @retry
@@ -428,12 +424,11 @@ class OpenAIAudioTranscription(_OpenAI):
     takes_context: bool = True
     prompt: str = ''
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer):
         """Pre creates the model.
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or 'str'
 
     @retry
@@ -496,12 +491,11 @@ class OpenAIAudioTranslation(_OpenAI):
     prompt: str = ''
     batch_size: int = 1
 
-    def pre_create(self, db: Datalayer, startup_cache={}) -> None:
+    def _pre_create(self, db: Datalayer):
         """Translates a file-like Audio recording to English.
 
         :param db: The datalayer to use for the model.
         """
-        super().pre_create(db, startup_cache=startup_cache)
         self.datatype = self.datatype or 'str'
 
     @retry

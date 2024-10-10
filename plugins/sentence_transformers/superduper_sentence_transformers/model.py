@@ -50,8 +50,8 @@ class SentenceTransformer(Model, _DeviceManaged):
     postprocess: t.Union[None, t.Callable] = None
     signature: Signature = 'singleton'
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example=example)
 
         if self.model is None:
             self.model = self.identifier
@@ -118,7 +118,7 @@ class SentenceTransformer(Model, _DeviceManaged):
             results = self.postprocess(results)
         return results
 
-    def pre_create(self, db):
+    def _pre_create(self, db):
         """Pre creates the model.
 
         If the datatype is not set and the datalayer is an IbisDataBackend,
@@ -126,7 +126,6 @@ class SentenceTransformer(Model, _DeviceManaged):
 
         :param db: The datalayer instance.
         """
-        super().pre_create(db)
         if self.datatype is not None:
             return
 

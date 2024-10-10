@@ -2,12 +2,14 @@ import dataclasses as dc
 import os
 import typing as t
 
+from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
 from superduper.base.leaf import Leaf
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component, _build_info_from_path
+from superduper.components.datatype import pickle_serializer
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 from .component import ensure_initialized
@@ -19,7 +21,7 @@ class _BaseTemplate(Component):
 
     :param template: Template component with variables.
     :param template_variables: Variables to be set.
-    :param info: Additional information.
+    :param types: Additional information about types of variables.
     :param blobs: Blob identifiers in `Template.component`.
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
@@ -30,7 +32,7 @@ class _BaseTemplate(Component):
 
     template: t.Union[t.Dict, Component]
     template_variables: t.Optional[t.List[str]] = None
-    info: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    types: t.Optional[t.Dict] = dc.field(default_factory=dict)
     blobs: t.Optional[t.List[str]] = None
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
@@ -75,9 +77,16 @@ class _BaseTemplate(Component):
 
 
 class Template(_BaseTemplate):
-    """Application template component."""
+    """Application template component.
+
+    :param data: Sample data to test the template.
+    """
+
+    _artifacts: t.ClassVar[t.Tuple[str]] = (('data', pickle_serializer),)
 
     type_id: t.ClassVar[str] = "template"
+
+    data: t.List[t.Dict] | None = None
 
     def pre_create(self, db: Datalayer) -> None:
         """Run before the object is created."""
@@ -86,6 +95,15 @@ class Template(_BaseTemplate):
         self.blobs = list(self.template.get(KEY_BLOBS, {}).keys())
         self.files = list(self.template.get(KEY_FILES, {}).keys())
         db.artifact_store.save_artifact(self.template)
+        if self.data is not None:
+            if not db.cfg.auto_schema:
+                logging.warn('Auto schema is disabled. Skipping data insertion.')
+                return
+            db[self.default_table].insert(self.data).execute()
+
+    @property
+    def default_table(self):
+        return f'_sample_{self.identifier}'
 
     def export(
         self,

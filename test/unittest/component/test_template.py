@@ -143,3 +143,26 @@ def test_query_template(db):
 
     assert set(t.template_variables) == {'limit', 'test'}
     assert t.template['query'] == 'documents.find(documents[0]).limit("<var:limit>")'
+
+
+def test_add_data(db):
+    m = Listener(
+        identifier='my_id',
+        model=ObjectModel(
+            object=lambda x: x + 2,
+            identifier='<var:model_id>',
+        ),
+        select=db['<var:collection>'].select(),
+        key='<var:key>',
+    )
+
+    t = Template(
+        'my_template',
+        template=m.encode(),
+        data=[{'x': i} for i in range(10)],
+    )
+
+    db.cfg.auto_schema = True
+    db.apply(t)
+
+    assert '_sample_my_template' in db.show('table')

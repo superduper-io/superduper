@@ -16,8 +16,8 @@ class Jina(APIBaseModel):
 
     api_key: t.Optional[str] = None
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example=example)
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
@@ -41,12 +41,12 @@ class JinaEmbedding(Jina):
     shape: t.Optional[t.Sequence[int]] = None
     signature: str = 'singleton'
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         if self.shape is None:
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 
-    def pre_create(self, db):
+    def _pre_create(self, db):
         """Pre create method for the model.
 
         If the datalayer is Ibis, the datatype will be set to the appropriate
@@ -54,7 +54,6 @@ class JinaEmbedding(Jina):
 
         :param db: The datalayer to use for the model.
         """
-        super().pre_create(db)
         if self.datatype is None:
             self.datatype = vector(shape=self.shape)
 

@@ -1,3 +1,4 @@
 superduper==0.3.0
+pillow>=10.2.0
 openai>=1.1.2
 httpx

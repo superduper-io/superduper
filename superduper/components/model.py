@@ -13,6 +13,7 @@ from functools import wraps
 
 import requests
 import tqdm
+from overrides import override
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -1260,3 +1261,35 @@ class SequentialModel(Model):
             else:
                 out = p.predict_batches(out)
         return out
+
+
+class ModelRouter(Model):
+    """ModelRouter component which routes the model to the correct model.
+
+    :param models: A dictionary of models to use
+    :param model: The model to use
+    """
+
+    models: t.Dict[str, Model]
+    model: str
+
+    def _pre_create(self, db):
+        self.datatype = self.models[self.model].datatype
+
+    @override
+    def predict(self, *args, **kwargs) -> t.Any:
+        logging.info(f'Predicting with model {self.model}')
+        return self.models[self.model].predict(*args, **kwargs)
+
+    @override
+    def predict_batches(self, dataset) -> t.List:
+        logging.info(f'Predicting with model {self.model}')
+        return self.models[self.model].predict_batches(dataset)
+
+    @override
+    def init(self, db):
+        if hasattr(self.models[self.model], 'shape'):
+            self.shape = getattr(self.models[self.model], 'shape')
+        self.example = self.models[self.model].example
+        self.signature = self.models[self.model].signature
+        self.models[self.model].init()

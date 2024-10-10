@@ -9,86 +9,67 @@
           "str": {
             "_path": "superduper.components.schema.FieldType"
           },
-          "schema": {
-            "_path": "superduper.components.schema.Schema",
-            "fields": {
-              "x": "?str",
-              "_fold": "?str"
-            }
-          },
-          "<var:table_name>": {
-            "_path": "superduper.components.table.Table",
-            "schema": "?schema"
-          },
-          "dill_lazy": {
+          "datatype:dill_lazy": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "lazy_artifact"
           },
-          "03c2d3eed85dc1daff9b9ef78206e90a0f3e8f41": {
+          "448d1fcf59700066bac31801314620a13fc45ea7": {
             "_path": "superduper.components.datatype.LazyArtifact",
-            "datatype": "?dill_lazy",
-            "blob": "&:blob:03c2d3eed85dc1daff9b9ef78206e90a0f3e8f41"
+            "datatype": "?datatype:dill_lazy",
+            "blob": "&:blob:448d1fcf59700066bac31801314620a13fc45ea7"
           },
-          "chunker": {
+          "model:chunker": {
+            "_path": "superduper.components.model.ObjectModel",
+            "status": "initializing",
+            "datatype": "?str",
+            "object": "?448d1fcf59700066bac31801314620a13fc45ea7"
+          },
+          "listener:chunker": {
             "_path": "superduper.components.listener.Listener",
-            "uuid": "chunk",
+            "cdc_table": "<var:table_name>",
             "key": "x",
-            "model": "?chunker",
-            "select": "?<var:table_name>-select",
-            "predict_id": "chunker"
+            "model": "?model:chunker",
+            "flatten": true
           },
-          "<var:table_name>-select": {
-            "_path": "superduper_mongodb.query.parse_query",
-            "documents": [],
-            "query": "<var:table_name>.select()"
-          },
-          "vector[1536]": {
+          "datatype:vector[1024]": {
             "_path": "superduper.components.vector_index.vector",
             "shape": [
-              1536
+              1024
             ]
           },
-          "text-embedding-ada-002": {
+          "model:text-embedding-ada-002": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
-            "datatype": "?vector[1536]",
+            "status": "ready",
+            "datatype": "?datatype:vector[1024]",
             "model": "text-embedding-ada-002",
             "shape": [
               1536
             ]
           },
-          "-outputs-chunker-select": {
-            "_path": "superduper_mongodb.query.parse_query",
-            "<var:table_name>": [],
-            "query": "_outputs__chunker.select()"
-          },
-          "text-embedding-ada-002-listener": {
+          "listener:text-embedding-ada-002-listener": {
             "_path": "superduper.components.listener.Listener",
             "upstream": [
-              "?<var:table_name>",
-              "?chunker"
+              "?listener:chunker",
+              "&:component:listener:chunker:?(listener:chunker.uuid)"
             ],
-            "key": "_outputs__chunker",
-            "model": "?text-embedding-ada-002",
-            "select": "?-outputs-chunker-select",
-            "predict_id": "text-embedding-ada-002-listener"
+            "cdc_table": "_outputs__chunker__?(listener:chunker.uuid)",
+            "key": "_outputs__chunker__?(listener:chunker.uuid)",
+            "model": "?model:text-embedding-ada-002"
           },
-          "my-vector-index": {
+          "vector_index:my-vector-index": {
             "_path": "superduper.components.vector_index.VectorIndex",
-            "indexing_listener": "?text-embedding-ada-002-listener"
+            "cdc_table": "_outputs__text-embedding-ada-002-listener__?(listener:text-embedding-ada-002-listener.uuid)",
+            "indexing_listener": "?listener:text-embedding-ada-002-listener"
           },
           "text-vector-search": {
             "_path": "superduper.components.application.Application",
+            "status": "ready",
             "components": [
-              "?<var:table_name>",
-              "?chunker",
-              "?my-vector-index"
+              "?listener:chunker",
+              "?vector_index:my-vector-index"
             ],
             "namespace": [
-              {
-                "type_id": "table",
-                "identifier": "<var:table_name>"
-              },
               {
                 "type_id": "listener",
                 "identifier": "chunker"
@@ -96,22 +77,6 @@
               {
                 "type_id": "vector_index",
                 "identifier": "my-vector-index"
-              },
-              {
-                "type_id": "schema",
-                "identifier": "schema"
-              },
-              {
-                "type_id": "model",
-                "identifier": "chunker"
-              },
-              {
-                "type_id": "listener",
-                "identifier": "text-embedding-ada-002-listener"
-              },
-              {
-                "type_id": "model",
-                "identifier": "text-embedding-ada-002"
               }
             ],
             "_literals": [

@@ -177,7 +177,7 @@ class Config(BaseConfig):
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
 
-    force_apply: bool = True
+    force_apply: bool = False
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True

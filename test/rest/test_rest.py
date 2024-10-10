@@ -8,6 +8,8 @@ from superduper.base.document import Document
 
 CFG.auto_schema = True
 CFG.rest.uri = 'localhost:8000'
+CFG.force_apply = True
+
 from superduper.rest.deployed_app import app
 
 from .mock_client import setup as _setup, teardown

@@ -407,7 +407,7 @@ class Datalayer:
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
-        force: bool = CFG.force_apply,
+        force: bool | None = None,
     ):
         """
         Add functionality in the form of components.
@@ -420,6 +420,9 @@ class Datalayer:
                              initialization begins.
         :return: Tuple containing the added object(s) and the original object(s).
         """
+        if force is None:
+            force = self.cfg.force_apply
+
         if not isinstance(object, Component):
             raise ValueError('Only components can be applied')
 
@@ -486,8 +489,8 @@ class Datalayer:
 
         if not force:
             if not click.confirm(
-                'Please approve this deployment plan.',
-                default=False,
+                '\033[1mPlease approve this deployment plan.\033[0m',
+                default=True,
             ):
                 return object
         self.cluster.queue.publish(events=events)

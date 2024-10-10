@@ -457,31 +457,26 @@ class Datalayer:
                 unique_job_ids.append(e.job_id)
                 unique_job_events.append(e)
 
-        print('\n----------------')
-        print('CREATION EVENTS:')
-        print('----------------')
+        logging.info('Here are the CREATION EVENTS:')
         steps = {
             c.component['uuid']: str(i) for i, c in enumerate(unique_create_events)
         }
         for i, c in enumerate(unique_create_events):
             if c.parent:
-                print(f'[{i}]: {c.huuid}: create ~ [{steps[c.parent]}]')
+                logging.info(f'[{i}]: {c.huuid}: create ~ [{steps[c.parent]}]')
             else:
-                print(f'[{i}]: {c.huuid}: create')
+                logging.info(f'[{i}]: {c.huuid}: create')
 
-        print('\n------------')
-        print('JOBS EVENTS:')
-        print('------------')
+        logging.info('JOBS EVENTS:')
         steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
         for i, j in enumerate(unique_job_events):
             if j.dependencies:
-                print(
+                logging.info(
                     f'[{i}]: {j.huuid}: {j.method} ~ '
                     f'[{",".join([steps[d] for d in j.dependencies])}]'
                 )
             else:
-                print(f'[{i}]: {j.huuid}: {j.method}')
-        print('\n')
+                logging.info(f'[{i}]: {j.huuid}: {j.method}')
 
         events = [
             *unique_create_events,

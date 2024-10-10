@@ -137,6 +137,7 @@ ignore = [
   "D212", # Multi-line docstring summary should start at the first line
   "D213", # Multi-line docstring summary should start at the second line
   "D401",
+  "D102",
   "E402",
 ]
 

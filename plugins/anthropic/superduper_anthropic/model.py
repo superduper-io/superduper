@@ -4,7 +4,6 @@ import typing as t
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
 from superduper.backends.query_dataset import QueryDataset
-from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel
 from superduper.ext.utils import format_prompt, get_key
 from superduper.misc.retry import Retry
@@ -24,9 +23,9 @@ class Anthropic(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db, artifacts, example):
         self.model = self.model or self.identifier
-        super().__post_init__(db, artifacts)
+        super().__post_init__(db, artifacts, example=example)
         self.client = anthropic.Anthropic(
             api_key=get_key(KEY_NAME), **self.client_kwargs
         )
@@ -50,16 +49,6 @@ class AnthropicCompletions(Anthropic):
     """
 
     prompt: str = ''
-
-    def pre_create(self, db: Datalayer) -> None:
-        """Pre create method for the model.
-
-        If the datalayer is Ibis, the datatype will be set to the appropriate
-        SQL datatype.
-
-        :param db: The datalayer to use for the model.
-        """
-        super().pre_create(db)
 
     @retry
     def predict(

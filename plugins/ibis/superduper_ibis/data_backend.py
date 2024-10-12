@@ -16,6 +16,7 @@ from superduper.base.enums import DBType
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+from superduper.base import exceptions
 
 from superduper_ibis.db_helper import get_db_helper
 from superduper_ibis.field_types import FieldType, dtype
@@ -264,7 +265,12 @@ class IbisDataBackend(BaseDataBackend):
 
         :param identifier: The identifier of the table or collection.
         """
-        return self.conn.table(identifier)
+        try:
+            return self.conn.table(identifier)
+        except ibis.common.exceptions.IbisError:
+            raise exceptions.TableNotFoundError(
+                f'Table {identifier} not found in database'
+            )
 
     def disconnect(self):
         """Disconnect the client."""

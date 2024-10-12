@@ -77,6 +77,10 @@ class DatabackendException(BaseException):
     """
 
 
+class TableNotFoundError(Exception):
+    """Table not found in database."""
+
+
 class MetadataException(BaseException):
     """
     MetadataException.

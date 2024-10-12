@@ -70,6 +70,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         DBConfig = get_db_config(self.dialect)
 
         type_string = DBConfig.type_string
+        type_string_long = DBConfig.type_string_long
         type_json_as_string = DBConfig.type_json_as_string
         type_json_as_text = DBConfig.type_json_as_text
         type_integer = DBConfig.type_integer
@@ -98,7 +99,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('genus', type_string),
             Column('queue', type_string),
             Column('status', type_string),
-            Column('dependencies', type_string),
+            Column('dependencies', type_string_long),
             *job_table_args,
         )
 
@@ -111,7 +112,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         )
 
         self.component_table = Table(
-            'COMPONENT',
+            "COMPONENT",
             metadata,
             # TODO rename with id -> uuid
             Column('id', type_string, primary_key=True),
@@ -138,7 +139,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._table_mapping = {
             '_artifact_relations': self.artifact_table,
         }
-
         metadata.create_all(self.conn)
 
     def _create_data(self, table_name, datas):
@@ -493,12 +493,13 @@ class SQLAlchemyMetadata(MetaDataStore):
     def set_component_status(self, uuid, status: Status):
         """Set status of component with `status`."""
         with self.session_context() as session:
+            value = status if isinstance(status, str) else status.value
             stmt = (
                 self.component_table.update()
                 .where(
                     self.component_table.c.uuid == uuid,
                 )
-                .values({'status': status.value})
+                .values({'status': value})
             )
             session.execute(stmt)
 
@@ -642,7 +643,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         with self.session_context() as session:
             stmt = (
                 self.job_table.update()
-                .where(self.job_table.c.identifier == job_id)
+                .where(self.job_table.c.job_id == job_id)
                 .values({key: value})
             )
             session.execute(stmt)

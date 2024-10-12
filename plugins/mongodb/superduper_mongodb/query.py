@@ -411,31 +411,12 @@ class MongoQuery(Query):
         coll = type(self)(table=self.table, db=self.db)
         return coll.find(filter_, projection)
 
-    @applies_to('find')
     def select_ids_of_missing_outputs(self, predict_id: str):
         """Select the ids of documents that are missing the given output.
 
         :param predict_id: The id of the prediction.
         """
-        args, kwargs = self.parts[0][1:]
-        if args:
-            args = [
-                {
-                    '$and': [
-                        args[0],
-                        {f'{CFG.output_prefix}{predict_id}': {'$exists': 0}},
-                    ]
-                },
-                *args[1:],
-            ]
-        else:
-            args = [{f'{CFG.output_prefix}{predict_id}': {'$exists': 0}}]
-
-        if len(args) == 1:
-            args.append({})
-        args[1] = {'_id': 1}
-
-        return self.table_or_collection.find(*args, **kwargs)
+        return self.select_ids
 
     @property
     @applies_to('find')

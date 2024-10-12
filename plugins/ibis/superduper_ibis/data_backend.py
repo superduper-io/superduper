@@ -12,11 +12,11 @@ from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.local.artifacts import FileSystemArtifactStore
+from superduper.base import exceptions
 from superduper.base.enums import DBType
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.base import exceptions
 
 from superduper_ibis.db_helper import get_db_helper
 from superduper_ibis.field_types import FieldType, dtype
@@ -66,6 +66,7 @@ class IbisDataBackend(BaseDataBackend):
         self.conn = conn
         self.name = name
         self.in_memory = in_memory
+        self.overwrite = False
         self._setup(conn)
 
     def _setup(self, conn):

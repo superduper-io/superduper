@@ -146,8 +146,8 @@ class Listener(CDC):
                                     db[self.select.table].select().limit(1).execute()
                                 )
                             except errors:
-                                # Note: This is added for sql databases, 
-                                # since they return error if key not found 
+                                # Note: This is added for sql databases,
+                                # since they return error if key not found
                                 # unlike mongodb
                                 r = {}
                             r = {**r, **db.startup_cache}

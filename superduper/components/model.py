@@ -482,7 +482,7 @@ class Model(Component, metaclass=ModelMeta):
         ids: t.Sequence[str] | None = None,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
-        overwrite: bool = False,
+        overwrite: bool = True,
         flatten: bool = False,
     ) -> t.Any:
         """Predict on the data points in the database.

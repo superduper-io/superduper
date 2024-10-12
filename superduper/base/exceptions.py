@@ -78,7 +78,11 @@ class DatabackendException(BaseException):
 
 
 class TableNotFoundError(Exception):
-    """Table not found in database."""
+    """Table not found in database.
+
+    :param args: *args for Exception
+    :param kwargs: **kwargs for Exception
+    """
 
 
 class MetadataException(BaseException):

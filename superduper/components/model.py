@@ -442,6 +442,7 @@ class Model(Component, metaclass=ModelMeta):
                     select = select.select_using_ids(ids)
                 # TODO - this is broken
                 query = select.select_ids_of_missing_outputs(predict_id=predict_id)
+
             else:
                 if ids:
                     return ids
@@ -481,7 +482,7 @@ class Model(Component, metaclass=ModelMeta):
         ids: t.Sequence[str] | None = None,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
-        overwrite: bool = True,
+        overwrite: bool = False,
         flatten: bool = False,
     ) -> t.Any:
         """Predict on the data points in the database.
@@ -508,6 +509,7 @@ class Model(Component, metaclass=ModelMeta):
         logging.debug(message)
 
         select = self._prepare_select_for_predict(select, self.db)
+
         # TODO ids are not propagated on trigger
         predict_ids = self._get_ids_from_select(
             X=X,
@@ -634,7 +636,6 @@ class Model(Component, metaclass=ModelMeta):
         )
 
         outputs = self.predict_batches(dataset)
-        # self._infer_auto_schema(outputs, predict_id)
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         assert isinstance(

@@ -59,6 +59,7 @@ class DefaultConfig:
     """Default configuration for database types # noqa."""
 
     type_string = String(DEFAULT_LENGTH)
+    type_string_long = String(1000)
     type_json_as_string = JsonAsString
     type_json_as_text = JsonAsText
     type_integer = Integer

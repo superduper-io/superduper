@@ -1,3 +1,4 @@
+import collections
 import base64
 
 import pandas as pd
@@ -43,6 +44,11 @@ class Base64Mixin:
         return schema_mapping
 
 
+class KeyEqualDefaultDict(collections.defaultdict):
+    def __missing__(self, key):
+        return key
+
+
 class DBHelper:
     """Generic helper class for database.
 
@@ -50,6 +56,8 @@ class DBHelper:
     """
 
     match_dialect = "base"
+    table_truncate = {'postgres': 63}
+    table_truncate_map = KeyEqualDefaultDict()
 
     def __init__(self, dialect):
         self.dialect = dialect
@@ -64,7 +72,15 @@ class DBHelper:
         # change the order of the columns since
         # ibis no longer supports permuting the order
         # based on the names of the columns
+
         columns = conn.table(table_name).columns
+        for column in datas.columns:
+            if conn.name in self.table_truncate:
+                n = self.table_truncate[conn.name]
+                if len(column) > n:
+                    self.table_truncate_map[column[:n]] = column
+
+        columns = list(map(lambda x: self.table_truncate_map[x], columns))
         datas = datas[columns]
         return table_name, pd.DataFrame(datas)
 

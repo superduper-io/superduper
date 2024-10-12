@@ -4,6 +4,7 @@ from copy import copy
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
+from superduper.base import exceptions
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.components.cdc import CDC
@@ -125,20 +126,34 @@ class Listener(CDC):
             'Couldn\'t retrieve outputs to determine schema; '
             '{table} returned 0 results.'
         )
+        errors = (
+            StopIteration,
+            KeyError,
+            FileNotFoundError,
+            exceptions.TableNotFoundError,
+        )
         if self.model.example is not None:
             input = self.model.example
         else:
             if self.dependencies:
                 try:
                     r = next(self.select.limit(1).execute())
-                except (StopIteration, KeyError, FileNotFoundError):
+                except errors:
                     try:
                         if not self.cdc_table.startswith(CFG.output_prefix):
-                            r = next(db[self.select.table].select().limit(1).execute())
+                            try:
+                                r = next(
+                                    db[self.select.table].select().limit(1).execute()
+                                )
+                            except errors:
+                                # Note: This is added for sql databases, 
+                                # since they return error if key not found 
+                                # unlike mongodb
+                                r = {}
                             r = {**r, **db.startup_cache}
                         else:
                             r = copy(db.startup_cache)
-                    except (StopIteration, KeyError) as e:
+                    except Exception as e:
                         raise Exception(msg.format(table=self.cdc_table)) from e
             else:
                 try:

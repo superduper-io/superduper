@@ -1,5 +1,5 @@
-import collections
 import base64
+import collections
 
 import pandas as pd
 
@@ -44,7 +44,9 @@ class Base64Mixin:
         return schema_mapping
 
 
-class KeyEqualDefaultDict(collections.defaultdict):
+class _KeyEqualDefaultDict(collections.defaultdict):
+    """Dict class with defaultdict behaviour."""
+
     def __missing__(self, key):
         return key
 
@@ -57,7 +59,7 @@ class DBHelper:
 
     match_dialect = "base"
     table_truncate = {'postgres': 63}
-    table_truncate_map = KeyEqualDefaultDict()
+    table_truncate_map = _KeyEqualDefaultDict()
 
     def __init__(self, dialect):
         self.dialect = dialect

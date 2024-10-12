@@ -331,6 +331,19 @@ class Datalayer:
         """
         from superduper.base.event import Change
 
+        component_exists_to_consume = False
+        for component in self.show("listener"):
+            cdc_table = self.load('listener', component).cdc_table
+            if cdc_table == table:
+                component_exists_to_consume = True
+                break
+        if not component_exists_to_consume:
+            logging.info(
+                'Skipping cdc for inserted documents in {table}',
+                'because no component to consume the table.',
+            )
+            return
+
         events = []
         for id in ids:
             event = Change(ids=[str(id)], queue=table, type=event_type)

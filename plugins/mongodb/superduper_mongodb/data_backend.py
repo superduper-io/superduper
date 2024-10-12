@@ -34,6 +34,7 @@ class MongoDataBackend(BaseDataBackend):
 
     def __init__(self, uri: str, flavour: t.Optional[str] = None):
         self.connection_callback = lambda: connection_callback(uri, flavour)
+        self.overwrite = True
         super().__init__(uri, flavour=flavour)
         self.conn, self.name = connection_callback(uri, flavour)
 

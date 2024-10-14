@@ -239,6 +239,7 @@ def component(*schema: t.Dict):
 
                 if metadata:
                     r.update(out.metadata)
+                    r['uuid'] = out.uuid
                 else:
                     for k in out.metadata:
                         if k in r:

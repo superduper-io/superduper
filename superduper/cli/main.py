@@ -70,7 +70,7 @@ def start(
         for t in prebuilt:
             if t not in existing:
                 logging.info(f'Applying template \'{t}\'')
-                db.apply(getattr(templates, t))
+                db.apply(getattr(templates, t), force=True)
 
     if not headless:
         webbrowser.open(f'http://localhost:{port}')

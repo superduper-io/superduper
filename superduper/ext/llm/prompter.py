@@ -77,7 +77,7 @@ class RetrievalPrompt(QueryModel):
         return super().inputs
 
     def predict(self, prompt):
-        """Predict the answer to the question based on the prompt.
+        """Create a prompt based on the facts and the question.
 
         :param prompt: The prompt to answer the question.
         """

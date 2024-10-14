@@ -1181,6 +1181,8 @@ class QueryModel(Model):
         :param args: Positional arguments to predict on.
         :param kwargs: Keyword arguments to predict on.
         """
+        if args:
+            raise Exception('QueryModel does not support positional arguments')
         assert self.db is not None, 'db cannot be None'
         if self.preprocess is not None:
             kwargs = self.preprocess(**kwargs)
@@ -1288,9 +1290,38 @@ class ModelRouter(Model):
         return self.models[self.model].predict_batches(dataset)
 
     @override
-    def init(self, db):
+    def init(self, db=None):
         if hasattr(self.models[self.model], 'shape'):
             self.shape = getattr(self.models[self.model], 'shape')
         self.example = self.models[self.model].example
         self.signature = self.models[self.model].signature
         self.models[self.model].init()
+
+
+class RAGModel(Model):
+    """Model to use for RAG.
+
+    :param prompt_template: Prompt template.
+    :param select: Query to retrieve data.
+    :param key: Key to use for get text out of documents.
+    :param llm: Language model to use.
+    """
+
+    prompt_template: str
+    signature: str = 'singleton'
+    select: Query
+    key: str
+    llm: Model
+
+    def _build_prompt(self, query, docs):
+        chunks = [doc[self.key] for doc in docs]
+        context = "\n\n".join(chunks)
+        return self.prompt_template.format(context=context, query=query)
+
+    def predict(self, query: str):
+        assert self.db, 'db cannot be None'
+        select = self.select.set_variables(db=self.db, query=query)
+        self.db.execute(select)
+        results = [r.unpack() for r in select.tolist()]
+        prompt = self._build_prompt(query, results)
+        return self.llm.predict(prompt)

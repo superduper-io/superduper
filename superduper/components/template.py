@@ -25,7 +25,6 @@ class _BaseTemplate(Component):
     :param blobs: Blob identifiers in `Template.component`.
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
-    :param default_values: Default values for the variables.
     """
 
     literals: t.ClassVar[t.Tuple[str]] = ('template',)
@@ -36,7 +35,6 @@ class _BaseTemplate(Component):
     blobs: t.Optional[t.List[str]] = None
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
-    default_values: t.Dict = dc.field(default_factory=dict)
 
     def __post_init__(self, db, artifacts, substitutions):
         if isinstance(self.template, Leaf):
@@ -59,6 +57,17 @@ class _BaseTemplate(Component):
         return Document.decode(component, db=self.db).unpack()
 
     @property
+    def default_values(self):
+        default_values = {}
+        if self.types:
+            for k in self.template_variables:
+                if k not in self.types:
+                    continue
+                if 'default' in self.types[k]:
+                    default_values[k] = self.types[k]['default']
+        return default_values
+
+    @property
     def form_template(self):
         """Form to be diplayed to user."""
         return {
@@ -71,6 +80,7 @@ class _BaseTemplate(Component):
                 )
                 for i, k in enumerate(self.template_variables)
             },
+            'types': self.types,
             **{k: v for k, v in self.template.items() if k != 'identifier'},
             '_template_name': self.identifier,
         }
@@ -88,13 +98,13 @@ class Template(_BaseTemplate):
 
     data: t.List[t.Dict] | None = None
 
-    def pre_create(self, db: Datalayer) -> None:
+    def _pre_create(self, db: Datalayer) -> None:
         """Run before the object is created."""
-        super().pre_create(db)
         assert isinstance(self.template, dict)
         self.blobs = list(self.template.get(KEY_BLOBS, {}).keys())
         self.files = list(self.template.get(KEY_FILES, {}).keys())
         db.artifact_store.save_artifact(self.template)
+        self.init(db)
         if self.data is not None:
             if not db.cfg.auto_schema:
                 logging.warn('Auto schema is disabled. Skipping data insertion.')

@@ -311,7 +311,7 @@ class Datalayer:
         schema = document.schema or self.infer_schema(document)
         table = Table(identifier=table_name, schema=schema)
         logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
-        self.apply(table)
+        self.apply(table, force=True)
 
     def _select(self, select: Query, reference: bool = True) -> SelectResult:
         """

@@ -505,12 +505,17 @@ class Query(_BaseQuery):
             )
             try:
                 return listener_uuids[identifier]
-            except KeyError:
+            except KeyError as e:
+                logging.warn(f'Error in completing UUIDs from cache: {e}')
                 pass
 
             try:
                 return db.show('listener', identifier, -1)['uuid']
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                logging.warn(
+                    f'Error in completing UUIDs from saved components,'
+                    f' based on `listenerr={identifier}`: {e}'
+                )
                 pass
 
             raise Exception(msg.format(predict_id=identifier))

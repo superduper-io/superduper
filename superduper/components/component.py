@@ -455,7 +455,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         metadata = {
             'type_id': self.type_id,
             'version': self.version,
-            'uuid': self.uuid,
         }
         return metadata
 

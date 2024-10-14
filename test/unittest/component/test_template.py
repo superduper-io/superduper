@@ -166,3 +166,25 @@ def test_add_data(db):
     db.apply(t)
 
     assert '_sample_my_template' in db.show('table')
+
+
+def test_cross_reference(db):
+    from superduper import Application
+
+    m = ObjectModel(
+        object=lambda x: x + 2,
+        identifier='my_id',
+    )
+
+    l1 = m.to_listener(select=db['docs'].select(), key='x', identifier='l1')
+    l2 = m.to_listener(select=db[l1.outputs].select(), key=l1.outputs, identifier='l2')
+
+    app = Application('my-app', components=[l1, l2])
+
+    r = app.encode(metadata=False, defaults=False)
+
+    r.pop_blobs()
+
+    import pprint
+
+    pprint.pprint(r)

@@ -46,7 +46,7 @@ class LlamaCpp(BaseLLM):
     download_dir: str = '.llama_cpp'
     signature: str = 'singleton'
 
-    def init(self):
+    def init(self, db=None):
         """Initialize the model.
 
         If the model_name_or_path is a uri, download it to the download_dir.

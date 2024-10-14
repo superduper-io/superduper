@@ -19,8 +19,8 @@ class _VLLMCore(Model):
 
     vllm_params: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, artifacts, example):
+        super().__post_init__(db, artifacts, example)
         assert "model" in self.vllm_params, "model is required in vllm_params"
         self._async_llm = None
         self._sync_llm = None

@@ -138,7 +138,7 @@ class Leaf(metaclass=LeafMeta):
     uuid: str = dc.field(default_factory=build_uuid)
 
     def _get_metadata(self):
-        return {'uuid': self.uuid}
+        return {}
 
     @property
     def metadata(self):
@@ -188,6 +188,23 @@ class Leaf(metaclass=LeafMeta):
             raise ValueError(f'Identifier {self.identifier} already exists in builds.')
         builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
 
+        def _replace_loads_with_references(record, lookup):
+            if isinstance(record, str) and record.startswith('&:component:'):
+                uuid = record.split(':')[-1]
+                key = lookup[uuid]
+                return f'?{key}'
+            if isinstance(record, list):
+                return [_replace_loads_with_references(x, lookup) for x in record]
+            if isinstance(record, dict):
+                return {
+                    k: _replace_loads_with_references(v, lookup)
+                    for k, v in record.items()
+                }
+            return record
+
+        lookup = {v['uuid']: k for k, v in builds.items() if 'uuid' in v}
+        builds = _replace_loads_with_references(builds, lookup)
+
         def _replace_uuids_with_keys(record):
             import json
 
@@ -198,6 +215,9 @@ class Leaf(metaclass=LeafMeta):
 
         if not metadata:
             builds = _replace_uuids_with_keys(builds)
+            for r in builds.values():
+                if 'uuid' in r:
+                    del r['uuid']
 
         return SuperDuperFlatEncode(
             {
@@ -256,6 +276,7 @@ class Leaf(metaclass=LeafMeta):
 
         if metadata:
             r.update(self.metadata)
+            r['uuid'] = self.uuid
         else:
             for k in self.metadata:
                 if k in r:

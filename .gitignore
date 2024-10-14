@@ -76,6 +76,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.virtual_documents
 
 # IPython
 profile_default/
@@ -175,6 +176,7 @@ dmypy.json
 lightning_logs/
 .cdc.tokens
 .lancedb
+.ipynb_checkpoints
 
 # docs
 /apidocs/source/

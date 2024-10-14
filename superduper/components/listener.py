@@ -56,7 +56,11 @@ class Listener(CDC):
         """Convert to dictionary."""
         out = super().dict(metadata=metadata, defaults=defaults)
         if not metadata:
-            del out['output_table']
+            try:
+                del out['output_table']
+            except KeyError:
+                logging.warn('output_table not found in listener.dict()')
+                pass
         return out
 
     def _set_upstream(self):

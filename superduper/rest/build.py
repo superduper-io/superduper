@@ -9,6 +9,7 @@ from superduper import logging
 from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.components.component import Component
+from superduper.components.template import Template
 from superduper.rest.base import SuperDuperApp
 
 from .utils import rewrite_artifacts
@@ -83,7 +84,7 @@ def build_rest_app(app: SuperDuperApp):
 
     @app.add('/db/show_template', method='get')
     def db_show_template(identifier: str, type_id: str = 'template'):
-        template = app.db.load(type_id=type_id, identifier=identifier)
+        template: Template = app.db.load(type_id=type_id, identifier=identifier)
         return template.form_template
 
     @app.add('/db/metadata/show_jobs', method='get')

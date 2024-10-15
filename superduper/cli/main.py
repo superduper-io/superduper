@@ -106,17 +106,27 @@ def _apply(name: str, variables: str | None = None):
         loaded = json.loads(variables)
         return t(**loaded)
 
+    db = superduper()
+
     if os.path.exists(name):
-        try:
+        with open(name + '/component.json', 'r') as f:
+            info = json.load(f)
+        if info['type_id'] == 'template':
             t = Template.read(name)
             c = _build_from_template(t)
-        except Exception as e:
-            if 'Expecting' in str(e):
-                c = Component.read(name)
+        else:
+            c = Component.read(name)
     else:
-        from superduper import templates
+        existing = db.show('template')
+        if name not in existing:
+            from superduper import templates
+            try:
+                t = getattr(templates, name)
+            except AttributeError:
+                raise Exception(f'No pre-built template found of that name: {name}')
+        else:
+            t = db.load('template', name)
 
-        t = getattr(templates, name)
         c = _build_from_template(t)
 
     try:

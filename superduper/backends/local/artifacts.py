@@ -87,6 +87,7 @@ class FileSystemArtifactStore(ArtifactStore):
             logging.warn(f"File {path} already exists")
         with open(path, 'wb') as f:
             f.write(serialized)
+        os.chmod(path, 0o777)
 
     def get_bytes(self, file_id: str) -> bytes:
         """
@@ -115,7 +116,7 @@ class FileSystemArtifactStore(ArtifactStore):
             shutil.copytree(file_path, save_path)
         else:
             shutil.copy(file_path, save_path)
-        # return the file_id
+        os.chmod(save_path, 0o777)
         return file_id
 
     def get_file(self, file_id: str) -> str:

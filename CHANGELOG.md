@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add frontend to project 
 - Change compute init order in cluster initialize
 - Add table error exception and sql table length fallback.
+- Permissions of artifacts increased
 
 #### New Features & Functionality
 

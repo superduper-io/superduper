@@ -1,6 +1,7 @@
 import random
 from typing import Iterator
 
+import numpy as np
 import pytest
 import torch
 from superduper import superduper
@@ -10,10 +11,14 @@ from superduper.components.datatype import DataType
 from superduper_torch.model import TorchModel
 from superduper_torch.training import TorchTrainer
 
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+
 
 @pytest.fixture
 def db() -> Iterator[Datalayer]:
-    db = superduper("mongomock://test_db")
+    db = superduper("mongomock://test_db", force_apply=True)
 
     yield db
     db.drop(force=True, data=True)
@@ -66,13 +71,11 @@ def model():
     )
 
 
-# TODO: The training task is not executed, but it was not tested.
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_fit(db, model, capfd):
+def test_fit(db, model):
     data = []
     for i in range(500):
-        x = torch.rand(32)
         y = int(random.random() > 0.5)
+        x = torch.rand(32) + y
         z = torch.rand(32)
         fold = int(random.random() > 0.5)
         fold = "valid" if fold else "train"
@@ -95,7 +98,6 @@ def test_fit(db, model, capfd):
     model.trainer = trainer
     db.apply(model)
 
-    captured = capfd.readouterr()
-
-    # check that the training actually happened
-    assert 'TRAIN; iteration:' in captured.out
+    model = db.load("model", model.identifier)
+    objective = model.trainer.metric_values['objective']
+    assert objective[-1] < objective[0]

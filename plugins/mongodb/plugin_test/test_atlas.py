@@ -66,7 +66,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
             [Document({'text': lorem.sentence()}) for _ in range(50)]
         )
     )
-    db.add(
+    db.apply(
         VectorIndex(
             'test-vector-index',
             indexing_listener=Listener(

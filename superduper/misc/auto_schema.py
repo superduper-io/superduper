@@ -1,8 +1,6 @@
 import importlib
 import typing as t
 
-from bson import ObjectId
-
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.datatype import (
@@ -60,8 +58,13 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
     if isinstance(data, _BaseEncodable):
         return datatype
 
-    if isinstance(data, ObjectId):
-        return datatype
+    try:
+        from bson import ObjectId
+
+        if isinstance(data, ObjectId):
+            return datatype
+    except ImportError:
+        pass
 
     if isinstance(data, BASE_TYPES):
         datatype = type(data)

@@ -1,7 +1,6 @@
 import os
 import random
 
-import pytest
 from superduper.base.document import Document
 from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
@@ -21,8 +20,6 @@ except ImportError:
     trl = None
 
 
-# TODO: The training task is not executed
-@pytest.mark.skip("The training task is not executed")
 def test_training(db, tmpdir):
     db.cfg.auto_schema = True
     datas = []

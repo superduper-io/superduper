@@ -930,7 +930,7 @@ class Model(Component, metaclass=ModelMeta):
         if isinstance(self, Component) and self.identifier not in db.show('model'):
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
-            db.add(self)
+            db.apply(self)
         return self.trainer.fit(
             self,
             train_dataset=train_dataset,

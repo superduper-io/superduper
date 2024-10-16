@@ -91,6 +91,10 @@ def _environ_dict(prefix: str, environ: t.Optional[StrDict] = None) -> StrDict:
 def _combine_one(target, source):
     for k, v in source.items():
         old_v = target.get(k, _NONE)
+
+        if isinstance(old_v, bool):
+            v = _fix_bool(v)
+
         if old_v is _NONE:
             target[k] = v
 
@@ -98,7 +102,7 @@ def _combine_one(target, source):
             not (isinstance(v, type(old_v)) or isinstance(old_v, type(v)))
             and old_v is not None
         ):
-            err = f'Expected {type(old_v)} but got {type(v)} for key={k}'
+            err = f'Expected {type(old_v)} but got {type(v)} for {k}={v}'
             raise ValueError(err)
 
         elif isinstance(v, dict):
@@ -106,6 +110,18 @@ def _combine_one(target, source):
 
         else:
             target[k] = v
+
+
+def _fix_bool(v):
+    if isinstance(v, bool):
+        return v
+
+    if v.lower() in ('true', '1'):
+        v = True
+    elif v.lower() in ('false', '0'):
+        v = False
+
+    return v
 
 
 def _env_dict_to_config_dict(

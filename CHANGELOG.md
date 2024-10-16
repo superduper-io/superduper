@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add table error exception and sql table length fallback.
 - Permissions of artifacts increased
 - Make JSON-able a configuration depending on the databackend
+- Restore some training test cases
 
 #### New Features & Functionality
 

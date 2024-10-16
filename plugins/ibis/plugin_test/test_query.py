@@ -112,7 +112,6 @@ def test_execute_complex_query_sqldb_auto_schema(db):
 
     db.cfg.auto_schema = True
 
-    # db.add(table)
     table = db["documents"]
     table.insert(
         [Document({"this": f"is a test {i}", "id": str(i)}) for i in range(100)]

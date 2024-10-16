@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add basic rest server
 - Add `@trigger` decorator to improve developer experience
 - `ModelRouter` to enable easy toggles
+- Simple interactive shell
 
 #### Bug Fixes
 

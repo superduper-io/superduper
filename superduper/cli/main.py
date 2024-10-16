@@ -13,7 +13,7 @@ def apply(name: str, variables: str | None = None):
     """Apply a serialized component.
 
     :param name: Path or name of the template/ component.
-    :param values: JSON string of values to apply to the template.
+    :param variables: JSON string of values to apply to the template.
     """
     _apply(name, variables)
 
@@ -73,13 +73,9 @@ def bootstrap(templates: t.List[str] | None = None):
         db.apply(tem, force=True)
 
 
-@command(help='Apply a template or application to a `superduper` deployment')
+@command(help='List prebuilt templates')
 def ls():
-    """Apply a serialized component.
-
-    :param name: Path or name of the template/ component.
-    :param values: JSON string of values to apply to the template.
-    """
+    """List prebuilt templates."""
     from superduper.templates import ls
 
     for r in ls():
@@ -94,22 +90,34 @@ def show(
 ):
     """Apply a serialized component.
 
-    :param name: Path or name of the template/ component.
-    :param values: JSON string of values to apply to the template.
+    :param type_id: Type of component to show.
+    :param identifier: Identifier of the component.
+    :param version: Version of the component.
     """
     db = superduper()
     to_show = db.show(type_id=type_id, identifier=identifier, version=version)
-    import json
 
     logging.info('Showing components in system:')
     print(json.dumps(to_show, indent=2))
 
 
-@command(help='`superduper` deployment')
-def drop(data: bool = False, force: bool = False):
+@command(help='Execute a query or prediction')
+def execute():
     """Apply a serialized component.
 
     :param path: Path to the stack.
+    """
+    from superduper.misc.interactive_prompt import _prompt
+
+    _prompt()
+
+
+@command(help='`superduper` deployment')
+def drop(data: bool = False, force: bool = False):
+    """Drop the deployment.
+
+    :param data: Drop the data.
+    :param force: Force the drop.
     """
     db = superduper()
     db.drop(force=force, data=data)

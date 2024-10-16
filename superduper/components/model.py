@@ -1297,7 +1297,8 @@ class ModelRouter(Model):
     model: str
 
     def _pre_create(self, db):
-        self.datatype = self.models[self.model].datatype
+        if not self.datatype:
+            self.datatype = self.models[self.model].datatype
 
     @override
     def predict(self, *args, **kwargs) -> t.Any:

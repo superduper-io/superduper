@@ -1,35 +1,72 @@
 {
-  "_base": "?vector-search",
+  "_base": "?text_vector_search",
   "_builds": {
-    "vector-search": {
+    "datatype:pickle": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "pickle",
+      "encodable": "artifact"
+    },
+    "2abbced0b779db61865b869a5a707c1114193b11": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:pickle",
+      "uri": null,
+      "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
+    },
+    "text_vector_search": {
       "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": false,
+      "status": null,
       "template": {
-        "_base": "?text-vector-search",
+        "_base": "?rag-app",
         "_builds": {
-          "str": {
-            "_path": "superduper.components.schema.FieldType"
-          },
-          "datatype:dill_lazy": {
+          "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
-            "encodable": "lazy_artifact"
+            "encodable": "artifact"
           },
-          "448d1fcf59700066bac31801314620a13fc45ea7": {
-            "_path": "superduper.components.datatype.LazyArtifact",
-            "datatype": "?datatype:dill_lazy",
-            "blob": "&:blob:448d1fcf59700066bac31801314620a13fc45ea7"
+          "2d5a572c14d982d8f3212a7fa1df7007c1bddc89": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:2d5a572c14d982d8f3212a7fa1df7007c1bddc89"
           },
-          "model:chunker": {
-            "_path": "superduper.components.model.ObjectModel",
-            "status": "initializing",
-            "datatype": "?str",
-            "object": "?448d1fcf59700066bac31801314620a13fc45ea7"
+          "model:chunk_model": {
+            "_object": "?2d5a572c14d982d8f3212a7fa1df7007c1bddc89",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "chunk_size": 200
+          },
+          "var-table-name-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table_name>.select()"
           },
           "listener:chunker": {
             "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "cdc_table": "<var:table_name>",
             "key": "x",
-            "model": "?model:chunker",
+            "model": "?model:chunk_model",
+            "predict_kwargs": {},
+            "select": "?var-table-name-select",
             "flatten": true
           },
           "datatype:vector[1024]": {
@@ -40,45 +77,134 @@
           },
           "model:text-embedding-ada-002": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
-            "status": "ready",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
             "datatype": "?datatype:vector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "model": "text-embedding-ada-002",
+            "max_batch_size": 8,
+            "openai_api_key": null,
+            "openai_api_base": null,
+            "client_kwargs": {},
             "shape": [
               1536
-            ]
+            ],
+            "batch_size": 100
           },
-          "listener:text-embedding-ada-002-listener": {
+          "c38df043cecc3c06c9225f66e56e5a6f343a7f12": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:c38df043cecc3c06c9225f66e56e5a6f343a7f12"
+          },
+          "model:sentence-transformers-embedding": {
+            "_path": "superduper_sentence_transformers.model.SentenceTransformer",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": "cpu",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
+            "datatype": "?datatype:vector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {
+              "show_progress_bar": true
+            },
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "model": "BAAI/bge-small-en",
+            "preprocess": null,
+            "postprocess": "?c38df043cecc3c06c9225f66e56e5a6f343a7f12"
+          },
+          "model:embedding": {
+            "_path": "superduper.components.model.ModelRouter",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "models": {
+              "openai": "?model:text-embedding-ada-002",
+              "sentence_transformers": "?model:sentence-transformers-embedding"
+            },
+            "model": "<var:embedding_model>"
+          },
+          "outputs-chunker-?(listener:chunker.uuid)-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "_outputs__chunker__?(listener:chunker.uuid).select()"
+          },
+          "listener:embedding-listener": {
             "_path": "superduper.components.listener.Listener",
             "upstream": [
               "?listener:chunker",
-              "&:component:listener:chunker:?(listener:chunker.uuid)"
+              "?listener:chunker"
             ],
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "cdc_table": "_outputs__chunker__?(listener:chunker.uuid)",
             "key": "_outputs__chunker__?(listener:chunker.uuid)",
-            "model": "?model:text-embedding-ada-002"
+            "model": "?model:embedding",
+            "predict_kwargs": {},
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select",
+            "flatten": false
           },
-          "vector_index:my-vector-index": {
+          "vector_index:vector-index": {
             "_path": "superduper.components.vector_index.VectorIndex",
-            "cdc_table": "_outputs__text-embedding-ada-002-listener__?(listener:text-embedding-ada-002-listener.uuid)",
-            "indexing_listener": "?listener:text-embedding-ada-002-listener"
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "cdc_table": "_outputs__embedding-listener__?(listener:embedding-listener.uuid)",
+            "indexing_listener": "?listener:embedding-listener",
+            "compatible_listener": null,
+            "measure": "cosine",
+            "metric_values": {}
           },
-          "text-vector-search": {
+          "rag-app": {
             "_path": "superduper.components.application.Application",
-            "status": "ready",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "components": [
               "?listener:chunker",
-              "?vector_index:my-vector-index"
+              "?vector_index:vector-index"
             ],
-            "namespace": [
-              {
-                "type_id": "listener",
-                "identifier": "chunker"
-              },
-              {
-                "type_id": "vector_index",
-                "identifier": "my-vector-index"
-              }
-            ],
+            "namespace": null,
+            "link": null,
             "_literals": [
               "template"
             ]
@@ -86,13 +212,30 @@
         }
       },
       "template_variables": [
+        "embedding_model",
         "table_name"
       ],
+      "types": {
+        "embedding_model": {
+          "type": "str",
+          "choices": [
+            "openai",
+            "sentence_transformers"
+          ],
+          "default": "openai"
+        },
+        "table_name": {
+          "type": "str",
+          "default": "_sample_text_vector_search"
+        }
+      },
+      "blobs": null,
+      "files": null,
+      "data": "?2abbced0b779db61865b869a5a707c1114193b11",
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

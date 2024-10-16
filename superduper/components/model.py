@@ -43,6 +43,8 @@ def model(
     model_update_kwargs: t.Optional[t.Dict] = None,
     output_schema: t.Optional[Schema] = None,
     num_workers: int = 0,
+    example: t.Any | None = None,
+    signature: Signature = '*args,**kwargs',
 ):
     """Decorator to wrap a function with `ObjectModel`.
 
@@ -55,6 +57,8 @@ def model(
     :param model_update_kwargs: Dictionary to define update kwargs.
     :param output_schema: Schema for the model outputs.
     :param num_workers: Number of workers to use for parallel processing
+    :param example: Example to auto-determine the schema/ datatype.
+    :param signature: Signature for the model.
     """
     if item is not None and (inspect.isclass(item) or callable(item)):
         if inspect.isclass(item):
@@ -64,6 +68,12 @@ def model(
                 return ObjectModel(
                     object=object_,
                     identifier=identifier or object_.__class__.__name__,
+                    datatype=datatype,
+                    model_update_kwargs=model_update_kwargs or {},
+                    output_schema=output_schema,
+                    num_workers=num_workers,
+                    example=example,
+                    signature=signature,
                 )
 
             return object_model_factory
@@ -72,6 +82,12 @@ def model(
             return ObjectModel(
                 identifier=item.__name__,
                 object=item,
+                datatype=datatype,
+                model_update_kwargs=model_update_kwargs or {},
+                output_schema=output_schema,
+                num_workers=num_workers,
+                example=example,
+                signature=signature,
             )
     else:
 
@@ -87,6 +103,8 @@ def model(
                         model_update_kwargs=model_update_kwargs or {},
                         output_schema=output_schema,
                         num_workers=num_workers,
+                        example=example,
+                        signature=signature,
                     )
 
                 return object_model_factory
@@ -99,6 +117,8 @@ def model(
                     model_update_kwargs=model_update_kwargs or {},
                     output_schema=output_schema,
                     num_workers=num_workers,
+                    example=example,
+                    signature=signature,
                 )
 
         return decorated_function

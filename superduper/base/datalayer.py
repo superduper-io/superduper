@@ -485,11 +485,15 @@ class Datalayer:
 
         logging.info('JOBS EVENTS:')
         steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
+
+        def uniquify(x):
+            return sorted(list(set(x)))
+
         for i, j in enumerate(unique_job_events):
             if j.dependencies:
                 logging.info(
                     f'[{i}]: {j.huuid}: {j.method} ~ '
-                    f'[{",".join([steps[d] for d in j.dependencies])}]'
+                    f'[{",".join(uniquify([steps[d] for d in j.dependencies]))}]'
                 )
             else:
                 logging.info(f'[{i}]: {j.huuid}: {j.method}')

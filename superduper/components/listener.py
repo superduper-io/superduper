@@ -211,6 +211,7 @@ class Listener(CDC):
         """Pre-create hook."""
         if self.select is None:
             return
+
         if not db.cfg.auto_schema:
             db.startup_cache[self.outputs] = None
             return

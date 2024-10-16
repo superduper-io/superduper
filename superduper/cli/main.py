@@ -105,6 +105,17 @@ def show(
     print(json.dumps(to_show, indent=2))
 
 
+@command(help='Execute a query or prediction')
+def execute():
+    """Apply a serialized component.
+
+    :param path: Path to the stack.
+    """
+    from superduper.misc.interactive_prompt import _prompt
+
+    _prompt()
+
+
 @command(help='`superduper` deployment')
 def drop(data: bool = False, force: bool = False):
     """Apply a serialized component.

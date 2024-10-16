@@ -1,5 +1,6 @@
 import json
 import os
+import typing as t
 
 from superduper import Component, logging, superduper
 from superduper.components.template import Template
@@ -23,7 +24,6 @@ def start(
     remote_port: int = 8000,
     host: str = 'localhost',
     headless: bool = False,
-    templates: bool = True,
 ):
     """Start the rest server and user interface.
 
@@ -31,7 +31,6 @@ def start(
     :param remote_port: Port to connect to remotely
     :param host: Host to connect to remotely
     :param headless: Toggle to ``True`` to suppress the browser.
-    :param templates: Toggle to ``False`` to suppress initializing templates.
     """
     from superduper.rest.base import SuperDuperApp
     from superduper.rest.build import build_frontend, build_rest_app
@@ -46,34 +45,27 @@ def start(
     else:
         logging.warn('Frontend pointing to remote server!')
 
-    build_frontend(app, port=remote_port, host=host)
-
-    if headless:
-        app.start()
-    else:
-        import threading
-        import time
-        import webbrowser
-
-        server_thread = threading.Thread(target=lambda: app.start())
-        server_thread.start()
-        logging.info('Waiting for server to start')
-
-        time.sleep(3)
-
-    if templates:
-        from superduper import templates
-
-        db = app.app.state.pool
-        existing = db.show('template')
-        prebuilt = templates.ls()
-        for t in prebuilt:
-            if t not in existing:
-                logging.info(f'Applying template \'{t}\'')
-                db.apply(getattr(templates, t), force=True)
-
     if not headless:
-        webbrowser.open(f'http://localhost:{port}')
+        build_frontend(app, port=remote_port, host=host)
+
+    app.start()
+
+
+@command(help='Initialize a template in the system')
+def bootstrap(templates: t.List[str] | None = None):
+    """Initialize a template in the system.
+
+    :param templates: List of templates to initialize.
+    """
+    from superduper import templates as inbuilt
+
+    if templates is None:
+        templates = inbuilt.ls()
+        templates = ['rag']
+    db = superduper()
+    for tem in templates:
+        tem = getattr(inbuilt, tem)
+        db.apply(tem, force=True)
 
 
 @command(help='Apply a template or application to a `superduper` deployment')
@@ -87,6 +79,24 @@ def ls():
 
     for r in ls():
         print(r)
+
+
+@command(help='Show available components')
+def show(
+    type_id: str | None = None,
+    identifier: str | None = None,
+    version: int | None = None,
+):
+    """Apply a serialized component.
+
+    :param name: Path or name of the template/ component.
+    :param values: JSON string of values to apply to the template.
+    """
+    db = superduper()
+    to_show = db.show(type_id=type_id, identifier=identifier, version=version)
+    import json
+
+    print(json.dumps(to_show, indent=2))
 
 
 @command(help='`superduper` deployment')
@@ -120,6 +130,7 @@ def _apply(name: str, variables: str | None = None):
         existing = db.show('template')
         if name not in existing:
             from superduper import templates
+
             try:
                 t = getattr(templates, name)
             except AttributeError:

@@ -58,7 +58,7 @@ jobs:
         key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('pyproject.toml', '*/pyproject.toml') }}
       #---------------------------------------------------
 
-    - name: Install SuperDuperDB Project
+    - name: Install superduper-framework
       run: |
         # Install core and testsuite dependencies on the cached python environment.
         python -m pip install '.[test]'

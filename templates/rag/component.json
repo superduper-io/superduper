@@ -6,13 +6,18 @@
       "method": "pickle",
       "encodable": "artifact"
     },
-    "692420d66e95035ee4c3326723bb6b28a69a7e65": {
+    "2abbced0b779db61865b869a5a707c1114193b11": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:pickle",
-      "blob": "&:blob:692420d66e95035ee4c3326723bb6b28a69a7e65"
+      "uri": null,
+      "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
     },
     "rag": {
       "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": false,
+      "status": null,
       "template": {
         "_base": "?rag-app",
         "_builds": {
@@ -21,20 +26,48 @@
             "method": "dill",
             "encodable": "lazy_artifact"
           },
-          "24c1b3fe6156ed17ba40678c93367d4b926a28c8": {
+          "016955c27c59e668345b72677045e55c91a2e7a1": {
             "_path": "superduper.components.datatype.LazyArtifact",
             "datatype": "?datatype:dill_lazy",
-            "blob": "&:blob:24c1b3fe6156ed17ba40678c93367d4b926a28c8"
+            "uri": null,
+            "blob": "&:blob:016955c27c59e668345b72677045e55c91a2e7a1"
           },
           "model:chunker": {
             "_path": "superduper.components.model.ObjectModel",
-            "object": "?24c1b3fe6156ed17ba40678c93367d4b926a28c8"
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?016955c27c59e668345b72677045e55c91a2e7a1",
+            "method": null
+          },
+          "var-table-name-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table_name>.select()"
           },
           "listener:chunker": {
             "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "cdc_table": "<var:table_name>",
             "key": "x",
             "model": "?model:chunker",
+            "predict_kwargs": {},
+            "select": "?var-table-name-select",
             "flatten": true
           },
           "datatype:vector[1024]": {
@@ -45,38 +78,98 @@
           },
           "model:text-embedding-ada-002": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
             "datatype": "?datatype:vector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "model": "text-embedding-ada-002",
+            "max_batch_size": 8,
+            "openai_api_key": null,
+            "openai_api_base": null,
+            "client_kwargs": {},
             "shape": [
               1536
-            ]
+            ],
+            "batch_size": 100
           },
           "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "4ed1d33cd20e79786ca10fcf8b276a88af72c713": {
+          "6c128f12abf27078a50305621c32c511dba30bb5": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
-            "blob": "&:blob:4ed1d33cd20e79786ca10fcf8b276a88af72c713"
+            "uri": null,
+            "blob": "&:blob:6c128f12abf27078a50305621c32c511dba30bb5"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": "cpu",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
             "datatype": "?datatype:vector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
             "predict_kwargs": {
               "show_progress_bar": true
             },
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "model": "BAAI/bge-small-en",
-            "postprocess": "?4ed1d33cd20e79786ca10fcf8b276a88af72c713"
+            "preprocess": null,
+            "postprocess": "?6c128f12abf27078a50305621c32c511dba30bb5"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "models": {
-              "openai_embedding": "?model:text-embedding-ada-002",
-              "sentence_transformers_embedding": "?model:sentence-transformers-embedding"
+              "openai": "?model:text-embedding-ada-002",
+              "sentence_transformers": "?model:sentence-transformers-embedding"
             },
             "model": "<var:embedding_model>"
+          },
+          "outputs-chunker-?(listener:chunker.uuid)-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "_outputs__chunker__?(listener:chunker.uuid).select()"
           },
           "listener:embedding-listener": {
             "_path": "superduper.components.listener.Listener",
@@ -84,14 +177,27 @@
               "?listener:chunker",
               "?listener:chunker"
             ],
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "cdc_table": "_outputs__chunker__?(listener:chunker.uuid)",
             "key": "_outputs__chunker__?(listener:chunker.uuid)",
-            "model": "?model:embedding"
+            "model": "?model:embedding",
+            "predict_kwargs": {},
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select",
+            "flatten": false
           },
           "vector_index:vector-index": {
             "_path": "superduper.components.vector_index.VectorIndex",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "cdc_table": "_outputs__embedding-listener__?(listener:embedding-listener.uuid)",
-            "indexing_listener": "?listener:embedding-listener"
+            "indexing_listener": "?listener:embedding-listener",
+            "compatible_listener": null,
+            "measure": "cosine",
+            "metric_values": {}
           },
           "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vector-index-n-5": {
             "_path": "superduper_mongodb.query.parse_query",
@@ -104,10 +210,39 @@
           },
           "model:llm-openai": {
             "_path": "superduper_openai.model.OpenAIChatCompletion",
-            "model": "gpt-3.5-turbo"
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "model": "gpt-3.5-turbo",
+            "max_batch_size": 8,
+            "openai_api_key": null,
+            "openai_api_base": null,
+            "client_kwargs": {},
+            "batch_size": 1,
+            "prompt": ""
           },
           "model:llm-vllm": {
             "_path": "superduper_vllm.model.VllmCompletion",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
             "predict_kwargs": {
               "max_tokens": 1024,
               "temperature": 0.8
@@ -115,6 +250,11 @@
             "compute_kwargs": {
               "num_gpus": 1
             },
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "vllm_params": {
               "model": "TheBloke/Mistral-7B-Instruct-v0.2-AWQ",
               "gpu_memory_utilization": 0.7,
@@ -122,22 +262,47 @@
               "quantization": "awq"
             }
           },
-          "model:llm-llamacpp": {
-            "_path": "superduper_llamacpp.model.LlamaCpp",
-            "model_name_or_path": "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
-          },
           "model:llm": {
             "_path": "superduper.components.model.ModelRouter",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "models": {
               "openai": "?model:llm-openai",
               "anthropic": "?model:llm-vllm",
-              "vllm": "?model:llm-vllm",
-              "llamacpp": "?model:llm-llamacpp"
+              "vllm": "?model:llm-vllm"
             },
             "model": "<var:llm_model>"
           },
           "model:rag-model": {
             "_path": "superduper.components.model.RAGModel",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
             "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n{context}\n\nHere's the question: {query}",
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vector-index-n-5",
             "key": "_outputs__chunker__?(listener:chunker.uuid)",
@@ -145,11 +310,17 @@
           },
           "rag-app": {
             "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": null,
             "components": [
               "?listener:chunker",
               "?vector_index:vector-index",
               "?model:rag-model"
             ],
+            "namespace": null,
+            "link": null,
             "_literals": [
               "template"
             ]
@@ -185,7 +356,9 @@
           "default": "_sample_rag"
         }
       },
-      "data": "?692420d66e95035ee4c3326723bb6b28a69a7e65",
+      "blobs": null,
+      "files": null,
+      "data": "?2abbced0b779db61865b869a5a707c1114193b11",
       "_literals": [
         "template"
       ]

@@ -559,6 +559,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     builds[k] = leaf
     to_del = []
     keys = list(builds.keys())
+
     for other in keys:
         import re
 
@@ -568,7 +569,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
             for match in matches:
                 got = _get_leaf_from_cache(match, builds, getters, db=db)
                 other = other.replace(f'?({match})', got)
-            builds[other] = leaf
+            builds[other] = builds[old_other]
             to_del.append(old_other)
 
     for other in to_del:
@@ -577,8 +578,10 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     if isinstance(leaf, Leaf):
         if not leaf.db:
             leaf.db = db
+
     if attribute is not None:
         return getattr(leaf, attribute)
+
     return leaf
 
 
@@ -608,7 +611,7 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
     if isinstance(r, dict):
         literals = r.get('_literals', [])
         return {
-            k: (
+            _deep_flat_decode(k, builds, getters=getters, db=db): (
                 _deep_flat_decode(v, builds, getters=getters, db=db)
                 if k not in literals
                 else v

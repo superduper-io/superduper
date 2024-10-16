@@ -38,7 +38,7 @@ class _BaseTemplate(Component):
 
     def __post_init__(self, db, artifacts, substitutions):
         if isinstance(self.template, Leaf):
-            self.template = self.template.encode(defaults=False, metadata=False)
+            self.template = self.template.encode(defaults=True, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
         if substitutions is not None:
             self.template = QueryUpdateDocument(self.template).to_template(
@@ -120,7 +120,7 @@ class Template(_BaseTemplate):
         path: t.Optional[str] = None,
         format: str = 'json',
         zip: bool = False,
-        defaults: bool = False,
+        defaults: bool = True,
         metadata: bool = False,
     ):
         """

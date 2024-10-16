@@ -248,6 +248,7 @@ class Leaf(metaclass=LeafMeta):
 
         return list(set(_find_variables(self.encode())))
 
+    # TODO this is buggy - defaults don't work
     @property
     def defaults(self):
         """Get the default parameter values."""

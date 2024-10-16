@@ -33,8 +33,7 @@ class MongoArtifactStore(ArtifactStore):
         else:
             self.conn = conn
             self.name = name
-        self.db = self.conn[self.name]
-        self.filesystem = gridfs.GridFS(self.db)
+        self.filesystem = gridfs.GridFS(self.conn[self.name])
 
     def url(self):
         """Return the URL of the database."""
@@ -55,7 +54,7 @@ class MongoArtifactStore(ArtifactStore):
                 default=False,
             ):
                 logging.warn('Aborting...')
-        return self.db.client.drop_database(self.db.name)
+        return self.conn.drop_database(self.name)
 
     def _exists(self, file_id):
         return self.filesystem.find_one({'file_id': file_id}) is not None

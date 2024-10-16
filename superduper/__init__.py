@@ -68,4 +68,5 @@ __all__ = (
     'requires_packages',
     'pickle_serializer',
     'dill_serializer',
+    'templates',
 )

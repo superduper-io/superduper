@@ -20,9 +20,6 @@ class CDC(Component):
     type_id: t.ClassVar[str] = 'cdc'
     cdc_table: str
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
-
     def declare_component(self, cluster):
         """Declare the component to the cluster.
 

@@ -67,6 +67,12 @@ def build_rest_app(app: SuperDuperApp):
         version: t.Optional[int] = None,
         application: t.Optional[str] = None,
     ):
+        if type_id == 'template' and identifier is None:
+            out = app.db.show('template')
+            from superduper import templates
+
+            out += [x for x in templates.ls() if x not in out]
+            return out
         if application is not None:
             r = app.db.metadata.get_component('application', application)
             return r['namespace']
@@ -91,9 +97,7 @@ def build_rest_app(app: SuperDuperApp):
     def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
         return [
             r['job_id']
-            for r in app.db.metadata.show_jobs(
-                type_id=type_id, component_identifier=identifier
-            )
+            for r in app.db.metadata.show_jobs(type_id=type_id, identifier=identifier)
             if 'job_id' in r
         ]
 
@@ -101,6 +105,12 @@ def build_rest_app(app: SuperDuperApp):
     def db_execute(
         query: t.Dict,
     ):
+        if query['query'].startswith('db.show'):
+            output = eval(f'app.{query["query"]}')
+            logging.info('db.show results:')
+            logging.info(output)
+            return [{'_base': output}], []
+
         if '_path' not in query:
             plugin = app.db.databackend.type.__module__.split('.')[0]
             query['_path'] = f'{plugin}.query.parse_query'

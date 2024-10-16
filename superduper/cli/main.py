@@ -61,9 +61,14 @@ def bootstrap(templates: t.List[str] | None = None):
 
     if templates is None:
         templates = inbuilt.ls()
-        templates = ['rag']
+        templates = ['rag', 'text_vector_search']
     db = superduper()
+    existing = db.show('template')
     for tem in templates:
+        if tem in existing:
+            logging.info(f'Template {tem} already exists')
+            continue
+        logging.info(f'Applying template: {tem} from inbuilt')
         tem = getattr(inbuilt, tem)
         db.apply(tem, force=True)
 
@@ -96,6 +101,7 @@ def show(
     to_show = db.show(type_id=type_id, identifier=identifier, version=version)
     import json
 
+    logging.info('Showing components in system:')
     print(json.dumps(to_show, indent=2))
 
 
@@ -111,10 +117,17 @@ def drop(data: bool = False, force: bool = False):
 
 
 def _apply(name: str, variables: str | None = None):
+    variables = variables or '{}'
+    variables = json.loads(variables)
+
     def _build_from_template(t):
         assert variables is not None, 'Variables must be provided for templates'
-        loaded = json.loads(variables)
-        return t(**loaded)
+        all_values = variables.copy()
+        for k in t.template_variables:
+            if k not in all_values:
+                assert k in t.default_values, f'Variable {k} not specified'
+                all_values[k] = t.default_values[k]
+        return t(**all_values)
 
     db = superduper()
 

@@ -1,4 +1,4 @@
-superduper==0.3.0
-pillow>=10.2.0
+superduper==0.0.4.dev
 openai>=1.1.2
 httpx
+sentence-transformers>=2.2.2

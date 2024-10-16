@@ -53,7 +53,7 @@ def start(
 
 
 @command(help='Initialize a template in the system')
-def bootstrap(templates: t.List[str]):
+def bootstrap(templates: t.List[str], pip_install: bool = False):
     """Initialize a template in the system.
 
     :param templates: List of templates to initialize.
@@ -71,7 +71,7 @@ def bootstrap(templates: t.List[str]):
             continue
         logging.info(f'Applying template: {tem} from inbuilt')
         tem = getattr(inbuilt, tem)
-        if tem.requirements:
+        if tem.requirements and pip_install:
             with open('/tmp/requirements.txt', 'w') as f:
                 f.write('\n'.join(tem.requirements))
             subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
@@ -110,11 +110,20 @@ def show(
     print(json.dumps(to_show, indent=2))
 
 
+@command(help='Execute a query or prediction')
+def execute():
+    """Execute a query or prediction."""
+    from superduper.misc.interactive_prompt import _prompt
+
+    _prompt()
+
+
 @command(help='`superduper` deployment')
 def drop(data: bool = False, force: bool = False):
-    """Apply a serialized component.
+    """Drop the deployment.
 
-    :param path: Path to the stack.
+    :param data: Drop the data.
+    :param force: Force the drop.
     """
     db = superduper()
     db.drop(force=force, data=data)

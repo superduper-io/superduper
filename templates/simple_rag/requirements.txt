@@ -1,1 +1,1 @@
--e plugins/openai
+-e ./plugins/openai

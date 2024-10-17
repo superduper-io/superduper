@@ -1,5 +1,5 @@
--e plugins/openai
--e plugins/anthropic
--e plugins/sentence_transformers
--e plugins/vllm
--e plugins/llamacpp
+-e ./plugins/openai
+-e ./plugins/anthropic
+-e ./plugins/sentence_transformers
+-e ./plugins/vllm
+-e ./plugins/llamacpp

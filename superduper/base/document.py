@@ -592,7 +592,7 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
         return type(r)(
             [_deep_flat_decode(x, builds, getters=getters, db=db) for x in r]
         )
-    if isinstance(r, dict) and '_path' in r:
+    if isinstance(r, dict) and '_path' in r and r['_path'] is not None:
         parts = r['_path'].split('.')
         cls = parts[-1]
         module = '.'.join(parts[:-1])

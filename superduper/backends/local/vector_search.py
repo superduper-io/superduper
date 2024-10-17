@@ -31,7 +31,14 @@ class LocalVectorSearchBackend(VectorSearchBackend):
     def initialize(self):
         """Initialize the vector search."""
         for identifier in self.db.show('vector_index'):
-            vector_index = self.db.load('vector_index', identifier=identifier)
+            try:
+                vector_index = self.db.load('vector_index', identifier=identifier)
+            except FileNotFoundError:
+                logging.error(
+                    f'Could not load vector index: {identifier} '
+                    'Is the artifact store correctly configured?'
+                )
+                continue
             self._put(vector_index)
             vector_index.copy_vectors()
 

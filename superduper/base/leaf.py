@@ -295,7 +295,7 @@ class Leaf(metaclass=LeafMeta):
             )
             return Document({'_object': cls, **r})
 
-        path = f'{self.__class__.__module__}.' f'{self.__class__.__name__}'
+        path = f'{self.__class__.__module__}.{self.__class__.__name__}'
         return Document({'_path': path, **r})
 
     @classmethod

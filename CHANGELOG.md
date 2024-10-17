@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-## Changes Since Last Release 
+## Changes Since Last Release
 
 #### Changed defaults / behaviours 
 
@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change compute init order in cluster initialize
 - Add table error exception and sql table length fallback.
 - Permissions of artifacts increased
+- Make JSON-able a configuration depending on the databackend
 
 #### New Features & Functionality
 

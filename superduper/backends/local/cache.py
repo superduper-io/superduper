@@ -15,28 +15,46 @@ class LocalCache(Cache):
         super().__init__()
         self.init_cache = init_cache
         self._cache: t.Dict = {}
-        self._cache_uuid: t.Dict = {}
+        self._component_to_uuid: t.Dict = {}
         self._db = None
 
     def list_components(self):
         """List components by (type_id, identifier) in the cache."""
-        return list(self._cache.keys())
+        return list(self._component_to_uuid.keys())
 
     def list_uuids(self):
         """List UUIDs in the cache."""
-        return list(self._cache_uuid.keys())
+        return list(self._cache.keys())
 
-    # TODO which of these is the correct one?
-    # def __getitem__(self, *item):
-    #     return self._cache[item]
+    def __getitem__(self, item):
+        if isinstance(item, tuple):
+            # (type_id, identifier)
+            item = self._component_to_uuid[item[0], item[1]]
+        return self._cache[item]
 
     def _put(self, component: Component):
         """Put a component in the cache."""
-        self._cache[component.type_id, component.identifier] = component
-        self._cache_uuid[component.uuid] = component
+        self._cache[component.uuid] = component
+        if (component.type_id, component.identifier) in self._component_to_uuid:
+            current = self._component_to_uuid[component.type_id, component.identifier]
+            current_version = self._cache[current].version
+            if current_version < component.version:
+                self._component_to_uuid[
+                    component.type_id, component.identifier
+                ] = component.uuid
+        else:
+            self._component_to_uuid[
+                component.type_id, component.identifier
+            ] = component.uuid
 
-    def __delitem__(self, name: str):
-        del self._cache[name]
+    def __delitem__(self, item):
+        if isinstance(item, tuple):
+            item = self._component_to_uuid[item[0], item[1]]
+        tuples = [k for k, v in self._component_to_uuid.items() if v == item]
+        if tuples:
+            for type_id, identifier in tuples:
+                del self._component_to_uuid[type_id, identifier]
+        del self._cache[item]
 
     def initialize(self):
         """Initialize the cache."""
@@ -52,6 +70,7 @@ class LocalCache(Cache):
     def drop(self):
         """Drop the cache."""
         self._cache = {}
+        self._component_to_uuid = {}
 
     @property
     def db(self):
@@ -67,23 +86,6 @@ class LocalCache(Cache):
         self._db = value
         self.initialize()
 
-    # def init(self):
-    #     """Initialize the cache."""
-    #     if not self.init_cache:
-    #         return
-    #     for component in self.db.show():
-    #         if 'version' not in component:
-    #             component['version'] = -1
-
-    #         show = self.db.show(**component)
-    #         uuid = show.get('uuid')
-    #         if show.get('cache', False):
-    #             self._cache[uuid] = self.db.load(uuid=uuid)
-
-    def __getitem__(self, uuid: str):
-        """Get a component from the cache."""
-        return self._cache_uuid[uuid]
-
     def __iter__(self):
         return iter(self._cache.keys())
 
@@ -91,5 +93,9 @@ class LocalCache(Cache):
         """Expire an item from the cache."""
         try:
             del self._cache[item]
+            for (t, i), uuid in self._component_to_uuid.items():
+                if uuid == item:
+                    del self._component_to_uuid[t, i]
+                    break
         except KeyError:
             pass

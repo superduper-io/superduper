@@ -92,6 +92,18 @@ def _model_update_impl(
 class IbisQuery(Query):
     """A query that can be executed on an Ibis database."""
 
+    def __post_init__(self, db=None):
+        super().__post_init__(db)
+        self._primary_id = None
+        self._base_table = None
+
+    @property
+    def base_table(self):
+        """Return the base table."""
+        if self._base_table is None:
+            self._base_table = self.db.load('table', self.table)
+        return self._base_table
+
     flavours: t.ClassVar[t.Dict[str, str]] = {
         "pre_like": r"^.*\.like\(.*\)\.select",
         "post_like": r"^.*\.([a-z]+)\(.*\)\.like(.*)$",
@@ -234,8 +246,7 @@ class IbisQuery(Query):
     @property
     def primary_id(self):
         """Return the primary id."""
-        table = self.db.load('table', self.table)
-        return table.primary_id
+        return self.base_table.primary_id
 
     def model_update(
         self,

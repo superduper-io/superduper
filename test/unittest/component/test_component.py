@@ -69,7 +69,8 @@ def test_init(monkeypatch):
 def test_load_lazily(db):
     m = ObjectModel("lazy_model", object=lambda x: x + 2)
 
-    db.add(m)
+    db.apply(m)
+    db.expire(m.uuid)
 
     reloaded = db.load("model", m.identifier)
 

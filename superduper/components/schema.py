@@ -20,6 +20,7 @@ class FieldType(Leaf):
 
     def __post_init__(self, db):
         super().__post_init__(db)
+
         if isinstance(self.identifier, DataType):
             self.identifier = self.identifier.name
 

@@ -55,7 +55,6 @@ dependencies = [
     "ruamel.yaml>=0.18",
     "python-magic",
     "apscheduler",
-    "bson",
     "python-multipart>=0.0.9",
     "qdrant-client>=1.10.0,<2"
 ]

@@ -154,7 +154,7 @@ Combine any Python based AI model, API from the ecosystem with the most establis
 
 Remove the need to implement MLOps, using the declarative and compositional Superduper components, which specify the end state that the models and data should reach.
 
-**Promote code reusablity and portabiity**
+**Promote code reusability and portability**
 
 Package components as templates, exposing the key parameters required to reuse and communicate AI applications in your community and organization.
 
@@ -164,7 +164,7 @@ Implement vector search and embedding generation without requiring a dedicated v
 
 **Move to production without any additional effort**
 
-Superduper's REST API, allows installed models to be served without addiitonal development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
+Superduper's REST API, allows installed models to be served without additional development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
 
 ## Key classes
 

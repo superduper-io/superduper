@@ -716,10 +716,10 @@ class Component(Leaf, metaclass=ComponentMeta):
             with open(os.path.join(path, f"{component}.yaml"), "w") as f:
                 f.write(output)
 
-        from superduper import REQUIRES
-
-        with open(os.path.join(path, "requirements.txt"), "w") as f:
-            f.write("\n".join(REQUIRES))
+        # No longer relevant with plugins
+        # Needs to be created manually currently
+        # with open(os.path.join(path, "requirements.txt"), "w") as f:
+        #     f.write("\n".join(REQUIRES))
 
         if zip:
             self._zip_export(path)

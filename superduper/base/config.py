@@ -98,8 +98,8 @@ class LogType(str, Enum):
 class BytesEncoding(str, Enum):
     """Enumerate the encoding of bytes in the data backend # noqa."""
 
-    BYTES = "Bytes"
-    BASE64 = "Str"
+    BYTES = "bytes"
+    BASE64 = "str"
 
 
 @dc.dataclass

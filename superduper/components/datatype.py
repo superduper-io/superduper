@@ -287,7 +287,7 @@ class DataType(Component):
     def bytes_encoding_after_encode(self, data):
         """Encode the data to base64.
 
-        if the bytes_encoding is BASE64 and the intermidia_type is BYTES
+        if the bytes_encoding is BASE64 and the intermediate_type is BYTES
 
         :param data: Encoded data
         """
@@ -301,7 +301,7 @@ class DataType(Component):
     def bytes_encoding_before_decode(self, data):
         """Encode the data to base64.
 
-        if the bytes_encoding is BASE64 and the intermidia_type is BYTES
+        if the bytes_encoding is BASE64 and the intermediate_type is BYTES
 
         :param data: Decoded data
         """

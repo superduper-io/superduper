@@ -274,7 +274,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         :param status: The status to set the component to.
         """
-        return self.db.metadata.set_component_status(self.uuid, status)
+        return self.db.metadata.set_component_status(self.uuid, str(status))
 
     def create_jobs(
         self,
@@ -780,6 +780,9 @@ class Component(Leaf, metaclass=ComponentMeta):
             r['type_id'] = self.type_id
             r['version'] = self.version
             r['identifier'] = self.identifier
+
+        if r.get('status') is not None:
+            r['status'] = str(self.status)
         return Document(r)
 
     @classmethod

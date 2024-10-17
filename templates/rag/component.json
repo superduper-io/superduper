@@ -26,14 +26,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "678e006ae753e24437af717e3f645fbfee9f54c9": {
+          "a3083074dfbc27e2d3fa07a132522089c03fa1de": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:678e006ae753e24437af717e3f645fbfee9f54c9"
+            "blob": "&:blob:a3083074dfbc27e2d3fa07a132522089c03fa1de"
           },
           "model:chunker": {
-            "_object": "?678e006ae753e24437af717e3f645fbfee9f54c9",
+            "_object": "?a3083074dfbc27e2d3fa07a132522089c03fa1de",
             "upstream": null,
             "plugins": null,
             "cache": false,
@@ -52,7 +52,7 @@
             "chunk_size": 200
           },
           "var-table-name-select-var-id-field-x": {
-            "_path": "superduper_mongodb.query.parse_query",
+            "_path": "superduper_ibis.query.parse_query",
             "documents": [],
             "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
           },
@@ -108,11 +108,11 @@
               1024
             ]
           },
-          "e7650b0163ba2fa90b2c5d419cafafedecc66628": {
+          "877552c9dc895dc69c5ee7ccf173357514138d94": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:e7650b0163ba2fa90b2c5d419cafafedecc66628"
+            "blob": "&:blob:877552c9dc895dc69c5ee7ccf173357514138d94"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -141,7 +141,7 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?e7650b0163ba2fa90b2c5d419cafafedecc66628"
+            "postprocess": "?877552c9dc895dc69c5ee7ccf173357514138d94"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
@@ -167,11 +167,11 @@
             "model": "<var:embedding_model>"
           },
           "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
-            "_path": "superduper_mongodb.query.parse_query",
+            "_path": "superduper_ibis.query.parse_query",
             "documents": [],
-            "query": "_outputs__chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"_outputs__chunker__?(listener:chunker.uuid)\")"
+            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
           },
-          "listener:embedding-listener": {
+          "listener:embeddinglistener": {
             "_path": "superduper.components.listener.Listener",
             "upstream": [
               "?listener:chunker",
@@ -180,33 +180,33 @@
             "plugins": null,
             "cache": false,
             "status": null,
-            "cdc_table": "_outputs__chunker__?(listener:chunker.uuid)",
-            "key": "_outputs__chunker__?(listener:chunker.uuid)",
+            "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
+            "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "model": "?model:embedding",
             "predict_kwargs": {},
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)",
             "flatten": false
           },
-          "vector_index:vector-index": {
+          "vector_index:vectorindex": {
             "_path": "superduper.components.vector_index.VectorIndex",
             "upstream": null,
             "plugins": null,
             "cache": false,
             "status": null,
-            "cdc_table": "_outputs__embedding-listener__?(listener:embedding-listener.uuid)",
-            "indexing_listener": "?listener:embedding-listener",
+            "cdc_table": "<var:output_prefix>embeddinglistener__?(listener:embeddinglistener.uuid)",
+            "indexing_listener": "?listener:embeddinglistener",
             "compatible_listener": null,
             "measure": "cosine",
             "metric_values": {}
           },
-          "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vector-index-n-5": {
-            "_path": "superduper_mongodb.query.parse_query",
+          "outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
+            "_path": "superduper_ibis.query.parse_query",
             "documents": [
               {
-                "_outputs__chunker__?(listener:chunker.uuid)": "<var:query>"
+                "<var:output_prefix>chunker__?(listener:chunker.uuid)": "<var:query>"
               }
             ],
-            "query": "_outputs__chunker__?(listener:chunker.uuid).select().like(documents[0], vector_index=\"vector-index\", n=5)"
+            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid)\n<var:output_prefix>chunker__?(listener:chunker.uuid).select(query[0]).like(documents[0], vector_index=\"vectorindex\", n=5)"
           },
           "model:llm-openai": {
             "_path": "superduper_openai.model.OpenAIChatCompletion",
@@ -304,8 +304,8 @@
             "serve": false,
             "trainer": null,
             "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n{context}\n\nHere's the question: {query}",
-            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vector-index-n-5",
-            "key": "_outputs__chunker__?(listener:chunker.uuid)",
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
+            "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "llm": "?model:llm"
           },
           "rag-app": {
@@ -316,7 +316,7 @@
             "status": null,
             "components": [
               "?listener:chunker",
-              "?vector_index:vector-index",
+              "?vector_index:vectorindex",
               "?model:rag-model"
             ],
             "namespace": null,
@@ -359,6 +359,10 @@
         "table_name": {
           "type": "str",
           "default": "_sample_rag"
+        },
+        "output_prefix": {
+          "type": "str",
+          "default": "outputs__"
         }
       },
       "blobs": null,

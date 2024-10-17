@@ -151,6 +151,7 @@ class Config(BaseConfig):
     :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
+    :param json_native: Whether the databackend supports json natively or not.
     :param log_colorize: Whether to colorize the logs
     :param output_prefix: The prefix for the output table and output field key
     :param vector_search_kwargs: The keyword arguments to pass to the vector search
@@ -181,6 +182,7 @@ class Config(BaseConfig):
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
+    json_native: bool = True
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
     rest: RestConfig = dc.field(default_factory=RestConfig)

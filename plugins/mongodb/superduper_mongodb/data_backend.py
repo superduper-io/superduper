@@ -10,7 +10,7 @@ from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.enums import DBType
 from superduper.components.datatype import DataType
-from superduper.components.schema import FieldType, Schema
+from superduper.components.schema import Schema
 from superduper.misc.colors import Colors
 
 from superduper_mongodb.artifacts import MongoArtifactStore
@@ -248,6 +248,4 @@ class MongoDataBackend(BaseDataBackend):
         """
         # If the data can be converted to JSON,
         # then save it as native data in MongoDB.
-        for key, datatype in schema.fields.items():
-            if isinstance(datatype, DataType) and datatype.identifier == "json":
-                schema.fields[key] = FieldType(identifier="json")
+        pass

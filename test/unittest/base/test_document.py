@@ -220,10 +220,18 @@ def test_column_encoding(db):
 
 
 def test_refer_to_system(db):
-    db.apply(pickle_serializer)
+    from superduper.components.datatype import DataType, methods
+
+    serializer = DataType(
+        identifier='my-datatype',
+        encodable='encodable',
+        db=db,
+        **methods['pickle'],
+    )
+    db.apply(serializer)
 
     db.artifact_store.put_bytes(
-        pickle_serializer.encode_data(np.random.rand(3)), file_id='12345'
+        serializer.encode_data(np.random.rand(3)), file_id='12345'
     )
 
     r = {
@@ -231,7 +239,7 @@ def test_refer_to_system(db):
             'my_artifact': {
                 '_path': 'superduper.components.datatype.LazyArtifact',
                 'blob': '&:blob:12345',
-                'datatype': "&:component:datatype:pickle",
+                'datatype': "&:component:datatype:my-datatype",
             }
         },
         'data': '?my_artifact',

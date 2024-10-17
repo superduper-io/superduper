@@ -198,6 +198,7 @@ def test_add_with_artifact(db):
     )
 
     db.apply(m)
+    db.cluster.cache.expire(m.uuid)
 
     m = db.load('model', m.identifier)
 
@@ -473,6 +474,7 @@ def test_replace(db):
         object=lambda x: x + 1,
         identifier='m',
         datatype=DataType(identifier='base'),
+        signature='singleton',
     )
     model.version = 0
     with pytest.raises(Exception):
@@ -487,6 +489,9 @@ def test_replace(db):
     )
     new_model.version = 0
     db.replace(new_model)
+
+    assert model.uuid not in db.cluster.cache._cache
+
     time.sleep(0.1)
     assert db.load('model', 'm').predict_batches([1]) == [3]
 
@@ -494,6 +499,7 @@ def test_replace(db):
     new_model = ObjectModel(
         object=lambda x: x + 3, identifier='m', signature='singleton'
     )
+    new_model.version = 0
     db.replace(new_model)
     time.sleep(0.1)
     assert db.load('model', 'm').predict_batches([1]) == [4]

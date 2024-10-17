@@ -145,7 +145,7 @@ class Component(Leaf, metaclass=ComponentMeta):
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
-    cache: t.Optional[bool] = False
+    cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
 
     @property
@@ -557,7 +557,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param cluster: The cluster to declare the component to.
         """
         if self.cache:
-            logging.debug(f'Declaring {self.type_id}: {self.identifier} to cache')
+            logging.info(f'Adding {self.type_id}: {self.identifier} to cache')
             cluster.cache.put(self)
             cluster.compute.put(self)
 
@@ -796,7 +796,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         assert db is not None
         r = r['_content']
         assert r['version'] is not None
-        return db.load(r['type_id'], r['identifier'], r['version'], allow_hidden=True)
+        return db.load(r['type_id'], r['identifier'], r['version'])
 
     def __setattr__(self, k, v):
         if k in dc.fields(self):

@@ -580,10 +580,10 @@ class Datalayer:
         type_id: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
-        allow_hidden: bool = False,
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
         on_load: bool = True,
+        allow_hidden: bool = False,
     ) -> Component:
         """
         Load a component using uniquely identifying information.
@@ -600,63 +600,52 @@ class Datalayer:
                              of deprecated components.
         :param uuid: [Optional] UUID of the component to load.
         """
-        if type_id == 'encoder':
-            logging.warn(
-                '"encoder" has moved to "datatype" this functionality will not work'
-                ' after version 0.2.0'
-            )
-            type_id = 'datatype'
-        if uuid is None and huuid is None:
-            if type_id is None or identifier is None:
-                raise ValueError(
-                    'Must specify `type_id` and `identifier` to load a component '
-                    'when `uuid` is not provided.'
-                )
-
+        if version is not None:
+            assert type_id is not None
+            assert identifier is not None
             info = self.metadata.get_component(
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
                 allow_hidden=allow_hidden,
             )
-        else:
-            if huuid:
-                uuid = huuid.split(':')[-1]
+            uuid = info['uuid']
+
+        if huuid is not None:
+            uuid = huuid.split(':')[-1]
+
+        if uuid is not None:
             try:
-                assert uuid is not None
-                uuid = uuid.split('.')[0]
+                return self.cluster.cache[uuid]
+            except KeyError:
+                logging.info(f'Component {uuid} not found in cache, loading from db')
                 info = self.metadata.get_component_by_uuid(
-                    uuid=uuid,
+                    uuid=uuid, allow_hidden=allow_hidden
+                )
+                c = Document.decode(info, db=self)
+                c.db = self
+        else:
+            try:
+                return self.cluster.cache[type_id, identifier]
+            except KeyError:
+                logging.warn(
+                    f'Component ({type_id}, {identifier}) not found in cache, '
+                    'loading from db'
+                )
+                assert type_id is not None
+                assert identifier is not None
+                info = self.metadata.get_component(
+                    type_id=type_id,
+                    identifier=identifier,
                     allow_hidden=allow_hidden,
                 )
-            except FileNotFoundError as e:
-                if huuid is not None:
-                    raise FileNotFoundError(
-                        f'Could not find {huuid} in metadata.'
-                    ) from e
-                raise e
+                c = Document.decode(info, db=self)
+                c.db = self
 
-            assert info is not None
-            type_id = info['type_id']
-
-        if info.get('cache', False):
-            try:
-                return self.cluster.cache[info['type_id'], info['identifier']]
-            except KeyError:
-                logging.info(
-                    f'Component {info["uuid"]} not found in cache, loading from db'
-                )
-
-        m = Document.decode(info, db=self)
-        m.db = self
-        if on_load:
-            m.on_load(self)
-
-        assert type_id is not None
-        if m.cache:
-            logging.info(f'Adding component {info["uuid"]} to cache.')
-            self.cluster.cache.put(m)
-        return m
+        if c.cache:
+            logging.info(f'Adding {c.huuid} to cache')
+            self.cluster.cache.put(c)
+        return c
 
     def _add_child_components(self, components, parent, job_events, context):
         # TODO this is a bit of a mess
@@ -707,7 +696,6 @@ class Datalayer:
             self._update_component(object, parent=parent)
             return [], []
 
-        # object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
@@ -810,7 +798,9 @@ class Datalayer:
         ):
             # TODO - make this less I/O intensive
             component = self.load(
-                type_id, identifier, version=version, allow_hidden=force
+                type_id,
+                identifier,
+                version=version,
             )
             info = self.metadata.get_component(
                 type_id, identifier, version=version, allow_hidden=force
@@ -893,11 +883,10 @@ class Datalayer:
             type_id=object.type_id,
             version=object.version,
         )
-        self.expire(object.uuid)
+        self.expire(old_uuid)
 
     def expire(self, uuid):
         """Expire a component from the cache."""
-        parents = True
         self.cluster.cache.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)
         while parents:
@@ -969,6 +958,7 @@ class Datalayer:
             assert isinstance(like, dict)
             like = Document(like)
         like = self._get_content_for_filter(like)
+        logging.info('Getting vector-index')
         vi = self.load('vector_index', vector_index)
         if outputs is None:
             outs: t.Dict = {}

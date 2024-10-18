@@ -51,8 +51,22 @@ def start(
     app.start()
 
 
+@command(help='Display a template')
+def inspect(template: str):
+    """Display a template"""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    from pygments import highlight, lexers, formatters
+    path = f'{root}/templates/{template}/component.json'
+    with open(path, 'r') as f:
+        component = json.load(f)
+
+    formatted_json = json.dumps(component, indent=2)
+    colorful_json = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
+    print(colorful_json)
+
+
 @command(help='Initialize a template in the system')
-def bootstrap(template: str, destination: str | None, pip_install: bool = False):
+def bootstrap(template: str, destination: str | None = None, pip_install: bool = False):
     """Initialize a template in the system.
 
     :param template: Template to initialize.

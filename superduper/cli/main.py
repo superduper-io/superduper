@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import typing as t
 
 from superduper import Component, logging, superduper
@@ -13,7 +14,7 @@ def apply(name: str, variables: str | None = None):
     """Apply a serialized component.
 
     :param name: Path or name of the template/ component.
-    :param variables: JSON string of values to apply to the template.
+    :param values: JSON string of values to apply to the template.
     """
     _apply(name, variables)
 
@@ -52,14 +53,14 @@ def start(
 
 
 @command(help='Initialize a template in the system')
-def bootstrap(templates: t.List[str] | None = None):
+def bootstrap(templates: t.List[str]):
     """Initialize a template in the system.
 
     :param templates: List of templates to initialize.
     """
     from superduper import templates as inbuilt
 
-    if templates is None:
+    if templates == ['*']:
         templates = inbuilt.ls()
         templates = ['rag', 'text_vector_search']
     db = superduper()
@@ -70,12 +71,20 @@ def bootstrap(templates: t.List[str] | None = None):
             continue
         logging.info(f'Applying template: {tem} from inbuilt')
         tem = getattr(inbuilt, tem)
+        if tem.requirements:
+            with open('/tmp/requirements.txt', 'w') as f:
+                f.write('\n'.join(tem.requirements))
+            subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
         db.apply(tem, force=True)
 
 
-@command(help='List prebuilt templates')
+@command(help='Apply a template or application to a `superduper` deployment')
 def ls():
-    """List prebuilt templates."""
+    """Apply a serialized component.
+
+    :param name: Path or name of the template/ component.
+    :param values: JSON string of values to apply to the template.
+    """
     from superduper.templates import ls
 
     for r in ls():
@@ -90,34 +99,22 @@ def show(
 ):
     """Apply a serialized component.
 
-    :param type_id: Type of component to show.
-    :param identifier: Identifier of the component.
-    :param version: Version of the component.
+    :param name: Path or name of the template/ component.
+    :param values: JSON string of values to apply to the template.
     """
     db = superduper()
     to_show = db.show(type_id=type_id, identifier=identifier, version=version)
+    import json
 
     logging.info('Showing components in system:')
     print(json.dumps(to_show, indent=2))
 
 
-@command(help='Execute a query or prediction')
-def execute():
+@command(help='`superduper` deployment')
+def drop(data: bool = False, force: bool = False):
     """Apply a serialized component.
 
     :param path: Path to the stack.
-    """
-    from superduper.misc.interactive_prompt import _prompt
-
-    _prompt()
-
-
-@command(help='`superduper` deployment')
-def drop(data: bool = False, force: bool = False):
-    """Drop the deployment.
-
-    :param data: Drop the data.
-    :param force: Force the drop.
     """
     db = superduper()
     db.drop(force=force, data=data)
@@ -148,17 +145,7 @@ def _apply(name: str, variables: str | None = None):
         else:
             c = Component.read(name)
     else:
-        existing = db.show('template')
-        if name not in existing:
-            from superduper import templates
-
-            try:
-                t = getattr(templates, name)
-            except AttributeError:
-                raise Exception(f'No pre-built template found of that name: {name}')
-        else:
-            t = db.load('template', name)
-
+        t = db.load('template', name)
         c = _build_from_template(t)
 
     try:

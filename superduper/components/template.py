@@ -46,7 +46,6 @@ class _BaseTemplate(Component):
             )
         if self.template_variables is None:
             self.template_variables = self.template.variables
-        logging.info(f"Template variables: {self.template_variables}")
         super().__post_init__(db, artifacts)
 
     @ensure_initialized
@@ -98,6 +97,7 @@ class Template(_BaseTemplate):
     type_id: t.ClassVar[str] = "template"
 
     data: t.List[t.Dict] | None = None
+    requirements: t.Optional[t.List[str]] = None
 
     def _pre_create(self, db: Datalayer) -> None:
         """Run before the object is created."""

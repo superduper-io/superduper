@@ -1306,6 +1306,11 @@ class ModelRouter(Model):
         return self.models[self.model].predict(*args, **kwargs)
 
     @override
+    def fit(self, *args, **kwargs) -> t.Any:
+        logging.info(f'Fitting with model {self.model}')
+        return self.models[self.model].fit(*args, **kwargs)
+
+    @override
     def predict_batches(self, dataset) -> t.List:
         logging.info(f'Predicting with model {self.model}')
         return self.models[self.model].predict_batches(dataset)

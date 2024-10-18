@@ -3,73 +3,145 @@
   "_builds": {
     "transfer-learner": {
       "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": false,
+      "status": null,
       "template": {
         "_base": "?my-model",
         "_builds": {
-          "<var:table>-select-outputs-features": {
-            "_path": "superduper_mongodb.query.parse_query",
-            "documents": [],
-            "query": "<var:table>.select().outputs(\"features\")"
-          },
-          "my-trainer": {
-            "_path": "superduper_sklearn.model.SklearnTrainer",
-            "key": [
-              "_outputs__features",
-              "label"
-            ],
-            "select": "?<var:table>-select-outputs-features"
-          },
-          "dill": {
+          "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "85f40a9ab4d99d2e5423f6d53af04361677af2f3": {
+          "ea7281291bdbac227aa133cd3c0e6a6eda5af840": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:85f40a9ab4d99d2e5423f6d53af04361677af2f3"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:ea7281291bdbac227aa133cd3c0e6a6eda5af840"
           },
-          "acc": {
+          "metric:acc": {
             "_path": "superduper.components.metric.Metric",
-            "object": "?85f40a9ab4d99d2e5423f6d53af04361677af2f3"
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "object": "?ea7281291bdbac227aa133cd3c0e6a6eda5af840"
           },
-          "my-valid": {
-            "_path": "superduper.components.dataset.Dataset"
+          "<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf-filter-fold-eq-valid": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [
+              {
+                "_fold": {
+                  "<$>eq": "valid"
+                }
+              }
+            ],
+            "query": "<var:table>.select().outputs(\"features__c7963b93f0234f3298b40286906971cf\").filter(documents[0])"
           },
-          "transfer_learning_performance": {
+          "dataset:my-valid": {
+            "_path": "superduper.components.dataset.Dataset",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "select": "?<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf-filter-fold-eq-valid",
+            "sample_size": null,
+            "random_seed": null,
+            "creation_date": null,
+            "raw_data": null,
+            "pin": false
+          },
+          "validation:transfer_learning_performance": {
             "_path": "superduper.components.model.Validation",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
             "metrics": [
-              "?acc"
+              "?metric:acc"
             ],
             "key": [
-              "_outputs__features",
+              "_outputs__features__c7963b93f0234f3298b40286906971cf",
               "label"
             ],
             "datasets": [
-              "?my-valid"
+              "?dataset:my-valid"
             ]
           },
-          "pickle": {
+          "<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table>.select().outputs(\"features__c7963b93f0234f3298b40286906971cf\")"
+          },
+          "trainer:my-trainer": {
+            "_path": "superduper_sklearn.model.SklearnTrainer",
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "key": [
+              "_outputs__features__c7963b93f0234f3298b40286906971cf",
+              "label"
+            ],
+            "select": "?<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf",
+            "transform": null,
+            "metric_values": {},
+            "signature": "*args",
+            "data_prefetch": false,
+            "prefetch_size": 1000,
+            "prefetch_factor": 100,
+            "in_memory": true,
+            "compute_kwargs": {},
+            "validation": null,
+            "fit_params": {},
+            "predict_params": {},
+            "y_preprocess": null
+          },
+          "datatype:pickle": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "pickle",
             "encodable": "artifact"
           },
-          "11f4c3e68e30071c92163ece040096ea80e23755": {
+          "b2fb772b6860a8d71d4dfe3115263984aadc447b": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?pickle",
-            "blob": "&:blob:11f4c3e68e30071c92163ece040096ea80e23755"
+            "datatype": "?datatype:pickle",
+            "uri": null,
+            "blob": "&:blob:b2fb772b6860a8d71d4dfe3115263984aadc447b"
           },
           "my-model": {
             "_path": "superduper_sklearn.model.Estimator",
-            "trainer": "?my-trainer",
-            "validation": "?transfer_learning_performance",
-            "object": "?11f4c3e68e30071c92163ece040096ea80e23755"
+            "upstream": null,
+            "plugins": null,
+            "cache": false,
+            "status": "ready",
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": "?validation:transfer_learning_performance",
+            "metric_values": {
+              "my-valid/acc": 0.7647058823529411
+            },
+            "num_workers": 0,
+            "serve": false,
+            "trainer": "?trainer:my-trainer",
+            "object": "?b2fb772b6860a8d71d4dfe3115263984aadc447b",
+            "preprocess": null,
+            "postprocess": null
           }
         }
       },
       "template_variables": [
         "table"
       ],
+      "types": {},
+      "blobs": null,
+      "files": null,
+      "data": null,
       "_literals": [
         "template"
       ]

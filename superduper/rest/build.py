@@ -1,6 +1,9 @@
 import hashlib
+import os
 import shutil
+import sys
 import typing as t
+from contextlib import contextmanager
 
 import magic
 from fastapi import File, Response
@@ -13,6 +16,34 @@ from superduper.components.template import Template
 from superduper.rest.base import SuperDuperApp
 
 from .utils import rewrite_artifacts
+
+
+class Tee:
+    """A file-like object that writes to multiple outputs."""
+
+    def __init__(self, *files):
+        self.files = files
+
+    def write(self, data):
+        for f in self.files:
+            f.write(data)
+            f.flush()  # Ensure each write is flushed immediately
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
+
+@contextmanager
+def redirect_stdout_to_file(file_path: str):
+    """Context manager to redirect stdout to a specified file temporarily."""
+    original_stdout = sys.stdout
+    try:
+        with open(file_path, 'w', buffering=1) as f:
+            sys.stdout = Tee(original_stdout, f)
+            yield
+    finally:
+        sys.stdout = original_stdout
 
 
 def build_rest_app(app: SuperDuperApp):
@@ -34,8 +65,21 @@ def build_rest_app(app: SuperDuperApp):
         media_type = magic.from_buffer(bytes, mime=True)
         return Response(content=bytes, media_type=media_type)
 
-    @app.add('/db/apply', method='post')
-    def db_apply(info: t.Dict):
+    def _print_to_screen():
+        for i in range(100):
+            print(f'Testing {i}')
+            time.sleep(0.1)
+        print('[DONE]')
+
+    @app.add('/test/log', method='post')
+    def test_log():
+        log_file = "/tmp/test.log"
+        with redirect_stdout_to_file(log_file):
+            _print_to_screen()
+        os.remove(log_file)
+        return {'status': 'ok'}
+
+    def _process_db_apply(info):
         if '_variables' in info:
             assert {'_variables', 'identifier'}.issubset(info.keys())
             variables = info.pop('_variables')
@@ -59,6 +103,46 @@ def build_rest_app(app: SuperDuperApp):
         component = Document.decode(info).unpack()
         app.db.apply(component, force=True)
         return {'status': 'ok'}
+
+    @app.add('/db/apply', method='post')
+    def db_apply(info: t.Dict, id: str | None = None):
+        if id:
+            log_file = f"/tmp/{id}.log"
+            with redirect_stdout_to_file(log_file):
+                try:
+                    out = _process_db_apply(info)
+                finally:
+                    os.remove(log_file)
+        else:
+            out = _process_db_apply(info)
+        return out
+
+    import subprocess
+    import time
+
+    from fastapi.responses import StreamingResponse
+
+    def tail_f(filename):
+        process = subprocess.Popen(
+            ["tail", "-n", "1000", "-f", filename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            for line in process.stdout:
+                yield line
+                if '[DONE]' in line:
+                    process.terminate()
+                    return
+        except KeyboardInterrupt:
+            process.terminate()
+
+    @app.add('/stdout', method='get')
+    async def stream(id: str):
+        return StreamingResponse(
+            tail_f(f'/tmp/{id}.log'), media_type="text/event-stream"
+        )
 
     @app.add('/db/show', method='get')
     def db_show(

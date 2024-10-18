@@ -3,122 +3,195 @@
   "_builds": {
     "image-vector-search": {
       "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
       "template": {
         "_base": "?image-vector-search",
         "_builds": {
-          "vector[1024]": {
-            "_path": "superduper.components.vector_index.vector",
+          "datatype:sqlvector[1024]": {
+            "_path": "superduper.components.vector_index.sqlvector",
             "shape": [
               1024
             ]
           },
-          "dill": {
+          "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "75347bbb255301912d39cedb0694f549f8819abb": {
+          "a59f7ef66658ac2aebb08cfb42392889a8d4dfbc": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:75347bbb255301912d39cedb0694f549f8819abb"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:a59f7ef66658ac2aebb08cfb42392889a8d4dfbc"
           },
           "e1635b227a7f3787dc79524d812915c342701260": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
+            "datatype": "?datatype:dill",
+            "uri": null,
             "blob": "&:blob:e1635b227a7f3787dc79524d812915c342701260"
           },
-          "6e99888088997261fb7a5634c403fc06c5fb6f9b": {
+          "d74a9ebc7af72ea5640dc6cb7928eb708189ccac": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:6e99888088997261fb7a5634c403fc06c5fb6f9b"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:d74a9ebc7af72ea5640dc6cb7928eb708189ccac"
           },
-          "clip_image": {
+          "model:clip_image": {
             "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
             "signature": "singleton",
-            "datatype": "?vector[1024]",
-            "object": "?75347bbb255301912d39cedb0694f549f8819abb",
+            "datatype": "?datatype:sqlvector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?a59f7ef66658ac2aebb08cfb42392889a8d4dfbc",
             "preprocess": "?e1635b227a7f3787dc79524d812915c342701260",
-            "postprocess": "?6e99888088997261fb7a5634c403fc06c5fb6f9b"
+            "preprocess_signature": "singleton",
+            "postprocess": "?d74a9ebc7af72ea5640dc6cb7928eb708189ccac",
+            "postprocess_signature": "singleton",
+            "forward_method": "__call__",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
           },
           "<var:table>-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
             "query": "<var:table>.select()"
           },
-          "indexing-listener": {
+          "listener:indexing-listener": {
             "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "<var:table>",
             "key": "img",
-            "model": "?clip_image",
+            "model": "?model:clip_image",
+            "predict_kwargs": {},
             "select": "?<var:table>-select",
-            "predict_id": "indexing-listener"
+            "flatten": false
           },
-          "38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3": {
+          "e5551585470d016f388b67c7903b13f8a49e149b": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:e5551585470d016f388b67c7903b13f8a49e149b"
           },
-          "68e3d68b08e34272c74c87c050a934ecaa20fbf7": {
+          "5af4e17913a59c52b9dcc60b35cfe88a64052f3d": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:68e3d68b08e34272c74c87c050a934ecaa20fbf7"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:5af4e17913a59c52b9dcc60b35cfe88a64052f3d"
           },
-          "89d6b1b6e00ddbac730818039f895c3533395a19": {
+          "d892f128056598f912763336ce4047f36090c11f": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:89d6b1b6e00ddbac730818039f895c3533395a19"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:d892f128056598f912763336ce4047f36090c11f"
           },
-          "clip_text": {
+          "model:clip_text": {
             "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
             "signature": "singleton",
-            "datatype": "?vector[1024]",
-            "object": "?38c0a0ed4807b9f73c6acbee624fb6d1d0ef91f3",
-            "preprocess": "?68e3d68b08e34272c74c87c050a934ecaa20fbf7",
-            "postprocess": "?89d6b1b6e00ddbac730818039f895c3533395a19",
-            "forward_method": "encode_text"
+            "datatype": "?datatype:sqlvector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?e5551585470d016f388b67c7903b13f8a49e149b",
+            "preprocess": "?5af4e17913a59c52b9dcc60b35cfe88a64052f3d",
+            "preprocess_signature": "singleton",
+            "postprocess": "?d892f128056598f912763336ce4047f36090c11f",
+            "postprocess_signature": "singleton",
+            "forward_method": "encode_text",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
           },
-          "compatible-listener": {
+          "listener:compatible-listener": {
             "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
+            "cdc_table": "",
             "key": "text",
-            "model": "?clip_text",
+            "model": "?model:clip_text",
+            "predict_kwargs": {},
             "select": null,
-            "predict_id": "compatible-listener"
+            "flatten": false
           },
-          "my-vector-index": {
+          "vector_index:my-vector-index": {
             "_path": "superduper.components.vector_index.VectorIndex",
-            "indexing_listener": "?indexing-listener",
-            "compatible_listener": "?compatible-listener"
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "_outputs__indexing-listener__?(listener:indexing-listener.uuid)",
+            "indexing_listener": "?listener:indexing-listener",
+            "compatible_listener": "?listener:compatible-listener",
+            "measure": "cosine",
+            "metric_values": {}
           },
           "image-vector-search": {
             "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
             "components": [
-              "?my-vector-index"
+              "?vector_index:my-vector-index"
             ],
             "namespace": [
               {
                 "type_id": "vector_index",
                 "identifier": "my-vector-index"
-              },
-              {
-                "type_id": "listener",
-                "identifier": "indexing-listener"
-              },
-              {
-                "type_id": "listener",
-                "identifier": "compatible-listener"
-              },
-              {
-                "type_id": "model",
-                "identifier": "clip_image"
-              },
-              {
-                "type_id": "datatype",
-                "identifier": "vector[1024]"
-              },
-              {
-                "type_id": "model",
-                "identifier": "clip_text"
               }
             ],
+            "link": null,
             "_literals": [
               "template"
             ]
@@ -128,6 +201,11 @@
       "template_variables": [
         "table"
       ],
+      "types": {},
+      "blobs": null,
+      "files": null,
+      "data": null,
+      "requirements": null,
       "_literals": [
         "template"
       ]

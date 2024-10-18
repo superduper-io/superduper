@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Permissions of artifacts increased
 - Make JSON-able a configuration depending on the databackend
 - Restore some training test cases
+- Simple querying shell
 
 #### New Features & Functionality
 

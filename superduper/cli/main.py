@@ -1,7 +1,6 @@
 import json
 import os
 import subprocess
-import typing as t
 
 from superduper import Component, logging, superduper
 from superduper.components.template import Template
@@ -53,29 +52,41 @@ def start(
 
 
 @command(help='Initialize a template in the system')
-def bootstrap(templates: t.List[str], pip_install: bool = False):
+def bootstrap(template: str, destination: str | None, pip_install: bool = False):
     """Initialize a template in the system.
 
-    :param templates: List of templates to initialize.
+    :param template: Template to initialize.
+
+    Add template to the system.
+
+    >>> superduper bootstrap rag
+
+    Copy template to a directory to update it.
+
+    >>> superduper bootstrap rag ./my_template
     """
     from superduper import templates as inbuilt
 
-    if templates == ['*']:
-        templates = inbuilt.ls()
-        templates = ['rag', 'text_vector_search']
     db = superduper()
     existing = db.show('template')
-    for tem in templates:
-        if tem in existing:
-            logging.info(f'Template {tem} already exists')
-            continue
-        logging.info(f'Applying template: {tem} from inbuilt')
-        tem = getattr(inbuilt, tem)
-        if tem.requirements and pip_install:
-            with open('/tmp/requirements.txt', 'w') as f:
-                f.write('\n'.join(tem.requirements))
-            subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
-        db.apply(tem, force=True)
+    if destination is not None:
+        root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        template_directory = os.path.join(root, f'templates/{template}')
+        print(template_directory)
+        import shutil
+
+        shutil.copytree(template_directory, destination)
+        return
+
+    if template in existing:
+        logging.warn(f'Template {template} already exists')
+    logging.info(f'Applying template: {template} from inbuilt')
+    tem = getattr(inbuilt, template)
+    if tem.requirements and pip_install:
+        with open('/tmp/requirements.txt', 'w') as f:
+            f.write('\n'.join(tem.requirements))
+        subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
+    db.apply(tem)
 
 
 @command(help='Apply a template or application to a `superduper` deployment')

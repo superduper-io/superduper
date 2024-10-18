@@ -44,11 +44,8 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             except TypeError as e:
                 import traceback
 
-                logging.error(
-                    f'Could not load vector index: {identifier} '
-                    f'{e}'
-                )
-                logging.error(traceback.format_exc())  
+                logging.error(f'Could not load vector index: {identifier} ' f'{e}')
+                logging.error(traceback.format_exc())
                 continue
 
     # TODO needed?

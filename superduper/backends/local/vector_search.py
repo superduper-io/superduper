@@ -33,14 +33,23 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         for identifier in self.db.show('vector_index'):
             try:
                 vector_index = self.db.load('vector_index', identifier=identifier)
+                self._put(vector_index)
+                vector_index.copy_vectors()
             except FileNotFoundError:
                 logging.error(
                     f'Could not load vector index: {identifier} '
                     'Is the artifact store correctly configured?'
                 )
                 continue
-            self._put(vector_index)
-            vector_index.copy_vectors()
+            except TypeError as e:
+                import traceback
+
+                logging.error(
+                    f'Could not load vector index: {identifier} '
+                    f'{e}'
+                )
+                logging.error(traceback.format_exc())  
+                continue
 
     # TODO needed?
     def __contains__(self, item):

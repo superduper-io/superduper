@@ -16,7 +16,7 @@
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
-      "cache": false,
+      "cache": true,
       "status": null,
       "template": {
         "_base": "?rag-app",
@@ -26,17 +26,17 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "a3083074dfbc27e2d3fa07a132522089c03fa1de": {
+          "a10c50aef32e291aeadde1af7b4c5f32ef3db804": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:a3083074dfbc27e2d3fa07a132522089c03fa1de"
+            "blob": "&:blob:a10c50aef32e291aeadde1af7b4c5f32ef3db804"
           },
           "model:chunker": {
-            "_object": "?a3083074dfbc27e2d3fa07a132522089c03fa1de",
+            "_object": "?a10c50aef32e291aeadde1af7b4c5f32ef3db804",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -52,7 +52,7 @@
             "chunk_size": 200
           },
           "var-table-name-select-var-id-field-x": {
-            "_path": "superduper_ibis.query.parse_query",
+            "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
             "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
           },
@@ -60,7 +60,7 @@
             "_path": "superduper.components.listener.Listener",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:table_name>",
             "key": "x",
@@ -79,7 +79,7 @@
             "_path": "superduper_openai.model.OpenAIEmbedding",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": "?datatype:sqlvector[1536]",
@@ -108,11 +108,11 @@
               1024
             ]
           },
-          "877552c9dc895dc69c5ee7ccf173357514138d94": {
+          "6fe724d5828fab83ecf874150018a459a06f0ce4": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:877552c9dc895dc69c5ee7ccf173357514138d94"
+            "blob": "&:blob:6fe724d5828fab83ecf874150018a459a06f0ce4"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -124,7 +124,7 @@
             "device": "cpu",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": "?datatype:sqlvector[1024]",
@@ -141,13 +141,13 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?877552c9dc895dc69c5ee7ccf173357514138d94"
+            "postprocess": "?6fe724d5828fab83ecf874150018a459a06f0ce4"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "*args,**kwargs",
             "datatype": null,
@@ -166,10 +166,10 @@
             },
             "model": "<var:embedding_model>"
           },
-          "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
-            "_path": "superduper_ibis.query.parse_query",
+          "outputs-chunker-?(listener:chunker.uuid)-select-var-id-field-source-outputs-chunker-?(listener:chunker.uuid)": {
+            "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
+            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"<var:id_field>\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
           },
           "listener:embeddinglistener": {
             "_path": "superduper.components.listener.Listener",
@@ -178,20 +178,20 @@
               "?listener:chunker"
             ],
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "model": "?model:embedding",
             "predict_kwargs": {},
-            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)",
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-var-id-field-source-outputs-chunker-?(listener:chunker.uuid)",
             "flatten": false
           },
           "vector_index:vectorindex": {
             "_path": "superduper.components.vector_index.VectorIndex",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:output_prefix>embeddinglistener__?(listener:embeddinglistener.uuid)",
             "indexing_listener": "?listener:embeddinglistener",
@@ -199,20 +199,20 @@
             "measure": "cosine",
             "metric_values": {}
           },
-          "outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
-            "_path": "superduper_ibis.query.parse_query",
+          "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
+            "_path": "superduper_mongodb.query.parse_query",
             "documents": [
               {
                 "<var:output_prefix>chunker__?(listener:chunker.uuid)": "<var:query>"
               }
             ],
-            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid)\n<var:output_prefix>chunker__?(listener:chunker.uuid).select(query[0]).like(documents[0], vector_index=\"vectorindex\", n=5)"
+            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select().like(documents[0], vector_index=\"vectorindex\", n=5)"
           },
           "model:llm-openai": {
             "_path": "superduper_openai.model.OpenAIChatCompletion",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -237,7 +237,7 @@
             "_path": "superduper_vllm.model.VllmCompletion",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "*args,**kwargs",
             "datatype": null,
@@ -266,7 +266,7 @@
             "_path": "superduper.components.model.ModelRouter",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "*args,**kwargs",
             "datatype": null,
@@ -290,7 +290,7 @@
             "_path": "superduper.components.model.RAGModel",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -304,7 +304,7 @@
             "serve": false,
             "trainer": null,
             "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n{context}\n\nHere's the question: {query}",
-            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "llm": "?model:llm"
           },
@@ -312,7 +312,7 @@
             "_path": "superduper.components.application.Application",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "components": [
               "?listener:chunker",
@@ -331,7 +331,8 @@
         "llm_model",
         "embedding_model",
         "table_name",
-        "id_field"
+        "id_field",
+        "output_prefix"
       ],
       "types": {
         "id_field": {
@@ -368,6 +369,7 @@
       "blobs": null,
       "files": null,
       "data": "?2abbced0b779db61865b869a5a707c1114193b11",
+      "requirements": null,
       "_literals": [
         "template"
       ]

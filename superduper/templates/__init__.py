@@ -16,4 +16,9 @@ def ls():
 
 
 def __getattr__(name: str):
-    return Template.read(str(PARENT / "templates" / f"{name}"))
+    t = Template.read(str(PARENT / "templates" / f"{name}"))
+    requirements_path = str(PARENT / "templates" / f"{name}" / "requirements.txt")
+    if os.path.exists(requirements_path):
+        with open(requirements_path, 'r') as f:
+            t.requirements = [x.strip() for x in f.read().split('\n') if x]
+    return t

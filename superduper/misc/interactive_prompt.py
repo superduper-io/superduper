@@ -1,6 +1,7 @@
 import pprint
 import sys
 
+from superduper import logging
 from superduper.base.cursor import SuperDuperCursor
 
 
@@ -34,7 +35,14 @@ def _prompt():
         import re
 
         if re.match('[A-Za-z0-9_]+ = ', input_):
-            exec(input_, values)
+            try:
+                exec(input_, values)
+            except Exception as e:
+                logging.error(str(e))
+                continue
+            except KeyboardInterrupt:
+                print('Aborted')
+                sys.exit(0)
             continue
 
         if '.predict' in input_:
@@ -42,14 +50,23 @@ def _prompt():
             model = parts[0]
             rest = '.'.join(parts[1:])
             values['model'] = db.load('model', model)
-            exec(f'result = model.{rest}', values)
+            try:
+                exec(f'result = model.{rest}', values)
+            except Exception as e:
+                logging.error(e)
+                continue
+
             pprint.pprint(values['result'])
             continue
 
         parts = input_.strip().split('.')
         table = parts[0]
         rest = '.'.join(parts[1:])
-        exec(f'result = db["{table}"].{rest}.execute()', values)
+        try:
+            exec(f'result = db["{table}"].{rest}.execute()', values)
+        except Exception as e:
+            logging.error(e)
+            continue
         if isinstance(values['result'], SuperDuperCursor):
             for r in values['result']:
                 pprint.pprint(r.unpack())

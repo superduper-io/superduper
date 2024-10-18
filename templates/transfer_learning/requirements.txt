@@ -1,3 +1,5 @@
-superduper==0.3.0
+superduper==0.0.4.dev
+torch>=2.0.0
+pillow>=10.2.0
 sentence-transformers>=2.2.2
 scikit-learn>=1.2.2

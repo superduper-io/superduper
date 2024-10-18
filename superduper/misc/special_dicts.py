@@ -363,7 +363,7 @@ def _childrens(tree, object, nesting=1):
         return
     for name, child in object.builds.items():
         identifier = child.get('uuid', None)
-        child_text = f"{name}: {child['_path']}({identifier})"
+        child_text = f"{name}: {child.get('_path', '__main__')}({identifier})"
         subtree = tree.add(Text(child_text, style="yellow"))
         for key, value in child.items():
             key_text = Text(f"{key}", style="magenta")

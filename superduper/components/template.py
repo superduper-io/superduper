@@ -52,6 +52,8 @@ class _BaseTemplate(Component):
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
+        msg = 'Types of variables don\'t match with the template variables.'
+        assert set(self.types.keys()) == set(self.template_variables), msg
         assert set(kwargs.keys()) == set(self.template_variables)
         component = _replace_variables(self.template, **kwargs)
         return Document.decode(component, db=self.db).unpack()

@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from superduper import Component, logging, superduper
+from superduper import CFG, Component, logging, superduper
 from superduper.components.template import Template
 
 from . import command
@@ -24,6 +24,7 @@ def start(
     remote_port: int = 8000,
     host: str = 'localhost',
     headless: bool = False,
+    data_backend: str | None = None,
 ):
     """Start the rest server and user interface.
 
@@ -35,7 +36,7 @@ def start(
     from superduper.rest.base import SuperDuperApp
     from superduper.rest.build import build_frontend, build_rest_app
 
-    app = SuperDuperApp('rest', port=remote_port)
+    app = SuperDuperApp('rest', port=remote_port, data_backend=data_backend)
 
     if host == 'localhost':
         # host frontend and server together
@@ -53,20 +54,28 @@ def start(
 
 @command(help='Display a template')
 def inspect(template: str):
-    """Display a template"""
+    """Display a template."""
     root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    from pygments import highlight, lexers, formatters
+    from pygments import formatters, highlight, lexers
+
     path = f'{root}/templates/{template}/component.json'
     with open(path, 'r') as f:
         component = json.load(f)
 
     formatted_json = json.dumps(component, indent=2)
-    colorful_json = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
+    colorful_json = highlight(
+        formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter()
+    )
     print(colorful_json)
 
 
 @command(help='Initialize a template in the system')
-def bootstrap(template: str, destination: str | None = None, pip_install: bool = False):
+def bootstrap(
+    template: str,
+    destination: str | None = None,
+    pip_install: bool = False,
+    data_backend: str | None = None,
+):
     """Initialize a template in the system.
 
     :param template: Template to initialize.
@@ -81,7 +90,9 @@ def bootstrap(template: str, destination: str | None = None, pip_install: bool =
     """
     from superduper import templates as inbuilt
 
-    db = superduper()
+    data_backend = data_backend or CFG.data_backend
+
+    db = superduper(data_backend)
     existing = db.show('template')
     if destination is not None:
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -121,13 +132,15 @@ def show(
     type_id: str | None = None,
     identifier: str | None = None,
     version: int | None = None,
+    data_backend: str | None = None,
 ):
     """Apply a serialized component.
 
     :param name: Path or name of the template/ component.
     :param values: JSON string of values to apply to the template.
     """
-    db = superduper()
+    data_backend = data_backend or CFG.data_backend
+    db = superduper(data_backend)
     to_show = db.show(type_id=type_id, identifier=identifier, version=version)
     import json
 
@@ -136,26 +149,27 @@ def show(
 
 
 @command(help='Execute a query or prediction')
-def execute():
+def execute(data_backend: str = None):
     """Execute a query or prediction."""
     from superduper.misc.interactive_prompt import _prompt
 
-    _prompt()
+    _prompt(data_backend=data_backend)
 
 
 @command(help='`superduper` deployment')
-def drop(data: bool = False, force: bool = False):
+def drop(data: bool = False, force: bool = False, data_backend: str | None = None):
     """Drop the deployment.
 
     :param data: Drop the data.
     :param force: Force the drop.
     """
-    db = superduper()
+    data_backend = data_backend or CFG.data_backend
+    db = superduper(data_backend)
     db.drop(force=force, data=data)
     db.disconnect()
 
 
-def _apply(name: str, variables: str | None = None):
+def _apply(name: str, variables: str | None = None, data_backend: str | None = None):
     variables = variables or '{}'
     variables = json.loads(variables)
 
@@ -168,7 +182,8 @@ def _apply(name: str, variables: str | None = None):
                 all_values[k] = t.default_values[k]
         return t(**all_values)
 
-    db = superduper()
+    data_backend = data_backend or CFG.data_backend
+    db = superduper(data_backend)
 
     if os.path.exists(name):
         with open(name + '/component.json', 'r') as f:

@@ -1,14 +1,16 @@
 import pprint
 import sys
 
-from superduper import logging
+from superduper import CFG, logging
 from superduper.base.cursor import SuperDuperCursor
 
 
-def _prompt():
+def _prompt(data_backend: str | None = None):
     from superduper import superduper
 
-    db = superduper()
+    data_backend = data_backend or CFG.data_backend
+
+    db = superduper(data_backend)
     values = {'db': db}
 
     while True:
@@ -53,7 +55,7 @@ def _prompt():
             try:
                 exec(f'result = model.{rest}', values)
             except Exception as e:
-                logging.error(e)
+                logging.error(str(e))
                 continue
 
             pprint.pprint(values['result'])
@@ -65,7 +67,7 @@ def _prompt():
         try:
             exec(f'result = db["{table}"].{rest}.execute()', values)
         except Exception as e:
-            logging.error(e)
+            logging.error(str(e))
             continue
         if isinstance(values['result'], SuperDuperCursor):
             for r in values['result']:

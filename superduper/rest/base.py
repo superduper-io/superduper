@@ -69,7 +69,12 @@ class SuperDuperApp:
     """
 
     def __init__(
-        self, service='rest', port=8000, db: Datalayer = None, prefix: str = ''
+        self,
+        service='rest',
+        port=8000,
+        db: Datalayer = None,
+        prefix: str = '',
+        data_backend: str | None = None,
     ):
         if prefix and not prefix.startswith('/'):
             prefix = f'/{prefix}'
@@ -99,6 +104,7 @@ class SuperDuperApp:
             allow_headers=["*"],  # You can specify allowed headers here
         )
         self._db = db
+        self.data_backend = data_backend
 
     @cached_property
     def app(self):
@@ -196,7 +202,10 @@ class SuperDuperApp:
         def startup_db_client():
             sys.path.append('./')
             if self._db is None:
-                db = build_datalayer(cfg)
+                if self.data_backend:
+                    db = build_datalayer(cfg, data_backend=self.data_backend)
+                else:
+                    db = build_datalayer(cfg)
             else:
                 db = self._db
             self._app.state.pool = db

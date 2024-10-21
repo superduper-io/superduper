@@ -14,7 +14,6 @@ import dill
 
 from superduper import CFG
 from superduper.backends.base.artifacts import (
-    ArtifactSavingError,
     _construct_file_id_from_uri,
 )
 from superduper.base.config import BytesEncoding
@@ -562,9 +561,6 @@ class Artifact(_BaseEncodable):
         if not (self.lazy and not isinstance(self._blob, bytes)):
             self.init()
 
-        if self.datatype.bytes_encoding == BytesEncoding.BASE64:
-            raise ArtifactSavingError('BASE64 not supported on disk!')
-
     def init(self, db=None):
         """Initialize to load `x` with the actual file from the artifact store."""
         if isinstance(self._blob, t.Callable):
@@ -590,7 +586,7 @@ class Artifact(_BaseEncodable):
         return r
 
     def _encode(self):
-        bytes_ = self.datatype.encode_data(self.x)
+        bytes_ = self.datatype.encoder(self.x)
         sha1 = self.get_hash(bytes_)
         return bytes_, sha1
 

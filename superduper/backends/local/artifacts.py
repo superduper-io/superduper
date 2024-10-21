@@ -85,6 +85,7 @@ class FileSystemArtifactStore(ArtifactStore):
         path = os.path.join(self.conn, file_id)
         if os.path.exists(path):
             logging.warn(f"File {path} already exists")
+
         with open(path, 'wb') as f:
             f.write(serialized)
         os.chmod(path, 0o777)

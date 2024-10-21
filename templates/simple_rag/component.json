@@ -1,5 +1,5 @@
 {
-  "_base": "?rag-simple",
+  "_base": "?simple_rag",
   "_builds": {
     "datatype:pickle": {
       "_path": "superduper.components.datatype.get_serializer",
@@ -12,31 +12,31 @@
       "uri": null,
       "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
     },
-    "rag-simple": {
+    "simple_rag": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
-      "cache": false,
+      "cache": true,
       "status": null,
       "template": {
-        "_base": "?rag-app",
+        "_base": "?simple-rag-app",
         "_builds": {
           "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "7a67b09d00dcbbc7315aedbbf4f8a9015a07bc4e": {
+          "afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:7a67b09d00dcbbc7315aedbbf4f8a9015a07bc4e"
+            "blob": "&:blob:afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2"
           },
           "model:chunker": {
-            "_object": "?7a67b09d00dcbbc7315aedbbf4f8a9015a07bc4e",
+            "_object": "?afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -60,7 +60,7 @@
             "_path": "superduper.components.listener.Listener",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:table_name>",
             "key": "x",
@@ -79,7 +79,7 @@
             "_path": "superduper_openai.model.OpenAIEmbedding",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": "?datatype:sqlvector[1536]",
@@ -114,7 +114,7 @@
               "?listener:chunker"
             ],
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
@@ -127,7 +127,7 @@
             "_path": "superduper.components.vector_index.VectorIndex",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:output_prefix>embeddinglistener__?(listener:embeddinglistener.uuid)",
             "indexing_listener": "?listener:embeddinglistener",
@@ -148,7 +148,7 @@
             "_path": "superduper_openai.model.OpenAIChatCompletion",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -169,11 +169,11 @@
             "batch_size": 1,
             "prompt": ""
           },
-          "model:rag-model": {
+          "model:simple_rag": {
             "_path": "superduper.components.model.RAGModel",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -186,21 +186,21 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\n{context}\n\nHere's the question: {query}",
+            "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question\n\n{context}\n\nHere's the question: {query}",
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "llm": "?model:llm-openai"
           },
-          "rag-app": {
+          "simple-rag-app": {
             "_path": "superduper.components.application.Application",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "components": [
               "?listener:chunker",
               "?vector_index:vectorindex",
-              "?model:rag-model"
+              "?model:simple_rag"
             ],
             "namespace": null,
             "link": null,
@@ -212,7 +212,8 @@
       },
       "template_variables": [
         "table_name",
-        "id_field"
+        "id_field",
+        "output_prefix"
       ],
       "types": {
         "id_field": {
@@ -239,7 +240,7 @@
         },
         "table_name": {
           "type": "str",
-          "default": "_sample_rag"
+          "default": "_sample_simple_rag"
         },
         "output_prefix": {
           "type": "str",
@@ -249,6 +250,7 @@
       "blobs": null,
       "files": null,
       "data": "?2abbced0b779db61865b869a5a707c1114193b11",
+      "requirements": null,
       "_literals": [
         "template"
       ]

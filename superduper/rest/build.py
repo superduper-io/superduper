@@ -2,7 +2,9 @@ import hashlib
 import os
 import shutil
 import sys
+import tempfile
 import typing as t
+import zipfile
 from contextlib import contextmanager
 
 import magic
@@ -64,6 +66,45 @@ def build_rest_app(app: SuperDuperApp):
         bytes = app.db.artifact_store.get_bytes(file_id=file_id)
         media_type = magic.from_buffer(bytes, mime=True)
         return Response(content=bytes, media_type=media_type)
+
+    @app.add("/db/upload", method="put")
+    def db_upload(raw: bytes = File(...)):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "component.zip")
+            with open(path, "wb") as f:
+                f.write(raw)
+
+            with zipfile.ZipFile(path, "r") as zip_ref:
+                zip_ref.extractall(temp_dir)
+
+            path = os.path.join(temp_dir, "component.json")
+            try:
+                with open(path, "r") as f:
+                    component = json.load(f)
+            except FileNotFoundError as f:
+                raise Exception("No component.json file found in the zip file")
+
+            blobs = os.path.join(temp_dir, "blobs")
+            blob_objects = []
+            if os.path.exists(blobs):
+                blob_objects = os.listdir(blobs)
+                for blob in blob_objects:
+                    blob_path = os.path.join(blobs, blob)
+                    with open(blob_path, "rb") as f:
+                        content = f.read()
+                    app.db.artifact_store.put_bytes(content, blob)
+
+            files = os.path.join(temp_dir, "files")
+            if os.path.exists(files):
+                file_objects = os.listdir(files)
+                for file in file_objects:
+                    file_path = os.path.join(files, file)
+                    app.db.artifact_store.put_file(file_path, file)
+
+        # TODO add file objects
+        # Component to be rendered in the front end
+        # Blob objects to be displayed on the upload
+        return {"component": component, "artifacts": blob_objects}
 
     def _print_to_screen():
         for i in range(100):

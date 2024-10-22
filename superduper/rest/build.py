@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 import magic
 from fastapi import File, Response
+from fastapi.responses import JSONResponse
 
 from superduper import logging
 from superduper.backends.base.query import Query
@@ -58,6 +59,26 @@ def build_rest_app(app: SuperDuperApp):
 
     :param app: SuperDuperApp
     """
+
+    @app.add("/health", method="get")
+    def health():
+        return {"status": 200}
+
+    @app.add("/handshake/config", method="post")
+    def handshake(cfg: str):
+        from superduper import CFG
+
+        cfg_dict = json.loads(cfg)
+        match = CFG.match(cfg_dict)
+        if match:
+            return {"status": 200, "msg": "matched"}
+
+        diff = CFG.diff(cfg_dict)
+
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Config doesn't match based on this diff: {diff}"},
+        )
 
     @app.add('/db/artifact_store/put', method='put')
     def db_artifact_store_put_bytes(

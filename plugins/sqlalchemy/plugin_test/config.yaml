@@ -1,3 +1,4 @@
 artifact_store: null
 data_backend: sqlite://
 auto_schema: false
+json_native: false

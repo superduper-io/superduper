@@ -94,25 +94,3 @@ class Dataset(Component):
         return f'Dataset(identifier={self.identifier}, select={self.select})'
 
     __repr__ = __str__
-
-
-class DataInit(Component):
-    """A data initialization component.
-
-    :param data: The data to initialize.
-    :param table: The table to insert the data.
-    """
-
-    data: t.List[t.Dict]
-    table: str
-
-    def on_create(self, db: Datalayer) -> None:
-        """Called after the first time this component is created.
-
-        Generally used if ``self.version`` is important in this logic.
-
-        :param db: the db that creates the component.
-        """
-        super().on_create(db)
-        self.init()
-        db[self.table].insert(self.data).execute()

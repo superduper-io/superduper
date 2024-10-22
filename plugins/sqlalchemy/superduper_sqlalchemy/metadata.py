@@ -139,7 +139,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._table_mapping = {
             '_artifact_relations': self.artifact_table,
         }
-        metadata.create_all(self.conn)
+
+        try:
+            metadata.create_all(self.conn)
+        except Exception as e:
+            logging.error(f'Error creating tables: {e}')
 
     def _create_data(self, table_name, datas):
         table = self._table_mapping[table_name]

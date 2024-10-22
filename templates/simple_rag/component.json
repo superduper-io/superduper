@@ -1,6 +1,20 @@
 {
   "_base": "?simple_rag",
   "_builds": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:AUTO-_fold=<class 'str'>&x=<class 'str'>": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "x": "?str",
+        "_fold": "?str"
+      }
+    },
     "datatype:pickle": {
       "_path": "superduper.components.datatype.get_serializer",
       "method": "pickle",
@@ -11,6 +25,16 @@
       "datatype": "?datatype:pickle",
       "uri": null,
       "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
+    },
+    "table:_sample_simple_rag": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": "Status.ready",
+      "schema": "?schema:AUTO-_fold=<class 'str'>&x=<class 'str'>",
+      "primary_id": "id",
+      "data": "?2abbced0b779db61865b869a5a707c1114193b11"
     },
     "simple_rag": {
       "_path": "superduper.components.template.Template",
@@ -26,14 +50,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "0f095e0b9ff1a22949a81695d0a10a63d0f61785": {
+          "e46e054b9cee237abcea32cedfe8842e8be09b6b": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:0f095e0b9ff1a22949a81695d0a10a63d0f61785"
+            "blob": "&:blob:e46e054b9cee237abcea32cedfe8842e8be09b6b"
           },
           "model:chunker": {
-            "_object": "?0f095e0b9ff1a22949a81695d0a10a63d0f61785",
+            "_object": "?e46e054b9cee237abcea32cedfe8842e8be09b6b",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -254,8 +278,9 @@
       },
       "blobs": null,
       "files": null,
-      "data": "?2abbced0b779db61865b869a5a707c1114193b11",
+      "data": null,
       "requirements": null,
+      "default_table": "?table:_sample_simple_rag",
       "_literals": [
         "template"
       ]

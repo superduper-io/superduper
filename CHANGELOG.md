@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restore some training test cases
 - Simple querying shell
 - Fix existing templates
+- Add optional data insert to `Table`
 
 #### New Features & Functionality
 

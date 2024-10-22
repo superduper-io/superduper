@@ -1,6 +1,6 @@
 import pytest
 
-from superduper.components.dataset import DataInit, Dataset
+from superduper.components.dataset import Dataset
 
 
 @pytest.mark.parametrize("pin", [True, False])
@@ -29,17 +29,3 @@ def test_dataset_pin(db, pin):
         len(dataset.data) == 10
     else:
         len(dataset.data) == 20
-
-
-def test_init_data(db):
-    db.cfg.auto_schema = True
-    data = [{"x": i, "y": [1, 2, 3]} for i in range(10)]
-    data_init = DataInit(data=data, table="documents", identifier="test_data_init")
-
-    db.apply(data_init)
-
-    data = list(db["documents"].select().execute())
-    assert len(data) == 10
-    for i, d in enumerate(data):
-        assert d["x"] == i
-        assert d["y"] == [1, 2, 3]

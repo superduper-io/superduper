@@ -1,7 +1,9 @@
 import typing as t
 
 from superduper import CFG
+from superduper.base.annotations import trigger
 from superduper.components.component import Component
+from superduper.components.datatype import pickle_serializer
 from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
@@ -16,12 +18,16 @@ class Table(Component):
 
     :param schema: The schema of the table
     :param primary_id: The primary id of the table
+    :param data: Data to insert post creation
     """
+
+    _artifacts: t.ClassVar[t.Tuple[str]] = (('data', pickle_serializer),)
 
     type_id: t.ClassVar[str] = 'table'
 
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID
+    data: t.List[t.Dict] | None = None
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -55,3 +61,7 @@ class Table(Component):
                 pass
             else:
                 raise e
+
+    @trigger('apply', requires='data')
+    def add_data(self):
+        self.db[self.identifier].insert(self.data).execute()

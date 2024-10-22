@@ -280,6 +280,7 @@ class Datalayer:
             )
         if auto_schema and self.cfg.auto_schema:
             self._auto_create_table(insert.table, insert.documents)
+            # <--- need to wait here --->
 
         inserted_ids = insert.do_execute(self)
 

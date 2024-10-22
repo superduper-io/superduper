@@ -56,7 +56,7 @@ dependencies = [
     "python-magic",
     "apscheduler",
     "python-multipart>=0.0.9",
-    "qdrant-client>=1.10.0,<2"
+    "httpx"
 ]
 
 [project.optional-dependencies]

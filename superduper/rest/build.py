@@ -16,9 +16,12 @@ from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.template import Template
-from superduper.rest.base import SuperDuperApp
+from superduper.rest.base import DatalayerDependency, SuperDuperApp
 
 from .utils import rewrite_artifacts
+
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
 
 
 class Tee:
@@ -57,19 +60,26 @@ def build_rest_app(app: SuperDuperApp):
     """
 
     @app.add('/db/artifact_store/put', method='put')
-    def db_artifact_store_put_bytes(raw: bytes = File(...)):
+    def db_artifact_store_put_bytes(
+        raw: bytes = File(...), db: 'Datalayer' = DatalayerDependency()
+    ):
         file_id = str(hashlib.sha1(raw).hexdigest())
-        app.db.artifact_store.put_bytes(serialized=raw, file_id=file_id)
+        db.artifact_store.put_bytes(serialized=raw, file_id=file_id)
         return {'file_id': file_id}
 
-    @app.add('/db/artifact_store/get', method='get')
-    def db_artifact_store_get_bytes(file_id: str):
-        bytes = app.db.artifact_store.get_bytes(file_id=file_id)
+    @app.add(
+        '/db/artifact_store/get',
+        method='get',
+    )
+    def db_artifact_store_get_bytes(
+        file_id: str, db: 'Datalayer' = DatalayerDependency()
+    ):
+        bytes = db.artifact_store.get_bytes(file_id=file_id)
         media_type = magic.from_buffer(bytes, mime=True)
         return Response(content=bytes, media_type=media_type)
 
     @app.add("/db/upload", method="put")
-    def db_upload(raw: bytes = File(...)):
+    def db_upload(raw: bytes = File(...), db: 'Datalayer' = DatalayerDependency()):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = os.path.join(temp_dir, "component.zip")
             with open(path, "wb") as f:
@@ -93,14 +103,14 @@ def build_rest_app(app: SuperDuperApp):
                     blob_path = os.path.join(blobs, blob)
                     with open(blob_path, "rb") as f:
                         content = f.read()
-                    app.db.artifact_store.put_bytes(content, blob)
+                    db.artifact_store.put_bytes(content, blob)
 
             files = os.path.join(temp_dir, "files")
             if os.path.exists(files):
                 file_objects = os.listdir(files)
                 for file in file_objects:
                     file_path = os.path.join(files, file)
-                    app.db.artifact_store.put_file(file_path, file)
+                    db.artifact_store.put_file(file_path, file)
 
         # TODO add file objects
         # Component to be rendered in the front end
@@ -121,7 +131,7 @@ def build_rest_app(app: SuperDuperApp):
         os.remove(log_file)
         return {'status': 'ok'}
 
-    def _process_db_apply(info):
+    def _process_db_apply(db, info):
         if '_variables' in info:
             assert {'_variables', 'identifier'}.issubset(info.keys())
             variables = info.pop('_variables')
@@ -137,28 +147,30 @@ def build_rest_app(app: SuperDuperApp):
                 identifier=identifier,
                 template_body=info,
                 template_name=template_name,
-                db=app.db,
+                db=db,
                 **variables,
             )
-            app.db.apply(component, force=True)
+            db.apply(component, force=True)
             return {'status': 'ok'}
-        component = Document.decode(info, db=app.db).unpack()
+        component = Document.decode(info, db=db).unpack()
         # TODO this shouldn't be necessary to do twice
         component.unpack()
-        app.db.apply(component, force=True)
+        db.apply(component, force=True)
         return {'status': 'ok'}
 
     @app.add('/db/apply', method='post')
-    def db_apply(info: t.Dict, id: str | None = None):
+    def db_apply(
+        info: t.Dict, id: str | None = None, db: 'Datalayer' = DatalayerDependency()
+    ):
         if id:
             log_file = f"/tmp/{id}.log"
             with redirect_stdout_to_file(log_file):
                 try:
-                    out = _process_db_apply(info)
+                    out = _process_db_apply(db, info)
                 finally:
                     os.remove(log_file)
         else:
-            out = _process_db_apply(info)
+            out = _process_db_apply(db, info)
         return out
 
     import subprocess
@@ -194,45 +206,54 @@ def build_rest_app(app: SuperDuperApp):
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         application: t.Optional[str] = None,
+        db: 'Datalayer' = DatalayerDependency(),
     ):
         if type_id == 'template' and identifier is None:
-            out = app.db.show('template')
+            out = db.show('template')
             from superduper import templates
 
             out += [x for x in templates.ls() if x not in out]
             return out
         if application is not None:
-            r = app.db.metadata.get_component('application', application)
+            r = db.metadata.get_component('application', application)
             return r['namespace']
         else:
-            return app.db.show(
+            return db.show(
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
             )
 
     @app.add('/db/remove', method='post')
-    def db_remove(type_id: str, identifier: str):
-        app.db.remove(type_id=type_id, identifier=identifier, force=True)
+    def db_remove(
+        type_id: str, identifier: str, db: 'Datalayer' = DatalayerDependency()
+    ):
+        db.remove(type_id=type_id, identifier=identifier, force=True)
         return {'status': 'ok'}
 
     @app.add('/db/show_template', method='get')
-    def db_show_template(identifier: str, type_id: str = 'template'):
-        template: Template = app.db.load(type_id=type_id, identifier=identifier)
+    def db_show_template(
+        identifier: str,
+        type_id: str = 'template',
+        db: 'Datalayer' = DatalayerDependency(),
+    ):
+        template: Template = db.load(type_id=type_id, identifier=identifier)
         return template.form_template
 
     @app.add('/db/metadata/show_jobs', method='get')
-    def db_metadata_show_jobs(type_id: str, identifier: t.Optional[str] = None):
+    def db_metadata_show_jobs(
+        type_id: str,
+        identifier: t.Optional[str] = None,
+        db: 'Datalayer' = DatalayerDependency(),
+    ):
         return [
             r['job_id']
-            for r in app.db.metadata.show_jobs(type_id=type_id, identifier=identifier)
+            for r in db.metadata.show_jobs(type_id=type_id, identifier=identifier)
             if 'job_id' in r
         ]
 
     @app.add('/db/execute', method='post')
-    def db_execute(
-        query: t.Dict,
-    ):
+    def db_execute(query: t.Dict, db: 'Datalayer' = DatalayerDependency()):
         if query['query'].startswith('db.show'):
             output = eval(f'app.{query["query"]}')
             logging.info('db.show results:')
@@ -240,10 +261,10 @@ def build_rest_app(app: SuperDuperApp):
             return [{'_base': output}], []
 
         if '_path' not in query:
-            plugin = app.db.databackend.type.__module__.split('.')[0]
+            plugin = db.databackend.type.__module__.split('.')[0]
             query['_path'] = f'{plugin}.query.parse_query'
 
-        q = Document.decode(query, db=app.db).unpack()
+        q = Document.decode(query, db=db).unpack()
 
         logging.info('processing this query:')
         logging.info(q)
@@ -258,7 +279,7 @@ def build_rest_app(app: SuperDuperApp):
         if isinstance(result, Document):
             result = [result]
 
-        result = [rewrite_artifacts(r, db=app.db) for r in result]
+        result = [rewrite_artifacts(r, db=db) for r in result]
         result = [r.encode() for r in result]
         blobs_keys = [list(r.pop_blobs().keys()) for r in result]
         result = list(zip(result, blobs_keys))

@@ -123,7 +123,14 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Configuration
     # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
-    cfg = (cfg or s.CFG)(**kwargs)
+    if s.CFG.cluster_engine != 'local':
+        plugin = load_plugin(s.CFG.cluster_engine)
+        CFG = getattr(plugin, 'CFG')
+    else:
+        CFG = s.CFG
+
+    cfg = (cfg or CFG)(**kwargs)
+
     cfg = t.cast(Config, cfg)
     databackend_obj = _build_databackend(cfg.data_backend)
     if cfg.metadata_store:

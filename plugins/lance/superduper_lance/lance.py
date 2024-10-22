@@ -4,7 +4,6 @@ import typing as t
 import lance
 import numpy as np
 import pyarrow as pa
-
 from superduper import CFG
 from superduper.vector_search.base import (
     BaseVectorSearcher,

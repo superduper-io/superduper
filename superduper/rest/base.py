@@ -80,6 +80,7 @@ class SuperDuperApp:
             prefix = f'/{prefix}'
 
         self.service = service
+        self.prefix = prefix
 
         self.port = port
 
@@ -209,6 +210,7 @@ class SuperDuperApp:
             else:
                 db = self._db
             self._app.state.pool = db
+            self._app.state.pool.cluster.initialize()
             self._db = db
 
         return

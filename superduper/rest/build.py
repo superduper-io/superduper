@@ -142,7 +142,7 @@ def build_rest_app(app: SuperDuperApp):
             )
             app.db.apply(component, force=True)
             return {'status': 'ok'}
-        component = Document.decode(info).unpack()
+        component = Document.decode(info, db=app.db).unpack()
         app.db.apply(component, force=True)
         return {'status': 'ok'}
 

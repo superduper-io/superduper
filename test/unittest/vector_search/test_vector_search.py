@@ -7,8 +7,6 @@ import pytest
 from superduper import CFG
 from superduper.backends.local.vector_search import InMemoryVectorSearcher
 from superduper.vector_search.base import VectorItem
-from superduper.vector_search.lance import LanceVectorSearcher
-from superduper.vector_search.qdrant import QdrantVectorSearcher
 
 
 @pytest.fixture
@@ -22,7 +20,7 @@ def index_data(monkeypatch):
 
 @pytest.mark.parametrize(
     "vector_index_cls",
-    [InMemoryVectorSearcher, LanceVectorSearcher, QdrantVectorSearcher],
+    [InMemoryVectorSearcher],
 )
 @pytest.mark.parametrize("measure", ["l2", "dot", "cosine"])
 def test_index(index_data, measure, vector_index_cls):

@@ -41,7 +41,6 @@ dependencies = [
     "requests>=2.22",  # lower bound from openai and boto3
     "tqdm>=4.64.1",
     "typer>=0.7.0",
-    "pylance>=0.6.1,<=0.8.14",
     "pydantic>=1",
     "pygments",
     "numpy>=1.24.3",

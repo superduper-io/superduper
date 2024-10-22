@@ -514,7 +514,7 @@ class Component(Leaf, metaclass=ComponentMeta):
             a = getattr(self, f.name)
             if a is None:
                 continue
-            if f.name in lookup:
+            if f.name in lookup and not isinstance(a, Leaf):
                 schema[f.name] = lookup[f.name]
                 continue
             if isinstance(getattr(self, f.name), Component):

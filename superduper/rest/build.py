@@ -143,6 +143,8 @@ def build_rest_app(app: SuperDuperApp):
             app.db.apply(component, force=True)
             return {'status': 'ok'}
         component = Document.decode(info, db=app.db).unpack()
+        # TODO this shouldn't be necessary to do twice
+        component.unpack()
         app.db.apply(component, force=True)
         return {'status': 'ok'}
 

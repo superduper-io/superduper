@@ -26,14 +26,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2": {
+          "0f095e0b9ff1a22949a81695d0a10a63d0f61785": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2"
+            "blob": "&:blob:0f095e0b9ff1a22949a81695d0a10a63d0f61785"
           },
           "model:chunker": {
-            "_object": "?afdfb86be6c6ec3165fcdc74c13cefc83ff2c2a2",
+            "_object": "?0f095e0b9ff1a22949a81695d0a10a63d0f61785",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -52,7 +52,7 @@
             "chunk_size": 200
           },
           "var-table-name-select-var-id-field-x": {
-            "_path": "superduper_mongodb.query.parse_query",
+            "_path": "superduper_<var:databackend>.query.parse_query",
             "documents": [],
             "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
           },
@@ -103,7 +103,7 @@
             "batch_size": 100
           },
           "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
-            "_path": "superduper_mongodb.query.parse_query",
+            "_path": "superduper_<var:databackend>.query.parse_query",
             "documents": [],
             "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
           },
@@ -136,7 +136,7 @@
             "metric_values": {}
           },
           "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
-            "_path": "superduper_mongodb.query.parse_query",
+            "_path": "superduper_<var:databackend>.query.parse_query",
             "documents": [
               {
                 "<var:output_prefix>chunker__?(listener:chunker.uuid)": "<var:query>"
@@ -213,7 +213,8 @@
       "template_variables": [
         "table_name",
         "id_field",
-        "output_prefix"
+        "output_prefix",
+        "databackend"
       ],
       "types": {
         "id_field": {
@@ -245,6 +246,10 @@
         "output_prefix": {
           "type": "str",
           "default": "outputs__"
+        },
+        "databackend": {
+          "type": "str",
+          "default": "mongodb"
         }
       },
       "blobs": null,

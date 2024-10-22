@@ -255,7 +255,7 @@ def build_rest_app(app: SuperDuperApp):
     @app.add('/db/execute', method='post')
     def db_execute(query: t.Dict, db: 'Datalayer' = DatalayerDependency()):
         if query['query'].startswith('db.show'):
-            output = eval(f'app.{query["query"]}')
+            output = eval(query["query"])
             logging.info('db.show results:')
             logging.info(output)
             return [{'_base': output}], []

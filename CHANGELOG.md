@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix bug in variables
 - Fix Qdrant collection name
 - Fix the ordering and sequencing of jobs initiated on `db.apply`
+- Fix rest routes with db injection.
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

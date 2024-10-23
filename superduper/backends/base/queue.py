@@ -101,7 +101,6 @@ class BaseQueuePublisher(BaseBackend):
         :param value: ``Datalayer`` instance.
         """
         self._db = value
-        self.initialize()
 
 
 class JobFutureException(Exception):

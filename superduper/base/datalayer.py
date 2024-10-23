@@ -269,6 +269,7 @@ class Datalayer:
         :param insert: The insert query object specifying the data to be inserted.
         :param refresh: Boolean indicating whether to refresh the task group on insert.
         :param datatypes: List of datatypes in the insert documents.
+        :param auto_schema: Toggle to False to switch off automatic schema creation.
         """
         for e in datatypes:
             self.add(e)
@@ -280,7 +281,31 @@ class Datalayer:
             )
         if auto_schema and self.cfg.auto_schema:
             self._auto_create_table(insert.table, insert.documents)
-            # <--- need to wait here --->
+
+            timeout = 5
+
+            import time
+
+            start = time.time()
+
+            exists = False
+            while time.time() - start < timeout:
+                try:
+                    assert insert.table in self.show(
+                        'table'
+                    ), f'{insert.table} not found, retrying...'
+                    exists = True
+                except AssertionError as e:
+                    logging.warn(str(e))
+                    time.sleep(0.25)
+                    continue
+                break
+
+            if not exists:
+                raise TimeoutError(
+                    f'{insert.table} not found after {timeout} seconds'
+                    ' table auto creation likely has failed or is stalling...'
+                )
 
         inserted_ids = insert.do_execute(self)
 

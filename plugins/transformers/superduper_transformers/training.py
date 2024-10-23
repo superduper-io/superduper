@@ -96,7 +96,7 @@ class LLMCallback(TrainerCallback):
             identifier=self.experiment_id, path=checkpoint_path, step=state.global_step
         )
         self.llm.adapter_id = checkpoint
-        self.db.replace(self.llm)
+        self.db.replace(self.llm, force=True)
 
         if not args.save_total_limit:
             return
@@ -142,7 +142,7 @@ class LLMCallback(TrainerCallback):
                 step=step,
             )
             self.llm.adapter_id = checkpoint
-            self.db.replace(self.llm)
+            self.db.replace(self.llm, force=True)
 
     def check_init(self):
         """Check the initialization of the callback."""
@@ -460,9 +460,9 @@ def handle_ray_results(db, llm, results):
         llm.adapter_id = Checkpoint(
             identifier=llm.identifier, path=path, step=int(path.split("-")[-1])
         )
-        db.apply(llm.adapter_id)
+        db.apply(llm.adapter_id, force=True)
         if db is not None:
-            db.replace(llm, upsert=True)
+            db.replace(llm, upsert=True, force=True)
 
 
 def train_func(

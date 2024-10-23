@@ -157,9 +157,10 @@ def build_rest_app(app: SuperDuperApp):
             assert {'_variables', 'identifier'}.issubset(info.keys())
             variables = info.pop('_variables')
             for k in variables:
-                assert '<' not in variables[k]
-                assert '>' not in variables[k]
-                assert ' ' not in variables[k]
+                if isinstance(variables[k], str):
+                    assert '<' not in variables[k]
+                    assert '>' not in variables[k]
+                    assert ' ' not in variables[k]
 
             identifier = info.pop('identifier')
             template_name = info.pop('_template_name', None)

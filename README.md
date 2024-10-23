@@ -234,6 +234,7 @@ If you have any problems, questions, comments, or ideas:
 - Follow us on [Twitter (now X)](https://twitter.com/superduperdb).
 - Connect with us on [LinkedIn](https://www.linkedin.com/company/superduper-io).
 - Feel free to contact a maintainer or community volunteer directly! 
+- You can [Ask Superduper Guru](https://gurubase.io/g/superduper), it is a Superduper-focused AI to answer your questions.
 
 
 ## Contributing  

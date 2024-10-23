@@ -229,12 +229,6 @@ def build_rest_app(app: SuperDuperApp):
         application: t.Optional[str] = None,
         db: 'Datalayer' = DatalayerDependency(),
     ):
-        if type_id == 'template' and identifier is None:
-            out = db.show('template')
-            from superduper import templates
-
-            out += [x for x in templates.ls() if x not in out]
-            return out
         if application is not None:
             r = db.metadata.get_component('application', application)
             return r['namespace']

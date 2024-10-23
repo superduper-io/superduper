@@ -446,7 +446,11 @@ def _deep_flat_encode(
 
     from superduper.backends.base.query import _BaseQuery
 
-    if not isinstance(r, _BaseQuery) and getattr(r, 'importable', False):
+    if (
+        not isinstance(r, _BaseQuery)
+        and getattr(r, 'importable', False)
+        and inspect.isfunction(r)
+    ):
         ref = r.__name__
         r = dict(r.dict(metadata=metadata, defaults=defaults))
         _deep_flat_encode(

@@ -94,16 +94,16 @@ class _BaseTemplate(Component):
 class Template(_BaseTemplate):
     """Application template component.
 
-    :param data: Sample data to test the template.
     :param requirements: pip requirements for the template.
     :param default_table: Default table to be used with the template.
+    :param queries: `QueryTemplate` instances to be used with the template.
     """
 
     type_id: t.ClassVar[str] = "template"
 
-    data: t.List[t.Dict] | None = None
     requirements: t.List[str] | None = None
     default_table: Table | None = None
+    queries: t.List['QueryTemplate'] | None = None
 
     def _pre_create(self, db: Datalayer) -> None:
         """Run before the object is created."""

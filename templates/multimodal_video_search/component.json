@@ -3,191 +3,293 @@
   "_builds": {
     "video-search-template": {
       "_path": "superduper.components.template.Template",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
       "template": {
         "_base": "?video-search",
         "_builds": {
-          "video_on_file": {
+          "datatype:video_on_file": {
             "_path": "superduper.components.datatype.DataType",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
+            "encoder": null,
+            "decoder": null,
+            "info": null,
+            "shape": null,
+            "directory": null,
             "encodable": "file",
-            "bytes_encoding": "Bytes"
+            "bytes_encoding": "bytes",
+            "intermediate_type": "bytes",
+            "media_type": null
           },
           "str": {
             "_path": "superduper.components.schema.FieldType"
           },
-          "schema": {
+          "schema:schema": {
             "_path": "superduper.components.schema.Schema",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
             "fields": {
-              "x": "?video_on_file",
+              "x": "?datatype:video_on_file",
               "_fold": "?str"
             }
           },
-          "<var:content_table>": {
+          "table:<var:content_table>": {
             "_path": "superduper.components.table.Table",
-            "schema": "?schema"
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": "Status.ready",
+            "schema": "?schema:schema",
+            "primary_id": "id",
+            "data": null
           },
-          "dill_lazy": {
+          "datatype:dill_lazy": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "lazy_artifact"
           },
-          "1dcc2f682a36ed9a5205526e6db3ba8d891a42d2": {
+          "987dbd3724ee3bde8706161a21dde8708ed04a7f": {
             "_path": "superduper.components.datatype.LazyArtifact",
-            "datatype": "?dill_lazy",
-            "blob": "&:blob:1dcc2f682a36ed9a5205526e6db3ba8d891a42d2"
+            "datatype": "?datatype:dill_lazy",
+            "uri": null,
+            "blob": "&:blob:987dbd3724ee3bde8706161a21dde8708ed04a7f"
           },
-          "chunker": {
-            "_path": "superduper.components.listener.Listener",
-            "uuid": "chunker",
-            "upstream": [
-              "?<var:content_table>"
-            ],
-            "key": "x",
-            "model": "?chunker",
-            "select": "?<var:content_table>-select",
-            "predict_id": "chunker"
+          "model:chunker": {
+            "_path": "superduper.components.model.ObjectModel",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?987dbd3724ee3bde8706161a21dde8708ed04a7f",
+            "method": null
           },
           "<var:content_table>-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
             "query": "<var:content_table>.select()"
           },
-          "vector[1024]": {
-            "_path": "superduper.components.vector_index.vector",
+          "listener:chunker": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": [
+              "?table:<var:content_table>"
+            ],
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "<var:content_table>",
+            "key": "x",
+            "model": "?model:chunker",
+            "predict_kwargs": {},
+            "select": "?<var:content_table>-select",
+            "flatten": true
+          },
+          "datatype:sqlvector[1024]": {
+            "_path": "superduper.components.vector_index.sqlvector",
             "shape": [
               1024
             ]
           },
-          "dill": {
+          "load": {
+            "_path": "superduper.base.leaf.ImportCall",
+            "import_path": "clip.clip.load",
+            "args": [
+              "ViT-B/32"
+            ],
+            "kwargs": {
+              "device": "cpu"
+            }
+          },
+          "load[0]": {
+            "_path": "superduper.base.leaf.Index",
+            "parent": "?load",
+            "index": 0
+          },
+          "load[0]/visual": {
+            "_path": "superduper.base.leaf.Attribute",
+            "parent": "?load[0]",
+            "attribute": "visual"
+          },
+          "load[1]": {
+            "_path": "superduper.base.leaf.Index",
+            "parent": "?load",
+            "index": 1
+          },
+          "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "b167226edf11254e9911b099a9649f8d486c59a3": {
+          "4b17933c2863f672b4c2d6bdfb9f300b4c70d18e": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:b167226edf11254e9911b099a9649f8d486c59a3"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:4b17933c2863f672b4c2d6bdfb9f300b4c70d18e"
           },
-          "e1635b227a7f3787dc79524d812915c342701260": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:e1635b227a7f3787dc79524d812915c342701260"
-          },
-          "1c7776361d917bec4100537c80afd4c7283190e5": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:1c7776361d917bec4100537c80afd4c7283190e5"
-          },
-          "clip_image": {
+          "model:clip_image": {
             "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
             "signature": "singleton",
-            "datatype": "?vector[1024]",
-            "object": "?b167226edf11254e9911b099a9649f8d486c59a3",
-            "preprocess": "?e1635b227a7f3787dc79524d812915c342701260",
-            "postprocess": "?1c7776361d917bec4100537c80afd4c7283190e5"
+            "datatype": "?datatype:sqlvector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?load[0]/visual",
+            "preprocess": "?load[1]",
+            "preprocess_signature": "singleton",
+            "postprocess": "?4b17933c2863f672b4c2d6bdfb9f300b4c70d18e",
+            "postprocess_signature": "singleton",
+            "forward_method": "__call__",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
           },
-          "-outputs-chunker-select": {
+          "outputs-chunker-?(listener:chunker.uuid)-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "_outputs__chunker.select()"
+            "query": "outputs__chunker__?(listener:chunker.uuid).select()"
           },
-          "clip_image-listener": {
+          "listener:clip_image-listener": {
             "_path": "superduper.components.listener.Listener",
-            "key": "_outputs__chunker.image",
-            "model": "?clip_image",
-            "select": "?-outputs-chunker-select",
-            "predict_id": "clip_image-listener"
+            "upstream": [
+              "?listener:chunker"
+            ],
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "outputs__chunker__?(listener:chunker.uuid)",
+            "key": "outputs__chunker__?(listener:chunker.uuid).image",
+            "model": "?model:clip_image",
+            "predict_kwargs": {},
+            "select": "?outputs-chunker-?(listener:chunker.uuid)-select",
+            "flatten": false
           },
-          "a63404539858e3f2ce4049e8cd74aa9312e56e55": {
+          "c54dab6c3472eebdd2f8371bb97de9543532a885": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:a63404539858e3f2ce4049e8cd74aa9312e56e55"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:c54dab6c3472eebdd2f8371bb97de9543532a885"
           },
-          "4909592f62c0c4b1374321961bfbcb3daee2f899": {
+          "9300666af603a1da8a23f02814d5883ce9a15f04": {
             "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:4909592f62c0c4b1374321961bfbcb3daee2f899"
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:9300666af603a1da8a23f02814d5883ce9a15f04"
           },
-          "52821fa2cdbd806942770c765078687ef5b851b3": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?dill",
-            "blob": "&:blob:52821fa2cdbd806942770c765078687ef5b851b3"
-          },
-          "clip_text": {
+          "model:clip_text": {
             "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
             "signature": "singleton",
-            "datatype": "?vector[1024]",
-            "object": "?a63404539858e3f2ce4049e8cd74aa9312e56e55",
-            "preprocess": "?4909592f62c0c4b1374321961bfbcb3daee2f899",
-            "postprocess": "?52821fa2cdbd806942770c765078687ef5b851b3",
-            "forward_method": "encode_text"
+            "datatype": "?datatype:sqlvector[1024]",
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?load[0]",
+            "preprocess": "?c54dab6c3472eebdd2f8371bb97de9543532a885",
+            "preprocess_signature": "singleton",
+            "postprocess": "?9300666af603a1da8a23f02814d5883ce9a15f04",
+            "postprocess_signature": "singleton",
+            "forward_method": "encode_text",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
           },
-          "compatible-listener": {
+          "listener:compatible-listener": {
             "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "",
             "key": "text",
-            "model": "?clip_text",
+            "model": "?model:clip_text",
+            "predict_kwargs": {},
             "select": null,
-            "predict_id": "compatible-listener"
+            "flatten": false
           },
-          "my-vector-index": {
+          "vector_index:my-vector-index": {
             "_path": "superduper.components.vector_index.VectorIndex",
             "upstream": [
-              "?chunker"
+              "?listener:chunker"
             ],
-            "indexing_listener": "?clip_image-listener",
-            "compatible_listener": "?compatible-listener"
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "outputs__clip_image-listener__?(listener:clip_image-listener.uuid)",
+            "indexing_listener": "?listener:clip_image-listener",
+            "compatible_listener": "?listener:compatible-listener",
+            "measure": "cosine",
+            "metric_values": {}
           },
           "video-search": {
             "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
             "components": [
-              "?chunker",
-              "?my-vector-index"
+              "?listener:chunker",
+              "?vector_index:my-vector-index"
             ],
-            "namespace": [
-              {
-                "type_id": "listener",
-                "identifier": "chunker"
-              },
-              {
-                "type_id": "vector_index",
-                "identifier": "my-vector-index"
-              },
-              {
-                "type_id": "table",
-                "identifier": "<var:content_table>"
-              },
-              {
-                "type_id": "model",
-                "identifier": "chunker"
-              },
-              {
-                "type_id": "schema",
-                "identifier": "schema"
-              },
-              {
-                "type_id": "datatype",
-                "identifier": "video_on_file"
-              },
-              {
-                "type_id": "listener",
-                "identifier": "clip_image-listener"
-              },
-              {
-                "type_id": "listener",
-                "identifier": "compatible-listener"
-              },
-              {
-                "type_id": "model",
-                "identifier": "clip_image"
-              },
-              {
-                "type_id": "datatype",
-                "identifier": "vector[1024]"
-              },
-              {
-                "type_id": "model",
-                "identifier": "clip_text"
-              }
-            ],
+            "namespace": null,
+            "link": null,
             "_literals": [
               "template"
             ]
@@ -197,6 +299,12 @@
       "template_variables": [
         "content_table"
       ],
+      "types": {},
+      "blobs": null,
+      "files": null,
+      "data": null,
+      "requirements": null,
+      "default_table": null,
       "_literals": [
         "template"
       ]

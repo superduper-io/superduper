@@ -631,6 +631,13 @@ class MongoQuery(Query):
         if limit:
             pipeline.append(limit)
 
+        try:
+            import json
+
+            logging.debug(f'Executing pipeline: {json.dumps(pipeline, indent=2)}')
+        except TypeError:
+            pass
+
         raw_cursor = getattr(parent, 'aggregate')(pipeline)
 
         return SuperDuperCursor(

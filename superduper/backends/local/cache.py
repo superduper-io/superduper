@@ -76,7 +76,6 @@ class LocalCache(Cache):
         :param value: The value to set the ``db`` to.
         """
         self._db = value
-        self.initialize()
 
     def __iter__(self):
         return iter(self._cache.keys())

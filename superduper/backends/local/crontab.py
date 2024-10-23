@@ -28,4 +28,3 @@ class LocalCrontabBackend(CrontabBackend):
 
     def initialize(self):
         """Initialize the crontab."""
-        raise NotImplementedError

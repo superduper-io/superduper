@@ -51,7 +51,6 @@ class VectorSearchBackend(BaseBackend):
         :param value: ``Datalayer`` instance.
         """
         self._db = value
-        self.initialize()
 
 
 class VectorSearcherInterface(ABC):

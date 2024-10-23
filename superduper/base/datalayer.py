@@ -828,6 +828,7 @@ class Datalayer:
         self,
         object: t.Any,
         upsert: bool = False,
+        force: bool = False,
     ):
         """
         Replace a model in the artifact store with an updated object.
@@ -848,6 +849,7 @@ class Datalayer:
             if upsert:
                 return self.apply(
                     object,
+                    force=force,
                 )
             raise e
 
@@ -866,7 +868,7 @@ class Datalayer:
         ]
 
         for child in children:
-            self.replace(child, upsert=True)
+            self.replace(child, upsert=True, force=force)
             if old_uuid:
                 self.metadata.delete_parent_child(old_uuid, child.uuid)
 

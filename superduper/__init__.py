@@ -14,6 +14,7 @@ __version__ = '0.0.4.dev'
 
 from .base.decorators import code
 from .base.document import Document
+from .base.leaf import imported, imported_value
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
@@ -30,7 +31,7 @@ from .components.model import (
 from .components.plugin import Plugin
 from .components.schema import Schema
 from .components.table import Table
-from .components.template import Template
+from .components.template import QueryTemplate, Template
 from .components.vector_index import VectorIndex, vector
 from .misc.annotations import requires_packages
 
@@ -63,10 +64,13 @@ __all__ = (
     'Table',
     'Application',
     'Template',
+    'QueryTemplate',
     'Application',
     'Component',
     'requires_packages',
     'pickle_serializer',
     'dill_serializer',
     'templates',
+    'imported',
+    'imported_value',
 )

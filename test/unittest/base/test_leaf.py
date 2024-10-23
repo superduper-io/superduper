@@ -143,3 +143,23 @@ def test_find_variables():
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
+
+
+def test_addressable():
+    from .example import MyClass
+
+    obj = MyClass(2).process
+
+    assert obj(2) == 4
+
+    r = obj.encode()
+
+    import pprint
+
+    pprint.pprint(r)
+
+    rebuilt = Document.decode(r).unpack()
+
+    assert rebuilt(2) == 4
+
+    pprint.pprint(rebuilt)

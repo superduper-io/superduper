@@ -336,3 +336,157 @@ def find_leaf_cls(full_import_path) -> t.Type[Leaf]:
     :param full_import_path: Full import path of the class.
     """
     return _CLASS_REGISTRY[full_import_path]
+
+
+class Address(Leaf):
+    """Address is a base class for all address classes."""
+
+    def __getattr__(self, name):
+        try:
+            super().__getattribute__(name)
+        except AttributeError:
+            return Attribute(
+                identifier=f'{self.identifier}/{name}', parent=self, attribute=name
+            )
+
+    def __getitem__(self, item):
+        return Index(identifier=f'{self.identifier}[{item}]', parent=self, index=item)
+
+    def __call__(self, *args, **kwargs):
+        return self.compile()(*args, **kwargs)
+
+    def compile(self):
+        raise NotImplementedError
+
+
+class Import(Address):
+    """
+    Import is a class that imports a class from a module.
+
+    :param import_path: The import path of the class.
+    :param parent: The parent class.
+    :param args: Positional arguments to pass to the class.
+    :param kwargs: Keyword arguments to pass to the class.
+    """
+
+    import_path: str | None
+    parent: dc.InitVar[t.Any | None] = None
+    args: t.Tuple | None = None
+    kwargs: t.Dict | None = None
+
+    def __post_init__(self, db: t.Optional['Datalayer'] = None, parent=None):
+        super().__post_init__(db=db)
+
+        assert parent is not None or self.import_path is not None
+        if self.import_path is None:
+            module = parent.__module__
+            name = parent.__name__
+            self.import_path = f'{module}.{name}'
+        elif parent is None:
+            module = '.'.join(self.import_path.split('.')[:-1])
+            name = self.import_path.split('.')[-1]
+            module = importlib.import_module(module)
+            parent = getattr(module, name)
+
+        if self.args is not None:
+            assert self.kwargs is not None
+            parent = parent.f(*self.args, **self.kwargs)
+        self.parent = parent
+
+    def compile(self):
+        return self.parent
+
+
+class ImportCall(Address):
+    """
+    ImportCall is a class that imports a function from a module and calls it.
+
+    :param import_path: The import path of the function.
+    :param args: Positional arguments to pass to the function.
+    :param kwargs: Keyword arguments to pass to the function.
+    """
+
+    import_path: str
+    args: t.Tuple = ()
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def __post_init__(self, db: t.Optional['Datalayer'] = None):
+        super().__post_init__(db=db)
+        name = self.import_path.split('.')[-1]
+        module = '.'.join(self.import_path.split('.')[:-1])
+        module = importlib.import_module(module)
+        object = getattr(module, name)
+        self.parent = object(*self.args, **self.kwargs)
+
+    def compile(self):
+        return self.parent
+
+
+class Attribute(Address):
+    """
+    An Attribute is a class that represents an attribute of a parent class.
+
+    :param parent: The parent class.
+    :param attribute: The attribute to get.
+    """
+
+    parent: Address
+    attribute: str
+
+    def compile(self):
+        parent = self.parent.compile()
+        return getattr(parent, self.attribute)
+
+
+class Index(Address):
+    """
+    An Index is a class that represents an index of a parent class.
+
+    :param parent: The parent class.
+    :param index: The index to get.
+    """
+
+    parent: Leaf
+    index: int
+
+    def compile(self):
+        parent = self.parent.compile()
+        return parent[self.index]
+
+
+def imported_value(f):
+    """Wrap a import to be serialized as a fixed value.
+
+    :param f: The function or class to wrap.
+    """
+    return Import(identifier=f.__name__, import_path=f'{f.__module__}.{f.__name__}')
+
+
+def imported(f):
+    """Wrap a function or class to be imported.
+
+    :param f: The function or class to wrap.
+    """
+    if inspect.isclass(f):
+
+        def wrapper(*args, **kwargs):
+            return Import(
+                identifier=f.__name__,
+                import_path=f'{f.__module__}.{f.__name__}',
+                args=args,
+                kwargs=kwargs,
+            )
+
+        wrapper.f = f
+        return wrapper
+    else:
+
+        def wrapper(*args, **kwargs):
+            return ImportCall(
+                identifier=f.__name__,
+                import_path=f'{f.__module__}.{f.__name__}',
+                args=args,
+                kwargs=kwargs,
+            )
+
+        return wrapper

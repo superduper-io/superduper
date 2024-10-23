@@ -1,35 +1,206 @@
 {
-  "_base": "?transfer-learner",
+  "_base": "?transfer_learning",
   "_builds": {
-    "transfer-learner": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "int": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:sample_transfer_learning/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "data": "?str",
+        "label": "?int",
+        "_fold": "?str"
+      }
+    },
+    "datatype:pickle": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "pickle",
+      "encodable": "artifact"
+    },
+    "07a730747184cc9e74d063e3ba1d63490a97683a": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:pickle",
+      "uri": null,
+      "blob": "&:blob:07a730747184cc9e74d063e3ba1d63490a97683a"
+    },
+    "table:sample_transfer_learning": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_transfer_learning/schema",
+      "primary_id": "id",
+      "data": "?07a730747184cc9e74d063e3ba1d63490a97683a"
+    },
+    "transfer_learning": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
-      "cache": false,
+      "cache": true,
       "status": null,
       "template": {
-        "_base": "?my-model",
+        "_base": "?transfer-learning",
         "_builds": {
           "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "ea7281291bdbac227aa133cd3c0e6a6eda5af840": {
+          "5bc8e544cad19b05fd301a92d2a163c49588eff0": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:ea7281291bdbac227aa133cd3c0e6a6eda5af840"
+            "blob": "&:blob:5bc8e544cad19b05fd301a92d2a163c49588eff0"
+          },
+          "model:embedding": {
+            "_path": "superduper_sentence_transformers.model.SentenceTransformer",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": "cpu",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "model": "all-MiniLM-L6-v2",
+            "preprocess": null,
+            "postprocess": "?5bc8e544cad19b05fd301a92d2a163c49588eff0"
+          },
+          "resnet18": {
+            "_path": "superduper.base.leaf.ImportCall",
+            "import_path": "torchvision.models.resnet.resnet18",
+            "args": [],
+            "kwargs": {
+              "pretrained": true
+            }
+          },
+          "aa581246c925d3c82d51eaa1c7c622a320907d80": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:aa581246c925d3c82d51eaa1c7c622a320907d80"
+          },
+          "1efb5539a7bf2d03f2bb6c4b331d4daa9723b045": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:1efb5539a7bf2d03f2bb6c4b331d4daa9723b045"
+          },
+          "model:my-vision-model": {
+            "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "object": "?resnet18",
+            "preprocess": "?aa581246c925d3c82d51eaa1c7c622a320907d80",
+            "preprocess_signature": "singleton",
+            "postprocess": "?1efb5539a7bf2d03f2bb6c4b331d4daa9723b045",
+            "postprocess_signature": "singleton",
+            "forward_method": "__call__",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
+          },
+          "model:feature_extractor": {
+            "_path": "superduper.components.model.ModelRouter",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "models": {
+              "<var:modality>": "?model:embedding",
+              "image": "?model:my-vision-model"
+            },
+            "model": "<var:modality>"
+          },
+          "var-table-name-select": {
+            "_path": "superduper_mongodb.query.parse_query",
+            "documents": [],
+            "query": "<var:table_name>.select()"
+          },
+          "listener:features": {
+            "_path": "superduper.components.listener.Listener",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "cdc_table": "<var:table_name>",
+            "key": "data",
+            "model": "?model:feature_extractor",
+            "predict_kwargs": {},
+            "select": "?var-table-name-select",
+            "flatten": false
+          },
+          "ef455cfe171f625141c9b4a8e610d05451a4b804": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:ef455cfe171f625141c9b4a8e610d05451a4b804"
           },
           "metric:acc": {
             "_path": "superduper.components.metric.Metric",
             "upstream": null,
             "plugins": null,
-            "cache": false,
-            "status": "ready",
-            "object": "?ea7281291bdbac227aa133cd3c0e6a6eda5af840"
+            "cache": true,
+            "status": null,
+            "object": "?ef455cfe171f625141c9b4a8e610d05451a4b804"
           },
-          "<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf-filter-fold-eq-valid": {
+          "var-table-name-outputs-features-?(listener:features.uuid)-filter-fold-eq-valid": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [
               {
@@ -38,15 +209,15 @@
                 }
               }
             ],
-            "query": "<var:table>.select().outputs(\"features__c7963b93f0234f3298b40286906971cf\").filter(documents[0])"
+            "query": "<var:table_name>.outputs(\"features__?(listener:features.uuid)\").filter(documents[0])"
           },
           "dataset:my-valid": {
             "_path": "superduper.components.dataset.Dataset",
             "upstream": null,
             "plugins": null,
-            "cache": false,
-            "status": "ready",
-            "select": "?<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf-filter-fold-eq-valid",
+            "cache": true,
+            "status": null,
+            "select": "?var-table-name-outputs-features-?(listener:features.uuid)-filter-fold-eq-valid",
             "sample_size": null,
             "random_seed": null,
             "creation_date": null,
@@ -57,35 +228,35 @@
             "_path": "superduper.components.model.Validation",
             "upstream": null,
             "plugins": null,
-            "cache": false,
-            "status": "ready",
+            "cache": true,
+            "status": null,
             "metrics": [
               "?metric:acc"
             ],
             "key": [
-              "_outputs__features__c7963b93f0234f3298b40286906971cf",
+              "_outputs__features__?(listener:features.uuid)",
               "label"
             ],
             "datasets": [
               "?dataset:my-valid"
             ]
           },
-          "<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf": {
+          "var-table-name-outputs-features-?(listener:features.uuid)": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "<var:table>.select().outputs(\"features__c7963b93f0234f3298b40286906971cf\")"
+            "query": "<var:table_name>.outputs(\"features__?(listener:features.uuid)\")"
           },
-          "trainer:my-trainer": {
+          "trainer:my-scikit-trainer": {
             "_path": "superduper_sklearn.model.SklearnTrainer",
             "upstream": null,
             "plugins": null,
-            "cache": false,
-            "status": "ready",
+            "cache": true,
+            "status": null,
             "key": [
-              "_outputs__features__c7963b93f0234f3298b40286906971cf",
+              "_outputs__features__?(listener:features.uuid)",
               "label"
             ],
-            "select": "?<var:table>-select-outputs-features-c7963b93f0234f3298b40286906971cf",
+            "select": "?var-table-name-outputs-features-?(listener:features.uuid)",
             "transform": null,
             "metric_values": {},
             "signature": "*args",
@@ -104,18 +275,18 @@
             "method": "pickle",
             "encodable": "artifact"
           },
-          "b2fb772b6860a8d71d4dfe3115263984aadc447b": {
+          "759895dbfc55ad753608c7f7d598d932f105564c": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:pickle",
             "uri": null,
-            "blob": "&:blob:b2fb772b6860a8d71d4dfe3115263984aadc447b"
+            "blob": "&:blob:759895dbfc55ad753608c7f7d598d932f105564c"
           },
-          "my-model": {
+          "model:my-model-scikit": {
             "_path": "superduper_sklearn.model.Estimator",
             "upstream": null,
             "plugins": null,
-            "cache": false,
-            "status": "ready",
+            "cache": true,
+            "status": null,
             "signature": "singleton",
             "datatype": null,
             "output_schema": null,
@@ -123,30 +294,185 @@
             "predict_kwargs": {},
             "compute_kwargs": {},
             "validation": "?validation:transfer_learning_performance",
-            "metric_values": {
-              "my-valid/acc": 0.7647058823529411
-            },
+            "metric_values": {},
             "num_workers": 0,
             "serve": false,
-            "trainer": "?trainer:my-trainer",
-            "object": "?b2fb772b6860a8d71d4dfe3115263984aadc447b",
+            "trainer": "?trainer:my-scikit-trainer",
+            "object": "?759895dbfc55ad753608c7f7d598d932f105564c",
             "preprocess": null,
             "postprocess": null
+          },
+          "d53c8306ea14f3b0dc51732dc7b1b992f86817bd": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:d53c8306ea14f3b0dc51732dc7b1b992f86817bd"
+          },
+          "a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc"
+          },
+          "trainer:my-torch-trainer": {
+            "_path": "superduper_torch.training.TorchTrainer",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "key": [
+              "_outputs__features__?(listener:features.uuid)",
+              "label"
+            ],
+            "select": "?var-table-name-outputs-features-?(listener:features.uuid)",
+            "transform": "?d53c8306ea14f3b0dc51732dc7b1b992f86817bd",
+            "metric_values": {},
+            "signature": "*args",
+            "data_prefetch": false,
+            "prefetch_size": 1000,
+            "prefetch_factor": 100,
+            "in_memory": true,
+            "compute_kwargs": {},
+            "validation": null,
+            "objective": "?a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc",
+            "loader_kwargs": {
+              "batch_size": 10
+            },
+            "max_iterations": 1000,
+            "no_improve_then_stop": 5,
+            "download": false,
+            "validation_interval": 100,
+            "listen": "objective",
+            "optimizer_cls": "Adam",
+            "optimizer_kwargs": {},
+            "optimizer_state": null,
+            "collate_fn": null
+          },
+          "12b0bbc77db0240b2641cda7a18a0d278e069e17": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:12b0bbc77db0240b2641cda7a18a0d278e069e17"
+          },
+          "4b4af3ab7a98258049d6f5e790f8329677b4bc13": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:4b4af3ab7a98258049d6f5e790f8329677b4bc13"
+          },
+          "08874721584e8ab2e9715feb46d773621bad7163": {
+            "_path": "superduper.components.datatype.Artifact",
+            "datatype": "?datatype:dill",
+            "uri": null,
+            "blob": "&:blob:08874721584e8ab2e9715feb46d773621bad7163"
+          },
+          "model:my-model-torch": {
+            "_path": "superduper_torch.model.TorchModel",
+            "preferred_devices": [
+              "cuda",
+              "mps",
+              "cpu"
+            ],
+            "device": null,
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "singleton",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": "?validation:transfer_learning_performance",
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": "?trainer:my-torch-trainer",
+            "object": "?12b0bbc77db0240b2641cda7a18a0d278e069e17",
+            "preprocess": "?4b4af3ab7a98258049d6f5e790f8329677b4bc13",
+            "preprocess_signature": "singleton",
+            "postprocess": "?08874721584e8ab2e9715feb46d773621bad7163",
+            "postprocess_signature": "singleton",
+            "forward_method": "__call__",
+            "forward_signature": "singleton",
+            "train_forward_method": "__call__",
+            "train_forward_signature": "singleton",
+            "train_preprocess": null,
+            "train_preprocess_signature": "singleton",
+            "collate_fn": null,
+            "optimizer_state": null,
+            "loader_kwargs": {}
+          },
+          "model:estimator": {
+            "_path": "superduper.components.model.ModelRouter",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "signature": "*args,**kwargs",
+            "datatype": null,
+            "output_schema": null,
+            "model_update_kwargs": {},
+            "predict_kwargs": {},
+            "compute_kwargs": {},
+            "validation": null,
+            "metric_values": {},
+            "num_workers": 0,
+            "serve": false,
+            "trainer": null,
+            "models": {
+              "scikit-framework": "?model:my-model-scikit",
+              "torch-framework": "?model:my-model-torch"
+            },
+            "model": "scikit-framework"
+          },
+          "transfer-learning": {
+            "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "components": [
+              "?listener:features",
+              "?model:estimator"
+            ],
+            "namespace": null,
+            "link": null,
+            "_literals": [
+              "template"
+            ]
           }
         }
       },
       "template_variables": [
-        "table"
+        "table_name",
+        "framework",
+        "modality"
       ],
-      "types": {},
+      "types": {
+        "table_name": {
+          "type": "str",
+          "default": "sample_transfer_learning"
+        },
+        "modality": {
+          "type": "str",
+          "default": "text"
+        },
+        "framework": {
+          "type": "str",
+          "default": "scikit-framework"
+        }
+      },
       "blobs": null,
       "files": null,
-      "data": null,
+      "requirements": null,
+      "default_table": "?table:sample_transfer_learning",
+      "queries": null,
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

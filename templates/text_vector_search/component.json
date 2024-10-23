@@ -1,6 +1,20 @@
 {
   "_base": "?text_vector_search",
   "_builds": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:sample_text_vector_search/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "x": "?str",
+        "_fold": "?str"
+      }
+    },
     "datatype:pickle": {
       "_path": "superduper.components.datatype.get_serializer",
       "method": "pickle",
@@ -12,31 +26,94 @@
       "uri": null,
       "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
     },
+    "table:sample_text_vector_search": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_text_vector_search/schema",
+      "primary_id": "id",
+      "data": "?2abbced0b779db61865b869a5a707c1114193b11"
+    },
+    "query_template:vector_search": {
+      "_path": "superduper.components.template.QueryTemplate",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "template": {
+        "_path": "superduper_<var:data_backend>.query.parse_query",
+        "documents": [
+          {
+            "<var:output_prefix>chunker_<var:table_name>": "<var:search_term>"
+          }
+        ],
+        "identifier": "outputs-chunker-var-table-name-like-outputs-chunker-var-table-name-tell-me-about-the-use-of-pylance-and-vector-search-n-10-vector-index-vector-index-var-table-name-select",
+        "query": "<var:output_prefix>chunker_<var:table_name>.like(documents[0], n=10, vector_index=\"vector-index-<var:table_name>\").select()",
+        "_builds": {},
+        "_files": {},
+        "_blobs": {}
+      },
+      "template_variables": [
+        "data_backend",
+        "output_prefix",
+        "search_term",
+        "table_name"
+      ],
+      "types": {
+        "search_term": {
+          "type": "str",
+          "default": "enter your question here..."
+        },
+        "table_name": {
+          "type": "str",
+          "default": "sample_text_vector_search"
+        },
+        "output_prefix": {
+          "type": "str",
+          "default": "_outputs__"
+        },
+        "data_backend": {
+          "type": "mongodb",
+          "choices": [
+            "mongodb",
+            "ibis"
+          ],
+          "default": "mongodb"
+        }
+      },
+      "blobs": null,
+      "files": null,
+      "_literals": [
+        "template"
+      ]
+    },
     "text_vector_search": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
-      "cache": false,
+      "cache": true,
       "status": null,
       "template": {
-        "_base": "?rag-app",
+        "_base": "?text-vector-search-app-<var:table_name>",
         "_builds": {
           "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "2d5a572c14d982d8f3212a7fa1df7007c1bddc89": {
+          "cce2e9b3e021884810b3c313763de1669b102235": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:2d5a572c14d982d8f3212a7fa1df7007c1bddc89"
+            "blob": "&:blob:cce2e9b3e021884810b3c313763de1669b102235"
           },
           "model:chunk_model": {
-            "_object": "?2d5a572c14d982d8f3212a7fa1df7007c1bddc89",
+            "_object": "?cce2e9b3e021884810b3c313763de1669b102235",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
             "datatype": null,
@@ -51,38 +128,38 @@
             "trainer": null,
             "chunk_size": 200
           },
-          "var-table-name-select": {
-            "_path": "superduper_mongodb.query.parse_query",
+          "var-table-name-select-var-id-field-x": {
+            "_path": "superduper_<var:data_backend>.query.parse_query",
             "documents": [],
-            "query": "<var:table_name>.select()"
+            "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
           },
-          "listener:chunker": {
+          "listener:chunker_<var:table_name>": {
             "_path": "superduper.components.listener.Listener",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "cdc_table": "<var:table_name>",
             "key": "x",
             "model": "?model:chunk_model",
             "predict_kwargs": {},
-            "select": "?var-table-name-select",
+            "select": "?var-table-name-select-var-id-field-x",
             "flatten": true
           },
-          "datatype:vector[1024]": {
-            "_path": "superduper.components.vector_index.vector",
+          "datatype:sqlvector[1536]": {
+            "_path": "superduper.components.vector_index.sqlvector",
             "shape": [
-              1024
+              1536
             ]
           },
           "model:text-embedding-ada-002": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
-            "datatype": "?datatype:vector[1024]",
+            "datatype": "?datatype:sqlvector[1536]",
             "output_schema": null,
             "model_update_kwargs": {},
             "predict_kwargs": {},
@@ -102,11 +179,17 @@
             ],
             "batch_size": 100
           },
-          "c38df043cecc3c06c9225f66e56e5a6f343a7f12": {
+          "datatype:sqlvector[1024]": {
+            "_path": "superduper.components.vector_index.sqlvector",
+            "shape": [
+              1024
+            ]
+          },
+          "70966ca6683007348be9fc71e5d4459fb66fb27c": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:c38df043cecc3c06c9225f66e56e5a6f343a7f12"
+            "blob": "&:blob:70966ca6683007348be9fc71e5d4459fb66fb27c"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -118,10 +201,10 @@
             "device": "cpu",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "singleton",
-            "datatype": "?datatype:vector[1024]",
+            "datatype": "?datatype:sqlvector[1024]",
             "output_schema": null,
             "model_update_kwargs": {},
             "predict_kwargs": {
@@ -135,13 +218,13 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?c38df043cecc3c06c9225f66e56e5a6f343a7f12"
+            "postprocess": "?70966ca6683007348be9fc71e5d4459fb66fb27c"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "signature": "*args,**kwargs",
             "datatype": null,
@@ -160,48 +243,48 @@
             },
             "model": "<var:embedding_model>"
           },
-          "outputs-chunker-?(listener:chunker.uuid)-select": {
-            "_path": "superduper_mongodb.query.parse_query",
+          "outputs-chunker-var-table-name-?(listener:chunker_<var:table_name>.uuid)-select": {
+            "_path": "superduper_<var:data_backend>.query.parse_query",
             "documents": [],
-            "query": "_outputs__chunker__?(listener:chunker.uuid).select()"
+            "query": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid).select()"
           },
-          "listener:embedding-listener": {
+          "listener:embedding-listener-<var:table_name>": {
             "_path": "superduper.components.listener.Listener",
             "upstream": [
-              "?listener:chunker",
-              "?listener:chunker"
+              "?listener:chunker_<var:table_name>",
+              "?listener:chunker_<var:table_name>"
             ],
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
-            "cdc_table": "_outputs__chunker__?(listener:chunker.uuid)",
-            "key": "_outputs__chunker__?(listener:chunker.uuid)",
+            "cdc_table": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid)",
+            "key": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid)",
             "model": "?model:embedding",
             "predict_kwargs": {},
-            "select": "?outputs-chunker-?(listener:chunker.uuid)-select",
+            "select": "?outputs-chunker-var-table-name-?(listener:chunker_<var:table_name>.uuid)-select",
             "flatten": false
           },
-          "vector_index:vector-index": {
+          "vector_index:vector-index-<var:table_name>": {
             "_path": "superduper.components.vector_index.VectorIndex",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
-            "cdc_table": "_outputs__embedding-listener__?(listener:embedding-listener.uuid)",
-            "indexing_listener": "?listener:embedding-listener",
+            "cdc_table": "<var:output_prefix>embedding-listener-<var:table_name>__?(listener:embedding-listener-<var:table_name>.uuid)",
+            "indexing_listener": "?listener:embedding-listener-<var:table_name>",
             "compatible_listener": null,
             "measure": "cosine",
             "metric_values": {}
           },
-          "rag-app": {
+          "text-vector-search-app-<var:table_name>": {
             "_path": "superduper.components.application.Application",
             "upstream": null,
             "plugins": null,
-            "cache": false,
+            "cache": true,
             "status": null,
             "components": [
-              "?listener:chunker",
-              "?vector_index:vector-index"
+              "?listener:chunker_<var:table_name>",
+              "?vector_index:vector-index-<var:table_name>"
             ],
             "namespace": null,
             "link": null,
@@ -213,9 +296,15 @@
       },
       "template_variables": [
         "embedding_model",
-        "table_name"
+        "table_name",
+        "output_prefix",
+        "data_backend"
       ],
       "types": {
+        "id_field": {
+          "type": "str",
+          "default": "_id"
+        },
         "embedding_model": {
           "type": "str",
           "choices": [
@@ -226,12 +315,28 @@
         },
         "table_name": {
           "type": "str",
-          "default": "_sample_text_vector_search"
+          "default": "sample_text_vector_search"
+        },
+        "output_prefix": {
+          "type": "str",
+          "default": "_outputs__"
+        },
+        "data_backend": {
+          "type": "mongodb",
+          "choices": [
+            "mongodb",
+            "ibis"
+          ],
+          "default": "mongodb"
         }
       },
       "blobs": null,
       "files": null,
-      "data": "?2abbced0b779db61865b869a5a707c1114193b11",
+      "requirements": null,
+      "default_table": "?table:sample_text_vector_search",
+      "queries": [
+        "?query_template:vector_search"
+      ],
       "_literals": [
         "template"
       ]

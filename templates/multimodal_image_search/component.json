@@ -1,6 +1,45 @@
 {
   "_base": "?image-vector-search",
   "_builds": {
+    "datatype:pil_image": {
+      "_path": "superduper_pillow.encoder.image_type",
+      "encodable": "encodable"
+    },
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:AUTO-_fold=<class 'str'>&img=pil_image": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "img": "?datatype:pil_image",
+        "_fold": "?str"
+      }
+    },
+    "datatype:pickle": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "pickle",
+      "encodable": "artifact"
+    },
+    "d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:pickle",
+      "uri": null,
+      "blob": "&:blob:d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b"
+    },
+    "table:_sample_multimodal_image_search": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": "Status.ready",
+      "schema": "?schema:AUTO-_fold=<class 'str'>&img=pil_image",
+      "primary_id": "id",
+      "data": "?d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b"
+    },
     "image-vector-search": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
@@ -16,35 +55,48 @@
               1024
             ]
           },
+          "load": {
+            "_path": "superduper.base.leaf.ImportCall",
+            "import_path": "clip.clip.load",
+            "args": [
+              "RN50"
+            ],
+            "kwargs": {
+              "device": "<var:device>"
+            }
+          },
+          "load[0]": {
+            "_path": "superduper.base.leaf.Index",
+            "parent": "?load",
+            "index": 0
+          },
+          "load[0]/visual": {
+            "_path": "superduper.base.leaf.Attribute",
+            "parent": "?load[0]",
+            "attribute": "visual"
+          },
+          "load[1]": {
+            "_path": "superduper.base.leaf.Index",
+            "parent": "?load",
+            "index": 1
+          },
           "datatype:dill": {
             "_path": "superduper.components.datatype.get_serializer",
             "method": "dill",
             "encodable": "artifact"
           },
-          "a59f7ef66658ac2aebb08cfb42392889a8d4dfbc": {
+          "f79d2cedb218e815edcc2c38787ea44413e988e6": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:a59f7ef66658ac2aebb08cfb42392889a8d4dfbc"
-          },
-          "e1635b227a7f3787dc79524d812915c342701260": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:e1635b227a7f3787dc79524d812915c342701260"
-          },
-          "d74a9ebc7af72ea5640dc6cb7928eb708189ccac": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:d74a9ebc7af72ea5640dc6cb7928eb708189ccac"
+            "blob": "&:blob:f79d2cedb218e815edcc2c38787ea44413e988e6"
           },
           "model:clip_image": {
             "_path": "superduper_torch.model.TorchModel",
             "preferred_devices": [
               "cuda",
               "mps",
-              "cpu"
+              "<var:device>"
             ],
             "device": null,
             "upstream": null,
@@ -62,10 +114,10 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "object": "?a59f7ef66658ac2aebb08cfb42392889a8d4dfbc",
-            "preprocess": "?e1635b227a7f3787dc79524d812915c342701260",
+            "object": "?load[0]/visual",
+            "preprocess": "?load[1]",
             "preprocess_signature": "singleton",
-            "postprocess": "?d74a9ebc7af72ea5640dc6cb7928eb708189ccac",
+            "postprocess": "?f79d2cedb218e815edcc2c38787ea44413e988e6",
             "postprocess_signature": "singleton",
             "forward_method": "__call__",
             "forward_signature": "singleton",
@@ -95,30 +147,24 @@
             "select": "?<var:table>-select",
             "flatten": false
           },
-          "e5551585470d016f388b67c7903b13f8a49e149b": {
+          "bf18c4fa88c06100aff919e8ce27d51ec6301a13": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:e5551585470d016f388b67c7903b13f8a49e149b"
+            "blob": "&:blob:bf18c4fa88c06100aff919e8ce27d51ec6301a13"
           },
-          "5af4e17913a59c52b9dcc60b35cfe88a64052f3d": {
+          "aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:5af4e17913a59c52b9dcc60b35cfe88a64052f3d"
-          },
-          "d892f128056598f912763336ce4047f36090c11f": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:d892f128056598f912763336ce4047f36090c11f"
+            "blob": "&:blob:aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c"
           },
           "model:clip_text": {
             "_path": "superduper_torch.model.TorchModel",
             "preferred_devices": [
               "cuda",
               "mps",
-              "cpu"
+              "<var:device>"
             ],
             "device": null,
             "upstream": null,
@@ -136,10 +182,10 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "object": "?e5551585470d016f388b67c7903b13f8a49e149b",
-            "preprocess": "?5af4e17913a59c52b9dcc60b35cfe88a64052f3d",
+            "object": "?load[0]",
+            "preprocess": "?bf18c4fa88c06100aff919e8ce27d51ec6301a13",
             "preprocess_signature": "singleton",
-            "postprocess": "?d892f128056598f912763336ce4047f36090c11f",
+            "postprocess": "?aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c",
             "postprocess_signature": "singleton",
             "forward_method": "encode_text",
             "forward_signature": "singleton",
@@ -170,7 +216,7 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "_outputs__indexing-listener__?(listener:indexing-listener.uuid)",
+            "cdc_table": "outputs__indexing-listener__?(listener:indexing-listener.uuid)",
             "indexing_listener": "?listener:indexing-listener",
             "compatible_listener": "?listener:compatible-listener",
             "measure": "cosine",
@@ -199,6 +245,7 @@
         }
       },
       "template_variables": [
+        "device",
         "table"
       ],
       "types": {},
@@ -206,11 +253,11 @@
       "files": null,
       "data": null,
       "requirements": null,
+      "default_table": "?table:_sample_multimodal_image_search",
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

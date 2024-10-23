@@ -950,6 +950,9 @@ class Model(Component, metaclass=ModelMeta):
             X=self.trainer.key,
             db=self.db,
         )
+        if len(train_dataset) == 0:
+            logging.warn('No data found for training, skipping training')
+            return
         return self.fit(
             train_dataset=train_dataset,
             valid_dataset=valid_dataset,

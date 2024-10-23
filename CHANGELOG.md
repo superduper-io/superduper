@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ModelRouter` to enable easy toggles
 - Simple interactive shell
 - Add pdf rag template
+- Updated llm_finetuning template
 
 #### Bug Fixes
 

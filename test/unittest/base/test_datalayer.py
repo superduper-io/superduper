@@ -480,7 +480,7 @@ def test_replace(db):
     with pytest.raises(Exception):
         db.replace(model)
 
-    db.replace(model, upsert=True)
+    db.replace(model, upsert=True, force=True)
 
     assert db.load('model', 'm').predict(1) == 2
 

@@ -36,7 +36,7 @@ st.markdown(
 def init_db():
     from superduper import superduper
 
-    db = superduper("mongodb://localhost:27017/pdf_rag")
+    db = superduper()
     model_rag = db.load("model", "rag")
     return db, model_rag
 

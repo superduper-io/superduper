@@ -26,9 +26,16 @@ class Anthropic(APIBaseModel):
     def __post_init__(self, db, artifacts, example):
         self.model = self.model or self.identifier
         super().__post_init__(db, artifacts, example=example)
+
+    def init(self, db=None):
+        """Initialize the model.
+
+        :param db: The database to use.
+        """
         self.client = anthropic.Anthropic(
             api_key=get_key(KEY_NAME), **self.client_kwargs
         )
+        super().init(db=db)
 
 
 class AnthropicCompletions(Anthropic):

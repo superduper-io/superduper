@@ -331,6 +331,7 @@ class QueryUpdateDocument(Document):
         :param substitutions: The substitutions to make.
             `str-to-replace -> variable-name`
         """
+        substitutions.setdefault(CFG.output_prefix, 'output_prefix')
 
         def substitute(x):
             if isinstance(x, str):

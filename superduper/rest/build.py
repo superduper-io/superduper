@@ -160,7 +160,6 @@ def build_rest_app(app: SuperDuperApp):
                 if isinstance(variables[k], str):
                     assert '<' not in variables[k]
                     assert '>' not in variables[k]
-                    assert ' ' not in variables[k]
 
             identifier = info.pop('identifier')
             template_name = info.pop('_template_name', None)

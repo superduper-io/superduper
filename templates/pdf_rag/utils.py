@@ -93,50 +93,27 @@ def merge_metadatas(metadatas):
     }
 
 
-def fetch_images(db, pdf_id):
+def fetch_images(db, pdf_id, split_image_key):
     image_folder = os.environ.get("IMAGES_FOLDER", ".cache/images")
     image_folder = os.path.join(image_folder, str(pdf_id))
     if os.path.exists(image_folder) and os.listdir(image_folder):
         return
 
     os.makedirs(image_folder, exist_ok=True)
-    table = db["_outputs__split_image"]
+    table = db[split_image_key]
     select = table.filter(table["_source"].isin([pdf_id]))
     for doc in select.execute():
-        image_path = doc["_outputs__split_image"].unpack()
+        image_path = doc[split_image_key].unpack()
         shutil.move(image_path, image_folder)
 
 
-def get_related_documents(db, contexts, match_text=None):
-    """Convert contexts to a dataframe."""
-    image_folder = os.environ.get("IMAGES_FOLDER", ".cache/images")
-    source_ids = [source["_source"] for source in contexts]
-    for source_id in source_ids:
-        fetch_images(db, source_id)
-    for source in contexts:
-        outputs = source["_outputs__chunk"]
-        source_elements = outputs["source_elements"]
-        if match_text:
-            match_indexes = rematch([e["text"] for e in source_elements], match_text)
-            if not match_indexes:
-                continue
-            source_elements = [source_elements[i] for i in match_indexes]
-        metadata = merge_metadatas([e["metadata"] for e in source_elements])
-        page_number = metadata["page_number"]
-        file_name = metadata["file_name"]
-        pdf_id = source["_source"]
-        coordinates = metadata["coordinates"]
-        file_path = os.path.join(image_folder, str(pdf_id), f"{page_number-1}.jpg")
-        if os.path.exists(file_path):
-            img = draw_rectangle_and_display(file_path, coordinates)
-        else:
-            img = None
-        score = round(source["score"], 2)
-        text = f"**file_name**: {file_name}\n\n**score**: {score}\n\n**text:**\n\n{outputs['txt']}"
-        yield text, img
-
-
-def get_related_merged_documents(db, contexts, match_text=None):
+def get_related_merged_documents(
+    db,
+    contexts,
+    chunk_key,
+    split_image_key,
+    match_text=None,
+):
     """
     Convert contexts to a dataframe
     Will merge the same page
@@ -144,9 +121,9 @@ def get_related_merged_documents(db, contexts, match_text=None):
     image_folder = os.environ.get("IMAGES_FOLDER", ".cache/images")
     source_ids = [source["_source"] for source in contexts]
     for source_id in source_ids:
-        fetch_images(db, source_id)
+        fetch_images(db, source_id, split_image_key)
 
-    page_elements, page2score = groupby_source_elements(contexts)
+    page_elements, page2score = groupby_source_elements(contexts, chunk_key)
     for (pdf_id, page_number), source_elements in page_elements.items():
         if match_text:
             match_indexes = rematch([e["text"] for e in source_elements], match_text)
@@ -169,7 +146,7 @@ def get_related_merged_documents(db, contexts, match_text=None):
         yield text, img
 
 
-def groupby_source_elements(contexts):
+def groupby_source_elements(contexts, chunk_key):
     """
     Group pages for all contexts
     """
@@ -179,7 +156,7 @@ def groupby_source_elements(contexts):
     page2score = {}
     page_elements = defaultdict(list)
     for source in contexts:
-        outputs = source["_outputs__chunk"]
+        outputs = source[chunk_key]
         source_elements = outputs["source_elements"]
         pdf_id = source["_source"]
         for element in source_elements:
@@ -242,8 +219,14 @@ def draw_rectangle_and_display(image_path, relative_coordinates, expand=0.005):
 
 
 class Processer(Model):
-    def predict(self, contexts, match_text=None, merge=False):
-        if merge:
-            return get_related_merged_documents(self.db, contexts, match_text)
-        else:
-            return get_related_documents(self.db, contexts, match_text)
+    chunk_key: str
+    split_image_key: str
+
+    def predict(self, contexts, match_text=None):
+        return get_related_merged_documents(
+            db=self.db,
+            contexts=contexts,
+            chunk_key=self.chunk_key,
+            split_image_key=self.split_image_key,
+            match_text=match_text,
+        )

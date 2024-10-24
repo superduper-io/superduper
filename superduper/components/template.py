@@ -2,6 +2,7 @@ import dataclasses as dc
 import os
 import typing as t
 
+from superduper import CFG
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
@@ -52,6 +53,11 @@ class _BaseTemplate(Component):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
         assert set(kwargs.keys()) == set(self.template_variables)
+
+        if 'output_prefix' in kwargs:
+            assert kwargs['output_prefix'] == CFG.output_prefix
+        else:
+            kwargs["output_prefix"] = CFG.output_prefix
         component = _replace_variables(self.template, **kwargs)
         return Document.decode(component, db=self.db).unpack()
 

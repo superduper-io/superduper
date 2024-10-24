@@ -215,12 +215,6 @@ class IbisQuery(Query):
             ) from e
 
         assert isinstance(output, pandas.DataFrame)
-        table_truncate_map = self.db.databackend.db_helper.table_truncate_map
-        columns = {}
-        for c in output.columns:
-            columns[c] = table_truncate_map[c]
-        output = output.rename(columns=columns)
-
         output = output.to_dict(orient="records")
         component_table = self.db.load('table', self.table)
         return SuperDuperCursor(

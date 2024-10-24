@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple querying shell
 - Fix existing templates
 - Add optional data insert to `Table`
+- Make Lance vector searcher as plugin.
 
 #### New Features & Functionality
 

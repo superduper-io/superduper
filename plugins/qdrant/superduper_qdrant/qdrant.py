@@ -5,7 +5,6 @@ from copy import deepcopy
 
 import numpy as np
 from qdrant_client import QdrantClient, models
-
 from superduper import CFG
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,

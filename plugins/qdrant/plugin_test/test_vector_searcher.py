@@ -1,30 +1,26 @@
-import tempfile
 import uuid
 
 import numpy as np
 import pytest
-
-from superduper import CFG
-from superduper.backends.local.vector_search import InMemoryVectorSearcher
 from superduper.vector_search.base import VectorItem
+
+from superduper_qdrant import VectorSearcher as QdrantVectorSearcher
 
 
 @pytest.fixture
-def index_data(monkeypatch):
-    with tempfile.TemporaryDirectory() as unique_dir:
-        monkeypatch.setattr(CFG, "lance_home", str(unique_dir))
-        h = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
-        ids = [str(uuid.uuid4()) for _ in range(h.shape[0])]
-        yield h, ids, unique_dir
+def index_data():
+    h = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    ids = [str(uuid.uuid4()) for _ in range(h.shape[0])]
+    yield h, ids
 
 
 @pytest.mark.parametrize(
     "vector_index_cls",
-    [InMemoryVectorSearcher],
+    [QdrantVectorSearcher],
 )
 @pytest.mark.parametrize("measure", ["l2", "dot", "cosine"])
 def test_index(index_data, measure, vector_index_cls):
-    vectors, ids, ud = index_data
+    vectors, ids = index_data
     h = vector_index_cls(uuid="123456", measure=measure, dimensions=3)
     h.add(items=[VectorItem(id=id_, vector=hh) for hh, id_ in zip(vectors, ids)])
     y = np.array([0, 0, 1])

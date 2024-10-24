@@ -3,10 +3,10 @@ import uuid
 
 import numpy as np
 import pytest
-
 from superduper import CFG
-from superduper.backends.local.vector_search import InMemoryVectorSearcher
 from superduper.vector_search.base import VectorItem
+
+from superduper_lance import VectorSearcher as LanceVectorSearcher
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def index_data(monkeypatch):
 
 @pytest.mark.parametrize(
     "vector_index_cls",
-    [InMemoryVectorSearcher],
+    [LanceVectorSearcher],
 )
 @pytest.mark.parametrize("measure", ["l2", "dot", "cosine"])
 def test_index(index_data, measure, vector_index_cls):

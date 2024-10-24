@@ -58,8 +58,7 @@ class DBHelper:
     """
 
     match_dialect = "base"
-    table_truncate = {'postgres': 63}
-    table_truncate_map = _KeyEqualDefaultDict()
+    truncates = {"postgres": {"column": 63, "table": 63}}
 
     def __init__(self, dialect):
         self.dialect = dialect
@@ -77,13 +76,19 @@ class DBHelper:
 
         columns = conn.table(table_name).columns
         for column in datas.columns:
-            if conn.name in self.table_truncate:
-                n = self.table_truncate[conn.name]
+            if conn.name in self.truncates:
+                n = self.truncates[conn.name]["column"]
                 if len(column) > n:
-                    self.table_truncate_map[column[:n]] = column
-
-        columns = list(map(lambda x: self.table_truncate_map[x], columns))
+                    raise Exception(
+                        f"{conn.name} database has limit of {n} for column name."
+                    )
         datas = datas[columns]
+        if conn.name in self.truncates:
+            if len(table_name) > self.truncates[conn.name]["table"]:
+                raise Exception(
+                    f"{conn.name} database has limit of {n} for table name."
+                )
+
         return table_name, pd.DataFrame(datas)
 
     def process_schema_types(self, schema_mapping):

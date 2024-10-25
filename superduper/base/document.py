@@ -34,6 +34,7 @@ if t.TYPE_CHECKING:
 ContentType = t.Union[t.Dict, Encodable]
 LeafMetaType = t.Type['Leaf']
 
+_VERSION_LIMIT = 1000
 # TODO is this used for anything?
 _LEAF_TYPES = {
     'component': Component,
@@ -644,6 +645,13 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
     return r
 
 
+def _check_if_version(x):
+    if x.isnumeric():
+        if int(x) < _VERSION_LIMIT:
+            return True
+    return False
+
+
 def _get_component(db, path):
     parts = path.split(':')
     if len(parts) == 1:
@@ -651,7 +659,7 @@ def _get_component(db, path):
     if len(parts) == 2:
         return db.load(type_id=parts[0], identifier=parts[1])
     if len(parts) == 3:
-        if not parts[2].isnumeric():
+        if not _check_if_version(parts[2]):
             return db.load(uuid=parts[2])
         return db.load(type_id=parts[0], identifier=parts[1], version=parts[2])
     raise ValueError(f'Invalid component reference: {path}')

@@ -34,6 +34,23 @@ new_release: ## Release a new version of superduper.io
 	git push origin release-$(RELEASE_VERSION)
 	git push origin $(RELEASE_VERSION)
 
+TEMPLATES ?= '*'
+
+build_templates:  # build the templates with APPLY=False TEMPLATES='*'
+	if [ "$(TEMPLATES)" = "*" ]; then \
+		templates_to_build=$$(ls -d templates/*/); \
+	else \
+		templates_to_build=$$(echo $(TEMPLATES) | tr ',' ' '); \
+	fi; \
+	for template in $$templates_to_build; do \
+		echo $$template; \
+		rm -rf templates/$$template/blobs; \
+		rm -rf templates/$$template/files; \
+		rm -rf templates/$$template/.ipynb_checkpoints; \
+		(cd templates/$$template && papermill build.ipynb /tmp/papermill_output.ipynb -p APPLY False); \
+		jupyter nbconvert templates/$$template/build.ipynb --clear-output; \
+	done;
+
 ##@ Code Quality
 
 gen_docs: ## Generate Docs and API

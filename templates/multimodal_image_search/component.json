@@ -1,5 +1,5 @@
 {
-  "_base": "?image-vector-search",
+  "_base": "?multimodal_image_search",
   "_builds": {
     "datatype:pil_image": {
       "_path": "superduper_pillow.encoder.image_type",
@@ -8,7 +8,7 @@
     "str": {
       "_path": "superduper.components.schema.FieldType"
     },
-    "schema:AUTO-_fold=<class 'str'>&img=pil_image": {
+    "schema:sample_multimodal_image_search/schema": {
       "_path": "superduper.components.schema.Schema",
       "upstream": null,
       "plugins": null,
@@ -19,28 +19,36 @@
         "_fold": "?str"
       }
     },
-    "datatype:pickle": {
+    "datatype:dill": {
       "_path": "superduper.components.datatype.get_serializer",
-      "method": "pickle",
+      "method": "dill",
       "encodable": "artifact"
     },
-    "d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b": {
+    "8bd61247ed6689d62771ddc3bc3a012f0c6ca087": {
       "_path": "superduper.components.datatype.Artifact",
-      "datatype": "?datatype:pickle",
+      "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b"
+      "blob": "&:blob:8bd61247ed6689d62771ddc3bc3a012f0c6ca087"
     },
-    "table:_sample_multimodal_image_search": {
+    "dataset:sample_images": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?8bd61247ed6689d62771ddc3bc3a012f0c6ca087"
+    },
+    "table:sample_multimodal_image_search": {
       "_path": "superduper.components.table.Table",
       "upstream": null,
       "plugins": null,
       "cache": true,
-      "status": "Status.ready",
-      "schema": "?schema:AUTO-_fold=<class 'str'>&img=pil_image",
+      "status": null,
+      "schema": "?schema:sample_multimodal_image_search/schema",
       "primary_id": "id",
-      "data": "?d42588f7e71fe28a4a864ce0c7c2dafdd0dff09b"
+      "data": "?dataset:sample_images"
     },
-    "image-vector-search": {
+    "multimodal_image_search": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
@@ -85,11 +93,11 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "f79d2cedb218e815edcc2c38787ea44413e988e6": {
+          "0d075429858cd4d08c3bd9e2be789d9f88fe649f": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:f79d2cedb218e815edcc2c38787ea44413e988e6"
+            "blob": "&:blob:0d075429858cd4d08c3bd9e2be789d9f88fe649f"
           },
           "model:clip_image": {
             "_path": "superduper_torch.model.TorchModel",
@@ -102,7 +110,7 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "signature": "singleton",
             "datatype": "?datatype:sqlvector[1024]",
             "output_schema": null,
@@ -117,7 +125,7 @@
             "object": "?load[0]/visual",
             "preprocess": "?load[1]",
             "preprocess_signature": "singleton",
-            "postprocess": "?f79d2cedb218e815edcc2c38787ea44413e988e6",
+            "postprocess": "?0d075429858cd4d08c3bd9e2be789d9f88fe649f",
             "postprocess_signature": "singleton",
             "forward_method": "__call__",
             "forward_signature": "singleton",
@@ -129,10 +137,10 @@
             "optimizer_state": null,
             "loader_kwargs": {}
           },
-          "<var:table>-select": {
+          "<var:table_name>-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "<var:table>.select()"
+            "query": "<var:table_name>.select()"
           },
           "listener:indexing-listener": {
             "_path": "superduper.components.listener.Listener",
@@ -140,24 +148,24 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "<var:table>",
+            "cdc_table": "<var:table_name>",
             "key": "img",
             "model": "?model:clip_image",
             "predict_kwargs": {},
-            "select": "?<var:table>-select",
+            "select": "?<var:table_name>-select",
             "flatten": false
           },
-          "bf18c4fa88c06100aff919e8ce27d51ec6301a13": {
+          "74abfc56aa344c2bb09ace700790c133a5b83948": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:bf18c4fa88c06100aff919e8ce27d51ec6301a13"
+            "blob": "&:blob:74abfc56aa344c2bb09ace700790c133a5b83948"
           },
-          "aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c": {
+          "3516efb5fedb59553124bdcc463af15e0a1ecb69": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c"
+            "blob": "&:blob:3516efb5fedb59553124bdcc463af15e0a1ecb69"
           },
           "model:clip_text": {
             "_path": "superduper_torch.model.TorchModel",
@@ -170,7 +178,7 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "signature": "singleton",
             "datatype": "?datatype:sqlvector[1024]",
             "output_schema": null,
@@ -183,9 +191,9 @@
             "serve": false,
             "trainer": null,
             "object": "?load[0]",
-            "preprocess": "?bf18c4fa88c06100aff919e8ce27d51ec6301a13",
+            "preprocess": "?74abfc56aa344c2bb09ace700790c133a5b83948",
             "preprocess_signature": "singleton",
-            "postprocess": "?aea6ff98a7ef32cea8f004f3d6c70dc168fe8a7c",
+            "postprocess": "?3516efb5fedb59553124bdcc463af15e0a1ecb69",
             "postprocess_signature": "singleton",
             "forward_method": "encode_text",
             "forward_signature": "singleton",
@@ -202,7 +210,7 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "cdc_table": "",
             "key": "text",
             "model": "?model:clip_text",
@@ -216,7 +224,7 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "outputs__indexing-listener__?(listener:indexing-listener.uuid)",
+            "cdc_table": "<var:output_prefix>indexing-listener__?(listener:indexing-listener.uuid)",
             "indexing_listener": "?listener:indexing-listener",
             "compatible_listener": "?listener:compatible-listener",
             "measure": "cosine",
@@ -227,16 +235,11 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "components": [
               "?vector_index:my-vector-index"
             ],
-            "namespace": [
-              {
-                "type_id": "vector_index",
-                "identifier": "my-vector-index"
-              }
-            ],
+            "namespace": null,
             "link": null,
             "_literals": [
               "template"
@@ -246,14 +249,24 @@
       },
       "template_variables": [
         "device",
-        "table"
+        "output_prefix",
+        "table_name"
       ],
-      "types": {},
+      "types": {
+        "device": {
+          "type": "str",
+          "default": "cpu"
+        },
+        "table_name": {
+          "type": "str",
+          "default": "sample_multimodal_image_search"
+        }
+      },
       "blobs": null,
       "files": null,
-      "data": null,
       "requirements": null,
-      "default_table": "?table:_sample_multimodal_image_search",
+      "default_table": "?table:sample_multimodal_image_search",
+      "queries": null,
       "_literals": [
         "template"
       ]

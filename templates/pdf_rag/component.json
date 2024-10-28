@@ -1,6 +1,55 @@
 {
   "_base": "?pdf-rag",
   "_builds": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "datatype:file_lazy": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "file",
+      "encodable": "lazy_file"
+    },
+    "schema:sample_pdf_rag/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "url": "?str",
+        "file": "?datatype:file_lazy",
+        "_fold": "?str"
+      }
+    },
+    "datatype:dill": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "dill",
+      "encodable": "artifact"
+    },
+    "1db2546427804ee7161c5c5eedeb8521e6831413": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:dill",
+      "uri": null,
+      "blob": "&:blob:1db2546427804ee7161c5c5eedeb8521e6831413"
+    },
+    "dataset:sample_pdfs": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?1db2546427804ee7161c5c5eedeb8521e6831413"
+    },
+    "table:sample_pdf_rag": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_pdf_rag/schema",
+      "primary_id": "id",
+      "data": "?dataset:sample_pdfs"
+    },
     "pdf-rag": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
@@ -30,7 +79,7 @@
               "_fold": "?str"
             }
           },
-          "table:pdfs": {
+          "table:<var:table_name>": {
             "_path": "superduper.components.table.Table",
             "upstream": null,
             "plugins": null,
@@ -45,11 +94,11 @@
             "method": "dill",
             "encodable": "lazy_artifact"
           },
-          "546e1d0fcf7d48581ed26bd3dff69c4172d3a155": {
+          "44db6ffe33f83e1174ff6ce4541538e136fcfdf0": {
             "_path": "superduper.components.datatype.LazyArtifact",
             "datatype": "?datatype:dill_lazy",
             "uri": null,
-            "blob": "&:blob:546e1d0fcf7d48581ed26bd3dff69c4172d3a155"
+            "blob": "&:blob:44db6ffe33f83e1174ff6ce4541538e136fcfdf0"
           },
           "model:split_image": {
             "_path": "superduper.components.model.ObjectModel",
@@ -68,7 +117,7 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "object": "?546e1d0fcf7d48581ed26bd3dff69c4172d3a155",
+            "object": "?44db6ffe33f83e1174ff6ce4541538e136fcfdf0",
             "method": null
           },
           "var-table-name-find": {
@@ -92,11 +141,11 @@
           "json": {
             "_path": "superduper.components.schema.FieldType"
           },
-          "64d43173d7759053e2e6cb20f6ec85de85a451b4": {
+          "d3583f01e9b6265ee55da8cbc49f771b7df88a1a": {
             "_path": "superduper.components.datatype.LazyArtifact",
             "datatype": "?datatype:dill_lazy",
             "uri": null,
-            "blob": "&:blob:64d43173d7759053e2e6cb20f6ec85de85a451b4"
+            "blob": "&:blob:d3583f01e9b6265ee55da8cbc49f771b7df88a1a"
           },
           "model:chunk": {
             "_path": "superduper.components.model.ObjectModel",
@@ -115,7 +164,7 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "object": "?64d43173d7759053e2e6cb20f6ec85de85a451b4",
+            "object": "?d3583f01e9b6265ee55da8cbc49f771b7df88a1a",
             "method": null
           },
           "var-table-name-select": {
@@ -180,11 +229,11 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "f4469712866fa1bac3e026fe3c3c43c09e118167": {
+          "f9cdb1b37f64778b6d3e49c812bf0ca382161ac0": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:f4469712866fa1bac3e026fe3c3c43c09e118167"
+            "blob": "&:blob:f9cdb1b37f64778b6d3e49c812bf0ca382161ac0"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -213,7 +262,7 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?f4469712866fa1bac3e026fe3c3c43c09e118167"
+            "postprocess": "?f9cdb1b37f64778b6d3e49c812bf0ca382161ac0"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
@@ -238,7 +287,7 @@
             },
             "model": "<var:embedding_model>"
           },
-          "OUT-chunk-?(listener:chunk.uuid)-select": {
+          "outputs-chunk-?(listener:chunk.uuid)-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
             "query": "<var:output_prefix>chunk__?(listener:chunk.uuid).select()"
@@ -255,7 +304,7 @@
             "key": "<var:output_prefix>chunk__?(listener:chunk.uuid).txt",
             "model": "?model:embedding",
             "predict_kwargs": {},
-            "select": "?OUT-chunk-?(listener:chunk.uuid)-select",
+            "select": "?outputs-chunk-?(listener:chunk.uuid)-select",
             "flatten": false
           },
           "vector_index:vector-index": {
@@ -270,11 +319,11 @@
             "measure": "cosine",
             "metric_values": {}
           },
-          "35b17d0b4e3e2d04f9eed13f8ed2ab25bdee48f9": {
+          "3d13bcd47e6a8a3f467070290a1b7300a10394ce": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:35b17d0b4e3e2d04f9eed13f8ed2ab25bdee48f9"
+            "blob": "&:blob:3d13bcd47e6a8a3f467070290a1b7300a10394ce"
           },
           "model:llm-openai": {
             "_path": "superduper_openai.model.OpenAIChatCompletion",
@@ -379,11 +428,11 @@
             },
             "model": "<var:llm_model>"
           },
-          "a90fb30c4b6cd9fb7f29ddcae3bed4d5": {
+          "9498b7a11ec9428e68b04e01475a2d85": {
             "_path": "superduper.components.datatype.LazyFile",
             "datatype": "?datatype:file_lazy",
             "uri": null,
-            "x": "&:file:a90fb30c4b6cd9fb7f29ddcae3bed4d5"
+            "x": "&:file:9498b7a11ec9428e68b04e01475a2d85"
           },
           "plugin:plugin-utils_py": {
             "_path": "superduper.components.plugin.Plugin",
@@ -391,11 +440,11 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "path": "?a90fb30c4b6cd9fb7f29ddcae3bed4d5",
+            "path": "?9498b7a11ec9428e68b04e01475a2d85",
             "cache_path": "~/.superduper/plugins"
           },
           "model:processor": {
-            "_path": "utils.Processer",
+            "_path": "utils.Processor",
             "upstream": null,
             "plugins": [
               "?plugin:plugin-utils_py"
@@ -417,7 +466,7 @@
             "split_image_key": "<var:output_prefix>split_image__?(listener:split_image.uuid)"
           },
           "model:rag": {
-            "_object": "?35b17d0b4e3e2d04f9eed13f8ed2ab25bdee48f9",
+            "_object": "?3d13bcd47e6a8a3f467070290a1b7300a10394ce",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -445,7 +494,7 @@
             "cache": true,
             "status": null,
             "components": [
-              "?table:pdfs",
+              "?table:<var:table_name>",
               "?listener:split_image",
               "?listener:chunk",
               "?vector_index:vector-index",
@@ -472,7 +521,7 @@
         },
         "table_name": {
           "type": "str",
-          "default": "_pdfs"
+          "default": "sample_pdf_rag"
         },
         "llm_model": {
           "type": "str",
@@ -494,14 +543,13 @@
       },
       "blobs": null,
       "files": null,
-      "data": null,
       "requirements": null,
-      "default_table": null,
+      "default_table": "?table:sample_pdf_rag",
+      "queries": null,
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

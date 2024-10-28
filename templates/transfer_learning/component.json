@@ -14,21 +14,29 @@
       "cache": true,
       "status": null,
       "fields": {
-        "data": "?str",
-        "label": "?int",
+        "x": "?str",
+        "y": "?int",
         "_fold": "?str"
       }
     },
-    "datatype:pickle": {
+    "datatype:dill": {
       "_path": "superduper.components.datatype.get_serializer",
-      "method": "pickle",
+      "method": "dill",
       "encodable": "artifact"
     },
-    "07a730747184cc9e74d063e3ba1d63490a97683a": {
+    "3a847462147e3361a60b17215078490f59767184": {
       "_path": "superduper.components.datatype.Artifact",
-      "datatype": "?datatype:pickle",
+      "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:07a730747184cc9e74d063e3ba1d63490a97683a"
+      "blob": "&:blob:3a847462147e3361a60b17215078490f59767184"
+    },
+    "dataset:text_classification": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?3a847462147e3361a60b17215078490f59767184"
     },
     "table:sample_transfer_learning": {
       "_path": "superduper.components.table.Table",
@@ -38,7 +46,7 @@
       "status": null,
       "schema": "?schema:sample_transfer_learning/schema",
       "primary_id": "id",
-      "data": "?07a730747184cc9e74d063e3ba1d63490a97683a"
+      "data": "?dataset:text_classification"
     },
     "transfer_learning": {
       "_path": "superduper.components.template.Template",
@@ -54,11 +62,11 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "5bc8e544cad19b05fd301a92d2a163c49588eff0": {
+          "de1e4576d2c743b018e3afb4badc241c509d65ce": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:5bc8e544cad19b05fd301a92d2a163c49588eff0"
+            "blob": "&:blob:de1e4576d2c743b018e3afb4badc241c509d65ce"
           },
           "model:embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -85,7 +93,7 @@
             "trainer": null,
             "model": "all-MiniLM-L6-v2",
             "preprocess": null,
-            "postprocess": "?5bc8e544cad19b05fd301a92d2a163c49588eff0"
+            "postprocess": "?de1e4576d2c743b018e3afb4badc241c509d65ce"
           },
           "resnet18": {
             "_path": "superduper.base.leaf.ImportCall",
@@ -95,17 +103,17 @@
               "pretrained": true
             }
           },
-          "aa581246c925d3c82d51eaa1c7c622a320907d80": {
+          "ae6e0ba86d9ad714157c066d9070401072cda7d0": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:aa581246c925d3c82d51eaa1c7c622a320907d80"
+            "blob": "&:blob:ae6e0ba86d9ad714157c066d9070401072cda7d0"
           },
-          "1efb5539a7bf2d03f2bb6c4b331d4daa9723b045": {
+          "abb0b9a01af793ed8b2ee428d91ac23d30bba11a": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:1efb5539a7bf2d03f2bb6c4b331d4daa9723b045"
+            "blob": "&:blob:abb0b9a01af793ed8b2ee428d91ac23d30bba11a"
           },
           "model:my-vision-model": {
             "_path": "superduper_torch.model.TorchModel",
@@ -131,9 +139,9 @@
             "serve": false,
             "trainer": null,
             "object": "?resnet18",
-            "preprocess": "?aa581246c925d3c82d51eaa1c7c622a320907d80",
+            "preprocess": "?ae6e0ba86d9ad714157c066d9070401072cda7d0",
             "preprocess_signature": "singleton",
-            "postprocess": "?1efb5539a7bf2d03f2bb6c4b331d4daa9723b045",
+            "postprocess": "?abb0b9a01af793ed8b2ee428d91ac23d30bba11a",
             "postprocess_signature": "singleton",
             "forward_method": "__call__",
             "forward_signature": "singleton",
@@ -180,17 +188,17 @@
             "cache": true,
             "status": null,
             "cdc_table": "<var:table_name>",
-            "key": "data",
+            "key": "x",
             "model": "?model:feature_extractor",
             "predict_kwargs": {},
             "select": "?var-table-name-select",
             "flatten": false
           },
-          "ef455cfe171f625141c9b4a8e610d05451a4b804": {
+          "c5e455b84077be0bc2e294adbc82851b5f373f74": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:ef455cfe171f625141c9b4a8e610d05451a4b804"
+            "blob": "&:blob:c5e455b84077be0bc2e294adbc82851b5f373f74"
           },
           "metric:acc": {
             "_path": "superduper.components.metric.Metric",
@@ -198,7 +206,7 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "object": "?ef455cfe171f625141c9b4a8e610d05451a4b804"
+            "object": "?c5e455b84077be0bc2e294adbc82851b5f373f74"
           },
           "var-table-name-outputs-features-?(listener:features.uuid)-filter-fold-eq-valid": {
             "_path": "superduper_mongodb.query.parse_query",
@@ -234,8 +242,8 @@
               "?metric:acc"
             ],
             "key": [
-              "_outputs__features__?(listener:features.uuid)",
-              "label"
+              "<var:output_prefix>features__?(listener:features.uuid)",
+              "y"
             ],
             "datasets": [
               "?dataset:my-valid"
@@ -253,8 +261,8 @@
             "cache": true,
             "status": null,
             "key": [
-              "_outputs__features__?(listener:features.uuid)",
-              "label"
+              "<var:output_prefix>features__?(listener:features.uuid)",
+              "y"
             ],
             "select": "?var-table-name-outputs-features-?(listener:features.uuid)",
             "transform": null,
@@ -302,11 +310,11 @@
             "preprocess": null,
             "postprocess": null
           },
-          "d53c8306ea14f3b0dc51732dc7b1b992f86817bd": {
+          "e829d70044fe76e239781c53dbcf134baf146c3b": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:d53c8306ea14f3b0dc51732dc7b1b992f86817bd"
+            "blob": "&:blob:e829d70044fe76e239781c53dbcf134baf146c3b"
           },
           "a10fbf2cdd7532dd7bf5bba03b7c28e01b4326cc": {
             "_path": "superduper.components.datatype.Artifact",
@@ -321,11 +329,11 @@
             "cache": true,
             "status": null,
             "key": [
-              "_outputs__features__?(listener:features.uuid)",
-              "label"
+              "<var:output_prefix>features__?(listener:features.uuid)",
+              "y"
             ],
             "select": "?var-table-name-outputs-features-?(listener:features.uuid)",
-            "transform": "?d53c8306ea14f3b0dc51732dc7b1b992f86817bd",
+            "transform": "?e829d70044fe76e239781c53dbcf134baf146c3b",
             "metric_values": {},
             "signature": "*args",
             "data_prefetch": false,
@@ -348,23 +356,23 @@
             "optimizer_state": null,
             "collate_fn": null
           },
-          "12b0bbc77db0240b2641cda7a18a0d278e069e17": {
+          "617bfe65cffb71045ee56b2f6ecf53471948e5d3": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:12b0bbc77db0240b2641cda7a18a0d278e069e17"
+            "blob": "&:blob:617bfe65cffb71045ee56b2f6ecf53471948e5d3"
           },
-          "4b4af3ab7a98258049d6f5e790f8329677b4bc13": {
+          "566f28394dde6ba99e520e5718cf1d043b109f40": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:4b4af3ab7a98258049d6f5e790f8329677b4bc13"
+            "blob": "&:blob:566f28394dde6ba99e520e5718cf1d043b109f40"
           },
-          "08874721584e8ab2e9715feb46d773621bad7163": {
+          "117d23db837c4b47b161f5e8a3ce0a1e91db1c3f": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:08874721584e8ab2e9715feb46d773621bad7163"
+            "blob": "&:blob:117d23db837c4b47b161f5e8a3ce0a1e91db1c3f"
           },
           "model:my-model-torch": {
             "_path": "superduper_torch.model.TorchModel",
@@ -389,10 +397,10 @@
             "num_workers": 0,
             "serve": false,
             "trainer": "?trainer:my-torch-trainer",
-            "object": "?12b0bbc77db0240b2641cda7a18a0d278e069e17",
-            "preprocess": "?4b4af3ab7a98258049d6f5e790f8329677b4bc13",
+            "object": "?617bfe65cffb71045ee56b2f6ecf53471948e5d3",
+            "preprocess": "?566f28394dde6ba99e520e5718cf1d043b109f40",
             "preprocess_signature": "singleton",
-            "postprocess": "?08874721584e8ab2e9715feb46d773621bad7163",
+            "postprocess": "?117d23db837c4b47b161f5e8a3ce0a1e91db1c3f",
             "postprocess_signature": "singleton",
             "forward_method": "__call__",
             "forward_signature": "singleton",
@@ -448,7 +456,8 @@
       "template_variables": [
         "table_name",
         "framework",
-        "modality"
+        "modality",
+        "output_prefix"
       ],
       "types": {
         "table_name": {

@@ -8,6 +8,7 @@ from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+    from superduper.components.dataset import Dataset, RemoteData
 
 DEFAULT_PRIMARY_ID = 'id'
 
@@ -27,7 +28,7 @@ class Table(Component):
 
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID
-    data: t.List[t.Dict] | None = None
+    data: t.List[t.Dict] | 'Dataset' | 'RemoteData' | None = None
 
     def __post_init__(self, db, artifacts):
         super().__post_init__(db, artifacts)
@@ -64,4 +65,8 @@ class Table(Component):
 
     @trigger('apply', requires='data')
     def add_data(self):
-        self.db[self.identifier].insert(self.data).execute()
+        if isinstance(self.data, Component):
+            data = self.data.data
+        else:
+            data = self.data
+        self.db[self.identifier].insert(data).execute()

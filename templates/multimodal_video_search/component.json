@@ -1,7 +1,55 @@
 {
-  "_base": "?video-search-template",
+  "_base": "?multimodal_video_search",
   "_builds": {
-    "video-search-template": {
+    "datatype:file_lazy": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "file",
+      "encodable": "lazy_file"
+    },
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:sample_multimodal_video_search/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "x": "?datatype:file_lazy",
+        "_fold": "?str"
+      }
+    },
+    "datatype:dill": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "dill",
+      "encodable": "artifact"
+    },
+    "02607b0df50fdc0b78a27207a2ddbd2ef03b29ce": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:dill",
+      "uri": null,
+      "blob": "&:blob:02607b0df50fdc0b78a27207a2ddbd2ef03b29ce"
+    },
+    "dataset:sample_videos": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?02607b0df50fdc0b78a27207a2ddbd2ef03b29ce"
+    },
+    "table:sample_multimodal_video_search": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_multimodal_video_search/schema",
+      "primary_id": "id",
+      "data": "?dataset:sample_videos"
+    },
+    "multimodal_video_search": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
       "plugins": null,
@@ -10,21 +58,10 @@
       "template": {
         "_base": "?video-search",
         "_builds": {
-          "datatype:video_on_file": {
-            "_path": "superduper.components.datatype.DataType",
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": "Status.ready",
-            "encoder": null,
-            "decoder": null,
-            "info": null,
-            "shape": null,
-            "directory": null,
-            "encodable": "file",
-            "bytes_encoding": "bytes",
-            "intermediate_type": "bytes",
-            "media_type": null
+          "datatype:file_lazy": {
+            "_path": "superduper.components.datatype.get_serializer",
+            "method": "file",
+            "encodable": "lazy_file"
           },
           "str": {
             "_path": "superduper.components.schema.FieldType"
@@ -34,18 +71,18 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "fields": {
-              "x": "?datatype:video_on_file",
+              "x": "?datatype:file_lazy",
               "_fold": "?str"
             }
           },
-          "table:<var:content_table>": {
+          "table:<var:table_name>": {
             "_path": "superduper.components.table.Table",
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "schema": "?schema:schema",
             "primary_id": "id",
             "data": null
@@ -55,11 +92,11 @@
             "method": "dill",
             "encodable": "lazy_artifact"
           },
-          "987dbd3724ee3bde8706161a21dde8708ed04a7f": {
+          "e4e97659fbf4f75130d02572695d4b4300d2bce4": {
             "_path": "superduper.components.datatype.LazyArtifact",
             "datatype": "?datatype:dill_lazy",
             "uri": null,
-            "blob": "&:blob:987dbd3724ee3bde8706161a21dde8708ed04a7f"
+            "blob": "&:blob:e4e97659fbf4f75130d02572695d4b4300d2bce4"
           },
           "model:chunker": {
             "_path": "superduper.components.model.ObjectModel",
@@ -78,27 +115,29 @@
             "num_workers": 0,
             "serve": false,
             "trainer": null,
-            "object": "?987dbd3724ee3bde8706161a21dde8708ed04a7f",
+            "object": "?e4e97659fbf4f75130d02572695d4b4300d2bce4",
             "method": null
           },
-          "<var:content_table>-select": {
+          "<var:table_name>-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "<var:content_table>.select()"
+            "query": "<var:table_name>.select()"
           },
           "listener:chunker": {
             "_path": "superduper.components.listener.Listener",
             "upstream": [
-              "?table:<var:content_table>"
+              "?table:<var:table_name>"
             ],
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "<var:content_table>",
+            "cdc_table": "<var:table_name>",
             "key": "x",
             "model": "?model:chunker",
-            "predict_kwargs": {},
-            "select": "?<var:content_table>-select",
+            "predict_kwargs": {
+              "max_chunk_size": 1
+            },
+            "select": "?<var:table_name>-select",
             "flatten": true
           },
           "datatype:sqlvector[1024]": {
@@ -137,11 +176,11 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "4b17933c2863f672b4c2d6bdfb9f300b4c70d18e": {
+          "71cab8e3b21eab1499f896ec7cf63059eb7394f6": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:4b17933c2863f672b4c2d6bdfb9f300b4c70d18e"
+            "blob": "&:blob:71cab8e3b21eab1499f896ec7cf63059eb7394f6"
           },
           "model:clip_image": {
             "_path": "superduper_torch.model.TorchModel",
@@ -169,7 +208,7 @@
             "object": "?load[0]/visual",
             "preprocess": "?load[1]",
             "preprocess_signature": "singleton",
-            "postprocess": "?4b17933c2863f672b4c2d6bdfb9f300b4c70d18e",
+            "postprocess": "?71cab8e3b21eab1499f896ec7cf63059eb7394f6",
             "postprocess_signature": "singleton",
             "forward_method": "__call__",
             "forward_signature": "singleton",
@@ -184,7 +223,7 @@
           "outputs-chunker-?(listener:chunker.uuid)-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "outputs__chunker__?(listener:chunker.uuid).select()"
+            "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select()"
           },
           "listener:clip_image-listener": {
             "_path": "superduper.components.listener.Listener",
@@ -194,24 +233,24 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "outputs__chunker__?(listener:chunker.uuid)",
-            "key": "outputs__chunker__?(listener:chunker.uuid).image",
+            "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
+            "key": "<var:output_prefix>chunker__?(listener:chunker.uuid).image",
             "model": "?model:clip_image",
             "predict_kwargs": {},
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select",
             "flatten": false
           },
-          "c54dab6c3472eebdd2f8371bb97de9543532a885": {
+          "8d32a23cfa2654df2f6e7a693824b9f793adc735": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:c54dab6c3472eebdd2f8371bb97de9543532a885"
+            "blob": "&:blob:8d32a23cfa2654df2f6e7a693824b9f793adc735"
           },
-          "9300666af603a1da8a23f02814d5883ce9a15f04": {
+          "439607949f74e0d723e28b7a5a02df219ffc40f3": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:9300666af603a1da8a23f02814d5883ce9a15f04"
+            "blob": "&:blob:439607949f74e0d723e28b7a5a02df219ffc40f3"
           },
           "model:clip_text": {
             "_path": "superduper_torch.model.TorchModel",
@@ -237,9 +276,9 @@
             "serve": false,
             "trainer": null,
             "object": "?load[0]",
-            "preprocess": "?c54dab6c3472eebdd2f8371bb97de9543532a885",
+            "preprocess": "?8d32a23cfa2654df2f6e7a693824b9f793adc735",
             "preprocess_signature": "singleton",
-            "postprocess": "?9300666af603a1da8a23f02814d5883ce9a15f04",
+            "postprocess": "?439607949f74e0d723e28b7a5a02df219ffc40f3",
             "postprocess_signature": "singleton",
             "forward_method": "encode_text",
             "forward_signature": "singleton",
@@ -272,7 +311,7 @@
             "plugins": null,
             "cache": true,
             "status": null,
-            "cdc_table": "outputs__clip_image-listener__?(listener:clip_image-listener.uuid)",
+            "cdc_table": "<var:output_prefix>clip_image-listener__?(listener:clip_image-listener.uuid)",
             "indexing_listener": "?listener:clip_image-listener",
             "compatible_listener": "?listener:compatible-listener",
             "measure": "cosine",
@@ -297,19 +336,24 @@
         }
       },
       "template_variables": [
-        "content_table"
+        "output_prefix",
+        "table_name"
       ],
-      "types": {},
+      "types": {
+        "table_name": {
+          "type": "str",
+          "default": "sample_multimodal_video_search"
+        }
+      },
       "blobs": null,
       "files": null,
-      "data": null,
       "requirements": null,
-      "default_table": null,
+      "default_table": "?table:sample_multimodal_video_search",
+      "queries": null,
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

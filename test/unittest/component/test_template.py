@@ -141,7 +141,7 @@ def test_query_template(db):
     q = db['documents'].find({'this': 'is a <var:test>'}).limit('<var:limit>')
     t = QueryTemplate('select_lim', template=q)
 
-    assert set(t.template_variables) == {'limit', 'test'}
+    assert set(t.template_variables).issuperset({'limit', 'test'})
     assert t.template['query'] == 'documents.find(documents[0]).limit("<var:limit>")'
 
 

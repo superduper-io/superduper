@@ -94,3 +94,24 @@ class Dataset(Component):
         return f'Dataset(identifier={self.identifier}, select={self.select})'
 
     __repr__ = __str__
+
+
+class RemoteData(Component):
+    """Class to fetch dataset from remote.
+
+    :param getter: Function to fetch data.
+    """
+
+    type_id: t.ClassVar[str] = 'dataset'
+    getter: t.Callable
+
+    def __post_init__(self, db, artifacts):
+        self._data = None
+        return super().__post_init__(db, artifacts)
+
+    @property
+    def data(self):
+        """Get the data."""
+        if self._data is None:
+            self._data = self.getter()
+        return self._data

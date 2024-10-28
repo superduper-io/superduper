@@ -1,4 +1,2 @@
-superduper==0.0.4.dev
-openai>=1.1.2
-httpx
-sentence-transformers>=2.2.2
+-e ./plugins/openai
+-e ./plugins/sentence_transformers

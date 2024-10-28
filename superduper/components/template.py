@@ -52,12 +52,14 @@ class _BaseTemplate(Component):
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
-        assert set(kwargs.keys()) == set(self.template_variables)
+
+        assert set(kwargs.keys()) == (set(self.template_variables) - {'output_prefix'})
 
         if 'output_prefix' in kwargs:
             assert kwargs['output_prefix'] == CFG.output_prefix
         else:
             kwargs["output_prefix"] = CFG.output_prefix
+
         component = _replace_variables(self.template, **kwargs)
         return Document.decode(component, db=self.db).unpack()
 

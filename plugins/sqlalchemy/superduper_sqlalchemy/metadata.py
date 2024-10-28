@@ -70,7 +70,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         DBConfig = get_db_config(self.dialect)
 
         type_string = DBConfig.type_string
-        type_string_long = DBConfig.type_string_long
+        type_array = DBConfig.type_array
         type_json_as_string = DBConfig.type_json_as_string
         type_json_as_text = DBConfig.type_json_as_text
         type_integer = DBConfig.type_integer
@@ -99,7 +99,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('genus', type_string),
             Column('queue', type_string),
             Column('status', type_string),
-            Column('dependencies', type_string_long),
+            Column('dependencies', type_array),
             *job_table_args,
         )
 
@@ -573,10 +573,6 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         :param info: The information used to create the job
         """
-        if 'dependencies' in info:
-            import json
-
-            info['dependencies'] = json.dumps(info['dependencies'])
         with self.session_context() as session:
             stmt = insert(self.job_table).values(**info)
             session.execute(stmt)

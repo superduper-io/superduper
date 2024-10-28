@@ -1,4 +1,4 @@
-pillow>=10.2.0
 git+https://github.com/openai/CLIP.git
-torch>=2.0.0
+-e ./plugins/pillow
+-e ./plugins/torch
 opencv-python

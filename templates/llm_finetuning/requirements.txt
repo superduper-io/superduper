@@ -1,6 +1,1 @@
-superduper==0.3.0
-transformers>=4.29.1
-datasets>=2.18.0
-torch
-peft>=0.10.0
-trl>=0.8.0
+-e ./plugins/transformers

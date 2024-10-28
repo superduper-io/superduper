@@ -1,6 +1,53 @@
 {
   "_base": "?llm-finetune",
   "_builds": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "int": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:sample_llm_finetuning/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "x": "?str",
+        "y": "?int",
+        "_fold": "?str"
+      }
+    },
+    "datatype:dill": {
+      "_path": "superduper.components.datatype.get_serializer",
+      "method": "dill",
+      "encodable": "artifact"
+    },
+    "913bc7838286b1f1fa6f4f90969bd9acf4dc205f": {
+      "_path": "superduper.components.datatype.Artifact",
+      "datatype": "?datatype:dill",
+      "uri": null,
+      "blob": "&:blob:913bc7838286b1f1fa6f4f90969bd9acf4dc205f"
+    },
+    "dataset:llm_finetuning": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?913bc7838286b1f1fa6f4f90969bd9acf4dc205f"
+    },
+    "table:sample_llm_finetuning": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_llm_finetuning/schema",
+      "primary_id": "id",
+      "data": "?dataset:llm_finetuning"
+    },
     "llm-finetune": {
       "_path": "superduper.components.template.Template",
       "upstream": null,
@@ -10,19 +57,19 @@
       "template": {
         "_base": "?llm",
         "_builds": {
-          "<var:collection>-select": {
+          "sample-llm-finetuning-select": {
             "_path": "superduper_mongodb.query.parse_query",
             "documents": [],
-            "query": "<var:collection>.select()"
+            "query": "<var:table_name>.select()"
           },
           "trainer:llm-finetune-trainer": {
             "_path": "superduper_transformers.training.LLMTrainer",
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.ready",
+            "status": null,
             "key": "text",
-            "select": "?<var:collection>-select",
+            "select": "?sample-llm-finetuning-select",
             "transform": null,
             "metric_values": {},
             "signature": "*args",
@@ -173,7 +220,7 @@
             "setup_chat_format": false,
             "log_to_db": true,
             "training_kwargs": {
-              "<var:collection>_text_field": "text"
+              "dataset_text_field": "text"
             },
             "num_gpus": null,
             "ray_configs": null
@@ -194,7 +241,7 @@
             "upstream": null,
             "plugins": null,
             "cache": true,
-            "status": "Status.initializing",
+            "status": null,
             "signature": "singleton",
             "datatype": null,
             "output_schema": null,
@@ -218,10 +265,11 @@
         }
       },
       "template_variables": [
-        "collection",
+        "table_name",
         "model_name",
         "use_lora",
-        "num_train_epochs"
+        "num_train_epochs",
+        "output_prefix"
       ],
       "types": {
         "collection": {
@@ -239,17 +287,21 @@
         "num_train_epochs": {
           "type": "int",
           "default": 3
+        },
+        "table_name": {
+          "type": "str",
+          "default": "sample_llm_finetuning"
         }
       },
       "blobs": null,
       "files": null,
-      "data": null,
       "requirements": null,
+      "default_table": "?table:sample_llm_finetuning",
+      "queries": null,
       "_literals": [
         "template"
       ]
     }
   },
-  "_blobs": {},
   "_files": {}
 }

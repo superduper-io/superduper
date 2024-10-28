@@ -1,16 +1,48 @@
 {
   "_base": "?rag",
   "_builds": {
-    "datatype:pickle": {
+    "str": {
+      "_path": "superduper.components.schema.FieldType"
+    },
+    "schema:sample_rag/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "fields": {
+        "txt": "?str",
+        "_fold": "?str"
+      }
+    },
+    "datatype:dill": {
       "_path": "superduper.components.datatype.get_serializer",
-      "method": "pickle",
+      "method": "dill",
       "encodable": "artifact"
     },
-    "2abbced0b779db61865b869a5a707c1114193b11": {
+    "e8f8096744f84888cf17483a0e29769062256c1d": {
       "_path": "superduper.components.datatype.Artifact",
-      "datatype": "?datatype:pickle",
+      "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
+      "blob": "&:blob:e8f8096744f84888cf17483a0e29769062256c1d"
+    },
+    "dataset:superduper-docs": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?e8f8096744f84888cf17483a0e29769062256c1d"
+    },
+    "table:sample_rag": {
+      "_path": "superduper.components.table.Table",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "schema": "?schema:sample_rag/schema",
+      "primary_id": "id",
+      "data": "?dataset:superduper-docs"
     },
     "rag": {
       "_path": "superduper.components.template.Template",
@@ -26,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "a10c50aef32e291aeadde1af7b4c5f32ef3db804": {
+          "0b56594dbbc66ce17a94374db7039775b4708b1c": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:a10c50aef32e291aeadde1af7b4c5f32ef3db804"
+            "blob": "&:blob:0b56594dbbc66ce17a94374db7039775b4708b1c"
           },
           "model:chunker": {
-            "_object": "?a10c50aef32e291aeadde1af7b4c5f32ef3db804",
+            "_object": "?0b56594dbbc66ce17a94374db7039775b4708b1c",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -108,11 +140,11 @@
               1024
             ]
           },
-          "6fe724d5828fab83ecf874150018a459a06f0ce4": {
+          "4437ddb05518fdd4004785ad91d65242c0a127f9": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:6fe724d5828fab83ecf874150018a459a06f0ce4"
+            "blob": "&:blob:4437ddb05518fdd4004785ad91d65242c0a127f9"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -141,7 +173,7 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?6fe724d5828fab83ecf874150018a459a06f0ce4"
+            "postprocess": "?4437ddb05518fdd4004785ad91d65242c0a127f9"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
@@ -331,8 +363,7 @@
         "llm_model",
         "embedding_model",
         "table_name",
-        "id_field",
-        "output_prefix"
+        "id_field"
       ],
       "types": {
         "id_field": {
@@ -359,17 +390,14 @@
         },
         "table_name": {
           "type": "str",
-          "default": "_sample_rag"
-        },
-        "output_prefix": {
-          "type": "str",
-          "default": "outputs__"
+          "default": "sample_rag"
         }
       },
       "blobs": null,
       "files": null,
-      "data": "?2abbced0b779db61865b869a5a707c1114193b11",
       "requirements": null,
+      "default_table": "?table:sample_rag",
+      "queries": null,
       "_literals": [
         "template"
       ]

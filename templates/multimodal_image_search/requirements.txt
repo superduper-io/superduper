@@ -1,2 +1,3 @@
-pip install git+https://github.com/openai/CLIP.git
+git+https://github.com/openai/CLIP.git
 -e ./plugins/torch
+-e ./plugins/pillow

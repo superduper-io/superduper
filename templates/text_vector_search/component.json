@@ -15,16 +15,24 @@
         "_fold": "?str"
       }
     },
-    "datatype:pickle": {
+    "datatype:dill": {
       "_path": "superduper.components.datatype.get_serializer",
-      "method": "pickle",
+      "method": "dill",
       "encodable": "artifact"
     },
-    "2abbced0b779db61865b869a5a707c1114193b11": {
+    "ab1417c5365dbbc692b8d9c6be9af59f7d17fbcd": {
       "_path": "superduper.components.datatype.Artifact",
-      "datatype": "?datatype:pickle",
+      "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:2abbced0b779db61865b869a5a707c1114193b11"
+      "blob": "&:blob:ab1417c5365dbbc692b8d9c6be9af59f7d17fbcd"
+    },
+    "dataset:superduper-docs": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "status": null,
+      "getter": "?ab1417c5365dbbc692b8d9c6be9af59f7d17fbcd"
     },
     "table:sample_text_vector_search": {
       "_path": "superduper.components.table.Table",
@@ -34,7 +42,7 @@
       "status": null,
       "schema": "?schema:sample_text_vector_search/schema",
       "primary_id": "id",
-      "data": "?2abbced0b779db61865b869a5a707c1114193b11"
+      "data": "?dataset:superduper-docs"
     },
     "query_template:vector_search": {
       "_path": "superduper.components.template.QueryTemplate",
@@ -70,10 +78,6 @@
           "type": "str",
           "default": "sample_text_vector_search"
         },
-        "output_prefix": {
-          "type": "str",
-          "default": "_outputs__"
-        },
         "data_backend": {
           "type": "mongodb",
           "choices": [
@@ -103,14 +107,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "cce2e9b3e021884810b3c313763de1669b102235": {
+          "ae86bc10a051f0f2d72122d621410e3280a2ea6e": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:cce2e9b3e021884810b3c313763de1669b102235"
+            "blob": "&:blob:ae86bc10a051f0f2d72122d621410e3280a2ea6e"
           },
           "model:chunk_model": {
-            "_object": "?cce2e9b3e021884810b3c313763de1669b102235",
+            "_object": "?ae86bc10a051f0f2d72122d621410e3280a2ea6e",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -128,10 +132,10 @@
             "trainer": null,
             "chunk_size": 200
           },
-          "var-table-name-select-var-id-field-x": {
+          "var-table-name-select": {
             "_path": "superduper_<var:data_backend>.query.parse_query",
             "documents": [],
-            "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
+            "query": "<var:table_name>.select()"
           },
           "listener:chunker_<var:table_name>": {
             "_path": "superduper.components.listener.Listener",
@@ -143,7 +147,7 @@
             "key": "x",
             "model": "?model:chunk_model",
             "predict_kwargs": {},
-            "select": "?var-table-name-select-var-id-field-x",
+            "select": "?var-table-name-select",
             "flatten": true
           },
           "datatype:sqlvector[1536]": {
@@ -185,11 +189,11 @@
               1024
             ]
           },
-          "70966ca6683007348be9fc71e5d4459fb66fb27c": {
+          "1f5253f1e85147807ea1fbd45124f598774024f5": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:70966ca6683007348be9fc71e5d4459fb66fb27c"
+            "blob": "&:blob:1f5253f1e85147807ea1fbd45124f598774024f5"
           },
           "model:sentence-transformers-embedding": {
             "_path": "superduper_sentence_transformers.model.SentenceTransformer",
@@ -218,7 +222,7 @@
             "trainer": null,
             "model": "BAAI/bge-small-en",
             "preprocess": null,
-            "postprocess": "?70966ca6683007348be9fc71e5d4459fb66fb27c"
+            "postprocess": "?1f5253f1e85147807ea1fbd45124f598774024f5"
           },
           "model:embedding": {
             "_path": "superduper.components.model.ModelRouter",
@@ -297,14 +301,9 @@
       "template_variables": [
         "embedding_model",
         "table_name",
-        "output_prefix",
         "data_backend"
       ],
       "types": {
-        "id_field": {
-          "type": "str",
-          "default": "_id"
-        },
         "embedding_model": {
           "type": "str",
           "choices": [
@@ -316,10 +315,6 @@
         "table_name": {
           "type": "str",
           "default": "sample_text_vector_search"
-        },
-        "output_prefix": {
-          "type": "str",
-          "default": "_outputs__"
         },
         "data_backend": {
           "type": "mongodb",

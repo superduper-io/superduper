@@ -1,0 +1,134 @@
+name: Template Testing
+
+on:
+  pull_request:
+    branches:
+      - main
+      - '[0-9]+.[0-9]+'
+    paths: # Paths that may affect code quality
+
+concurrency:
+  group: ${{ github.ref }}-template
+  cancel-in-progress: true
+
+jobs:
+  template_update_check:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.final_output.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup conditions based on branch
+        id: setup
+        run: |
+          if [[ "${{ github.base_ref }}" == "main" ]]; then
+            echo "mode=changed" >> $GITHUB_ENV
+          else
+            echo "mode=all" >> $GITHUB_ENV
+          fi
+
+      - name: Get changed templates
+        if: env.mode == 'changed'
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v44
+
+      - name: Filter changed templates and set output
+        if: env.mode == 'changed'
+        id: set-matrix-1
+        run: |
+          IFS=$'\n'
+          changed_files=(${{ steps.changed-files-specific.outputs.all_changed_files }})
+          declare -A template_set
+          for file in "${changed_files[@]}"; do
+            if [[ "$file" =~ ^templates/ ]]; then
+              template_name=$(echo "$file" | cut -d '/' -f 2)
+              template_set[$template_name]=1
+            fi
+          done
+          templates=("${!template_set[@]}")
+          matrix_json=$(printf '%s\n' "${templates[@]}" | jq -R -s -c '{template: split("\n")[:-1]}')
+          echo "matrix_json=$matrix_json"
+          echo "Changed templates: ${templates[*]}"
+          echo "matrix_json: $matrix_json"
+          echo "matrix_json=$matrix_json" >> $GITHUB_ENV
+
+      - name: Get all templates to test
+        if: env.mode == 'all'
+        id: set-matrix-2
+        run: |
+          IFS=$'\n'
+          # List directories only under 'templates/' and create an array
+          changed_templates=($(find templates/ -maxdepth 1 -mindepth 1 -type d -exec basename {} \;))
+          echo "Here are the changed templates:"
+          echo "${changed_templates[@]}"
+          declare -A template_set
+
+          # Loop through the array to populate another associative array to ensure uniqueness
+          for file in "${changed_templates[@]}"; do
+            template_set[$file]=1
+          done
+
+          # Create an array from the associative array's keys
+          templates=("${!template_set[@]}")
+          echo "All templates: ${templates[*]}"
+
+          # Create JSON array from the list of templates
+          matrix_json=$(printf '%s\n' "${templates[@]}" | jq -R -s -c '{template: split("\n")[:-1]}')
+          echo "matrix_json=$matrix_json"
+
+          echo "matrix_json: $matrix_json"
+          echo "matrix_json=$matrix_json" >> $GITHUB_ENV
+
+
+      - name: Set job output
+        id: final_output
+        run: |
+          echo "::set-output name=matrix::$matrix_json"
+
+  test_template:
+    needs: template_update_check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.template_update_check.outputs.matrix)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Pip Packages
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Cache Python Installation
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ matrix.template }}_${{ hashFiles('pyproject.toml', 'templates/${{ matrix.template }}/requirements.txt') }}
+
+      - name: Install Superduper Project
+        run: |
+          # Install core and testsuite dependencies on the cached python environment.
+          python -m pip install '.[test]'
+          python -m pip install -e plugins/mongodb
+
+      - name: Install template requirements
+        run: |
+          echo "Installing local template dependencies..."
+          python -m pip install -r "templates/${{ matrix.template }}/requirements.txt"
+          if [ -e "templates/${{ matrix.template }}/install.sh" ]; then
+            bash templates/${{ matrix.template }}/install.sh
+          fi
+
+      - name: Template testing
+        run: |
+          export SUPERDUPER_TEMPLATE=${{ matrix.template }}
+          export SUPERDUPER_DATA_BACKEND='mongomock://test_db'
+          pytest test/integration/template/test_template.py -s
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

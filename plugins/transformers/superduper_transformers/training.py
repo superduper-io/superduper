@@ -4,13 +4,6 @@ import typing as t
 from copy import deepcopy
 from functools import wraps
 
-from superduper.misc.annotations import requires_packages
-
-_, requirements = requires_packages(
-    ['peft', '0.10.0', None],
-    ['trl', '0.8.0', None],
-)
-
 import torch
 import transformers
 from datasets import Dataset as NativeDataset

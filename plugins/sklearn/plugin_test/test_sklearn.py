@@ -69,7 +69,7 @@ class TestPipeline:
                 select=data_in_db["documents"].select(),
             ),
         )
-        _ = data_in_db.apply(pipeline)
+        _ = data_in_db.apply(pipeline, force=True)
 
         r = next(data_in_db['documents'].select().limit(1).execute())
         reloaded = data_in_db.load(type_id="model", identifier="my-svc")
@@ -105,7 +105,7 @@ def test_sklearn(db):
         object=SVC(),
     )
     assert 'object' in m.artifact_schema.fields
-    db.apply(m)
+    db.apply(m, force=True)
     assert db.show('model') == ['test']
 
     reloaded = db.load(type_id='model', identifier='test')

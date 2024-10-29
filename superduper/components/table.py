@@ -69,4 +69,5 @@ class Table(Component):
             data = self.data.data
         else:
             data = self.data
-        self.db[self.identifier].insert(data).execute()
+        if data:
+            self.db[self.identifier].insert(data).execute()

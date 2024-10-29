@@ -102,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the ordering and sequencing of jobs initiated on `db.apply`
 - Fix rest routes with db injection and prefix.
 - Fix cluster db setter.
+- Fix decode function
 
 ## [0.3.0](https://github.com/superduper-io/superduper/compare/0.3.0...0.2.0])    (2024-Jun-21)
 

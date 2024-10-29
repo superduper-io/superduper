@@ -1,6 +1,7 @@
 from superduper.backends.base.crontab import CrontabBackend
 
 
+# TODO: implement this
 class LocalCrontabBackend(CrontabBackend):
     """Local crontab backend."""
 
@@ -20,7 +21,7 @@ class LocalCrontabBackend(CrontabBackend):
 
     def list_uuids(self):
         """List UUIDs of components."""
-        raise NotImplementedError
+        return []
 
     def drop(self):
         """Drop the crontab."""

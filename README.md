@@ -47,6 +47,8 @@ Using Superduper is simply "**CAPE**": **Connect** to your data, **apply** arbit
 - **Package**
 - **Execute**
 
+<img src="https://github.com/superduper-io/superduper/blob/main/img/apply.gif" alt="Alt text for the image" style="width: 100%;">
+
 **Connect**
 
 ```python

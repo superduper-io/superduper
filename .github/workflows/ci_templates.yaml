@@ -86,9 +86,12 @@ jobs:
         id: final_output
         run: |
           echo "::set-output name=matrix::$matrix_json"
+          echo "::set-output name=templates_exist::$TEMPLATES_EXIST"
+
 
   test_template:
     needs: template_update_check
+    if: needs.template_update_check.outputs.templates_exist != '0'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

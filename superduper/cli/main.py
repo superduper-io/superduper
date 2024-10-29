@@ -35,6 +35,9 @@ def start(
     """
     from superduper.rest.base import SuperDuperApp
     from superduper.rest.build import build_frontend, build_rest_app
+    from superduper import CFG
+
+    CFG.log_colorize = False
 
     app = SuperDuperApp('rest', port=remote_port, data_backend=data_backend)
 

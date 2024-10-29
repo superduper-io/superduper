@@ -204,7 +204,10 @@ class SuperDuperApp:
             sys.path.append('./')
             if self._db is None:
                 if self.data_backend:
-                    db = build_datalayer(cfg, data_backend=self.data_backend)
+                    db = build_datalayer(
+                        cfg,
+                        data_backend=self.data_backend,
+                    )
                 else:
                     db = build_datalayer(cfg)
             else:

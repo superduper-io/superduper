@@ -176,7 +176,7 @@ class Config(BaseConfig):
 
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
-    log_colorize: bool = True
+    log_colorize: bool = False
 
     force_apply: bool = False
 

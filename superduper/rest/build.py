@@ -181,7 +181,7 @@ def build_rest_app(app: SuperDuperApp):
 
     @app.add('/db/apply', method='post')
     def db_apply(
-        info: t.Dict, id: str | None = None, db: 'Datalayer' = DatalayerDependency()
+        info: t.Dict, id: str | None = 'test', db: 'Datalayer' = DatalayerDependency()
     ):
         if id:
             log_file = f"/tmp/{id}.log"

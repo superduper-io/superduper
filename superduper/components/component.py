@@ -559,7 +559,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         if self.cache:
             logging.info(f'Adding {self.type_id}: {self.identifier} to cache')
             cluster.cache.put(self)
-            cluster.compute.put(self)
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store.

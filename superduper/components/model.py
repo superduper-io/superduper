@@ -372,6 +372,7 @@ class Model(Component, metaclass=ModelMeta):
                   ``compute_kwargs`` on a distributed cluster.
     :param trainer: `Trainer` instance to use for training.
     :param example: An example to auto-determine the schema/ datatype.
+    :param deploy: Creates a standalone class instance on compute cluster.
     """
 
     type_id: t.ClassVar[str] = 'model'
@@ -387,6 +388,7 @@ class Model(Component, metaclass=ModelMeta):
     serve: bool = False
     trainer: t.Optional[Trainer] = None
     example: dc.InitVar[t.Any | None] = None
+    deploy: bool = False
 
     def __post_init__(self, db, artifacts, example):
         super().__post_init__(db, artifacts)
@@ -407,7 +409,9 @@ class Model(Component, metaclass=ModelMeta):
 
     def declare_component(self, cluster):
         """Declare model on compute."""
-        cluster.compute.put(self)
+        super().declare_component(cluster)
+        if self.deploy or self.serve:
+            cluster.compute.put(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:

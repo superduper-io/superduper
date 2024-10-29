@@ -67,6 +67,9 @@ class LocalComputeBackend(ComputeBackend):
         self.db.metadata.update_job(job.identifier, 'status', 'running')
 
         try:
+            logging.debug(
+                f'Running job {job.job_id}: {component.identifier}.{job.method}'
+            )
             method = getattr(component, job.method)
             output = method(*args, **kwargs)
         except Exception as e:

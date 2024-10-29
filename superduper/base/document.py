@@ -569,7 +569,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     for other in keys:
         import re
 
-        matches = re.findall(f'.*\?\(({k}\..*)\)', other)
+        matches = re.findall(f'.*\?\(({k}\..*?)\)', other)
         old_other = other[:]
         if matches:
             for match in matches:

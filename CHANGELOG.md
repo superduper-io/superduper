@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix existing templates
 - Add optional data insert to `Table`
 - Make Lance vector searcher as plugin.
+- Remove job dependencies from job metadata
 
 #### New Features & Functionality
 
@@ -77,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated llm_finetuning template
 - Add sql table length exceed limit and uuid truncation.
 - Add ci workflow to test templates
+- Add deploy flag in model.
 
 #### Bug Fixes
 

@@ -17,6 +17,7 @@ class Event(ABC):
         _base_dict = dc.asdict(self)
         if 'time' in _base_dict:
             _base_dict['time'] = str(_base_dict['time'])
+        _base_dict.pop('dependencies', None)
         return {
             **_base_dict,
             'genus': self.genus,

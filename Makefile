@@ -21,18 +21,20 @@ help: ## Display this help
 # Release a new version of superduper.io
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
+PARENT=$(shell python -c "import sys; print('.'.join(sys.argv[1].split('.')[:-1]))" $$(cat VERSION))
 CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
 
 new_release: ## Release a new version of superduper.io
 	@python3 superduper/misc/release_tools.py
+	@echo "** Releasing a version to $(PARENT) parent version"
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)
 	@echo "** Commit Bump Version and Tags"
 	@git commit -m "Bump Version $(RELEASE_VERSION)" --amend
 	@git tag $(RELEASE_VERSION)
-	git push origin release-$(RELEASE_VERSION)
-	git push origin $(RELEASE_VERSION)
+	git push upstream release-$(RELEASE_VERSION)
+	@echo "Now make a pull request to the $(RELEASE_VERSION)"
 
 TEMPLATES ?= '*'
 

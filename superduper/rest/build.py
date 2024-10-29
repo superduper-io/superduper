@@ -186,10 +186,7 @@ def build_rest_app(app: SuperDuperApp):
         if id:
             log_file = f"/tmp/{id}.log"
             with redirect_stdout_to_file(log_file):
-                try:
-                    out = _process_db_apply(db, info)
-                finally:
-                    os.remove(log_file)
+                out = _process_db_apply(db, info)
         else:
             out = _process_db_apply(db, info)
         return out
@@ -211,6 +208,7 @@ def build_rest_app(app: SuperDuperApp):
                 yield line
                 if '[DONE]' in line:
                     process.terminate()
+                    os.remove(filename)
                     return
         except KeyboardInterrupt:
             process.terminate()

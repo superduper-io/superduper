@@ -37,24 +37,6 @@ class BaseException(Exception):
         return self.msg
 
 
-class RequiredPackageVersionsNotFound(ImportError):
-    """
-    Exception raised when one or more required packages are not found.
-
-    :param args: *args for ImportError
-    :param kwargs: **kwargs for ImportError
-    """
-
-
-class RequiredPackageVersionsWarning(ImportWarning):
-    """
-    Exception raised when one or more required packages are not found.
-
-    :param args: *args for ImportWarning
-    :param kwargs: **kwargs for ImportWarning
-    """
-
-
 class ServiceRequestException(BaseException):
     """ServiceRequestException.
 

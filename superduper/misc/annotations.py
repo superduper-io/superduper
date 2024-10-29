@@ -11,7 +11,6 @@ from typing import Optional
 from packaging import version
 
 from superduper import logging
-from superduper.base.exceptions import RequiredPackageVersionsNotFound
 
 
 def _normalize_module(import_module, lower_bound, upper_bound, install_module):
@@ -58,52 +57,6 @@ def _compare_versions(package, lower_bound, upper_bound, install_name):
     if not (lower_bound <= got_version and got_version <= upper_bound):
         return False, installation_line + f'    # (got {got_version})'
     return True, installation_line
-
-
-def requires_packages(*packages, warn=False):
-    """Require the packages to be installed.
-
-    :param packages: list of tuples of packages
-                     each tuple of the form
-                     (import_name, lower_bound/None,
-                      upper_bound/None, install_name/None)
-    :param warn: if True, warn instead of raising an exception
-
-    E.g. ('sklearn', '0.1.0', '0.2.0', 'scikit-learn')
-    """
-    from superduper import REQUIRES
-
-    out = []
-    all = []
-    for m in packages:
-        satisfactory, install_line = _requires_packages(*m)
-        if not satisfactory:
-            out.append(install_line)
-        all.append(install_line)
-    if out:
-        if warn:
-            warnings.warn('\n' + '\n'.join(out))
-        else:
-            raise RequiredPackageVersionsNotFound('\n' + '\n'.join(out))
-    REQUIRES.extend(all)
-    return out, all
-
-
-def _requires_packages(
-    import_module, lower_bound=None, upper_bound=None, install_module=None
-):
-    """Compare the versions of the required packages.
-
-    A utility function to check that a required package for a module
-    in superduper.ext is installed.
-    """
-    import_module, lower_bound, upper_bound, install_module = _normalize_module(
-        import_module,
-        lower_bound,
-        upper_bound,
-        install_module,
-    )
-    return _compare_versions(import_module, lower_bound, upper_bound, install_module)
 
 
 def deprecated(f):

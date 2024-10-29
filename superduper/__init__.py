@@ -33,7 +33,6 @@ from .components.schema import Schema
 from .components.table import Table
 from .components.template import QueryTemplate, Template
 from .components.vector_index import VectorIndex, vector
-from .misc.annotations import requires_packages
 
 REQUIRES = [
     'superduper=={}'.format(__version__),
@@ -67,7 +66,6 @@ __all__ = (
     'QueryTemplate',
     'Application',
     'Component',
-    'requires_packages',
     'pickle_serializer',
     'dill_serializer',
     'templates',

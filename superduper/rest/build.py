@@ -12,7 +12,7 @@ try:
     import magic
 except ImportError:
     magic = None
-from fastapi import File, Response
+from fastapi import BackgroundTasks, File, Response
 from fastapi.responses import JSONResponse
 
 from superduper import logging
@@ -158,7 +158,10 @@ def build_rest_app(app: SuperDuperApp):
         os.remove(log_file)
         return {'status': 'ok'}
 
-    def _process_db_apply(db, info):
+    def _process_db_apply(db, component):
+        db.apply(component, force=True)
+
+    def _process_apply_info(db, info):
         if '_variables' in info:
             assert {'_variables', 'identifier'}.issubset(info.keys())
             variables = info.pop('_variables')
@@ -177,25 +180,28 @@ def build_rest_app(app: SuperDuperApp):
                 db=db,
                 **variables,
             )
-            db.apply(component, force=True)
-            return {'status': 'ok'}
+            return component
         component = Document.decode(info, db=db).unpack()
         # TODO this shouldn't be necessary to do twice
         component.unpack()
-        db.apply(component, force=True)
-        return {'status': 'ok'}
+        return component
 
     @app.add('/db/apply', method='post')
-    def db_apply(
-        info: t.Dict, id: str | None = 'test', db: 'Datalayer' = DatalayerDependency()
+    async def db_apply(
+        info: t.Dict,
+        background_tasks: BackgroundTasks,
+        id: str | None = 'test',
+        db: 'Datalayer' = DatalayerDependency(),
     ):
         if id:
             log_file = f"/tmp/{id}.log"
             with redirect_stdout_to_file(log_file):
-                out = _process_db_apply(db, info)
+                component = _process_apply_info(db, info)
+                background_tasks.add_task(_process_db_apply, db, component)
         else:
-            out = _process_db_apply(db, info)
-        return out
+            component = _process_apply_info(db, info)
+            background_tasks.add_task(_process_db_apply, db, component)
+        return {'status': 'ok'}
 
     import subprocess
     import time

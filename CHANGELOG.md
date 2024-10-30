@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add sql table length exceed limit and uuid truncation.
 - Add ci workflow to test templates
 - Add deploy flag in model.
+- Modify the apply endpoint in the REST API to an asynchronous interface.
 
 #### Bug Fixes
 

@@ -24,11 +24,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "913bc7838286b1f1fa6f4f90969bd9acf4dc205f": {
+    "a026ecb590e04810d1e0f9d4ef7195e74c3614c3": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:913bc7838286b1f1fa6f4f90969bd9acf4dc205f"
+      "blob": "&:blob:a026ecb590e04810d1e0f9d4ef7195e74c3614c3"
     },
     "dataset:llm_finetuning": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -36,7 +36,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?913bc7838286b1f1fa6f4f90969bd9acf4dc205f"
+      "getter": "?a026ecb590e04810d1e0f9d4ef7195e74c3614c3"
     },
     "table:sample_llm_finetuning": {
       "_path": "superduper.components.table.Table",
@@ -236,7 +236,7 @@
             "uri": null,
             "blob": "&:blob:4a8dc14137b3a79a81256a795b266fe82bda52d9"
           },
-          "llm": {
+          "model:llm": {
             "_path": "superduper_transformers.model.LLM",
             "upstream": null,
             "plugins": null,
@@ -253,6 +253,7 @@
             "num_workers": 0,
             "serve": false,
             "trainer": "?trainer:llm-finetune-trainer",
+            "deploy": false,
             "prompt": "{input}",
             "prompt_func": null,
             "max_batch_size": 4,
@@ -261,6 +262,21 @@
             "model_kwargs": "?4a8dc14137b3a79a81256a795b266fe82bda52d9",
             "tokenizer_kwargs": "?4a8dc14137b3a79a81256a795b266fe82bda52d9",
             "prompt_template": "{input}"
+          },
+          "llm": {
+            "_path": "superduper.components.application.Application",
+            "upstream": null,
+            "plugins": null,
+            "cache": true,
+            "status": null,
+            "components": [
+              "?model:llm"
+            ],
+            "namespace": null,
+            "link": null,
+            "_literals": [
+              "template"
+            ]
           }
         }
       },
@@ -268,8 +284,7 @@
         "table_name",
         "model_name",
         "use_lora",
-        "num_train_epochs",
-        "output_prefix"
+        "num_train_epochs"
       ],
       "types": {
         "collection": {

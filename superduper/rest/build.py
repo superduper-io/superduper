@@ -8,7 +8,10 @@ import typing as t
 import zipfile
 from contextlib import contextmanager
 
-import magic
+try:
+    import magic
+except ImportError:
+    magic = None
 from fastapi import File, Response
 from fastapi.responses import JSONResponse
 
@@ -96,7 +99,10 @@ def build_rest_app(app: SuperDuperApp):
         file_id: str, db: 'Datalayer' = DatalayerDependency()
     ):
         bytes = db.artifact_store.get_bytes(file_id=file_id)
-        media_type = magic.from_buffer(bytes, mime=True)
+        if magic is not None:
+            media_type = magic.from_buffer(bytes, mime=True)
+        else:
+            media_type = None
         return Response(content=bytes, media_type=media_type)
 
     @app.add("/db/upload", method="put")

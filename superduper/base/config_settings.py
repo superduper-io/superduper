@@ -11,12 +11,17 @@ from .config import _dataclass_from_dict
 
 File = t.Union[Path, str]
 
+HOME = os.environ.get('HOME')
+
 PREFIX = 'SUPERDUPER_'
 CONFIG_FILE = os.environ.get('SUPERDUPER_CONFIG')
 USER_CONFIG: str = (
     str(Path(CONFIG_FILE).expanduser())
     if CONFIG_FILE
-    else f'{os.environ["HOME"]}/.superduper/config.yaml'
+    else (
+        f'{HOME}/.superduper/config.yaml' if HOME
+        else None
+    )
 )
 PREFIX = 'SUPERDUPER_'
 ROOT = Path(__file__).parents[2]

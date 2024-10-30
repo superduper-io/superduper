@@ -76,6 +76,9 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: plugins/${{ matrix.plugin }}/dist/
 
+      - name: Remove unwanted files from dist
+        run: rm -f plugins/${{ matrix.plugin }}/dist/*.attestation
+
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: plugins/${{ matrix.plugin }}/dist/

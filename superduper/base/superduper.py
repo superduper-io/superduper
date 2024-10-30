@@ -7,12 +7,9 @@ __all__ = ('superduper',)
 
 
 def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
-    """Superduper API to automatically wrap an object to a db or a component.
+    """Superduper API to automatically wrap a URI to a `data_backend`.
 
-    Attempts to automatically wrap an item in a superduper.ioponent by
-    using duck typing to recognize it.
-
-    :param item: A database or model
+    :param item: URI
     :param kwargs: Additional keyword arguments to pass to the component
     """
     if item is None:
@@ -99,6 +96,7 @@ class _DuckTyper:
         _DuckTyper._DUCK_TYPES.append(cls)
 
 
+# TODO not needed
 class MongoDbTyper(_DuckTyper):
     """A DuckTyper for MongoDB databases.
 
@@ -172,6 +170,7 @@ class SklearnTyper(_DuckTyper):
         return Estimator(object=item, **kwargs)
 
 
+# TODO remove
 class TorchTyper(_DuckTyper):
     """A DuckTyper for torch.nn.Module and torch.jit.ScriptModule.
 

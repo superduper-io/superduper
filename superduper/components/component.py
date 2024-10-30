@@ -132,6 +132,7 @@ class Component(Leaf, metaclass=ComponentMeta):
     :param status: What part of the lifecycle the component is in.
     """
 
+    breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     type_id: t.ClassVar[str] = 'component'
     # TODO is this used for anything?

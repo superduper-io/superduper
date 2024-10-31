@@ -49,7 +49,10 @@ def redirect_stdout_to_file(file_path: str):
     """Context manager to redirect stdout to a specified file temporarily."""
     original_stdout = sys.stdout
     try:
-        with open(file_path, 'w', buffering=1) as f:
+        mode = 'w'
+        if os.path.exists(file_path):
+            mode = 'a'
+        with open(file_path, mode, buffering=1) as f:
             sys.stdout = Tee(original_stdout, f)
             yield
     finally:
@@ -158,8 +161,13 @@ def build_rest_app(app: SuperDuperApp):
         os.remove(log_file)
         return {'status': 'ok'}
 
-    def _process_db_apply(db, component):
-        db.apply(component, force=True)
+    def _process_db_apply(db, component, id: str | None = None):
+        if id:
+            log_file = f"/tmp/{id}.log"
+            with redirect_stdout_to_file(log_file):
+                db.apply(component, force=True)
+        else:
+            db.apply(component, force=True)
 
     def _process_apply_info(db, info):
         if '_variables' in info:
@@ -193,14 +201,8 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
-        if id:
-            log_file = f"/tmp/{id}.log"
-            with redirect_stdout_to_file(log_file):
-                component = _process_apply_info(db, info)
-                background_tasks.add_task(_process_db_apply, db, component)
-        else:
-            component = _process_apply_info(db, info)
-            background_tasks.add_task(_process_db_apply, db, component)
+        component = _process_apply_info(db, info)
+        background_tasks.add_task(_process_db_apply, db, component, id)
         return {'status': 'ok'}
 
     import subprocess

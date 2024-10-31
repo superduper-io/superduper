@@ -20,11 +20,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "60ca8cae14f69a82da08cb69135b087ad78d5203": {
+    "b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:60ca8cae14f69a82da08cb69135b087ad78d5203"
+      "blob": "&:blob:b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -32,7 +32,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?60ca8cae14f69a82da08cb69135b087ad78d5203"
+      "getter": "?b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
@@ -58,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "039aed30ddb0b6d251775302b5055579eec0c7f8": {
+          "ed427a7bd46cc39e185686807cc11c799df8ec75": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:039aed30ddb0b6d251775302b5055579eec0c7f8"
+            "blob": "&:blob:ed427a7bd46cc39e185686807cc11c799df8ec75"
           },
           "model:chunker": {
-            "_object": "?039aed30ddb0b6d251775302b5055579eec0c7f8",
+            "_object": "?ed427a7bd46cc39e185686807cc11c799df8ec75",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -108,7 +108,7 @@
               1536
             ]
           },
-          "model:text-embedding-ada-002": {
+          "model:<var:embedding_model>": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
             "upstream": null,
             "plugins": null,
@@ -126,11 +126,14 @@
             "serve": false,
             "trainer": null,
             "deploy": false,
-            "model": "text-embedding-ada-002",
+            "model": "<var:embedding_model>",
             "max_batch_size": 8,
             "openai_api_key": null,
             "openai_api_base": null,
-            "client_kwargs": {},
+            "client_kwargs": {
+              "base_url": "<var:base_url>",
+              "api_key": "<var:api_key>"
+            },
             "shape": [
               1536
             ],
@@ -152,7 +155,7 @@
             "status": null,
             "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
-            "model": "?model:text-embedding-ada-002",
+            "model": "?model:<var:embedding_model>",
             "predict_kwargs": {},
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)",
             "flatten": false
@@ -178,7 +181,7 @@
             ],
             "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select().like(documents[0], vector_index=\"vectorindex\", n=5)"
           },
-          "model:llm-openai-2": {
+          "model:llm-model": {
             "_path": "superduper_openai.model.OpenAIChatCompletion",
             "upstream": null,
             "plugins": null,
@@ -196,11 +199,14 @@
             "serve": false,
             "trainer": null,
             "deploy": false,
-            "model": "gpt-4-turbo",
+            "model": "<var:llm_model>",
             "max_batch_size": 8,
             "openai_api_key": null,
             "openai_api_base": null,
-            "client_kwargs": {},
+            "client_kwargs": {
+              "base_url": "<var:base_url>",
+              "api_key": "<var:api_key>"
+            },
             "batch_size": 1,
             "prompt": ""
           },
@@ -225,7 +231,7 @@
             "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question\n\n{context}\n\nHere's the question: {query}",
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
-            "llm": "?model:llm-openai-2"
+            "llm": "?model:llm-model"
           },
           "simple-rag-app": {
             "_path": "superduper.components.application.Application",
@@ -249,30 +255,24 @@
       "template_variables": [
         "table_name",
         "id_field",
-        "databackend"
+        "databackend",
+        "base_url",
+        "api_key",
+        "embedding_model",
+        "llm_model"
       ],
       "types": {
         "id_field": {
           "type": "str",
           "default": "_id"
         },
-        "llm_model": {
-          "type": "str",
-          "choices": [
-            "openai",
-            "anthropic",
-            "vllm",
-            "llamacpp"
-          ],
-          "default": "openai"
-        },
         "embedding_model": {
           "type": "str",
-          "choices": [
-            "openai",
-            "sentence_transformers"
-          ],
-          "default": "openai"
+          "default": "text-embedding-ada-002"
+        },
+        "llm_model": {
+          "type": "str",
+          "default": "gpt-3.5-turbo"
         },
         "table_name": {
           "type": "str",
@@ -281,6 +281,16 @@
         "databackend": {
           "type": "str",
           "default": "mongodb"
+        },
+        "base_url": {
+          "type": "str",
+          "optional": true,
+          "default": null
+        },
+        "api_key": {
+          "type": "str",
+          "optional": true,
+          "default": "ollama"
         }
       },
       "blobs": null,

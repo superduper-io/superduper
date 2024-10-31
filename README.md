@@ -188,6 +188,8 @@ pip install superduper-framework
 
 **Connect** and **apply** a pre-built template:
 
+(***Note:*** *the pre-built templates are only supported by Python 3.10; you may use all of the other features in Python 3.11+.*)
+
 ```bash
 git clone https://github.com/superduper-io/superduper && cd superduper
 superduper apply templates/retrieval_augmented_generation.zip 'mongodb://localhost:27017/test_db' data=docu

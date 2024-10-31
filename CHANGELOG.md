@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes Since Last Release 
 
-#### Changed defaults / behaviours 
+#### Changed defaults / behaviours
 
 - Change images docker superduper/<image> to superduperio/<image> 
 - Change the image's user from `/home/superduperdb` to `/home/superduper`

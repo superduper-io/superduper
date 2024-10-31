@@ -47,7 +47,9 @@ Using Superduper is simply "**CAPE**": **Connect** to your data, **apply** arbit
 - **Package**
 - **Execute**
 
-<img src="https://github.com/superduper-io/superduper/blob/main/img/apply.gif" alt="Alt text for the image" style="width: 100%;">
+**Watch this video for a quick-start walkthrough!**
+
+[![Watch the video](https://img.youtube.com/vi/9rA0dGmK2-s/maxresdefault.jpg)](https://www.youtube.com/watch?v=9rA0dGmK2-s)
 
 **Connect**
 
@@ -79,23 +81,23 @@ query.execute()
 
 Superduper may be run anywhere; you can also [contact us](https://superduper.io/contact) to learn more about the enterprise platform for bringing your Superduper workflows to production at scale. 
 
-## What's new in the `main` branch?
+## What's new in `0.4.0`?
 
 We are working on an upcoming release of `0.4.0`. In this release we have:
 
-### Revamped how `Component` triggers initial computations and data dependent computations using `@trigger`
+#### Revamped how `Component` triggers initial computations and data dependent computations using `@trigger`
 
 This will enable a large diversity of `Component` types in addition to the well established `Model`, `Listener`, `VectorIndex`.
 
-### Created a general `CDC` (change-data-capture) base class
+#### Created a general `CDC` (change-data-capture) base class
 
 This will allow developers to create a range of functionality which reacts to incoming data changes
 
-### Developed the concept of `Template` to enable re-usable units of complete functionality
+#### Developed the concept of `Template` to enable re-usable units of complete functionality
 
 Components saved as `Template` instances, will allow users to easily redeploy their already deployed and tested `Component` and `Application` implementations, on alternative data sources, and with key parameters toggled to cater to operational requirements.
 
-### Added concrete `Template` implementations to the project
+#### Added concrete `Template` implementations to the project
 
 These `Template` instances may be applied with Superduper with a simple single command
 
@@ -113,7 +115,7 @@ app = template(variable_1='value_1', variable_2='value_2', ...)
 db.apply(app)
 ```
 
-### Added a user interface and new REST implementation
+#### Added a user interface and new REST implementation
 
 Now you may view your `Component`, `Application` and `Template` instances in the user-interface, and execute queries using `QueryTemplate` instances, directly against the REST server.
 

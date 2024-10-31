@@ -9,13 +9,13 @@ from . import command
 
 
 @command(help='Apply a template or application to a `superduper` deployment')
-def apply(name: str, variables: str | None = None):
+def apply(name: str, variables: str | None = None, data_backend: str | None = None):
     """Apply a serialized component.
 
     :param name: Path or name of the template/ component.
     :param values: JSON string of values to apply to the template.
     """
-    _apply(name, variables)
+    _apply(name, variables, data_backend=data_backend)
 
 
 @command(help='Start rest server and user interface')

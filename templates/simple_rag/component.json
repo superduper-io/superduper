@@ -20,11 +20,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5": {
+    "e33fc324e963b1fe6be2060591af6527e89648ae": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
+      "blob": "&:blob:e33fc324e963b1fe6be2060591af6527e89648ae"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -32,7 +32,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
+      "getter": "?e33fc324e963b1fe6be2060591af6527e89648ae"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
@@ -58,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "ed427a7bd46cc39e185686807cc11c799df8ec75": {
+          "52281f61975ecbaa4fe61eccb6855367aa9bd4d2": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:ed427a7bd46cc39e185686807cc11c799df8ec75"
+            "blob": "&:blob:52281f61975ecbaa4fe61eccb6855367aa9bd4d2"
           },
           "model:chunker": {
-            "_object": "?ed427a7bd46cc39e185686807cc11c799df8ec75",
+            "_object": "?52281f61975ecbaa4fe61eccb6855367aa9bd4d2",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -205,7 +205,7 @@
             "openai_api_base": null,
             "client_kwargs": {
               "base_url": "<var:base_url>",
-              "api_key": "<var:api_key>"
+              "api_key": "<var:api_key>" 
             },
             "batch_size": 1,
             "prompt": ""
@@ -290,7 +290,7 @@
         "api_key": {
           "type": "str",
           "optional": true,
-          "default": "ollama"
+          "default": null
         }
       },
       "blobs": null,

@@ -8,7 +8,7 @@
   </a>
 </div>
 <div align="center">
-  <h1>Build end-to-end AI-data workflows and applications with your favourite database</h1>
+  <h1>Build end-to-end AI-data workflows and applications with your favourite tools</h1>
 </div>
 
 

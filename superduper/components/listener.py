@@ -247,23 +247,6 @@ class Listener(CDC):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
 
-    # TODO remove
-    @property
-    def outputs_key(self):
-        """Model outputs key."""
-        logging.warn(
-            (
-                "listener.outputs_key is deprecated and will be removed"
-                "in a future release. Please use listener.outputs instead."
-            )
-        )
-        return self.outputs
-
-    @property
-    def outputs_select(self):
-        """Get select statement for outputs."""
-        return self.db[self.select.table].select().outputs(self.predict_id)
-
     @property
     def dependencies(self):
         """Listener model dependencies."""

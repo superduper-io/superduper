@@ -58,7 +58,7 @@ def test_basic_template(db):
     primary_id = db['documents'].primary_id
     r = db['documents'].select(primary_id, 'y').outputs(listener.predict_id).execute()
     r = Document(list(r)[0].unpack())
-    assert r[listener.outputs_key] == r['y'] + 2
+    assert r[listener.outputs] == r['y'] + 2
 
 
 def test_template_export(db):
@@ -109,7 +109,7 @@ def test_template_export(db):
             .execute()
         )
         r = Document(list(r)[0].unpack())
-        assert r[listener.outputs_key] == r['y'] + 2
+        assert r[listener.outputs] == r['y'] + 2
 
 
 def test_from_template(db):

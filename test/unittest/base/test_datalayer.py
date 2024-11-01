@@ -9,6 +9,7 @@ import pytest
 
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
+from superduper.base.leaf import imported_value
 from superduper.components.component import Component
 from superduper.components.dataset import Dataset
 from superduper.components.datatype import (
@@ -39,8 +40,10 @@ mongodb_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml'
 
 @dc.dataclass(kw_only=True)
 class TestComponent(Component):
+    breaks: ClassVar[Sequence] = ('inc',)
     _artifacts: ClassVar[Sequence[str]] = (('artifact', dill_serializer),)
     version: Optional[int] = None
+    inc: int = 0
     type_id: str = 'test-component'
     is_on_create: bool = False
     is_after_create: bool = False
@@ -121,12 +124,12 @@ def test_add_version(db: Datalayer):
     assert db.show('test-component', 'test') == [0]
 
     # Check the version is incremented
-    component = TestComponent(identifier='test')
+    component = TestComponent(identifier='test', inc=1)
     db.apply(component)
     assert component.version == 1
     assert db.show('test-component', 'test') == [0, 1]
 
-    component = TestComponent(identifier='test')
+    component = TestComponent(identifier='test', inc=2)
     db.apply(component)
     assert component.version == 2
     assert db.show('test-component', 'test') == [0, 1, 2]
@@ -216,8 +219,8 @@ def test_add_table(db):
 
 def test_remove_component_version(db):
     for component in [
-        TestComponent(identifier='test', version=0),
-        TestComponent(identifier='test', version=1),
+        TestComponent(identifier='test', inc=0),
+        TestComponent(identifier='test', inc=1),
     ]:
         db.apply(component)
     assert db.show('test-component', 'test') == [0, 1]
@@ -297,8 +300,8 @@ def test_remove_component_with_artifact(db):
 
 def test_remove_one_version(db):
     for component in [
-        TestComponent(identifier='test', version=0),
-        TestComponent(identifier='test', version=1),
+        TestComponent(identifier='test', inc=0),
+        TestComponent(identifier='test', inc=1),
     ]:
         db.apply(component)
 
@@ -336,9 +339,9 @@ def test_show(db):
         TestComponent(identifier='a1'),
         TestComponent(identifier='a2'),
         TestComponent(identifier='a3'),
-        TestComponent(identifier='b'),
-        TestComponent(identifier='b'),
-        TestComponent(identifier='b'),
+        TestComponent(identifier='b', inc=0),
+        TestComponent(identifier='b', inc=1),
+        TestComponent(identifier='b', inc=2),
         DataType(identifier='c1'),
         DataType(identifier='c2'),
     ]:
@@ -469,7 +472,7 @@ def test_update_db(db):
         # assert doc[key] == '100'
 
 
-def test_replace(db):
+def test_replace(db: Datalayer):
     model = ObjectModel(
         object=lambda x: x + 1,
         identifier='m',
@@ -505,7 +508,7 @@ def test_replace(db):
     assert db.load('model', 'm').predict_batches([1]) == [4]
 
 
-def test_replace_with_child(db):
+def test_replace_with_child(db: Datalayer):
     db.apply(Table('docs', schema=Schema('docs', fields={'X': 'int', 'y': 'int'})))
     trainer = Trainer(
         identifier='trainer',
@@ -542,9 +545,12 @@ def test_replace_with_child(db):
     db.metadata.get_component_version_parents(rereloaded.uuid)
 
 
+def my_lambda(x): return x + 1
+
+
 def test_compound_component(db):
     m = ObjectModel(
-        object=lambda x: x + 1,
+        object=imported_value(my_lambda),
         identifier='my-test-module',
         datatype=FieldType(identifier='int'),
     )
@@ -558,7 +564,7 @@ def test_compound_component(db):
 
     db.apply(
         ObjectModel(
-            object=lambda x: x + 1,
+            object=lambda x: x + 2,
             identifier='my-test-module',
             datatype=FieldType(identifier='int'),
         )

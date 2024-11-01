@@ -4,7 +4,8 @@ from superduper import logging
 import typing as t
 
 from superduper.base.constant import KEY_BUILDS
-from superduper.base.event import Create, Signal
+from superduper.base.document import Document
+from superduper.base.event import Create, Signal, Update
 from superduper.components.component import Status
 from superduper.misc.special_dicts import recursive_update
 from superduper import Component
@@ -78,13 +79,17 @@ def apply(
     }
     for i, c in enumerate(unique_create_events):
         if c.parent:
-            logging.info(f'[{i}]: {c.huuid}: create ~ [{steps[c.parent]}]')
+            try:
+                logging.info(f'[{i}]: {c.huuid}: {c.genus} ~ [{steps[c.parent]}]')
+            except KeyError:
+                logging.info(f'[{i}]: {c.huuid}: {c.genus}')
         else:
-            logging.info(f'[{i}]: {c.huuid}: create')
+            logging.info(f'[{i}]: {c.huuid}: {c.genus}')
 
     logging.info('JOBS EVENTS:')
     steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
 
+    # TODO why do we need this?
     def uniquify(x):
         return sorted(list(set(x)))
 
@@ -114,51 +119,36 @@ def apply(
 
 
 def _apply(
-    db,
+    db: 'Datalayer',
     object: 'Component',
+    context: str,
+    job_events: t.List['Job'],
     parent: t.Optional[str] = None,
-    artifacts: t.Optional[t.Dict[str, bytes]] = None,
-    context: t.Optional[str] = None,
-    job_events: t.Sequence['Job'] = (),
 ):
-    job_events = list(job_events)
-
     object.db = db
     existing_versions = db.show(object.type_id, object.identifier)
-    already_exists = (
-        isinstance(object.version, int) and object.version in existing_versions
-    )
+    already_exists = bool(existing_versions)
+
+    serialized = object.dict()
+    broken = True
     if already_exists:
-        _update_component(object, parent=parent)
-        return [], []
+        current = db.load(object.type_id, object.identifier)
+        diff = current.dict().diff(serialized)
+        diff = Document({k: v for k, v in diff.items() if k not in {'uuid', 'version'}})
+        if not diff:
+            return [], job_events
 
-    assert hasattr(object, 'identifier')
-    assert hasattr(object, 'version')
+        broken = bool(set(diff.keys()).intersection(object.breaks))
+        if not broken:
+            serialized = diff
 
-    if object.version is None:
-        if existing_versions:
-            object.version = max(existing_versions) + 1
-        else:
-            object.version = 0
-
-    if object.get_triggers('apply') == ['set_status']:
-        object.status = Status.ready
-
-    serialized = object.dict().encode(leaves_to_keep=(Component,))
-
-    for k, v in serialized[KEY_BUILDS].items():
-        # TODO this is from the `@component` decorator.
-        # Can be handled with a single @leaf decorator around a function
-        # or a class
-        if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
-            r = dict(v.dict())
-            del r['identifier']
-            serialized[KEY_BUILDS][k] = r
+    serialized = serialized.encode(leaves_to_keep=(Component,))
 
     children = [
         v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
     ]
-    create_events, j = _add_child_components(
+
+    create_events, j = _apply_child_components(
         db=db,
         components=children,
         parent=object,
@@ -166,26 +156,54 @@ def _apply(
         context=context,
     )
     job_events += j
+
     if children:
         serialized = _change_component_reference_prefix(serialized)
 
     serialized = db._save_artifact(object.uuid, serialized)
-    if artifacts:
-        for file_id, bytes in artifacts.items():
-            db.artifact_store.put_bytes(bytes, file_id)
 
-    assert context is not None
-    event = Create(
-        context=context,
-        component=serialized,
-        parent=parent,
-    )
-    create_events.append(event)
+    if broken:
+        if existing_versions:
+            object.version = max(existing_versions) + 1
+            serialized['version'] = object.version
+        else:
+            serialized['version'] = 0
+            object.version = 0
+        metadata_event = Create(
+            context=context,
+            component=serialized,
+            parent=parent,
+        )
 
-    job_events += object.create_jobs(
-        event_type='apply', jobs=job_events, context=context
-    )
-    return create_events, job_events
+        these_job_events = object.create_jobs(
+            event_type='apply',
+            jobs=job_events,
+            context=context,
+        )
+    else:
+        current_serialized = Document(db.metadata.get_component_by_uuid(uuid=current.uuid))
+        serialized = dict(current_serialized.update(serialized))
+        object.version = current.version
+        object.uuid = current.uuid
+        metadata_event = Update(
+            context=context,
+            component=serialized,
+            parent=parent,
+        )
+
+        these_job_events = object.create_jobs(
+            event_type='apply',
+            jobs=job_events,
+            context=context,
+            requires=list(diff.keys())
+        )
+
+    if not these_job_events:
+        metadata_event.component['status'] = Status.ready
+        object.status = Status.ready
+
+    create_events.append(metadata_event)
+    return create_events, job_events + these_job_events
     
 
 def _change_component_reference_prefix(serialized):
@@ -219,7 +237,7 @@ def _change_component_reference_prefix(serialized):
     return serialized
     
 
-def _add_child_components(db, components, parent, job_events, context):
+def _apply_child_components(db, components, parent, job_events, context):
     # TODO this is a bit of a mess
     # it handles the situation in `Stack` when
     # the components should be added in a certain order

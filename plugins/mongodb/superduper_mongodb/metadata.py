@@ -363,14 +363,21 @@ class MongoMetaDataStore(MetaDataStore):
     def _replace_object(
         self,
         info: t.Dict[str, t.Any],
-        identifier: str,
-        type_id: str,
-        version: int,
+        identifier: str | None = None,
+        type_id: str | None = None,
+        version: int | None = None,
+        uuid: str | None = None,
     ) -> None:
-        self.component_collection.replace_one(
-            {'identifier': identifier, 'type_id': type_id, 'version': version},
-            info,
-        )
+        if uuid:
+            return self.component_collection.replace_one({'uuid': uuid}, info)
+        else:
+            assert type_id, 'type_id cannot be False in replace'
+            assert identifier, "identifier cannot be False in replace"
+            assert version is not None, 'version cannot be None in replace'
+            self.component_collection.replace_one(
+                {'identifier': identifier, 'type_id': type_id, 'version': version},
+                info,
+            )
 
     def _update_object(
         self,

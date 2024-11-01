@@ -375,6 +375,7 @@ class Model(Component, metaclass=ModelMeta):
     :param deploy: Creates a standalone class instance on compute cluster.
     """
 
+    breaks: t.ClassVar[t.Sequence] = ('trainer',)
     type_id: t.ClassVar[str] = 'model'
     signature: Signature = '*args,**kwargs'
     datatype: EncoderArg = None
@@ -1028,6 +1029,7 @@ class ObjectModel(Model):
 
     """
 
+    breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
         ('object', dill_lazy),
     )
@@ -1240,6 +1242,7 @@ class SequentialModel(Model):
 
     :param models: A list of models to use
     """
+    breaks: t.ClassVar[t.Sequence] = ('models',)
 
     models: t.List[Model]
 
@@ -1299,7 +1302,7 @@ class ModelRouter(Model):
     :param models: A dictionary of models to use
     :param model: The model to use
     """
-
+    breaks: t.ClassVar[t.Sequence] = ('models',)
     models: t.Dict[str, Model]
     model: str
 
@@ -1339,6 +1342,7 @@ class RAGModel(Model):
     :param key: Key to use for get text out of documents.
     :param llm: Language model to use.
     """
+    breaks: t.ClassVar[t.Sequence] = ('llm', 'prompt_template')
 
     prompt_template: str
     signature: str = 'singleton'

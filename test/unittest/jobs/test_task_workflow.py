@@ -45,17 +45,17 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     )
 
     downstream_listener = downstream_model.to_listener(
-        key=upstream_listener.outputs_key,
-        select=upstream_listener.outputs_select,
+        key=upstream_listener.outputs,
+        select=db[upstream_listener.outputs].select(),
         identifier="downstream",
     )
 
     db.apply(downstream_listener)
 
-    outputs1 = list(upstream_listener.outputs_select.execute())
+    outputs1 = db[upstream_listener.outputs].select().tolist()
     outputs1 = [r[upstream_listener.outputs] for r in outputs1]
 
-    outputs2 = list(downstream_listener.outputs_select.execute())
+    outputs2 = db[downstream_listener.outputs].select().tolist()
     outputs2 = [r[downstream_listener.outputs] for r in outputs2]
 
     assert len(outputs1) == 1 if not flatten else 10
@@ -68,13 +68,13 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
 
     # Check that the listeners are triggered when data is inserted later
     outputs1 = [
-        Document(d.unpack())[upstream_listener.outputs_key]
-        for d in db.execute(upstream_listener.outputs_select)
+        Document(d.unpack())[upstream_listener.outputs]
+        for d in db[upstream_listener.outputs].select().execute()
     ]
 
     outputs2 = [
-        Document(d.unpack())[downstream_listener.outputs_key]
-        for d in db.execute(downstream_listener.outputs_select)
+        Document(d.unpack())[downstream_listener.outputs]
+        for d in db[downstream_listener.outputs].select().execute()
     ]
 
     assert len(outputs1) == 2 if not flatten else 20

@@ -96,6 +96,34 @@ class _Getters:
         return data
 
 
+def _diff(r1, r2, d):
+    for k in r1:
+        if isinstance(r1[k], dict):
+            subdiff = {}
+            _diff(r1[k], r2[k], {})
+            if subdiff:
+                d[k] = subdiff
+            continue
+        if r1[k] != r2[k]:
+            d[k] = r2[k]
+
+
+def _update(r, s):
+    # TODO - how to deal with unordered sets?
+    """
+    >>> r = {'a': 1, 'b': {'c': 2, 'd': 3}}
+    >>> s = {'b': {'c': 4}}
+    >>> _update(r, s)
+    {'a': 1, 'b': {'c': 4, 'd': 3}}
+    """
+    for k in s:
+        if isinstance(s[k], dict):
+            r[k] = _update(r.get(k, {}), s[k])
+        else:
+            r[k] = s[k]
+    return r
+
+
 class Document(MongoStyleDict):
     """A wrapper around an instance of dict or a Encodable.
 
@@ -120,6 +148,19 @@ class Document(MongoStyleDict):
         super().__init__(*args, **kwargs)
         self.db = db
         self.schema = schema
+
+    def diff(self, other: 'Document'):
+        """Get a `Document` with the difference to `other` inside.
+        
+        :param other: Other `Document`.
+        """
+        out = {}
+        _diff(self, other, out)
+        return Document(out)
+
+    def update(self, other):
+        """Update document with values from other."""
+        return _update(dict(self), dict(other))
 
     def encode(
         self,
@@ -447,8 +488,8 @@ def _deep_flat_encode(
     if isinstance(r, Native):
         return r.x
 
+    # TODO what is this??
     from superduper.backends.base.query import _BaseQuery
-
     if (
         not isinstance(r, _BaseQuery)
         and getattr(r, 'importable', False)
@@ -480,7 +521,9 @@ def _deep_flat_encode(
 
         logging.debug(f'Decoding leaf {type(r)} with identifier: {r.identifier}')
 
-        if isinstance(r, leaves_to_keep):
+        # inline components do not need to be kept
+        # they are simply parametrized by their inputs
+        if isinstance(r, leaves_to_keep) and not r.inline:
             builds[key] = r
             return '?' + key
 

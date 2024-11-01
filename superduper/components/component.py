@@ -149,6 +149,13 @@ class Component(Leaf, metaclass=ComponentMeta):
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
 
+    def __eq__(self, value: Component):
+        assert isinstance(value, type(self))
+        for k in dc.fields(self):
+            if not getattr(self, k) == getattr(value, k):
+                return False
+        return True
+
     @property
     def huuid(self):
         """Return a human-readable uuid."""
@@ -245,7 +252,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         return True
 
-    def get_triggers(self, event_type):
+    def get_triggers(self, event_type, requires: t.Sequence[str] | None = None):
         """
         Get all the triggers for the component.
 
@@ -253,11 +260,17 @@ class Component(Leaf, metaclass=ComponentMeta):
         """
         # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
-        return [
+        triggers = [
             attr_name
             for attr_name in self.triggers
             if self._filter_trigger(attr_name, event_type)
         ]
+        if requires:
+            triggers = [
+                t for t in triggers
+                if getattr(self, t).requires in requires
+            ]
+        return triggers
 
     def _get_dependencies(self, dependencies):
         these_dependencies = {}
@@ -283,6 +296,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         event_type: str,
         ids: t.Sequence[str] | None = None,
         jobs: t.Sequence[Job] = (),
+        requires: t.Sequence[str] | None = None,
     ) -> t.List[Job]:
         """Deploy apply jobs for the component.
 
@@ -295,7 +309,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         max_it = 100
         it = 0
 
-        triggers = self.get_triggers('apply')
+        triggers = self.get_triggers('apply', requires=requires)
         triggers = list(set(triggers) - {'set_status'})
 
         # local_job_lookup is {j.method_name: j.job_id for j in local_jobs}
@@ -375,7 +389,7 @@ class Component(Leaf, metaclass=ComponentMeta):
             if len(local_jobs) == len(triggers):
                 break
 
-        if event_type == 'apply':
+        if event_type == 'apply' and local_jobs:
             status_update: Job = self.set_status(
                 status=Status.ready, job=True, context=context
             )

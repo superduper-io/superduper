@@ -77,7 +77,7 @@ def test_listener_chaining(db):
 
     listener2 = Listener(
         model=m2,
-        select=listener1.outputs_select,
+        select=db[listener1.outputs].select(),
         key=listener1.outputs,
         identifier='listener2',
     )
@@ -85,7 +85,7 @@ def test_listener_chaining(db):
     db.apply(listener2)
 
     def check_listener_output(listener, output_n):
-        docs = list(db.execute(listener.outputs_select))
+        docs = db[listener.outputs].select().tolist()
         assert len(docs) == output_n
         assert all([listener.outputs in r for r in docs])
 
@@ -134,7 +134,7 @@ def test_create_output_dest(db, data, flatten):
 
     db.apply(listener1)
 
-    doc = list(db.execute(listener1.outputs_select))[0]
+    doc = db[listener1.outputs].select().tolist()[0]
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))
     if isinstance(data, np.ndarray):
@@ -176,7 +176,7 @@ def test_listener_cleanup(db, data):
     )
 
     db.add(listener1)
-    doc = list(db.execute(listener1.outputs_select))[0]
+    doc = db[listener1.outputs].select().tolist()[0]
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))
     if isinstance(data, np.ndarray):

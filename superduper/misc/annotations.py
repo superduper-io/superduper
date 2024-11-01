@@ -161,6 +161,7 @@ def build_importable(*, db=None, importable=None):
     return getattr(importlib.import_module(module), attr)
 
 
+# TODO remove @component() -> @component
 def component(*schema: t.Dict):
     """Decorator for creating a component.
 

@@ -410,15 +410,23 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def _replace_object(self, info, identifier, type_id, version):
+    def _replace_object(
+        self,
+        info,
+        identifier: str | None = None,
+        type_id: str | None = None,
+        version: int | None = None,
+        uuid: str | None = None,
+    ):
         pass
 
     def replace_object(
         self,
         info: t.Dict[str, t.Any],
-        identifier: str,
-        type_id: str,
-        version: t.Optional[int] = None,
+        identifier: str | None = None,
+        type_id: str | None = None,
+        version: int | None = None,
+        uuid: str | None = None,
     ) -> None:
         """
         Replace an object in the metadata store.
@@ -428,13 +436,14 @@ class MetaDataStore(ABC):
         :param type_id: type of object
         :param version: version of object
         """
-        if version is not None:
+        if version is None and uuid is None:
             version = self.get_latest_version(type_id, identifier)
         return self._replace_object(
             info=info,
             identifier=identifier,
             type_id=type_id,
             version=version,
+            uuid=uuid,
         )
 
     @abstractmethod

@@ -120,6 +120,7 @@ class Create(Event):
         """Execute the create event."""
         # TODO decide where to assign version
         db.metadata.create_component(self.component)
+        # TODO - do we really need to load the whole component?
         component = db.load(uuid=self.component['uuid'])
         if self.parent:
             db.metadata.create_parent_child(self.parent, component.uuid)
@@ -128,7 +129,6 @@ class Create(Event):
             for dep in component.dependencies:
                 if isinstance(dep, (tuple, list)):
                     dep = dep[-1]
-
                 db.metadata.create_parent_child(component.uuid, dep)
         component.on_create(db=db)
 
@@ -140,6 +140,41 @@ class Create(Event):
             f'{self.component["identifier"]}:'
             f'{self.component["uuid"]}'
         )
+
+
+
+@dc.dataclass(kw_only=True)
+class Update(Event):
+    """
+    Update component event.
+
+    :param context: the component context of creation.
+    :param component: the component to be created
+    :param parent: the parent of the component (if any)
+    """
+
+    genus: t.ClassVar[str] = 'update'
+    queue: t.ClassVar[str] = '_apply'
+
+    context: str
+    component: t.Dict
+    parent: str | None = None
+
+    def execute(self, db: 'Datalayer'):
+        """Execute the create event."""
+        # TODO decide where to assign version
+        db.metadata.replace_object(self.component, uuid=self.component['uuid'])
+        db.expire(self.component['uuid'])
+
+    @property
+    def huuid(self):
+        """Return the hashed uuid."""
+        return (
+            f'{self.component["type_id"]}:'
+            f'{self.component["identifier"]}:'
+            f'{self.component["uuid"]}'
+        )
+
 
 
 @dc.dataclass(kw_only=True)

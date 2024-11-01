@@ -147,6 +147,7 @@ class Leaf(metaclass=LeafMeta):
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
+        self.inline = False
 
     @property
     def leaves(self):

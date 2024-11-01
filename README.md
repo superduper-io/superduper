@@ -168,16 +168,6 @@ Implement vector search and embedding generation without requiring a dedicated v
 
 Superduper's REST API, allows installed models to be served without additional development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
 
-## Key classes
-
-| Name | Description |
-| --- | --- |
-| `superduper.base.datalayer.Datalayer` | connector to all `superduper` functionality |
-| `superduper.Component` | base class for models, triggers, event listeners, vector-indices etc. |
-| `superduper.Model` | base class for all model implementations |
-| `superduper.components.cdc.CDC` | base class for all change-data-capture implementations |
-| `superduper.backends.base.query.Query` | base class for all query implementations |
-
 ## Getting started
 
 **Installation**:
@@ -186,32 +176,44 @@ Superduper's REST API, allows installed models to be served without additional d
 pip install superduper-framework
 ```
 
+**View** available pre-built templates:
+
+```bash
+superduper ls
+```
+
 **Connect** and **apply** a pre-built template:
 
 (***Note:*** *the pre-built templates are only supported by Python 3.10; you may use all of the other features in Python 3.11+.*)
 
 ```bash
-git clone https://github.com/superduper-io/superduper && cd superduper
-superduper apply templates/retrieval_augmented_generation.zip 'mongodb://localhost:27017/test_db' data=docu
+# e.g. 'mongodb://localhost:27017/test_db'
+SUPERDUPER_DATA_BACKEND=<your-db-uri> superduper apply simple_rag
 ```
 
 **Execute** a query or prediction on the results:
 
 ```python
 from superduper import superduper
-db = superduper('mongodb://localhost:27017/test_db')
+db = superduper('<your-db-uri>')  # e.g. 'mongodb://localhost:27017/test_db'
 db['rag'].predict('Tell me about superduper')
 ```
 
-<!-- to be uncommented after we include the interface
 **View** and **monitor** everything in the Superduper interface. From the command line:
 
 ```bash
 superduper start
 ```
--->
 
 ***After doing this you are ready to build your own components, applications and templates!***
+
+**Get started** by copying an existing template, to your own development environment:
+
+```bash
+superduper bootstrap <template_name> --destination templates/my-template
+```
+
+**Edit** the `build.ipynb` notebook, to build your own functionality.
 
 ## Currently supported datastores
 

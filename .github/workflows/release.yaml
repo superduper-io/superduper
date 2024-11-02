@@ -1,8 +1,8 @@
-name: Release in Pypi/DockerHub
+name: Release on PyPi
 on:
   push:
     branches:
-      - release-[0-9]+.[0-9]+.[0-9]+
+      - '^[0-9]+.[0-9]+$'
 
 jobs:
   build:

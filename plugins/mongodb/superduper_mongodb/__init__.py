@@ -4,7 +4,7 @@ from .metadata import MongoMetaDataStore as MetaDataStore
 from .query import MongoQuery
 from .vector_search import MongoAtlasVectorSearcher as VectorSearcher
 
-__version__ = "0.0.5"
+__version__ = "0.4.0"
 
 __all__ = [
     "ArtifactStore",

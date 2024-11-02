@@ -1,5 +1,5 @@
 from .model import CohereEmbed, CohereGenerate
 
-__version__ = "0.0.5"
+__version__ = "0.4.0"
 
 __all__ = 'CohereEmbed', 'CohereGenerate'

@@ -79,6 +79,53 @@ query.execute()
 
 Superduper may be run anywhere; you can also [contact us](https://superduper.io/contact) to learn more about the enterprise platform for bringing your Superduper workflows to production at scale. 
 
+## What does Superduper support?
+
+Superduper is flexible enough to support a huge range of AI techniques and paradigms. We have a range of pre-built functionality in the `plugins` and `templates` directories. In particular, Superduper excels when AI and data need to interact in a continuous and tightly integrated fashion. Here are some illustrative examples, which you may try out from our templates:
+
+- Semantic multimodal vector search ([images](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_image_search), [text](https://github.com/superduper-io/superduper/tree/main/templates/text_vector_search), [video](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_video_search))
+- [Retrieval augmented generation](https://github.com/superduper-io/superduper/tree/main/templates/retrieval_augmented_generation) with specialized requirements (data fetching involves semantic search as well as business rules and pre-processing)
+- [LLM finetuning on database hosted data](https://github.com/superduper-io/superduper/tree/main/templates/llm_finetuning)
+- [Transfer learning using multimodal data](https://github.com/superduper-io/superduper/tree/main/templates/transfer_learning)
+
+We're looking to connect with enthusiastic developers to contribute to the repertoire of amazing pre-built templates and workflows available in Superduper open-source. Please join the discussion, by contributing issues and pull requests!
+
+## Core features
+
+- Create a Superduper data-AI connection/ datalayer consisting of your own
+  - databackend (database/ datalake/ datawarehouse)
+  - metadata store (same or other as databackend)
+  - artifact store (to store big objects)
+  - compute implementation
+- Build complex units of functionality (`Component`) using a declarative programming model, which integrate closely with data in your databackend, using a simple set of primitives and base classes.
+- Build larger units of functionality wrapping several interrelated `Component` instances into an AI-data `Application`
+- Reuse battle-tested `Component`, `Model` and `Application` instances using `Template`, giving developers an easy point to start with difficult AI implementations
+- A transparent, human-readable, web-friendly and highly portable serialization protocol, "Superduper-protocol", to communicate results of experimentation, make `Application` lineage and versioning easy to follow, and create an elegant segway from the AI world to the databasing/ typed-data worlds.
+- Execute queries using a combination of outputs of `Model` instances as well as primary databackend data, to enable the latest generation of AI-data applications, including all flavours of vector-search, RAG, and much, much more.
+
+## Key benefits
+
+**Massive flexibility**
+
+Combine any Python based AI model, API from the ecosystem with the most established, battle tested databases and warehouses;  Snowflake, MongoDB, Postgres, MySQL, SQL Server, SQLite, BigQuery, and Clickhouse are all supported.
+
+**Seamless integration avoiding MLOps**
+
+Remove the need to implement MLOps, using the declarative and compositional Superduper components, which specify the end state that the models and data should reach.
+
+**Promote code reusability and portability**
+
+Package components as templates, exposing the key parameters required to reuse and communicate AI applications in your community and organization.
+
+**Cost savings**
+
+Implement vector search and embedding generation without requiring a dedicated vector database. Effortlessly toggle between self hosted models and API hosted models, without major code changes.
+
+**Move to production without any additional effort**
+
+Superduper's REST API, allows installed models to be served without additional development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
+
+
 ## What's new in the `main` branch?
 
 We are working on an upcoming release of `0.4.0`. In this release we have:
@@ -120,53 +167,6 @@ Now you may view your `Component`, `Application` and `Template` instances in the
 ```
 superduper start
 ```
-
-## What does Superduper support?
-
-Superduper is flexible enough to support a huge range of AI techniques and paradigms. We have a range of pre-built functionality in the `plugins` and `templates` directories. In particular, Superduper excels when AI and data need to interact in a continuous and tightly integrated fashion. Here are some illustrative examples, which you may try out from our templates:
-
-- Semantic multimodal vector search ([images](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_image_search), [text](https://github.com/superduper-io/superduper/tree/main/templates/text_vector_search), [video](https://github.com/superduper-io/superduper/tree/main/templates/multimodal_video_search))
-- [Retrieval augmented generation](https://github.com/superduper-io/superduper/tree/main/templates/retrieval_augmented_generation) with specialized requirements (data fetching involves semantic search as well as business rules and pre-processing)
-- Object detection directly on database hosted images
-- [LLM finetuning on database hosted data](https://github.com/superduper-io/superduper/tree/main/templates/llm_finetuning)
-- [Transfer learning using multimodal data](https://github.com/superduper-io/superduper/tree/main/templates/transfer_learning)
-
-We're looking to connect with enthusiastic developers to contribute to the repertoire of amazing pre-built templates and workflows available in Superduper open-source. Please join the discussion, by contributing issues and pull requests!
-
-## Core features
-
-- Create a Superduper data-AI connection/ datalayer consisting of your own
-  - databackend (database/ datalake/ datawarehouse)
-  - metadata store (same or other as databackend)
-  - artifact store (to store big objects)
-  - compute implementation
-- Build complex units of functionality (`Component`) using a declarative programming model, which integrate closely with data in your databackend, using a simple set of primitives and base classes.
-- Build larger units of functionality wrapping several interrelated `Component` instances into an AI-data `Application`
-- Reuse battle-tested `Component`, `Model` and `Application` instances using `Template`, giving developers an easy point to start with difficult AI implementations
-- A transparent, human-readable, web-friendly and highly portable serialization protocol, "Superduper-protocol", to communicate results of experimentation, make `Application` lineage and versioning easy to follow, and create an elegant segway from the AI world to the databasing/ typed-data worlds.
-- Execute queries using a combination of outputs of `Model` instances as well as primary databackend data, to enable the latest generation of AI-data applications, including all flavours of vector-search, RAG, and much, much more.
-
-## Key benefits
-
-**Massive flexibility**
-
-Combine any Python based AI model, API from the ecosystem with the most established, battle tested databases and warehouses;  Snowflake, MongoDB, Postgres, MySQL, SQL Server, SQLite, BigQuery, and Clickhouse are all supported.
-
-**Seamless integration avoiding MLOps**
-
-Remove the need to implement MLOps, using the declarative and compositional Superduper components, which specify the end state that the models and data should reach.
-
-**Promote code reusability and portability**
-
-Package components as templates, exposing the key parameters required to reuse and communicate AI applications in your community and organization.
-
-**Cost savings**
-
-Implement vector search and embedding generation without requiring a dedicated vector database. Effortlessly toggle between self hosted models and API hosted models, without major code changes.
-
-**Move to production without any additional effort**
-
-Superduper's REST API, allows installed models to be served without additional development work. For enterprise grade scalability, fail safes, security and logging, applications and workflows created with Superduper, may be deployed in one click on [Superduper enterprise](https://superduper.io/contact).
 
 ## Getting started
 

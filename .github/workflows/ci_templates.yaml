@@ -24,10 +24,8 @@ jobs:
         id: setup
         run: |
           if [[ "${{ github.base_ref }}" == "main" ]]; then
-            echo "mode=changed"
             echo "mode=changed" >> $GITHUB_ENV
           else
-            echo "mode=all"
             echo "mode=all" >> $GITHUB_ENV
           fi
 
@@ -83,17 +81,13 @@ jobs:
           echo "matrix_json: $matrix_json"
           echo "matrix_json=$matrix_json" >> $GITHUB_ENV
 
-
       - name: Set job output
         id: final_output
         run: |
           echo "::set-output name=matrix::$matrix_json"
-          echo "::set-output name=templates_exist::$TEMPLATES_EXIST"
-
 
   test_template:
     needs: template_update_check
-    if: needs.template_update_check.outputs.templates_exist != '0'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

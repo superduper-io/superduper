@@ -24,8 +24,10 @@ jobs:
         id: setup
         run: |
           if [[ "${{ github.base_ref }}" == "main" ]]; then
+            echo "mode=changed"
             echo "mode=changed" >> $GITHUB_ENV
           else
+            echo "mode=all"
             echo "mode=all" >> $GITHUB_ENV
           fi
 

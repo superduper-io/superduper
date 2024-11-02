@@ -20,11 +20,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5": {
+    "a395902bca4bf34255e97a6a057b0edffc3500b2": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
+      "blob": "&:blob:a395902bca4bf34255e97a6a057b0edffc3500b2"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -32,7 +32,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?b7858bea2763eff422b8e8b5e6fd7b0b9dacb4b5"
+      "getter": "?a395902bca4bf34255e97a6a057b0edffc3500b2"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
@@ -58,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "ed427a7bd46cc39e185686807cc11c799df8ec75": {
+          "727d3bb560939e1211f9cac189d56e07e9622eeb": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:ed427a7bd46cc39e185686807cc11c799df8ec75"
+            "blob": "&:blob:727d3bb560939e1211f9cac189d56e07e9622eeb"
           },
           "model:chunker": {
-            "_object": "?ed427a7bd46cc39e185686807cc11c799df8ec75",
+            "_object": "?727d3bb560939e1211f9cac189d56e07e9622eeb",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -131,8 +131,8 @@
             "openai_api_key": null,
             "openai_api_base": null,
             "client_kwargs": {
-              "base_url": "<var:base_url>",
-              "api_key": "<var:api_key>"
+              "base_url": null,
+              "api_key": null
             },
             "shape": [
               1536
@@ -204,8 +204,8 @@
             "openai_api_key": null,
             "openai_api_base": null,
             "client_kwargs": {
-              "base_url": "<var:base_url>",
-              "api_key": "<var:api_key>"
+              "base_url": null,
+              "api_key": null
             },
             "batch_size": 1,
             "prompt": ""
@@ -290,7 +290,7 @@
         "api_key": {
           "type": "str",
           "optional": true,
-          "default": "ollama"
+          "default": null
         }
       },
       "blobs": null,

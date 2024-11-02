@@ -24,11 +24,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "a026ecb590e04810d1e0f9d4ef7195e74c3614c3": {
+    "3b76f9f4db5089b20c14142b58f7a485faa38c43": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:a026ecb590e04810d1e0f9d4ef7195e74c3614c3"
+      "blob": "&:blob:3b76f9f4db5089b20c14142b58f7a485faa38c43"
     },
     "dataset:llm_finetuning": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -36,7 +36,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?a026ecb590e04810d1e0f9d4ef7195e74c3614c3"
+      "getter": "?3b76f9f4db5089b20c14142b58f7a485faa38c43"
     },
     "table:sample_llm_finetuning": {
       "_path": "superduper.components.table.Table",

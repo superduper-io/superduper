@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+#### New Features & Functionality
+
+#### Bug Fixes
+
+## [0.3.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
+
+#### Changed defaults / behaviours
+
 - Change images docker superduper/<image> to superduperio/<image> 
 - Change the image's user from `/home/superduperdb` to `/home/superduper`
 - Add message broker service config

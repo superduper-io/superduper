@@ -149,10 +149,17 @@ class Component(Leaf, metaclass=ComponentMeta):
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
 
+    def refresh(self):
+        pass
+
     @property
     def huuid(self):
         """Return a human-readable uuid."""
         return f'{self.type_id}:{self.identifier}:{self.uuid}'
+
+    def handle_update_or_same(self, other):
+        other.uuid = self.uuid
+        other.version = self.version
 
     def set_db(self, value):
         """Set the db for the component.
@@ -261,7 +268,8 @@ class Component(Leaf, metaclass=ComponentMeta):
         ]
         if requires:
             triggers = [
-                t for t in triggers
+                t
+                for t in triggers
                 if set(getattr(self, t).requires).intersection(requires)
             ]
         return triggers
@@ -770,12 +778,26 @@ class Component(Leaf, metaclass=ComponentMeta):
         shutil.make_archive(path, 'zip', path)
         shutil.rmtree(path)
 
-    def dict(self, metadata: bool = True, defaults: bool = True) -> 'Document':
+    def dict(
+        self, metadata: bool = True, defaults: bool = True, refs: bool = False
+    ) -> 'Document':
         """A dictionary representation of the component."""
         from superduper import Document
         from superduper.components.datatype import Artifact, File
 
         r = super().dict(metadata=metadata, defaults=defaults)
+
+        def _convert_components_to_refs(r):
+            if isinstance(r, dict):
+                return {k: _convert_components_to_refs(v) for k, v in r.items()}
+            if isinstance(r, list):
+                return [_convert_components_to_refs(x) for x in r]
+            if isinstance(r, Component) and not getattr(r, 'inline', False):
+                return f'&:component:{r.huuid}'
+            return r
+
+        if refs:
+            r = _convert_components_to_refs(r)
         s = self.artifact_schema
 
         for k in s.fields:

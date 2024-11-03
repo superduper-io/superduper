@@ -230,9 +230,9 @@ class DataType(Component):
         """Check if the encodable is an artifact."""
         return self.encodable_cls.artifact
 
-    def dict(self, metadata: bool = True, defaults: bool = True):
+    def dict(self, metadata: bool = True, defaults: bool = True, refs: bool = False):
         """Get the dictionary representation of the object."""
-        r = super().dict(metadata=metadata, defaults=defaults)
+        r = super().dict(metadata=metadata, defaults=defaults, refs=refs)
         if hasattr(self.bytes_encoding, 'value'):
             r['bytes_encoding'] = str(self.bytes_encoding.value)  # type: ignore[union-attr]
         return r

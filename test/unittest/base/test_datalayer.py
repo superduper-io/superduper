@@ -1,4 +1,3 @@
-import dataclasses as dc
 import os
 import time
 from typing import Any, ClassVar, Optional, Sequence
@@ -38,11 +37,9 @@ ibis_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('ibis.yaml')
 mongodb_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml')
 
 
-@dc.dataclass(kw_only=True)
 class TestComponent(Component):
     breaks: ClassVar[Sequence] = ('inc',)
     _artifacts: ClassVar[Sequence[str]] = (('artifact', dill_serializer),)
-    version: Optional[int] = None
     inc: int = 0
     type_id: str = 'test-component'
     is_on_create: bool = False
@@ -119,7 +116,9 @@ def test_add_version(db: Datalayer):
 
     # Check duplicate components are not added
     db.apply(component)
+
     component_loaded = db.load('test-component', 'test')
+
     assert component_loaded.version == 0
     assert db.show('test-component', 'test') == [0]
 
@@ -249,8 +248,8 @@ def test_remove_component_with_parent(db):
     db.apply(
         TestComponent(
             identifier='test_3_parent',
-            version=0,
-            child=TestComponent(identifier='test_3_child', version=0),
+            inc=0,
+            child=TestComponent(identifier='test_3_child', inc=0),
         )
     )
 
@@ -262,7 +261,7 @@ def test_remove_component_with_parent(db):
 def test_remove_component_with_clean_up(db):
     # Test clean up
     component_clean_up = TestComponent(
-        identifier='test_clean_up', version=0, check_clean_up=True
+        identifier='test_clean_up', inc=0, check_clean_up=True
     )
     db.apply(component_clean_up)
     with pytest.raises(Exception) as e:
@@ -283,7 +282,7 @@ def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
     component_with_artifact = TestComponent(
         identifier='test_with_artifact',
-        version=0,
+        inc=0,
         artifact={'test': 'test'},
     )
     db.apply(component_with_artifact)
@@ -314,9 +313,9 @@ def test_remove_one_version(db):
 
 def test_remove_multi_version(db):
     for component in [
-        TestComponent(identifier='test', version=0),
-        TestComponent(identifier='test', version=1),
-        TestComponent(identifier='test', version=2),
+        TestComponent(identifier='test', inc=0),
+        TestComponent(identifier='test', inc=1),
+        TestComponent(identifier='test', inc=2),
     ]:
         db.apply(component)
 
@@ -376,7 +375,6 @@ def test_load(db):
         DataType(identifier='e2'),
         m1,
         ObjectModel(object=lambda x: x, identifier='m1', datatype='int32'),
-        m1,
     ]
     for component in components:
         db.apply(component)
@@ -483,7 +481,8 @@ def test_replace(db: Datalayer):
     with pytest.raises(Exception):
         db.replace(model)
 
-    db.replace(model, upsert=True, force=True)
+    db.apply(model)
+    db.replace(model)
 
     assert db.load('model', 'm').predict(1) == 2
 
@@ -545,7 +544,8 @@ def test_replace_with_child(db: Datalayer):
     db.metadata.get_component_version_parents(rereloaded.uuid)
 
 
-def my_lambda(x): return x + 1
+def my_lambda(x):
+    return x + 1
 
 
 def test_compound_component(db):

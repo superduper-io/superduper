@@ -180,7 +180,9 @@ def component(*schema: t.Dict):
 
             assert isinstance(out, Component)
 
-            def to_dict(metadata: bool = True, defaults: bool = True):
+            def to_dict(
+                metadata: bool = True, defaults: bool = True, uuid: bool = True
+            ):
                 path = f'{f.__module__}.{f.__name__}'
                 from superduper.base.document import Document
 
@@ -198,6 +200,9 @@ def component(*schema: t.Dict):
                     for k in out.metadata:
                         if k in r:
                             del r[k]
+
+                if not uuid and 'uuid' in r:
+                    del r['uuid']
 
                 if 'identifier' not in r:
                     r['identifier'] = out.identifier

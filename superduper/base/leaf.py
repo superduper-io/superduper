@@ -137,6 +137,15 @@ class Leaf(metaclass=LeafMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=build_uuid)
 
+    def __eq__(self, value: 'Leaf'):
+        assert isinstance(value, type(self))
+        for k in dc.fields(self):
+            if k in self.metadata:
+                continue
+            if not getattr(self, k) == getattr(value, k):
+                return False
+        return True
+
     def _get_metadata(self):
         return {}
 

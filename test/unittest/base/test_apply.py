@@ -183,4 +183,26 @@ def test_break_nested(db: Datalayer):
 
 
 def test_job_on_update(db: Datalayer):
-    ...
+
+    c = MyComponent(
+        'test',
+        a='value',
+        b=2,
+    )
+
+    db.apply(c)
+
+    assert db.show('my', 'test') == [0]
+
+    c = MyComponent(
+        'test',
+        a='value',
+        b=2,
+        sub=MyValidator('valid', target=2)
+    )
+
+    db.apply(c)
+
+    reload = db.load('my', 'test')
+
+    assert reload.validate_results is not None

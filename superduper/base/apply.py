@@ -134,7 +134,7 @@ def _apply(
     if already_exists:
         current = db.load(object.type_id, object.identifier)
         diff = current.dict().diff(serialized)
-        diff = Document({k: v for k, v in diff.items() if k not in {'uuid', 'version'}})
+        diff = Document({k: v for k, v in diff.items() if k not in {'uuid', 'version', 'status'}})
         if not diff:
             return [], job_events
 

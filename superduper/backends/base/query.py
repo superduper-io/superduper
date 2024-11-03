@@ -365,6 +365,16 @@ class Query(_BaseQuery):
         """
         pass
 
+    def __eq__(self, value):
+        if not isinstance(value, Query):
+            return False
+        left = self.dict()
+        right = value.dict()
+        for k in left:
+            if left[k] != right[k]:
+                return False
+        return True
+
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Return the query as a dictionary."""
         query, documents = self._dump_query()

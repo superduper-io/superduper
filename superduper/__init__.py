@@ -9,7 +9,7 @@ ROOT = config_settings.ROOT
 
 logging = logger.Logging
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 
 from .base.decorators import code

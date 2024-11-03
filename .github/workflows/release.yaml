@@ -28,7 +28,9 @@ jobs:
         run: python -m pip install --upgrade build
 
       - name: Build
-        run: python -m build
+        run: |
+          cp -r templates/* superduper/templates/
+          python -m build
 
         # smoke-test that build is valid
       - name: Check wheel contents

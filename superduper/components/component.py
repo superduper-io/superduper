@@ -149,13 +149,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
 
-    def __eq__(self, value: Component):
-        assert isinstance(value, type(self))
-        for k in dc.fields(self):
-            if not getattr(self, k) == getattr(value, k):
-                return False
-        return True
-
     @property
     def huuid(self):
         """Return a human-readable uuid."""
@@ -214,6 +207,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Get all the child components of the component."""
         return self.get_children(deep=False)
 
+    # TODO do we still need this?
     def _job_dependencies(self) -> t.Sequence[str]:
         """List all job ids of component-children."""
         refs = self.get_children_refs(deep=False)
@@ -268,7 +262,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         if requires:
             triggers = [
                 t for t in triggers
-                if getattr(self, t).requires in requires
+                if set(getattr(self, t).requires).intersection(requires)
             ]
         return triggers
 
@@ -470,6 +464,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         metadata = {
             'type_id': self.type_id,
             'version': self.version,
+            'status': self.status,
         }
         return metadata
 

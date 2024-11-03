@@ -58,7 +58,7 @@ def start(
 @command(help='Display a template')
 def inspect(template: str):
     """Display a template."""
-    root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    root = os.path.dirname(os.path.dirname(__file__))
     from pygments import formatters, highlight, lexers
 
     path = f'{root}/templates/{template}/component.json'
@@ -98,7 +98,7 @@ def bootstrap(
     db = superduper(data_backend)
     existing = db.show('template')
     if destination is not None:
-        root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        root = os.path.dirname(os.path.dirname(__file__))
         template_directory = os.path.join(root, f'templates/{template}')
         print(template_directory)
         import shutil

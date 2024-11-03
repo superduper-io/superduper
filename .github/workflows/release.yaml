@@ -115,6 +115,10 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: artifact/
+
+      - name: Remove unwanted files from dist
+        run: rm -f artifact/*.attestation
+
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: artifact/

@@ -1,2 +1,2 @@
-recursive-include templates *
+recursive-include superduper/templates *
 recursive-include superduper/rest/out *

@@ -127,6 +127,7 @@ jobs:
         run: |
           export SUPERDUPER_TEMPLATE=${{ matrix.template }}
           export SUPERDUPER_DATA_BACKEND='mongomock://test_db'
+          cd superduper/templates && ln -s ../../templates/* . && cd ../../
           pytest test/integration/template/test_template.py -s
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

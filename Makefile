@@ -26,7 +26,7 @@ CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
 CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
 
 new_release: ## Release a new version of superduper.io
-	@python3 superduper/misc/release_tools.py
+	@python superduper/misc/release_tools.py
 	@echo "** Releasing a version to $(PARENT) parent version"
 	@echo "** Switching to branch release-$(RELEASE_VERSION)"
 	@git checkout -b release-$(RELEASE_VERSION)

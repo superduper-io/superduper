@@ -31,17 +31,17 @@ def test_output_prefix(db):
         for t in expect_tables:
             assert any(k.startswith(t) for k in tables)
 
-        outputs_a = list(listener_a.outputs_select.execute())
+        outputs_a = db[listener_a.outputs].select().tolist()
         assert len(outputs_a) == 6
         for r in outputs_a:
             assert any(k.startswith("sddb_outputs_a") for k in r)
 
-        outputs_b = list(listener_b.outputs_select.execute())
+        outputs_b = db[listener_b.outputs].select().tolist()
         assert len(outputs_b) == 6
         for r in outputs_b:
             assert any(k.startswith("sddb_outputs_b") for k in r)
 
-        outputs_c = list(listener_c.outputs_select.execute())
+        outputs_c = db[listener_c.outputs].select().tolist()
         assert len(outputs_c) == 6
         for r in outputs_c:
             assert any(k.startswith("sddb_outputs_c") for k in r)

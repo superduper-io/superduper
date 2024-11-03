@@ -232,7 +232,7 @@ class Trainer(Component):
 
 
 class Validation(Component):
-    """component which represents Validation definition.
+    """Component which represents Validation definition.
 
     :param metrics: List of metrics for validation
     :param key: Model input type key
@@ -881,7 +881,7 @@ class Model(Component, metaclass=ModelMeta):
                 metrics=self.validation.metrics,
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
-        self.db.replace(self, upsert=True)
+        self.db.replace(self)
 
     def _create_datasets(self, X, db, select):
         train_dataset = self._create_dataset(
@@ -1242,6 +1242,7 @@ class SequentialModel(Model):
 
     :param models: A list of models to use
     """
+
     breaks: t.ClassVar[t.Sequence] = ('models',)
 
     models: t.List[Model]
@@ -1302,6 +1303,7 @@ class ModelRouter(Model):
     :param models: A dictionary of models to use
     :param model: The model to use
     """
+
     breaks: t.ClassVar[t.Sequence] = ('models',)
     models: t.Dict[str, Model]
     model: str
@@ -1342,6 +1344,7 @@ class RAGModel(Model):
     :param key: Key to use for get text out of documents.
     :param llm: Language model to use.
     """
+
     breaks: t.ClassVar[t.Sequence] = ('llm', 'prompt_template')
 
     prompt_template: str

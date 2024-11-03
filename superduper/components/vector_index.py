@@ -110,6 +110,7 @@ class VectorIndex(CDC):
     """
 
     type_id: t.ClassVar[str] = 'vector_index'
+    breaks: t.ClassVar[t.Sequence[str]] = ('indexing_listener',)
 
     indexing_listener: Listener
     compatible_listener: t.Optional[Listener] = None
@@ -121,6 +122,11 @@ class VectorIndex(CDC):
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         return super().__post_init__(db, artifacts)
 
+    def refresh(self):
+        if self.cdc_table.startswith('_outputs'):
+            self.cdc_table = self.indexing_listener.outputs
+
+    # TODO why this?
     def __hash__(self):
         return hash((self.type_id, self.identifier))
 

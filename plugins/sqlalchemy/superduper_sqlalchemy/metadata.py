@@ -472,19 +472,31 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def _replace_object(self, info, identifier, type_id, version):
+    def _replace_object(self, info, identifier: str | None = None, type_id: str | None = None, version: int | None = None, uuid: str | None = None):
         info = self._refactor_component_info(info)
-        with self.session_context() as session:
-            stmt = (
-                self.component_table.update()
-                .where(
-                    self.component_table.c.type_id == type_id,
-                    self.component_table.c.identifier == identifier,
-                    self.component_table.c.version == version,
+
+        if uuid is None:
+            with self.session_context() as session:
+                stmt = (
+                    self.component_table.update()
+                    .where(
+                        self.component_table.c.type_id == type_id,
+                        self.component_table.c.identifier == identifier,
+                        self.component_table.c.version == version,
+                    )
+                    .values(**info)
                 )
-                .values(**info)
-            )
-            session.execute(stmt)
+                session.execute(stmt)
+        else:
+            with self.session_context() as session:
+                stmt = (
+                    self.component_table.update()
+                    .where(
+                        self.component_table.c.uuid == uuid
+                    )
+                    .values(**info)
+                )
+                session.execute(stmt)
 
     def show_cdc_tables(self):
         """Show tables to be consumed with cdc."""

@@ -36,6 +36,7 @@ class Listener(CDC):
     """
 
     type_id: t.ClassVar[str] = 'listener'
+    breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
 
     key: ModelInputType
     model: Model
@@ -45,6 +46,11 @@ class Listener(CDC):
     output_table: t.Optional[Table] = None
     flatten: bool = False
 
+    def _get_metadata(self):
+        """Get metadata of the component."""
+        metadata = super()._get_metadata()
+        return {**metadata, 'output_table': self.output_table}
+
     def __post_init__(self, db, artifacts):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
@@ -52,9 +58,15 @@ class Listener(CDC):
 
         return super().__post_init__(db, artifacts)
 
-    def dict(self, metadata: bool = True, defaults: bool = True) -> t.Dict:
+    def handle_update_or_same(self, other):
+        super().handle_update_or_same(other)
+        other.output_table = self.output_table
+
+    def dict(
+        self, metadata: bool = True, defaults: bool = True, refs: bool = False
+    ) -> t.Dict:
         """Convert to dictionary."""
-        out = super().dict(metadata=metadata, defaults=defaults)
+        out = super().dict(metadata=metadata, defaults=defaults, refs=refs)
         if not metadata:
             try:
                 del out['output_table']

@@ -437,6 +437,8 @@ class MetaDataStore(ABC):
         :param version: version of object
         """
         if version is None and uuid is None:
+            assert isinstance(type_id, str)
+            assert isinstance(identifier, str)
             version = self.get_latest_version(type_id, identifier)
         return self._replace_object(
             info=info,

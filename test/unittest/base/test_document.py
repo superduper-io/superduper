@@ -264,16 +264,9 @@ def test_encode_same_identifier():
 
 
 def test_diff():
+    r1 = Document({'a': 1, 'b': 2})
 
-    r1 = Document({
-        'a': 1,
-        'b': 2
-    })
-
-    r2 = Document({
-        'a': 1,
-        'b': 3
-    })
+    r2 = Document({'a': 1, 'b': 3})
 
     diff = r1.diff(r2)
 

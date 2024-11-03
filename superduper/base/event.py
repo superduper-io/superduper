@@ -142,7 +142,6 @@ class Create(Event):
         )
 
 
-
 @dc.dataclass(kw_only=True)
 class Update(Event):
     """
@@ -174,7 +173,6 @@ class Update(Event):
             f'{self.component["identifier"]}:'
             f'{self.component["uuid"]}'
         )
-
 
 
 @dc.dataclass(kw_only=True)

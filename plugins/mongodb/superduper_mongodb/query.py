@@ -126,7 +126,7 @@ class MongoQuery(Query):
     def _create_table_if_not_exists(self):
         return
 
-    def dict(self, metadata: bool = True, defaults: bool = True):
+    def dict(self, metadata: bool = True, defaults: bool = True, uuid: bool = True):
         """Return the query as a dictionary."""
         r = super().dict()
         r['documents'] = list(map(_serialize_special_character, r['documents']))

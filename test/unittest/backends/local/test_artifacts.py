@@ -113,13 +113,13 @@ def test_duplicate_artifact(capfd, db, artifact_store: FileSystemArtifactStore):
         return x
 
     test_component = TestComponentBytes(function=my_func, identifier="test")
-    db.add(test_component)
+    db.apply(test_component)
     test_component_loaded = db.load("TestComponent", "test")
     test_component_loaded.init()
 
     # This should use skip the artifact since it exists
-    test_component = TestComponentBytes(function=my_func, identifier="test")
-    db.add(test_component)
+    test_component = TestComponentBytes(function=my_func, identifier="another")
+    db.apply(test_component)
     out, _ = capfd.readouterr()
 
     # assert "Artifact with file_id" in out

@@ -99,11 +99,35 @@ class _Getters:
 def _diff(r1, r2, d):
     for k in r1:
         if isinstance(r1[k], dict):
+            if r1[k].keys() != r2[k].keys():
+                d[k] = r2[k]
+                continue
+
+        if isinstance(r1[k], dict):
             subdiff = {}
             _diff(r1[k], r2[k], {})
             if subdiff:
                 d[k] = subdiff
             continue
+
+        if isinstance(r1[k], Leaf):
+            r1k = r1[k].dict(metadata=False)
+            r2k = r2[k].dict(metadata=False)
+
+            if set(r1k.keys()) != set(r2k.keys()):
+                d[k] = r2[k]
+                continue
+
+            if 'uuid' in r1k:
+                del r1k['uuid']
+            if 'uuid' in r2k:
+                del r2k['uuid']
+            dd = {}
+            _diff(r1k, r2k, dd)
+            if dd:
+                d[k] = r2[k]
+            continue
+
         if r1[k] != r2[k]:
             d[k] = r2[k]
 
@@ -111,6 +135,8 @@ def _diff(r1, r2, d):
 def _update(r, s):
     # TODO - how to deal with unordered sets?
     """
+    Update a dictionary with another dictionary, also nested.
+
     >>> r = {'a': 1, 'b': {'c': 2, 'd': 3}}
     >>> s = {'b': {'c': 4}}
     >>> _update(r, s)
@@ -149,18 +175,36 @@ class Document(MongoStyleDict):
         self.db = db
         self.schema = schema
 
+    def map(self, fn, type_):
+        def _map(r):
+            if isinstance(r, dict):
+                out = {}
+                for k, v in r.items():
+                    out[k] = _map(v)
+                return out
+            if isinstance(r, (list, tuple, set)):
+                out = []
+                for x in r:
+                    out.append(_map(x))
+                return type(out)(out)
+            if isinstance(r, type_):
+                return fn(r)
+            return r
+
+        return Document(_map(self))
+
     def diff(self, other: 'Document'):
         """Get a `Document` with the difference to `other` inside.
-        
+
         :param other: Other `Document`.
         """
-        out = {}
+        out: t.Dict = {}
         _diff(self, other, out)
         return Document(out)
 
-    def update(self, other):
+    def update(self, other: 'Document'):
         """Update document with values from other."""
-        return _update(dict(self), dict(other))
+        return Document(_update(dict(self), dict(other)))
 
     def encode(
         self,
@@ -490,6 +534,7 @@ def _deep_flat_encode(
 
     # TODO what is this??
     from superduper.backends.base.query import _BaseQuery
+
     if (
         not isinstance(r, _BaseQuery)
         and getattr(r, 'importable', False)

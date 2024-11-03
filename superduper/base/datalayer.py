@@ -5,7 +5,6 @@ import warnings
 from collections import namedtuple
 
 import click
-import networkx
 
 import superduper as s
 from superduper import CFG, logging
@@ -17,11 +16,9 @@ from superduper.backends.base.metadata import MetaDataStore
 from superduper.backends.base.query import Query
 from superduper.base import apply, exceptions
 from superduper.base.config import Config
-from superduper.base.constant import KEY_BUILDS
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
-from superduper.base.event import Create, Signal
-from superduper.components.component import Component, Status
+from superduper.components.component import Component
 from superduper.components.datatype import DataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
@@ -29,10 +26,9 @@ from superduper.misc.annotations import deprecated
 from superduper.misc.colors import Colors
 from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
-from superduper.misc.special_dicts import recursive_update
 
 if t.TYPE_CHECKING:
-    from superduper.base.event import Job
+    pass
 
 
 DBResult = t.Any
@@ -562,7 +558,6 @@ class Datalayer:
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
         huuid: t.Optional[str] = None,
-        on_load: bool = True,
         allow_hidden: bool = False,
     ) -> Component:
         """
@@ -598,7 +593,9 @@ class Datalayer:
             try:
                 return self.cluster.cache[uuid]
             except KeyError:
-                logging.info(f'Component {uuid} not found in cache, loading from db')
+                logging.info(
+                    f'Component {uuid} not found in cache, loading from db with uuid'
+                )
                 info = self.metadata.get_component_by_uuid(
                     uuid=uuid, allow_hidden=allow_hidden
                 )
@@ -606,14 +603,16 @@ class Datalayer:
                 c.db = self
         else:
             try:
-                return self.cluster.cache[type_id, identifier]
+                c = self.cluster.cache[type_id, identifier]
+                logging.info(f'Component {uuid} was found in cache...')
             except KeyError:
-                logging.warn(
+                logging.info(
                     f'Component ({type_id}, {identifier}) not found in cache, '
                     'loading from db'
                 )
                 assert type_id is not None
                 assert identifier is not None
+                logging.info(f'Load ({type_id, identifier}) from metadata...')
                 info = self.metadata.get_component(
                     type_id=type_id,
                     identifier=identifier,
@@ -621,6 +620,9 @@ class Datalayer:
                 )
                 c = Document.decode(info, db=self)
                 c.db = self
+
+        # if c.version is None:
+        #     import pdb; pdb.set_trace()
 
         if c.cache:
             logging.info(f'Adding {c.huuid} to cache')
@@ -671,12 +673,7 @@ class Datalayer:
             del filter['_id']
         return filter
 
-    def replace(
-        self,
-        object: t.Any,
-        upsert: bool = False,
-        force: bool = False,
-    ):
+    def replace(self, object: t.Any):
         """
         Replace a model in the artifact store with an updated object.
 
@@ -685,47 +682,27 @@ class Datalayer:
         :param object: The object to replace.
         :param upsert: Toggle to ``True`` to enable replacement even if
                        the object doesn't exist yet.
+        :param force: set to `True` to skip confirm # TODO
         """
         old_uuid = None
-        try:
-            info = self.metadata.get_component(
-                object.type_id, object.identifier, version=object.version
-            )
-            old_uuid = info['uuid']
-        except FileNotFoundError as e:
-            if upsert:
-                return self.apply(
-                    object,
-                    force=force,
-                )
-            raise e
+        info = self.metadata.get_component(
+            object.type_id, object.identifier, version=object.version
+        )
+        old_uuid = info['uuid']
 
-        # If object has no version, update the last version
-        object.version = info['version']
+        serialized = object.dict()
 
-        serialized = object.dict().encode(leaves_to_keep=(Component,))
-        for k, v in serialized[KEY_BUILDS].items():
-            if isinstance(v, Component) and hasattr(v, 'inline') and v.inline:
-                r = dict(v.dict())
-                del r['identifier']
-                serialized[KEY_BUILDS][k] = r
+        def _replace_fn(component):
+            if getattr(component, 'inline', False):
+                return component
+            self.replace(component)
+            return f'&:component:{component.huuid}'
 
-        children = [
-            v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
-        ]
-
-        for child in children:
-            self.replace(child, upsert=True, force=force)
-            if old_uuid:
-                self.metadata.delete_parent_child(old_uuid, child.uuid)
-
-        if children:
-            serialized = apply._change_component_reference_prefix(serialized)
+        serialized = serialized.map(_replace_fn, Component)
+        serialized = serialized.encode()
 
         self._delete_artifacts(object.uuid, info)
-
         serialized = self._save_artifact(object.uuid, serialized)
-
         self.metadata.replace_object(
             serialized,
             identifier=object.identifier,

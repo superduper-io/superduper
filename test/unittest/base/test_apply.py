@@ -1,4 +1,5 @@
 import typing as t
+
 from superduper import Component
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
@@ -28,8 +29,8 @@ class MyComponent(Component):
             self.db.replace(self)
         return self.validate_results
 
-def test_simple_apply(db: Datalayer):
 
+def test_simple_apply(db: Datalayer):
     c = MyComponent('test', a='value', b=1)
 
     db.apply(c)
@@ -39,7 +40,6 @@ def test_simple_apply(db: Datalayer):
 
 
 def test_skip_same(db: Datalayer):
-
     c = MyComponent('test', a='value', b=1)
 
     db.apply(c)
@@ -57,7 +57,6 @@ def test_skip_same(db: Datalayer):
 
 
 def test_update_component_version(db: Datalayer):
-
     c = MyComponent('test', a='value', b=1)
 
     db.apply(c)
@@ -80,7 +79,6 @@ def test_update_component_version(db: Datalayer):
 
 
 def test_break_version(db: Datalayer):
-
     c = MyComponent('test', a='value', b=1)
 
     db.apply(c)
@@ -103,7 +101,6 @@ def test_break_version(db: Datalayer):
 
 
 def test_update_nested(db: Datalayer):
-
     c = MyComponent(
         'test',
         a='value',
@@ -112,7 +109,7 @@ def test_update_nested(db: Datalayer):
             'sub',
             a='sub-value',
             b=3,
-        )
+        ),
     )
 
     db.apply(c)
@@ -127,7 +124,7 @@ def test_update_nested(db: Datalayer):
             'sub',
             a='new-sub-value',
             b=3,
-        )
+        ),
     )
 
     # Neither the child or the parent
@@ -144,7 +141,6 @@ def test_update_nested(db: Datalayer):
 
 
 def test_break_nested(db: Datalayer):
-
     c = MyComponent(
         'test',
         a='value',
@@ -153,7 +149,7 @@ def test_break_nested(db: Datalayer):
             'sub',
             a='sub-value',
             b=3,
-        )
+        ),
     )
 
     db.apply(c)
@@ -168,10 +164,10 @@ def test_break_nested(db: Datalayer):
             'sub',
             a='sub-value',
             b=4,
-        )
+        ),
     )
 
-    # re-applying this component should break 
+    # re-applying this component should break
     # the child, however the parent isn't
     # broken by self.sub, so is only updated
     db.apply(c)
@@ -183,7 +179,6 @@ def test_break_nested(db: Datalayer):
 
 
 def test_job_on_update(db: Datalayer):
-
     c = MyComponent(
         'test',
         a='value',
@@ -194,12 +189,7 @@ def test_job_on_update(db: Datalayer):
 
     assert db.show('my', 'test') == [0]
 
-    c = MyComponent(
-        'test',
-        a='value',
-        b=2,
-        sub=MyValidator('valid', target=2)
-    )
+    c = MyComponent('test', a='value', b=2, sub=MyValidator('valid', target=2))
 
     db.apply(c)
 

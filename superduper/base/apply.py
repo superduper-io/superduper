@@ -1,14 +1,11 @@
-import click
-import networkx
-from superduper import logging
 import typing as t
 
-from superduper.base.constant import KEY_BUILDS
+import click
+
+from superduper import Component, logging
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.components.component import Status
-from superduper.misc.special_dicts import recursive_update
-from superduper import Component
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -55,6 +52,7 @@ def apply(
     )
     # this flags that the context is not needed anymore
     if not create_events:
+        logging.info('No changes needed, doing nothing!')
         return object
 
     # TODO for some reason the events get created multiple times
@@ -73,10 +71,10 @@ def apply(
             unique_job_ids.append(e.job_id)
             unique_job_events.append(e)
 
-    logging.info('Here are the CREATION EVENTS:')
-    steps = {
-        c.component['uuid']: str(i) for i, c in enumerate(unique_create_events)
-    }
+    logging.info('-' * 100)
+    logging.info('METADATA EVENTS:')
+    logging.info('-' * 100)
+    steps = {c.component['uuid']: str(i) for i, c in enumerate(unique_create_events)}
     for i, c in enumerate(unique_create_events):
         if c.parent:
             try:
@@ -86,7 +84,9 @@ def apply(
         else:
             logging.info(f'[{i}]: {c.huuid}: {c.genus}')
 
+    logging.info('-' * 100)
     logging.info('JOBS EVENTS:')
+    logging.info('-' * 100)
     steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
 
     # TODO why do we need this?
@@ -101,6 +101,8 @@ def apply(
             )
         else:
             logging.info(f'[{i}]: {j.huuid}: {j.method}')
+
+    logging.info('-' * 100)
 
     events = [
         *unique_create_events,
@@ -126,49 +128,79 @@ def _apply(
     parent: t.Optional[str] = None,
 ):
     object.db = db
-    existing_versions = db.show(object.type_id, object.identifier)
-    already_exists = bool(existing_versions)
 
-    serialized = object.dict()
-    broken = True
-    if already_exists:
+    serialized = object.dict(metadata=False)
+    del serialized['uuid']
+
+    create_events = []
+    job_events = list(job_events)
+
+    def wrapper(child):
+        nonlocal job_events
+        nonlocal create_events
+
+        if getattr(child, 'inline', True):
+            return child
+
+        c, j = _apply(
+            db=db,
+            object=child,
+            context=context,
+            job_events=job_events,
+            parent=object.uuid,
+        )
+        create_events += c
+        job_events += j
+
+        return f'&:component:{child.huuid}'
+
+    serialized = serialized.map(wrapper, Component)
+
+    try:
         current = db.load(object.type_id, object.identifier)
-        diff = current.dict().diff(serialized)
-        diff = Document({k: v for k, v in diff.items() if k not in {'uuid', 'version', 'status'}})
-        if not diff:
-            return [], job_events
+        current_serialized = current.dict(metadata=False, refs=True)
+        del current_serialized['uuid']
+        this_diff = Document(current_serialized).diff(serialized)
+        logging.info(f'Found identical {object.huuid}')
 
-        broken = bool(set(diff.keys()).intersection(object.breaks))
-        if not broken:
-            serialized = diff
+        if not this_diff:
+            current.handle_update_or_same(object)
+            return create_events, job_events
 
-    serialized = serialized.encode(leaves_to_keep=(Component,))
+        elif set(this_diff.keys(deep=True)).intersection(object.breaks):
+            apply_status = 'broken'
+            serialized = object.dict().update(serialized).update(this_diff).encode()
+            assert current.version is not None
+            object.version = current.version + 1
+            serialized['version'] = current.version + 1
+            logging.info(f'Found broken {object.huuid}')
+            Document(object.metadata).map(wrapper, Component)
 
-    children = [
-        v for v in serialized[KEY_BUILDS].values() if isinstance(v, Component)
-    ]
+        else:
+            apply_status = 'update'
+            current.handle_update_or_same(object)
 
-    create_events, j = _apply_child_components(
-        db=db,
-        components=children,
-        parent=object,
-        job_events=job_events,
-        context=context,
-    )
-    job_events += j
+            serialized['version'] = current.version
+            serialized['uuid'] = current.uuid
 
-    if children:
-        serialized = _change_component_reference_prefix(serialized)
+            serialized = current.dict().update(serialized).update(this_diff).encode()
+
+            logging.info(f'Found update {object.huuid}')
+
+    except FileNotFoundError:
+        serialized['version'] = 0
+        serialized = object.dict().update(serialized)
+        Document(object.metadata).map(wrapper, Component)
+
+        serialized = serialized.encode()
+
+        object.version = 0
+        apply_status = 'new'
+        logging.info(f'Found new {object.huuid}')
 
     serialized = db._save_artifact(object.uuid, serialized)
 
-    if broken:
-        if existing_versions:
-            object.version = max(existing_versions) + 1
-            serialized['version'] = object.version
-        else:
-            serialized['version'] = 0
-            object.version = 0
+    if apply_status in {'new', 'broken'}:
         metadata_event = Create(
             context=context,
             component=serialized,
@@ -181,10 +213,8 @@ def _apply(
             context=context,
         )
     else:
-        current_serialized = Document(db.metadata.get_component_by_uuid(uuid=current.uuid))
-        serialized = dict(current_serialized.update(serialized))
-        object.version = current.version
-        object.uuid = current.uuid
+        assert apply_status == 'update'
+
         metadata_event = Update(
             context=context,
             component=serialized,
@@ -195,7 +225,7 @@ def _apply(
             event_type='apply',
             jobs=job_events,
             context=context,
-            requires=list(diff.keys())
+            requires=list(this_diff.keys()),
         )
 
     if not these_job_events:
@@ -204,66 +234,3 @@ def _apply(
 
     create_events.append(metadata_event)
     return create_events, job_events + these_job_events
-    
-
-def _change_component_reference_prefix(serialized):
-    """Replace '?' to '&' in the serialized object."""
-    references = {}
-    for reference in list(serialized[KEY_BUILDS].keys()):
-        if isinstance(serialized[KEY_BUILDS][reference], Component):
-            comp = serialized[KEY_BUILDS][reference]
-            serialized[KEY_BUILDS].pop(reference)
-            references[reference] = (
-                comp.type_id + ':' + comp.identifier + ':' + comp.uuid
-            )
-
-    # Only replace component references
-    if not references:
-        return
-
-    def replace_function(value):
-        # Change value if it is a string and starts with '?'
-        # and the value is in references
-        # ?:xxx: -> &:xxx:
-        if (
-            isinstance(value, str)
-            and value.startswith('?')
-            and value[1:] in references
-        ):
-            return '&:component:' + references[value[1:]]
-        return value
-
-    serialized = recursive_update(serialized, replace_function)
-    return serialized
-    
-
-def _apply_child_components(db, components, parent, job_events, context):
-    # TODO this is a bit of a mess
-    # it handles the situation in `Stack` when
-    # the components should be added in a certain order
-    G = networkx.DiGraph()
-    lookup = {(c.type_id, c.identifier): c for c in components}
-    for k in lookup:
-        G.add_node(k)
-        for d in lookup[k].get_children_refs():  # dependencies:
-            if d[:2] in lookup:
-                G.add_edge(d, lookup[k].id_tuple)
-
-    nodes = networkx.topological_sort(G)
-    create_events = []
-    job_events = []
-    for n in nodes:
-        c, j = _apply(
-            db=db, object=lookup[n], parent=parent.uuid, job_events=job_events, context=context
-        )
-        create_events += c
-        job_events += j
-    return create_events, job_events
-    
-
-def _update_component(object, parent: t.Optional[str] = None):
-    # TODO add update logic here to check changed attributes
-    logging.debug(
-        f'{object.type_id},{object.identifier} already exists - doing nothing'
-    )
-    return []

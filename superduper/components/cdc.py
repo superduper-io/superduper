@@ -20,6 +20,10 @@ class CDC(Component):
     type_id: t.ClassVar[str] = 'cdc'
     cdc_table: str
 
+    def handle_update_or_same(self, other):
+        super().handle_update_or_same(other)
+        other.cdc_table = self.cdc_table
+
     def declare_component(self, cluster):
         """Declare the component to the cluster.
 
@@ -28,6 +32,9 @@ class CDC(Component):
         super().declare_component(cluster)
         self.db.cluster.queue.put(self)
         self.db.cluster.cdc.put(self)
+
+    def _get_metadata(self):
+        return {**super()._get_metadata(), 'cdc_table': self.cdc_table}
 
     @property
     def dependencies(self):

@@ -38,21 +38,28 @@ jobs:
         if: env.mode == 'changed'
         id: set-matrix-1
         run: |
-          IFS=$'\n'
-          changed_files=(${{ steps.changed-files-specific.outputs.all_changed_files }})
+          # IFS=$'\n'
+          changed_files=(superduper/components/streamlit.py .github/workflows/ci_templates.yaml .gitignore superduper/__init__.py)
           declare -A template_set
+
+          # Check each file if it's in the templates/ directory
           for file in "${changed_files[@]}"; do
             if [[ "$file" =~ ^templates/ ]]; then
               template_name=$(echo "$file" | cut -d '/' -f 2)
               template_set[$template_name]=1
             fi
           done
+
           templates=("${!template_set[@]}")
-          matrix_json=$(printf '%s\n' "${templates[@]}" | jq -R -s -c '{template: split("\n")[:-1]}')
+
+          # Generate a single-line JSON
+          matrix_json=$(printf '%s' "${templates[@]}" | jq -R -s 'if . == "" then {template: []} else {template: (./"\n" | map(select(. != "")))} end' | jq -c .)
+
           echo "matrix_json=$matrix_json"
           echo "Changed templates: ${templates[*]}"
           echo "matrix_json: $matrix_json"
           echo "matrix_json=$matrix_json" >> $GITHUB_ENV
+
 
       - name: Get all templates to test
         if: env.mode == 'all'

@@ -30,6 +30,7 @@ from .components.model import (
 )
 from .components.plugin import Plugin
 from .components.schema import Schema
+from .components.streamlit import Streamlit
 from .components.table import Table
 from .components.template import QueryTemplate, Template
 from .components.vector_index import VectorIndex, vector
@@ -71,4 +72,5 @@ __all__ = (
     'templates',
     'imported',
     'imported_value',
+    'Streamlit',
 )

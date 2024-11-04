@@ -22,6 +22,7 @@ class _BaseTemplate(Component):
     :param template: Template component with variables.
     :param template_variables: Variables to be set.
     :param types: Additional information about types of variables.
+    :param schema: How to structure frontend form.
     :param blobs: Blob identifiers in `Template.component`.
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
@@ -31,7 +32,8 @@ class _BaseTemplate(Component):
 
     template: t.Union[t.Dict, Component]
     template_variables: t.Optional[t.List[str]] = None
-    types: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    types: t.Optional[t.Dict] = None
+    schema: t.Optional[t.Dict] = None
     blobs: t.Optional[t.List[str]] = None
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None

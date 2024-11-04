@@ -196,3 +196,5 @@ test/sleep.json
 /output/
 /deploy/testenv/requirements.txt
 /superduper/rest/superdupertmp
+/example.py
+

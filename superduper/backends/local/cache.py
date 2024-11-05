@@ -37,11 +37,13 @@ class LocalCache(Cache):
         self._cache[component.uuid] = component
         if (component.type_id, component.identifier) in self._component_to_uuid:
             current = self._component_to_uuid[component.type_id, component.identifier]
-            current_version = self._cache[current].version
+            current_component = self._cache[current]
+            current_version = current_component.version
             if current_version < component.version:
                 self._component_to_uuid[
                     component.type_id, component.identifier
                 ] = component.uuid
+                self.expire(current_component.uuid)
         else:
             self._component_to_uuid[
                 component.type_id, component.identifier

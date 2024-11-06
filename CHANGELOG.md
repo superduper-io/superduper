@@ -110,6 +110,7 @@ Include templates data in accessible directory (failed)
 - Add ci workflow to test templates
 - Add deploy flag in model.
 - Modify the apply endpoint in the REST API to an asynchronous interface.
+- Add db apply wait on create events.
 
 #### Bug Fixes
 

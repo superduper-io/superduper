@@ -23,6 +23,8 @@ class Application(Component):
                  i.e. streamlit, gradio, etc
     """
 
+    breaks: t.ClassVar[t.Sequence[str]] = ('components',)
+
     literals: t.ClassVar[t.Sequence[str]] = ("template",)
     type_id: t.ClassVar[str] = "application"
     components: t.Sequence[Component]

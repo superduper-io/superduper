@@ -621,9 +621,6 @@ class Datalayer:
                 c = Document.decode(info, db=self)
                 c.db = self
 
-        # if c.version is None:
-        #     import pdb; pdb.set_trace()
-
         if c.cache:
             logging.info(f'Adding {c.huuid} to cache')
             self.cluster.cache.put(c)

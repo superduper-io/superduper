@@ -1,5 +1,7 @@
 import typing as t
 
+import networkx
+
 from superduper import CFG, logging
 
 from .component import Component
@@ -11,6 +13,8 @@ if t.TYPE_CHECKING:
 class Application(Component):
     """
     A placeholder to hold list of components with associated funcionality.
+
+    Components are sorted in a way that respects their mutual dependencies.
 
     :param components: List of components to group together and apply to `superduper`.
     :param namespace: List of tuples with type_id and identifier of components to
@@ -24,6 +28,30 @@ class Application(Component):
     components: t.Sequence[Component]
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
     link: t.Optional[str] = None
+
+    def __post_init__(self, db, artifacts):
+        super().__post_init__(db, artifacts)
+        self._sort_components_and_set_upstream()
+
+    def _sort_components_and_set_upstream(self):
+        G = networkx.DiGraph()
+        lookup = {c.huuid: c for c in self.components}
+        for k in lookup:
+            G.add_node(k)
+            for d in lookup[k].get_children_refs():  # dependencies:
+                if d in lookup:
+                    G.add_edge(d, k)
+                    if lookup[d].upstream is None:
+                        lookup[d].upstream = []
+
+        for e in G.edges:
+            if lookup[e[1]].upstream is None:
+                lookup[e[1]].upstream = []
+            lookup[e[1]].upstream.append(lookup[e[0]])
+
+        nodes = networkx.topological_sort(G)
+        components = [lookup[n] for n in nodes]
+        self.components = components
 
     def pre_create(self, db: "Datalayer"):
         """Pre-create hook.

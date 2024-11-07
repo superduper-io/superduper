@@ -4,7 +4,7 @@ from pprint import pprint
 import numpy as np
 import pytest
 
-from superduper import ObjectModel, Schema, superduper
+from superduper import Application, ObjectModel, Schema, superduper
 from superduper.base.document import Document
 from superduper.components.datatype import pickle_encoder
 from superduper.components.table import Table
@@ -93,3 +93,18 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
     assert get_listener_output(listener1) == 2
     assert get_listener_output(listener2) == 4
     assert np.allclose(get_listener_output(listener3), data["z"] * 3)
+
+
+def test_sort_components(db):
+    m = ObjectModel('test', object=lambda x: x + 1)
+
+    l1 = m.to_listener(key='x', select=db['docs'].select(), identifier='l1')
+    l2 = m.to_listener(
+        key=l1.outputs,
+        select=db[l1.outputs].select(),
+        identifier='l2',
+    )
+
+    app = Application('test-app', components=[l2, l1])
+
+    assert app.components[0].identifier == 'l1'

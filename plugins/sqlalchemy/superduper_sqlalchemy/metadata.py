@@ -472,7 +472,14 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def _replace_object(self, info, identifier: str | None = None, type_id: str | None = None, version: int | None = None, uuid: str | None = None):
+    def _replace_object(
+        self,
+        info,
+        identifier: str | None = None,
+        type_id: str | None = None,
+        version: int | None = None,
+        uuid: str | None = None,
+    ):
         info = self._refactor_component_info(info)
 
         if uuid is None:
@@ -491,9 +498,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             with self.session_context() as session:
                 stmt = (
                     self.component_table.update()
-                    .where(
-                        self.component_table.c.uuid == uuid
-                    )
+                    .where(self.component_table.c.uuid == uuid)
                     .values(**info)
                 )
                 session.execute(stmt)

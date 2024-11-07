@@ -80,7 +80,6 @@ class _BaseTemplate(Component):
     def form_template(self):
         """Form to be diplayed to user."""
         return {
-            'identifier': '<enter-a-unique-identifier>',
             '_variables': {
                 k: (
                     f'<value-{i}>'

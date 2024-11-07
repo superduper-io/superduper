@@ -18,7 +18,6 @@ from fastapi.responses import JSONResponse
 from superduper import logging
 from superduper.backends.base.query import Query
 from superduper.base.document import Document
-from superduper.components.component import Component
 from superduper.components.template import Template
 from superduper.rest.base import DatalayerDependency, SuperDuperApp
 
@@ -169,31 +168,6 @@ def build_rest_app(app: SuperDuperApp):
         else:
             db.apply(component, force=True)
 
-    def _process_apply_info(db, info):
-        if '_variables' in info:
-            assert {'_variables', 'identifier'}.issubset(info.keys())
-            variables = info.pop('_variables')
-            for k in variables:
-                if isinstance(variables[k], str):
-                    assert '<' not in variables[k]
-                    assert '>' not in variables[k]
-
-            identifier = info.pop('identifier')
-            template_name = info.pop('_template_name', None)
-
-            component = Component.from_template(
-                identifier=identifier,
-                template_body=info,
-                template_name=template_name,
-                db=db,
-                **variables,
-            )
-            return component
-        component = Document.decode(info, db=db).unpack()
-        # TODO this shouldn't be necessary to do twice
-        component.unpack()
-        return component
-
     @app.add('/db/apply', method='post')
     async def db_apply(
         info: t.Dict,
@@ -201,7 +175,7 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
-        component = _process_apply_info(db, info)
+        component = Document.decode(info, db=db).unpack()
         background_tasks.add_task(_process_db_apply, db, component, id)
         return {'status': 'ok'}
 

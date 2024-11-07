@@ -191,8 +191,9 @@ class Document(MongoStyleDict):
         :param db: The datalayer to use.
         """
         if '_variables' in r:
+            variables = {**r['_variables'], 'output_prefix': CFG.output_prefix}
             r = _replace_variables(
-                {k: v for k, v in r.items() if k != '_variables'}, **r['_variables']
+                {k: v for k, v in r.items() if k != '_variables'}, **variables
             )
         schema = schema or r.get(KEY_SCHEMA)
         schema = get_schema(db, schema)
@@ -216,6 +217,7 @@ class Document(MongoStyleDict):
 
         if not isinstance(getters, _Getters):
             getters = _Getters(getters)
+        assert isinstance(getters, _Getters)
 
         # Prioritize using the local artifact storage getter,
         # and then use the DB read getter.

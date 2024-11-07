@@ -42,10 +42,7 @@ def init_db():
 
 
 def load_questions():
-    return [
-        "What is sparse-vector retrieval?",
-        "How to perform Query Optimization?"
-    ]
+    return ["What is sparse-vector retrieval?", "How to perform Query Optimization?"]
 
 
 db, model_rag = st.cache_resource(init_db)()

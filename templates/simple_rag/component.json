@@ -20,11 +20,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "a395902bca4bf34255e97a6a057b0edffc3500b2": {
+    "49356cba66449584068ae0edc984be1075bfa359": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:a395902bca4bf34255e97a6a057b0edffc3500b2"
+      "blob": "&:blob:49356cba66449584068ae0edc984be1075bfa359"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -32,7 +32,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?a395902bca4bf34255e97a6a057b0edffc3500b2"
+      "getter": "?49356cba66449584068ae0edc984be1075bfa359"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
@@ -58,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "727d3bb560939e1211f9cac189d56e07e9622eeb": {
+          "9549af93acca54b93a73d08690a40da760eb1563": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:727d3bb560939e1211f9cac189d56e07e9622eeb"
+            "blob": "&:blob:9549af93acca54b93a73d08690a40da760eb1563"
           },
           "model:chunker": {
-            "_object": "?727d3bb560939e1211f9cac189d56e07e9622eeb",
+            "_object": "?9549af93acca54b93a73d08690a40da760eb1563",
             "upstream": null,
             "plugins": null,
             "cache": true,

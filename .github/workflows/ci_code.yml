@@ -65,6 +65,7 @@ jobs:
         # TODO: We currently need a default plugin to run tests using MongoDB. 
         # Once the local file database is complete, we may need to update this section.
         python -m pip install plugins/mongodb
+        python -m pip install plugins/openai
         python -m pip install plugins/ibis
         python -m pip install plugins/sqlalchemy
 
@@ -85,5 +86,6 @@ jobs:
 
     - name: Usecase Testing
       run: |
+        cp -r templates/* superduper/templates/
         make usecase_testing SUPERDUPER_CONFIG=test/configs/default.yaml
         make usecase_testing SUPERDUPER_CONFIG=test/configs/sql.yaml

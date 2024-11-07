@@ -139,6 +139,7 @@ ignore = [
   "D102",
   "E402",
 ]
+exclude = ["templates", "superduper/templates"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

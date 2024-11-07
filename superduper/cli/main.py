@@ -176,6 +176,7 @@ def _apply(name: str, variables: str | None = None, data_backend: str | None = N
     variables = variables or '{}'
     variables = json.loads(variables)
 
+    # TODO remove all of this template logic
     def _build_from_template(t):
         assert variables is not None, 'Variables must be provided for templates'
         all_values = variables.copy()

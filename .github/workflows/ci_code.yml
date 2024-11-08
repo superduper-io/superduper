@@ -9,12 +9,6 @@ on:
       - 'superduper/**'
       - 'test/**'
       - 'pyproject.toml'
-    paths-ignore:
-      - "plugins/**"
-      - ".github/**"
-      - 'docs/**'
-      - '*.md'
-      - '*.rst'
   workflow_dispatch:
 
 concurrency:

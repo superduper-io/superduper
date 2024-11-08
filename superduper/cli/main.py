@@ -25,6 +25,7 @@ def start(
     host: str = 'localhost',
     headless: bool = False,
     data_backend: str | None = None,
+    templates: str | None = None,
 ):
     """Start the rest server and user interface.
 
@@ -39,7 +40,12 @@ def start(
 
     CFG.log_colorize = False
 
-    app = SuperDuperApp('rest', port=remote_port, data_backend=data_backend)
+    app = SuperDuperApp(
+        'rest',
+        port=remote_port,
+        data_backend=data_backend,
+        templates=templates.split(',') if templates else None,
+    )
 
     if host == 'localhost':
         # host frontend and server together

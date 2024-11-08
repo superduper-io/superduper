@@ -7,7 +7,7 @@ on:
       - 'templates/**'
 
 jobs:
-  release_changed_plugins:
+  release_changed_templates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

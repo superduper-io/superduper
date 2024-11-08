@@ -32,7 +32,7 @@ jobs:
               version=$(cat "templates/$template_name/VERSION")
               cd templates/$template_name && zip -r "${template_name}.zip" . & cd ../..
               echo "Releasing ${template_name}-${version}.zip !!!"
-              aws s3 cp "templates/${template_name}/${template_name}.zip "s3://superduper-public-templates/${template_name}-${version}.zip"
+              aws s3 cp "templates/${template_name}/${template_name}.zip" "s3://superduper-public-templates/${template_name}-${version}.zip"
               echo "Releasing ${template_name}-${version}.zip !!!... DONE"
             fi
           done

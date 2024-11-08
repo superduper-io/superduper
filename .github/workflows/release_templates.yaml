@@ -29,7 +29,7 @@ jobs:
           for file in "${changed_files[@]}"; do
             if [[ "$file" =~ ^templates/ ]]; then
               template_name=$(echo "$file" | cut -d '/' -f 2)
-              version=$(cat "templates/$template_name/VERSION)
+              version=$(cat "templates/$template_name/VERSION")
               cd templates/$template_name && zip -r "${template_name}.zip" . & cd ../..
               echo "Releasing ${template_name}-${version}.zip !!!"
               aws s3 cp "templates/${template_name}/${template_name}.zip "s3://superduper-public-templates/${template_name}-${version}.zip"

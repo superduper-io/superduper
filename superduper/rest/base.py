@@ -75,6 +75,7 @@ class SuperDuperApp:
         db: Datalayer = None,
         prefix: str = '',
         data_backend: str | None = None,
+        templates: t.List[str] | None = None,
     ):
         if prefix and not prefix.startswith('/'):
             prefix = f'/{prefix}'
@@ -106,6 +107,7 @@ class SuperDuperApp:
         )
         self._db = db
         self.data_backend = data_backend
+        self.templates = templates
 
     @cached_property
     def app(self):
@@ -190,6 +192,19 @@ class SuperDuperApp:
         self.print_routes()
         self.run()
 
+    def _add_templates(self, db):
+        if self.templates:
+            from superduper import templates
+
+            existing = db.show('template')
+            for t in self.templates:
+                if t in existing:
+                    logging.info(f'Found existing template: {t}')
+                    continue
+                logging.info(f'Applying template: {t}')
+                t = getattr(templates, t)
+                db.apply(t, force=True)
+
     def startup(
         self,
         cfg: t.Union[Config, None] = None,
@@ -212,6 +227,9 @@ class SuperDuperApp:
                     db = build_datalayer(cfg)
             else:
                 db = self._db
+
+            self._add_templates(db)
+
             self._app.state.pool = db
             self._app.state.pool.cluster.initialize()
             self._db = db

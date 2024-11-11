@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "superduper-framework"
 description = "🔮 Bring AI to your favourite database 🔮"
 readme = "README.md"
+version = '0.5.0.dev'
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.com"}]
 keywords = [
@@ -31,7 +32,6 @@ classifiers = [
     "Typing :: Typed"
 ]
 requires-python = ">=3.10"
-dynamic = ["version"]
 dependencies = [
     "boto3>=1.16",
     "dill>=0.3.6",
@@ -85,9 +85,6 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["superduper*"]
-
-[tool.setuptools.dynamic]
-version = {attr = "superduper.__version__"}
 
 [tool.black]
 skip-string-normalization = true

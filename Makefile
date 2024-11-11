@@ -16,26 +16,6 @@ export SUPERDUPER_ARTIFACTS_DIR ?= ~/.cache/superduper/artifacts
 help: ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-##@ Release Management
-
-# Release a new version of superduper.io
-# The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
-RELEASE_VERSION=$(shell cat VERSION)
-PARENT=$(shell python -c "import sys; print('.'.join(sys.argv[1].split('.')[:-1]))" $$(cat VERSION))
-CURRENT_RELEASE=$(shell git describe --abbrev=0 --tags)
-CURRENT_COMMIT=$(shell git rev-parse --short HEAD)
-
-new_release: ## Release a new version of superduper.io
-	@python superduper/misc/release_tools.py
-	@echo "** Releasing a version to $(PARENT) parent version"
-	@echo "** Switching to branch release-$(RELEASE_VERSION)"
-	@git checkout -b release-$(RELEASE_VERSION)
-	@echo "** Commit Bump Version and Tags"
-	@git commit -m "Bump Version $(RELEASE_VERSION)" --amend
-	@git tag $(RELEASE_VERSION)
-	git push upstream release-$(RELEASE_VERSION)
-	@echo "Now make a pull request to the $(RELEASE_VERSION)"
-
 TEMPLATES ?= '*'
 
 build_templates:  # build the templates with APPLY=False TEMPLATES='*'

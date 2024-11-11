@@ -52,7 +52,7 @@ jobs:
           templates=("${!template_set[@]}")
 
           # Generate a single-line JSON
-          matrix_json=$(printf '%s' "${templates[@]}" | jq -R -s 'if . == "" then {template: []} else {template: (./"\n" | map(select(. != "")))} end' | jq -c .)
+          matrix_json=$(printf '%s\n' "${templates[@]}" | jq -R -s 'if . == "" then {template: []} else {template: (./"\n" | map(select(. != "")))} end' | jq -c .)
 
           echo "matrix_json=$matrix_json"
           echo "Changed templates: ${templates[*]}"

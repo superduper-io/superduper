@@ -23,6 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
+- Support remote templates
+
+## [0.4.2](https://github.com/superduper-io/superduper/compare/0.4.2...0.4.1])    (2024-Nov-03)
+
+#### Changed defaults / behaviours
+
+#### New Features & Functionality
+
+#### Bug Fixes
+
 Include templates data in accessible directory
 
 ## [0.4.1](https://github.com/superduper-io/superduper/compare/0.4.1...0.4.0])    (2024-Nov-03)

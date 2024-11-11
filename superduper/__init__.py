@@ -9,7 +9,16 @@ ROOT = config_settings.ROOT
 
 logging = logger.Logging
 
-__version__ = '0.5.0.dev'
+import toml
+import os
+
+def get_version():
+    path = os.path.join(os.path.dirname(__file__), '..', 'pyproject.toml')
+    with open(path, 'r', encoding='utf-8') as file:
+        pyproject = toml.load(file)
+    return pyproject['project']['version']
+
+__version__ = get_version()
 
 
 from .base.decorators import code

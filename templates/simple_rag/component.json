@@ -20,11 +20,11 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "a395902bca4bf34255e97a6a057b0edffc3500b2": {
+    "de5a10b374e634d964148beb865f73c5b82e53a6": {
       "_path": "superduper.components.datatype.Artifact",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:a395902bca4bf34255e97a6a057b0edffc3500b2"
+      "blob": "&:blob:de5a10b374e634d964148beb865f73c5b82e53a6"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
@@ -32,7 +32,7 @@
       "plugins": null,
       "cache": true,
       "status": null,
-      "getter": "?a395902bca4bf34255e97a6a057b0edffc3500b2"
+      "getter": "?de5a10b374e634d964148beb865f73c5b82e53a6"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
@@ -58,14 +58,14 @@
             "method": "dill",
             "encodable": "artifact"
           },
-          "727d3bb560939e1211f9cac189d56e07e9622eeb": {
+          "a03a6ac18d448d0e3cd7b62ebcd7f19d777b5a59": {
             "_path": "superduper.components.datatype.Artifact",
             "datatype": "?datatype:dill",
             "uri": null,
-            "blob": "&:blob:727d3bb560939e1211f9cac189d56e07e9622eeb"
+            "blob": "&:blob:a03a6ac18d448d0e3cd7b62ebcd7f19d777b5a59"
           },
           "model:chunker": {
-            "_object": "?727d3bb560939e1211f9cac189d56e07e9622eeb",
+            "_object": "?a03a6ac18d448d0e3cd7b62ebcd7f19d777b5a59",
             "upstream": null,
             "plugins": null,
             "cache": true,
@@ -108,7 +108,7 @@
               1536
             ]
           },
-          "model:<var:embedding_model>": {
+          "model:text-embedding": {
             "_path": "superduper_openai.model.OpenAIEmbedding",
             "upstream": null,
             "plugins": null,
@@ -155,7 +155,7 @@
             "status": null,
             "cdc_table": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
             "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
-            "model": "?model:<var:embedding_model>",
+            "model": "?model:text-embedding",
             "predict_kwargs": {},
             "select": "?outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)",
             "flatten": false
@@ -293,6 +293,7 @@
           "default": null
         }
       },
+      "schema": null,
       "blobs": null,
       "files": null,
       "requirements": null,

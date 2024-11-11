@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 
 from superduper import CFG, Component, logging, superduper
 from superduper.components.template import Template
@@ -25,6 +24,7 @@ def start(
     host: str = 'localhost',
     headless: bool = False,
     data_backend: str | None = None,
+    templates: str | None = None,
 ):
     """Start the rest server and user interface.
 
@@ -39,7 +39,12 @@ def start(
 
     CFG.log_colorize = False
 
-    app = SuperDuperApp('rest', port=remote_port, data_backend=data_backend)
+    app = SuperDuperApp(
+        'rest',
+        port=remote_port,
+        data_backend=data_backend,
+        templates=templates.split(',') if templates else None,
+    )
 
     if host == 'localhost':
         # host frontend and server together
@@ -97,9 +102,23 @@ def bootstrap(
 
     db = superduper(data_backend)
     existing = db.show('template')
+
+    if template.startswith('http'):
+        import subprocess
+
+        logging.info('Downloading remote template...')
+        subprocess.run(['curl', '-O', '-k', template])
+        template = template.split('/')[-1]
+        if template.endswith('.zip'):
+            template = template[:-4]
+            subprocess.run(['unzip', '-d', template, f'{template}.zip'])
+
     if destination is not None:
-        root = os.path.dirname(os.path.dirname(__file__))
-        template_directory = os.path.join(root, f'templates/{template}')
+        if os.path.exists(template):
+            template_directory = template
+        else:
+            root = os.path.dirname(os.path.dirname(__file__))
+            template_directory = os.path.join(root, f'templates/{template}')
         print(template_directory)
         import shutil
 
@@ -108,8 +127,12 @@ def bootstrap(
 
     if template in existing:
         logging.warn(f'Template {template} already exists')
+
     logging.info(f'Applying template: {template} from inbuilt')
-    tem = getattr(inbuilt, template)
+    if os.path.exists(template):
+        tem = Template.read(template)
+    else:
+        tem = getattr(inbuilt, template)
     if tem.requirements and pip_install:
         with open('/tmp/requirements.txt', 'w') as f:
             f.write('\n'.join(tem.requirements))

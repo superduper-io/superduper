@@ -1,4 +1,4 @@
 git+https://github.com/openai/CLIP.git
--e ./plugins/pillow
--e ./plugins/torch
+superduper_pillow
+superduper_torch
 opencv-python

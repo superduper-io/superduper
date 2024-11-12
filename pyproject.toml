@@ -56,7 +56,8 @@ dependencies = [
     "python-magic",
     "apscheduler",
     "python-multipart>=0.0.9",
-    "httpx"
+    "httpx",
+    "toml",
 ]
 
 [project.optional-dependencies]
@@ -94,7 +95,7 @@ target-version = ["py38"]
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_ignores = true
-disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg"]
+disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg", "import-untyped"]
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"

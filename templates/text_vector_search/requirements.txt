@@ -1,2 +1,2 @@
--e ./plugins/openai
--e ./plugins/sentence_transformers
+superduper_openai
+superduper_transformers

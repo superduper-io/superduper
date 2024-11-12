@@ -1,3 +1,3 @@
 git+https://github.com/openai/CLIP.git
--e ./plugins/torch
--e ./plugins/pillow
+superduper_torch
+superduper_pillow

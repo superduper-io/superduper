@@ -1,1 +1,1 @@
--e ./plugins/openai
+superduper_openai

@@ -56,7 +56,8 @@ dependencies = [
     "python-magic",
     "apscheduler",
     "python-multipart>=0.0.9",
-    "httpx"
+    "httpx",
+    "toml",
 ]
 
 [project.optional-dependencies]

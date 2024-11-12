@@ -123,7 +123,7 @@ class VectorIndex(CDC):
         return super().__post_init__(db, artifacts)
 
     def refresh(self):
-        if self.cdc_table.startswith('_outputs'):
+        if self.cdc_table.startswith(CFG.output_prefix):
             self.cdc_table = self.indexing_listener.outputs
 
     # TODO why this?

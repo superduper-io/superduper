@@ -139,6 +139,9 @@ def _apply(
         nonlocal job_events
         nonlocal create_events
 
+        # handle the @component decorator
+        # this shouldn't be applied, but
+        # only saved as a quasi-leaf
         if getattr(child, 'inline', True):
             return child
 
@@ -154,26 +157,55 @@ def _apply(
 
         return f'&:component:{child.huuid}'
 
+    # This map function applies `wrapper` to anything
+    # "found" inside the `Document`, which is a `Component`
+    # The output document has the output of `wrapper`
+    # as replacement for those leaves which are `Component`
+    # instances.
     serialized = serialized.map(wrapper, Component)
 
     try:
         current = db.load(object.type_id, object.identifier)
+
+        # only check for diff not in metadata/ uuid
+        # also only
         current_serialized = current.dict(metadata=False, refs=True)
         del current_serialized['uuid']
+
+        # finds the fields where there is a difference
         this_diff = Document(current_serialized).diff(serialized)
         logging.info(f'Found identical {object.huuid}')
 
         if not this_diff:
+            # if no change then update the component
+            # to have the same info as the "existing" version
             current.handle_update_or_same(object)
             return create_events, job_events
 
         elif set(this_diff.keys(deep=True)).intersection(object.breaks):
+            # if this is a breaking change then create a new version
             apply_status = 'broken'
-            serialized = object.dict().update(serialized).update(this_diff).encode()
+
+            # this overwrites the fields which were made
+            # during the `.map` to the children
+            # serializer.map...
+            # this means replacing components with references
+            serialized = object.dict().update(serialized)
+
+            # this is necessary to prevent inconsistencies
+            # this takes the difference between
+            # the current and
+            serialized = serialized.update(this_diff).encode()
+
+            # assign/ increment the version since
+            # this breaks a previous version
             assert current.version is not None
             object.version = current.version + 1
             serialized['version'] = current.version + 1
             logging.info(f'Found broken {object.huuid}')
+
+            # if the metadata includes components, which
+            # need to be applied, do that now
             Document(object.metadata).map(wrapper, Component)
 
         else:
@@ -183,6 +215,8 @@ def _apply(
             serialized['version'] = current.version
             serialized['uuid'] = current.uuid
 
+            # update the existing component with the change
+            # data from the applied component
             serialized = current.dict().update(serialized).update(this_diff).encode()
 
             logging.info(f'Found update {object.huuid}')
@@ -190,6 +224,9 @@ def _apply(
     except FileNotFoundError:
         serialized['version'] = 0
         serialized = object.dict().update(serialized)
+
+        # if the metadata includes components, which
+        # need to be applied, do that now
         Document(object.metadata).map(wrapper, Component)
 
         serialized = serialized.encode()
@@ -221,6 +258,10 @@ def _apply(
             parent=parent,
         )
 
+        # the requires flag, allows
+        # the developer to restrict jobs "on-update"
+        # to only be those jobs concerned with the
+        # change data
         these_job_events = object.create_jobs(
             event_type='apply',
             jobs=job_events,
@@ -228,6 +269,8 @@ def _apply(
             requires=list(this_diff.keys()),
         )
 
+    # If nothing needs to be done, then don't
+    # require the status to be "initializing"
     if not these_job_events:
         metadata_event.component['status'] = Status.ready
         object.status = Status.ready

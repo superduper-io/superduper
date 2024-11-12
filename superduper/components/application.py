@@ -36,6 +36,7 @@ class Application(Component):
         self._sort_components_and_set_upstream()
 
     def _sort_components_and_set_upstream(self):
+        logging.info('Resorting components based on topological order.')
         G = networkx.DiGraph()
         lookup = {c.huuid: c for c in self.components}
         for k in lookup:
@@ -52,6 +53,7 @@ class Application(Component):
             lookup[e[1]].upstream.append(lookup[e[0]])
 
         nodes = networkx.topological_sort(G)
+        logging.info(f'New order of components: {nodes}')
         components = [lookup[n] for n in nodes]
         self.components = components
 

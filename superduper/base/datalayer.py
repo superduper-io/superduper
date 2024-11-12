@@ -27,10 +27,6 @@ from superduper.misc.colors import Colors
 from superduper.misc.download import download_from_one
 from superduper.misc.retry import db_retry
 
-if t.TYPE_CHECKING:
-    pass
-
-
 DBResult = t.Any
 TaskGraph = t.Any
 

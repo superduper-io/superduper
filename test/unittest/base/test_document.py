@@ -270,4 +270,4 @@ def test_diff():
 
     diff = r1.diff(r2)
 
-    print(diff)
+    assert set(diff.keys()) == {'b'}

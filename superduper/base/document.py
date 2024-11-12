@@ -186,7 +186,7 @@ class Document(MongoStyleDict):
                 out = []
                 for x in r:
                     out.append(_map(x))
-                return type(out)(out)
+                return type(r)(out)
             if isinstance(r, type_):
                 return fn(r)
             return r

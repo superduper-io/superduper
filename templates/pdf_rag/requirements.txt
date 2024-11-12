@@ -1,6 +1,6 @@
 pdf2image
 unstructured[pdf]
--e ./plugins/openai
--e ./plugins/anthropic
--e ./plugins/sentence_transformers
--e ./plugins/vllm
+superduper_openai
+superduper_anthropic
+superduper_sentence_transformers
+superduper_vllm

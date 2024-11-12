@@ -1,4 +1,3 @@
--e ./plugins/sentence_transformers
--e ./plugins/sklearn
--e ./plugins/torch
--e ./plugins/torch
+superduper_sentence_transformers
+superduper_sklearn
+superduper_torch

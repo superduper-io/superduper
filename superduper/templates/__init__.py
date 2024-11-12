@@ -14,6 +14,7 @@ VERSIONS = {
     'pdf_rag': '0.4.0',
     'rag': '0.4.0',
     'simple_rag': '0.4.0',
+    'text_vector_search': '0.4.0',
     'transfer_learning': '0.4.0',
 }
 

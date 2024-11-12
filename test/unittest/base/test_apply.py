@@ -174,7 +174,6 @@ def test_break_nested(db: Datalayer):
 
     assert db.show('my', 'test') == [0]
     assert db.show('my', 'sub') == [0, 1]
-
     assert db.load('my', 'sub').b == 4
 
 

@@ -130,24 +130,24 @@ class Component(Leaf, metaclass=ComponentMeta):
                   cluster this component will be reloaded on every component
                   task e.g model prediction.
     :param status: What part of the lifecycle the component is in.
+    :param build_variables: Variables which were supplied to a template to build
+    :param build_template: Template which was used to build
     """
 
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     type_id: t.ClassVar[str] = 'component'
-    # TODO is this used for anything?
-    leaf_type: t.ClassVar[str] = 'component'
     # TODO do something more elegant than this
     _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
-    # TODO what is this for?
-    changed: t.ClassVar[set] = set([])
 
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
     artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
+    build_variables: t.Dict | None = None
+    build_template: str | None = None
 
     def refresh(self):
         pass

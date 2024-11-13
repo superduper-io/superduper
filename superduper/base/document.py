@@ -4,7 +4,6 @@ from collections import defaultdict
 from functools import partial
 
 from superduper import CFG, logging
-from superduper.base.code import Code
 from superduper.base.constant import (
     KEY_BLOBS,
     KEY_BUILDS,
@@ -15,7 +14,6 @@ from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
 from superduper.components.datatype import (
-    _ENCODABLES,
     Blob,
     DataType,
     Encodable,
@@ -35,13 +33,6 @@ ContentType = t.Union[t.Dict, Encodable]
 LeafMetaType = t.Type['Leaf']
 
 _VERSION_LIMIT = 1000
-# TODO is this used for anything?
-_LEAF_TYPES = {
-    'component': Component,
-    'leaf': Leaf,
-    'remote_code': Code,
-}
-_LEAF_TYPES.update(_ENCODABLES)
 
 
 def _blob_getter(uri: str, getter: t.Callable):

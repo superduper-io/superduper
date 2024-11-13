@@ -460,7 +460,6 @@ class Encodable(_BaseEncodable):
     x: t.Any = Empty()
     artifact: t.ClassVar[bool] = False
     blob: dc.InitVar[t.Optional[bytearray]] = None
-    leaf_type: t.ClassVar[str] = 'encodable'
 
     def __post_init__(self, db, blob):
         super().__post_init__(db)
@@ -527,7 +526,6 @@ class Native(_BaseEncodable):
     :param x: The encodable object.
     """
 
-    leaf_type: t.ClassVar[str] = 'native'
     x: t.Optional[t.Any] = None
 
     def __post_init__(self, db):
@@ -547,7 +545,6 @@ class Artifact(_BaseEncodable):
                 if bytes, it should be the actual data.
     """
 
-    leaf_type: t.ClassVar[str] = 'artifact'
     artifact: t.ClassVar[bool] = True
     x: t.Any = Empty()
     blob: dc.InitVar[t.Optional[t.Union[str, bytes]]] = None
@@ -609,7 +606,6 @@ class Artifact(_BaseEncodable):
 class LazyArtifact(Artifact):
     """Data to be saved and loaded only when needed."""
 
-    leaf_type: t.ClassVar[str] = 'lazy_artifact'
     lazy: t.ClassVar[bool] = True
 
     def dict(self, metadata: bool = True, defaults: bool = True):
@@ -636,7 +632,6 @@ class File(_BaseEncodable):
     """
 
     lazy: t.ClassVar[bool] = False
-    leaf_type: t.ClassVar[str] = 'file'
     artifact: t.ClassVar[bool] = True
 
     x: t.Any = Empty()
@@ -687,7 +682,6 @@ class File(_BaseEncodable):
 class LazyFile(File):
     """Class is used to load a file only when needed."""
 
-    leaf_type: t.ClassVar[str] = 'lazy_file'
     lazy: t.ClassVar[bool] = True
 
     def dict(self, metadata: bool = True, defaults: bool = True):

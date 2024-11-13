@@ -1,12 +1,18 @@
 from ibis.expr.datatypes import dtype
-from superduper.components.datatype import DataType
+from superduper.components.datatype import (
+    Artifact,
+    DataType,
+    File,
+    LazyArtifact,
+    LazyFile,
+)
 from superduper.components.schema import ID, FieldType, Schema
 
 SPECIAL_ENCODABLES_FIELDS = {
-    "file": "String",
-    "lazy_file": "String",
-    "artifact": "String",
-    "lazy_artifact": "String",
+    File: "String",
+    LazyFile: "String",
+    Artifact: "String",
+    LazyArtifact: "String",
 }
 
 
@@ -34,8 +40,8 @@ def convert_schema_to_fields(schema: Schema):
         elif not isinstance(v, DataType):
             fields[k] = v.identifier
         else:
-            if v.encodable_cls.leaf_type in SPECIAL_ENCODABLES_FIELDS:
-                fields[k] = SPECIAL_ENCODABLES_FIELDS[v.encodable_cls.leaf_type]
+            if v.encodable_cls in SPECIAL_ENCODABLES_FIELDS:
+                fields[k] = SPECIAL_ENCODABLES_FIELDS[v.encodable_cls]
             else:
                 fields[k] = v.bytes_encoding
 

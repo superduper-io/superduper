@@ -15,10 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Streamlit component and server
 - Graceful updates when making incremental changes
-
-#### Bug Fixes
-
-Include templates data in accessible directory (failed)
+- Include templates remotely
+- Remove duplicate jobs
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

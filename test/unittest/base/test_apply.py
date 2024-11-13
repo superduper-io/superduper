@@ -3,6 +3,7 @@ import typing as t
 from superduper import Component
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
+from superduper.components.application import Application
 
 
 class MyValidator(Component):
@@ -195,3 +196,35 @@ def test_job_on_update(db: Datalayer):
     reload = db.load('my', 'test')
 
     assert reload.validate_results is not None
+
+
+def test_duplicate_job_submission(db: Datalayer):
+    from superduper import ObjectModel
+
+    db.cfg.auto_schema = True
+
+    def my_func(x):
+        return x + 1
+
+    listener_1 = ObjectModel(
+        'list1',
+        object=my_func,
+    ).to_listener(key='x', select=db['docs'].select())
+
+    listener_2 = ObjectModel(
+        'list2',
+        object=my_func,
+        upstream=listener_1,
+    ).to_listener(key=listener_1.outputs, select=db[listener_1.outputs].select())
+
+    c = Application(
+        'test',
+        components=[
+            listener_1,
+            listener_2,
+        ],
+    )
+
+    db['docs'].insert([{'x': i} for i in range(10)]).execute()
+
+    db.apply(c)

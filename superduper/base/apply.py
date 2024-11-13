@@ -48,34 +48,20 @@ def apply(
         db=db,
         object=object,
         context=object.uuid,
-        job_events=[],
+        job_events={},
     )
     # this flags that the context is not needed anymore
     if not create_events:
         logging.info('No changes needed, doing nothing!')
         return object
 
-    # TODO for some reason the events get created multiple times
-    # we need to fix that to prevent inefficiencies
-    unique_create_ids = []
-    unique_create_events = []
-    for e in create_events:
-        if e.component['uuid'] not in unique_create_ids:
-            unique_create_ids.append(e.component['uuid'])
-            unique_create_events.append(e)
-
-    unique_job_ids = []
-    unique_job_events = []
-    for e in job_events:
-        if e.job_id not in unique_job_ids:
-            unique_job_ids.append(e.job_id)
-            unique_job_events.append(e)
-
     logging.info('-' * 100)
     logging.info('METADATA EVENTS:')
     logging.info('-' * 100)
-    steps = {c.component['uuid']: str(i) for i, c in enumerate(unique_create_events)}
-    for i, c in enumerate(unique_create_events):
+
+    steps = {c.component['uuid']: str(i) for i, c in enumerate(create_events.values())}
+
+    for i, c in enumerate(create_events.values()):
         if c.parent:
             try:
                 logging.info(f'[{i}]: {c.huuid}: {c.genus} ~ [{steps[c.parent]}]')
@@ -87,17 +73,13 @@ def apply(
     logging.info('-' * 100)
     logging.info('JOBS EVENTS:')
     logging.info('-' * 100)
-    steps = {j.job_id: str(i) for i, j in enumerate(unique_job_events)}
+    steps = {j.job_id: str(i) for i, j in enumerate(job_events.values())}
 
-    # TODO why do we need this?
-    def uniquify(x):
-        return sorted(list(set(x)))
-
-    for i, j in enumerate(unique_job_events):
+    for i, j in enumerate(job_events.values()):
         if j.dependencies:
             logging.info(
                 f'[{i}]: {j.huuid}: {j.method} ~ '
-                f'[{",".join(uniquify([steps[d] for d in j.dependencies]))}]'
+                f'[{",".join([steps[d] for d in j.dependencies])}]'
             )
         else:
             logging.info(f'[{i}]: {j.huuid}: {j.method}')
@@ -105,8 +87,8 @@ def apply(
     logging.info('-' * 100)
 
     events = [
-        *unique_create_events,
-        *unique_job_events,
+        *list(create_events.values()),
+        *list(job_events.values()),
         Signal(context=object.uuid, msg='done'),
     ]
 
@@ -123,20 +105,27 @@ def apply(
 def _apply(
     db: 'Datalayer',
     object: 'Component',
-    context: str,
-    job_events: t.List['Job'],
+    context: str | None = None,
+    job_events: t.Dict[str, 'Job'] | None = None,
     parent: t.Optional[str] = None,
 ):
+    if context is None:
+        context = object.uuid
+
+    if job_events is None:
+        job_events = {}
+
+    if object.huuid in job_events:
+        return [], []
+
     object.db = db
 
     serialized = object.dict(metadata=False)
     del serialized['uuid']
 
-    create_events = []
-    job_events = list(job_events)
+    create_events = {}
 
     def wrapper(child):
-        nonlocal job_events
         nonlocal create_events
 
         # handle the @component decorator
@@ -152,8 +141,9 @@ def _apply(
             job_events=job_events,
             parent=object.uuid,
         )
-        create_events += c
-        job_events += j
+
+        job_events.update(j)
+        create_events.update(c)
 
         return f'&:component:{child.huuid}'
 
@@ -162,6 +152,7 @@ def _apply(
     # The output document has the output of `wrapper`
     # as replacement for those leaves which are `Component`
     # instances.
+
     serialized = serialized.map(wrapper, Component)
 
     try:
@@ -246,7 +237,7 @@ def _apply(
 
         these_job_events = object.create_jobs(
             event_type='apply',
-            jobs=job_events,
+            jobs=list(job_events.values()),
             context=context,
         )
     else:
@@ -264,7 +255,7 @@ def _apply(
         # change data
         these_job_events = object.create_jobs(
             event_type='apply',
-            jobs=job_events,
+            jobs=list(job_events.values()),
             context=context,
             requires=list(this_diff.keys()),
         )
@@ -275,5 +266,6 @@ def _apply(
         metadata_event.component['status'] = Status.ready
         object.status = Status.ready
 
-    create_events.append(metadata_event)
-    return create_events, job_events + these_job_events
+    create_events[metadata_event.huuid] = metadata_event
+    job_events.update({jj.huuid: jj for jj in these_job_events})
+    return create_events, job_events

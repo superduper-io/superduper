@@ -211,7 +211,7 @@ class Job(Event):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return f'{self.type_id}:{self.identifier}:{self.uuid}'
+        return f'{self.type_id}:{self.identifier}:{self.uuid}.{self.method}'
 
     def get_args_kwargs(self, futures):
         """Get args and kwargs for job execution.

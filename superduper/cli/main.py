@@ -116,12 +116,13 @@ def bootstrap(
     if os.path.exists(template):
         if destination is not None:
             import shutil
+
             shutil.copytree(template, destination)
             return
         tem = Template.read(template)
-    
+
     else:
-        if os.path.exists(destination):
+        if destination is not None and os.path.exists(destination):
             tem = getattr(inbuilt, template)
             tem.export(destination)
             return

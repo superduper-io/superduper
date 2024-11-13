@@ -15,7 +15,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
-## [0.4.2](https://github.com/superduper-io/superduper/compare/0.4.2...0.4.1])    (2024-Nov-03)
+## [0.4.5](https://github.com/superduper-io/superduper/compare/0.4.5...0.4.4])    (2024-Nov-13)
+
+#### Changed defaults / behaviours
+
+#### New Features & Functionality
+
+- Support fetching templates from Superduper-Hub
+
+#### Bug Fixes
+
+## [0.4.4](https://github.com/superduper-io/superduper/compare/0.4.4...0.4.3])    (2024-Nov-13)
+
+#### Changed defaults / behaviours
+
+#### New Features & Functionality
+
+#### Bug Fixes
+
+## [0.4.3](https://github.com/superduper-io/superduper/compare/0.4.3...0.4.2])    (2024-Nov-03)
 
 #### Changed defaults / behaviours
 

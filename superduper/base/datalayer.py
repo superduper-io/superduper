@@ -597,10 +597,15 @@ class Datalayer:
                 )
                 c = Document.decode(info, db=self)
                 c.db = self
+                if c.cache:
+                    logging.info(f'Adding {c.huuid} to cache')
+                    self.cluster.cache.put(c)
         else:
             try:
                 c = self.cluster.cache[type_id, identifier]
-                logging.info(f'Component {uuid} was found in cache...')
+                logging.debug(
+                    f'Component {(type_id, identifier)} was found in cache...'
+                )
             except KeyError:
                 logging.info(
                     f'Component ({type_id}, {identifier}) not found in cache, '
@@ -617,9 +622,9 @@ class Datalayer:
                 c = Document.decode(info, db=self)
                 c.db = self
 
-        if c.cache:
-            logging.info(f'Adding {c.huuid} to cache')
-            self.cluster.cache.put(c)
+                if c.cache:
+                    logging.info(f'Adding {c.huuid} to cache')
+                    self.cluster.cache.put(c)
         return c
 
     def _remove_component_version(

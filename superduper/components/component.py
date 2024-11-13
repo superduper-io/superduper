@@ -676,7 +676,11 @@ class Component(Leaf, metaclass=ComponentMeta):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        r = self.encode(defaults=defaults, metadata=metadata)
+        r = self.dict(defaults=defaults, metadata=metadata).encode(
+            defaults=defaults, metadata=metadata
+        )
+        if not metadata:
+            del r['uuid']
 
         def rewrite_keys(r, keys):
             if isinstance(r, dict):
@@ -691,9 +695,8 @@ class Component(Leaf, metaclass=ComponentMeta):
             return r
 
         if hr:
-            r = rewrite_keys(
-                r, {k: f"blob_{i}" for i, k in enumerate(r.get(KEY_BLOBS))}
-            )
+            blobs = r.get(KEY_BLOBS, {})
+            r = rewrite_keys(r, {k: f"blob_{i}" for i, k in enumerate(blobs)})
 
         if r.get(KEY_BLOBS):
             self._save_blobs_for_export(r[KEY_BLOBS], path)

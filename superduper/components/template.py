@@ -62,7 +62,12 @@ class _BaseTemplate(Component):
         else:
             kwargs["output_prefix"] = CFG.output_prefix
 
-        component = _replace_variables(self.template, **kwargs)
+        component = _replace_variables(
+            self.template,
+            **kwargs,
+            build_variables=kwargs,
+            build_template=self.identifier,
+        )
         return Document.decode(component, db=self.db).unpack()
 
     @property

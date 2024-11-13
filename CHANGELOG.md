@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Graceful updates when making incremental changes
 - Include templates remotely
 - Remove duplicate jobs
+- Add template information to regular component
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

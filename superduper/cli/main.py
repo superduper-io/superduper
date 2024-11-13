@@ -107,33 +107,37 @@ def bootstrap(
         import subprocess
 
         logging.info('Downloading remote template...')
+        file_name = template.split('/')[-1]
+        dir_name = file_name[:-4]
         subprocess.run(['curl', '-O', '-k', template])
-        template = template.split('/')[-1]
+        subprocess.run(['unzip', '-o', file_name, '-d', dir_name])
+        template = dir_name
 
-    if destination is not None:
-        if os.path.exists(template):
-            template_directory = template
-        else:
-            root = os.path.dirname(os.path.dirname(__file__))
-            template_directory = os.path.join(root, f'templates/{template}')
-        print(template_directory)
-        import shutil
-
-        shutil.copytree(template_directory, destination)
-        return
-
-    if template in existing:
-        logging.warn(f'Template {template} already exists')
-
-    logging.info(f'Applying template: {template} from inbuilt')
     if os.path.exists(template):
+        if destination is not None:
+            import shutil
+            shutil.copytree(template, destination)
+            return
         tem = Template.read(template)
+    
     else:
         tem = getattr(inbuilt, template)
+        if destination is not None and os.path.exists(destination):
+            tem.export(destination)
+            return
+
+    if tem.identifier in existing:
+        logging.warn(f'Template {tem.identifier} already exists')
+        logging.warn('Aborting...')
+        return
+
+    logging.info(f'Installating template: {template}')
+
     if tem.requirements and pip_install:
         with open('/tmp/requirements.txt', 'w') as f:
             f.write('\n'.join(tem.requirements))
         subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
+
     db.apply(tem)
 
 

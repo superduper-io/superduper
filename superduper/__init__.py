@@ -9,19 +9,13 @@ ROOT = config_settings.ROOT
 
 logging = logger.Logging
 
-import os
+from importlib import metadata
 
-import toml
-
-
-def _get_version():
-    path = os.path.join(os.path.dirname(__file__), '..', 'pyproject.toml')
-    with open(path, 'r', encoding='utf-8') as file:
-        pyproject = toml.load(file)
-    return pyproject['project']['version']
-
-
-__version__ = _get_version()
+try:
+    __version__ = metadata.version('superduper-framework')
+except metadata.PackageNotFoundError:
+    # when developers do `pip install -e .`
+    __version__ = "dev"
 
 
 from .base.decorators import code

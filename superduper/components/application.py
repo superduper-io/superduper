@@ -52,7 +52,7 @@ class Application(Component):
                 lookup[e[1]].upstream = []
             lookup[e[1]].upstream.append(lookup[e[0]])
 
-        nodes = networkx.topological_sort(G)
+        nodes = list(networkx.topological_sort(G))
         logging.info(f'New order of components: {nodes}')
         components = [lookup[n] for n in nodes]
         self.components = components

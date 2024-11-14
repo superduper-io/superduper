@@ -1,11 +1,13 @@
 import typing as t
 
 import click
+from rich.console import Console
 
 from superduper import Component, logging
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.components.component import Status
+from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -43,17 +45,26 @@ def apply(
     # and vice-versa
     object.pre_create(db)
 
+    # This holds a record of the changes
+    diff: t.Dict = {}
     # context allows us to track the origin of the component creation
     create_events, job_events = _apply(
         db=db,
         object=object,
         context=object.uuid,
         job_events={},
+        global_diff=diff,
     )
     # this flags that the context is not needed anymore
     if not create_events:
         logging.info('No changes needed, doing nothing!')
         return object
+
+    if diff:
+        logging.info('Found this diff:')
+        Console().print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
+
+    logging.info('Found these changes and/ or additions that need to be made:')
 
     logging.info('-' * 100)
     logging.info('METADATA EVENTS:')
@@ -75,14 +86,17 @@ def apply(
     logging.info('-' * 100)
     steps = {j.job_id: str(i) for i, j in enumerate(job_events.values())}
 
-    for i, j in enumerate(job_events.values()):
-        if j.dependencies:
-            logging.info(
-                f'[{i}]: {j.huuid}: {j.method} ~ '
-                f'[{",".join([steps[d] for d in j.dependencies])}]'
-            )
-        else:
-            logging.info(f'[{i}]: {j.huuid}: {j.method}')
+    if not job_events:
+        logging.info('No job events...')
+    else:
+        for i, j in enumerate(job_events.values()):
+            if j.dependencies:
+                logging.info(
+                    f'[{i}]: {j.huuid}: {j.method} ~ '
+                    f'[{",".join([steps[d] for d in j.dependencies])}]'
+                )
+            else:
+                logging.info(f'[{i}]: {j.huuid}: {j.method}')
 
     logging.info('-' * 100)
 
@@ -108,6 +122,7 @@ def _apply(
     context: str | None = None,
     job_events: t.Dict[str, 'Job'] | None = None,
     parent: t.Optional[str] = None,
+    global_diff: t.Dict | None = None,
 ):
     if context is None:
         context = object.uuid
@@ -140,6 +155,7 @@ def _apply(
             context=context,
             job_events=job_events,
             parent=object.uuid,
+            global_diff=global_diff,
         )
 
         job_events.update(j)
@@ -153,7 +169,7 @@ def _apply(
     # as replacement for those leaves which are `Component`
     # instances.
 
-    serialized = serialized.map(wrapper, Component)
+    serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
 
     try:
         current = db.load(object.type_id, object.identifier)
@@ -175,7 +191,7 @@ def _apply(
 
         elif set(this_diff.keys(deep=True)).intersection(object.breaks):
             # if this is a breaking change then create a new version
-            apply_status = 'broken'
+            apply_status = 'breaking'
 
             # this overwrites the fields which were made
             # during the `.map` to the children
@@ -193,11 +209,11 @@ def _apply(
             assert current.version is not None
             object.version = current.version + 1
             serialized['version'] = current.version + 1
-            logging.info(f'Found broken {object.huuid}')
+            logging.info(f'Found breaking changes in {object.huuid}')
 
             # if the metadata includes components, which
             # need to be applied, do that now
-            Document(object.metadata).map(wrapper, Component)
+            Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
 
         else:
             apply_status = 'update'
@@ -218,7 +234,7 @@ def _apply(
 
         # if the metadata includes components, which
         # need to be applied, do that now
-        Document(object.metadata).map(wrapper, Component)
+        Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
 
         serialized = serialized.encode()
 
@@ -226,9 +242,20 @@ def _apply(
         apply_status = 'new'
         logging.info(f'Found new {object.huuid}')
 
+    if global_diff is not None and apply_status in {'update', 'breaking'}:
+        this_diff = this_diff.map(
+            lambda x: '?' + x.split(':')[3],
+            lambda x: isinstance(x, str) and x.startswith('&:component:'),
+        )
+        global_diff[object.identifier] = {
+            'status': apply_status,
+            'changes': dict(this_diff),
+            'type_id': object.type_id,
+        }
+
     serialized = db._save_artifact(object.uuid, serialized)
 
-    if apply_status in {'new', 'broken'}:
+    if apply_status in {'new', 'breaking'}:
         metadata_event = Create(
             context=context,
             component=serialized,

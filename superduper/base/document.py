@@ -166,7 +166,7 @@ class Document(MongoStyleDict):
         self.db = db
         self.schema = schema
 
-    def map(self, fn, type_):
+    def map(self, fn, condition):
         def _map(r):
             if isinstance(r, dict):
                 out = {}
@@ -178,7 +178,7 @@ class Document(MongoStyleDict):
                 for x in r:
                     out.append(_map(x))
                 return type(r)(out)
-            if isinstance(r, type_):
+            if condition(r):
                 return fn(r)
             return r
 

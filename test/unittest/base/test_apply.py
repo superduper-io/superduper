@@ -2,6 +2,7 @@ import typing as t
 
 from superduper import Component
 from superduper.base.annotations import trigger
+from superduper.base.apply import _apply
 from superduper.base.datalayer import Datalayer
 from superduper.components.application import Application
 
@@ -226,5 +227,52 @@ def test_duplicate_job_submission(db: Datalayer):
     )
 
     db['docs'].insert([{'x': i} for i in range(10)]).execute()
+
+    db.apply(c)
+
+
+def test_diff(db):
+    c = MyComponent(
+        'test',
+        a='value',
+        b=2,
+        sub=MyComponent(
+            'sub',
+            a='sub-value',
+            b=3,
+        ),
+    )
+
+    db.apply(c)
+
+    assert set(db.show('my')) == {'test', 'sub'}
+
+    c = MyComponent(
+        'test',
+        a='value',
+        b=2,
+        sub=MyComponent(
+            'sub',
+            a='sub-value',
+            b=4,
+        ),
+    )
+
+    # re-applying this component should break
+    # the child, however the parent isn't
+    # broken by self.sub, so is only updated
+    diff = {}
+    _apply(
+        db=db,
+        object=c,
+        global_diff=diff,
+    )
+
+    import json
+
+    print(json.dumps(diff, indent=2))
+
+    assert set(diff['sub']['changes'].keys()) == {'b'}
+    assert diff['sub']['changes']['b'] == 4
 
     db.apply(c)

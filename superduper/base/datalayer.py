@@ -696,7 +696,7 @@ class Datalayer:
             self.replace(component)
             return f'&:component:{component.huuid}'
 
-        serialized = serialized.map(_replace_fn, Component)
+        serialized = serialized.map(_replace_fn, lambda x: isinstance(x, Component))
         serialized = serialized.encode()
 
         self._delete_artifacts(object.uuid, info)

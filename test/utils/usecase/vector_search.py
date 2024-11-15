@@ -26,7 +26,13 @@ def add_data(db: "Datalayer", start: int, end: int):
     db["documents"].insert(data).execute()
 
 
-def build_vector_index(db: "Datalayer", n: int = 100):
+def build_vector_index(
+    db: "Datalayer",
+    n: int = 100,
+    list_embeddings=False,
+    vector_datatype=None,
+    measure=None,
+):
     from superduper import ObjectModel, VectorIndex
 
     db.cfg.auto_schema = True
@@ -42,11 +48,12 @@ def build_vector_index(db: "Datalayer", n: int = 100):
             if x - offset >= 0:
                 vector[x - offset] = 1
 
-        return np.array(vector)
+        if not list_embeddings:
+            return np.array(vector)
+        return vector
 
     indexing_model = ObjectModel(
-        identifier="model",
-        object=predict,
+        identifier="model", object=predict, datatype=vector_datatype
     )
 
     indexing_model = indexing_model.to_listener(
@@ -71,5 +78,7 @@ def build_vector_index(db: "Datalayer", n: int = 100):
         indexing_listener=indexing_model,
         compatible_listener=compatible_listener,
     )
+    if measure:
+        vector_index.measure = measure
 
     db.apply(vector_index)

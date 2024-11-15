@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add diff when re-applying component
 - Add schema to `Template`
 - Low-code form builder for frontend
+- Add snowflake vector search engine
 
 #### Bug Fixes
 

@@ -346,7 +346,7 @@ class VectorIndex(CDC):
         return models, keys
 
     @property
-    def dimensions(self) -> int:
+    def dimensions(self) -> t.Optional[int]:
         """Get dimension for vector database.
 
         This dimension will be used to prepare vectors in the vector database.
@@ -363,11 +363,15 @@ class VectorIndex(CDC):
             f'{self.indexing_listener.output_table.schema.huuid}'
         )
 
-        dt = next(
-            v
-            for v in self.indexing_listener.output_table.schema.fields.values()
-            if hasattr(v, 'shape') and v.shape is not None
-        )
+        try:
+            dt = next(
+                v
+                for v in self.indexing_listener.output_table.schema.fields.values()
+                if hasattr(v, 'shape') and v.shape is not None
+            )
+        except StopIteration:
+            return None
+
         try:
             assert dt.shape is not None, msg
             return dt.shape[-1]

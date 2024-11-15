@@ -233,6 +233,7 @@ class IbisDataBackend(BaseDataBackend):
         :param identifier: The identifier of the table.
         :param mapping: The mapping of the schema.
         """
+        breakpoint()
         mapping = convert_schema_to_fields(schema)
         if "id" not in mapping:
             mapping["id"] = "string"

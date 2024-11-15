@@ -1,7 +1,8 @@
 import re
 import typing as t
 
-from superduper import CFG, logging
+from snowflake.snowpark import Session
+from superduper import CFG
 from superduper.vector_search.base import BaseVectorSearcher, VectorItem
 
 if t.TYPE_CHECKING:
@@ -28,12 +29,32 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         measure: t.Optional[str] = None,
         output_path: t.Optional[str] = None,
     ):
-        from snowflake.snowpark import Session
-
         self.identifier = identifier
         vector_search_uri = CFG.data_backend
         assert vector_search_uri, "Vector search URI is required"
 
+        self.session = SnowflakeVectorSearcher.create_session(vector_search_uri)
+
+        assert output_path
+        self.output_path = output_path
+        self.collection = collection
+        if measure != 'l2':
+            raise TypeError(
+                "NOTE: Only L2 similary function is supported by ",
+                "snowflake vector search",
+            )
+
+        self.measure = measure
+        self.dimensions = dimensions
+
+        super().__init__(identifier=identifier, dimensions=dimensions, measure=measure)
+
+    @classmethod
+    def create_session(cls, vector_search_uri):
+        """Creates a snowflake session.
+
+        :param vector_search_uri: Connection URI.
+        """
         pattern = r"snowflake://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<account>[^/]+)/(?P<database>[^/]+)/(?P<schema>[^/]+)"
         match = re.match(pattern, vector_search_uri)
 
@@ -47,26 +68,11 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
                 # TODO: check warehouse
                 "warehouse": "base",
             }
-            self.session = Session.builder.configs(connection_parameters).create()
+            session = Session.builder.configs(connection_parameters).create()
+            return session
 
         else:
             raise ValueError(f"URI `{vector_search_uri}` is invalid!")
-
-        assert output_path
-        self.output_path = output_path
-        self.collection = collection
-        if measure != 'l2':
-            logging.warn(
-                "NOTE: Only L2 similary function is supported by ",
-                "snowflake vector search",
-                "\nSwitching to L2 function.",
-            )
-            measure = 'l2'
-
-        self.measure = measure
-        self.dimensions = dimensions
-
-        super().__init__(identifier=identifier, dimensions=dimensions, measure=measure)
 
     def __len__(self):
         pass
@@ -154,5 +160,5 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         )
         result_list = result_df.collect()
         ids = [row["_source"] for row in result_list]
-        scores = [row["distance".upper()] for row in result_list]
+        scores = [-row["distance".upper()] for row in result_list]
         return ids, scores

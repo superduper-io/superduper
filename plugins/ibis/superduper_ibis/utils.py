@@ -5,14 +5,16 @@ from superduper.components.datatype import (
     File,
     LazyArtifact,
     LazyFile,
+    Native,
 )
 from superduper.components.schema import ID, FieldType, Schema
 
 SPECIAL_ENCODABLES_FIELDS = {
-    File: "String",
-    LazyFile: "String",
-    Artifact: "String",
-    LazyArtifact: "String",
+    File: "str",
+    LazyFile: "str",
+    Artifact: "str",
+    LazyArtifact: "str",
+    Native: "json",
 }
 
 
@@ -41,7 +43,7 @@ def convert_schema_to_fields(schema: Schema):
             fields[k] = v.identifier
         else:
             if v.encodable_cls in SPECIAL_ENCODABLES_FIELDS:
-                fields[k] = SPECIAL_ENCODABLES_FIELDS[v.encodable_cls]
+                fields[k] = dtype(SPECIAL_ENCODABLES_FIELDS[v.encodable_cls])
             else:
                 fields[k] = v.bytes_encoding
 

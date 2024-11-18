@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add diff when re-applying component
 - Add schema to `Template`
 
+#### Bug Fixes
+
+- Catch exceptions in updates vs. breakign
+
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 
 #### Changed defaults / behaviours

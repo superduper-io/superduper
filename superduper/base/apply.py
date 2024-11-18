@@ -127,6 +127,9 @@ def _apply(
     if context is None:
         context = object.uuid
 
+    if job_events and any(x.startswith(object.huuid) for x in job_events):
+        return [], []
+
     if job_events is None:
         job_events = {}
 
@@ -193,6 +196,16 @@ def _apply(
             # if this is a breaking change then create a new version
             apply_status = 'breaking'
 
+            if object.uuid == current.uuid:
+                # This happens if the developer performs "surgery"
+                # on an already instantiated object (uuid is not rebuilt)
+
+                raise NotImplementedError(
+                    'Component was modified in place. This is currently not '
+                    'supported. '
+                    'To re-apply a component, rebuild the Python object.'
+                )
+
             # this overwrites the fields which were made
             # during the `.map` to the children
             # serializer.map...
@@ -216,6 +229,7 @@ def _apply(
             Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
 
         else:
+            # if object.identifier ==
             apply_status = 'update'
             current.handle_update_or_same(object)
 

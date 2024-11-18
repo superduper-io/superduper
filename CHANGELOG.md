@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Bug Fixes
 
+## [0.4.6](https://github.com/superduper-io/superduper/compare/0.4.6...0.4.5])    (2024-Nov-13)
+
 ## [0.4.5](https://github.com/superduper-io/superduper/compare/0.4.5...0.4.4])    (2024-Nov-13)
 
 #### Changed defaults / behaviours

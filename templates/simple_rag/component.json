@@ -14,14 +14,14 @@
         "method": "dill",
         "encodable": "artifact"
       },
-      "4be3d97bb2269b51799a6ea310a3bf85dc5436cd": {
+      "a966a94e382909090e064504fe152b4eb10ec558": {
         "_path": "superduper.components.datatype.Artifact",
         "datatype": "?datatype:dill",
         "uri": null,
-        "blob": "&:blob:4be3d97bb2269b51799a6ea310a3bf85dc5436cd"
+        "blob": "&:blob:a966a94e382909090e064504fe152b4eb10ec558"
       },
       "model:chunker": {
-        "_object": "?4be3d97bb2269b51799a6ea310a3bf85dc5436cd",
+        "_object": "?a966a94e382909090e064504fe152b4eb10ec558",
         "upstream": null,
         "plugins": null,
         "cache": true,
@@ -256,8 +256,8 @@
   },
   "schema": {
     "id_field": "str",
-    "embedder": "str",
-    "llm": "str",
+    "embedding_model": "str",
+    "llm_model": "str",
     "table_name": "str",
     "databackend": "str",
     "base_url": "str",
@@ -274,11 +274,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "53da1195b35a4a1e"
+      "uuid": "61f23079a5734a0a"
     },
     "schema:sample_simple_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "45f5d1fadeee4499",
+      "uuid": "fd759c1e1f4b4615",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -294,26 +294,26 @@
       "method": "dill",
       "encodable": "artifact"
     },
-    "1a17c625ea9aa0dce9aba13737b0d45b2f5f01f3": {
+    "27272ea569eb16b8ff1a70355841476da8bd3b92": {
       "_path": "superduper.components.datatype.Artifact",
-      "uuid": "5d8e8fc9485c491f",
+      "uuid": "82179396d9894e99",
       "datatype": "?datatype:dill",
       "uri": null,
-      "blob": "&:blob:1a17c625ea9aa0dce9aba13737b0d45b2f5f01f3"
+      "blob": "&:blob:27272ea569eb16b8ff1a70355841476da8bd3b92"
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "c504249245564540",
+      "uuid": "99d9b10b0c8b4573",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "?1a17c625ea9aa0dce9aba13737b0d45b2f5f01f3"
+      "getter": "?27272ea569eb16b8ff1a70355841476da8bd3b92"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "9d4ff527c41c45f1",
+      "uuid": "2cca99e6239d4b02",
       "upstream": null,
       "plugins": null,
       "cache": true,

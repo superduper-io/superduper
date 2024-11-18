@@ -43,6 +43,17 @@ class _BaseTemplate(Component):
             self.template = self.template.encode(defaults=True, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
         if substitutions is not None:
+            databackend_name = db.databackend._backend.__class__.__name__.split(
+                'DataBackend'
+            )[0].lower()
+            if databackend_name == 'mongo':
+                databackend_name = 'mongodb'
+            substitutions = {
+                databackend_name: 'databackend',
+                CFG.output_prefix: 'output_prefix',
+                **substitutions,
+            }
+        if substitutions is not None:
             self.template = QueryUpdateDocument(self.template).to_template(
                 **substitutions
             )
@@ -58,6 +69,9 @@ class _BaseTemplate(Component):
         assert set(kwargs.keys()) == (set(self.template_variables) - {'output_prefix'})
 
         kwargs['output_prefix'] = CFG.output_prefix
+        kwargs['databackend'] = (
+            'mongodb' if CFG.data_backend.startswith('mongo') else 'ibis'
+        )
 
         component = _replace_variables(
             self.template,

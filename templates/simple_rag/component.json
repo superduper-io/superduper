@@ -252,12 +252,25 @@
       "type": "str",
       "optional": true,
       "default": null
+    },
+    "multi": {
+      "type": "multi-select",
+      "choices": ["json", "date", "third-value"]
+    },
+    "complex": {
+      "type": "complex",
+      "api_key": {
+        "type": "select",
+        "choices": ["1", "2", "other"]
+      },
+      "radio": "bool"
     }
   },
   "schema": {
     "id_field": "str",
-    "embedding_model": "str",
-    "llm_model": "str",
+    "embedding_model": "bool",
+    "complex": {"type": "complex", "sequence": true},
+    "llm_model": "multi",
     "table_name": "str",
     "databackend": "str",
     "base_url": "str",

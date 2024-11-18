@@ -87,6 +87,12 @@ jobs:
         # Artifacts located in artifact/
       - name: Download artifact
         uses: actions/download-artifact@v3
+      
+      - name: Create git tag
+        run: |
+          TAG="${{ needs.test-build.outputs.package_version }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
 
       - name: create release
         run: >

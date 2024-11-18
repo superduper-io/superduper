@@ -1,6 +1,6 @@
 import os
 
-from superduper import CFG, superduper, templates
+from superduper import CFG, superduper, templates, Template
 
 skips = []
 
@@ -16,7 +16,7 @@ def test_template():
         print(f'Skipping template {template_name}')
         return
 
-    t = getattr(templates, template_name)
+    t = Template.read(f'templates/{template_name}')
 
     db.apply(t)
 

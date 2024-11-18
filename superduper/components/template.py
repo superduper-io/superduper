@@ -58,10 +58,6 @@ class _BaseTemplate(Component):
         assert set(kwargs.keys()) == (set(self.template_variables) - {'output_prefix'})
 
         kwargs['output_prefix'] = CFG.output_prefix
-        if 'output_prefix' in kwargs:
-            assert kwargs['output_prefix'] == CFG.output_prefix
-        else:
-            kwargs["output_prefix"] = CFG.output_prefix
 
         component = _replace_variables(
             self.template,

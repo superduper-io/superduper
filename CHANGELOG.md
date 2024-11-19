@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add template information to regular component
 - Add diff when re-applying component
 - Add schema to `Template`
+- Low-code form builder for frontend
 
 #### Bug Fixes
 

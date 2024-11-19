@@ -1,6 +1,6 @@
 import os
 
-from superduper import CFG, superduper, templates, Template
+from superduper import CFG, Template, superduper
 
 skips = []
 

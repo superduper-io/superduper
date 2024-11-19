@@ -96,14 +96,6 @@ class _BaseTemplate(Component):
     def form_template(self):
         """Form to be diplayed to user."""
         return {
-            '_variables': {
-                k: (
-                    f'<value-{i}>'
-                    if k not in self.default_values
-                    else self.default_values[k]
-                )
-                for i, k in enumerate(self.template_variables)
-            },
             'types': self.types,
             'schema': self.schema,
             **{k: v for k, v in self.template.items() if k != 'identifier'},

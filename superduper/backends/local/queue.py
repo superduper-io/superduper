@@ -92,7 +92,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
     def start_consuming(self):
         """Start consuming."""
 
-    def consume(self, db: 'Datalayer', queue: t.Dict[str, Event]):
+    def consume(self, db: 'Datalayer', queue: t.Dict[str, t.List[Event]]):
         """Consume the current queue and run jobs."""
         keys = list(queue.keys())[:]
         for k in keys:

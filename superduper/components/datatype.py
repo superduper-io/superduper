@@ -1,6 +1,7 @@
 import base64
 import dataclasses as dc
 import hashlib
+from importlib import import_module
 import inspect
 import io
 import json
@@ -8,7 +9,7 @@ import os
 import pickle
 import re
 import typing as t
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 import dill
 
@@ -17,7 +18,7 @@ from superduper.backends.base.artifacts import (
     _construct_file_id_from_uri,
 )
 from superduper.base.config import BytesEncoding
-from superduper.base.leaf import Leaf
+from superduper.base.leaf import Leaf, import_item
 from superduper.components.component import Component, ensure_initialized
 from superduper.misc.annotations import component
 from superduper.misc.hash import hash_path
@@ -176,7 +177,34 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-class DataType(Component):
+class _BaseDatatype(Component):
+    """Base class for datatype.
+
+    :param shape: size of vector
+    """
+
+    type_id: t.ClassVar[str] = 'datatype'
+    # TODO this can just be an integer
+    shape: t.Optional[int] = None
+
+    @abstractmethod
+    def encode_data(self, item, info: t.Optional[t.Dict] = None):
+        """Decode the item as `bytes`
+
+        :param item: The item to decode.
+        :param info: The optional information dictionary.
+        """
+    
+    @abstractmethod
+    def decode_data(self, item, info: t.Optional[t.Dict] = None):
+        """Decode the item from bytes.
+
+        :param item: The item to decode.
+        :param info: The optional information dictionary.
+        """
+
+
+class DataType(_BaseDatatype):
     """A data type component that defines how data is encoded and decoded.
 
     :param encoder: A callable that converts an encodable object of this
@@ -184,7 +212,6 @@ class DataType(Component):
     :param decoder: A callable that converts bytes to an encodable object
                     of this encoder.
     :param info: An optional information dictionary.
-    :param shape: The shape of the data.
     :param directory: The directory to store file types.
     :param encodable: The type of encodable object ('encodable',
                       'lazy_artifact', or 'file').
@@ -194,12 +221,10 @@ class DataType(Component):
     :param media_type: The media type.
     """
 
-    type_id: t.ClassVar[str] = 'datatype'
     encoder: t.Optional[t.Callable] = None  # not necessary if encodable is file
     decoder: t.Optional[t.Callable] = None
-    info: t.Optional[t.Dict] = None
-    shape: t.Optional[t.Sequence] = None
-    directory: t.Optional[str] = None
+    info: t.Optional[t.Dict] = None   # TODO deprecate
+    directory: t.Optional[str] = None   # TODO needed?
     encodable: str = 'encodable'
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
     intermediate_type: t.Optional[str] = IntermediateType.BYTES
@@ -334,6 +359,7 @@ def encode_torch_state_dict(module, info):
     return buffer.getvalue()
 
 
+# TODO migrate to torch plugin
 class DecodeTorchStateDict:
     """Torch state dictionary decoder.
 
@@ -450,6 +476,8 @@ class Blob(Leaf):
     bytes: bytes
 
 
+# TODO this is no longer stricly needed, since we now encode
+# directly with `Schema`
 class Encodable(_BaseEncodable):
     """Class for encoding non-Python datatypes to the database.
 
@@ -799,3 +827,35 @@ serializers = {
     'dill_lazy': dill_lazy,
     'file_lazy': file_lazy,
 }
+
+
+class Vector(_BaseDatatype):
+    identifier: str = ''
+
+    encodable_cls: t.ClassVar[type] = Encodable
+
+    def __post_init__(self, db, artifacts):
+        type_: str = CFG.datatype_presets.vector
+        module = '.'.join(type_.split('.')[:-1])
+        cls = type_.split('.')[-1]
+        datatype = getattr(import_module(module), cls)
+        if inspect.isclass(datatype):
+            datatype = datatype('tmp')
+        self.datatype = datatype
+        self.identifier = f'vector[{self.shape[0]}]'
+        return super().__post_init__(db, artifacts)
+
+    def encode_data(self, item, info: t.Optional[t.Dict] = None):
+        return self.datatype.encode_data(item=item, info=info)
+
+    def encode_data_with_identifier(self, item, info: t.Optional[t.Dict] = None):
+        b = self.encode_data(item=item, info=info)
+        if isinstance(b, str):
+            return b, hashlib.sha1(b.encode()).hexdigest()
+        else:
+            assert type(b) == bytes
+            return b, hashlib.sha1(b).hexdigest()
+
+    def decode_data(self, item, info: t.Optional[t.Dict] = None):
+        return self.datatype.decode_data(item=item, info=info)
+

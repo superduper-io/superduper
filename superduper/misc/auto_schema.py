@@ -4,9 +4,11 @@ import typing as t
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.datatype import (
+    _BaseDatatype,
     DataType,
     DataTypeFactory,
     _BaseEncodable,
+    Vector,
     get_serializer,
     json_serializer,
 )
@@ -24,10 +26,6 @@ def register_module(module_name):
     except Exception:
         logging.debug(f"Could not register module: {module_name}")
 
-
-register_module("superduper.ext.numpy.encoder")
-register_module("superduper.ext.torch.encoder")
-register_module("superduper.ext.pillow.encoder")
 
 DEFAULT_DATATYPE = get_serializer(
     identifier='DEFAULT',
@@ -60,7 +58,6 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     try:
         from bson import ObjectId
-
         if isinstance(data, ObjectId):
             return datatype
     except ImportError:
@@ -74,7 +71,7 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
     for factory in DataTypeFactory.__subclasses__():
         if factory.check(data):
             datatype = factory.create(data)
-            assert isinstance(datatype, DataType) or isinstance(datatype, FieldType)
+            assert isinstance(datatype, _BaseDatatype) or isinstance(datatype, FieldType)
             logging.debug(f"Inferred datatype: {datatype.identifier} for data: {data}")
             break
 
@@ -97,7 +94,6 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 def infer_schema(
     data: t.Mapping[str, t.Any],
     identifier: t.Optional[str] = None,
-    ibis=False,
 ) -> Schema:
     """Infer a schema from a given data object.
 
@@ -137,6 +133,32 @@ def infer_schema(
     return Schema(identifier=identifier, fields=schema_data)  # type: ignore
 
 
+class VectorTypeFactory(DataTypeFactory):
+    """A factory for Vector datatypes # noqa."""
+
+    @staticmethod
+    def check(data: t.Any) -> bool:
+        """Check if the data is able to be encoded by the JSON serializer.
+
+        :param data: The data object
+        """
+        from numpy import array as native_array
+        try:
+            _ = native_array(data)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def create(data: t.Any) -> DataType | FieldType:
+        """Create a JSON datatype.
+
+        :param data: The data object
+        """
+        return Vector(shape=(len(data),))
+
+
+
 class JsonDataTypeFactory(DataTypeFactory):
     """A factory for JSON datatypes # noqa."""
 
@@ -161,3 +183,11 @@ class JsonDataTypeFactory(DataTypeFactory):
         if CFG.json_native:
             return FieldType(identifier='json')
         return json_serializer
+
+
+from superduper.ext import numpy
+
+
+register_module("superduper.ext.numpy.encoder")
+register_module("superduper.ext.torch.encoder")
+register_module("superduper.ext.pillow.encoder")

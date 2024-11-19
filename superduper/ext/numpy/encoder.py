@@ -2,7 +2,7 @@ import typing as t
 
 import numpy
 
-from superduper.components.datatype import DataType, DataTypeFactory
+from superduper.components.datatype import _BaseDatatype, DataType, DataTypeFactory
 from superduper.ext.utils import str_shape
 from superduper.misc.annotations import component
 
@@ -45,6 +45,21 @@ class DecodeArray:
         :param info: The info of the encoding.
         """
         return numpy.frombuffer(bytes, dtype=self.dtype).reshape(self.shape)
+
+
+class Array(_BaseDatatype):
+    dtype: str = 'float64'
+
+    def encode_data(self, item, info = None):
+        encoder = EncodeArray(self.dtype)
+        return encoder(item)
+
+    def decode_data(self, item, info = None):
+        shape = self.shape
+        if isinstance(shape, int):
+            shape = (self.shape,)
+        decoder = DecodeArray(self.dtype, shape=shape)
+        return decoder(item)
 
 
 @component()

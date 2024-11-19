@@ -130,6 +130,10 @@ class RestConfig(BaseConfig):
     config: t.Optional[str] = None
 
 
+class DataTypePresets(BaseConfig):
+    vector: str = 'superduper.ext.numpy.Array'
+
+
 @dc.dataclass
 class Config(BaseConfig):
     """The data class containing all configurable superduper values.
@@ -179,6 +183,8 @@ class Config(BaseConfig):
     log_colorize: bool = True
 
     force_apply: bool = False
+
+    datatype_presets: DataTypePresets = dc.field(default_factory=DataTypePresets)
 
     bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True

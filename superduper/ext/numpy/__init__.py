@@ -1,7 +1,7 @@
 import typing as t
 
-from .encoder import array
+from .encoder import array, Array
 
 requirements: t.List = []
 
-__all__ = ['array']
+__all__ = ['array', 'Array']

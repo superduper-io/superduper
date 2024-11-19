@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes Since Last Release
 
-#### Changed defaults / behaviours 
+#### Changed defaults / behaviours
 
 #### New Features & Functionality
 
@@ -26,12 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Bug Fixes
 
 - Catch exceptions in updates vs. breakign
+- Fix the issue where the trigger fails in custom components.
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 
 #### Changed defaults / behaviours
 
-- Change images docker superduper/<image> to superduperio/<image> 
+- Change images docker superduper/<image> to superduperio/<image>
 - Change the image's user from `/home/superduperdb` to `/home/superduper`
 - Add message broker service config
 - Add helper dict method in Event.
@@ -58,8 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the bug in the CI where plugins are skipping tests.
 - Updated CONTRIBUTING.md
 - Add README.md files for the plugins.
-- Add templates to project 
-- Add frontend to project 
+- Add templates to project
+- Add frontend to project
 - Change compute init order in cluster initialize
 - Add table error exception and sql table length fallback.
 - Permissions of artifacts increased
@@ -112,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix vector_index function job.
 - Fix verbosity in component info
 - Change default encoding to sqlvector
-- Fix some links in documentation 
+- Fix some links in documentation
 - Change `__dataclass_params__` to `_dataclass_params`
 - Make component reload after caching in apply
 - Fix a minor bug in schedule_jobs
@@ -152,10 +153,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix doc-strings
 - Fix support for keys in new queue handler.
 - Fix the bug where the query itself changes after encoding
-- Fix the dependency error in copy_vectors within vector_index. 
+- Fix the dependency error in copy_vectors within vector_index.
 - Fix Template substitutions
-- Fix remove un_use _import function
+- Fix remove un_use_import function
 - Fix some linting and small refactors.
+
 ## [0.2.0](https://github.com/superduper-io/superduper/compare/0.1.3...0.2.0])    (2024-Jun-21)
 
 #### Changed defaults / behaviours
@@ -164,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add model dict output indexing in graph
 - Make lance upsert for added vectors
 - Make vectors normalized in inmemory vector database for cosine measure
-- Add local cluster as tmux session 
+- Add local cluster as tmux session
 - At the end of the test, drop the collection instead of the database
 - Force load vector indices during backfill
 - Fix pandas database (in-memory)
@@ -217,7 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auto-create tables and schemas
 - Add `Application` and `Template` support to build reusable apps
 - Add pretty-print to `Component.info`
-- `Model` 
+- `Model`
 - 'Add pluggable compute backend via config'
 
 #### Bug Fixes
@@ -244,7 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle ProgrammingError of SnowFlake for non-existing objects
 - Updated the use cases.
 - Update references to components and artifacts.
-- Fix Ray compute async with job submission api. 
+- Fix Ray compute async with job submission api.
 - Refactor document encode
 - Change '_leaves' to '_builds'
 - Fixed empty identifier of Code.from_object.
@@ -257,7 +259,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3](https://github.com/superduper-io/superduper/compare/0.1.1...0.1.3])    (2024-Jun-20)
 
-Test release before v0.2 
+Test release before v0.2
 
 ## [0.1.1](https://github.com/superduper-io/superduper/compare/0.1.0...0.1.1])    (2024-Feb-09)
 
@@ -339,26 +341,26 @@ Test release before v0.2
 
 #### Changed defaults / behaviors
 
--   Updated readme by @fnikolai in #1196.
--   Removed unused import by @jieguangzhou in #1205.
--   Updated README.md with contributors by @thejumpman2323 in #1201.
--   Added conditional builders in Dockerfile by @fnikolai in #1213.
--   Optimized unit tests by @jieguangzhou in #1204.
+- Updated readme by @fnikolai in #1196.
+- Removed unused import by @jieguangzhou in #1205.
+- Updated README.md with contributors by @thejumpman2323 in #1201.
+- Added conditional builders in Dockerfile by @fnikolai in #1213.
+- Optimized unit tests by @jieguangzhou in #1204.
 
 #### New Features & Functionality
 
--   Updated README.md with announcement emoji by @thejumpman2323 in #1222.
--   Launched announcement by @fnikolai in #1208.
--   Added raw SQL in ibis by @thejumpman2323 in #1220.
--   Added experimental keyword by @fnikolai in #1218.
--   Added query table by @thejumpman2323 in #1212.
--   Merged Ashishpatel26 main by @blythed in #1224.
--   Bumped Version to 0.0.15 by @fnikolai in #1225.
+- Updated README.md with announcement emoji by @thejumpman2323 in #1222.
+- Launched announcement by @fnikolai in #1208.
+- Added raw SQL in ibis by @thejumpman2323 in #1220.
+- Added experimental keyword by @fnikolai in #1218.
+- Added query table by @thejumpman2323 in #1212.
+- Merged Ashishpatel26 main by @blythed in #1224.
+- Bumped Version to 0.0.15 by @fnikolai in #1225.
 
 #### Bug Fixes
 
--   Fixed dependencies and makefile by @fnikolai in #1209.
--   Fixed demo release by @fnikolai in #1210.
+- Fixed dependencies and makefile by @fnikolai in #1209.
+- Fixed demo release by @fnikolai in #1210.
 
 ## [0.0.14](https://github.com/superduper-io/superduper/compare/0.0.13...0.0.14])    (2023-Oct-27)
 
@@ -381,5 +383,3 @@ Test release before v0.2
 ## [0.0.5](https://github.com/superduper-io/superduper/compare/0.0.5...0.0.4])      (2023-Aug-15)
 
 ## 0.0.4      (2023-Aug-03)
-
-

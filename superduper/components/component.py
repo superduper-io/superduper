@@ -311,7 +311,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         max_it = 100
         it = 0
 
-        triggers = self.get_triggers('apply', requires=requires)
+        triggers = self.get_triggers(event_type, requires=requires)
         triggers = list(set(triggers) - {'set_status'})
 
         # local_job_lookup is {j.method_name: j.job_id for j in local_jobs}

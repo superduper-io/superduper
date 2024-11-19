@@ -352,13 +352,7 @@ class Datalayer:
         """
         from superduper.base.event import Change
 
-        component_exists_to_consume = False
-        for component in self.show("listener"):
-            cdc_table = self.load('listener', component).cdc_table
-            if cdc_table == table:
-                component_exists_to_consume = True
-                break
-        if not component_exists_to_consume:
+        if not self.metadata.show_cdcs(table):
             logging.info(
                 'Skipping cdc for inserted documents in {table}',
                 'because no component to consume the table.',

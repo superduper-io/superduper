@@ -50,7 +50,8 @@ class Application(Component):
         for e in G.edges:
             if lookup[e[1]].upstream is None:
                 lookup[e[1]].upstream = []
-            lookup[e[1]].upstream.append(lookup[e[0]])
+            if lookup[e[0]] not in lookup[e[1]].upstream:
+                lookup[e[1]].upstream.append(lookup[e[0]])
 
         nodes = list(networkx.topological_sort(G))
         logging.info(f'New order of components: {nodes}')
@@ -97,6 +98,9 @@ class Application(Component):
             ):
                 raise ValueError("Invalid component info.")
 
+            if component_info.get("type_id") in {"application", "template"}:
+                continue
+
             component = db.load(
                 type_id=component_info["type_id"],
                 identifier=component_info["identifier"],
@@ -128,8 +132,13 @@ class Application(Component):
                 logging.info("\n" + "-" * 80)
                 logging.info(f"Delete the children of {component.identifier}:")
                 logging.info(f"Children: {[c.identifier for c in component.children]}")
+                upstream = component.upstream or []
                 components_with_parent.update(
-                    [(c.type_id, c.identifier) for c in component.children]
+                    [
+                        (c.type_id, c.identifier)
+                        for c in component.children
+                        if c not in upstream
+                    ]
                 )
 
         remove_components = model_outputs_components | components_with_parent
@@ -145,7 +154,7 @@ class Application(Component):
 
         logging.info("Combine components to application.")
         components_strings = "\n".join(
-            [f"{c.type_id}.{c.identifier}" for c in components]
+            [f"{c.type_id}:{c.identifier}" for c in components]
         )
         logging.info(f"Components: \n{components_strings}")
         app = cls(identifier=identifier, components=components)

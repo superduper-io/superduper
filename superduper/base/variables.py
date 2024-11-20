@@ -31,8 +31,6 @@ def _replace_variables(x, **kwargs):
         return kwargs.get(x[5:-1], x)
     if isinstance(x, str):
         variables = re.findall(r'<var:(.*?)>', x)
-        if variables:
-            print(x)
         variables = list(map(lambda v: v.strip(), variables))
         for k in variables:
             if k not in kwargs:

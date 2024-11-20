@@ -2,7 +2,7 @@ import dataclasses as dc
 import os
 import typing as t
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
@@ -206,6 +206,8 @@ class Template(_BaseTemplate):
                 KEY_FILES: config_object.get(KEY_FILES, {}),
             }
         )
+        logging.info("Template read successfully.")
+        logging.info(f"Variables: {object.template_variables}")
         return object
 
 

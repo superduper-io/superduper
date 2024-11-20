@@ -55,6 +55,8 @@ class Listener(CDC):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         self._set_upstream()
+        if isinstance(self.key, tuple):
+            self.key = list(self.key)
 
         return super().__post_init__(db, artifacts)
 
@@ -71,7 +73,7 @@ class Listener(CDC):
             try:
                 del out['output_table']
             except KeyError:
-                logging.warn('output_table not found in listener.dict()')
+                logging.debug('output_table not found in listener.dict()')
                 pass
         return out
 
@@ -80,10 +82,18 @@ class Listener(CDC):
         if deps:
             if not self.upstream:
                 self.upstream = []
+
+            upstream_ids = {
+                (upstream.identifier, upstream.uuid)
+                for upstream in self.upstream
+                if isinstance(upstream, Listener)
+            }
             try:
                 it = 0
                 for dep in deps:
                     identifier, uuid = dep
+                    if (identifier, uuid) in upstream_ids:
+                        continue
                     self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
                     it += 1
             except ValueError as e:

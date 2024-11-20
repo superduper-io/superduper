@@ -553,7 +553,7 @@ def _deep_flat_encode(
         uuid = r.uuid
 
         if key in builds:
-            logging.warn(f'Leaf {key} already exists')
+            logging.debug(f'Leaf {key} already exists')
 
         logging.debug(f'Decoding leaf {type(r)} with identifier: {r.identifier}')
 

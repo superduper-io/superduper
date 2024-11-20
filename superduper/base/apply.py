@@ -192,18 +192,23 @@ def _apply(
             current.handle_update_or_same(object)
             return create_events, job_events
 
-        elif set(this_diff.keys(deep=True)).intersection(object.breaks):
+        elif breaks := set(this_diff.keys(deep=True)).intersection(object.breaks):
             # if this is a breaking change then create a new version
             apply_status = 'breaking'
 
             if object.uuid == current.uuid:
                 # This happens if the developer performs "surgery"
                 # on an already instantiated object (uuid is not rebuilt)
+                for key in breaks:
+                    logging.error(
+                        f'Old: {current.dict()[key]}, New: {object.dict()[key]}'
+                    )
 
                 raise NotImplementedError(
-                    'Component was modified in place. This is currently not '
-                    'supported. '
+                    f'Component {object.identifier} was modified in place.'
+                    'This is currently not supported. '
                     'To re-apply a component, rebuild the Python object.'
+                    f'Breaks: {breaks}'
                 )
 
             # this overwrites the fields which were made

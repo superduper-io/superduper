@@ -53,6 +53,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.conn = sql_conn
         self.dialect = sql_conn.dialect.name
         self._init_tables()
+        self._need_init = False
 
         self._lock = threading.Lock()
 
@@ -142,6 +143,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         try:
             metadata.create_all(self.conn)
+            self._need_init = False
         except Exception as e:
             logging.error(f'Error creating tables: {e}')
 
@@ -207,9 +209,13 @@ class SQLAlchemyMetadata(MetaDataStore):
         except ProgrammingError as e:
             logging.warn(f'Error dropping artifact table {e}')
 
+        self._need_init = True
+
     @contextmanager
     def session_context(self):
         """Provide a transactional scope around a series of operations."""
+        if self._need_init:
+            self._init_tables()
         sm = sessionmaker(bind=self.conn)
         session = sm()
         try:

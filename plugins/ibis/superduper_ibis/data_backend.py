@@ -69,6 +69,10 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
+        self.datatype_presets = {
+            'vector': 'superduper.ext.numpy.Array'
+        }
+
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")
         self.db_helper = get_db_helper(self.dialect)

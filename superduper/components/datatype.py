@@ -1,5 +1,6 @@
 import base64
 import dataclasses as dc
+from functools import cached_property
 import hashlib
 from importlib import import_module
 import inspect
@@ -202,6 +203,21 @@ class _BaseDatatype(Component):
         :param item: The item to decode.
         :param info: The optional information dictionary.
         """
+
+    def encode_data_with_identifier(self, item, info: t.Optional[t.Dict] = None):
+        b = self.encode_data(item=item, info=info)
+        if type(b) == bytes:
+            return b, hashlib.sha1(b).hexdigest()
+        else:
+            return b, hashlib.sha1(str(b).encode()).hexdigest()
+
+
+class NativeDatatype(_BaseDatatype):
+    def encode_data(self, item, info = None):
+        return item
+    
+    def decode_data(self, item, info = None):
+        return item
 
 
 class DataType(_BaseDatatype):
@@ -835,27 +851,26 @@ class Vector(_BaseDatatype):
     encodable_cls: t.ClassVar[type] = Encodable
 
     def __post_init__(self, db, artifacts):
-        type_: str = CFG.datatype_presets.vector
+        self.identifier = f'vector[{self.shape[0]}]'
+        return super().__post_init__(db, artifacts)
+
+    @cached_property
+    def datatype_impl(self):
+        if isinstance(CFG.datatype_presets.vector, str):
+            type_: str = CFG.datatype_presets.vector
+        else:
+            type_: str = self.db.databackend.datatype_presets['vector']
         module = '.'.join(type_.split('.')[:-1])
         cls = type_.split('.')[-1]
         datatype = getattr(import_module(module), cls)
         if inspect.isclass(datatype):
             datatype = datatype('tmp')
-        self.datatype = datatype
-        self.identifier = f'vector[{self.shape[0]}]'
-        return super().__post_init__(db, artifacts)
+        return datatype
 
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
-        return self.datatype.encode_data(item=item, info=info)
+        return self.datatype_impl.encode_data(item=item, info=info)
 
-    def encode_data_with_identifier(self, item, info: t.Optional[t.Dict] = None):
-        b = self.encode_data(item=item, info=info)
-        if isinstance(b, str):
-            return b, hashlib.sha1(b.encode()).hexdigest()
-        else:
-            assert type(b) == bytes
-            return b, hashlib.sha1(b).hexdigest()
 
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
-        return self.datatype.decode_data(item=item, info=info)
+        return self.datatype_impl.decode_data(item=item, info=info)
 

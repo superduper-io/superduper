@@ -158,7 +158,6 @@ class VectorTypeFactory(DataTypeFactory):
         return Vector(shape=(len(data),))
 
 
-
 class JsonDataTypeFactory(DataTypeFactory):
     """A factory for JSON datatypes # noqa."""
 

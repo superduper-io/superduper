@@ -353,16 +353,21 @@ class Datalayer:
         from superduper.base.event import Change
 
         component_exists_to_consume = False
-        for component in self.show("listener"):
-            cdc_table = self.load('listener', component).cdc_table
+        msg = """
+        Skipping cdc for inserted documents in {table}
+        because no component to consume the table.
+        """
+
+        tables = self.metadata.show_cdc_tables()
+        if not tables:
+            logging.warn(msg)
+            return
+        for cdc_table in tables:
             if cdc_table == table:
                 component_exists_to_consume = True
                 break
         if not component_exists_to_consume:
-            logging.info(
-                'Skipping cdc for inserted documents in {table}',
-                'because no component to consume the table.',
-            )
+            logging.info(msg)
             return
 
         events = []

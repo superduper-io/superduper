@@ -4,6 +4,7 @@ import json
 import os
 import typing as t
 
+import numpy
 import requests
 import tqdm
 from httpx import ResponseNotRead
@@ -140,14 +141,14 @@ class OpenAIEmbedding(_OpenAI):
         e = self.syncClient.embeddings.create(
             input=X, model=self.model, **self.predict_kwargs
         )
-        return e.data[0].embedding
+        return numpy.array(e.data[0].embedding).astype('float32')
 
     @retry
     def _predict_a_batch(self, texts: t.List[t.Dict]):
         out = self.syncClient.embeddings.create(
             input=texts, model=self.model, **self.predict_kwargs
         )
-        return [r.embedding for r in out.data]
+        return [numpy.array(r.embedding).astype('float32') for r in out.data]
 
 
 class OpenAIChatCompletion(_OpenAI):

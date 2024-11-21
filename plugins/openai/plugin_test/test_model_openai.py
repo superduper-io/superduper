@@ -94,7 +94,7 @@ def test_embed():
     resp = e.predict('Hello, world!')
 
     assert len(resp) == e.shape[0]
-    assert all(isinstance(x, float) for x in resp)
+    assert str(resp.dtype) == 'float32'
 
 
 @vcr.use_cassette()
@@ -104,7 +104,7 @@ def test_batch_embed():
 
     assert len(resp) == 2
     assert all(len(x) == e.shape[0] for x in resp)
-    assert all(isinstance(x, float) for y in resp for x in y)
+    assert all(str(x.dtype) == 'float32' for x in resp)
 
 
 @vcr.use_cassette()

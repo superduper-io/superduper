@@ -61,10 +61,6 @@ class SentenceTransformer(Model, _DeviceManaged):
             self.object = _SentenceTransformer(self.model, device=self.device)
             self._default_model = True
 
-        if self.datatype is None:
-            sample = self.predict('Test')
-            self.shape = (len(sample),)
-
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Serialize as a dictionary."""
         r = super().dict(metadata=metadata, defaults=defaults)

@@ -6,6 +6,7 @@ from importlib import import_module
 import inspect
 import io
 import json
+import numpy
 import os
 import pickle
 import re
@@ -178,7 +179,7 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-class _BaseDatatype(Component):
+class BaseDataType(Component):
     """Base class for datatype.
 
     :param shape: size of vector
@@ -212,15 +213,17 @@ class _BaseDatatype(Component):
             return b, hashlib.sha1(str(b).encode()).hexdigest()
 
 
-class NativeDatatype(_BaseDatatype):
+class NativeVector(BaseDataType):
     def encode_data(self, item, info = None):
+        if isinstance(item, numpy.ndarray):
+            item = item.tolist()
         return item
     
     def decode_data(self, item, info = None):
-        return item
+        return numpy.array(item)
 
 
-class DataType(_BaseDatatype):
+class DataType(BaseDataType):
     """A data type component that defines how data is encoded and decoded.
 
     :param encoder: A callable that converts an encodable object of this
@@ -258,7 +261,6 @@ class DataType(_BaseDatatype):
             self.encodable_cls = _ENCODABLES[self.encodable]
         else:
             import importlib
-
             self.encodable_cls = importlib.import_module(
                 '.'.join(self.encodable.split('.')[:-1])
             ).__dict__[self.encodable.split('.')[-1]]
@@ -845,13 +847,13 @@ serializers = {
 }
 
 
-class Vector(_BaseDatatype):
-    identifier: str = ''
+class Vector(BaseDataType):
 
-    encodable_cls: t.ClassVar[type] = Encodable
+    identifier: str = ''
 
     def __post_init__(self, db, artifacts):
         self.identifier = f'vector[{self.shape[0]}]'
+        self.encodable_cls = Native
         return super().__post_init__(db, artifacts)
 
     @cached_property
@@ -873,4 +875,3 @@ class Vector(_BaseDatatype):
 
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
         return self.datatype_impl.decode_data(item=item, info=info)
-

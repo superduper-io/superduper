@@ -14,6 +14,7 @@ from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
 from superduper.components.datatype import (
+    BaseDataType,
     Blob,
     DataType,
     Encodable,
@@ -598,7 +599,7 @@ def _schema_decode(
     decoded = {}
     for k, value in data.items():
         field = schema.fields.get(k)
-        if not isinstance(field, DataType):
+        if not isinstance(field, BaseDataType):
             decoded[k] = value
             continue
 

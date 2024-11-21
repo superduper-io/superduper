@@ -130,7 +130,14 @@ class RestConfig(BaseConfig):
     config: t.Optional[str] = None
 
 
+@dc.dataclass
 class DataTypePresets(BaseConfig):
+    """Paths of default types of data.
+
+    Overrides DataBackend.datatype_presets.
+
+    :param vector: BaseDataType to encode vectors.
+    """
     vector: str | None = None
 
 
@@ -152,6 +159,7 @@ class Config(BaseConfig):
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
     :param force_apply: Whether to force apply the configuration
+    :param datatype_presets: Presets to be applied for default types of data
     :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.

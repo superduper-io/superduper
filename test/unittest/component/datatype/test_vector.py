@@ -1,7 +1,5 @@
 import numpy
 
-from superduper.components.datatype import Vector
-
 
 def test_auto_detect_vector(db):
     db.cfg.auto_schema = True
@@ -14,4 +12,7 @@ def test_auto_detect_vector(db):
 
     impl = schema.fields['x'].datatype_impl
 
-    assert impl.__module__ + '.' + impl.__class__.__name__ == db.databackend.datatype_presets['vector']
+    assert (
+        impl.__module__ + '.' + impl.__class__.__name__
+        == db.databackend.datatype_presets['vector']
+    )

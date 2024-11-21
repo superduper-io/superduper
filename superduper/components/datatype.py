@@ -1,26 +1,26 @@
 import base64
 import dataclasses as dc
-from functools import cached_property
 import hashlib
-from importlib import import_module
 import inspect
 import io
 import json
-import numpy
 import os
 import pickle
 import re
 import typing as t
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from functools import cached_property
+from importlib import import_module
 
 import dill
+import numpy
 
 from superduper import CFG
 from superduper.backends.base.artifacts import (
     _construct_file_id_from_uri,
 )
 from superduper.base.config import BytesEncoding
-from superduper.base.leaf import Leaf, import_item
+from superduper.base.leaf import Leaf
 from superduper.components.component import Component, ensure_initialized
 from superduper.misc.annotations import component
 from superduper.misc.hash import hash_path
@@ -171,7 +171,7 @@ class DataTypeFactory:
 
     @staticmethod
     @abstractmethod
-    def create(data: t.Any) -> "DataType":
+    def create(data: t.Any) -> "BaseDataType":
         """Create a DataType for the data.
 
         :param data: The data to create the DataType for
@@ -191,12 +191,12 @@ class BaseDataType(Component):
 
     @abstractmethod
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
-        """Decode the item as `bytes`
+        """Decode the item as `bytes`.
 
         :param item: The item to decode.
         :param info: The optional information dictionary.
         """
-    
+
     @abstractmethod
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
         """Decode the item from bytes.
@@ -207,19 +207,21 @@ class BaseDataType(Component):
 
     def encode_data_with_identifier(self, item, info: t.Optional[t.Dict] = None):
         b = self.encode_data(item=item, info=info)
-        if type(b) == bytes:
+        if isinstance(b, bytes):
             return b, hashlib.sha1(b).hexdigest()
         else:
             return b, hashlib.sha1(str(b).encode()).hexdigest()
 
 
 class NativeVector(BaseDataType):
-    def encode_data(self, item, info = None):
+    """Datatype for encoding vectors which are supported natively by databackend."""
+
+    def encode_data(self, item, info=None):
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
         return item
-    
-    def decode_data(self, item, info = None):
+
+    def decode_data(self, item, info=None):
         return numpy.array(item)
 
 
@@ -242,8 +244,8 @@ class DataType(BaseDataType):
 
     encoder: t.Optional[t.Callable] = None  # not necessary if encodable is file
     decoder: t.Optional[t.Callable] = None
-    info: t.Optional[t.Dict] = None   # TODO deprecate
-    directory: t.Optional[str] = None   # TODO needed?
+    info: t.Optional[t.Dict] = None  # TODO deprecate
+    directory: t.Optional[str] = None  # TODO needed?
     encodable: str = 'encodable'
     bytes_encoding: t.Optional[str] = CFG.bytes_encoding
     intermediate_type: t.Optional[str] = IntermediateType.BYTES
@@ -261,6 +263,7 @@ class DataType(BaseDataType):
             self.encodable_cls = _ENCODABLES[self.encodable]
         else:
             import importlib
+
             self.encodable_cls = importlib.import_module(
                 '.'.join(self.encodable.split('.')[:-1])
             ).__dict__[self.encodable.split('.')[-1]]
@@ -848,6 +851,7 @@ serializers = {
 
 
 class Vector(BaseDataType):
+    """Vector meta-datatype for encoding vectors ready for search."""
 
     identifier: str = ''
 
@@ -871,7 +875,6 @@ class Vector(BaseDataType):
 
     def encode_data(self, item, info: t.Optional[t.Dict] = None):
         return self.datatype_impl.encode_data(item=item, info=info)
-
 
     def decode_data(self, item, info: t.Optional[t.Dict] = None):
         return self.datatype_impl.decode_data(item=item, info=info)

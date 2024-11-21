@@ -732,7 +732,6 @@ class Query(_BaseQuery):
         kwargs = self.parts[0][2]
         schema = kwargs.pop('schema', None)
 
-
         if schema is None:
             try:
                 table = self.db.load('table', self.table)

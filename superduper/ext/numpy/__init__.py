@@ -1,6 +1,6 @@
 import typing as t
 
-from .encoder import array, Array
+from .encoder import Array, array
 
 requirements: t.List = []
 

@@ -432,11 +432,15 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
     # X = {'a': 'x', 'b': 'y'}
     # _test(X, docs)
 
+
 import numpy
+
 
 @pytest.fixture
 def object_model():
-    return ObjectModel('test', object=lambda x: numpy.array(x) + 1, signature='singleton')
+    return ObjectModel(
+        'test', object=lambda x: numpy.array(x) + 1, signature='singleton'
+    )
 
 
 def test_object_model_predict(object_model):

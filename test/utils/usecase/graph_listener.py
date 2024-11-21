@@ -38,6 +38,10 @@ def build_graph_listener(db: "Datalayer"):
 
     db["documents"].insert(data).execute()
 
+    data = db['documents'].find().tolist()
+
+    assert isinstance(data[0]['z'], np.ndarray)
+
     def func_a(x):
         return {"x": x, "model": "a"}
 

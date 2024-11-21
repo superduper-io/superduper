@@ -144,7 +144,6 @@ def test_like(db):
 def test_insert_with_auto_schema(db):
     db.cfg.auto_schema = True
     import numpy as np
-    import pandas as pd
 
     # Doesn't work with the Vector datatype together
     data = {

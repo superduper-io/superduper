@@ -67,18 +67,18 @@ class Schema(Component):
     @cached_property
     def encoded_types(self):
         """List of fields of type DataType."""
-        return [k for k, v in self.fields.items() if isinstance(v, DataType)]
+        return [k for k, v in self.fields.items() if isinstance(v, BaseDataType)]
 
     @cached_property
     def trivial(self):
         """Determine if the schema contains only trivial fields."""
-        return not any([isinstance(v, DataType) for v in self.fields.values()])
+        return not any([isinstance(v, BaseDataType) for v in self.fields.values()])
 
     @property
     def encoders(self):
         """An iterable to list DataType fields."""
         for v in self.fields.values():
-            if isinstance(v, DataType):
+            if isinstance(v, BaseDataType):
                 yield v
 
     @property
@@ -137,7 +137,7 @@ class Schema(Component):
 
         encoded_data = {}
         for k, v in data.items():
-            if k in self.fields and isinstance(self.fields[k], DataType):
+            if k in self.fields and isinstance(self.fields[k], BaseDataType):
                 field_encoder = self.fields[k]
                 assert callable(field_encoder)
                 encoded_data.update({k: field_encoder(v)})

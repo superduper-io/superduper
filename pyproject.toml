@@ -36,7 +36,7 @@ dependencies = [
     "boto3>=1.16",
     "dill>=0.3.6",
     "loguru>=0.7.2",
-    "loki-logger-handler>=0.1.1",
+    "loki-logger-handler==1.0.0",
     "networkx>=2.8.8",
     "requests>=2.22",  # lower bound from openai and boto3
     "tqdm>=4.64.1",

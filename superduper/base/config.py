@@ -138,6 +138,7 @@ class DataTypePresets(BaseConfig):
 
     :param vector: BaseDataType to encode vectors.
     """
+
     vector: str | None = None
 
 

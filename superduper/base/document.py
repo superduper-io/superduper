@@ -16,7 +16,6 @@ from superduper.components.component import Component
 from superduper.components.datatype import (
     BaseDataType,
     Blob,
-    DataType,
     Encodable,
     FileItem,
     Native,

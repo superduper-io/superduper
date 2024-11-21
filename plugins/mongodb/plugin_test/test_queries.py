@@ -1,14 +1,14 @@
 import random
+
+import numpy as np
+import pytest
+from superduper.base.document import Document
 from test.utils.setup.fake_data import (
     add_listeners,
     add_models,
     add_random_data,
     add_vector_index,
 )
-
-import numpy as np
-import pytest
-from superduper.base.document import Document
 
 
 def get_new_data(n=10, update=False):

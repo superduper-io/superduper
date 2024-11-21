@@ -57,7 +57,7 @@ def test_schema(db, data):
     db.apply(t)
 
     db.execute(db["my_table"].insert([Document(data)]))
-    
+
     select = db["my_table"].select().limit(1)
     decode_data = db.execute(select).next().unpack()
     for key in data:

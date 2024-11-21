@@ -52,13 +52,14 @@ class Array(BaseDataType):
 
     :param dtype: numpy native datatype
     """
+
     dtype: str = 'float64'
 
-    def encode_data(self, item, info = None):
+    def encode_data(self, item, info=None):
         encoder = EncodeArray(self.dtype)
         return encoder(item)
 
-    def decode_data(self, item, info = None):
+    def decode_data(self, item, info=None):
         shape = self.shape
         if isinstance(shape, int):
             shape = (self.shape,)

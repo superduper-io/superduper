@@ -1,6 +1,7 @@
 import importlib
-import numpy as np
 import typing as t
+
+import numpy as np
 
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
@@ -8,8 +9,8 @@ from superduper.components.datatype import (
     BaseDataType,
     DataType,
     DataTypeFactory,
-    _BaseEncodable,
     Vector,
+    _BaseEncodable,
     get_serializer,
     json_serializer,
 )
@@ -59,6 +60,7 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     try:
         from bson import ObjectId
+
         if isinstance(data, ObjectId):
             return datatype
     except ImportError:
@@ -143,7 +145,7 @@ class VectorTypeFactory(DataTypeFactory):
         return isinstance(data, np.ndarray) and len(data.shape) == 1
 
     @staticmethod
-    def create(data: t.Any) -> DataType | FieldType:
+    def create(data: t.Any) -> BaseDataType | FieldType:
         """Create a JSON datatype.
 
         :param data: The data object
@@ -167,7 +169,7 @@ class JsonDataTypeFactory(DataTypeFactory):
             return False
 
     @staticmethod
-    def create(data: t.Any) -> DataType | FieldType:
+    def create(data: t.Any) -> BaseDataType | FieldType:
         """Create a JSON datatype.
 
         :param data: The data object
@@ -184,5 +186,3 @@ register_module("superduper.ext.pillow.encoder")
 
 FACTORIES = DataTypeFactory.__subclasses__()
 FACTORIES = sorted(FACTORIES, key=lambda x: 0 if x.__module__ == __name__ else 1)
-
-

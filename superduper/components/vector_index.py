@@ -371,6 +371,7 @@ class VectorIndex(CDC):
 
         try:
             assert dt.shape is not None, msg
+            assert isinstance(dt.shape, (tuple, list))
             return dt.shape[-1]
         except IndexError as e:
             raise Exception(

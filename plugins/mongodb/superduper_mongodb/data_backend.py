@@ -41,7 +41,7 @@ class MongoDataBackend(BaseDataBackend):
         self._db = self.conn[self.name]
 
         self.datatype_presets = {
-            'vector': 'superduper.components.datatype.NativeDatatype'
+            'vector': 'superduper.components.datatype.NativeVector'
         }
 
     def reconnect(self):

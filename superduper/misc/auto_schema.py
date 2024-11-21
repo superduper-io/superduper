@@ -1,10 +1,11 @@
 import importlib
+import numpy as np
 import typing as t
 
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.datatype import (
-    _BaseDatatype,
+    BaseDataType,
     DataType,
     DataTypeFactory,
     _BaseEncodable,
@@ -68,10 +69,10 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
         logging.debug(f"Inferred base type: {datatype} for data:", data)
         return datatype
 
-    for factory in DataTypeFactory.__subclasses__():
+    for factory in FACTORIES:
         if factory.check(data):
             datatype = factory.create(data)
-            assert isinstance(datatype, _BaseDatatype) or isinstance(datatype, FieldType)
+            assert isinstance(datatype, BaseDataType) or isinstance(datatype, FieldType)
             logging.debug(f"Inferred datatype: {datatype.identifier} for data: {data}")
             break
 
@@ -99,9 +100,6 @@ def infer_schema(
 
     :param data: The data object
     :param identifier: The identifier for the schema, if None, it will be generated
-    :param ibis: If True, the schema will be updated for the Ibis backend,
-                 otherwise for MongoDB
-    :return: The inferred schema
     """
     assert isinstance(data, dict), "Data must be a dictionary"
 
@@ -142,12 +140,7 @@ class VectorTypeFactory(DataTypeFactory):
 
         :param data: The data object
         """
-        from numpy import array as native_array
-        try:
-            _ = native_array(data)
-            return True
-        except Exception:
-            return False
+        return isinstance(data, np.ndarray) and len(data.shape) == 1
 
     @staticmethod
     def create(data: t.Any) -> DataType | FieldType:
@@ -184,9 +177,12 @@ class JsonDataTypeFactory(DataTypeFactory):
         return json_serializer
 
 
-from superduper.ext import numpy
-
-
 register_module("superduper.ext.numpy.encoder")
 register_module("superduper.ext.torch.encoder")
 register_module("superduper.ext.pillow.encoder")
+
+
+FACTORIES = DataTypeFactory.__subclasses__()
+FACTORIES = sorted(FACTORIES, key=lambda x: 0 if x.__module__ == __name__ else 1)
+
+

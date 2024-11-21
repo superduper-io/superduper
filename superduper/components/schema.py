@@ -3,7 +3,7 @@ from functools import cached_property
 
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
-from superduper.components.datatype import _BaseDatatype, DataType
+from superduper.components.datatype import BaseDataType, DataType
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
@@ -54,7 +54,7 @@ class Schema(Component):
         super().__post_init__(db, artifacts)
 
         for k, v in self.fields.items():
-            if isinstance(v, (_BaseDatatype, FieldType)):
+            if isinstance(v, (BaseDataType, FieldType)):
                 continue
 
             try:
@@ -99,7 +99,7 @@ class Schema(Component):
         :param files: Files.
         """
         for k, field in self.fields.items():
-            if not isinstance(field, _BaseDatatype):
+            if not isinstance(field, BaseDataType):
                 continue
 
             if k not in out:

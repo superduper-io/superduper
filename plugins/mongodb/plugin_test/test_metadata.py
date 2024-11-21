@@ -1,6 +1,7 @@
+from test.utils.database import metadata as metadata_utils
+
 import pytest
 from superduper import CFG
-from test.utils.database import metadata as metadata_utils
 
 from superduper_mongodb.metadata import MongoMetaDataStore
 

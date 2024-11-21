@@ -214,7 +214,16 @@ class BaseDataType(Component):
 
 
 class NativeVector(BaseDataType):
-    """Datatype for encoding vectors which are supported natively by databackend."""
+    """Datatype for encoding vectors which are supported natively by databackend.
+
+    :param dtype: Datatype of array to encode.
+    """
+
+    dtype: str = 'float64'
+
+    def __post_init__(self, db, artifacts):
+        self.encodable_cls = Native
+        return super().__post_init__(db, artifacts)
 
     def encode_data(self, item, info=None):
         if isinstance(item, numpy.ndarray):
@@ -222,7 +231,7 @@ class NativeVector(BaseDataType):
         return item
 
     def decode_data(self, item, info=None):
-        return numpy.array(item)
+        return numpy.array(item).astype(self.dtype)
 
 
 class DataType(BaseDataType):
@@ -851,14 +860,21 @@ serializers = {
 
 
 class Vector(BaseDataType):
-    """Vector meta-datatype for encoding vectors ready for search."""
+    """Vector meta-datatype for encoding vectors ready for search.
+
+    :param dtype: Datatype of encoded arrays.
+    """
 
     identifier: str = ''
+    dtype: str = 'float64'
 
     def __post_init__(self, db, artifacts):
         self.identifier = f'vector[{self.shape[0]}]'
-        self.encodable_cls = Native
         return super().__post_init__(db, artifacts)
+
+    @property
+    def encodable_cls(self):
+        return self.datatype_impl.encodable_cls
 
     @cached_property
     def datatype_impl(self):
@@ -870,7 +886,7 @@ class Vector(BaseDataType):
         cls = type_.split('.')[-1]
         datatype = getattr(import_module(module), cls)
         if inspect.isclass(datatype):
-            datatype = datatype('tmp')
+            datatype = datatype('tmp', dtype=self.dtype)
         return datatype
 
     def encode_data(self, item, info: t.Optional[t.Dict] = None):

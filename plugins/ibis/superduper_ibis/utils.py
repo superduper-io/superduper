@@ -1,7 +1,8 @@
 from ibis.expr.datatypes import dtype
+from superduper import CFG
 from superduper.components.datatype import (
     Artifact,
-    DataType,
+    BaseDataType,
     File,
     LazyArtifact,
     LazyFile,
@@ -23,7 +24,6 @@ def _convert_field_type_to_ibis_type(field_type: FieldType):
         ibis_type = "String"
     else:
         ibis_type = field_type.identifier
-
     return dtype(ibis_type)
 
 
@@ -39,12 +39,12 @@ def convert_schema_to_fields(schema: Schema):
     for k, v in schema.fields.items():
         if isinstance(v, FieldType):
             fields[k] = _convert_field_type_to_ibis_type(v)
-        elif not isinstance(v, DataType):
+        elif not isinstance(v, BaseDataType):
             fields[k] = v.identifier
         else:
             if v.encodable_cls in SPECIAL_ENCODABLES_FIELDS:
                 fields[k] = dtype(SPECIAL_ENCODABLES_FIELDS[v.encodable_cls])
             else:
-                fields[k] = v.bytes_encoding
+                fields[k] = CFG.bytes_encoding
 
     return fields

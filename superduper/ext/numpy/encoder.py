@@ -2,7 +2,12 @@ import typing as t
 
 import numpy
 
-from superduper.components.datatype import BaseDataType, DataType, DataTypeFactory
+from superduper.components.datatype import (
+    BaseDataType,
+    DataType,
+    DataTypeFactory,
+    Encodable,
+)
 from superduper.ext.utils import str_shape
 from superduper.misc.annotations import component
 
@@ -54,6 +59,10 @@ class Array(BaseDataType):
     """
 
     dtype: str = 'float64'
+
+    def __post_init__(self, db, artifacts):
+        self.encodable_cls = Encodable
+        return super().__post_init__(db, artifacts)
 
     def encode_data(self, item, info=None):
         encoder = EncodeArray(self.dtype)

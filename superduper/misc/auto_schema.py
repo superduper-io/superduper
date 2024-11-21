@@ -150,7 +150,7 @@ class VectorTypeFactory(DataTypeFactory):
 
         :param data: The data object
         """
-        return Vector(shape=(len(data),))
+        return Vector(shape=(len(data),), dtype=str(data.dtype))
 
 
 class JsonDataTypeFactory(DataTypeFactory):

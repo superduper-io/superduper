@@ -38,7 +38,7 @@ def build_graph_listener(db: "Datalayer"):
 
     db["documents"].insert(data).execute()
 
-    data = db['documents'].find().tolist()
+    data = db['documents'].select().tolist()
 
     assert isinstance(data[0]['z'], np.ndarray)
 

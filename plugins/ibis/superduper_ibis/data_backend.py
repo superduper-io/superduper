@@ -69,7 +69,7 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
-        self.datatype_presets = {'vector': 'superduper.ext.numpy.Array'}
+        self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
 
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")
@@ -294,4 +294,4 @@ class IbisDataBackend(BaseDataBackend):
         """
         from superduper.misc.auto_schema import infer_schema
 
-        return infer_schema(data, identifier=identifier, ibis=True)
+        return infer_schema(data, identifier=identifier)

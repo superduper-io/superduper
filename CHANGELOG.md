@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours 
 
-#### New Features & Functionality
+#### New Features & Functionality 
 
 - Streamlit component and server
 - Graceful updates when making incremental changes

@@ -161,7 +161,7 @@ class IbisQuery(Query):
             )
             fields.update(to_update)
 
-        return Schema(f"_tmp:{self.table}", fields=fields)
+        return Schema(f"_tmp:{self.table}", fields=fields, db=self.db)
 
     def renamings(self, r={}):
         """Return the renamings.

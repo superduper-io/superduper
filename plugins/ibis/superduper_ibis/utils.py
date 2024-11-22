@@ -1,5 +1,4 @@
 from ibis.expr.datatypes import dtype
-from superduper import CFG
 from superduper.components.datatype import (
     Artifact,
     BaseDataType,
@@ -42,9 +41,13 @@ def convert_schema_to_fields(schema: Schema):
         elif not isinstance(v, BaseDataType):
             fields[k] = v.identifier
         else:
-            if v.encodable_cls in SPECIAL_ENCODABLES_FIELDS:
-                fields[k] = dtype(SPECIAL_ENCODABLES_FIELDS[v.encodable_cls])
+            if v.encodable == 'encodable':
+                fields[k] = dtype(
+                    'str'
+                    if schema.db.databackend.bytes_encoding == 'base64'
+                    else 'bytes'
+                )
             else:
-                fields[k] = CFG.bytes_encoding
+                fields[k] = dtype('str')
 
     return fields

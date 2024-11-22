@@ -219,6 +219,7 @@ class NativeVector(BaseDataType):
     :param dtype: Datatype of array to encode.
     """
 
+    encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float64'
 
     def __post_init__(self, db, artifacts):
@@ -232,6 +233,22 @@ class NativeVector(BaseDataType):
 
     def decode_data(self, item, info=None):
         return numpy.array(item).astype(self.dtype)
+
+
+class Json2Str(BaseDataType):
+    """Datatype for encoding vectors which are supported natively by databackend."""
+
+    encodable: t.ClassVar[str] = 'native'
+
+    def __post_init__(self, db, artifacts):
+        # self.encodable_cls = Native
+        return super().__post_init__(db, artifacts)
+
+    def encode_data(self, item, info=None):
+        return json.dumps(item)
+
+    def decode_data(self, item, info=None):
+        return json.loads(item)
 
 
 class DataType(BaseDataType):
@@ -324,7 +341,7 @@ class DataType(BaseDataType):
         """
         info = info or {}
         data = self.encoder(item, info) if self.encoder else item
-        data = self.bytes_encoding_after_encode(data)
+        # data = self.bytes_encoding_after_encode(data)
         return data
 
     @ensure_initialized
@@ -335,7 +352,7 @@ class DataType(BaseDataType):
         :param info: The optional information dictionary.
         """
         info = info or {}
-        item = self.bytes_encoding_before_decode(item)
+        # item = self.bytes_encoding_before_decode(item)
         return self.decoder(item, info=info) if self.decoder else item
 
     def bytes_encoding_after_encode(self, data):
@@ -789,14 +806,7 @@ def get_serializer(
     )
 
 
-json_serializer = DataType(
-    'json',
-    encoder=json_encode,
-    decoder=json_decode,
-    encodable='encodable',
-    bytes_encoding=BytesEncoding.BASE64,
-    intermediate_type=IntermediateType.STRING,
-)
+json_serializer = Json2Str('json')
 
 
 pickle_encoder = get_serializer(
@@ -875,6 +885,10 @@ class Vector(BaseDataType):
     @property
     def encodable_cls(self):
         return self.datatype_impl.encodable_cls
+
+    @property
+    def encodable(self):
+        return self.datatype_impl.encodable
 
     @cached_property
     def datatype_impl(self):

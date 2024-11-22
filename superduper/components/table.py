@@ -41,6 +41,7 @@ class Table(Component):
         self.schema = Schema(
             self.schema.identifier,
             fields={**fields},
+            db=db,
         )
 
     def on_create(self, db: 'Datalayer'):

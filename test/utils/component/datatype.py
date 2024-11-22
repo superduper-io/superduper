@@ -45,10 +45,10 @@ def print_sep():
     print("\n", "-" * 80, "\n")
 
 
-def check_data_with_schema(data, datatype: DataType):
+def check_data_with_schema(data, datatype: DataType, db):
     print("datatype", datatype)
     print_sep()
-    schema = Schema(identifier="schema", fields={"x": datatype, "y": int})
+    schema = Schema(identifier="schema", fields={"x": datatype, "y": int}, db=db)
 
     document = Document({"x": data, "y": 1})
     print(document)
@@ -59,7 +59,7 @@ def check_data_with_schema(data, datatype: DataType):
     print_sep()
 
     decoded = Document.decode(encoded, schema=schema)
-    if datatype.encodable_cls.lazy:
+    if datatype.encodable == 'lazy_artifact':
         assert isinstance(decoded["x"], datatype.encodable_cls)
         assert isinstance(decoded["x"].x, type(data))
         decoded = Document(decoded.unpack())
@@ -96,7 +96,7 @@ def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
 
     decoded = list(db["documents"].select().execute())[0]
 
-    if datatype.encodable_cls.lazy:
+    if datatype.encodable == 'lazy_artifact':
         assert isinstance(decoded["x"], datatype.encodable_cls)
         assert isinstance(decoded["x"].x, Empty)
         decoded = Document(decoded.unpack())

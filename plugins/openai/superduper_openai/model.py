@@ -18,7 +18,6 @@ from openai._types import NOT_GIVEN
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel, Inputs
-from superduper.components.vector_index import vector
 from superduper.misc.compat import cache
 from superduper.misc.retry import Retry
 
@@ -107,9 +106,6 @@ class OpenAIEmbedding(_OpenAI):
 
     """
 
-    shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
-
-    shape: t.Optional[t.Sequence[int]] = None
     signature: str = 'singleton'
     batch_size: int = 100
 
@@ -117,20 +113,6 @@ class OpenAIEmbedding(_OpenAI):
     def inputs(self):
         """The inputs of the model."""
         return Inputs(['input'])
-
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
-        if self.shape is None:
-            self.shape = self.shapes[self.model]
-
-    def _pre_create(self, db: Datalayer) -> None:
-        """Pre creates the model.
-
-        the datatype is set to ``vector``.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or vector(shape=self.shape)
 
     @retry
     def predict(self, X: str):

@@ -161,11 +161,11 @@ class Config(BaseConfig):
     :param logging_type: The type of logging to use
     :param force_apply: Whether to force apply the configuration
     :param datatype_presets: Presets to be applied for default types of data
-    :param bytes_encoding: The encoding of bytes in the data backend
     :param auto_schema: Whether to automatically create the schema.
                         If True, the schema will be created if it does not exist.
     :param json_native: Whether the databackend supports json natively or not.
     :param log_colorize: Whether to colorize the logs
+    :param bytes_encoding: (Deprecated)
     :param output_prefix: The prefix for the output table and output field key
     :param vector_search_kwargs: The keyword arguments to pass to the vector search
     :param rest: Settings for rest server.
@@ -190,12 +190,12 @@ class Config(BaseConfig):
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
+    bytes_encoding: str = 'bytes'
 
     force_apply: bool = False
 
     datatype_presets: DataTypePresets = dc.field(default_factory=DataTypePresets)
 
-    bytes_encoding: BytesEncoding = BytesEncoding.BYTES
     auto_schema: bool = True
     json_native: bool = True
     output_prefix: str = "_outputs__"

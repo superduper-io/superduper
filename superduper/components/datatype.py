@@ -219,6 +219,7 @@ class NativeVector(BaseDataType):
     :param dtype: Datatype of array to encode.
     """
 
+    encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float64'
 
     def __post_init__(self, db, artifacts):
@@ -324,7 +325,7 @@ class DataType(BaseDataType):
         """
         info = info or {}
         data = self.encoder(item, info) if self.encoder else item
-        data = self.bytes_encoding_after_encode(data)
+        # data = self.bytes_encoding_after_encode(data)
         return data
 
     @ensure_initialized
@@ -335,7 +336,7 @@ class DataType(BaseDataType):
         :param info: The optional information dictionary.
         """
         info = info or {}
-        item = self.bytes_encoding_before_decode(item)
+        # item = self.bytes_encoding_before_decode(item)
         return self.decoder(item, info=info) if self.decoder else item
 
     def bytes_encoding_after_encode(self, data):
@@ -875,6 +876,10 @@ class Vector(BaseDataType):
     @property
     def encodable_cls(self):
         return self.datatype_impl.encodable_cls
+
+    @property
+    def encodable(self):
+        return self.datatype_impl.encodable
 
     @cached_property
     def datatype_impl(self):

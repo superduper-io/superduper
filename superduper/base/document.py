@@ -14,7 +14,6 @@ from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
 from superduper.components.datatype import (
-    BaseDataType,
     Blob,
     Encodable,
     FileItem,
@@ -52,7 +51,7 @@ def _build_blob_getter(base_getter):
     return partial(_blob_getter, getter=base_getter)
 
 
-class _Getters:
+class Getters:
     """A class to manage getters for decoding documents.
 
     We have will have a list of getters for each type of reference.
@@ -258,7 +257,7 @@ class Document(MongoStyleDict):
         r,
         schema: t.Optional['Schema'] = None,
         db: t.Optional['Datalayer'] = None,
-        getters: t.Union[_Getters, t.Dict[str, t.Callable], None] = None,
+        getters: t.Union[Getters, t.Dict[str, t.Callable], None] = None,
     ):
         """Converts any dictionary into a Document or a Leaf.
 
@@ -291,9 +290,9 @@ class Document(MongoStyleDict):
                         identifier = k
                     builds[k]['identifier'] = identifier
 
-        if not isinstance(getters, _Getters):
-            getters = _Getters(getters)
-        assert isinstance(getters, _Getters)
+        if not isinstance(getters, Getters):
+            getters = Getters(getters)
+        assert isinstance(getters, Getters)
 
         # Prioritize using the local artifact storage getter,
         # and then use the DB read getter.
@@ -314,7 +313,7 @@ class Document(MongoStyleDict):
 
         if schema is not None:
             schema.init()
-            r = _schema_decode(schema, r, getters)
+            r = schema.decode_data(r, getters)
 
         r = _deep_flat_decode(
             {k: v for k, v in r.items() if k not in (KEY_BUILDS, KEY_BLOBS, KEY_FILES)},
@@ -586,42 +585,6 @@ def _deep_flat_encode(
     return r
 
 
-def _schema_decode(
-    schema, data: dict[str, t.Any], getters: _Getters
-) -> dict[str, t.Any]:
-    """Decode data using the schema's encoders.
-
-    :param data: Data to decode.
-    """
-    if schema.trivial:
-        return data
-    decoded = {}
-    for k, value in data.items():
-        field = schema.fields.get(k)
-        if not isinstance(field, BaseDataType):
-            decoded[k] = value
-            continue
-
-        value = data[k]
-        if reference := parse_reference(value):
-            value = getters.run(reference.name, reference.path)
-            if reference.name == 'blob':
-                kwargs = {'blob': value}
-            elif reference.name == 'file':
-                kwargs = {'x': value}
-            else:
-                assert False, f'Unknown reference type {reference.name}'
-            encodable = field.encodable_cls(datatype=field, **kwargs)
-            if not field.encodable_cls.lazy:
-                encodable = encodable.unpack()
-            decoded[k] = encodable
-        else:
-            decoded[k] = field.decode_data(data[k])
-
-    decoded.pop(KEY_SCHEMA, None)
-    return decoded
-
-
 def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None):
     if reference := parse_reference(f'?{k}'):
         if reference.name in getters:
@@ -672,7 +635,7 @@ def _get_leaf_from_cache(k, builds, getters, db: t.Optional['Datalayer'] = None)
     return leaf
 
 
-def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] = None):
+def _deep_flat_decode(r, builds, getters: Getters, db: t.Optional['Datalayer'] = None):
     if isinstance(r, Leaf):
         return r
     if isinstance(r, (list, tuple)):
@@ -722,7 +685,8 @@ def _deep_flat_decode(r, builds, getters: _Getters, db: t.Optional['Datalayer'] 
     if isinstance(r, str) and r.startswith('&'):
         assert getters is not None
         reference = parse_reference(r)
-        return getters.run(reference.name, reference.path)
+        out = getters.run(reference.name, reference.path)
+        return out
     return r
 
 
@@ -741,7 +705,8 @@ def _get_component(db, path):
         return db.load(type_id=parts[0], identifier=parts[1])
     if len(parts) == 3:
         if not _check_if_version(parts[2]):
-            return db.load(uuid=parts[2])
+            out = db.load(uuid=parts[2])
+            return out
         return db.load(type_id=parts[0], identifier=parts[1], version=parts[2])
     raise ValueError(f'Invalid component reference: {path}')
 

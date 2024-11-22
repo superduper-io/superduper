@@ -62,6 +62,7 @@ class Array(BaseDataType):
 
     def __post_init__(self, db, artifacts):
         self.encodable_cls = Encodable
+        self.encodable = 'encodable'
         return super().__post_init__(db, artifacts)
 
     def encode_data(self, item, info=None):

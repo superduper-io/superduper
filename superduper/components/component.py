@@ -819,6 +819,7 @@ class Component(Leaf, metaclass=ComponentMeta):
             r['status'] = str(self.status)
         return Document(r)
 
+    # TODO needed? looks to have legacy "_content"
     @classmethod
     def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
         """Decodes a dictionary component into a `Component` instance.

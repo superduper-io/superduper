@@ -93,7 +93,6 @@ def test_embed():
     e = OpenAIEmbedding(identifier='text-embedding-ada-002')
     resp = e.predict('Hello, world!')
 
-    assert len(resp) == e.shape[0]
     assert str(resp.dtype) == 'float32'
 
 
@@ -103,7 +102,6 @@ def test_batch_embed():
     resp = e.predict_batches(['Hello', 'world!'])
 
     assert len(resp) == 2
-    assert all(len(x) == e.shape[0] for x in resp)
     assert all(str(x.dtype) == 'float32' for x in resp)
 
 

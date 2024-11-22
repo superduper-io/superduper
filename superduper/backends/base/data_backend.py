@@ -27,6 +27,7 @@ class BaseDataBackend(ABC):
         self.in_memory_tables: t.Dict = {}
         self._datalayer = None
         self.uri = uri
+        self.bytes_encoding = 'bytes'
 
     @property
     def type(self):

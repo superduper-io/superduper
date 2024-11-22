@@ -1,11 +1,31 @@
+import base64
+import hashlib
 import typing as t
 from functools import cached_property
 
+from superduper.base.constant import KEY_SCHEMA
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
 from superduper.components.datatype import BaseDataType, DataType
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
+
+if t.TYPE_CHECKING:
+    from superduper.base.document import Getters
+
+
+def get_hash(data):
+    """Get the hash of the given data.
+
+    :param data: Data to hash.
+    """
+    if isinstance(data, str):
+        bytes_ = data.encode()
+    elif isinstance(data, bytes):
+        bytes_ = data
+    else:
+        bytes_ = str(id(data)).encode()
+    return hashlib.sha1(bytes_).hexdigest()
 
 
 class FieldType(Leaf):
@@ -37,6 +57,14 @@ class FieldType(Leaf):
 
 
 ID = FieldType(identifier='ID')
+
+
+def _convert_base64_to_bytes(str_: str) -> bytes:
+    return base64.b64decode(str_)
+
+
+def _convert_bytes_to_base64(bytes_: bytes) -> str:
+    return base64.b64encode(bytes_).decode('utf-8')
 
 
 class Schema(Component):
@@ -90,6 +118,47 @@ class Schema(Component):
                 fields.add((k, v.identifier))
         return fields
 
+    def decode_data(
+        self, data: dict[str, t.Any], getters: 'Getters'
+    ) -> dict[str, t.Any]:
+        """Decode data using the schema's encoders.
+
+        :param data: Data to decode.
+        """
+        if self.trivial:
+            return data
+        decoded = {}
+        for k, value in data.items():
+            field = self.fields.get(k)
+            if not isinstance(field, BaseDataType):
+                decoded[k] = value
+                continue
+
+            value = data[k]
+            if reference := parse_reference(value):
+                value = getters.run(reference.name, reference.path)
+                if reference.name == 'blob':
+                    kwargs = {'blob': value}
+                elif reference.name == 'file':
+                    kwargs = {'x': value}
+                else:
+                    assert False, f'Unknown reference type {reference.name}'
+                encodable = field.encodable_cls(datatype=field, **kwargs)
+                if not field.encodable_cls.lazy:
+                    encodable = encodable.unpack()
+                decoded[k] = encodable
+            else:
+                b = data[k]
+                if (
+                    field.encodable == 'encodable'
+                    and self.db.databackend.bytes_encoding == 'base64'
+                ):
+                    b = _convert_base64_to_bytes(b)
+                decoded[k] = field.decode_data(b)
+
+        decoded.pop(KEY_SCHEMA, None)
+        return decoded
+
     def encode_data(self, out, builds, blobs, files, leaves_to_keep=()):
         """Encode data using the schema's encoders.
 
@@ -108,8 +177,19 @@ class Schema(Component):
             if isinstance(out[k], leaves_to_keep):
                 continue
 
-            data, identifier = field.encode_data_with_identifier(out[k])
-            if field.encodable_cls.artifact:
+            # data, identifier = field.encode_data_with_identifier(out[k])
+            data = field.encode_data(out[k])
+
+            identifier = get_hash(data)
+
+            if (
+                field.encodable == 'encodable'
+                and self.db.databackend.bytes_encoding == 'base64'
+            ):
+                assert isinstance(data, bytes)
+                data = _convert_bytes_to_base64(data)
+
+            if field.encodable in {'artifact', 'lazy_artifact'}:
                 reference = field.encodable_cls.build_reference(identifier, data)
                 ref_obj = parse_reference(reference)
 

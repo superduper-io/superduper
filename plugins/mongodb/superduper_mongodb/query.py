@@ -676,7 +676,7 @@ class MongoQuery(Query):
 
         fields = {k: v for k, v in fields.items() if isinstance(v, BaseDataType)}
 
-        return Schema(f"_tmp:{self.table}", fields=fields)
+        return Schema(f"_tmp:{self.table}", fields=fields, db=self.db)
 
     def _get_project(self):
         find_params, _ = self._get_method_parameters('find')

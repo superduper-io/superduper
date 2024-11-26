@@ -269,3 +269,20 @@ def test_replace_one(db):
     doc = db.execute(collection.find_one({'_id': r['_id']}))
     print(doc['x'])
     assert doc.unpack()['x'].tolist() == new_x.tolist()
+
+
+def test_select_missing_ids(db):
+    db.cfg.auto_schema = True
+    add_random_data(db, n=5)
+    add_models(db)
+    add_vector_index(db)
+    out = db.load('listener', 'vector-x').outputs
+    doc = list(db[out].select().execute())[0]
+    source_id = doc['_source']
+    db.databackend._db[out].delete_one({'_source': source_id})
+
+    predict_id = out.split('_outputs__')[-1]
+    query = db['documents'].select_ids_of_missing_outputs(predict_id)
+    x = list(query.execute())
+    assert len(x) == 1
+    assert source_id == x[0]['_id']

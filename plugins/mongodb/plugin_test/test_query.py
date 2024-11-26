@@ -72,6 +72,7 @@ def test_select_missing_outputs(db):
         )
     )
     select = MongoQuery(table='documents').find({}, {'_id': 1})
+    select.db = db
     modified_select = select.select_ids_of_missing_outputs('x::test_model_output::0::0')
     out = list(db.execute(modified_select))
     assert len(out) == (len(docs) - len(ids))

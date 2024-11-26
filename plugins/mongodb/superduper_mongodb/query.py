@@ -103,6 +103,7 @@ class MongoQuery(Query):
         'post_like': r'^.*\.(find|select)\(.*\)\.like(.*)$',
         'bulk_write': r'^.*\.bulk_write\(.*\)$',
         'outputs': r'^.*\.outputs\(.*\)',
+        'missing_outputs': r'^.*\.missing_outputs\(.*\)$',
         'find_one': r'^.*\.find_one\(.*\)',
         'find': r'^.*\.find\(.*\)',
         'select': r'^.*\.select\(.*\)$',
@@ -416,7 +417,41 @@ class MongoQuery(Query):
 
         :param predict_id: The id of the prediction.
         """
-        return self.select_ids
+        return self.missing_outputs(predict_id=predict_id, ids_only=1)
+
+    def _execute_missing_outputs(self, parent):
+        """Select the documents that are missing the given output."""
+        if len(self.parts[-1][2]) == 0:
+            raise ValueError("Predict id is required")
+        predict_id = self.parts[-1][2]["predict_id"]
+        ids_only = self.parts[-1][2].get('ids_only', False)
+
+        key = f'{CFG.output_prefix}{predict_id}'
+
+        lookup = [
+            {
+                '$lookup': {
+                    'from': key,
+                    'localField': '_id',
+                    'foreignField': '_source',
+                    'as': key,
+                }
+            },
+            {'$match': {key: {'$size': 0}}},
+        ]
+
+        raw_cursor = getattr(parent, 'aggregate')(lookup)
+
+        def get_ids(result):
+            return {"_id": result["_id"]}
+
+        return SuperDuperCursor(
+            raw_cursor=raw_cursor,
+            db=self.db,
+            id_field='_id',
+            process_func=get_ids if ids_only else self._postprocess_result,
+            schema=self._get_schema(),
+        )
 
     @property
     @applies_to('find')

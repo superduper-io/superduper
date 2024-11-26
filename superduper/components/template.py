@@ -38,7 +38,7 @@ class _BaseTemplate(Component):
     files: t.Optional[t.List[str]] = None
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
 
-    def __post_init__(self, db, artifacts, substitutions):
+    def __post_init__(self, db, substitutions):
         if isinstance(self.template, Leaf):
             self.template = self.template.encode(defaults=True, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
@@ -59,7 +59,7 @@ class _BaseTemplate(Component):
             )
         if self.template_variables is None:
             self.template_variables = self.template.variables
-        super().__post_init__(db, artifacts)
+        super().__post_init__(db)
 
     @ensure_initialized
     def __call__(self, **kwargs):
@@ -224,10 +224,10 @@ class QueryTemplate(_BaseTemplate):
 
     type_id: t.ClassVar[str] = 'query_template'
 
-    def __post_init__(self, db, artifacts, substitutions):
+    def __post_init__(self, db, substitutions):
         if isinstance(self.template, Leaf):
             self.template = self.template.dict(metadata=False, defaults=False).encode()
-        return super().__post_init__(db, artifacts, substitutions)
+        return super().__post_init__(db, substitutions)
 
     @property
     def form_template(self):

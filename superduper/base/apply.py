@@ -7,6 +7,7 @@ from superduper import Component, logging
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.components.component import Status
+from superduper.components.datatype import Blob
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:
@@ -62,7 +63,10 @@ def apply(
 
     if diff:
         logging.info('Found this diff:')
-        Console().print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
+        to_show = Document(diff).map(
+            lambda x: f'&:blob:{x.identifier}', condition=lambda x: isinstance(x, Blob)
+        )
+        Console().print(dict_to_tree(to_show, root=object.identifier), soft_wrap=True)
 
     logging.info('Found these changes and/ or additions that need to be made:')
 
@@ -139,6 +143,7 @@ def _apply(
     object.db = db
 
     serialized = object.dict(metadata=False)
+
     del serialized['uuid']
 
     create_events = {}
@@ -183,7 +188,9 @@ def _apply(
         del current_serialized['uuid']
 
         # finds the fields where there is a difference
-        this_diff = Document(current_serialized).diff(serialized)
+        this_diff = Document(current_serialized, schema=current_serialized.schema).diff(
+            serialized
+        )
         logging.info(f'Found identical {object.huuid}')
 
         if not this_diff:
@@ -215,7 +222,7 @@ def _apply(
             # this is necessary to prevent inconsistencies
             # this takes the difference between
             # the current and
-            serialized = serialized.update(this_diff).encode()
+            serialized = serialized.update(this_diff).encode(keep_schema=False)
 
             # assign/ increment the version since
             # this breaks a previous version
@@ -229,7 +236,6 @@ def _apply(
             Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
 
         else:
-            # if object.identifier ==
             apply_status = 'update'
             current.handle_update_or_same(object)
 
@@ -238,7 +244,12 @@ def _apply(
 
             # update the existing component with the change
             # data from the applied component
-            serialized = current.dict().update(serialized).update(this_diff).encode()
+            serialized = (
+                current.dict()
+                .update(serialized)
+                .update(this_diff)
+                .encode(keep_schema=False)
+            )
 
             logging.info(f'Found update {object.huuid}')
 
@@ -250,7 +261,7 @@ def _apply(
         # need to be applied, do that now
         Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
 
-        serialized = serialized.encode()
+        serialized = serialized.encode(keep_schema=False)
 
         object.version = 0
         apply_status = 'new'

@@ -3,7 +3,7 @@ from test.utils.component import datatype as datatype_utils
 
 import pytest
 
-from superduper import DataType
+from superduper.components.datatype import file
 
 
 @pytest.fixture
@@ -16,45 +16,17 @@ def random_data(tmpdir):
     return file_name
 
 
-def dt_file():
-    return DataType("my-file", encodable="file")
+def test_data_with_schema(db, random_data):
+    datatype_utils.check_data_with_schema(random_data, file, db=db)
 
 
-def dt_file_lazy():
-    return DataType("my-file", encodable="lazy_file")
+def test_data_with_schema_and_db(random_data, db):
+    datatype_utils.check_data_with_schema_and_db(random_data, file, db)
 
 
-datatypes = [
-    dt_file(),
-    dt_file_lazy(),
-]
+def test_component(random_data):
+    datatype_utils.check_component(random_data, file)
 
 
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_with_schema(db, datatype: DataType, random_data):
-    datatype_utils.check_data_with_schema(random_data, datatype, db=db)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_with_schema_and_db(datatype: DataType, random_data, db):
-    datatype_utils.check_data_with_schema_and_db(random_data, datatype, db)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_without_schema(datatype: DataType, random_data):
-    datatype_utils.check_data_without_schema(random_data, datatype)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_without_schema_and_db(datatype: DataType, random_data, db):
-    datatype_utils.check_data_without_schema_and_db(random_data, datatype, db)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_component(random_data, datatype):
-    datatype_utils.check_component(random_data, datatype)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_component_with_db(db, random_data, datatype):
-    datatype_utils.check_component_with_db(random_data, datatype, db)
+def test_component_with_db(db, random_data):
+    datatype_utils.check_component_with_db(random_data, file, db)

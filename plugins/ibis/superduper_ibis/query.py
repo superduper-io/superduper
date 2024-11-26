@@ -11,7 +11,7 @@ from superduper.backends.base.query import (
 )
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.exceptions import DatabackendException
-from superduper.components.datatype import Encodable
+from superduper.components.datatype import _Encodable
 from superduper.components.schema import Schema
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
@@ -81,7 +81,7 @@ def _model_update_impl(
         d = {
             "_source": str(source_id),
             f"{CFG.output_prefix}{predict_id}": output.x
-            if isinstance(output, Encodable)
+            if isinstance(output, _Encodable)
             else output,
             "id": str(uuid.uuid4()),
         }

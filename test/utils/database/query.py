@@ -210,16 +210,6 @@ def test_auto_document_wrapping(db):
     table_or_collection.insert([data]).execute()
     _check(2)
 
-    # Without `Document` non dict data
-    table_or_collection.insert([np.zeros((1))]).execute()
-    c = _check(3)
-
-    gt = np.zeros((1))
-
-    # Auto wrapped _base
-    assert "x" in c[-1]
-    assert c[-1].unpack()["x"] == gt
-
 
 def test_model(db):
     from test.utils.setup.fake_data import add_models

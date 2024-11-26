@@ -10,10 +10,6 @@ from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.component import Component, ensure_initialized
-from superduper.components.datatype import (
-    DataType,
-    dill_serializer,
-)
 
 
 class Dataset(Component):
@@ -30,9 +26,7 @@ class Dataset(Component):
     """
 
     type_id: t.ClassVar[str] = 'dataset'
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
-        ('raw_data', dill_serializer),
-    )
+    _fields = {'raw_data': 'default'}
 
     select: t.Optional[Query] = None
     sample_size: t.Optional[int] = None
@@ -41,13 +35,13 @@ class Dataset(Component):
     raw_data: t.Optional[t.Sequence[t.Any]] = None
     pin: bool = False
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         """Post-initialization method.
 
         :param artifacts: Optional additional artifacts for initialization.
         """
+        super().__post_init__(db=db)
         self._data = None
-        return super().__post_init__(db, artifacts)
 
     @property
     @ensure_initialized
@@ -105,9 +99,9 @@ class RemoteData(Component):
     type_id: t.ClassVar[str] = 'dataset'
     getter: t.Callable
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         self._data = None
-        return super().__post_init__(db, artifacts)
+        return super().__post_init__(db)
 
     @property
     def data(self):

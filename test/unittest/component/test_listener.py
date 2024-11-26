@@ -262,14 +262,12 @@ def test_upstream_serializes(db):
         upstream=[upstream_component],
     )
 
-    db.apply(dependent_listener)
-
     listener = Listener(
         identifier="test-listener",
         model=ObjectModel("test", object=lambda x: x),
         select=db[dependent_listener.outputs].select(),
         key=dependent_listener.outputs,
-        upstream=[upstream_component],
+        upstream=[dependent_listener],
     )
     db.apply(listener)
 

@@ -51,12 +51,12 @@ class Listener(CDC):
         metadata = super()._get_metadata()
         return {**metadata, 'output_table': self.output_table}
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         self._set_upstream()
 
-        return super().__post_init__(db, artifacts)
+        return super().__post_init__(db)
 
     def handle_update_or_same(self, other):
         super().handle_update_or_same(other)

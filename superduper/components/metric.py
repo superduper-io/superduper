@@ -1,6 +1,6 @@
 import typing as t
 
-from superduper.components.component import Component
+from superduper.components.component import Component, ensure_initialized
 
 
 class Metric(Component):
@@ -15,6 +15,7 @@ class Metric(Component):
 
     object: t.Callable
 
+    @ensure_initialized
     def __call__(self, x: t.Sequence[int], y: t.Sequence[int]) -> bool:
         """Call the metric object on the x and y data.
 

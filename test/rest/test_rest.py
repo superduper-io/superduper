@@ -53,7 +53,7 @@ def test_apply(setup):
                 'code': CODE,
             },
             'my_function': {
-                '_path': 'superduper.components.model.ObjectModel',
+                '_path': 'superduper.components.model.ImportedModel',
                 'object': '?function_body',
                 'identifier': 'my_function',
             },

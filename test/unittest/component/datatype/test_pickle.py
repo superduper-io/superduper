@@ -6,9 +6,8 @@ import pytest
 
 from superduper.base.enums import DBType
 from superduper.components.datatype import (
-    DataType,
+    BaseDataType,
     pickle_encoder,
-    pickle_lazy,
     pickle_serializer,
 )
 
@@ -22,28 +21,17 @@ def random_data():
 datatypes = [
     pickle_encoder,
     pickle_serializer,
-    pickle_lazy,
 ]
 
 
 @pytest.mark.parametrize("datatype", datatypes)
-def test_data_with_schema(db, datatype: DataType, random_data: pd.DataFrame):
+def test_data_with_schema(db, datatype: BaseDataType, random_data: pd.DataFrame):
     datatype_utils.check_data_with_schema(random_data, datatype, db)
 
 
 @pytest.mark.parametrize("datatype", datatypes)
-def test_data_with_schema_and_db(datatype: DataType, random_data: pd.DataFrame, db):
+def test_data_with_schema_and_db(datatype: BaseDataType, random_data: pd.DataFrame, db):
     datatype_utils.check_data_with_schema_and_db(random_data, datatype, db)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_without_schema(datatype: DataType, random_data: pd.DataFrame):
-    datatype_utils.check_data_without_schema(random_data, datatype)
-
-
-@pytest.mark.parametrize("datatype", datatypes)
-def test_data_without_schema_and_db(datatype: DataType, random_data: pd.DataFrame, db):
-    datatype_utils.check_data_without_schema_and_db(random_data, datatype, db)
 
 
 @pytest.mark.parametrize("datatype", datatypes)

@@ -6,13 +6,11 @@ import numpy as np
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.datatype import (
+    DEFAULT_ENCODER,
     BaseDataType,
-    DataType,
     DataTypeFactory,
     Vector,
-    _BaseEncodable,
-    get_serializer,
-    json_serializer,
+    json_encoder,
 )
 from superduper.components.schema import FieldType, Schema
 
@@ -29,12 +27,6 @@ def register_module(module_name):
         logging.debug(f"Could not register module: {module_name}")
 
 
-DEFAULT_DATATYPE = get_serializer(
-    identifier='DEFAULT',
-    method='pickle',
-    encodable='encodable',
-)
-
 BASE_TYPES = (
     int,
     str,
@@ -45,7 +37,7 @@ BASE_TYPES = (
 )
 
 
-def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
+def infer_datatype(data: t.Any) -> t.Optional[t.Union[BaseDataType, type]]:
     """Infer the datatype of a given data object.
 
     If the data object is a base type, return None,
@@ -55,8 +47,9 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
     """
     datatype = None
 
-    if isinstance(data, _BaseEncodable):
-        return datatype
+    # # TODO - why this?
+    # if isinstance(data, _BaseEncodable):
+    #     return datatype
 
     try:
         from bson import ObjectId
@@ -80,8 +73,8 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
 
     if datatype is None:
         try:
-            encoded_data = DEFAULT_DATATYPE.encoder(data)
-            decoded_data = DEFAULT_DATATYPE.decoder(encoded_data)
+            encoded_data = DEFAULT_ENCODER.encode_data(data)
+            decoded_data = DEFAULT_ENCODER.decode_data(encoded_data)
             assert isinstance(decoded_data, type(data))
         except Exception as e:
             raise UnsupportedDatatype(
@@ -89,7 +82,7 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[DataType, type]]:
             ) from e
 
         logging.debug(f"Inferring default datatype for data: {data}")
-        datatype = DEFAULT_DATATYPE
+        datatype = DEFAULT_ENCODER
 
     return datatype
 
@@ -163,7 +156,7 @@ class JsonDataTypeFactory(DataTypeFactory):
         :param data: The data object
         """
         try:
-            json_serializer.encode_data(data)
+            json_encoder.encode_data(data)
             return True
         except Exception:
             return False
@@ -176,7 +169,7 @@ class JsonDataTypeFactory(DataTypeFactory):
         """
         if CFG.json_native:
             return FieldType(identifier='json')
-        return json_serializer
+        return json_encoder
 
 
 register_module("superduper.ext.numpy.encoder")

@@ -21,8 +21,9 @@ from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
 from superduper.base.exceptions import DatabackendException
+from superduper.base.leaf import Leaf
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
-from superduper.components.datatype import DataType, dill_lazy
+from superduper.components.datatype import BaseDataType
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
 
@@ -31,7 +32,7 @@ if t.TYPE_CHECKING:
     from superduper.components.dataset import Dataset
 
 
-EncoderArg = t.Union[DataType, str, None]
+EncoderArg = t.Union[BaseDataType, str, None]
 ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
@@ -391,8 +392,8 @@ class Model(Component, metaclass=ModelMeta):
     example: dc.InitVar[t.Any | None] = None
     deploy: bool = False
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db, example):
+        super().__post_init__(db)
         self.example = example
 
         self._is_initialized = False
@@ -856,6 +857,9 @@ class Model(Component, metaclass=ModelMeta):
         :param dataset: Dataset to run validation on.
         :param metrics: Metrics for performing validation
         """
+        if isinstance(key, str):
+            # metrics are currently functions of 2 inputs.
+            key = [key, key]
         mapping1 = Mapping(key[0], self.signature)
         mapping2 = Mapping(key[1], 'singleton')
         inputs = [mapping1(r) for r in dataset.data]
@@ -1014,7 +1018,9 @@ class IndexableNode:
         return _Node(item)
 
 
-class ObjectModel(Model):
+# This is if the user would like to
+# import the object
+class ImportedModel(Model):
     """Model component which wraps a Model to become serializable.
 
     Example:
@@ -1030,10 +1036,7 @@ class ObjectModel(Model):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_lazy),
-    )
-    object: t.Callable
+    object: Leaf
     method: t.Optional[str] = None
 
     @staticmethod
@@ -1095,6 +1098,13 @@ class ObjectModel(Model):
         return getattr(self.object, self.method)(*args, **kwargs)
 
 
+class ObjectModel(ImportedModel):
+    """A model to wrap a Python object and serialize it."""
+
+    _fields = {'object': 'default'}
+    object: t.Callable
+
+
 class APIBaseModel(Model):
     """APIBaseModel component which is used to make the type of API request.
 
@@ -1105,8 +1115,8 @@ class APIBaseModel(Model):
     model: t.Optional[str] = None
     max_batch_size: int = 8
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
         if self.model is None:
             assert self.identifier is not None
             self.model = self.identifier
@@ -1146,8 +1156,8 @@ class APIModel(APIBaseModel):
         """Method to get ``Inputs`` instance for model inputs."""
         return Inputs(self.runtime_params)
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db):
+        super().__post_init__(db)
         self.params['model'] = self.model
         env_variables = re.findall(r'{([A-Z0-9\_]+)}', self.url)
         runtime_variables = re.findall(r'{([a-z0-9\_]+)}', self.url)
@@ -1190,7 +1200,7 @@ class QueryModel(Model):
     """
 
     preprocess: t.Optional[t.Callable] = None
-    postprocess: t.Optional[t.Union[t.Callable]] = None
+    postprocess: t.Optional[t.Callable] = None
     select: Query
     signature: Signature = '**kwargs'
 
@@ -1247,10 +1257,10 @@ class SequentialModel(Model):
 
     models: t.List[Model]
 
-    def __post_init__(self, db, artifacts, example):
+    def __post_init__(self, db, example):
         self.signature = self.models[0].signature
         self.datatype = self.models[-1].datatype
-        return super().__post_init__(db, artifacts, example)
+        return super().__post_init__(db, example)
 
     @property
     def inputs(self) -> Inputs:

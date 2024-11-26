@@ -1,19 +1,19 @@
 import inspect
 
 from superduper import Document
-from superduper.components.datatype import Artifact, Encodable
+from superduper.components.datatype import _Artifact, _Encodable
 
 
 def rewrite_artifacts(r, db):
     """Helper function to rewrite artifacts."""
-    if isinstance(r, Encodable):
+    if isinstance(r, _Encodable):
         kwargs = r.dict()
         kwargs['datatype'].encodable = 'artifact'
         blob = r._encode()[0]
         db.artifact_store.put_bytes(blob, file_id=r.identifier)
-        init_args = inspect.signature(Artifact.__init__).parameters.keys()
+        init_args = inspect.signature(_Artifact.__init__).parameters.keys()
         kwargs = {k: v for k, v in kwargs.items() if k in init_args}
-        return Artifact(**kwargs)
+        return _Artifact(**kwargs)
     if isinstance(r, Document):
         return Document(rewrite_artifacts(dict(r), db=db))
     if isinstance(r, dict):

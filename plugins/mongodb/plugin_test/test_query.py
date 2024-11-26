@@ -5,7 +5,7 @@ import pytest
 from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.ext.numpy.encoder import array
+from superduper.ext.numpy.encoder import Array
 
 from superduper_mongodb.query import MongoQuery
 
@@ -14,7 +14,7 @@ from superduper_mongodb.query import MongoQuery
 def schema(request):
     bytes_encoding = request.param if hasattr(request, 'param') else None
 
-    array_tensor = array(dtype="float64", shape=(32,), bytes_encoding=bytes_encoding)
+    array_tensor = Array(dtype="float64", shape=(32,))
     schema = Schema(
         identifier=f'documents-{bytes_encoding}',
         fields={

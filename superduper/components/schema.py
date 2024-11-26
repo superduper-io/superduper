@@ -1,31 +1,16 @@
 import base64
-import hashlib
 import typing as t
 from functools import cached_property
 
 from superduper.base.constant import KEY_SCHEMA
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
-from superduper.components.datatype import BaseDataType, DataType
+from superduper.components.datatype import BaseDataType, Saveable
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
     from superduper.base.document import Getters
-
-
-def get_hash(data):
-    """Get the hash of the given data.
-
-    :param data: Data to hash.
-    """
-    if isinstance(data, str):
-        bytes_ = data.encode()
-    elif isinstance(data, bytes):
-        bytes_ = data
-    else:
-        bytes_ = str(id(data)).encode()
-    return hashlib.sha1(bytes_).hexdigest()
 
 
 class FieldType(Leaf):
@@ -36,12 +21,13 @@ class FieldType(Leaf):
     :param identifier: The name of the data type.
     """
 
-    identifier: t.Union[str, DataType]
+    identifier: t.Union[str, BaseDataType]
 
     def __post_init__(self, db):
         super().__post_init__(db)
 
-        if isinstance(self.identifier, DataType):
+        # TODO why would this happen?
+        if isinstance(self.identifier, BaseDataType):
             self.identifier = self.identifier.name
 
         elif isinstance(self.identifier, self.__class__):
@@ -74,12 +60,12 @@ class Schema(Component):
     """
 
     type_id: t.ClassVar[str] = 'schema'
-    fields: t.Mapping[str, DataType]
+    fields: t.Mapping[str, BaseDataType]
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
-        super().__post_init__(db, artifacts)
+        super().__post_init__(db)
 
         for k, v in self.fields.items():
             if isinstance(v, (BaseDataType, FieldType)):
@@ -92,6 +78,12 @@ class Schema(Component):
 
             self.fields[k] = v
 
+    def update(self, other: 'Schema'):
+        new_fields = self.fields.copy()
+        new_fields.update(other.fields)
+        return Schema(self.identifier, fields=new_fields)
+
+    # TODO why do we need this?
     @cached_property
     def encoded_types(self):
         """List of fields of type DataType."""
@@ -124,6 +116,7 @@ class Schema(Component):
         """Decode data using the schema's encoders.
 
         :param data: Data to decode.
+        :param getters: Getters to decode.
         """
         if self.trivial:
             return data
@@ -136,17 +129,8 @@ class Schema(Component):
 
             value = data[k]
             if reference := parse_reference(value):
-                value = getters.run(reference.name, reference.path)
-                if reference.name == 'blob':
-                    kwargs = {'blob': value}
-                elif reference.name == 'file':
-                    kwargs = {'x': value}
-                else:
-                    assert False, f'Unknown reference type {reference.name}'
-                encodable = field.encodable_cls(datatype=field, **kwargs)
-                if not field.encodable_cls.lazy:
-                    encodable = encodable.unpack()
-                decoded[k] = encodable
+                saveable: Saveable = getters.run(reference.name, reference.path)
+                decoded[k] = saveable
             else:
                 b = data[k]
                 if (
@@ -174,13 +158,13 @@ class Schema(Component):
             if k not in out:
                 continue
 
+            if isinstance(out[k], Saveable):
+                continue
+
             if isinstance(out[k], leaves_to_keep):
                 continue
 
-            # data, identifier = field.encode_data_with_identifier(out[k])
             data = field.encode_data(out[k])
-
-            identifier = get_hash(data)
 
             if (
                 field.encodable == 'encodable'
@@ -188,18 +172,20 @@ class Schema(Component):
             ):
                 assert isinstance(data, bytes)
                 data = _convert_bytes_to_base64(data)
+                out[k] = data
 
-            if field.encodable in {'artifact', 'lazy_artifact'}:
-                reference = field.encodable_cls.build_reference(identifier, data)
-                ref_obj = parse_reference(reference)
+            elif isinstance(data, Saveable):
+                ref_obj = parse_reference(data.reference)
 
                 if ref_obj.name == 'blob':
-                    blobs[identifier] = data
+                    blobs[data.identifier] = data.bytes
+
                 elif ref_obj.name == 'file':
-                    files[identifier] = data
+                    files[data.identifier] = data.path
                 else:
                     assert False, f'Unknown reference type {ref_obj.name}'
-                out[k] = reference
+
+                out[k] = data.reference
             else:
                 out[k] = data
 

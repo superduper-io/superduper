@@ -24,7 +24,7 @@ from .base.leaf import imported, imported_value
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
-from .components.datatype import DataType, dill_serializer, pickle_serializer
+from .components.datatype import BaseDataType, dill_serializer, pickle_serializer
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
@@ -39,7 +39,7 @@ from .components.schema import Schema
 from .components.streamlit import Streamlit
 from .components.table import Table
 from .components.template import QueryTemplate, Template
-from .components.vector_index import VectorIndex, vector
+from .components.vector_index import VectorIndex
 
 REQUIRES = [
     'superduper=={}'.format(__version__),
@@ -52,7 +52,7 @@ __all__ = (
     'config',
     'logging',
     'superduper',
-    'DataType',
+    'BaseDataType',
     'Document',
     'code',
     'ObjectModel',
@@ -62,7 +62,6 @@ __all__ = (
     'model',
     'Listener',
     'VectorIndex',
-    'vector',
     'Dataset',
     'Metric',
     'Plugin',

@@ -7,11 +7,7 @@ import pytest
 
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.components.component import Component
-from superduper.components.datatype import (
-    DataType,
-    file_lazy,
-    serializers,
-)
+from superduper.components.datatype import INBUILT_DATATYPES
 
 
 @dc.dataclass(kw_only=True)
@@ -19,9 +15,7 @@ class TestComponent(Component):
     path: str
     type_id: t.ClassVar[str] = "TestComponent"
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, "DataType"]]] = (
-        ("path", file_lazy),
-    )
+    _fields = {'path': 'file'}
 
 
 @dc.dataclass(kw_only=True)
@@ -29,9 +23,7 @@ class TestComponentBytes(Component):
     function: callable
     type_id: t.ClassVar[str] = "TestComponent"
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, "DataType"]]] = (
-        ("path", file_lazy),
-    )
+    _fields = {'function': 'dill_serializer'}
 
 
 @pytest.fixture
@@ -59,7 +51,7 @@ def random_directory(tmpdir):
 def artifact_store(tmpdir) -> FileSystemArtifactStore:
     tmpdir_path = os.path.join(tmpdir, "artifact_store")
     artifact_strore = FileSystemArtifactStore(f"{tmpdir_path}")
-    artifact_strore._serializers = serializers
+    artifact_strore._serializers = INBUILT_DATATYPES
     return artifact_strore
 
 

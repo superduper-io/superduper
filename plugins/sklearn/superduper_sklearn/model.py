@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
-from superduper.components.datatype import DataType, pickle_serializer
+from superduper.components.datatype import pickle_serializer
 from superduper.components.model import (
     Model,
     ModelInputType,
@@ -93,7 +93,7 @@ class SklearnTrainer(Trainer):
                 metrics.update(dataset_metrics)
 
         model.metric_values = metrics
-        db.replace(model, upsert=True)
+        db.replace(model)
 
 
 class Estimator(Model):
@@ -117,9 +117,7 @@ class Estimator(Model):
 
     """
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
-        ('object', pickle_serializer),
-    )
+    _fields = {'object': pickle_serializer}
 
     object: BaseEstimator
     trainer: t.Optional[SklearnTrainer] = None

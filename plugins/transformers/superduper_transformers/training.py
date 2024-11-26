@@ -89,7 +89,7 @@ class LLMCallback(TrainerCallback):
             identifier=self.experiment_id, path=checkpoint_path, step=state.global_step
         )
         self.llm.adapter_id = checkpoint
-        self.db.replace(self.llm, force=True)
+        self.db.replace(self.llm)
 
         if not args.save_total_limit:
             return
@@ -135,7 +135,7 @@ class LLMCallback(TrainerCallback):
                 step=step,
             )
             self.llm.adapter_id = checkpoint
-            self.db.replace(self.llm, force=True)
+            self.db.replace(self.llm)
 
     def check_init(self):
         """Check the initialization of the callback."""
@@ -184,11 +184,11 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
     num_gpus: t.Optional[int] = None
     ray_configs: t.Optional[dict] = None
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         self.output_dir = self.output_dir or os.path.join("output", self.identifier)
         if self.num_gpus and 'num_gpus' not in self.compute_kwargs:
             self.compute_kwargs['num_gpus'] = self.num_gpus
-        return SuperDuperTrainer.__post_init__(self, db, artifacts)
+        return SuperDuperTrainer.__post_init__(self, db)
 
     def build(self):
         """Build the training arguments."""

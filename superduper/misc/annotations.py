@@ -121,6 +121,7 @@ def _get_indent(docstring: str) -> int:
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
 
 
+# TODO deprecate - no longer needed
 def importable(f):
     """Make a function serializable as an importable.
 

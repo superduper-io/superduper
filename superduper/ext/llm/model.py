@@ -28,8 +28,8 @@ class BaseLLM(Model):
     max_batch_size: t.Optional[int] = 4
     signature: str = 'singleton'
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
         self.takes_context = True
         self.identifier = self.identifier.replace("/", "-")
 

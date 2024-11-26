@@ -532,6 +532,7 @@ class MongoQuery(Query):
             method, args, kwargs = part
             # args: (filter, projection, *args)
             filter = copy.deepcopy(args[0]) if len(args) > 0 else {}
+            filter = dict(filter)
             filter.update(self._get_filter_conditions())
             args = tuple((filter, *args[1:]))
 

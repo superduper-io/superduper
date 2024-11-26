@@ -12,7 +12,6 @@ def model1(db):
         return x + 1
 
     model = ObjectModel(identifier='m1', object=model_object, signature='singleton')
-    db.add(model)
     yield model
 
 
@@ -22,7 +21,6 @@ def model2(db):
         return x + 2, x
 
     model = ObjectModel(identifier='m2', object=model_object)
-    db.add(model)
     yield model
 
 
@@ -32,7 +30,6 @@ def model2_multi_dict(db):
         return {'x': x + 2}
 
     model = ObjectModel(identifier='m2_multi_dict', object=model_object)
-    db.add(model)
     yield model
 
 
@@ -42,7 +39,6 @@ def model2_multi(db):
         return x + y + 2
 
     model = ObjectModel(identifier='m2_multi', object=model_object)
-    db.add(model)
     yield model
 
 
@@ -52,7 +48,6 @@ def model3(db):
         return x + y + 3
 
     model = ObjectModel(identifier='m3', object=model_object)
-    db.add(model)
     yield model
 
 
@@ -150,7 +145,7 @@ def test_complex_graph_with_select(db):
 def test_serialization(db, model1):
     g = Graph(identifier='complex-graph', input=model1)
     original_g = g.G
-    db.add(g)
+    db.apply(g)
     g = db.load('model', 'complex-graph')
     assert nx.utils.graphs_equal(original_g, g.G)
 

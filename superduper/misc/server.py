@@ -8,7 +8,7 @@ import requests
 
 from superduper import CFG, logging
 from superduper.base import exceptions
-from superduper.misc.auto_schema import DEFAULT_DATATYPE
+from superduper.misc.auto_schema import DEFAULT_ENCODER
 
 primitives = (bool, str, int, float, type(None), list, dict)
 
@@ -35,12 +35,12 @@ def server_request_decoder(x):
     :param x: Object to decode.
     """
     x = x['_b64data']
-    x = DEFAULT_DATATYPE.decoder(base64.b64decode(x))
+    x = DEFAULT_ENCODER.decoder(base64.b64decode(x))
     return x
 
 
 def _server_request_encoder(x):
-    x = DEFAULT_DATATYPE.encoder(x)
+    x = DEFAULT_ENCODER.encoder(x)
     return {'_b64data': base64.b64encode(x).decode()}
 
 

@@ -19,12 +19,12 @@ from superduper.base.config import Config
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.components.component import Component
-from superduper.components.datatype import DataType
+from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.annotations import deprecated
 from superduper.misc.colors import Colors
-from superduper.misc.download import download_from_one
+from superduper.misc.importing import import_object
 from superduper.misc.retry import db_retry
 
 DBResult = t.Any
@@ -255,7 +255,7 @@ class Datalayer:
         self,
         insert: Query,
         refresh: bool = True,
-        datatypes: t.Sequence[DataType] = (),
+        datatypes: t.Sequence[BaseDataType] = (),
         auto_schema: bool = True,
     ) -> InsertResult:
         """
@@ -275,7 +275,7 @@ class Datalayer:
                 'train' if random.random() >= s.CFG.fold_probability else 'valid',
             )
         if auto_schema and self.cfg.auto_schema:
-            self._auto_create_table(insert.table, insert.documents)
+            schema = self._auto_create_table(insert.table, insert.documents).schema
 
             timeout = 5
 
@@ -301,6 +301,8 @@ class Datalayer:
                     f'{insert.table} not found after {timeout} seconds'
                     ' table auto creation likely has failed or is stalling...'
                 )
+            for r in insert.documents:
+                r.schema = schema
 
         inserted_ids = insert.do_execute(self)
 
@@ -333,6 +335,7 @@ class Datalayer:
         table = Table(identifier=table_name, schema=schema)
         logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
         self.apply(table, force=True)
+        return table
 
     def _select(self, select: Query, reference: bool = True) -> SelectResult:
         """
@@ -563,6 +566,7 @@ class Datalayer:
         :param version: [Optional] Numerical version.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
+        :param huuid: [Optional] human-readable UUID of the component to load.
         :param uuid: [Optional] UUID of the component to load.
         """
         if version is not None:
@@ -589,7 +593,20 @@ class Datalayer:
                 info = self.metadata.get_component_by_uuid(
                     uuid=uuid, allow_hidden=allow_hidden
                 )
-                c = Document.decode(info, db=self)
+                try:
+                    class_schema = import_object(info['_path']).build_class_schema()
+                except KeyError:
+                    # if defined in __main__ then the class is directly serialized
+                    assert '_object' in info
+                    from superduper.components.datatype import DEFAULT_SERIALIZER, Blob
+
+                    bytes_ = Blob(
+                        identifier=info['_object'].split(':')[-1], db=self
+                    ).unpack()
+                    object = DEFAULT_SERIALIZER.decode_data(bytes_)
+                    class_schema = object.build_class_schema()
+
+                c = Document.decode(info, db=self, schema=class_schema)
                 c.db = self
                 if c.cache:
                     logging.info(f'Adding {c.huuid} to cache')
@@ -655,16 +672,6 @@ class Datalayer:
             self._delete_artifacts(r['uuid'], info)
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
-    def _get_content_for_filter(self, filter) -> Document:
-        if isinstance(filter, dict):
-            filter = Document(filter)
-        if '_id' not in filter:
-            filter['_id'] = 0
-        download_from_one(filter)
-        if not filter['_id']:
-            del filter['_id']
-        return filter
-
     def replace(self, object: t.Any):
         """
         Replace a model in the artifact store with an updated object.
@@ -677,31 +684,40 @@ class Datalayer:
         :param force: set to `True` to skip confirm # TODO
         """
         old_uuid = None
-        info = self.metadata.get_component(
-            object.type_id, object.identifier, version=object.version
-        )
-        old_uuid = info['uuid']
+        try:
+            info = self.metadata.get_component(
+                object.type_id, object.identifier, version=object.version
+            )
+            old_uuid = info['uuid']
+        except FileNotFoundError:
+            pass
 
         serialized = object.dict()
 
-        def _replace_fn(component):
-            if getattr(component, 'inline', False):
-                return component
-            self.replace(component)
-            return f'&:component:{component.huuid}'
+        if old_uuid:
 
-        serialized = serialized.map(_replace_fn, lambda x: isinstance(x, Component))
-        serialized = serialized.encode()
+            def _replace_fn(component):
+                if getattr(component, 'inline', False):
+                    return component
+                self.replace(component)
+                return f'&:component:{component.huuid}'
 
-        self._delete_artifacts(object.uuid, info)
-        serialized = self._save_artifact(object.uuid, serialized)
-        self.metadata.replace_object(
-            serialized,
-            identifier=object.identifier,
-            type_id=object.type_id,
-            version=object.version,
-        )
-        self.expire(old_uuid)
+            serialized = serialized.map(_replace_fn, lambda x: isinstance(x, Component))
+            serialized = serialized.encode(keep_schema=False)
+
+            self._delete_artifacts(object.uuid, info)
+            serialized = self._save_artifact(object.uuid, serialized)
+
+            self.metadata.replace_object(
+                serialized,
+                identifier=object.identifier,
+                type_id=object.type_id,
+                version=object.version,
+            )
+            self.expire(old_uuid)
+        else:
+            serialized = serialized.encode(keep_schema=False)
+            self.metadata.create_component(serialized)
 
     def expire(self, uuid):
         """Expire a component from the cache."""
@@ -775,7 +791,8 @@ class Datalayer:
         if not isinstance(like, Document):
             assert isinstance(like, dict)
             like = Document(like)
-        like = self._get_content_for_filter(like)
+        # TODO deprecate
+        # like = self._get_content_for_filter(like)
         logging.info('Getting vector-index')
         vi = self.load('vector_index', vector_index)
         if outputs is None:

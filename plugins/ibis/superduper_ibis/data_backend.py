@@ -14,7 +14,7 @@ from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.base import exceptions
 from superduper.base.enums import DBType
-from superduper.components.datatype import DataType
+from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 
@@ -69,7 +69,7 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
-        if uri.startswith('snowflake://') or uri.startswith('sqlite://'):
+        if uri.startswith('snowflake://'):
             self.bytes_encoding = 'base64'
 
         self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
@@ -190,7 +190,7 @@ class IbisDataBackend(BaseDataBackend):
     def create_output_dest(
         self,
         predict_id: str,
-        datatype: t.Union[FieldType, DataType],
+        datatype: t.Union[FieldType, BaseDataType],
         flatten: bool = False,
     ):
         """Create a table for the output of the model.

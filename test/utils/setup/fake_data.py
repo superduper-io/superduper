@@ -10,7 +10,7 @@ from superduper.components.model import ObjectModel
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.components.vector_index import VectorIndex
-from superduper.ext.numpy.encoder import array
+from superduper.ext.numpy.encoder import Array
 
 GLOBAL_TEST_N_DATA_POINTS = 100
 
@@ -31,7 +31,7 @@ def add_random_data(
     table_name: str = "documents",
     n: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_array = array(dtype="float", shape=(32,))
+    float_array = Array(dtype="float", shape=(32,))
 
     schema = Schema(
         identifier=table_name,
@@ -57,16 +57,16 @@ def add_random_data(
 
 def add_datatypes(db: Datalayer):
     for n in [8, 16, 32]:
-        db.apply(array(dtype="float", shape=(n,)))
+        db.apply(Array(dtype="float", shape=(n,)))
 
 
 def add_models(db: Datalayer):
     # identifier, weight_shape, encoder
     params = [
-        ["linear_a", (32, 16), array(dtype="float", shape=(16,)), False],
-        ["linear_a_multi", (32, 16), array(dtype="float", shape=(16,)), True],
-        ["linear_b", (16, 8), array(dtype="float", shape=(8,)), False],
-        ["linear_b_multi", (16, 8), array(dtype="float", shape=(8,)), True],
+        ["linear_a", (32, 16), Array(dtype="float", shape=(16,)), False],
+        ["linear_a_multi", (32, 16), Array(dtype="float", shape=(16,)), True],
+        ["linear_b", (16, 8), Array(dtype="float", shape=(8,)), False],
+        ["linear_b_multi", (16, 8), Array(dtype="float", shape=(8,)), True],
     ]
     for identifier, weight_shape, datatype, flatten in params:
         weight = np.random.randn(weight_shape[1])

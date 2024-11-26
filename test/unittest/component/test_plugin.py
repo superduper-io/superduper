@@ -56,19 +56,9 @@ def create_import_plugin(tempdirname):
     component_dict = {
         "_base": "?plugin",
         "_builds": {
-            "file_lazy": {
-                "_path": "superduper.components.datatype.get_serializer",
-                "method": "file",
-                "encodable": "lazy_file",
-            },
-            "file_id": {
-                "_path": "superduper.components.datatype.LazyFile",
-                "datatype": "?file_lazy",
-                "x": "&:file:p_import:file_id",
-            },
             "plugin": {
                 "_path": "superduper.components.plugin.Plugin",
-                "path": "?file_id",
+                "path": "&:file:p_import:file_id",
             },
         },
     }

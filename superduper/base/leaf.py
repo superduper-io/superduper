@@ -288,14 +288,12 @@ class Leaf(metaclass=LeafMeta):
         if self.literals:
             r['_literals'] = list(self.literals)
 
-        from superduper.components.datatype import Artifact, dill_serializer
+        from superduper.components.datatype import DEFAULT_SERIALIZER
 
         if self.__class__.__module__ == '__main__':
-            cls = Artifact(
-                x=self.__class__,
-                datatype=dill_serializer,
+            return Document(
+                {'_object': DEFAULT_SERIALIZER.encode_data(self.__class__), **r}
             )
-            return Document({'_object': cls, **r})
 
         path = f'{self.__class__.__module__}.{self.__class__.__name__}'
         return Document({'_path': path, **r})

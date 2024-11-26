@@ -4,12 +4,9 @@ import numpy
 
 from superduper.components.datatype import (
     BaseDataType,
-    DataType,
     DataTypeFactory,
-    Encodable,
 )
 from superduper.ext.utils import str_shape
-from superduper.misc.annotations import component
 
 
 class EncodeArray:
@@ -55,51 +52,31 @@ class DecodeArray:
 class Array(BaseDataType):
     """Encode/ decode a numpy array as bytes.
 
-    :param dtype: numpy native datatype
+    :param dtype: numpy native datatype.
+    :param shape: Shape of array.
     """
 
     dtype: str = 'float64'
+    shape: int | t.Tuple[int]
+    identifier: str = ''
 
-    def __post_init__(self, db, artifacts):
-        self.encodable_cls = Encodable
+    def __post_init__(self, db):
         self.encodable = 'encodable'
-        return super().__post_init__(db, artifacts)
+        if not self.identifier:
+            dtype = str(self.dtype)
+            self.identifier = f'numpy-{dtype}[{str_shape(self.shape)}]'
+        return super().__post_init__(db)
 
-    def encode_data(self, item, info=None):
+    def encode_data(self, item):
         encoder = EncodeArray(self.dtype)
         return encoder(item)
 
-    def decode_data(self, item, info=None):
+    def decode_data(self, item):
         shape = self.shape
         if isinstance(shape, int):
             shape = (self.shape,)
         decoder = DecodeArray(self.dtype, shape=shape)
         return decoder(item)
-
-
-@component()
-def array(
-    dtype: str,
-    shape: t.Sequence,
-    bytes_encoding: t.Optional[str] = None,
-    encodable: str = 'encodable',
-):
-    """
-    Create an encoder of numpy arrays.
-
-    :param dtype: The dtype of the array.
-    :param shape: The shape of the array.
-    :param bytes_encoding: The bytes encoding to use.
-    :param encodable: The encodable to use.
-    """
-    return DataType(
-        identifier=f'numpy-{dtype}[{str_shape(shape)}]',
-        encoder=EncodeArray(dtype),
-        decoder=DecodeArray(dtype, shape),
-        shape=shape,
-        bytes_encoding=bytes_encoding,
-        encodable=encodable,
-    )
 
 
 class NumpyDataTypeFactory(DataTypeFactory):
@@ -115,10 +92,10 @@ class NumpyDataTypeFactory(DataTypeFactory):
         return isinstance(data, numpy.ndarray)
 
     @staticmethod
-    def create(data: t.Any) -> DataType:
+    def create(data: t.Any) -> Array:
         """Create a numpy array datatype.
 
         It's used for registering the auto schema.
         :param data: The numpy array.
         """
-        return array(dtype=str(data.dtype), shape=list(data.shape))
+        return Array(dtype=str(data.dtype), shape=list(data.shape))

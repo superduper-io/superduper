@@ -161,8 +161,7 @@ class TorchTrainer(Trainer):
                     self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        db.replace(model, upsert=True)
-                        self.changed.update({'all_metrics', 'optimizer_state'})
+                        db.replace(model)
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return

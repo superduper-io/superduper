@@ -104,7 +104,7 @@ def test_sklearn(db):
         identifier='test',
         object=SVC(),
     )
-    assert 'object' in m.artifact_schema.fields
+    assert 'object' in m._fields
     db.apply(m, force=True)
     assert db.show('model') == ['test']
 

@@ -89,7 +89,7 @@ def test_training(db, tmpdir):
         identifier="validation",
         datasets=validation_sets,
         metrics=metrics,
-        key="text",
+        key='text',
     )
 
     model = LLM(
@@ -109,8 +109,9 @@ def test_training(db, tmpdir):
     # load from checkpoint
     experiment_id = db.show("checkpoint")[-1]
     checkpoint = db.load("checkpoint", experiment_id)
+
     llm = LLM(
-        identifier="llm_chekpoint",
+        identifier="llm_checkpoint",
         adapter_id=checkpoint,
         model_name_or_path="facebook/opt-125m",
         tokenizer_kwargs=dict(model_max_length=64),

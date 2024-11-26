@@ -67,9 +67,9 @@ class RetrievalPrompt(QueryModel):
     prompt_introduction: str = PROMPT_INTRODUCTION
     join: str = "\n---\n"
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         assert 'prompt' in self.select.variables
-        return super().__post_init__(db, artifacts)
+        return super().__post_init__(db)
 
     @property
     def inputs(self):

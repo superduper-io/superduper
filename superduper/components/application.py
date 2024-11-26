@@ -31,8 +31,8 @@ class Application(Component):
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
     link: t.Optional[str] = None
 
-    def __post_init__(self, db, artifacts):
-        super().__post_init__(db, artifacts)
+    def __post_init__(self, db):
+        super().__post_init__(db)
         self._sort_components_and_set_upstream()
 
     def _sort_components_and_set_upstream(self):

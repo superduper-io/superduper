@@ -34,7 +34,8 @@ def transformers_model(db):
     yield model
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+# @pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.skip  # distilbert-base-uncased no longer supported
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict('this is a test')
     assert isinstance(one_prediction, dict)
@@ -50,7 +51,8 @@ def td():
         yield tmp
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+# @pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.skip  # distilbert-base-uncased no longer supported
 # TODO: Test the sqldb
 def test_transformer_fit(transformers_model, db, td):
     repo_name = td

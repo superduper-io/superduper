@@ -3,7 +3,6 @@ import typing as t
 import tqdm
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
-from superduper.components.vector_index import vector
 
 from superduper_jina.client import JinaAPIClient
 
@@ -16,8 +15,8 @@ class Jina(APIBaseModel):
 
     api_key: t.Optional[str] = None
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example=example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example=example)
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
 
@@ -41,21 +40,10 @@ class JinaEmbedding(Jina):
     shape: t.Optional[t.Sequence[int]] = None
     signature: str = 'singleton'
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
         if self.shape is None:
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
-
-    def _pre_create(self, db):
-        """Pre create method for the model.
-
-        If the datalayer is Ibis, the datatype will be set to the appropriate
-        SQL datatype.
-
-        :param db: The datalayer to use for the model.
-        """
-        if self.datatype is None:
-            self.datatype = vector(shape=self.shape)
 
     def predict(self, X: str):
         """Predict the embedding of a single text.

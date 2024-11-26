@@ -11,13 +11,10 @@ from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.cdc import CDC
 from superduper.components.component import Component
-from superduper.components.datatype import DataType
 from superduper.components.listener import Listener
 from superduper.components.model import Mapping, ModelInputType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.ext.utils import str_shape
-from superduper.misc.annotations import component
 from superduper.misc.special_dicts import MongoStyleDict
 from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
 
@@ -118,9 +115,9 @@ class VectorIndex(CDC):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     cdc_table: str = ''
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
-        return super().__post_init__(db, artifacts)
+        return super().__post_init__(db)
 
     def refresh(self):
         if self.cdc_table.startswith(CFG.output_prefix):
@@ -417,44 +414,3 @@ class DecodeArray:
         :param info: Optional info
         """
         return np.frombuffer(bytes, dtype=self.dtype).tolist()
-
-
-@component(
-    {'name': 'shape', 'type': 'int'},
-    {'name': 'identifier', 'type': 'str'},
-)
-def vector(shape, identifier: t.Optional[str] = None):
-    """Create an encoder for a vector (list of ints/ floats) of a given shape.
-
-    :param shape: The shape of the vector
-    :param identifier: The identifier of the vector
-    """
-    if isinstance(shape, int):
-        shape = (shape,)
-
-    identifier = identifier or f'vector[{str_shape(shape)}]'
-    return DataType(
-        identifier=identifier,
-        shape=shape,
-        encoder=None,
-        decoder=None,
-        encodable='native',
-    )
-
-
-@component()
-def sqlvector(shape, bytes_encoding: t.Optional[str] = None):
-    """Create an encoder for a vector (list of ints/ floats) of a given shape.
-
-    This is used for compatibility with SQL databases, as the default vector
-
-    :param shape: The shape of the vector
-    :param bytes_encoding: The encoding of the bytes
-    """
-    return DataType(
-        identifier=f'sqlvector[{str_shape(shape)}]',
-        shape=shape,
-        encoder=EncodeArray(dtype='float64'),
-        decoder=DecodeArray(dtype='float64'),
-        bytes_encoding=bytes_encoding,
-    )

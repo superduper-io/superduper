@@ -6,7 +6,7 @@ import sys
 import typing as t
 
 from superduper import Component, logging
-from superduper.components.datatype import LazyFile, file_lazy
+from superduper.components.datatype import File, file
 
 
 class Plugin(Component):
@@ -18,19 +18,19 @@ class Plugin(Component):
     """
 
     type_id: t.ClassVar[str] = "plugin"
-    _artifacts: t.ClassVar = (("path", file_lazy),)
+    _fields = {"path": file}
     path: str
     identifier: str = ""
     cache_path: str = "~/.superduper/plugins"
 
-    def __post_init__(self, db, artifacts):
-        if isinstance(self.path, LazyFile):
+    def __post_init__(self, db):
+        if isinstance(self.path, File):
             self._prepare_plugin()
         else:
             path_name = os.path.basename(self.path.rstrip("/"))
             self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
         self._install()
-        super().__post_init__(db, artifacts)
+        super().__post_init__(db)
 
     def _install(self):
         logging.debug(f"Installing plugin {self.identifier}")
@@ -92,7 +92,7 @@ class Plugin(Component):
 
     def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
-        assert isinstance(self.path, LazyFile)
+        assert isinstance(self.path, File)
         cache_path = os.path.expanduser(self.cache_path)
         uuid_path = os.path.join(cache_path, self.uuid)
         # Check if plugin is already in cache

@@ -24,7 +24,7 @@ from superduper.base.leaf import Leaf, LeafMeta
 if t.TYPE_CHECKING:
     from superduper import Document
     from superduper.base.datalayer import Datalayer
-    from superduper.components.datatype import DataType
+    from superduper.components.datatype import BaseDataType
     from superduper.components.plugin import Plugin
 
 
@@ -87,6 +87,20 @@ ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version
 ComponentTuple.__doc__ = 'noqa'
 
 
+def _is_optional_callable(annotation) -> bool:
+    """Tell if an annotation is t.Optional[t.Callable].
+
+    >>> is_optional_callable(t.Optional[t.Callable])
+    True
+    """
+    # Check if the annotation is of the form Optional[...]
+    if t.get_origin(annotation) is t.Union:
+        # Get the type inside Optional and check if it is Callable
+        inner_type = t.get_args(annotation)[0]  # Optional[X] means X is at index 0
+        return inner_type is t.Callable
+    return False
+
+
 class ComponentMeta(LeafMeta):
     """Metaclass for the `Component` class.
 
@@ -113,6 +127,33 @@ class ComponentMeta(LeafMeta):
             if hasattr(attr_value, 'events'):
                 new_cls.triggers.add(attr_name)
 
+        import copy
+
+        new_cls._fields = copy.deepcopy(new_cls._fields)
+        for base in bases:
+            try:
+                new_cls._fields.update(
+                    {k: v for k, v in base._fields.items() if k not in new_cls._fields}
+                )
+            except AttributeError:
+                continue
+
+        for field in dc.fields(new_cls):
+            if field.name in new_cls._fields:
+                continue
+            try:
+                # For some reason it is random whether annotations are strings or not
+                annotation = new_cls.__annotations__[field.name]
+                if annotation in {
+                    't.Callable',
+                    't.Optional[t.Callable]',
+                    't.Callable | None',
+                }:
+                    new_cls._fields[field.name] = 'default'
+                elif annotation is t.Callable or _is_optional_callable(annotation):
+                    new_cls._fields[field.name] = 'default'
+            except KeyError:
+                continue
         return new_cls
 
 
@@ -122,7 +163,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     Class to represent superduper.io serializable entities
     that can be saved into a database.
 
-    :param artifacts: A dictionary of artifacts paths and `DataType` objects
     :param upstream: A list of upstream components
     :param plugins: A list of plugins to be used in the component.
     :param cache: (Optional) If set `true` the component will not be cached
@@ -137,13 +177,11 @@ class Component(Leaf, metaclass=ComponentMeta):
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     type_id: t.ClassVar[str] = 'component'
-    # TODO do something more elegant than this
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = ()
+    _fields: t.ClassVar[t.Dict[str, t.Union['BaseDataType', str]]] = {}
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
     upstream: t.Optional[t.List["Component"]] = None
     plugins: t.Optional[t.List["Plugin"]] = None
-    artifacts: dc.InitVar[t.Optional[t.Dict]] = None
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
     build_variables: t.Dict | None = None
@@ -385,6 +423,8 @@ class Component(Leaf, metaclass=ComponentMeta):
                 local_job_lookup[attr_name] = job
                 local_jobs.append(job)
 
+                triggers = [t for t in triggers if t != attr_name]
+
             it += 1
             if it > max_it:
                 raise Exception('Circular job dependency detected')
@@ -455,10 +495,9 @@ class Component(Leaf, metaclass=ComponentMeta):
         leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Leaf)]
         return {k: r[k] for k in leaf_keys}
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         super().__post_init__(db)
 
-        self.artifacts = artifacts
         self.version: t.Optional[int] = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
@@ -506,45 +545,21 @@ class Component(Leaf, metaclass=ComponentMeta):
                 return [_init(i) for i in item]
 
             if isinstance(item, Leaf):
-                item.init(db=db)
+                item.init()
                 return item.unpack()
 
             return item
 
+        schema = self.build_class_schema()
+
         for f in dc.fields(self):
             item = getattr(self, f.name)
-            unpacked_item = _init(item)
-            setattr(self, f.name, unpacked_item)
+            item = _init(item)
+            if f.name in self._fields and isinstance(item, bytes):
+                item = schema.fields[f.name].decode_data(item)
+            setattr(self, f.name, item)
 
         return self
-
-    @property
-    def artifact_schema(self):
-        """Returns `Schema` representation for the serializers in the component."""
-        from superduper import Schema
-        from superduper.components.datatype import dill_serializer
-
-        schema = {}
-        lookup = dict(self._artifacts)
-        if self.artifacts is not None:
-            lookup.update(self.artifacts)
-        for f in dc.fields(self):
-            a = getattr(self, f.name)
-            if a is None:
-                continue
-            if f.name in lookup and not isinstance(a, Leaf):
-                schema[f.name] = lookup[f.name]
-                continue
-            if isinstance(getattr(self, f.name), Component):
-                continue
-            item = getattr(self, f.name)
-            if (
-                callable(item)
-                and not isinstance(item, Leaf)
-                and not getattr(item, 'importable', False)
-            ):
-                schema[f.name] = dill_serializer
-        return Schema(identifier=f'serializer/{self.identifier}', fields=schema)
 
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         self.status = Status.initializing
@@ -679,6 +694,8 @@ class Component(Leaf, metaclass=ComponentMeta):
         r = self.dict(defaults=defaults, metadata=metadata).encode(
             defaults=defaults, metadata=metadata
         )
+
+        del r['_schema']
         if not metadata:
             del r['uuid']
 
@@ -786,7 +803,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     ) -> 'Document':
         """A dictionary representation of the component."""
         from superduper import Document
-        from superduper.components.datatype import Artifact, File
 
         r = super().dict(metadata=metadata, defaults=defaults)
 
@@ -801,14 +817,14 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         if refs:
             r = _convert_components_to_refs(r)
-        s = self.artifact_schema
+
+        s = self.build_class_schema()
+
+        from superduper.components.datatype import Saveable
 
         for k in s.fields:
-            attr = getattr(self, k)
-            if isinstance(attr, (Artifact, File)):
-                r[k] = attr
-            else:
-                r[k] = s.fields[k](x=attr)  # artifact or file
+            if r[k] is not None and not isinstance(r[k], Saveable):
+                r[k] = s.fields[k].encode_data(r[k])
 
         if metadata:
             r['type_id'] = self.type_id
@@ -817,7 +833,19 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         if r.get('status') is not None:
             r['status'] = str(self.status)
-        return Document(r)
+
+        return Document(r, schema=s)
+
+    @classmethod
+    def build_class_schema(cls):
+        from superduper import Schema
+        from superduper.components.datatype import INBUILT_DATATYPES
+
+        _fields = cls._fields.copy()
+        for k in _fields:
+            if isinstance(_fields[k], str):
+                _fields[k] = INBUILT_DATATYPES[_fields[k]]
+        return Schema(f'{cls.__name__}/class_schema', fields=_fields)
 
     # TODO needed? looks to have legacy "_content"
     @classmethod

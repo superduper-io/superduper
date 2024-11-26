@@ -8,11 +8,6 @@ from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.component import ensure_initialized
-from superduper.components.datatype import (
-    DataType,
-    dill_serializer,
-    pickle_serializer,
-)
 from superduper.components.model import (
     Model,
     Signature,
@@ -59,12 +54,12 @@ class TransformersTrainer(TrainingArguments, Trainer):
     :param preprocess_logits_for_metrics: preprocess logits for metrics
     """
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
-        ('data_collator', dill_serializer),
-        ('callbacks', dill_serializer),
-        ('optimizers', dill_serializer),
-        ('preprocess_logits_for_metrics', dill_serializer),
-    )
+    _fields = {
+        'data_collator': 'default',
+        'callbacks': 'default',
+        'optimizers': 'default',
+        'preprocess_logits_for_metrics': 'default',
+    }
 
     signature: Signature = '**kwargs'
     output_dir: str = ''
@@ -78,11 +73,11 @@ class TransformersTrainer(TrainingArguments, Trainer):
         t.Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
     ] = None
 
-    def __post_init__(self, db, artifacts):
+    def __post_init__(self, db):
         assert self.output_dir == '' or self.output_dir == self.identifier
         self.output_dir = self.identifier
         TrainingArguments.__post_init__(self)
-        return Trainer.__post_init__(self, db, artifacts)
+        return Trainer.__post_init__(self, db)
 
     @property
     def native_arguments(self):
@@ -122,7 +117,7 @@ class TransformersTrainer(TrainingArguments, Trainer):
             return output
 
         def custom_saver():
-            db.replace(model, upsert=True)
+            db.replace(model)
 
         trainer = _TrainerWithSaving(
             model=model.pipeline.model,  # type: ignore[union-attr]
@@ -190,11 +185,11 @@ class TextClassificationPipeline(Model, _DeviceManaged):
 
     """
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('tokenizer_cls', pickle_serializer),
-        ('model_cls', pickle_serializer),
-        ('object', pickle_serializer),
-    )
+    _fields = {
+        'tokenizer_cls': 'default',
+        'model_cls': 'default',
+        'pipeline': 'default',
+    }
     signature: Signature = 'singleton'
     tokenizer_name: t.Optional[str] = None
     tokenizer_cls: object = AutoTokenizer
@@ -214,10 +209,10 @@ class TextClassificationPipeline(Model, _DeviceManaged):
             model=self.model_cls.from_pretrained(self.model_name),
         )
 
-    def __post_init__(self, db, artifacts, example):
+    def __post_init__(self, db, example):
         if self.pipeline is None:
             self._build_pipeline()
-        super().__post_init__(db, artifacts, example)
+        super().__post_init__(db, example)
 
     def predict(self, text: str):
         """Predict the class of a single text.
@@ -279,17 +274,17 @@ class LLM(BaseLLM):
     _model_cache: t.ClassVar[dict] = {}
     _tokenizer_cache: t.ClassVar[dict] = {}
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, DataType]]] = (
-        ("model_kwargs", dill_serializer),
-        ("tokenizer_kwargs", dill_serializer),
-    )
+    _fields = {
+        'model_kwargs': 'default',
+        'tokenizer_kwargs': 'default',
+    }
 
-    def __post_init__(self, db, artifacts, example):
+    def __post_init__(self, db, example):
         if not self.identifier:
             self.identifier = self.adapter_id or self.model_name_or_path
 
         #  TODO: Compatible with the bug of artifact sha1 equality and will be deleted
-        super().__post_init__(db, artifacts, example)
+        super().__post_init__(db, example)
 
     @classmethod
     def from_pretrained(

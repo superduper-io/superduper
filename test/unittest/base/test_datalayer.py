@@ -12,15 +12,13 @@ from superduper.base.leaf import imported_value
 from superduper.components.component import Component
 from superduper.components.dataset import Dataset
 from superduper.components.datatype import (
-    DataType,
-    LazyArtifact,
+    BaseDataType,
+    Blob,
     dill_serializer,
-    pickle_decode,
-    pickle_encode,
     pickle_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.components.model import Model, ObjectModel, Trainer
+from superduper.components.model import ImportedModel, Model, ObjectModel, Trainer
 from superduper.components.schema import FieldType, Schema
 from superduper.components.table import Table
 
@@ -39,7 +37,7 @@ mongodb_config = os.environ.get('SUPERDUPER_CONFIG', "").endswith('mongodb.yaml'
 
 class TestComponent(Component):
     breaks: ClassVar[Sequence] = ('inc',)
-    _artifacts: ClassVar[Sequence[str]] = (('artifact', dill_serializer),)
+    _fields = {'artifact': dill_serializer}
     inc: int = 0
     type_id: str = 'test-component'
     is_on_create: bool = False
@@ -83,7 +81,6 @@ def add_fake_model(db: Datalayer):
         identifier='fake_model',
         example=((1,), {}),
     )
-    db.apply(model)
     select = db['documents'].select()
     listener = Listener(
         identifier='listener-x',
@@ -134,10 +131,15 @@ def test_add_version(db: Datalayer):
     assert db.show('test-component', 'test') == [0, 1, 2]
 
 
+class TestComponentPickle(TestComponent):
+    _fields = {'artifact': pickle_serializer}
+
+
 def test_add_component_with_bad_artifact(db):
     artifact = {'data': lambda x: x}
-    component = TestComponent(
-        identifier='test', artifact=artifact, artifacts={'artifact': pickle_serializer}
+    component = TestComponentPickle(
+        identifier='test',
+        artifact=artifact,
     )
     with pytest.raises(Exception):
         db.apply(component)
@@ -149,9 +151,7 @@ def test_add_artifact_auto_replace(db):
     component = TestComponent(identifier='test', artifact=artifact)
     db.apply(component)
     r = db.show('test-component', 'test', -1)
-    assert r['artifact'].startswith('?')
-    info = r['_builds'][r['artifact'][1:]]
-    assert info['blob'].startswith('&')
+    assert r['artifact'].startswith('&')
 
 
 def test_add_child(db):
@@ -206,7 +206,7 @@ def test_add_with_artifact(db):
 
     assert m.object is not None
 
-    assert isinstance(m.object, LazyArtifact)
+    assert isinstance(m.object, Blob)
     m.init()
     assert callable(m.object)
 
@@ -289,7 +289,7 @@ def test_remove_component_with_artifact(db):
     info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
-    artifact_file_id = info_with_artifact['artifact'][1:]
+    artifact_file_id = info_with_artifact['artifact'].split(':')[-1]
     with patch.object(db.artifact_store, '_delete_bytes') as mock_delete:
         db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
@@ -367,14 +367,22 @@ def test_show(db):
     assert db.show('test-component', 'b', -1)['version'] == 2
 
 
+class DataType(BaseDataType):
+    def encode_data(self, item):
+        return item
+
+    def decode_data(self, item):
+        return item
+
+
 def test_load(db):
-    m1 = ObjectModel(object=lambda x: x, identifier='m1', datatype='int32')
+    m1 = ObjectModel(object=lambda x: x, identifier='m1')
 
     components = [
         DataType(identifier='e1'),
         DataType(identifier='e2'),
         m1,
-        ObjectModel(object=lambda x: x, identifier='m1', datatype='int32'),
+        ObjectModel(object=lambda x: x, identifier='m1'),
     ]
     for component in components:
         db.apply(component)
@@ -389,7 +397,7 @@ def test_load(db):
         db.load('model', 'e1')
 
     datatype = db.load('datatype', 'e1')
-    assert isinstance(datatype, DataType)
+    assert isinstance(datatype, BaseDataType)
 
     assert datatype.type_id, datatype.identifier in db.cluster.cache
 
@@ -411,17 +419,7 @@ def test_insert(db):
 
 
 def test_insert_artifacts(db):
-    dt = DataType(
-        'my_saveable',
-        encodable='artifact',
-        encoder=pickle_encode,
-        decoder=pickle_decode,
-    )
-    table = Table(
-        'documents',
-        schema=Schema('documents', fields={'x': dt}),
-    )
-    db.apply(table)
+    db.cfg.auto_schema = True
     db._insert(
         db['documents'].insert(
             [Document({'x': numpy.random.randn(100)}) for _ in range(1)]
@@ -478,9 +476,6 @@ def test_replace(db: Datalayer):
         signature='singleton',
     )
     model.version = 0
-    with pytest.raises(Exception):
-        db.replace(model)
-
     db.apply(model)
     db.replace(model)
 
@@ -549,7 +544,7 @@ def my_lambda(x):
 
 
 def test_compound_component(db):
-    m = ObjectModel(
+    m = ImportedModel(
         object=imported_value(my_lambda),
         identifier='my-test-module',
         datatype=FieldType(identifier='int'),
@@ -613,7 +608,7 @@ def test_dataset(db):
     assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
-def test_delete_componet_with_same_artifact(db):
+def test_delete_component_with_same_artifact(db):
     from superduper import ObjectModel
 
     model1 = ObjectModel(

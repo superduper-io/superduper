@@ -12,6 +12,8 @@ import numpy.typing
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex
 
+# TODO this is now in the wrong place
+
 
 class BaseVectorSearcher(ABC):
     """Base class for vector searchers.

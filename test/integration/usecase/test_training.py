@@ -17,7 +17,7 @@ class MyTrainer(Trainer):
 
 
 class MyModel(Model):
-    _artifacts: t.ClassVar[t.Any] = (('estimator', pickle_serializer),)
+    _fields = {'estimator': pickle_serializer}
     estimator: t.Any
     signature: str = 'singleton'
 

@@ -1,7 +1,6 @@
 import inspect
 import typing as t
 from collections import defaultdict
-from functools import partial
 
 from superduper import CFG, logging
 from superduper.base.constant import (
@@ -13,13 +12,7 @@ from superduper.base.constant import (
 from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
-from superduper.components.datatype import (
-    Blob,
-    Encodable,
-    FileItem,
-    Native,
-    _BaseEncodable,
-)
+from superduper.components.datatype import BaseDataType, Blob, File
 from superduper.components.schema import Schema, get_schema
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
@@ -28,27 +21,9 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-ContentType = t.Union[t.Dict, Encodable]
 LeafMetaType = t.Type['Leaf']
 
 _VERSION_LIMIT = 1000
-
-
-def _blob_getter(uri: str, getter: t.Callable):
-    from superduper.misc.download import Fetcher
-
-    dialect = uri.split('://')[0]
-
-    is_loader = 'loader' in inspect.signature(getter).parameters
-    if dialect not in Fetcher.DIALECTS or not is_loader:
-        return getter(uri)
-    else:
-        loader = Fetcher()
-        return getter(uri, loader=loader)
-
-
-def _build_blob_getter(base_getter):
-    return partial(_blob_getter, getter=base_getter)
 
 
 class Getters:
@@ -70,10 +45,11 @@ class Getters:
 
     def add_getter(self, name: str, getter: t.Callable):
         """Add a getter for a reference type."""
-        if name == 'blob':
-            self._getters[name].append(_build_blob_getter(getter))
-        else:
-            self._getters[name].append(getter)
+        self._getters[name].append(getter)
+        # if name == 'blob':
+        #     self._getters[name].append(_build_blob_getter(getter))
+        # else:
+        #     self._getters[name].append(getter)
 
     def run(self, name, data):
         """Run the getters one by one until one returns a value."""
@@ -102,6 +78,11 @@ def _diff(r1, r2, d):
 
         if isinstance(r1[k], Leaf):
             r1k = r1[k].dict(metadata=False)
+
+            if r2[k] is None:
+                d[k] = None
+                continue
+
             r2k = r2[k].dict(metadata=False)
 
             if set(r1k.keys()) != set(r2k.keys()):
@@ -181,7 +162,7 @@ class Document(MongoStyleDict):
                 return fn(r)
             return r
 
-        return Document(_map(self))
+        return Document(_map(self), schema=self.schema)
 
     def diff(self, other: 'Document'):
         """Get a `Document` with the difference to `other` inside.
@@ -190,11 +171,16 @@ class Document(MongoStyleDict):
         """
         out: t.Dict = {}
         _diff(self, other, out)
-        return Document(out)
+        return Document(out, schema=self.schema)
 
-    def update(self, other: 'Document'):
+    def update(self, other: t.Union['Document', dict]):
         """Update document with values from other."""
-        return Document(_update(dict(self), dict(other)))
+        schema = self.schema or Schema('tmp', fields={})
+
+        if isinstance(other, Document) and other.schema:
+            assert other.schema is not None
+            schema = schema.update(other.schema)
+        return Document(_update(dict(self), dict(other)), schema=schema)
 
     def encode(
         self,
@@ -202,6 +188,7 @@ class Document(MongoStyleDict):
         leaves_to_keep: t.Sequence = (),
         metadata: bool = True,
         defaults: bool = True,
+        keep_schema: bool = True,
     ) -> SuperDuperFlatEncode:
         """Encode the document to a format that can be used in a database.
 
@@ -224,6 +211,10 @@ class Document(MongoStyleDict):
             out = schema.encode_data(
                 out, builds, blobs, files, leaves_to_keep=leaves_to_keep
             )
+
+        if not keep_schema:
+            del out['_schema']
+
         out = _deep_flat_encode(
             out,
             builds=builds,
@@ -275,6 +266,7 @@ class Document(MongoStyleDict):
 
         builds = r.get(KEY_BUILDS, {})
 
+        # TODO is this the right place for this?
         # Important: Leaf.identifier or Component.type_id:Component.identifier are
         # are used as the key, but must be set if not present.
         for k in builds:
@@ -297,18 +289,19 @@ class Document(MongoStyleDict):
         # Prioritize using the local artifact storage getter,
         # and then use the DB read getter.
         if r.get(KEY_BLOBS):
-            getters.add_getter('blob', lambda x: r[KEY_BLOBS].get(x))
+            getters.add_getter(
+                'blob', lambda x: Blob(identifier=x, bytes=r[KEY_BLOBS].get(x))
+            )
+
+        def my_getter(x):
+            return File(path=r[KEY_FILES].get(x.split(':')[-1]), db=db)
 
         if r.get(KEY_FILES):
-            getters.add_getter('file', lambda x: r[KEY_FILES].get(x.split(':')[-1]))
-
-        # Add a remote file getter
-        getters.add_getter('file', _get_file_remote_callback)
-        getters.add_getter('blob', _get_local_blob)
+            getters.add_getter('file', my_getter)
 
         if db is not None:
             getters.add_getter('component', lambda x: _get_component(db, x))
-            getters.add_getter('blob', _get_artifact_callback(db))
+            getters.add_getter('blob', _get_blob_callback(db))
             getters.add_getter('file', _get_file_callback(db))
 
         if schema is not None:
@@ -348,12 +341,25 @@ class Document(MongoStyleDict):
     def __repr__(self) -> str:
         return f'Document({repr(dict(self))})'
 
+    @staticmethod
+    def decode_blobs(schema, r):
+        for k, v in schema.fields.items():
+            if k not in r:
+                continue
+            if not isinstance(v, BaseDataType):
+                continue
+            if v.encodable == 'artifact':
+                r[k] = v.decode_data(r[k])
+        return r
+
     def unpack(self, leaves_to_keep: t.Sequence = ()) -> t.Any:
         """Returns the content, but with any encodables replaced by their contents.
 
         :param leaves_to_keep: The types of leaves to keep.
         """
         out = _unpack(self, leaves_to_keep=leaves_to_keep)
+        if self.schema is not None:
+            out = self.decode_blobs(self.schema, out)
         if '_base' in out:
             out = out['_base']
         return out
@@ -364,6 +370,7 @@ class Document(MongoStyleDict):
         return new_doc
 
 
+# TODO what is this? Looks like it should be in superduper_mongodb
 class QueryUpdateDocument(Document):
     """A document that is used to update a document in a database.
 
@@ -402,6 +409,7 @@ class QueryUpdateDocument(Document):
         update = {'$set': update}
         return update
 
+    # TODO needed?
     def to_template(self, **substitutions):
         """
         Convert the document to a template with variables.
@@ -443,9 +451,7 @@ class QueryUpdateDocument(Document):
 
 
 def _unpack(item: t.Any, db=None, leaves_to_keep: t.Sequence = ()) -> t.Any:
-    if isinstance(item, _BaseEncodable) and not any(
-        [isinstance(item, leaf) for leaf in leaves_to_keep]
-    ):
+    if isinstance(item, Leaf) and not isinstance(item, tuple(leaves_to_keep)):
         return item.unpack()
     elif isinstance(item, dict):
         return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}
@@ -515,12 +521,9 @@ def _deep_flat_encode(
         blobs[r.identifier] = r.bytes
         return '&:blob:' + r.identifier
 
-    if isinstance(r, FileItem):
+    if isinstance(r, File):
         files[r.identifier] = r.path
         return '&:file:' + r.identifier
-
-    if isinstance(r, Native):
-        return r.x
 
     # TODO what is this??
     from superduper.backends.base.query import _BaseQuery
@@ -653,10 +656,11 @@ def _deep_flat_decode(r, builds, getters: Getters, db: t.Optional['Datalayer'] =
     if isinstance(r, dict) and '_object' in r:
         dict_ = {k: v for k, v in r.items() if k != '_object'}
         dict_ = _deep_flat_decode(dict_, builds, getters=getters, db=db)
-        object = _deep_flat_decode(
-            builds[r['_object'][1:]], builds, getters=getters, db=db
-        )
-        instance = import_item(object=object.unpack(), dict=dict_, db=db)
+        from superduper.components.datatype import DEFAULT_SERIALIZER
+
+        bytes_ = Blob(identifier=r['_object'].split(':')[-1], db=db).unpack()
+        object = DEFAULT_SERIALIZER.decode_data(bytes_)
+        instance = import_item(object=object, dict=dict_, db=db)
         return instance
     if isinstance(r, dict):
         literals = r.get('_literals', [])
@@ -711,51 +715,15 @@ def _get_component(db, path):
     raise ValueError(f'Invalid component reference: {path}')
 
 
-def _get_artifact_callback(db):
-    def callback(path):
-        def pull_bytes():
-            return db.artifact_store.get_bytes(path), path
-
-        return pull_bytes
-
-    return callback
-
-
-def _get_file_remote_callback(path):
-    from superduper.misc.download import Fetcher
-
-    if not Fetcher.is_uri(path):
-        return None
-
-    fetcher = None
-
-    def pull_file():
-        nonlocal fetcher
-        if fetcher is None:
-            fetcher = Fetcher()
-        uri = path.split(':file:')[-1]
-        from superduper.misc.files import get_file_from_uri
-
-        content = fetcher(uri)
-        file_id = get_file_from_uri(uri)
-
-        file_path = fetcher.save(uri, content, file_id)
-        return file_path, path
-
-    return pull_file
-
-
 def _get_file_callback(db):
-    def callback(path):
-        def pull_file():
-            identifier = path.split(':')[-1]
-            return db.artifact_store.get_file(identifier), path
-
-        return pull_file
+    def callback(ref):
+        return File(identifier=ref, db=db)
 
     return callback
 
 
-def _get_local_blob(x, loader=None):
-    if x.split('://')[0].startswith('file'):
-        return loader(x)
+def _get_blob_callback(db):
+    def callback(ref):
+        return Blob(identifier=ref, db=db)
+
+    return callback

@@ -4,7 +4,7 @@ from pprint import pprint
 
 from superduper import ObjectModel
 from superduper.backends.base.query import Query
-from superduper.base.constant import KEY_BUILDS
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
@@ -24,12 +24,10 @@ class TestSubModel(Component):
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1
     b: str = 'b'
-    c: ObjectModel = dc.field(
-        default_factory=ObjectModel(identifier='test-2', object=lambda x: x + 2)
-    )
+    c: ObjectModel | None = None
     d: t.List[ObjectModel] = dc.field(default_factory=[])
-    e: OtherSer = dc.field(default_factory=OtherSer(identifier='test', d='test'))
-    f: t.Callable = dc.field(default=lambda x: x)
+    e: OtherSer | None = None
+    f: t.Callable
 
 
 class MySer(Leaf):
@@ -111,15 +109,16 @@ def test_component_with_document():
         f=lambda x: x,
     )
     print('encoding')
-    d = Document(t.dict())
-    r = d.encode()
+    d = t.dict()
+    r = d.encode(leaves_to_keep=Leaf)
     builds = r[KEY_BUILDS]
 
     pprint(r)
-    assert len(builds) == 8
+    assert len(builds) == 3
+    assert len(r[KEY_BLOBS]) == 1
 
     for leaf in builds:
-        print(type(leaf))
+        print(type(builds[leaf]))
 
 
 def test_find_variables():

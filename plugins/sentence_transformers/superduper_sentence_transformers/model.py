@@ -4,7 +4,6 @@ from sentence_transformers import SentenceTransformer as _SentenceTransformer
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.enums import DBType
 from superduper.components.component import ensure_initialized
-from superduper.components.datatype import DataType, dill_lazy
 from superduper.components.model import Model, Signature, _DeviceManaged
 
 DEFAULT_PREDICT_KWARGS = {
@@ -39,9 +38,11 @@ class SentenceTransformer(Model, _DeviceManaged):
 
     """
 
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, 'DataType']]] = (
-        ('object', dill_lazy),
-    )
+    _fields = {
+        'object': 'default',
+        'postprocess': 'default',
+        'preprocess': 'default',
+    }
 
     object: t.Optional[_SentenceTransformer] = None
     model: t.Optional[str] = None
@@ -50,8 +51,8 @@ class SentenceTransformer(Model, _DeviceManaged):
     postprocess: t.Union[None, t.Callable] = None
     signature: Signature = 'singleton'
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example=example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example=example)
 
         if self.model is None:
             self.model = self.identifier

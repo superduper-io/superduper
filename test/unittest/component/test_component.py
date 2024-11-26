@@ -10,10 +10,8 @@ from superduper import ObjectModel
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.datatype import (
-    Artifact,
-    DataType,
-    Empty,
-    LazyArtifact,
+    BaseDataType,
+    Blob,
     dill_serializer,
 )
 from superduper.components.listener import Listener
@@ -32,27 +30,41 @@ def cleanup():
 @dc.dataclass(kw_only=True)
 class MyComponent(Component):
     type_id: t.ClassVar[str] = "my_type"
-    _lazy_fields: t.ClassVar[t.Sequence[str]] = ("my_dict",)
+    _fields = {
+        'my_dict': dill_serializer,
+        'nested_list': dill_serializer,
+    }
     my_dict: t.Dict
     nested_list: t.List
     a: t.Callable
 
 
-def test_init(monkeypatch):
-    from unittest.mock import MagicMock
+def test_reload(db):
+    m = ObjectModel('test', object=lambda x: x + 1)
 
-    e = Artifact(x=None, identifier="123", datatype=dill_serializer)
-    a = Artifact(x=None, identifier="456", datatype=dill_serializer)
+    db.apply(m)
 
-    def side_effect(*args, **kwargs):
-        a.x = lambda x: x + 1
+    reloaded = db.load('model', 'test')
+    reloaded.unpack()
 
-    a.init = MagicMock()
-    a.init.side_effect = side_effect
 
-    list_ = [e, a]
+def test_init(db, monkeypatch):
+    a = Blob(
+        identifier="456",
+        bytes=dill_serializer._encode_data(lambda x: x + 1),
+        db=db,
+    )
+    my_dict = Blob(
+        identifier="456",
+        bytes=dill_serializer._encode_data({'a': lambda x: x + 1}),
+        db=db,
+    )
 
-    c = MyComponent("test", my_dict={"a": a}, a=a, nested_list=list_)
+    list_ = Blob(
+        identifier='789', bytes=dill_serializer._encode_data([lambda x: x + 1]), db=db
+    )
+
+    c = MyComponent("test", my_dict=my_dict, a=a, nested_list=list_)
 
     c.init()
 
@@ -62,8 +74,8 @@ def test_init(monkeypatch):
     assert callable(c.a)
     assert c.a(1) == 2
 
-    assert callable(c.nested_list[1])
-    assert c.nested_list[1](1) == 2
+    assert callable(c.nested_list[0])
+    assert c.nested_list[0](1) == 2
 
 
 def test_load_lazily(db):
@@ -74,8 +86,8 @@ def test_load_lazily(db):
 
     reloaded = db.load("model", m.identifier)
 
-    assert isinstance(reloaded.object, LazyArtifact)
-    assert isinstance(reloaded.object.x, Empty)
+    assert isinstance(reloaded.object, Blob)
+    assert reloaded.object.bytes is None
 
     reloaded.init(db=db)
 
@@ -97,7 +109,7 @@ def test_export_and_read():
         reloaded = Component.read(save_path)  # getters=getters
 
         assert isinstance(reloaded, ObjectModel)
-        assert isinstance(reloaded.datatype, DataType)
+        assert isinstance(reloaded.datatype, BaseDataType)
 
 
 def test_set_variables(db):
@@ -163,6 +175,7 @@ def test_upstream(db, clean):
     db.apply(m)
 
 
+# TODO needed?
 def test_set_db_deep(db):
     c1 = UpstreamComponent(identifier='c1')
     m = MyListener(

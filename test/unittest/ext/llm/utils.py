@@ -31,13 +31,11 @@ def check_llm_as_listener_model(db, llm):
         key="question",
         model=llm,
     )
-    db.add(listener)
+    db.apply(listener)
 
-    output_select = listener.outputs_select
-
-    results = db.execute(output_select)
+    results = db[listener.outputs].select().execute()
     for result in results:
-        output = result[listener.outputs_key]
+        output = result[listener.outputs]
         assert isinstance(output, str)
 
 

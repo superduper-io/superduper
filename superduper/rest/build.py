@@ -273,7 +273,7 @@ def build_rest_app(app: SuperDuperApp):
         result = q.execute()
 
         if q.type in {'insert', 'delete', 'update'}:
-            return {'_base': [str(x) for x in result[0]]}, []
+            return {'_base': [str(x) for x in result]}, []
 
         logging.warn(str(q))
 

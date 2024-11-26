@@ -50,8 +50,8 @@ class _OpenAI(APIBaseModel):
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
 
         assert isinstance(self.client_kwargs, dict)
 
@@ -151,8 +151,8 @@ class OpenAIChatCompletion(_OpenAI):
     batch_size: int = 1
     prompt: str = ''
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
         self.takes_context = True
 
     def _format_prompt(self, context, X):

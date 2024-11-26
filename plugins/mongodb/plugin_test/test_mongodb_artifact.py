@@ -6,10 +6,6 @@ import typing as t
 import pytest
 from superduper import CFG
 from superduper.components.component import Component
-from superduper.components.datatype import (
-    DataType,
-    file_serializer,
-)
 
 DO_SKIP = not CFG.data_backend.startswith("mongodb")
 
@@ -18,10 +14,7 @@ DO_SKIP = not CFG.data_backend.startswith("mongodb")
 class TestComponent(Component):
     path: str
     type_id: t.ClassVar[str] = "TestComponent"
-
-    _artifacts: t.ClassVar[t.Sequence[t.Tuple[str, "DataType"]]] = (
-        ("path", file_serializer),
-    )
+    fields = {'path': 'file'}
 
 
 @pytest.fixture

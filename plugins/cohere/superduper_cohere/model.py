@@ -6,7 +6,6 @@ import tqdm
 from cohere.error import CohereAPIError, CohereConnectionError
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
-from superduper.components.vector_index import vector
 from superduper.ext.utils import format_prompt, get_key
 from superduper.misc.retry import Retry
 
@@ -23,8 +22,8 @@ class Cohere(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example=example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example=example)
         self.identifier = self.identifier or self.model
 
 
@@ -47,21 +46,10 @@ class CohereEmbed(Cohere):
     batch_size: int = 100
     signature: str = 'singleton'
 
-    def __post_init__(self, db, artifacts, example):
-        super().__post_init__(db, artifacts, example=example)
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example=example)
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
-
-    def _pre_create(self, db):
-        """Pre create method for the model.
-
-        If the datalayer is Ibis, the datatype will be set to the appropriate
-        SQL datatype.
-
-        :param db: The datalayer to use for the model.
-        """
-        if self.datatype is None:
-            self.datatype = vector(shape=self.shape)
 
     @retry
     def predict(self, X: str):

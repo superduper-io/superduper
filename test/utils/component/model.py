@@ -25,8 +25,6 @@ def test_predict(model: Model, sample_data: t.Any):
 def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
     model.identifier = random_id()
 
-    db.apply(model)
-
     db.cfg.auto_schema = True
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)]).execute()

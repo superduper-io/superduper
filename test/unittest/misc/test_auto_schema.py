@@ -37,11 +37,11 @@ def test_infer_datatype():
 
     assert infer_datatype({"a": 1}).identifier == "json"
 
-    assert infer_datatype({"a": np.array([1, 2, 3])}).identifier == "DEFAULT"
+    assert infer_datatype({"a": np.array([1, 2, 3])}).identifier == "default_encoder"
 
     assert (
         infer_datatype(pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})).identifier
-        == "DEFAULT"
+        == "default_encoder"
     )
 
     with pytest.raises(UnsupportedDatatype):

@@ -9,7 +9,7 @@ from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.enums import DBType
-from superduper.components.datatype import DataType
+from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.misc.colors import Colors
 
@@ -140,7 +140,7 @@ class MongoDataBackend(BaseDataBackend):
     def create_output_dest(
         self,
         predict_id: str,
-        datatype: t.Union[str, DataType],
+        datatype: t.Union[str, BaseDataType],
         flatten: bool = False,
     ):
         """Create an output collection for a component.

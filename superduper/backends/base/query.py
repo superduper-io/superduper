@@ -5,7 +5,7 @@ import re
 import typing as t
 import uuid
 from abc import abstractmethod
-from functools import wraps
+from functools import cached_property, wraps
 
 from superduper import CFG, logging
 from superduper.base.constant import (
@@ -309,30 +309,9 @@ class Query(_BaseQuery):
         """Return the flavour of the query."""
         return self._get_flavour()
 
-    @property
+    @cached_property
     def documents(self):
         """Return the documents."""
-
-        def _wrap_document(document):
-            if not isinstance(document, Document):
-                if isinstance(document, dict):
-                    document = Document(document)
-                else:
-                    try:
-                        table = self.db.load('table', self.table)
-                    except FileNotFoundError:
-                        raise FileNotFoundError(
-                            "Table not found. Please provide a document or a dictionary"
-                        )
-                    field = [
-                        k
-                        for k in table.schema.fields
-                        if k not in [self.primary_id, '_fold']
-                        and not k.startswith(CFG.output_prefix)
-                    ]
-                    assert len(field) == 1
-                    document = Document({field[0]: document})
-            return document
 
         def _update_part(documents):
             nonlocal self
@@ -345,8 +324,9 @@ class Query(_BaseQuery):
         if one_document:
             documents = [documents]
         wrapped_documents = []
+
         for document in documents:
-            document = _wrap_document(document)
+            document = Document(document)
             wrapped_documents.append(document)
 
         if one_document:

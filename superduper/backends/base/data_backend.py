@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from superduper import logging
 from superduper.backends.base.query import Query
-from superduper.components.datatype import DataType
+from superduper.components.datatype import BaseDataType
 
 if t.TYPE_CHECKING:
     from superduper.components.schema import Schema
@@ -75,7 +75,7 @@ class BaseDataBackend(ABC):
     def create_output_dest(
         self,
         predict_id: str,
-        datatype: t.Union[str, DataType],
+        datatype: t.Union[str, BaseDataType],
         flatten: bool = False,
     ):
         """Create an output destination for the database.

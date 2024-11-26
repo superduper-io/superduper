@@ -9,24 +9,12 @@ from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.base.enums import DBType
 from superduper.components.component import Component
-from superduper.components.datatype import (
-    DataType,
-    Empty,
-    _BaseEncodable,
-)
+from superduper.components.datatype import BaseDataType, pickle_serializer
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 
 def assert_equal(expect, actual):
-    if isinstance(actual, _BaseEncodable) and actual.lazy:
-        actual.init()
-        actual = actual.x
-
-    if isinstance(expect, _BaseEncodable) and expect.lazy:
-        expect.init()
-        expect = expect.x
-
     assert isinstance(expect, type(actual))
     if isinstance(expect, np.ndarray):
         assert np.array_equal(expect, actual)
@@ -45,7 +33,7 @@ def print_sep():
     print("\n", "-" * 80, "\n")
 
 
-def check_data_with_schema(data, datatype: DataType, db):
+def check_data_with_schema(data, datatype, db):
     print("datatype", datatype)
     print_sep()
     schema = Schema(identifier="schema", fields={"x": datatype, "y": int}, db=db)
@@ -58,11 +46,8 @@ def check_data_with_schema(data, datatype: DataType, db):
     pprint(encoded)
     print_sep()
 
-    decoded = Document.decode(encoded, schema=schema)
-    if datatype.encodable == 'lazy_artifact':
-        assert isinstance(decoded["x"], datatype.encodable_cls)
-        assert isinstance(decoded["x"].x, type(data))
-        decoded = Document(decoded.unpack())
+    decoded = Document.decode(encoded, schema=schema, db=db).unpack()
+
     pprint(decoded)
     print_sep()
 
@@ -72,7 +57,7 @@ def check_data_with_schema(data, datatype: DataType, db):
     return document, encoded, decoded
 
 
-def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
+def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     print("datatype", datatype)
     print_sep()
     schema = Schema(identifier="schema", fields={"x": datatype, "y": int})
@@ -95,11 +80,7 @@ def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
     print_sep()
 
     decoded = list(db["documents"].select().execute())[0]
-
-    if datatype.encodable == 'lazy_artifact':
-        assert isinstance(decoded["x"], datatype.encodable_cls)
-        assert isinstance(decoded["x"].x, Empty)
-        decoded = Document(decoded.unpack())
+    decoded = decoded.unpack()
 
     pprint(decoded)
     print_sep()
@@ -108,51 +89,6 @@ def check_data_with_schema_and_db(data, datatype: DataType, db: Datalayer):
     assert_equal(document["y"], decoded["y"])
 
     return document, encoded, decoded
-
-
-def check_data_without_schema(data, datatype: DataType):
-    print("datatype", datatype)
-    print_sep()
-
-    document = Document({"x": datatype(data), "y": 1})
-    pprint(document)
-    print_sep()
-
-    encoded = document.encode()
-    pprint(encoded)
-    print_sep()
-
-    decoded = Document.decode(encoded)
-    pprint(decoded)
-    assert_equal(document["x"], decoded["x"])
-    assert_equal(document["y"], decoded["y"])
-    return document, encoded, decoded
-
-
-def check_data_without_schema_and_db(data, datatype: DataType, db: Datalayer):
-    print("datatype", datatype)
-    print("\n", "-" * 80, "\n")
-
-    table = Table(
-        "documents",
-        schema=Schema(identifier="schema", fields={"x": datatype, "y": int}),
-    )
-
-    db.apply(table)
-
-    document = Document({"x": data, "y": 1})
-    print(document)
-    print("\n", "-" * 80, "\n")
-    db["documents"].insert([document]).execute()
-
-    decoded = list(db["documents"].select().execute())[0]
-    pprint(decoded)
-    print("\n", "-" * 80, "\n")
-
-    assert_equal(document["x"], decoded["x"])
-    assert_equal(document["y"], decoded["y"])
-
-    return document, decoded
 
 
 @dc.dataclass(kw_only=True)
@@ -167,18 +103,17 @@ class TestComponent(Component):
     y: int = 1
     x: np.ndarray | None = None
     child: ChildComponent | None = None
-    _artifacts: t.ClassVar = ()
+    _fields = {'x': pickle_serializer}
 
 
-def check_component(data, datatype: DataType):
+def check_component(data, datatype: BaseDataType):
     print("datatype", datatype)
     print_sep()
 
     c = TestComponent(
         "test",
         x=data,
-        child=ChildComponent("child", y=2, artifacts={"x": datatype}),
-        artifacts={"x": datatype},
+        child=ChildComponent("child", y=2),
     )
     pprint(c)
     print_sep()
@@ -203,8 +138,7 @@ def check_component_with_db(data, datatype, db):
     c = TestComponent(
         "test",
         x=data,
-        child=ChildComponent("child", y=2, artifacts={"x": datatype}),
-        artifacts={"x": datatype},
+        child=ChildComponent("child", y=2),
     )
     db.add(c)
     pprint(c)

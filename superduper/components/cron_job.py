@@ -2,7 +2,6 @@ import typing as t
 
 from superduper import Component
 from superduper.components.component import ensure_initialized
-from superduper.components.datatype import dill_serializer
 
 
 class CronJob(Component):
@@ -33,7 +32,7 @@ class FunctionCronJob(CronJob):
     :param function: Callable to run
     """
 
-    _artifacts = (('function', dill_serializer),)
+    _fields = {'function': 'default'}
 
     function: t.Callable
 

@@ -133,6 +133,7 @@ def test_from_template(db):
     component.init()
     assert isinstance(component, Listener)
     assert isinstance(component.model, ObjectModel)
+
     assert component.model.object(3) == 5
 
 

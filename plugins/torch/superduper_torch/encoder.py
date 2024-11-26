@@ -2,12 +2,12 @@ import typing as t
 
 import numpy
 import torch
-from superduper.components.datatype import DataType, DataTypeFactory
+from superduper.components.datatype import BaseDataType, DataTypeFactory
+from superduper.ext.numpy.encoder import DecodeArray, EncodeArray
 from superduper.ext.utils import str_shape
-from superduper.misc.annotations import component
 
 if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
+    pass
 
 
 class EncodeTensor:
@@ -38,7 +38,7 @@ class DecodeTensor:
     """
 
     def __init__(self, dtype, shape):
-        self.dtype = torch.randn(1).type(dtype).numpy().dtype
+        self.dtype = torch.from_numpy(numpy.random.randn(1).astype(dtype)).dtype
         self.shape = shape
 
     def __call__(self, bytes, info: t.Optional[t.Dict] = None):
@@ -51,32 +51,42 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-@component()
-def tensor(
-    dtype,
-    shape: t.Sequence,
-    bytes_encoding: t.Optional[str] = None,
-    encodable: str = 'encodable',
-    db: t.Optional['Datalayer'] = None,
-):
-    """Create an encoder for a tensor of a given dtype and shape.
+class Tensor(BaseDataType):
+    """Encode/ decode a numpy array as bytes.
 
-    :param dtype: The dtype of the tensor.
-    :param shape: The shape of the tensor.
-    :param bytes_encoding: The bytes encoding to use.
-    :param encodable: The encodable name
-        ["artifact", "encodable", "lazy_artifact", "file"].
-    :param db: The datalayer instance.
+    :param dtype: numpy native datatype.
+    :param shape: Shape of array.
     """
-    dtype = getattr(torch, dtype)
-    return DataType(
-        identifier=f"{str(dtype).replace('.', '-')}[{str_shape(shape)}]",
-        encoder=EncodeTensor(dtype),
-        decoder=DecodeTensor(dtype, shape),
-        shape=shape,
-        bytes_encoding=bytes_encoding,
-        encodable=encodable,
-    )
+
+    dtype: str = 'float64'
+    shape: int | t.Tuple[int]
+    identifier: str = ''
+
+    def __post_init__(self, db):
+        self.encodable = 'encodable'
+        if not self.identifier:
+            dtype = str(self.dtype)
+            self.identifier = f'torch-{dtype}[{str_shape(self.shape)}]'
+        return super().__post_init__(db)
+
+    def encode_data(self, item):
+        """Encode data.
+
+        :param item: item to encode.
+        """
+        encoder = EncodeArray(self.dtype)
+        return encoder(item.numpy())
+
+    def decode_data(self, item):
+        """Decode data.
+
+        :param item: item to decode.
+        """
+        shape = self.shape
+        if isinstance(shape, int):
+            shape = (self.shape,)
+        decoder = DecodeArray(self.dtype, shape=shape)
+        return torch.from_numpy(decoder(item))
 
 
 class TorchDataTypeFactory(DataTypeFactory):
@@ -96,7 +106,7 @@ class TorchDataTypeFactory(DataTypeFactory):
         return isinstance(data, torch.Tensor)
 
     @staticmethod
-    def create(data: t.Any) -> DataType:
+    def create(data: t.Any) -> BaseDataType:
         """Create a torch tensor datatype.
 
         It's used for registering the auto schema.
@@ -104,4 +114,4 @@ class TorchDataTypeFactory(DataTypeFactory):
         :param data: Data to create the datatype from
         """
         dtype = str(data.dtype).split(".")[1]
-        return tensor(dtype=dtype, shape=list(data.shape))
+        return Tensor(dtype=dtype, shape=list(data.shape))

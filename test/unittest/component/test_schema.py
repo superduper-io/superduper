@@ -4,13 +4,13 @@ import pytest
 
 from superduper import Component, Schema, Table
 from superduper.components.datatype import (
-    Blob,
     File,
     dill_serializer,
     file,
     pickle_encoder,
     pickle_serializer,
 )
+from superduper.misc.typing import JSON, Blob
 
 
 class TestComponent(Component):
@@ -20,9 +20,22 @@ class TestComponent(Component):
     b: str | None = None
 
 
+class TestComponentWithAnnotation(Component):
+    a: Blob
+    b: JSON
+
+
 class TestUnannotatedComponent(Component):
     a: t.Callable
     b: t.Optional[t.Callable]
+
+
+def test_annotation_without_fields():
+    assert TestComponentWithAnnotation._fields['a'] == 'default'
+    assert TestComponentWithAnnotation._fields['b'] == 'json'
+    c = TestComponentWithAnnotation('test', a=lambda x: x, b={'x': 2})
+
+    print(c.dict())
 
 
 def test_schema_with_bytes_encoding(db):
@@ -64,6 +77,8 @@ def test_schema_with_blobs(db):
     db['documents'].insert([{'txt': 'testing 123'}]).execute()
 
     r = db['documents'].select().tolist()[0]
+
+    from superduper.components.datatype import Blob
 
     assert isinstance(r['txt'], Blob)
 
@@ -141,6 +156,8 @@ def test_component_serializes_with_schema(db, tmp_file):
 
     pprint.pprint(r_encoded)
 
+    from superduper.components.datatype import Blob
+
     assert isinstance(r['a'], Blob)
 
     assert r_encoded['a'].startswith('&:blob:')
@@ -161,5 +178,6 @@ def test_auto_infer_fields():
 
 def test_wrap_function_with_blob():
     r = TestComponent('test', a=lambda x: x + 1).dict()
+    from superduper.components.datatype import Blob
 
     assert isinstance(r['a'], Blob)

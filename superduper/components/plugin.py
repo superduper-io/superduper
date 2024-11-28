@@ -6,7 +6,7 @@ import sys
 import typing as t
 
 from superduper import Component, logging
-from superduper.components.datatype import File, file
+from superduper.components.datatype import FileItem, file
 
 
 class Plugin(Component):
@@ -24,7 +24,7 @@ class Plugin(Component):
     cache_path: str = "~/.superduper/plugins"
 
     def __post_init__(self, db):
-        if isinstance(self.path, File):
+        if isinstance(self.path, FileItem):
             self._prepare_plugin()
         else:
             path_name = os.path.basename(self.path.rstrip("/"))
@@ -92,7 +92,7 @@ class Plugin(Component):
 
     def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
-        assert isinstance(self.path, File)
+        assert isinstance(self.path, FileItem)
         cache_path = os.path.expanduser(self.cache_path)
         uuid_path = os.path.join(cache_path, self.uuid)
         # Check if plugin is already in cache

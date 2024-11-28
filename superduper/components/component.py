@@ -153,6 +153,17 @@ class ComponentMeta(LeafMeta):
                     new_cls._fields[field.name] = 'default'
                 elif annotation is t.Callable or _is_optional_callable(annotation):
                     new_cls._fields[field.name] = 'default'
+                # a hack...
+                elif 'superduper.misc.typing' in str(annotation):
+                    annotation = str(annotation)
+                    import re
+
+                    match1 = re.match('^typing\.Optional\[(.*)\]$', annotation)
+                    match2 = re.match('^t\.Optional\[(.*)\]$', annotation)
+                    match = match1 or match2
+                    if match:
+                        annotation = match.groups()[0]
+                    new_cls._fields[field.name] = annotation.split('.')[-1]
             except KeyError:
                 continue
         return new_cls

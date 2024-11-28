@@ -248,10 +248,9 @@ def build_rest_app(app: SuperDuperApp):
         db: 'Datalayer' = DatalayerDependency(),
     ):
         component = db.load(type_id, identifier)
-        template = db.load('template', component['build_template'])
-        template: Template = db.load(type_id=type_id, identifier=identifier)
+        template: Template = db.load('template', component.build_template)
         form = template.form_template
-        form['_variables'] = component['build_variables']
+        form['_variables'] = component.build_variables
         return form
 
     @app.add('/db/metadata/show_jobs', method='get')

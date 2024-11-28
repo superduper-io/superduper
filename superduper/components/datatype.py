@@ -183,7 +183,7 @@ class PickleEncoder(_Encodable, _PickleMixin, BaseDataType):
 
 class _DillMixin:
     def _encode_data(self, item):
-        return dill.dumps(item)
+        return dill.dumps(item, recurse=True)
 
     def decode_data(self, item):
         return dill.loads(item)

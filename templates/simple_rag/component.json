@@ -9,19 +9,8 @@
   "template": {
     "_base": "?simple-rag-app",
     "_builds": {
-      "datatype:dill": {
-        "_path": "superduper.components.datatype.get_serializer",
-        "method": "dill",
-        "encodable": "artifact"
-      },
-      "de9b9736f737c75c41eb85fcac49e01daf5d060f": {
-        "_path": "superduper.components.datatype.Artifact",
-        "datatype": "?datatype:dill",
-        "uri": null,
-        "blob": "&:blob:de9b9736f737c75c41eb85fcac49e01daf5d060f"
-      },
       "model:chunker": {
-        "_object": "?de9b9736f737c75c41eb85fcac49e01daf5d060f",
+        "_object": "&:blob:099f6a8a882c5760ebc37394bf2bcd1e5948ecb9",
         "upstream": null,
         "plugins": null,
         "cache": true,
@@ -59,12 +48,6 @@
         "select": "?var-table-name-select-var-id-field-x",
         "flatten": true
       },
-      "datatype:sqlvector[1536]": {
-        "_path": "superduper.components.vector_index.sqlvector",
-        "shape": [
-          1536
-        ]
-      },
       "model:text-embedding": {
         "_path": "superduper_openai.model.OpenAIEmbedding",
         "upstream": null,
@@ -73,7 +56,7 @@
         "build_variables": null,
         "build_template": null,
         "signature": "singleton",
-        "datatype": "?datatype:sqlvector[1536]",
+        "datatype": null,
         "output_schema": null,
         "model_update_kwargs": {},
         "predict_kwargs": {},
@@ -88,13 +71,7 @@
         "max_batch_size": 8,
         "openai_api_key": null,
         "openai_api_base": null,
-        "client_kwargs": {
-          "base_url": null,
-          "api_key": null
-        },
-        "shape": [
-          1536
-        ],
+        "client_kwargs": {},
         "batch_size": 100
       },
       "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
@@ -162,10 +139,7 @@
         "max_batch_size": 8,
         "openai_api_key": null,
         "openai_api_base": null,
-        "client_kwargs": {
-          "base_url": null,
-          "api_key": null
-        },
+        "client_kwargs": {},
         "batch_size": 1,
         "prompt": ""
       },
@@ -252,25 +226,12 @@
       "type": "str",
       "optional": true,
       "default": null
-    },
-    "multi": {
-      "type": "multi-select",
-      "choices": ["json", "date", "third-value"]
-    },
-    "complex": {
-      "type": "complex",
-      "api_key": {
-        "type": "select",
-        "choices": ["1", "2", "other"]
-      },
-      "radio": "bool"
     }
   },
   "schema": {
     "id_field": "str",
-    "embedding_model": "bool",
-    "complex": {"type": "complex", "sequence": true},
-    "llm_model": "multi",
+    "embedding_model": "str",
+    "llm_model": "str",
     "table_name": "str",
     "databackend": "str",
     "base_url": "str",
@@ -287,11 +248,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "75a6311c662f4c63"
+      "uuid": "1662208fe1904567"
     },
     "schema:sample_simple_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "6c69843bda044e35",
+      "uuid": "c7462e01773a4058",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -302,31 +263,19 @@
         "_fold": "?str"
       }
     },
-    "datatype:dill": {
-      "_path": "superduper.components.datatype.get_serializer",
-      "method": "dill",
-      "encodable": "artifact"
-    },
-    "5577a5f23fa391377c7d07bf5e8cf72f85ddc60b": {
-      "_path": "superduper.components.datatype.Artifact",
-      "uuid": "0fbc9f9d3be74eca",
-      "datatype": "?datatype:dill",
-      "uri": null,
-      "blob": "&:blob:5577a5f23fa391377c7d07bf5e8cf72f85ddc60b"
-    },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "e28f17826f9f4522",
+      "uuid": "7447b0fecb1d4c13",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "?5577a5f23fa391377c7d07bf5e8cf72f85ddc60b"
+      "getter": "&:blob:9ef0b1a2e9ff79d242463e1926d60e16f385539c"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "b56dc62d22114825",
+      "uuid": "04944f6a7a804c54",
       "upstream": null,
       "plugins": null,
       "cache": true,

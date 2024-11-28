@@ -128,44 +128,27 @@ Superduper's REST API, allows installed models to be served without additional d
 
 ## What's new in the `main` branch?
 
-We are working on an upcoming release of `0.4.0`. In this release we have:
+We are working on an upcoming release of `0.5.0`. In this release we will have:
 
-### Revamped how `Component` triggers initial computations and data dependent computations using `@trigger`
+### A graceful update schema to update already applied components
 
-This will enable a large diversity of `Component` types in addition to the well established `Model`, `Listener`, `VectorIndex`.
+This means that changing a prompt or parameter deep in your `Component` wont' mean 
+starting all components from scratch. This also lays the groundwork for rollbacks 
+and version pins.
 
-### Created a general `CDC` (change-data-capture) base class
+### A smart form builder leveraging the `Template` class
 
-This will allow developers to create a range of functionality which reacts to incoming data changes
+This will allow developers to expose their applications as no-code interfaces.
 
-### Developed the concept of `Template` to enable re-usable units of complete functionality
-
-Components saved as `Template` instances, will allow users to easily redeploy their already deployed and tested `Component` and `Application` implementations, on alternative data sources, and with key parameters toggled to cater to operational requirements.
-
-### Added concrete `Template` implementations to the project
-
-These `Template` instances may be applied with Superduper with a simple single command
-
-```
-superduper apply <template> '{"variable_1": "value_1",  "variable_2": ...}'
-```
-
-or:
+### Serialization based on Python native type annotations
 
 ```python
-from superduper import templates
+from superduper import typing as t
 
-app = template(variable_1='value_1', variable_2='value_2', ...)
-
-db.apply(app)
-```
-
-### Added a user interface and new REST implementation
-
-Now you may view your `Component`, `Application` and `Template` instances in the user-interface, and execute queries using `QueryTemplate` instances, directly against the REST server.
-
-```
-superduper start
+class MyPDF:
+    path: t.File
+    my_func: t.Blob
+    my_other_func: t.Pickle
 ```
 
 ## Getting started

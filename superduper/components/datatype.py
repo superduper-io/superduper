@@ -13,10 +13,12 @@ import numpy
 
 from superduper import CFG
 from superduper.base.leaf import Leaf
-from superduper.components.component import Component
+from superduper.components.component import Component, ComponentMeta
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
+
+INBUILT_DATATYPES = {}
 
 
 class DataTypeFactory:
@@ -43,7 +45,21 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-class BaseDataType(Component):
+class DataTypeMeta(ComponentMeta):
+    """Metaclass for the `Model` class and descendants # noqa."""
+
+    def __new__(mcls, name, bases, dct):
+        """Create a new class with merged docstrings # noqa."""
+        cls = super().__new__(mcls, name, bases, dct)
+        try:
+            instance = cls(cls.__name__)
+            INBUILT_DATATYPES[cls.__name__] = instance
+        except TypeError:
+            pass
+        return cls
+
+
+class BaseDataType(Component, metaclass=DataTypeMeta):
     """Base class for datatype."""
 
     type_id: t.ClassVar[str] = 'datatype'
@@ -180,7 +196,7 @@ class _PickleMixin:
         return pickle.loads(item)
 
 
-class PickleSerializer(_Artifact, _PickleMixin, BaseDataType):
+class Pickle(_Artifact, _PickleMixin, BaseDataType):
     """Serializer with pickle."""
 
 
@@ -196,7 +212,7 @@ class _DillMixin:
         return dill.loads(item)
 
 
-class DillSerializer(_Artifact, _DillMixin, BaseDataType):
+class Dill(_Artifact, _DillMixin, BaseDataType):
     """Serializer with dill.
 
     This is also the default serializer.
@@ -204,18 +220,20 @@ class DillSerializer(_Artifact, _DillMixin, BaseDataType):
     """
 
 
-class _DillEncoder(_Encodable, _DillMixin, BaseDataType):
+class DillEncoder(_Encodable, _DillMixin, BaseDataType):
+    """Encoder with dill."""
+
     ...
 
 
-class FileType(BaseDataType):
+class File(BaseDataType):
     """Type for encoding files on disk."""
 
     encodable: t.ClassVar[str] = 'file'
 
     def encode_data(self, item):
         assert os.path.exists(item)
-        return File(path=item)
+        return FileItem(path=item)
 
     def decode_data(self, item):
         return item
@@ -254,7 +272,7 @@ class Saveable(Leaf):
         pass
 
 
-class File(Saveable):
+class FileItem(Saveable):
     """Placeholder for a file.
 
     :param path: Path to file.
@@ -313,25 +331,27 @@ class Blob(Saveable):
 
 json_encoder = JSON('json')
 pickle_encoder = PickleEncoder('pickle_encoder')
-pickle_serializer = PickleSerializer('pickle_serializer')
-dill_encoder = _DillEncoder('dill_encoder')
-dill_serializer = DillSerializer('dill_serializer')
-file = FileType('file')
-
-DEFAULT_ENCODER = PickleEncoder('default_encoder')
-DEFAULT_SERIALIZER = DillSerializer('default')
+pickle_serializer = Pickle('pickle_serializer')
+dill_encoder = DillEncoder('dill_encoder')
+dill_serializer = Dill('dill_serializer')
+file = File('file')
 
 
-INBUILT_DATATYPES = {
-    dt.identifier: dt
-    for dt in [
-        json_encoder,
-        pickle_encoder,
-        pickle_serializer,
-        dill_encoder,
-        dill_serializer,
-        file,
-        DEFAULT_SERIALIZER,
-        DEFAULT_ENCODER,
-    ]
-}
+INBUILT_DATATYPES.update(
+    {
+        dt.identifier: dt
+        for dt in [
+            json_encoder,
+            pickle_encoder,
+            pickle_serializer,
+            dill_encoder,
+            dill_serializer,
+            file,
+        ]
+    }
+)
+
+DEFAULT_ENCODER = INBUILT_DATATYPES['PickleEncoder']
+DEFAULT_SERIALIZER = INBUILT_DATATYPES['Dill']
+INBUILT_DATATYPES['default'] = DEFAULT_SERIALIZER
+INBUILT_DATATYPES['Blob'] = INBUILT_DATATYPES['Pickle']

@@ -12,7 +12,7 @@ from superduper.base.constant import (
 from superduper.base.leaf import Leaf, import_item
 from superduper.base.variables import _replace_variables
 from superduper.components.component import Component
-from superduper.components.datatype import BaseDataType, Blob, File
+from superduper.components.datatype import BaseDataType, Blob, FileItem
 from superduper.components.schema import Schema, get_schema
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
@@ -300,7 +300,7 @@ class Document(MongoStyleDict):
             )
 
         def my_getter(x):
-            return File(path=r[KEY_FILES].get(x.split(':')[-1]), db=db)
+            return FileItem(path=r[KEY_FILES].get(x.split(':')[-1]), db=db)
 
         if r.get(KEY_FILES):
             getters.add_getter('file', my_getter)
@@ -527,7 +527,7 @@ def _deep_flat_encode(
         blobs[r.identifier] = r.bytes
         return '&:blob:' + r.identifier
 
-    if isinstance(r, File):
+    if isinstance(r, FileItem):
         files[r.identifier] = r.path
         return '&:file:' + r.identifier
 
@@ -723,7 +723,7 @@ def _get_component(db, path):
 
 def _get_file_callback(db):
     def callback(ref):
-        return File(identifier=ref, db=db)
+        return FileItem(identifier=ref, db=db)
 
     return callback
 

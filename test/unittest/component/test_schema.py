@@ -5,7 +5,7 @@ import pytest
 from superduper import Component, Schema, Table
 from superduper.components.datatype import (
     Blob,
-    File,
+    FileItem,
     dill_serializer,
     file,
     pickle_encoder,
@@ -104,7 +104,7 @@ def test_schema_with_file(db, tmp_file):
     r = db['documents'].select().tolist()[0]
 
     # loaded document contains a pointer to the file
-    assert isinstance(r['my_file'], File)
+    assert isinstance(r['my_file'], FileItem)
 
     # however the path has not been populated
     assert not r['my_file'].path

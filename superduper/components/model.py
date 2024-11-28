@@ -369,6 +369,7 @@ class ModelMeta(ComponentMeta):
         return cls
 
 
+# TODO there are a lot of redundant parameters here
 class Model(Component, metaclass=ModelMeta):
     """Base class for components which can predict.
 

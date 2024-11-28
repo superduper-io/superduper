@@ -95,7 +95,7 @@ target-version = ["py38"]
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_ignores = true
-disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg", "import-untyped"]
+disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg", "import-untyped", "no-redef", "valid-type", "valid-newtype"]
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"
@@ -136,6 +136,7 @@ ignore = [
   "D401",
   "D102",
   "E402",
+  "F403"
 ]
 exclude = ["templates", "superduper/templates"]
 

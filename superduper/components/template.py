@@ -46,8 +46,6 @@ class _BaseTemplate(Component):
             databackend_name = db.databackend._backend.__class__.__name__.split(
                 'DataBackend'
             )[0].lower()
-            if databackend_name == 'mongo':
-                databackend_name = 'mongodb'
             substitutions = {
                 databackend_name: 'databackend',
                 CFG.output_prefix: 'output_prefix',
@@ -66,13 +64,14 @@ class _BaseTemplate(Component):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
 
-        assert set(kwargs.keys()) == (set(self.template_variables) - {'output_prefix'})
-
-        kwargs['output_prefix'] = CFG.output_prefix
-        kwargs['databackend'] = (
-            'mongodb' if CFG.data_backend.startswith('mongo') else 'ibis'
+        assert set(kwargs.keys()) == (
+            set(self.template_variables) - {'output_prefix', 'databackend'}
         )
 
+        kwargs['output_prefix'] = CFG.output_prefix
+        kwargs['databackend'] = self.db.databackend._backend.__class__.__name__.split(
+            'DataBackend'
+        )[0].lower()
         component = _replace_variables(
             self.template,
             **kwargs,

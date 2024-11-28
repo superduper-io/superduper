@@ -206,7 +206,7 @@ def _apply(name: str, variables: str | None = None, data_backend: str | None = N
         assert variables is not None, 'Variables must be provided for templates'
         all_values = variables.copy()
         for k in t.template_variables:
-            if k == 'output_prefix':
+            if k in {'output_prefix', 'databackend'}:
                 continue
             if k not in all_values:
                 assert k in t.default_values, f'Variable {k} not specified'

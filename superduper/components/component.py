@@ -483,6 +483,7 @@ class Component(Leaf, metaclass=ComponentMeta):
                 template_variables=list(kwargs.keys()),
                 blobs=list(set(blobs)),
             )
+            template.db = db
 
         output = template(**kwargs)
         output.identifier = identifier

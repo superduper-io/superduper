@@ -128,6 +128,7 @@ def test_from_template(db):
         template_body=m.encode(),
         key='y',
         model='my_id',
+        db=db,
     )
 
     component.init()

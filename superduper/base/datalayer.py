@@ -595,7 +595,7 @@ class Datalayer:
                 )
                 try:
                     class_schema = import_object(info['_path']).build_class_schema()
-                except KeyError:
+                except (KeyError, AttributeError):
                     # if defined in __main__ then the class is directly serialized
                     assert '_object' in info
                     from superduper.components.datatype import DEFAULT_SERIALIZER, Blob

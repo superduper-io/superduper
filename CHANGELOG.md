@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
-...
+- No need to add `.signature` to `Model` implementations
 
 #### New Features & Functionality
 
@@ -20,8 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Bug Fixes
 
 - Fix the random silent failure bug when ibis creates tables.
-
-...
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 
@@ -36,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor secrets loading method.
 - Add db.load in db wait
 - Add model component cleanup
+- Deprecate `signature` as parameter and auto-infer from `.predict`
 
 #### New Features & Functionality
 

@@ -21,7 +21,7 @@ def test_function_predict():
 
 
 def test_function_predict_batches():
-    function = ObjectModel(object=lambda x: x, identifier='test', signature='singleton')
+    function = ObjectModel(object=lambda x: x, identifier='test')
     assert function.predict_batches([1, 1]) == [1, 1]
 
 

@@ -475,7 +475,6 @@ def test_replace(db: Datalayer):
         object=lambda x: x + 1,
         identifier='m',
         datatype=DataType(identifier='base'),
-        signature='singleton',
     )
     model.version = 0
     db.apply(model)
@@ -484,7 +483,8 @@ def test_replace(db: Datalayer):
     assert db.load('model', 'm').predict(1) == 2
 
     new_model = ObjectModel(
-        object=lambda x: x + 2, identifier='m', signature='singleton'
+        object=lambda x: x + 2,
+        identifier='m',
     )
     new_model.version = 0
     db.replace(new_model)
@@ -496,7 +496,8 @@ def test_replace(db: Datalayer):
 
     # replace the last version of the model
     new_model = ObjectModel(
-        object=lambda x: x + 3, identifier='m', signature='singleton'
+        object=lambda x: x + 3,
+        identifier='m',
     )
     new_model.version = 0
     db.replace(new_model)

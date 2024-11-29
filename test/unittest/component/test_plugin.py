@@ -10,7 +10,7 @@ PYTHON_CODE = """
 from superduper import Model
 
 class PModel(Model):
-    def predict(self) -> int:
+    def predict(self, X) -> int:
         return "{plugin_type}"
 """
 
@@ -82,7 +82,7 @@ def test_module(tmpdir):
     from p_module import PModel
 
     model = PModel("test")
-    assert model.predict() == "module"
+    assert model.predict(2) == "module"
 
 
 def test_package(tmpdir):
@@ -96,7 +96,7 @@ def test_package(tmpdir):
     from p_package.p_package import PModel
 
     model = PModel("test")
-    assert model.predict() == "package"
+    assert model.predict(2) == "package"
 
 
 def test_directory(tmpdir):
@@ -111,7 +111,7 @@ def test_directory(tmpdir):
 
     model = PModel("test")
 
-    assert model.predict() == "directory"
+    assert model.predict(2) == "directory"
 
 
 def test_repeated_loading(tmpdir):
@@ -151,7 +151,7 @@ def test_import(tmpdir):
     from p_import.p_import import PModel
 
     model = PModel("test")
-    assert model.predict() == "import"
+    assert model.predict(2) == "import"
 
 
 def test_apply(db, tmpdir):

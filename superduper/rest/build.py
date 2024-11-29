@@ -241,6 +241,19 @@ def build_rest_app(app: SuperDuperApp):
         template: Template = db.load(type_id=type_id, identifier=identifier)
         return template.form_template
 
+    @app.add('/db/edit', method='get')
+    def db_edit(
+        identifier: str,
+        type_id: str,
+        db: 'Datalayer' = DatalayerDependency(),
+    ):
+        component = db.load(type_id, identifier)
+        template = db.load('template', component['build_template'])
+        template: Template = db.load(type_id=type_id, identifier=identifier)
+        form = template.form_template
+        form['_variables'] = component['build_variables']
+        return form
+
     @app.add('/db/metadata/show_jobs', method='get')
     def db_metadata_show_jobs(
         type_id: str,

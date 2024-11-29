@@ -45,7 +45,6 @@ def model(
     output_schema: t.Optional[Schema] = None,
     num_workers: int = 0,
     example: t.Any | None = None,
-    signature: Signature = '*args,**kwargs',
 ):
     """Decorator to wrap a function with `ObjectModel`.
 
@@ -59,7 +58,6 @@ def model(
     :param output_schema: Schema for the model outputs.
     :param num_workers: Number of workers to use for parallel processing
     :param example: Example to auto-determine the schema/ datatype.
-    :param signature: Signature for the model.
     """
     if item is not None and (inspect.isclass(item) or callable(item)):
         if inspect.isclass(item):
@@ -74,7 +72,6 @@ def model(
                     output_schema=output_schema,
                     num_workers=num_workers,
                     example=example,
-                    signature=signature,
                 )
 
             return object_model_factory
@@ -88,7 +85,6 @@ def model(
                 output_schema=output_schema,
                 num_workers=num_workers,
                 example=example,
-                signature=signature,
             )
     else:
 
@@ -105,7 +101,6 @@ def model(
                         output_schema=output_schema,
                         num_workers=num_workers,
                         example=example,
-                        signature=signature,
                     )
 
                 return object_model_factory
@@ -119,7 +114,6 @@ def model(
                     output_schema=output_schema,
                     num_workers=num_workers,
                     example=example,
-                    signature=signature,
                 )
 
         return decorated_function
@@ -352,13 +346,32 @@ class ModelMeta(ComponentMeta):
         if 'init' in dct:
             dct['init'] = init_decorator(dct['init'])
         cls = super().__new__(mcls, name, bases, dct)
+
+        signature = inspect.signature(cls.predict)
+        pos = []
+        kw = []
+        for k in signature.parameters:
+            if k == 'self':
+                continue
+            if signature.parameters[k].default == inspect._empty:
+                pos.append(k)
+            else:
+                kw.append(k)
+        if len(pos) == 1 and not kw:
+            cls._signature = 'singleton'
+        elif pos and not kw:
+            cls._signature = '*args'
+        elif pos and kw:
+            cls._signature = '*args,**kwargs'
+        else:
+            assert not pos and kw
+            cls._signature = '**kwargs'
         return cls
 
 
 class Model(Component, metaclass=ModelMeta):
     """Base class for components which can predict.
 
-    :param signature: Model signature.
     :param datatype: DataType instance.
     :param output_schema: Output schema (mapping of encoders).
     :param model_update_kwargs: The kwargs to use for model update.
@@ -378,7 +391,6 @@ class Model(Component, metaclass=ModelMeta):
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
     type_id: t.ClassVar[str] = 'model'
-    signature: Signature = '*args,**kwargs'
     datatype: EncoderArg = None
     output_schema: t.Optional[Schema] = None
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -407,6 +419,10 @@ class Model(Component, metaclass=ModelMeta):
         """
         super().cleanup(db=db)
         db.cluster.compute.drop(self)
+
+    @property
+    def signature(self):
+        return self._signature
 
     @property
     def inputs(self) -> Inputs:
@@ -1047,6 +1063,10 @@ class ImportedModel(Model):
     object: Leaf
     method: t.Optional[str] = None
 
+    def __post_init__(self, db, example):
+        super().__post_init__(db, example)
+        self._inferred_signature = None
+
     @staticmethod
     def _infer_signature(object):
         # find positional and key-word parameters from the object
@@ -1066,6 +1086,13 @@ class ImportedModel(Model):
         if not positional:
             return '**kwargs'
         return '*args,**kwargs'
+
+    @property
+    @ensure_initialized
+    def signature(self):
+        if self._inferred_signature is None:
+            self._inferred_signature = self._infer_signature(self.object)
+        return self._inferred_signature
 
     @property
     def outputs(self):
@@ -1206,6 +1233,7 @@ class QueryModel(Model):
     :param preprocess: Preprocess callable
     :param postprocess: Postprocess callable
     :param select: query used to find data (can include `like`)
+    :param signature: signature to use
     """
 
     preprocess: t.Optional[t.Callable] = None
@@ -1267,9 +1295,12 @@ class SequentialModel(Model):
     models: t.List[Model]
 
     def __post_init__(self, db, example):
-        self.signature = self.models[0].signature
         self.datatype = self.models[-1].datatype
         return super().__post_init__(db, example)
+
+    @property
+    def signature(self):
+        return self.models[0].signature
 
     @property
     def inputs(self) -> Inputs:
@@ -1300,7 +1331,22 @@ class SequentialModel(Model):
         :param args: Positional arguments to predict on.
         :param kwargs: Keyword arguments to predict on.
         """
-        return self.predict_batches([(args, kwargs)])[0]
+        for i, p in enumerate(self.models):
+            assert isinstance(p, Model), f'Expected `Model`, got {type(p)}'
+            if i == 0:
+                out = p.predict(*args, **kwargs)
+            else:
+                if p.signature == 'singleton':
+                    out = p.predict(out)
+                elif p.signature == '*args':
+                    out = p.predict(*out)
+                elif p.signature == '**kwargs':
+                    out = p.predict(**out)
+                else:
+                    msg = 'Model defines a predict with no free parameters'
+                    assert p.signature == '*args,**kwargs', msg
+                    out = p.predict(*out[0], **out[1])
+        return out
 
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Execute on series of data point defined in dataset.
@@ -1367,7 +1413,6 @@ class RAGModel(Model):
     breaks: t.ClassVar[t.Sequence] = ('llm', 'prompt_template')
 
     prompt_template: str
-    signature: str = 'singleton'
     select: Query
     key: str
     llm: Model

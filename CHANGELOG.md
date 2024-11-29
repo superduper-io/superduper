@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deprecate vanilla `DataType`
 - Remove `_Encodable` from project
+- Deprecate `signature` as parameter and auto-infer from `.predict`
 
 #### New Features & Functionality
 

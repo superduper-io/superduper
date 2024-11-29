@@ -11,7 +11,7 @@ def model1(db):
     def model_object(x):
         return x + 1
 
-    model = ObjectModel(identifier='m1', object=model_object, signature='singleton')
+    model = ObjectModel(identifier='m1', object=model_object)
     yield model
 
 
@@ -53,13 +53,17 @@ def model3(db):
 
 def test_simple_graph(model1, model2):
     g = Graph(
-        identifier='simple-graph', input=model1, outputs=model2, signature='*args'
+        identifier='simple-graph',
+        input=model1,
+        outputs=model2,
     )
     g.connect(model1, model2)
     assert g.predict(1) == (4, 2)
 
     g = Graph(
-        identifier='simple-graph', input=model1, outputs=model2, signature='*args'
+        identifier='simple-graph',
+        input=model1,
+        outputs=model2,
     )
     g.connect(model1, model2)
     assert g.predict_batches([1, 2, 3]) == [(4, 2), (5, 3), (6, 4)]
@@ -70,7 +74,6 @@ def test_graph_output_indexing(model2_multi_dict, model2, model1):
         identifier='simple-graph',
         input=model1,
         outputs=[model2],
-        signature='**kwargs',
     )
     g.connect(model1, model2_multi_dict, on=(None, 'x'))
     g.connect(model2_multi_dict, model2, on=('x', 'x'))

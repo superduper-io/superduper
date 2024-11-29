@@ -220,7 +220,8 @@ def test_model_append_metrics():
 @patch.object(Mapping, '__call__')
 def test_model_validate(mock_call):
     # Check the metadadata recieves the correct values
-    model = Validator('test', object=object())
+    model = Validator('test', object=lambda x: x)
+    model._signature = 'singleton'
     my_metric = MagicMock(spec=Metric)
     my_metric.identifier = 'acc'
     my_metric.return_value = 0.5
@@ -382,13 +383,12 @@ def test_sequential_model():
             ObjectModel(
                 identifier='test-predictor-2',
                 object=lambda x: x + 1,
-                signature='singleton',
             ),
         ],
     )
 
-    assert m.predict(x=1) == 4
-    assert m.predict_batches([((1,), {}) for _ in range(4)]) == [4, 4, 4, 4]
+    assert m.predict(1) == 4
+    assert m.predict_batches([1 for _ in range(4)]) == [4, 4, 4, 4]
 
 
 def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey):
@@ -439,7 +439,8 @@ import numpy
 @pytest.fixture
 def object_model():
     return ObjectModel(
-        'test', object=lambda x: numpy.array(x) + 1, signature='singleton'
+        'test',
+        object=lambda x: numpy.array(x) + 1,
     )
 
 
@@ -468,3 +469,34 @@ def test_object_model_as_a_listener(db, object_model):
     r = results[0].unpack()
     key = next(k for k in r.keys() if k.startswith('_outputs__test'))
     assert all(np.allclose(r.unpack()[key], sample_data + 1) for r in results)
+
+
+class MyModelSingleton(Model):
+    def predict(self, X):
+        return X
+
+
+class MyModelArgs(Model):
+    def predict(self, X, Y):
+        return X
+
+
+class MyModelArgsKwargs(Model):
+    def predict(self, X, Y=None):
+        return X
+
+
+class MyModelKwargs(Model):
+    def predict(self, Y=None):
+        return Y
+
+
+def test_signature_inference():
+    assert MyModelSingleton._signature == 'singleton'
+    assert MyModelArgs._signature == '*args'
+    assert MyModelArgsKwargs._signature == '*args,**kwargs'
+    assert MyModelKwargs._signature == '**kwargs'
+
+    m = ObjectModel('test', object=lambda x, y: x + y)
+
+    assert m.signature == '*args'

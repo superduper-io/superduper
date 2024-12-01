@@ -197,7 +197,7 @@ class IbisQuery(Query):
         return ids
 
     def _create_table_if_not_exists(self):
-        tables = self.db.databackend.list_tables_or_collections()
+        tables = self.db.databackend.list_tables()
         if self.table in tables:
             return
         self.db.databackend.create_table_and_schema(

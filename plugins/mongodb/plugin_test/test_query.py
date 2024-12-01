@@ -7,7 +7,7 @@ from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.ext.numpy.encoder import Array
 
-from superduper_mongodb.query import MongoQuery
+from superduper_mongodb.query import MongoDBQuery
 
 
 @pytest.fixture
@@ -63,15 +63,15 @@ def test_mongo_schema(db, schema):
 
 
 def test_select_missing_outputs(db):
-    docs = list(db.execute(MongoQuery(table='documents').find({}, {'_id': 1})))
+    docs = list(db.execute(MongoDBQuery(table='documents').find({}, {'_id': 1})))
     ids = [r['_id'] for r in docs[: len(docs) // 2]]
     db.execute(
-        MongoQuery(table='documents').update_many(
+        MongoDBQuery(table='documents').update_many(
             {'_id': {'$in': ids}},
             Document({'$set': {'_outputs__x::test_model_output::0::0': 'test'}}),
         )
     )
-    select = MongoQuery(table='documents').find({}, {'_id': 1})
+    select = MongoDBQuery(table='documents').find({}, {'_id': 1})
     select.db = db
     modified_select = select.select_ids_of_missing_outputs('x::test_model_output::0::0')
     out = list(db.execute(modified_select))

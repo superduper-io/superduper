@@ -36,7 +36,7 @@ def applies_to(*flavours):
             )
 
             try:
-                flavour = self.flavour
+                    flavour = self.flavour
             except TypeError:
                 raise TypeError(msg)
             assert flavour in flavours, msg
@@ -275,7 +275,7 @@ class Query(_BaseQuery):
             )
 
     def _get_parent(self):
-        return self.db.databackend.get_table_or_collection(self.table)
+        return self.db.databackend.get_table(self.table)
 
     def _execute_select(self, parent):
         raise NotImplementedError

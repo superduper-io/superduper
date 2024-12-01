@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from superduper.base.enums import DBType
 from superduper.components.datatype import (
     BaseDataType,
     pickle_encoder,
@@ -43,6 +42,6 @@ def test_component(random_data, datatype):
 def test_component_with_db(db, random_data, datatype):
     # TODO: Need to fix the encodable in component when db is SQL
     # Some bytes are not serializable, then can't be stored in SQL
-    if datatype.encodable == "encodable" and db.databackend.db_type == DBType.SQL:
-        return
+    # if datatype.encodable == "encodable" and db.databackend.db_type == DBType.SQL:
+    #     return
     datatype_utils.check_component_with_db(random_data, datatype, db)

@@ -7,7 +7,6 @@ import numpy as np
 
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
-from superduper.base.enums import DBType
 from superduper.components.component import Component
 from superduper.components.datatype import BaseDataType, pickle_serializer
 from superduper.components.schema import Schema
@@ -70,7 +69,8 @@ def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     print_sep()
     db["documents"].insert([document]).execute()
 
-    if db.databackend.db_type == DBType.MONGODB:
+    # TODO: remove this databackend specific logic
+    if db.databackend.backend_name == 'mongodb':
         encoded = db.databackend.conn["test_db"]["documents"].find_one()
     else:
         t = db.databackend.conn.table("documents")

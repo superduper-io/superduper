@@ -816,8 +816,9 @@ class Datalayer:
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
-        out = self.databackend.infer_schema(data, identifier)
-        return out
+        from superduper.misc.auto_schema import infer_schema
+
+        return infer_schema(data, identifier=identifier)
 
     @property
     def cfg(self) -> Config:

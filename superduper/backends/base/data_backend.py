@@ -14,16 +14,18 @@ class BaseDataBackend(ABC):
     """Base data backend for the database.
 
     :param uri: URI to the databackend database.
+    :param plugin: Plugin implementing the databackend.
     :param flavour: Flavour of the databackend.
     """
 
     db_type = None
 
-    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+    def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.conn = None
         self.flavour = flavour
         self.in_memory: bool = False
         self.in_memory_tables: t.Dict = {}
+        self.plugin = plugin
         self._datalayer = None
         self.uri = uri
         self.bytes_encoding = 'bytes'
@@ -39,7 +41,7 @@ class BaseDataBackend(ABC):
 
     @property
     def db(self):
-        """Return the datalayer."""
+        """Return the DB."""
         raise NotImplementedError
 
     @abstractmethod
@@ -58,11 +60,6 @@ class BaseDataBackend(ABC):
         :param value: The datalayer.
         """
         self._datalayer = value
-
-    @abstractmethod
-    def url(self):
-        """Databackend connection url."""
-        pass
 
     @abstractmethod
     def build_metadata(self):
@@ -105,17 +102,16 @@ class BaseDataBackend(ABC):
         """
         pass
 
-    @abstractmethod
     def get_query_builder(self, key):
         """Get a query builder for the database.
 
         :param key: The key of the query builder,
                     typically the table or collection name.
         """
-        pass
+        return self.plugin.Query(table=key, db=self.datalayer)
 
     @abstractmethod
-    def get_table_or_collection(self, identifier):
+    def get_table(self, identifier):
         """Get a table or collection from the database.
 
         :param identifier: The identifier of the table or collection.
@@ -134,49 +130,12 @@ class BaseDataBackend(ABC):
         """Disconnect the client."""
 
     @abstractmethod
-    def list_tables_or_collections(self):
+    def list_tables(self):
         """List all tables or collections in the database."""
 
-    @staticmethod
-    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """Infer a schema from a given data object.
-
-        :param data: The data object
-        :param identifier: The identifier for the schema, if None, it will be generated
-        :return: The inferred schema
-        """
-
-    def check_ready_ids(
-        self, query: Query, keys: t.List[str], ids: t.Optional[t.List[t.Any]] = None
-    ):
-        """Check if all the keys are ready in the ids.
-
-        :param query: The query object.
-        :param keys: The keys to check.
-        :param ids: The ids to check.
-        """
-        if ids:
-            query = query.select_using_ids(ids)
-        data = query.execute()
-        ready_ids = []
-        for select in data:
-            notfound = 0
-            for k in keys:
-                try:
-                    select[k]
-                except KeyError:
-                    notfound += 1
-            if notfound == 0:
-                ready_ids.append(select[query.primary_id])
-        self._log_check_ready_ids_message(ids, ready_ids)
-        return ready_ids
-
-    def _log_check_ready_ids_message(self, input_ids, ready_ids):
-        if input_ids and len(ready_ids) != len(input_ids):
-            not_ready_ids = set(input_ids) - set(ready_ids)
-            logging.info(f"IDs {not_ready_ids} do not ready.")
-            logging.debug(f"Ready IDs: {ready_ids}")
-            logging.debug(f"Not ready IDs: {not_ready_ids}")
+    @abstractmethod
+    def reconnect(self):
+        """Reconnect to the databackend"""
 
 
 class DataBackendProxy:

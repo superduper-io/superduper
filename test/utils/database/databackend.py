@@ -45,6 +45,6 @@ def test_list_tables_or_collections(databackend: BaseDataBackend):
             table_name, schema=Schema(identifier="schema", fields=fields)
         )
 
-    tables = databackend.list_tables_or_collections()
+    tables = databackend.list_tables()
     assert len(tables) == 10
     assert [f"table_{i}" for i in range(10)] == sorted(tables)

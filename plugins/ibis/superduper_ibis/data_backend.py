@@ -13,7 +13,6 @@ from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.base import exceptions
-from superduper.base.enums import DBType
 from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
@@ -84,12 +83,10 @@ class IbisDataBackend(BaseDataBackend):
     :param flavour: Flavour of the databackend.
     """
 
-    db_type = DBType.SQL
-
-    def __init__(self, uri: str, flavour: t.Optional[str] = None):
+    def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.connection_callback = lambda: _connection_callback(uri, flavour)
         conn, name, in_memory = self.connection_callback()
-        super().__init__(uri=uri, flavour=flavour)
+        super().__init__(uri=uri, flavour=flavour, plugin=plugin)
         self.conn = conn
         self.name = name
         self.in_memory = in_memory
@@ -110,17 +107,9 @@ class IbisDataBackend(BaseDataBackend):
 
     def reconnect(self):
         """Reconnect to the database client."""
-        # Reconnect to database.
         conn, _, _ = self.connection_callback()
         self.conn = conn
         self._setup(conn)
-
-    def get_query_builder(self, table_name):
-        """Get the query builder for the data backend.
-
-        :param table_name: Which table to get the query builder for
-        """
-        return IbisQuery(table=table_name, db=self.datalayer)
 
     def url(self):
         """Get the URL of the database."""
@@ -302,7 +291,7 @@ class IbisDataBackend(BaseDataBackend):
             logging.info(f"Dropping table: {table}")
             self.conn.drop_table(table)
 
-    def get_table_or_collection(self, identifier):
+    def get_table(self, identifier):
         """Get a table or collection from the database.
 
         :param identifier: The identifier of the table or collection.
@@ -316,21 +305,8 @@ class IbisDataBackend(BaseDataBackend):
 
     def disconnect(self):
         """Disconnect the client."""
-
         # TODO: implement me
 
-    def list_tables_or_collections(self):
+    def list_tables(self):
         """List all tables or collections in the database."""
         return self.conn.list_tables()
-
-    @staticmethod
-    def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):
-        """Infer a schema from a given data object.
-
-        :param data: The data object
-        :param identifier: The identifier for the schema, if None, it will be generated
-        :return: The inferred schema
-        """
-        from superduper.misc.auto_schema import infer_schema
-
-        return infer_schema(data, identifier=identifier)

@@ -86,13 +86,13 @@ def parse_query(
     documents = list(map(_decode, documents))
     return _parse_query(
         query=query,
-        builder_cls=MongoQuery,
+        builder_cls=MongoDBQuery,
         documents=list(documents),
         db=db,
     )
 
 
-class MongoQuery(Query):
+class MongoDBQuery(Query):
     """A query class for MongoDB.
 
     This class is used to build and execute queries on a MongoDB database.
@@ -359,7 +359,7 @@ class MongoQuery(Query):
 
         :param predict_ids: The ids of the predictions to select.
         """
-        return self.db.databackend.drop_table_or_collection(
+        return self.db.databackend.drop_table(
             f'{CFG.output_prefix}{predict_id}'
         )
 

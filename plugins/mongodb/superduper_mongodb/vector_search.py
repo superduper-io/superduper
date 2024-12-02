@@ -2,7 +2,7 @@ import typing as t
 from functools import cached_property
 
 from superduper import CFG, logging
-from superduper.vector_search.base import BaseVectorSearcher, VectorItem
+from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem
 
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex

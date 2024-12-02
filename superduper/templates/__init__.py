@@ -29,6 +29,7 @@ def ls():
 
 def __getattr__(name: str):
     import re
+
     if not re.match('.*[0-9]+\.[0-9]+\.[0-9]+.*', name):
         assert name in TEMPLATES
         file = TEMPLATES[name].split('/')[-1]
@@ -39,6 +40,7 @@ def __getattr__(name: str):
 
     if not os.path.exists(f'/tmp/{file}'):
         import subprocess
+
         subprocess.run(['curl', '-O', '-k', url])
         subprocess.run(['mv', file, f'/tmp/{file}'])
         subprocess.run(['unzip', f'/tmp/{file}', '-d', f'/tmp/{file[:-4]}'])
@@ -52,4 +54,8 @@ def __getattr__(name: str):
 
 
 def get(name):
+    """Get a template from local cache or online hub.
+
+    :param name: name of template
+    """
     return __getattr__(name)

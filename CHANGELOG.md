@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours 
 
 - Deprecate vanilla `DataType`
-- Remove `_Encodable` from project
+- Remove `_Encodable` from project 
 
 #### New Features & Functionality
 

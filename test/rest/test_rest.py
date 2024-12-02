@@ -82,7 +82,7 @@ def test_insert_image(setup):
     file_id = result['file_id']
 
     query = {
-        '_path': 'superduper.backends.mongodb.query.parse_query',
+        '_path': 'superduper_mongodb.query.parse_query',
         'query': 'coll.insert_one(documents[0])',
         '_builds': {
             'image_type': {
@@ -108,7 +108,7 @@ def test_insert_image(setup):
     )
 
     query = {
-        '_path': 'superduper.backends.mongodb.query.parse_query',
+        '_path': 'superduper_mongodb.query.parse_query',
         'query': 'coll.find(documents[0], documents[1])',
         'documents': [{}, {'_id': 0}],
     }

@@ -262,11 +262,7 @@ def test_diff(db):
     # the child, however the parent isn't
     # broken by self.sub, so is only updated
     diff = {}
-    _apply(
-        db=db,
-        object=c,
-        global_diff=diff,
-    )
+    _apply(db=db, object=c, global_diff=diff, non_breaking_changes={})
 
     import json
 

@@ -43,11 +43,8 @@ class _BaseTemplate(Component):
             self.template = self.template.encode(defaults=True, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
         if substitutions is not None:
-            databackend_name = db.databackend._backend.__class__.__name__.split(
-                'DataBackend'
-            )[0].lower()
             substitutions = {
-                databackend_name: 'databackend',
+                db.databackend.backend_name: 'databackend',
                 CFG.output_prefix: 'output_prefix',
                 **substitutions,
             }

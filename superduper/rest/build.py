@@ -15,7 +15,7 @@ except ImportError:
 from fastapi import BackgroundTasks, File, Response
 from fastapi.responses import JSONResponse
 
-from superduper import logging
+from superduper import logging, CFG
 from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.components.template import Template
@@ -64,6 +64,8 @@ def build_rest_app(app: SuperDuperApp):
 
     :param app: SuperDuperApp
     """
+
+    CFG.log_colorize = False
 
     @app.add("/health", method="get")
     def health():
@@ -175,6 +177,11 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
+        if '_variables' in info:
+            info['_variables']['output_prefix'] = CFG.output_prefix
+            info['_variables']['databackend'] = (
+                db.databackend._backend.__class__.__name__.split('DataBackend')[0].lower()
+            )
         component = Document.decode(info, db=db).unpack()
         background_tasks.add_task(_process_db_apply, db, component, id)
         return {'status': 'ok'}

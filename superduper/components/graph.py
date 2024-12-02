@@ -197,7 +197,6 @@ class DocumentInput(Model):
 
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
-    signature: Signature = 'singleton'
 
     def __post_init__(self, db, example):
         super().__post_init__(db, example)
@@ -232,12 +231,11 @@ class Graph(Model):
     :param edges: Graph edges list.
     :param input: Graph root node.
     :param outputs: Graph output nodes.
-    :param signature: Graph signature.
 
     Example:
     -------
     >> g = Graph(
-    >>   identifier='simple-graph', input=model1, outputs=[model2], signature='*args'
+    >>   identifier='simple-graph', input=model1, outputs=[model2],
     >> )
     >> g.connect(model1, model2)
     >> assert g.predict(1) == [(4, 2)]
@@ -253,7 +251,6 @@ class Graph(Model):
     )
     input: Model
     outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
-    signature: Signature = '*args,**kwargs'
 
     def __post_init__(self, db, example):
         self.G = nx.DiGraph()
@@ -261,7 +258,7 @@ class Graph(Model):
         self.version = 0
         self._db = None
 
-        self.signature = self.input.signature
+        self._signature = self.input.signature
         if isinstance(self.outputs, list):
             self.output_identifiers = [
                 o.identifier if isinstance(o, Model) else o for o in self.outputs

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Low-code form builder for frontend
 - Add snowflake vector search engine
 - Add a meta-datatype `Vector` to handle different databackend requirements
+- Add type annotatiions as a way to declare schema
 
 #### Bug Fixes
 

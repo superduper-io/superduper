@@ -6,6 +6,7 @@ import numpy as np
 import tqdm
 
 from superduper import CFG, logging
+from superduper.backends.base.vector_search import VectorIndexMeasureType, VectorItem
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
@@ -16,7 +17,6 @@ from superduper.components.model import Mapping, ModelInputType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.special_dicts import MongoStyleDict
-from superduper.vector_search.base import VectorIndexMeasureType, VectorItem
 
 if t.TYPE_CHECKING:
     pass

@@ -214,7 +214,7 @@ class VectorItem:
 
     def to_dict(self) -> t.Dict:
         """Converts the vector item to a dictionary."""
-        return {'id': self.id, 'vector': self.vector}
+        return {'id': str(self.id), 'vector': self.vector.tolist()}
 
 
 def l2(x, y):

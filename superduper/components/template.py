@@ -67,11 +67,8 @@ class _BaseTemplate(Component):
         assert set(kwargs.keys()) == (
             set(self.template_variables) - {'output_prefix', 'databackend'}
         )
-
         kwargs['output_prefix'] = CFG.output_prefix
-        kwargs['databackend'] = self.db.databackend._backend.__class__.__name__.split(
-            'DataBackend'
-        )[0].lower()
+        kwargs['databackend'] = self.db.databackend.backend_name
         component = _replace_variables(
             self.template,
             **kwargs,

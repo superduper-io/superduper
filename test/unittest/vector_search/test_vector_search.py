@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from superduper import CFG
+from superduper.backends.base.vector_search import VectorItem
 from superduper.backends.local.vector_search import InMemoryVectorSearcher
-from superduper.vector_search.base import VectorItem
 
 
 @pytest.fixture

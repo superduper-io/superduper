@@ -4,6 +4,7 @@ import click
 from rich.console import Console
 
 from superduper import Component, logging
+from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
 from superduper.components.component import Status
@@ -55,6 +56,7 @@ def apply(
         context=object.uuid,
         job_events={},
         global_diff=diff,
+        non_breaking_changes={},
     )
     # this flags that the context is not needed anymore
     if not create_events:
@@ -123,6 +125,7 @@ def apply(
 def _apply(
     db: 'Datalayer',
     object: 'Component',
+    non_breaking_changes: t.Dict,
     context: str | None = None,
     job_events: t.Dict[str, 'Job'] | None = None,
     parent: t.Optional[str] = None,
@@ -164,6 +167,7 @@ def _apply(
             job_events=job_events,
             parent=object.uuid,
             global_diff=global_diff,
+            non_breaking_changes=non_breaking_changes,
         )
 
         job_events.update(j)
@@ -179,6 +183,29 @@ def _apply(
 
     serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
 
+    def replace_existing(x):
+        if isinstance(x, str):
+            for uuid in non_breaking_changes:
+                x = x.replace(uuid, non_breaking_changes[uuid])
+
+        elif isinstance(x, Query):
+            r = x.dict()
+            for uuid in non_breaking_changes:
+                r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
+            for i, doc in enumerate(r['documents']):
+                replace = {}
+                for k in doc:
+                    replace_k = k
+                    for uuid in non_breaking_changes:
+                        replace_k = replace_k.replace(uuid, non_breaking_changes[uuid])
+                    replace[replace_k] = doc[k]
+                r['documents'][i] = replace
+            x = Document.decode(r).unpack()
+
+        else:
+            raise TypeError("Unexpected target of substitution in db.apply")
+        return x
+
     try:
         current = db.load(object.type_id, object.identifier)
 
@@ -186,6 +213,10 @@ def _apply(
         # also only
         current_serialized = current.dict(metadata=False, refs=True)
         del current_serialized['uuid']
+
+        serialized = serialized.map(
+            replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
+        )
 
         # finds the fields where there is a difference
         this_diff = Document(current_serialized, schema=current_serialized.schema).diff(
@@ -196,7 +227,11 @@ def _apply(
         if not this_diff:
             # if no change then update the component
             # to have the same info as the "existing" version
+
+            non_breaking_changes[object.uuid] = current.uuid
+
             current.handle_update_or_same(object)
+
             return create_events, job_events
 
         elif set(this_diff.keys(deep=True)).intersection(object.breaks):
@@ -237,6 +272,15 @@ def _apply(
 
         else:
             apply_status = 'update'
+
+            # the non-breaking changes lookup table
+            # allows components which are downstream
+            # from this component via references
+            # (e.g. `Listener` instances which listen to these outputs)
+            # to understand if they are now referring to the "original"
+            # or the "new" version.
+            non_breaking_changes[object.uuid] = current.uuid
+
             current.handle_update_or_same(object)
 
             serialized['version'] = current.version

@@ -93,6 +93,26 @@ class Listener(CDC):
                         f'dependency {deps[it]}'
                     )
 
+        if not self.upstream:
+            return
+
+        from collections import defaultdict
+
+        from superduper import Component
+
+        # This is to perform deduplication, in case an upstream
+        # listener has already been provided
+
+        huuids = [x.huuid if isinstance(x, Component) else x for x in self.upstream]
+        huuids = defaultdict(lambda: [])
+        for x in self.upstream:
+            if isinstance(x, Component):
+                huuids['&:component:' + x.huuid].append(x)
+            else:
+                huuids[x].append(x)
+
+        self.upstream = [x[0] for x in huuids.values()]
+
     @property
     def predict_id(self):
         """Predict ID property."""

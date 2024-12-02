@@ -202,7 +202,7 @@ class SuperDuperApp:
                     logging.info(f'Found existing template: {t}')
                     continue
                 logging.info(f'Applying template: {t}')
-                t = getattr(templates, t)
+                t = templates.get(t)
                 db.apply(t, force=True)
 
     def startup(

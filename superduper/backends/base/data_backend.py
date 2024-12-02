@@ -21,13 +21,16 @@ class BaseDataBackend(ABC):
 
     def __init__(self, uri: str, flavour: t.Optional[str] = None):
         self.conn = None
-        self.name = 'base'
         self.flavour = flavour
         self.in_memory: bool = False
         self.in_memory_tables: t.Dict = {}
         self._datalayer = None
         self.uri = uri
         self.bytes_encoding = 'bytes'
+
+    @property
+    def backend_name(self):
+        return self.__class__.__name__.split('DataBackend')[0].lower()
 
     @property
     def type(self):

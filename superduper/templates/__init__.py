@@ -28,17 +28,28 @@ def ls():
 
 
 def __getattr__(name: str):
-    assert name in TEMPLATES
-    file = TEMPLATES[name].split('/')[-1]
+    import re
+    if not re.match('.*[0-9]+\.[0-9]+\.[0-9]+.*', name):
+        assert name in TEMPLATES
+        file = TEMPLATES[name].split('/')[-1]
+        url = TEMPLATES[name]
+    else:
+        file = name + '.zip'
+        url = BASE_URL + f'/{name}.zip'
+
     if not os.path.exists(f'/tmp/{file}'):
         import subprocess
-
-        subprocess.run(['curl', '-O', '-k', TEMPLATES[name]])
+        subprocess.run(['curl', '-O', '-k', url])
         subprocess.run(['mv', file, f'/tmp/{file}'])
         subprocess.run(['unzip', f'/tmp/{file}', '-d', f'/tmp/{file[:-4]}'])
+
     t = Template.read(f'/tmp/{file[:-4]}')
     requirements_path = f'{file[:-4]}/requirements.txt'
     if os.path.exists(requirements_path):
         with open(requirements_path, 'r') as f:
             t.requirements = [x.strip() for x in f.read().split('\n') if x]
     return t
+
+
+def get(name):
+    return __getattr__(name)

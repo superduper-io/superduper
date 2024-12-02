@@ -279,8 +279,8 @@ def build_rest_app(app: SuperDuperApp):
             return [{'_base': output}], []
 
         if '_path' not in query:
-            plugin = db.databackend.type.__module__.split('.')[0]
-            query['_path'] = f'{plugin}.query.parse_query'
+            plugin = db.databackend.backend_name
+            query['_path'] = f'superduper_{plugin}.query.parse_query'
 
         q = Document.decode(query, db=db).unpack()
 

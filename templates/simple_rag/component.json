@@ -10,7 +10,7 @@
     "_base": "?simple-rag-app",
     "_builds": {
       "model:chunker": {
-        "_object": "&:blob:6bfd95310bb90a70a3f5c56139b7f8550e085735",
+        "_object": "&:blob:8fcce33acf9802bdceac19fa0b5a30d30af40502",
         "upstream": null,
         "plugins": null,
         "cache": true,
@@ -31,7 +31,7 @@
         "chunk_size": 200
       },
       "var-table-name-select-var-id-field-x": {
-        "_path": "superduper_<var:databackend>db.query.parse_query",
+        "_path": "superduper_<var:databackend>.query.parse_query",
         "documents": [],
         "query": "<var:table_name>.select(\"<var:id_field>\", \"x\")"
       },
@@ -75,7 +75,7 @@
         "batch_size": 100
       },
       "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
-        "_path": "superduper_<var:databackend>db.query.parse_query",
+        "_path": "superduper_<var:databackend>.query.parse_query",
         "documents": [],
         "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
       },
@@ -107,14 +107,14 @@
         "measure": "cosine",
         "metric_values": {}
       },
-      "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
-        "_path": "superduper_<var:databackend>db.query.parse_query",
+      "outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
+        "_path": "superduper_<var:databackend>.query.parse_query",
         "documents": [
           {
             "<var:output_prefix>chunker__?(listener:chunker.uuid)": "<var:query>"
           }
         ],
-        "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select().like(documents[0], vector_index=\"vectorindex\", n=5)"
+        "query": "<var:output_prefix>chunker__?(listener:chunker.uuid)\n<var:output_prefix>chunker__?(listener:chunker.uuid).select(query[0]).like(documents[0], vector_index=\"vectorindex\", n=5)"
       },
       "model:llm-model": {
         "_path": "superduper_openai.model.OpenAIChatCompletion",
@@ -163,7 +163,7 @@
         "trainer": null,
         "deploy": false,
         "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question. Please answer in 20 words or less.\n\n{context}\n\nHere's the question: {query}",
-        "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
+        "select": "?outputs-chunker-?(listener:chunker.uuid)-select-query-0-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
         "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
         "llm": "?model:llm-model"
       },
@@ -196,39 +196,36 @@
   "types": {
     "id_field": {
       "type": "str",
-      "default": "_id",
-      "tooltip": "The name of the id-field in the rows of your tables"
+      "default": "_id"
     },
     "embedding_model": {
       "type": "str",
+      "default": "text-embedding-ada-002",
       "choices": [
         "text-embedding-ada-002",
         "nomic-embed-text:latest"
-      ],
-      "default": "text-embedding-ada-002",
-      "tooltip": "The vectorization model used in your openai or ollama account"
+      ]
     },
     "llm_model": {
       "type": "str",
+      "default": "gpt-3.5-turbo",
       "choices": [
         "gpt-3.5-turbo",
         "gpt-4-turbo",
         "llama3.1:8b"
-      ],
-      "default": "gpt-3.5-turbo",
-      "tooltip": "The LLM model used in your openai or ollama account"
+      ]
     },
     "table_name": {
       "type": "str",
-      "default": "sample_simple_rag",
-      "tooltip": "Which table are the documents to be analysed stored in"
+      "default": "sample_simple_rag"
     }
   },
   "schema": {
-    "id_field": "id_field",
-    "embedding_model": "embedding_model",
-    "llm_model": "llm_model",
-    "table_name": "table_name"
+    "id_field": "str",
+    "embedding_model": "str",
+    "llm_model": "str",
+    "table_name": "str",
+    "databackend": "str"
   },
   "blobs": null,
   "files": null,
@@ -241,11 +238,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "2bc07b5afade42df"
+      "uuid": "88118d95130e4a22"
     },
     "schema:sample_simple_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "95f1a95170824162",
+      "uuid": "0965a065804f4101",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -258,17 +255,17 @@
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "bd363be101b94b8f",
+      "uuid": "6b489b303a9c456d",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:cc13138ca98061fafe937460ef929c53ae8cb52a"
+      "getter": "&:blob:dbea2bb8f7b2c787b1043be4588887ff295657b5"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "4ef75298354446bd",
+      "uuid": "c057875cef884e07",
       "upstream": null,
       "plugins": null,
       "cache": true,

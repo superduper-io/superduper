@@ -3,12 +3,12 @@ from test.utils.database import databackend as db_utils
 import pytest
 from superduper import CFG
 
-from superduper_mongodb.data_backend import MongoDataBackend
+from superduper_mongodb.data_backend import MongoDBDataBackend
 
 
 @pytest.fixture
 def databackend():
-    backend = MongoDataBackend(CFG.data_backend)
+    backend = MongoDBDataBackend(CFG.data_backend)
     yield backend
     backend.drop(True)
 

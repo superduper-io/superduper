@@ -20,7 +20,7 @@ from superduper_mongodb.utils import connection_callback
 from .query import MongoQuery
 
 
-class MongoDataBackend(BaseDataBackend):
+class MongoDBDataBackend(BaseDataBackend):
     """
     Data backend for MongoDB.
 

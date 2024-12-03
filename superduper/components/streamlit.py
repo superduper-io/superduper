@@ -25,6 +25,8 @@ class Streamlit(Component):
         def demo_func():
             return self.demo_func(db=self.db, **self.demo_kwargs)
 
+        demo_func.__name__ = self.identifier
+
         return st.Page(demo_func, title=self.identifier, default=self.default)
 
 
@@ -48,7 +50,7 @@ if __name__ == '__main__':
 
     import streamlit as st
 
-    landing = st.Page(func_default, title="Landing", default=True)
+    landing = st.Page(func_default, title="About", default=True)
     pg = st.navigation([landing, *pages])
-    st.set_page_config(page_title="Data manager", page_icon=":material/edit:")
+    st.set_page_config(page_title="Superduper demo server", page_icon=":material/edit:")
     pg.run()

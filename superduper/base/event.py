@@ -252,6 +252,7 @@ class Job(Event):
 events = {
     'signal': Signal,
     'change': Change,
+    'update': Update,
     'create': Create,
     'job': Job,
 }

@@ -139,7 +139,7 @@ def bootstrap(
             f.write('\n'.join(tem.requirements))
         subprocess.run(['pip', 'install', '-r', '/tmp/requirements.txt'])
 
-    db.apply(tem)
+    db.apply(tem, force=True)
 
 
 @command(help='Apply a template or application to a `superduper` deployment')

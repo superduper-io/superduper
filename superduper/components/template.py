@@ -60,7 +60,6 @@ class _BaseTemplate(Component):
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
-
         assert set(kwargs.keys()) == (
             set(self.template_variables) - {'output_prefix', 'databackend'}
         )

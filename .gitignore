@@ -197,3 +197,4 @@ test/sleep.json
 /deploy/testenv/requirements.txt
 /superduper/rest/superdupertmp
 /example*
+.cache

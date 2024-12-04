@@ -2,7 +2,6 @@ import typing as t
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 from superduper.backends.query_dataset import QueryDataset
-from superduper.base.enums import DBType
 from superduper.components.component import ensure_initialized
 from superduper.components.model import Model, Signature, _DeviceManaged
 
@@ -62,9 +61,9 @@ class SentenceTransformer(Model, _DeviceManaged):
             self.object = _SentenceTransformer(self.model, device=self.device)
             self._default_model = True
 
-    def dict(self, metadata: bool = True, defaults: bool = True):
+    def dict(self, metadata: bool = True, defaults: bool = True, refs: bool = False):
         """Serialize as a dictionary."""
-        r = super().dict(metadata=metadata, defaults=defaults)
+        r = super().dict(metadata=metadata, defaults=defaults, refs=refs)
         if self._default_model:
             del r['object']
         return r
@@ -125,4 +124,3 @@ class SentenceTransformer(Model, _DeviceManaged):
         """
         if self.datatype is not None:
             return
-

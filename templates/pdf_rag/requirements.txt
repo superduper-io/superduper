@@ -2,5 +2,3 @@ plugins/openai
 plugins/sentence_transformers
 pdf2image
 unstructured[pdf]
-superduper_anthropic
-superduper_vllm

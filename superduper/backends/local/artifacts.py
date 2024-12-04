@@ -88,7 +88,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
         with open(path, 'wb') as f:
             f.write(serialized)
-        os.chmod(path, 0777)
+        os.chmod(path, 777)
 
     def get_bytes(self, file_id: str) -> bytes:
         """
@@ -117,7 +117,7 @@ class FileSystemArtifactStore(ArtifactStore):
             shutil.copytree(file_path, save_path)
         else:
             shutil.copy(file_path, save_path)
-        os.chmod(save_path, 0777)
+        os.chmod(save_path, 777)
         return file_id
 
     def get_file(self, file_id: str) -> str:

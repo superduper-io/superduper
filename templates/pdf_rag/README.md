@@ -38,7 +38,7 @@ export SUPERDUPER_DATA_BACKEND=mongodb://host.docker.internal:27017/test_db
 export SUPERDUPER_ARTIFACT_STORE=filesystem://./data
 ```
 
-***Prepare the app with your choice of models and data**
+**Prepare the app with your choice of models and data**
 
 ```bash
 bash templates/pdf_rag/start.sh bodybuilder <embedding_model> <llm_model>

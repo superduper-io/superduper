@@ -126,9 +126,3 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.datatype is not None:
             return
 
-        from superduper.components.vector_index import sqlvector, vector
-
-        if db.databackend.db_type == DBType.SQL:
-            self.datatype = sqlvector(shape=self.shape)
-        else:
-            self.datatype = vector(shape=self.shape)

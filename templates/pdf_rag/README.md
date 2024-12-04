@@ -56,7 +56,7 @@ For example, on Ollama:
 bash templates/pdf_rag/start.sh bodybuilder nomic-embed-text:latest llama3.1:70b
 ```
 
-***Run the app's frontend**
+**Run the app's frontend**
 
 ```bash
 python3 -m streamlit run templates/pdf-rag/streamlit.py

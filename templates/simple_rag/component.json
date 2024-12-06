@@ -10,7 +10,7 @@
     "_base": "?simple-rag-app",
     "_builds": {
       "model:chunker": {
-        "_object": "&:blob:d00327140f722a84c4d86a6f34b80d38ada07db9",
+        "_object": "&:blob:26b5d7fea3a717415a6a26fe5553e6fe24c035f1",
         "upstream": null,
         "plugins": null,
         "cache": true,
@@ -228,7 +228,10 @@
   "blobs": null,
   "files": null,
   "requirements": null,
-  "default_table": "?table:sample_simple_rag",
+  "default_tables": [
+    "?table:sample_simple_rag"
+  ],
+  "staged_file": null,
   "queries": null,
   "_literals": [
     "template"
@@ -236,11 +239,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "2de054f155fb4fa9"
+      "uuid": "87367228add245bf"
     },
     "schema:sample_simple_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "5ec62406d85a4db9",
+      "uuid": "7d4160707dd9433e",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -253,17 +256,17 @@
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "ed07f690b6834b96",
+      "uuid": "4a00c2a7d1834ca3",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:68c35853625b61260ff74705fd1cf8d537caa79e"
+      "getter": "&:blob:79ce3dfb3c6c84bb7337688e86681e4848847bbb"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "dc1821abae974b67",
+      "uuid": "c616f83b95fd46ef",
       "upstream": null,
       "plugins": null,
       "cache": true,

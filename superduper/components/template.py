@@ -60,6 +60,7 @@ class _BaseTemplate(Component):
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
+
         assert set(kwargs.keys()) == (
             set(self.template_variables) - {'output_prefix', 'databackend'}
         )
@@ -99,14 +100,17 @@ class Template(_BaseTemplate):
     """Application template component.
 
     :param requirements: pip requirements for the template.
-    :param default_table: Default table to be used with the template.
+    :param default_tables: Default table to be used with the template.
+    :param staged_file: A file which should be staged after installing the template.
     :param queries: `QueryTemplate` instances to be used with the template.
     """
 
+    _fields = {'staged_file': 'file'}
     type_id: t.ClassVar[str] = "template"
 
     requirements: t.List[str] | None = None
-    default_table: Table | None = None
+    default_tables: t.List[Table] | None = None
+    staged_file: str | None = None
     queries: t.List['QueryTemplate'] | None = None
 
     def _pre_create(self, db: Datalayer) -> None:

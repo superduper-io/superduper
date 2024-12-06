@@ -10,7 +10,7 @@
     "_base": "?simple-rag-app",
     "_builds": {
       "model:chunker": {
-        "_object": "&:blob:26b5d7fea3a717415a6a26fe5553e6fe24c035f1",
+        "_object": "&:blob:ef8655ee5f19aa0d2a7fb09d4c46aeedceb2bd24",
         "upstream": null,
         "plugins": null,
         "cache": true,
@@ -166,6 +166,29 @@
         "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
         "llm": "?model:llm-model"
       },
+      "plugin:plugin-demo_py": {
+        "_path": "superduper.components.plugin.Plugin",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "path": "&:file:9c9e4b89367007582586a03565c5b6b43f070f1f",
+        "cache_path": "~/.superduper/plugins"
+      },
+      "streamlit:simple-rag-demo": {
+        "_path": "superduper.components.streamlit.Streamlit",
+        "upstream": [
+          "?plugin:plugin-demo_py"
+        ],
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "demo_func": "&:blob:c663645459821c0f6a085c0f21d2ae498d037bdd",
+        "demo_kwargs": {},
+        "default": false
+      },
       "simple-rag-app": {
         "_path": "superduper.components.application.Application",
         "upstream": null,
@@ -176,7 +199,8 @@
         "components": [
           "?listener:chunker",
           "?vector_index:vectorindex",
-          "?model:simple_rag"
+          "?model:simple_rag",
+          "?streamlit:simple-rag-demo"
         ],
         "namespace": null,
         "link": null,
@@ -239,11 +263,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "87367228add245bf"
+      "uuid": "febc200679094b58"
     },
     "schema:sample_simple_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "7d4160707dd9433e",
+      "uuid": "072995725c184c7c",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -256,17 +280,17 @@
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "4a00c2a7d1834ca3",
+      "uuid": "c25678c26fd34bbb",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:79ce3dfb3c6c84bb7337688e86681e4848847bbb"
+      "getter": "&:blob:09e5f267190b83b6904c5f893cdbb437b9c7b871"
     },
     "table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "c616f83b95fd46ef",
+      "uuid": "c0ac7c716c8a44b4",
       "upstream": null,
       "plugins": null,
       "cache": true,

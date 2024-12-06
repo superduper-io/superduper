@@ -460,38 +460,24 @@ class Model(Component, metaclass=ModelMeta):
         predict_id: str,
         overwrite: bool = False,
     ):
+        # TODO why all this complex logic just to get ids
         if not self.db.databackend.check_output_dest(predict_id):
             overwrite = True
         try:
             if not overwrite:
                 if ids:
-                    select = select.select_using_ids(ids)
+                    select = select.select(select.primary_id)
                 # TODO - this is broken
-                query = select.select_ids_of_missing_outputs(predict_id=predict_id)
-
+                # query = select.select_ids_of_missing_outputs(predict_id=predict_id)
+                predict_ids = select.missing_ids(predict_id).execute()
             else:
                 if ids:
                     return ids
-                query = select.select_ids
+                predict_ids = select.ids()
         except FileNotFoundError:
             # This is case for sql where Table is not created yet
             # and we try to access `db.load('table', name)`.
             return []
-        try:
-            id_field = self.db.databackend.id_field
-        except AttributeError:
-            id_field = query.table_or_collection.primary_id
-
-        # TODO: Find better solution to support in-memory (pandas)
-        # Since pandas has a bug, it cannot join on empty table.
-        try:
-            id_curr = self.db.execute(query)
-        except DatabackendException:
-            id_curr = self.db.execute(select.select(id_field))
-
-        predict_ids = []
-        for r in tqdm.tqdm(id_curr):
-            predict_ids.append(str(r[id_field]))
 
         if ids and len(predict_ids) > len(ids):
             raise Exception(
@@ -564,8 +550,11 @@ class Model(Component, metaclass=ModelMeta):
     ):
         X_data: t.Any
         mapping = Mapping(X, self.signature)
+
         if in_memory:
-            docs = list(self.db.execute(select.select_using_ids(ids)))
+            t = self.db[select.table]
+            select_using_ids = select.filter(t.primary_id.isin(ids))
+            docs = select_using_ids.execute()
             X_data = list(map(lambda x: mapping(x), docs))
         else:
             assert isinstance(self.db, Datalayer)
@@ -654,6 +643,7 @@ class Model(Component, metaclass=ModelMeta):
                 )
                 it += 1
             return output_ids
+
         dataset, _ = self._prepare_inputs_from_select(
             X=X,
             select=select,
@@ -668,22 +658,27 @@ class Model(Component, metaclass=ModelMeta):
             self.version, int
         ), 'Version has not been set, can\'t save outputs...'
 
-        update = select.model_update(
-            db=self.db,
-            predict_id=predict_id,
-            outputs=outputs,
-            ids=ids,
-            flatten=flatten,
-            **self.model_update_kwargs,
-        )
-        output_ids = []
-        if update:
-            # Don't use auto_schema for inserting model outputs
-            if update.type == 'insert':
-                output_ids = update.execute(db=self.db, auto_schema=True)
-            else:
-                output_ids = update.execute(db=self.db)
-        return output_ids
+        if flatten:
+            documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    f'{CFG.output_prefix}{predict_id}': sub_output,
+                }
+                for id, output in zip(ids, outputs)
+                for sub_output in output
+            ]
+        else:
+            documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    f'{CFG.output_prefix}{predict_id}': output,
+                }
+                for id, output in zip(ids, outputs)
+            ]
+
+        return self.db[f'{CFG.output_prefix}{predict_id}'].insert(documents).execute()
 
     def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.

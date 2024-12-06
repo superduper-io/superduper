@@ -82,7 +82,7 @@ class Datalayer:
         self.startup_cache: t.Dict[str, t.Any] = {}
 
     def __getitem__(self, item):
-        return self.databackend.get_query_builder(item)
+        return Query(table=item, parts=(), db=self)
 
     @property
     def cdc(self):
@@ -251,6 +251,42 @@ class Datalayer:
             )
         return result
 
+    def _prepare_insert(self, insert: Query, auto_schema: bool = True):
+
+        for r in insert.documents:
+            r.setdefault(
+                '_fold',
+                'train' if random.random() >= s.CFG.fold_probability else 'valid',
+            )
+
+        if auto_schema and self.cfg.auto_schema:
+            self._auto_create_table(insert.table, insert.documents).schema
+
+            timeout = 5
+
+            import time
+
+            start = time.time()
+
+            exists = False
+            while time.time() - start < timeout:
+                try:
+                    assert insert.table in self.show(
+                        'table'
+                    ), f'{insert.table} not found, retrying...'
+                    exists = True
+                except AssertionError as e:
+                    logging.warn(str(e))
+                    time.sleep(0.25)
+                    continue
+                break
+
+            if not exists:
+                raise TimeoutError(
+                    f'{insert.table} not found after {timeout} seconds'
+                    ' table auto creation likely has failed or is stalling...'
+                )
+
     def _insert(
         self,
         insert: Query,
@@ -331,7 +367,7 @@ class Datalayer:
 
         # Should we need to check all the documents?
         document = documents[0]
-        schema = document.schema or self.infer_schema(document)
+        schema = self.infer_schema(document)
         table = Table(identifier=table_name, schema=schema)
         logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
         self.apply(table, force=True)
@@ -343,7 +379,7 @@ class Datalayer:
 
         :param select: The select query object specifying the data to be retrieved.
         """
-        return select.do_execute(db=self)
+        return select.execute()
 
     def on_event(self, table: str, ids: t.List[str], event_type: 'str'):
         """
@@ -827,8 +863,8 @@ class Datalayer:
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
+        # TODO have a slightly more user-friendly schema
         from superduper.misc.auto_schema import infer_schema
-
         return infer_schema(data, identifier=identifier)
 
     @property

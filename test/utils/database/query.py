@@ -4,6 +4,7 @@ import pytest
 from superduper.base.document import Document
 
 
+
 def test_insert(db):
     db.cfg.auto_schema = True
 

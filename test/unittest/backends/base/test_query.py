@@ -7,6 +7,10 @@ def test_insert(db):
     query_utils.test_insert(db)
 
 
+def test_serialize_deserialize(db):
+    query_utils.test_serialize_deserialize(db)
+
+
 def test_read(db):
     query_utils.test_read(db)
 

@@ -3,7 +3,6 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduper import logging
-from superduper.backends.base.query import Query
 from superduper.components.datatype import BaseDataType
 
 if t.TYPE_CHECKING:
@@ -18,7 +17,7 @@ class BaseDataBackend(ABC):
     :param flavour: Flavour of the databackend.
     """
 
-    db_type = None
+    id_field: str = 'id'
 
     def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.conn = None
@@ -29,6 +28,10 @@ class BaseDataBackend(ABC):
         self._datalayer = None
         self.uri = uri
         self.bytes_encoding = 'bytes'
+
+    @property
+    def database(self):
+        raise NotImplementedError
 
     @property
     def backend_name(self):
@@ -47,6 +50,15 @@ class BaseDataBackend(ABC):
     @abstractmethod
     def drop_outputs(self):
         """Drop all outputs."""
+
+    @abstractmethod
+    def random_id(self):
+        """Generate random-id"""
+        pass
+
+    @abstractmethod
+    def to_id(self, id):
+        pass
 
     @property
     def datalayer(self):

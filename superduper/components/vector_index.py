@@ -173,8 +173,7 @@ class VectorIndex(CDC):
         # TODO do this using the backfill_vector_search functionality here
         if ids is None:
             assert self.indexing_listener.select is not None
-            cur = select.select_ids.execute()
-            ids = [r[select.primary_id] for r in cur]
+            ids = select.ids()
             docs = [r.unpack() for r in select.execute()]
         else:
             docs = [r.unpack() for r in select.select_using_ids(ids).execute()]

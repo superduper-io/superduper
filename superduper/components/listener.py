@@ -207,7 +207,7 @@ class Listener(CDC):
                         raise Exception(msg.format(table=self.cdc_table)) from e
             else:
                 try:
-                    r = next(self.select.limit(1).execute())
+                    r = self.select.get()
                 except (StopIteration, KeyError, FileNotFoundError) as e:
                     raise Exception(msg.format(table=self.select)) from e
             mapping = Mapping(self.key, self.model.signature)

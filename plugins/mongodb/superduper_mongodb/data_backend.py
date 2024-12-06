@@ -1,10 +1,8 @@
+from bson.objectid import ObjectId
 import os
 import typing as t
 
 import click
-import mongomock
-import pymongo
-import pymongo.collection
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
@@ -39,6 +37,17 @@ class MongoDBDataBackend(BaseDataBackend):
             'vector': 'superduper.components.datatype.NativeVector'
         }
 
+    @property
+    def database(self):
+        return self._db
+
+    def random_id(self):
+        return ObjectId()
+
+    def to_id(self, id): 
+        return ObjectId(id)
+
+    # TODO move to the super
     def reconnect(self):
         """Reconnect to MongoDB databackend."""
         conn, _ = self.connection_callback()

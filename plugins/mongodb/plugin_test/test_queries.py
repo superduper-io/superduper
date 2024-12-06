@@ -1,4 +1,5 @@
 import random
+from superduper.backends.base.query import Query
 from test.utils.setup.fake_data import (
     add_listeners,
     add_models,
@@ -28,6 +29,186 @@ def get_new_data(n=10, update=False):
             )
         )
     return data
+
+
+def test_insert(db):
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+    r = db.databackend._db.documents.find_one()
+    assert 'x' in r
+
+
+def test_select_table(db):
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    results = db['documents'].execute()
+    assert len(results) == 10
+
+
+def test_ids(db):
+
+    db.cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    results = db['documents'].ids()
+
+    assert len(results) == 10
+
+    assert all(isinstance(x, str) for x in results)
+
+
+def test_subset(db):
+
+    db.cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    ids = db['documents'].ids()
+    results = db['documents'].subset(ids[:5])
+
+    assert set([r['_id'] for r in results]) == set(ids[:5])
+
+
+def test_select_all_cols(db):
+
+    db.cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    q = db['documents'].select()
+
+    results = q.execute()
+
+    assert len(results) == 10
+
+
+def test_select_one_col(db):
+
+    db.cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    q = db['documents'].select('x')
+
+    results = q.execute()
+
+    assert set(results[0].keys()) == {'x'}
+
+
+def test_filter(db):
+
+    db.cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    t = db['documents']
+
+    q = t.filter(t['x'] == 1)
+
+    results = q.execute()
+
+    assert len(results) == 1
+
+    assert results[0]['x'] == 1
+
+
+def test_filter_select(db):
+
+    db['documents'].cfg.auto_schema = True
+
+    db['documents'].insert([{'x': i} for i in range(10)]).execute()
+
+    t = db['documents']
+
+    q = t.filter(t['x'] == 2).select('_id')
+
+    r = q.execute()[0]
+
+    assert set(r.keys()) == {'_id'}
+
+
+def test_outputs(db):
+
+    db['documents'].cfg.auto_schema = True
+    
+    ids = db['documents'].insert([{'x': i} for i in range(10)]).execute()
+    db['_outputs__a__123'].insert([{'_outputs__a__123': i + 2, '_source': id} for i, id in enumerate(ids)]).execute()
+    outputs = db['documents'].outputs('a__123').execute()
+    print(outputs)
+
+    for r in outputs:
+        assert r['x'] + 2 == r['_outputs__a__123']
+
+
+class ToSave:
+    def __init__(self, x):
+        self.x = x
+
+
+def test_encode_decode_data(db):
+
+    db.cfg.auto_schema = True
+    db['docs'].insert([{'x': ToSave(i)} for i in range(10)]).execute()
+
+    results = db['docs'].execute()
+
+    assert isinstance(results[0]['x'], ToSave)
+
+
+def test_pre_like(db):
+    db.cfg.auto_schema = True
+
+    import numpy
+    from superduper import model
+
+    @model
+    def my_model(x):
+        return numpy.array([float(x + 1) for _ in range(5)])
+
+    db['docs'].insert([{'x': i} for i in range(10)]).execute()
+
+    index = my_model.to_vector_index(identifier='my_index', key='x', select=db['docs'].select())
+
+    db.apply(index)
+
+    q = db['docs'].like({'x': 2}, 'my_index', n=2).select()
+
+    results = q.execute()
+
+    assert len(results) == 2
+
+    assert all('_id' in r for r in results)
+
+    import pprint
+    pprint.pprint(results)
+
+
+def test_post_like(db):
+    db.cfg.auto_schema = True
+
+    import numpy
+    from superduper import model
+
+    @model
+    def my_model(x):
+        return numpy.array([float(x + 1) for _ in range(5)])
+
+    db['docs'].insert([{'x': i} for i in range(10)]).execute()
+
+    index = my_model.to_vector_index(identifier='my_index', key='x', select=db['docs'].select())
+
+    db.apply(index)
+
+    q = db['docs'].select().like({'x': 2}, 'my_index', n=2)
+
+    results = q.execute()
+
+    assert len(results) == 2
+
+    assert all('_id' in r for r in results)
+
+    import pprint
+    pprint.pprint(results)
 
 
 def test_delete_many(db):

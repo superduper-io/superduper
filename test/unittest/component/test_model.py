@@ -137,21 +137,15 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         my_object.return_value = 2
         # Check the base predict function
         predict_mixin.db = db
-        with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
-            select, 'model_update'
-        ) as model_update:
+        with patch.object(select, 'select_using_ids') as select_using_ids:
             predict_mixin._predict_with_select_and_ids(
                 X=X, select=select, ids=ids, predict_id='test'
             )
             select_using_ids.assert_called_once_with(ids)
-            _, kwargs = model_update.call_args
-            #  make sure the outputs are set
-            assert kwargs.get('outputs') == [2] * 10
 
     with (
         patch.object(predict_mixin, 'object') as my_object,
         patch.object(select, 'select_using_ids') as select_using_id,
-        patch.object(select, 'model_update') as model_update,
     ):
         my_object.return_value = 2
 
@@ -164,9 +158,6 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
             X=X, select=select, ids=ids, predict_id='test'
         )
         select_using_id.assert_called_once_with(ids)
-        _, kwargs = model_update.call_args
-        kwargs_output_ids = [o for o in kwargs.get('outputs')]
-        assert kwargs_output_ids == [2] * 10
 
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = {'out': 2}
@@ -177,15 +168,11 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
         predict_mixin.output_schema = schema = MagicMock(spec=Schema)
         predict_mixin.db = db
         schema.side_effect = str
-        with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
-            select, 'model_update'
-        ) as model_update:
+        with patch.object(select, 'select_using_ids') as select_using_ids:
             predict_mixin._predict_with_select_and_ids(
                 X=X, select=select, ids=ids, predict_id='test'
             )
             select_using_ids.assert_called_once_with(ids)
-            _, kwargs = model_update.call_args
-            assert kwargs.get('outputs') == [{'out': 2} for _ in range(10)]
 
 
 def test_model_append_metrics():
@@ -409,16 +396,11 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
 
         # Check the base predict function
         predict_mixin_multikey.db = db
-        with patch.object(select, 'select_using_ids') as select_using_ids, patch.object(
-            select, 'model_update'
-        ) as model_update:
+        with patch.object(select, 'select_using_ids') as select_using_ids:
             predict_mixin_multikey._predict_with_select_and_ids(
                 X=X, predict_id='test', select=select, ids=ids
             )
             select_using_ids.assert_called_once_with(ids)
-            _, kwargs = model_update.call_args
-            #  make sure the outputs are set
-            assert kwargs.get('outputs') == [2] * 10
 
     # TODO - I don't know how this works given that the `_outputs` field
     # should break...

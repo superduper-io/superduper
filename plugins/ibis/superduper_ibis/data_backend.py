@@ -1,5 +1,6 @@
 import glob
 import os
+import uuid
 import typing as t
 from warnings import warn
 
@@ -70,6 +71,12 @@ class IbisDataBackend(BaseDataBackend):
             self.bytes_encoding = 'base64'
 
         self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
+
+    def random_id(self):
+        return str(uuid.uuid4())
+
+    def to_id(self, id):
+        return str(id)
 
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")

@@ -33,6 +33,7 @@ class Table(Component):
         fields.update(self.schema.fields)
         schema_version = self.schema.version
 
+        # TODO make globally configurable
         if '_fold' not in self.schema.fields:
             fields.update({'_fold': 'str'})
 
@@ -42,6 +43,10 @@ class Table(Component):
             db=db,
         )
         self.schema.version = schema_version
+
+    def cleanup(self, db):
+        if self.identifier.startswith(CFG.output_prefix):
+            db.databackend.drop_table(self.identifier)
 
     def on_create(self, db: 'Datalayer'):
         """Create the table, on creation of the component.
@@ -70,4 +75,4 @@ class Table(Component):
         else:
             data = self.data
         if data:
-            self.db[self.identifier].insert(data).execute()
+            self.db[self.identifier].insert(data)

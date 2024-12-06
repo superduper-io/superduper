@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from superduper import Application, Document
-from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel, Trainer
@@ -24,8 +23,8 @@ class _Tmp(ObjectModel):
     ...
 
 
-def test_listener_serializes_properly():
-    q = Query(table='test').find({}, {})
+def test_listener_serializes_properly(db):
+    q = db['test'].select()
     listener = Listener(
         identifier="listener",
         model=ObjectModel("test", object=lambda x: x),
@@ -58,7 +57,7 @@ def test_listener_chaining(db):
                 )
             )
 
-        db.execute(table.insert(data))
+        table.insert(data)
 
     # Insert data
     insert_random()
@@ -85,7 +84,7 @@ def test_listener_chaining(db):
     db.apply(listener2)
 
     def check_listener_output(listener, output_n):
-        docs = db[listener.outputs].select().tolist()
+        docs = db[listener.outputs].select().execute()
         assert len(docs) == output_n
         assert all([listener.outputs in r for r in docs])
 
@@ -120,9 +119,7 @@ def test_create_output_dest(db, data, flatten):
         "m1",
         object=lambda x: data if not flatten else [data] * 10,
     )
-    q = table.insert([{"x": 1}])
-
-    db.execute(q)
+    table.insert([{"x": 1}])
 
     listener1 = Listener(
         model=m1,
@@ -134,7 +131,7 @@ def test_create_output_dest(db, data, flatten):
 
     db.apply(listener1)
 
-    doc = db[listener1.outputs].select().tolist()[0]
+    doc = db[listener1.outputs].select().get()
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))
     if isinstance(data, np.ndarray):
@@ -164,9 +161,7 @@ def test_listener_cleanup(db, data):
         "m1",
         object=lambda x: data,
     )
-    q = table.insert([{"x": 1}])
-
-    db.execute(q)
+    table.insert([{"x": 1}])
 
     listener1 = Listener(
         model=m1,
@@ -176,7 +171,7 @@ def test_listener_cleanup(db, data):
     )
 
     db.add(listener1)
-    doc = db[listener1.outputs].select().tolist()[0]
+    doc = db[listener1.outputs].select().execute()[0]
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))
     if isinstance(data, np.ndarray):
@@ -216,7 +211,7 @@ def test_listener_chaining_with_trainer(db, cleanup):
                 )
             )
 
-        db.execute(table.insert(data))
+        table.insert(data)
 
     # Insert data
     insert_random()
@@ -294,7 +289,7 @@ def test_predict_id_utils(db):
         ]
     )
 
-    db.execute(q)
+    q.execute()
 
     listener1 = Listener(
         model=m1,
@@ -309,19 +304,18 @@ def test_predict_id_utils(db):
     outputs = listener1.outputs
     # Listener identifier is set as the table name
     select = db[outputs].select()
-    docs = select.tolist()
-    # docs = list(db.execute(select))
+    docs = select.execute()
     assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]
 
     # Listener identifier is set as the table name and filter is applied
     table = db[outputs].select()
     select = table.filter(table[outputs] > 1)
-    docs = select.tolist()
+    docs = select.execute()
     assert [doc[listener1.outputs] for doc in docs] == [2, 3]
 
     # Listener identifier is set as the predict_id in outputs()
     select = db["test"].select().outputs('listener1')
-    docs = select.tolist()
+    docs = select.execute()
     assert [doc[listener1.outputs] for doc in docs] == [1, 2, 3]
 
 
@@ -341,11 +335,9 @@ def test_complete_uuids(db):
         ]
     )
 
-    db.execute(q)
-
     l1 = Listener(
         model=m1,
-        select=db['test'].select(),
+        select=db['test'],
         key="x",
         identifier="l1",
     )
@@ -358,7 +350,7 @@ def test_complete_uuids(db):
 
     assert f'"{l1.predict_id}"' in str(qq) or l1.predict_id in str(qq)
 
-    results = q.tolist()
+    results = q.execute()
 
     assert results[0]['_outputs__l1'] == results[0][l1.outputs]
 
@@ -377,7 +369,7 @@ def test_autofill_data_listener(db):
             {"x": 2},
             {"x": 3},
         ]
-    ).execute()
+    )
     l1 = m.to_listener(select=db['test'].select(), key='x', identifier='l1')
     l2 = m.to_listener(select=db[l1.outputs].select(), key=l1.outputs, identifier='l2')
 

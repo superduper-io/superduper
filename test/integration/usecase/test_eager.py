@@ -24,9 +24,9 @@ def test_graph_deps(db: "Datalayer"):
         {"x": 3, "y": "4", "z": Tuple(7, 8, 9)},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
-    data = list(db["documents"].select().execute(eager_mode=True))[0]
+    data = db["documents"].select().execute(eager_mode=True)[0]
 
     def func_a(x):
         return Tuple(x, "a")
@@ -74,7 +74,7 @@ def test_graph_deps(db: "Datalayer"):
         {"x": 6, "y": "7", "z": Tuple(16, 17, 18)},
     ]
 
-    db["documents"].insert(new_data).execute()
+    db["documents"].insert(new_data)
 
     new_data = Document(
         list(
@@ -102,9 +102,9 @@ def test_flatten(db: "Datalayer"):
         {"n": 3, "x": "c"},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
-    data = list(db["documents"].select().execute(eager_mode=True))[0]
+    data = db["documents"].select().execute(eager_mode=True)[0]
 
     def func_a(n, x):
         return [x] * n
@@ -115,9 +115,7 @@ def test_flatten(db: "Datalayer"):
     output_a.apply()
     pprint(output_a)
 
-    outputs = list(
-        db[f'_outputs__{output_a.predict_id}'].select().execute(eager_mode=True)
-    )
+    outputs = db[f'_outputs__{output_a.predict_id}'].select().execute(eager_mode=True)
     assert len(outputs) == 6
 
     results = [o[f'_outputs__{output_a.predict_id}'].data for o in outputs]
@@ -133,9 +131,9 @@ def test_predict_id(db: "Datalayer"):
         {"x": 1},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
-    data = list(db["documents"].select().execute(eager_mode=True))[0]
+    data = db["documents"].select().execute(eager_mode=True)[0]
 
     model_a = ObjectModel(identifier="a", object=lambda x: f"{x}->a")
 
@@ -170,9 +168,9 @@ def test_condition(db: "Datalayer"):
         {"x": 3},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
-    data = list(db["documents"].select().execute(eager_mode=True))[0]
+    data = db["documents"].select().execute(eager_mode=True)[0]
 
     model = ObjectModel(identifier="a", object=lambda x: f"{x}->a")
 

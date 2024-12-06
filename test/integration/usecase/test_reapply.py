@@ -14,7 +14,7 @@ class MyModel(Model):
 def test_reapply(db):
     db.cfg.auto_schema = True
 
-    db['docs'].insert([{'x': i} for i in range(10)]).execute()
+    db['docs'].insert([{'x': i} for i in range(10)])
 
     def build(name, data):
         model = MyModel('test', a=name, b=data)
@@ -34,7 +34,7 @@ def test_reapply(db):
 
     db.apply(listener_2)
 
-    outputs = db[listener_2.outputs].select().tolist()
+    outputs = db[listener_2.outputs].select().execute()
 
     import pprint
 

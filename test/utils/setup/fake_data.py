@@ -52,7 +52,7 @@ def add_random_data(
         fold = int(random.random() > 0.5)
         fold = "valid" if fold else "train"
         data.append({"id": str(i), "x": x, "y": y, "z": z, "_fold": fold})
-    db[table_name].insert(data).execute()
+    db[table_name].insert(data)
 
 
 def add_datatypes(db: Datalayer):

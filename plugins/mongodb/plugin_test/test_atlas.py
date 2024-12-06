@@ -11,8 +11,6 @@ from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.vector_index import VectorIndex
 
-from superduper_mongodb.query import MongoDBQuery
-
 try:
     client = pymongo.MongoClient(CFG.data_backend)
     build_info = client.admin.command('buildInfo')
@@ -56,7 +54,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
         encoder=Vector(dtype='float64', shape=(16,)),
     )
     db = superduper()
-    collection = MongoDBQuery(table='docs')
+    collection = db['docs']
 
     vector_indexes = db.data_backend.list_vector_indexes()
 
@@ -64,11 +62,8 @@ def test_setup_atlas_vector_search(atlas_search_config):
 
     import lorem
 
-    db.execute(
-        collection.insert_many(
-            [Document({'text': lorem.sentence()}) for _ in range(50)]
-        )
-    )
+    db['docs'].insert([{'text': lorem.sentence()} for _ in range(50)])
+
     db.apply(
         VectorIndex(
             'test-vector-index',
@@ -87,11 +82,14 @@ def test_setup_atlas_vector_search(atlas_search_config):
 @pytest.mark.skipif(DO_SKIP, reason='Only atlas deployments relevant.')
 def test_use_atlas_vector_search(atlas_search_config):
     db = superduper()
-    collection = MongoDBQuery(table='docs')
 
-    query = collection.like(
-        Document({'text': 'This is a test'}), n=5, vector_index='test-vector-index'
-    ).find()
+    query = (
+        db['docs']
+        .like(
+            Document({'text': 'This is a test'}), n=5, vector_index='test-vector-index'
+        )
+        .select()
+    )
 
     it = 0
     for r in db.execute(query):

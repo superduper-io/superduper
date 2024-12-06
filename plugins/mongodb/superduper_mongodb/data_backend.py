@@ -2,19 +2,27 @@ import os
 import typing as t
 
 import click
-import mongomock
-import pymongo
-import pymongo.collection
+from bson.objectid import ObjectId
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStoreProxy
-from superduper.components.datatype import BaseDataType
+from superduper.backends.base.query import Query
 from superduper.components.schema import Schema
 from superduper.misc.colors import Colors
 
 from superduper_mongodb.artifacts import MongoDBArtifactStore
 from superduper_mongodb.metadata import MongoDBMetaDataStore
 from superduper_mongodb.utils import connection_callback
+
+OPS_MAP = {
+    '__eq__': '$eq',
+    '__ne__': '$ne',
+    '__lt__': '$lt',
+    '__le__': '$lte',
+    '__gt__': '$gt',
+    '__ge__': '$gte',
+    'isin': '$in',
+}
 
 
 class MongoDBDataBackend(BaseDataBackend):
@@ -33,21 +41,28 @@ class MongoDBDataBackend(BaseDataBackend):
         super().__init__(uri, flavour=flavour, plugin=plugin)
 
         self.conn, self.name = connection_callback(uri, flavour)
-        self._db = self.conn[self.name]
+        self._database = self.conn[self.name]
 
         self.datatype_presets = {
             'vector': 'superduper.components.datatype.NativeVector'
         }
 
+    def random_id(self):
+        """Generate a random ID."""
+        return ObjectId()
+
+    # TODO move to the super
     def reconnect(self):
         """Reconnect to MongoDB databackend."""
         conn, _ = self.connection_callback()
         self.conn = conn
-        self._db = self.conn[self.name]
+        self._database = self.conn[self.name]
 
     def build_metadata(self):
         """Build the metadata store for the data backend."""
-        return MetaDataStoreProxy(MongoDBMetaDataStore(callback=self.connection_callback))
+        return MetaDataStoreProxy(
+            MongoDBMetaDataStore(callback=self.connection_callback)
+        )
 
     def build_artifact_store(self):
         """Build the artifact store for the data backend."""
@@ -62,19 +77,13 @@ class MongoDBDataBackend(BaseDataBackend):
             return FileSystemArtifactStore(f"/tmp/{self.name}")
         return MongoDBArtifactStore(self.conn, f"_filesystem:{self.name}")
 
-    def drop_outputs(self):
-        """Drop all outputs."""
-        for collection in self._db.list_collection_names():
-            if collection.startswith(CFG.output_prefix):
-                self._db.drop_collection(collection)
-
     def drop_table(self, name: str):
         """Drop the table or collection.
 
         Please use with caution as you will lose all data.
         :param name: Collection to drop.
         """
-        return self._db.drop_collection(name)
+        return self._database.drop_collection(name)
 
     def drop(self, force: bool = False):
         """Drop the data backend.
@@ -91,45 +100,25 @@ class MongoDBDataBackend(BaseDataBackend):
                 default=False,
             ):
                 logging.warn("Aborting...")
-        return self._db.client.drop_database(self._db.name)
+        return self._database.client.drop_database(self._database.name)
 
     def get_table(self, identifier):
         """Get a table or collection from the data backend.
 
         :param identifier: table or collection identifier
         """
-        return self._db[identifier]
+        return self._database[identifier]
 
     def list_tables(self):
         """List all tables or collections in the data backend."""
-        return self._db.list_collection_names()
-
-    def disconnect(self):
-        """Disconnect the client."""
-        # TODO: implement me
-
-    def create_output_dest(
-        self,
-        predict_id: str,
-        datatype: t.Union[str, BaseDataType],
-        flatten: bool = False,
-    ):
-        """Create an output collection for a component.
-
-        That will do nothing for MongoDB.
-
-        :param predict_id: The predict id of the output destination
-        :param datatype: datatype of component
-        :param flatten: flatten the output
-        """
-        pass
+        return self._database.list_collection_names()
 
     def check_output_dest(self, predict_id) -> bool:
         """Check if the output destination exists.
 
         :param predict_id: identifier of the prediction
         """
-        return self._db[f"{CFG.output_prefix}{predict_id}"].find_one() is not None
+        return self._database[f"{CFG.output_prefix}{predict_id}"].find_one() is not None
 
     def create_table_and_schema(self, identifier: str, schema: Schema):
         """Create a table and schema in the data backend.
@@ -140,3 +129,206 @@ class MongoDBDataBackend(BaseDataBackend):
         # If the data can be converted to JSON,
         # then save it as native data in MongoDB.
         pass
+
+    ###################################
+    # Query execution implementations #
+    ###################################
+
+    def primary_id(self, query):
+        """Get the primary ID for the query."""
+        return '_id'
+
+    def insert(self, table, documents):
+        """Insert documents into the table."""
+        for doc in documents:
+            if '_id' in doc:
+                doc['_id'] = ObjectId(doc['_id'])
+            if '_source' in doc:
+                doc['_source'] = ObjectId(doc['_source'])
+        return self._database[table].insert_many(documents).inserted_ids
+
+    def missing_outputs(self, table, predict_id: str):
+        """Get the missing outputs for the prediction."""
+        key = f'{CFG.output_prefix}{predict_id}'
+        lookup = [
+            {
+                '$lookup': {
+                    'from': key,
+                    'localField': '_id',
+                    'foreignField': '_source',
+                    'as': key,
+                }
+            },
+            {'$match': {key: {'$size': 0}}},
+        ]
+        collection = self._database[table]
+        results = list(collection.aggregate(lookup))
+        return [r['_id'] for r in results]
+
+    def select(self, query: Query):
+        """Select data from the table."""
+        if query.decomposition.outputs:
+            return self._outputs(query)
+
+        collection = self._database[query.table]
+
+        limit = self._get_limit(query)
+        if limit:
+            return list(
+                collection.find(
+                    self._mongo_filter(query), self._get_project(query)
+                ).limit(limit)
+            )
+
+        return list(
+            collection.find(self._mongo_filter(query), self._get_project(query))
+        )
+
+    def to_id(self, id):
+        """Convert the ID to the correct format."""
+        return ObjectId(id)
+
+    ########################
+    # Helper methods below #
+    ########################
+
+    @staticmethod
+    def _get_project(query):
+        if query.decomposition.select is None:
+            return {}
+
+        if not query.decomposition.select.args:
+            return {}
+
+        project = {}
+        for k in query.decomposition.select.args:
+            if isinstance(k, Query):
+                assert k.parts[0] == 'primary_id'
+                project['_id'] = 1
+            else:
+                project[k] = 1
+
+        if '_id' not in project:
+            project['_id'] = 0
+
+        return project
+
+    @staticmethod
+    def _mongo_filter(query):
+        if query.decomposition.filter is None:
+            return {}
+
+        filters = query.decomposition.filter.args
+
+        mongo_filter = {}
+        for f in filters:
+            assert len(f) > 2, f'Invalid filter query: {f}'
+            key = f.parts[0]
+            if key == 'primary_id':
+                key = '_id'
+
+            op = f.parts[1]
+
+            if op.name not in OPS_MAP:
+                raise ValueError(
+                    f'Operation {op} not supported, '
+                    f'supported operations are: {OPS_MAP.keys()}'
+                )
+
+            if not op.args:
+                raise ValueError(f'No arguments found for operation {op}')
+
+            value = op.args[0]
+
+            if f.decomposition.col == 'primary_id':
+                if isinstance(value, str):
+                    value = ObjectId(value)
+                elif isinstance(value, list):
+                    value = [ObjectId(x) for x in value]
+
+            mongo_filter[key] = {OPS_MAP[op.name]: value}
+        return mongo_filter
+
+    @staticmethod
+    def _get_limit(query):
+        try:
+            out = query.decomposition.limit.args[0]
+            assert out > 0
+            return out
+        except AttributeError:
+            return
+
+    def _outputs(self, query):
+        pipeline = []
+
+        project = self._get_project(query).copy()
+
+        filter_mapping_base = {
+            k: v
+            for k, v in self._mongo_filter(query).items()
+            if not k.startswith(CFG.output_prefix)
+        }
+        filter_mapping_outputs = {
+            k: v
+            for k, v in self._mongo_filter(query).items()
+            if k.startswith(CFG.output_prefix)
+        }
+
+        if filter_mapping_base:
+            pipeline.append({"$match": filter_mapping_base})
+            if project:
+                project.update({k: 1 for k in filter_mapping_base.keys()})
+
+        predict_ids = query.decomposition.predict_ids
+
+        if filter_mapping_outputs:
+            predict_ids = [
+                pid
+                for pid in predict_ids
+                if f'{CFG.output_prefix}{pid}' in filter_mapping_outputs
+            ]
+
+        for predict_id in predict_ids:
+            key = f'{CFG.output_prefix}{predict_id}'
+            lookup = {
+                "$lookup": {
+                    "from": key,
+                    "localField": "_id",
+                    "foreignField": "_source",
+                    "as": key,
+                }
+            }
+
+            if project:
+                project[key] = 1
+
+            pipeline.append(lookup)
+
+            if key in filter_mapping_outputs:
+                pipeline.append({"$match": {key: filter_mapping_outputs[key]}})
+
+            pipeline.append(
+                {"$unwind": {"path": f"${key}", "preserveNullAndEmptyArrays": True}}
+            )
+
+        if project:
+            pipeline.append({"$project": project})
+
+        if self._get_limit(query):
+            pipeline.append({"$limit": self._get_limit(query)})
+
+        try:
+            import json
+
+            logging.debug(f'Executing pipeline: {json.dumps(pipeline, indent=2)}')
+        except TypeError:
+            pass
+
+        collection = self._database[query.table]
+        result = list(collection.aggregate(pipeline))
+
+        for pid in predict_ids:
+            k = f'{CFG.output_prefix}{pid}'
+            for r in result:
+                r[k] = r[k][k]
+        return result

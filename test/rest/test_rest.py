@@ -4,7 +4,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from superduper import CFG
-from superduper.base.document import Document
 
 CFG.auto_schema = True
 CFG.rest.uri = 'localhost:8000'
@@ -28,7 +27,7 @@ def test_health(setup):
 
 
 def test_select_data(setup):
-    result = setup.post('/db/execute', json={'query': 'coll.find({}, {"_id": 0})'})
+    result = setup.post('/db/execute', json={'query': 'coll.select()'})
     result = json.loads(result.content)
     if 'error' in result:
         raise Exception(result['messages'] + result['traceback'])
@@ -70,65 +69,3 @@ def test_apply(setup):
     models = json.loads(models.content)
 
     assert models == ['my_function']
-
-
-@pytest.mark.skip
-def test_insert_image(setup):
-    result = setup.put(
-        '/db/artifact_store/put', files={"raw": ("test/material/data/test.png")}
-    )
-    result = json.loads(result.content)
-
-    file_id = result['file_id']
-
-    query = {
-        '_path': 'superduper_mongodb.query.parse_query',
-        'query': 'coll.insert_one(documents[0])',
-        '_builds': {
-            'image_type': {
-                '_path': 'superduper.ext.pillow.encoder.image_type',
-                'encodable': 'artifact',
-            },
-            'my_artifact': {
-                '_path': 'superduper.components.datatype.LazyArtifact',
-                'blob': f'&:blob:{file_id}',
-                'datatype': "?image_type",
-            },
-        },
-        'documents': [
-            {
-                'img': '?my_artifact',
-            }
-        ],
-    }
-
-    result = setup.post(
-        '/db/execute',
-        json=query,
-    )
-
-    query = {
-        '_path': 'superduper_mongodb.query.parse_query',
-        'query': 'coll.find(documents[0], documents[1])',
-        'documents': [{}, {'_id': 0}],
-    }
-
-    result = setup.post(
-        '/db/execute',
-        json=query,
-    )
-
-    result = json.loads(result.content)
-    from superduper import superduper
-
-    db = superduper()
-
-    result = [Document.decode(r[0], db=db).unpack() for r in result]
-
-    assert len(result) == 3
-
-    image_record = next(r for r in result if 'img' in r)
-
-    from PIL.PngImagePlugin import PngImageFile
-
-    assert isinstance(image_record['img'], PngImageFile)

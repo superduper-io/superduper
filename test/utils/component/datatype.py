@@ -64,31 +64,22 @@ def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     table = Table("documents", schema=schema)
     db.apply(table)
 
-    document = Document({"x": data, "y": 1})
+    document = {"x": data, "y": 1}
     print(document)
     print_sep()
-    db["documents"].insert([document]).execute()
 
-    # TODO: remove this databackend specific logic
-    if db.databackend.backend_name == 'mongodb':
-        encoded = db.databackend.conn["test_db"]["documents"].find_one()
-    else:
-        t = db.databackend.conn.table("documents")
-        encoded = dict(t.select(t).execute().iloc[0])
+    db["documents"].insert([document])
 
-    pprint(encoded)
-    print_sep()
+    decoded = db["documents"].select().execute()[0]
 
-    decoded = list(db["documents"].select().execute())[0]
     decoded = decoded.unpack()
 
     pprint(decoded)
     print_sep()
-
     assert_equal(document["x"], decoded["x"])
     assert_equal(document["y"], decoded["y"])
 
-    return document, encoded, decoded
+    return document, decoded
 
 
 @dc.dataclass(kw_only=True)

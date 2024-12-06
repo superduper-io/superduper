@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add create events waiting on db apply.
 - Refactor secrets loading method.
 - Add db.load in db wait
+- Deprecate "free" queries
 
 #### New Features & Functionality
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a standalone flag in Streamlit to mark the page as independent.
 - Add secrets directory mount for loading secret env vars.
 - Remove components recursively
+- Enforce strict and developer friendly query developer contract
 
 #### Bug Fixes
 

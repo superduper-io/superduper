@@ -147,20 +147,6 @@ def build_rest_app(app: SuperDuperApp):
         # Blob objects to be displayed on the upload
         return {"component": component, "artifacts": blob_objects}
 
-    def _print_to_screen():
-        for i in range(100):
-            print(f'Testing {i}')
-            time.sleep(0.1)
-        print('[DONE]')
-
-    @app.add('/test/log', method='post')
-    def test_log():
-        log_file = "/tmp/test.log"
-        with redirect_stdout_to_file(log_file):
-            _print_to_screen()
-        os.remove(log_file)
-        return {'status': 'ok'}
-
     def _process_db_apply(db, component, id: str | None = None):
         if id:
             log_file = f"/tmp/{id}.log"
@@ -168,6 +154,10 @@ def build_rest_app(app: SuperDuperApp):
                 db.apply(component, force=True)
         else:
             db.apply(component, force=True)
+
+    @app.add('/describe_tables')
+    def describe_tables(db: 'Datalayer' = DatalayerDependency()):
+        return db.databackend.list_tables_or_collections()
 
     @app.add('/db/apply', method='post')
     async def db_apply(
@@ -185,7 +175,6 @@ def build_rest_app(app: SuperDuperApp):
         return {'status': 'ok'}
 
     import subprocess
-    import time
 
     from fastapi.responses import StreamingResponse
 

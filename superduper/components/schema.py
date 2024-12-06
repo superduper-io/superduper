@@ -123,11 +123,12 @@ class Schema(Component):
         decoded = {}
         for k, value in data.items():
             field = self.fields.get(k)
-            if not isinstance(field, BaseDataType):
+            if not isinstance(field, BaseDataType) or value is None:
                 decoded[k] = value
                 continue
 
             value = data[k]
+
             if reference := parse_reference(value):
                 saveable: Saveable = getters.run(reference.name, reference.path)
                 decoded[k] = saveable
@@ -162,6 +163,9 @@ class Schema(Component):
                 continue
 
             if isinstance(out[k], leaves_to_keep):
+                continue
+
+            if out[k] is None:
                 continue
 
             data = field.encode_data(out[k])

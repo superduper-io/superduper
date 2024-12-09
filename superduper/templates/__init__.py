@@ -31,7 +31,7 @@ def __getattr__(name: str):
     import re
 
     if not re.match('.*[0-9]+\.[0-9]+\.[0-9]+.*', name):
-        assert name in TEMPLATES
+        assert name in TEMPLATES, f'{name} not in supported templates {TEMPLATES}'
         file = TEMPLATES[name].split('/')[-1]
         url = TEMPLATES[name]
     else:

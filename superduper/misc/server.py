@@ -97,7 +97,7 @@ def request_server(
     :param args: Arguments to pass
     :param type: Type of request
     """
-    _handshake(service)
+    # _handshake(service)
     return _request_server(
         service=service, data=data, endpoint=endpoint, args=args, type=type
     )

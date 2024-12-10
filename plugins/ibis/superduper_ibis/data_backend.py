@@ -27,6 +27,30 @@ BASE64_PREFIX = "base64:"
 INPUT_KEY = "_source"
 
 
+def _snowflake_connection_callback():
+    # In the Snowflake native apps framework, the
+    # inbuild database is provided by env variables
+    # and authentication is via OAuth with a
+    # mounted token. In this case, as a convention
+    # we connect with `"snowflake://"`
+
+    logging.info('Using env variables and OAuth to connect!')
+
+    import snowflake
+
+    conn = snowflake.connector.connect(
+        account=os.environ['SNOWFLAKE_ACCOUNT'],
+        host=os.environ['SNOWFLAKE_HOST'],
+        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
+        database=os.environ['SNOWFLAKE_DATABASE'],
+        port=int(os.environ['SNOWFLAKE_PORT']),
+        token=open('/snowflake/session/token').read(),
+        authenticator='oauth',
+    )
+
+    return ibis.snowflake.from_connection(conn)
+
+
 def _connection_callback(uri, flavour):
     if flavour == "pandas":
         uri = uri.split("://")[-1]
@@ -43,6 +67,8 @@ def _connection_callback(uri, flavour):
         ibis_conn = ibis.pandas.connect(tables)
         in_memory = True
         return ibis_conn, dir_name, in_memory
+    elif uri == 'snowflake://':
+        return _snowflake_connection_callback(uri), 'snowflake', False
     else:
         name = uri.split("//")[0]
         in_memory = False

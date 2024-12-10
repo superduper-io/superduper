@@ -91,3 +91,13 @@ class Cluster(ABC):
         self.vector_search.initialize()
         self.crontab.initialize()
         self.cdc.initialize()
+
+    def drop_component(self, uuid: str):
+        """Drop component and its services rom the cluster.
+
+        :param uuid: Component uuid.
+        """
+        try:
+            del self.cache[uuid]
+        except KeyError:
+            pass

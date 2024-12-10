@@ -541,6 +541,7 @@ class Datalayer:
 
             for v in sorted(versions_in_use):
                 self.metadata.hide_component_version(type_id, identifier, v)
+
         else:
             logging.warn('aborting.')
 
@@ -664,10 +665,7 @@ class Datalayer:
                 type_id, identifier, version=version, allow_hidden=force
             )
             component.cleanup(self)
-            try:
-                del self.cluster.cache[component.uuid]
-            except KeyError:
-                pass
+            self.cluster.drop_component(component.uuid)
 
             self._delete_artifacts(r['uuid'], info)
             self.metadata.delete_component_version(type_id, identifier, version=version)

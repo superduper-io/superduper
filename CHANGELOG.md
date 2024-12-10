@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add create events waiting on db apply.
 - Refactor secrets loading method.
 - Add db.load in db wait
+- Add model component cleanup
 
 #### New Features & Functionality
 

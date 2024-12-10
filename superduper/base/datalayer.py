@@ -511,6 +511,7 @@ class Datalayer:
 
             for v in sorted(versions_in_use):
                 self.metadata.hide_component_version(type_id, identifier, v)
+
         else:
             logging.warn('aborting.')
 

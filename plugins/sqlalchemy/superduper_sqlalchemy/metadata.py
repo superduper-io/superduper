@@ -23,6 +23,31 @@ from superduper.misc.colors import Colors
 from superduper_sqlalchemy.db_helper import get_db_config
 
 
+def _connect_snowflake():
+    # In the Snowflake native apps framework, the
+    # inbuild database is provided by env variables
+    # and authentication is via OAuth with a
+    # mounted token. In this case, as a convention
+    # we connect with `"snowflake://"`
+
+    import snowflake
+
+    def creator():
+        import os
+
+        return snowflake.connector.connect(
+            account=os.environ['SNOWFLAKE_ACCOUNT'],
+            host=os.environ['SNOWFLAKE_HOST'],
+            schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
+            database=os.environ['SNOWFLAKE_DATABASE'],
+            port=int(os.environ['SNOWFLAKE_PORT']),
+            token=open('/snowflake/session/token').read(),
+            authenticator='oauth',
+        )
+
+    return create_engine("snowflake://not@used/db", creator=creator)
+
+
 class SQLAlchemyMetadata(MetaDataStore):
     """
     Abstraction for storing meta-data separately from primary data.
@@ -42,6 +67,9 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         if callback:
             self.connection_callback = callback
+        elif uri == 'snowflake://':
+            name = 'snowflake'
+            self.connection_callback = lambda: (_connect_snowflake(), name)
         else:
             assert isinstance(uri, str)
             name = uri.split('//')[0]

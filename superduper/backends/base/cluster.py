@@ -97,3 +97,13 @@ class Cluster(ABC):
         self.cdc.initialize()
 
         logging.info(f"Cluster initialized in {time.time() - start:.2f} seconds.")
+
+    def drop_component(self, uuid: str):
+        """Drop component and its services rom the cluster.
+
+        :param uuid: Component uuid.
+        """
+        try:
+            del self.cache[uuid]
+        except KeyError:
+            pass

@@ -400,6 +400,13 @@ class Model(Component, metaclass=ModelMeta):
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
 
+    def cleanup(self, db: "Datalayer") -> None:
+        """Clean up when the model is deleted.
+
+        :param db: Data layer instance to process.
+        """
+        db.cluster.compute.drop_component(self.uuid)
+
     @property
     def inputs(self) -> Inputs:
         """Instance of `Inputs` to represent model params."""

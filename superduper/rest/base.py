@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+import os
 import typing as t
 from functools import cached_property
 from traceback import format_exc
@@ -198,12 +199,10 @@ class SuperDuperApp:
 
             existing = db.show('template')
             for t in self.templates:
-                if t in existing:
+                if t in existing or t is None:
                     logging.info(f'Found existing template: {t}')
                     continue
                 logging.info(f'Applying template: {t}')
-
-                import os
 
                 if t is None:
                     continue

@@ -204,8 +204,10 @@ class SuperDuperApp:
                 logging.info(f'Applying template: {t}')
 
                 import os
+
                 if os.path.exists(t):
                     from superduper import Template
+
                     t = Template.read(t)
                 else:
                     t = templates.get(t)

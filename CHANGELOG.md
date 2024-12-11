@@ -1,4 +1,4 @@
-# superduper.io Changelog 
+# superduper.io Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-## Changes Since Last Release   
+## Changes Since Last Release
 
-#### Changed defaults / behaviours 
+#### Changed defaults / behaviours
 
 - Deprecate vanilla `DataType`
-- Remove `_Encodable` from project 
+- Remove `_Encodable` from project
 
 #### New Features & Functionality
 
@@ -25,7 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add schema to `Template`
 - Low-code form builder for frontend
 - Add snowflake vector search engine
-- Add a meta-datatype `Vector` to handle different databackend requirements 
+- Add a meta-datatype `Vector` to handle different databackend requirements
+- Support `<var:template_staged_file>` in Template to enable apps to use files/folders included in the template
+- Add Data Component for storing data directly in the template
 
 #### Bug Fixes
 

@@ -175,6 +175,23 @@ class Template(_BaseTemplate):
         if zip:
             self._zip_export(path)
 
+    @property
+    def default_values(self):
+        default_values = super().default_values
+        return self._replace_stage_file(default_values)
+
+    @property
+    def form_template(self):
+        """Form to be diplayed to user."""
+        form_template = super().form_template
+        return self._replace_stage_file(form_template)
+
+    def _replace_stage_file(self, data):
+        if self.staged_file:
+            self.unpack()
+            data = _replace_variables(data, template_staged_file=self.staged_file)
+        return data
+
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):
         """

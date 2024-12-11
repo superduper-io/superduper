@@ -109,3 +109,18 @@ class RemoteData(Component):
         if self._data is None:
             self._data = self.getter()
         return self._data
+
+
+class Data(Component):
+    """Class to store data.
+
+    :param raw_data: The raw data.
+    """
+
+    _fields = {'raw_data': 'default'}
+    type_id: t.ClassVar[str] = 'data'
+    raw_data: t.Any
+
+    @property
+    def data(self):
+        return self.raw_data

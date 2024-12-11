@@ -784,6 +784,8 @@ class Component(Leaf, metaclass=ComponentMeta):
             save_path = os.path.join(path, "files", file_id, name)
             os.makedirs(os.path.join(path, "files", file_id), exist_ok=True)
             if os.path.isdir(file_path):
+                if os.path.exists(save_path):
+                    shutil.rmtree(save_path)
                 shutil.copytree(file_path, save_path)
             else:
                 shutil.copy(file_path, save_path)

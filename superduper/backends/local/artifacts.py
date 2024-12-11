@@ -111,6 +111,7 @@ class FileSystemArtifactStore(ArtifactStore):
         name = path.name
         file_id_folder = os.path.join(self.conn, file_id)
         os.makedirs(file_id_folder, exist_ok=True)
+        os.chmod(file_id_folder, 0o777)
         save_path = os.path.join(file_id_folder, name)
         logging.info(f"Copying file {file_path} to {save_path}")
         if path.is_dir():

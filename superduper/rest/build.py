@@ -67,7 +67,7 @@ def build_rest_app(app: SuperDuperApp):
     CFG.log_colorize = False
 
     @app.add("/health", method="get")
-    def health():
+    async def health():
         return {"status": 200}
 
     @app.add("/handshake/config", method="post")
@@ -147,7 +147,12 @@ def build_rest_app(app: SuperDuperApp):
         # Blob objects to be displayed on the upload
         return {"component": component, "artifacts": blob_objects}
 
-    def _process_db_apply(db, component, id: str | None = None):
+    def _process_db_apply(db, info, id: str | None = None):
+        if '_variables' in info:
+            info['_variables']['output_prefix'] = CFG.output_prefix
+            info['_variables']['databackend'] = db.databackend.backend_name
+
+        component = Document.decode(info, db=db).unpack()
         if id:
             log_file = f"/tmp/{id}.log"
             with redirect_stdout_to_file(log_file):
@@ -160,18 +165,13 @@ def build_rest_app(app: SuperDuperApp):
         return db.databackend.list_tables_or_collections()
 
     @app.add('/db/apply', method='post')
-    async def db_apply(
+    def db_apply(
         info: t.Dict,
         background_tasks: BackgroundTasks,
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
-        if '_variables' in info:
-            info['_variables']['output_prefix'] = CFG.output_prefix
-            info['_variables']['databackend'] = db.databackend.backend_name
-
-        component = Document.decode(info, db=db).unpack()
-        background_tasks.add_task(_process_db_apply, db, component, id)
+        background_tasks.add_task(_process_db_apply, db, info, id)
         return {'status': 'ok'}
 
     import subprocess

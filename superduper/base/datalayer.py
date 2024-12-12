@@ -269,6 +269,10 @@ class Datalayer:
         for e in datatypes:
             self.add(e)
 
+        if not insert.documents:
+            logging.info(f'No documents to insert into {insert.table}')
+            return []
+
         for r in insert.documents:
             r.setdefault(
                 '_fold',
@@ -357,7 +361,7 @@ class Datalayer:
 
         if not self.metadata.show_cdcs(table):
             logging.info(
-                'Skipping cdc for inserted documents in {table}',
+                f'Skipping cdc for inserted documents in ({table})',
                 'because no component to consume the table.',
             )
             return

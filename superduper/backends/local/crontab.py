@@ -1,12 +1,47 @@
+from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from superduper import logging
 from superduper.backends.base.crontab import CrontabBackend
 
 
-# TODO: implement this
 class LocalCrontabBackend(CrontabBackend):
     """Local crontab backend."""
 
+    def __init__(self):
+        super().__init__()
+        self.jobs = set()
+        self._job_uuids = set()
+        self.scheduler = BackgroundScheduler(
+            jobstores={"default": MemoryJobStore()},
+            executors={"default": ThreadPoolExecutor(20)},
+        )
+
+    def _add_job_to_scheduler(self, job):
+        minute, hour, day, month, day_of_week = job.schedule.split()
+        self.scheduler.add_job(
+            job.run,
+            "cron",
+            minute=minute,
+            hour=hour,
+            day=day,
+            month=month,
+            day_of_week=day_of_week,
+            id=job.uuid,
+        )
+        # check if scheduler is not started
+        if not self.scheduler.running:
+            logging.info("Starting scheduler")
+            self.scheduler.start()
+
     def _put(self, item):
-        raise NotImplementedError
+        from superduper.components.cron_job import CronJob
+
+        assert isinstance(item, CronJob)
+        self.jobs.add((item.type_id, item.identifier))
+        self._job_uuids.add(item.uuid)
+        self._add_job_to_scheduler(item)
 
     def list(self):
         """List crontab items."""
@@ -17,11 +52,11 @@ class LocalCrontabBackend(CrontabBackend):
 
     def list_components(self):
         """List components."""
-        raise NotImplementedError
+        return list(self.jobs)
 
     def list_uuids(self):
         """List UUIDs of components."""
-        return []
+        return list(self._job_uuids)
 
     def drop(self):
         """Drop the crontab."""
@@ -29,3 +64,13 @@ class LocalCrontabBackend(CrontabBackend):
 
     def initialize(self):
         """Initialize the crontab."""
+        for component_data in self.db.show():
+            type_id = component_data['type_id']
+            identifier = component_data['identifier']
+            r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
+            if r.get('schedule'):
+                obj = self.db.load(type_id=type_id, identifier=identifier)
+                from superduper.components.cron_job import CronJob
+
+                if isinstance(obj, CronJob):
+                    self.put(obj)

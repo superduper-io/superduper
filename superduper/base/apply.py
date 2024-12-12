@@ -20,6 +20,7 @@ def apply(
     db: 'Datalayer',
     object: t.Union['Component', t.Sequence[t.Any], t.Any],
     force: bool | None = None,
+    wait: bool = False,
 ):
     """
     Add functionality in the form of components.

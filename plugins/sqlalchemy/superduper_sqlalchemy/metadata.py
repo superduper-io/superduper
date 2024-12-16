@@ -30,8 +30,9 @@ def _connect_snowflake():
     # mounted token. In this case, as a convention
     # we connect with `"snowflake://"`
     def creator():
-        import snowflake.connector
         import os
+
+        import snowflake.connector
 
         return snowflake.connector.connect(
             host=os.environ['SNOWFLAKE_HOST'],

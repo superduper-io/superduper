@@ -1,6 +1,6 @@
 import os
 import shutil
-from logging import getLogger
+
 from superduper import Model, logging
 
 

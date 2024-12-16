@@ -4,7 +4,6 @@ import sys
 from superduper import Schema, Table
 from superduper.components.datatype import file
 
-
 pdf_folder = sys.argv[1]
 pdf_names = [pdf for pdf in os.listdir(pdf_folder) if pdf.endswith(".pdf")]
 pdf_paths = [os.path.join(pdf_folder, pdf) for pdf in pdf_names]

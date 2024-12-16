@@ -34,8 +34,9 @@ def _snowflake_connection_callback():
     # mounted token. In this case, as a convention
     # we connect with `"snowflake://"`
 
-    import snowflake.connector
     import os
+
+    import snowflake.connector
 
     logging.info('Using env variables and OAuth to connect!')
 

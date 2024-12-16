@@ -1,6 +1,6 @@
 def demo_func(db):
-    import streamlit as st
     import openai
+    import streamlit as st
 
     openai.api_key = "your_openai_api_key"
 

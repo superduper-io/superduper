@@ -335,7 +335,7 @@
   "blobs": null,
   "files": null,
   "requirements": null,
-  "default_table": "?table:sample_pdf_rag",
+  "default_tables": ["?table:sample_pdf_rag"],
   "queries": null,
   "_literals": [
     "template"

@@ -68,7 +68,7 @@ def _connection_callback(uri, flavour):
         in_memory = True
         return ibis_conn, dir_name, in_memory
     elif uri == 'snowflake://':
-        return _snowflake_connection_callback(uri), 'snowflake', False
+        return _snowflake_connection_callback(), 'snowflake', False
     else:
         name = uri.split("//")[0]
         in_memory = False

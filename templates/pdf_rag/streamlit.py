@@ -29,7 +29,8 @@ def add_logo(width=250):
 add_logo()
 
 st.markdown(
-    "#### Superduper Demo (Volvo) App: <br>Technical Guide - PDF RAG", unsafe_allow_html=True
+    "#### Superduper Demo (Volvo) App: <br>Technical Guide - PDF RAG",
+    unsafe_allow_html=True,
 )
 
 

@@ -36,16 +36,17 @@ def _snowflake_connection_callback():
 
     logging.info('Using env variables and OAuth to connect!')
 
-    import snowflake
+    import snowflake.connector
 
     conn = snowflake.connector.connect(
-        account=os.environ['SNOWFLAKE_ACCOUNT'],
         host=os.environ['SNOWFLAKE_HOST'],
-        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
-        database=os.environ['SNOWFLAKE_DATABASE'],
         port=int(os.environ['SNOWFLAKE_PORT']),
-        token=open('/snowflake/session/token').read(),
+        account=os.environ['SNOWFLAKE_ACCOUNT'],
         authenticator='oauth',
+        token=open('/snowflake/session/token').read(),
+        warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
+        database=os.environ['SNOWFLAKE_DATABASE'],
+        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
     )
 
     return ibis.snowflake.from_connection(conn)
@@ -68,7 +69,7 @@ def _connection_callback(uri, flavour):
         in_memory = True
         return ibis_conn, dir_name, in_memory
     elif uri == 'snowflake://':
-        return _snowflake_connection_callback(uri), 'snowflake', False
+        return _snowflake_connection_callback(), 'snowflake', False
     else:
         name = uri.split("//")[0]
         in_memory = False

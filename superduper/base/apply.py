@@ -194,7 +194,11 @@ def _apply(
                 r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
             for i, doc in enumerate(r['documents']):
                 replace = {}
-                for k in doc:
+                doc = doc.map(
+                    lambda x: replace_existing(x),
+                    condition=lambda x: isinstance(x, str),
+                )
+                for k in doc.keys():
                     replace_k = k
                     for uuid in non_breaking_changes:
                         replace_k = replace_k.replace(uuid, non_breaking_changes[uuid])
@@ -243,8 +247,8 @@ def _apply(
                 # on an already instantiated object (uuid is not rebuilt)
 
                 raise NotImplementedError(
-                    'Component was modified in place. This is currently not '
-                    'supported. '
+                    f'{object.type_id}-{object.identifier} was modified in place. '
+                    'This is currently not supported. '
                     'To re-apply a component, rebuild the Python object.'
                 )
 

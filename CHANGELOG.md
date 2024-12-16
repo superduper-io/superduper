@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Catch exceptions in updates vs. breakign
 - Fix the issue where the trigger fails in custom components.
 - Fix serialization between vector-search client and vector-search backend with `to_dict`
+- Fix the bug in the update diff check that replaces uuids
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

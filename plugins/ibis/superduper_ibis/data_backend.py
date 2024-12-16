@@ -34,18 +34,20 @@ def _snowflake_connection_callback():
     # mounted token. In this case, as a convention
     # we connect with `"snowflake://"`
 
+    import snowflake.connector
+    import os
+
     logging.info('Using env variables and OAuth to connect!')
 
-    import snowflake
-
     conn = snowflake.connector.connect(
-        account=os.environ['SNOWFLAKE_ACCOUNT'],
         host=os.environ['SNOWFLAKE_HOST'],
-        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
-        database=os.environ['SNOWFLAKE_DATABASE'],
         port=int(os.environ['SNOWFLAKE_PORT']),
-        token=open('/snowflake/session/token').read(),
+        account=os.environ['SNOWFLAKE_ACCOUNT'],
         authenticator='oauth',
+        token=open('/snowflake/session/token').read(),
+        warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
+        database=os.environ['SNOWFLAKE_DATABASE'],
+        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
     )
 
     return ibis.snowflake.from_connection(conn)

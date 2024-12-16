@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connect to Snowflake using the incluster oauth token
 - Add postprocess in apibase model.
 - Fallback for ibis drop table
+- Add create events waiting on db apply.
 
 #### New Features & Functionality
 

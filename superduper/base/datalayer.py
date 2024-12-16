@@ -1,5 +1,4 @@
 import random
-import time
 import typing as t
 import warnings
 from collections import namedtuple
@@ -36,8 +35,6 @@ SelectResult = SuperDuperCursor
 UpdateResult = t.List[str]
 PredictResult = t.Union[Document, t.Sequence[Document]]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
-
-_WAIT_TIMEOUT = 60
 
 
 class Datalayer:
@@ -456,34 +453,7 @@ class Datalayer:
         :param wait: Wait for apply events.
         :return: Tuple containing the added object(s) and the original object(s).
         """
-        return apply.apply(
-            db=self,
-            object=object,
-            force=force,
-        )
-
-    def _wait_on_events(self, events):
-        remaining = len(events)
-        time_left = _WAIT_TIMEOUT
-        while True:
-            for event in events:
-                identifier = event.component['identifier']
-                type_id = event.component['type_id']
-                version = event.component['version']
-                try:
-                    self.show(type_id=type_id, identifier=identifier, version=version)
-                except FileNotFoundError:
-                    pass
-                else:
-                    remaining -= 1
-
-            if remaining <= 0:
-                return
-            elif time_left == 0:
-                raise TimeoutError("Timeout error while waiting for create events.")
-            else:
-                time.sleep(1)
-                time_left -= 1
+        return apply.apply(db=self, object=object, force=force, wait=wait)
 
     def remove(
         self,

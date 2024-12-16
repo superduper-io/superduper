@@ -1,3 +1,4 @@
+import time
 import typing as t
 
 import click
@@ -15,11 +16,14 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.base.event import Job
 
+_WAIT_TIMEOUT = 60
+
 
 def apply(
     db: 'Datalayer',
     object: t.Union['Component', t.Sequence[t.Any], t.Any],
     force: bool | None = None,
+    wait: bool = False,
 ):
     """
     Add functionality in the form of components.
@@ -31,6 +35,8 @@ def apply(
     :param object: Object to be stored.
     :param force: List of jobs which should execute before component
                             initialization begins.
+    :param wait: Blocks execution till create events finish.
+
     :return: Tuple containing the added object(s) and the original object(s).
     """
     if force is None:
@@ -119,7 +125,34 @@ def apply(
         ):
             return object
     db.cluster.queue.publish(events=events)
+    if wait:
+        unique_create_events = list(create_events.values())
+        _wait_on_events(db, unique_create_events)
     return object
+
+
+def _wait_on_events(db, events):
+    remaining = len(events)
+    time_left = _WAIT_TIMEOUT
+    while True:
+        for event in events:
+            identifier = event.component['identifier']
+            type_id = event.component['type_id']
+            version = event.component['version']
+            try:
+                db.show(type_id=type_id, identifier=identifier, version=version)
+            except FileNotFoundError:
+                pass
+            else:
+                remaining -= 1
+
+        if remaining <= 0:
+            return
+        elif time_left == 0:
+            raise TimeoutError("Timeout error while waiting for create events.")
+        else:
+            time.sleep(1)
+            time_left -= 1
 
 
 def _apply(

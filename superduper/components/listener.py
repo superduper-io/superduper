@@ -55,6 +55,8 @@ class Listener(CDC):
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         self._set_upstream()
+        if isinstance(self.key, tuple):
+            self.key = list(self.key)
 
         return super().__post_init__(db)
 

@@ -96,10 +96,10 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
+        self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
+
         if uri.startswith('snowflake://'):
             self.bytes_encoding = 'base64'
-
-        self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
 
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")

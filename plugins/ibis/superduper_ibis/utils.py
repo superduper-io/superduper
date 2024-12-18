@@ -39,6 +39,9 @@ def convert_schema_to_fields(schema: Schema):
                     if schema.db.databackend.bytes_encoding == 'base64'
                     else 'bytes'
                 )
+            elif v.encodable == 'native':
+                fields[k] = dtype(v.dtype)
+
             else:
                 fields[k] = dtype('str')
 

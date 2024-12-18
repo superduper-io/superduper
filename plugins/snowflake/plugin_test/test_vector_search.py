@@ -1,9 +1,9 @@
 import warnings
-from test.utils.usecase.vector_search import build_vector_index
 
 import pytest
 from superduper import CFG, superduper
-from superduper.components.vector_index import vector
+from superduper.components.datatype import NativeVector
+from test.utils.usecase.vector_search import build_vector_index
 
 from superduper_snowflake.vector_search import SnowflakeVectorSearcher
 
@@ -21,8 +21,10 @@ except Exception as e:
 @pytest.mark.skipif(DO_SKIP, reason='Only snowflake deployments relevant.')
 def test_basic_snowflake_search():
     CFG.vector_search_engine = 'snowflake'
+
     db = superduper()
-    d1 = vector(shape=[300])
+
+    d1 = NativeVector(identifier='vector[300]', shape=[300])
     build_vector_index(db, n=10, list_embeddings=True, vector_datatype=d1, measure='l2')
 
     vector_index = "vector_index"

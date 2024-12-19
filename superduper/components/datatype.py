@@ -98,7 +98,8 @@ class NativeVector(BaseVector):
         return item
 
     def decode_data(self, item):
-        return numpy.array(item).astype('float' if self.dtype == 'json' else self.dtype)
+        # TODO:
+        return numpy.array(item).astype(self.dtype)
 
 
 class Vector(BaseVector):
@@ -111,7 +112,7 @@ class Vector(BaseVector):
 
     def __post_init__(self, db):
         self.identifier = f'vector[{self.shape[0]}]'
-        return super().__post_init__(db)
+        super().__post_init__(db)
 
     @property
     def encodable(self):
@@ -139,7 +140,10 @@ class Vector(BaseVector):
 
 
 class JSON(BaseDataType):
-    """Datatype for encoding vectors which are supported natively by databackend."""
+    """Datatype for encoding vectors which are supported natively by databackend.
+
+    :param dtype: Datatype of encoded arrays.
+    """
 
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'str'

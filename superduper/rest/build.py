@@ -148,19 +148,33 @@ def build_rest_app(app: SuperDuperApp):
         return {"component": component, "artifacts": blob_objects}
 
     def _process_db_apply(db, component, id: str | None = None):
+        def _apply():
+            nonlocal component
+            component = Document.decode(component, db=db).unpack()
+            db.apply(component, force=True)
+
         if id:
             log_file = f"/tmp/{id}.log"
             with redirect_stdout_to_file(log_file):
-                db.apply(component, force=True)
+                try:
+                    _apply()
+                except Exception as e:
+                    logging.error(f'Exception during application apply :: {e}')
+                    raise
         else:
-            db.apply(component, force=True)
+            try:
+                _apply()
+
+            except Exception as e:
+                logging.error(f'Exception during application apply :: {e}')
+                raise
 
     @app.add('/describe_tables')
     def describe_tables(db: 'Datalayer' = DatalayerDependency()):
         return db.databackend.list_tables_or_collections()
 
     @app.add('/db/apply', method='post')
-    async def db_apply(
+    def db_apply(
         info: t.Dict,
         background_tasks: BackgroundTasks,
         id: str | None = 'test',
@@ -170,8 +184,8 @@ def build_rest_app(app: SuperDuperApp):
             info['_variables']['output_prefix'] = CFG.output_prefix
             info['_variables']['databackend'] = db.databackend.backend_name
 
-        component = Document.decode(info, db=db).unpack()
-        background_tasks.add_task(_process_db_apply, db, component, id)
+        # info = Document.decode(info, db=db).unpack()
+        background_tasks.add_task(_process_db_apply, db, info, id)
         return {'status': 'ok'}
 
     import subprocess

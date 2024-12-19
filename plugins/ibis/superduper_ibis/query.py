@@ -80,9 +80,9 @@ def _model_update_impl(
     for output, source_id in zip(outputs, ids):
         d = {
             "_source": str(source_id),
-            f"{CFG.output_prefix}{predict_id}": output.x
-            if isinstance(output, _Encodable)
-            else output,
+            f"{CFG.output_prefix}{predict_id}": (
+                output.x if isinstance(output, _Encodable) else output
+            ),
             "id": str(uuid.uuid4()),
         }
         documents.append(Document(d))

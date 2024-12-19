@@ -1110,10 +1110,12 @@ class APIBaseModel(Model):
 
     :param model: The Model to use, e.g. ``'text-embedding-ada-002'``
     :param max_batch_size: Maximum  batch size.
+    :param postprocess: Postprocess function to use on the output of the API request
     """
 
     model: t.Optional[str] = None
     max_batch_size: int = 8
+    postprocess: t.Optional[t.Callable] = None
 
     def __post_init__(self, db, example):
         super().__post_init__(db, example)
@@ -1149,7 +1151,6 @@ class APIModel(APIBaseModel):
     """
 
     url: str
-    postprocess: t.Optional[t.Callable] = None
 
     @property
     def inputs(self):

@@ -10,12 +10,14 @@ class Streamlit(Component):
     :param demo_func: Callable which builds the demo.
     :param demo_kwargs: key-word arguments to the `demo_func`
     :param default: Set to `True` if this is to be the frontpage.
+    :param is_standalone: Set to `True` if this is a standalone page.
     """
 
     type_id: t.ClassVar[str] = 'streamlit'
     demo_func: t.Callable
     demo_kwargs: t.Dict = dc.field(default_factory=dict)
     default: bool = False
+    is_standalone: bool = False
 
     @property
     def page(self):

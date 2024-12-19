@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a meta-datatype `Vector` to handle different databackend requirements
 - Support `<var:template_staged_file>` in Template to enable apps to use files/folders included in the template
 - Add Data Component for storing data directly in the template
+- Add a standalone flag in Streamlit to mark the page as independent.
 
 #### Bug Fixes
 

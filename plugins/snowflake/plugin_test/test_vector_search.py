@@ -1,9 +1,9 @@
 import warnings
+from test.utils.usecase.vector_search import build_vector_index
 
 import pytest
 from superduper import CFG, superduper
 from superduper.components.datatype import Vector
-from test.utils.usecase.vector_search import build_vector_index
 
 from superduper_snowflake.vector_search import SnowflakeVectorSearcher
 

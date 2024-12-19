@@ -1,9 +1,10 @@
+from test.utils.setup.fake_data import add_listeners, add_models, add_random_data
+
 import numpy as np
 import pytest
 from superduper.base.document import Document
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from test.utils.setup.fake_data import add_listeners, add_models, add_random_data
 
 
 def test_serialize_table():

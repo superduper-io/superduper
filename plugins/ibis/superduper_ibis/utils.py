@@ -1,8 +1,5 @@
 from ibis.expr.datatypes import dtype
-from superduper.components.datatype import (
-    BaseDataType,
-    File,
-)
+from superduper.components.datatype import BaseDataType, File, Vector
 from superduper.components.schema import ID, FieldType, Schema
 
 SPECIAL_ENCODABLES_FIELDS = {
@@ -39,6 +36,9 @@ def convert_schema_to_fields(schema: Schema):
                     if schema.db.databackend.bytes_encoding == 'base64'
                     else 'bytes'
                 )
+            elif isinstance(v, Vector):
+                fields[k] = dtype('json')
+
             elif v.encodable == 'native':
                 fields[k] = dtype(v.dtype)
 

@@ -123,14 +123,21 @@ class OpenAIEmbedding(_OpenAI):
         e = self.syncClient.embeddings.create(
             input=X, model=self.model, **self.predict_kwargs
         )
-        return numpy.array(e.data[0].embedding).astype('float32')
+
+        out = numpy.array(e.data[0].embedding).astype('float32')
+        if self.postprocess is not None:
+            out = self.postprocess(out)
+        return out
 
     @retry
     def _predict_a_batch(self, texts: t.List[t.Dict]):
         out = self.syncClient.embeddings.create(
             input=texts, model=self.model, **self.predict_kwargs
         )
-        return [numpy.array(r.embedding).astype('float32') for r in out.data]
+        out = [numpy.array(r.embedding).astype('float32') for r in out.data]
+        if self.postprocess is not None:
+            out = list(map(self.postprocess, out))
+        return out
 
 
 class OpenAIChatCompletion(_OpenAI):

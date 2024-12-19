@@ -281,12 +281,11 @@ class Datalayer:
         if auto_schema and self.cfg.auto_schema:
             schema = self._auto_create_table(insert.table, insert.documents).schema
 
-            timeout = 5
+            timeout = 60
 
             import time
 
             start = time.time()
-
             exists = False
             while time.time() - start < timeout:
                 try:
@@ -296,7 +295,7 @@ class Datalayer:
                     exists = True
                 except AssertionError as e:
                     logging.warn(str(e))
-                    time.sleep(0.25)
+                    time.sleep(1)
                     continue
                 break
 

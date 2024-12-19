@@ -3,7 +3,7 @@ import typing as t
 
 from snowflake.snowpark import Session
 from superduper import CFG
-from superduper.vector_search.base import BaseVectorSearcher, VectorItem
+from superduper.backends.base.vector_search import BaseVectorSearcher, VectorItem
 
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex
@@ -46,8 +46,8 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
 
         self.measure = measure
         self.dimensions = dimensions
-
-        super().__init__(identifier=identifier, dimensions=dimensions, measure=measure)
+        self._cache = {}
+        self._db = None
 
     @classmethod
     def create_session(cls, vector_search_uri):
@@ -162,3 +162,6 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         ids = [row["_source"] for row in result_list]
         scores = [-row["distance".upper()] for row in result_list]
         return ids, scores
+
+    def initialize(self):
+        """Initialize vector search."""

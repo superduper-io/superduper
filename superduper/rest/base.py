@@ -205,6 +205,9 @@ class SuperDuperApp:
 
                 import os
 
+                if t is None:
+                    continue
+
                 if os.path.exists(t):
                     from superduper import Template
 

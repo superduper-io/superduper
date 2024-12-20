@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove `_Encodable` from project
 - Connect to Snowflake using the incluster oauth token
 - Add postprocess in apibase model.
+- Fallback for ibis drop table
 
 #### New Features & Functionality
 

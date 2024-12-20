@@ -75,6 +75,7 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: plugins/${{ matrix.plugin }}/dist/
+          verbose: true
 
       - name: Remove unwanted files from dist
         run: rm -f plugins/${{ matrix.plugin }}/dist/*.attestation

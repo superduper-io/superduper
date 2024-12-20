@@ -215,7 +215,13 @@ class IbisDataBackend(BaseDataBackend):
         Please use with caution as you will lose all data.
         :param name: Table name to drop.
         """
-        return self.db.databackend.conn.drop_table(name)
+        try:
+            return self.db.databackend.conn.drop_table(name)
+        except Exception as e:
+            msg = "Object found is of type 'VIEW'"
+            if msg in str(e):
+                return self.db.databackend.conn.drop_view(name)
+            raise
 
     def create_output_dest(
         self,

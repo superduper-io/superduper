@@ -439,7 +439,7 @@ class Datalayer:
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
         force: bool | None = None,
-        wait: bool = True,
+        wait: bool = False,
     ):
         """
         Add functionality in the form of components.

@@ -60,7 +60,8 @@ class LocalCrontabBackend(CrontabBackend):
 
     def drop(self):
         """Drop the crontab."""
-        raise NotImplementedError
+        for job_id in self._job_uuids:
+            self.scheduler.remove_job(job_id)
 
     def initialize(self):
         """Initialize the crontab."""

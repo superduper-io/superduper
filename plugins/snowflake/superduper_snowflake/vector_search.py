@@ -1,3 +1,4 @@
+import os
 import re
 import typing as t
 
@@ -55,24 +56,46 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
 
         :param vector_search_uri: Connection URI.
         """
-        pattern = r"snowflake://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<account>[^/]+)/(?P<database>[^/]+)/(?P<schema>[^/]+)"
-        match = re.match(pattern, vector_search_uri)
+        if vector_search_uri == 'snowflake://':
+            host = os.environ['SNOWFLAKE_HOST']
+            port = int(os.environ['SNOWFLAKE_PORT'])
+            account = os.environ['SNOWFLAKE_ACCOUNT']
+            token = open('/snowflake/session/token').read()
+            warehouse = os.environ['SNOWFLAKE_WAREHOUSE']
+            database = os.environ['SNOWFLAKE_DATABASE']
+            schema = os.environ['SUPERDUPER_DATA_SCHEMA']
 
-        if match:
             connection_parameters = {
-                "user": match.group("user"),
-                "password": match.group("password"),
-                "account": match.group("account"),
-                "database": match.group("database"),
-                "schema": match.group("schema"),
-                # TODO: check warehouse
-                "warehouse": "base",
+                "token": token,
+                "account": account,
+                "database": database,
+                "schema": schema,
+                "warehouse": warehouse,
+                "authenticator": "oauth",
+                "port": port,
+                "host": host,
             }
-            session = Session.builder.configs(connection_parameters).create()
-            return session
-
         else:
-            raise ValueError(f"URI `{vector_search_uri}` is invalid!")
+            pattern = r"snowflake://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<account>[^/]+)/(?P<database>[^/]+)/(?P<schema>[^/]+)"
+            match = re.match(pattern, vector_search_uri)
+            schema = match.group("schema")
+            database = match.group("database")
+            if match:
+                connection_parameters = {
+                    "user": match.group("user"),
+                    "password": match.group("password"),
+                    "account": match.group("account"),
+                    "database": match.group("database"),
+                    "schema": match.group("schema"),
+                    # TODO: check warehouse
+                    "warehouse": "base",
+                }
+
+            else:
+                raise ValueError(f"URI `{vector_search_uri}` is invalid!")
+
+        session = Session.builder.configs(connection_parameters).create()
+        return session
 
     def __len__(self):
         pass

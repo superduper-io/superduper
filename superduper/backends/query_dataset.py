@@ -68,11 +68,15 @@ class QueryDataset:
             if ids is None:
                 self._ids = [
                     r[self.select.id_field]
-                    for r in self.db.execute(self.select.select_ids)
+                    # TODO replace .select_ids with `.ids()`
+                    for r in self.db.execute(self.select.select_ids())
                 ]
             else:
                 self._ids = ids
-            self.select_one = self.select.select_single_id
+
+            t = db[self.select.table]
+            id = self.select.primary_id
+            self.select_one = lambda x: next(self.select.filter(t[id] == x).execute())
 
         self.mapping = mapping
 

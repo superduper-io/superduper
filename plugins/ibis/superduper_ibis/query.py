@@ -197,7 +197,7 @@ class IbisQuery(Query):
         return ids
 
     def _create_table_if_not_exists(self):
-        tables = self.db.databackend.list_tables_or_collections()
+        tables = self.db.databackend.list_tables()
         if self.table in tables:
             return
         self.db.databackend.create_table_and_schema(
@@ -242,39 +242,39 @@ class IbisQuery(Query):
         """Return the primary id."""
         return self.base_table.primary_id
 
-    def model_update(
-        self,
-        ids: t.List[t.Any],
-        predict_id: str,
-        outputs: t.Sequence[t.Any],
-        flatten: bool = False,
-        **kwargs,
-    ):
-        """Update the model outputs in the database.
+    # def model_update(
+    #     self,
+    #     ids: t.List[t.Any],
+    #     predict_id: str,
+    #     outputs: t.Sequence[t.Any],
+    #     flatten: bool = False,
+    #     **kwargs,
+    # ):
+    #     """Update the model outputs in the database.
 
-        :param ids: The ids of the inputs.
-        :param predict_id: The predict id.
-        :param outputs: The outputs.
-        :param flatten: Whether to flatten the outputs.
-        :param kwargs: Additional keyword arguments.
-        """
-        self.is_output_query = True
-        self.updated_key = predict_id
+    #     :param ids: The ids of the inputs.
+    #     :param predict_id: The predict id.
+    #     :param outputs: The outputs.
+    #     :param flatten: Whether to flatten the outputs.
+    #     :param kwargs: Additional keyword arguments.
+    #     """
+    #     self.is_output_query = True
+    #     self.updated_key = predict_id
 
-        if not flatten:
-            return _model_update_impl(
-                db=self.db,
-                ids=ids,
-                predict_id=predict_id,
-                outputs=outputs,
-            )
-        else:
-            return _model_update_impl_flatten(
-                db=self.db,
-                ids=ids,
-                predict_id=predict_id,
-                outputs=outputs,
-            )
+    #     if not flatten:
+    #         return _model_update_impl(
+    #             db=self.db,
+    #             ids=ids,
+    #             predict_id=predict_id,
+    #             outputs=outputs,
+    #         )
+    #     else:
+    #         return _model_update_impl_flatten(
+    #             db=self.db,
+    #             ids=ids,
+    #             predict_id=predict_id,
+    #             outputs=outputs,
+    #         )
 
     def add_fold(self, fold: str):
         """Return a query that adds a fold.

@@ -1,59 +1,145 @@
+"""
+Permitted patterns
+
+type_1: table.like()[.filter(...)][.select(...)][.get() | .limit(...)]'
+type_2: table[.filter(...)][.select(...)][.like()][.get() | .limit(...)]'
+
+Select always comes last, unless with `.get`, `.limit`.
+
+"""
+from abc import ABC, abstractmethod
+import copy
 import dataclasses as dc
-import importlib
+import functools
 import json
 import re
 import typing as t
+from types import MethodType
 import uuid
-from abc import abstractmethod
-from functools import cached_property, wraps
 
 from superduper import CFG, logging
-from superduper.base.constant import (
-    KEY_BLOBS,
-    KEY_BUILDS,
-    KEY_FILES,
-    KEY_SCHEMA,
-)
 from superduper.base.document import Document, _unpack
 from superduper.base.leaf import Leaf
+from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-def applies_to(*flavours):
-    """Decorator to check if the query matches the accepted flavours.
+@dc.dataclass
+class QueryPart:
+    name: str
+    args: t.Sequence
+    kwargs: t.Dict
 
-    :param flavours: The flavours to check against.
+
+@dc.dataclass
+class Op(QueryPart):
+    symbol: str
+
+
+@dc.dataclass
+class Decomposition:
     """
+    Decompose a query into its parts.
+    
+    :param table: The table to use.
+    :param db: The datalayer to use.
+    :param col: The column to use.
+    :param insert: The insert part of the query.
+    :param pre_like: The pre-like part of the query.
+    :param post_like: The post-like part of the query.
+    :param filter: The filter part of the query.
+    :param select: The select part of the query.
+    :param get: The get part of the query.
+    :param limit: The limit part of the query.
+    :param outputs: The outputs part of the query.
+    :param op: The operation part of the query.
+    """
+    table: str
+    db: 'Datalayer'
+    col: str | None = None
+    insert: QueryPart | None = None
+    pre_like: QueryPart | None = None
+    post_like: QueryPart | None = None
+    filter: QueryPart | None = None
+    select: QueryPart | None = None
+    get: QueryPart | None = None
+    limit: QueryPart | None = None
+    outputs: QueryPart | None = None
+    op: Op | None = None
 
-    def decorator(f):
-        @wraps(f)
-        def decorated(self, *args, **kwargs):
-            msg = (
-                f'Query {self} does not match any of accepted patterns {flavours},'
-                f' for the {f.__name__} method to which this method applies.'
-            )
+    def to_query(self):
 
-            try:
-                flavour = self.flavour
-            except TypeError:
-                raise TypeError(msg)
-            assert flavour in flavours, msg
-            return f(self, *args, **kwargs)
+        q = self.db[self.table]
 
-        return decorated
+        if self.pre_like:
+            q = q + self.pre_like
 
-    return decorator
+        if self.outputs:
+            q = q + self.outputs
+
+        if self.filter:
+            q = q + self.filter
+
+        if self.select:
+            q = q + self.select
+
+        if self.post_like:
+            q = q + self.post_like
+
+        if self.get:
+            assert not self.limit
+            q = q + self.get
+
+        if self.limit:
+            q = q + self.limit
+
+        return q
+
+    def copy(self):
+        return self.to_query().copy().decomposition
+
+
+def stringify(item, documents, queries):
+    if isinstance(item, dict):
+        documents.append(item)
+        out = f'documents[{len(documents) - 1}]'
+    elif isinstance(item, list):
+        old_len = len(documents)
+        documents.extend(item)
+        out = f'documents[{old_len}:{len(documents)}]'
+    elif isinstance(item, Query):
+        out = f'query[{len(queries)}]'
+        queries.append(item.stringify(documents, queries))
+    elif isinstance(item, Op):
+        arg = stringify(item.args[0], documents, queries)
+        return f' {item.symbol} {arg}'
+    elif isinstance(item, QueryPart):
+        args = [stringify(a, documents, queries) for a in item.args]
+        kwargs = {k: stringify(v, documents, queries) for k, v in item.kwargs.items()}
+        parameters = ''
+        if args and kwargs:
+            parameters = ', '.join(args) + ', ' + ', '.join([f'{k}={v}' for k, v in kwargs.items()])
+        elif args:
+            parameters = ', '.join(args)
+        elif kwargs:
+            parameters = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
+        return f'.{item.name}({parameters})'
+    else:
+        try:
+            out = json.dumps(item)
+        except Exception:
+            documents.append(item)
+            out = f'documents[{len(documents) - 1}]'
+    return out
 
 
 class _BaseQuery(Leaf):
-    parts: t.Sequence[t.Union[t.Tuple, str]] = dc.field(default_factory=list)
+    parts: t.Sequence[t.Union[QueryPart, str]] = dc.field(default_factory=list)
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         super().__post_init__(db)
-        self._is_output_query = False
-        self._updated_key = None
         if not self.identifier:
             self.identifier = self._build_hr_identifier()
         self.identifier = re.sub('[^a-zA-Z0-9\-]', '-', self.identifier)
@@ -61,12 +147,7 @@ class _BaseQuery(Leaf):
 
     def unpack(self):
         parts = _unpack(self.parts)
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=parts,
-            identifier=self.identifier,
-        )
+        return from_parts(impl=self.__class__, table=self.table, parts=parts, db=self.db)
 
     def _build_hr_identifier(self):
         identifier = str(self).split('\n')[-1]
@@ -82,50 +163,34 @@ class _BaseQuery(Leaf):
             identifier = identifier.replace(f'#{i}', v)
         return identifier
 
-    def __getattr__(self, item):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[*self.parts, item],
-        )
-
-    def __call__(self, *args, **kwargs):
-        """Add a method call to the query.
-
-        :param args: The arguments to pass to the method.
-        :param kwargs: The keyword arguments to pass to the method.
-        """
-        assert isinstance(self.parts[-1], str)
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=[*self.parts[:-1], (self.parts[-1], args, kwargs)],
-        )
-
     def _to_str(self):
-        documents = {}
+        documents = []
         queries = {}
         out = str(self.table)
         for part in self.parts:
             if isinstance(part, str):
-                out += f'.{part}'
-                continue
+                if isinstance(getattr(self.__class__, part, None), property):
+                    out += f'.{part}'
+                    continue
+                else:
+                    out += f'["{part}"]'
+                    continue
             args = []
-            for a in part[1]:
+            for a in part.args:
                 args.append(self._update_item(a, documents, queries))
             args = ', '.join(args)
             kwargs = {}
-            for k, v in part[2].items():
+            for k, v in part.kwargs.items():
                 kwargs[k] = self._update_item(v, documents, queries)
             kwargs = ', '.join([f'{k}={v}' for k, v in kwargs.items()])
-            if part[1] and part[2]:
-                out += f'.{part[0]}({args}, {kwargs})'
-            if not part[1] and part[2]:
-                out += f'.{part[0]}({kwargs})'
-            if part[1] and not part[2]:
-                out += f'.{part[0]}({args})'
-            if not part[1] and not part[2]:
-                out += f'.{part[0]}()'
+            if part.args and part.kwargs:
+                out += f'.{part.name}({args}, {kwargs})'
+            if not part.args and part.kwargs:
+                out += f'.{part.name}({kwargs})'
+            if part.args and not part.kwargs:
+                out += f'.{part.name}({args})'
+            if not part.args and not part.kwargs:
+                out += f'.{part.name}()'
         return out, documents, queries
 
     def _dump_query(self):
@@ -134,35 +199,138 @@ class _BaseQuery(Leaf):
             output = '\n'.join(list(queries.values())) + '\n' + output
         for i, k in enumerate(queries):
             output = output.replace(k, str(i))
-        for i, k in enumerate(documents):
-            output = output.replace(k, str(i))
-        documents = list(documents.values())
         return output, documents
 
     @staticmethod
     def _update_item(a, documents, queries):
         if isinstance(a, Query):
             a, sub_documents, sub_queries = a._to_str()
-            documents.update(sub_documents)
+            if documents:
+                for i in range(len(sub_documents)):
+                    a = a.replace(f'documents[{i}]', f'documents[{i + len(documents)}]')
+            documents.extend(sub_documents)
             queries.update(sub_queries)
             id_ = uuid.uuid4().hex[:5].upper()
             queries[id_] = a
             arg = f'query[{id_}]'
         else:
-            id_ = uuid.uuid4().hex[:5].upper()
             if isinstance(a, dict):
-                documents[id_] = a
-                arg = f'documents[{id_}]'
+                documents.append(a)
+                arg = f'documents[{len(documents) - 1}]'
             elif isinstance(a, list):
-                documents[id_] = {'_base': a}
-                arg = f'documents[{id_}]'
+                old_len = len(documents)
+                documents.extend(a)
+                arg = f'documents[{old_len}:{len(documents)}]'
             else:
                 try:
                     arg = json.dumps(a)
                 except Exception:
-                    documents[id_] = {'_base': a}
-                    arg = id_
+                    documents.append(a)
+                    arg = f'documents[{len(documents) - 1}]'
         return arg
+
+
+def bind(f):
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        out = f(self, *args, **kwargs)
+        children = self.mapping[f.__name__]
+        for method in children:
+            out._bind_base_method(method, eval(method))
+        return out
+
+    decorated.__name__ = f.__name__
+    return decorated
+
+
+@bind
+def limit(self, n: int):
+    # always the last one
+    assert not self.decomposition.limit
+    assert not self.decomposition.get
+    return self + QueryPart('limit', (n,), {})
+
+
+@bind
+def insert(self, documents):
+    # no children
+    return self + QueryPart('insert', (documents,), {})
+
+
+@bind
+def outputs(self, *predict_ids):
+
+    d = self.decomposition
+
+    assert not d.outputs
+
+    d.outputs = QueryPart('outputs', predict_ids, {})
+
+    return d.to_query()
+
+
+def ids(self):
+    msg = '.ids only applicable to select queries'
+    assert self.type == 'select', msg
+    q = self.select(self.primary_id)
+    pid = self.primary_id.execute()
+    results = q.execute()
+    return [str(r[pid]) for r in results]
+
+
+@bind
+def select(self, *cols):
+
+    d = self.decomposition
+
+    if d.select:
+        d.select = QueryPart(
+            'select',
+            (*d.select.args, *cols),
+            {},
+        )
+    else:
+        d.select = QueryPart('select', cols, {})
+
+    return d.to_query()
+
+
+@bind
+def filter(self, *filters):
+
+    d = self.decomposition
+
+    if d.filter:
+        d.filter = QueryPart(
+            'filter',
+            args=(*d.filter.args, *filters),
+            kwargs={}
+        )
+    else:
+        d.filter = QueryPart(
+            'filter',
+            args=filters,
+            kwargs={}
+        )
+
+    return d.to_query()
+
+
+@bind
+def like(self, r: t.Dict, vector_index: str, n: int = 10):
+    return self + QueryPart('like', args=(r, vector_index), kwargs={'n': n})
+
+
+SYMBOLS = {
+    '__eq__': '==',
+    '__ne__': '!=',
+    '__le__': '<=',
+    '__ge__': '>=',
+    '__lt__': '<',
+    '__gt__': '>',
+    'isin': 'in'
+}
+
 
 
 class Query(_BaseQuery):
@@ -175,189 +343,154 @@ class Query(_BaseQuery):
     :param parts: The parts of the query.
     """
 
-    flavours: t.ClassVar[t.Dict[str, str]] = {}
+    # mapping between methods and allowed downstream methods
+    # base methods are at the key level
+    mapping: t.ClassVar[t.Dict] = {
+        'insert': [],
+        'select': ['filter', 'outputs', 'like', 'limit', 'select', 'ids'],
+        'filter': ['filter', 'outputs', 'like', 'limit', 'select', 'ids'],
+        'like': ['select', 'filter', 'ids'],
+        'outputs': ['filter', 'limit', 'ids'],
+        'limit': [],
+        'ids': [],
+    }
 
+    flavours: t.ClassVar[t.Dict[str, str]] = {}
     table: str
     identifier: str = ''
+
+    def __post_init__(self, db = None):
+        out = super().__post_init__(db)
+        if not self.parts:
+            for method in self.mapping:
+                self._bind_base_method(method, eval(method))
+        elif self.parts:
+            if isinstance(self.parts[-1], str):
+                name = self.parts[-1]
+                self._bind_base_method('filter', filter)
+            else:
+                name = self.parts[-1].name
+
+                try:
+                    for method in self.mapping[name]:
+                        self._bind_base_method(method, eval(method))
+                except KeyError:
+                    pass
+
+        if self.type == 'insert':
+            self._add_fold_to_insert()
+
+        return out
+
+    def _add_fold_to_insert(self):
+        assert self.type == 'insert'
+        documents = self[-1].args[0]
+        import random
+        for r in documents:
+            r.setdefault(
+                '_fold',
+                'train' if random.random() >= CFG.fold_probability else 'valid',
+            )
+
+    @property
+    def decomposition(self):
+
+        out = Decomposition(table=self.table, db=self.db)
+
+        for i, part in enumerate(self.parts):
+            if isinstance(part, str):
+                out.col = part
+                continue
+
+            if i == 0 and part.name == 'like':
+                out.pre_like = part
+                continue
+
+            if part.name == 'like':
+                out.post_like = part
+                continue
+
+            if isinstance(part, Op):
+                out.op = Op
+                continue
+            
+            msg = f'Found unexpected query part "{part.name}"'
+            assert part.name in [f.name for f in dc.fields(out)], msg
+            setattr(out, part.name, part)
+
+        return out
+
+    def _bind_base_method(self, name, method):
+        method = MethodType(method, self)
+        setattr(self, name, method)
+
+    def stringify(self, documents, queries):
+        parts = []
+        for part in self.parts:
+            if isinstance(part, str):
+                if part == 'primary_id':
+                    parts.append('.primary_id')
+                else:
+                    parts.append(f'["{part}"]')
+                continue
+            parts.append(stringify(part, documents, queries))
+        parts = ''.join(parts)
+        return f'{self.table}{parts}'
+
+    @property
+    def type(self):
+        if self.parts and isinstance(self[-1], QueryPart) and self[-1].name == 'insert':
+            return 'insert'
+        if 'delete' in str(self):
+            return 'delete'
+        return 'select'
 
     @property
     def tables(self):
         """Tables contained in the ``Query`` object."""
         out = []
         for part in self.parts:
-            if part[0] == 'outputs':
-                out.extend([f'{CFG.output_prefix}{x}' for x in part[1]])
+            if part.name == 'outputs':
+                out.extend([f'{CFG.output_prefix}{x}' for x in part.args])
         out.append(self.table)
         return list(set(out))
 
+    def __len__(self):
+        return len(self.parts) + 1
+
     def __getitem__(self, item):
+
+        # supports queries which use strings to index
         if isinstance(item, str):
-            return getattr(self, item)
+            return self + item
+
+        if isinstance(item, int):
+            return self.parts[item]
+
         if not isinstance(item, slice):
             raise TypeError('Query index must be a string or a slice')
+
         assert isinstance(item, slice)
+
         parts = self.parts[item]
-        return type(self)(db=self.db, table=self.table, parts=parts)
 
-    # TODO - not necessary: either `Document.decode(r, db=db)`
-    # or `db['table'].select...`
+        return self.__class__(db=self.db, table=self.table, parts=parts)
 
-    # TODO why necessary?
-    def set_db(self, value: 'Datalayer'):
-        """Set the datalayer to use to execute the query.
+    def copy(self):
+        r = self.dict()
+        del r['_path']
+        del r['identifier']
+        return parse_query(**r, db=self.db)
 
-        :param db: The datalayer to use to execute the query.
-        """
-
-        def _set_the_db(r, db):
-            if isinstance(r, (tuple, list)):
-                out = [_set_the_db(x, db) for x in r]
-                return out
-            if isinstance(r, Document):
-                return Document({k: _set_the_db(v, db) for k, v in r.items()})
-            if isinstance(r, dict):
-                return {k: _set_the_db(v, db) for k, v in r.items()}
-            if isinstance(r, Query):
-                r.db = db
-                return r
-
-            return r
-
-        self._db = value
-
-        # Recursively set db
-        parts: t.List[t.Union[str, tuple]] = []
-        for part in self.parts:
-            if isinstance(part, str):
-                parts.append(part)
-                continue
-            part_args = tuple(_set_the_db(part[1], value))
-            part_kwargs = _set_the_db(part[2], value)
-            part = part[0]
-            parts.append((part, part_args, part_kwargs))
-        self.parts = parts
-
-    # TODO need this?
-    @property
-    def is_output_query(self):
-        """Check if query is of output type."""
-        return self._is_output_query
-
-    @is_output_query.setter
-    def is_output_query(self, b):
-        """Property setter."""
-        self._is_output_query = b
-
-    # TODO necessary?
-    @property
-    def updated_key(self):
-        """Return query updated key."""
-        return self._updated_key
-
-    @updated_key.setter
-    def updated_key(self, update):
-        """Property setter."""
-        self._updated_key = update
-
-    def _get_flavour(self):
-        _query_str = self._to_str()
-        repr_ = _query_str[0]
-
-        if repr_ == self.table and not (_query_str[0] and _query_str[-1]):
-            # Table selection query.
-            return 'select'
-
-        try:
-            return next(k for k, v in self.flavours.items() if re.match(v, repr_))
-        except StopIteration:
-            raise TypeError(
-                f'Query flavour {repr_} did not match existing {type(self)} flavours'
-            )
-
-    def _get_parent(self):
-        return self.db.databackend.get_table_or_collection(self.table)
-
-    def _execute_select(self, parent):
-        raise NotImplementedError
-
-    def _prepare_pre_like(self, parent):
-        like_args, like_kwargs = self.parts[0][1:]
-        like_args = list(like_args)
-        if not like_args:
-            like_args = [{}]
-        like = like_args[0] or like_kwargs.pop('r', {})
-        if isinstance(like, Document):
-            like = like.unpack()
-
-        ids = like_kwargs.pop('within_ids', [])
-
-        n = like_kwargs.pop('n', 100)
-
-        vector_index = like_kwargs.get('vector_index')
-
-        similar_ids, similar_scores = self.db.select_nearest(
-            like,
-            vector_index=vector_index,
-            ids=ids,
-            n=n,
-        )
-        similar_scores = dict(zip(similar_ids, similar_scores))
-        return similar_ids, similar_scores
-
-    @property
-    def flavour(self):
-        """Return the flavour of the query."""
-        return self._get_flavour()
-
-    @cached_property
-    def documents(self):
-        """Return the documents."""
-
-        def _update_part(documents):
-            nonlocal self
-            doc_args = (documents, *self.parts[0][1][1:])
-            insert_part = (self.parts[0][0], doc_args, self.parts[0][2])
-            return [insert_part] + self.parts[1:]
-
-        documents = self.parts[0][1][0]
-        one_document = isinstance(documents, (dict, Document))
-        if one_document:
-            documents = [documents]
-        wrapped_documents = []
-
-        for document in documents:
-            document = Document(document)
-            wrapped_documents.append(document)
-
-        if one_document:
-            self.parts = _update_part(wrapped_documents[0])
-        else:
-            self.parts = _update_part(wrapped_documents)
-        return wrapped_documents
-
-    @property
-    @abstractmethod
-    def type(self):
-        """Return the type of the query.
-
-        The type is used to route the correct method to execute the query in the
-        datalayer.
-        """
-        pass
-
-    def dict(
-        self,
-        metadata: bool = True,
-        defaults: bool = True,
-        uuid: bool = True,
-        refs: bool = False,
-    ):
+    def dict(self, *args, **kwargs):
         """Return the query as a dictionary."""
-        query, documents = self._dump_query()
-        documents = [Document(r) for r in documents]
+        documents = []
+        queries = []
+        stringify(self, documents=documents, queries=queries)
+        query = '\n'.join(queries)
         return Document(
             {
-                '_path': f'{self.__module__}.parse_query',
+                '_path': 'superduper.backends.base.query.parse_query',
                 'documents': documents,
                 'identifier': self.identifier,
                 'query': query,
@@ -365,23 +498,35 @@ class Query(_BaseQuery):
         )
 
     def __repr__(self):
-        output, docs = self._dump_query()
-        for i, doc in enumerate(docs):
-            doc_string = str(doc)
-            if isinstance(doc, Document):
-                r = doc.unpack()
-                if '_base' in r:
-                    r = r['_base']
-                doc_string = str(r)
-            output = output.replace(f'documents[{i}]', doc_string)
-        return output
+        r = self.dict()
+        query = r['query'].split('\n')[-1]
+        queries = r['query'].split('\n')[:-1]
+        for i, q in enumerate(queries):
+            query = query.replace(f'query[{i}]', q)
+
+        doc_refs = re.findall('documents\[([0-9]+)\]', query)
+        if doc_refs:
+            for numeral in doc_refs:
+                query = query.replace(f'documents[{numeral}]', str(r['documents'][int(numeral)]))
+
+        doc_segs = re.findall('documents\[([0-9]+):([0-9]+)\]', query)
+        if doc_segs:
+            for n1, n2 in doc_segs:
+                query = query.replace(f'documents[{n1}:{n2}]', ' '.join([str(rr) for rr in  r['documents'][int(n1):int(n2)]]))
+
+        return query
+
+    def __add__(self, other: QueryPart | str):
+        return Query(
+            table=self.table,
+            parts=[*self.parts, other],
+            db=self.db,
+        )
 
     def _ops(self, op, other):
-        return type(self)(
-            db=self.db,
-            table=self.table,
-            parts=self.parts + [(op, (other,), {})],
-        )
+        msg = 'Can only compare based on a column'
+        assert isinstance(self.parts[-1], str), msg
+        return self + Op(op, args=(other,), kwargs={}, symbol=SYMBOLS[op])
 
     def __eq__(self, other):
         return self._ops('__eq__', other)
@@ -442,36 +587,10 @@ class Query(_BaseQuery):
 
         return r
 
-    def _execute(self, parent, method='encode'):
-        return self._get_chain_native_query(parent, self.parts, method)
-
-    def _get_chain_native_query(self, parent, parts, method='encode'):
-        try:
-            for part in parts:
-                if isinstance(part, str):
-                    parent = getattr(parent, part)
-                    continue
-                args = self._encode_or_unpack_args(
-                    part[1], self.db, method=method, parent=parent
-                )
-                kwargs = self._encode_or_unpack_args(
-                    part[2], self.db, method=method, parent=parent
-                )
-                parent = getattr(parent, part[0])(*args, **kwargs)
-        except Exception as e:
-            logging.error(f'Error in executing query, parts: {parts}')
-            raise e
-
-        return parent
-
-    @abstractmethod
-    def _create_table_if_not_exists(self):
-        pass
-
     def complete_uuids(
         self, db: 'Datalayer', listener_uuids: t.Optional[t.Dict] = None
     ) -> 'Query':
-        """Complete the UUIDs with have been omitted from output-tables.
+        """Complete the UUIDs which have been omitted from output-tables.
 
         :param db: ``db`` instance.
         :param listener_uuids: identifier to UUIDs of listeners lookup
@@ -481,7 +600,7 @@ class Query(_BaseQuery):
 
         r = copy.deepcopy(self.dict())
         lines = r['query'].split('\n')
-        parser = importlib.import_module(self.__module__).parse_query
+        parser = parse_query
 
         def _get_uuid(identifier):
             if '.' in identifier:
@@ -559,26 +678,27 @@ class Query(_BaseQuery):
         out = parser(**r, db=db)
         return out
 
-    def tolist(self, db=None, eager_mode=False, **kwargs):
-        """Execute and convert to list."""
-        return self.execute(db=db, eager_mode=eager_mode, **kwargs).tolist()
+    @property
+    def primary_id(self):
+        return Query(table=self.table, parts=(), db=self.db) + 'primary_id'
 
-    def execute(self, db=None, eager_mode=False, handle_outputs=True, **kwargs):
-        """
-        Execute the query.
+    @property
+    def documents(self):
+        return self.dict()['documents']
 
-        :param db: Datalayer instance.
-        """
-        if self.type == 'select' and handle_outputs and 'outputs' in str(self):
-            query = self.complete_uuids(db=db or self.db)
-            return query.execute(
-                db=db, eager_mode=eager_mode, **kwargs, handle_outputs=False
-            )
-        self.db = db or self.db
-        results = self.db.execute(self, **kwargs)
-        if eager_mode and self.type == 'select':
-            results = self._convert_eager_mode_results(results)
-        return results
+    def subset(self, ids: t.Sequence[str]):
+        assert self.type == 'select'
+        t = self.db[self.table]
+        modified_query = self.filter(t.primary_id.isin(ids))
+        return modified_query.execute()
+
+    def execute(self):
+        if self.type == 'insert':
+            self.db._prepare_insert(self)
+        return self.db.databackend.plugin.Executor(self, db=self.db).execute()
+
+    def get(self):
+        return self.db.databackend.plugin.Executor(self, db=self.db).get()
 
     def _convert_eager_mode_results(self, results):
         from superduper.base.cursor import SuperDuperCursor
@@ -601,216 +721,49 @@ class Query(_BaseQuery):
 
         raise ValueError(f'Cannot convert {results} to eager mode results')
 
-    def do_execute(self, db=None):
-        """
-        Execute the query.
 
-        This methold will first create the table if it does not exist and then
-        execute the query.
-
-        All the methods matching the pattern `_execute_{flavour}` will be
-        called if they exist.
-
-        If no such method exists, the `_execute` method will be called.
-
-        :param db: The datalayer to use to execute the query.
-        """
-        self.db = db or self.db
-        assert self.db is not None, 'No datalayer (db) provided'
-        self._create_table_if_not_exists()
-        parent = self._get_parent()
-        try:
-            flavour = self._get_flavour()
-            handler = f'_execute_{flavour}' in dir(self)
-            if handler is False:
-                raise AssertionError
-            handler = getattr(self, f'_execute_{flavour}')
-            return handler(parent=parent)
-        except TypeError as e:
-            logging.error(f'Error in executing query: {self}')
-            if 'did not match' in str(e):
-                return self._execute(parent=parent)
-            else:
-                raise e
-        except AssertionError:
-            return self._execute(parent=parent)
-
-    @property
-    @abstractmethod
-    def primary_id(self):
-        """Return the primary id of the table."""
-        pass
-
-    @abstractmethod
-    def model_update(
-        self,
-        ids: t.List[t.Any],
-        predict_id: str,
-        outputs: t.Sequence[t.Any],
-        flatten: bool = False,
-        **kwargs,
-    ):
-        """Update the model outputs in the database.
-
-        :param ids: The ids of the documents to update.
-        :param predict_id: The id of the prediction.
-        :param outputs: The outputs to store.
-        :param flatten: Whether to flatten the outputs.
-        :param kwargs: Additional keyword arguments.
-        """
-        pass
-
-    @abstractmethod
-    def add_fold(self, fold: str):
-        """Add a fold to the query.
-
-        :param fold: The fold to add.
-        """
-        pass
-
-    @abstractmethod
-    def select_using_ids(self, ids: t.Sequence[str]):
-        """Return a query that selects ids.
-
-        :param ids: The ids to select.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def select_ids(self, ids: t.Sequence[str]):
-        """Return a query that selects ids.
-
-        :param ids: The ids to select.
-        """
-        pass
-
-    @abstractmethod
-    def select_ids_of_missing_outputs(self, predict_id: str):
-        """Return the ids of missing outputs.
-
-        :param predict_id: The id of the prediction.
-        """
-        pass
-
-    @abstractmethod
-    def select_single_id(self, id: str):
-        """Return a single document by id.
-
-        :param id: The id of the document.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def select_table(self):
-        """Return the table to select from."""
-        pass
-
-    def _prepare_documents(self):
-        documents = self.documents
-        kwargs = self.parts[0][2]
-        schema = kwargs.pop('schema', None)
-
-        if schema is None:
-            try:
-                table = self.db.load('table', self.table)
-                schema = table.schema
-            except FileNotFoundError:
-                pass
-
-        documents = [
-            r.encode(schema) if isinstance(r, Document) else r for r in documents
-        ]
-        for r in documents:
-            r = self.db.artifact_store.save_artifact(r)
-            r.pop(KEY_BUILDS)
-            r.pop(KEY_BLOBS)
-            r.pop(KEY_FILES)
-            r.pop(KEY_SCHEMA, None)
-        return documents
-
-    # TODO deprecate (self.table)
-    @property
-    def table_or_collection(self):
-        """Return the table or collection to select from."""
-        return type(self)(table=self.table, db=self.db)
-
-    def _execute_pre_like(self, parent):
-        assert self.parts[0][0] == 'like'
-        assert self.parts[1][0] in ['find', 'find_one', 'select']
-
-        similar_ids, similar_scores = self._prepare_pre_like(parent)
-
-        query = self[1:]
-        query = query.filter(query[self.primary_id].isin(similar_ids))
-        result = query.execute()
-        result.scores = similar_scores
-        return result
-
-    def _execute_post_like(self, parent):
-        assert self.parts[0][0] in {
-            'find',
-            'select',
-        }, "Post like query must start with find/select"
-        if self.parts[-1][0] != 'like':
-            raise ValueError('Post like query must end with like')
-        like_kwargs = self.parts[-1][2]
-        like_args = self.parts[-1][1]
-        assert 'vector_index' in like_kwargs
-
-        if not like_args and 'r' in like_kwargs:
-            like_args = (like_kwargs['r'],)
-
-        assert like_args
-
-        query = self[:-1]
-        result = list(query.execute())
-        ids = [str(r[self.primary_id]) for r in query.execute()]
-
-        similar_ids, scores = self.db.select_nearest(
-            like=like_args[0],
-            ids=ids,
-            vector_index=like_kwargs.get('vector_index'),
-            n=like_kwargs.get('n', 100),
-        )
-        scores = dict(zip(similar_ids, scores))
-
-        result = [r for r in result if str(r[self.primary_id]) in similar_ids]
-
-        from superduper.base.cursor import SuperDuperCursor
-
-        cursor = SuperDuperCursor(
-            raw_cursor=result,
-            db=self.db,
-            id_field=self.primary_id,
-        )
-        cursor.scores = scores
-        return cursor
-
-
-def _parse_query_part(part, documents, query, builder_cls, db=None):
+def _parse_query_part(part, documents, query, db):
     if part.startswith(CFG.output_prefix):
-        predict_id = part[len(CFG.output_prefix) :].split('.')[0]
+        predict_id = part[len(CFG.output_prefix) :]
         table = f'{CFG.output_prefix}{predict_id}'
-        rest_part = part[len(table) + 1 :]
     else:
         table = part.split('.', 1)[0]
-        rest_part = part[len(table) + 1 :]
+    rest_part = part[len(table) + 1 :]
 
-    # The format of the rest part should be a chain of '.method(args, kwargs)'
+    col = None
+    col_match = re.match('^([a-zA-Z0-9]+)\["[a-zA-Z0-9]+"\]$', table)
+    if col_match:
+        table = col_match.groups()[0]
+        col = col_match.groups()[1]
+
     parts = re.findall(r'\.([a-zA-Z0-9_]+)(\(.*?\))?', "." + rest_part)
+
+    # TODO what's this clause?
     recheck_part = ".".join(p[0] + p[1] for p in parts)
     if recheck_part != rest_part:
         raise ValueError(f'Invalid query part: {part} != {recheck_part}')
 
-    current = builder_cls(table=table, parts=(), db=db)
+    new_parts = []
     for part in parts:
+        if isinstance(part, str) and re.match('^[a-zA-Z0-9]+\["[a-zA-Z0-9]+"\]$', part) is not None:
+            new_parts.extend(part.split('[')[0], part.split(']').strip()[:-1])
+            continue
+        new_parts.append(part)
+
+    if col is None:
+        current = Query(table=table, parts=(), db=db)
+    else:
+        current = Query(table=table, parts=(col,), db=db)
+
+    for part in parts:
+
         comp = part[0] + part[1]
         match = re.match(r'^([a-zA-Z0-9_]+)\((.*)\)$', comp)
+
         if match is None:
             current = getattr(current, comp)
             continue
+
         if not match.groups()[1].strip():
             current = getattr(current, match.groups()[0])()
             continue
@@ -826,12 +779,25 @@ def _parse_query_part(part, documents, query, builder_cls, db=None):
             else:
                 args.append(eval(x, {'documents': documents, 'query': query}))
         current = comp(*args, **kwargs)
+
+    return current
+
+
+def from_parts(impl, table, parts, db):
+    current = impl(table=table, parts=(), db=db)
+    for part in parts:
+        if isinstance(part, str):
+            try:
+                current = getattr(current, part)
+            except AttributeError:
+                current = current[part]
+            continue
+        current = getattr(current, part.name)(*part.args, **part.kwargs)
     return current
 
 
 def parse_query(
     query: t.Union[str, list],
-    builder_cls: t.Optional[t.Type[Query]] = None,
     documents: t.Sequence[t.Any] = (),
     db: t.Optional['Datalayer'] = None,
 ):
@@ -842,62 +808,142 @@ def parse_query(
     :param documents: The documents to query.
     :param db: The datalayer to use to execute the query.
     """
-    if (
-        isinstance(query, str)
-        and 'predict' in query
-        and query.split('\n')[-1].strip().split('.')[1].startswith('predict')
-    ):
-        builder_cls = Model
-        return _parse_query_part(query, documents, [], builder_cls, db=db)
 
-    builder_cls = builder_cls or Query
-    documents = [Document(r, db=db) for r in documents]
     if isinstance(query, str):
         query = [x.strip() for x in query.split('\n') if x.strip()]
     for i, q in enumerate(query):
-        query[i] = _parse_query_part(q, documents, query[:i], builder_cls, db=db)
+        query[i] = _parse_query_part(q, documents, query[:i], db=db)
+
     return query[-1]
 
 
-class Model(_BaseQuery):
-    """
-    A model helper class for create a query to predict.
+class Executor(ABC):
 
-    :param table: The table to use.
-    :param parts: The parts of the query.
-    """
+    def __init__(self, parent, db: 'Datalayer'):
+        self.parent = parent
+        self.db = db
 
-    table: str
-    identifier: str = ''
-    type: t.ClassVar[str] = 'predict'
+    @property
+    def decomposition(self) -> Decomposition:
+        return self.parent.decomposition
+
+    def get(self):
+        assert self.parent.type == 'select'
+
+        if self.decomposition.pre_like:
+            return list(self._execute_pre_like(n=1))[0]
+
+        elif self.decomposition.post_like:
+            return list(self._execute_post_like(n=1))[0]
+
+        return Document(next(iter(self._execute_select())))
+
+    def to_id(self, id):
+        return id
+
+    @functools.cached_property
+    def primary_id(self):
+        return self.parent.primary_id.execute()
+
+    def _wrap_results(self, result):
+        for r in result:
+            if self.primary_id in r:
+                r[self.primary_id] = str(r[self.primary_id])
+        result = [Document.decode(r, schema=self.schema) for r in result]
+        return [Document(r) for r in result]
 
     def execute(self):
-        """Execute the model as a query."""
-        return self.db.execute(self)
 
-    def do_execute(self, db=None):
-        """Execute the query.
+        if self.decomposition.insert:
+            return self._do_execute_insert()
 
-        :param db: Datalayer instance.
-        """
-        self.db = db
-        m = self.db.load('model', self.table)
-        method = getattr(m, self.parts[-1][0])
-        r = method(*self.parts[-1][1], **self.parts[-1][2])
-        if isinstance(r, dict):
-            return Document(r)
-        else:
-            return Document({'_base': r})
+        if self.decomposition.col == 'primary_id':
+            return self._execute_primary_id()
 
-    def dict(self, metadata: bool = True, defaults: bool = True):
-        """Return the query as a dictionary."""
-        query, documents = self._dump_query()
-        documents = [Document(r) for r in documents]
-        return Document(
-            {
-                '_path': f'{self.__module__}.parse_query',
-                'documents': documents,
-                'identifier': self.identifier,
-                'query': query,
-            }
+        elif self.decomposition.pre_like:
+            return self._wrap_results(self._execute_pre_like())
+
+        elif self.decomposition.post_like:
+            return self._wrap_results(self._execute_post_like())
+
+        return self._wrap_results(self._execute_select())
+
+    @functools.cached_property
+    def schema(self) -> Schema:
+        base_schema = self.db.load('table', self.parent.table).schema
+
+        # TODO handle outputs
+        return base_schema
+
+    def _do_execute_insert(self):
+        documents = self.parent.documents
+        if not self.schema.trivial:
+            blobs = []
+            files = []
+            for i, r in enumerate(documents):
+                documents[i] = self.schema.encode_data(r, builds={}, blobs=blobs, files=files)
+        self._execute_insert(documents)
+
+    @abstractmethod
+    def _execute_insert(self, documents):
+        pass
+
+    @abstractmethod
+    def _execute_primary_id(self):
+        pass
+
+    @abstractmethod
+    def _execute_select(self):
+        pass
+
+    def _execute_pre_like(self):
+
+        assert self.decomposition.pre_like is not None
+
+        ids, scores = self.db.select_nearest(
+            like=self.decomposition.pre_like.args[0],
+            vector_index=self.decomposition.pre_like.args[1],
+            n=self.decomposition.pre_like.kwargs.get('n', 10),
         )
+
+        lookup = {id: score for id, score in zip(ids, scores)}
+
+        t = self.db[self.decomposition.table]
+        new_filter = t.primary_id.isin(ids)
+
+        copy = self.decomposition.copy()
+        copy.pre_like = None
+
+        new = copy.to_query()
+        new = new.filter(new_filter)
+
+        results = new.execute()
+
+        for r in results:
+            r['score'] = lookup[r[self.primary_id]]
+
+        return results
+
+    def _execute_post_like(self):
+
+        like_part = self.parent[-1]
+        prepare_query = self.parent[:-1]
+        relevant_ids = prepare_query.ids()
+
+        ids, scores = self.db.select_nearest(
+            like=like_part.args[0],
+            vector_index=like_part.args[1],
+            n=like_part.kwargs['n'],
+            ids=relevant_ids,
+        )
+
+        lookup = {id: score for id, score in zip(ids, scores)}
+
+        t = self.db[self.parent.table]
+
+        results = prepare_query.filter(t.primary_id.isin(ids)).execute()
+
+        for r in results:
+            r['score'] = lookup[r[self.primary_id]]
+
+        return results

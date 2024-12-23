@@ -8,7 +8,7 @@ from superduper.components.component import Status
 from superduper.misc.colors import Colors
 
 
-class MongoMetaDataStore(MetaDataStore):
+class MongoDBMetaDataStore(MetaDataStore):
     """
     Metadata store for MongoDB.
 

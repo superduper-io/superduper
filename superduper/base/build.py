@@ -42,8 +42,9 @@ class _Loader:
                 f"{plugin} with flavour {flavour} not supported "
                 "to create metadata store."
             )
-        impl = getattr(load_plugin(plugin), cls.impl)
-        return impl(uri, flavour=flavour)
+        plugin = load_plugin(plugin)
+        impl = getattr(plugin, cls.impl)
+        return impl(uri, flavour=flavour, plugin=plugin)
 
 
 class _MetaDataLoader(_Loader):

@@ -199,12 +199,12 @@ class Component(Leaf, metaclass=ComponentMeta):
         other.uuid = self.uuid
         other.version = self.version
 
-    def set_db(self, value):
+    def set_db(self, value: "Datalayer"):
         """Set the db for the component.
 
         :param value: The value to set the db to.
         """
-        self.db = value
+        self.db: "Datalayer" = value
         for child in self.get_children():
             child.set_db(value)
 

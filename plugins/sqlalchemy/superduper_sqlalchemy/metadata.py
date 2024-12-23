@@ -553,6 +553,19 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
+    def _get_component_status(self, uuid):
+        """Get status of component."""
+        with self.session_context() as session:
+            stmt = (
+                select(self.component_table)
+                .where(self.component_table.c.uuid == uuid)
+                .limit(1)
+            )
+            res = self.query_results(self.component_table, stmt, session)
+            if not res:
+                return None
+            return res[0]['status']
+
     def _show_cdcs(self, table):
         """Show all triggers in the database.
 
@@ -634,9 +647,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         """
         with self.session_context() as session:
             stmt = (
-                select(self.job_table)
-                .where(self.job_table.c.identifier == job_id)
-                .limit(1)
+                select(self.job_table).where(self.job_table.c.job_id == job_id).limit(1)
             )
             res = self.query_results(self.job_table, stmt, session)
             return res[0] if res else None

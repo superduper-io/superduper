@@ -6,7 +6,6 @@ from .data_backend import DataBackendProxy
 
 if t.TYPE_CHECKING:
     from superduper.backends.base.query import Select
-    from superduper.components.component import Status
 
 
 class NonExistentMetadataError(Exception):
@@ -158,7 +157,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def set_component_status(self, uuid: str, status: 'Status'):
+    def set_component_status(self, uuid: str, status: str):
         """
         Set the status of a component.
 
@@ -166,6 +165,15 @@ class MetaDataStore(ABC):
         :param status: ``Status`` to set
         """
         pass
+
+    def get_component_status(self, uuid: str):
+        """
+        Get the status of a component.
+
+        :param uuid: ``Component.uuid``
+        """
+        status = self._get_component_status(uuid)
+        return status
 
     # ------------------ JOBS ------------------
 

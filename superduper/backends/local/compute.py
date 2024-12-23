@@ -63,8 +63,9 @@ class LocalComputeBackend(ComputeBackend):
         """
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
 
+        assert job.job_id is not None
         component = self.db.load(uuid=job.uuid)
-        self.db.metadata.update_job(job.identifier, 'status', 'running')
+        self.db.metadata.update_job(job.job_id, 'status', 'running')
 
         try:
             logging.debug(
@@ -73,10 +74,10 @@ class LocalComputeBackend(ComputeBackend):
             method = getattr(component, job.method)
             output = method(*args, **kwargs)
         except Exception as e:
-            self.db.metadata.update_job(job.identifier, 'status', 'failed')
+            self.db.metadata.update_job(job.job_id, 'status', 'failed')
             raise e
 
-        self.db.metadata.update_job(job.identifier, 'status', 'success')
+        self.db.metadata.update_job(job.job_id, 'status', 'success')
         self.futures[job.context][job.job_id] = output
         assert job.job_id is not None
         return job.job_id

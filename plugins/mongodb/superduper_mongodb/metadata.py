@@ -424,3 +424,8 @@ class MongoMetaDataStore(MetaDataStore):
         return self.component_collection.update_one(
             {'uuid': uuid}, {'$set': {'status': status}}
         )
+
+    def _get_component_status(self, uuid):
+        """Get status of component."""
+        data = self.component_collection.find_one({'uuid': uuid}, {'status': 1})
+        return data['status'] if data else None

@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix crontab drop method.
 - Fix job status update.
 - Fix a random bug caused by queue thread-safety issues when OSS used crontab.
+- Fix the bug in the update mechanism that fails when the parent references an existing child.
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

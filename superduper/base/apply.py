@@ -227,6 +227,8 @@ def _apply(
                 r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
             for i, doc in enumerate(r['documents']):
                 replace = {}
+                if not isinstance(doc, Document):
+                    doc = Document(doc)
                 doc = doc.map(
                     lambda x: replace_existing(x),
                     condition=lambda x: isinstance(x, str),
@@ -259,13 +261,17 @@ def _apply(
         this_diff = Document(current_serialized, schema=current_serialized.schema).diff(
             serialized
         )
+
         logging.info(f'Found identical {object.huuid}')
 
         if not this_diff:
             # if no change then update the component
             # to have the same info as the "existing" version
 
-            non_breaking_changes[object.uuid] = current.uuid
+            if object.uuid != current.uuid:
+                # This happens if the developer performs "surgery"
+                # on an already instantiated object (uuid is not rebuilt)
+                non_breaking_changes[object.uuid] = current.uuid
 
             current.handle_update_or_same(object)
 
@@ -335,6 +341,10 @@ def _apply(
             logging.info(f'Found update {object.huuid}')
 
     except FileNotFoundError:
+        # Also replace the existing components with references
+        serialized = serialized.map(
+            replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
+        )
         serialized['version'] = 0
         serialized = object.dict().update(serialized)
 

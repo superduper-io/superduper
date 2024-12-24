@@ -1,3 +1,4 @@
+import threading
 import typing as t
 
 from superduper import logging
@@ -27,6 +28,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         super().__init__(uri=uri)
         self.consumer = self.build_consumer()
         self._component_uuid_mapping: t.Dict = {}
+        self.lock = threading.Lock()
 
     def list(self):
         """List all components."""
@@ -46,7 +48,8 @@ class LocalQueuePublisher(BaseQueuePublisher):
             identifier = component_data['identifier']
             r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
             if r.get('trigger'):
-                self.queue[type_id, identifier] = []
+                with self.lock:
+                    self.queue[type_id, identifier] = []
 
     def _put(self, component):
         msg = 'Table name "_apply" collides with Superduper namespace'
@@ -77,9 +80,10 @@ class LocalQueuePublisher(BaseQueuePublisher):
 
         :param events: list of events
         """
-        for event in events:
-            self.queue[event.queue].append(event)
-        self.consumer.consume(db=self.db, queue=self.queue)
+        with self.lock:
+            for event in events:
+                self.queue[event.queue].append(event)
+            self.consumer.consume(db=self.db, queue=self.queue)
 
 
 class LocalQueueConsumer(BaseQueueConsumer):

@@ -156,6 +156,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     context = str(uuid.uuid4())
     jobs: t.List[Job] = []
     job_lookup: t.DefaultDict = defaultdict(dict)
+    logging.info(f'Consuming {event_type} events on {table}')
 
     from superduper.components.cdc import build_streaming_graph
 
@@ -186,7 +187,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         for job in sub_jobs:
             job_lookup[component.uuid][job.method] = job.job_id
         jobs += sub_jobs
-        print(f'Streaming with {component.type_id}:{component.identifier}')
+        logging.info(f'Streaming with {component.type_id}:{component.identifier}')
 
     for job in jobs:
         job.execute(db)

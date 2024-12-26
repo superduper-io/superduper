@@ -1,6 +1,25 @@
 import hashlib
+import os
 
 from superduper import CFG
+
+
+def load_secrets():
+    secrets_dir = CFG.secrets_volume
+    if not os.path.isdir(secrets_dir):
+        raise ValueError(f"The path '{secrets_dir}' is not a valid directory.")
+
+    for root, _, files in os.walk(secrets_dir):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            try:
+                with open(file_path, 'r') as file:
+                    content = file.read().strip()
+
+                key = file_name
+                os.environ[key] = content
+            except Exception as e:
+                print(f"Error reading file {file_path}: {e}")
 
 
 def get_file_from_uri(uri):

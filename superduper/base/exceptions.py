@@ -89,3 +89,11 @@ class UnsupportedDatatype(BaseException):
 
     :param msg: msg for BaseException
     """
+
+
+class MissingSecretsException(BaseException):
+    """
+    Missing secrets.
+
+    :param msg: msg for BaseException
+    """

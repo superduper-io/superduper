@@ -1,3 +1,4 @@
+import time
 import dataclasses as dc
 import functools
 import typing as t
@@ -5,6 +6,8 @@ import typing as t
 import tenacity
 
 import superduper as s
+from superduper import logging
+from superduper.misc.files import load_secrets
 
 ExceptionTypes = t.Union[t.Type[BaseException], t.Tuple[t.Type[BaseException], ...]]
 
@@ -38,6 +41,41 @@ class Retry:
         )
         retrier = tenacity.retry(retry=retry, stop=stop, wait=wait)
         return retrier(f)
+
+
+def safe_retry(exception_to_check, retries=1, delay=1):
+    """
+    A decorator that retries a function if a specified exception is raised.
+
+    :param exception_to_check: The exception or tuple of exceptions to check.
+    :param retries: The maximum number of retries.
+    :param delay: Delay between retries in seconds.
+    :return: The result of the decorated function.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            attempt = 0
+            while attempt < retries:
+                try:
+                    load_secrets()
+                    return func(*args, **kwargs)
+                except exception_to_check as e:
+                    attempt += 1
+                    if attempt >= retries:
+                        logging.error(
+                            f"Function {func.__name__} failed after {retries} retries."
+                        )
+                        raise
+                    logging.warn(
+                        f"Retrying {func.__name__} due to {e}, attempt {attempt} of {retries}..."
+                    )
+                    time.sleep(delay)
+
+        return wrapper
+
+    return decorator
 
 
 def db_retry(connector='databackend'):

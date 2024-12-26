@@ -174,6 +174,7 @@ class Config(BaseConfig):
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
     data_backend: str = "mongodb://localhost:27017/test_db"
+    secrets_volume: str = os.path.join(".superduper", "/session/secrets")
 
     lance_home: str = os.path.join(".superduper", "vector_indices")
 

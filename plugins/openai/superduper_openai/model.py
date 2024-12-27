@@ -62,9 +62,12 @@ class _OpenAI(APIBaseModel):
             self.client_kwargs['default_headers'] = self.openai_api_base
 
     @safe_retry(exceptions.MissingSecretsException, verbose=0)
-    def init(self):
-        """Initialize the model."""
-        super().init()
+    def init(self, db=None):
+        """Initialize the model.
+
+        :param db: Database instance.
+        """
+        super().init(db=db)
 
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if 'OPENAI_API_KEY' not in os.environ or (

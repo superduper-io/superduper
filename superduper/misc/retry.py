@@ -1,6 +1,6 @@
-import time
 import dataclasses as dc
 import functools
+import time
 import typing as t
 
 import tenacity
@@ -69,7 +69,8 @@ def safe_retry(exception_to_check, retries=1, delay=1):
                         )
                         raise
                     logging.warn(
-                        f"Retrying {func.__name__} due to {e}, attempt {attempt} of {retries}..."
+                        f"Retrying {func.__name__} due to {e}"
+                        ", attempt {attempt} of {retries}..."
                     )
                     time.sleep(delay)
 

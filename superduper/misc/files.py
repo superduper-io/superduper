@@ -5,6 +5,7 @@ from superduper import CFG
 
 
 def load_secrets():
+    """Help method to load secrets from directory."""
     secrets_dir = CFG.secrets_volume
     if not os.path.isdir(secrets_dir):
         raise ValueError(f"The path '{secrets_dir}' is not a valid directory.")

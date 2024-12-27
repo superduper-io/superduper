@@ -43,13 +43,14 @@ class Retry:
         return retrier(f)
 
 
-def safe_retry(exception_to_check, retries=1, delay=1):
+def safe_retry(exception_to_check, retries=1, delay=0.3, verbose=1):
     """
     A decorator that retries a function if a specified exception is raised.
 
     :param exception_to_check: The exception or tuple of exceptions to check.
     :param retries: The maximum number of retries.
     :param delay: Delay between retries in seconds.
+    :param verbose: Verbose for logs.
     :return: The result of the decorated function.
     """
 
@@ -57,21 +58,25 @@ def safe_retry(exception_to_check, retries=1, delay=1):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             attempt = 0
-            while attempt < retries:
+            while attempt <= retries:
                 try:
-                    load_secrets()
+                    if attempt >= 1:
+                        load_secrets()
                     return func(*args, **kwargs)
                 except exception_to_check as e:
                     attempt += 1
-                    if attempt >= retries:
-                        logging.error(
-                            f"Function {func.__name__} failed after {retries} retries."
-                        )
+                    if attempt > retries:
+                        if verbose:
+                            logging.error(
+                                f"Function {func.__name__} failed ",
+                                "after {retries} retries.",
+                            )
                         raise
-                    logging.warn(
-                        f"Retrying {func.__name__} due to {e}"
-                        ", attempt {attempt} of {retries}..."
-                    )
+                    if verbose:
+                        logging.warn(
+                            f"Retrying {func.__name__} due to {e}"
+                            ", attempt {attempt} of {retries}..."
+                        )
                     time.sleep(delay)
 
         return wrapper

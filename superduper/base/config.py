@@ -1,7 +1,7 @@
 """Configuration variables for superduper.io.
 
 The classes in this file define the configuration variables for superduper.io,
-which means that this file gets imported before alost anything else, and
+hich means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
 """
 
@@ -148,6 +148,7 @@ class Config(BaseConfig):
 
     :param envs: The envs datas
     :param data_backend: The URI for the data backend
+    :param secrets_volume: The secrets volume mount for secrets env vars.
     :param lance_home: The home directory for the Lance vector indices,
                        Default: .superduper/vector_indices
     :param artifact_store: The URI for the artifact store

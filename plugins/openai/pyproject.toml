@@ -26,7 +26,8 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "vcrpy>=5.1.0",
+    "vcrpy==5.1.0",
+    "urllib3==2.2.3",
 ]
 
 [project.urls]

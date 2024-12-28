@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add postprocess in apibase model.
 - Fallback for ibis drop table
 - Add create events waiting on db apply.
+- Refactor secrets loading method.
 
 #### New Features & Functionality
 

@@ -12,6 +12,7 @@ from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import wraps
 
+import networkx
 import yaml
 
 from superduper import logging
@@ -187,8 +188,28 @@ class Component(Leaf, metaclass=ComponentMeta):
     build_variables: t.Dict | None = None
     build_template: str | None = None
 
+    # TODO what's this?
     def refresh(self):
         pass
+
+    @staticmethod
+    def sort_components(components):
+        """Sort components based on topological order.
+
+        :param components: List of components.
+        """
+        logging.info('Resorting components based on topological order.')
+        G = networkx.DiGraph()
+        lookup = {c.huuid: c for c in components}
+        for k in lookup:
+            G.add_node(k)
+            for d in lookup[k].get_children_refs():  # dependencies:
+                if d in lookup:
+                    G.add_edge(d, k)
+
+        nodes = list(networkx.topological_sort(G))
+        logging.info(f'New order of components: {nodes}')
+        return [lookup[n] for n in nodes]
 
     @property
     def huuid(self):

@@ -1,6 +1,5 @@
 import random
 import typing as t
-import warnings
 from collections import namedtuple
 
 import click
@@ -460,6 +459,7 @@ class Datalayer:
         type_id: str,
         identifier: str,
         version: t.Optional[int] = None,
+        recursive: bool = False,
         force: bool = False,
     ):
         """
@@ -476,7 +476,7 @@ class Datalayer:
         # TODO: versions = [version] if version is not None else ...
         if version is not None:
             return self._remove_component_version(
-                type_id, identifier, version=version, force=force
+                type_id, identifier, version=version, force=force, recursive=recursive
             )
 
         versions = self.metadata.show_component_versions(type_id, identifier)
@@ -497,20 +497,15 @@ class Datalayer:
                 raise exceptions.ComponentInUseError(
                     f'Component versions: {component_versions_in_use} are in use'
                 )
-            else:
-                warnings.warn(
-                    exceptions.ComponentInUseWarning(
-                        f'Component versions: {component_versions_in_use}'
-                        ', marking as hidden'
-                    )
-                )
 
         if force or click.confirm(
             f'You are about to delete {type_id}/{identifier}, are you sure?',
             default=False,
         ):
             for v in sorted(list(set(versions) - set(versions_in_use))):
-                self._remove_component_version(type_id, identifier, v, force=True)
+                self._remove_component_version(
+                    type_id, identifier, v, recursive=recursive, force=True
+                )
 
             for v in sorted(versions_in_use):
                 self.metadata.hide_component_version(type_id, identifier, v)
@@ -617,33 +612,54 @@ class Datalayer:
         identifier: str,
         version: int,
         force: bool = False,
+        recursive: bool = False,
     ):
         r = self.metadata.get_component(type_id, identifier, version=version)
         if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
             raise Exception(f'{r["uuid"]} is involved in other components: {parents}')
 
-        if force or click.confirm(
-            f'You are about to delete {type_id}/{identifier}{version}, are you sure?',
-            default=False,
+        if not (
+            force
+            or click.confirm(
+                f'You are about to delete {type_id}/{identifier}{version}, '
+                'are you sure?',
+                default=False,
+            )
         ):
-            # TODO - make this less I/O intensive
-            component = self.load(
-                type_id,
-                identifier,
-                version=version,
-            )
-            info = self.metadata.get_component(
-                type_id, identifier, version=version, allow_hidden=force
-            )
-            component.cleanup(self)
-            try:
-                del self.cluster.cache[component.uuid]
-            except KeyError:
-                pass
+            return
 
-            self._delete_artifacts(r['uuid'], info)
-            self.metadata.delete_component_version(type_id, identifier, version=version)
+        component = self.load(
+            type_id,
+            identifier,
+            version=version,
+        )
+        info = self.metadata.get_component(
+            type_id, identifier, version=version, allow_hidden=force
+        )
+        component.cleanup(self)
+        try:
+            del self.cluster.cache[component.uuid]
+        except KeyError:
+            pass
+
+        self._delete_artifacts(r['uuid'], info)
+        self.metadata.delete_component_version(type_id, identifier, version=version)
+
+        if not recursive:
+            return
+
+        children = component.get_children(deep=True)
+        children = component.sort_components(children)[::-1]
+        for c in children:
+            assert isinstance(c.version, int)
+            self._remove_component_version(
+                c.type_id,
+                c.identifier,
+                version=c.version,
+                recursive=False,
+                force=force,
+            )
 
     def replace(self, object: t.Any):
         """

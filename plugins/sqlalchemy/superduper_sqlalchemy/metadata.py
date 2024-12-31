@@ -306,17 +306,25 @@ class SQLAlchemyMetadata(MetaDataStore):
             stmt = insert(self.component_table).values(**new_info)
             session.execute(stmt)
 
-    def delete_parent_child(self, parent_id: str, child_id: str):
+    def delete_parent_child(self, parent_id: str, child_id: str | None = None):
         """
         Delete parent-child relationships between two components.
 
         :param parent: parent component uuid
         :param child: child component uuid
         """
+        if child_id:
+            with self.session_context() as session:
+                stmt = delete(self.parent_child_association_table).where(
+                    self.parent_child_association_table.c.parent_id == parent_id,
+                    self.parent_child_association_table.c.child_id == child_id,
+                )
+                session.execute(stmt)
+            return
+
         with self.session_context() as session:
             stmt = delete(self.parent_child_association_table).where(
                 self.parent_child_association_table.c.parent_id == parent_id,
-                self.parent_child_association_table.c.child_id == child_id,
             )
             session.execute(stmt)
 
@@ -361,6 +369,9 @@ class SQLAlchemyMetadata(MetaDataStore):
                     self.component_table.c.id == cv['id']
                 )
                 session.execute(stmt_delete)
+
+        if cv:
+            self.delete_parent_child(cv['id'])
 
     def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
         """Get a component by UUID.

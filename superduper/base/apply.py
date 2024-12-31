@@ -132,15 +132,15 @@ def apply(
 
 
 def _wait_on_events(db, events):
-    remaining = len(events)
     time_left = _WAIT_TIMEOUT
     while True:
+        remaining = len(events)
         for event in events:
             identifier = event.component['identifier']
             type_id = event.component['type_id']
             version = event.component['version']
             try:
-                db.show(type_id=type_id, identifier=identifier, version=version)
+                db.load(type_id=type_id, identifier=identifier, version=version)
             except FileNotFoundError:
                 pass
             else:

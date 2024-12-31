@@ -237,7 +237,7 @@ def build_rest_app(app: SuperDuperApp):
     def db_remove(
         type_id: str, identifier: str, db: 'Datalayer' = DatalayerDependency()
     ):
-        db.remove(type_id=type_id, identifier=identifier, force=True)
+        db.remove(type_id=type_id, identifier=identifier, recursive=True, force=True)
         return {'status': 'ok'}
 
     @app.add('/db/show_template', method='get')

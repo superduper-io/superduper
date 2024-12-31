@@ -196,3 +196,21 @@ def test_set_db_deep(db):
 
     assert m.upstream[0].db is not None
     assert m.model.db is not None
+
+
+class NewComponent(Component):
+    ...
+
+
+def test_remove_recursive(db):
+    c1 = NewComponent(identifier='c1')
+    c2 = NewComponent(identifier='c2', upstream=[c1])
+    c3 = NewComponent(identifier='c3', upstream=[c2, c1])
+
+    db.apply(c3)
+
+    assert sorted([r['identifier'] for r in db.show()]) == ['c1', 'c2', 'c3']
+
+    db.remove('component', c3.identifier, recursive=True, force=True)
+
+    assert not db.show()

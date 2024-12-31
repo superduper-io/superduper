@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fallback for ibis drop table
 - Add create events waiting on db apply.
 - Refactor secrets loading method.
+- Add db.load in db wait
 
 #### New Features & Functionality
 

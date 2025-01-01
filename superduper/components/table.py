@@ -31,6 +31,7 @@ class Table(Component):
         super().__post_init__(db)
         fields = {}
         fields.update(self.schema.fields)
+        schema_version = self.schema.version
 
         if '_fold' not in self.schema.fields:
             fields.update({'_fold': 'str'})
@@ -40,6 +41,7 @@ class Table(Component):
             fields={**fields},
             db=db,
         )
+        self.schema.version = schema_version
 
     def on_create(self, db: 'Datalayer'):
         """Create the table, on creation of the component.

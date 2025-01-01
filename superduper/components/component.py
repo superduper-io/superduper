@@ -260,12 +260,17 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def get_children(self, deep: bool = False) -> t.List["Component"]:
         """Get all the children of the component."""
-        r = self.dict().encode(leaves_to_keep=(Leaf,) if deep else (Component,))
+        r = self.dict().encode(leaves_to_keep=Component)
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
-        # Remove duplicates
         lookup = {}
         for v in out:
             lookup[id(v)] = v
+        if deep:
+            children = list(lookup.values())
+            for v in children:
+                sub = v.get_children(deep=True)
+                for s in sub:
+                    lookup[id(s)] = s
         return list(lookup.values())
 
     @property

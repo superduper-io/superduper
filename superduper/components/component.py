@@ -260,7 +260,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def get_children(self, deep: bool = False) -> t.List["Component"]:
         """Get all the children of the component."""
-        r = self.dict().encode(leaves_to_keep=Component)
+        r = self.dict().encode(leaves_to_keep=(Component,))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:
@@ -889,11 +889,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         r = r['_content']
         assert r['version'] is not None
         return db.load(r['type_id'], r['identifier'], r['version'])
-
-    def __setattr__(self, k, v):
-        if k in dc.fields(self):
-            self.changed.add(k)
-        return super().__setattr__(k, v)
 
     def info(self, verbosity: int = 1):
         """Method to display the component information.

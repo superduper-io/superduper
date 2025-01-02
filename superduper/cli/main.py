@@ -192,7 +192,7 @@ def drop(data: bool = False, force: bool = False, data_backend: str | None = Non
     :param force: Force the drop.
     """
     data_backend = data_backend or CFG.data_backend
-    db = superduper(data_backend)
+    db = superduper(data_backend, initialize_cluster=False)
     db.drop(force=force, data=data)
     db.disconnect()
 

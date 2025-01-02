@@ -61,8 +61,11 @@ class LocalCache(Cache):
     def initialize(self):
         """Initialize the cache."""
 
-    def drop(self):
-        """Drop the cache."""
+    def drop(self, component: t.Optional['Component'] = None):
+        """Drop the cache.
+
+        :param component: Component to drop.
+        """
         self._cache = {}
         self._component_to_uuid = {}
 

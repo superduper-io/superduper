@@ -1,3 +1,4 @@
+import time
 import threading
 import typing as t
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ from sqlalchemy import (
     delete,
     insert,
     select,
+    text
 )
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
@@ -74,7 +76,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         else:
             assert isinstance(uri, str)
             name = uri.split('//')[0]
-            self.connection_callback = lambda: (create_engine(uri), name)
+            self.connection_callback = lambda: (create_engine(uri, connect_args={'role': 'USERADMIN'}), name)
 
         sql_conn, name = self.connection_callback()
 
@@ -84,6 +86,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._init_tables()
 
         self._lock = threading.Lock()
+        self._connect()
+
+    def _connect(self):
+        sm = sessionmaker(bind=self.conn)
+        self.session = sm()
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""
@@ -170,6 +177,9 @@ class SQLAlchemyMetadata(MetaDataStore):
         }
 
         try:
+            with self.conn.connect() as conn:
+                conn.execute(text('USE DATABASE OTHERUSER_DB'))
+                conn.execute(text("USE SCHEMA DATA"))
             metadata.create_all(self.conn)
         except Exception as e:
             logging.error(f'Error creating tables: {e}')
@@ -237,18 +247,28 @@ class SQLAlchemyMetadata(MetaDataStore):
             logging.warn(f'Error dropping artifact table {e}')
 
     @contextmanager
-    def session_context(self):
+    def session_context(self, auto_close=False, max_retries=1):
         """Provide a transactional scope around a series of operations."""
-        sm = sessionmaker(bind=self.conn)
-        session = sm()
-        try:
-            yield session
-            session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
+        for attempt in range(max_retries):
+            try:
+                yield self.session
+                self.session.commit()
+                break
+            except Exception:
+                logging.debug('retrying session.')
+                if attempt <= max_retries - 1:
+                    time.sleep(0.1)
+
+                    if self.session:
+                        self.session.close()
+                    self._connect()
+                else:
+                    self.session.rollback()
+                    raise
+            finally:
+                if auto_close:
+                    self.session.close()
+
 
     # --------------- COMPONENTS -----------------
 

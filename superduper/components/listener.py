@@ -314,3 +314,4 @@ class Listener(CDC):
         """
         if self.select is not None:
             db[self.select.table].drop_outputs(self.predict_id)
+        db.cluster.cdc.drop(self)

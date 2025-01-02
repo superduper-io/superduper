@@ -405,7 +405,7 @@ class Model(Component, metaclass=ModelMeta):
 
         :param db: Data layer instance to process.
         """
-        db.cluster.compute.drop_component(self.uuid)
+        db.cluster.compute.drop(self)
 
     @property
     def inputs(self) -> Inputs:

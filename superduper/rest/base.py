@@ -1,7 +1,7 @@
+import os
 import sys
 import threading
 import time
-import os
 import typing as t
 from functools import cached_property
 from traceback import format_exc

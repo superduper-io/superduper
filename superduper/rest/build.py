@@ -150,7 +150,16 @@ def build_rest_app(app: SuperDuperApp):
     def _process_db_apply(db, component, id: str | None = None):
         def _apply():
             nonlocal component
+            variables = None
+            build_template = component['build_template']
+            if '_variables' in component:
+                variables = component['_variables']
+
             component = Document.decode(component, db=db).unpack()
+            if variables:
+                component.build_template = build_template
+                component.build_variables = variables
+
             db.apply(component, force=True)
 
         if id:

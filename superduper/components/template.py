@@ -92,7 +92,7 @@ class _BaseTemplate(Component):
             'types': self.types,
             'schema': self.schema,
             **{k: v for k, v in self.template.items() if k != 'identifier'},
-            '_template_name': self.identifier,
+            'build_template': self.identifier,
         }
 
 

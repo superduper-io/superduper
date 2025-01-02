@@ -325,7 +325,7 @@ class VectorIndex(CDC):
 
         :param db: The datalayer to cleanup
         """
-        db.cluster.vector_search.drop(self.identifier)
+        db.cluster.vector_search.drop(self)
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:

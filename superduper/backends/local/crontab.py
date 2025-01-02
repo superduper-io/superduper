@@ -1,9 +1,14 @@
+import typing as t
+
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from superduper import logging
 from superduper.backends.base.crontab import CrontabBackend
+
+if t.TYPE_CHECKING:
+    from superduper import Component
 
 
 class LocalCrontabBackend(CrontabBackend):
@@ -58,10 +63,23 @@ class LocalCrontabBackend(CrontabBackend):
         """List UUIDs of components."""
         return list(self._job_uuids)
 
-    def drop(self):
-        """Drop the crontab."""
-        for job_id in self._job_uuids:
-            self.scheduler.remove_job(job_id)
+    def drop_component(self, uuid: str):
+        """Drop the crontab.
+
+        :param uuid: Component uuid to remove.
+        """
+        self.scheduler.remove_job(uuid)
+
+    def drop(self, component: t.Optional['Component'] = None):
+        """Drop the crontab.
+
+        :param component: Component to remove.
+        """
+        if component:
+            self.scheduler.remove_job(component.uuid)
+        else:
+            for job_id in self._job_uuids:
+                self.scheduler.remove_job(job_id)
 
     def initialize(self):
         """Initialize the crontab."""

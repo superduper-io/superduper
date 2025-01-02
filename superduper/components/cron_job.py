@@ -24,6 +24,13 @@ class CronJob(Component):
         """Run the job."""
         raise NotImplementedError
 
+    def cleanup(self, db):
+        """Cleanup crontab service.
+
+        :param db: Database instance.
+        """
+        db.cluster.crontab.drop(self)
+
 
 class FunctionCronJob(CronJob):
     """

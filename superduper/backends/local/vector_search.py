@@ -10,6 +10,9 @@ from superduper.backends.base.vector_search import (
     measures,
 )
 
+if t.TYPE_CHECKING:
+    from superduper import Component
+
 
 class LocalVectorSearchBackend(VectorSearchBackend):
     """Local vector search backend.
@@ -67,14 +70,17 @@ class LocalVectorSearchBackend(VectorSearchBackend):
     def __getitem__(self, identifier):
         return self._cache[identifier]
 
-    def drop(self, identifier=None):
-        """Drop the vector search."""
+    def drop(self, component: t.Optional['Component'] = None):
+        """Drop the CDC.
+
+        :param component: Component to remove.
+        """
         # TODO: drop actual vector search not the cache
-        if identifier is None:
+        if component is None:
             self._cache = {}
         else:
-            del self._cache[identifier]
-            del self._identifier_uuid_map[identifier]
+            del self._cache[component.identifier]
+            del self._identifier_uuid_map[component.identifier]
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):

@@ -120,7 +120,7 @@ def test_set_variables(db):
             object=lambda x: x + 2,
         ),
         key="<var:key>",
-        select=db["docs"].find(),
+        select=db["docs"],
     )
 
     from superduper import Document
@@ -186,7 +186,7 @@ def test_set_db_deep(db):
             object=lambda x: x + 2,
         ),
         key="x",
-        select=db["docs"].find(),
+        select=db["docs"],
     )
 
     assert m.upstream[0].db is None

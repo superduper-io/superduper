@@ -11,11 +11,6 @@ def make_params(params):
     return '?' + urlencode(params)
 
 
-def insert(client, data):
-    query = {'query': 'coll.insert_many(documents)', 'documents': data}
-    return client.post('/db/execute', json=query)
-
-
 def apply(client, component):
     return client.post('/db/apply', json=component)
 
@@ -38,13 +33,14 @@ def setup(client):
         {"x": [1, 2, 3, 4, 5], "y": 'test'},
         {"x": [6, 7, 8, 9, 10], "y": 'test'},
     ]
-    insert(client, data)
+    db['coll'].insert(data)
     return client
 
 
 def teardown(client):
-    delete(client)
-    remove(client, 'datatype', 'image')
+    # delete(client)
+    # remove(client, 'datatype', 'image')
+    ...
 
 
 if __name__ == '__main__':

@@ -23,25 +23,21 @@ def test_output_prefix(db):
             "sddb_outputs_c",
         ]
 
-        tables = [
-            x
-            for x in db.databackend.list_tables_or_collections()
-            if not x.startswith("_")
-        ]
+        tables = [x for x in db.databackend.list_tables() if not x.startswith("_")]
         for t in expect_tables:
             assert any(k.startswith(t) for k in tables)
 
-        outputs_a = db[listener_a.outputs].select().tolist()
+        outputs_a = db[listener_a.outputs].select().execute()
         assert len(outputs_a) == 6
         for r in outputs_a:
             assert any(k.startswith("sddb_outputs_a") for k in r)
 
-        outputs_b = db[listener_b.outputs].select().tolist()
+        outputs_b = db[listener_b.outputs].select().execute()
         assert len(outputs_b) == 6
         for r in outputs_b:
             assert any(k.startswith("sddb_outputs_b") for k in r)
 
-        outputs_c = db[listener_c.outputs].select().tolist()
+        outputs_c = db[listener_c.outputs].select().execute()
         assert len(outputs_c) == 6
         for r in outputs_c:
             assert any(k.startswith("sddb_outputs_c") for k in r)

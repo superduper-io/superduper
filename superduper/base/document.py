@@ -46,10 +46,6 @@ class Getters:
     def add_getter(self, name: str, getter: t.Callable):
         """Add a getter for a reference type."""
         self._getters[name].append(getter)
-        # if name == 'blob':
-        #     self._getters[name].append(_build_blob_getter(getter))
-        # else:
-        #     self._getters[name].append(getter)
 
     def run(self, name, data):
         """Run the getters one by one until one returns a value."""
@@ -179,7 +175,7 @@ class Document(MongoStyleDict):
 
         if isinstance(other, Document) and other.schema:
             assert other.schema is not None
-            schema = schema.update(other.schema)
+            schema += other.schema
         return Document(_update(dict(self), dict(other)), schema=schema)
 
     def encode(

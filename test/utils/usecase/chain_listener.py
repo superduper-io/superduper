@@ -14,7 +14,7 @@ def build_chain_listener(db: "Datalayer"):
         {"x": 3},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
     data = list(db["documents"].select().execute(eager_mode=True))[0]
 
@@ -51,7 +51,7 @@ def build_chain_listener(db: "Datalayer"):
         {"x": 6},
     ]
 
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
     assert db.databackend.check_output_dest(listener_a.predict_id)
     assert db.databackend.check_output_dest(listener_b.predict_id)

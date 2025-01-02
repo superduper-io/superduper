@@ -22,12 +22,11 @@ def test_template():
 
     assert f'sample_{template_name}' in db.show('table')
 
-    sample = db[f'sample_{template_name}'].select().limit(2).tolist()
+    sample = db[f'sample_{template_name}'].limit(2).execute()
 
     assert sample
 
     print('Got sample:', sample)
-    print(f'Got {len(sample)} samples')
 
     app = t()
 

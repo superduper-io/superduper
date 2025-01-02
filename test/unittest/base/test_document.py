@@ -5,7 +5,6 @@ import tempfile
 import numpy as np
 import pytest
 
-from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.datatype import (
@@ -30,16 +29,18 @@ def test_document_encoding(db):
     assert (new_document['x'] - document['x']).sum() == 0
 
 
-def test_flat_query_encoding():
-    q = Query(table='docs').find({'a': 1}).limit(2)
+def test_flat_query_encoding(db):
+    # TODO what is being tested here??
 
-    r = q._deep_flat_encode({}, {}, {})
+    t = db['docs']
 
-    doc = Document({'x': 1})
+    q = t.filter(t['a'] == 1).limit(2)
 
-    q = Query(table='docs').like(doc, vector_index='test').find({'a': 1}).limit(2)
+    r = q.encode()
 
-    r = q._deep_flat_encode({}, {}, {})
+    q = t.like({'x': 1}, vector_index='test').filter(t['a'] == 1).limit(2)
+
+    r = q.encode()
 
     print(r)
 
@@ -207,7 +208,7 @@ def test_column_encoding(db):
     schema = Schema(
         'test',
         fields={
-            'id': int,
+            'id': str,
             'x': int,
             'y': int,
             'data': pickle_serializer,
@@ -218,10 +219,10 @@ def test_column_encoding(db):
     data = np.random.rand(20)
     db['test'].insert(
         [
-            Document({'id': 1, 'x': 1, 'y': 2, 'data': data}),
-            Document({'id': 2, 'x': 3, 'y': 4, 'data': data}),
+            {'id': '1', 'x': 1, 'y': 2, 'data': data},
+            {'id': '2', 'x': 3, 'y': 4, 'data': data},
         ]
-    ).execute()
+    )
 
     db['test'].select().execute()
 

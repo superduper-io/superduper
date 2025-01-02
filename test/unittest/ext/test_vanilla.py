@@ -9,9 +9,7 @@ def data_in_db(db):
     db.cfg.auto_schema = True
     X = [1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5]
-    db.execute(
-        db['documents'].insert([Document({'X': x, 'y': yy}) for x, yy in zip(X, y)])
-    )
+    db['documents'].insert([Document({'X': x, 'y': yy}) for x, yy in zip(X, y)])
     yield db
 
 
@@ -31,10 +29,10 @@ def test_function_predict_in_db(data_in_db):
     data_in_db.apply(function)
     function.predict_in_db(
         X='X',
-        select=data_in_db['documents'].select(),
+        select=data_in_db['documents'],
         predict_id='test',
     )
-    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
+    out = data_in_db['_outputs__test'].select().execute()
     assert [Document(o)['_outputs__test'] for o in out] == [1, 2, 3, 4, 5]
 
 
@@ -51,11 +49,9 @@ def test_function_predict_with_flatten_outputs(data_in_db):
         predict_id='test',
         flatten=True,
     )
-    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
-    primary_id = data_in_db['documents'].primary_id
-    input_ids = [
-        c[primary_id] for c in data_in_db.execute(data_in_db['documents'].select())
-    ]
+    out = data_in_db['_outputs__test'].select().execute()
+    primary_id = data_in_db['documents'].primary_id.execute()
+    input_ids = [c[primary_id] for c in data_in_db['documents'].select().execute()]
     source_ids = []
     for i, id in enumerate(input_ids):
         ix = 3 if i + 1 > 2 else 2
@@ -95,11 +91,9 @@ def test_function_predict_with_mix_flatten_outputs(data_in_db):
         flatten=True,
     )
 
-    out = list(data_in_db.execute(data_in_db['_outputs__test'].select()))
-    primary_id = data_in_db['documents'].primary_id
-    input_ids = [
-        c[primary_id] for c in data_in_db.execute(data_in_db['documents'].select())
-    ]
+    out = data_in_db['_outputs__test'].select().execute()
+    primary_id = data_in_db['documents'].primary_id.execute()
+    input_ids = [c[primary_id] for c in data_in_db['documents'].select().execute()]
     source_ids = []
     for i, id in enumerate(input_ids):
         source_ids.append(id if i + 1 < 2 else [id] * 3)

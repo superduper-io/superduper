@@ -230,7 +230,7 @@ class Leaf(metaclass=LeafMeta):
             }
         )
 
-    def set_variables(self, **kwargs) -> 'Leaf':
+    def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Leaf':
         """Set free variables of self.
 
         :param db: Datalayer instance.
@@ -241,7 +241,7 @@ class Leaf(metaclass=LeafMeta):
 
         r = self.encode()
         rr = _replace_variables(r, **kwargs)
-        return Document.decode(rr).unpack()
+        return Document.decode(rr, db=db).unpack()
 
     @property
     def variables(self) -> t.List[str]:
@@ -258,9 +258,13 @@ class Leaf(metaclass=LeafMeta):
         fields = dc.fields(self)
         for f in fields:
             value = getattr(self, f.name)
-            if f.default is not dc.MISSING and value == f.default:
+            if f.default is not dc.MISSING and f.default and value == f.default:
                 out[f.name] = value
-            elif f.default_factory is not dc.MISSING and value == f.default_factory():
+            elif (
+                f.default_factory is not dc.MISSING
+                and f.default
+                and value == f.default_factory()
+            ):
                 out[f.name] = value
         return out
 

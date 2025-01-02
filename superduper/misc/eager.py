@@ -5,7 +5,6 @@ from enum import Enum
 import networkx as nx
 
 from superduper import CFG, logging
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.leaf import build_uuid
 
 if t.TYPE_CHECKING:
@@ -397,24 +396,9 @@ class Graph:
             else:
                 raise ValueError(f"Unknown node type: {upstream_node.type}")
 
-        if main_table != root_table:
-            select = self.db[main_table].select()
+        select = self.db[main_table]
 
-        else:
-            from superduper.base.enums import DBType
-
-            if self.db.databackend.db_type == DBType.MONGODB:
-                if main_table_keys:
-                    main_table_keys.extend(
-                        [KEY_BUILDS, KEY_FILES, KEY_BLOBS, "_schema"]
-                    )
-                select = self.db[main_table].find({}, {k: 1 for k in main_table_keys})
-
-            else:
-                if "id" not in main_table_keys:
-                    main_table_keys.insert(0, "id")
-                select = self.db[main_table].select(*main_table_keys)
-
+        if main_table == root_table:
             if node.filter:
                 for key, value in node.filter.items():
                     if value[0] == "ne":

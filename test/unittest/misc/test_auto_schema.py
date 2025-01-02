@@ -56,10 +56,10 @@ def test_schema(db, data):
 
     db.apply(t)
 
-    db.execute(db["my_table"].insert([Document(data)]))
+    db["my_table"].insert([Document(data)])
 
-    select = db["my_table"].select().limit(1)
-    decode_data = db.execute(select).next().unpack()
+    select = db["my_table"].select()
+    decode_data = select.get().unpack()
     for key in data:
         assert isinstance(data[key], type(decode_data[key]))
         assert str(data[key]) == str(decode_data[key])

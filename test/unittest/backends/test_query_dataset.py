@@ -1,5 +1,6 @@
 import pytest
 
+from superduper import CFG
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import Mapping
 
@@ -16,7 +17,7 @@ def test_query_dataset(db):
     add_random_data(db)
     add_models(db)
     add_vector_index(db)
-    primary_id = db["documents"].primary_id
+    primary_id = db["documents"].primary_id.execute()
 
     listener_uuid = db.show('listener', 'vector-x', -1)['uuid']
 
@@ -24,18 +25,19 @@ def test_query_dataset(db):
         db=db,
         mapping=Mapping("_base", signature="singleton"),
         select=db["documents"]
-        .select(primary_id, 'x', '_fold')
-        .outputs("vector-x__" + listener_uuid),
+        .outputs("vector-x__" + listener_uuid)
+        .select(
+            primary_id, 'x', '_fold', f"{CFG.output_prefix}vector-x__" + listener_uuid
+        ),
         fold="train",
     )
+
     r = train_data[0]
+
     assert r["_fold"] == "train"
     assert "y" not in r
     assert "x" in r
 
-    db["documents"].select(primary_id, 'x', '_fold').outputs(
-        "vector-x__" + listener_uuid
-    )
     assert r['_outputs__vector-x__' + listener_uuid].shape[0] == 16
 
     train_data = QueryDataset(

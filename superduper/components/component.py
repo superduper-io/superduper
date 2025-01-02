@@ -260,7 +260,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def get_children(self, deep: bool = False) -> t.List["Component"]:
         """Get all the children of the component."""
-        r = self.dict().encode(leaves_to_keep=Component)
+        r = self.dict().encode(leaves_to_keep=(Component,))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:

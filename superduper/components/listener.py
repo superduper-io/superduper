@@ -189,14 +189,12 @@ class Listener(CDC):
         else:
             if self.dependencies:
                 try:
-                    r = next(self.select.limit(1).execute())
+                    r = self.select.get()
                 except errors:
                     try:
                         if not self.cdc_table.startswith(CFG.output_prefix):
                             try:
-                                r = next(
-                                    db[self.select.table].select().limit(1).execute()
-                                )
+                                r = db[self.select.table].get()
                             except errors:
                                 # Note: This is added for sql databases,
                                 # since they return error if key not found
@@ -209,7 +207,7 @@ class Listener(CDC):
                         raise Exception(msg.format(table=self.cdc_table)) from e
             else:
                 try:
-                    r = next(self.select.limit(1).execute())
+                    r = self.select.get()
                 except (StopIteration, KeyError, FileNotFoundError) as e:
                     raise Exception(msg.format(table=self.select)) from e
             mapping = Mapping(self.key, self.model.signature)
@@ -313,4 +311,5 @@ class Listener(CDC):
         :param db: Data layer instance to process.
         """
         if self.select is not None:
-            db[self.select.table].drop_outputs(self.predict_id)
+            # db[self.select.table].drop_outputs(self.predict_id)
+            db.databackend.drop_table(self.outputs)

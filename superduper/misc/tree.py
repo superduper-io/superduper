@@ -17,7 +17,7 @@ def dict_to_tree(dictionary, root: str = 'root', tree=None):
             # If the value is another dictionary, create a subtree
             subtree = tree.add(f"[bold yellow]{key}")
             dict_to_tree(value, root=root, tree=subtree)
-        else:
+        elif key == 'status':
             # Add the key and value as a leaf node
             if value == 'breaking':
                 tree.add(f"[bold cyan]{key}: [red]{value}")

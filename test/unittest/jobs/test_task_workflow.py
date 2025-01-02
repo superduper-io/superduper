@@ -23,7 +23,7 @@ def assert_output_is_correct(data, output):
 def test_downstream_task_workflows_are_triggered(db, data, flatten):
     db.cfg.auto_schema = True
 
-    db.execute(db["test"].insert([{"x": 10}]))
+    db["test"].insert([{"x": 10}])
 
     upstream_model = ObjectModel(
         "m1",
@@ -52,10 +52,10 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
 
     db.apply(downstream_listener)
 
-    outputs1 = db[upstream_listener.outputs].select().tolist()
+    outputs1 = db[upstream_listener.outputs].select().execute()
     outputs1 = [r[upstream_listener.outputs] for r in outputs1]
 
-    outputs2 = db[downstream_listener.outputs].select().tolist()
+    outputs2 = db[downstream_listener.outputs].select().execute()
     outputs2 = [r[downstream_listener.outputs] for r in outputs2]
 
     assert len(outputs1) == 1 if not flatten else 10
@@ -64,7 +64,7 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
     assert_output_is_correct(data * 10, outputs1[0])
     assert_output_is_correct(data * 10 / 2, outputs2[0])
 
-    db["test"].insert([{"x": 20}]).execute()
+    db["test"].insert([{"x": 20}])
 
     # Check that the listeners are triggered when data is inserted later
     outputs1 = [

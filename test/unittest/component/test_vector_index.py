@@ -9,9 +9,9 @@ def test_vector_index_recovery(db):
     build_vector_index(db)
 
     table = db["documents"]
-    primary_id = table.primary_id
+    primary_id = table.primary_id.execute()
     vector_index = "vector_index"
-    sample_data = list(table.select().execute())[50]
+    sample_data = table.select().execute()[50]
 
     # Simulate restart
     del db.cluster.vector_search[vector_index]

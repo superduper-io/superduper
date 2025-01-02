@@ -3,7 +3,6 @@ import typing as t
 from pprint import pprint
 
 from superduper import ObjectModel
-from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.base.leaf import Leaf
@@ -75,20 +74,16 @@ def test_encode_leaf_with_children():
     }
 
 
-def test_save_variables_2():
-    query = (
-        Query(table='documents')
-        .like({'x': '<var:X>'}, vector_index='test')
-        .find({'x': {'$regex': '^test/1'}})
-    )
+def test_save_variables_2(db):
+    t = db['documents']
+    query = t.like({'x': '<var:X>'}, vector_index='test').filter(t['x'] == 1)
 
     assert [x for x in query.variables] == ['X']
 
 
-def test_save_non_string_variables():
-    query = Query(table='documents').find().limit('<var:limit>')
-
-    assert str(query) == 'documents.find().limit("<var:limit>")'
+def test_save_non_string_variables(db):
+    query = db['documents'].select().limit('<var:limit>')
+    assert str(query) == 'documents.select().limit("<var:limit>")'
     assert [x for x in query.variables] == ['limit']
 
 
@@ -121,23 +116,20 @@ def test_component_with_document():
         print(type(builds[leaf]))
 
 
-def test_find_variables():
+def test_find_variables(db):
     from superduper import Document
 
     r = Document({'txt': '<var:test>'})
 
     assert r.variables == ['test']
 
-    q = Query(table='test').find_one(Document({'txt': '<var:test>'}))
+    t = db['test']
+
+    q = t.filter(t['txt'] == '<var:test>')
 
     assert q.variables == ['test']
 
-    q = (
-        Query(table='test')
-        .like(Document({'txt': '<var:test>'}), vector_index='test')
-        .find()
-        .limit(5)
-    )
+    q = db['test'].like({'txt': '<var:test>'}, vector_index='test').limit(5)
 
     q_set = q.set_variables(test='my-value')
 

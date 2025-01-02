@@ -1,4 +1,4 @@
-DIRECTORIES ?= superduper test
+DIRECTORIES ?= superduper test plugins
 SUPERDUPER_CONFIG ?= test/configs/default.yaml
 PYTEST_ARGUMENTS ?=
 PLUGIN_NAME ?=

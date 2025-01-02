@@ -2,13 +2,15 @@ from test.utils.database import databackend as db_utils
 
 import pytest
 from superduper import CFG
+from superduper.misc.plugins import load_plugin
 
 from superduper_mongodb.data_backend import MongoDBDataBackend
 
 
 @pytest.fixture
 def databackend():
-    backend = MongoDBDataBackend(CFG.data_backend)
+    plugin = load_plugin('mongodb')
+    backend = MongoDBDataBackend(CFG.data_backend, plugin=plugin)
     yield backend
     backend.drop(True)
 
@@ -16,10 +18,6 @@ def databackend():
 @pytest.mark.skip(reason="Open this test after creating a blank table for MongoDB.")
 def test_output_dest(databackend):
     db_utils.test_output_dest(databackend)
-
-
-def test_query_builder(databackend):
-    db_utils.test_query_builder(databackend)
 
 
 @pytest.mark.skip(reason="Open this test after creating a blank table for MongoDB.")

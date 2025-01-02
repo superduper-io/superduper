@@ -19,6 +19,10 @@ Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
 
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
+
+
 class DataTypeFactory:
     """Abstract class for creating a DataType # noqa."""
 
@@ -262,7 +266,7 @@ class File(Saveable):
 
     path: str = ''
 
-    def __post_init__(self, db=None):
+    def __post_init__(self, db: 'Datalayer' = None):
         if not self.identifier:
             self.identifier = get_hash(self.path)
         return super().__post_init__(db)

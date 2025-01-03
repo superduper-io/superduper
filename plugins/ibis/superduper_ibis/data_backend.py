@@ -299,8 +299,12 @@ class IbisDataBackend(BaseDataBackend):
             return
 
         for table in self.conn.list_tables():
-            logging.info(f"Dropping table: {table}")
-            self.conn.drop_table(table)
+            try:
+                logging.info(f"Dropping table: {table}")
+                self.conn.drop_table(table)
+            except Exception as e:
+                logging.error(f"Error dropping table: {table}")
+                logging.error(e)
 
     def get_table_or_collection(self, identifier):
         """Get a table or collection from the database.

@@ -152,6 +152,7 @@ def build_rest_app(app: SuperDuperApp):
             nonlocal component
             variables = None
             build_template = component['build_template']
+            identifier = component['identifier']
             if '_variables' in component:
                 variables = component['_variables']
 
@@ -159,6 +160,8 @@ def build_rest_app(app: SuperDuperApp):
             if variables:
                 component.build_template = build_template
                 component.build_variables = variables
+
+            component.identifier = identifier
 
             db.apply(component, force=True)
 

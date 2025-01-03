@@ -617,7 +617,9 @@ class Datalayer:
         r = self.metadata.get_component(type_id, identifier, version=version)
         if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
-            raise Exception(f'{r["uuid"]} is involved in other components: {parents}')
+            raise exceptions.ComponentInUseError(
+                f'{r["uuid"]} is involved in other components: {parents}'
+            )
 
         if not (
             force
@@ -653,13 +655,22 @@ class Datalayer:
         children = component.sort_components(children)[::-1]
         for c in children:
             assert isinstance(c.version, int)
-            self._remove_component_version(
-                c.type_id,
-                c.identifier,
-                version=c.version,
-                recursive=False,
-                force=force,
-            )
+            try:
+                self._remove_component_version(
+                    c.type_id,
+                    c.identifier,
+                    version=c.version,
+                    recursive=False,
+                    force=force,
+                )
+            except exceptions.ComponentInUseError as e:
+                if force:
+                    logging.warn(
+                        f'Component {c.huuid} is in use: {e}\n'
+                        'Skipping since force=True...'
+                    )
+                else:
+                    raise e
 
     def replace(self, object: t.Any):
         """

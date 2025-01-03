@@ -47,6 +47,8 @@ class _OpenAI(APIBaseModel):
     :param client_kwargs: The kwargs to be passed to OpenAI
     """
 
+    breaks: t.ClassVar[t.Tuple[str]] = ('model',)
+
     openai_api_key: t.Optional[str] = None
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)

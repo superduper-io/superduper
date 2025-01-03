@@ -76,7 +76,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         else:
             assert isinstance(uri, str)
             name = uri.split('//')[0]
-            self.connection_callback = lambda: (create_engine(uri, connect_args={'role': 'USERADMIN'}), name)
+            self.connection_callback = lambda: (create_engine(uri), name)
 
         sql_conn, name = self.connection_callback()
 
@@ -89,8 +89,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._connect()
 
     def _connect(self):
+
+        start = time.time()
         sm = sessionmaker(bind=self.conn)
         self.session = sm()
+        logging.info(f'Connected to {self.name} in {time.time() - start:.2f} seconds')
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""
@@ -177,9 +180,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         }
 
         try:
-            with self.conn.connect() as conn:
-                conn.execute(text('USE DATABASE OTHERUSER_DB'))
-                conn.execute(text("USE SCHEMA DATA"))
             metadata.create_all(self.conn)
         except Exception as e:
             logging.error(f'Error creating tables: {e}')
@@ -247,27 +247,17 @@ class SQLAlchemyMetadata(MetaDataStore):
             logging.warn(f'Error dropping artifact table {e}')
 
     @contextmanager
-    def session_context(self, auto_close=False, max_retries=1):
+    def session_context(self):
         """Provide a transactional scope around a series of operations."""
-        for attempt in range(max_retries):
-            try:
-                yield self.session
-                self.session.commit()
-                break
-            except Exception:
-                logging.debug('retrying session.')
-                if attempt <= max_retries - 1:
-                    time.sleep(0.1)
+        if not self.session.is_active:
+            self._connect()
 
-                    if self.session:
-                        self.session.close()
-                    self._connect()
-                else:
-                    self.session.rollback()
-                    raise
-            finally:
-                if auto_close:
-                    self.session.close()
+        try:
+            yield self.session
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
 
 
     # --------------- COMPONENTS -----------------
@@ -407,20 +397,19 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 .limit(1)
             )
+            if not allow_hidden:
+                stmt = stmt.where(self.component_table.c.hidden == allow_hidden)
             res = self.query_results(self.component_table, stmt, session)
             try:
-                r = res[0]
+                res = res[0]
+                dict_ = res['dict']
+                del res['dict']
+                res = {**res, **dict_}
+                return res
             except IndexError:
                 raise NonExistentMetadataError(
                     f'Table with uuid: {uuid} does not exist'
                 )
-
-        return self._get_component(
-            type_id=r['type_id'],
-            identifier=r['identifier'],
-            version=r['version'],
-            allow_hidden=allow_hidden,
-        )
 
     def _get_component(
         self,

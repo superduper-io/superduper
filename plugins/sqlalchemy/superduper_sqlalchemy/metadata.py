@@ -2,6 +2,7 @@ import time
 import threading
 import typing as t
 from contextlib import contextmanager
+from collections import defaultdict
 
 import click
 from sqlalchemy import (
@@ -51,6 +52,35 @@ def _connect_snowflake():
     return create_engine("snowflake://not@used/db", creator=creator)
 
 
+class Cache:
+    def __init__(self):
+        self._uuid2metadata: t.Dict[str, t.Dict]= {}
+        self._type_id_identifier2metadata = defaultdict(dict)
+
+
+    def add_metadata(self, metadata):
+        self._uuid2metadata[metadata['uuid']] = metadata
+        version = metadata['version']
+        type_id = metadata['type_id']
+        identifier = metadata['identifier']
+        self._type_id_identifier2metadata[(type_id, identifier)][version] = metadata
+
+
+    def get_metadata_by_uuid(self, uuid):
+        return self._uuid2metadata.get(uuid)
+
+    def get_metadata_by_identifier(self, type_id, identifier, version):
+        metadata = self._type_id_identifier2metadata[(type_id, identifier)]
+        if not metadata:
+            return None
+        version = version or max(metadata.keys())
+        return metadata[version]
+
+    def update_metadata(self, metadata):
+        self.add_metadata(metadata)
+
+
+
 class SQLAlchemyMetadata(MetaDataStore):
     """
     Abstraction for storing meta-data separately from primary data.
@@ -87,6 +117,18 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self._lock = threading.Lock()
         self._connect()
+        self._cache = Cache()
+        self._init_cache()
+
+
+    def _init_cache(self):
+        with self.session_context() as session:
+            stmt = (
+                select(self.component_table)
+            )
+            res = self.query_results(self.component_table, stmt, session)
+            for r in res:
+                self._cache.add_metadata(r)
 
     def _connect(self):
 
@@ -251,10 +293,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         """Provide a transactional scope around a series of operations."""
         if not self.session.is_active:
             self._connect()
-
         try:
             yield self.session
-            self.session.commit()
         except Exception:
             self.session.rollback()
             raise
@@ -315,6 +355,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         with self.session_context() as session:
             stmt = insert(self.component_table).values(**new_info)
             session.execute(stmt)
+            # self._cache.add_metadata(new_info)
 
     def delete_parent_child(self, parent_id: str, child_id: str | None = None):
         """
@@ -389,6 +430,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param uuid: UUID of component
         :param allow_hidden: whether to load hidden components
         """
+        if res:= self._cache.get_metadata_by_uuid(uuid):
+            return res
         with self.session_context() as session:
             stmt = (
                 select(self.component_table)
@@ -405,6 +448,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 dict_ = res['dict']
                 del res['dict']
                 res = {**res, **dict_}
+                self._cache.add_metadata(res)
                 return res
             except IndexError:
                 raise NonExistentMetadataError(
@@ -425,6 +469,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param version: the version of the component
         :param allow_hidden: whether to allow hidden components
         """
+        if res:= self._cache.get_metadata_by_identifier(type_id, identifier, version):
+            return res
         with self.session_context() as session:
             stmt = select(self.component_table).where(
                 self.component_table.c.type_id == type_id,
@@ -440,6 +486,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 dict_ = res['dict']
                 del res['dict']
                 res = {**res, **dict_}
+                self._cache.add_metadata(res)
                 return res
 
     def get_component_version_parents(self, uuid: str):
@@ -482,6 +529,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param identifier: the identifier of the component
         :param allow_hidden: whether to allow hidden components
         """
+        if res:= self._cache.get_metadata_by_identifier(type_id, identifier, None):
+            return res['version']
         with self.session_context() as session:
             stmt = (
                 select(self.component_table)
@@ -493,7 +542,6 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .order_by(self.component_table.c.version.desc())
                 .limit(1)
             )
-            res = session.execute(stmt)
             res = self.query_results(self.component_table, stmt, session)
             versions = [r['version'] for r in res]
             if len(versions) == 0:

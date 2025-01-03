@@ -216,11 +216,11 @@ class IbisDataBackend(BaseDataBackend):
         :param name: Table name to drop.
         """
         try:
-            return self.db.databackend.conn.drop_table(name)
+            return self.conn.drop_table(name)
         except Exception as e:
             msg = "Object found is of type 'VIEW'"
             if msg in str(e):
-                return self.db.databackend.conn.drop_view(name)
+                return self.conn.drop_view(name)
             raise
 
     def create_output_dest(
@@ -299,12 +299,8 @@ class IbisDataBackend(BaseDataBackend):
             return
 
         for table in self.conn.list_tables():
-            try:
-                logging.info(f"Dropping table: {table}")
-                self.conn.drop_table(table)
-            except Exception as e:
-                logging.error(f"Error dropping table: {table}")
-                logging.error(e)
+            logging.info(f"Dropping table: {table}")
+            self.drop_table_or_collection(table)
 
     def get_table_or_collection(self, identifier):
         """Get a table or collection from the database.

@@ -15,6 +15,10 @@ DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
+BATCH_SIZE = 30
+
+def _chunked_list(lst, batch_size=BATCH_SIZE):
+    return [lst[i : i + batch_size] for i in range(0, len(lst), batch_size)]
 
 class BaseQueueConsumer(ABC):
     """
@@ -188,9 +192,20 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
             job_lookup[component.uuid][job.method] = job.job_id
         jobs += sub_jobs
         logging.info(f'Streaming with {component.type_id}:{component.identifier}')
+    
 
-    for job in jobs:
-        job.execute(db)
+    for jobs in _chunked_list(jobs):
+        job_metadata = []
+        for job in jobs:
+            job_metadata.append({k: v for k, v in job.dict().items() if k not in {'genus', 'queue'}})
+
+        db.metadata.create_job(
+            job_metadata
+        )
+
+        for job in jobs:
+            job.execute(db)
+
     db.cluster.compute.release_futures(context)
 
 
@@ -205,5 +220,8 @@ def consume_events(events, table: str, db=None):
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        for event in events:
-            event.execute(db)
+
+        for batch in _chunked_list(events):
+            for event in batch:
+                event.execute(db, batch=True)
+            db.metadata.commit()

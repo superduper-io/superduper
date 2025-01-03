@@ -1,3 +1,4 @@
+import time
 import dataclasses as dc
 from abc import ABC, abstractmethod
 
@@ -82,6 +83,8 @@ class Cluster(ABC):
         :param with_compute: Boolean to init
                              compute.
         """
+        from superduper import logging
+        start = time.time()
         assert self.db
         if with_compute:
             self.compute.initialize()
@@ -91,3 +94,5 @@ class Cluster(ABC):
         self.vector_search.initialize()
         self.crontab.initialize()
         self.cdc.initialize()
+
+        logging.info(f"Cluster initialized in {time.time() - start:.2f} seconds.")

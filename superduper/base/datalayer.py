@@ -1,6 +1,7 @@
 import random
 import typing as t
 from collections import namedtuple
+import time
 
 import click
 
@@ -76,6 +77,7 @@ class Datalayer:
 
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
+        logging.info("Data Layer built")
 
     def __getitem__(self, item):
         return self.databackend.get_query_builder(item)
@@ -452,7 +454,17 @@ class Datalayer:
         :param wait: Wait for apply events.
         :return: Tuple containing the added object(s) and the original object(s).
         """
-        return apply.apply(db=self, object=object, force=force, wait=wait)
+        from superduper.backends.base import data_backend
+        from collections import Counter
+        start = time.time()
+        result = apply.apply(db=self, object=object, force=force, wait=wait)
+        logging.info(f'Apply took {time.time() - start} seconds')
+        logging.info(data_backend.global_time)
+        logging.info(data_backend.global_count)
+        data_backend.global_time = Counter()
+        data_backend.global_count = Counter()
+
+        return result
 
     def remove(
         self,

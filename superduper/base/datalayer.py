@@ -729,7 +729,7 @@ class Datalayer:
             self.expire(old_uuid)
         else:
             serialized = serialized.encode(keep_schema=False)
-            self.metadata.create_component(serialized)
+            self.metadata.create_component(serialized, batch=True)
 
     def expire(self, uuid):
         """Expire a component from the cache."""
@@ -749,8 +749,6 @@ class Datalayer:
 
         :param artifact: The artifact to save.
         """
-        artifact_ids, _ = self._find_artifacts(info)
-        self.metadata.create_artifact_relation(uuid, artifact_ids)
         return self.artifact_store.save_artifact(info)
 
     def _delete_artifacts(self, uuid, info: t.Dict):

@@ -1,6 +1,7 @@
 import time
 import threading
 import typing as t
+import json
 from contextlib import contextmanager
 from collections import defaultdict
 
@@ -14,7 +15,6 @@ from sqlalchemy import (
     delete,
     insert,
     select,
-    text
 )
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import sessionmaker
@@ -50,6 +50,65 @@ def _connect_snowflake():
         )
 
     return create_engine("snowflake://not@used/db", creator=creator)
+
+class _BatchedDBFlush(threading.Thread):
+    def __init__(self, connection_callback, flush_interval=5, max_batch_size=50):
+        super().__init__(daemon=True)
+        sql_conn, name = connection_callback()
+        self.conn = sql_conn
+        self.flush_interval = flush_interval
+        self.max_batch_size = max_batch_size
+        self.batch = []
+        self.batch_lock = threading.Lock()
+        self.stop_event = threading.Event()
+        self._connect()
+
+    def add_to_batch(self, item):
+        with self.batch_lock:
+            self.batch.append(item)
+            if len(self.batch) >= self.max_batch_size:
+                self._flush()
+
+    def _connect(self):
+
+        sm = sessionmaker(bind=self.conn)
+        self.session = sm()
+
+    @contextmanager
+    def session_context(self, commit=True):
+        if not self.session.is_active:
+            self._connect()
+        try:
+            yield self.session
+            if commit:
+                self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
+    def run(self):
+        while not self.stop_event.is_set():
+            time.sleep(self.flush_interval)
+            self._flush()
+
+    def _flush(self):
+        with self.batch_lock:
+            if not self.batch:
+                return
+
+            with self.session_context() as session:
+                try:
+                    for item in self.batch:
+                        session.execute(item)
+                    session.commit()
+                    self.batch.clear()
+                except Exception as e:
+                    session.rollback()
+                    print(f"Error during batch flush: {e}")
+
+    def stop(self):
+        self.stop_event.set()
+        self.join()
+        self._flush()
 
 
 class Cache:
@@ -119,6 +178,9 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._connect()
         self._cache = Cache()
         self._init_cache()
+        #self.db_flush_thread = _BatchedDBFlush(connection_callback=self.connection_callback, flush_interval=5, max_batch_size=10)
+        #self.db_flush_thread.start()
+
 
 
     def _init_cache(self):
@@ -136,6 +198,10 @@ class SQLAlchemyMetadata(MetaDataStore):
         sm = sessionmaker(bind=self.conn)
         self.session = sm()
         logging.info(f'Connected to {self.name} in {time.time() - start:.2f} seconds')
+
+
+    def commit(self):
+        self.session.commit()
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""
@@ -226,9 +292,9 @@ class SQLAlchemyMetadata(MetaDataStore):
         except Exception as e:
             logging.error(f'Error creating tables: {e}')
 
-    def _create_data(self, table_name, datas):
+    def _create_data(self, table_name, datas, batch=False):
         table = self._table_mapping[table_name]
-        with self.session_context() as session:
+        with self.session_context(commit=not batch) as session:
             for data in datas:
                 stmt = insert(table).values(**data)
                 session.execute(stmt)
@@ -289,12 +355,15 @@ class SQLAlchemyMetadata(MetaDataStore):
             logging.warn(f'Error dropping artifact table {e}')
 
     @contextmanager
-    def session_context(self):
+    def session_context(self, commit=True):
         """Provide a transactional scope around a series of operations."""
         if not self.session.is_active:
             self._connect()
         try:
             yield self.session
+            if commit:
+                print('######### Without commit')
+                self.session.commit()
         except Exception:
             self.session.rollback()
             raise
@@ -346,13 +415,14 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.parent_child_association_table, stmt, session)
             return len(res) > 0
 
-    def create_component(self, info: t.Dict):
+    def create_component(self, info: t.Dict, batch=False):
         """Create a component in the metadata store.
 
         :param info: the information to create the component
         """
         new_info = self._refactor_component_info(info)
-        with self.session_context() as session:
+
+        with self.session_context(commit=not batch) as session:
             stmt = insert(self.component_table).values(**new_info)
             session.execute(stmt)
             # self._cache.add_metadata(new_info)
@@ -379,7 +449,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def create_parent_child(self, parent_id: str, child_id: str):
+    def create_parent_child(self, parent_id: str, child_id: str, batch=False):
         """Create a parent-child relationship between two components.
 
         :param parent_id: the parent component
@@ -388,7 +458,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         import sqlalchemy
 
         try:
-            with self.session_context() as session:
+            with self.session_context(commit=not batch) as session:
                 stmt = insert(self.parent_child_association_table).values(
                     parent_id=parent_id, child_id=child_id
                 )
@@ -576,11 +646,12 @@ class SQLAlchemyMetadata(MetaDataStore):
         type_id: str | None = None,
         version: int | None = None,
         uuid: str | None = None,
+        batch = False
     ):
         info = self._refactor_component_info(info)
 
         if uuid is None:
-            with self.session_context() as session:
+            with self.session_context(commit=not batch) as session:
                 stmt = (
                     self.component_table.update()
                     .where(
@@ -592,7 +663,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 session.execute(stmt)
         else:
-            with self.session_context() as session:
+            with self.session_context(commit=not batch) as session:
                 stmt = (
                     self.component_table.update()
                     .where(self.component_table.c.uuid == uuid)
@@ -650,6 +721,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         :param type_id: the type of the component
         """
+        # TODO: cache it.
         with self.session_context() as session:
             stmt = select(self.component_table)
             if type_id is not None:
@@ -695,18 +767,32 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     # --------------- JOBS -----------------
 
-    def create_job(self, info: t.Dict):
+    def create_job(self, info: t.Union[t.Dict, t.List[t.Dict]]):
         """Create a job with the given info.
 
         :param info: The information used to create the job
         """
-        if 'dependencies' in info:
-            import json
+        def _create_job(info, session=None):
+            if 'dependencies' in info:
+                info['dependencies'] = json.dumps(info['dependencies'])
+            if not session:
+                with self.session_context() as session:
+                    stmt = insert(self.job_table).values(**info)
+                    session.execute(stmt)
+            else:
+                stmt = insert(self.job_table).values(**info)
+                session.execute(stmt)
 
-            info['dependencies'] = json.dumps(info['dependencies'])
-        with self.session_context() as session:
-            stmt = insert(self.job_table).values(**info)
-            session.execute(stmt)
+
+        if isinstance(info, dict):
+            _create_job(info)
+        else:
+            assert isinstance(info, (list, tuple))
+            with self.session_context() as session:
+                for job_info in info:
+                    _create_job(job_info, session)
+
+
 
     def get_job(self, job_id: str):
         """Get the job with the given job_id.

@@ -76,7 +76,7 @@ class MetaDataStore(ABC):
         """
         pass
 
-    def create_artifact_relation(self, uuid, artifact_ids):
+    def create_artifact_relation(self, uuid, artifact_ids, batch=False):
         """
         Create a relation between an artifact and a component version.
 
@@ -91,7 +91,7 @@ class MetaDataStore(ABC):
             data.append({'uuid': uuid, 'artifact_id': artifact_id})
 
         if data:
-            self._create_data('_artifact_relations', data)
+            self._create_data('_artifact_relations', data, batch=batch)
 
     def delete_artifact_relation(self, uuid, artifact_ids):
         """
@@ -425,6 +425,7 @@ class MetaDataStore(ABC):
         type_id: str | None = None,
         version: int | None = None,
         uuid: str | None = None,
+        batch: bool = False
     ):
         pass
 
@@ -435,6 +436,7 @@ class MetaDataStore(ABC):
         type_id: str | None = None,
         version: int | None = None,
         uuid: str | None = None,
+        batch=False
     ) -> None:
         """
         Replace an object in the metadata store.
@@ -454,6 +456,7 @@ class MetaDataStore(ABC):
             type_id=type_id,
             version=version,
             uuid=uuid,
+            batch=batch
         )
 
     @abstractmethod

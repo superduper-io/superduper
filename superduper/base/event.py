@@ -119,6 +119,13 @@ class Create(Event):
     def execute(self, db: 'Datalayer'):
         """Execute the create event."""
         # TODO decide where to assign version
+        if (
+            self.component['type_id'] == 'table'
+            and self.component['identifier'] == 'IRS'
+        ):
+            import time
+
+            time.sleep(10)
         db.metadata.create_component(self.component)
         # TODO - do we really need to load the whole component?
         component = db.load(uuid=self.component['uuid'])

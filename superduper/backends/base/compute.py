@@ -110,3 +110,9 @@ class ComputeBackend(BaseBackend):
         :param value: ``Datalayer`` instance.
         """
         self._db = value
+
+    def drop_component(self, uuid: str):
+        """Drop the component from compute.
+
+        :param uuid: Component uuid.
+        """

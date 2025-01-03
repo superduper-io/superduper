@@ -14,9 +14,11 @@ class BaseBackend(ABC):
         self._db = None
 
     @abstractmethod
-    def drop(self):
-        """Drop the backend."""
-        pass
+    def drop(self, component: t.Optional['Component'] = None):
+        """Drop the backend.
+
+        :param component: Component to Drop.
+        """
 
     @abstractmethod
     def list_uuids(self):
@@ -62,6 +64,12 @@ class BaseBackend(ABC):
         if identifier in self.list_components():
             del self[component.identifier]
         self._put(component, **kwargs)
+
+    def drop_component(self, identifier: str):
+        """Drop the component from backend.
+
+        :param identifier: Component identifier
+        """
 
     @property
     def db(self) -> 'Datalayer':

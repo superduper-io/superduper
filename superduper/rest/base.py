@@ -1,3 +1,4 @@
+import os
 import sys
 import threading
 import time
@@ -198,12 +199,10 @@ class SuperDuperApp:
 
             existing = db.show('template')
             for t in self.templates:
-                if t in existing:
+                if t in existing or t is None:
                     logging.info(f'Found existing template: {t}')
                     continue
                 logging.info(f'Applying template: {t}')
-
-                import os
 
                 if t is None:
                     continue

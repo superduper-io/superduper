@@ -454,9 +454,16 @@ class Datalayer:
         :param wait: Wait for apply events.
         :return: Tuple containing the added object(s) and the original object(s).
         """
+        from superduper.backends.base import data_backend
+        from collections import Counter
         start = time.time()
         result = apply.apply(db=self, object=object, force=force, wait=wait)
         logging.info(f'Apply took {time.time() - start} seconds')
+        logging.info(data_backend.global_time)
+        logging.info(data_backend.global_count)
+        data_backend.global_time = Counter()
+        data_backend.global_count = Counter()
+
         return result
 
     def remove(

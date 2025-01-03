@@ -211,10 +211,17 @@ class DataBackendProxy:
         @functools.wraps(attr)
         def wrapper(*args, **kwargs):
             try:
-                return attr(*args, **kwargs)
+                logging.warn(f"Executing {attr.__name__} with args: {args}, kwargs: {kwargs}")
+                import time
+                start = time.time()
+                result = attr(*args, **kwargs)
+                end = time.time()
+                global_time[attr.__name__] += end - start
+                global_count[attr.__name__] += 1
+                return result
             except Exception as e:
                 error_message = str(e).lower()
-                if 'expire' in error_message and 'token' in error_message:
+                if "expire" in error_message and "token" in error_message:
                     logging.warn(
                         f"Authentication expiry detected: {e}. "
                         "Attempting to reconnect..."
@@ -232,3 +239,9 @@ class DataBackendProxy:
         if callable(attr):
             return self._try_execute(attr)
         return attr
+
+
+from collections import Counter
+
+global_time = Counter()
+global_count = Counter()

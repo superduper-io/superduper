@@ -11,6 +11,7 @@ DATABASE_URL = CFG.metadata_store or "sqlite:///:memory:"
 @pytest.fixture
 def metadata():
     store = SQLAlchemyMetadata(DATABASE_URL)
+    store._batched = False
     yield store
     store.drop(force=True)
 

@@ -1,9 +1,9 @@
+import copy
+import json
 import threading
 import typing as t
-import json
-import copy
-from contextlib import contextmanager
 from collections import defaultdict
+from contextlib import contextmanager
 
 import click
 from sqlalchemy import (
@@ -52,12 +52,14 @@ def _connect_snowflake():
     return create_engine("snowflake://not@used/db", creator=creator)
 
 
-class Cache:
+class _Cache:
     def __init__(self):
         self._uuid2metadata: t.Dict[str, t.Dict] = {}
         self._type_id_identifier2metadata = defaultdict(dict)
 
-    def replace_metadata(self, metadata, uuid=None, type_id=None, version=None, identifier=None):
+    def replace_metadata(
+        self, metadata, uuid=None, type_id=None, version=None, identifier=None
+    ):
         metadata = copy.deepcopy(metadata)
         if 'dict' in metadata:
             dict_ = metadata['dict']
@@ -107,7 +109,8 @@ class Cache:
         metadata = self._type_id_identifier2metadata[(type_id, identifier)]
         if not metadata:
             return None
-        version = version or max(metadata.keys())
+        if version is None:
+            version = max(metadata.keys())
         return metadata[version]
 
     def update_metadata(self, metadata):
@@ -149,18 +152,19 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._init_tables()
 
         self._lock = threading.Lock()
-        self._cache = Cache()
+        self._cache = _Cache()
         self._init_cache()
         self._insert_flush = {
             'parent_child': [],
             'component': [],
             '_artifact_relations': [],
-            'job': []
+            'job': [],
         }
         self._parent_relation_cache = []
         self._batched = True
 
     def expire(self, uuid):
+        """Expire metadata cache."""
         self._cache.expire(uuid)
 
     @property
@@ -205,7 +209,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         # TODO: is it required to init after
         # a reconnect.
         self._init_tables()
-
 
     def _init_tables(self):
         # Get the DB config for the given dialect
@@ -416,7 +419,10 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.parent_child_association_table, stmt, session)
             return len(res) > 0
 
-    def create_component(self, info: t.Dict, ):
+    def create_component(
+        self,
+        info: t.Dict,
+    ):
         """Create a component in the metadata store.
 
         :param info: the information to create the component
@@ -453,7 +459,11 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def create_parent_child(self, parent_id: str, child_id: str, ):
+    def create_parent_child(
+        self,
+        parent_id: str,
+        child_id: str,
+    ):
         """Create a parent-child relationship between two components.
 
         :param parent_id: the parent component
@@ -668,7 +678,12 @@ class SQLAlchemyMetadata(MetaDataStore):
                     .values(**info)
                 )
                 session.execute(stmt)
-                self._cache.replace_metadata(type_id=type_id, identifier=identifier, version=version, metadata=info)
+                self._cache.replace_metadata(
+                    type_id=type_id,
+                    identifier=identifier,
+                    version=version,
+                    metadata=info,
+                )
         else:
             with self.session_context() as session:
                 stmt = (
@@ -780,7 +795,6 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         :param info: The information used to create the job
         """
-
         if 'dependencies' in info:
             info['dependencies'] = json.dumps(info['dependencies'])
 
@@ -790,8 +804,6 @@ class SQLAlchemyMetadata(MetaDataStore):
                 session.execute(stmt)
             else:
                 self._insert_flush['job'].append(info)
-
-
 
     def get_job(self, job_id: str):
         """Get the job with the given job_id.

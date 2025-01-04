@@ -35,7 +35,10 @@ class Event(ABC):
         return cls(**kwargs)
 
     @abstractmethod
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
         """Execute the event.
 
         :param db: Datalayer instance
@@ -57,10 +60,14 @@ class Signal(Event):
     msg: str
     context: str
 
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
         """Execute the signal.
 
         :param db: Datalayer instance
+
         """
         if self.msg.lower() == 'done':
             db.cluster.compute.release_futures(self.context)
@@ -91,7 +98,10 @@ class Change(Event):
         kwargs.pop('genus')
         return cls(**kwargs)
 
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
         """Execute the change event.
 
         :param db: Datalayer instance
@@ -116,24 +126,26 @@ class Create(Event):
     component: t.Dict
     parent: str | None = None
 
-    
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(self, db: 'Datalayer'):
         """Execute the create event."""
         # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.component)
-        db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids, batch=batch)
+        db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
 
-        db.metadata.create_component(self.component, batch=batch)
-        # TODO - do we really need to load the whole component?
+        db.metadata.create_component(self.component)
         component = db.load(uuid=self.component['uuid'])
+
         if self.parent:
-            db.metadata.create_parent_child(self.parent, component.uuid, batch=batch)
+            db.metadata.create_parent_child(self.parent, component.uuid)
 
         if hasattr(component, 'dependencies') and component.dependencies:
             for dep in component.dependencies:
                 if isinstance(dep, (tuple, list)):
                     dep = dep[-1]
-                db.metadata.create_parent_child(component.uuid, dep, batch=batch)
+                db.metadata.create_parent_child(
+                    component.uuid,
+                    dep,
+                )
         component.on_create(db=db)
 
     @property
@@ -163,10 +175,15 @@ class Update(Event):
     component: t.Dict
     parent: str | None = None
 
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
         """Execute the create event."""
         # TODO decide where to assign version
-        db.metadata.replace_object(self.component, uuid=self.component['uuid'], batch=batch)
+        artifact_ids, _ = db._find_artifacts(self.component)
+        db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
+        db.metadata.replace_object(self.component, uuid=self.component['uuid'])
         db.expire(self.component['uuid'])
 
     @property
@@ -242,11 +259,16 @@ class Job(Event):
         kwargs['dependencies'] = dependencies
         return args, kwargs
 
-    def execute(self, db: 'Datalayer', batch=False):
+    def execute(
+        self,
+        db: 'Datalayer',
+    ):
         """Execute the job event.
 
         :param db: Datalayer instance
         """
+        meta = {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
+        db.metadata.create_job(meta)
         return db.cluster.compute.submit(self)
 
 

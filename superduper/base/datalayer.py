@@ -1,7 +1,6 @@
 import random
 import typing as t
 from collections import namedtuple
-import time
 
 import click
 
@@ -454,16 +453,7 @@ class Datalayer:
         :param wait: Wait for apply events.
         :return: Tuple containing the added object(s) and the original object(s).
         """
-        from superduper.backends.base import data_backend
-        from collections import Counter
-        start = time.time()
         result = apply.apply(db=self, object=object, force=force, wait=wait)
-        logging.info(f'Apply took {time.time() - start} seconds')
-        logging.info(data_backend.global_time)
-        logging.info(data_backend.global_count)
-        data_backend.global_time = Counter()
-        data_backend.global_count = Counter()
-
         return result
 
     def remove(
@@ -718,6 +708,8 @@ class Datalayer:
             serialized = serialized.encode(keep_schema=False)
 
             self._delete_artifacts(object.uuid, info)
+            artifact_ids, _ = self._find_artifacts(info)
+            self.metadata.create_artifact_relation(object.uuid, artifact_ids)
             serialized = self._save_artifact(object.uuid, serialized)
 
             self.metadata.replace_object(
@@ -729,15 +721,17 @@ class Datalayer:
             self.expire(old_uuid)
         else:
             serialized = serialized.encode(keep_schema=False)
-            self.metadata.create_component(serialized, batch=True)
+            self.metadata.create_component(serialized)
 
     def expire(self, uuid):
         """Expire a component from the cache."""
         self.cluster.cache.expire(uuid)
+        self.metadata.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)
         while parents:
             for uuid in parents:
                 self.cluster.cache.expire(uuid)
+                self.metadata.expire(uuid)
             parents = sum(
                 [self.metadata.get_component_version_parents(uuid) for uuid in parents],
                 [],

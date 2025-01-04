@@ -211,13 +211,7 @@ class DataBackendProxy:
         @functools.wraps(attr)
         def wrapper(*args, **kwargs):
             try:
-                logging.warn(f"Executing {attr.__name__} with args: {args}, kwargs: {kwargs}")
-                import time
-                start = time.time()
                 result = attr(*args, **kwargs)
-                end = time.time()
-                global_time[attr.__name__] += end - start
-                global_count[attr.__name__] += 1
                 return result
             except Exception as e:
                 error_message = str(e).lower()
@@ -239,9 +233,3 @@ class DataBackendProxy:
         if callable(attr):
             return self._try_execute(attr)
         return attr
-
-
-from collections import Counter
-
-global_time = Counter()
-global_count = Counter()

@@ -1,7 +1,7 @@
-import time
 import threading
 import typing as t
 import json
+import copy
 from contextlib import contextmanager
 from collections import defaultdict
 
@@ -51,79 +51,54 @@ def _connect_snowflake():
 
     return create_engine("snowflake://not@used/db", creator=creator)
 
-class _BatchedDBFlush(threading.Thread):
-    def __init__(self, connection_callback, flush_interval=5, max_batch_size=50):
-        super().__init__(daemon=True)
-        sql_conn, name = connection_callback()
-        self.conn = sql_conn
-        self.flush_interval = flush_interval
-        self.max_batch_size = max_batch_size
-        self.batch = []
-        self.batch_lock = threading.Lock()
-        self.stop_event = threading.Event()
-        self._connect()
-
-    def add_to_batch(self, item):
-        with self.batch_lock:
-            self.batch.append(item)
-            if len(self.batch) >= self.max_batch_size:
-                self._flush()
-
-    def _connect(self):
-
-        sm = sessionmaker(bind=self.conn)
-        self.session = sm()
-
-    @contextmanager
-    def session_context(self, commit=True):
-        if not self.session.is_active:
-            self._connect()
-        try:
-            yield self.session
-            if commit:
-                self.session.commit()
-        except Exception:
-            self.session.rollback()
-            raise
-    def run(self):
-        while not self.stop_event.is_set():
-            time.sleep(self.flush_interval)
-            self._flush()
-
-    def _flush(self):
-        with self.batch_lock:
-            if not self.batch:
-                return
-
-            with self.session_context() as session:
-                try:
-                    for item in self.batch:
-                        session.execute(item)
-                    session.commit()
-                    self.batch.clear()
-                except Exception as e:
-                    session.rollback()
-                    print(f"Error during batch flush: {e}")
-
-    def stop(self):
-        self.stop_event.set()
-        self.join()
-        self._flush()
-
 
 class Cache:
     def __init__(self):
-        self._uuid2metadata: t.Dict[str, t.Dict]= {}
+        self._uuid2metadata: t.Dict[str, t.Dict] = {}
         self._type_id_identifier2metadata = defaultdict(dict)
 
+    def replace_metadata(self, metadata, uuid=None, type_id=None, version=None, identifier=None):
+        metadata = copy.deepcopy(metadata)
+        if 'dict' in metadata:
+            dict_ = metadata['dict']
+            del metadata['dict']
+            metadata = {**metadata, **dict_}
+        if uuid:
+            self._uuid2metadata[uuid] = metadata
 
-    def add_metadata(self, metadata):
-        self._uuid2metadata[metadata['uuid']] = metadata
         version = metadata['version']
         type_id = metadata['type_id']
         identifier = metadata['identifier']
         self._type_id_identifier2metadata[(type_id, identifier)][version] = metadata
+        return metadata
 
+    def expire(self, uuid):
+        if uuid in self._uuid2metadata:
+            metadata = self._uuid2metadata[uuid]
+            del self._uuid2metadata[uuid]
+            type_id = metadata['type_id']
+            identifier = metadata['identifier']
+            if (type_id, identifier) in self._type_id_identifier2metadata:
+                del self._type_id_identifier2metadata[(type_id, identifier)]
+
+    def expire_identifier(self, type_id, identifier):
+        if (type_id, identifier) in self._type_id_identifier2metadata:
+            del self._type_id_identifier2metadata[(type_id, identifier)]
+
+    def add_metadata(self, metadata):
+        metadata = copy.deepcopy(metadata)
+        if 'dict' in metadata:
+            dict_ = metadata['dict']
+            del metadata['dict']
+            metadata = {**metadata, **dict_}
+
+        self._uuid2metadata[metadata['uuid']] = metadata
+
+        version = metadata['version']
+        type_id = metadata['type_id']
+        identifier = metadata['identifier']
+        self._type_id_identifier2metadata[(type_id, identifier)][version] = metadata
+        return metadata
 
     def get_metadata_by_uuid(self, uuid):
         return self._uuid2metadata.get(uuid)
@@ -137,7 +112,6 @@ class Cache:
 
     def update_metadata(self, metadata):
         self.add_metadata(metadata)
-
 
 
 class SQLAlchemyMetadata(MetaDataStore):
@@ -175,33 +149,53 @@ class SQLAlchemyMetadata(MetaDataStore):
         self._init_tables()
 
         self._lock = threading.Lock()
-        self._connect()
         self._cache = Cache()
         self._init_cache()
-        #self.db_flush_thread = _BatchedDBFlush(connection_callback=self.connection_callback, flush_interval=5, max_batch_size=10)
-        #self.db_flush_thread.start()
+        self._insert_flush = {
+            'parent_child': [],
+            'component': [],
+            '_artifact_relations': [],
+            'job': []
+        }
+        self._parent_relation_cache = []
+        self._batched = True
 
+    def expire(self, uuid):
+        self._cache.expire(uuid)
 
+    @property
+    def batched(self):
+        """Batched metadata updates."""
+        return self._batched
 
     def _init_cache(self):
         with self.session_context() as session:
-            stmt = (
-                select(self.component_table)
-            )
+            stmt = select(self.component_table)
             res = self.query_results(self.component_table, stmt, session)
             for r in res:
                 self._cache.add_metadata(r)
 
-    def _connect(self):
-
-        start = time.time()
-        sm = sessionmaker(bind=self.conn)
-        self.session = sm()
-        logging.info(f'Connected to {self.name} in {time.time() - start:.2f} seconds')
-
+    def _get_db_table(self, table):
+        if table == 'component':
+            return self.component_table
+        elif table == 'parent_child':
+            return self.parent_child_association_table
+        elif table == 'job':
+            return self.job_table
+        else:
+            return self._table_mapping[table]
 
     def commit(self):
-        self.session.commit()
+        """Commit execute."""
+        if self._insert_flush:
+            for table, flush in self._insert_flush.items():
+                if flush:
+                    with self.session_context() as session:
+                        session.execute(insert(self._get_db_table(table)), flush)
+                        self._insert_flush[table] = []
+        with self.session_context() as session:
+            session.commit()
+        self._batched = False
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""
@@ -211,6 +205,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         # TODO: is it required to init after
         # a reconnect.
         self._init_tables()
+
 
     def _init_tables(self):
         # Get the DB config for the given dialect
@@ -292,12 +287,18 @@ class SQLAlchemyMetadata(MetaDataStore):
         except Exception as e:
             logging.error(f'Error creating tables: {e}')
 
-    def _create_data(self, table_name, datas, batch=False):
+    def _create_data(self, table_name, datas):
         table = self._table_mapping[table_name]
-        with self.session_context(commit=not batch) as session:
-            for data in datas:
-                stmt = insert(table).values(**data)
-                session.execute(stmt)
+        with self.session_context(commit=not self.batched) as session:
+            if not self.batched:
+                for data in datas:
+                    stmt = insert(table).values(**data)
+                    session.execute(stmt)
+            else:
+                if table_name not in self._insert_flush:
+                    self._insert_flush[table_name] = datas
+                else:
+                    self._insert_flush[table_name] += datas
 
     def _delete_data(self, table_name, filter):
         table = self._table_mapping[table_name]
@@ -357,17 +358,17 @@ class SQLAlchemyMetadata(MetaDataStore):
     @contextmanager
     def session_context(self, commit=True):
         """Provide a transactional scope around a series of operations."""
-        if not self.session.is_active:
-            self._connect()
+        sm = sessionmaker(bind=self.conn)
+        session = sm()
         try:
-            yield self.session
+            yield session
             if commit:
-                print('######### Without commit')
-                self.session.commit()
+                session.commit()
         except Exception:
-            self.session.rollback()
+            session.rollback()
             raise
-
+        finally:
+            session.close()
 
     # --------------- COMPONENTS -----------------
 
@@ -415,17 +416,20 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.parent_child_association_table, stmt, session)
             return len(res) > 0
 
-    def create_component(self, info: t.Dict, batch=False):
+    def create_component(self, info: t.Dict, ):
         """Create a component in the metadata store.
 
         :param info: the information to create the component
         """
         new_info = self._refactor_component_info(info)
+        with self.session_context(commit=not self.batched) as session:
+            if not self.batched:
+                stmt = insert(self.component_table).values(new_info)
+                session.execute(stmt)
+            else:
+                self._insert_flush['component'].append(copy.deepcopy(new_info))
 
-        with self.session_context(commit=not batch) as session:
-            stmt = insert(self.component_table).values(**new_info)
-            session.execute(stmt)
-            # self._cache.add_metadata(new_info)
+            self._cache.add_metadata(new_info)
 
     def delete_parent_child(self, parent_id: str, child_id: str | None = None):
         """
@@ -449,7 +453,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
             session.execute(stmt)
 
-    def create_parent_child(self, parent_id: str, child_id: str, batch=False):
+    def create_parent_child(self, parent_id: str, child_id: str, ):
         """Create a parent-child relationship between two components.
 
         :param parent_id: the parent component
@@ -458,11 +462,19 @@ class SQLAlchemyMetadata(MetaDataStore):
         import sqlalchemy
 
         try:
-            with self.session_context(commit=not batch) as session:
-                stmt = insert(self.parent_child_association_table).values(
-                    parent_id=parent_id, child_id=child_id
-                )
-                session.execute(stmt)
+            self._parent_relation_cache.append((parent_id, child_id))
+            with self.session_context(commit=not self.batched) as session:
+                if not self.batched:
+                    stmt = insert(self.parent_child_association_table).values(
+                        parent_id=parent_id, child_id=child_id
+                    )
+                    session.execute(stmt)
+                else:
+                    if (parent_id, child_id) not in self._parent_relation_cache:
+                        self._insert_flush['parent_child'].append(
+                            {'parent_id': parent_id, 'child_id': child_id}
+                        )
+
         except sqlalchemy.exc.IntegrityError:
             logging.warn(f'Skipping {parent_id} {child_id} since they already exists')
 
@@ -490,6 +502,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                     self.component_table.c.id == cv['id']
                 )
                 session.execute(stmt_delete)
+                self._cache.expire_identifier(type_id, identifier)
 
         if cv:
             self.delete_parent_child(cv['id'])
@@ -500,7 +513,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param uuid: UUID of component
         :param allow_hidden: whether to load hidden components
         """
-        if res:= self._cache.get_metadata_by_uuid(uuid):
+        if res := self._cache.get_metadata_by_uuid(uuid):
             return res
         with self.session_context() as session:
             stmt = (
@@ -515,10 +528,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.component_table, stmt, session)
             try:
                 res = res[0]
-                dict_ = res['dict']
-                del res['dict']
-                res = {**res, **dict_}
-                self._cache.add_metadata(res)
+                res = self._cache.add_metadata(res)
                 return res
             except IndexError:
                 raise NonExistentMetadataError(
@@ -539,7 +549,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param version: the version of the component
         :param allow_hidden: whether to allow hidden components
         """
-        if res:= self._cache.get_metadata_by_identifier(type_id, identifier, version):
+        if res := self._cache.get_metadata_by_identifier(type_id, identifier, version):
             return res
         with self.session_context() as session:
             stmt = select(self.component_table).where(
@@ -553,10 +563,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.component_table, stmt, session)
             if res:
                 res = res[0]
-                dict_ = res['dict']
-                del res['dict']
-                res = {**res, **dict_}
-                self._cache.add_metadata(res)
+                res = self._cache.add_metadata(res)
                 return res
 
     def get_component_version_parents(self, uuid: str):
@@ -599,7 +606,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param identifier: the identifier of the component
         :param allow_hidden: whether to allow hidden components
         """
-        if res:= self._cache.get_metadata_by_identifier(type_id, identifier, None):
+        if res := self._cache.get_metadata_by_identifier(type_id, identifier, None):
             return res['version']
         with self.session_context() as session:
             stmt = (
@@ -646,12 +653,11 @@ class SQLAlchemyMetadata(MetaDataStore):
         type_id: str | None = None,
         version: int | None = None,
         uuid: str | None = None,
-        batch = False
     ):
         info = self._refactor_component_info(info)
 
         if uuid is None:
-            with self.session_context(commit=not batch) as session:
+            with self.session_context() as session:
                 stmt = (
                     self.component_table.update()
                     .where(
@@ -662,14 +668,16 @@ class SQLAlchemyMetadata(MetaDataStore):
                     .values(**info)
                 )
                 session.execute(stmt)
+                self._cache.replace_metadata(type_id=type_id, identifier=identifier, version=version, metadata=info)
         else:
-            with self.session_context(commit=not batch) as session:
+            with self.session_context() as session:
                 stmt = (
                     self.component_table.update()
                     .where(self.component_table.c.uuid == uuid)
                     .values(**info)
                 )
                 session.execute(stmt)
+                self._cache.replace_metadata(uuid=uuid, metadata=info)
 
     def show_cdc_tables(self):
         """Show tables to be consumed with cdc."""
@@ -772,25 +780,16 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         :param info: The information used to create the job
         """
-        def _create_job(info, session=None):
-            if 'dependencies' in info:
-                info['dependencies'] = json.dumps(info['dependencies'])
-            if not session:
-                with self.session_context() as session:
-                    stmt = insert(self.job_table).values(**info)
-                    session.execute(stmt)
-            else:
+
+        if 'dependencies' in info:
+            info['dependencies'] = json.dumps(info['dependencies'])
+
+        with self.session_context(commit=not self.batched) as session:
+            if not self.batched:
                 stmt = insert(self.job_table).values(**info)
                 session.execute(stmt)
-
-
-        if isinstance(info, dict):
-            _create_job(info)
-        else:
-            assert isinstance(info, (list, tuple))
-            with self.session_context() as session:
-                for job_info in info:
-                    _create_job(job_info, session)
+            else:
+                self._insert_flush['job'].append(info)
 
 
 

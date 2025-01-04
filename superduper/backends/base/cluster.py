@@ -1,5 +1,5 @@
-import time
 import dataclasses as dc
+import time
 from abc import ABC, abstractmethod
 
 from superduper.backends.base.cache import Cache
@@ -84,6 +84,7 @@ class Cluster(ABC):
                              compute.
         """
         from superduper import logging
+
         start = time.time()
         assert self.db
         if with_compute:

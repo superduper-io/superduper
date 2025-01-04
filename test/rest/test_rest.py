@@ -59,6 +59,8 @@ def test_apply(setup):
             },
         },
         '_base': '?my_function',
+        'build_template': {},
+        'identifier': 'my_function',
     }
 
     _ = setup.post(

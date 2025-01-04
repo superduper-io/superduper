@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a standalone flag in Streamlit to mark the page as independent.
 - Add secrets directory mount for loading secret env vars.
 - Remove components recursively
+- Add metadata batched db updates
 
 #### Bug Fixes
 

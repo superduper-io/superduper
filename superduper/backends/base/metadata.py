@@ -39,8 +39,11 @@ class MetaDataStore(ABC):
         """Batched metadata updates."""
         return False
 
-    def expire(self):
-        """Expire metadata batch cache if any."""
+    def expire(self, uuid: str):
+        """Expire metadata batch cache if any.
+
+        :param uuid: uuid to expire.
+        """
 
     @abstractmethod
     def delete_parent_child(self, parent: str, child: str):

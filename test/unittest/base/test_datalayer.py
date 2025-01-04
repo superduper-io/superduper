@@ -272,10 +272,12 @@ def test_remove_component_with_clean_up(db):
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
     test_datatype = DataType(identifier='test_datatype')
+    db.metadata._batched = False
     db.apply(test_datatype)
     db._remove_component_version('datatype', 'test_datatype', 0, force=True)
     with pytest.raises(FileNotFoundError):
         db.load('datatype', 'test_datatype')
+    db.metadata._batched = True
 
 
 def test_remove_component_with_artifact(db):

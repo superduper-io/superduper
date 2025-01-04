@@ -15,10 +15,15 @@ DependencyType = t.Union[t.Dict[str, str], t.Sequence[t.Dict[str, str]]]
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
-BATCH_SIZE = 30
+BATCH_SIZE = 100
+
 
 def _chunked_list(lst, batch_size=BATCH_SIZE):
+    if len(lst) <= batch_size:
+        return [lst]
+
     return [lst[i : i + batch_size] for i in range(0, len(lst), batch_size)]
+
 
 class BaseQueueConsumer(ABC):
     """
@@ -192,21 +197,20 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
             job_lookup[component.uuid][job.method] = job.job_id
         jobs += sub_jobs
         logging.info(f'Streaming with {component.type_id}:{component.identifier}')
-    
 
-    for jobs in _chunked_list(jobs):
-        job_metadata = []
-        for job in jobs:
-            job_metadata.append({k: v for k, v in job.dict().items() if k not in {'genus', 'queue'}})
-
-        db.metadata.create_job(
-            job_metadata
-        )
-
+    if db.metadata.batched:
+        for chunk in _chunked_list(jobs):
+            for job in chunk:
+                job.execute(db)
+            db.metadata.commit()
+    else:
         for job in jobs:
             job.execute(db)
 
     db.cluster.compute.release_futures(context)
+
+
+table_type_ids = {'table', 'schema', 'data', 'datatype'}
 
 
 def consume_events(events, table: str, db=None):
@@ -220,8 +224,29 @@ def consume_events(events, table: str, db=None):
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:
+        if not db.metadata.batched:
+            for event in events:
+                event.execute(db)
+            return
 
-        for batch in _chunked_list(events):
-            for event in batch:
-                event.execute(db, batch=True)
-            db.metadata.commit()
+        # table events
+        table_events = []
+        non_table_events = []
+
+        for ix, event in enumerate(events):
+            if event.genus == 'create' and event.component['type_id'] in table_type_ids:
+                table_events.append(event)
+            else:
+                non_table_events.append(event)
+
+        for event in table_events:
+            event.execute(db)
+        db.metadata.commit()
+
+        # non table events
+        for event in non_table_events:
+            event.execute(db)
+            if event.genus == 'update':
+                db.metadata.commit()
+
+        db.metadata.commit()

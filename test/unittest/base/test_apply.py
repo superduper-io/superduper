@@ -191,7 +191,6 @@ def test_job_on_update(db: Datalayer):
     assert db.show('my', 'test') == [0]
 
     c = MyComponent('test', a='value', b=2, sub=MyValidator('valid', target=2))
-
     db.apply(c)
 
     reload = db.load('my', 'test')

@@ -104,6 +104,7 @@ class IbisDataBackend(BaseDataBackend):
                 'vector': 'superduper.components.datatype.NativeVector'
             }
 
+
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")
         self.db_helper = get_db_helper(self.dialect)

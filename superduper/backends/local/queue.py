@@ -7,7 +7,7 @@ from superduper.backends.base.queue import (
     BaseQueuePublisher,
     consume_events,
 )
-from superduper.base.event import Event
+from superduper.base.event import Create, Event
 from superduper.components.cdc import CDC
 
 if t.TYPE_CHECKING:
@@ -30,16 +30,29 @@ class LocalQueuePublisher(BaseQueuePublisher):
         self._component_uuid_mapping: t.Dict = {}
         self.lock = threading.Lock()
 
+    def show_pending(self, type_id: str | None):
+        if type_id is None:
+            return [
+                {'type_id': type_id, 'identifier': e.component['identifier']}
+                for e in self.queue['_apply']
+            ]
+        else:
+            return [
+                e.component['identifier']
+                for e in self.queue['_apply']
+                if e.component['type_id'] == type_id
+            ]
+
     def list(self):
         """List all components."""
-        return self.queues.keys()
+        return self.queue.keys()
 
     def drop(self):
         """Drop the queue."""
-        self.queues = {}
+        self.queue = {}
 
     def __delitem__(self, item):
-        del self.queues[item]
+        del self.queue[item]
 
     def initialize(self):
         """Initialize the queue."""

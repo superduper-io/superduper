@@ -243,6 +243,7 @@ def build_rest_app(app: SuperDuperApp):
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
+                show_status=True,
             )
 
     @app.add('/db/remove', method='post')

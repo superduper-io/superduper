@@ -199,9 +199,6 @@ class SuperDuperApp:
 
             existing = db.show('template')
             for t in self.templates:
-                if t in existing or t is None:
-                    logging.info(f'Found existing template: {t}')
-                    continue
                 logging.info(f'Applying template: {t}')
 
                 if t is None:
@@ -209,10 +206,12 @@ class SuperDuperApp:
 
                 if os.path.exists(t):
                     from superduper import Template
-
                     t = Template.read(t)
                 else:
                     t = templates.get(t)
+
+                if t.identifier in existing:
+                    continue
                 db.apply(t, force=True)
 
     def startup(

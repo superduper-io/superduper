@@ -149,7 +149,6 @@ class Datalayer:
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
-        show_status: bool = False,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -173,29 +172,10 @@ class Datalayer:
             out = self.metadata.show_components()
             out = sorted(list(set([nt(**x) for x in out])))
             out = [x._asdict() for x in out]
-            if show_status:
-                out = [{**r, 'status': 'initialized'} for r in out]
-                out.extend(
-                    [
-                        {**r, 'status': 'pending'}
-                        for r in self.cluster.queue.show_pending_create_events(type_id)
-                    ]
-                )
             return out
 
         if identifier is None:
             out = self.metadata.show_components(type_id=type_id)
-            if show_status:
-                out = [
-                    {'identifier': x, 'type_id': type_id, 'status': 'initialized'}
-                    for x in out
-                ]
-                out.extend(
-                    [
-                        {'identifier': x, 'status': 'pending', 'type_id': type_id}
-                        for x in self.cluster.queue.show_pending_create_events(type_id)
-                    ]
-                )
             return sorted(out)
 
         if version is None:

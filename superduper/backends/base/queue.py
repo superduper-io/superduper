@@ -86,10 +86,6 @@ class BaseQueuePublisher(BaseBackend):
         self.queue: t.Dict = defaultdict(lambda: [])
 
     @abstractmethod
-    def show_pending_create_events(self, type_id: str | None = None):
-        """Show pending events."""
-
-    @abstractmethod
     def build_consumer(self, **kwargs):
         """Build a consumer instance."""
 
@@ -245,6 +241,7 @@ def consume_events(events, table: str, db=None):
 
         for event in table_events:
             event.execute(db)
+
         db.metadata.commit()
 
         # non table events

@@ -8,6 +8,10 @@ import typing as t
 import zipfile
 from contextlib import contextmanager
 
+from superduper.base.leaf import import_item
+from superduper.components.application import Application
+from superduper.misc.importing import import_object
+
 try:
     import magic
 except ImportError:
@@ -25,6 +29,9 @@ from .utils import rewrite_artifacts
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+
+
+PENDING_COMPONENTS = set()
 
 
 class Tee:
@@ -192,11 +199,13 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
+        cls_path = info['_builds'][info['_base'][1:]]['_path']
+        cls = import_object(cls_path)
+        type_id = cls.type_id
+        PENDING_COMPONENTS.add((type_id, info['identifier']))
         if '_variables' in info:
             info['_variables']['output_prefix'] = CFG.output_prefix
             info['_variables']['databackend'] = db.databackend.backend_name
-
-        # info = Document.decode(info, db=db).unpack()
         background_tasks.add_task(_process_db_apply, db, info, id)
         return {'status': 'ok'}
 
@@ -240,18 +249,28 @@ def build_rest_app(app: SuperDuperApp):
             r = db.metadata.get_component('application', application)
             return r['namespace']
         else:
-            return db.show(
+            out = db.show(
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
-                show_status=show_status,
             )
+            if show_status:
+                assert version is None
+                if type_id is not None and identifier is None:
+                    out = [{'identifier': x, 'type_id': type_id} for x in out]
+                out = [{**r, 'status': 'initialized'} for r in out]
+                initialized = [(r['type_id'], r['identifier']) for r in out]
+                for pending_app in PENDING_COMPONENTS:
+                    if pending_app not in initialized:
+                        out.append({'type_id': pending_app[0], 'identifier': pending_app[1], 'status': 'pending'})
+            return out
 
     @app.add('/db/remove', method='post')
     def db_remove(
         type_id: str, identifier: str, db: 'Datalayer' = DatalayerDependency()
     ):
         db.remove(type_id=type_id, identifier=identifier, recursive=True, force=True)
+        PENDING_COMPONENTS.discard((type_id, identifier))
         return {'status': 'ok'}
 
     @app.add('/db/show_template', method='get')

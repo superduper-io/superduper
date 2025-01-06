@@ -30,7 +30,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         self._component_uuid_mapping: t.Dict = {}
         self.lock = threading.Lock()
 
-    def show_pending(self, type_id: str | None):
+    def show_pending_create_events(self, type_id: str | None = None):
         if type_id is None:
             return [
                 {'type_id': type_id, 'identifier': e.component['identifier']}

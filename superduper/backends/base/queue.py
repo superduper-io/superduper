@@ -86,7 +86,7 @@ class BaseQueuePublisher(BaseBackend):
         self.queue: t.Dict = defaultdict(lambda: [])
 
     @abstractmethod
-    def show_pending(self, type_id: str | None):
+    def show_pending_create_events(self, type_id: str | None = None):
         """Show pending events."""
 
     @abstractmethod

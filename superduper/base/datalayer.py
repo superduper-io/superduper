@@ -178,7 +178,7 @@ class Datalayer:
                 out.extend(
                     [
                         {**r, 'status': 'pending'}
-                        for r in self.cluster.queue.show_pending(type_id)
+                        for r in self.cluster.queue.show_pending_create_events(type_id)
                     ]
                 )
             return out
@@ -193,7 +193,7 @@ class Datalayer:
                 out.extend(
                     [
                         {'identifier': x, 'status': 'pending', 'type_id': type_id}
-                        for x in self.cluster.queue.show_pending(type_id)
+                        for x in self.cluster.queue.show_pending_create_events(type_id)
                     ]
                 )
             return sorted(out)

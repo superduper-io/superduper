@@ -211,6 +211,7 @@ class SuperDuperApp:
                     t = templates.get(t)
 
                 if t.identifier in existing:
+                    logging.warn(f'Template {t.identifier} already applied')
                     continue
                 db.apply(t, force=True)
 

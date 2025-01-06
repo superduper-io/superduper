@@ -233,6 +233,7 @@ def build_rest_app(app: SuperDuperApp):
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         application: t.Optional[str] = None,
+        show_status: t.Optional[bool] = False,
         db: 'Datalayer' = DatalayerDependency(),
     ):
         if application is not None:
@@ -243,7 +244,7 @@ def build_rest_app(app: SuperDuperApp):
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
-                show_status=True,
+                show_status=show_status,
             )
 
     @app.add('/db/remove', method='post')

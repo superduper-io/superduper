@@ -111,7 +111,7 @@ class _Cache:
             return None
         if version is None:
             version = max(metadata.keys())
-        return metadata[version]
+        return metadata.get(version)
 
     def update_metadata(self, metadata):
         self.add_metadata(metadata)

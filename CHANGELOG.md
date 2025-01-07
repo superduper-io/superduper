@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-## Changes Since Last Release 
+## Changes Since Last Release
 
 #### Changed defaults / behaviours
 
@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix minor bug in openai plugin init method
 - Fix the frontend rendering issue related to choices when it is set to /describe_tables.
 - Fix the error when using batch apply with dataset.
+- Fix the bug of mismatched data types in the diff within the update mechanism.
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
-- Deprecate vanilla `DataType` 
+- Deprecate vanilla `DataType`
 - Remove `_Encodable` from project
 - Connect to Snowflake using the incluster oauth token
 - Add postprocess in apibase model.
@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the bug in the update mechanism that fails when the parent references an existing child.
 - Fix minor bug in openai plugin init method
 - Fix the frontend rendering issue related to choices when it is set to /describe_tables.
+- Fix the error when using batch apply with dataset.
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

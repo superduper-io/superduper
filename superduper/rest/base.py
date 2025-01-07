@@ -206,6 +206,7 @@ class SuperDuperApp:
 
                 if os.path.exists(t):
                     from superduper import Template
+
                     t = Template.read(t)
                 else:
                     t = templates.get(t)

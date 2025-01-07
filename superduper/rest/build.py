@@ -8,8 +8,6 @@ import typing as t
 import zipfile
 from contextlib import contextmanager
 
-from superduper.base.leaf import import_item
-from superduper.components.application import Application
 from superduper.misc.importing import import_object
 
 try:
@@ -262,7 +260,13 @@ def build_rest_app(app: SuperDuperApp):
                 initialized = [(r['type_id'], r['identifier']) for r in out]
                 for pending_app in PENDING_COMPONENTS:
                     if pending_app not in initialized:
-                        out.append({'type_id': pending_app[0], 'identifier': pending_app[1], 'status': 'pending'})
+                        out.append(
+                            {
+                                'type_id': pending_app[0],
+                                'identifier': pending_app[1],
+                                'status': 'pending',
+                            }
+                        )
             return out
 
     @app.add('/db/remove', method='post')

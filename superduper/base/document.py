@@ -64,6 +64,10 @@ class Getters:
 
 def _diff(r1, r2, d):
     for k in r1:
+        if not isinstance(r1[k], type(r2[k])):
+            d[k] = r2[k]
+            continue
+
         if isinstance(r1[k], dict):
             if r1[k].keys() != r2[k].keys():
                 d[k] = r2[k]

@@ -5,6 +5,7 @@ Superduper ibis is a plugin for ibis-framework that allows you to use Superduper
 
 This plugin cannot be used independently; it must be used together with `superduper_ibis`.
 
+
 Superduper supports SQL databases via the ibis project. With superduper, queries may be built which conform to the ibis API, with additional support for complex data-types and vector-searches.
 
 

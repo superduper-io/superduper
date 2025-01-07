@@ -6,7 +6,7 @@ Superduper sqlalchemy is a metadata plugin for Superduper that allows you to sto
 This plugin cannot be used independently; it must be used together with superduper_ibis.
 
 
-## Installation
+## Installation 
 
 ```bash
 pip install superduper_sqlalchemy

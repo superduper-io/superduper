@@ -210,7 +210,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     db.cluster.compute.release_futures(context)
 
 
-table_type_ids = {'table', 'schema', 'data', 'datatype'}
+table_type_ids = {'table', 'schema', 'data', 'datatype', 'dataset'}
 
 
 def consume_events(events, table: str, db=None):

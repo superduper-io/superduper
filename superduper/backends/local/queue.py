@@ -7,7 +7,7 @@ from superduper.backends.base.queue import (
     BaseQueuePublisher,
     consume_events,
 )
-from superduper.base.event import Create, Event
+from superduper.base.event import Event
 from superduper.components.cdc import CDC
 
 if t.TYPE_CHECKING:

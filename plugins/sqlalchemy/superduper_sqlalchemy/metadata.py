@@ -203,7 +203,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""
-        sql_conn = create_engine(self.uri)
+        sql_conn, name = self.connection_callback()
         self.conn = sql_conn
 
         # TODO: is it required to init after

@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the frontend rendering issue related to choices when it is set to /describe_tables.
 - Fix the error when using batch apply with dataset.
 - Fix the bug of mismatched data types in the diff within the update mechanism.
+- Fix a small bug in sqlachmey reconnect
 
 ## [0.4.0](https://github.com/superduper-io/superduper/compare/0.4.0...0.3.0])    (2024-Nov-02)
 

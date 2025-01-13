@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - '[0-9]+.[0-9]+'
     paths: # Paths that may affect code quality
 
 concurrency:
@@ -95,6 +96,7 @@ jobs:
   test_template:
     needs: template_update_check
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix: ${{fromJson(needs.template_update_check.outputs.matrix)}}
@@ -125,6 +127,7 @@ jobs:
         run: |
           echo "Installing local template dependencies..."
           python -m pip install -r "templates/${{ matrix.template }}/requirements.txt"
+          echo $(which python)
           if [ -e "templates/${{ matrix.template }}/install.sh" ]; then
             bash templates/${{ matrix.template }}/install.sh
           fi

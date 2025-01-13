@@ -8,14 +8,14 @@ PARENT = Path(__file__).resolve().parent
 BASE_URL = 'https://superduper-public-templates.s3.us-east-2.amazonaws.com'
 
 VERSIONS = {
-    'llm_finetuning': '0.4.0',
-    'multimodal_image_search': '0.4.0',
-    'multimodal_video_search': '0.4.0',
-    'pdf_rag': '0.4.0',
-    'rag': '0.4.0',
-    'simple_rag': '0.4.0',
-    'text_vector_search': '0.4.0',
-    'transfer_learning': '0.4.0',
+    'llm_finetuning': '0.5.0',
+    'multimodal_image_search': '0.5.0',
+    'multimodal_video_search': '0.5.0',
+    'pdf_rag': '0.5.0',
+    'rag': '0.5.0',
+    'simple_rag': '0.5.0',
+    'text_vector_search': '0.5.0',
+    'transfer_learning': '0.5.0',
 }
 
 

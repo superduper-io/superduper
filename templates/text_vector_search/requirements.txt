@@ -1,2 +1,2 @@
 superduper_openai
-superduper_transformers
+superduper_sentence_transformers

@@ -109,6 +109,8 @@ class ArtifactStore(ABC):
         files = r.get(KEY_FILES, {})
 
         for file_id, blob in blobs.items():
+            if blob is None:
+                continue
             try:
                 self.put_bytes(blob, file_id=file_id)
             except FileExistsError:

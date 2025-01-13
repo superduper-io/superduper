@@ -72,7 +72,10 @@ class _BaseTemplate(Component):
             build_variables=kwargs,
             build_template=self.identifier,
         )
-        return Document.decode(component, db=self.db).unpack()
+        out = Document.decode(component, db=self.db)
+        if isinstance(out, Document) and '_base' in out:
+            out = out['_base']
+        return out
 
     @property
     def default_values(self):

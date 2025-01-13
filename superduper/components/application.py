@@ -73,6 +73,7 @@ class Application(Component):
 
         :param db: Datalayer instance
         """
+        super().cleanup(db=db)
         if self.namespace is not None:
             for type_id, identifier in self.namespace:
                 db.remove(type_id=type_id, identifier=identifier, force=True)

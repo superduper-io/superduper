@@ -29,6 +29,7 @@ class CronJob(Component):
 
         :param db: Database instance.
         """
+        super().cleanup(db=db)
         db.cluster.crontab.drop(self)
 
 

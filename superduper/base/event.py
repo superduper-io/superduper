@@ -146,6 +146,7 @@ class Create(Event):
                     component.uuid,
                     dep,
                 )
+
         component.on_create(db=db)
 
     @property

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "superduper-framework"
 description = "🔮 Bring AI to your favourite database 🔮"
 readme = "README.md"
-version = '0.5.0.dev'
+version = '0.5.0'
 license = {file = "LICENSE"}
 maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.com"}]
 keywords = [

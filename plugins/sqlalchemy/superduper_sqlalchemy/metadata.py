@@ -161,7 +161,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             'job': [],
         }
         self._parent_relation_cache = []
-        self._batched = True
+        self._batched = False
 
     def expire(self, uuid):
         """Expire metadata cache."""

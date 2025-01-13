@@ -227,7 +227,6 @@ def consume_events(events, table: str, db=None):
         if not db.metadata.batched:
             for event in events:
                 event.execute(db)
-                db.metadata.commit()
             return
 
         # table events

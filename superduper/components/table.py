@@ -1,5 +1,6 @@
 import typing as t
 
+import time
 from superduper import CFG
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
@@ -57,6 +58,7 @@ class Table(Component):
 
         try:
             db.databackend.create_table_and_schema(self.identifier, self.schema)
+            time.sleep(0.8)
         except Exception as e:
             if 'already exists' in str(e):
                 pass

@@ -405,6 +405,7 @@ class Model(Component, metaclass=ModelMeta):
 
         :param db: Data layer instance to process.
         """
+        super().cleanup(db=db)
         db.cluster.compute.drop(self)
 
     @property

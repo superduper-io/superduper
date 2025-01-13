@@ -459,12 +459,12 @@ class Query(_BaseQuery):
                 )
                 parent = getattr(parent, part[0])(*args, **kwargs)
         except Exception as e:
+            breakpoint()
             tables = self.db.databackend._backend.list_tables_or_collections()
             import traceback
             logging.error(f'Error in executing query, tables: {tables}')
             logging.error(f'Error in executing query, parts: {parts}')
             logging.error(traceback.format_exc())
-            __import__('ipdb').set_trace()
             raise e
 
         return parent

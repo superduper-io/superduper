@@ -66,8 +66,19 @@ class LocalCache(Cache):
 
         :param component: Component to drop.
         """
-        self._cache = {}
-        self._component_to_uuid = {}
+        from superduper import logging
+        if component:
+            try:
+                del self._cache[component.uuid]
+            except KeyError:
+                logging.warn(f'{component.uuid} does not exists in cache')
+            try:
+                del self._component_to_uuid[component.type_id, component.identifier]
+            except KeyError:
+                logging.warn(f'{component.identifier}: {component.type_id} does not exists in cache')
+        else:
+            self._cache = {}
+            self._component_to_uuid = {}
 
     @property
     def db(self):

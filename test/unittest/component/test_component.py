@@ -214,3 +214,10 @@ def test_remove_recursive(db):
     db.remove('component', c3.identifier, recursive=True, force=True)
 
     assert not db.show()
+
+
+class MyClass:
+    def predict(self, x):
+        import numpy
+
+        return numpy.random.randn(20)

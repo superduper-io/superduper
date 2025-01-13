@@ -63,10 +63,10 @@
         "serve": false,
         "trainer": null,
         "deploy": false,
-        "object": "&:blob:ec7a9415ceb23849d29e2687979bcbb6cc8b2c77",
+        "object": "&:blob:d3942f76a675869d293ba08d45df3ece6a2421dc",
         "method": null
       },
-      "var-table-name-find": {
+      "sample-pdf-rag-find": {
         "_path": "superduper_<var:databackend>.query.parse_query",
         "documents": [],
         "query": "<var:table_name>.find()"
@@ -81,7 +81,7 @@
         "key": "file",
         "model": "?model:split_image",
         "predict_kwargs": {},
-        "select": "?var-table-name-find",
+        "select": "?sample-pdf-rag-find",
         "flatten": true
       },
       "json": {
@@ -106,10 +106,10 @@
         "serve": false,
         "trainer": null,
         "deploy": false,
-        "object": "&:blob:91b869266cb2f7ea7749f80e31ccc5145048de12",
+        "object": "&:blob:b0a199b9f0c1d03807e32150e64f943908f8cc48",
         "method": null
       },
-      "var-table-name-select": {
+      "sample-pdf-rag-select": {
         "_path": "superduper_<var:databackend>.query.parse_query",
         "documents": [],
         "query": "<var:table_name>.select()"
@@ -124,7 +124,7 @@
         "key": "file",
         "model": "?model:chunk",
         "predict_kwargs": {},
-        "select": "?var-table-name-select",
+        "select": "?sample-pdf-rag-select",
         "flatten": true
       },
       "datatype:vector[1536]": {
@@ -160,6 +160,7 @@
         "deploy": false,
         "model": "<var:embedding_model>",
         "max_batch_size": 8,
+        "postprocess": null,
         "openai_api_key": null,
         "openai_api_base": null,
         "client_kwargs": {},
@@ -205,7 +206,7 @@
         "build_variables": null,
         "build_template": null,
         "signature": "singleton",
-        "datatype": null,
+        "datatype": "str",
         "output_schema": null,
         "model_update_kwargs": {},
         "predict_kwargs": {},
@@ -218,6 +219,7 @@
         "deploy": false,
         "model": "<var:llm_model>",
         "max_batch_size": 8,
+        "postprocess": null,
         "openai_api_key": null,
         "openai_api_base": null,
         "client_kwargs": {},
@@ -259,7 +261,7 @@
         "split_image_key": "<var:output_prefix>split_image__?(listener:split_image.uuid)"
       },
       "model:rag": {
-        "_object": "&:blob:2aa4f1653244b5cf6914641cb03ade5467835096",
+        "_object": "&:blob:895910253a2ec21be1ea3100534cc7de56de752b",
         "upstream": [
           "?vector_index:vector-index",
           "?vector_index:vector-index"
@@ -299,7 +301,68 @@
           "?vector_index:vector-index",
           "?model:rag"
         ],
-        "namespace": null,
+        "namespace": [
+          {
+            "type_id": "table",
+            "identifier": "<var:table_name>"
+          },
+          {
+            "type_id": "listener",
+            "identifier": "split_image"
+          },
+          {
+            "type_id": "listener",
+            "identifier": "chunk"
+          },
+          {
+            "type_id": "vector_index",
+            "identifier": "vector-index"
+          },
+          {
+            "type_id": "model",
+            "identifier": "rag"
+          },
+          {
+            "type_id": "schema",
+            "identifier": "myschema"
+          },
+          {
+            "type_id": "datatype",
+            "identifier": "file"
+          },
+          {
+            "type_id": "model",
+            "identifier": "split_image"
+          },
+          {
+            "type_id": "model",
+            "identifier": "chunk"
+          },
+          {
+            "type_id": "listener",
+            "identifier": "embedding"
+          },
+          {
+            "type_id": "model",
+            "identifier": "embedding"
+          },
+          {
+            "type_id": "datatype",
+            "identifier": "vector[1536]"
+          },
+          {
+            "type_id": "model",
+            "identifier": "llm-openai"
+          },
+          {
+            "type_id": "model",
+            "identifier": "processor"
+          },
+          {
+            "type_id": "plugin",
+            "identifier": "plugin-utils_py"
+          }
+        ],
         "link": null,
         "_literals": [
           "template"
@@ -335,7 +398,10 @@
   "blobs": null,
   "files": null,
   "requirements": null,
-  "default_tables": ["?table:sample_pdf_rag"],
+  "default_tables": [
+    "?table:sample_pdf_rag"
+  ],
+  "staged_file": null,
   "queries": null,
   "_literals": [
     "template"
@@ -343,11 +409,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "edfe67632ce44b46"
+      "uuid": "152ddb72c5dd46db"
     },
     "datatype:file": {
       "_path": "superduper.components.datatype.FileType",
-      "uuid": "3e8f4f113f4e48f8",
+      "uuid": "7006c3bb470748cc",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -356,7 +422,7 @@
     },
     "schema:sample_pdf_rag/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "64691418dd53488f",
+      "uuid": "1648436da92d4a01",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -370,17 +436,17 @@
     },
     "dataset:sample_pdfs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "03bdc61bd5fd46e9",
+      "uuid": "0bcd0834e73c40e4",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:c8f6b43b9dae800aa3e14c8ebbd45743b92363ed"
+      "getter": "&:blob:a3e2a63b6ce7692ba466572cfe99852a0b67cd09"
     },
     "table:sample_pdf_rag": {
       "_path": "superduper.components.table.Table",
-      "uuid": "80643ad7585349b5",
+      "uuid": "34b0dd3ebe434ffc",
       "upstream": null,
       "plugins": null,
       "cache": true,

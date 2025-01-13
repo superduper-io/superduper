@@ -852,6 +852,10 @@ class Component(Leaf, metaclass=ComponentMeta):
         from superduper.components.datatype import Saveable
 
         for k in s.fields:
+            # TODO remove this duality - either use Saveable or Leaf
+            # not both
+            if isinstance(r[k], Leaf):
+                continue
             if r[k] is not None and not isinstance(r[k], Saveable):
                 r[k] = s.fields[k].encode_data(r[k])
 

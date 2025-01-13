@@ -63,6 +63,8 @@ class Getters:
 
 
 def _diff(r1, r2, d):
+    # TODO deal with the case when the implementing class is different
+
     for k in r1:
         if not isinstance(r1[k], type(r2[k])):
             d[k] = r2[k]

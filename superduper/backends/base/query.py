@@ -459,7 +459,10 @@ class Query(_BaseQuery):
                 )
                 parent = getattr(parent, part[0])(*args, **kwargs)
         except Exception as e:
+            import traceback
+
             logging.error(f'Error in executing query, parts: {parts}')
+            logging.error(traceback.format_exc())
             raise e
 
         return parent

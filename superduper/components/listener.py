@@ -312,6 +312,7 @@ class Listener(CDC):
 
         :param db: Data layer instance to process.
         """
+        super().cleanup(db=db)
         if self.select is not None:
             db[self.select.table].drop_outputs(self.predict_id)
         db.cluster.cdc.drop(self)

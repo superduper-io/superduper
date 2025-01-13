@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add secrets directory mount for loading secret env vars.
 - Remove components recursively
 - Add metadata batched db updates
+- Add cache cleanup on db remove
 
 #### Bug Fixes
 

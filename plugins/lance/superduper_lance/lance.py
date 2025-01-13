@@ -5,7 +5,7 @@ import lance
 import numpy as np
 import pyarrow as pa
 from superduper import CFG
-from superduper.vector_search.base import (
+from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorIndexMeasureType,
     VectorItem,
@@ -32,6 +32,10 @@ class LanceVectorSearcher(BaseVectorSearcher):
         self.measure = (
             measure.name if isinstance(measure, VectorIndexMeasureType) else measure
         )
+
+    def initialize(self, db):
+        """Initialize the vector index."""
+        pass
 
     @property
     def dataset(self):

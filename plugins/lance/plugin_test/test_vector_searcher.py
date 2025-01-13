@@ -4,7 +4,7 @@ import uuid
 import numpy as np
 import pytest
 from superduper import CFG
-from superduper.vector_search.base import VectorItem
+from superduper.backends.base.vector_search import VectorItem
 
 from superduper_lance import VectorSearcher as LanceVectorSearcher
 

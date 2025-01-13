@@ -325,6 +325,7 @@ class VectorIndex(CDC):
 
         :param db: The datalayer to cleanup
         """
+        super().cleanup(db=db)
         db.cluster.vector_search.drop(self)
 
     @property

@@ -4,24 +4,18 @@ import typing as t
 import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
-<<<<<<< HEAD
 from superduper.components.datatype import (
     BaseDataType,
     DataTypeFactory,
     _Artifact,
     _Encodable,
 )
-=======
-from superduper.components.datatype import _Artifact, _Encodable, BaseDataType, DataTypeFactory
-
->>>>>>> fc106fe42 (Fix templates)
 
 BLANK_IMAGE = PIL.Image.new('RGB', (600, 600), (255, 255, 255))
 
 
 class _PILImageMixin(BaseDataType):
-    """Mixin class for pil-image encodings.
-    """
+    """Mixin class for pil-image encodings."""
 
     def _encode_data(self, item):
         buffer = io.BytesIO()

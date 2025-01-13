@@ -2,7 +2,7 @@ import uuid
 
 import numpy as np
 import pytest
-from superduper.vector_search.base import VectorItem
+from superduper.backends.base.vector_search import VectorItem
 
 from superduper_qdrant import VectorSearcher as QdrantVectorSearcher
 

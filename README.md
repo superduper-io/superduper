@@ -132,7 +132,7 @@ We are working on an upcoming release of `0.5.0`. In this release we will have:
 
 ### A graceful update schema to update already applied components
 
-This means that changing a prompt or parameter deep in your `Component` wont' mean 
+This means that changing a prompt or parameter deep in your `Component` won't mean 
 starting all components from scratch. This also lays the groundwork for rollbacks 
 and version pins.
 

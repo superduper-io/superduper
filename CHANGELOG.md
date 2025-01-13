@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+...
+
+#### New Features & Functionality
+
+...
+
+#### Bug Fixes
+
+...
+
+## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
+
+
+#### Changed defaults / behaviours
+
 - Deprecate vanilla `DataType`
 - Remove `_Encodable` from project
 - Connect to Snowflake using the incluster oauth token

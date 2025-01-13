@@ -132,6 +132,9 @@ class Schema(Component):
             if reference := parse_reference(value):
                 saveable: Saveable = getters.run(reference.name, reference.path)
                 decoded[k] = saveable
+            elif isinstance(value, str) and value.startswith('?'):
+                decoded[k] = value
+                continue
             else:
                 b = data[k]
                 if (
@@ -163,6 +166,18 @@ class Schema(Component):
                 continue
 
             if isinstance(out[k], leaves_to_keep):
+                continue
+
+            if isinstance(out[k], Leaf):
+                from superduper.base.document import _deep_flat_encode
+
+                out[k] = _deep_flat_encode(
+                    out[k],
+                    builds,
+                    blobs=blobs,
+                    files=files,
+                    leaves_to_keep=leaves_to_keep,
+                )
                 continue
 
             if out[k] is None:

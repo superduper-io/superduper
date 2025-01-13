@@ -177,7 +177,7 @@ def build_rest_app(app: SuperDuperApp):
                     _apply()
                 except Exception as e:
                     logging.error(f'Exception during application apply :: {e}')
-                    raise 
+                    raise
         else:
             try:
                 _apply()

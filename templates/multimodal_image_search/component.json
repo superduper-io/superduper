@@ -1,275 +1,267 @@
 {
-  "_base": "?multimodal_image_search",
+  "_path": "superduper.components.template.Template",
+  "identifier": "multimodal_image_search",
+  "upstream": null,
+  "plugins": null,
+  "cache": true,
+  "build_variables": null,
+  "build_template": null,
+  "template": {
+    "_base": "?image-vector-search",
+    "_builds": {
+      "datatype:vector[1024]": {
+        "_path": "superduper.components.datatype.Vector",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "shape": [
+          1024
+        ],
+        "dtype": "float64"
+      },
+      "load": {
+        "_path": "superduper.base.leaf.ImportCall",
+        "import_path": "clip.clip.load",
+        "args": [
+          "RN50"
+        ],
+        "kwargs": {
+          "device": "<var:device>"
+        }
+      },
+      "load[0]": {
+        "_path": "superduper.base.leaf.Index",
+        "parent": "?load",
+        "index": 0
+      },
+      "load[0]/visual": {
+        "_path": "superduper.base.leaf.Attribute",
+        "parent": "?load[0]",
+        "attribute": "visual"
+      },
+      "load[1]": {
+        "_path": "superduper.base.leaf.Index",
+        "parent": "?load",
+        "index": 1
+      },
+      "model:clip_image": {
+        "_path": "superduper_torch.model.TorchModel",
+        "preferred_devices": [
+          "cuda",
+          "mps",
+          "<var:device>"
+        ],
+        "device": null,
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "signature": "singleton",
+        "datatype": "?datatype:vector[1024]",
+        "output_schema": null,
+        "model_update_kwargs": {},
+        "predict_kwargs": {},
+        "compute_kwargs": {},
+        "validation": null,
+        "metric_values": {},
+        "num_workers": 0,
+        "serve": false,
+        "trainer": null,
+        "deploy": false,
+        "object": "?load[0]/visual",
+        "preprocess": "?load[1]",
+        "preprocess_signature": "singleton",
+        "postprocess": "&:blob:1ffd2eae193f44906b9a16dfb494f42d3674979d",
+        "postprocess_signature": "singleton",
+        "forward_method": "__call__",
+        "forward_signature": "singleton",
+        "train_forward_method": "__call__",
+        "train_forward_signature": "singleton",
+        "train_preprocess": null,
+        "train_preprocess_signature": "singleton",
+        "collate_fn": null,
+        "optimizer_state": null,
+        "loader_kwargs": {}
+      },
+      "<var:table_name>-select": {
+        "_path": "superduper_<var:databackend>.query.parse_query",
+        "documents": [],
+        "query": "<var:table_name>.select()"
+      },
+      "listener:indexing-listener": {
+        "_path": "superduper.components.listener.Listener",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "key": "img",
+        "model": "?model:clip_image",
+        "predict_kwargs": {},
+        "select": "?<var:table_name>-select",
+        "flatten": false
+      },
+      "model:clip_text": {
+        "_path": "superduper_torch.model.TorchModel",
+        "preferred_devices": [
+          "cuda",
+          "mps",
+          "<var:device>"
+        ],
+        "device": null,
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "signature": "singleton",
+        "datatype": "?datatype:vector[1024]",
+        "output_schema": null,
+        "model_update_kwargs": {},
+        "predict_kwargs": {},
+        "compute_kwargs": {},
+        "validation": null,
+        "metric_values": {},
+        "num_workers": 0,
+        "serve": false,
+        "trainer": null,
+        "deploy": false,
+        "object": "?load[0]",
+        "preprocess": "&:blob:4eca7843afabb395ff70a639e9a990c1edcf0054",
+        "preprocess_signature": "singleton",
+        "postprocess": "&:blob:66a739f9780a3ad8d5af562413042ccf28cf6c0f",
+        "postprocess_signature": "singleton",
+        "forward_method": "encode_text",
+        "forward_signature": "singleton",
+        "train_forward_method": "__call__",
+        "train_forward_signature": "singleton",
+        "train_preprocess": null,
+        "train_preprocess_signature": "singleton",
+        "collate_fn": null,
+        "optimizer_state": null,
+        "loader_kwargs": {}
+      },
+      "listener:compatible-listener": {
+        "_path": "superduper.components.listener.Listener",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "key": "text",
+        "model": "?model:clip_text",
+        "predict_kwargs": {},
+        "select": null,
+        "flatten": false
+      },
+      "vector_index:my-vector-index": {
+        "_path": "superduper.components.vector_index.VectorIndex",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "indexing_listener": "?listener:indexing-listener",
+        "compatible_listener": "?listener:compatible-listener",
+        "measure": "cosine",
+        "metric_values": {}
+      },
+      "image-vector-search": {
+        "_path": "superduper.components.application.Application",
+        "upstream": null,
+        "plugins": null,
+        "cache": true,
+        "build_variables": null,
+        "build_template": null,
+        "components": [
+          "?vector_index:my-vector-index"
+        ],
+        "namespace": null,
+        "link": null,
+        "_literals": [
+          "template"
+        ]
+      }
+    }
+  },
+  "template_variables": [
+    "databackend",
+    "device",
+    "table_name"
+  ],
+  "types": {
+    "device": {
+      "type": "str",
+      "default": "cpu"
+    },
+    "table_name": {
+      "type": "str",
+      "default": "sample_multimodal_image_search"
+    }
+  },
+  "schema": null,
+  "blobs": null,
+  "files": null,
+  "requirements": null,
+  "default_tables": [
+    "?table:sample_multimodal_image_search"
+  ],
+  "staged_file": null,
+  "queries": null,
+  "_literals": [
+    "template"
+  ],
   "_builds": {
     "datatype:pil_image": {
-      "_path": "superduper_pillow.encoder.image_type",
-      "encodable": "encodable"
-    },
-    "str": {
-      "_path": "superduper.components.schema.FieldType"
-    },
-    "schema:sample_multimodal_image_search/schema": {
-      "_path": "superduper.components.schema.Schema",
+      "_path": "superduper_pillow.encoder.PILImage",
+      "uuid": "f3d749b92f374cf4",
       "upstream": null,
       "plugins": null,
       "cache": true,
-      "status": null,
+      "build_variables": null,
+      "build_template": null
+    },
+    "str": {
+      "_path": "superduper.components.schema.FieldType",
+      "uuid": "85ae11c6bc9f4a6d"
+    },
+    "schema:sample_multimodal_image_search/schema": {
+      "_path": "superduper.components.schema.Schema",
+      "uuid": "622c11ed718a4e6a",
+      "upstream": null,
+      "plugins": null,
+      "cache": true,
+      "build_variables": null,
+      "build_template": null,
       "fields": {
         "img": "?datatype:pil_image",
         "_fold": "?str"
       }
     },
-    "datatype:dill": {
-      "_path": "superduper.components.datatype.get_serializer",
-      "method": "dill",
-      "encodable": "artifact"
-    },
-    "8bd61247ed6689d62771ddc3bc3a012f0c6ca087": {
-      "_path": "superduper.components.datatype.Artifact",
-      "datatype": "?datatype:dill",
-      "uri": null,
-      "blob": "&:blob:8bd61247ed6689d62771ddc3bc3a012f0c6ca087"
-    },
     "dataset:sample_images": {
       "_path": "superduper.components.dataset.RemoteData",
+      "uuid": "7707e5ef6cf5425f",
       "upstream": null,
       "plugins": null,
       "cache": true,
-      "status": null,
-      "getter": "?8bd61247ed6689d62771ddc3bc3a012f0c6ca087"
+      "build_variables": null,
+      "build_template": null,
+      "getter": "&:blob:a97c67e8f72f6cf57239bc6ad4795c8ab72add87"
     },
     "table:sample_multimodal_image_search": {
       "_path": "superduper.components.table.Table",
+      "uuid": "5975ad4b7b224135",
       "upstream": null,
       "plugins": null,
       "cache": true,
-      "status": null,
+      "build_variables": null,
+      "build_template": null,
       "schema": "?schema:sample_multimodal_image_search/schema",
       "primary_id": "id",
       "data": "?dataset:sample_images"
-    },
-    "multimodal_image_search": {
-      "_path": "superduper.components.template.Template",
-      "upstream": null,
-      "plugins": null,
-      "cache": true,
-      "status": null,
-      "template": {
-        "_base": "?image-vector-search",
-        "_builds": {
-          "datatype:sqlvector[1024]": {
-            "_path": "superduper.components.vector_index.sqlvector",
-            "shape": [
-              1024
-            ]
-          },
-          "load": {
-            "_path": "superduper.base.leaf.ImportCall",
-            "import_path": "clip.clip.load",
-            "args": [
-              "RN50"
-            ],
-            "kwargs": {
-              "device": "<var:device>"
-            }
-          },
-          "load[0]": {
-            "_path": "superduper.base.leaf.Index",
-            "parent": "?load",
-            "index": 0
-          },
-          "load[0]/visual": {
-            "_path": "superduper.base.leaf.Attribute",
-            "parent": "?load[0]",
-            "attribute": "visual"
-          },
-          "load[1]": {
-            "_path": "superduper.base.leaf.Index",
-            "parent": "?load",
-            "index": 1
-          },
-          "datatype:dill": {
-            "_path": "superduper.components.datatype.get_serializer",
-            "method": "dill",
-            "encodable": "artifact"
-          },
-          "0d075429858cd4d08c3bd9e2be789d9f88fe649f": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:0d075429858cd4d08c3bd9e2be789d9f88fe649f"
-          },
-          "model:clip_image": {
-            "_path": "superduper_torch.model.TorchModel",
-            "preferred_devices": [
-              "cuda",
-              "mps",
-              "<var:device>"
-            ],
-            "device": null,
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "signature": "singleton",
-            "datatype": "?datatype:sqlvector[1024]",
-            "output_schema": null,
-            "model_update_kwargs": {},
-            "predict_kwargs": {},
-            "compute_kwargs": {},
-            "validation": null,
-            "metric_values": {},
-            "num_workers": 0,
-            "serve": false,
-            "trainer": null,
-            "object": "?load[0]/visual",
-            "preprocess": "?load[1]",
-            "preprocess_signature": "singleton",
-            "postprocess": "?0d075429858cd4d08c3bd9e2be789d9f88fe649f",
-            "postprocess_signature": "singleton",
-            "forward_method": "__call__",
-            "forward_signature": "singleton",
-            "train_forward_method": "__call__",
-            "train_forward_signature": "singleton",
-            "train_preprocess": null,
-            "train_preprocess_signature": "singleton",
-            "collate_fn": null,
-            "optimizer_state": null,
-            "loader_kwargs": {}
-          },
-          "<var:table_name>-select": {
-            "_path": "superduper_mongodb.query.parse_query",
-            "documents": [],
-            "query": "<var:table_name>.select()"
-          },
-          "listener:indexing-listener": {
-            "_path": "superduper.components.listener.Listener",
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "cdc_table": "<var:table_name>",
-            "key": "img",
-            "model": "?model:clip_image",
-            "predict_kwargs": {},
-            "select": "?<var:table_name>-select",
-            "flatten": false
-          },
-          "74abfc56aa344c2bb09ace700790c133a5b83948": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:74abfc56aa344c2bb09ace700790c133a5b83948"
-          },
-          "3516efb5fedb59553124bdcc463af15e0a1ecb69": {
-            "_path": "superduper.components.datatype.Artifact",
-            "datatype": "?datatype:dill",
-            "uri": null,
-            "blob": "&:blob:3516efb5fedb59553124bdcc463af15e0a1ecb69"
-          },
-          "model:clip_text": {
-            "_path": "superduper_torch.model.TorchModel",
-            "preferred_devices": [
-              "cuda",
-              "mps",
-              "<var:device>"
-            ],
-            "device": null,
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "signature": "singleton",
-            "datatype": "?datatype:sqlvector[1024]",
-            "output_schema": null,
-            "model_update_kwargs": {},
-            "predict_kwargs": {},
-            "compute_kwargs": {},
-            "validation": null,
-            "metric_values": {},
-            "num_workers": 0,
-            "serve": false,
-            "trainer": null,
-            "object": "?load[0]",
-            "preprocess": "?74abfc56aa344c2bb09ace700790c133a5b83948",
-            "preprocess_signature": "singleton",
-            "postprocess": "?3516efb5fedb59553124bdcc463af15e0a1ecb69",
-            "postprocess_signature": "singleton",
-            "forward_method": "encode_text",
-            "forward_signature": "singleton",
-            "train_forward_method": "__call__",
-            "train_forward_signature": "singleton",
-            "train_preprocess": null,
-            "train_preprocess_signature": "singleton",
-            "collate_fn": null,
-            "optimizer_state": null,
-            "loader_kwargs": {}
-          },
-          "listener:compatible-listener": {
-            "_path": "superduper.components.listener.Listener",
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "cdc_table": "",
-            "key": "text",
-            "model": "?model:clip_text",
-            "predict_kwargs": {},
-            "select": null,
-            "flatten": false
-          },
-          "vector_index:my-vector-index": {
-            "_path": "superduper.components.vector_index.VectorIndex",
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "cdc_table": "<var:output_prefix>indexing-listener__?(listener:indexing-listener.uuid)",
-            "indexing_listener": "?listener:indexing-listener",
-            "compatible_listener": "?listener:compatible-listener",
-            "measure": "cosine",
-            "metric_values": {}
-          },
-          "image-vector-search": {
-            "_path": "superduper.components.application.Application",
-            "upstream": null,
-            "plugins": null,
-            "cache": true,
-            "status": null,
-            "components": [
-              "?vector_index:my-vector-index"
-            ],
-            "namespace": null,
-            "link": null,
-            "_literals": [
-              "template"
-            ]
-          }
-        }
-      },
-      "template_variables": [
-        "device",
-        "output_prefix",
-        "table_name"
-      ],
-      "types": {
-        "device": {
-          "type": "str",
-          "default": "cpu"
-        },
-        "table_name": {
-          "type": "str",
-          "default": "sample_multimodal_image_search"
-        }
-      },
-      "blobs": null,
-      "files": null,
-      "requirements": null,
-      "default_table": "?table:sample_multimodal_image_search",
-      "queries": null,
-      "_literals": [
-        "template"
-      ]
     }
   },
   "_files": {}

@@ -9,18 +9,15 @@
   "template": {
     "_base": "?text-vector-search-app-<var:table_name>",
     "_builds": {
-      "str": {
-        "_path": "superduper.components.schema.FieldType"
-      },
       "model:chunk_model": {
-        "_object": "&:blob:85d22fdc19a5621624255e5a6a0c9427d82370fd",
+        "_object": "&:blob:b0ba8519844ee9c8143f44e26907ed247e590505",
         "upstream": null,
         "plugins": null,
         "cache": true,
         "build_variables": null,
         "build_template": null,
         "signature": "singleton",
-        "datatype": "?str",
+        "datatype": null,
         "output_schema": null,
         "model_update_kwargs": {},
         "predict_kwargs": {},
@@ -33,7 +30,7 @@
         "deploy": false,
         "chunk_size": 200
       },
-      "sample-text-vector-search-select": {
+      "var-table-name-select": {
         "_path": "superduper_<var:data_backend>.query.parse_query",
         "documents": [],
         "query": "<var:table_name>.select()"
@@ -48,7 +45,7 @@
         "key": "x",
         "model": "?model:chunk_model",
         "predict_kwargs": {},
-        "select": "?sample-text-vector-search-select",
+        "select": "?var-table-name-select",
         "flatten": true
       },
       "datatype:vector[1536]": {
@@ -131,7 +128,7 @@
         "deploy": false,
         "model": "BAAI/bge-small-en",
         "preprocess": null,
-        "postprocess": "&:blob:7e3797ba5e8838fba8c62d6fe57f2cfe04a96e95"
+        "postprocess": "&:blob:2f7ef285cc78d6773a6363b80282b1a0c11e2daa"
       },
       "model:embedding": {
         "_path": "superduper.components.model.ModelRouter",
@@ -141,7 +138,7 @@
         "build_variables": null,
         "build_template": null,
         "signature": "*args,**kwargs",
-        "datatype": "?datatype:vector[1536]",
+        "datatype": null,
         "output_schema": null,
         "model_update_kwargs": {},
         "predict_kwargs": {},
@@ -156,9 +153,9 @@
           "openai": "?model:text-embedding-ada-002",
           "sentence_transformers": "?model:sentence-transformers-embedding"
         },
-        "model": "openai"
+        "model": "<var:embedding_model>"
       },
-      "outputs-chunker-sample-text-vector-search-?(listener:chunker_<var:table_name>.uuid)-select": {
+      "outputs-chunker-var-table-name-?(listener:chunker_<var:table_name>.uuid)-select": {
         "_path": "superduper_<var:data_backend>.query.parse_query",
         "documents": [],
         "query": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid).select()"
@@ -175,7 +172,7 @@
         "key": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid)",
         "model": "?model:embedding",
         "predict_kwargs": {},
-        "select": "?outputs-chunker-sample-text-vector-search-?(listener:chunker_<var:table_name>.uuid)-select",
+        "select": "?outputs-chunker-var-table-name-?(listener:chunker_<var:table_name>.uuid)-select",
         "flatten": false
       },
       "vector_index:vector-index-<var:table_name>": {
@@ -201,60 +198,7 @@
           "?listener:chunker_<var:table_name>",
           "?vector_index:vector-index-<var:table_name>"
         ],
-        "namespace": [
-          {
-            "type_id": "listener",
-            "identifier": "chunker_<var:table_name>"
-          },
-          {
-            "type_id": "vector_index",
-            "identifier": "vector-index-<var:table_name>"
-          },
-          {
-            "type_id": "model",
-            "identifier": "chunk_model"
-          },
-          {
-            "type_id": "table",
-            "identifier": "<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid)"
-          },
-          {
-            "type_id": "schema",
-            "identifier": "_schema/<var:output_prefix>chunker_<var:table_name>__?(listener:chunker_<var:table_name>.uuid)"
-          },
-          {
-            "type_id": "listener",
-            "identifier": "embedding-listener-<var:table_name>"
-          },
-          {
-            "type_id": "model",
-            "identifier": "embedding"
-          },
-          {
-            "type_id": "table",
-            "identifier": "<var:output_prefix>embedding-listener-<var:table_name>__?(listener:embedding-listener-<var:table_name>.uuid)"
-          },
-          {
-            "type_id": "datatype",
-            "identifier": "vector[1536]"
-          },
-          {
-            "type_id": "model",
-            "identifier": "text-embedding-ada-002"
-          },
-          {
-            "type_id": "model",
-            "identifier": "sentence-transformers-embedding"
-          },
-          {
-            "type_id": "datatype",
-            "identifier": "vector[1024]"
-          },
-          {
-            "type_id": "schema",
-            "identifier": "_schema/<var:output_prefix>embedding-listener-<var:table_name>__?(listener:embedding-listener-<var:table_name>.uuid)"
-          }
-        ],
+        "namespace": null,
         "link": null,
         "_literals": [
           "template"
@@ -306,11 +250,11 @@
   "_builds": {
     "str": {
       "_path": "superduper.components.schema.FieldType",
-      "uuid": "a1988c70333743bd"
+      "uuid": "cc89339c7fb24def"
     },
     "schema:sample_text_vector_search/schema": {
       "_path": "superduper.components.schema.Schema",
-      "uuid": "96d31af11c5d4ff2",
+      "uuid": "f885beb459fc45ba",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -323,17 +267,17 @@
     },
     "dataset:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "8c7bc3a98de54012",
+      "uuid": "08c1252c99474b0e",
       "upstream": null,
       "plugins": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:f868603eb46e70be26e589af755bc4141ada2535"
+      "getter": "&:blob:3fc930c83314c6fd4a8c1d6c9cda82ad99fb6524"
     },
     "table:sample_text_vector_search": {
       "_path": "superduper.components.table.Table",
-      "uuid": "0d3ea2d96c434c2e",
+      "uuid": "a9a6c7721f134d4d",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -345,7 +289,7 @@
     },
     "query_template:vector_search": {
       "_path": "superduper.components.template.QueryTemplate",
-      "uuid": "2aea6aa8054a4182",
+      "uuid": "61b9700db49d4dbc",
       "upstream": null,
       "plugins": null,
       "cache": true,
@@ -358,7 +302,7 @@
             "<var:output_prefix>chunker_<var:table_name>": "<var:search_term>"
           }
         ],
-        "identifier": "outputs-chunker-sample-text-vector-search-like-outputs-chunker-sample-text-vector-search-tell-me-about-the-use-of-pylance-and-vector-search-n-10-vector-index-vector-index-sample-text-vector-search-select",
+        "identifier": "outputs-chunker-var-table-name-like-outputs-chunker-var-table-name-tell-me-about-the-use-of-pylance-and-vector-search-n-10-vector-index-vector-index-var-table-name-select",
         "query": "<var:output_prefix>chunker_<var:table_name>.like(documents[0], n=10, vector_index=\"vector-index-<var:table_name>\").select()",
         "_builds": {},
         "_files": {},

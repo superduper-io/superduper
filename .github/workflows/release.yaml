@@ -87,6 +87,9 @@ jobs:
         # Artifacts located in artifact/
       - name: Download artifact
         uses: actions/download-artifact@v3
+
+      - name: Check out repository
+        uses: actions/checkout@v3
       
       - name: Create git tag
         run: |

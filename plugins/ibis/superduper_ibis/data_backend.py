@@ -1,7 +1,7 @@
 import glob
 import os
+import time
 import typing as t
-from warnings import warn
 
 import click
 import ibis
@@ -279,15 +279,30 @@ class IbisDataBackend(BaseDataBackend):
             mapping["id"] = "string"
         try:
             mapping = self.db_helper.process_schema_types(mapping)
-            t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
+            t = self._create_table_with_retry(identifier, schema=ibis.schema(mapping))
         except Exception as e:
             if "exists" in str(e) or "override" in str(e):
-                warn("Table already exists, skipping...")
+                logging.warn("Table already exists, skipping...")
                 t = self.conn.table(identifier)
             else:
                 raise e
 
         return t
+
+    def _create_table_with_retry(self, table_name, schema, retry=3):
+        for attempt in range(retry):
+            t = self.conn.create_table(table_name, schema=schema)
+
+            if table_name in self.conn.list_tables():
+                return t
+            else:
+                logging.warn(
+                    f"Failed to create table {table_name}. "
+                    f"Attempt {attempt + 1}/{retry}"
+                )
+                time.sleep(1)
+
+        raise exceptions.TableNotFoundError(f"Failed to create table {table_name}")
 
     def drop(self, force: bool = False):
         """Drop tables or collections in the database.

@@ -84,9 +84,6 @@ jobs:
     permissions:
       contents: write
     steps:
-        # Artifacts located in artifact/
-      - name: Download artifact
-        uses: actions/download-artifact@v3
 
       - name: Check out repository
         uses: actions/checkout@v3
@@ -103,6 +100,10 @@ jobs:
           TAG="${{ needs.test-build.outputs.package_version }}"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
+
+        # Artifacts located in artifact/
+      - name: Download artifact
+        uses: actions/download-artifact@v3
 
       - name: create release
         run: >

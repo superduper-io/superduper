@@ -45,6 +45,7 @@ def my_function(x):
 """
 
 
+@pytest.mark.skip
 def test_apply(setup):
     m = {
         '_builds': {

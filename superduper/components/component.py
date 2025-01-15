@@ -73,17 +73,6 @@ def _build_info_from_path(path: str):
     return config_object
 
 
-def getdeepattr(obj, attr):
-    """Get nested attribute with dot notation.
-
-    :param obj: Object.
-    :param attr: Attribute.
-    """
-    for a in attr.split('.'):
-        obj = getattr(obj, a)
-    return obj
-
-
 ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
 ComponentTuple.__doc__ = 'noqa'
 

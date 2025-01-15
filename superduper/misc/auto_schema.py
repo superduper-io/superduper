@@ -19,7 +19,7 @@ def register_module(module_name):
     """Register a module for datatype inference.
 
     Only modules with a check and create function will be registered
-    :param module_name: The module name, e.g. "superduper.ext.numpy.encoder"
+    :param module_name: The module name, e.g. "superduper_plugins.numpy.encoder"
     """
     try:
         importlib.import_module(module_name)
@@ -172,9 +172,8 @@ class JsonDataTypeFactory(DataTypeFactory):
         return json_encoder
 
 
-register_module("superduper.ext.numpy.encoder")
-register_module("superduper.ext.torch.encoder")
-register_module("superduper.ext.pillow.encoder")
+register_module("superduper_torch.encoder")
+register_module("superduper_pillow.encoder")
 
 
 FACTORIES = DataTypeFactory.__subclasses__()

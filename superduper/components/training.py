@@ -10,10 +10,11 @@ class Checkpoint(Component):
     :param step: The step of the checkpoint.
     """
 
-    path: t.Optional[str]
-    step: int
     _fields = {'path': 'file'}
     type_id: t.ClassVar[str] = "checkpoint"
+
+    path: t.Optional[str]
+    step: int
 
     def __post_init__(self, db):
         super().__post_init__(db)

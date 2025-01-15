@@ -18,7 +18,6 @@ except metadata.PackageNotFoundError:
     __version__ = "dev"
 
 
-from .base.decorators import code
 from .base.document import Document
 from .base.leaf import imported, imported_value
 from .components.application import Application

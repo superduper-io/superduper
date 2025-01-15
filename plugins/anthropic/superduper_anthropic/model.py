@@ -5,8 +5,8 @@ import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
 from superduper.backends.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
-from superduper.ext.utils import format_prompt, get_key
 from superduper.misc.retry import Retry
+from superduper.misc.utils import format_prompt, get_key
 
 retry = Retry(
     exception_types=(APIConnectionError, APIError, APIStatusError, APITimeoutError)

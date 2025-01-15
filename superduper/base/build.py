@@ -10,7 +10,7 @@ from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
-from superduper.misc.plugins import load_plugin
+from superduper.misc.importing import load_plugin
 
 
 class _Loader:
@@ -101,16 +101,6 @@ def _build_databackend(uri):
 def _build_metadata(uri):
     db = MetaDataStoreProxy(_MetaDataLoader.create(uri))
     return db
-
-
-def _build_compute(cfg):
-    """
-    Helper function to build compute backend.
-
-    :param cfg: SuperDuper config.
-    """
-    backend = getattr(load_plugin(cfg.cluster.compute.backend), 'ComputeBackend')
-    return backend(uri=cfg.cluster.compute.uri, **cfg.cluster.compute.kwargs)
 
 
 def build_datalayer(cfg=None, **kwargs) -> Datalayer:

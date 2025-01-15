@@ -9,9 +9,7 @@ if t.TYPE_CHECKING:
 
 
 class CDC(Component):
-    """Trigger a ion when a condition is met.
-
-    ***Note that this feature deploys on superduper.io Enterprise.***
+    """Trigger actions when new data arrives in a table.
 
     :param cdc_table: Table which fires the triggers.
     """

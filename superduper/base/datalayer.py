@@ -21,7 +21,6 @@ from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.annotations import deprecated
-from superduper.misc.colors import Colors
 from superduper.misc.importing import import_object
 from superduper.misc.retry import db_retry
 
@@ -125,8 +124,8 @@ class Datalayer:
         :param force: Force drop.
         """
         if not force and not click.confirm(
-            f"{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU WILL"
-            f"LOSE ALL DATA!!!]{Colors.RESET} "
+            "!!!WARNING USE WITH CAUTION AS YOU WILL"
+            "LOSE ALL DATA!!!]\n"
             "Are you sure you want to drop the database? ",
             default=False,
         ):

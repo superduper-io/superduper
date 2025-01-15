@@ -21,7 +21,6 @@ BATCH_SIZE = 100
 def _chunked_list(lst, batch_size=BATCH_SIZE):
     if len(lst) <= batch_size:
         return [lst]
-
     return [lst[i : i + batch_size] for i in range(0, len(lst), batch_size)]
 
 
@@ -117,8 +116,6 @@ class JobFutureException(Exception):
 
     # noqa
     """
-
-    ...
 
 
 def consume_streaming_events(events, table, db):

@@ -11,7 +11,6 @@ from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.enums import DBType
 from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
-from superduper.misc.colors import Colors
 
 from superduper_mongodb.artifacts import MongoArtifactStore
 from superduper_mongodb.metadata import MongoMetaDataStore
@@ -113,8 +112,8 @@ class MongoDBDataBackend(BaseDataBackend):
         """
         if not force:
             if not click.confirm(
-                f"{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU "
-                f"WILL LOSE ALL DATA!!!]{Colors.RESET} "
+                '!!!WARNING USE WITH CAUTION AS YOU '
+                "WILL LOSE ALL DATA!!!]\n"
                 "Are you sure you want to drop the data-backend? ",
                 default=False,
             ):

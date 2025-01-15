@@ -172,6 +172,8 @@ class Config(BaseConfig):
     :param rest: Settings for rest server.
     """
 
+    # TODO make _fold optional
+
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
     data_backend: str = "mongodb://localhost:27017/test_db"

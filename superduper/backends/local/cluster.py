@@ -16,7 +16,7 @@ from superduper.backends.local.compute import LocalComputeBackend
 from superduper.backends.local.crontab import LocalCrontabBackend
 from superduper.backends.local.queue import LocalQueuePublisher
 from superduper.backends.local.vector_search import LocalVectorSearchBackend
-from superduper.misc.plugins import load_plugin
+from superduper.misc.importing import load_plugin
 
 
 class LocalCluster(Cluster):

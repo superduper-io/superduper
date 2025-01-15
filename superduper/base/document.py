@@ -38,6 +38,8 @@ class Getters:
     :param getters: A dictionary of getters.
     """
 
+    # TODO replace with temporary artifact store.
+
     def __init__(self, getters=None):
         self._getters = defaultdict(list)
         for k, v in (getters or {}).items():
@@ -46,10 +48,6 @@ class Getters:
     def add_getter(self, name: str, getter: t.Callable):
         """Add a getter for a reference type."""
         self._getters[name].append(getter)
-        # if name == 'blob':
-        #     self._getters[name].append(_build_blob_getter(getter))
-        # else:
-        #     self._getters[name].append(getter)
 
     def run(self, name, data):
         """Run the getters one by one until one returns a value."""

@@ -21,7 +21,6 @@ from sqlalchemy.orm import sessionmaker
 from superduper import logging
 from superduper.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduper.components.component import Status
-from superduper.misc.colors import Colors
 
 from superduper_sqlalchemy.db_helper import get_db_config
 
@@ -331,8 +330,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         """
         if not force:
             if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                '!!!WARNING USE WITH CAUTION AS YOU '
+                'WILL LOSE ALL DATA!!!\n '
                 'Are you sure you want to drop all meta-data? ',
                 default=False,
             ):

@@ -27,16 +27,3 @@ def dict_to_tree(dictionary, root: str = 'root', tree=None):
                 tree.add(f"[bold cyan]{key}: [green]{value}")
 
     return tree
-
-
-if __name__ == '__main__':
-    data = {
-        "sub": {"status": "broken", "changes": {"b": 4}},
-        "test": {"status": "update", "changes": {"sub": "?sub"}},
-    }
-
-    from rich.console import Console
-
-    console = Console()
-    tree = dict_to_tree(data)
-    console.print(tree)

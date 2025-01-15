@@ -5,7 +5,6 @@ from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 from superduper import logging
 from superduper.backends.base.metadata import MetaDataStore
 from superduper.components.component import Status
-from superduper.misc.colors import Colors
 
 
 class MongoMetaDataStore(MetaDataStore):
@@ -61,8 +60,8 @@ class MongoMetaDataStore(MetaDataStore):
         """
         if not force:
             if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                '[!!!WARNING USE WITH CAUTION AS YOU '
+                'WILL LOSE ALL DATA!!!]\n '
                 'Are you sure you want to drop all meta-data? ',
                 default=False,
             ):

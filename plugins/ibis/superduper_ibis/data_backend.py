@@ -96,7 +96,7 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
-        self.datatype_presets = {'vector': 'superduper.ext.numpy.encoder.Array'}
+        self.datatype_presets = {'vector': 'superduper.components.datatype.Array'}
 
         if uri.startswith('snowflake://'):
             self.bytes_encoding = 'base64'

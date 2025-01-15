@@ -30,6 +30,7 @@ class ComputeBackend(BaseBackend):
         """Release futures from backend."""
         pass
 
+    # TODO needed?
     @property
     @abstractmethod
     def remote(self) -> bool:
@@ -88,9 +89,6 @@ class ComputeBackend(BaseBackend):
     def shutdown(self) -> None:
         """Shuts down the compute cluster."""
         pass
-
-    def execute_task(self, job_id, dependencies, compute_kwargs={}):
-        """Execute task function for distributed backends."""
 
     def initialize(self):
         """Connect to address."""

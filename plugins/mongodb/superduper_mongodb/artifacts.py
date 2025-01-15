@@ -7,7 +7,6 @@ import click
 import gridfs
 from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
-from superduper.misc.colors import Colors
 from tqdm import tqdm
 
 from superduper_mongodb.utils import connection_callback
@@ -48,8 +47,8 @@ class MongoArtifactStore(ArtifactStore):
         """
         if not force:
             if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                '!!!WARNING USE WITH CAUTION AS YOU '
+                'WILL LOSE ALL DATA!!!]\n'
                 'Are you sure you want to drop all artifacts? ',
                 default=False,
             ):

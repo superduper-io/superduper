@@ -3,9 +3,9 @@ import random
 import numpy as np
 import pytest
 from superduper.base.document import Document
+from superduper.components.datatype import Array
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.ext.numpy.encoder import Array
 
 from superduper_mongodb.query import MongoQuery
 

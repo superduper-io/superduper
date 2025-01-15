@@ -14,6 +14,7 @@ import numpy
 from superduper import CFG
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component, ComponentMeta
+from superduper.misc.utils import str_shape
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -355,3 +356,57 @@ DEFAULT_ENCODER = INBUILT_DATATYPES['PickleEncoder']
 DEFAULT_SERIALIZER = INBUILT_DATATYPES['Dill']
 INBUILT_DATATYPES['default'] = DEFAULT_SERIALIZER
 INBUILT_DATATYPES['Blob'] = INBUILT_DATATYPES['Pickle']
+
+
+class Array(BaseDataType):
+    """Encode/ decode a numpy array as bytes.
+
+    :param dtype: numpy native datatype.
+    :param shape: Shape of array.
+    """
+
+    dtype: str = 'float64'
+    shape: int | t.Tuple[int]
+    identifier: str = ''
+
+    def __post_init__(self, db):
+        self.encodable = 'encodable'
+        if not self.identifier:
+            dtype = str(self.dtype)
+            self.identifier = f'numpy-{dtype}[{str_shape(self.shape)}]'
+        return super().__post_init__(db)
+
+    def encode_data(self, item):
+        if item.dtype != self.dtype:
+            raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
+        return memoryview(item).tobytes()
+
+    def decode_data(self, item):
+        shape = self.shape
+        if isinstance(shape, int):
+            shape = (self.shape,)
+        return numpy.frombuffer(item, dtype=self.dtype).reshape(shape)
+
+
+class NumpyDataTypeFactory(DataTypeFactory):
+    """A factory for numpy arrays # noqa."""
+
+    @staticmethod
+    def check(data: t.Any) -> bool:
+        """Check if the data is a numpy array.
+
+        Used for creating an auto schema.
+
+        :param data: The data to check.
+        """
+        return isinstance(data, numpy.ndarray)
+
+    @staticmethod
+    def create(data: t.Any) -> Array:
+        """Create a numpy array datatype.
+
+        Used from creating an auto schema.
+
+        :param data: The numpy array.
+        """
+        return Array(dtype=str(data.dtype), shape=list(data.shape))

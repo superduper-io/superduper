@@ -5,12 +5,12 @@ import numpy as np
 # ruff: noqa: E402
 from superduper.base.datalayer import Datalayer
 from superduper.components.dataset import Dataset
+from superduper.components.datatype import Array
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.components.vector_index import VectorIndex
-from superduper.ext.numpy.encoder import Array
 
 GLOBAL_TEST_N_DATA_POINTS = 100
 

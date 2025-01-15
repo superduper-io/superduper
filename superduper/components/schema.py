@@ -60,6 +60,7 @@ class Schema(Component):
     """
 
     type_id: t.ClassVar[str] = 'schema'
+
     fields: t.Mapping[str, BaseDataType]
 
     def __post_init__(self, db):

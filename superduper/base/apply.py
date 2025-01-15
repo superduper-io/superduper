@@ -24,7 +24,7 @@ def apply(
     object: t.Union['Component', t.Sequence[t.Any], t.Any],
     force: bool | None = None,
     wait: bool = False,
-):
+) -> 'Component':
     """
     Add functionality in the form of components.
 
@@ -36,8 +36,6 @@ def apply(
     :param force: List of jobs which should execute before component
                             initialization begins.
     :param wait: Blocks execution till create events finish.
-
-    :return: Tuple containing the added object(s) and the original object(s).
     """
     if force is None:
         force = db.cfg.force_apply

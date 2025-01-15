@@ -7,7 +7,6 @@ import click
 
 from superduper import logging
 from superduper.backends.base.artifacts import ArtifactStore
-from superduper.misc.colors import Colors
 
 
 class FileSystemArtifactStore(ArtifactStore):
@@ -60,8 +59,8 @@ class FileSystemArtifactStore(ArtifactStore):
         """
         if not force:
             if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                '!!!WARNING USE WITH CAUTION AS YOU '
+                'WILL LOSE ALL DATA!!!]\n'
                 'Are you sure you want to drop all artifacts? ',
                 default=False,
             ):

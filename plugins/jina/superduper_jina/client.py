@@ -4,8 +4,8 @@ import aiohttp
 import requests
 from aiohttp import ClientConnectionError, ClientResponseError
 from requests.exceptions import HTTPError
-from superduper.ext.utils import get_key
 from superduper.misc.retry import Retry
+from superduper.misc.utils import get_key
 
 JINA_API_URL: str = "https://api.jina.ai/v1/embeddings"
 KEY_NAME = 'JINA_API_KEY'

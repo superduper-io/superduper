@@ -525,6 +525,7 @@ class Model(Component, metaclass=ModelMeta):
             )
         return predict_ids
 
+    # TODO - move this logic to `Listenen.run`
     def predict_in_db(
         self,
         X: ModelInputType,

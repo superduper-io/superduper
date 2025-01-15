@@ -160,15 +160,13 @@ def show(
     type_id: str | None = None,
     identifier: str | None = None,
     version: int | None = None,
-    data_backend: str | None = None,
 ):
     """Apply a serialized component.
 
     :param name: Path or name of the template/ component.
     :param values: JSON string of values to apply to the template.
     """
-    data_backend = data_backend or CFG.data_backend
-    db = superduper(data_backend)
+    db = superduper()
     to_show = db.show(type_id=type_id, identifier=identifier, version=version)
     import json
 
@@ -176,23 +174,14 @@ def show(
     print(json.dumps(to_show, indent=2))
 
 
-@command(help='Execute a query or prediction')
-def execute(data_backend: str = None):
-    """Execute a query or prediction."""
-    from superduper.misc.interactive_prompt import _prompt
-
-    _prompt(data_backend=data_backend)
-
-
 @command(help='`superduper` deployment')
-def drop(data: bool = False, force: bool = False, data_backend: str | None = None):
+def drop(data: bool = False, force: bool = False):
     """Drop the deployment.
 
     :param data: Drop the data.
     :param force: Force the drop.
     """
-    data_backend = data_backend or CFG.data_backend
-    db = superduper(data_backend, initialize_cluster=False)
+    db = superduper(initialize_cluster=False)
     db.drop(force=force, data=data)
     db.disconnect()
 

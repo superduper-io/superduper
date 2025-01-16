@@ -241,7 +241,7 @@ class Pickle(_Artifact, _PickleMixin, BaseDataType):
 
 
 class PickleEncoder(_Encodable, _PickleMixin, BaseDataType):
-    """Pickle inline encoder."""
+    """Pickle encoder."""
 
 
 class _DillMixin:

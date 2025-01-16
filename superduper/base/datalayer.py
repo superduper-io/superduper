@@ -686,8 +686,6 @@ class Datalayer:
         if old_uuid:
 
             def _replace_fn(component):
-                if getattr(component, 'inline', False):
-                    return component
                 self.replace(component)
                 return f'&:component:{component.huuid}'
 

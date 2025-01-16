@@ -162,62 +162,6 @@ def build_importable(*, db=None, importable=None):
     return getattr(importlib.import_module(module), attr)
 
 
-# TODO remove @component() -> @component
-def component(*schema: t.Dict):
-    """Decorator for creating a component.
-
-    :param schema: schema for the component
-    """
-
-    def decorator(f):
-        @functools.wraps(f)
-        def decorated(*, db=None, **kwargs):
-            if 'db' in inspect.signature(f).parameters:
-                out = f(**kwargs, db=db)
-            else:
-                out = f(**kwargs)
-
-            from superduper.components.component import Component
-
-            assert isinstance(out, Component)
-
-            def to_dict(
-                metadata: bool = True, defaults: bool = True, uuid: bool = True
-            ):
-                path = f'{f.__module__}.{f.__name__}'
-                from superduper.base.document import Document
-
-                r = Document({'_path': path, **kwargs})
-
-                if not defaults:
-                    for k, v in out.defaults.items():
-                        if k in r and r[k] == v:
-                            del r[k]
-
-                if metadata:
-                    r.update(out.metadata)
-                    r['uuid'] = out.uuid
-                else:
-                    for k in out.metadata:
-                        if k in r:
-                            del r[k]
-
-                if not uuid and 'uuid' in r:
-                    del r['uuid']
-
-                if 'identifier' not in r:
-                    r['identifier'] = out.identifier
-                return r
-
-            out.dict = to_dict
-            out.inline = True
-            return out
-
-        return decorated
-
-    return decorator
-
-
 def extract_parameters(doc):
     """
     Extracts and organizes parameter descriptions from a Sphinx-styled docstring.

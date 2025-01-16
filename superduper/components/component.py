@@ -220,6 +220,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         other.uuid = self.uuid
         other.version = self.version
 
+    # TODO no longer needed
     def set_db(self, value: "Datalayer"):
         """Set the db for the component.
 
@@ -529,7 +530,6 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def __post_init__(self, db):
         super().__post_init__(db)
-
         self.version: t.Optional[int] = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
@@ -865,7 +865,7 @@ class Component(Leaf, metaclass=ComponentMeta):
                 return {k: _convert_components_to_refs(v) for k, v in r.items()}
             if isinstance(r, list):
                 return [_convert_components_to_refs(x) for x in r]
-            if isinstance(r, Component) and not getattr(r, 'inline', False):
+            if isinstance(r, Component):
                 return f'&:component:{r.huuid}'
             return r
 

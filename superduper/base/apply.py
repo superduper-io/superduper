@@ -185,12 +185,6 @@ def _apply(
     def wrapper(child):
         nonlocal create_events
 
-        # handle the @component decorator
-        # this shouldn't be applied, but
-        # only saved as a quasi-leaf
-        if getattr(child, 'inline', True):
-            return child
-
         c, j = _apply(
             db=db,
             object=child,

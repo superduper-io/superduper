@@ -95,14 +95,11 @@ def check_class_docstring(cls, line):
             )
 
 
-def check_method_docstring(method, cls, line):
-    str_ = f'{cls.__module__}.{cls.__name__}.{method.__name__}'
-    print(str_)
-    if 'builtin' in str_:
-        return
+def check_method_docstring(method, line):
     doc_string = method.__doc__
     if doc_string is None:
-        raise MissingDocstring(method, cls.__module__, parent=cls.__name__)
+        msg = str(method)
+        raise MissingDocstring(method.__module__, msg, line=line)
 
     params = {
         k: v for k, v in inspect.signature(method).parameters.items() if k != 'self'
@@ -111,28 +108,28 @@ def check_method_docstring(method, cls, line):
 
     if len(doc_params) != len(params):
         raise MismatchingDocParameters(
-            module=cls.__module__,
-            name=method.__name__,
+            module=method.__module__,
+            name=str(method),
             msg=f'Got {len(params)} parameters but doc-string has {len(doc_params)}.',
-            parent=cls,
+            parent=None,
             line=line,
         )
 
     for i, (p, (dp, expl)) in enumerate(zip(params, doc_params.items())):
         if p != dp:
             raise MismatchingDocParameters(
-                module=cls.__module__,
-                name=method.__name__,
+                module=method.__module__,
+                name=str(method),
                 msg=f'At position {i}: {p} != {dp}',
-                parent=cls.__name__,
+                parent=None,
                 line=line,
             )
         if not expl.strip():
             raise MissingParameterExplanation(
-                module=cls.__module__,
-                name=method.__name__,
+                module=method.__module__,
+                name=str(method),
                 msg=f'Missing explanation of parameter {dp}',
-                parent=cls.__name__,
+                parent=None,
                 line=line,
             )
 
@@ -325,6 +322,5 @@ def test_method_docstrings(test_case):
     test_case = METHOD_TEST_CASES[test_case]
     check_method_docstring(
         TEST_CASES[test_case]["::object"],
-        TEST_CASES[test_case]["::object"].__class__,
         TEST_CASES[test_case]["::line"],
     )

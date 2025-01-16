@@ -12,7 +12,12 @@ class CDCBackend(BaseBackend):
 
     @abstractmethod
     def handle_event(self, event_type, table, ids):
-        """Handle an incoming event."""
+        """Handle an incoming event.
+
+        :param event_type: The type of event.
+        :param table: The table to handle.
+        :param ids: The ids to handle.
+        """
         pass
 
     @property

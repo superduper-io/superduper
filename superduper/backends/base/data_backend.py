@@ -94,7 +94,7 @@ class BaseDataBackend(ABC):
         """Create a schema in the data-backend.
 
         :param identifier: The identifier of the table.
-        :param mapping: The mapping of the schema.
+        :param schema: The schema to create.
         """
 
     @abstractmethod

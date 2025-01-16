@@ -71,7 +71,6 @@ class BaseDataType(Component, metaclass=DataTypeMeta):
         """Decode the item as `bytes`.
 
         :param item: The item to decode.
-        :param info: The optional information dictionary.
         """
 
     @abstractmethod
@@ -79,7 +78,6 @@ class BaseDataType(Component, metaclass=DataTypeMeta):
         """Decode the item from bytes.
 
         :param item: The item to decode.
-        :param info: The optional information dictionary.
         """
 
 
@@ -96,11 +94,17 @@ class BaseVector(BaseDataType):
 
     @abstractmethod
     def encode_data(self, item):
-        pass
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        """
 
     @abstractmethod
     def decode_data(self, item):
-        pass
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        """
 
 
 class NativeVector(BaseVector):
@@ -110,12 +114,19 @@ class NativeVector(BaseVector):
     dtype: str = 'float'
 
     def encode_data(self, item):
+        """Encode the item as a list of floats.
+
+        :param item: The item to encode.
+        """
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
         return item
 
     def decode_data(self, item):
-        # TODO:
+        """Decode the item from a list of floats.
+
+        :param item: The item to decode.
+        """
         return numpy.array(item).astype(self.dtype)
 
 
@@ -150,9 +161,17 @@ class Vector(BaseVector):
         return datatype
 
     def encode_data(self, item):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        """
         return self.datatype_impl.encode_data(item=item)
 
     def decode_data(self, item):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        """
         return self.datatype_impl.decode_data(item=item)
 
 
@@ -169,9 +188,17 @@ class JSON(BaseDataType):
         return super().__post_init__(db)
 
     def encode_data(self, item):
+        """Encode the item as a string.
+
+        :param item: The dictionary or list (json-able object) to encode.
+        """
         return json.dumps(item)
 
     def decode_data(self, item):
+        """Decode the item from string form.
+
+        :param item: The item to decode.
+        """
         return json.loads(item)
 
 
@@ -179,6 +206,10 @@ class _Encodable:
     encodable: t.ClassVar[str] = 'encodable'
 
     def encode_data(self, item):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        """
         return self._encode_data(item)
 
 
@@ -186,6 +217,10 @@ class _Artifact:
     encodable: t.ClassVar[str] = 'artifact'
 
     def encode_data(self, item):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        """
         return Blob(bytes=self._encode_data(item))
 
 
@@ -194,6 +229,10 @@ class _PickleMixin:
         return pickle.dumps(item)
 
     def decode_data(self, item):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        """
         return pickle.loads(item)
 
 
@@ -210,6 +249,10 @@ class _DillMixin:
         return dill.dumps(item, recurse=True)
 
     def decode_data(self, item):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        """
         return dill.loads(item)
 
 
@@ -233,10 +276,18 @@ class File(BaseDataType):
     encodable: t.ClassVar[str] = 'file'
 
     def encode_data(self, item):
+        """Encode the item as a file path.
+
+        :param item: The file path to encode.
+        """
         assert os.path.exists(item)
         return FileItem(path=item)
 
     def decode_data(self, item):
+        """Decode the item placeholder.
+
+        :param item: The file path to decode.
+        """
         return item
 
 
@@ -266,10 +317,12 @@ class Saveable(Leaf):
 
     @abstractmethod
     def init(self):
+        """Initialize the object."""
         pass
 
     @abstractmethod
     def unpack(self):
+        """Unpack the object to its original form."""
         pass
 
 
@@ -287,11 +340,13 @@ class FileItem(Saveable):
         return super().__post_init__(db)
 
     def init(self):
+        """Initialize the file to local disk."""
         if self.path:
             return
         self.path = self.db.artifact_store.get_file(self.identifier)
 
     def unpack(self):
+        """Get the path out of the object."""
         self.init()
         return self.path
 
@@ -316,12 +371,15 @@ class Blob(Saveable):
             self.identifier = get_hash(self.bytes)
         return super().__post_init__(db)
 
+    # TODO why do some of these methods have `init(self, db=None)`?
     def init(self):
+        """Initialize the blob."""
         if self.bytes:
             return
         self.bytes = self.db.artifact_store.get_bytes(self.identifier)
 
     def unpack(self):
+        """Get the bytes out of the blob."""
         self.init()
         return self.bytes
 
@@ -377,11 +435,19 @@ class Array(BaseDataType):
         return super().__post_init__(db)
 
     def encode_data(self, item):
+        """Encode the data.
+
+        :param item: The data to encode.
+        """
         if item.dtype != self.dtype:
             raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
         return memoryview(item).tobytes()
 
     def decode_data(self, item):
+        """Decode the data.
+
+        :param item: The data to decode.
+        """
         shape = self.shape
         if isinstance(shape, int):
             shape = (self.shape,)

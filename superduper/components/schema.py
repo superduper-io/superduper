@@ -80,6 +80,12 @@ class Schema(Component):
             self.fields[k] = v
 
     def update(self, other: 'Schema'):
+        """Update the schema with another schema.
+
+        Note this is not in place.
+
+        :param other: Schema to update with.
+        """
         new_fields = self.fields.copy()
         new_fields.update(other.fields)
         return Schema(self.identifier, fields=new_fields)
@@ -155,6 +161,7 @@ class Schema(Component):
         :param builds: Builds.
         :param blobs: Blobs.
         :param files: Files.
+        :param leaves_to_keep: `Leaf` instances to keep (don't encode)
         """
         for k, field in self.fields.items():
             if not isinstance(field, BaseDataType):

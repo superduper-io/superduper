@@ -92,7 +92,7 @@ class MetaDataStore(ABC):
         Create a relation between an artifact and a component version.
 
         :param uuid: UUID of component version
-        :param artifact: artifact
+        :param artifact_ids: artifact
         """
         artifact_ids = (
             [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
@@ -109,7 +109,7 @@ class MetaDataStore(ABC):
         Delete a relation between an artifact and a component version.
 
         :param uuid: UUID of component version
-        :param artifact: artifact
+        :param artifact_ids: artifact ids
         """
         artifact_ids = (
             [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
@@ -127,6 +127,7 @@ class MetaDataStore(ABC):
         """
         Get all relations between an artifact and a component version.
 
+        :param uuid: UUID of component version
         :param artifact_id: artifact
         """
         if uuid is None and artifact_id is None:
@@ -455,6 +456,7 @@ class MetaDataStore(ABC):
         :param identifier: identifier of object
         :param type_id: type of object
         :param version: version of object
+        :param uuid: UUID of object
         """
         if version is None and uuid is None:
             assert isinstance(type_id, str)

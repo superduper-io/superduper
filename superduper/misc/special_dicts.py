@@ -173,7 +173,10 @@ class SuperDuperFlatEncode(t.Dict[str, t.Any]):
         return x
 
     def create_template(self, **kwargs):
-        """Convert all instances of string to variable."""
+        """Convert all instances of string to variable.
+
+        :param kwargs: mappings from values to variable names
+        """
         r = self
         for k, v in kwargs.items():
             r = SuperDuperFlatEncode._str2var(r, v, k)

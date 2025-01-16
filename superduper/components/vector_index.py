@@ -119,10 +119,6 @@ class VectorIndex(CDC):
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         return super().__post_init__(db)
 
-    def refresh(self):
-        if self.cdc_table.startswith(CFG.output_prefix):
-            self.cdc_table = self.indexing_listener.outputs
-
     # TODO why this?
     def __hash__(self):
         return hash((self.type_id, self.identifier))

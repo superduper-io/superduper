@@ -50,7 +50,10 @@ class Dataset(Component):
         return self._data
 
     def init(self, db=None):
-        """Initialization method."""
+        """Initialization method.
+
+        :param db: The database to use for the operation.
+        """
         db = db or self.db
         super().init(db=db)
         if self.pin:

@@ -23,6 +23,10 @@ class _PILImageMixin(BaseDataType):
         return buffer.getvalue()
 
     def decode_data(self, item):
+        """Decode the data.
+
+        :param item: The data to decode.
+        """
         try:
             return PIL.Image.open(io.BytesIO(item))
         except Exception as e:

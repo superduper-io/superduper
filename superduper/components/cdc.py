@@ -19,6 +19,10 @@ class CDC(Component):
     cdc_table: str
 
     def handle_update_or_same(self, other):
+        """Handle the case in which the component is update without breaking changes.
+
+        :param other: The other component to handle.
+        """
         super().handle_update_or_same(other)
         other.cdc_table = self.cdc_table
 

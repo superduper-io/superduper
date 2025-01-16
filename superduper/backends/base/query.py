@@ -60,6 +60,7 @@ class _BaseQuery(Leaf):
         self.identifier = re.sub('[\-]+', '-', self.identifier)
 
     def unpack(self):
+        """Unpack the query."""
         parts = _unpack(self.parts)
         return type(self)(
             db=self.db,
@@ -206,7 +207,7 @@ class Query(_BaseQuery):
     def set_db(self, value: 'Datalayer'):
         """Set the datalayer to use to execute the query.
 
-        :param db: The datalayer to use to execute the query.
+        :param value: The datalayer to use to execute the query.
         """
 
         def _set_the_db(r, db):
@@ -352,7 +353,13 @@ class Query(_BaseQuery):
         uuid: bool = True,
         refs: bool = False,
     ):
-        """Return the query as a dictionary."""
+        """Return the query as a dictionary.
+
+        :param metadata: Include metadata.
+        :param defaults: Include defaults.
+        :param uuid: Include UUID.
+        :param refs: Include references.
+        """
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
         return Document(
@@ -563,7 +570,12 @@ class Query(_BaseQuery):
         return out
 
     def tolist(self, db=None, eager_mode=False, **kwargs):
-        """Execute and convert to list."""
+        """Execute and convert to list.
+
+        :param db: Datalayer instance.
+        :param eager_mode: Eager mode.
+        :param kwargs: Additional keyword arguments.
+        """
         return self.execute(db=db, eager_mode=eager_mode, **kwargs).tolist()
 
     def execute(self, db=None, eager_mode=False, handle_outputs=True, **kwargs):
@@ -571,6 +583,9 @@ class Query(_BaseQuery):
         Execute the query.
 
         :param db: Datalayer instance.
+        :param eager_mode: Eager mode.
+        :param handle_outputs: Handle outputs.
+        :param kwargs: Additional keyword arguments.
         """
         if self.type == 'select' and handle_outputs and 'outputs' in str(self):
             query = self.complete_uuids(db=db or self.db)
@@ -870,9 +885,10 @@ class Model(_BaseQuery):
     :param parts: The parts of the query.
     """
 
+    type: t.ClassVar[str] = 'predict'
+
     table: str
     identifier: str = ''
-    type: t.ClassVar[str] = 'predict'
 
     def execute(self):
         """Execute the model as a query."""
@@ -893,7 +909,11 @@ class Model(_BaseQuery):
             return Document({'_base': r})
 
     def dict(self, metadata: bool = True, defaults: bool = True):
-        """Return the query as a dictionary."""
+        """Return the query as a dictionary.
+
+        :param metadata: Include metadata.
+        :param defaults: Include defaults.
+        """
         query, documents = self._dump_query()
         documents = [Document(r) for r in documents]
         return Document(

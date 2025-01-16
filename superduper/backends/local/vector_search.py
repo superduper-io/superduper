@@ -11,7 +11,7 @@ from superduper.backends.base.vector_search import (
 )
 
 if t.TYPE_CHECKING:
-    from superduper import Component
+    from superduper import Component, VectorIndex
 
 
 class LocalVectorSearchBackend(VectorSearchBackend):
@@ -176,8 +176,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         _ids = [self.index[i] for i in ix]
         return _ids, scores
 
-    def initialize(self, vector_index):
-        """Initialize the vector index."""
+    def initialize(self, vector_index: 'VectorIndex'):
+        """Initialize the vector index.
+
+        :param vector_index: Vector index to initialize
+        """
         vector_index.copy_vectors()
 
     def add(self, items: t.Sequence[VectorItem] = (), cache: bool = False) -> None:

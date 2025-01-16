@@ -175,7 +175,7 @@ def test_listener_cleanup(db, data):
         identifier="listener1",
     )
 
-    db.add(listener1)
+    db.apply(listener1)
     doc = db[listener1.outputs].select().tolist()[0]
     result = Document(doc.unpack())[listener1.outputs]
     assert isinstance(result, type(data))

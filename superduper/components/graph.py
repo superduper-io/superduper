@@ -173,7 +173,10 @@ class Input(Model):
             self.signature = 'singleton'
 
     def predict(self, *args):
-        """Single prediction."""
+        """Single prediction.
+
+        :param args: Model input
+        """
         if self.signature == 'singleton':
             return args[0]
         return OutputWrapper(
@@ -476,6 +479,9 @@ class Graph(Model):
 
         Single data point prediction passes the args and kwargs to the defined node flow
         in the graph.
+
+        :param args: Arguments for the model.
+        :param kwargs: Keyword arguments for the model.
         """
         # Validate the node for incompletion
         # TODO: Move to to_graph method and validate the graph

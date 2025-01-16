@@ -61,13 +61,22 @@ class Listener(CDC):
         return super().__post_init__(db)
 
     def handle_update_or_same(self, other):
+        """If the component is new, but does not contain breaking changes.
+
+        :param other: Other listener object.
+        """
         super().handle_update_or_same(other)
         other.output_table = self.output_table
 
     def dict(
         self, metadata: bool = True, defaults: bool = True, refs: bool = False
     ) -> t.Dict:
-        """Convert to dictionary."""
+        """Convert to dictionary.
+
+        :param metadata: Include metadata.
+        :param defaults: Include default values.
+        :param refs: Include references.
+        """
         out = super().dict(metadata=metadata, defaults=defaults, refs=refs)
         if not metadata:
             try:

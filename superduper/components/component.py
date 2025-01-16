@@ -188,10 +188,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     build_variables: t.Dict | None = None
     build_template: str | None = None
 
-    # TODO what's this?
-    def refresh(self):
-        pass
-
     @staticmethod
     def sort_components(components):
         """Sort components based on topological order.
@@ -216,7 +212,11 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Return a human-readable uuid."""
         return f'{self.type_id}:{self.identifier}:{self.uuid}'
 
-    def handle_update_or_same(self, other):
+    def handle_update_or_same(self, other: 'Component'):
+        """Handle when a component is changed without breaking changes.
+
+        :param other: The other component to handle.
+        """
         other.uuid = self.uuid
         other.version = self.version
 
@@ -259,7 +259,10 @@ class Component(Leaf, metaclass=ComponentMeta):
         return sorted(list(set(out)))
 
     def get_children(self, deep: bool = False) -> t.List["Component"]:
-        """Get all the children of the component."""
+        """Get all the children of the component.
+
+        :param deep: If set `True` get all recursively.
+        """
         r = self.dict().encode(leaves_to_keep=(Component,))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
@@ -322,6 +325,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         Get all the triggers for the component.
 
         :param event_type: event_type
+        :param requires: the methods which should run first
         """
         # Get all of the methods in the class which have the `@trigger` decorator
         # and which match the event type
@@ -370,6 +374,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param event_type: The event type.
         :param ids: The ids of the component.
         :param jobs: The jobs of the component.
+        :param requires: The requirements of the component.
         """
         # TODO replace this with a DAG check
         max_it = 100
@@ -530,7 +535,10 @@ class Component(Leaf, metaclass=ComponentMeta):
             raise ValueError('identifier cannot be empty or None')
 
     def cleanup(self, db: Datalayer):
-        """Method to clean the component."""
+        """Method to clean the component.
+
+        :param db: The `Datalayer` to use for the operation.
+        """
         db.cluster.cache.drop(self)
 
     def _get_metadata(self):
@@ -548,7 +556,10 @@ class Component(Leaf, metaclass=ComponentMeta):
         return ()
 
     def init(self, db=None):
-        """Method to help initiate component field dependencies."""
+        """Method to help initiate component field dependencies.
+
+        :param db: The `Datalayer` to use for the operation.
+        """
         self.db = self.db or db
         self.unpack(db=db)
 
@@ -557,6 +568,8 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Method to unpack the component.
 
         This method is used to initialize all the fields of the component and leaf
+
+        :param db: The database to use for the operation.
         """
 
         def _init(item):
@@ -634,6 +647,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         Read a `Component` instance from a directory created with `.export`.
 
         :param path: Path to the directory containing the component.
+        :param db: Datalayer instance to be used to read the component.
 
         Expected directory structure:
         ```
@@ -704,6 +718,12 @@ class Component(Leaf, metaclass=ComponentMeta):
         Save `self` to a directory using super-duper protocol.
 
         :param path: Path to the directory to save the component.
+        :param format: Format to save the component in (json/ yaml).
+        :param zip: Whether to zip the directory.
+        :param defaults: Whether to save default values.
+        :param metadata: Whether to save metadata.
+        :param hr: Whether to save human-readable blobs.
+        :param component: Name of the component file.
 
         Created directory structure:
         ```
@@ -830,7 +850,12 @@ class Component(Leaf, metaclass=ComponentMeta):
     def dict(
         self, metadata: bool = True, defaults: bool = True, refs: bool = False
     ) -> 'Document':
-        """A dictionary representation of the component."""
+        """A dictionary representation of the component.
+
+        :param metadata: If set `true` include metadata.
+        :param defaults: If set `true` include defaults.
+        :param refs: If set `true` include references.
+        """
         from superduper import Document
 
         r = super().dict(metadata=metadata, defaults=defaults)

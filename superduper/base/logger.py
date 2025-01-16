@@ -95,7 +95,7 @@ class Logging:
         """Log a message with the SUCCESS level.
 
         :param msg: The message to log.
-        param args: Additional arguments to log.
+        :param args: Additional arguments to log.
         """
         logger.opt(depth=1).success(" ".join(map(str, (msg, *args))))
 

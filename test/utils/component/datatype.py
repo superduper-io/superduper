@@ -140,7 +140,7 @@ def check_component_with_db(data, datatype, db):
         x=data,
         child=ChildComponent("child", y=2),
     )
-    db.add(c)
+    db.apply(c)
     pprint(c)
     print_sep()
 

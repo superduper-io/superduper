@@ -46,11 +46,19 @@ class Getters:
             self.add_getter(k, v)
 
     def add_getter(self, name: str, getter: t.Callable):
-        """Add a getter for a reference type."""
+        """Add a getter for a reference type.
+
+        :param name: The name of the getter.
+        :param getter: The getter.
+        """
         self._getters[name].append(getter)
 
     def run(self, name, data):
-        """Run the getters one by one until one returns a value."""
+        """Run the getters one by one until one returns a value.
+
+        :param name: The name of the getter.
+        :param data: The data to get.
+        """
         if name not in self._getters:
             return data
         for getter in self._getters[name]:
@@ -151,6 +159,12 @@ class Document(MongoStyleDict):
         self.schema = schema
 
     def map(self, fn, condition):
+        """Map a function over the document.
+
+        :param fn: The function to map.
+        :param condition: The condition to map over.
+        """
+
         def _map(r):
             if isinstance(r, dict):
                 out = {}
@@ -178,7 +192,10 @@ class Document(MongoStyleDict):
         return Document(out, schema=self.schema)
 
     def update(self, other: t.Union['Document', dict]):
-        """Update document with values from other."""
+        """Update document with values from other.
+
+        :param other: The other document to update with.
+        """
         schema = self.schema or Schema('tmp', fields={})
 
         if isinstance(other, Document) and other.schema:
@@ -201,6 +218,9 @@ class Document(MongoStyleDict):
 
         :param schema: The schema to use.
         :param leaves_to_keep: The types of leaves to keep.
+        :param metadata: Whether to include metadata.
+        :param defaults: Whether to include defaults.
+        :param keep_schema: Whether to keep the schema.
         """
         builds: t.Dict[str, dict] = self.get(KEY_BUILDS, {})
         blobs: t.Dict[str, bytes] = self.get(KEY_BLOBS, {})
@@ -259,6 +279,7 @@ class Document(MongoStyleDict):
         :param r: The encoded data.
         :param schema: The schema to use.
         :param db: The datalayer to use.
+        :param getters: The getters to use.
         """
         if '_variables' in r:
             variables = {**r['_variables'], 'output_prefix': CFG.output_prefix}
@@ -267,7 +288,6 @@ class Document(MongoStyleDict):
             )
         schema = schema or r.get(KEY_SCHEMA)
         schema = get_schema(db, schema)
-
         builds = r.get(KEY_BUILDS, {})
 
         # TODO is this the right place for this?
@@ -334,7 +354,6 @@ class Document(MongoStyleDict):
     def set_variables(self, **kwargs) -> 'Document':
         """Set free variables of self.
 
-        :param db: The datalayer to use.
         :param kwargs: The vales to set the variables to `_replace_variables`.
         """
         from superduper.base.variables import _replace_variables
@@ -346,7 +365,12 @@ class Document(MongoStyleDict):
         return f'Document({repr(dict(self))})'
 
     @staticmethod
-    def decode_blobs(schema, r):
+    def decode_blobs(schema: 'Schema', r: t.Dict):
+        """Decode blobs in a document.
+
+        :param schema: The schema to use.
+        :param r: The document to decode.
+        """
         for k, v in schema.fields.items():
             if k not in r:
                 continue

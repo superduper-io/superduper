@@ -43,26 +43,21 @@ class LocalComputeBackend(ComputeBackend):
         """The name of the backend."""
         return "local"
 
-    # TODO needed?
     def release_futures(self, context: str):
-        """Release futures for a given context."""
+        """Release futures for a given context.
+
+        :param context: The apply context to release futures for.
+        """
         try:
             del self.futures[context]
         except KeyError:
             logging.warn(f'Could not release futures for context {context}')
-
-    # TODO needed? (we have .put)
-    # TODO hook to do what?
-    def component_hook(self, *args, **kwargs):
-        """Hook for component."""
-        pass
 
     def submit(self, job: Job) -> str:
         """
         Submits a function for local execution.
 
         :param job: The `Job` to be executed.
-        :param dependencies: List of `job_ids`
         """
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
 

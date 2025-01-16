@@ -201,6 +201,7 @@ class Template(_BaseTemplate):
         Read a `Component` instance from a directory created with `.export`.
 
         :param path: Path to the directory containing the component.
+        :param db: Datalayer instance to be used to read the component.
 
         Expected directory structure:
         ```

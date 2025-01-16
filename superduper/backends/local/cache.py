@@ -101,7 +101,10 @@ class LocalCache(Cache):
         return iter(self._cache.keys())
 
     def expire(self, item):
-        """Expire an item from the cache."""
+        """Expire an item from the cache.
+
+        :param item: The item to expire.
+        """
         try:
             del self._cache[item]
             for (t, i), uuid in self._component_to_uuid.items():

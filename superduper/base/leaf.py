@@ -159,13 +159,15 @@ class Leaf(metaclass=LeafMeta):
             if isinstance(getattr(self, f.name), Leaf)
         }
 
+    # TODO signature is inverted from `Component.encode`
     def encode(self, leaves_to_keep=(), metadata: bool = True, defaults: bool = True):
         """Encode itself.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
 
-        :param schema: Schema instance.
         :param leaves_to_keep: Leaves to keep.
+        :param metadata: Include metadata.
+        :param defaults: Include default values.
         """
         from superduper.base.document import _deep_flat_encode
 
@@ -233,7 +235,6 @@ class Leaf(metaclass=LeafMeta):
     def set_variables(self, **kwargs) -> 'Leaf':
         """Set free variables of self.
 
-        :param db: Datalayer instance.
         :param kwargs: Keyword arguments to pass to `_replace_variables`.
         """
         from superduper import Document
@@ -264,8 +265,13 @@ class Leaf(metaclass=LeafMeta):
                 out[f.name] = value
         return out
 
+    # TODO the signature does not agree with the `Component.dict` method
     def dict(self, metadata: bool = True, defaults: bool = True):
-        """Return dictionary representation of the object."""
+        """Return dictionary representation of the object.
+
+        :param metadata: Include metadata.
+        :param defaults: Include default values.
+        """
         from superduper import Document
 
         r = asdict(self)
@@ -356,6 +362,7 @@ class Address(Leaf):
         return self.compile()(*args, **kwargs)
 
     def compile(self):
+        """Compile the address."""
         raise NotImplementedError
 
 
@@ -394,6 +401,7 @@ class Import(Address):
         self.parent = parent
 
     def compile(self):
+        """Compile the import."""
         return self.parent
 
 
@@ -419,6 +427,7 @@ class ImportCall(Address):
         self.parent = object(*self.args, **self.kwargs)
 
     def compile(self):
+        """Compile the import call."""
         return self.parent
 
 
@@ -434,6 +443,7 @@ class Attribute(Address):
     attribute: str
 
     def compile(self):
+        """Compile the attribute."""
         parent = self.parent.compile()
         return getattr(parent, self.attribute)
 
@@ -450,6 +460,7 @@ class Index(Address):
     index: int
 
     def compile(self):
+        """Compile the index."""
         parent = self.parent.compile()
         return parent[self.index]
 

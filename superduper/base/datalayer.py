@@ -20,7 +20,6 @@ from superduper.components.component import Component
 from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.misc.annotations import deprecated
 from superduper.misc.importing import import_object
 from superduper.misc.retry import db_retry
 
@@ -122,6 +121,7 @@ class Datalayer:
         Drop all data, artifacts, and metadata.
 
         :param force: Force drop.
+        :param data: Drop data.
         """
         if not force and not click.confirm(
             "!!!WARNING USE WITH CAUTION AS YOU WILL"
@@ -159,6 +159,7 @@ class Datalayer:
                        'vector_index', 'job'].
         :param identifier: Identifying string to component.
         :param version: (Optional) Numerical version - specify for full metadata.
+        :param uuid: (Optional) UUID of the component.
         """
         if uuid is not None:
             return self.metadata.get_component_by_uuid(uuid)
@@ -349,9 +350,9 @@ class Datalayer:
         """
         Trigger computation jobs after data insertion.
 
-        :param query: The select or update query object that reduces
-                      the scope of computations.
+        :param table: The table to trigger computation jobs on.
         :param ids: IDs that further reduce the scope of computations.
+        :param event_type: The type of event to trigger.
         """
         from superduper.base.event import Change
 
@@ -424,17 +425,6 @@ class Datalayer:
 
         return updated_ids
 
-    @deprecated
-    def add(self, object: t.Any):
-        """
-        Note: The use of `add` is deprecated, use `apply` instead.
-
-        :param object: Object to be stored.
-        :param dependencies: List of jobs which should execute before component
-                             initialization begins.
-        """
-        return self.apply(object)
-
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
@@ -448,10 +438,8 @@ class Datalayer:
         and linked to the primary database through metadata.
 
         :param object: Object to be stored.
-        :param dependencies: List of jobs which should execute before component
-                             initialization begins.
+        :param force: Force apply.
         :param wait: Wait for apply events.
-        :return: Tuple containing the added object(s) and the original object(s).
         """
         result = apply.apply(db=self, object=object, force=force, wait=wait)
         return result
@@ -473,6 +461,7 @@ class Datalayer:
         :param identifier: Identifier of the component (refer to
                             `container.base.Component`).
         :param version: [Optional] Numerical version to remove.
+        :param recursive: Toggle to remove all descendants of the component.
         :param force: Force skip confirmation (use with caution).
         """
         # TODO: versions = [version] if version is not None else ...
@@ -535,10 +524,10 @@ class Datalayer:
         :param identifier: Identifier of the component
                            (see `container.base.Component`).
         :param version: [Optional] Numerical version.
+        :param uuid: [Optional] UUID of the component to load.
+        :param huuid: [Optional] human-readable UUID of the component to load.
         :param allow_hidden: Toggle to ``True`` to allow loading
                              of deprecated components.
-        :param huuid: [Optional] human-readable UUID of the component to load.
-        :param uuid: [Optional] UUID of the component to load.
         """
         if version is not None:
             assert type_id is not None
@@ -682,9 +671,6 @@ class Datalayer:
         (Use with caution!)
 
         :param object: The object to replace.
-        :param upsert: Toggle to ``True`` to enable replacement even if
-                       the object doesn't exist yet.
-        :param force: set to `True` to skip confirm # TODO
         """
         old_uuid = None
         try:
@@ -725,7 +711,10 @@ class Datalayer:
             self.metadata.create_component(serialized)
 
     def expire(self, uuid):
-        """Expire a component from the cache."""
+        """Expire a component from the cache.
+
+        :param uuid: The UUID of the component to expire.
+        """
         self.cluster.cache.expire(uuid)
         self.metadata.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)

@@ -58,7 +58,11 @@ class BaseQueueConsumer(ABC):
         pass
 
     def consume(self, *args, **kwargs):
-        """Start consuming messages from queue."""
+        """Start consuming messages from queue.
+
+        :param args: positional arguments
+        :param kwargs: keyword arguments
+        """
         logging.info(f"Started consuming on queue: {self.queue_name}")
         try:
             self.start_consuming()
@@ -85,8 +89,11 @@ class BaseQueuePublisher(BaseBackend):
         self.queue: t.Dict = defaultdict(lambda: [])
 
     @abstractmethod
-    def build_consumer(self, **kwargs):
-        """Build a consumer instance."""
+    def build_consumer(self, **kwargs) -> BaseQueueConsumer:
+        """Build a consumer instance.
+
+        :param kwargs: keyword arguments to consumer.
+        """
 
     @abstractmethod
     def publish(self, events: t.List[Event]):
@@ -94,7 +101,6 @@ class BaseQueuePublisher(BaseBackend):
         Publish events to local queue.
 
         :param events: list of events
-        :param to: Component name for events to be published.
         """
 
     @property

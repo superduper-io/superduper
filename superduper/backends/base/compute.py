@@ -24,10 +24,12 @@ class ComputeBackend(BaseBackend):
         """Return the type of compute engine."""
         pass
 
-    # TODO is this used anywhere?
     @abstractmethod
     def release_futures(self, context: str):
-        """Release futures from backend."""
+        """Release futures from backend.
+
+        :param context: Context of futures to release.
+        """
         pass
 
     # TODO needed?
@@ -94,7 +96,11 @@ class ComputeBackend(BaseBackend):
         """Connect to address."""
 
     def create_handler(self, *args, **kwargs):
-        """Create handler on component declare."""
+        """Create handler on component declare.
+
+        :param args: *args for `create_handler`
+        :param kwargs: *kwargs for `create_handler`
+        """
 
     @property
     def db(self) -> 'Datalayer':

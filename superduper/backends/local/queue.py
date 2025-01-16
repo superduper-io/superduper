@@ -30,19 +30,6 @@ class LocalQueuePublisher(BaseQueuePublisher):
         self._component_uuid_mapping: t.Dict = {}
         self.lock = threading.Lock()
 
-    def show_pending_create_events(self, type_id: str | None = None):
-        if type_id is None:
-            return [
-                {'type_id': type_id, 'identifier': e.component['identifier']}
-                for e in self.queue['_apply']
-            ]
-        else:
-            return [
-                e.component['identifier']
-                for e in self.queue['_apply']
-                if e.component['type_id'] == type_id
-            ]
-
     def list(self):
         """List all components."""
         return self.queue.keys()
@@ -84,7 +71,10 @@ class LocalQueuePublisher(BaseQueuePublisher):
         return list(self._component_uuid_mapping.values())
 
     def build_consumer(self, **kwargs):
-        """Build consumer client."""
+        """Build consumer client.
+
+        :param kwargs: Additional arguments.
+        """
         return LocalQueueConsumer()
 
     def publish(self, events: t.List[Event]):
@@ -111,7 +101,11 @@ class LocalQueueConsumer(BaseQueueConsumer):
         """Start consuming."""
 
     def consume(self, db: 'Datalayer', queue: t.Dict[str, t.List[Event]]):
-        """Consume the current queue and run jobs."""
+        """Consume the current queue and run jobs.
+
+        :param db: Datalayer instance.
+        :param queue: Queue to consume.
+        """
         keys = list(queue.keys())[:]
         for k in keys:
             consume_events(events=queue[k], table=k, db=db)

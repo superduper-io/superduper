@@ -127,7 +127,10 @@ class Create(Event):
     parent: str | None = None
 
     def execute(self, db: 'Datalayer'):
-        """Execute the create event."""
+        """Execute the create event.
+
+        :param db: Datalayer instance.
+        """
         # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.component)
         db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
@@ -180,7 +183,10 @@ class Update(Event):
         self,
         db: 'Datalayer',
     ):
-        """Execute the create event."""
+        """Execute the create event.
+
+        :param db: Datalayer instance.
+        """
         # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.component)
         db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)

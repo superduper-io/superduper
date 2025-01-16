@@ -44,7 +44,10 @@ class LocalCluster(Cluster):
         )
 
     def drop(self, force: bool = False):
-        """Drop the cluster."""
+        """Drop the cluster.
+
+        :param force: Force drop the cluster.
+        """
         if not force:
             if not click.confirm(
                 "Are you sure you want to drop the cache? ",

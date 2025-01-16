@@ -13,7 +13,6 @@ from functools import wraps
 
 import requests
 import tqdm
-from overrides import override
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -28,6 +27,7 @@ from superduper.components.metric import Metric
 from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
+    from superduper.backends.base.cluster import Cluster
     from superduper.base.datalayer import Datalayer
     from superduper.components.dataset import Dataset
 
@@ -434,8 +434,11 @@ class Model(Component, metaclass=ModelMeta):
         args, kwargs = self.handle_input_type(data, self.signature)
         return self.predict(*args, **kwargs)
 
-    def declare_component(self, cluster):
-        """Declare model on compute."""
+    def declare_component(self, cluster: 'Cluster'):
+        """Declare model on compute.
+
+        :param cluster: Cluster instance to declare the model.
+        """
         super().declare_component(cluster)
         if self.deploy or self.serve:
             cluster.compute.put(self)
@@ -835,6 +838,7 @@ class Model(Component, metaclass=ModelMeta):
         :param key: Key to be bound to the model
         :param select: Object for selecting which data is processed
         :param predict_kwargs: Keyword arguments to self.model.predict
+        :param identifier: Identifier for the listener
         :param kwargs: Additional keyword arguments
         """
         from superduper.components.vector_index import VectorIndex
@@ -860,8 +864,8 @@ class Model(Component, metaclass=ModelMeta):
 
         :param key: Key to be bound to the model
         :param select: Object for selecting which data is processed
-        :param identifier: A string used to identify the model.
         :param predict_kwargs: Keyword arguments to self.model.predict
+        :param identifier: Identifier for the listener
         :param kwargs: Additional keyword arguments to pass to `Listener`
         """
         from superduper.components.listener import Listener
@@ -995,7 +999,10 @@ class Model(Component, metaclass=ModelMeta):
         )
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
-        """Append metrics to the model."""
+        """Append metrics to the model.
+
+        :param d: Dictionary of metrics to append.
+        """
         assert self.trainer is not None
         if self.trainer.metric_values is not None:
             for k, v in d.items():
@@ -1309,10 +1316,6 @@ class SequentialModel(Model):
         """Instance of `Inputs` to represent model params."""
         return self.models[0].inputs
 
-    def declare_component(self, cluster):
-        """Declare model on compute."""
-        cluster.compute.put(self)
-
     def on_create(self, db: Datalayer):
         """Post create hook.
 
@@ -1379,23 +1382,37 @@ class ModelRouter(Model):
         if not self.datatype:
             self.datatype = self.models[self.model].datatype
 
-    @override
     def predict(self, *args, **kwargs) -> t.Any:
+        """Predict on a single data point.
+
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
+        """
         logging.info(f'Predicting with model {self.model}')
         return self.models[self.model].predict(*args, **kwargs)
 
-    @override
     def fit(self, *args, **kwargs) -> t.Any:
+        """Fit the model on the given data.
+
+        :param args: Arguments to fit on.
+        :param kwargs: Keyword arguments to fit on.
+        """
         logging.info(f'Fitting with model {self.model}')
         return self.models[self.model].fit(*args, **kwargs)
 
-    @override
     def predict_batches(self, dataset) -> t.List:
+        """Predict on a series of data points defined in the dataset.
+
+        :param dataset: Series of data points to predict on.
+        """
         logging.info(f'Predicting with model {self.model}')
         return self.models[self.model].predict_batches(dataset)
 
-    @override
     def init(self, db=None):
+        """Initialize the model.
+
+        :param db: DataLayer instance.
+        """
         if hasattr(self.models[self.model], 'shape'):
             self.shape = getattr(self.models[self.model], 'shape')
         self.example = self.models[self.model].example
@@ -1425,6 +1442,10 @@ class RAGModel(Model):
         return self.prompt_template.format(context=context, query=query)
 
     def predict(self, query: str):
+        """Predict on a single query string.
+
+        :param query: Query string.
+        """
         assert self.db, 'db cannot be None'
         select = self.select.set_variables(db=self.db, query=query)
         self.db.execute(select)

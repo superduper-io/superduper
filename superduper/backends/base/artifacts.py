@@ -92,12 +92,20 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def put_bytes(self, serialized: bytes, file_id: str):
-        """Save bytes in artifact store""" ""
+        """Save bytes in artifact store.
+
+        :param serialized: Bytes to save
+        :param file_id: Identifier of artifact in the store
+        """
         pass
 
     @abstractmethod
     def put_file(self, file_path: str, file_id: str) -> str:
-        """Save file in artifact store and return file_id."""
+        """Save file in artifact store and return file_id.
+
+        :param file_path: Path to file
+        :param file_id: Identifier of artifact in the store
+        """
         pass
 
     def save_artifact(self, r: t.Dict):
@@ -131,7 +139,7 @@ class ArtifactStore(ABC):
     def delete_artifact(self, artifact_ids: t.List[str]):
         """Delete artifact from artifact store.
 
-        :param r: dictionary with mandatory fields
+        :param artifact_ids: list of artifact ids to delete.
         """
         for artifact_id in artifact_ids:
             try:

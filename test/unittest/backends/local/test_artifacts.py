@@ -62,7 +62,7 @@ def test_save_and_load_directory(
 
     # test save and load directory
     test_component = TestComponent(path=random_directory, identifier="test")
-    db.add(test_component)
+    db.apply(test_component)
     test_component_loaded = db.load("TestComponent", "test")
     test_component_loaded.init()
     # assert that the paths are different
@@ -83,7 +83,7 @@ def test_save_and_load_file(db, artifact_store: FileSystemArtifactStore):
     # test save and load file
     file = os.path.abspath(__file__)
     test_component = TestComponent(path=file, identifier="test")
-    db.add(test_component)
+    db.apply(test_component)
     test_component_loaded = db.load("TestComponent", "test")
     test_component_loaded.init()
 

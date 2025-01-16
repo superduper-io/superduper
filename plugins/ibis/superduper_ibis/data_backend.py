@@ -161,7 +161,14 @@ class IbisDataBackend(BaseDataBackend):
             self.conn,
         )
         if not self.in_memory:
-            self.conn.insert(table_name, raw_documents)
+            try:
+                self.conn.insert(table_name, raw_documents)
+            except Exception as e:
+                print('#### ROLLBACK', e)
+                self.conn.con.rollback()
+                self.conn.insert(table_name, raw_documents)
+
+
         else:
             # CAUTION: The following is only tested with pandas.
             if table_name in self.conn.tables:
@@ -328,6 +335,10 @@ class IbisDataBackend(BaseDataBackend):
             raise exceptions.TableNotFoundError(
                 f'Table {identifier} not found in database'
             )
+        except:
+            self.conn.con.rollback()
+            print('####### ROLLBACK')
+            return self.conn.table(identifier)
 
     def disconnect(self):
         """Disconnect the client."""
@@ -336,7 +347,12 @@ class IbisDataBackend(BaseDataBackend):
 
     def list_tables_or_collections(self):
         """List all tables or collections in the database."""
-        return self.conn.list_tables()
+        try:
+            return self.conn.list_tables()
+        except:
+            self.conn.con.rollback()
+            print('####### ROLLBACK')
+            return self.conn.list_tables()
 
     @staticmethod
     def infer_schema(data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None):

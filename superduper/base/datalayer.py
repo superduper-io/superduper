@@ -17,11 +17,9 @@ from superduper.base.config import Config
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.components.component import Component
-from superduper.components.datatype import BaseDataType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.importing import import_object
-from superduper.misc.retry import db_retry
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -67,7 +65,7 @@ class Datalayer:
         self.artifact_store.db = self
 
         self.databackend = databackend
-        self.databackend.datalayer = self
+        self.databackend.db = self
 
         self.cluster = cluster
         self.cluster.db = self
@@ -77,7 +75,7 @@ class Datalayer:
         logging.info("Data Layer built")
 
     def __getitem__(self, item):
-        return self.databackend.get_query_builder(item)
+        return Query(table=item, parts=(), db=self)
 
     @property
     def cdc(self):
@@ -138,7 +136,7 @@ class Datalayer:
             self.databackend.drop(force=True)
             self.artifact_store.drop(force=True)
         else:
-            self.databackend.drop_outputs()
+            self.databackend.drop_table()
 
         self.metadata.drop(force=True)
 
@@ -195,89 +193,23 @@ class Datalayer:
             type_id=type_id, identifier=identifier, version=version
         )
 
-    @db_retry(connector='databackend')
-    def execute(self, query: Query, *args, **kwargs) -> ExecuteResult:
-        """Execute a query on the database.
+    def pre_insert(
+        self, table: str, documents: t.Sequence[t.Dict], auto_schema: bool = True
+    ):
+        """Pre-insert hook for data insertion.
 
-        :param query: The SQL query to execute, such as select, insert,
-                      delete, or update.
-        :param args: Positional arguments to pass to the execute call.
-        :param kwargs: Keyword arguments to pass to the execute call.
+        :param table: The table to insert data into.
+        :param documents: The documents to insert.
+        :param auto_schema: Automatically create a schema for the table.
         """
-        if query.type == 'delete':
-            return self._delete(query, *args, **kwargs)
-        if query.type == 'insert':
-            return self._insert(query, *args, **kwargs)
-        if query.type == 'select':
-            return self._select(query, *args, **kwargs)
-        if query.type == 'write':
-            return self._write(query, *args, **kwargs)
-        if query.type == 'update':
-            return self._update(query, *args, **kwargs)
-        if query.type == 'predict':
-            return self._predict(query, *args, **kwargs)
-
-        raise TypeError(
-            f'Wrong type of {query}; '
-            f'Expected object of type "delete", "insert", "select", "update"'
-            f'Got {type(query)};'
-        )
-
-    def _predict(self, prediction: t.Any) -> PredictResult:
-        return prediction.do_execute(self)
-
-    def _delete(self, delete: Query, refresh: bool = True) -> DeleteResult:
-        """
-        Delete data from the database.
-
-        :param delete: The delete query object specifying the data to be deleted.
-        """
-        result = delete.do_execute(self)
-        # TODO - do we need this refresh?
-        # If the handle-event works well, then we should not need this
-
-        if not refresh:
-            return
-
-        call_cdc = (
-            delete.query.table in self.metadata.show_cdc_tables()
-            and delete.query.table.startswith(CFG.output_prefix)
-        )
-        if call_cdc:
-            self.cluster.cdc.handle_event(
-                event_type='delete', table=delete.table, ids=result
-            )
-        return result
-
-    def _insert(
-        self,
-        insert: Query,
-        refresh: bool = True,
-        datatypes: t.Sequence[BaseDataType] = (),
-        auto_schema: bool = True,
-    ) -> InsertResult:
-        """
-        Insert data into the database.
-
-        :param insert: The insert query object specifying the data to be inserted.
-        :param refresh: Boolean indicating whether to refresh the task group on insert.
-        :param datatypes: List of datatypes in the insert documents.
-        :param auto_schema: Toggle to False to switch off automatic schema creation.
-        """
-        for e in datatypes:
-            self.add(e)
-
-        if not insert.documents:
-            logging.info(f'No documents to insert into {insert.table}')
-            return []
-
-        for r in insert.documents:
+        for r in documents:
             r.setdefault(
                 '_fold',
                 'train' if random.random() >= s.CFG.fold_probability else 'valid',
             )
+
         if auto_schema and self.cfg.auto_schema:
-            schema = self._auto_create_table(insert.table, insert.documents).schema
+            self._auto_create_table(table, documents).schema
 
             timeout = 60
 
@@ -287,9 +219,9 @@ class Datalayer:
             exists = False
             while time.time() - start < timeout:
                 try:
-                    assert insert.table in self.show(
+                    assert table in self.show(
                         'table'
-                    ), f'{insert.table} not found, retrying...'
+                    ), f'{table} not found, retrying...'
                     exists = True
                 except AssertionError as e:
                     logging.warn(str(e))
@@ -299,29 +231,21 @@ class Datalayer:
 
             if not exists:
                 raise TimeoutError(
-                    f'{insert.table} not found after {timeout} seconds'
+                    f'{table} not found after {timeout} seconds'
                     ' table auto creation likely has failed or is stalling...'
                 )
-            for r in insert.documents:
-                r.schema = schema
 
-        inserted_ids = insert.do_execute(self)
+    def post_insert(self, table: str, ids: t.Sequence[str]):
+        """Post-insert hook for data insertion.
 
-        logging.info(f'Inserted {len(inserted_ids)} documents into {insert.table}')
-        logging.debug(f'Inserted IDs: {inserted_ids}')
-
-        if not refresh:
-            return []
-
-        if (
-            insert.table in self.metadata.show_cdc_tables()
-            and not insert.table.startswith(CFG.output_prefix)
+        :param table: The table to insert data into.
+        :param ids: The IDs of the inserted data.
+        """
+        if table in self.metadata.show_cdc_tables() and not table.startswith(
+            CFG.output_prefix
         ):
-            self.cluster.cdc.handle_event(
-                event_type='insert', table=insert.table, ids=inserted_ids
-            )
-
-        return inserted_ids
+            logging.info(f'CDC for {table} is enabled')
+            self.cluster.cdc.handle_event(event_type='insert', table=table, ids=ids)
 
     def _auto_create_table(self, table_name, documents):
         try:
@@ -332,19 +256,11 @@ class Datalayer:
 
         # Should we need to check all the documents?
         document = documents[0]
-        schema = document.schema or self.infer_schema(document)
+        schema = self.infer_schema(document)
         table = Table(identifier=table_name, schema=schema)
         logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
         self.apply(table, force=True)
         return table
-
-    def _select(self, select: Query, reference: bool = True) -> SelectResult:
-        """
-        Select data from the database.
-
-        :param select: The select query object specifying the data to be retrieved.
-        """
-        return select.do_execute(db=self)
 
     def on_event(self, table: str, ids: t.List[str], event_type: 'str'):
         """
@@ -609,7 +525,9 @@ class Datalayer:
         try:
             r = self.metadata.get_component(type_id, identifier, version=version)
         except FileNotFoundError:
-            logging.warn(f'Component {type_id}:{identifier}:{version} has already been removed')
+            logging.warn(
+                f'Component {type_id}:{identifier}:{version} has already been removed'
+            )
             return
         if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
@@ -802,15 +720,6 @@ class Datalayer:
 
     def disconnect(self):
         """Gracefully shutdown the Datalayer."""
-        logging.info("Disconnect from Data Store")
-        self.databackend.disconnect()
-
-        logging.info("Disconnect from Metadata Store")
-        self.metadata.disconnect()
-
-        logging.info("Disconnect from Artifact Store")
-        self.artifact_store.disconnect()
-
         logging.info("Disconnect from Cluster")
         self.cluster.disconnect()
 
@@ -823,8 +732,10 @@ class Datalayer:
         :param identifier: The identifier for the schema, if None, it will be generated
         :return: The inferred schema
         """
-        out = self.databackend.infer_schema(data, identifier)
-        return out
+        # TODO have a slightly more user-friendly schema
+        from superduper.misc.auto_schema import infer_schema
+
+        return infer_schema(data, identifier=identifier)
 
     @property
     def cfg(self) -> Config:
@@ -836,3 +747,10 @@ class Datalayer:
         """Set the configuration object for the datalayer."""
         assert isinstance(cfg, Config)
         self._cfg = cfg
+
+    def execute(self, query: str):
+        """Execute a native DB query.
+
+        :param query: The query to execute.
+        """
+        return self.databackend.execute_native(query)

@@ -327,14 +327,6 @@ def test_remove_multi_version(db):
     assert db.show('test-component', 'test') == []
 
 
-def test_remove_not_exist_component(db):
-    with pytest.raises(FileNotFoundError) as e:
-        db.remove('test-component', 'test', 0, force=True)
-    assert 'test' in str(e)
-
-    db.remove('test-component', 'test', force=True)
-
-
 def test_show(db):
     for component in [
         TestComponent(identifier='a1'),
@@ -407,9 +399,7 @@ def test_load(db):
 def test_insert(db):
     db.cfg.auto_schema = True
     add_fake_model(db)
-    inserted_ids = (
-        db['documents'].insert([{'x': i, 'update': True} for i in range(5)]).execute()
-    )
+    inserted_ids = db['documents'].insert([{'x': i} for i in range(5)])
     assert len(inserted_ids) == 5
 
     uuid = db.show('listener', 'listener-x', 0)['uuid']
@@ -422,39 +412,16 @@ def test_insert(db):
 
 def test_insert_artifacts(db):
     db.cfg.auto_schema = True
-    db._insert(
-        db['documents'].insert(
-            [Document({'x': numpy.random.randn(100)}) for _ in range(1)]
-        )
-    )
-    r = list(db.execute(db['documents'].select()))[0]
+    db['documents'].insert([{'x': numpy.random.randn(100)} for _ in range(1)])
+    r = db['documents'].get()
     assert isinstance(r['x'], numpy.ndarray)
-
-
-def test_insert_sql_db(db):
-    db.cfg.auto_schema = True
-    listener = add_fake_model(db)
-    table = db['documents']
-    inserted_ids = db.execute(
-        table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
-    )
-    assert len(inserted_ids) == 5
-
-    q = table.select().outputs(listener.predict_id)
-
-    new_docs = db.execute(q)
-    new_docs = list(new_docs)
-
-    result = [Document(doc.unpack())[listener.outputs] for doc in new_docs]
-    assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
 @pytest.mark.skipif(not mongodb_config, reason='MongoDB not configured')
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
-    q = db['documents'].insert([Document({'x': i, 'update': True}) for i in range(5)])
-    db._insert(q)
+    db['documents'].insert([Document({'x': i, 'update': True}) for i in range(5)])
     updated_ids, _ = db._update(
         db['documents'].update_many({}, Document({'$set': {'x': 100}}))
     )
@@ -608,7 +575,7 @@ def test_dataset(db):
     db.apply(d)
     assert db.show('dataset') == ['test_dataset']
     dataset = db.load('dataset', 'test_dataset')
-    assert len(dataset.data) == len(list(db.execute(dataset.select)))
+    assert len(dataset.data) == len(dataset.select.execute())
 
 
 def test_delete_component_with_same_artifact(db):

@@ -7,7 +7,7 @@ from superduper.backends.base.metadata import MetaDataStore
 from superduper.components.component import Status
 
 
-class MongoMetaDataStore(MetaDataStore):
+class MongoDBMetaDataStore(MetaDataStore):
     """
     Metadata store for MongoDB.
 

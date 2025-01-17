@@ -12,14 +12,12 @@ from collections import defaultdict
 from functools import wraps
 
 import requests
-import tqdm
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
-from superduper.base.exceptions import DatabackendException
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.datatype import BaseDataType
@@ -482,6 +480,7 @@ class Model(Component, metaclass=ModelMeta):
         select.db = db
         return select
 
+    # TODO use query chunking not id chunking
     def _get_ids_from_select(
         self,
         *,
@@ -491,38 +490,24 @@ class Model(Component, metaclass=ModelMeta):
         predict_id: str,
         overwrite: bool = False,
     ):
+        # TODO why all this complex logic just to get ids
         if not self.db.databackend.check_output_dest(predict_id):
             overwrite = True
         try:
             if not overwrite:
                 if ids:
-                    select = select.select_using_ids(ids)
+                    select = select.select(select.primary_id)
                 # TODO - this is broken
-                query = select.select_ids_of_missing_outputs(predict_id=predict_id)
-
+                # query = select.select_ids_of_missing_outputs(predict_id=predict_id)
+                predict_ids = select.missing_outputs(predict_id)
             else:
                 if ids:
                     return ids
-                query = select.select_ids
+                predict_ids = select.ids()
         except FileNotFoundError:
             # This is case for sql where Table is not created yet
             # and we try to access `db.load('table', name)`.
             return []
-        try:
-            id_field = self.db.databackend.id_field
-        except AttributeError:
-            id_field = query.table_or_collection.primary_id
-
-        # TODO: Find better solution to support in-memory (pandas)
-        # Since pandas has a bug, it cannot join on empty table.
-        try:
-            id_curr = self.db.execute(query)
-        except DatabackendException:
-            id_curr = self.db.execute(select.select(id_field))
-
-        predict_ids = []
-        for r in tqdm.tqdm(id_curr):
-            predict_ids.append(str(r[id_field]))
 
         if ids and len(predict_ids) > len(ids):
             raise Exception(
@@ -576,6 +561,7 @@ class Model(Component, metaclass=ModelMeta):
             overwrite=overwrite,
             predict_id=predict_id,
         )
+
         out = self._predict_with_select_and_ids(
             X=X,
             predict_id=predict_id,
@@ -596,8 +582,9 @@ class Model(Component, metaclass=ModelMeta):
     ):
         X_data: t.Any
         mapping = Mapping(X, self.signature)
+
         if in_memory:
-            docs = list(self.db.execute(select.select_using_ids(ids)))
+            docs = select.subset(ids)
             X_data = list(map(lambda x: mapping(x), docs))
         else:
             assert isinstance(self.db, Datalayer)
@@ -612,7 +599,7 @@ class Model(Component, metaclass=ModelMeta):
 
         flat = False
         if 'outputs' in str(select):
-            sample = next(select.limit(1).execute())
+            sample = select.get()
             upstream_predict_ids = [
                 k for k in sample if k.startswith(CFG.output_prefix)
             ]
@@ -628,8 +615,8 @@ class Model(Component, metaclass=ModelMeta):
             logging.error(f"select: {select}")
             raise Exception(
                 'You\'ve specified more documents than unique ids;'
-                f' Is it possible that {select.table_or_collection.primary_id}'
-                f' isn\'t uniquely identifying?'
+                ' Is it possible that the primary_id'
+                ' isn\'t uniquely identifying?'
             )
         return X_data, mapping
 
@@ -686,6 +673,7 @@ class Model(Component, metaclass=ModelMeta):
                 )
                 it += 1
             return output_ids
+
         dataset, _ = self._prepare_inputs_from_select(
             X=X,
             select=select,
@@ -700,22 +688,30 @@ class Model(Component, metaclass=ModelMeta):
             self.version, int
         ), 'Version has not been set, can\'t save outputs...'
 
-        update = select.model_update(
-            db=self.db,
-            predict_id=predict_id,
-            outputs=outputs,
-            ids=ids,
-            flatten=flatten,
-            **self.model_update_kwargs,
-        )
-        output_ids = []
-        if update:
-            # Don't use auto_schema for inserting model outputs
-            if update.type == 'insert':
-                output_ids = update.execute(db=self.db, auto_schema=True)
-            else:
-                output_ids = update.execute(db=self.db)
-        return output_ids
+        if flatten:
+            documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    f'{CFG.output_prefix}{predict_id}': sub_output,
+                }
+                for id, output in zip(ids, outputs)
+                for sub_output in output
+            ]
+        else:
+            documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    f'{CFG.output_prefix}{predict_id}': output,
+                }
+                for id, output in zip(ids, outputs)
+            ]
+
+        from superduper.base.datalayer import Datalayer
+
+        assert isinstance(self.db, Datalayer)
+        return self.db[f'{CFG.output_prefix}{predict_id}'].insert(documents)
 
     def __call__(self, *args, **kwargs):
         """Connect the models to build a graph.
@@ -1453,7 +1449,6 @@ class RAGModel(Model):
         """
         assert self.db, 'db cannot be None'
         select = self.select.set_variables(db=self.db, query=query)
-        self.db.execute(select)
-        results = [r.unpack() for r in select.tolist()]
+        results = [r.unpack() for r in select.execute()]
         prompt = self._build_prompt(query, results)
         return self.llm.predict(prompt)

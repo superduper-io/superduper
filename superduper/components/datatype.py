@@ -22,6 +22,10 @@ Encode = t.Callable[[t.Any], bytes]
 INBUILT_DATATYPES = {}
 
 
+if t.TYPE_CHECKING:
+    pass
+
+
 class DataTypeFactory:
     """Abstract class for creating a DataType # noqa."""
 

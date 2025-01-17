@@ -138,10 +138,7 @@ def test_complex_graph_with_select(db):
     )
     db.apply(listener)
     assert all(
-        [
-            '_outputs__test__test' in x
-            for x in list(db.execute(db['_outputs__test__test'].select()))
-        ]
+        ['_outputs__test__test' in x for x in db['_outputs__test__test'].execute()]
     )
 
 

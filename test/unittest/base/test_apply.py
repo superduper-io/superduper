@@ -225,7 +225,7 @@ def test_duplicate_job_submission(db: Datalayer):
         ],
     )
 
-    db['docs'].insert([{'x': i} for i in range(10)]).execute()
+    db['docs'].insert([{'x': i} for i in range(10)])
 
     db.apply(c)
 

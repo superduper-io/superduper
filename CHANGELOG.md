@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features & Functionality
 
 - Add type annotations as a way to declare schema
+- Deprecate "free" queries
+- Create simpler developer contract for databackend
 
 #### Bug Fixes
 

@@ -231,7 +231,7 @@ def _apply(
                         replace_k = replace_k.replace(uuid, non_breaking_changes[uuid])
                     replace[replace_k] = doc[k]
                 r['documents'][i] = replace
-            x = Document.decode(r).unpack()
+            x = Document.decode(r, db=db).unpack()
 
         else:
             raise TypeError("Unexpected target of substitution in db.apply")

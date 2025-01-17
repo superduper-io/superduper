@@ -9,7 +9,7 @@ def test_dataset_pin(db, pin):
 
     datas = [{"x": i, "y": [1, 2, 3]} for i in range(10)]
 
-    db["documents"].insert(datas).execute()
+    db["documents"].insert(datas)
 
     select = db["documents"].select()
 
@@ -22,7 +22,7 @@ def test_dataset_pin(db, pin):
     assert db.show("dataset") == ["test_dataset"]
 
     new_datas = [{"x": i, "y": [1, 2, 3]} for i in range(10, 20)]
-    db["documents"].insert(new_datas).execute()
+    db["documents"].insert(new_datas)
     dataset: Dataset = db.load("dataset", "test_dataset")
     dataset.init()
     if pin:

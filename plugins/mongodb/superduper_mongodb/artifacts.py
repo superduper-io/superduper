@@ -12,7 +12,7 @@ from tqdm import tqdm
 from superduper_mongodb.utils import connection_callback
 
 
-class MongoArtifactStore(ArtifactStore):
+class MongoDBArtifactStore(ArtifactStore):
     """
     Artifact store for MongoDB.
 

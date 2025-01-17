@@ -64,7 +64,7 @@ class Dataset(Component):
     def _load_data(self, db: 'Datalayer'):
         assert db is not None, 'Database must be set'
         assert self.select is not None, 'Select must be set'
-        data = list(db.execute(self.select))
+        data = self.select.execute()
         if self.sample_size is not None and self.sample_size < len(data):
             perm = self.random.permutation(len(data)).tolist()
             data = [data[perm[i]] for i in range(self.sample_size)]

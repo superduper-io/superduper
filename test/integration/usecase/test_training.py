@@ -48,7 +48,7 @@ def test_training(db: "Datalayer"):
     # Need to reload to get the fitted model
     reloaded = db.load('model', 'my-model')
 
-    r = next(db['documents'].select().limit(1).execute())
+    r = db['documents'].get()
 
     # This only works if the model was trained
     prediction = reloaded.predict(r['x'])

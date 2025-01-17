@@ -35,7 +35,7 @@ class MyValidation(Validation):
 def test(db: Datalayer):
     db.cfg.auto_schema = True
 
-    db['docs'].insert([{'x': random.randrange(10)} for _ in range(10)]).execute()
+    db['docs'].insert([{'x': random.randrange(10)} for _ in range(10)])
 
     def build_vi(**kwargs):
         model = MyModel('my-model', example=1, **kwargs)

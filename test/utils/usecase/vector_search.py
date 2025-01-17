@@ -23,7 +23,7 @@ def add_data(db: "Datalayer", start: int, end: int):
                 "label": int(i % 2 == 0),
             }
         )
-    db["documents"].insert(data).execute()
+    db["documents"].insert(data)
 
 
 def build_vector_index(

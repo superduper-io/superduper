@@ -81,16 +81,11 @@ class Schema(Component):
             self.fields[k] = v
         return super().postinit()
 
-    def update(self, other: 'Schema'):
-        """Update the schema with another schema.
-
-        Note this is not in place.
-
-        :param other: Schema to update with.
-        """
+    def __add__(self, other: 'Schema'):
         new_fields = self.fields.copy()
         new_fields.update(other.fields)
-        return Schema(self.identifier, fields=new_fields)
+        id = self.identifier + '+' + other.identifier
+        return Schema(id, fields=new_fields, db=self.db)
 
     # TODO why do we need this?
     @cached_property
@@ -165,6 +160,7 @@ class Schema(Component):
         :param files: Files.
         :param leaves_to_keep: `Leaf` instances to keep (don't encode)
         """
+        result = {k: v for k, v in out.items()}
         for k, field in self.fields.items():
             if not isinstance(field, BaseDataType):
                 continue
@@ -201,7 +197,7 @@ class Schema(Component):
             ):
                 assert isinstance(data, bytes)
                 data = _convert_bytes_to_base64(data)
-                out[k] = data
+                result[k] = data
 
             elif isinstance(data, Saveable):
                 ref_obj = parse_reference(data.reference)
@@ -214,13 +210,12 @@ class Schema(Component):
                 else:
                     assert False, f'Unknown reference type {ref_obj.name}'
 
-                out[k] = data.reference
+                result[k] = data.reference
             else:
-                out[k] = data
+                result[k] = data
 
-        out['_schema'] = self.identifier
-
-        return out
+        result['_schema'] = self.identifier
+        return result
 
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
         """Encode data using the schema's encoders.

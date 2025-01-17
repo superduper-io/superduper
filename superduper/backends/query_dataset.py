@@ -51,28 +51,32 @@ class QueryDataset:
         self._db = db
 
         self.transform = transform
+
         if fold is not None:
-            self.select = select.add_fold(fold)
+            assert db is not None
+            fold_filter = db[select.table]['_fold'] == fold
+            self.select = select.filter(fold_filter)
         else:
             self.select = select
 
         self.in_memory = in_memory
         if self.in_memory:
             if ids is None:
-                self._documents = list(self.db.execute(self.select))
+                self._documents = self.select.execute()
             else:
-                self._documents = list(
-                    self.db.execute(self.select.select_using_ids(ids))
-                )
+                self._documents = self.select.subset(ids)
         else:
             if ids is None:
-                self._ids = [
-                    r[self.select.id_field]
-                    for r in self.db.execute(self.select.select_ids)
-                ]
+                self._ids = self.select.ids()
             else:
                 self._ids = ids
-            self.select_one = self.select.select_single_id
+
+            # TODO replace by adding parameters to `.get`
+            assert db is not None
+            t = db[self.select.table]
+            self.select_one = lambda x: next(
+                self.select.filter(t[t.primary_id] == x).execute()
+            )
 
         self.mapping = mapping
 

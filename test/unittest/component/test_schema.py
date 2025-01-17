@@ -39,7 +39,7 @@ def test_schema_with_bytes_encoding(db):
 
     db.databackend.bytes_encoding = 'base64'
 
-    db['documents'].insert([{'txt': 'testing 123'}]).execute()
+    db['documents'].insert([{'txt': 'testing 123'}])
 
     try:
         r = db.databackend.db['documents'].find_one()
@@ -61,9 +61,9 @@ def test_schema_with_blobs(db):
         )
     )
 
-    db['documents'].insert([{'txt': 'testing 123'}]).execute()
+    db['documents'].insert([{'txt': 'testing 123'}])
 
-    r = db['documents'].select().tolist()[0]
+    r = db['documents'].get()
 
     assert isinstance(r['txt'], Blob)
 
@@ -98,10 +98,10 @@ def test_schema_with_file(db, tmp_file):
             schema=Schema('_schema/documents', fields={'my_file': file}),
         )
     )
-    db['documents'].insert([{'my_file': tmp_file}]).execute()
+    db['documents'].insert([{'my_file': tmp_file}])
 
     # only the references are loaded when data is selected
-    r = db['documents'].select().tolist()[0]
+    r = db['documents'].get()
 
     # loaded document contains a pointer to the file
     assert isinstance(r['my_file'], FileItem)

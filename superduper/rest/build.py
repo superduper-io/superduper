@@ -317,21 +317,33 @@ def build_rest_app(app: SuperDuperApp):
             logging.info(output)
             return [{'_base': output}], []
 
-        if '_path' not in query:
-            plugin = db.databackend.backend_name
-            query['_path'] = f'superduper_{plugin}.query.parse_query'
+        import re
 
-        q = Document.decode(query, db=db).unpack()
+        predict_match = re.match(
+            r'^([a-zA-Z0-9_]+)\.predict\(.*\)$', query['query'].strip()
+        )
 
-        logging.info('processing this query:')
-        logging.info(q)
+        if predict_match:
+            model = predict_match.groups()[0]
+            m = db.load('model', model)
+            result = eval(
+                query['query'], {model: m, 'documents': query.get('documents', [])}
+            )
 
-        result = q.execute()
+            if isinstance(result, dict):
+                result = Document(result)
+            else:
+                result = Document({'_base': result})
 
-        if q.type in {'insert', 'delete', 'update'}:
-            return {'_base': [str(x) for x in result]}, []
+            q = None
+        else:
+            query['_path'] = 'superduper.backends.base.query.parse_query'
+            q = Document.decode(query, db=db).unpack()
 
-        logging.warn(str(q))
+            logging.info('processing this query:')
+            logging.info(q)
+            result = q.execute()
+            logging.warn(str(q))
 
         if isinstance(result, Document):
             result = [result]
@@ -344,8 +356,9 @@ def build_rest_app(app: SuperDuperApp):
         if isinstance(q, Query):
             for i, r in enumerate(result):
                 r = list(r)
-                if q.primary_id in r[0]:
-                    r[0][q.primary_id] = str(r[0][q.primary_id])
+                pid = q.primary_id.execute()
+                if pid in r[0]:
+                    r[0][pid] = str(r[0][pid])
                 result[i] = tuple(r)
             if 'score' in result[0][0]:
                 result = sorted(result, key=lambda x: -x[0]['score'])

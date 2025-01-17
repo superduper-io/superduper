@@ -2,23 +2,17 @@ from test.utils.database import databackend as db_utils
 
 import pytest
 from superduper import CFG
+from superduper.misc.importing import load_plugin
 
 from superduper_ibis.data_backend import IbisDataBackend
 
 
 @pytest.fixture
 def databackend():
-    backend = IbisDataBackend(CFG.data_backend)
+    plugin = load_plugin('ibis')
+    backend = IbisDataBackend(CFG.data_backend, plugin=plugin)
     yield backend
     backend.drop(True)
-
-
-def test_output_dest(databackend):
-    db_utils.test_output_dest(databackend)
-
-
-def test_query_builder(databackend):
-    db_utils.test_query_builder(databackend)
 
 
 def test_list_tables_or_collections(databackend):

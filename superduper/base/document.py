@@ -200,7 +200,7 @@ class Document(MongoStyleDict):
 
         if isinstance(other, Document) and other.schema:
             assert other.schema is not None
-            schema = schema.update(other.schema)
+            schema += other.schema
         return Document(_update(dict(self), dict(other)), schema=schema)
 
     def encode(

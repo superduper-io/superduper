@@ -115,9 +115,10 @@ class VectorIndex(CDC):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     cdc_table: str = ''
 
-    def __post_init__(self, db):
+    def postinit(self):
+        """Post-initialization method."""
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
-        return super().__post_init__(db)
+        super().postinit()
 
     # TODO why this?
     def __hash__(self):

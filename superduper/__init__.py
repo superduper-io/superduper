@@ -53,7 +53,6 @@ __all__ = (
     'superduper',
     'BaseDataType',
     'Document',
-    'code',
     'ObjectModel',
     'QueryModel',
     'Validation',

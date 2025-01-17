@@ -138,6 +138,10 @@ class Leaf(metaclass=LeafMeta):
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=build_uuid)
 
+    def postinit(self):
+        """Post-initialization method."""
+        pass
+
     def _get_metadata(self):
         return {}
 
@@ -148,6 +152,7 @@ class Leaf(metaclass=LeafMeta):
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
+        self.postinit()
 
     @property
     def leaves(self):

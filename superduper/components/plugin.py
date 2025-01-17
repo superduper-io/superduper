@@ -24,14 +24,15 @@ class Plugin(Component):
     identifier: str = ""
     cache_path: str = "~/.superduper/plugins"
 
-    def __post_init__(self, db):
+    def postinit(self):
+        """Post initialization method."""
         if isinstance(self.path, FileItem):
             self._prepare_plugin()
         else:
             path_name = os.path.basename(self.path.rstrip("/"))
             self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
         self._install()
-        super().__post_init__(db)
+        super().postinit()
 
     def _install(self):
         logging.debug(f"Installing plugin {self.identifier}")

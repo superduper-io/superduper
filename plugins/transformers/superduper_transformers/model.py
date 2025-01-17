@@ -8,6 +8,7 @@ from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
 from superduper.components.component import ensure_initialized
+from superduper.components.llm.model import BaseLLM
 from superduper.components.model import (
     Model,
     Signature,
@@ -15,7 +16,6 @@ from superduper.components.model import (
     _DeviceManaged,
 )
 from superduper.components.training import Checkpoint
-from superduper.ext.llm.model import BaseLLM
 from transformers import (
     AutoModelForCausalLM,
     AutoModelForSequenceClassification,
@@ -209,10 +209,11 @@ class TextClassificationPipeline(Model, _DeviceManaged):
             model=self.model_cls.from_pretrained(self.model_name),
         )
 
-    def __post_init__(self, db, example):
+    def postinit(self):
+        """Post-initialization method."""
         if self.pipeline is None:
             self._build_pipeline()
-        super().__post_init__(db, example)
+        super().postinit()
 
     def predict(self, text: str):
         """Predict the class of a single text.

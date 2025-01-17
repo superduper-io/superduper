@@ -9,7 +9,7 @@ from superduper.components.listener import Listener
 
 def check_predict(db, llm):
     """Test whether db can call model prediction normally."""
-    db.add(llm)
+    db.apply(llm)
     result = llm.predict("1+1=")
     assert isinstance(result, str)
 

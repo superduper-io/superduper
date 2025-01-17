@@ -23,9 +23,8 @@ class FieldType(Leaf):
 
     identifier: t.Union[str, BaseDataType]
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
-
+    def postinit(self):
+        """Post initialization method."""
         # TODO why would this happen?
         if isinstance(self.identifier, BaseDataType):
             self.identifier = self.identifier.name
@@ -40,6 +39,8 @@ class FieldType(Leaf):
             self.identifier = self.identifier.__name__
         else:
             raise ValueError(f'Invalid field type {self.identifier}')
+
+        super().postinit()
 
 
 ID = FieldType(identifier='ID')
@@ -63,10 +64,10 @@ class Schema(Component):
 
     fields: t.Mapping[str, BaseDataType]
 
-    def __post_init__(self, db):
+    def postinit(self):
+        """Post initialization method."""
         assert self.identifier is not None, 'Schema must have an identifier'
         assert self.fields is not None, 'Schema must have fields'
-        super().__post_init__(db)
 
         for k, v in self.fields.items():
             if isinstance(v, (BaseDataType, FieldType)):
@@ -78,6 +79,7 @@ class Schema(Component):
                 raise ValueError(f'Invalid field type {v} for field {k}')
 
             self.fields[k] = v
+        return super().postinit()
 
     def update(self, other: 'Schema'):
         """Update the schema with another schema.

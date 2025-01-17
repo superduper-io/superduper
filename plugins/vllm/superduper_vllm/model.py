@@ -19,8 +19,8 @@ class _VLLMCore(Model):
 
     vllm_params: dict = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    def postinit(self):
+        """Post-initialization method."""
         assert "model" in self.vllm_params, "model is required in vllm_params"
         self._async_llm = None
         self._sync_llm = None
@@ -29,6 +29,7 @@ class _VLLMCore(Model):
         parallel_size = max(tensor_parallel_size, pipeline_parallel_size)
         self.compute_kwargs["num_gpus"] = parallel_size
         logging.info(f"Setting num_gpus to {parallel_size}")
+        super().postinit()
 
     def _init_sync_llm(self):
         if self._sync_llm is not None:

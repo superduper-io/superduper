@@ -2,7 +2,6 @@ import functools
 import importlib
 import inspect
 import sys
-import typing as t
 import warnings
 from collections import defaultdict
 from importlib import metadata

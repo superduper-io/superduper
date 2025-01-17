@@ -27,8 +27,8 @@ class Table(Component):
     primary_id: str = DEFAULT_PRIMARY_ID
     data: t.Union['Dataset', 'RemoteData', None] = None
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
+    def postinit(self):
+        """Post initialization method."""
         fields = {}
         fields.update(self.schema.fields)
         schema_version = self.schema.version
@@ -39,9 +39,10 @@ class Table(Component):
         self.schema = Schema(
             self.schema.identifier,
             fields={**fields},
-            db=db,
+            db=self.db,
         )
         self.schema.version = schema_version
+        super().postinit()
 
     def on_create(self, db: 'Datalayer'):
         """Create the table, on creation of the component.

@@ -589,7 +589,7 @@ def _deep_flat_encode(
 
         # inline components do not need to be kept
         # they are simply parametrized by their inputs
-        if isinstance(r, leaves_to_keep): 
+        if isinstance(r, leaves_to_keep):
             builds[key] = r
             return '?' + key
 

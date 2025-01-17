@@ -34,7 +34,7 @@ def apply(
     :param db: Datalayer instance
     :param object: Object to be stored.
     :param force: List of jobs which should execute before component
-                            initialization begins.
+                  initialization begins.
     :param wait: Blocks execution till create events finish.
     """
     if force is None:
@@ -298,6 +298,7 @@ def _apply(
             # this breaks a previous version
             assert current.version is not None
             object.version = current.version + 1
+
             serialized['version'] = current.version + 1
             logging.info(f'Found breaking changes in {object.huuid}')
 

@@ -53,9 +53,7 @@ class _OpenAI(APIBaseModel):
     openai_api_base: t.Optional[str] = None
     client_kwargs: t.Optional[dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
-
+    def postinit(self):
         assert isinstance(self.client_kwargs, dict)
         if self.openai_api_key is not None:
             self.client_kwargs['api_key'] = self.openai_api_key
@@ -63,13 +61,15 @@ class _OpenAI(APIBaseModel):
             self.client_kwargs['base_url'] = self.openai_api_base
             self.client_kwargs['default_headers'] = self.openai_api_base
 
+        super().postinit()
+
     @safe_retry(exceptions.MissingSecretsException, verbose=0)
-    def init(self, db=None):
+    def init(self):
         """Initialize the model.
 
         :param db: Database instance.
         """
-        super().init(db=db)
+        super().init()
 
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if 'OPENAI_API_KEY' not in os.environ or (
@@ -167,9 +167,10 @@ class OpenAIChatCompletion(_OpenAI):
     batch_size: int = 1
     prompt: str = ''
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    def postinit(self):
+        """Post-initialization method."""
         self.takes_context = True
+        return super().postinit()
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))

@@ -334,10 +334,10 @@ class FileItem(Saveable):
 
     path: str = ''
 
-    def __post_init__(self, db=None):
+    def postinit(self):
+        """Post init."""
         if not self.identifier:
             self.identifier = get_hash(self.path)
-        return super().__post_init__(db)
 
     def init(self):
         """Initialize the file to local disk."""

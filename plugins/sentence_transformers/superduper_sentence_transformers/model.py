@@ -50,9 +50,8 @@ class SentenceTransformer(Model, _DeviceManaged):
     postprocess: t.Union[None, t.Callable] = None
     signature: Signature = 'singleton'
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example=example)
-
+    def postinit(self):
+        """Post-initialization method."""
         if self.model is None:
             self.model = self.identifier
 
@@ -60,6 +59,7 @@ class SentenceTransformer(Model, _DeviceManaged):
         if self.object is None:
             self.object = _SentenceTransformer(self.model, device=self.device)
             self._default_model = True
+        return super().postinit()
 
     def dict(self, metadata: bool = True, defaults: bool = True, refs: bool = False):
         """Serialize as a dictionary."""
@@ -68,9 +68,9 @@ class SentenceTransformer(Model, _DeviceManaged):
             del r['object']
         return r
 
-    def init(self, db=None):
+    def init(self):
         """Initialize the model."""
-        super().init(db=db)
+        super().init()
         self.to(self.device)
 
     def to(self, device):

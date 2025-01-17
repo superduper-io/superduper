@@ -39,22 +39,28 @@ class _BaseTemplate(Component):
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
 
     def __post_init__(self, db, substitutions):
+        self.substitutions = substitutions
+        super().__post_init__(db=db)
+
+    def postinit(self):
+        """Post initialization method."""
         if isinstance(self.template, Leaf):
             self.template = self.template.encode(defaults=True, metadata=False)
         self.template = SuperDuperFlatEncode(self.template)
-        if substitutions is not None:
-            substitutions = {
-                db.databackend.backend_name: 'databackend',
+        if self.substitutions is not None:
+            self.substitutions = {
+                self.db.databackend.backend_name: 'databackend',
                 CFG.output_prefix: 'output_prefix',
-                **substitutions,
+                **self.substitutions,
             }
-        if substitutions is not None:
+        if self.substitutions is not None:
             self.template = QueryUpdateDocument(self.template).to_template(
-                **substitutions
+                **self.substitutions
             )
         if self.template_variables is None:
             self.template_variables = self.template.variables
-        super().__post_init__(db)
+
+        super().postinit()
 
     @ensure_initialized
     def __call__(self, **kwargs):
@@ -116,13 +122,14 @@ class Template(_BaseTemplate):
     staged_file: str | None = None
     queries: t.List['QueryTemplate'] | None = None
 
+    # TODO deprecate _pre_create - subsume under postinit
     def _pre_create(self, db: Datalayer) -> None:
         """Run before the object is created."""
         assert isinstance(self.template, dict)
         self.blobs = list(self.template.get(KEY_BLOBS, {}).keys())
         self.files = list(self.template.get(KEY_FILES, {}).keys())
         db.artifact_store.save_artifact(self.template)
-        self.init(db)
+        self.init()
 
     def export(
         self,
@@ -241,10 +248,11 @@ class QueryTemplate(_BaseTemplate):
 
     type_id: t.ClassVar[str] = 'query_template'
 
-    def __post_init__(self, db, substitutions):
+    def postinit(self):
+        """Post initialization method."""
         if isinstance(self.template, Leaf):
             self.template = self.template.dict(metadata=False, defaults=False).encode()
-        return super().__post_init__(db, substitutions)
+        super().postinit()
 
     @property
     def form_template(self):

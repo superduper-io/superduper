@@ -16,6 +16,7 @@ class Checkpoint(Component):
     path: t.Optional[str]
     step: int
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
+    def postinit(self):
+        """Post initialization method."""
+        super().postinit()
         self.version = int(self.step)

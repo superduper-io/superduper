@@ -147,12 +147,11 @@ class TorchModel(Model, _DeviceManaged):
     optimizer_state: t.Optional[t.Any] = None
     loader_kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example=example)
-
+    def init(self):
+        """Initialize the model data."""
+        super().init()
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state)
-
         self._validation_set_cache = {}
 
     @property

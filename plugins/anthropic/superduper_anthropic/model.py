@@ -23,9 +23,10 @@ class Anthropic(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, example):
+    def postinit(self):
+        """Post-initialization method."""
         self.model = self.model or self.identifier
-        super().__post_init__(db, example=example)
+        super().postinit()
 
     def init(self, db=None):
         """Initialize the model.

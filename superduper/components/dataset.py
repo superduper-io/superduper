@@ -4,7 +4,6 @@ import typing as t
 from functools import cached_property
 
 import numpy
-from overrides import override
 
 from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
@@ -35,13 +34,10 @@ class Dataset(Component):
     raw_data: t.Optional[t.Sequence[t.Any]] = None
     pin: bool = False
 
-    def __post_init__(self, db):
-        """Post-initialization method.
-
-        :param artifacts: Optional additional artifacts for initialization.
-        """
-        super().__post_init__(db=db)
+    def postinit(self):
+        """Post initialization method."""
         self._data = None
+        super().postinit()
 
     @property
     @ensure_initialized
@@ -49,25 +45,18 @@ class Dataset(Component):
         """Property representing the dataset's data."""
         return self._data
 
-    def init(self, db=None):
-        """Initialization method.
-
-        :param db: The database to use for the operation.
-        """
-        db = db or self.db
-        super().init(db=db)
+    def init(self):
+        """Initialization method."""
+        super().init()
         if self.pin:
             assert self.raw_data is not None
-            self._data = [Document.decode(r, db=db).unpack() for r in self.raw_data]
+            self._data = [
+                Document.decode(r, db=self.db).unpack() for r in self.raw_data
+            ]
         else:
-            self._data = self._load_data(db)
+            self._data = self._load_data(self.db)
 
-    @override
     def _pre_create(self, db: 'Datalayer', startup_cache: t.Dict = {}) -> None:
-        """Pre-create hook for database operations.
-
-        :param db: The database to use for the operation.
-        """
         if self.raw_data is None and self.pin:
             data = self._load_data(db)
             self.raw_data = [r.encode() for r in data]

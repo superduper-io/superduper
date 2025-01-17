@@ -51,14 +51,14 @@ class Listener(CDC):
         metadata = super()._get_metadata()
         return {**metadata, 'output_table': self.output_table}
 
-    def __post_init__(self, db):
+    def postinit(self):
+        """Post initialization method."""
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
         self._set_upstream()
         if isinstance(self.key, tuple):
             self.key = list(self.key)
-
-        return super().__post_init__(db)
+        super().postinit()
 
     def handle_update_or_same(self, other):
         """If the component is new, but does not contain breaking changes.

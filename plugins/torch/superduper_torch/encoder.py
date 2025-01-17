@@ -20,12 +20,13 @@ class Tensor(BaseDataType):
     shape: int | t.Tuple[int]
     identifier: str = ''
 
-    def __post_init__(self, db):
+    def postinit(self):
+        """Post-initialization method."""
         self.encodable = 'encodable'
         if not self.identifier:
             dtype = str(self.dtype)
             self.identifier = f'torch-{dtype}[{str_shape(self.shape)}]'
-        return super().__post_init__(db)
+        return super().postinit()
 
     def encode_data(self, item):
         """Encode data.

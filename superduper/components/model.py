@@ -406,12 +406,15 @@ class Model(Component, metaclass=ModelMeta):
     deploy: bool = False
 
     def __post_init__(self, db, example):
-        super().__post_init__(db)
         self.example = example
+        super().__post_init__(db)
 
+    def postinit(self):
+        """Post-initialization method."""
         self._is_initialized = False
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
+        super().postinit()
 
     def cleanup(self, db: "Datalayer") -> None:
         """Clean up when the model is deleted.
@@ -1161,11 +1164,11 @@ class APIBaseModel(Model):
     max_batch_size: int = 8
     postprocess: t.Optional[t.Callable] = None
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    def postinit(self):
+        """Post-initialization method."""
         if self.model is None:
-            assert self.identifier is not None
             self.model = self.identifier
+        super().postinit()
 
     @ensure_initialized
     def _multi_predict(
@@ -1201,14 +1204,15 @@ class APIModel(APIBaseModel):
         """Method to get ``Inputs`` instance for model inputs."""
         return Inputs(self.runtime_params)
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
+    def postinit(self):
+        """Initialize the model data (e.g. weights etc.)."""
         self.params['model'] = self.model
         env_variables = re.findall(r'{([A-Z0-9\_]+)}', self.url)
         runtime_variables = re.findall(r'{([a-z0-9\_]+)}', self.url)
         runtime_variables = [x for x in runtime_variables if x != 'model']
         self.envs = env_variables
         self.runtime_params = runtime_variables
+        super().postinit()
 
     def build_url(self, params):
         """Get url for the ``APIModel``.
@@ -1303,9 +1307,10 @@ class SequentialModel(Model):
 
     models: t.List[Model]
 
-    def __post_init__(self, db, example):
+    def postinit(self):
+        """Post-initialization method."""
         self.datatype = self.models[-1].datatype
-        return super().__post_init__(db, example)
+        return super().postinit()
 
     @property
     def signature(self):

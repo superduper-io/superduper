@@ -5,7 +5,7 @@ import networkx as nx
 
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
-from superduper.components.model import Model, Signature, ensure_initialized
+from superduper.components.model import Model, ensure_initialized
 
 
 def input_node(*args):
@@ -160,17 +160,16 @@ class Input(Model):
 
     :param spec: Model specifications from `inspect`
     :param identifier: Unique identifier
-    :param signature: Model signature
     """
 
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
-    signature: Signature = '*args'
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    def postinit(self):
+        """Post initialization method."""
         if isinstance(self.spec, str):
-            self.signature = 'singleton'
+            self._signature = 'singleton'
+        super().postinit()
 
     def predict(self, *args):
         """Single prediction.
@@ -200,9 +199,6 @@ class DocumentInput(Model):
 
     spec: t.Union[str, t.List[str]]
     identifier: str = '_input'
-
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
 
     def predict(self, r):
         """Single prediction.
@@ -255,7 +251,8 @@ class Graph(Model):
     input: Model
     outputs: t.List[t.Union[str, Model]] = dc.field(default_factory=list)
 
-    def __post_init__(self, db, example):
+    def postinit(self):
+        """Post initialization method."""
         self.G = nx.DiGraph()
         self.nodes = {}
         self.version = 0
@@ -284,7 +281,7 @@ class Graph(Model):
                     on=on,
                     update_edge=False,
                 )
-        super().__post_init__(db, example=example)
+        super().postinit()
 
     def connect(
         self,

@@ -22,9 +22,10 @@ class Cohere(APIBaseModel):
 
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example=example)
+    def postinit(self):
+        """Post-initialization method."""
         self.identifier = self.identifier or self.model
+        return super().postinit()
 
 
 class CohereEmbed(Cohere):
@@ -46,10 +47,11 @@ class CohereEmbed(Cohere):
     batch_size: int = 100
     signature: str = 'singleton'
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example=example)
+    def postinit(self):
+        """Post-initialization method."""
         if self.shape is None:
             self.shape = self.shapes[self.identifier]
+        return super().postinit()
 
     @retry
     def predict(self, X: str):

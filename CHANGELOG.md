@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed defaults / behaviours
 
 - No need to add `.signature` to `Model` implementations
+- No need to write `Component.__post_init__` to modify attributes (use `Component.postinit`).
 
 #### New Features & Functionality
 

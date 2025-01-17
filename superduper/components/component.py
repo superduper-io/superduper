@@ -530,6 +530,10 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def __post_init__(self, db):
         super().__post_init__(db)
+        self.postinit()
+
+    def postinit(self):
+        """Post initialization method."""
         self.version: t.Optional[int] = None
         if not self.identifier:
             raise ValueError('identifier cannot be empty or None')
@@ -555,13 +559,9 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Get dependencies on the component."""
         return ()
 
-    def init(self, db=None):
-        """Method to help initiate component field dependencies.
-
-        :param db: The `Datalayer` to use for the operation.
-        """
-        self.db = self.db or db
-        self.unpack(db=db)
+    def init(self):
+        """Method to help initiate component field dependencies."""
+        self.unpack(db=self.db)
 
     # TODO Why both methods?
     def unpack(self, db=None):
@@ -575,7 +575,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         def _init(item):
             nonlocal db
             if isinstance(item, Component):
-                item.init(db=db)
+                item.init()
                 return item
 
             if isinstance(item, dict):

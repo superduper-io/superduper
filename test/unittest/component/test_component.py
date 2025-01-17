@@ -6,7 +6,7 @@ import typing as t
 
 import pytest
 
-from superduper import ObjectModel
+from superduper import ObjectModel, Schema, Table
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.datatype import (
@@ -89,7 +89,7 @@ def test_load_lazily(db):
     assert isinstance(reloaded.object, Blob)
     assert reloaded.object.bytes is None
 
-    reloaded.init(db=db)
+    reloaded.init()
 
     assert callable(reloaded.object)
 
@@ -128,7 +128,7 @@ def test_set_variables(db):
     e = m.encode()
     recon = Document.decode(e).unpack()
 
-    recon.init(db=db)
+    recon.init()
 
     listener = m.set_variables(test="test_value", key="key_value", docs="docs_value")
     assert listener.model.identifier == "test_value"
@@ -221,3 +221,8 @@ class MyClass:
         import numpy
 
         return numpy.random.randn(20)
+
+
+def test_calls_post_init():
+    t = Table('test', schema=Schema('test', fields={'x': 'str'}))
+    assert hasattr(t, 'version')

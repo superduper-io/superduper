@@ -24,7 +24,7 @@ def test_dataset_pin(db, pin):
     new_datas = [{"x": i, "y": [1, 2, 3]} for i in range(10, 20)]
     db["documents"].insert(new_datas).execute()
     dataset: Dataset = db.load("dataset", "test_dataset")
-    dataset.init(db)
+    dataset.init()
     if pin:
         len(dataset.data) == 10
     else:

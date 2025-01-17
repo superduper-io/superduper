@@ -15,10 +15,11 @@ class Jina(APIBaseModel):
 
     api_key: t.Optional[str] = None
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example=example)
+    def postinit(self):
+        """Post-initialization method."""
         self.identifier = self.identifier or self.model
         self.client = JinaAPIClient(model_name=self.identifier, api_key=self.api_key)
+        return super().postinit()
 
 
 class JinaEmbedding(Jina):
@@ -40,8 +41,9 @@ class JinaEmbedding(Jina):
     shape: t.Optional[t.Sequence[int]] = None
     signature: str = 'singleton'
 
-    def __post_init__(self, db, example):
-        super().__post_init__(db, example)
+    def postinit(self):
+        """Post-initialization method."""
+        super().postinit()
         if self.shape is None:
             self.shape = (len(self.client.encode_batch(['shape'])[0]),)
 

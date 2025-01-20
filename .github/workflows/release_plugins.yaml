@@ -15,8 +15,10 @@ jobs:
 
       - name: Extract plugin names from commit message
         id: set-matrix
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          commit_message="${{ github.event.head_commit.message }}"
+          commit_message="$COMMIT_MESSAGE"
           echo "Commit message: $commit_message"
           plugin_names=$(echo "$commit_message" | grep -oP '\[PLUGINS\] Bump Version \[\K[^\]]+')
           

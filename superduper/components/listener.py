@@ -37,6 +37,7 @@ class Listener(CDC):
 
     type_id: t.ClassVar[str] = 'listener'
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
+    _fields = {'model': 'component', 'select': 'leaf', 'output_table': 'component'}
 
     key: ModelInputType
     model: Model

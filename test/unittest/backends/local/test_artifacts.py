@@ -23,7 +23,7 @@ class TestComponentBytes(Component):
     function: callable
     type_id: t.ClassVar[str] = "TestComponent"
 
-    _fields = {'function': 'dill_serializer'}
+    _fields = {'function': 'default'}
 
 
 @pytest.fixture

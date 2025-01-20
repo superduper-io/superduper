@@ -20,6 +20,8 @@ class OtherSer(Leaf):
 
 
 class TestSubModel(Component):
+    _fields = {'c': 'component', 'd': 'slist', 'e': 'leaf', 'f': 'default'}
+
     type_id: t.ClassVar[str] = 'test-sub-model'
     a: int = 1
     b: str = 'b'
@@ -30,6 +32,8 @@ class TestSubModel(Component):
 
 
 class MySer(Leaf):
+    _fields = {'c': 'leaf'}
+
     a: int = 1
     b: str = 'b'
     c: Leaf = dc.field(default_factory=OtherSer(identifier='test', d='test'))
@@ -37,7 +41,7 @@ class MySer(Leaf):
 
 def test_encode_leaf():
     obj = Test('test', a=1, b='test_b', c=1.5)
-    assert obj.dict().encode() == {
+    assert obj.dict().encode(keep_schema=False) == {
         '_path': 'test.unittest.base.test_leaf.Test',
         'uuid': obj.uuid,
         'identifier': 'test',
@@ -57,7 +61,7 @@ def test_encode_leaf_with_children():
         b='test_b',
         c=OtherSer(identifier='other_ser', d='test'),
     )
-    assert obj.dict().encode() == {
+    assert obj.dict().encode(keep_schema=False) == {
         '_path': 'test.unittest.base.test_leaf.MySer',
         'identifier': 'my_ser',
         'uuid': obj.uuid,

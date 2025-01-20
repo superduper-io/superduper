@@ -1,3 +1,4 @@
+import copy
 import dataclasses as dc
 import importlib
 import inspect
@@ -13,6 +14,7 @@ _CLASS_REGISTRY = {}
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+    from superduper.components.datatype import BaseDataType
 
 
 def import_item(
@@ -65,6 +67,20 @@ def import_item(
         raise e
 
 
+def _is_optional_callable(annotation) -> bool:
+    """Tell if an annotation is t.Optional[t.Callable].
+
+    >>> is_optional_callable(t.Optional[t.Callable])
+    True
+    """
+    # Check if the annotation is of the form Optional[...]
+    if t.get_origin(annotation) is t.Union:
+        # Get the type inside Optional and check if it is Callable
+        inner_type = t.get_args(annotation)[0]  # Optional[X] means X is at index 0
+        return inner_type is t.Callable
+    return False
+
+
 class LeafMeta(type):
     """Metaclass that merges docstrings # noqa."""
 
@@ -115,6 +131,45 @@ class LeafMeta(type):
                 v = '\n    '.join(v)
                 param_string += f':param {k}: {v}\n'
             cls.__doc__ = placeholder_doc.replace('!!!', param_string)
+
+        cls._fields = copy.deepcopy(cls._fields)
+        for base in bases:
+            try:
+                cls._fields.update(
+                    {k: v for k, v in base._fields.items() if k not in cls._fields}
+                )
+            except AttributeError:
+                continue
+
+        for field in dc.fields(cls):
+            if field.name in cls._fields:
+                continue
+            try:
+                # For some reason it is random whether annotations are strings or not
+                annotation = cls.__annotations__[field.name]
+                if annotation in {
+                    't.Callable',
+                    't.Optional[t.Callable]',
+                    't.Callable | None',
+                }:
+                    cls._fields[field.name] = 'default'
+                elif inspect.isclass(annotation) and issubclass(annotation, bases):
+                    cls._fields[field.name] = 'component'
+                elif annotation is t.Callable or _is_optional_callable(annotation):
+                    cls._fields[field.name] = 'default'
+                # a hack...
+                elif 'superduper.misc.typing' in str(annotation):
+                    annotation = str(annotation)
+                    import re
+
+                    match1 = re.match('^typing\.Optional\[(.*)\]$', annotation)
+                    match2 = re.match('^t\.Optional\[(.*)\]$', annotation)
+                    match = match1 or match2
+                    if match:
+                        annotation = match.groups()[0]
+                    cls._fields[field.name] = annotation.split('.')[-1]
+            except KeyError:
+                continue
         return cls
 
 
@@ -132,11 +187,71 @@ class Leaf(metaclass=LeafMeta):
     """
 
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
+    # TODO no longer needed?
     literals: t.ClassVar[t.Sequence[str]] = ()
+    _class_schema = None
+    _fields: t.ClassVar[t.Dict[str, t.Union['BaseDataType', str]]] = {}
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=build_uuid)
+
+    @staticmethod
+    def get_cls_from_path(path):
+        """Get class from a path.
+
+        :param path: Import path to the class.
+        """
+        parts = path.split('.')
+        cls = parts[-1]
+        module = '.'.join(parts[:-1])
+        module = importlib.import_module(module)
+        return getattr(module, cls)
+
+    @staticmethod
+    def get_cls_from_blob(blob_ref, db):
+        """Get class from a blob reference.
+
+        :param blob_ref: Blob reference identifier.
+        :param db: Datalayer instance.
+        """
+        from superduper.components.datatype import DEFAULT_SERIALIZER, Blob
+
+        bytes_ = Blob(identifier=blob_ref.split(':')[-1], db=db).unpack()
+        return DEFAULT_SERIALIZER.decode_data(bytes_)
+
+    def reconnect(self, db):
+        """Reconnect the object to a new datalayer.
+
+        :param db: Datalayer instance.
+        """
+        r = self.dict()
+        if '_path' in r:
+            r.pop('_path')
+        elif '_object' in r:
+            r.pop('_object')
+        return self.from_dict(r, db=db)
+
+    @classmethod
+    def from_dict(cls, r: t.Dict, db: 'Datalayer'):
+        try:
+            out = cls(**{k: v for k, v in r.items() if k != '_path'}, db=db)
+            return out
+        except TypeError as e:
+            if 'got an unexpected keyword argument' in str(e):
+                init_params = {
+                    k: v
+                    for k, v in r.items()
+                    if k in inspect.signature(cls.__init__).parameters
+                }
+                post_init_params = {
+                    k: v for k, v in r.items() if k in cls.set_post_init
+                }
+                instance = cls(**init_params, db=db)
+                for k, v in post_init_params.items():
+                    setattr(instance, k, v)
+                return instance
+            raise e
 
     def postinit(self):
         """Post-initialization method."""
@@ -163,8 +278,26 @@ class Leaf(metaclass=LeafMeta):
             if isinstance(getattr(self, f.name), Leaf)
         }
 
+    @classmethod
+    def cls_encode(cls, item: 'Leaf', builds, blobs, files, leaves_to_keep=()):
+        """Encode a dictionary component into a `Component` instance.
+
+        :param r: Object to be encoded.
+        """
+        return item.encode(
+            builds=builds, blobs=blobs, files=files, leaves_to_keep=leaves_to_keep
+        )
+
     # TODO signature is inverted from `Component.encode`
-    def encode(self, leaves_to_keep=(), metadata: bool = True, defaults: bool = True):
+    def encode(
+        self,
+        leaves_to_keep=(),
+        metadata: bool = True,
+        defaults: bool = True,
+        builds: t.Dict = None,
+        blobs: t.Dict = None,
+        files: t.Dict = None,
+    ):
         """Encode itself.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
@@ -172,29 +305,21 @@ class Leaf(metaclass=LeafMeta):
         :param leaves_to_keep: Leaves to keep.
         :param metadata: Include metadata.
         :param defaults: Include default values.
+        :param builds: Builds.
+        :param blobs: Blobs.
+        :param files: Files.
         """
-        from superduper.base.document import _deep_flat_encode
-
         builds: t.Dict = {}
         blobs: t.Dict = {}
         files: t.Dict = {}
         uuids_to_keys: t.Dict = {}
-        r = _deep_flat_encode(
-            self.dict(
-                metadata=metadata,
-                defaults=defaults,
-            ),
-            builds,
-            blobs=blobs,
-            files=files,
-            leaves_to_keep=leaves_to_keep,
-            metadata=metadata,
-            defaults=defaults,
-            uuids_to_keys=uuids_to_keys,
-        )
-        if self.identifier in builds:
-            raise ValueError(f'Identifier {self.identifier} already exists in builds.')
-        builds[self.identifier] = {k: v for k, v in r.items() if k != 'identifier'}
+
+        r = self.dict(metadata=metadata, defaults=defaults)
+
+        if r.schema is not None:
+            r = r.schema.encode_data(r, builds=builds, blobs=blobs, files=files)
+        else:
+            r = dict(r)
 
         def _replace_loads_with_references(record, lookup):
             if isinstance(record, str) and record.startswith('&:component:'):
@@ -223,13 +348,16 @@ class Leaf(metaclass=LeafMeta):
 
         if not metadata:
             builds = _replace_uuids_with_keys(builds)
-            for r in builds.values():
-                if 'uuid' in r:
-                    del r['uuid']
+            for v in builds.values():
+                if 'uuid' in v:
+                    del v['uuid']
+            if 'uuid' in r:
+                del r['uuid']
 
+        # TODO deprecate this wrapper (not needed)
         return SuperDuperFlatEncode(
             {
-                '_base': f'?{self.identifier}',
+                **r,
                 KEY_BUILDS: builds,
                 KEY_BLOBS: blobs,
                 KEY_FILES: files,
@@ -274,6 +402,18 @@ class Leaf(metaclass=LeafMeta):
                 out[f.name] = value
         return out
 
+    @classmethod
+    def build_class_schema(cls, db):
+        from superduper import Schema
+        from superduper.components.datatype import INBUILT_DATATYPES
+
+        _fields = cls._fields.copy()
+        for k in _fields:
+            if isinstance(_fields[k], str):
+                _fields[k] = INBUILT_DATATYPES[_fields[k].lower()](k, db=db)
+
+        return Schema(f'{cls.__name__}/class_schema', fields=_fields, db=db)
+
     # TODO the signature does not agree with the `Component.dict` method
     def dict(self, metadata: bool = True, defaults: bool = True):
         """Return dictionary representation of the object.
@@ -282,6 +422,8 @@ class Leaf(metaclass=LeafMeta):
         :param defaults: Include default values.
         """
         from superduper import Document
+
+        s = self.build_class_schema(db=self.db)
 
         r = asdict(self)
 
@@ -307,11 +449,12 @@ class Leaf(metaclass=LeafMeta):
 
         if self.__class__.__module__ == '__main__':
             return Document(
-                {'_object': DEFAULT_SERIALIZER.encode_data(self.__class__), **r}
+                {'_object': DEFAULT_SERIALIZER.encode_data(self.__class__), **r},
+                schema=s,
             )
 
         path = f'{self.__class__.__module__}.{self.__class__.__name__}'
-        return Document({'_path': path, **r})
+        return Document({'_path': path, **r}, schema=s)
 
     @classmethod
     def _register_class(cls):

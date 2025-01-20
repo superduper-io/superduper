@@ -22,6 +22,7 @@ class Table(Component):
     """
 
     type_id: t.ClassVar[str] = 'table'
+    _fields = {'schema': 'component'}
 
     schema: Schema
     primary_id: str = DEFAULT_PRIMARY_ID

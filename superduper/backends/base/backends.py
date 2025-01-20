@@ -1,4 +1,3 @@
-# TODO deprecate the implementations in favour of the plugin paradigm
 import typing as t
 from abc import ABC, abstractmethod
 

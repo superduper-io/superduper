@@ -25,7 +25,6 @@ from superduper.base.leaf import Leaf, LeafMeta
 if t.TYPE_CHECKING:
     from superduper import Document
     from superduper.base.datalayer import Datalayer
-    from superduper.components.datatype import BaseDataType
     from superduper.components.plugin import Plugin
 
 
@@ -117,44 +116,6 @@ class ComponentMeta(LeafMeta):
             if hasattr(attr_value, 'events'):
                 new_cls.triggers.add(attr_name)
 
-        import copy
-
-        new_cls._fields = copy.deepcopy(new_cls._fields)
-        for base in bases:
-            try:
-                new_cls._fields.update(
-                    {k: v for k, v in base._fields.items() if k not in new_cls._fields}
-                )
-            except AttributeError:
-                continue
-
-        for field in dc.fields(new_cls):
-            if field.name in new_cls._fields:
-                continue
-            try:
-                # For some reason it is random whether annotations are strings or not
-                annotation = new_cls.__annotations__[field.name]
-                if annotation in {
-                    't.Callable',
-                    't.Optional[t.Callable]',
-                    't.Callable | None',
-                }:
-                    new_cls._fields[field.name] = 'default'
-                elif annotation is t.Callable or _is_optional_callable(annotation):
-                    new_cls._fields[field.name] = 'default'
-                # a hack...
-                elif 'superduper.misc.typing' in str(annotation):
-                    annotation = str(annotation)
-                    import re
-
-                    match1 = re.match('^typing\.Optional\[(.*)\]$', annotation)
-                    match2 = re.match('^t\.Optional\[(.*)\]$', annotation)
-                    match = match1 or match2
-                    if match:
-                        annotation = match.groups()[0]
-                    new_cls._fields[field.name] = annotation.split('.')[-1]
-            except KeyError:
-                continue
         return new_cls
 
 
@@ -178,7 +139,7 @@ class Component(Leaf, metaclass=ComponentMeta):
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     type_id: t.ClassVar[str] = 'component'
-    _fields: t.ClassVar[t.Dict[str, t.Union['BaseDataType', str]]] = {}
+    _fields = {'upstream': 'slist'}
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
     upstream: t.Optional[t.List["Component"]] = None
@@ -220,16 +181,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         other.uuid = self.uuid
         other.version = self.version
 
-    # TODO no longer needed
-    def set_db(self, value: "Datalayer"):
-        """Set the db for the component.
-
-        :param value: The value to set the db to.
-        """
-        self.db: "Datalayer" = value
-        for child in self.get_children():
-            child.set_db(value)
-
     def get_children_refs(self, deep: bool = False, only_initializing: bool = False):
         """Get all the children of the component.
 
@@ -265,6 +216,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param deep: If set `True` get all recursively.
         """
         r = self.dict().encode(leaves_to_keep=(Component,))
+
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:
@@ -590,7 +542,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
             return item
 
-        schema = self.build_class_schema()
+        schema = self.build_class_schema(db=self.db)
 
         for f in dc.fields(self):
             item = getattr(self, f.name)
@@ -676,30 +628,18 @@ class Component(Leaf, metaclass=ComponentMeta):
 
             out = Document.decode(config_object, db=db).unpack()
         else:
+            from superduper.backends.local.artifacts import FileSystemArtifactStore
 
-            def load_blob(blob, loader=None):
-                from superduper.misc.hash import hash_string
-
-                def _read_blob(blob_path):
-                    with open(blob_path, 'rb') as f:
-                        return f.read()
-
-                key = hash_string(blob)[:32]  # uuid length
-                cached_path = path + '/blobs/' + key
-                if os.path.exists(cached_path):
-                    return _read_blob(cached_path)
-                elif loader and loader.is_uri(blob):
-                    with open(path + '/blobs/' + key, 'wb') as f:
-                        data = loader(blob)
-                        f.write(data)
-                        return data
-                else:
-                    blob_path = path + '/blobs/' + blob
-                    return _read_blob(blob_path=blob_path)
-
-            getters = {'blob': load_blob}
-
-            out = Document.decode(config_object, getters=getters).unpack()
+            artifact_store = FileSystemArtifactStore(
+                conn=path,
+                name='tmp_artifact_store',
+                files='files',
+                blobs='blobs',
+            )
+            db = namedtuple('tmp_db', field_names=('artifact_store',))(
+                artifact_store=artifact_store
+            )
+            out = Document.decode(config_object, db=db).unpack()
             if was_zipped:
                 shutil.rmtree(path)
         return out
@@ -742,7 +682,6 @@ class Component(Leaf, metaclass=ComponentMeta):
             defaults=defaults, metadata=metadata
         )
 
-        del r['_schema']
         if not metadata:
             del r['uuid']
 
@@ -870,19 +809,28 @@ class Component(Leaf, metaclass=ComponentMeta):
             return r
 
         if refs:
-            r = _convert_components_to_refs(r)
+            r = Document(_convert_components_to_refs(r), schema=self._class_schema)
 
-        s = self.build_class_schema()
+        # from superduper.components.datatype import Saveable
 
-        from superduper.components.datatype import Saveable
+        # for k in s.fields:
+        #     # TODO remove this duality - either use Saveable or Leaf
+        #     # not both
 
-        for k in s.fields:
-            # TODO remove this duality - either use Saveable or Leaf
-            # not both
-            if isinstance(r[k], Leaf):
-                continue
-            if r[k] is not None and not isinstance(r[k], Saveable):
-                r[k] = s.fields[k].encode_data(r[k])
+        #     if k not in r:
+        #         continue
+
+        #     if isinstance(r[k], Leaf):
+        #         continue
+
+        #     if inspect.isclass(s.fields[k]) and issubclass(s.fields[k], Leaf):
+        #         continue
+
+        #     if s.fields[k].encodable == 'leaf':
+        #         continue
+
+        #     if r[k] is not None and not isinstance(r[k], Saveable):
+        #         r[k] = s.fields[k].encode_data(r[k])
 
         if metadata:
             r['type_id'] = self.type_id
@@ -892,18 +840,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         if r.get('status') is not None:
             r['status'] = str(self.status)
 
-        return Document(r, schema=s)
-
-    @classmethod
-    def build_class_schema(cls):
-        from superduper import Schema
-        from superduper.components.datatype import INBUILT_DATATYPES
-
-        _fields = cls._fields.copy()
-        for k in _fields:
-            if isinstance(_fields[k], str):
-                _fields[k] = INBUILT_DATATYPES[_fields[k]]
-        return Schema(f'{cls.__name__}/class_schema', fields=_fields)
+        return r
 
     # TODO needed? looks to have legacy "_content"
     @classmethod

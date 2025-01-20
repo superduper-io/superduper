@@ -123,6 +123,7 @@ class QueryDataset:
         return self._get_item(input)
 
 
+# TODO remove - never used
 class CachedQueryDataset(QueryDataset):
     """Cached Query Dataset for fetching documents from database.
 

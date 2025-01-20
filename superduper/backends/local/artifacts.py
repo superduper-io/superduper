@@ -13,9 +13,11 @@ class FileSystemArtifactStore(ArtifactStore):
     """
     Abstraction for storing large artifacts separately from primary data.
 
-    :param conn: root directory of the artifact store
-    :param name: subdirectory to use for this artifact store
-    :param flavour: Flavour of the artifact store
+    :param conn: Root directory of the artifact store.
+    :param name: Name of the artifact store.
+    :param flavour: Flavour of the artifact store.
+    :param files: Subdirectory to use for files.
+    :param blobs: Subdirectory to use for blobs.
     """
 
     def __init__(
@@ -23,17 +25,30 @@ class FileSystemArtifactStore(ArtifactStore):
         conn: t.Any,
         name: t.Optional[str] = None,
         flavour: t.Optional[str] = None,
+        files: str = '',
+        blobs: str = '',
     ):
         if conn.startswith('filesystem://'):
             conn = conn.split('filesystem://')[-1]
         super().__init__(conn, name, flavour)
+
         if not os.path.exists(self.conn):
             logging.info('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
 
-    def _exists(self, file_id: str):
-        path = os.path.join(self.conn, file_id)
-        return os.path.exists(path)
+        self.files = os.path.join(self.conn, files) if files else self.conn
+        if self.files != self.conn and not os.path.exists(self.files):
+            logging.info('Creating file store directory')
+            os.makedirs(self.files, exist_ok=True)
+
+        self.blobs = os.path.join(self.conn, blobs) if blobs else self.conn
+        if self.blobs != self.conn and not os.path.exists(self.blobs):
+            logging.info('Creating file store directory')
+            os.makedirs(self.blobs, exist_ok=True)
+
+    # def _exists(self, file_id: str):
+    #     path = os.path.join(self.conn, file_id)
+    #     return os.path.exists(path)
 
     def url(self):
         """Return the URL of the artifact store."""
@@ -44,7 +59,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
         :param file_id: File id uses to identify artifact in store
         """
-        path = os.path.join(self.conn, file_id)
+        path = os.path.join(self.blobs, file_id)
         if os.path.isdir(path):
             shutil.rmtree(path)
         else:
@@ -81,7 +96,7 @@ class FileSystemArtifactStore(ArtifactStore):
         :param serialized: The bytes to be saved.
         :param file_id: The id of the file.
         """
-        path = os.path.join(self.conn, file_id)
+        path = os.path.join(self.blobs, file_id)
         if os.path.exists(path):
             logging.warn(f"File {path} already exists")
 
@@ -95,7 +110,7 @@ class FileSystemArtifactStore(ArtifactStore):
 
         :param file_id: The id of the file.
         """
-        with open(os.path.join(self.conn, file_id), 'rb') as f:
+        with open(os.path.join(self.blobs, file_id), 'rb') as f:
             return f.read()
 
     def put_file(self, file_path: str, file_id: str):
@@ -108,7 +123,7 @@ class FileSystemArtifactStore(ArtifactStore):
         """
         path = Path(file_path)
         name = path.name
-        file_id_folder = os.path.join(self.conn, file_id)
+        file_id_folder = os.path.join(self.files, file_id)
 
         os.makedirs(file_id_folder, exist_ok=True)
         os.chmod(file_id_folder, 0o777)
@@ -126,8 +141,8 @@ class FileSystemArtifactStore(ArtifactStore):
 
         :param file_id: The id of the file.
         """
-        logging.info(f"Loading file {file_id} from {self.conn}")
-        path = os.path.join(self.conn, file_id)
+        logging.info(f"Loading file {file_id} from {self.files}")
+        path = os.path.join(self.files, file_id)
         files = os.listdir(path)
         assert len(files) == 1, f"Expected 1 file, got {len(files)}"
         name = files[0]

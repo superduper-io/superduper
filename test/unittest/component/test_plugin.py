@@ -54,13 +54,9 @@ def create_package_plugin(
 def create_import_plugin(tempdirname):
     import_path = os.path.join(tempdirname, "import")
     component_dict = {
-        "_base": "?plugin",
-        "_builds": {
-            "plugin": {
-                "_path": "superduper.components.plugin.Plugin",
-                "path": "&:file:p_import:file_id",
-            },
-        },
+        "identifier": "plugin",
+        "_path": "superduper.components.plugin.Plugin",
+        "path": "&:file:p_import:file_id",
     }
     os.makedirs(import_path)
     write_path(os.path.join(import_path, "component.json"), json.dumps(component_dict))

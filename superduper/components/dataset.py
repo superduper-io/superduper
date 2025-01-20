@@ -9,6 +9,7 @@ from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
 from superduper.components.component import Component, ensure_initialized
+from superduper.components.schema import Schema
 
 
 class Dataset(Component):
@@ -19,19 +20,21 @@ class Dataset(Component):
     :param random_seed: The random seed to use for sampling.
     :param creation_date: The date the dataset was created.
     :param raw_data: The raw data for the dataset.
+    :param schema: Optional schema for decoding the data.
     :param pin: Whether to pin the dataset.
                 If True, the dataset will load the datas from the database every time.
                 If False, the dataset will cache the datas after we apply to db.
     """
 
     type_id: t.ClassVar[str] = 'dataset'
-    _fields = {'raw_data': 'default'}
+    _fields = {'raw_data': 'default', 'select': 'leaf'}
 
     select: t.Optional[Query] = None
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Sequence[t.Any]] = None
+    schema: t.Optional[Schema] = None
     pin: bool = False
 
     def postinit(self):
@@ -50,9 +53,13 @@ class Dataset(Component):
         super().init()
         if self.pin:
             assert self.raw_data is not None
-            self._data = [
-                Document.decode(r, db=self.db).unpack() for r in self.raw_data
-            ]
+            if self.schema is not None:
+                self._data = [
+                    Document.decode(r, db=self.db, schema=self.schema).unpack()
+                    for r in self.raw_data
+                ]
+            else:
+                self._data = self.raw_data
         else:
             self._data = self._load_data(self.db)
 

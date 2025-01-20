@@ -1,3 +1,4 @@
+# TODO - remove in favour of annotations on classes
 import importlib
 import typing as t
 
@@ -6,13 +7,16 @@ import numpy as np
 from superduper import CFG, logging
 from superduper.base.exceptions import UnsupportedDatatype
 from superduper.components.datatype import (
-    DEFAULT_ENCODER,
+    INBUILT_DATATYPES,
+    JSON,
     BaseDataType,
     DataTypeFactory,
     Vector,
-    json_encoder,
 )
 from superduper.components.schema import FieldType, Schema
+
+if t.TYPE_CHECKING:
+    from superduper.base.datalayer import Datalayer
 
 
 def register_module(module_name):
@@ -37,19 +41,18 @@ BASE_TYPES = (
 )
 
 
-def infer_datatype(data: t.Any) -> t.Optional[t.Union[BaseDataType, type]]:
+def infer_datatype(
+    data: t.Any, db: 'Datalayer'
+) -> t.Optional[t.Union[BaseDataType, type]]:
     """Infer the datatype of a given data object.
 
     If the data object is a base type, return None,
     Otherwise, return the inferred datatype
 
-    :param data: The data object
+    :param data: The data object.
+    :param db: The datalayer.
     """
     datatype = None
-
-    # # TODO - why this?
-    # if isinstance(data, _BaseEncodable):
-    #     return datatype
 
     try:
         from bson import ObjectId
@@ -60,48 +63,52 @@ def infer_datatype(data: t.Any) -> t.Optional[t.Union[BaseDataType, type]]:
         pass
 
     if isinstance(data, BASE_TYPES):
-        datatype = type(data)
+        datatype: BaseDataType = type(data)
         logging.debug(f"Inferred base type: {datatype} for data:", data)
         return datatype
 
     for factory in FACTORIES:
         if factory.check(data):
-            datatype = factory.create(data)
+            datatype: BaseDataType = factory.create(data, db=db)
             assert isinstance(datatype, BaseDataType) or isinstance(datatype, FieldType)
             logging.debug(f"Inferred datatype: {datatype.identifier} for data: {data}")
             break
 
     if datatype is None:
+        datatype: BaseDataType = INBUILT_DATATYPES['encodable']('encodable', db=db)
         try:
-            encoded_data = DEFAULT_ENCODER.encode_data(data)
-            decoded_data = DEFAULT_ENCODER.decode_data(encoded_data)
+            encoded_data = datatype.encode_data(data)
+            decoded_data = datatype.decode_data(encoded_data)
             assert isinstance(decoded_data, type(data))
         except Exception as e:
+            import traceback
+
+            logging.error(traceback.format_exc())
             raise UnsupportedDatatype(
                 f"Could not infer datatype for data: {data}"
             ) from e
-
         logging.debug(f"Inferring default datatype for data: {data}")
-        datatype = DEFAULT_ENCODER
 
     return datatype
 
 
 def infer_schema(
     data: t.Mapping[str, t.Any],
+    db: 'Datalayer',
     identifier: t.Optional[str] = None,
 ) -> Schema:
     """Infer a schema from a given data object.
 
-    :param data: The data object
-    :param identifier: The identifier for the schema, if None, it will be generated
+    :param data: The data object.
+    :param db: The datalayer.
+    :param identifier: The identifier for the schema, if None, it will be generated.
     """
     assert isinstance(data, dict), "Data must be a dictionary"
 
     schema_data = {}
     for k, v in data.items():
         try:
-            data_type = infer_datatype(v)
+            data_type = infer_datatype(v, db=db)
         except UnsupportedDatatype as e:
             raise UnsupportedDatatype(
                 f"Could not infer datatype for key: {k}, value: {v}"
@@ -123,7 +130,7 @@ def infer_schema(
 
     identifier = "AUTO-" + identifier
 
-    return Schema(identifier=identifier, fields=schema_data)  # type: ignore
+    return Schema(identifier=identifier, fields=schema_data, db=db)  # type: ignore
 
 
 class VectorTypeFactory(DataTypeFactory):
@@ -138,12 +145,13 @@ class VectorTypeFactory(DataTypeFactory):
         return isinstance(data, np.ndarray) and len(data.shape) == 1
 
     @staticmethod
-    def create(data: t.Any) -> BaseDataType | FieldType:
-        """Create a JSON datatype.
+    def create(data: t.Any, db: 'Datalayer') -> BaseDataType | FieldType:
+        """Create a vector datatype.
 
-        :param data: The data object
+        :param data: The data object.
+        :param db: The datalayer.
         """
-        return Vector(shape=(len(data),), dtype=str(data.dtype))
+        return Vector(shape=(len(data),), dtype=str(data.dtype), db=db)
 
 
 class JsonDataTypeFactory(DataTypeFactory):
@@ -153,23 +161,24 @@ class JsonDataTypeFactory(DataTypeFactory):
     def check(data: t.Any) -> bool:
         """Check if the data is able to be encoded by the JSON serializer.
 
-        :param data: The data object
+        :param data: The data object.
         """
         try:
-            json_encoder.encode_data(data)
+            JSON('json').encode_data(data)
             return True
         except Exception:
             return False
 
     @staticmethod
-    def create(data: t.Any) -> BaseDataType | FieldType:
+    def create(data: t.Any, db: 'Datalayer') -> BaseDataType | FieldType:
         """Create a JSON datatype.
 
-        :param data: The data object
+        :param data: The data object.
+        :param db: The datalayer.
         """
         if CFG.json_native:
             return FieldType(identifier='json')
-        return json_encoder
+        return JSON('json', db=db)
 
 
 register_module("superduper_torch.encoder")

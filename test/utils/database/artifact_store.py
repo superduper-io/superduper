@@ -8,9 +8,6 @@ def test_bytes(artifact_store: ArtifactStore):
     # test put_bytes
     artifact_store.put_bytes(b"hello", "id")
 
-    # test exists
-    assert artifact_store.exists("id")
-
     # test get_bytes
     assert artifact_store.get_bytes("id") == b"hello"
 
@@ -59,9 +56,12 @@ def _test_file(artifact_store: ArtifactStore):
         with open(loaded_file_path, "r") as file:
             assert file.read() == "hello"
 
-    assert artifact_store.exists(new_file_id)
     artifact_store._delete_bytes(new_file_id)
-    assert not artifact_store.exists(new_file_id)
+
+    import pytest
+
+    with pytest.raises(FileNotFoundError):
+        loaded_file_path = artifact_store.get_file(new_file_id)
 
 
 def _test_directory(artifact_store: ArtifactStore):
@@ -90,6 +90,9 @@ def _test_directory(artifact_store: ArtifactStore):
 
         assert compare_directories(path, loaded_file_path)
 
-    assert artifact_store.exists(new_file_id)
     artifact_store._delete_bytes(new_file_id)
-    assert not artifact_store.exists(new_file_id)
+
+    import pytest
+
+    with pytest.raises(FileNotFoundError):
+        loaded_file_path = artifact_store.get_file(new_file_id)

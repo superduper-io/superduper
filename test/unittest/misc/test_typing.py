@@ -1,5 +1,5 @@
 from superduper.components.component import Component
-from superduper.components.datatype import File, Pickle
+from superduper.components.datatype import Dill, File
 from superduper.misc import typing as t
 
 
@@ -12,11 +12,11 @@ def new_func(x):
     return x + 1
 
 
-def test_annotations():
-    s = MyComponent.build_class_schema()
+def test_annotations(db):
+    s = MyComponent.build_class_schema(db)
 
     assert isinstance(s.fields['path'], File)
-    assert isinstance(s.fields['my_func'], Pickle)
+    assert isinstance(s.fields['my_func'], Dill)
 
     import tempfile
 

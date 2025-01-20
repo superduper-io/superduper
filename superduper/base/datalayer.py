@@ -17,9 +17,9 @@ from superduper.base.config import Config
 from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.components.component import Component
+from superduper.components.datatype import LeafType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-from superduper.misc.importing import import_object
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -469,21 +469,15 @@ class Datalayer:
                 info = self.metadata.get_component_by_uuid(
                     uuid=uuid, allow_hidden=allow_hidden
                 )
-                try:
-                    class_schema = import_object(info['_path']).build_class_schema()
-                except (KeyError, AttributeError):
-                    # if defined in __main__ then the class is directly serialized
-                    assert '_object' in info
-                    from superduper.components.datatype import DEFAULT_SERIALIZER, Blob
+                # to prevent deserialization propagating back to the cache
+                builds = {k: v for k, v in info.get('_builds', {}).items()}
+                for k in builds:
+                    builds[k]['identifier'] = k.split(':')[-1]
 
-                    bytes_ = Blob(
-                        identifier=info['_object'].split(':')[-1], db=self
-                    ).unpack()
-                    object = DEFAULT_SERIALIZER.decode_data(bytes_)
-                    class_schema = object.build_class_schema()
-
-                c = Document.decode(info, db=self, schema=class_schema)
-                c.db = self
+                c = LeafType('leaf_type', db=self).decode_data(
+                    {k: v for k, v in info.items() if k != '_builds'},
+                    builds=builds,
+                )
                 if c.cache:
                     logging.info(f'Adding {c.huuid} to cache')
                     self.cluster.cache.put(c)
@@ -506,9 +500,9 @@ class Datalayer:
                     identifier=identifier,
                     allow_hidden=allow_hidden,
                 )
-                c = Document.decode(info, db=self)
-                c.db = self
-
+                c = LeafType('leaf_type', db=self).decode_data(
+                    info, builds=info.get('_builds', {})
+                )
                 if c.cache:
                     logging.info(f'Adding {c.huuid} to cache')
                     self.cluster.cache.put(c)
@@ -735,7 +729,7 @@ class Datalayer:
         # TODO have a slightly more user-friendly schema
         from superduper.misc.auto_schema import infer_schema
 
-        return infer_schema(data, identifier=identifier)
+        return infer_schema(data, identifier=identifier, db=self)
 
     @property
     def cfg(self) -> Config:

@@ -193,6 +193,14 @@ class Trainer(Component):
     :param validation: Validation object to measure training performance
     """
 
+    _fields = {
+        'transform': 'default',
+        'select': 'leaf',
+        'metric_values': 'json',
+        'compute_kwargs': 'json',
+        'validation': 'component',
+    }
+
     type_id: t.ClassVar[str] = 'trainer'
     key: ModelInputType
     select: Query
@@ -231,6 +239,8 @@ class Validation(Component):
     :param key: Model input type key
     :param datasets: Sequence of dataset.
     """
+
+    _fields = {'datasets': 'slist', 'metrics': 'slist'}
 
     type_id: t.ClassVar[str] = 'validation'
     metrics: t.Sequence[Metric] = ()
@@ -296,7 +306,13 @@ class Mapping:
                 kwargs[v] = r[k]
         except KeyError:
             raise KeyError(f'Key `{k}` not found in document {r}.')
-        args = Document({'_base': args}).unpack()
+
+        args = list(args)
+        for i, arg in enumerate(args):
+            if isinstance(arg, Leaf):
+                args[i] = arg.unpack()
+        args = tuple(args)
+
         kwargs = Document(kwargs).unpack()
         if self.signature == '**kwargs':
             return kwargs
@@ -387,6 +403,17 @@ class Model(Component, metaclass=ModelMeta):
     :param example: An example to auto-determine the schema/ datatype.
     :param deploy: Creates a standalone class instance on compute cluster.
     """
+
+    _fields = {
+        'datatype': 'leaf',
+        'output_schema': 'component',
+        'model_update_kwargs': 'json',
+        'predict_kwargs': 'json',
+        'compute_kwargs': 'json',
+        'validation': 'component',
+        'metric_values': 'json',
+        'trainer': 'component',
+    }
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
     type_id: t.ClassVar[str] = 'model'
@@ -1067,6 +1094,7 @@ class ImportedModel(Model):
 
     """
 
+    _fields = {'object': 'leaf'}
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
     object: Leaf
     method: t.Optional[str] = None
@@ -1447,7 +1475,9 @@ class RAGModel(Model):
 
         :param query: Query string.
         """
-        assert self.db, 'db cannot be None'
+        from superduper.base.datalayer import Datalayer
+
+        assert isinstance(self.db, Datalayer)
         select = self.select.set_variables(db=self.db, query=query)
         results = [r.unpack() for r in select.execute()]
         prompt = self._build_prompt(query, results)

@@ -358,10 +358,11 @@ def test_complete_uuids(db):
 def test_autofill_data_listener(db):
     db.cfg.auto_schema = True
 
-    m = ObjectModel(
-        "m1",
-        object=lambda x: x + 2,
-    )
+    def get_model():
+        return ObjectModel(
+            "m1",
+            object=lambda x: x + 2,
+        )
 
     db['test'].insert(
         [
@@ -370,8 +371,10 @@ def test_autofill_data_listener(db):
             {"x": 3},
         ]
     )
-    l1 = m.to_listener(select=db['test'].select(), key='x', identifier='l1')
-    l2 = m.to_listener(select=db[l1.outputs].select(), key=l1.outputs, identifier='l2')
+    l1 = get_model().to_listener(select=db['test'].select(), key='x', identifier='l1')
+    l2 = get_model().to_listener(
+        select=db[l1.outputs].select(), key=l1.outputs, identifier='l2'
+    )
 
     db.apply(l1)
     db.apply(l2)

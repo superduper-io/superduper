@@ -23,7 +23,7 @@ INBUILT_DATATYPES = {}
 
 
 if t.TYPE_CHECKING:
-    pass
+    from superduper.base.datalayer import Datalayer
 
 
 class DataTypeFactory:
@@ -71,18 +71,202 @@ class BaseDataType(Component, metaclass=DataTypeMeta):
     cache: bool = True
 
     @abstractmethod
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Decode the item as `bytes`.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
 
     @abstractmethod
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item from bytes.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
+
+
+class LeafType(BaseDataType):
+    """Datatype for encoding leafs."""
+
+    encodable: t.ClassVar[str] = 'leaf'
+
+    def encode_data(self, item, builds, *args, leaves_to_keep=(), **kwargs):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param args: Additional arguments.
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param kwargs: Additional keyword arguments.
+        """
+        if isinstance(item, leaves_to_keep):
+            key = (
+                f"{item.type_id}:{item.identifier}"
+                if hasattr(item, 'type_id')
+                else item.identifier
+            )
+            builds[key] = item
+            return '?' + key
+
+        r = item.dict()
+        if r.schema:
+            r = dict(r.schema.encode_data(r, *args, builds=builds, **kwargs))
+
+        identifier = r.pop('identifier')
+
+        if '_schema' in r:
+            del r['_schema']
+
+        key = (
+            f"{item.type_id}:{identifier}"
+            if isinstance(item, Component)
+            else identifier
+        )
+        builds[key] = r
+        return '?' + key
+
+    def decode_data(self, item, builds: t.Dict, *args, **kwargs):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param builds: The build-cache dictionary.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        from superduper.base.datalayer import Datalayer
+
+        if isinstance(item, str) and item.startswith('?'):
+            key = item[1:]
+            if isinstance(builds[key], dict):
+                r = {'identifier': key.split(':')[-1], **builds[key]}
+                builds[key] = _decode_leaf(r, builds, *args, db=self.db, **kwargs)  # type: ignore[arg-type]
+            return builds[key]
+
+        elif isinstance(item, str) and item.startswith('&'):
+            uuid = item[1:].split(':')[-1]
+            return self.db.load(uuid=uuid)
+
+        elif isinstance(item, str):
+            raise ValueError(f'Unknown reference type {item} for a leaf')
+
+        assert isinstance(self.db, Datalayer)
+        out = _decode_leaf(item, builds, *args, db=self.db, **kwargs)
+
+        if isinstance(out, Component):
+            key = f"{out.type_id}:{out.identifier}"
+        else:
+            key = out.identifier
+
+        builds[key] = out
+
+        return out
+
+
+def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
+    if '_path' in r:
+        cls = Leaf.get_cls_from_path(path=r['_path'])
+    else:
+        assert '_object' in r, 'Require _path or _blob in object'
+        cls = Leaf.get_cls_from_blob(path=r['_object'])
+
+    dict_ = {k: v for k, v in r.items() if k not in {'_object', '_path'}}
+
+    if inspect.isfunction(cls):
+        out = cls(
+            **{
+                k: v for k, v in dict_.items() if k in inspect.signature(cls).parameters
+            },
+            db=db,
+        )
+    else:
+        assert issubclass(cls, Leaf)
+        schema = cls.build_class_schema(db=db)
+        dict_ = schema.decode_data(dict_, builds=builds)
+        out = cls.from_dict(dict_, db=db)
+
+    if isinstance(out, Leaf):
+        builds[out.identifier] = out
+    else:
+        assert isinstance(out, Component)
+        builds[f'{out.type_id}:{out.identifier}'] = out
+    return out
+
+
+class SDict(BaseDataType):
+    """Datatype for encoding dictionaries which are supported as dict by databackend."""
+
+    encodable: t.ClassVar[str] = 'native'
+
+    def encode_data(self, item, builds, *args, **kwargs):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        assert isinstance(item, dict)
+        return {
+            k: (
+                LeafType('leaf').encode_data(v, builds, *args, **kwargs)
+                if isinstance(v, Leaf)
+                else v
+            )
+            for k, v in item.items()
+        }
+
+    def decode_data(self, item, builds, *args, **kwargs):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param builds: The build-cache dictionary.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        leaf_type = LeafType('leaf', db=self.db)
+        return {
+            k: leaf_type.decode_data(v, builds, *args, **kwargs)
+            for k, v in item.items()
+        }
+
+
+class SList(BaseDataType):
+    """Datatype for encoding lists which are supported as list by databackend."""
+
+    encodable: t.ClassVar[str] = 'native'
+
+    def encode_data(self, item, builds, *args, **kwargs):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        :param builds: The builds.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        assert isinstance(item, list)
+        return [
+            (
+                LeafType('leaf').encode_data(r, builds, *args, **kwargs)
+                if isinstance(r, Leaf)
+                else r
+            )
+            for r in item
+        ]
+
+    def decode_data(self, item, builds, *args, **kwargs):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param builds: The builds.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        leaf_type = LeafType('leaf', db=self.db)
+        return [leaf_type.decode_data(r, builds, *args, **kwargs) for r in item]
 
 
 class BaseVector(BaseDataType):
@@ -97,17 +281,21 @@ class BaseVector(BaseDataType):
     dtype: str = 'float64'
 
     @abstractmethod
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
 
     @abstractmethod
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
 
 
@@ -117,19 +305,23 @@ class NativeVector(BaseVector):
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float'
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as a list of floats.
 
         :param item: The item to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
         return item
 
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item from a list of floats.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return numpy.array(item).astype(self.dtype)
 
@@ -164,17 +356,21 @@ class Vector(BaseVector):
             datatype = datatype('tmp', dtype=self.dtype, shape=self.shape)
         return datatype
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return self.datatype_impl.encode_data(item=item)
 
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return self.datatype_impl.decode_data(item=item)
 
@@ -188,20 +384,21 @@ class JSON(BaseDataType):
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'str'
 
-    def __post_init__(self, db):
-        return super().__post_init__(db)
-
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as a string.
 
         :param item: The dictionary or list (json-able object) to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return json.dumps(item)
 
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item from string form.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return json.loads(item)
 
@@ -209,33 +406,72 @@ class JSON(BaseDataType):
 class _Encodable:
     encodable: t.ClassVar[str] = 'encodable'
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return self._encode_data(item)
+
+    def decode_data(self, item, *args, **kwargs):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        # handle the databackend bytes_encoding/ base64 encoding
+        from superduper.components.schema import _convert_base64_to_bytes
+
+        if self.db.databackend.bytes_encoding == 'base64':
+            item = _convert_base64_to_bytes(item)
+        return self._decode_data(item)
 
 
 class _Artifact:
     encodable: t.ClassVar[str] = 'artifact'
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
-        return Blob(bytes=self._encode_data(item))
+        return Blob(
+            bytes=self._encode_data(item),
+            builder=self._decode_data,
+            db=self.db,
+        )
+
+    def decode_data(self, item, *args, **kwargs):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
+        assert isinstance(item, str)
+        assert item.startswith('&')
+        return Blob(
+            identifier=item.split(':')[-1],
+            builder=self._decode_data,
+            db=self.db,
+        )
 
 
 class _PickleMixin:
     def _encode_data(self, item):
         return pickle.dumps(item)
 
-    def decode_data(self, item):
+    def _decode_data(self, item):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return pickle.loads(item)
 
@@ -252,10 +488,12 @@ class _DillMixin:
     def _encode_data(self, item):
         return dill.dumps(item, recurse=True)
 
-    def decode_data(self, item):
+    def _decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         return dill.loads(item)
 
@@ -279,20 +517,24 @@ class File(BaseDataType):
 
     encodable: t.ClassVar[str] = 'file'
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the item as a file path.
 
         :param item: The file path to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         assert os.path.exists(item)
         return FileItem(path=item)
 
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the item placeholder.
 
         :param item: The file path to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
-        return item
+        return FileItem(identifier=item.split(':')[-1], db=self.db)
 
 
 def get_hash(data):
@@ -364,10 +606,12 @@ class Blob(Saveable):
     """Placeholder for a blob of bytes.
 
     :param bytes: Bytes blob.
+    :param builder: Function to rebuild object from bytes.
     """
 
     bytes: bytearray | None = None
     identifier: str = ''
+    builder: t.Callable
 
     def __post_init__(self, db=None):
         if not self.identifier:
@@ -384,40 +628,13 @@ class Blob(Saveable):
 
     def unpack(self):
         """Get the bytes out of the blob."""
-        self.init()
-        return self.bytes
+        if self.bytes is None:
+            self.init()
+        return self.builder(self.bytes)
 
     @property
     def reference(self):
         return f'&:blob:{self.identifier}'
-
-
-json_encoder = JSON('json')
-pickle_encoder = PickleEncoder('pickle_encoder')
-pickle_serializer = Pickle('pickle_serializer')
-dill_encoder = DillEncoder('dill_encoder')
-dill_serializer = Dill('dill_serializer')
-file = File('file')
-
-
-INBUILT_DATATYPES.update(
-    {
-        dt.identifier: dt
-        for dt in [
-            json_encoder,
-            pickle_encoder,
-            pickle_serializer,
-            dill_encoder,
-            dill_serializer,
-            file,
-        ]
-    }
-)
-
-DEFAULT_ENCODER = INBUILT_DATATYPES['PickleEncoder']
-DEFAULT_SERIALIZER = INBUILT_DATATYPES['Dill']
-INBUILT_DATATYPES['default'] = DEFAULT_SERIALIZER
-INBUILT_DATATYPES['Blob'] = INBUILT_DATATYPES['Pickle']
 
 
 class Array(BaseDataType):
@@ -438,19 +655,23 @@ class Array(BaseDataType):
             self.identifier = f'numpy-{dtype}[{str_shape(self.shape)}]'
         return super().__post_init__(db)
 
-    def encode_data(self, item):
+    def encode_data(self, item, *args, **kwargs):
         """Encode the data.
 
         :param item: The data to encode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         if item.dtype != self.dtype:
             raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
         return memoryview(item).tobytes()
 
-    def decode_data(self, item):
+    def decode_data(self, item, *args, **kwargs):
         """Decode the data.
 
         :param item: The data to decode.
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
         """
         shape = self.shape
         if isinstance(shape, int):
@@ -472,11 +693,33 @@ class NumpyDataTypeFactory(DataTypeFactory):
         return isinstance(data, numpy.ndarray)
 
     @staticmethod
-    def create(data: t.Any) -> Array:
+    def create(data: t.Any, db: 'Datalayer') -> Array:
         """Create a numpy array datatype.
 
         Used from creating an auto schema.
 
         :param data: The numpy array.
+        :param db: The datalayer.
         """
         return Array(dtype=str(data.dtype), shape=list(data.shape))
+
+
+INBUILT_DATATYPES = {
+    'json': JSON,
+    'encodable': PickleEncoder,
+    'component': LeafType,
+    'default': Dill,
+    'blob': Dill,
+    'leaf': LeafType,
+    'file': File,
+    'sdict': SDict,
+    'slist': SList,
+}
+
+dill_serializer = Dill('dill_serializer')
+pickle_serializer = Pickle('pickle_serializer')
+pickle_encoder = PickleEncoder('pickle_encoder')
+file = File('file')
+
+DEFAULT_SERIALIZER = dill_serializer
+DEFAULT_ENCODER = pickle_encoder

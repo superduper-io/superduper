@@ -35,17 +35,19 @@ def print_sep():
 def check_data_with_schema(data, datatype, db):
     print("datatype", datatype)
     print_sep()
-    schema = Schema(identifier="schema", fields={"x": datatype, "y": int}, db=db)
+
+    schema = Schema(identifier="schema", fields={"x": datatype, "y": int})
 
     document = Document({"x": data, "y": 1})
     print(document)
     print_sep()
 
     encoded = document.encode(schema=schema)
+
     pprint(encoded)
     print_sep()
 
-    decoded = Document.decode(encoded, schema=schema, db=db).unpack()
+    decoded = Document.decode(encoded, schema=schema).unpack()
 
     pprint(decoded)
     print_sep()

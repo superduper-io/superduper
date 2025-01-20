@@ -26,7 +26,7 @@ keywords = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
-  "ibis-framework[sqlite]>=9.0.1",
+  "ibis-framework[sqlite]>=9.0.1,<10.0.0",
   "click",
   'pandas',
   "sqlalchemy"

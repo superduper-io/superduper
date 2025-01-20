@@ -141,14 +141,12 @@ def test_component_serializes_with_schema(db, tmp_file):
 
     pprint.pprint(r_encoded)
 
-    assert isinstance(r['a'], Blob)
-
     assert r_encoded['a'].startswith('&:blob:')
     assert r_encoded['b'].startswith('&:file:')
 
 
-def test_auto_infer_fields():
-    s = TestUnannotatedComponent.build_class_schema()
+def test_auto_infer_fields(db):
+    s = TestUnannotatedComponent.build_class_schema(db)
 
     assert isinstance(s, Schema)
 
@@ -156,10 +154,4 @@ def test_auto_infer_fields():
 
     pprint.pprint(s)
 
-    assert list(s.fields.keys()) == ['a', 'b']
-
-
-def test_wrap_function_with_blob():
-    r = TestComponent('test', a=lambda x: x + 1).dict()
-
-    assert isinstance(r['a'], Blob)
+    assert list(s.fields.keys()) == ['upstream', 'a', 'b']

@@ -7,10 +7,9 @@ from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
 from superduper.base.leaf import Leaf
-from superduper.base.variables import _replace_variables
+from superduper.base.variables import _find_variables, _replace_variables
 from superduper.components.component import Component, _build_info_from_path
 from superduper.components.table import Table
-from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 from .component import ensure_initialized
 
@@ -46,7 +45,6 @@ class _BaseTemplate(Component):
         """Post initialization method."""
         if isinstance(self.template, Leaf):
             self.template = self.template.encode(defaults=True, metadata=False)
-        self.template = SuperDuperFlatEncode(self.template)
         if self.substitutions is not None:
             self.substitutions = {
                 self.db.databackend.backend_name: 'databackend',
@@ -58,7 +56,7 @@ class _BaseTemplate(Component):
                 **self.substitutions
             )
         if self.template_variables is None:
-            self.template_variables = self.template.variables
+            self.template_variables = sorted(list(set(_find_variables(self.template))))
 
         super().postinit()
 
@@ -71,7 +69,10 @@ class _BaseTemplate(Component):
             set(self.template_variables) - {'output_prefix', 'databackend'}
         )
         kwargs['output_prefix'] = CFG.output_prefix
-        kwargs['databackend'] = self.db.databackend.backend_name
+        try:
+            kwargs['databackend'] = self.db.databackend.backend_name
+        except AttributeError:
+            pass
         component = _replace_variables(
             self.template,
             **kwargs,

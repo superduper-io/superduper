@@ -1,3 +1,4 @@
+# TODO deprecate this module
 import json
 import os
 

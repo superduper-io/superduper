@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "superduper-framework"
-description = "🔮 Bring AI to your favourite database 🔮"
+description = "Build compositional and declarative AI applications and agents"
 readme = "README.md"
 version = '0.5.0'
 license = {file = "LICENSE"}

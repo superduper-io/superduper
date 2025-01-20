@@ -1,5 +1,5 @@
 artifact_store: null
-data_backend: sqlite://
+data_backend: 'sqlite://'
 auto_schema: false
 force_apply: true
 json_native: false

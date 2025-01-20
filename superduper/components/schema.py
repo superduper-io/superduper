@@ -1,16 +1,15 @@
 import base64
+import inspect
 import typing as t
 from functools import cached_property
 
-from superduper.base.constant import KEY_SCHEMA
 from superduper.base.leaf import Leaf
-from superduper.components.component import Component
 from superduper.components.datatype import BaseDataType, Saveable
 from superduper.misc.reference import parse_reference
 from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 if t.TYPE_CHECKING:
-    from superduper.base.document import Getters
+    pass
 
 
 class FieldType(Leaf):
@@ -54,14 +53,15 @@ def _convert_bytes_to_base64(bytes_: bytes) -> str:
     return base64.b64encode(bytes_).decode('utf-8')
 
 
-class Schema(Component):
+class Schema(BaseDataType):
     """A component carrying the `DataType` of columns.
 
     :param fields: A mapping of field names to types or `Encoders`
     """
 
-    type_id: t.ClassVar[str] = 'schema'
+    _fields = {'fields': 'sdict'}
 
+    type_id: t.ClassVar[str] = 'schema'
     fields: t.Mapping[str, BaseDataType]
 
     def postinit(self):
@@ -71,6 +71,10 @@ class Schema(Component):
 
         for k, v in self.fields.items():
             if isinstance(v, (BaseDataType, FieldType)):
+                v.db = self.db
+                continue
+
+            if inspect.isclass(v) and issubclass(v, Leaf):
                 continue
 
             try:
@@ -114,41 +118,32 @@ class Schema(Component):
                 fields.add((k, v.identifier))
         return fields
 
-    def decode_data(
-        self, data: dict[str, t.Any], getters: 'Getters'
-    ) -> dict[str, t.Any]:
+    def decode_data(self, data: dict[str, t.Any], builds: t.Dict) -> dict[str, t.Any]:
         """Decode data using the schema's encoders.
 
         :param data: Data to decode.
-        :param getters: Getters to decode.
+        :param builds: build cache for decoding references.
         """
         if self.trivial:
             return data
+
         decoded = {}
+
         for k, value in data.items():
             field = self.fields.get(k)
+
             if not isinstance(field, BaseDataType) or value is None:
                 decoded[k] = value
                 continue
 
-            value = data[k]
+            decoded[k] = field.decode_data(value, builds=builds)
 
-            if reference := parse_reference(value):
-                saveable: Saveable = getters.run(reference.name, reference.path)
-                decoded[k] = saveable
-            elif isinstance(value, str) and value.startswith('?'):
-                decoded[k] = value
+            if isinstance(value, str) and value.startswith('?'):
+                decoded[k] = builds[value[1:]]
                 continue
             else:
-                b = data[k]
-                if (
-                    field.encodable == 'encodable'
-                    and self.db.databackend.bytes_encoding == 'base64'
-                ):
-                    b = _convert_base64_to_bytes(b)
-                decoded[k] = field.decode_data(b)
+                decoded[k] = field.decode_data(value, builds=builds)
 
-        decoded.pop(KEY_SCHEMA, None)
         return decoded
 
     def encode_data(self, out, builds, blobs, files, leaves_to_keep=()):
@@ -161,45 +156,34 @@ class Schema(Component):
         :param leaves_to_keep: `Leaf` instances to keep (don't encode)
         """
         result = {k: v for k, v in out.items()}
-        for k, field in self.fields.items():
+
+        for k in out:
+            field = self.fields.get(k)
+
             if not isinstance(field, BaseDataType):
                 continue
 
-            if k not in out:
+            if isinstance(out[k], str) and (
+                out[k].startswith('?') or out[k].startswith('&')
+            ):
                 continue
 
             if isinstance(out[k], Saveable):
                 continue
 
-            if isinstance(out[k], leaves_to_keep):
-                continue
-
-            if isinstance(out[k], Leaf):
-                from superduper.base.document import _deep_flat_encode
-
-                out[k] = _deep_flat_encode(
-                    out[k],
-                    builds,
-                    blobs=blobs,
-                    files=files,
-                    leaves_to_keep=leaves_to_keep,
-                )
-                continue
-
             if out[k] is None:
                 continue
 
-            data = field.encode_data(out[k])
+            data = field.encode_data(
+                out[k],
+                builds=builds,
+                blobs=blobs,
+                files=files,
+                leaves_to_keep=leaves_to_keep,
+            )
 
-            if (
-                field.encodable == 'encodable'
-                and self.db.databackend.bytes_encoding == 'base64'
-            ):
-                assert isinstance(data, bytes)
-                data = _convert_bytes_to_base64(data)
-                result[k] = data
-
-            elif isinstance(data, Saveable):
+            # TODO - move into the _Encodable/ _Saveable classes
+            if isinstance(data, Saveable):
                 ref_obj = parse_reference(data.reference)
 
                 if ref_obj.name == 'blob':
@@ -214,7 +198,6 @@ class Schema(Component):
             else:
                 result[k] = data
 
-        result['_schema'] = self.identifier
         return result
 
     def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:

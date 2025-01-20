@@ -10,5 +10,8 @@ def test_model():
     )
     m_dict = m.dict()
     assert m_dict['identifier'] == m.identifier
-    assert m_dict['object'].bytes == dill_serializer._encode_data(m.object)
     assert m_dict['datatype'].identifier == 'dill_serializer'
+
+    encoded = m_dict.encode()
+    bytes = encoded['_blobs'][encoded['object'].split(':')[-1]]
+    assert bytes == dill_serializer._encode_data(m.object)

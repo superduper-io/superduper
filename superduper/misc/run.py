@@ -10,6 +10,7 @@ __all__ = (
 )
 
 
+# TODO remove
 def run(
     args: t.Sequence[str],
     text: bool = True,
@@ -31,6 +32,7 @@ def run(
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 
+# TODO remove
 def out(args: t.Sequence[str], **kwargs) -> str:
     """
     Run a command and return the output.

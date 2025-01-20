@@ -1,6 +1,5 @@
 import functools
 import importlib
-import inspect
 import sys
 import warnings
 from collections import defaultdict
@@ -34,6 +33,7 @@ MIN = version.parse('0.0.0')
 MAX = version.parse(f'{sys.maxsize}.0.0')
 
 
+# TODO remove
 def _compare_versions(package, lower_bound, upper_bound, install_name):
     constraint = ''
     if lower_bound == upper_bound:
@@ -118,47 +118,6 @@ def _get_indent(docstring: str) -> int:
         return 0
 
     return len(non_empty_lines[1]) - len(non_empty_lines[1].lstrip())
-
-
-# TODO deprecate - no longer needed
-def importable(f):
-    """Make a function serializable as an importable.
-
-    :param f: function to make importable, decorated with @importable
-    """
-    f.importable = True
-
-    if inspect.isclass(f):
-        # TODO log *args, **kwargs of __init__
-        raise NotImplementedError('Classes are not supported yet')
-
-    else:
-
-        def to_dict(metadata: bool = True, defaults: bool = True):
-            path = f'{f.__module__}.{f.__name__}'
-            from superduper.base.document import Document
-
-            r = Document(
-                {
-                    '_path': 'superduper.misc.annotations.build_importable',
-                    'importable': path,
-                }
-            )
-            return r
-
-        f.dict = to_dict
-        return f
-
-
-def build_importable(*, db=None, importable=None):
-    """Build an importable from a path.
-
-    :param db: ``Datalayer`` instance
-    :param importable: importable path
-    """
-    attr = importable.split('.')[-1]
-    module = '.'.join(importable.split('.')[:-1])
-    return getattr(importlib.import_module(module), attr)
 
 
 def extract_parameters(doc):

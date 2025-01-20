@@ -18,7 +18,7 @@ def test_basic_template(db):
         identifier='lm',
         model=ObjectModel(
             object=model,
-            identifier='<var:model_id>',
+            identifier='test',
         ),
         select=db['documents'].select(),
         key='<var:key>',
@@ -32,22 +32,21 @@ def test_basic_template(db):
     )
 
     vars = template.template_variables
-    assert len(vars) == 2
+    assert len(vars) == 1
     assert all([v in ['key', 'model_id'] for v in vars])
     db.apply(template)
 
     # Check template component has not been added to metadata
     assert 'my_id' not in db.show('model')
     assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('listener')])
-    listener = template(key='y', model_id='my_id')
+    listener = template(key='y')
 
     assert listener.key == 'y'
-    assert listener.model.identifier == 'my_id'
 
     db.apply(listener)
 
     reloaded_template = db.load('template', template.identifier)
-    listener = reloaded_template(key='y', model_id='my_id')
+    listener = reloaded_template(key='y')
 
     db.apply(listener)
 
@@ -67,9 +66,9 @@ def test_template_export(db):
         identifier='lm',
         model=ObjectModel(
             object=lambda x: x + 2,
-            identifier='<var:model_id>',
+            identifier='test',
         ),
-        select=db['<var:collection>'].select(),
+        select=db['<var:table>'].select(),
         key='<var:key>',
     )
 
@@ -92,10 +91,9 @@ def test_template_export(db):
         rt = Component.read(temp_dir, db=db)
         db.apply(rt)
 
-        listener = rt(key='y', model_id='my_id', collection='documents')
+        listener = rt(key='y', table='documents')
 
         assert listener.key == 'y'
-        assert listener.model.identifier == 'my_id'
         assert listener.select.table == 'documents'
 
         db.apply(listener)
@@ -121,7 +119,7 @@ def test_from_template(db):
         template_body=m.encode(),
         key='y',
         model='my_id',
-        db=db,
+        # db=db,
     )
 
     component.init()

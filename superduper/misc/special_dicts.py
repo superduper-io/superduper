@@ -326,6 +326,7 @@ class MongoStyleDict(t.Dict[str, t.Any]):
             self[parent] = parent_item
 
 
+# TODO duplicate in document.py
 def diff(r1, r2):
     """Get the difference between two dictionaries.
 

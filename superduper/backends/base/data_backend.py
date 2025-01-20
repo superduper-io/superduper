@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_SCHEMA
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.document import Document
 
 if t.TYPE_CHECKING:
@@ -232,7 +232,6 @@ class BaseDataBackend(ABC):
                 r.pop(KEY_BUILDS)
                 r.pop(KEY_BLOBS)
                 r.pop(KEY_FILES)
-                r.pop(KEY_SCHEMA, None)
                 documents[i] = r
 
         out = self.insert(table, documents)

@@ -1,5 +1,4 @@
 import hashlib
-import os
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -7,6 +6,7 @@ from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 
 
+# TODO - move to hash.py
 def _construct_file_id_from_uri(uri):
     return str(hashlib.sha1(uri.encode()).hexdigest())
 
@@ -65,30 +65,6 @@ class ArtifactStore(ABC):
         :param force: If ``True``, don't ask for confirmation
         """
         pass
-
-    @abstractmethod
-    def _exists(self, file_id: str):
-        pass
-
-    def exists(
-        self,
-        file_id: t.Optional[str] = None,
-        datatype: t.Optional[str] = None,
-        uri: t.Optional[str] = None,
-    ):
-        """Check if artifact exists in artifact store.
-
-        :param file_id: file id of artifact in the store
-        :param datatype: Datatype of the artifact
-        :param uri: URI of the artifact
-        """
-        if file_id is None:
-            assert uri is not None, "if file_id is None, uri can\'t be None"
-            file_id = _construct_file_id_from_uri(uri)
-            if self.load('datatype', datatype).directory:
-                assert datatype is not None
-                file_id = os.path.join(datatype.directory, file_id)
-        return self._exists(file_id)
 
     @abstractmethod
     def put_bytes(self, serialized: bytes, file_id: str):

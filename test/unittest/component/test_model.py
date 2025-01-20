@@ -289,21 +289,24 @@ def test_model_fit(db):
 
     from superduper.components.dataset import Dataset
 
-    valid_dataset = Dataset(identifier='test', select=db['documents'].select())
+    valid_dataset = Dataset(identifier='test', select=db['documents'].select(), db=db)
 
     model = Validator(
         'test',
         object=object(),
-        trainer=MyTrainer('my-trainer', key='x', select=db['documents'].select()),
+        trainer=MyTrainer(
+            'my-trainer', key='x', select=db['documents'].select(), db=db
+        ),
         validation=Validation(
             'my-valid',
             datasets=[valid_dataset],
             metrics=[Metric('metric', object=lambda x, y: True)],
             key=('x', 'y'),
+            db=db,
         ),
+        db=db,
     )
 
-    model.set_db(db)
     with patch.object(model, 'fit'):
         model.fit_in_db()
         model.fit.assert_called_once()

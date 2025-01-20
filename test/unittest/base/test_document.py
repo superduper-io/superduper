@@ -23,7 +23,6 @@ def test_document_encoding(db):
     new_document = Document.decode(
         document.encode(),
         schema=schema,
-        db=db,
     )
     new_document = new_document.unpack()
     assert (new_document['x'] - document['x']).sum() == 0
@@ -133,7 +132,7 @@ def test_encode_model_with_remote_blob():
     assert m.object.x(1) == 3
 
 
-def test_encode_model():
+def test_encode_model(db):
     m = ObjectModel(
         identifier='test',
         object=lambda x: x + 2,
@@ -143,11 +142,7 @@ def test_encode_model():
 
     pprint.pprint(encoded_r)
 
-    decoded_r = Document.decode(
-        encoded_r,
-        getters={'blob': lambda x: encoded_r[KEY_BLOBS][x]},
-        schema=m.build_class_schema(),
-    )
+    decoded_r = Document.decode(encoded_r)
 
     print(decoded_r)
 

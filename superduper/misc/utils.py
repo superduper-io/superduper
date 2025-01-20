@@ -23,6 +23,7 @@ def get_key(key_name: str) -> str:
         raise KeyError(f'Environment variable {key_name} is not set') from None
 
 
+# TODO move to plugins
 def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) -> str:
     """Format a prompt with the given input and context.
 

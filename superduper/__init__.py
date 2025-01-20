@@ -2,8 +2,6 @@
 from .base import config, config_settings, configs, logger
 from .base.superduper import superduper
 
-ICON = '🔮'
-
 CFG = configs.CFG
 ROOT = config_settings.ROOT
 
@@ -46,7 +44,6 @@ REQUIRES = [
 
 __all__ = (
     'CFG',
-    'ICON',
     'ROOT',
     'config',
     'logging',

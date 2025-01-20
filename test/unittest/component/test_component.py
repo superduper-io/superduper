@@ -53,15 +53,20 @@ def test_init(db, monkeypatch):
         identifier="456",
         bytes=dill_serializer._encode_data(lambda x: x + 1),
         db=db,
+        builder=dill_serializer._decode_data,
     )
     my_dict = Blob(
         identifier="456",
         bytes=dill_serializer._encode_data({'a': lambda x: x + 1}),
         db=db,
+        builder=dill_serializer._decode_data,
     )
 
     list_ = Blob(
-        identifier='789', bytes=dill_serializer._encode_data([lambda x: x + 1]), db=db
+        identifier='789',
+        bytes=dill_serializer._encode_data([lambda x: x + 1]),
+        db=db,
+        builder=dill_serializer._decode_data,
     )
 
     c = MyComponent("test", my_dict=my_dict, a=a, nested_list=list_)
@@ -116,7 +121,7 @@ def test_set_variables(db):
     m = Listener(
         identifier="test",
         model=ObjectModel(
-            identifier="<var:test>",
+            identifier="test",
             object=lambda x: x + 2,
         ),
         key="<var:key>",
@@ -130,9 +135,24 @@ def test_set_variables(db):
 
     recon.init()
 
-    listener = m.set_variables(test="test_value", key="key_value", docs="docs_value")
-    assert listener.model.identifier == "test_value"
+    listener = m.set_variables(key="key_value", docs="docs_value")
     assert listener.key == "key_value"
+
+
+def test_encoding(db):
+    m = Listener(
+        identifier="test",
+        model=ObjectModel(
+            identifier="object_model",
+            object=lambda x: x + 2,
+        ),
+        key="X",
+        select=db["docs"].select(),
+    )
+
+    r = m.encode()
+
+    assert isinstance(r['model'], str)
 
 
 class UpstreamComponent(Component):
@@ -173,29 +193,6 @@ def test_upstream(db, clean):
     )
 
     db.apply(m)
-
-
-# TODO needed?
-def test_set_db_deep(db):
-    c1 = UpstreamComponent(identifier='c1')
-    m = MyListener(
-        identifier='l1',
-        upstream=[c1],
-        model=ObjectModel(
-            identifier="model1",
-            object=lambda x: x + 2,
-        ),
-        key="x",
-        select=db["docs"],
-    )
-
-    assert m.upstream[0].db is None
-    assert m.model.db is None
-
-    m.set_db(db)
-
-    assert m.upstream[0].db is not None
-    assert m.model.db is not None
 
 
 class NewComponent(Component):

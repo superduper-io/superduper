@@ -223,7 +223,9 @@ def l2(x, y):
     :param x: numpy.ndarray
     :param y: numpy.ndarray
     """
-    return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
+    result = numpy.array([numpy.linalg.norm(x - y, axis=1)])
+    result = 1 / (1 + result)
+    return result
 
 
 def dot(x, y):

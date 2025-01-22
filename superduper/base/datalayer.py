@@ -621,7 +621,9 @@ class Datalayer:
         try:
             r = self.metadata.get_component(type_id, identifier, version=version)
         except FileNotFoundError:
-            logging.warn(f'Component {type_id}:{identifier}:{version} has already been removed')
+            logging.warn(
+                f'Component {type_id}:{identifier}:{version} has already been removed'
+            )
             return
         if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])

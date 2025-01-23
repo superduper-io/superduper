@@ -61,7 +61,9 @@ jobs:
               
         # Artifacts located in artifact/
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
 
       - name: Install wheel
         run: python -m pip install artifact/*.whl
@@ -103,7 +105,9 @@ jobs:
 
         # Artifacts located in artifact/
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
 
       - name: create release
         run: >
@@ -126,7 +130,9 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact
       # Try uploading to Test PyPI first, in case something fails.
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:

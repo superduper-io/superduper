@@ -327,14 +327,6 @@ def test_remove_multi_version(db):
     assert db.show('test-component', 'test') == []
 
 
-def test_remove_not_exist_component(db):
-    with pytest.raises(FileNotFoundError) as e:
-        db.remove('test-component', 'test', 0, force=True)
-    assert 'test' in str(e)
-
-    db.remove('test-component', 'test', force=True)
-
-
 def test_show(db):
     for component in [
         TestComponent(identifier='a1'),

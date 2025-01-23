@@ -7,19 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Before you create a Pull Request, remember to update the Changelog with your changes.**
 
-## Changes Since Last Release
-
-#### Changed defaults / behaviours
-
-...
-
-#### New Features & Functionality
-
-...
+## [0.5.2](https://github.com/superduper-io/superduper/compare/0.5.2...0.5.0])    (2024-Nov-02)
 
 #### Bug Fixes
 
 - Fix the random silent failure bug when ibis creates tables.
+- Improve handling of errors in `db.remove`
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

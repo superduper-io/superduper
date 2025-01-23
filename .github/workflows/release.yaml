@@ -66,6 +66,9 @@ jobs:
           name: artifact
           path: artifact
 
+      - name: check
+        run: ls -R ./artifact
+
       - name: Install wheel
         run: python -m pip install ./artifact
       

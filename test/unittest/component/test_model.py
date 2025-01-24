@@ -1,5 +1,4 @@
 import dataclasses as dc
-from test.utils.component import model as model_utils
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -24,14 +23,14 @@ from superduper.components.model import (
     Validation,
 )
 from superduper.components.schema import FieldType
+from test.utils.component import model as model_utils
 
 
 # ------------------------------------------
 # Test the _TrainingConfiguration class (tc)
 # ------------------------------------------
 @dc.dataclass
-class Validator(ObjectModel):
-    ...
+class Validator(ObjectModel): ...
 
 
 # --------------------------------
@@ -190,12 +189,10 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
 
 def test_model_append_metrics():
     @dc.dataclass
-    class _Tmp(ObjectModel):
-        ...
+    class _Tmp(ObjectModel): ...
 
     class MyTrainer(Trainer):
-        def fit(self, *args, **kwargs):
-            ...
+        def fit(self, *args, **kwargs): ...
 
     model = _Tmp(
         'test',

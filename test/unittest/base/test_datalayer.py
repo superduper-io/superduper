@@ -567,9 +567,8 @@ def test_compound_component(db):
 
 
 def test_reload_dataset(db):
-    from test.utils.setup.fake_data import add_random_data
-
     from superduper.components.dataset import Dataset
+    from test.utils.setup.fake_data import add_random_data
 
     add_random_data(db, n=6)
 

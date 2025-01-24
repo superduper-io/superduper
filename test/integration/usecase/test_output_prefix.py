@@ -1,7 +1,7 @@
 import unittest.mock as mock
-from test.utils.usecase.chain_listener import build_chain_listener
 
 from superduper import CFG
+from test.utils.usecase.chain_listener import build_chain_listener
 
 
 def test_output_prefix(db):

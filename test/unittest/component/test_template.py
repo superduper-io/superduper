@@ -1,10 +1,9 @@
-from test.utils.setup.fake_data import add_random_data
-
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.template import QueryTemplate, Template
+from test.utils.setup.fake_data import add_random_data
 
 
 def test_basic_template(db):

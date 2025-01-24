@@ -34,6 +34,10 @@ def _connect_snowflake():
     # we connect with `"snowflake://"`
 
     import snowflake.connector
+    import os
+    if os.get('SUPERDUPER_AUTH_DEBUG'):
+        with open(os.environ['SUPERDUPER_AUTH_TOKEN'], 'w') as f:
+            f.write('2026-01-01 23:59:59.999999\n')
 
     def creator():
         import os
@@ -310,6 +314,18 @@ class SQLAlchemyMetadata(MetaDataStore):
             conditions = [getattr(table.c, k) == v for k, v in filter.items()]
             stmt = delete(table).where(*conditions)
             session.execute(stmt)
+
+    def _check_token(self):
+        import os
+        import datetime
+        auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
+        with open(auth_token) as f:
+            expiration_date = datetime.datetime.strptime(
+                f.read().split('\n')[0].strip(),
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+        if expiration_date < datetime.datetime.now():
+            raise Exception("auth token expired")
 
     def _get_data(self, table_name, filter):
         table = self._table_mapping[table_name]

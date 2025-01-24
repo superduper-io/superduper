@@ -146,6 +146,17 @@ class IbisDataBackend(BaseDataBackend):
             logging.warn(f"Falling back to using the uri: {self.uri}.")
             return MetaDataStoreProxy(SQLAlchemyMetadata(uri=self.uri))
 
+    def _check_token(self):
+        import datetime
+        auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
+        with open(auth_token) as f:
+            expiration_date = datetime.strptime(
+                f.read().split('\n')[0].strip(),
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+        if expiration_date < datetime.now():
+            raise Exception("auth token expired")
+
     def insert(self, table_name, raw_documents):
         """Insert data into the database.
 

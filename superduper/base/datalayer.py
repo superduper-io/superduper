@@ -12,6 +12,7 @@ from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStore
 from superduper.backends.base.query import Query
+from superduper.backends.local.cluster import LocalCluster
 from superduper.base import apply, exceptions
 from superduper.base.config import Config
 from superduper.base.cursor import SuperDuperCursor
@@ -314,7 +315,8 @@ class Datalayer:
             return []
 
         if (
-            insert.table in self.metadata.show_cdc_tables()
+            isinstance(self.cluster, LocalCluster)
+            and insert.table in self.metadata.show_cdc_tables()
             and not insert.table.startswith(CFG.output_prefix)
         ):
             self.cluster.cdc.handle_event(
@@ -416,8 +418,10 @@ class Datalayer:
 
         table = update.table
 
-        if table in self.metadata.show_cdc_tables() and not table.startswith(
-            CFG.output_prefix
+        if (
+            isinstance(self.cluster, LocalCluster)
+            and table in self.metadata.show_cdc_tables() 
+            and not table.startswith(CFG.output_prefix)
         ):
             self.cluster.cdc.handle_event(
                 event_type='update', table=update.table, ids=updated_ids

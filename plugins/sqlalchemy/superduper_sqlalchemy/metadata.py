@@ -713,10 +713,14 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_cdc_tables(self):
         """Show tables to be consumed with cdc."""
         with self.session_context() as session:
-            stmt = select(self.component_table)
+            stmt = (
+                self.component_table.select()
+                .where(
+                    self.component_table.c.cdc_table.isnot(None),
+                )
+            )
             res = self.query_results(self.component_table, stmt, session)
-        res = [r['identifier'] for r in res]
-        return res
+        return [r['cdc_table'] for r in res]
 
     def set_component_status(self, uuid, status: Status):
         """Set status of component with `status`."""

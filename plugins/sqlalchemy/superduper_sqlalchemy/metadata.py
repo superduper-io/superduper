@@ -35,7 +35,7 @@ def _connect_snowflake():
 
     import snowflake.connector
     import os
-    if os.get('SUPERDUPER_AUTH_DEBUG'):
+    if os.environ.get('SUPERDUPER_AUTH_DEBUG'):
         with open(os.environ['SUPERDUPER_AUTH_TOKEN'], 'w') as f:
             f.write('2026-01-01 23:59:59.999999\n')
 

@@ -71,7 +71,7 @@ class SnowflakeDataBackend(IbisDataBackend):
             schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
         )
 
-    def _connect_callback(self, uri):
+    def _connection_callback(self, uri):
         if uri != 'snowflake://':
             return IbisDataBackend._connection_callback(uri)
         return ibis.snowflake.from_connection(self._do_connection_callback(uri))

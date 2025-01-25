@@ -74,7 +74,7 @@ class SnowflakeDataBackend(IbisDataBackend):
     def _connection_callback(self, uri):
         if uri != 'snowflake://':
             return IbisDataBackend._connection_callback(uri)
-        return ibis.snowflake.from_connection(self._do_connection_callback(uri))
+        return ibis.snowflake.from_connection(self._do_connection_callback(uri)), 'snowflake', False
 
     def insert(self, table_name, raw_documents):
         df = pandas.DataFrame(raw_documents)

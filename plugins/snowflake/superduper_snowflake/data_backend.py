@@ -6,6 +6,7 @@ import ibis
 import pandas
 import snowflake.connector
 
+from superduper_snowflake.schema import ibis_schema_to_snowpark_schema
 from superduper import logging
 from superduper_ibis.data_backend import IbisDataBackend
 from snowflake.snowpark import Session
@@ -77,9 +78,11 @@ class SnowflakeDataBackend(IbisDataBackend):
         return ibis.snowflake.from_connection(self._do_connection_callback(uri)), 'snowflake', False
 
     def insert(self, table_name, raw_documents):
+
+        ibis_schema = self.conn.table(table_name).schema()
+        snowpark_schema = ibis_schema_to_snowpark_schema(ibis_schema)
         df = pandas.DataFrame(raw_documents)
-        columns = df.columns
         rows = list(df.itertuples(index=False, name=None))
-        native_df = self.snowpark.create_dataframe(rows, schema=columns)
+        native_df = self.snowpark.create_dataframe(rows, schema=snowpark_schema)
         return native_df.write.saveAsTable(f'"{table_name}"', mode='append')  
 

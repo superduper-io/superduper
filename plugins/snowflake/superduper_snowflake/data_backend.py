@@ -81,5 +81,5 @@ class SnowflakeDataBackend(IbisDataBackend):
         columns = df.columns
         rows = list(df.itertuples(index=False, name=None))
         native_df = self.snowpark.create_dataframe(rows, schema=columns)
-        return native_df.write.saveAsTable(table_name, mode='append')  
+        return native_df.write.saveAsTable(f'"{table_name}"', mode='append')  
 

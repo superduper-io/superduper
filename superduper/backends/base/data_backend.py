@@ -211,6 +211,10 @@ class DataBackendProxy:
         @functools.wraps(attr)
         def wrapper(*args, **kwargs):
             try:
+                import os
+
+                if os.environ.get("SUPERDUPER_AUTH_DEBUG"):
+                    self._backend._check_token()
                 result = attr(*args, **kwargs)
                 return result
             except Exception as e:

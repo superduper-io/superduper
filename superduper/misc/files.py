@@ -28,6 +28,7 @@ def load_secrets():
                 content = file.read().strip()
 
             os.environ[key_dir] = content
+            logging.info(f'Successfully loaded secret {key_dir} into environment.')
         except Exception as e:
             logging.error(f"Error reading file {secret_file_path}: {e}")
 

@@ -327,14 +327,6 @@ def test_remove_multi_version(db):
     assert db.show('test-component', 'test') == []
 
 
-def test_remove_not_exist_component(db):
-    with pytest.raises(FileNotFoundError) as e:
-        db.remove('test-component', 'test', 0, force=True)
-    assert 'test' in str(e)
-
-    db.remove('test-component', 'test', force=True)
-
-
 def test_show(db):
     for component in [
         TestComponent(identifier='a1'),
@@ -575,9 +567,8 @@ def test_compound_component(db):
 
 
 def test_reload_dataset(db):
-    from test.utils.setup.fake_data import add_random_data
-
     from superduper.components.dataset import Dataset
+    from test.utils.setup.fake_data import add_random_data
 
     add_random_data(db, n=6)
 

@@ -30,6 +30,7 @@ dependencies = [
   "snowflake-connector-python",
   "snowflake-sqlalchemy",
   "ibis-framework[snowflake]",
+  "superduper-ibis>=0.5.2"
 ]
 
 [project.optional-dependencies]

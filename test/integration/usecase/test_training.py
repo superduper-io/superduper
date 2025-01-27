@@ -1,9 +1,9 @@
 import typing as t
-from test.utils.setup.fake_data import add_random_data
 
 from superduper.base.datalayer import Datalayer
 from superduper.components.datatype import pickle_serializer
 from superduper.components.model import Model, Trainer
+from test.utils.setup.fake_data import add_random_data
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

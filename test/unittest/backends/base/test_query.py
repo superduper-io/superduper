@@ -1,6 +1,5 @@
-from test.utils.database import query as query_utils
-
 from superduper import Document
+from test.utils.database import query as query_utils
 
 
 def test_insert(db):

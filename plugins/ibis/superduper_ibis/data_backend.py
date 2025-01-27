@@ -27,56 +27,6 @@ BASE64_PREFIX = "base64:"
 INPUT_KEY = "_source"
 
 
-def _snowflake_connection_callback():
-    # In the Snowflake native apps framework, the
-    # inbuild database is provided by env variables
-    # and authentication is via OAuth with a
-    # mounted token. In this case, as a convention
-    # we connect with `"snowflake://"`
-
-    logging.info('Using env variables and OAuth to connect!')
-
-    import snowflake.connector
-
-    conn = snowflake.connector.connect(
-        host=os.environ['SNOWFLAKE_HOST'],
-        port=int(os.environ['SNOWFLAKE_PORT']),
-        account=os.environ['SNOWFLAKE_ACCOUNT'],
-        authenticator='oauth',
-        token=open('/snowflake/session/token').read(),
-        warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
-        database=os.environ['SNOWFLAKE_DATABASE'],
-        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
-    )
-
-    return ibis.snowflake.from_connection(conn)
-
-
-def _connection_callback(uri, flavour):
-    if flavour == "pandas":
-        uri = uri.split("://")[-1]
-        csv_files = glob.glob(uri)
-        dir_name = os.path.dirname(uri)
-        tables = {}
-        for csv_file in csv_files:
-            filename = os.path.basename(csv_file)
-            if os.path.getsize(csv_file) == 0:
-                df = pandas.DataFrame()
-            else:
-                df = pandas.read_csv(csv_file)
-            tables[filename.split(".")[0]] = df
-        ibis_conn = ibis.pandas.connect(tables)
-        in_memory = True
-        return ibis_conn, dir_name, in_memory
-    elif uri == 'snowflake://':
-        return _snowflake_connection_callback(), 'snowflake', False
-    else:
-        name = uri.split("//")[0]
-        in_memory = False
-        ibis_conn = ibis.connect(uri)
-        return ibis_conn, name, in_memory
-
-
 class IbisDataBackend(BaseDataBackend):
     """Ibis data backend for the database.
 
@@ -87,7 +37,7 @@ class IbisDataBackend(BaseDataBackend):
     db_type = DBType.SQL
 
     def __init__(self, uri: str, flavour: t.Optional[str] = None):
-        self.connection_callback = lambda: _connection_callback(uri, flavour)
+        self.connection_callback = lambda: self._connection_callback(uri)
         conn, name, in_memory = self.connection_callback()
         super().__init__(uri=uri, flavour=flavour)
         self.conn = conn
@@ -103,6 +53,13 @@ class IbisDataBackend(BaseDataBackend):
             self.datatype_presets = {
                 'vector': 'superduper.components.datatype.NativeVector'
             }
+
+    @staticmethod
+    def _connection_callback(uri):
+        name = uri.split("//")[0]
+        in_memory = False
+        ibis_conn = ibis.connect(uri)
+        return ibis_conn, name, in_memory
 
     def _setup(self, conn):
         self.dialect = getattr(conn, "name", "base")
@@ -146,6 +103,17 @@ class IbisDataBackend(BaseDataBackend):
             logging.warn(f"Falling back to using the uri: {self.uri}.")
             return MetaDataStoreProxy(SQLAlchemyMetadata(uri=self.uri))
 
+    def _check_token(self):
+        import datetime
+        auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
+        with open(auth_token) as f:
+            expiration_date = datetime.datetime.strptime(
+                f.read().split('\n')[0].strip(),
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+        if expiration_date < datetime.datetime.now():
+            raise Exception("auth token expired")
+
     def insert(self, table_name, raw_documents):
         """Insert data into the database.
 
@@ -160,20 +128,7 @@ class IbisDataBackend(BaseDataBackend):
             raw_documents,
             self.conn,
         )
-        if not self.in_memory:
-            self.conn.insert(table_name, raw_documents)
-        else:
-            # CAUTION: The following is only tested with pandas.
-            if table_name in self.conn.tables:
-                t = self.conn.tables[table_name]
-                df = pandas.concat([t.to_pandas(), raw_documents])
-                self.conn.create_table(table_name, df, overwrite=True)
-            else:
-                df = pandas.DataFrame(raw_documents)
-                self.conn.create_table(table_name, df)
-
-            if self.conn.backend_table_type == DataFrame:
-                df.to_csv(os.path.join(self.name, table_name + ".csv"), index=False)
+        self.conn.insert(table_name, raw_documents)
 
     def check_ready_ids(
         self, query: IbisQuery, keys: t.List[str], ids: t.Optional[t.List[t.Any]] = None

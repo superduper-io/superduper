@@ -1,6 +1,5 @@
-from test.utils.usecase.vector_search import add_data
-
 from superduper import model
+from test.utils.usecase.vector_search import add_data
 
 
 def test_vector_index_recovery(db):

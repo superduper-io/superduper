@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - '[0-9]+.[0-9]+'
     paths:  # run this action only when the docs folder is changed
       - 'plugins/**'
 

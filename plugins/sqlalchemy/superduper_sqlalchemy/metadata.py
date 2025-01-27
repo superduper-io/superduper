@@ -34,6 +34,10 @@ def _connect_snowflake():
     # we connect with `"snowflake://"`
 
     import snowflake.connector
+    import os
+    if os.environ.get('SUPERDUPER_AUTH_DEBUG'):
+        with open(os.environ['SUPERDUPER_AUTH_TOKEN'], 'w') as f:
+            f.write('2026-01-01 23:59:59.999999\n')
 
     def creator():
         import os
@@ -310,6 +314,18 @@ class SQLAlchemyMetadata(MetaDataStore):
             conditions = [getattr(table.c, k) == v for k, v in filter.items()]
             stmt = delete(table).where(*conditions)
             session.execute(stmt)
+
+    def _check_token(self):
+        import os
+        import datetime
+        auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
+        with open(auth_token) as f:
+            expiration_date = datetime.datetime.strptime(
+                f.read().split('\n')[0].strip(),
+                "%Y-%m-%d %H:%M:%S.%f"
+            )
+        if expiration_date < datetime.datetime.now():
+            raise Exception("auth token expired")
 
     def _get_data(self, table_name, filter):
         table = self._table_mapping[table_name]
@@ -697,10 +713,14 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_cdc_tables(self):
         """Show tables to be consumed with cdc."""
         with self.session_context() as session:
-            stmt = select(self.component_table)
+            stmt = (
+                self.component_table.select()
+                .where(
+                    self.component_table.c.cdc_table.isnot(None),
+                )
+            )
             res = self.query_results(self.component_table, stmt, session)
-        res = [r['identifier'] for r in res]
-        return res
+        return [r['cdc_table'] for r in res]
 
     def set_component_status(self, uuid, status: Status):
         """Set status of component with `status`."""

@@ -76,21 +76,26 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
                 "host": host,
             }
         else:
-            pattern = r"snowflake://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<account>[^/]+)/(?P<database>[^/]+)/(?P<schema>[^/]+)"
-            match = re.match(pattern, vector_search_uri)
-            schema = match.group("schema")
-            database = match.group("database")
+            if '?warehouse=' not in vector_search_uri:
+                match = re.match(
+                    '^snowflake:\/\/(.*):(.*)\@(.*)\/(.*)\/(.*)$', vector_search_uri
+                )
+                user, password, account, database, schema = match.groups()
+                warehouse = None
+            else:
+                match = re.match(
+                    '^snowflake://(.*):(.*)@(.*)/(.*)/(.*)?warehouse=(.*)$', vector_search_uri
+                )
+                user, password, account, database, schema, warehouse = match.groups()
             if match:
                 connection_parameters = {
-                    "user": match.group("user"),
-                    "password": match.group("password"),
-                    "account": match.group("account"),
-                    "database": match.group("database"),
-                    "schema": match.group("schema"),
-                    # TODO: check warehouse
-                    "warehouse": "base",
+                    "user": user,
+                    "password": password,
+                    "account": account,
+                    "database": database,
+                    "schema": schema,
+                    "warehouse": warehouse,
                 }
-
             else:
                 raise ValueError(f"URI `{vector_search_uri}` is invalid!")
 

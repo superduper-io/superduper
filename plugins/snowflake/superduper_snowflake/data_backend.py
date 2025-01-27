@@ -22,7 +22,8 @@ class SnowflakeDataBackend(IbisDataBackend):
 
     @staticmethod
     def _get_snowpark_session(uri):
-        logging.info('Creating Snowpark session')
+        logging.info('Creating Snowpark session for'
+                     ' snowflake vector-search implementation')
         if uri == 'snowflake://':
             connection_parameters = dict(
                 host=os.environ['SNOWFLAKE_HOST'],
@@ -43,9 +44,9 @@ class SnowflakeDataBackend(IbisDataBackend):
                 warehouse = None
             else:
                 match = re.match(
-                    'snowflake://(.*):(.*)@(.*)/(.*)/(.*)?warehouse=(.*)^'
+                    '^snowflake://(.*):(.*)@(.*)/(.*)/(.*)?warehouse=(.*)$', uri
                 )
-                password, user, account, database, schema, warehouse = match.groups()
+                user, password, account, database, schema, warehouse = match.groups()
 
             connection_parameters = dict(
                 user=user,

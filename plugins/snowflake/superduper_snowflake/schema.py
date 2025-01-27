@@ -55,15 +55,24 @@ def ibis_type_to_snowpark_type(ibis_dtype):
     return StringType()
 
 
-def ibis_schema_to_snowpark_schema(ibis_schema):
+def ibis_schema_to_snowpark_cols(ibis_schema):
     """
     Convert an Ibis schema (ibis.Schema) to a Snowpark StructType.
     """
-    fields = []
+    cols = {}
     for col_name, col_type in ibis_schema.items():
         # Convert Ibis type to Snowpark type
         snowpark_type = ibis_type_to_snowpark_type(col_type)
         # Create a StructField; adjust `nullable` as appropriate for your use-case
-        fields.append(StructField(col_name, snowpark_type, nullable=True))
-    
+        cols[col_name] = StructField(col_name, snowpark_type, nullable=True)
+    return cols
+
+
+def snowpark_cols_to_schema(snowpark_cols, col_names):
+    """
+    Convert a Snowpark StructType to an Ibis schema (ibis.Schema).
+    """
+    fields = []
+    for col_name in col_names:
+        fields.append(snowpark_cols[col_name])
     return StructType(fields)

@@ -3,12 +3,12 @@ from snowflake.snowpark.types import (
     StructField,
     StringType,
     IntegerType,
-    FloatType,
     DoubleType,
     BooleanType,
     DateType,
     TimestampType,
     DecimalType,
+    VariantType
 )
 
 
@@ -35,6 +35,9 @@ def ibis_type_to_snowpark_type(ibis_dtype):
         precision = ibis_dtype.precision
         scale = ibis_dtype.scale
         return DecimalType(precision, scale)
+
+    if ibis_dtype.is_json():
+        return VariantType()
     
     # String
     if ibis_dtype.is_string():

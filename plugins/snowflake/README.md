@@ -3,6 +3,8 @@
 
 Superduper snowflake is a vector search plugin for Superduper that allows you to performce vector search directly on snowflake tables.
 
+We also ship a fallback databackend implementation.
+
 ## Installation
 
 ```bash

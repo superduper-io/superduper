@@ -171,6 +171,9 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         from snowflake.snowpark.functions import col, lit, vector_l2_distance
         from snowflake.snowpark.types import VectorType
 
+        if hasattr(h, 'tolist'):
+            h = h.tolist()
+
         vector_table = self.session.table(f'"{self.collection}"')
         result_df = (
             vector_table.select(

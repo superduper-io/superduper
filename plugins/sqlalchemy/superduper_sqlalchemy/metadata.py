@@ -201,6 +201,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def commit(self):
         """Commit execute."""
+
         with self._lock:
             if self._insert_flush:
                 for table, flush in self._insert_flush.items():
@@ -309,10 +310,11 @@ class SQLAlchemyMetadata(MetaDataStore):
                     stmt = insert(table).values(**data)
                     session.execute(stmt)
             else:
-                if table_name not in self._insert_flush:
-                    self._insert_flush[table_name] = datas
-                else:
-                    self._insert_flush[table_name] += datas
+                with self._lock:
+                    if table_name not in self._insert_flush:
+                        self._insert_flush[table_name] = datas
+                    else:
+                        self._insert_flush[table_name] += datas
 
     def _delete_data(self, table_name, filter):
         table = self._table_mapping[table_name]

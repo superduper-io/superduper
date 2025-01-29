@@ -201,15 +201,16 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def commit(self):
         """Commit execute."""
-        if self._insert_flush:
-            for table, flush in self._insert_flush.items():
-                if flush:
-                    with self.session_context() as session:
-                        session.execute(insert(self._get_db_table(table)), flush)
-                        self._insert_flush[table] = []
-        with self.session_context() as session:
-            session.commit()
-        self._batched = False
+        with self._lock:
+            if self._insert_flush:
+                for table, flush in self._insert_flush.items():
+                    if flush:
+                        with self.session_context() as session:
+                            session.execute(insert(self._get_db_table(table)), flush)
+                            self._insert_flush[table] = []
+            with self.session_context() as session:
+                session.commit()
+            self._batched = False
 
     def reconnect(self):
         """Reconnect to sqlalchmey metadatastore."""

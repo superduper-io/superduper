@@ -71,10 +71,6 @@ def build_rest_app(app: SuperDuperApp):
     """
     CFG.log_colorize = False
 
-    @app.add("/health", method="get")
-    def health():
-        return {"status": 200}
-
     @app.add("/handshake/config", method="post")
     def handshake(cfg: str):
         from superduper import CFG

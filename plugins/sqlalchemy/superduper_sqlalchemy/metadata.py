@@ -26,6 +26,12 @@ from superduper.misc.colors import Colors
 from superduper_sqlalchemy.db_helper import get_db_config
 
 
+def wrap_underscore_path(data):
+    if 'superduper_path' in data:
+        data['_path'] = data.pop('superduper_path')
+    return data
+
+
 def _connect_snowflake():
     # In the Snowflake native apps framework, the
     # inbuild database is provided by env variables
@@ -271,7 +277,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             Column('hidden', type_boolean),
             Column('status', type_string),
             Column('type_id', type_string),
-            Column('_path', type_string),
+            Column('superduper_path', type_string),
             Column('dict', type_json_as_text),
             Column('cdc_table', type_string),
             *component_table_args,
@@ -412,7 +418,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 select(self.component_table),
                 session=session,
             )
-        return list(res)
+        return [wrap_underscore_path(r) for r in res]
 
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
@@ -540,7 +546,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param allow_hidden: whether to load hidden components
         """
         if res := self._cache.get_metadata_by_uuid(uuid):
-            return res
+            return wrap_underscore_path(res)
         with self.session_context() as session:
             stmt = (
                 select(self.component_table)
@@ -555,6 +561,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             try:
                 res = res[0]
                 res = self._cache.add_metadata(res)
+                res = wrap_underscore_path(res)
                 return res
             except IndexError:
                 raise NonExistentMetadataError(
@@ -576,7 +583,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         :param allow_hidden: whether to allow hidden components
         """
         if res := self._cache.get_metadata_by_identifier(type_id, identifier, version):
-            return res
+            return wrap_underscore_path(res)
         with self.session_context() as session:
             stmt = select(self.component_table).where(
                 self.component_table.c.type_id == type_id,
@@ -589,6 +596,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             res = self.query_results(self.component_table, stmt, session)
             if res:
                 res = res[0]
+                res = wrap_underscore_path(res)
                 res = self._cache.add_metadata(res)
                 return res
 
@@ -621,6 +629,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         new_info['dict'] = {k: info[k] for k in info if k not in component_fields}
         new_info['id'] = new_info['dict']['uuid']
         new_info['uuid'] = new_info['dict']['uuid']
+        new_info['superduper_path'] = new_info.pop('_path')
         return new_info
 
     def get_latest_version(
@@ -770,7 +779,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             if type_id is not None:
                 stmt = stmt.where(self.component_table.c.type_id == type_id)
             res = self.query_results(self.component_table, stmt, session)
-        return res
+        return [wrap_underscore_path(r) for r in res]
 
     def show_component_versions(self, type_id: str, identifier: str):
         """Show all versions of a component in the database.
@@ -796,6 +805,8 @@ class SQLAlchemyMetadata(MetaDataStore):
         value: t.Any,
         version: int,
     ):
+        if key == '_path':
+            key = 'superduper_path'
         with self.session_context() as session:
             stmt = (
                 self.component_table.update()
@@ -926,4 +937,4 @@ class SQLAlchemyMetadata(MetaDataStore):
             # - NotExist: SnowFlake returns error if a component does not exist
             return []
 
-        return results
+        return [wrap_underscore_path(r) for r in results]

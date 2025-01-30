@@ -82,16 +82,37 @@ class SnowflakeDataBackend(IbisDataBackend):
         super().reconnect()
         self.snowpark = self._get_snowpark_session(self.uri)
 
+    # def insert(self, table_name, raw_documents):
+    #     ibis_schema = self.conn.table(table_name).schema()
+    #     df = pandas.DataFrame(raw_documents)
+    #     rows = list(df.itertuples(index=False, name=None))
+    #     columns = list(ibis_schema.keys())
+    #     df = df.to_dict(orient='records')
+    #     get_row = lambda row: [row[col] for col in columns]
+    #     rows = list(map(get_row, df))
+    #     snowpark_cols = ibis_schema_to_snowpark_cols(ibis_schema)
+    #     snowpark_schema = snowpark_cols_to_schema(snowpark_cols, columns)
+    #     native_df = self.snowpark.create_dataframe(rows, schema=snowpark_schema)
+    #     return native_df.write.saveAsTable(f'"{table_name}"', mode='append')  
+
     def insert(self, table_name, raw_documents):
         ibis_schema = self.conn.table(table_name).schema()
         df = pandas.DataFrame(raw_documents)
-        rows = list(df.itertuples(index=False, name=None))
+
+        # Ensure columns match the expected schema
         columns = list(ibis_schema.keys())
-        df = df.to_dict(orient='records')
-        get_row = lambda row: [row[col] for col in columns]
-        rows = list(map(get_row, df))
+        df = df[columns]  # Keep only relevant columns
+
+        # Convert to list of lists
+        rows = df.values.tolist()
+
+        # Convert schema for Snowpark
         snowpark_cols = ibis_schema_to_snowpark_cols(ibis_schema)
         snowpark_schema = snowpark_cols_to_schema(snowpark_cols, columns)
+
+        # Create Snowpark DataFrame
         native_df = self.snowpark.create_dataframe(rows, schema=snowpark_schema)
-        return native_df.write.saveAsTable(f'"{table_name}"', mode='append')  
+
+        # Save table with correct format
+        return native_df.write.saveAsTable(f'"{table_name}"', mode='append')
 

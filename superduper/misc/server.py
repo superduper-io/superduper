@@ -46,7 +46,7 @@ def _server_request_encoder(x):
 
 # TODO doesn't seem to be used
 def _request_server(
-    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
+    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post', timeout: int = 10
 ):
     if service == 'cdc':
         service_uri = CFG.cluster.cdc.uri
@@ -74,10 +74,10 @@ def _request_server(
             if not isinstance(data, primitives):
                 data = _server_request_encoder(data)
 
-        response = requests.post(url, json=data, params=args)
+        response = requests.post(url, json=data, params=args, timeout=timeout)
         result = json.loads(response.content)
     else:
-        response = requests.get(url, params=args)
+        response = requests.get(url, params=args, timeout=timeout)
         result = json.loads(response.content)
     if response.status_code != 200:
         error = json.loads(response.content)

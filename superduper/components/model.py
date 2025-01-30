@@ -573,7 +573,11 @@ class Model(Component, metaclass=ModelMeta):
         X_data: t.Any
         mapping = Mapping(X, self.signature)
         if in_memory:
+            logging.info('Loading data into memory...')
             docs = list(self.db.execute(select.select_using_ids(ids)))
+            pid = select.table_or_collection.primary_id
+            lookup = {r[pid]: r for r in docs}
+            docs = [lookup[id_] for id_ in ids]
             X_data = list(map(lambda x: mapping(x), docs))
         else:
             assert isinstance(self.db, Datalayer)

@@ -78,6 +78,10 @@ class SnowflakeDataBackend(IbisDataBackend):
             return IbisDataBackend._connection_callback(uri)
         return ibis.snowflake.from_connection(self._do_connection_callback(uri), create_object_udfs=False), 'snowflake', False
 
+    def reconnect(self):
+        super().reconnect()
+        self.snowpark = self._get_snowpark_session(self.uri)
+
     def insert(self, table_name, raw_documents):
         ibis_schema = self.conn.table(table_name).schema()
         df = pandas.DataFrame(raw_documents)

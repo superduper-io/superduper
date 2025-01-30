@@ -1,3 +1,4 @@
+from functools import wraps
 import os
 import re
 import typing as t
@@ -8,6 +9,18 @@ from superduper.backends.base.vector_search import BaseVectorSearcher, VectorIte
 
 if t.TYPE_CHECKING:
     from superduper.components.vector_index import VectorIndex
+
+
+def retry(f):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except Exception as e:
+            if 'token' in str(e):
+                self.session = SnowflakeVectorSearcher.create_session(CFG.data_backend)
+            return f(self, *args, **kwargs)
+    return wrapper
 
 
 class SnowflakeVectorSearcher(BaseVectorSearcher):
@@ -161,6 +174,7 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
         ).collect()
         return self.find_nearest_from_array(result, n=n, within_ids=within_ids)
 
+    @retry
     def find_nearest_from_array(self, h, n=100, within_ids=None):
         """Find the nearest vectors to the given vector.
 

@@ -64,6 +64,14 @@ class QueryDataset:
                 self._documents = list(
                     self.db.execute(self.select.select_using_ids(ids))
                 )
+                primary_id = self.select.id_field
+                # is it possible that the _documents came out in a different order?
+                # if so, resort them
+                lookup = {
+                    r[primary_id]: r for r in self._documents
+                }
+                self._documents = [lookup[id] for id in ids]
+                # DONE
         else:
             if ids is None:
                 self._ids = [

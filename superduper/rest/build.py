@@ -196,7 +196,7 @@ def build_rest_app(app: SuperDuperApp):
         return db.databackend.list_tables_or_collections()
 
     @app.add('/db/apply', method='post')
-    async def db_apply(
+    def db_apply(
         info: t.Dict,
         background_tasks: BackgroundTasks,
         id: str | None = 'test',
@@ -205,8 +205,7 @@ def build_rest_app(app: SuperDuperApp):
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)
         type_id = cls.type_id
-        async with lock:
-            PENDING_COMPONENTS.add((type_id, info['identifier']))
+        PENDING_COMPONENTS.add((type_id, info['identifier']))
         if '_variables' in info:
             info['_variables']['output_prefix'] = CFG.output_prefix
             info['_variables']['databackend'] = db.databackend.backend_name
@@ -275,13 +274,16 @@ def build_rest_app(app: SuperDuperApp):
                         )
             return out
 
+    def _process_db_remove(db, type_id, identifier):
+        return db.remove(type_id=type_id, identifier=identifier, recursive=True, force=True)
+
     @app.add('/db/remove', method='post')
-    async def db_remove(
-        type_id: str, identifier: str, db: 'Datalayer' = DatalayerDependency()
+    def db_remove(
+        type_id: str, identifier: str, bg: BackgroundTasks, db: 'Datalayer' = DatalayerDependency(),
     ):
-        async with lock:
-            PENDING_COMPONENTS.discard((type_id, identifier))
+        PENDING_COMPONENTS.discard((type_id, identifier))
         db.remove(type_id=type_id, identifier=identifier, recursive=True, force=True)
+        bg.add_task(_process_db_remove, db, type_id, identifier)
         return {'status': 'ok'}
 
     @app.add('/db/show_template', method='get')

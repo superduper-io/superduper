@@ -10,7 +10,7 @@ from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.metadata import MetaDataStore
+from superduper.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduper.backends.base.query import Query
 from superduper.backends.local.cluster import LocalCluster
 from superduper.base import apply, exceptions
@@ -629,6 +629,11 @@ class Datalayer:
                 f'Component {type_id}:{identifier}:{version} has already been removed'
             )
             return
+        except NonExistentMetadataError:    
+            logging.warn(
+                f'Component {type_id}:{identifier}:{version} has already been removed'
+            )
+            return
         except Exception as e:
             if 'not exist' in str(e):
                 logging.warn(
@@ -656,6 +661,7 @@ class Datalayer:
             identifier,
             version=version,
         )
+
         info = self.metadata.get_component(
             type_id, identifier, version=version, allow_hidden=force
         )

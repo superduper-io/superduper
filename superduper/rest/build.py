@@ -31,9 +31,6 @@ if t.TYPE_CHECKING:
 
 
 PENDING_COMPONENTS = set()
-# lock = threading.Lock()
-import asyncio
-lock = asyncio.Lock()
 
 
 

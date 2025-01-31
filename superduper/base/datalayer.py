@@ -629,6 +629,12 @@ class Datalayer:
                 f'Component {type_id}:{identifier}:{version} has already been removed'
             )
             return
+        except Exception as e:
+            if 'not exist' in str(e):
+                logging.warn(
+                    f'Component {type_id}:{identifier}:{version} has already been removed'
+                )
+                return
         if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
             raise exceptions.ComponentInUseError(

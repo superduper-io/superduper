@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
 import typing as t
 import zipfile
 from contextlib import contextmanager
@@ -30,6 +31,7 @@ if t.TYPE_CHECKING:
 
 
 PENDING_COMPONENTS = set()
+lock = threading.Lock()
 
 
 class Tee:
@@ -200,7 +202,8 @@ def build_rest_app(app: SuperDuperApp):
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)
         type_id = cls.type_id
-        PENDING_COMPONENTS.add((type_id, info['identifier']))
+        with lock:
+            PENDING_COMPONENTS.add((type_id, info['identifier']))
         if '_variables' in info:
             info['_variables']['output_prefix'] = CFG.output_prefix
             info['_variables']['databackend'] = db.databackend.backend_name
@@ -273,7 +276,8 @@ def build_rest_app(app: SuperDuperApp):
     def db_remove(
         type_id: str, identifier: str, db: 'Datalayer' = DatalayerDependency()
     ):
-        PENDING_COMPONENTS.discard((type_id, identifier))
+        with lock:
+            PENDING_COMPONENTS.discard((type_id, identifier))
         db.remove(type_id=type_id, identifier=identifier, recursive=True, force=True)
         return {'status': 'ok'}
 

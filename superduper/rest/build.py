@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+import traceback
 import typing as t
 import zipfile
 from contextlib import contextmanager
@@ -177,14 +178,15 @@ def build_rest_app(app: SuperDuperApp):
                     _apply()
                 except Exception as e:
                     logging.error(f'Exception during application apply :: {e}')
-                    raise
+                    logging.error(traceback.format_exc())
+                    raise e
         else:
             try:
                 _apply()
 
             except Exception as e:
                 logging.error(f'Exception during application apply :: {e}')
-                raise
+                raise e
 
     @app.add('/describe_tables')
     def describe_tables(db: 'Datalayer' = DatalayerDependency()):

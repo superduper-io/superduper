@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import tempfile
+import traceback
 import typing as t
 import zipfile
 from contextlib import contextmanager
@@ -177,6 +178,8 @@ def build_rest_app(app: SuperDuperApp):
                     _apply()
                 except Exception as e:
                     logging.error(f'Exception during application apply :: {e}')
+                    logging.error(traceback.format_exc())
+                    PENDING_COMPONENTS.discard((component.type_id, component.identifier))
                     raise
         else:
             try:

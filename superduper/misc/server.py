@@ -3,6 +3,7 @@ import base64
 import json
 import os
 from functools import lru_cache
+import traceback
 
 import requests
 
@@ -87,7 +88,8 @@ def _request_server(
 
 
 def request_server(
-    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
+    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post',
+    retries: int = 1, timeout: int = 10
 ):
     """Request server with data.
 
@@ -97,7 +99,16 @@ def request_server(
     :param args: Arguments to pass
     :param type: Type of request
     """
-    # _handshake(service)
-    return _request_server(
-        service=service, data=data, endpoint=endpoint, args=args, type=type
-    )
+    for i in range(retries):
+        try:
+            return _request_server(
+                service=service, data=data, endpoint=endpoint, args=args, type=type,
+                timeout=timeout,
+            )
+        except requests.exceptions.RequestException as e:
+            if i == retries - 1:
+                raise e
+
+            logging.error(f'Error connecting to {service} :: {e}')
+            logging.error(traceback.format_exc())
+            logging.info(f'Retrying {service}/{endpoint}...')

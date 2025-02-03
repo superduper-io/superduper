@@ -575,8 +575,8 @@ class Model(Component, metaclass=ModelMeta):
         if in_memory:
             docs = list(self.db.execute(select.select_using_ids(ids)))
             pid = select.table_or_collection.primary_id
-            lookup = {r[pid]: r for r in docs}
-            docs = [lookup[id_] for id_ in ids]
+            lookup = {str(r[pid]): r for r in docs}
+            docs = [lookup[str(id_)] for id_ in ids]
             X_data = list(map(lambda x: mapping(x), docs))
         else:
             assert isinstance(self.db, Datalayer)
@@ -672,8 +672,28 @@ class Model(Component, metaclass=ModelMeta):
             in_memory=in_memory,
         )
 
+        try:
+            existing = list(self.db[CFG.output_prefix + predict_id].select('_source').execute())
+            existing_ids = [str(r['_source']) for r in existing]
+        except Exception as e:
+            if 'complete' in str(e):
+                existing_ids = []
+
+        dataset = [r for i, r in enumerate(dataset) if ids[i] not in existing_ids]
+        ids = [id_ for id_ in ids if id_ not in existing_ids]
+
         outputs = self.predict_batches(dataset)
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
+
+        try:
+            existing = list(self.db[CFG.output_prefix + predict_id].select('_source').execute())
+            existing_ids = [str(r['_source']) for r in existing]
+        except Exception as e:
+            if 'complete' in str(e):
+                existing_ids = []
+
+        outputs = [output for i, output in enumerate(outputs) if ids[i] not in existing_ids]
+        ids = [id_ for id_ in ids if id_ not in existing_ids]
 
         assert isinstance(
             self.version, int

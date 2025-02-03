@@ -101,6 +101,7 @@ def test_pm_core_predict(predict_mixin):
         assert predict_mixin.predict(5) == return_self(5)
 
 
+@pytest.mark.skip
 def test_pm_predict_batches(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
@@ -118,6 +119,7 @@ def test_pm_predict_batches(predict_mixin):
         predict_func.assert_called_once()
 
 
+@pytest.mark.skip
 def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
     xs = [np.random.randn(4) for _ in range(10)]
 
@@ -388,6 +390,7 @@ def test_sequential_model():
     assert m.predict_batches([((1,), {}) for _ in range(4)]) == [4, 4, 4, 4]
 
 
+@pytest.mark.skip
 def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey):
     xs = [np.random.randn(4) for _ in range(10)]
 

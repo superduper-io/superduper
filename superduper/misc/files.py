@@ -1,7 +1,90 @@
 import hashlib
 import os
+import traceback
 
 from superduper import CFG, logging
+from superduper.base.exceptions import IncorrectSecretException, MissingSecretsException
+
+
+def check_openai(name):
+    from openai import Client, AuthenticationError, OpenAIError
+    try:
+        _ = Client().models.list()
+    except AuthenticationError:
+        raise IncorrectSecretException(
+            'OpenAI API key is incorrect. Please check the key and try again.'
+        )
+    except OpenAIError as e:
+        raise MissingSecretsException(
+            'OpenAI API key is missing. Set as enviroment variable OPENAI_API_KEY.'
+        )
+
+
+def check_s3(name):
+
+    if name == 'AWS_ACCESS_KEY_ID':
+        assert 'AWS_SECRET_ACCESS_KEY' in os.environ, 'AWS_SECRET_ACCESS_KEY not found'
+    elif name == 'AWS_SECRET_ACCESS_KEY':
+        assert 'AWS_ACCESS_KEY_ID' in os.environ, 'AWS_ACCESS_KEY_ID not found'
+    else:
+        raise ValueError(f'Unknown secret {name}')
+
+    import boto3
+    from botocore.exceptions import ClientError
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.list_buckets()
+    except ClientError as e:
+        if 'does not exist' in str(e):
+            raise IncorrectSecretException(
+                'AWS credentials are incorrect. Please check the credentials and try again. '
+                'The provided AWS key-pair does not exist.'
+            )
+        elif 'not authorized' in str(e):
+            raise IncorrectSecretException(
+                'AWS credentials are incorrect. Please check the credentials and try again. '
+                'The provided AWS key-pair is not authorized to access the requested resources. '
+                'Minimum required permissions: s3:ListBucket, s3:GetObject.'
+            )
+        logging.error(traceback.format_exc())
+        raise e
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise e
+
+
+def not_empty(name):
+    assert name in os.environ, f'{name} not found in environment'
+
+
+class MatchersFactory:
+    def __getitem__(self, key):
+        if key.startswith('AWS_ACCESS_KEY_ID'):
+            return lambda: check_s3(key)
+        if key == ('OPENAI_API_KEY'):
+            return lambda: check_openai(key)
+        return lambda: not_empty(key)
+
+
+MATCHERS = MatchersFactory()
+
+
+def check_secrets():
+    """Check that the secrets connect"""
+    required = os.environ.get('SUPERDUPER_REQUIRED_SECRETS', '').split(',')
+    logging.info(f'Checking secrets {required}')
+    errors = []
+    for secret in required:
+        try:
+            MATCHERS[secret]()
+        except Exception as e:
+            errors.append(e)
+
+    if errors:
+        raise IncorrectSecretException(
+            'Some secrets are incorrect. Please check the secrets and try again.\n'
+            '\n'.join([str(e) for e in errors])
+        )
 
 
 def load_secrets():

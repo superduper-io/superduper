@@ -9,7 +9,9 @@ import typing as t
 import zipfile
 from contextlib import contextmanager
 
+from superduper.misc.files import check_secrets, load_secrets
 from superduper.misc.importing import import_object
+from superduper.misc.plugins import load_plugin
 
 try:
     import magic
@@ -74,6 +76,11 @@ def build_rest_app(app: SuperDuperApp):
 
     @app.add("/health", method="get")
     def health():
+        if 'REQUIRED_SECRETS' in os.environ:
+            load_secrets()
+            check_secrets()
+            if CFG.data_backend == 'snowflake://':
+                load_plugin('snowflake').check_secret_updates()
         return {"status": 200}
 
     @app.add("/handshake/config", method="post")
@@ -191,7 +198,13 @@ def build_rest_app(app: SuperDuperApp):
 
     @app.add('/describe_tables')
     def describe_tables(db: 'Datalayer' = DatalayerDependency()):
-        return db.databackend.list_tables_or_collections()
+        out = db.databackend.list_tables_or_collections()
+        return [
+            t for t in out if (
+                not t.startswith(CFG.output_prefix)
+                and not t.lower() in {'component', 'job', 'parent_child_association', 'artifact_relations'}
+            )
+        ]
 
     @app.add('/db/apply', method='post')
     def db_apply(
@@ -200,6 +213,12 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
+        if 'REQUIRED_SECRETS' in os.environ:
+            load_secrets()
+            check_secrets()
+            if db.cfg.data_backend == 'snowflake://':
+                load_plugin('snowflake').check_secret_updates()
+
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)
         type_id = cls.type_id

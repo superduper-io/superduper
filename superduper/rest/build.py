@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -213,6 +214,10 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
+
+        msg = 'Identifier (name) of application should match [a-zA-Z\_0-9]+'
+        assert re.match('^[a-zA-Z\_0-9]+$', info['identifier']) is not None, msg
+
         if 'REQUIRED_SECRETS' in os.environ:
             load_secrets()
             check_secrets()
@@ -222,6 +227,16 @@ def build_rest_app(app: SuperDuperApp):
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)
         type_id = cls.type_id
+        if (type_id, info['identifier']) in PENDING_COMPONENTS and not db.show(type_id, info['identifier']):
+            raise Exception(f'The component you have added ({type_id}, {info["identifier"]}) '
+                            'is in the pending state')
+
+        try:
+            if db.show(type_id, info['identifier'], -1)['status'] != 'ready':
+                raise Exception(f'The component {type_id}:{info["identifier"]} is being processed')
+        except FileNotFoundError:
+            logging.info(f'Processing a new component {type_id}:{info["identifier"]}')
+
         PENDING_COMPONENTS.add((type_id, info['identifier']))
         if '_variables' in info:
             info['_variables']['output_prefix'] = CFG.output_prefix

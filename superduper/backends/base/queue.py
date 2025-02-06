@@ -85,6 +85,10 @@ class BaseQueuePublisher(BaseBackend):
         self.uri: t.Optional[str] = uri
         self.queue: t.Dict = defaultdict(lambda: [])
 
+    def clear(self):
+        """Clear the queue."""
+        self.queue = defaultdict(lambda: [])
+
     @abstractmethod
     def build_consumer(self, **kwargs):
         """Build a consumer instance."""

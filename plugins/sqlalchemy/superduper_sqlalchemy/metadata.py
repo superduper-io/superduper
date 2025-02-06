@@ -67,6 +67,9 @@ class _Cache:
         self._uuid2metadata: t.Dict[str, t.Dict] = {}
         self._type_id_identifier2metadata = defaultdict(dict)
 
+    def __bool__(self):
+        return bool(self._uuid2metadata) or bool(self._type_id_identifier2metadata)
+
     def replace_metadata(
         self, metadata, uuid=None, type_id=None, version=None, identifier=None
     ):
@@ -93,10 +96,18 @@ class _Cache:
             if (type_id, identifier) in self._type_id_identifier2metadata:
                 del self._type_id_identifier2metadata[(type_id, identifier)]
 
-    def expire_identifier(self, type_id, identifier):
+    def expire_version(self, type_id, identifier, version):
         if (type_id, identifier) in self._type_id_identifier2metadata:
-            del self._type_id_identifier2metadata[(type_id, identifier)]
+            try:
+                r = self._type_id_identifier2metadata[(type_id, identifier)][version]
+            except KeyError:
+                return
 
+            del self._type_id_identifier2metadata[(type_id, identifier)][version]
+            del self._uuid2metadata[r['uuid']]
+            if not self._type_id_identifier2metadata[(type_id, identifier)]:
+                del self._type_id_identifier2metadata[(type_id, identifier)]
+        
     def add_metadata(self, metadata):
         metadata = copy.deepcopy(metadata)
         if 'dict' in metadata:
@@ -455,7 +466,17 @@ class SQLAlchemyMetadata(MetaDataStore):
         new_info = self._refactor_component_info(info)
         with self.session_context(commit=not self.batched) as session:
             if not self.batched:
-                stmt = insert(self.component_table).values(new_info)
+                primary_key_value = new_info['id']
+                exists = session.execute(
+                    select(self.component_table).
+                    where(self.component_table.c.id == primary_key_value)
+                ).scalar() is not None
+                if exists:
+                    return
+                stmt = (
+                    insert(self.component_table)
+                        .values(new_info)
+                )
                 session.execute(stmt)
             else:
                 self._insert_flush['component'].append(copy.deepcopy(new_info))
@@ -537,7 +558,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                     self.component_table.c.id == cv['id']
                 )
                 session.execute(stmt_delete)
-                self._cache.expire_identifier(type_id, identifier)
+                self._cache.expire_version(type_id, identifier, version)
 
         if cv:
             self.delete_parent_child(cv['id'])

@@ -16,7 +16,6 @@ import networkx
 import yaml
 
 from superduper import logging
-from superduper.backends.base.queue import JobFutureException
 from superduper.base.annotations import trigger
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
@@ -234,34 +233,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Get all the child components of the component."""
         return self.get_children(deep=False)
 
-    # TODO do we still need this?
-    def _job_dependencies(self) -> t.Sequence[str]:
-        """List all job ids of component-children."""
-        refs = self.get_children_refs(deep=False)
-        if not refs:
-            return []
-        deps = []
-        for type_id, identifier, uuid_ in refs:
-            # TODO this logic is wrong
-            # we should only get the jobs of the specific version
-            # TODO add version to jobs system
-            # (this is not technically wrong, but overkill)
-            jobs = self.db.metadata.show_jobs(
-                type_id=type_id,
-                identifier=identifier,
-            )
-            job_ids = [r['job_id'] for r in jobs]
-            if job_ids:
-                # Currently listener jobs are registered as belonging to the model
-                # This is wrong and should be fixed
-                # These dependencies won't work until this is fixed
-                logging.warn(
-                    f'Upstream jobs found for component '
-                    f'{f"&:component:{type_id}:{identifier}:{uuid_}"};'
-                )
-            deps.extend(job_ids)
-        return list(set(deps))
-
     def _filter_trigger(self, name, event_type):
         attr = getattr(self, name)
         if event_type not in getattr(attr, 'events', ()):
@@ -294,16 +265,6 @@ class Component(Leaf, metaclass=ComponentMeta):
                 if set(getattr(self, t).requires).intersection(requires)
             ]
         return triggers
-
-    def _get_dependencies(self, dependencies):
-        these_dependencies = {}
-        refs = self.get_children_refs(deep=False, only_initializing=True)
-        for key in refs:
-            try:
-                these_dependencies[key] = dependencies[key]
-            except KeyError as e:
-                raise JobFutureException(str(e)) from e
-        return these_dependencies
 
     @trigger('apply')
     def set_status(self, status: Status):
@@ -422,56 +383,6 @@ class Component(Leaf, metaclass=ComponentMeta):
             status_update.dependencies = [j.job_id for j in local_jobs]
             local_jobs.append(status_update)
         return local_jobs
-
-    @classmethod
-    def from_template(
-        self,
-        identifier: str,
-        template_body: t.Optional[t.Dict] = None,
-        template_name: t.Optional[str] = None,
-        db: t.Optional[Datalayer] = None,
-        **kwargs,
-    ):
-        """Create a component from a template.
-
-        :param identifier: Identifier of the component.
-        :param template_body: Body of the template.
-        :param template_name: Name of the template.
-        :param db: Datalayer instance.
-        """
-        from superduper import Template
-
-        if template_name:
-            from superduper.base.datalayer import Datalayer
-
-            assert isinstance(db, Datalayer)
-            template: Template = db.load('template', template_name)
-        else:
-            assert template_body is not None
-
-            def _find_blobs(r, out):
-                if isinstance(r, dict):
-                    for v in r.values():
-                        _find_blobs(v, out)
-                if isinstance(r, list):
-                    for i in r:
-                        _find_blobs(i, out)
-                if isinstance(r, str) and r.startswith('&:blob:'):
-                    out.append(r.split(':')[-1])
-
-            blobs: t.List[str] = []
-            _find_blobs(template_body, blobs)
-            template = Template(
-                '_tmp',
-                template=template_body,
-                template_variables=list(kwargs.keys()),
-                blobs=list(set(blobs)),
-            )
-            template.db = db
-
-        output = template(**kwargs)
-        output.identifier = identifier
-        return output
 
     @property
     def leaves(self):
@@ -811,27 +722,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         if refs:
             r = Document(_convert_components_to_refs(r), schema=self._class_schema)
 
-        # from superduper.components.datatype import Saveable
-
-        # for k in s.fields:
-        #     # TODO remove this duality - either use Saveable or Leaf
-        #     # not both
-
-        #     if k not in r:
-        #         continue
-
-        #     if isinstance(r[k], Leaf):
-        #         continue
-
-        #     if inspect.isclass(s.fields[k]) and issubclass(s.fields[k], Leaf):
-        #         continue
-
-        #     if s.fields[k].encodable == 'leaf':
-        #         continue
-
-        #     if r[k] is not None and not isinstance(r[k], Saveable):
-        #         r[k] = s.fields[k].encode_data(r[k])
-
         if metadata:
             r['type_id'] = self.type_id
             r['version'] = self.version
@@ -841,20 +731,6 @@ class Component(Leaf, metaclass=ComponentMeta):
             r['status'] = str(self.status)
 
         return r
-
-    # TODO needed? looks to have legacy "_content"
-    @classmethod
-    def decode(cls, r, db: t.Optional[t.Any] = None, reference: bool = False):
-        """Decodes a dictionary component into a `Component` instance.
-
-        :param r: Object to be decoded.
-        :param db: Datalayer instance.
-        :param reference: If decode with reference.
-        """
-        assert db is not None
-        r = r['_content']
-        assert r['version'] is not None
-        return db.load(r['type_id'], r['identifier'], r['version'])
 
     def info(self, verbosity: int = 1):
         """Method to display the component information.

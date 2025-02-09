@@ -1,12 +1,9 @@
-import base64
 import inspect
 import typing as t
 from functools import cached_property
 
 from superduper.base.leaf import Leaf
-from superduper.components.datatype import BaseDataType, Saveable
-from superduper.misc.reference import parse_reference
-from superduper.misc.special_dicts import SuperDuperFlatEncode
+from superduper.components.datatype import BaseDataType
 
 if t.TYPE_CHECKING:
     pass
@@ -43,14 +40,6 @@ class FieldType(Leaf):
 
 
 ID = FieldType(identifier='ID')
-
-
-def _convert_base64_to_bytes(str_: str) -> bytes:
-    return base64.b64decode(str_)
-
-
-def _convert_bytes_to_base64(bytes_: bytes) -> str:
-    return base64.b64encode(bytes_).decode('utf-8')
 
 
 class Schema(BaseDataType):
@@ -91,32 +80,10 @@ class Schema(BaseDataType):
         id = self.identifier + '+' + other.identifier
         return Schema(id, fields=new_fields, db=self.db)
 
-    # TODO why do we need this?
-    @cached_property
-    def encoded_types(self):
-        """List of fields of type DataType."""
-        return [k for k, v in self.fields.items() if isinstance(v, BaseDataType)]
-
     @cached_property
     def trivial(self):
         """Determine if the schema contains only trivial fields."""
         return not any([isinstance(v, BaseDataType) for v in self.fields.values()])
-
-    @property
-    def encoders(self):
-        """An iterable to list DataType fields."""
-        for v in self.fields.values():
-            if isinstance(v, BaseDataType):
-                yield v
-
-    @property
-    def fields_set(self):
-        """Get the fields set for the schema."""
-        fields = set()
-        for k, v in self.fields.items():
-            if hasattr(v, 'identifier'):
-                fields.add((k, v.identifier))
-        return fields
 
     def decode_data(self, data: dict[str, t.Any], builds: t.Dict) -> dict[str, t.Any]:
         """Decode data using the schema's encoders.
@@ -168,13 +135,10 @@ class Schema(BaseDataType):
             ):
                 continue
 
-            if isinstance(out[k], Saveable):
-                continue
-
             if out[k] is None:
                 continue
 
-            data = field.encode_data(
+            result[k] = field.encode_data(
                 out[k],
                 builds=builds,
                 blobs=blobs,
@@ -182,41 +146,7 @@ class Schema(BaseDataType):
                 leaves_to_keep=leaves_to_keep,
             )
 
-            # TODO - move into the _Encodable/ _Saveable classes
-            if isinstance(data, Saveable):
-                ref_obj = parse_reference(data.reference)
-
-                if ref_obj.name == 'blob':
-                    blobs[data.identifier] = data.bytes
-
-                elif ref_obj.name == 'file':
-                    files[data.identifier] = data.path
-                else:
-                    assert False, f'Unknown reference type {ref_obj.name}'
-
-                result[k] = data.reference
-            else:
-                result[k] = data
-
         return result
-
-    def __call__(self, data: dict[str, t.Any]) -> dict[str, t.Any]:
-        """Encode data using the schema's encoders.
-
-        :param data: Data to encode.
-        """
-        if self.trivial:
-            return data
-
-        encoded_data = {}
-        for k, v in data.items():
-            if k in self.fields and isinstance(self.fields[k], BaseDataType):
-                field_encoder = self.fields[k]
-                assert callable(field_encoder)
-                encoded_data.update({k: field_encoder(v)})
-            else:
-                encoded_data.update({k: v})
-        return SuperDuperFlatEncode(encoded_data)
 
 
 def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:

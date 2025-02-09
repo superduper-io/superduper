@@ -42,7 +42,7 @@ def check_data_with_schema(data, datatype, db):
     print(document)
     print_sep()
 
-    encoded = document.encode(schema=schema)
+    encoded = document.encode(schema=schema, db=db)
 
     pprint(encoded)
     print_sep()

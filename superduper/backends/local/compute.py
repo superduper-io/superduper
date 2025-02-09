@@ -29,11 +29,6 @@ class LocalComputeBackend(ComputeBackend):
         self.futures: t.DefaultDict = defaultdict(lambda: {})
 
     @property
-    def remote(self) -> bool:
-        """Return if remote compute engine."""
-        return False
-
-    @property
     def type(self) -> str:
         """The type of the backend."""
         return "local"
@@ -105,28 +100,6 @@ class LocalComputeBackend(ComputeBackend):
         :param component: Component to remove.
         """
 
-    @property
-    def tasks(self) -> t.Dict[str, t.Any]:
-        """List for all pending tasks."""
-        return self.__outputs
-
-    def wait_all(self) -> None:
-        """Waits for all pending tasks to complete."""
-        pass
-
-    def result(self, identifier: str) -> t.Any:
-        """Retrieves the result of a previously submitted task.
-
-        Note: This will block until the future is completed.
-
-        :param identifier: The identifier of the submitted task.
-        """
-        return self.__outputs[identifier]
-
     def disconnect(self) -> None:
         """Disconnect the local client."""
-        pass
-
-    def shutdown(self) -> None:
-        """Shuts down the local cluster."""
         pass

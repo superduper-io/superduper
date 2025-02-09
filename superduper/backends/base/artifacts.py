@@ -1,14 +1,8 @@
-import hashlib
 import typing as t
 from abc import ABC, abstractmethod
 
 from superduper import logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
-
-
-# TODO - move to hash.py
-def _construct_file_id_from_uri(uri):
-    return str(hashlib.sha1(uri.encode()).hexdigest())
 
 
 class ArtifactStore(ABC):
@@ -145,12 +139,3 @@ class ArtifactStore(ABC):
     def disconnect(self):
         """Disconnect the client."""
         pass
-
-
-class ArtifactSavingError(Exception):
-    """
-    Error when saving artifact in artifact store fails.
-
-    :param args: *args for `Exception`
-    :param kwargs: **kwargs for `Exception`
-    """

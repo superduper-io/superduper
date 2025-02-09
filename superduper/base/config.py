@@ -149,8 +149,6 @@ class Config(BaseConfig):
     :param envs: The envs datas
     :param data_backend: The URI for the data backend
     :param secrets_volume: The secrets volume mount for secrets env vars.
-    :param lance_home: The home directory for the Lance vector indices,
-                       Default: .superduper/vector_indices
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
     :param vector_search_engine: The engine to use for vector search
@@ -178,8 +176,6 @@ class Config(BaseConfig):
 
     data_backend: str = "mongodb://localhost:27017/test_db"
     secrets_volume: str = os.path.join(".superduper", "/session/secrets")
-
-    lance_home: str = os.path.join(".superduper", "vector_indices")
 
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
@@ -210,11 +206,6 @@ class Config(BaseConfig):
         if envs is not None:
             for k, v in envs.items():
                 os.environ[k.upper()] = v
-
-    @property
-    def hybrid_storage(self):
-        """Whether to use hybrid storage."""
-        return self.downloads.folder is not None
 
     @property
     def comparables(self):

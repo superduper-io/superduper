@@ -166,7 +166,9 @@ def test_decode_inline_data(db):
 
     r = {
         'x': 2,
-        'data': pickle_encoder.encode_data(np.random.randn(20)),
+        'data': pickle_encoder.encode_data(
+            np.random.randn(20), builds={}, blobs={}, files={}
+        ),
     }
 
     r = Document.decode(r, schema=schema).unpack()

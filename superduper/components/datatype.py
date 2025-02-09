@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import inspect
 import json
@@ -24,6 +25,14 @@ INBUILT_DATATYPES = {}
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
+
+
+def _convert_base64_to_bytes(str_: str) -> bytes:
+    return base64.b64decode(str_)
+
+
+def _convert_bytes_to_base64(bytes_: bytes) -> str:
+    return base64.b64encode(bytes_).decode('utf-8')
 
 
 class DataTypeFactory:
@@ -71,12 +80,14 @@ class BaseDataType(Component, metaclass=DataTypeMeta):
     cache: bool = True
 
     @abstractmethod
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Decode the item as `bytes`.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
 
     @abstractmethod
@@ -94,14 +105,14 @@ class LeafType(BaseDataType):
 
     encodable: t.ClassVar[str] = 'leaf'
 
-    def encode_data(self, item, builds, *args, leaves_to_keep=(), **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
         :param builds: The build-cache dictionary.
-        :param args: Additional arguments.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
         :param leaves_to_keep: The `Leaf` type(s) to keep.
-        :param kwargs: Additional keyword arguments.
         """
         if isinstance(item, leaves_to_keep):
             key = (
@@ -114,7 +125,11 @@ class LeafType(BaseDataType):
 
         r = item.dict()
         if r.schema:
-            r = dict(r.schema.encode_data(r, *args, builds=builds, **kwargs))
+            r = dict(
+                r.schema.encode_data(
+                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                )
+            )
 
         identifier = r.pop('identifier')
 
@@ -201,18 +216,21 @@ class SDict(BaseDataType):
 
     encodable: t.ClassVar[str] = 'native'
 
-    def encode_data(self, item, builds, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
         :param builds: The build-cache dictionary.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         assert isinstance(item, dict)
         return {
             k: (
-                LeafType('leaf').encode_data(v, builds, *args, **kwargs)
+                LeafType('leaf').encode_data(
+                    v, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                )
                 if isinstance(v, Leaf)
                 else v
             )
@@ -239,18 +257,21 @@ class SList(BaseDataType):
 
     encodable: t.ClassVar[str] = 'native'
 
-    def encode_data(self, item, builds, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
-        :param builds: The builds.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         assert isinstance(item, list)
         return [
             (
-                LeafType('leaf').encode_data(r, builds, *args, **kwargs)
+                LeafType('leaf').encode_data(
+                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                )
                 if isinstance(r, Leaf)
                 else r
             )
@@ -281,12 +302,14 @@ class BaseVector(BaseDataType):
     dtype: str = 'float64'
 
     @abstractmethod
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
 
     @abstractmethod
@@ -305,12 +328,14 @@ class NativeVector(BaseVector):
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float'
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as a list of floats.
 
         :param item: The item to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
@@ -356,14 +381,18 @@ class Vector(BaseVector):
             datatype = datatype('tmp', dtype=self.dtype, shape=self.shape)
         return datatype
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
-        return self.datatype_impl.encode_data(item=item)
+        return self.datatype_impl.encode_data(
+            item, builds, blobs, files, leaves_to_keep=leaves_to_keep
+        )
 
     def decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
@@ -384,12 +413,14 @@ class JSON(BaseDataType):
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'str'
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as a string.
 
-        :param item: The dictionary or list (json-able object) to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         return json.dumps(item)
 
@@ -406,14 +437,19 @@ class JSON(BaseDataType):
 class _Encodable:
     encodable: t.ClassVar[str] = 'encodable'
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
-        return self._encode_data(item)
+        encoded = self._encode_data(item)
+        if self.db.databackend.bytes_encoding == 'base64':
+            encoded = _convert_bytes_to_base64(encoded)
+        return encoded
 
     def decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
@@ -422,9 +458,6 @@ class _Encodable:
         :param args: Additional arguments.
         :param kwargs: Additional keyword arguments.
         """
-        # handle the databackend bytes_encoding/ base64 encoding
-        from superduper.components.schema import _convert_base64_to_bytes
-
         if self.db.databackend.bytes_encoding == 'base64':
             item = _convert_base64_to_bytes(item)
         return self._decode_data(item)
@@ -433,18 +466,22 @@ class _Encodable:
 class _Artifact:
     encodable: t.ClassVar[str] = 'artifact'
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as `bytes`.
 
         :param item: The item to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
-        return Blob(
+        b = Blob(
             bytes=self._encode_data(item),
             builder=self._decode_data,
             db=self.db,
         )
+        blobs[b.identifier] = b.bytes
+        return b.reference
 
     def decode_data(self, item, *args, **kwargs):
         """Decode the item from `bytes`.
@@ -467,12 +504,6 @@ class _PickleMixin:
         return pickle.dumps(item)
 
     def _decode_data(self, item):
-        """Decode the item from `bytes`.
-
-        :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
-        """
         return pickle.loads(item)
 
 
@@ -489,12 +520,6 @@ class _DillMixin:
         return dill.dumps(item, recurse=True)
 
     def _decode_data(self, item, *args, **kwargs):
-        """Decode the item from `bytes`.
-
-        :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
-        """
         return dill.loads(item)
 
 
@@ -509,23 +534,25 @@ class Dill(_Artifact, _DillMixin, BaseDataType):
 class DillEncoder(_Encodable, _DillMixin, BaseDataType):
     """Encoder with dill."""
 
-    ...
-
 
 class File(BaseDataType):
     """Type for encoding files on disk."""
 
     encodable: t.ClassVar[str] = 'file'
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as a file path.
 
-        :param item: The file path to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         assert os.path.exists(item)
-        return FileItem(path=item)
+        file = FileItem(path=item)
+        files[file.identifier] = file.path
+        return file.reference
 
     def decode_data(self, item, *args, **kwargs):
         """Decode the item placeholder.
@@ -596,7 +623,6 @@ class FileItem(Saveable):
         self.init()
         return self.path
 
-    # TODO - return this as self.dict()?
     @property
     def reference(self):
         return f'&:file:{self.identifier}'
@@ -619,7 +645,6 @@ class Blob(Saveable):
             self.identifier = get_hash(self.bytes)
         return super().__post_init__(db)
 
-    # TODO why do some of these methods have `init(self, db=None)`?
     def init(self):
         """Initialize the blob."""
         if self.bytes:
@@ -655,12 +680,14 @@ class Array(BaseDataType):
             self.identifier = f'numpy-{dtype}[{str_shape(self.shape)}]'
         return super().__post_init__(db)
 
-    def encode_data(self, item, *args, **kwargs):
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the data.
 
-        :param item: The data to encode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         if item.dtype != self.dtype:
             raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')

@@ -77,7 +77,7 @@ def infer_datatype(
     if datatype is None:
         datatype: BaseDataType = INBUILT_DATATYPES['encodable']('encodable', db=db)
         try:
-            encoded_data = datatype.encode_data(data)
+            encoded_data = datatype.encode_data(data, builds={}, blobs={}, files={})
             decoded_data = datatype.decode_data(encoded_data)
             assert isinstance(decoded_data, type(data))
         except Exception as e:
@@ -164,7 +164,7 @@ class JsonDataTypeFactory(DataTypeFactory):
         :param data: The data object.
         """
         try:
-            JSON('json').encode_data(data)
+            JSON('json').encode_data(data, builds={}, blobs={}, files={})
             return True
         except Exception:
             return False

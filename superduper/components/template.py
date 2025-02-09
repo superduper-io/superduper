@@ -1,5 +1,6 @@
 import dataclasses as dc
 import os
+import subprocess
 import typing as t
 
 from superduper import CFG
@@ -131,6 +132,53 @@ class Template(_BaseTemplate):
         self.files = list(self.template.get(KEY_FILES, {}).keys())
         db.artifact_store.save_artifact(self.template)
         self.init()
+
+    def download(self, name: str = '*', path='./templates'):
+        """Download the templates to the given path.
+
+        :param name: Name of the template to download.
+        :param path: Path to download the templates.
+
+        Here are the supported templates:
+
+        - llm_finetuning
+        - multimodal_image_search
+        - multimodal_video_search
+        - pdf_rag
+        - rag
+        - simple_rag
+        - text_vector_search
+        - transfer_learning
+        """
+        base_url = 'https://superduper-public-templates.s3.us-east-2.amazonaws.com'
+        versions = {
+            'llm_finetuning': '0.5.0',
+            'multimodal_image_search': '0.5.0',
+            'multimodal_video_search': '0.5.0',
+            'pdf_rag': '0.5.0',
+            'rag': '0.5.0',
+            'simple_rag': '0.5.0',
+            'text_vector_search': '0.5.0',
+            'transfer_learning': '0.5.0',
+        }
+        templates = {k: base_url + f'/{k}-{versions[k]}.zip' for k in versions}
+
+        if name == '*':
+            for a_name in templates:
+                self.download(a_name, path + '/' + a_name)
+            return
+
+        assert name in templates, '{} not in supported templates {}'.format(
+            name, list(templates.keys())
+        )
+
+        file = name + '.zip'
+        url = templates[name]
+
+        if not os.path.exists(f'/tmp/{file}'):
+            subprocess.run(['curl', '-O', '-k', url])
+            subprocess.run(['mv', file, f'/tmp/{file}'])
+            subprocess.run(['unzip', f'/tmp/{file}', '-d', path])
 
     def export(
         self,

@@ -162,7 +162,6 @@ def show_configuration(cfg):
     """
     table = PrettyTable()
     table.field_names = ["Configuration", "Value"]
-    # Only show the important configuration values.
     key_values = [
         ('Data Backend', anonymize_url(cfg.data_backend)),
         ('Metadata Store', anonymize_url(cfg.metadata_store)),

@@ -1,4 +1,3 @@
-import os
 import typing as t
 
 
@@ -10,17 +9,6 @@ def str_shape(shape: t.Sequence[int]) -> str:
     if not shape:
         raise ValueError('Shape was empty')
     return 'x'.join(str(x) for x in shape)
-
-
-def get_key(key_name: str) -> str:
-    """Get an environment variable.
-
-    :param key_name: The name of the environment variable to get.
-    """
-    try:
-        return os.environ[key_name]
-    except KeyError:
-        raise KeyError(f'Environment variable {key_name} is not set') from None
 
 
 # TODO move to plugins

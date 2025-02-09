@@ -15,7 +15,7 @@ import requests
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.backends.query_dataset import CachedQueryDataset, QueryDataset
+from superduper.backends.query_dataset import QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
 from superduper.base.leaf import Leaf
@@ -148,30 +148,6 @@ class Inputs:
         return {**tmp, **kwargs}
 
 
-class CallableInputs(Inputs):
-    """Class represents the model callable args and kwargs.
-
-    :param fn: Callable function
-    :param predict_kwargs: (optional) predict_kwargs if provided in Model
-                        initiation
-    """
-
-    def __init__(self, fn, predict_kwargs: t.Dict = {}):
-        sig = inspect.signature(fn)
-        full_argspec = inspect.getfullargspec(fn)
-        self.kwonly = full_argspec.kwonlyargs
-        self.args = full_argspec.args
-
-        sig_keys = list(sig.parameters.keys())
-        params = []
-        for k in sig_keys:
-            if k in predict_kwargs or (k == 'kwargs' and sig.parameters[k].kind == 4):
-                continue
-            params.append(k)
-
-        self.params = params
-
-
 # TODO migrate this to its own module
 class Trainer(Component):
     """Trainer component to train a model.
@@ -185,9 +161,6 @@ class Trainer(Component):
     :param transform: (optional) transform callable.
     :param metric_values: Dictionary for metric defaults.
     :param signature: Model signature.
-    :param data_prefetch: Boolean for prefetching data before forward pass.
-    :param prefetch_size: Prefetch batch size.
-    :param prefetch_factor: Prefetch factor for data prefetching.
     :param in_memory: If training in memory.
     :param compute_kwargs: Kwargs for compute backend.
     :param validation: Validation object to measure training performance
@@ -207,9 +180,6 @@ class Trainer(Component):
     transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
     signature: Signature = '*args'
-    data_prefetch: bool = False
-    prefetch_size: int = 1000
-    prefetch_factor: int = 100
     in_memory: bool = True
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     validation: t.Optional[Validation] = None
@@ -258,18 +228,6 @@ class Mapping:
     def __init__(self, mapping: ModelInputType, signature: Signature):
         self.mapping = self._map_args_kwargs(mapping)
         self.signature = signature
-
-    @property
-    def id_key(self):
-        """Extract the output key for model outputs."""
-        outputs = []
-        for arg in self.mapping[0]:
-            outputs.append(arg)
-        for key, value in self.mapping[1].items():
-            if key.startswith(CFG.output_prefix):
-                key = key.split('.')[1]
-            outputs.append(f'{key}={value}')
-        return ', '.join(outputs)
 
     @staticmethod
     def _map_args_kwargs(mapping):
@@ -383,7 +341,6 @@ class ModelMeta(ComponentMeta):
         return cls
 
 
-# TODO there are a lot of redundant parameters here
 class Model(Component, metaclass=ModelMeta):
     """Base class for components which can predict.
 
@@ -960,13 +917,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def _create_dataset(self, X, db, select, fold=None, **kwargs):
         kwargs = kwargs.copy()
-        if self.trainer.data_prefetch:
-            dataset_cls = CachedQueryDataset
-            kwargs['prefetch_size'] = self.prefetch_size
-        else:
-            dataset_cls = QueryDataset
-
-        dataset = dataset_cls(
+        dataset = QueryDataset(
             select=select,
             fold=fold,
             db=db,
@@ -1136,12 +1087,6 @@ class ImportedModel(Model):
         return IndexableNode([int])
 
     @property
-    def inputs(self):
-        """A method to get Model callable inputs."""
-        kwargs = self.predict_kwargs if self.predict_kwargs else {}
-        return CallableInputs(self.object, kwargs)
-
-    @property
     def training_keys(self) -> t.List:
         """Retrieve training keys."""
         if isinstance(self.train_X, list):
@@ -1195,12 +1140,14 @@ class APIBaseModel(Model):
         super().postinit()
 
     @ensure_initialized
-    def _multi_predict(
+    def predict_batches(
         self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
     ) -> t.List:
         """Use multi-threading to predict on a series of data points.
 
         :param dataset: Series of data points.
+        :param args: Positional arguments to predict on.
+        :param kwargs: Keyword arguments to predict on.
         """
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_batch_size
@@ -1222,11 +1169,6 @@ class APIModel(APIBaseModel):
     """
 
     url: str
-
-    @property
-    def inputs(self):
-        """Method to get ``Inputs`` instance for model inputs."""
-        return Inputs(self.runtime_params)
 
     def postinit(self):
         """Initialize the model data (e.g. weights etc.)."""
@@ -1278,13 +1220,6 @@ class QueryModel(Model):
     select: Query
     signature: Signature = '**kwargs'
 
-    @property
-    def inputs(self) -> Inputs:
-        """Instance of `Inputs` to represent model params."""
-        if self.preprocess is not None:
-            return CallableInputs(self.preprocess)
-        return Inputs([x.value for x in self.select.variables])
-
     def predict(self, *args, **kwargs):
         """Predict on a single data point.
 
@@ -1328,7 +1263,6 @@ class SequentialModel(Model):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('models',)
-
     models: t.List[Model]
 
     def postinit(self):
@@ -1339,11 +1273,6 @@ class SequentialModel(Model):
     @property
     def signature(self):
         return self.models[0].signature
-
-    @property
-    def inputs(self) -> Inputs:
-        """Instance of `Inputs` to represent model params."""
-        return self.models[0].inputs
 
     def on_create(self, db: Datalayer):
         """Post create hook.

@@ -227,7 +227,9 @@ class BaseDataBackend(ABC):
 
         if not schema.trivial:
             for i, r in enumerate(documents):
-                r = Document(r).encode(schema=self.get_schema(self.db[table]))
+                r = Document(r).encode(
+                    schema=self.get_schema(self.db[table]), db=self.db
+                )
                 self.db.artifact_store.save_artifact(r)
                 r.pop(KEY_BUILDS)
                 r.pop(KEY_BLOBS)

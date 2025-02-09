@@ -13,7 +13,7 @@ from superduper.base.constant import (
 from superduper.base.leaf import Leaf
 from superduper.base.variables import _replace_variables
 from superduper.components.schema import Schema, get_schema
-from superduper.misc.special_dicts import MongoStyleDict, SuperDuperFlatEncode
+from superduper.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -256,7 +256,8 @@ class Document(MongoStyleDict):
         metadata: bool = True,
         defaults: bool = True,
         keep_schema: bool = True,
-    ) -> SuperDuperFlatEncode:
+        db: t.Optional['Datalayer'] = None,
+    ) -> t.Dict:
         """Encode the document to a format that can be used in a database.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
@@ -267,6 +268,7 @@ class Document(MongoStyleDict):
         :param metadata: Whether to include metadata.
         :param defaults: Whether to include defaults.
         :param keep_schema: Whether to keep the schema.
+        :param db: The datalayer to use.
         """
         builds: t.Dict[str, dict] = self.get(KEY_BUILDS, {})
         blobs: t.Dict[str, bytes] = self.get(KEY_BLOBS, {})
@@ -278,12 +280,12 @@ class Document(MongoStyleDict):
         out = dict(self)
 
         if schema is not None:
+            schema = schema.reconnect(db=db) if db else schema
             out = schema.encode_data(
                 out, builds, blobs, files, leaves_to_keep=leaves_to_keep
             )
 
         out.update({KEY_BUILDS: builds, KEY_FILES: files, KEY_BLOBS: blobs})
-        out = SuperDuperFlatEncode(out)
         return out
 
     def __getitem__(self, key: str) -> t.Any:
@@ -446,8 +448,10 @@ class QueryUpdateDocument(Document):
         # Update leaves
         if original is None:
             original = update
-        if not isinstance(original, SuperDuperFlatEncode):
-            return {'$set': update}
+
+        # TODO - what is this?
+        # if not isinstance(original, SuperDuperFlatEncode):
+        #     return {'$set': update}
 
         for mk in (KEY_BUILDS, KEY_FILES, KEY_BLOBS):
             m = original.pop(mk, {})
@@ -478,7 +482,7 @@ class QueryUpdateDocument(Document):
                 return [substitute(v) for v in x]
             return x
 
-        return SuperDuperFlatEncode(substitute(dict(self)))
+        return substitute(dict(self))
 
     def encode(
         self,

@@ -8,63 +8,12 @@ import uuid
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.misc.annotations import extract_parameters, replace_parameters
 from superduper.misc.serialization import asdict
-from superduper.misc.special_dicts import SuperDuperFlatEncode
 
 _CLASS_REGISTRY = {}
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
     from superduper.components.datatype import BaseDataType
-
-
-def import_item(
-    dict,
-    cls: t.Optional[str] = None,
-    module: t.Optional[str] = None,
-    object: t.Optional[type] = None,
-    db: t.Optional['Datalayer'] = None,
-):
-    """Import item from a cls and module specification.
-
-    :param dict: Dictionary of parameters.
-    :param cls: Class name.
-    :param module: Module name.
-    :param object: Object to instantiate.
-    :param db: Datalayer instance.
-    """
-    if object is None:
-        assert cls is not None
-        assert module is not None
-        module = importlib.import_module(module)
-        object = getattr(module, cls)
-
-    try:
-        out = object(**dict, db=db)
-        return out
-    except TypeError as e:
-        if 'got an unexpected keyword argument' in str(e):
-            if callable(object) and not inspect.isclass(object):
-                return object(
-                    **{
-                        k: v
-                        for k, v in dict.items()
-                        if k in inspect.signature(object).parameters
-                    },
-                    db=db,
-                )
-            init_params = {
-                k: v
-                for k, v in dict.items()
-                if k in inspect.signature(object.__init__).parameters
-            }
-            post_init_params = {
-                k: v for k, v in dict.items() if k in object.set_post_init
-            }
-            instance = object(**init_params, db=db)
-            for k, v in post_init_params.items():
-                setattr(instance, k, v)
-            return instance
-        raise e
 
 
 def _is_optional_callable(annotation) -> bool:
@@ -355,14 +304,12 @@ class Leaf(metaclass=LeafMeta):
                 del r['uuid']
 
         # TODO deprecate this wrapper (not needed)
-        return SuperDuperFlatEncode(
-            {
-                **r,
-                KEY_BUILDS: builds,
-                KEY_BLOBS: blobs,
-                KEY_FILES: files,
-            }
-        )
+        return {
+            **r,
+            KEY_BUILDS: builds,
+            KEY_BLOBS: blobs,
+            KEY_FILES: files,
+        }
 
     def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Leaf':
         """Set free variables of self.

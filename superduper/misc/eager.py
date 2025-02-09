@@ -190,13 +190,6 @@ class SuperDuperData:
         new_sdd._compare = ("ne", other)
         return new_sdd
 
-    def set_condition(self, data: "SuperDuperData"):
-        """Set the condition for the query."""
-        if not data.ops and data.ops[-1] not in ("eq", "ne"):
-            raise ValueError("Condition must be set after a comparison operation")
-        self._filter[data.key] = data._compare
-        self._filter_nodes.add(data.source)
-
     @property
     def filter(self):
         """Return the filter for building the query."""
@@ -206,6 +199,13 @@ class SuperDuperData:
     def filter_nodes(self):
         """Return the filter nodes for building the query."""
         return self._filter_nodes
+
+    def set_condition(self, data: "SuperDuperData"):
+        """Set the condition for the query."""
+        if not data.ops and data.ops[-1] not in ("eq", "ne"):
+            raise ValueError("Condition must be set after a comparison operation")
+        self._filter[data.key] = data._compare
+        self._filter_nodes.add(data.source)
 
 
 class Graph:

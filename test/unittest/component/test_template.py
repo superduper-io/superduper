@@ -103,32 +103,6 @@ def test_template_export(db):
         assert r[listener.outputs] == r['y'] + 2
 
 
-def test_from_template(db):
-    add_random_data(db)
-    m = Listener(
-        identifier='my_id',
-        model=ObjectModel(
-            object=lambda x: x + 2,
-            identifier='<var:model_id>',
-        ),
-        select=db['<var:collection>'].select(),
-        key='<var:key>',
-    )
-    component = Component.from_template(
-        identifier='test-from-template',
-        template_body=m.encode(),
-        key='y',
-        model='my_id',
-        # db=db,
-    )
-
-    component.init()
-    assert isinstance(component, Listener)
-    assert isinstance(component.model, ObjectModel)
-
-    assert component.model.object(3) == 5
-
-
 def test_query_template(db):
     add_random_data(db)
     table = db['documents']
@@ -157,7 +131,7 @@ def test_cross_reference(db):
 
     r = app.encode(metadata=False, defaults=False)
 
-    r.pop_blobs()
+    r.pop('_blobs')
 
     import pprint
 

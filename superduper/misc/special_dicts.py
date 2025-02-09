@@ -1,20 +1,11 @@
-import copy
-import re
 import typing as t
 from collections import OrderedDict
 
-import yaml
 from rich.columns import Columns
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.tree import Tree
-
-from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.base.variables import _find_variables
-
-if t.TYPE_CHECKING:
-    pass
 
 
 class IndexableDict(OrderedDict):
@@ -34,7 +25,6 @@ class IndexableDict(OrderedDict):
     """
 
     def __init__(self, ordered_dict):
-        self._ordered_dict = ordered_dict
         self._keys = list(ordered_dict.keys())
         super().__init__(ordered_dict)
 
@@ -56,215 +46,7 @@ class IndexableDict(OrderedDict):
             raise IndexError(f"Index {index} is out of range.")
 
 
-def _highlight_references(yaml_str, pattern=r'(\?[\w/<>:.-]+|\&[\w/<>:.-]+)'):
-    highlighted_text = Text()
-    for line in yaml_str.split('\n'):
-        matches = re.finditer(pattern, line)
-        start = 0
-        for match in matches:
-            before = line[start : match.start()]
-            reference = line[match.start() : match.end()]
-            start = match.end()
-            if reference.startswith('?'):
-                highlighted_text.append(before)
-                highlighted_text.append(reference, style="bold underline green")
-            elif reference.startswith('&'):
-                highlighted_text.append(before)
-                highlighted_text.append(reference, style="bold underline blue")
-
-        if start < len(line):
-            after = line[start:]
-            field = after.split(':')
-            if len(field) > 1:
-                highlighted_text.append(field[0] + ':', style="bold magenta")
-                highlighted_text.append(':'.join(field[1:]))
-            else:
-                highlighted_text.append(after)
-        highlighted_text.append('\n')
-    return highlighted_text
-
-
-def _format_base_section(base_section):
-    blocks = base_section.split('/')
-    component_type = blocks[1]
-    component_identifier = blocks[-1]
-    base = {
-        'type': component_type,
-        'identifier': component_identifier,
-        'reference': base_section,
-    }
-
-    yaml_str = yaml.dump(base)
-    return yaml_str
-
-
-def _print_serialized_object(serialized_object):
-    console = Console()
-
-    # Extract sections of the serialized object
-    base_section = serialized_object.get('_base', {})
-    leaves_section = serialized_object.get(KEY_BUILDS, {})
-    blobs_section = serialized_object.get(KEY_BLOBS, {})
-
-    # Format base section with additional component info
-    base_yaml = _format_base_section(base_section)
-
-    # Convert sections to YAML strings
-    leaves_yaml = yaml.dump(leaves_section)
-    blobs_yaml = yaml.dump(blobs_section)
-
-    # Highlight references
-    base_text = _highlight_references(base_yaml)
-    leaves_text = _highlight_references(leaves_yaml)
-    blobs_text = _highlight_references(blobs_yaml)
-
-    # Create panels for different sections
-    base_panel = Panel(base_text, title="Base Component", border_style="green")
-    leaves_panel = Panel(leaves_text, title="Leaves", border_style="cyan")
-    blobs_panel = Panel(blobs_text, title="Blobs (Binary data)", border_style="magenta")
-
-    # Print the panels
-    console.print(base_panel)
-    console.print(leaves_panel)
-    console.print(blobs_panel)
-    console.print(_legend_panel())
-
-
-def _legend_panel():
-    legend_content = """
-    [bold underline green]Legend[/]\n
-    [bold blue]_path[/]: This indicates the module path within superduper.io.\n
-    [bold yellow]&[/]: This denotes an artifact store reference.\n
-    [bold magenta]?[/]: This represents an intra-serialized data reference, 
-                        typically within the child leaves.\n
-    """
-    return Panel(legend_content, title="Legend", border_style="green", width=50)
-
-
-class SuperDuperFlatEncode(t.Dict[str, t.Any]):
-    """
-    Dictionary for representing flattened encoding data.
-
-    :param args: *args for `dict`
-    :param kwargs: **kwargs for `dict`
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    @property
-    def builds(self):
-        """Return the builds of the dictionary."""
-        return IndexableDict(self.get(KEY_BUILDS, {}))
-
-    @staticmethod
-    def _str2var(x, item, variable):
-        if isinstance(x, str):
-            return x.replace(item, f'<var:{variable}>')
-        if isinstance(x, dict):
-            return {
-                SuperDuperFlatEncode._str2var(
-                    k, item, variable
-                ): SuperDuperFlatEncode._str2var(v, item, variable)
-                for k, v in x.items()
-            }
-        if isinstance(x, list):
-            return [SuperDuperFlatEncode._str2var(v, item, variable) for v in x]
-        return x
-
-    def create_template(self, **kwargs):
-        """Convert all instances of string to variable.
-
-        :param kwargs: mappings from values to variable names
-        """
-        r = self
-        for k, v in kwargs.items():
-            r = SuperDuperFlatEncode._str2var(r, v, k)
-        r['_variables'] = {v: f'<value-{i}>' for i, v in enumerate(kwargs.values())}
-        return SuperDuperFlatEncode(r)
-
-    @property
-    def files(self):
-        """Return the files of the dictionary."""
-        return self.get(KEY_FILES, [])
-
-    @property
-    def blobs(self):
-        """Return the blobs of the dictionary."""
-        return self.get(KEY_BLOBS, [])
-
-    def pop_builds(self):
-        """Pop the builds of the dictionary."""
-        return IndexableDict(self.pop(KEY_BUILDS, {}))
-
-    def pop_files(self):
-        """Pop the files of the dictionary."""
-        return self.pop(KEY_FILES, {})
-
-    def pop_blobs(self):
-        """Pop the blobs of the dictionary."""
-        return self.pop(KEY_BLOBS, {})
-
-    def load_keys_with_blob(self):
-        """Load all outer reference keys with actual data blob."""
-
-        def _get_blob(output, key):
-            if isinstance(key, str) and key[0] == '?':
-                output = output[KEY_BUILDS][key[1:]]['blob']
-            else:
-                output = key
-            return output
-
-        if '_base' in self:
-            key = self['_base']
-            return _get_blob(self, key)
-        else:
-            for k, v in self.items():
-                self[k] = _get_blob(self, key=v)
-        return self
-
-    def merge(self, d, inplace=False):
-        """Merge two dictionaries.
-
-        :param d: Dict, must have '_base' key
-        :param inplace: bool, if True, merge in place
-        """
-        assert isinstance(d, SuperDuperFlatEncode)
-        if '_base' in d:
-            assert '_base' in self, "Cannot merge differently encoded data"
-        builds = copy.deepcopy(self.builds)
-        builds.update(d.builds)
-
-        blobs = copy.deepcopy(self.blobs)
-        blobs = blobs.append(d.blobs)
-
-        files = copy.deepcopy(self.files)
-        files = files.append(d.files)
-
-        if inplace:
-            if builds:
-                self[KEY_BUILDS] = builds
-            self[KEY_BLOBS] = blobs
-            self[KEY_FILES] = files
-            return self
-        else:
-            out = copy.deepcopy(self)
-            if builds:
-                out[KEY_BUILDS] = builds
-            out[KEY_BLOBS] = blobs
-            out[KEY_FILES] = files
-            return out
-
-    @property
-    def variables(self):
-        """List of variables in the object."""
-        return sorted(list(set(_find_variables(self))))
-
-    def info(self):
-        """Print the serialized object."""
-        _print_serialized_object(self)
-
-
+# TODO - incorporate into `Document`
 class MongoStyleDict(t.Dict[str, t.Any]):
     """Dictionary object mirroring how MongoDB handles fields.
 
@@ -509,22 +291,3 @@ def recursive_find(data, check_function: t.Callable):
 
     recurse(data)
     return found_items
-
-
-class ArgumentDefaultDict(dict):
-    """
-    Default-dictionary which takes the key as an argument to default factory.
-
-    :param args: *args for `dict`
-    :param default_factory: Callable used to create default dependent on key
-    :param kwargs: **kwargs for `dict`
-    """
-
-    def __init__(self, *args, default_factory, **kwargs):
-        self.default_factory = default_factory
-        super().__init__(*args, **kwargs)
-
-    def __getitem__(self, key):
-        if key not in self:
-            self[key] = self.default_factory(key)
-        return super().__getitem__(key)

@@ -32,13 +32,6 @@ class ComputeBackend(BaseBackend):
         """
         pass
 
-    # TODO needed?
-    @property
-    @abstractmethod
-    def remote(self) -> bool:
-        """Return if remote compute engine."""
-        pass
-
     @property
     @abstractmethod
     def name(self) -> str:
@@ -58,38 +51,9 @@ class ComputeBackend(BaseBackend):
         """
         pass
 
-    # TODO is this used?
-    @property
-    @abstractmethod
-    def tasks(self) -> t.Any:
-        """List for all tasks."""
-        pass
-
-    # TODO is this used?
-    @abstractmethod
-    def wait_all(self) -> None:
-        """Waits for all pending tasks to complete."""
-        pass
-
-    # TODO is this used?
-    @abstractmethod
-    def result(self, identifier: str) -> t.Any:
-        """Retrieves the result of a previously submitted task.
-
-        Note: This will block until the future is completed.
-
-        :param identifier: The identifier of the submitted task.
-        """
-        pass
-
     @abstractmethod
     def disconnect(self) -> None:
         """Disconnect the client."""
-        pass
-
-    @abstractmethod
-    def shutdown(self) -> None:
-        """Shuts down the compute cluster."""
         pass
 
     def initialize(self):

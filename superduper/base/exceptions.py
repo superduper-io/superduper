@@ -14,17 +14,6 @@ class ComponentInUseError(Exception):
     pass
 
 
-class ComponentInUseWarning(Warning):
-    """
-    Warning raised when a component is already in use.
-
-    :param args: *args for Exception
-    :param kwargs: **kwargs for Exception
-    """
-
-    pass
-
-
 class BaseException(Exception):
     """BaseException which logs a message after exception.
 
@@ -39,49 +28,11 @@ class BaseException(Exception):
         return self.msg
 
 
-class ServiceRequestException(BaseException):
-    """ServiceRequestException.
-
-    :param msg: msg for BaseException
-    """
-
-
-class QueryException(BaseException):
-    """QueryException.
-
-    :param msg: msg for BaseException
-    """
-
-
-class DatabackendException(BaseException):
-    """
-    DatabackendException.
-
-    :param msg: msg for BaseException
-    """
-
-
 class TableNotFoundError(Exception):
     """Table not found in database.
 
     :param args: *args for Exception
     :param kwargs: **kwargs for Exception
-    """
-
-
-class MetadataException(BaseException):
-    """
-    MetadataException.
-
-    :param msg: msg for BaseException
-    """
-
-
-class ComponentException(BaseException):
-    """
-    ComponentException.
-
-    :param msg: msg for BaseException
     """
 
 

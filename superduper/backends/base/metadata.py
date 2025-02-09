@@ -1,11 +1,7 @@
-import time
 import typing as t
 from abc import ABC, abstractmethod
 
 from .data_backend import DataBackendProxy
-
-if t.TYPE_CHECKING:
-    from superduper.backends.base.query import Select
 
 
 class NonExistentMetadataError(Exception):
@@ -45,6 +41,7 @@ class MetaDataStore(ABC):
         :param uuid: uuid to expire.
         """
 
+    # TODO why isn't this used anywhere?
     @abstractmethod
     def delete_parent_child(self, parent: str, child: str):
         """
@@ -208,35 +205,6 @@ class MetaDataStore(ABC):
         :param value: value to be updated
         """
         pass
-
-    def watch_job(self, identifier: str):
-        """
-        Listen to a job.
-
-        :param identifier: job identifier
-        """
-        status = 'pending'
-        n_lines = 0
-        n_lines_stderr = 0
-        while status in {'pending', 'running'}:
-            r = self.get_job(identifier)
-            status = r['status']
-            if status == 'running':
-                if len(r['stdout']) > n_lines:
-                    print(''.join(r['stdout'][n_lines:]), end='')
-                    n_lines = len(r['stdout'])
-                if len(r['stderr']) > n_lines_stderr:
-                    print(''.join(r['stderr'][n_lines_stderr:]), end='')
-                    n_lines_stderr = len(r['stderr'])
-            time.sleep(0.01)
-        r = self.get_job(identifier)
-        if status == 'success':
-            if len(r['stdout']) > n_lines:
-                print(''.join(r['stdout'][n_lines:]), end='')
-            if len(r['stderr']) > n_lines_stderr:
-                print(''.join(r['stderr'][n_lines_stderr:]), end='')
-        elif status == 'failed':
-            print(r['msg'])
 
     @abstractmethod
     def show_jobs(
@@ -490,7 +458,7 @@ class MetaDataStore(ABC):
         """
         pass
 
-    def add_query(self, query: 'Select', model: str):
+    def add_query(self, query, model: str):
         """Add query id to query table.
 
         :param query: query object

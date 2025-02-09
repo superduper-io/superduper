@@ -8,28 +8,16 @@ import superduper as s
 from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.cluster import Cluster
-from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.data_backend import BaseDataBackend
 from superduper.backends.base.metadata import MetaDataStore
 from superduper.backends.base.query import Query
 from superduper.base import apply, exceptions
 from superduper.base.config import Config
-from superduper.base.cursor import SuperDuperCursor
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.datatype import LeafType
 from superduper.components.schema import Schema
 from superduper.components.table import Table
-
-DBResult = t.Any
-TaskGraph = t.Any
-
-DeleteResult = DBResult
-InsertResult = t.List[str]
-SelectResult = SuperDuperCursor
-UpdateResult = t.List[str]
-PredictResult = t.Union[Document, t.Sequence[Document]]
-ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
 
 class Datalayer:
@@ -86,33 +74,6 @@ class Datalayer:
     def cdc(self, cdc):
         """CDC property setter."""
         self._cdc = cdc
-
-    # TODO - needed?
-    def set_compute(self, new: ComputeBackend):
-        """
-        Set a new compute engine at runtime.
-
-        Use it only if you know what you are doing.
-        The standard procedure is to set the compute engine during initialization.
-
-        :param new: New compute backend.
-        """
-        logging.warn(
-            f"Changing compute engine from '{self.compute.name}' to '{new.name}'"
-        )
-
-        self.compute.disconnect()
-        logging.success(
-            f"Successfully disconnected from compute engine: '{self.compute.name}'"
-        )
-
-        logging.info(f"Connecting to compute engine: {new.name}")
-        self.compute = new
-
-    # TODO needed?
-    def get_compute(self):
-        """Get compute."""
-        return self.compute
 
     def drop(self, force: bool = False, data: bool = False):
         """
@@ -258,7 +219,9 @@ class Datalayer:
         document = documents[0]
         schema = self.infer_schema(document)
         table = Table(identifier=table_name, schema=schema)
-        logging.info(f"Creating table {table_name} with schema {schema.fields_set}")
+        logging.info(
+            f"Creating table {table_name} with schema {list(schema.fields.keys())}"
+        )
         self.apply(table, force=True)
         return table
 
@@ -286,60 +249,6 @@ class Datalayer:
         logging.info(f'Created {len(events)} events for {event_type} on [{table}]')
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)  # type: ignore[arg-type]
-
-    def _write(self, write: Query, refresh: bool = True) -> UpdateResult:
-        """
-        Bulk write data to the database.
-
-        :param write: The update query object specifying the data to be written.
-        :param refresh: Boolean indicating whether to refresh the task group on write.
-        """
-        _, updated_ids, deleted_ids = write.do_execute(self)
-
-        if not refresh:
-            return []
-
-        call_cdc = (
-            write.table in self.metadata.show_cdc_tables()
-            and write.table.startswith(CFG.output_prefix)
-        )
-        if call_cdc:
-            if updated_ids:
-                self.cluster.cdc.handle_event(
-                    event_type='update', table=write.table, ids=updated_ids
-                )
-            if deleted_ids:
-                self.cluster.cdc.handle_event(
-                    event_type='delete', table=write.table, ids=deleted_ids
-                )
-
-        return updated_ids + deleted_ids
-
-    def _update(self, update: Query, refresh: bool = True) -> UpdateResult:
-        """
-        Update data in the database.
-
-        :param update: The update query object specifying the data to be updated.
-        :param refresh: Boolean indicating whether to refresh the task group
-                        after update.
-        :return: Tuple containing the updated IDs and the refresh result if
-                 performed.
-        """
-        updated_ids = update.do_execute(self)
-
-        if not refresh:
-            return updated_ids
-
-        table = update.table
-
-        if table in self.metadata.show_cdc_tables() and not table.startswith(
-            CFG.output_prefix
-        ):
-            self.cluster.cdc.handle_event(
-                event_type='update', table=update.table, ids=updated_ids
-            )
-
-        return updated_ids
 
     def apply(
         self,
@@ -516,6 +425,7 @@ class Datalayer:
         force: bool = False,
         recursive: bool = False,
     ):
+        # TODO fix parent-child relationship
         try:
             r = self.metadata.get_component(type_id, identifier, version=version)
         except FileNotFoundError:

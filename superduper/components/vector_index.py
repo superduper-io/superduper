@@ -2,7 +2,6 @@ import dataclasses as dc
 import itertools
 import typing as t
 
-import numpy as np
 import tqdm
 
 from superduper import CFG, logging
@@ -372,43 +371,3 @@ class VectorIndex(CDC):
             raise Exception(
                 f'Couldn\'t get a vector shape for {dt.huuid} due to empty shape'
             ) from e
-
-
-# TODO what is this?
-class EncodeArray:
-    """Class to encode an array.
-
-    :param dtype: Datatype of array
-    """
-
-    def __init__(self, dtype):
-        self.dtype = dtype
-
-    def __call__(self, x, info: t.Optional[t.Dict] = None):
-        """Encode an array.
-
-        :param x: The array to encode
-        :param info: Optional info
-        """
-        x = np.asarray(x)
-        if x.dtype != self.dtype:
-            raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
-        return memoryview(x).tobytes()
-
-
-class DecodeArray:
-    """Class to decode an array.
-
-    :param dtype: Datatype of array
-    """
-
-    def __init__(self, dtype):
-        self.dtype = dtype
-
-    def __call__(self, bytes, info: t.Optional[t.Dict] = None):
-        """Decode an array.
-
-        :param bytes: The bytes to decode
-        :param info: Optional info
-        """
-        return np.frombuffer(bytes, dtype=self.dtype).tolist()

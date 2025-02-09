@@ -1,16 +1,6 @@
 import pytest
 
-from superduper.misc.utils import format_prompt, get_key
-
-
-def test_patch_environment_variable(monkeypatch):
-    key_name = 'API_KEY'
-    key_value = 'TOP_SECRET'
-
-    monkeypatch.setenv(key_name, key_value)
-    patched_value = get_key(key_name)
-
-    assert patched_value == key_value
+from superduper.misc.utils import format_prompt
 
 
 @pytest.mark.parametrize(

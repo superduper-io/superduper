@@ -720,12 +720,12 @@ class Query(_BaseQuery):
     def _encode_or_unpack_args(self, r, db, method='encode', parent=None):
         if isinstance(r, Document):
             out = getattr(r, method)()
-            from superduper.misc.special_dicts import SuperDuperFlatEncode
-
-            if isinstance(out, SuperDuperFlatEncode):
-                out.pop_builds()
-                out.pop_files()
-                out.pop_blobs()
+            try:
+                out.pop('_builds')
+                out.pop('_files')
+                out.pop('_blobs')
+            except KeyError:
+                pass
 
             if '_base' in out:
                 return out['_base']

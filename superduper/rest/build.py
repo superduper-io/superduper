@@ -77,7 +77,7 @@ def build_rest_app(app: SuperDuperApp):
 
     @app.add("/health", method="get")
     def health():
-        if 'REQUIRED_SECRETS' in os.environ:
+        if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
             load_secrets()
             check_secrets()
             if CFG.data_backend == 'snowflake://':

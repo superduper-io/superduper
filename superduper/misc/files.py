@@ -31,9 +31,17 @@ def check_s3(name):
 
     import boto3
     from botocore.exceptions import ClientError
-    s3_client = boto3.client('s3')
     try:
+        session = boto3.Session(
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+        )
+        s3_client = session.client('s3')
         s3_client.list_buckets()
+    except KeyError as e:
+        raise MissingSecretsException(
+            'AWS credentials are missing. Set as environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.'
+        )
     except ClientError as e:
         if 'does not exist' in str(e):
             raise IncorrectSecretException(

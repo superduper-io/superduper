@@ -218,7 +218,7 @@ def build_rest_app(app: SuperDuperApp):
         msg = 'Identifier (name) of application should match [a-zA-Z\_0-9]+'
         assert re.match('^[a-zA-Z\_0-9]+$', info['identifier']) is not None, msg
 
-        if 'REQUIRED_SECRETS' in os.environ:
+        if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
             load_secrets()
             check_secrets()
             if db.cfg.data_backend == 'snowflake://':

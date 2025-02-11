@@ -76,12 +76,12 @@ def build_rest_app(app: SuperDuperApp):
     CFG.log_colorize = False
 
     @app.add("/health", method="get")
-    def health():
+    def health(db: 'Datalayer' = DatalayerDependency()):
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
             load_secrets()
             check_secrets()
             if CFG.data_backend == 'snowflake://':
-                load_plugin('snowflake').check_secret_updates()
+                load_plugin('snowflake').check_secret_updates(db)
         return {"status": 200}
 
     @app.add("/handshake/config", method="post")
@@ -222,7 +222,7 @@ def build_rest_app(app: SuperDuperApp):
             load_secrets()
             check_secrets()
             if db.cfg.data_backend == 'snowflake://':
-                load_plugin('snowflake').check_secret_updates()
+                load_plugin('snowflake').check_secret_updates(db)
 
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)

@@ -10,6 +10,7 @@ import typing as t
 import zipfile
 from contextlib import contextmanager
 
+from superduper.base.exceptions import IncorrectSecretException
 from superduper.misc.files import check_secrets, load_secrets
 from superduper.misc.importing import import_object
 from superduper.misc.plugins import load_plugin
@@ -18,8 +19,9 @@ try:
     import magic
 except ImportError:
     magic = None
-from fastapi import BackgroundTasks, File, Response
+from fastapi import BackgroundTasks, File, Response, HTTPException
 from fastapi.responses import JSONResponse
+from starlette.status import HTTP_406_NOT_ACCEPTABLE, HTTP_409_CONFLICT
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -67,6 +69,27 @@ def redirect_stdout_to_file(file_path: str):
         sys.stdout = original_stdout
 
 
+def _check_secret_health():
+    try:
+        load_secrets()
+        check_secrets()
+    except IncorrectSecretException as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_406_NOT_ACCEPTABLE,
+            detail=str(e),
+        )
+    try:
+        if CFG.data_backend == 'snowflake://':
+            load_plugin('snowflake').check_secret_updates(db)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_409_CONFLICT,
+            detail=str(e),
+        )
+
+
 def build_rest_app(app: SuperDuperApp):
     """
     Add the key endpoints to the FastAPI app.
@@ -78,10 +101,7 @@ def build_rest_app(app: SuperDuperApp):
     @app.add("/health", method="get")
     def health(db: 'Datalayer' = DatalayerDependency()):
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
-            load_secrets()
-            check_secrets()
-            if CFG.data_backend == 'snowflake://':
-                load_plugin('snowflake').check_secret_updates(db)
+            _check_secret_health()
         return {"status": 200}
 
     @app.add("/handshake/config", method="post")
@@ -219,10 +239,7 @@ def build_rest_app(app: SuperDuperApp):
         assert re.match('^[a-zA-Z\_0-9]+$', info['identifier']) is not None, msg
 
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
-            load_secrets()
-            check_secrets()
-            if db.cfg.data_backend == 'snowflake://':
-                load_plugin('snowflake').check_secret_updates(db)
+            _check_secret_health()
 
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)

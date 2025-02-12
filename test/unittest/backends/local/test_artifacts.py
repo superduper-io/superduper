@@ -8,11 +8,12 @@ import pytest
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.components.component import Component
 from superduper.components.datatype import INBUILT_DATATYPES
+from superduper.misc import typing as st
 
 
 @dc.dataclass(kw_only=True)
 class TestComponent(Component):
-    path: str
+    path: st.File
     type_id: t.ClassVar[str] = "TestComponent"
 
     _fields = {'path': 'file'}

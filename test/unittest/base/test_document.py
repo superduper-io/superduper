@@ -8,7 +8,6 @@ import pytest
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.components.datatype import (
-    BaseDataType,
     pickle_encoder,
     pickle_serializer,
 )
@@ -18,7 +17,7 @@ from superduper.components.table import Table
 
 
 def test_document_encoding(db):
-    schema = Schema('tmp', fields={'x': pickle_serializer}, db=db)
+    schema = Schema(fields={'x': pickle_serializer})
     document = Document({'x': np.random.rand(20)}, schema=schema)
     new_document = Document.decode(
         document.encode(),
@@ -48,7 +47,7 @@ def test_encode_decode_flattened_document():
     data = np.array([1, 2, 3])
     from superduper.components.datatype import pickle_serializer
 
-    schema = Schema('my-schema', fields={'data': pickle_serializer})
+    schema = Schema({'data': pickle_serializer})
 
     r = Document(
         {
@@ -162,7 +161,7 @@ def test_encode_model(db):
 
 
 def test_decode_inline_data(db):
-    schema = Schema('my-schema', fields={'data': pickle_encoder}, db=db)
+    schema = Schema({'data': 'pickleencoder'})
 
     r = {
         'x': 2,
@@ -175,44 +174,15 @@ def test_decode_inline_data(db):
     print(r)
 
 
-def test_refer_to_applied_item(db):
-    dt = pickle_serializer
-    db.apply(dt)
-
-    m = ObjectModel(
-        identifier='test',
-        object=lambda x: x + 2,
-        datatype=dt,
-    )
-
-    db.apply(m)
-    r = db.metadata.get_component_by_uuid(m.uuid)
-
-    assert r['datatype'].startswith('&:component:datatype:pickle_serializer')
-
-    import pprint
-
-    pprint.pprint(r)
-
-    print(db.show('datatype'))
-    dt = db.load('datatype', 'pickle_serializer', 0)
-    print(dt)
-    c = db.load('model', 'test')
-    print(c)
-
-
 def test_column_encoding(db):
-    schema = Schema(
-        'test',
-        fields={
-            'id': str,
-            'x': int,
-            'y': int,
-            'data': pickle_serializer,
-        },
-    )
+    fields = {
+        'id': 'str',
+        'x': 'int',
+        'y': 'int',
+        'data': 'pickle',
+    }
 
-    db.apply(Table('test', schema=schema))
+    db.apply(Table('test', fields=fields))
     data = np.random.rand(20)
     db['test'].insert(
         [
@@ -233,16 +203,13 @@ def test_refer_to_system(db):
         'data': '&:blob:12345',
     }
 
-    r = Document.decode(
-        r, db=db, schema=Schema('tmp', fields={'data': pickle_serializer})
-    ).unpack()
+    r = Document.decode(r, db=db, schema=Schema({'data': pickle_serializer})).unpack()
 
     assert isinstance(r['data'], np.ndarray)
 
 
 def test_encode_same_identifier():
-    datatype = BaseDataType(identifier="a")
-    model = ObjectModel(identifier="a", object=lambda x: x, datatype=datatype)
+    model = ObjectModel(identifier="a", object=lambda x: x, datatype='str')
     listener = model.to_listener(identifier="a", key="a", select=None)
 
     encode_data = listener.encode()
@@ -250,7 +217,6 @@ def test_encode_same_identifier():
 
     assert listener.identifier == "a"
     assert listener.model.identifier == "a"
-    assert listener.model.datatype.identifier == "a"
 
 
 def test_diff():

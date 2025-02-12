@@ -10,8 +10,9 @@ from superduper.base.datalayer import Datalayer
 from superduper.components.cdc import CDC
 from superduper.components.model import Mapping
 from superduper.components.table import Table
+from superduper.misc import typing as st
 
-from .model import Model, ModelInputType
+from .model import Model
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -38,8 +39,7 @@ class Listener(CDC):
     type_id: t.ClassVar[str] = 'listener'
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
     _fields = {'model': 'component', 'select': 'leaf', 'output_table': 'component'}
-
-    key: ModelInputType
+    key: st.JSON
     model: Model
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     select: t.Optional[Query] = None
@@ -69,16 +69,24 @@ class Listener(CDC):
         super().handle_update_or_same(other)
         other.output_table = self.output_table
 
+    # TODO include schema by default
     def dict(
-        self, metadata: bool = True, defaults: bool = True, refs: bool = False
+        self,
+        metadata: bool = True,
+        defaults: bool = True,
+        refs: bool = False,
+        schema: bool = False,
     ) -> t.Dict:
         """Convert to dictionary.
 
         :param metadata: Include metadata.
         :param defaults: Include default values.
         :param refs: Include references.
+        :param schema: Include schema in document
         """
-        out = super().dict(metadata=metadata, defaults=defaults, refs=refs)
+        out = super().dict(
+            metadata=metadata, defaults=defaults, refs=refs, schema=schema
+        )
         if not metadata:
             try:
                 del out['output_table']
@@ -225,15 +233,11 @@ class Listener(CDC):
         return input
 
     def _determine_table_and_schema(self, db: Datalayer):
-        from superduper import Schema
 
         if self.model.datatype is not None:
-            schema = Schema(
-                f'_schema/{self.outputs}',
-                fields={'_source': 'ID', self.outputs: self.model.datatype},
-            )
+            fields = {'_source': 'ID', self.outputs: self.model.datatype}
         elif self.model.output_schema is not None:
-            schema = self.model.output_schema
+            fields = self.model.output_schema
         else:
             input = self._get_sample_input(db)
 
@@ -251,17 +255,14 @@ class Listener(CDC):
                 prediction = prediction[0]
 
             db.startup_cache[self.outputs] = prediction
-            schema = db.infer_schema(
+            fields = db.infer_schema(
                 {'data': prediction}, identifier=self.outputs + '/schema'
             )
-            datatype = schema.fields['data']
+            datatype = fields['data']
             self.model.datatype = datatype
-            schema = Schema(
-                f'_schema/{self.outputs}',
-                fields={'_source': 'ID', 'id': 'ID', self.outputs: datatype},
-            )
+            fields = {'_source': 'ID', 'id': 'ID', self.outputs: datatype}
 
-        self.output_table = Table(self.outputs, schema=schema)
+        self.output_table = Table(self.outputs, fields=fields)
 
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         """Pre-create hook."""
@@ -292,6 +293,7 @@ class Listener(CDC):
     @property
     def dependencies(self):
         """Listener model dependencies."""
+        self.model.unpack()
         args, kwargs = self.mapping.mapping
         all_ = list(args) + list(kwargs.values())
         out = []

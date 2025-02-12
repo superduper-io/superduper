@@ -291,3 +291,45 @@ def recursive_find(data, check_function: t.Callable):
 
     recurse(data)
     return found_items
+
+
+def dict_to_ascii_table(d):
+    """
+    Return a single string that represents an ASCII table.
+
+    Each key/value in the dict is a column.
+    Columns are centered and padded based on the widest
+    string needed (key or value).
+
+    :param d: Convert a dictionary to a table.
+    """
+    if not d:
+        return "<empty dictionary>"
+
+    keys = list(d.keys())
+    vals = list(d.values())
+
+    # Determine the needed width for each column
+    widths = [max(len(str(k)), len(str(v))) for k, v in zip(keys, vals)]
+
+    def center_text(text, width):
+        """Center text within a given width using spaces."""
+        text = str(text)
+        if len(text) >= width:
+            return text  # already as wide or wider, won't cut off
+        # Calculate left/right spaces for centering
+        left_spaces = (width - len(text)) // 2
+        right_spaces = width - len(text) - left_spaces
+        return " " * left_spaces + text + " " * right_spaces
+
+    # Build the header row (keys)
+    header_row = " | ".join(center_text(k, w) for k, w in zip(keys, widths))
+
+    # Build a separator row with + in the middle
+    separator_row = "-+-".join("-" * w for w in widths)
+
+    # Build the value row
+    value_row = " | ".join(center_text(v, w) for v, w in zip(vals, widths))
+
+    # Combine them with line breaks
+    return "\n".join([header_row, separator_row, value_row])

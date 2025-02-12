@@ -6,7 +6,11 @@ import typing as t
 import uuid
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
-from superduper.misc.annotations import extract_parameters, replace_parameters
+from superduper.misc.annotations import (
+    extract_parameters,
+    lazy_classproperty,
+    replace_parameters,
+)
 from superduper.misc.serialization import asdict
 
 _CLASS_REGISTRY = {}
@@ -41,9 +45,8 @@ class LeafMeta(type):
             if isinstance(v, (type, dc.InitVar)):
                 annotations[k] = v
             if isinstance(v, dc.Field):
-                annotations[
-                    k
-                ] = v.type  # Ensure field types are recorded in annotations
+                if v.type is not None:
+                    annotations[k] = v.type
 
         # Update namespace with proper annotations
         namespace['__annotations__'] = annotations
@@ -59,6 +62,7 @@ class LeafMeta(type):
         else:
             # Base class: kw_only=False
             dataclass_params['kw_only'] = False
+
         cls = dc.dataclass(**dataclass_params)(
             super().__new__(mcs, name, bases, namespace)
         )
@@ -90,35 +94,6 @@ class LeafMeta(type):
             except AttributeError:
                 continue
 
-        for field in dc.fields(cls):
-            if field.name in cls._fields:
-                continue
-            try:
-                # For some reason it is random whether annotations are strings or not
-                annotation = cls.__annotations__[field.name]
-                if annotation in {
-                    't.Callable',
-                    't.Optional[t.Callable]',
-                    't.Callable | None',
-                }:
-                    cls._fields[field.name] = 'default'
-                elif inspect.isclass(annotation) and issubclass(annotation, bases):
-                    cls._fields[field.name] = 'component'
-                elif annotation is t.Callable or _is_optional_callable(annotation):
-                    cls._fields[field.name] = 'default'
-                # a hack...
-                elif 'superduper.misc.typing' in str(annotation):
-                    annotation = str(annotation)
-                    import re
-
-                    match1 = re.match('^typing\.Optional\[(.*)\]$', annotation)
-                    match2 = re.match('^t\.Optional\[(.*)\]$', annotation)
-                    match = match1 or match2
-                    if match:
-                        annotation = match.groups()[0]
-                    cls._fields[field.name] = annotation.split('.')[-1]
-            except KeyError:
-                continue
         return cls
 
 
@@ -138,12 +113,31 @@ class Leaf(metaclass=LeafMeta):
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
     # TODO no longer needed?
     literals: t.ClassVar[t.Sequence[str]] = ()
-    _class_schema = None
     _fields: t.ClassVar[t.Dict[str, t.Union['BaseDataType', str]]] = {}
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
     uuid: str = dc.field(default_factory=build_uuid)
+
+    @lazy_classproperty
+    def _new_fields(cls):
+        """Get the schema of the class."""
+        from superduper.misc.schema import get_schema
+
+        s, a = get_schema(cls)
+        return s
+
+    @lazy_classproperty
+    def class_schema(cls):
+        fields = {}
+        from superduper.components.datatype import INBUILT_DATATYPES
+        from superduper.components.schema import Schema
+
+        named_fields = cls._new_fields
+        for f in named_fields:
+            fields[f] = INBUILT_DATATYPES[named_fields[f]]
+        out = Schema(fields=fields)
+        return out
 
     @staticmethod
     def get_cls_from_path(path):
@@ -264,11 +258,7 @@ class Leaf(metaclass=LeafMeta):
         uuids_to_keys: t.Dict = {}
 
         r = self.dict(metadata=metadata, defaults=defaults)
-
-        if r.schema is not None:
-            r = r.schema.encode_data(r, builds=builds, blobs=blobs, files=files)
-        else:
-            r = dict(r)
+        r = self.class_schema.encode_data(r, builds=builds, blobs=blobs, files=files)
 
         def _replace_loads_with_references(record, lookup):
             if isinstance(record, str) and record.startswith('&:component:'):
@@ -357,20 +347,19 @@ class Leaf(metaclass=LeafMeta):
         _fields = cls._fields.copy()
         for k in _fields:
             if isinstance(_fields[k], str):
-                _fields[k] = INBUILT_DATATYPES[_fields[k].lower()](k, db=db)
+                _fields[k] = INBUILT_DATATYPES[_fields[k].lower()]
 
-        return Schema(f'{cls.__name__}/class_schema', fields=_fields, db=db)
+        return Schema(_fields)
 
     # TODO the signature does not agree with the `Component.dict` method
-    def dict(self, metadata: bool = True, defaults: bool = True):
+    def dict(self, metadata: bool = True, defaults: bool = True, schema: bool = False):
         """Return dictionary representation of the object.
 
         :param metadata: Include metadata.
         :param defaults: Include default values.
+        :param schema: Include schema.
         """
         from superduper import Document
-
-        s = self.build_class_schema(db=self.db)
 
         r = asdict(self)
 
@@ -394,9 +383,18 @@ class Leaf(metaclass=LeafMeta):
 
         from superduper.components.datatype import DEFAULT_SERIALIZER
 
+        s = None
+        if schema:
+            s = self.class_schema
+
         if self.__class__.__module__ == '__main__':
             return Document(
-                {'_object': DEFAULT_SERIALIZER.encode_data(self.__class__), **r},
+                {
+                    '_object': DEFAULT_SERIALIZER.encode_data(
+                        self.__class__, builds={}, blobs={}, files={}
+                    ),
+                    **r,
+                },
                 schema=s,
             )
 
@@ -477,7 +475,7 @@ class Import(Address):
 
     import_path: str | None
     parent: dc.InitVar[t.Any | None] = None
-    args: t.Tuple | None = None
+    args: t.List | None = None
     kwargs: t.Dict | None = None
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None, parent=None):

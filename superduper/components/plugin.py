@@ -7,6 +7,7 @@ import typing as t
 
 from superduper import Component, logging
 from superduper.components.datatype import FileItem, file
+from superduper.misc import typing as st
 
 
 class Plugin(Component):
@@ -20,7 +21,7 @@ class Plugin(Component):
     type_id: t.ClassVar[str] = "plugin"
     _fields = {"path": file}
 
-    path: str
+    path: st.File
     identifier: str = ""
     cache_path: str = "~/.superduper/plugins"
 

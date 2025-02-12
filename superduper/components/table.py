@@ -7,7 +7,6 @@ from superduper.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.components.dataset import Dataset, RemoteData
 
 DEFAULT_PRIMARY_ID = 'id'
 
@@ -16,7 +15,7 @@ class Table(Component):
     """
     A component that represents a table in a database.
 
-    :param schema: The schema of the table
+    :param fields: The schema of the table
     :param primary_id: The primary id of the table
     :param data: Data to insert post creation
     """
@@ -24,26 +23,17 @@ class Table(Component):
     type_id: t.ClassVar[str] = 'table'
     _fields = {'schema': 'component'}
 
-    schema: Schema
+    fields: t.Dict
     primary_id: str = DEFAULT_PRIMARY_ID
-    data: t.Union['Dataset', 'RemoteData', None] = None
+    data: Component | None = None
 
     def postinit(self):
         """Post initialization method."""
-        fields = {}
-        fields.update(self.schema.fields)
-        schema_version = self.schema.version
+        fields = {**self.fields, '_fold': 'str'}
+        from superduper.components.datatype import INBUILT_DATATYPES
 
-        # TODO make globally configurable
-        if '_fold' not in self.schema.fields:
-            fields.update({'_fold': 'str'})
-
-        self.schema = Schema(
-            self.schema.identifier,
-            fields={**fields},
-            db=self.db,
-        )
-        self.schema.version = schema_version
+        fields = {k: INBUILT_DATATYPES[fields[k]] for k in fields}
+        self.schema = Schema(fields)
         super().postinit()
 
     def cleanup(self, db):
@@ -60,11 +50,12 @@ class Table(Component):
         :param db: The Datalayer instance
         """
         assert self.schema is not None, "Schema must be set"
+        # TODO drop?
         if db.databackend.in_memory:
             if self.identifier.startswith(CFG.output_prefix):
-                db.databackend.in_memory_tables[
-                    self.identifier
-                ] = db.databackend.create_table_and_schema(self.identifier, self.schema)
+                db.databackend.in_memory_tables[self.identifier] = (
+                    db.databackend.create_table_and_schema(self.identifier, self.schema)
+                )
 
         try:
             db.databackend.create_table_and_schema(self.identifier, self.schema)

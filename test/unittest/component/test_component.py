@@ -6,11 +6,10 @@ import typing as t
 
 import pytest
 
-from superduper import ObjectModel, Schema, Table
+from superduper import ObjectModel, Table
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.datatype import (
-    BaseDataType,
     Blob,
     dill_serializer,
 )
@@ -100,7 +99,7 @@ def test_load_lazily(db):
 
 
 def test_export_and_read():
-    m = ObjectModel("test", object=lambda x: x + 2, datatype=dill_serializer)
+    m = ObjectModel("test", object=lambda x: x + 2)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "tmp_save")
@@ -114,7 +113,6 @@ def test_export_and_read():
         reloaded = Component.read(save_path)  # getters=getters
 
         assert isinstance(reloaded, ObjectModel)
-        assert isinstance(reloaded.datatype, BaseDataType)
 
 
 def test_set_variables(db):
@@ -177,9 +175,9 @@ def clean():
 
 
 def test_upstream(db, clean):
-    from superduper import Schema, Table
+    from superduper import Table
 
-    db.apply(Table('docs', schema=Schema('docs/schema', fields={'id': str, 'x': str})))
+    db.apply(Table('docs', fields={'id': 'str', 'x': 'str'}))
     c1 = UpstreamComponent(identifier='c1')
     m = MyListener(
         identifier='l1',
@@ -195,8 +193,7 @@ def test_upstream(db, clean):
     db.apply(m)
 
 
-class NewComponent(Component):
-    ...
+class NewComponent(Component): ...
 
 
 def test_remove_recursive(db):
@@ -221,5 +218,5 @@ class MyClass:
 
 
 def test_calls_post_init():
-    t = Table('test', schema=Schema('test', fields={'x': 'str'}))
+    t = Table('test', fields={'x': 'str'})
     assert hasattr(t, 'version')

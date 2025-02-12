@@ -141,8 +141,8 @@ class Component(Leaf, metaclass=ComponentMeta):
     _fields = {'upstream': 'slist'}
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
-    upstream: t.Optional[t.List["Component"]] = None
-    plugins: t.Optional[t.List["Plugin"]] = None
+    upstream: t.Optional[t.List['Component']] = None
+    plugins: t.Optional[t.List['Plugin']] = None
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
     build_variables: t.Dict | None = None
@@ -214,8 +214,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         :param deep: If set `True` get all recursively.
         """
-        r = self.dict().encode(leaves_to_keep=(Component,))
-
+        r = self.dict(schema=True).encode(leaves_to_keep=(Component,))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:
@@ -447,19 +446,20 @@ class Component(Leaf, metaclass=ComponentMeta):
             if isinstance(item, list):
                 return [_init(i) for i in item]
 
-            if isinstance(item, Leaf):
+            from superduper.components.datatype import Saveable
+
+            if isinstance(item, Saveable):
                 item.init()
                 return item.unpack()
 
             return item
 
-        schema = self.build_class_schema(db=self.db)
-
+        # TODO is this necessary?
         for f in dc.fields(self):
             item = getattr(self, f.name)
             item = _init(item)
             if f.name in self._fields and isinstance(item, bytes):
-                item = schema.fields[f.name].decode_data(item)
+                item = self.class_schema.fields[f.name].decode_data(item)
             setattr(self, f.name, item)
 
         return self
@@ -589,9 +589,8 @@ class Component(Leaf, metaclass=ComponentMeta):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        r = self.dict(defaults=defaults, metadata=metadata).encode(
-            defaults=defaults, metadata=metadata
-        )
+        r = self.dict(defaults=defaults, metadata=metadata, schema=True)
+        r = r.encode(defaults=defaults, metadata=metadata)
 
         if not metadata:
             del r['uuid']
@@ -698,17 +697,22 @@ class Component(Leaf, metaclass=ComponentMeta):
         shutil.rmtree(path)
 
     def dict(
-        self, metadata: bool = True, defaults: bool = True, refs: bool = False
+        self,
+        metadata: bool = True,
+        defaults: bool = True,
+        refs: bool = False,
+        schema: bool = False,
     ) -> 'Document':
         """A dictionary representation of the component.
 
         :param metadata: If set `true` include metadata.
         :param defaults: If set `true` include defaults.
         :param refs: If set `true` include references.
+        :param schema: If `true` include schema.
         """
         from superduper import Document
 
-        r = super().dict(metadata=metadata, defaults=defaults)
+        r = super().dict(metadata=metadata, defaults=defaults, schema=schema)
 
         def _convert_components_to_refs(r):
             if isinstance(r, dict):
@@ -720,7 +724,7 @@ class Component(Leaf, metaclass=ComponentMeta):
             return r
 
         if refs:
-            r = Document(_convert_components_to_refs(r), schema=self._class_schema)
+            r = Document(_convert_components_to_refs(r), schema=self.class_schema)
 
         if metadata:
             r['type_id'] = self.type_id

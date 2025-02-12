@@ -36,7 +36,7 @@ def check_data_with_schema(data, datatype, db):
     print("datatype", datatype)
     print_sep()
 
-    schema = Schema(identifier="schema", fields={"x": datatype, "y": int})
+    schema = Schema(fields={"x": datatype, "y": int})
 
     document = Document({"x": data, "y": 1})
     print(document)
@@ -61,9 +61,8 @@ def check_data_with_schema(data, datatype, db):
 def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     print("datatype", datatype)
     print_sep()
-    schema = Schema(identifier="schema", fields={"x": datatype, "y": int})
 
-    table = Table("documents", schema=schema)
+    table = Table("documents", fields={"x": str(datatype).lower(), "y": 'int'})
     db.apply(table)
 
     document = {"x": data, "y": 1}

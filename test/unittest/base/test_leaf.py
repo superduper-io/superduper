@@ -61,7 +61,7 @@ def test_encode_leaf_with_children():
         b='test_b',
         c=OtherSer(identifier='other_ser', d='test'),
     )
-    assert obj.dict().encode(keep_schema=False) == {
+    assert obj.dict(schema=True).encode(keep_schema=False) == {
         '_path': 'test.unittest.base.test_leaf.MySer',
         'identifier': 'my_ser',
         'uuid': obj.uuid,
@@ -108,7 +108,7 @@ def test_component_with_document():
         f=lambda x: x,
     )
     print('encoding')
-    d = t.dict()
+    d = t.dict(schema=True)
     r = d.encode(leaves_to_keep=Leaf)
     builds = r[KEY_BUILDS]
 

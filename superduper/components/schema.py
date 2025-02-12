@@ -1,95 +1,45 @@
-import inspect
+import dataclasses as dc
 import typing as t
 from functools import cached_property
 
-from superduper.base.leaf import Leaf
+from superduper import logging
 from superduper.components.datatype import BaseDataType
+from superduper.misc.special_dicts import dict_to_ascii_table
 
 if t.TYPE_CHECKING:
     pass
 
 
-class FieldType(Leaf):
-    """Field type to represent the type of a field in a table.
-
-    This is a wrapper around native datatype
-
-    :param identifier: The name of the data type.
-    """
-
-    identifier: t.Union[str, BaseDataType]
-
-    def postinit(self):
-        """Post initialization method."""
-        # TODO why would this happen?
-        if isinstance(self.identifier, BaseDataType):
-            self.identifier = self.identifier.name
-
-        elif isinstance(self.identifier, self.__class__):
-            self.identifier = self.identifier.identifier
-
-        elif isinstance(self.identifier, str):
-            self.identifier = self.identifier
-
-        elif self.identifier in (str, bool, int, float, bytes):
-            self.identifier = self.identifier.__name__
-        else:
-            raise ValueError(f'Invalid field type {self.identifier}')
-
-        super().postinit()
-
-
-ID = FieldType(identifier='ID')
-
-
+@dc.dataclass
 class Schema(BaseDataType):
     """A component carrying the `DataType` of columns.
 
     :param fields: A mapping of field names to types or `Encoders`
     """
 
-    _fields = {'fields': 'sdict'}
-
-    type_id: t.ClassVar[str] = 'schema'
-    fields: t.Mapping[str, BaseDataType]
-
-    def postinit(self):
-        """Post initialization method."""
-        assert self.identifier is not None, 'Schema must have an identifier'
-        assert self.fields is not None, 'Schema must have fields'
-
-        for k, v in self.fields.items():
-            if isinstance(v, (BaseDataType, FieldType)):
-                v.db = self.db
-                continue
-
-            if inspect.isclass(v) and issubclass(v, Leaf):
-                continue
-
-            try:
-                v = FieldType(identifier=v)
-            except ValueError:
-                raise ValueError(f'Invalid field type {v} for field {k}')
-
-            self.fields[k] = v
-        return super().postinit()
+    fields: t.Dict[str, BaseDataType]
 
     def __add__(self, other: 'Schema'):
         new_fields = self.fields.copy()
         new_fields.update(other.fields)
-        id = self.identifier + '+' + other.identifier
-        return Schema(id, fields=new_fields, db=self.db)
+        return Schema(fields=new_fields)
 
     @cached_property
     def trivial(self):
         """Determine if the schema contains only trivial fields."""
         return not any([isinstance(v, BaseDataType) for v in self.fields.values()])
 
-    def decode_data(self, data: dict[str, t.Any], builds: t.Dict) -> dict[str, t.Any]:
+    def __repr__(self):
+        return dict_to_ascii_table(self.fields)
+
+    def decode_data(
+        self, data: dict[str, t.Any], builds: t.Dict, db
+    ) -> dict[str, t.Any]:
         """Decode data using the schema's encoders.
 
         :param data: Data to decode.
         :param builds: build cache for decoding references.
+        :param db: Datalayer instance
         """
         if self.trivial:
             return data
@@ -103,13 +53,22 @@ class Schema(BaseDataType):
                 decoded[k] = value
                 continue
 
-            decoded[k] = field.decode_data(value, builds=builds)
+            try:
+                decoded[k] = field.decode_data(value, builds=builds, db=db)
+            except Exception as e:
+                raise e
+                import traceback
+
+                logging.error(traceback.format_exc())
+                raise ValueError(
+                    f'Error decoding field "{k}" with value "{value}" using {field}'
+                ) from e
 
             if isinstance(value, str) and value.startswith('?'):
                 decoded[k] = builds[value[1:]]
                 continue
             else:
-                decoded[k] = field.decode_data(value, builds=builds)
+                decoded[k] = field.decode_data(value, builds=builds, db=db)
 
         return decoded
 

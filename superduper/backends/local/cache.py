@@ -41,14 +41,14 @@ class LocalCache(Cache):
             current_component = self._cache[current]
             current_version = current_component.version
             if current_version < component.version:
-                self._component_to_uuid[
-                    component.type_id, component.identifier
-                ] = component.uuid
+                self._component_to_uuid[component.type_id, component.identifier] = (
+                    component.uuid
+                )
                 self.expire(current_component.uuid)
         else:
-            self._component_to_uuid[
-                component.type_id, component.identifier
-            ] = component.uuid
+            self._component_to_uuid[component.type_id, component.identifier] = (
+                component.uuid
+            )
 
     def __delitem__(self, item):
         if isinstance(item, tuple):

@@ -8,6 +8,7 @@ from superduper.components.plugin import Plugin
 
 PYTHON_CODE = """
 from superduper import Model
+import typing as t
 
 class PModel(Model):
     def predict(self, X) -> int:

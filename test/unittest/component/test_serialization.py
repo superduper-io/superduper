@@ -5,12 +5,10 @@ from superduper.components.model import ObjectModel
 def test_model():
     m = ObjectModel(
         identifier='test',
-        datatype=dill_serializer,
+        datatype='dill',
         object=lambda x: x + 1,
     )
-    m_dict = m.dict()
-    assert m_dict['identifier'] == m.identifier
-    assert m_dict['datatype'].identifier == 'dill_serializer'
+    m_dict = m.dict(schema=True)
 
     encoded = m_dict.encode()
     bytes = encoded['_blobs'][encoded['object'].split(':')[-1]]

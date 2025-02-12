@@ -16,7 +16,6 @@ from superduper.base.config import Config
 from superduper.base.document import Document
 from superduper.components.component import Component
 from superduper.components.datatype import LeafType
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 
@@ -217,11 +216,8 @@ class Datalayer:
 
         # Should we need to check all the documents?
         document = documents[0]
-        schema = self.infer_schema(document)
-        table = Table(identifier=table_name, schema=schema)
-        logging.info(
-            f"Creating table {table_name} with schema {list(schema.fields.keys())}"
-        )
+        table = Table(identifier=table_name, fields=self.infer_schema(document))
+        logging.info(f"Creating table {table_name} with schema {table.schema}")
         self.apply(table, force=True)
         return table
 
@@ -383,9 +379,10 @@ class Datalayer:
                 for k in builds:
                     builds[k]['identifier'] = k.split(':')[-1]
 
-                c = LeafType('leaf_type', db=self).decode_data(
+                c = LeafType().decode_data(
                     {k: v for k, v in info.items() if k != '_builds'},
                     builds=builds,
+                    db=self,
                 )
                 if c.cache:
                     logging.info(f'Adding {c.huuid} to cache')
@@ -409,8 +406,10 @@ class Datalayer:
                     identifier=identifier,
                     allow_hidden=allow_hidden,
                 )
-                c = LeafType('leaf_type', db=self).decode_data(
-                    info, builds=info.get('_builds', {})
+                c = LeafType().decode_data(
+                    info,
+                    builds=info.get('_builds', {}),
+                    db=self,
                 )
                 if c.cache:
                     logging.info(f'Adding {c.huuid} to cache')
@@ -507,7 +506,7 @@ class Datalayer:
         except FileNotFoundError:
             pass
 
-        serialized = object.dict()
+        serialized = object.dict(schema=True)
 
         if old_uuid:
 
@@ -629,7 +628,7 @@ class Datalayer:
 
     def infer_schema(
         self, data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None
-    ) -> Schema:
+    ) -> t.Dict:
         """Infer a schema from a given data object.
 
         :param data: The data object

@@ -12,7 +12,7 @@ from superduper.base.document import Document
 from superduper.components.cdc import CDC
 from superduper.components.component import Component
 from superduper.components.listener import Listener
-from superduper.components.model import Mapping, ModelInputType
+from superduper.components.model import Mapping
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.special_dicts import MongoStyleDict
@@ -325,7 +325,7 @@ class VectorIndex(CDC):
         db.cluster.vector_search.drop(self)
 
     @property
-    def models_keys(self) -> t.Tuple[t.List[str], t.List[ModelInputType]]:
+    def models_keys(self) -> t.Tuple[t.List[str], t.List]:
         """Return a list of model and keys for each listener."""
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.compatible_listener, str)
@@ -354,7 +354,7 @@ class VectorIndex(CDC):
         assert hasattr(self.indexing_listener.output_table, 'schema')
         msg = (
             f'Couldn\'t get a vector shape for '
-            f'{self.indexing_listener.output_table.schema.huuid}'
+            f'{self.indexing_listener.output_table.schema}'
         )
 
         dt = next(
@@ -365,8 +365,8 @@ class VectorIndex(CDC):
 
         try:
             assert dt.shape is not None, msg
-            assert isinstance(dt.shape, (tuple, list))
-            return dt.shape[-1]
+            assert isinstance(dt.shape, int)
+            return dt.shape
         except IndexError as e:
             raise Exception(
                 f'Couldn\'t get a vector shape for {dt.huuid} due to empty shape'

@@ -20,9 +20,9 @@ from superduper.base.annotations import trigger
 from superduper.base.document import Document
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
-from superduper.components.datatype import BaseDataType
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
+from superduper.misc import typing as st
 
 if t.TYPE_CHECKING:
     from superduper.backends.base.cluster import Cluster
@@ -30,8 +30,7 @@ if t.TYPE_CHECKING:
     from superduper.components.dataset import Dataset
 
 
-EncoderArg = t.Union[BaseDataType, str, None]
-ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
+# ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
@@ -175,8 +174,8 @@ class Trainer(Component):
     }
 
     type_id: t.ClassVar[str] = 'trainer'
-    key: ModelInputType
-    select: Query
+    key: st.JSON
+    select: st.LeafType
     transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
     signature: Signature = '*args'
@@ -213,9 +212,9 @@ class Validation(Component):
     _fields = {'datasets': 'slist', 'metrics': 'slist'}
 
     type_id: t.ClassVar[str] = 'validation'
-    metrics: t.Sequence[Metric] = ()
-    key: ModelInputType
-    datasets: t.Sequence[Dataset] = ()
+    metrics: t.List[Metric] = dc.field(default_factory=list)
+    key: st.JSON
+    datasets: t.List[Dataset] = dc.field(default_factory=list)
 
 
 class Mapping:
@@ -225,7 +224,7 @@ class Mapping:
     :param signature: Signature for the model.
     """
 
-    def __init__(self, mapping: ModelInputType, signature: Signature):
+    def __init__(self, mapping: t.Dict | t.List, signature: Signature):
         self.mapping = self._map_args_kwargs(mapping)
         self.signature = signature
 
@@ -374,8 +373,8 @@ class Model(Component, metaclass=ModelMeta):
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
     type_id: t.ClassVar[str] = 'model'
-    datatype: EncoderArg = None
-    output_schema: t.Optional[Schema] = None
+    datatype: str | None = None
+    output_schema: t.Optional[t.Dict] = None
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
     predict_kwargs: t.Dict = dc.field(default_factory=dict)
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -503,7 +502,7 @@ class Model(Component, metaclass=ModelMeta):
     # TODO - move this logic to `Listenen.run`
     def predict_in_db(
         self,
-        X: ModelInputType,
+        X: str | t.List | t.Dict,
         predict_id: str,
         select: Query,
         ids: t.Sequence[str] | None = None,
@@ -559,13 +558,13 @@ class Model(Component, metaclass=ModelMeta):
 
     def _prepare_inputs_from_select(
         self,
-        X: ModelInputType,
+        X: str | t.List | t.Dict,
         select: Query,
         ids,
         in_memory: bool = True,
     ):
         X_data: t.Any
-        mapping = Mapping(X, self.signature)
+        mapping = Mapping(X, self.signature)  # type: ignore[arg-type]
 
         if in_memory:
             docs = select.subset(ids)
@@ -809,7 +808,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def to_vector_index(
         self,
-        key: ModelInputType,
+        key: str | t.List | t.Dict,
         select: Query,
         predict_kwargs: t.Optional[dict] = None,
         identifier: t.Optional[str] = None,
@@ -837,7 +836,7 @@ class Model(Component, metaclass=ModelMeta):
 
     def to_listener(
         self,
-        key: ModelInputType,
+        key: str | t.List | t.Dict,
         select: Query,
         predict_kwargs: t.Optional[dict] = None,
         identifier: t.Optional[str] = None,

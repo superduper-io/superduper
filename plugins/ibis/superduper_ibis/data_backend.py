@@ -91,14 +91,6 @@ class IbisDataBackend(BaseDataBackend):
         self.overwrite = False
         self._setup(conn)
 
-        self.datatype_presets = {'vector': 'superduper.components.datatype.Array'}
-
-        if uri.startswith('snowflake://') or uri.startswith('clickhouse://'):
-            self.bytes_encoding = 'base64'
-            self.datatype_presets.update(
-                {'vector': 'superduper.components.datatype.NativeVector'}
-            )
-
     def random_id(self):
         """Generate a random ID."""
         return str(uuid.uuid4())

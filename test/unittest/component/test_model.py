@@ -1,4 +1,5 @@
 import dataclasses as dc
+import typing as t  # noqa: F401
 from test.utils.component import model as model_utils
 from unittest.mock import MagicMock, patch
 
@@ -23,15 +24,14 @@ from superduper.components.model import (
     Trainer,
     Validation,
 )
-from superduper.components.schema import FieldType
+from superduper.misc import typing as st  # noqa: F401
 
 
 # ------------------------------------------
 # Test the _TrainingConfiguration class (tc)
 # ------------------------------------------
 @dc.dataclass
-class Validator(ObjectModel):
-    ...
+class Validator(ObjectModel): ...
 
 
 # --------------------------------
@@ -178,12 +178,10 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
 
 def test_model_append_metrics():
     @dc.dataclass
-    class _Tmp(ObjectModel):
-        ...
+    class _Tmp(ObjectModel): ...
 
     class MyTrainer(Trainer):
-        def fit(self, *args, **kwargs):
-            ...
+        def fit(self, *args, **kwargs): ...
 
     model = _Tmp(
         'test',
@@ -239,7 +237,7 @@ def test_model_validate_in_db(db):
     model_predict = ObjectModel(
         identifier='test',
         object=lambda x: sum(x) > 0.5,
-        datatype=FieldType(identifier='str'),
+        datatype='str',
         validation=Validation(
             identifier='my-valid',
             metrics=[

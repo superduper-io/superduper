@@ -1,11 +1,10 @@
 from superduper.components.component import Component
-from superduper.components.datatype import Dill, File
-from superduper.misc import typing as t
+from superduper.misc import typing as st
 
 
 class MyComponent(Component):
-    path: t.File
-    my_func: t.Blob
+    path: st.File
+    my_func: st.Dill
 
 
 def new_func(x):
@@ -13,10 +12,9 @@ def new_func(x):
 
 
 def test_annotations(db):
-    s = MyComponent.build_class_schema(db)
 
-    assert isinstance(s.fields['path'], File)
-    assert isinstance(s.fields['my_func'], Dill)
+    assert MyComponent._new_fields['path'] == 'file'
+    assert MyComponent._new_fields['my_func'] == 'dill'
 
     import tempfile
 

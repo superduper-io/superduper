@@ -1,9 +1,11 @@
 import base64
+import dataclasses as dc
 import hashlib
 import inspect
 import json
 import os
 import pickle
+import re
 import typing as t
 from abc import abstractmethod
 from functools import cached_property
@@ -14,13 +16,32 @@ import numpy
 
 from superduper import CFG
 from superduper.base.leaf import Leaf
-from superduper.components.component import Component, ComponentMeta
+from superduper.components.component import Component
+from superduper.misc.annotations import classproperty
 from superduper.misc.utils import str_shape
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
-INBUILT_DATATYPES = {}
+# TODO do we need encodable?
+
+
+@dc.dataclass
+class FieldType:
+    """Field type to represent the type of a field in a table.
+
+    This is a wrapper around a database's native datatypes.
+
+    :param identifier: The identifier of the datatype.
+    """
+
+    identifier: str
+
+    def __repr__(self):
+        return self.identifier
+
+
+ID = FieldType(identifier='ID')
 
 
 if t.TYPE_CHECKING:
@@ -35,6 +56,7 @@ def _convert_bytes_to_base64(bytes_: bytes) -> str:
     return base64.b64encode(bytes_).decode('utf-8')
 
 
+# TODO - shouldn't this be handled by the datatype?
 class DataTypeFactory:
     """Abstract class for creating a DataType # noqa."""
 
@@ -59,25 +81,14 @@ class DataTypeFactory:
         raise NotImplementedError
 
 
-class DataTypeMeta(ComponentMeta):
-    """Metaclass for the `Model` class and descendants # noqa."""
-
-    def __new__(mcls, name, bases, dct):
-        """Create a new class with merged docstrings # noqa."""
-        cls = super().__new__(mcls, name, bases, dct)
-        try:
-            instance = cls(cls.__name__)
-            INBUILT_DATATYPES[cls.__name__] = instance
-        except TypeError:
-            pass
-        return cls
-
-
-class BaseDataType(Component, metaclass=DataTypeMeta):
+@dc.dataclass
+class BaseDataType:
     """Base class for datatype."""
 
-    type_id: t.ClassVar[str] = 'datatype'
-    cache: bool = True
+    dtype: t.ClassVar[str] = 'str'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}'
 
     @abstractmethod
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -91,18 +102,19 @@ class BaseDataType(Component, metaclass=DataTypeMeta):
         """
 
     @abstractmethod
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from bytes.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build-cache dictionary.
+        :param db: The datalayer.
         """
 
 
 class LeafType(BaseDataType):
     """Datatype for encoding leafs."""
 
+    dtype: t.ClassVar[str] = 'json'
     encodable: t.ClassVar[str] = 'leaf'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -123,13 +135,15 @@ class LeafType(BaseDataType):
             builds[key] = item
             return '?' + key
 
-        r = item.dict()
+        r = item.dict(schema=True)
         if r.schema:
             r = dict(
                 r.schema.encode_data(
                     r, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
             )
+        else:
+            r = dict(r)
 
         identifier = r.pop('identifier')
 
@@ -144,32 +158,28 @@ class LeafType(BaseDataType):
         builds[key] = r
         return '?' + key
 
-    def decode_data(self, item, builds: t.Dict, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
         :param builds: The build-cache dictionary.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param db: The Datalayer.
         """
-        from superduper.base.datalayer import Datalayer
-
         if isinstance(item, str) and item.startswith('?'):
             key = item[1:]
             if isinstance(builds[key], dict):
                 r = {'identifier': key.split(':')[-1], **builds[key]}
-                builds[key] = _decode_leaf(r, builds, *args, db=self.db, **kwargs)  # type: ignore[arg-type]
+                builds[key] = _decode_leaf(r, builds, db=db)
             return builds[key]
 
         elif isinstance(item, str) and item.startswith('&'):
             uuid = item[1:].split(':')[-1]
-            return self.db.load(uuid=uuid)
+            return db.load(uuid=uuid)
 
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a leaf')
 
-        assert isinstance(self.db, Datalayer)
-        out = _decode_leaf(item, builds, *args, db=self.db, **kwargs)
+        out = _decode_leaf(item, builds, db=db)
 
         if isinstance(out, Component):
             key = f"{out.type_id}:{out.identifier}"
@@ -199,8 +209,7 @@ def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
         )
     else:
         assert issubclass(cls, Leaf)
-        schema = cls.build_class_schema(db=db)
-        dict_ = schema.decode_data(dict_, builds=builds)
+        dict_ = cls.class_schema.decode_data(dict_, builds=builds, db=db)
         out = cls.from_dict(dict_, db=db)
 
     if isinstance(out, Leaf):
@@ -214,6 +223,7 @@ def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
 class SDict(BaseDataType):
     """Datatype for encoding dictionaries which are supported as dict by databackend."""
 
+    dtype: t.ClassVar[str] = 'dict'
     encodable: t.ClassVar[str] = 'native'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -228,7 +238,7 @@ class SDict(BaseDataType):
         assert isinstance(item, dict)
         return {
             k: (
-                LeafType('leaf').encode_data(
+                LeafType().encode_data(
                     v, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
                 if isinstance(v, Leaf)
@@ -237,24 +247,21 @@ class SDict(BaseDataType):
             for k, v in item.items()
         }
 
-    def decode_data(self, item, builds, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
         :param builds: The build-cache dictionary.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param db: The Datalayer.
         """
-        leaf_type = LeafType('leaf', db=self.db)
-        return {
-            k: leaf_type.decode_data(v, builds, *args, **kwargs)
-            for k, v in item.items()
-        }
+        leaf_type = LeafType()
+        return {k: leaf_type.decode_data(v, builds, db) for k, v in item.items()}
 
 
 class SList(BaseDataType):
     """Datatype for encoding lists which are supported as list by databackend."""
 
+    dtype: t.ClassVar[str] = 'json'
     encodable: t.ClassVar[str] = 'native'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -269,7 +276,7 @@ class SList(BaseDataType):
         assert isinstance(item, list)
         return [
             (
-                LeafType('leaf').encode_data(
+                LeafType().encode_data(
                     r, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
                 if isinstance(r, Leaf)
@@ -278,28 +285,30 @@ class SList(BaseDataType):
             for r in item
         ]
 
-    def decode_data(self, item, builds, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
         :param builds: The builds.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param db: The Datalayer.
         """
-        leaf_type = LeafType('leaf', db=self.db)
-        return [leaf_type.decode_data(r, builds, *args, **kwargs) for r in item]
+        leaf_type = LeafType()
+        return [leaf_type.decode_data(r, builds, db) for r in item]
 
 
+@dc.dataclass(kw_only=True)
 class BaseVector(BaseDataType):
     """Base class for vector.
 
     :param shape: size of vector
-
     :param dtype: Datatype of array to encode.
     """
 
     shape: int
     dtype: str = 'float64'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}[{self.dtype}:{self.shape}]'
 
     @abstractmethod
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -313,17 +322,22 @@ class BaseVector(BaseDataType):
         """
 
     @abstractmethod
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: The Datalayer.
         """
 
 
+@dc.dataclass(kw_only=True)
 class NativeVector(BaseVector):
-    """Datatype for encoding vectors which are supported as list by databackend."""
+    """Datatype for encoding vectors which are supported as list by databackend.
+
+    :param dtype: Datatype of encoded arrays.
+    :param shape: Shape of array.
+    """
 
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float'
@@ -341,27 +355,23 @@ class NativeVector(BaseVector):
             item = item.tolist()
         return item
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from a list of floats.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: The Datalayer.
         """
         return numpy.array(item).astype(self.dtype)
 
 
+@dc.dataclass(kw_only=True)
 class Vector(BaseVector):
     """Vector meta-datatype for encoding vectors ready for search.
 
     :param dtype: Datatype of encoded arrays.
+    :param shape: Shape of array.
     """
-
-    identifier: str = ''
-
-    def __post_init__(self, db):
-        self.identifier = f'vector[{self.shape[0]}]'
-        super().__post_init__(db)
 
     @property
     def encodable(self):
@@ -369,16 +379,15 @@ class Vector(BaseVector):
 
     @cached_property
     def datatype_impl(self):
-        if isinstance(CFG.datatype_presets.vector, str):
-            type_: str = CFG.datatype_presets.vector
-        else:
-            type_: str = self.db.databackend.datatype_presets['vector']
+        type_ = CFG.datatype_presets.vector
+        if type_ is None:
+            return NativeVector(shape=self.shape, dtype=self.dtype)
 
         module = '.'.join(type_.split('.')[:-1])
         cls = type_.split('.')[-1]
         datatype = getattr(import_module(module), cls)
         if inspect.isclass(datatype):
-            datatype = datatype('tmp', dtype=self.dtype, shape=self.shape)
+            datatype = datatype(dtype=self.dtype, shape=self.shape)
         return datatype
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -394,24 +403,26 @@ class Vector(BaseVector):
             item, builds, blobs, files, leaves_to_keep=leaves_to_keep
         )
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: The Datalayer.
         """
-        return self.datatype_impl.decode_data(item=item)
+        return self.datatype_impl.decode_data(item, builds, db)
 
 
 class JSON(BaseDataType):
-    """Datatype for encoding vectors which are supported natively by databackend.
-
-    :param dtype: Datatype of encoded arrays.
-    """
+    """Datatype for encoding json-able items."""
 
     encodable: t.ClassVar[str] = 'native'
-    dtype: str = 'str'
+
+    @classproperty
+    def dtype(self):
+        if CFG.json_native:
+            return 'json'
+        return 'str'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as a string.
@@ -422,15 +433,24 @@ class JSON(BaseDataType):
         :param files: The cache of files (paths).
         :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
+        if self.dtype == 'json':
+            # necessary to enforce json-able content
+            try:
+                json.dumps(item)
+            except Exception:
+                raise TypeError(f'Item {item} is not json-able')
+            return item
         return json.dumps(item)
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from string form.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: The Datalayer.
         """
+        if self.dtype == 'json':
+            return item
         return json.loads(item)
 
 
@@ -447,19 +467,17 @@ class _Encodable:
         :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
         encoded = self._encode_data(item)
-        if self.db.databackend.bytes_encoding == 'base64':
-            encoded = _convert_bytes_to_base64(encoded)
+        encoded = _convert_bytes_to_base64(encoded)
         return encoded
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: The Datalayer.
         """
-        if self.db.databackend.bytes_encoding == 'base64':
-            item = _convert_base64_to_bytes(item)
+        item = _convert_base64_to_bytes(item)
         return self._decode_data(item)
 
 
@@ -478,24 +496,23 @@ class _Artifact:
         b = Blob(
             bytes=self._encode_data(item),
             builder=self._decode_data,
-            db=self.db,
         )
         blobs[b.identifier] = b.bytes
         return b.reference
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
 
         :param item: The item to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache
+        :param db: The datalayer.
         """
         assert isinstance(item, str)
         assert item.startswith('&')
         return Blob(
             identifier=item.split(':')[-1],
             builder=self._decode_data,
-            db=self.db,
+            db=db,
         )
 
 
@@ -519,7 +536,7 @@ class _DillMixin:
     def _encode_data(self, item):
         return dill.dumps(item, recurse=True)
 
-    def _decode_data(self, item, *args, **kwargs):
+    def _decode_data(self, item):
         return dill.loads(item)
 
 
@@ -554,14 +571,133 @@ class File(BaseDataType):
         files[file.identifier] = file.path
         return file.reference
 
-    def decode_data(self, item, *args, **kwargs):
+    def decode_data(self, item, builds, db):
         """Decode the item placeholder.
 
         :param item: The file path to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
+        :param builds: The build cache.
+        :param db: Datalayer.
         """
-        return FileItem(identifier=item.split(':')[-1], db=self.db)
+        return FileItem(identifier=item.split(':')[-1], db=db)
+
+
+@dc.dataclass(kw_only=True)
+class Array(BaseDataType):
+    """Encode/ decode a numpy array as bytes.
+
+    :param dtype: numpy native datatype.
+    :param shape: Shape of array.
+    """
+
+    encodable: t.ClassVar[str] = 'encodable'
+
+    dtype: str = 'float64'
+    shape: int | t.Tuple[int]
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}[{self.dtype}:{str_shape(self.shape)}]'
+
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
+        """Encode the data.
+
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        """
+        if item.dtype != self.dtype:
+            raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
+        return _convert_bytes_to_base64(memoryview(item).tobytes())
+
+    def decode_data(self, item, builds, db):
+        """Decode the data.
+
+        :param item: The data to decode.
+        :param builds: The build cache
+        :param db: The datalayer.
+        """
+        shape = self.shape
+        if isinstance(shape, int):
+            shape = (self.shape,)
+        return numpy.frombuffer(
+            _convert_base64_to_bytes(item), dtype=self.dtype
+        ).reshape(shape)
+
+
+class NumpyDataTypeFactory(DataTypeFactory):
+    """A factory for numpy arrays # noqa."""
+
+    @staticmethod
+    def check(data: t.Any) -> bool:
+        """Check if the data is a numpy array.
+
+        Used for creating an auto schema.
+
+        :param data: The data to check.
+        """
+        return isinstance(data, numpy.ndarray)
+
+    @staticmethod
+    def create(data: t.Any) -> str:
+        """Create a numpy array datatype.
+
+        Used from creating an auto schema.
+
+        :param data: The numpy array.
+        """
+        return f'array[{str(data.dtype)}:{str_shape(data.shape)}]'
+
+
+class _DatatypeLookup:
+    presets = {
+        str(x).lower(): x
+        for x in [
+            JSON(),
+            PickleEncoder(),
+            DillEncoder(),
+            Dill(),
+            Pickle(),
+            File(),
+            LeafType(),
+            SDict(),
+            SList(),
+            FieldType('str'),
+            FieldType('int'),
+            FieldType('bytes'),
+            FieldType('float'),
+            FieldType('bool'),
+            FieldType('ID'),
+        ]
+    }
+
+    def __getitem__(self, item):
+        try:
+            return self.presets[item.lower()]
+        except KeyError:
+
+            import_match = re.match(r'^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+$', item)
+
+            if import_match:
+                # only supports datatypes without arguments
+                module, cls = item.rsplit('.', 1)
+                return getattr(import_module(module), cls)
+
+            vector_match = re.match(r'^vector\[([a-z0-9]+):([0-9]+)\]', item)
+
+            if vector_match:
+                dtype, shape = vector_match.groups()
+                shape = int(shape)
+                return Vector(dtype=dtype, shape=shape)
+
+            array_match = re.match(r'^array\[([a-z0-9]+):(.*)\]$', item)
+
+            if array_match:
+                dtype, shape = array_match.groups()
+                shape = tuple([int(x) for x in shape.split('x')])
+                return Array(dtype=dtype, shape=shape)
+
+            raise KeyError(f'Unknown datatype {item}')
 
 
 def get_hash(data):
@@ -578,10 +714,16 @@ def get_hash(data):
     return hashlib.sha1(bytes_).hexdigest()
 
 
-class Saveable(Leaf):
-    """A Saveable base class."""
+@dc.dataclass
+class Saveable:
+    """A Saveable base class.
+
+    :param identifier: Identifier of the object.
+    :param db: The Datalayer.
+    """
 
     identifier: str = ''
+    db: 'Datalayer' = None
 
     @property
     @abstractmethod
@@ -599,15 +741,18 @@ class Saveable(Leaf):
         pass
 
 
+@dc.dataclass(kw_only=True)
 class FileItem(Saveable):
     """Placeholder for a file.
 
+    :param identifier: Identifier of the file.
+    :param db: The Datalayer.
     :param path: Path to file.
     """
 
     path: str = ''
 
-    def postinit(self):
+    def __post_init__(self):
         """Post init."""
         if not self.identifier:
             self.identifier = get_hash(self.path)
@@ -628,22 +773,24 @@ class FileItem(Saveable):
         return f'&:file:{self.identifier}'
 
 
+@dc.dataclass(kw_only=True)
 class Blob(Saveable):
     """Placeholder for a blob of bytes.
 
-    :param bytes: Bytes blob.
+    :param bytes: The `bytes` blob.
+    :param identifier: Identifier of the blob.
     :param builder: Function to rebuild object from bytes.
+    :param db: The Datalayer.
     """
 
     bytes: bytearray | None = None
     identifier: str = ''
     builder: t.Callable
 
-    def __post_init__(self, db=None):
+    def __post_init__(self):
         if not self.identifier:
             assert self.bytes is not None
             self.identifier = get_hash(self.bytes)
-        return super().__post_init__(db)
 
     def init(self):
         """Initialize the blob."""
@@ -662,91 +809,12 @@ class Blob(Saveable):
         return f'&:blob:{self.identifier}'
 
 
-class Array(BaseDataType):
-    """Encode/ decode a numpy array as bytes.
+INBUILT_DATATYPES = _DatatypeLookup()
 
-    :param dtype: numpy native datatype.
-    :param shape: Shape of array.
-    """
-
-    dtype: str = 'float64'
-    shape: int | t.Tuple[int]
-    identifier: str = ''
-
-    def __post_init__(self, db):
-        self.encodable = 'encodable'
-        if not self.identifier:
-            dtype = str(self.dtype)
-            self.identifier = f'numpy-{dtype}[{str_shape(self.shape)}]'
-        return super().__post_init__(db)
-
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the data.
-
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
-        """
-        if item.dtype != self.dtype:
-            raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
-        return memoryview(item).tobytes()
-
-    def decode_data(self, item, *args, **kwargs):
-        """Decode the data.
-
-        :param item: The data to decode.
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
-        """
-        shape = self.shape
-        if isinstance(shape, int):
-            shape = (self.shape,)
-        return numpy.frombuffer(item, dtype=self.dtype).reshape(shape)
-
-
-class NumpyDataTypeFactory(DataTypeFactory):
-    """A factory for numpy arrays # noqa."""
-
-    @staticmethod
-    def check(data: t.Any) -> bool:
-        """Check if the data is a numpy array.
-
-        Used for creating an auto schema.
-
-        :param data: The data to check.
-        """
-        return isinstance(data, numpy.ndarray)
-
-    @staticmethod
-    def create(data: t.Any, db: 'Datalayer') -> Array:
-        """Create a numpy array datatype.
-
-        Used from creating an auto schema.
-
-        :param data: The numpy array.
-        :param db: The datalayer.
-        """
-        return Array(dtype=str(data.dtype), shape=list(data.shape))
-
-
-INBUILT_DATATYPES = {
-    'json': JSON,
-    'encodable': PickleEncoder,
-    'component': LeafType,
-    'default': Dill,
-    'blob': Dill,
-    'leaf': LeafType,
-    'file': File,
-    'sdict': SDict,
-    'slist': SList,
-}
-
-dill_serializer = Dill('dill_serializer')
-pickle_serializer = Pickle('pickle_serializer')
-pickle_encoder = PickleEncoder('pickle_encoder')
-file = File('file')
+dill_serializer = Dill()
+pickle_serializer = Pickle()
+pickle_encoder = PickleEncoder()
+file = File()
 
 DEFAULT_SERIALIZER = dill_serializer
 DEFAULT_ENCODER = pickle_encoder

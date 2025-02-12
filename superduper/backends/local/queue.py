@@ -55,9 +55,9 @@ class LocalQueuePublisher(BaseQueuePublisher):
         msg = 'Table name "_apply" collides with Superduper namespace'
         assert component.cdc_table != '_apply', msg
         assert isinstance(component, CDC)
-        self._component_uuid_mapping[
-            component.type_id, component.identifier
-        ] = component.uuid
+        self._component_uuid_mapping[component.type_id, component.identifier] = (
+            component.uuid
+        )
         if component.cdc_table in self.queue:
             return
         self.queue[component.cdc_table] = []

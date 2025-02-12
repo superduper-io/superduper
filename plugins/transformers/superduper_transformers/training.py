@@ -617,9 +617,9 @@ def ray_train(
                 train_loop_config.get("gradient_checkpointing_kwargs", {}) or {}
             )
             gradient_checkpointing_kwargs["use_reentrant"] = False
-            train_loop_config[
-                "gradient_checkpointing_kwargs"
-            ] = gradient_checkpointing_kwargs
+            train_loop_config["gradient_checkpointing_kwargs"] = (
+                gradient_checkpointing_kwargs
+            )
         train_loop_args = LLMTrainer(**train_loop_config)
         # Build the training_args on remote machine
         train_loop_args.build()

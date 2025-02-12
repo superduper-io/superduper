@@ -12,7 +12,8 @@ from superduper.base.constant import (
 )
 from superduper.base.leaf import Leaf
 from superduper.base.variables import _replace_variables
-from superduper.components.schema import Schema, get_schema
+from superduper.components.datatype import Saveable
+from superduper.components.schema import Schema
 from superduper.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -242,16 +243,17 @@ class Document(MongoStyleDict):
 
         :param other: The other document to update with.
         """
-        schema = self.schema or Schema('tmp', fields={})
+        schema = self.schema or Schema(fields={})
 
         if isinstance(other, Document) and other.schema:
             assert other.schema is not None
             schema += other.schema
+
         return Document(_update(dict(self), dict(other)), schema=schema)
 
     def encode(
         self,
-        schema: t.Optional[t.Union['Schema', str]] = None,
+        schema: t.Optional['Schema'] = None,
         leaves_to_keep: t.Sequence = (),
         metadata: bool = True,
         defaults: bool = True,
@@ -276,11 +278,9 @@ class Document(MongoStyleDict):
 
         # Get schema from database.
         schema = self.schema or schema
-        schema = get_schema(self.db, schema) if schema else None
         out = dict(self)
 
         if schema is not None:
-            schema = schema.reconnect(db=db) if db else schema
             out = schema.encode_data(
                 out, builds, blobs, files, leaves_to_keep=leaves_to_keep
             )
@@ -356,9 +356,7 @@ class Document(MongoStyleDict):
                 cls = Leaf.get_cls_from_blob(r['_object'], db=db)
 
             if inspect.isclass(cls):
-                schema = cls.build_class_schema(db)
-                assert isinstance(schema, Schema)
-                r = schema.decode_data(r, builds=builds)
+                r = cls.class_schema.decode_data(r, builds=builds, db=db)
 
             if inspect.isclass(cls):
                 return cls.from_dict(r, db)
@@ -378,8 +376,8 @@ class Document(MongoStyleDict):
                 schema: Schema = db.load('schema', r['_schema'])
 
             assert schema is not None
-            schema: Schema = schema.reconnect(db=db)
-            r = schema.decode_data(r, builds=builds)
+            # schema: Schema = schema.reconnect(db=db)
+            r = schema.decode_data(r, builds=builds, db=db)
 
         # TODO don't need these 2 options
         if isinstance(r, dict):
@@ -503,7 +501,7 @@ class QueryUpdateDocument(Document):
 
 
 def _unpack(item: t.Any, leaves_to_keep: t.Sequence = ()) -> t.Any:
-    if isinstance(item, Leaf) and not isinstance(item, tuple(leaves_to_keep)):
+    if isinstance(item, Saveable) and not isinstance(item, tuple(leaves_to_keep)):
         return item.unpack()
     elif isinstance(item, dict):
         return {k: _unpack(v, leaves_to_keep=leaves_to_keep) for k, v in item.items()}

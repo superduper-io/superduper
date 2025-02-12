@@ -3,3 +3,5 @@ data_backend: 'sqlite://'
 auto_schema: false
 force_apply: true
 json_native: false
+datatype_presets:
+  vector: superduper.components.datatype.Array

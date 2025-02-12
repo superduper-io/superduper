@@ -27,21 +27,21 @@ def data():
 
 
 def test_infer_datatype(db):
-    assert infer_datatype(1, db) is int
-    assert infer_datatype(1.0, db) is float
-    assert infer_datatype("1", db) is str
-    assert infer_datatype(True, db) is bool
-    assert infer_datatype(b"1", db) is bytes
+    assert infer_datatype(1, db) == 'int'
+    assert infer_datatype(1.0, db) == 'float'
+    assert infer_datatype("1", db) == 'str'
+    assert infer_datatype(True, db) == 'bool'
+    assert infer_datatype(b"1", db) == 'bytes'
 
-    assert infer_datatype(np.array([1, 2, 3]), db).identifier == "vector[3]"
+    assert infer_datatype(np.array([1, 2, 3]), db) == "vector[int64:3]"
 
-    assert infer_datatype({"a": 1}, db).identifier == "json"
+    assert infer_datatype({"a": 1}, db) == "json"
 
-    assert infer_datatype({"a": np.array([1, 2, 3])}, db).identifier == "encodable"
+    assert infer_datatype({"a": np.array([1, 2, 3])}, db) == "dillencoder"
 
     assert (
-        infer_datatype(pd.DataFrame({"col1": [1, 2], "col2": [3, 4]}), db).identifier
-        == "encodable"
+        infer_datatype(pd.DataFrame({"col1": [1, 2], "col2": [3, 4]}), db)
+        == "dillencoder"
     )
 
     with pytest.raises(UnsupportedDatatype):
@@ -52,7 +52,7 @@ def test_infer_datatype(db):
 def test_schema(db, data):
     schema = db.infer_schema(data)
 
-    t = Table(identifier="my_table", schema=schema)
+    t = Table(identifier="my_table", fields=schema)
 
     db.apply(t)
 

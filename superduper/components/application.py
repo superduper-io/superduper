@@ -28,7 +28,7 @@ class Application(Component):
 
     literals: t.ClassVar[t.Sequence[str]] = ("template",)
     type_id: t.ClassVar[str] = 'application'
-    components: t.Sequence[Component]
+    components: t.List[Component]
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
     link: t.Optional[str] = None
 

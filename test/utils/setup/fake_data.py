@@ -8,7 +8,6 @@ from superduper.components.dataset import Dataset
 from superduper.components.datatype import Array
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.components.vector_index import VectorIndex
 
@@ -31,18 +30,15 @@ def add_random_data(
     table_name: str = "documents",
     n: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    float_array = Array(dtype="float", shape=(32,))
+    # float_array = Array(dtype="float", shape=(32,))
 
-    schema = Schema(
-        identifier=table_name,
-        fields={
-            "id": "str",
-            "x": float_array,
-            "y": "int32",
-            "z": float_array,
-        },
-    )
-    t = Table(identifier=table_name, schema=schema)
+    fields = {
+        "id": "str",
+        "x": "array[float:32]",
+        "y": "int",
+        "z": "array[float:32]",
+    }
+    t = Table(identifier=table_name, fields=fields)
     db.apply(t)
     data = []
     for i in range(n):
@@ -62,11 +58,18 @@ def add_datatypes(db: Datalayer):
 
 def add_models(db: Datalayer):
     # identifier, weight_shape, encoder
+    # params = [
+    #     ["linear_a", (32, 16), Array(dtype="float", shape=(16,)), False],
+    #     ["linear_a_multi", (32, 16), Array(dtype="float", shape=(16,)), True],
+    #     ["linear_b", (16, 8), Array(dtype="float", shape=(8,)), False],
+    #     ["linear_b_multi", (16, 8), Array(dtype="float", shape=(8,)), True],
+    # ]
+
     params = [
-        ["linear_a", (32, 16), Array(dtype="float", shape=(16,)), False],
-        ["linear_a_multi", (32, 16), Array(dtype="float", shape=(16,)), True],
-        ["linear_b", (16, 8), Array(dtype="float", shape=(8,)), False],
-        ["linear_b_multi", (16, 8), Array(dtype="float", shape=(8,)), True],
+        ["linear_a", (32, 16), 'vector[float:16]', False],
+        ["linear_a_multi", (32, 16), 'vector[float:16]', True],
+        ["linear_b", (16, 8), 'vector[float:8]', False],
+        ["linear_b_multi", (16, 8), 'vector[float:8]', True],
     ]
     for identifier, weight_shape, datatype, flatten in params:
         weight = np.random.randn(weight_shape[1])

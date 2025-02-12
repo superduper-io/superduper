@@ -365,9 +365,9 @@ class LLM(BaseLLM):
                 tokenizer_kwargs["pretrained_model_name_or_path"] = adapter_id
 
             else:
-                tokenizer_kwargs[
-                    "pretrained_model_name_or_path"
-                ] = self.model_name_or_path
+                tokenizer_kwargs["pretrained_model_name_or_path"] = (
+                    self.model_name_or_path
+                )
 
             tokenizer = AutoTokenizer.from_pretrained(
                 **tokenizer_kwargs,

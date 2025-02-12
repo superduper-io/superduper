@@ -176,7 +176,7 @@ def _apply(
 
     object.db = db
 
-    serialized = object.dict(metadata=False)
+    serialized = object.dict(metadata=False, schema=True)
 
     del serialized['uuid']
 
@@ -214,7 +214,7 @@ def _apply(
                 x = x.replace(uuid, non_breaking_changes[uuid])
 
         elif isinstance(x, Query):
-            r = x.dict()
+            r = x.dict(schema=True)
             for uuid in non_breaking_changes:
                 r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
             for i, doc in enumerate(r['documents']):
@@ -242,7 +242,7 @@ def _apply(
 
         # only check for diff not in metadata/ uuid
         # also only
-        current_serialized = current.dict(metadata=False, refs=True)
+        current_serialized = current.dict(metadata=False, refs=True, schema=True)
         del current_serialized['uuid']
 
         serialized = serialized.map(
@@ -269,6 +269,13 @@ def _apply(
 
             return create_events, job_events
 
+        elif '_path' in this_diff:
+            # TODO use custom exception
+            raise ValueError(
+                f'Cannot update a version of {current_serialized["_path"]} '
+                f'with a new class {serialized["_path"]}.'
+            )
+
         elif set(this_diff.keys(deep=True)).intersection(object.breaks):
             # if this is a breaking change then create a new version
             apply_status = 'breaking'
@@ -287,7 +294,7 @@ def _apply(
             # during the `.map` to the children
             # serializer.map...
             # this means replacing components with references
-            serialized = object.dict().update(serialized)
+            serialized = object.dict(schema=True).update(serialized)
 
             # this is necessary to prevent inconsistencies
             # this takes the difference between
@@ -325,7 +332,7 @@ def _apply(
             # update the existing component with the change
             # data from the applied component
             serialized = (
-                current.dict()
+                current.dict(schema=True)
                 .update(serialized)
                 .update(this_diff)
                 .encode(keep_schema=False)
@@ -339,7 +346,8 @@ def _apply(
             replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
         )
         serialized['version'] = 0
-        serialized = object.dict().update(serialized)
+
+        serialized = object.dict(schema=True).update(serialized)
 
         # if the metadata includes components, which
         # need to be applied, do that now
@@ -365,6 +373,7 @@ def _apply(
     serialized = db._save_artifact(object.uuid, serialized)
 
     if apply_status in {'new', 'breaking'}:
+
         metadata_event = Create(
             context=context,
             component=serialized,

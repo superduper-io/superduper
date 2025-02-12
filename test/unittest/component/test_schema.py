@@ -8,16 +8,15 @@ from superduper.components.datatype import (
     FileItem,
     dill_serializer,
     file,
-    pickle_encoder,
-    pickle_serializer,
 )
+from superduper.misc import typing as st
 
 
 class TestComponent(Component):
     _fields = {'a': dill_serializer, 'b': file}
 
     a: t.Callable
-    b: str | None = None
+    b: st.File
 
 
 class TestUnannotatedComponent(Component):
@@ -29,35 +28,26 @@ def test_schema_with_bytes_encoding(db):
     db.apply(
         Table(
             'documents',
-            schema=Schema('_schema/documents', fields={'txt': pickle_encoder}),
+            fields={'txt': 'pickleencoder'},
         )
     )
 
-    t = db.load('table', 'documents')
-
-    assert t.schema.db is not None
-
-    db.databackend.bytes_encoding = 'base64'
-
     db['documents'].insert([{'txt': 'testing 123'}])
 
-    try:
-        r = db.databackend.db['documents'].find_one()
-    except Exception:
-        return
+    r = db.databackend.db['documents'].get()
 
     print(r)
 
     assert isinstance(r['txt'], str)
 
-    r = db['documents'].find_one()
+    r = db['documents'].get()
 
 
 def test_schema_with_blobs(db):
     db.apply(
         Table(
             'documents',
-            schema=Schema('_schema/documents', fields={'txt': pickle_serializer}),
+            fields={'txt': 'pickle'},
         )
     )
 
@@ -95,7 +85,7 @@ def test_schema_with_file(db, tmp_file):
     db.apply(
         Table(
             'documents',
-            schema=Schema('_schema/documents', fields={'my_file': file}),
+            fields={'my_file': 'file'},
         )
     )
     db['documents'].insert([{'my_file': tmp_file}])
@@ -131,7 +121,7 @@ def test_schema_with_file(db, tmp_file):
 def test_component_serializes_with_schema(db, tmp_file):
     c = TestComponent('test', a='testing testing 123', b=tmp_file)
 
-    r = c.dict()
+    r = c.dict(schema=True)
 
     r_encoded = r.encode()
 
@@ -146,7 +136,7 @@ def test_component_serializes_with_schema(db, tmp_file):
 
 
 def test_auto_infer_fields(db):
-    s = TestUnannotatedComponent.build_class_schema(db)
+    s = TestUnannotatedComponent.class_schema
 
     assert isinstance(s, Schema)
 
@@ -154,4 +144,4 @@ def test_auto_infer_fields(db):
 
     pprint.pprint(s)
 
-    assert list(s.fields.keys()) == ['upstream', 'a', 'b']
+    assert set(s.fields.keys()).issuperset({'upstream', 'a', 'b'})

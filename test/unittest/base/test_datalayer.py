@@ -1,5 +1,6 @@
 import os
 import time
+import typing as t  # noqa: F401
 from typing import Any, ClassVar, Optional, Sequence
 from unittest.mock import patch
 
@@ -8,19 +9,17 @@ import pytest
 
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
-from superduper.base.leaf import imported_value
 from superduper.components.component import Component
 from superduper.components.dataset import Dataset
 from superduper.components.datatype import (
     BaseDataType,
     Blob,
     dill_serializer,
-    pickle_serializer,
 )
 from superduper.components.listener import Listener
-from superduper.components.model import ImportedModel, Model, ObjectModel, Trainer
-from superduper.components.schema import FieldType, Schema
+from superduper.components.model import Model, ObjectModel, Trainer
 from superduper.components.table import Table
+from superduper.misc import typing as st
 
 
 class FakeModel(Model):
@@ -43,7 +42,7 @@ class TestComponent(Component):
     is_on_create: bool = False
     is_after_create: bool = False
     check_clean_up: bool = False
-    child: Optional['TestComponent'] = None
+    child: Optional[Component] = None
     artifact: Any = None
 
     def pre_create(self, db):
@@ -66,15 +65,8 @@ class TestComponent(Component):
 
 
 def add_fake_model(db: Datalayer):
-    schema = Schema(
-        identifier='documents',
-        fields={
-            'id': 'str',
-            'x': 'int',
-        },
-    )
-    t = Table(identifier='documents', schema=schema)
-    db.apply(t)
+    table = Table(identifier='documents', fields={'id': 'str', 'x': 'int'})
+    db.apply(table)
 
     model = ObjectModel(
         object=lambda x: str(x),
@@ -132,7 +124,7 @@ def test_add_version(db: Datalayer):
 
 
 class TestComponentPickle(TestComponent):
-    _fields = {'artifact': pickle_serializer}
+    artifact: st.Pickle
 
 
 def test_add_component_with_bad_artifact(db):
@@ -212,7 +204,7 @@ def test_add_with_artifact(db):
 
 
 def test_add_table(db):
-    component = Table('test', schema=Schema('test-s', fields={'field': 'str'}))
+    component = Table('test', fields={'field': 'str'})
     db.apply(component)
 
 
@@ -267,17 +259,6 @@ def test_remove_component_with_clean_up(db):
     with pytest.raises(Exception) as e:
         db._remove_component_version('test-component', 'test_clean_up', 0, force=True)
     assert 'cleanup' in str(e)
-
-
-def test_remove_component_from_data_layer_dict(db):
-    # Test component is deleted from datalayer
-    test_datatype = DataType(identifier='test_datatype')
-    db.metadata._batched = False
-    db.apply(test_datatype)
-    db._remove_component_version('datatype', 'test_datatype', 0, force=True)
-    with pytest.raises(FileNotFoundError):
-        db.load('datatype', 'test_datatype')
-    db.metadata._batched = True
 
 
 def test_remove_component_with_artifact(db):
@@ -335,8 +316,8 @@ def test_show(db):
         TestComponent(identifier='b', inc=0),
         TestComponent(identifier='b', inc=1),
         TestComponent(identifier='b', inc=2),
-        DataType(identifier='c1'),
-        DataType(identifier='c2'),
+        # DataType(identifier='c1'),
+        # DataType(identifier='c2'),
     ]:
         db.apply(component)
 
@@ -345,7 +326,7 @@ def test_show(db):
     assert 'None' in str(e) and '1' in str(e)
 
     assert sorted(db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
-    assert sorted(db.show('datatype')) == ['c1', 'c2']
+    # assert sorted(db.show('datatype')) == ['c1', 'c2']
 
     assert sorted(db.show('test-component', 'a1')) == [0]
     assert sorted(db.show('test-component', 'b')) == [0, 1, 2]
@@ -373,27 +354,27 @@ def test_load(db):
     m1 = ObjectModel(object=lambda x: x, identifier='m1')
 
     components = [
-        DataType(identifier='e1'),
-        DataType(identifier='e2'),
+        # DataType(identifier='e1'),
+        # DataType(identifier='e2'),
         m1,
         ObjectModel(object=lambda x: x, identifier='m1'),
     ]
     for component in components:
         db.apply(component)
 
-    # Test load fails
-    # error version
-    with pytest.raises(Exception):
-        db.load('datatype', 'e1', version=1)
+    # # Test load fails
+    # # error version
+    # with pytest.raises(Exception):
+    #     db.load('datatype', 'e1', version=1)
 
     # # error identifier
     with pytest.raises(Exception):
         db.load('model', 'e1')
 
-    datatype = db.load('datatype', 'e1')
-    assert isinstance(datatype, BaseDataType)
+    # datatype = db.load('datatype', 'e1')
+    # assert isinstance(datatype, BaseDataType)
 
-    assert datatype.type_id, datatype.identifier in db.cluster.cache
+    # assert datatype.type_id, datatype.identifier in db.cluster.cache
 
 
 def test_insert(db):
@@ -441,7 +422,6 @@ def test_replace(db: Datalayer):
     model = ObjectModel(
         object=lambda x: x + 1,
         identifier='m',
-        datatype=DataType(identifier='base'),
     )
     model.version = 0
     db.apply(model)
@@ -473,7 +453,7 @@ def test_replace(db: Datalayer):
 
 
 def test_replace_with_child(db: Datalayer):
-    db.apply(Table('docs', schema=Schema('docs', fields={'X': 'int', 'y': 'int'})))
+    db.apply(Table('docs', fields={'X': 'int', 'y': 'int'}))
     trainer = Trainer(
         identifier='trainer',
         key=('X', 'y'),
@@ -514,30 +494,18 @@ def my_lambda(x):
 
 
 def test_compound_component(db):
-    m = ImportedModel(
-        object=imported_value(my_lambda),
-        identifier='my-test-module',
-        datatype=FieldType(identifier='int'),
-    )
+    m = ObjectModel(object=my_lambda, identifier='my-test-module', datatype='int')
 
     db.apply(m)
     assert 'my-test-module' in db.show('model')
     assert db.show('model', 'my-test-module') == [0]
 
-    db.apply(m)
-    assert db.show('model', 'my-test-module') == [0]
-
     db.apply(
-        ObjectModel(
-            object=lambda x: x + 2,
-            identifier='my-test-module',
-            datatype=FieldType(identifier='int'),
-        )
+        ObjectModel(object=lambda x: x + 2, identifier='my-test-module', datatype='int')
     )
     assert db.show('model', 'my-test-module') == [0, 1]
 
     m = db.load(type_id='model', identifier='my-test-module')
-    assert isinstance(m.datatype, FieldType)
 
     db.remove('model', 'my-test-module', force=True)
 

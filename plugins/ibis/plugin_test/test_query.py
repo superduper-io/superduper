@@ -3,25 +3,17 @@ from test.utils.setup.fake_data import add_listeners, add_models, add_random_dat
 import numpy as np
 import pytest
 from superduper.base.document import Document
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 
 def test_serialize_table():
-    schema = Schema(
-        identifier="my_schema",
-        fields={
-            "id": "int64",
-            "health": "int32",
-            "age": "int32",
-        },
-    )
+    fields = {
+        "id": "int",
+        "health": "int",
+        "age": "int",
+    }
 
-    s = schema.encode()
-    ds = Document.decode(s).unpack()
-    assert isinstance(ds, Schema)
-
-    t = Table(identifier="my_table", schema=schema)
+    t = Table(identifier="my_table", fields=fields)
 
     s = t.encode()
 

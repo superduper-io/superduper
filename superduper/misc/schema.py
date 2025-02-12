@@ -1,0 +1,198 @@
+import sys
+import types
+import typing as t
+from dataclasses import fields
+from typing import Any, ForwardRef, get_args, get_origin
+
+from superduper.base.leaf import Leaf
+
+
+def _evaluate_forward_ref(ref: ForwardRef, globalns: dict, localns: dict = None):
+    # Call ref._evaluate(...) with the correct signature depending on Python version.
+    return ref._evaluate(globalns, localns or {}, set())  # type: ignore[arg-type]
+
+
+def _safe_resolve_annotation(raw_annotation: Any, globalns: dict) -> Any:
+    # Attempt to resolve a single annotation (which may be a string forward reference,
+    # a ForwardRef object, or already a real Python type). If it can't be resolved
+    # because the referenced name doesn't exist, return None (or any placeholder).
+
+    # 1) If annotation is already a real type (e.g. int, list[str], etc.),
+    # just return it
+    if not isinstance(raw_annotation, str) and not isinstance(
+        raw_annotation, ForwardRef
+    ):
+        return raw_annotation
+
+    # 2) If annotation is a string, convert it to a ForwardRef object
+    if isinstance(raw_annotation, str):
+        raw_annotation_eval = ForwardRef(raw_annotation)
+    else:
+        raw_annotation_eval = raw_annotation
+
+    # 3) Attempt to _evaluate the forward reference
+    try:
+        out = _evaluate_forward_ref(raw_annotation_eval, globalns, localns={})
+    except NameError:
+        # The name in the annotation doesn't exist -> skip or fallback
+        return None
+
+    return out
+
+
+def _safe_get_type_hints(cls: t.Type[t.Any]) -> dict[str, t.Any]:
+    # Partially resolve type hints for a dataclass `cls`. For each field:
+    #   - If its annotation can be resolved, return the real type.
+    #   - If not, return None instead of raising NameError.
+    # We'll pull the module in which `cls` is defined, so that forward references
+    # can see the same globals that `cls` sees:
+    module_globals = sys.modules[cls.__module__].__dict__
+    superduper_globals = sys.modules['superduper'].__dict__
+
+    hints = {}
+
+    for f in fields(cls):
+        hints[f.name] = _safe_resolve_annotation(
+            f.type, {**module_globals, **superduper_globals}
+        )
+    return hints
+
+
+def _process_dict(args):
+    if not args:
+        return dict, None
+
+    assert len(args) == 2
+    # only support strings to our things
+    if args[0] is str:
+        return args[1], dict
+
+
+def _process_list(args):
+    if len(args) == 0:
+        return list, None
+    assert len(args) == 1
+    return args[0], list
+
+
+def _process_union(args):
+    if len(args) == 1:
+        return process(args[0])
+
+    elif len(args) == 2 and args[-1] is type(None):
+        return process(args[0])
+
+    elif len(args) > 2 and args[-1] is type(None):
+        return process(args[:-1])
+
+    else:
+        # arbitrary union not supported
+        return None, None
+
+
+class _DataTypeFactory:
+    def __init__(self, source, name):
+        self.source = source
+        self.name = name
+
+    def __getitem__(self, cls):
+        if cls in {str, int, bool}:
+            return cls.__name__
+        if cls in {list, dict}:
+            return 'json'
+        try:
+            if isinstance(cls, t.NewType):
+                return str(cls).split('.')[-1].lower()
+            if issubclass(cls, Leaf):
+                return 'leaftype'
+        except TypeError:
+            pass
+        return 'dill'
+
+
+def _map_type_to_superduper(source, name, cls, iterable):
+    if iterable is None:
+        return _DataTypeFactory(source, name)[cls]
+    if cls and issubclass(cls, Leaf):
+        if iterable is list:
+            return 'slist'
+        if iterable is dict:
+            return 'sdict'
+        raise ValueError(f"Unsupported iterable type {iterable} for {cls}")
+    if cls is None and iterable in {list, dict}:
+        return 'json'
+    if cls in {str, int}:
+        return 'json'
+    return 'dill'
+
+
+def process(annotation):
+    """Process an annotation with a crude mapping to workable superduper types.
+
+    Output is expected as a tuple of base type and iterable over that type.
+
+    :param annotation: The annotation to process.
+
+    >>> import typing as t
+    >>> from superduper import Model, Component
+    >>> process(Model)
+    (superduper.components.model.Model, None)
+    >>> process(Model | None)
+    (superduper.components.model.Model, None)
+    >>> process(t.List[str])
+    (str, list)
+    >>> process(t.Dict[str, Component])
+    (superduper.components.component.Component, dict)
+    >>> process(t.Dict[str, MyClass])
+    (my_path.to_module.MyClass, dict)
+    """
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    inferred_cls = None
+    iterable_ = None
+
+    if origin is None:
+        inferred_cls = annotation
+
+    if origin is t.Union or origin is types.UnionType:
+        inferred_cls, iterable_ = _process_union(args)
+
+    if origin is list:
+        inferred_cls, iterable_ = _process_list(args)
+
+    if origin is dict:
+        inferred_cls, iterable_ = _process_dict(args)
+
+    if isinstance(inferred_cls, ForwardRef):
+        module_globals = sys.modules[inferred_cls.__module__].__dict__
+        superduper_globals = sys.modules['superduper'].__dict__
+        inferred_cls = _evaluate_forward_ref(
+            inferred_cls, {**module_globals, **superduper_globals}
+        )
+
+    return inferred_cls, iterable_
+
+
+def get_schema(cls):
+    """Get a schema for a superduper class.
+
+    :param cls: The class to get a schema for.
+    """
+    annotations = _safe_get_type_hints(cls)
+
+    schema = {}
+    for parameter in annotations:
+        annotation = annotations[parameter]
+        if annotation is None:
+            schema[parameter] = 'str'
+            continue
+        inferred_cls, iterable = process(annotation)
+        if inferred_cls is None:
+            schema[parameter] = 'dill'
+            continue
+        schema[parameter] = _map_type_to_superduper(
+            cls.__name__, parameter, inferred_cls, iterable
+        )
+
+    return schema, annotations

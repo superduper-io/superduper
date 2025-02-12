@@ -80,5 +80,44 @@ def replace_parameters(doc, placeholder: str = '!!!'):
     return '\n'.join(lines)
 
 
-if __name__ == '__main__':
-    print(replace_parameters(extract_parameters.__doc__))
+from weakref import WeakKeyDictionary
+
+
+class lazy_classproperty:
+    """
+    Descriptor that computes the value once per owner class.
+
+    It caches the computed value in a WeakKeyDictionary keyed by the owner.
+
+    :param func: Function to compute the value.
+    """
+
+    def __init__(self, func):
+        self.func = func
+        self._cache = WeakKeyDictionary()
+
+    def __get__(self, instance, owner):
+        # Check if the owner class already has a cached value.
+        if owner not in self._cache:
+            # Compute and cache the value for this owner class.
+            self._cache[owner] = self.func(owner)
+        return self._cache[owner]
+
+
+class _ClassPropertyDescriptor:
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, instance, owner):
+        # 'owner' is the class, regardless of whether
+        # we access it via the class or an instance
+        return self.fget(owner)
+
+
+def classproperty(func):
+    """
+    Decorator for creating a read-only class-level property.
+
+    :param func: Function to compute the value.
+    """
+    return _ClassPropertyDescriptor(func)

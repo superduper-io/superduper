@@ -114,14 +114,10 @@ def load_secrets():
             logging.warn(f"Warning: No 'secret_string' file found in {key_path}.")
             continue
 
-        try:
-            with open(secret_file_path, 'r') as file:
-                content = file.read().strip()
-
-            os.environ[key_dir] = content
-            logging.info(f'Successfully loaded secret {key_dir} into environment.')
-        except Exception as e:
-            logging.error(f"Error reading file {secret_file_path}: {e}")
+        with open(secret_file_path, 'r') as file:
+            content = file.read().strip()
+        os.environ[key_dir] = content
+        logging.info(f'Successfully loaded secret {key_dir} into environment.')
 
 
 def get_file_from_uri(uri):

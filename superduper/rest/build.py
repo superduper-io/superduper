@@ -21,7 +21,7 @@ except ImportError:
     magic = None
 from fastapi import BackgroundTasks, File, Response, HTTPException
 from fastapi.responses import JSONResponse
-from starlette.status import HTTP_406_NOT_ACCEPTABLE, HTTP_409_CONFLICT
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_410_GONE
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -69,16 +69,43 @@ def redirect_stdout_to_file(file_path: str):
         sys.stdout = original_stdout
 
 
-def _check_secret_health():
+def _check_secret_health(db):
     try:
         load_secrets()
+    except FileNotFoundError as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_410_GONE,
+            detail=str(e),
+        )
+    except OSError as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+
+    try:
         check_secrets()
     except IncorrectSecretException as e:
         logging.error(traceback.format_exc())
         raise HTTPException(
-            status_code=HTTP_406_NOT_ACCEPTABLE,
+            status_code=HTTP_401_UNAUTHORIZED,
             detail=str(e),
         )
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+    
     try:
         if CFG.data_backend == 'snowflake://':
             load_plugin('snowflake').check_secret_updates(db)
@@ -98,10 +125,18 @@ def build_rest_app(app: SuperDuperApp):
     """
     CFG.log_colorize = False
 
-    @app.add("/health", method="get")
+    @app.add(
+        "/health",
+        method="get",
+        responses={
+            HTTP_410_GONE: {"description": "Secret files are missing"},
+            HTTP_401_UNAUTHORIZED: {"description": "Secrets are empty or incorrect"},
+            HTTP_409_CONFLICT: {"description": "Secrets are being updated"},
+        }
+    )
     def health(db: 'Datalayer' = DatalayerDependency()):
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
-            _check_secret_health()
+            _check_secret_health(db)
         return {"status": 200}
 
     @app.add("/handshake/config", method="post")
@@ -239,7 +274,7 @@ def build_rest_app(app: SuperDuperApp):
         assert re.match('^[a-zA-Z\_0-9]+$', info['identifier']) is not None, msg
 
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
-            _check_secret_health()
+            _check_secret_health(db)
 
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)

@@ -70,20 +70,15 @@ class BaseDataBackend(ABC):
         self._db = value
 
     @abstractmethod
-    def build_metadata(self):
-        """Build a default metadata store based on current connection."""
-        pass
-
-    @abstractmethod
     def build_artifact_store(self):
         """Build a default artifact store based on current connection."""
         pass
 
     @abstractmethod
-    def create_table_and_schema(self, identifier: str, schema: "Schema"):
+    def create_table_and_schema(self, identifier: str, schema: 'Schema'):
         """Create a schema in the data-backend.
 
-        :param identifier: The identifier of the table.
+        :param identifier: The identifier of the schema.
         :param schema: The schema to create.
         """
 
@@ -131,6 +126,33 @@ class BaseDataBackend(ABC):
         """
 
     @abstractmethod
+    def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
+        """Replace data.
+
+        :param table: The table to insert into.
+        :param condition: The condition to update.
+        :param r: The document to replace.
+        """
+
+    @abstractmethod
+    def update(self, table: str, condition: t.Dict, key: str, value: t.Any):
+        """Update data in the database.
+
+        :param table: The table to update.
+        :param condition: The condition to update.
+        :param key: The key to update.
+        :param value: The value to update.
+        """
+
+    @abstractmethod
+    def delete(self, table: str, condition: t.Dict):
+        """Update data in the database.
+
+        :param table: The table to update.
+        :param condition: The condition to update.
+        """
+
+    @abstractmethod
     def missing_outputs(self, query: Query, predict_id: str) -> t.List[str]:
         """Get missing outputs from an outputs query.
 
@@ -166,66 +188,77 @@ class BaseDataBackend(ABC):
     # Methods which leverage implementations #
     ##########################################
 
-    def get(self, query: Query):
+    def get(self, query: Query, raw: bool = False):
         """Get a single result from a query.
 
         :param query: The query to perform.
+        :param raw: If ``True``, return raw results.
         """
         assert query.type == 'select'
 
         if query.decomposition.pre_like:
-            return list(self.pre_like(query, n=1))[0]
+            return list(self.pre_like(query, n=1, raw=raw))[0]
 
         elif query.decomposition.post_like:
-            return list(self.post_like(query, n=1))[0]
+            return list(self.post_like(query, n=1, raw=raw))[0]
 
-        return query.limit(1).execute()[0]
+        try:
+            return query.limit(1).execute(raw=raw)[0]
+        except IndexError:
+            return None
 
-    def _wrap_results(self, query: Query, result, schema):
+    def _wrap_results(self, query: Query, result, schema, raw: bool = False):
         pid = self.primary_id(query)
         for r in result:
             if pid in r:
                 r[pid] = str(r[pid])
             if '_source' in r:
                 r['_source'] = str(r['_source'])
+
+        if raw:
+            return result
         return [Document.decode(r, schema=schema, db=self.db) for r in result]
 
-    def execute(self, query: Query):
+    def execute(self, query: Query, raw: bool = False):
         """Execute a query.
 
         :param query: The query to execute.
+        :param raw: If ``True``, return raw results.
         """
         query = query if '.outputs' not in str(query) else query.complete_uuids(self.db)
 
         schema = self.get_schema(query)
 
         if query.decomposition.pre_like:
-            return self._wrap_results(query, self.pre_like(query), schema=schema)
+            return self._wrap_results(
+                query, self.pre_like(query), schema=schema, raw=raw
+            )
 
         if query.decomposition.post_like:
-            return self._wrap_results(query, self.post_like(query), schema=schema)
+            return self._wrap_results(
+                query, self.post_like(query), schema=schema, raw=raw
+            )
 
-        return self._wrap_results(query, self.select(query), schema=schema)
+        return self._wrap_results(query, self.select(query), schema=schema, raw=raw)
 
     def get_schema(self, query) -> 'Schema':
         """Get the schema of a query.
 
         :param query: The query to get the schema of.
         """
-        base_schema = self.db.load('table', query.table).schema
-
+        base_schema = self.db.metadata.get_schema(query.table)
         if query.decomposition.outputs:
             for predict_id in query.decomposition.outputs.args:
-                base_schema += self.db.load(
-                    'table', f'{CFG.output_prefix}{predict_id}'
-                ).schema
+                base_schema += self.db.metadata.get_schema(
+                    f'{CFG.output_prefix}{predict_id}'
+                )
 
         return base_schema
 
-    def _do_insert(self, table, documents):
-        schema = self.get_schema(self.db[table])
+    def _do_insert(self, table, documents, raw: bool = False):
 
-        if not schema.trivial:
+        schema = self.get_schema(self.db[table])
+        if not raw and not schema.trivial:
             for i, r in enumerate(documents):
                 r = Document(r).encode(
                     schema=self.get_schema(self.db[table]), db=self.db
@@ -234,6 +267,22 @@ class BaseDataBackend(ABC):
                 r.pop(KEY_BUILDS)
                 r.pop(KEY_BLOBS)
                 r.pop(KEY_FILES)
+                documents[i] = r
+        else:
+            for i, r in enumerate(documents):
+                r = dict(r)
+                try:
+                    r.pop(KEY_BUILDS)
+                except KeyError:
+                    pass
+                try:
+                    r.pop(KEY_BLOBS)
+                except KeyError:
+                    pass
+                try:
+                    r.pop(KEY_FILES)
+                except KeyError:
+                    pass
                 documents[i] = r
 
         out = self.insert(table, documents)

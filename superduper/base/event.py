@@ -116,6 +116,7 @@ class Create(Event):
 
     :param context: the component context of creation.
     :param component: the component to be created
+    :param data: the data of the component
     :param parent: the parent of the component (if any)
     """
 
@@ -123,8 +124,9 @@ class Create(Event):
     queue: t.ClassVar[str] = '_apply'
 
     context: str
-    component: t.Dict
-    parent: str | None = None
+    component: str
+    data: t.Dict
+    parent: list | None = None
 
     def execute(self, db: 'Datalayer'):
         """Execute the create event.
@@ -132,21 +134,25 @@ class Create(Event):
         :param db: Datalayer instance.
         """
         # TODO decide where to assign version
-        artifact_ids, _ = db._find_artifacts(self.component)
-        db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
+        artifact_ids, _ = db._find_artifacts(self.data)
+        db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
 
-        db.metadata.create_component(self.component)
-        component = db.load(uuid=self.component['uuid'])
+        db.metadata.create_component(self.data)
+        component = db.load(component=self.component, uuid=self.data['uuid'])
 
         if self.parent:
-            db.metadata.create_parent_child(self.parent, component.uuid)
+            db.metadata.create_parent_child(
+                self.parent[0], self.parent[1], self.component, component.uuid
+            )
 
         if hasattr(component, 'dependencies') and component.dependencies:
             for dep in component.dependencies:
                 if isinstance(dep, (tuple, list)):
                     dep = dep[-1]
                 db.metadata.create_parent_child(
+                    component.component,
                     component.uuid,
+                    'Listener',
                     dep,
                 )
 
@@ -155,11 +161,7 @@ class Create(Event):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return (
-            f'{self.component["type_id"]}:'
-            f'{self.component["identifier"]}:'
-            f'{self.component["uuid"]}'
-        )
+        return f'{self.component}:' f'{self.data["identifier"]}:' f'{self.data["uuid"]}'
 
 
 @dc.dataclass(kw_only=True)
@@ -168,7 +170,8 @@ class Update(Event):
     Update component event.
 
     :param context: the component context of creation.
-    :param component: the component to be created
+    :param component: the type of component to be created
+    :param data: the component data to be created
     :param parent: the parent of the component (if any)
     """
 
@@ -176,8 +179,9 @@ class Update(Event):
     queue: t.ClassVar[str] = '_apply'
 
     context: str
-    component: t.Dict
-    parent: str | None = None
+    component: str
+    data: t.Dict
+    parent: list | None = None
 
     def execute(
         self,
@@ -188,19 +192,17 @@ class Update(Event):
         :param db: Datalayer instance.
         """
         # TODO decide where to assign version
-        artifact_ids, _ = db._find_artifacts(self.component)
-        db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
-        db.metadata.replace_object(self.component, uuid=self.component['uuid'])
-        db.expire(self.component['uuid'])
+        artifact_ids, _ = db._find_artifacts(self.data)
+        db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
+        db.metadata.replace_object(
+            self.component, uuid=self.data['uuid'], info=self.data
+        )
+        db.expire(self.data['uuid'])
 
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return (
-            f'{self.component["type_id"]}:'
-            f'{self.component["identifier"]}:'
-            f'{self.component["uuid"]}'
-        )
+        return f'{self.component}' f'{self.data["identifier"]}:' f'{self.data["uuid"]}'
 
 
 @dc.dataclass(kw_only=True)
@@ -209,7 +211,7 @@ class Job(Event):
     Job event.
 
     :param context: context component for job creation
-    :param type_id: type_id of component
+    :param component: type of component
     :param identifier: identifier of component
     :param uuid: uuid of component
     :param args: arguments of method
@@ -225,7 +227,7 @@ class Job(Event):
     queue: t.ClassVar[str] = '_apply'
 
     context: str
-    type_id: str
+    component: str
     identifier: str
     uuid: str
     args: t.Sequence[t.Any] = ()
@@ -239,7 +241,7 @@ class Job(Event):
     @property
     def huuid(self):
         """Return the hashed uuid."""
-        return f'{self.type_id}:{self.identifier}:{self.uuid}.{self.method}'
+        return f'{self.component}:{self.identifier}:{self.uuid}.{self.method}'
 
     def get_args_kwargs(self, futures):
         """Get args and kwargs for job execution.

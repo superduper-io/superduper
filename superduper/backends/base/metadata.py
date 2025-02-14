@@ -1,88 +1,241 @@
+import dataclasses as dc
+import datetime
 import typing as t
-from abc import ABC, abstractmethod
+import uuid
 
-from .data_backend import DataBackendProxy
+from superduper.base.exceptions import DatabackendError
+from superduper.base.leaf import Leaf
+from superduper.components.cdc import CDC
+from superduper.components.schema import Schema
+from superduper.components.table import Table
 
 
 class NonExistentMetadataError(Exception):
-    """NonExistentMetadataError.
+    """Error to raise when a component type doesn't exist.
 
-    :param args: *args for `Exception`
-    :param kwargs: **kwargs for `Exception`
+    # noqa
     """
 
 
-class MetaDataStore(ABC):
+class UniqueConstraintError(Exception):
+    """Unique constraint error to raise when a component exists.
+
+    # noqa
+    """
+
+
+# TODO merge with Event/Job
+class Job(Leaf):
+    """Job table.
+
+    #noqa
+    """
+
+    context: str
+    component: str
+    identifier: str
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+    time: str = dc.field(default_factory=lambda: str(datetime.datetime.now))
+    job_id: t.Optional[str] = dc.field(default_factory=lambda: str(uuid.uuid4()))
+    method: str
+    status: str = 'pending'
+    dependencies: t.List[str] = dc.field(default_factory=list)
+
+
+class ParentChildAssociations(Leaf):
+    """Parent-child associations table.
+
+    :param parent_component: parent component type
+    :param parent_uuid: parent uuid
+    :param child_component: child component type
+    :param child_uuid: child component uuid
+    """
+
+    parent_component: str
+    parent_uuid: str
+    child_component: str
+    child_uuid: str
+
+
+class ArtifactRelations(Leaf):
+    """Artifact relations table.
+
+    :param component_id: UUID of component version
+    :param artifact_id: UUID of component version
+    """
+
+    component_id: str
+    artifact_id: str
+
+
+metaclasses = {
+    'Table': Table,
+    'ParentChildAssociations': ParentChildAssociations,
+    'ArtifactRelations': ArtifactRelations,
+    'Job': Job,
+}
+
+
+class MetaDataStore:
     """
     Abstraction for storing meta-data separately from primary data.
 
-    :param uri: URI to the databackend database.
-    :param flavour: Flavour of the databackend.
-    :param callback: Optional callback to create connection.
+    :param db: Datalayer instance.
     """
 
-    def __init__(
-        self,
-        uri: t.Optional[str] = None,
-        flavour: t.Optional[str] = None,
-        callback: t.Optional[t.Callable] = None,
-    ):
-        self.uri = uri
-        self.flavour = flavour
+    def __init__(self, db):
+        self.db = db
 
-    @property
-    def batched(self):
-        """Batched metadata updates."""
-        return False
+        self.preset_components = {
+            ('Table', 'Table'): Table(
+                'Table',
+                cls=Table,
+                primary_id='uuid',
+                uuid='abc',
+                component=True,
+                path='superduper.components.table.Table',
+            ).encode(),
+            ('Table', 'ParentChildAssociations'): Table(
+                'ParentChildAssociations',
+                cls=ParentChildAssociations,
+                primary_id='uuid',
+                uuid='def',
+                component=True,
+                path='superduper.backends.base.metadata.ParentChildAssociations',
+            ).encode(),
+            ('Table', 'ArtifactRelations'): Table(
+                'ArtifactRelations',
+                cls=ArtifactRelations,
+                primary_id='uuid',
+                uuid='ghi',
+                component=True,
+                path='superduper.backends.base.metadata.ArtifactRelations',
+            ).encode(),
+            ('Table', 'Job'): Table(
+                'Job',
+                cls=Job,
+                primary_id='uuid',
+                uuid='jkl',
+                component=True,
+                path='superduper.backends.base.metadata.Job',
+            ).encode(),
+        }
 
-    def expire(self, uuid: str):
-        """Expire metadata batch cache if any.
+        self.preset_uuids = {}
+        for info in self.preset_components.values():
+            self.preset_uuids[info['uuid']] = info
 
-        :param uuid: uuid to expire.
+    def init(self):
+        """Initialize the metadata store."""
+        for cls in metaclasses.values():
+            self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
+
+    def get_schema(self, table: str):
+        """Get the schema of a table.
+
+        :param table: table name.
         """
+        if table in metaclasses:
+            return metaclasses[table].class_schema
 
-    # TODO why isn't this used anywhere?
-    @abstractmethod
-    def delete_parent_child(self, parent: str, child: str):
+        r = self.db['Table'].get(identifier=table)
+        try:
+            r = r.unpack()
+            if r['cls'] is not None:
+                return r['cls'].class_schema
+            return Schema.build(r['fields'])
+        except AttributeError as e:
+            if 'unpack' in str(e) and 'NoneType' in str(e):
+                raise NonExistentMetadataError(f'{table} does not exist in metadata')
+            raise e
+        except TypeError as e:
+            if 'NoneType' in str(e):
+                raise NonExistentMetadataError(f'{table} does not exist in metadata')
+            raise e
+
+    def create(self, cls: t.Type[Leaf]):
+        """
+        Create a table in the metadata store.
+
+        :param cls: class to create
+        """
+        try:
+            r = self.db['Table'].get(identifier=cls.__name__)
+        except DatabackendError as e:
+            if 'not found' in str(e):
+                self.db.databackend.create_table_and_schema('Table', Table.class_schema)
+                t = Table('Table', cls=Table, primary_id='uuid', component=True)
+                r = self.db['Table'].insert(
+                    [t.dict(schema=True, path=False)], auto_schema=False
+                )
+            else:
+                raise e
+
+        if r:
+            raise UniqueConstraintError(
+                f'{cls.__name__} already exists in metadata with data: {r}'
+            )
+
+        self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
+        t = Table(cls.__name__, cls=cls, primary_id='uuid', component=True)
+        self.db['Table'].insert([t.dict(schema=True, path=False)], auto_schema=False)
+
+    def delete_parent_child_relationships(self, parent_uuid: str):
         """
         Delete parent-child mappings.
 
-        :param parent: parent component
-        :param child: child component
+        :param parent_uuid: parent component uuid
         """
-        pass
+        self.db['ParentChildAssociations'].delete({'parent_uuid': parent_uuid})
 
-    @abstractmethod
-    def url(self):
-        """Metadata store connection url."""
-        pass
+    def create_entry(
+        self, info: t.Dict, component: str | None = None, raw: bool = True
+    ):
+        """
+        Create a component in the metadata store.
 
-    @abstractmethod
+        :param info: dictionary containing information about the component.
+        :param component: component name
+        :param raw: whether to insert raw data
+        """
+        if component is None:
+            path = info.pop('_path')
+            component = path.rsplit('.', 1)[1]
+        self.db[component].insert([info], raw=raw)
+
     def create_component(self, info: t.Dict):
         """
         Create a component in the metadata store.
 
         :param info: dictionary containing information about the component.
         """
-        pass
+        return self.create_entry(info)
 
-    @abstractmethod
-    def create_job(self, info: t.Dict):
-        """Create a job in the metadata store.
-
-        :param info: dictionary containing information about the job.
-        """
-        pass
-
-    @abstractmethod
-    def create_parent_child(self, parent: str, child: str):
+    def create_parent_child(
+        self,
+        parent_component: str,
+        parent_uuid: str,
+        child_component: str,
+        child_uuid: str,
+    ):
         """
         Create a parent-child relationship between two components.
 
-        :param parent: parent component
-        :param child: child component
+        :param parent_component: parent component type
+        :param parent_uuid: parent uuid
+        :param child_component: child component type
+        :param child_uuid: child component uuid
         """
-        pass
+        self.create_entry(
+            {
+                'parent_component': parent_component,
+                'parent_uuid': parent_uuid,
+                'child_component': child_component,
+                'child_uuid': child_uuid,
+            },
+            'ParentChildAssociations',
+        )
 
     def create_artifact_relation(self, uuid, artifact_ids):
         """
@@ -96,10 +249,10 @@ class MetaDataStore(ABC):
         )
         data = []
         for artifact_id in artifact_ids:
-            data.append({'uuid': uuid, 'artifact_id': artifact_id})
+            data.append({'component_id': uuid, 'artifact_id': artifact_id})
 
         if data:
-            self._create_data('_artifact_relations', data)
+            self.db['ArtifactRelations'].insert(data)
 
     def delete_artifact_relation(self, uuid, artifact_ids):
         """
@@ -112,12 +265,8 @@ class MetaDataStore(ABC):
             [artifact_ids] if not isinstance(artifact_ids, list) else artifact_ids
         )
         for artifact_id in artifact_ids:
-            self._delete_data(
-                '_artifact_relations',
-                {
-                    'uuid': uuid,
-                    'artifact_id': artifact_id,
-                },
+            self.db['ArtifactRelations'].delete(
+                {'component_id': uuid, 'artifact_id': artifact_id}
             )
 
     def get_artifact_relations(self, uuid=None, artifact_id=None):
@@ -127,75 +276,46 @@ class MetaDataStore(ABC):
         :param uuid: UUID of component version
         :param artifact_id: artifact
         """
+        t = self.db['ArtifactRelations']
         if uuid is None and artifact_id is None:
             raise ValueError('Either `uuid` or `artifact_id` must be provided')
         elif uuid:
-            relations = self._get_data(
-                '_artifact_relations',
-                {'uuid': uuid},
-            )
+            relations = t.filter(t['component_id'] == uuid).execute()
             ids = [relation['artifact_id'] for relation in relations]
         else:
-            relations = self._get_data(
-                '_artifact_relations',
-                {'artifact_id': artifact_id},
-            )
-            ids = [relation['uuid'] for relation in relations]
+            relations = t.filter(t['artifact_id'] == artifact_id).execute()
+            ids = [relation['component_id'] for relation in relations]
         return ids
 
-    # TODO: Refactor to use _create_data, _delete_data, _get_data
-    @abstractmethod
-    def _create_data(self, table_name, datas):
-        pass
-
-    @abstractmethod
-    def _delete_data(self, table_name, filter):
-        pass
-
-    @abstractmethod
-    def _get_data(self, table_name, filter):
-        pass
-
-    @abstractmethod
-    def drop(self, force: bool = False):
-        """
-        Drop the metadata store.
-
-        :param force: whether to force the drop (without confirmation)
-        """
-        pass
-
-    @abstractmethod
-    def set_component_status(self, uuid: str, status: str):
+    def set_component_status(self, component: str, uuid: str, status: str):
         """
         Set the status of a component.
 
+        :param component: type of component
         :param uuid: ``Component.uuid``
         :param status: ``Status`` to set
         """
-        pass
+        self.db[component].update({'uuid': uuid}, key='status', value=status)
 
-    def get_component_status(self, uuid: str):
+    def get_component_status(self, component: str, uuid: str):
         """
         Get the status of a component.
 
+        :param component: type of component
         :param uuid: ``Component.uuid``
         """
-        status = self._get_component_status(uuid)
-        return status
+        return self.db[component].get(uuid=uuid)['status']
 
     # ------------------ JOBS ------------------
 
-    @abstractmethod
     def get_job(self, job_id: str):
         """
         Get a job from the metadata store.
 
         :param job_id: job identifier
         """
-        pass
+        return self.db['Jobs'].get(job_id=job_id)
 
-    @abstractmethod
     def update_job(self, job_id: str, key: str, value: t.Any):
         """
         Update a job in the metadata store.
@@ -204,59 +324,57 @@ class MetaDataStore(ABC):
         :param key: key to be updated
         :param value: value to be updated
         """
-        pass
+        return self.db['Job'].update({'job_id': job_id}, key=key, value=value)
 
-    @abstractmethod
-    def show_jobs(
-        self,
-        identifier: t.Optional[str],
-        type_id: t.Optional[str],
-    ):
-        """Show all jobs in the metadata store.
+    def create_job(self, info: t.Dict):
+        """Create a job in the metadata store.
 
-        :param identifier: identifier of component
-        :param type_id: type of component
+        :param info: dictionary containing information about the job.
         """
-        pass
+        self.create_entry(info, 'Job', raw=False)
 
-    @abstractmethod
-    def show_job_ids(self, uuids: t.Optional[str] = None, status: str = 'running'):
-        """Show all jobs-id in the metadata store, with optional filters.
-
-        :param uuids: Optional list of component uuids.
-        :param status: Optional status of the job.
-        """
-        pass
-
-    def show_components(self, type_id: t.Optional[str] = None):
+    def show_components(self, component: str | None = None):
         """
         Show all components in the metadata store.
 
-        :param type_id: type of component
-        :param **kwargs: additional arguments
+        :param component: type of component
         """
-        results = self._show_components(type_id)
-        if type_id is not None:
-            identifiers = [data['identifier'] for data in results]
-            identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
-            return identifiers
-        else:
-            components = [
-                {'identifier': data['identifier'], 'type_id': data['type_id']}
-                for data in results
-            ]
-            # Remove duplicates
-            components = [dict(t) for t in {tuple(d.items()) for d in components}]
-            components = sorted(
-                components, key=lambda x: (x['type_id'], x['identifier'])
-            )
-            return components
+        if component is None:
+            out = []
+            t = self.db['Table']
+            for component in t.filter(t['component'] == True).distinct(  # noqa: E712
+                'identifier'
+            ):
+                if component in metaclasses:
+                    continue
+                out.extend(
+                    [
+                        {'component': component, 'identifier': x}
+                        for x in self.db[component].distinct('identifier')
+                    ]
+                )
+            return out
+        return self.db[component].distinct('identifier')
 
-    # TODO is this used?
-    @abstractmethod
+    def get_classes(self):
+        """Get all classes in the metadata store."""
+        data = self['Metadata'].execute()
+        return [r['cls'] for r in data]
+
     def show_cdc_tables(self):
         """List the tables used for CDC."""
-        pass
+        cdc_classes = []
+        for r in self.db['Table'].execute():
+            if r['cls'] is None:
+                continue
+            r = r.unpack()
+            if issubclass(r['cls'], CDC):
+                cdc_classes.append(r)
+
+        cdc_tables = []
+        for r in cdc_classes:
+            cdc_tables.extend(self.db[r['identifier']].distinct('cdc_table'))
+        return cdc_tables
 
     def show_cdcs(self, table):
         """
@@ -264,102 +382,106 @@ class MetaDataStore(ABC):
 
         :param table: ``Table`` to consider.
         """
-        results = self._show_cdcs(table)
-        lookup = {}
-        results = list(results)
-        # Forces the latest versions out
-        results = sorted(results, key=lambda r: r['version'])
-        for r in results:
-            lookup[r['type_id'], r['identifier']] = r['uuid']
-        return list(lookup.values())
+        cdc_classes = []
+        for r in self.db['Table'].execute():
+            if r['cls'] is None:
+                continue
+            if issubclass(r['cls'], CDC):
+                cdc_classes.append(r)
 
-    @abstractmethod
-    def _show_cdcs(self, table):
-        pass
+        cdcs = []
+        for r in cdc_classes:
+            t = self.db[r['identifier']]
+            results = t.filter(t['cdc_table'] == table).execute()
+            for result in results:
+                cdcs.extend([{'component': r['identifier'], 'uuid': result['uuid']}])
+        return cdcs
 
-    @abstractmethod
-    def _show_components(self, type_id: t.Optional[str] = None):
-        """
-        Show all components in the metadata store.
-
-        :param type_id: type of component
-        :param **kwargs: additional arguments
-        """
-        pass
-
-    @abstractmethod
-    def show_component_versions(self, type_id: str, identifier: str):
+    def show_component_versions(self, component: str, identifier: str):
         """
         Show all versions of a component in the metadata store.
 
-        :param type_id: type of component
+        :param component: type of component
         :param identifier: identifier of component
         """
-        pass
+        t = self.db[component]
+        return t.filter(t['identifier'] == identifier).distinct('version')
 
-    @abstractmethod
-    def delete_component_version(self, type_id: str, identifier: str, version: int):
+    def delete_component_version(self, component: str, identifier: str, version: int):
         """
         Delete a component version from the metadata store.
 
-        :param type_id: type of component
+        :param component: type of component
         :param identifier: identifier of component
         :param version: version of component
         """
-        pass
+        self.db[component].delete({'identifier': identifier, 'version': version})
 
-    @abstractmethod
-    def _get_component_uuid(self, type_id: str, identifier: str, version: int):
-        pass
+    def get_uuid(self, component: str, identifier: str, version: int):
+        """
+        Get the UUID of a component version.
 
-    @abstractmethod
+        :param component: type of component
+        :param identifier: identifier of component
+        :param version: version of component
+        """
+        t = self.db[component]
+        r = (
+            t.filter(t['identifier'] == identifier, t['version'] == version)
+            .select('uuid')
+            .get()
+        )
+        return r['uuid']
+
     def component_version_has_parents(
-        self, type_id: str, identifier: str, version: int
+        self, component: str, identifier: str, version: int
     ):
         """
         Check if a component version has parents.
 
-        :param type_id: type of component
+        :param component: type of component
         :param identifier: identifier of component
         :param version: version of component
         """
-        pass
+        uuid = self.get_uuid(component, identifier, version)
+        return bool(self.get_component_version_parents(uuid))
 
-    @abstractmethod
     def get_latest_version(
-        self, type_id: str, identifier: str, allow_hidden: bool = False
+        self, component: str, identifier: str, allow_hidden: bool = False
     ):
         """
         Get the latest version of a component.
 
-        :param type_id: type of component
+        :param component: type of component
         :param identifier: identifier of component
         :param allow_hidden: whether to allow hidden components
         """
-        pass
+        t = self.db[component]
+        versions = t.filter(t['identifier'] == identifier).distinct('version')
 
-    @abstractmethod
-    def _get_component(
-        self,
-        type_id: str,
-        identifier: str,
-        version: int,
-        allow_hidden: bool = False,
-    ):
-        pass
+        if not versions:
+            raise NonExistentMetadataError(
+                f'{identifier} does not exist in metadata for {component}'
+            )
+        return max(versions)
 
-    @abstractmethod
-    def get_component_by_uuid(self, uuid: str, allow_hidden: bool = False):
+    def get_component_by_uuid(self, component: str, uuid: str):
         """Get a component by UUID.
 
+        :param component: type of component
         :param uuid: UUID of component
-        :param allow_hidden: whether to load hidden components
         """
-        pass
+        if uuid in self.preset_uuids:
+            return self.preset_uuids[uuid]
+        r = self.db[component].get(uuid=uuid, raw=True)
+        cls = self.db['Table'].get(identifier=component)['cls']
+        _path = cls.__module__ + '.' + cls.__name__
+        r['_path'] = _path
+        return r
 
     def get_component(
         self,
-        type_id: str,
+        component: str,
         identifier: str,
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
@@ -367,122 +489,48 @@ class MetaDataStore(ABC):
         """
         Get a component from the metadata store.
 
-        :param type_id: type of component
+        :param component: type of component
         :param identifier: identifier of component
         :param version: version of component
         :param allow_hidden: whether to allow hidden components
         """
+        if (component, identifier) in self.preset_components:
+            return self.preset_components[(component, identifier)]
+
         if version is None:
             version = self.get_latest_version(
-                type_id=type_id, identifier=identifier, allow_hidden=allow_hidden
+                component=component,
+                identifier=identifier,
             )
-        r = self._get_component(
-            type_id=type_id,
-            identifier=identifier,
-            version=version,
-            allow_hidden=allow_hidden,
-        )
+        r = self.db[component].get(identifier=identifier, version=version, raw=True)
+
+        if component == 'Table':
+            r['_path'] = 'superduper.components.table.Table'
+        else:
+            r['_path'] = self.db['Table'].get(identifier=component)['path']
         if r is None:
-            raise FileNotFoundError(f'Object {identifier} does not exist in metadata')
+            raise NonExistentMetadataError(
+                f'Object {identifier} does not exist in metadata for {component}'
+            )
         return r
 
-    @abstractmethod
-    def _update_object(
-        self,
-        identifier: str,
-        type_id: str,
-        key: str,
-        value: t.Any,
-        version: int,
-    ):
-        pass
-
-    @abstractmethod
-    def _replace_object(
-        self,
-        info,
-        identifier: str | None = None,
-        type_id: str | None = None,
-        version: int | None = None,
-        uuid: str | None = None,
-        batch: bool = False,
-    ):
-        pass
-
-    def replace_object(
-        self,
-        info: t.Dict[str, t.Any],
-        identifier: str | None = None,
-        type_id: str | None = None,
-        version: int | None = None,
-        uuid: str | None = None,
-    ) -> None:
+    def replace_object(self, component: str, uuid: str, info: t.Dict[str, t.Any]):
         """
         Replace an object in the metadata store.
 
-        :param info: dictionary containing information about the object
-        :param identifier: identifier of object
-        :param type_id: type of object
-        :param version: version of object
-        :param uuid: UUID of object
+        :param component: type of component.
+        :param uuid: unique identifier of the object.
+        :param info: dictionary containing information about the object.
         """
-        if version is None and uuid is None:
-            assert isinstance(type_id, str)
-            assert isinstance(identifier, str)
-            version = self.get_latest_version(type_id, identifier)
-        return self._replace_object(
-            info=info,
-            identifier=identifier,
-            type_id=type_id,
-            version=version,
-            uuid=uuid,
-        )
+        self.db[component].replace({'uuid': uuid}, info)
 
-    @abstractmethod
     def get_component_version_parents(self, uuid: str):
         """
         Get the parents of a component version.
 
         :param uuid: unique identifier of component version
         """
-        pass
-
-    @abstractmethod
-    def hide_component_version(self, type_id: str, identifier: str, version: int):
-        """
-        Hide a component version.
-
-        :param type_id: type of component
-        :param identifier: identifier of component
-        :param version: version of component
-        """
-        pass
-
-    def add_query(self, query, model: str):
-        """Add query id to query table.
-
-        :param query: query object
-        :param model: model identifier
-        """
-        raise NotImplementedError
-
-    def get_queries(self, model: str):
-        """Get all queries from query table corresponding to the model.
-
-        :param model: model identifier
-        """
-
-    @abstractmethod
-    def disconnect(self):
-        """Disconnect the client."""
-
-
-class MetaDataStoreProxy(DataBackendProxy):
-    """
-    Proxy class to DataBackend which acts as middleware for performing fallbacks.
-
-    :param backend: Instance of `MetaDataStore`.
-    """
-
-    def __init__(self, backend):
-        super().__init__(backend=backend)
+        t = self.db['ParentChildAssociations']
+        q = t.filter(t['child_uuid'] == uuid).select('parent_component', 'parent_uuid')
+        results = q.execute()
+        return [(r['parent_component'], r['parent_uuid']) for r in results]

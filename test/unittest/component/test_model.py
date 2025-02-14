@@ -421,15 +421,16 @@ def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey
 import numpy
 
 
-@pytest.fixture
-def object_model():
+def make_object_model(shape):
     return ObjectModel(
-        'test',
-        object=lambda x: numpy.array(x) + 1,
+        'test', object=lambda x: numpy.array(x) + 1, datatype=f'array[float:{shape}]'
     )
 
 
-def test_object_model_predict(object_model):
+def test_object_model_predict():
+
+    object_model = make_object_model('10x10')
+
     sample_data = np.zeros((10, 10))
     result, results = model_utils.test_predict(object_model, sample_data)
 
@@ -437,7 +438,9 @@ def test_object_model_predict(object_model):
     assert all(np.allclose(r, sample_data + 1) for r in results)
 
 
-def test_object_model_predict_in_db(db, object_model):
+def test_object_model_predict_in_db(db):
+    object_model = make_object_model('10x10')
+
     sample_data = np.zeros((10, 10))
 
     results = model_utils.test_predict_in_db(object_model, sample_data, db)
@@ -448,7 +451,9 @@ def test_object_model_predict_in_db(db, object_model):
     assert all(np.allclose(r.unpack()[key], sample_data + 1) for r in results)
 
 
-def test_object_model_as_a_listener(db, object_model):
+def test_object_model_as_a_listener(db):
+
+    object_model = make_object_model('10x10')
     sample_data = np.zeros((10, 10))
     results = model_utils.test_model_as_a_listener(object_model, sample_data, db)
     r = results[0].unpack()

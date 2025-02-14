@@ -3,6 +3,7 @@ import typing as t
 import numpy
 
 from superduper import logging
+from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorItem,
@@ -33,23 +34,26 @@ class LocalVectorSearchBackend(VectorSearchBackend):
 
     def initialize(self):
         """Initialize the vector search."""
-        for identifier in self.db.show('vector_index'):
-            try:
-                vector_index = self.db.load('vector_index', identifier=identifier)
-                self._put(vector_index)
-                vector_index.copy_vectors()
-            except FileNotFoundError:
-                logging.error(
-                    f'Could not load vector index: {identifier} '
-                    'Is the artifact store correctly configured?'
-                )
-                continue
-            except TypeError as e:
-                import traceback
+        try:
+            for identifier in self.db.show('VectorIndex'):
+                try:
+                    vector_index = self.db.load('VectorIndex', identifier=identifier)
+                    self._put(vector_index)
+                    vector_index.copy_vectors()
+                except FileNotFoundError:
+                    logging.error(
+                        f'Could not load vector index: {identifier} '
+                        'Is the artifact store correctly configured?'
+                    )
+                    continue
+                except TypeError as e:
+                    import traceback
 
-                logging.error(f'Could not load vector index: {identifier} ' f'{e}')
-                logging.error(traceback.format_exc())
-                continue
+                    logging.error(f'Could not load vector index: {identifier} ' f'{e}')
+                    logging.error(traceback.format_exc())
+                    continue
+        except NonExistentMetadataError:
+            pass
 
     # TODO needed?
     def __contains__(self, item):
@@ -104,10 +108,12 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self._cache: t.Sequence[VectorItem] = []
         self._CACHE_SIZE = 10000
 
-        assert isinstance(measure, str)
-
-        self.measure_name = measure
-        self.measure = measures[measure]
+        if isinstance(measure, str):
+            self.measure_name = measure
+            self.measure = measures[measure]
+        else:
+            self.measure_name = measure.__name__
+            self.measure = measure
 
         self.h = None
         self.index = None

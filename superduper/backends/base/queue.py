@@ -201,7 +201,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         jobs += sub_jobs
         logging.info(f'Streaming with {component.type_id}:{component.identifier}')
 
-    if db.metadata.batched:
+    if False:  # db.metadata.batched:
         for chunk in _chunked_list(jobs):
             for job in chunk:
                 job.execute(db)
@@ -227,7 +227,8 @@ def consume_events(events, table: str, db=None):
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        if not db.metadata.batched:
+        # if not db.metadata.batched:
+        if True:
             for event in events:
                 event.execute(db)
             return

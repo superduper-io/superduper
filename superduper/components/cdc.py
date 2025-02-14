@@ -49,10 +49,10 @@ class CDC(Component):
 def _get_parent_cdcs_of_component(component, db: 'Datalayer'):
     parents = db.metadata.get_component_version_parents(component.uuid)
     out = []
-    for uuid in parents:
-        r = db.metadata.get_component_by_uuid(uuid)
+    for parent_component, parent_uuid in parents:
+        r = db.metadata.get_component_by_uuid(parent_component, parent_uuid)
         if r.get('cdc_table'):
-            out.append(db.load(uuid=uuid))
+            out.append(db.load(parent_component, uuid=parent_uuid))
     return {c.uuid: c for c in out}
 
 
@@ -61,8 +61,8 @@ def _get_cdcs_on_table(table, db: 'Datalayer'):
 
     cdcs = db.metadata.show_cdcs(table)
     out = []
-    for uuid in cdcs:
-        component = db.load(uuid=uuid)
+    for r in cdcs:
+        component = db.load(component=r['component'], uuid=r['uuid'])
         if isinstance(component, Listener) and component.select is not None:
             if len(component.select.tables) > 1:
                 continue

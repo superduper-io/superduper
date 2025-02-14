@@ -1,4 +1,5 @@
 from ibis.expr.datatypes import dtype
+from superduper import CFG
 from superduper.components.datatype import (
     ID,
     BaseDataType,
@@ -35,6 +36,9 @@ def convert_schema_to_fields(schema: Schema):
         else:
             assert isinstance(schema.fields[k], BaseDataType)
 
-            fields[k] = dtype(schema.fields[k].dtype)
+            if not CFG.json_native and schema.fields[k].dtype == "json":
+                fields[k] = dtype("str")
+            else:
+                fields[k] = dtype(schema.fields[k].dtype)
 
     return fields

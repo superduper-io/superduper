@@ -5,7 +5,7 @@ import typing as t
 import tqdm
 
 from superduper import CFG, logging
-from superduper.backends.base.vector_search import VectorIndexMeasureType, VectorItem
+from superduper.backends.base.vector_search import VectorItem
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
@@ -110,7 +110,7 @@ class VectorIndex(CDC):
 
     indexing_listener: Listener
     compatible_listener: t.Optional[Listener] = None
-    measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
+    measure: str = 'cosine'
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     cdc_table: str = ''
 
@@ -149,7 +149,7 @@ class VectorIndex(CDC):
         except StopIteration:
             raise Exception(
                 f'Couldn\'t get a vector shape for '
-                f'{self.indexing_listener.output_table.schema.huuid}'
+                f'{self.indexing_listener.output_table.schema}'
             )
 
     # TODO consider a flag such as depends='*'

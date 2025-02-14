@@ -9,6 +9,7 @@ from superduper import Application, Document
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel, Trainer
+from superduper.components.table import Table
 from superduper.misc import typing as st  # noqa: F401
 
 
@@ -63,8 +64,8 @@ def test_listener_chaining(db):
     # Insert data
     insert_random()
 
-    m1 = ObjectModel("m1", object=lambda x: x + 1)
-    m2 = ObjectModel("m2", object=lambda x: x + 2)
+    m1 = ObjectModel("m1", object=lambda x: x + 1, datatype='int')
+    m2 = ObjectModel("m2", object=lambda x: x + 2, datatype='int')
 
     listener1 = Listener(
         model=m1,
@@ -101,14 +102,17 @@ def test_listener_chaining(db):
 @pytest.mark.parametrize(
     "data",
     [
-        1,
-        "1",
-        {"x": 1},
-        [1],
-        {
-            "x": np.array([1]),
-        },
-        np.array([[1, 2, 3], [4, 5, 6]]),
+        (1, 'int'),
+        ("1", 'str'),
+        ({"x": 1}, 'json'),
+        ([1], 'json'),
+        (
+            {
+                "x": np.array([1]),
+            },
+            'pickleencoder',
+        ),
+        (np.array([[1, 2, 3], [4, 5, 6]]), 'pickleencoder'),
     ],
 )
 @pytest.mark.parametrize("flatten", [False, True])
@@ -116,9 +120,12 @@ def test_create_output_dest(db, data, flatten):
     db.cfg.auto_schema = True
     table = db["test"]
 
+    data, datatype = data
+
     m1 = ObjectModel(
         "m1",
         object=lambda x: data if not flatten else [data] * 10,
+        datatype=datatype,
     )
     table.insert([{"x": 1}])
 
@@ -144,23 +151,29 @@ def test_create_output_dest(db, data, flatten):
 @pytest.mark.parametrize(
     "data",
     [
-        1,
-        "1",
-        {"x": 1},
-        [1],
-        {
-            "x": np.array([1]),
-        },
-        np.array([[1, 2, 3], [4, 5, 6]]),
+        (1, 'int'),
+        ("1", 'str'),
+        ({"x": 1}, 'json'),
+        ([1], 'json'),
+        (
+            {
+                "x": np.array([1]),
+            },
+            'pickleencoder',
+        ),
+        (np.array([[1, 2, 3], [4, 5, 6]]), 'pickleencoder'),
     ],
 )
 def test_listener_cleanup(db, data):
     db.cfg.auto_schema = True
     table = db["test"]
 
+    data, datatype = data
+
     m1 = ObjectModel(
         "m1",
         object=lambda x: data,
+        datatype=datatype,
     )
     table.insert([{"x": 1}])
 
@@ -180,7 +193,7 @@ def test_listener_cleanup(db, data):
     else:
         assert result == data
 
-    db.remove('listener', listener1.identifier, force=True)
+    db.remove('Listener', listener1.identifier, force=True)
     assert not db.databackend.check_output_dest(listener1.predict_id)
 
 
@@ -208,6 +221,7 @@ def test_listener_chaining_with_trainer(db, cleanup):
                     {
                         "x": i + start,
                         "y": y,
+                        '_fold': 'train' if i < 3 else 'valid',
                     }
                 )
             )
@@ -217,7 +231,7 @@ def test_listener_chaining_with_trainer(db, cleanup):
     # Insert data
     insert_random()
 
-    features = ObjectModel("features", object=lambda x: x + 1)
+    features = ObjectModel("features", object=lambda x: x + 1, datatype='int')
 
     trainable_model = _Tmp(identifier="trainable_model", object=lambda x: x + 2)
 
@@ -228,7 +242,8 @@ def test_listener_chaining_with_trainer(db, cleanup):
         identifier="listener1",
     )
 
-    select = db[features_listener.outputs].select()
+    select = db['test'].outputs(features_listener.predict_id)
+
     trainable_model.trainer = MyTrainer(
         'test', select=select, key=features_listener.outputs
     )
@@ -248,6 +263,8 @@ def test_listener_chaining_with_trainer(db, cleanup):
 
 
 def test_upstream_serializes(db):
+    # db.cfg.auto_schema = True
+
     upstream_component = ObjectModel("upstream", object=lambda x: x)
 
     dependent_listener = Listener(
@@ -255,21 +272,22 @@ def test_upstream_serializes(db):
         model=upstream_component,
         select=db['other'].select(),
         key='y',
-        upstream=[upstream_component],
+        upstream=[upstream_component, Table('other', fields={'y': 'str'})],
     )
 
     listener = Listener(
         identifier="test-listener",
-        model=ObjectModel("test", object=lambda x: x),
+        model=ObjectModel("test", object=lambda x: x, datatype='vector[float:32]'),
         select=db[dependent_listener.outputs].select(),
         key=dependent_listener.outputs,
         upstream=[dependent_listener],
     )
+
     db.apply(listener)
 
-    assert 'upstream' in db.show('model')
+    assert 'upstream' in db.show('ObjectModel')
 
-    _ = db.show('listener', listener.identifier, -1)
+    _ = db.show('Listener', listener.identifier, -1)
 
 
 # TODO: Need to fix this test case
@@ -360,10 +378,7 @@ def test_autofill_data_listener(db):
     db.cfg.auto_schema = True
 
     def get_model():
-        return ObjectModel(
-            "m1",
-            object=lambda x: x + 2,
-        )
+        return ObjectModel("m1", object=lambda x: x + 2, datatype='int')
 
     db['test'].insert(
         [

@@ -6,6 +6,7 @@ import inspect
 import multiprocessing
 import os
 import re
+import sys
 import typing as t
 from abc import abstractmethod
 from collections import defaultdict
@@ -14,6 +15,7 @@ from functools import wraps
 import requests
 
 from superduper import CFG, logging
+from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.annotations import trigger
@@ -23,6 +25,11 @@ from superduper.components.component import Component, ComponentMeta, ensure_ini
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
 from superduper.misc import typing as st
+from superduper.misc.schema import (
+    _map_type_to_superduper,
+    _safe_resolve_annotation,
+    process as process_annotation,
+)
 
 if t.TYPE_CHECKING:
     from superduper.backends.base.cluster import Cluster
@@ -393,6 +400,21 @@ class Model(Component, metaclass=ModelMeta):
     def postinit(self):
         """Post-initialization method."""
         self._is_initialized = False
+        if self.datatype is None:
+            annotation = self.predict.__annotations__.get('return')
+            if annotation is None:
+                self.datatype = 'str'
+            else:
+                module_globals = sys.modules[__name__].__dict__
+                superduper_globals = sys.modules['superduper'].__dict__
+                annotation = _safe_resolve_annotation(
+                    annotation, {**module_globals, **superduper_globals}
+                )
+                inferred_annotation, iterable = process_annotation(annotation)
+                self.datatype = _map_type_to_superduper(
+                    self.__class__.__name__, 'predict', inferred_annotation, iterable
+                )
+
         if not self.identifier:
             raise Exception('_Predictor identifier must be non-empty')
         super().postinit()
@@ -487,7 +509,7 @@ class Model(Component, metaclass=ModelMeta):
                 if ids:
                     return ids
                 predict_ids = select.ids()
-        except FileNotFoundError:
+        except NonExistentMetadataError:
             # This is case for sql where Table is not created yet
             # and we try to access `db.load('table', name)`.
             return []
@@ -587,7 +609,9 @@ class Model(Component, metaclass=ModelMeta):
                 k for k in sample if k.startswith(CFG.output_prefix)
             ]
             for pid in upstream_predict_ids:
-                if self.db.show(uuid=pid.split('__')[-1]).get('flatten', False):
+                if self.db.show('Listener', uuid=pid.split('__')[-1]).get(
+                    'flatten', False
+                ):
                     flat = True
                     break
 
@@ -942,7 +966,9 @@ class Model(Component, metaclass=ModelMeta):
         :param db: The datalayer.
         """
         assert isinstance(self.trainer, Trainer)
-        if isinstance(self, Component) and self.identifier not in db.show('model'):
+        if isinstance(self, Component) and self.identifier not in db.show(
+            self.component
+        ):
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
             db.apply(self)
@@ -989,18 +1015,6 @@ class Model(Component, metaclass=ModelMeta):
 class _DeviceManaged:
     preferred_devices: t.Sequence[str] = ('cuda', 'mps', 'cpu')
     device: t.Optional[str] = None
-
-    def on_load(self, db: Datalayer) -> None:
-        if self.preferred_devices:
-            for i, device in enumerate(self.preferred_devices):
-                try:
-                    self.to(device)
-                    self.device = device
-                    return
-                except Exception:
-                    if i == len(self.preferred_devices) - 1:
-                        raise
-        logging.info(f'Successfully mapped to {self.device}')
 
     @abstractmethod
     def to(self, device):
@@ -1281,7 +1295,6 @@ class SequentialModel(Model):
             if isinstance(p, str):
                 continue
             p.on_create(db)
-        self.on_load(db)
 
     def predict(self, *args, **kwargs):
         """Predict on a single data point.

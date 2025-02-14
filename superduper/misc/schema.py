@@ -5,6 +5,7 @@ from dataclasses import fields
 from typing import Any, ForwardRef, get_args, get_origin
 
 from superduper.base.leaf import Leaf
+from superduper.components.component import Component
 
 
 def _evaluate_forward_ref(ref: ForwardRef, globalns: dict, localns: dict = None):
@@ -96,13 +97,15 @@ class _DataTypeFactory:
         self.name = name
 
     def __getitem__(self, cls):
-        if cls in {str, int, bool}:
+        if cls in {str, int, bool, float}:
             return cls.__name__
         if cls in {list, dict}:
             return 'json'
         try:
             if isinstance(cls, t.NewType):
                 return str(cls).split('.')[-1].lower()
+            if issubclass(cls, Component):
+                return 'componenttype'
             if issubclass(cls, Leaf):
                 return 'leaftype'
         except TypeError:
@@ -121,7 +124,7 @@ def _map_type_to_superduper(source, name, cls, iterable):
         raise ValueError(f"Unsupported iterable type {iterable} for {cls}")
     if cls is None and iterable in {list, dict}:
         return 'json'
-    if cls in {str, int}:
+    if cls in {str, int, float, bool}:
         return 'json'
     return 'dill'
 

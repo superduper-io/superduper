@@ -66,6 +66,9 @@ def _diff(r1, r2, d):
                 d[k] = r2[k]
             continue
 
+        if isinstance(r1[k], Saveable) and isinstance(r2[k], Saveable):
+            continue
+
         if r1[k] != r2[k]:
             d[k] = r2[k]
 
@@ -81,7 +84,7 @@ def _update(r, s):
     {'a': 1, 'b': {'c': 4, 'd': 3}}
     """
     for k in s:
-        if isinstance(s[k], dict):
+        if isinstance(s[k], dict) and isinstance(r.get(k, {}), dict):
             r[k] = _update(r.get(k, {}), s[k])
         else:
             r[k] = s[k]
@@ -161,6 +164,9 @@ class _InMemoryArtifactStore(ArtifactStore):
     def disconnect(self):
         """Disconnect the client."""
         pass
+
+    def list(self):
+        return sorted(list(set(list(self.blobs.keys()) + list(self.files.keys()))))
 
 
 class _TmpDB:
@@ -307,6 +313,14 @@ class Document(MongoStyleDict):
             ),
         )
 
+    def dict(self, *args, **kwargs):
+        """To preserve back-compatibility.
+
+        :param args: *args for `dict`
+        :param kwargs: **kwargs for `dict`
+        """
+        return self
+
     @classmethod
     def decode(
         cls,
@@ -319,10 +333,7 @@ class Document(MongoStyleDict):
         :param r: The encoded data.
         :param schema: The schema to use.
         :param db: The datalayer to use.
-        :param getters: The getters to use.
         """
-        # TODO - is this the right place for this?
-
         if db is None:
             blobs = r.pop('_blobs', {})
             files = r.pop('_files', {})
@@ -369,6 +380,7 @@ class Document(MongoStyleDict):
                 }
                 return cls(**r, db=db)
         else:
+            # TODO remove this _schema key
             if schema is None:
                 from superduper.base.datalayer import Datalayer
 

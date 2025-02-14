@@ -86,7 +86,7 @@ class LocalCrontabBackend(CrontabBackend):
         for component_data in self.db.show():
             type_id = component_data['type_id']
             identifier = component_data['identifier']
-            r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
+            r = self.db.show(component=type_id, identifier=identifier, version=-1)
             if r.get('schedule'):
                 obj = self.db.load(type_id=type_id, identifier=identifier)
                 from superduper.components.cron_job import CronJob

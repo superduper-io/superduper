@@ -38,7 +38,7 @@ def test(db: Datalayer):
     db['docs'].insert([{'x': random.randrange(10)} for _ in range(10)])
 
     def build_vi(**kwargs):
-        model = MyModel('my-model', example=1, **kwargs)
+        model = MyModel('my-model', example=1, datatype='vector[int:10]', **kwargs)
 
         listener = Listener(
             'my-listener',
@@ -55,17 +55,17 @@ def test(db: Datalayer):
     db.apply(build_vi())
     db.apply(build_vi())
 
-    assert db.show('vector_index', 'my-vector-index') == [0]
-    assert db.show('listener', 'my-listener') == [0]
-    assert db.show('model', 'my-model') == [0]
+    assert db.show('VectorIndex', 'my-vector-index') == [0]
+    assert db.show('Listener', 'my-listener') == [0]
+    assert db.show('MyModel', 'my-model') == [0]
 
     component = build_vi()
     component.indexing_listener.select = db['other'].select()
 
     db.apply(component)
 
-    assert db.show('listener', 'my-listener') == [0, 1]
-    assert db.show('vector_index', 'my-vector-index') == [0, 1]
+    assert db.show('Listener', 'my-listener') == [0, 1]
+    assert db.show('VectorIndex', 'my-vector-index') == [0, 1]
 
     component.indexing_listener.model.validation = MyValidation(
         'test-validate', key='x', datasets=[], metrics=[]
@@ -73,8 +73,8 @@ def test(db: Datalayer):
 
     db.apply(component)
 
-    assert db.show('model', 'my-model') == [0]
+    assert db.show('MyModel', 'my-model') == [0]
 
-    m = db.load('model', 'my-model')
+    m = db.load('MyModel', 'my-model')
 
     assert m.metric_values == [0.1]

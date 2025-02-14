@@ -69,7 +69,6 @@ __all__ = (
     'Component',
     'pickle_serializer',
     'dill_serializer',
-    'templates',
     'imported',
     'imported_value',
     'Streamlit',

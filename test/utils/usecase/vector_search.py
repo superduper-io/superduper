@@ -53,7 +53,7 @@ def build_vector_index(
         return vector
 
     indexing_model = ObjectModel(
-        identifier="model", object=predict, datatype=vector_datatype
+        identifier="model", object=predict, datatype=f'vector[int:{VECTOR_SIZE}]'
     )
 
     indexing_model = indexing_model.to_listener(

@@ -17,6 +17,7 @@ import uuid
 from types import MethodType
 
 from superduper import CFG, logging
+from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.document import Document, _unpack
 from superduper.base.leaf import Leaf
 
@@ -291,15 +292,55 @@ def limit(self, n: int):
     return self + QueryPart('limit', (n,), {})
 
 
-def insert(self, documents):
+def insert(self, documents, raw: bool = False, auto_schema: bool = True):
     """Insert documents into the table.
 
     # noqa
     """
-    self.db.pre_insert(self.table, documents)
-    out = self.db.databackend._do_insert(self.table, documents)
+    self.db.pre_insert(self.table, documents, auto_schema=auto_schema)
+    out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db.post_insert(self.table, ids=out)
     return out
+
+
+def update(self, condition: t.Dict, key: str, value: t.Any):
+    """Update documents in the table.
+
+    # noqa
+    """
+    return self.db.databackend.update(self.table, condition, key=key, value=value)
+
+
+def delete(self, condition: t.Dict):
+    """Update documents in the table.
+
+    # noqa
+    """
+    return self.db.databackend.delete(self.table, condition)
+
+
+def replace(self, condition: t.Dict, r: t.Dict):
+    """Update documents in the table.
+
+    # noqa
+    """
+    try:
+        r.pop(KEY_BUILDS)
+    except KeyError:
+        pass
+    try:
+        r.pop(KEY_BLOBS)
+    except KeyError:
+        pass
+    try:
+        r.pop(KEY_FILES)
+    except KeyError:
+        pass
+    try:
+        r.pop(KEY_PATH)
+    except KeyError:
+        pass
+    return self.db.databackend.replace(self.table, condition, r)
 
 
 @bind
@@ -319,7 +360,7 @@ def outputs(self, *predict_ids):
     return d.to_query()
 
 
-def get(self, eager_mode: bool = False, **kwargs):
+def get(self, eager_mode: bool = False, raw: bool = False, **kwargs):
     """Get a single row of data.
 
     # noqa
@@ -331,7 +372,8 @@ def get(self, eager_mode: bool = False, **kwargs):
         for k, v in kwargs.items():
             filters.append(t[k] == v)
         query = self.filter(*filters)
-    result = query.db.databackend.get(query)
+
+    result = query.db.databackend.get(query, raw=raw)
     if eager_mode:
         return self._convert_eager_mode_results(result)
     return result
@@ -348,6 +390,19 @@ def ids(self):
     pid = self.primary_id.execute()
     results = q.execute()
     return [str(r[pid]) for r in results]
+
+
+def distinct(self, key: str):
+    """Get distinct values of a column.
+
+    # noqa
+    """
+    q = self.select(key)
+    msg = '.distinct only applicable to select queries'
+    assert self.type == 'select', msg
+    q = self.select(key)
+    results = q.execute()
+    return list(set([r[key] for r in results]))
 
 
 # TODO use this/ test this
@@ -469,6 +524,9 @@ class Query(_BaseQuery):
     # base methods are at the key level
     mapping: t.ClassVar[t.Dict] = {
         'insert': [],
+        'update': [],
+        'delete': [],
+        'replace': [],
         'select': [
             'filter',
             'outputs',
@@ -476,6 +534,7 @@ class Query(_BaseQuery):
             'limit',
             'select',
             'ids',
+            'distinct',
             'missing_outputs',
             'chunks',
             'get',
@@ -487,15 +546,25 @@ class Query(_BaseQuery):
             'limit',
             'select',
             'ids',
+            'distinct',
             'missing_outputs',
             'chunks',
             'get',
         ],
-        'like': ['select', 'filter', 'ids', 'missing_outputs', 'get', 'limit'],
+        'like': [
+            'select',
+            'filter',
+            'ids',
+            'distinct',
+            'missing_outputs',
+            'get',
+            'limit',
+        ],
         'outputs': [
             'filter',
             'limit',
             'ids',
+            'distinct',
             'missing_outputs',
             'chunks',
             'get',
@@ -503,6 +572,7 @@ class Query(_BaseQuery):
         ],
         'limit': [],
         'ids': [],
+        'distinct': [],
         'get': [],
     }
 
@@ -781,11 +851,11 @@ class Query(_BaseQuery):
                 pass
 
             try:
-                return db.show('listener', identifier, -1)['uuid']
+                return db.show('Listener', identifier, -1)['uuid']
             except FileNotFoundError as e:
                 logging.warn(
                     f'Error in completing UUIDs from saved components,'
-                    f' based on `listenerr={identifier}`: {e}'
+                    f' based on `Listener={identifier}`: {e}'
                 )
                 pass
 
@@ -867,14 +937,15 @@ class Query(_BaseQuery):
 
         return modified_query.execute()
 
-    def execute(self, eager_mode=False):
+    def execute(self, eager_mode=False, raw: bool = False):
         """Execute the query.
 
         :param eager_mode: Whether to execute in eager mode.
+        :param raw: Whether to return raw results.
         """
         if self.parts and self.parts[0] == 'primary_id':
             return self.db.databackend.primary_id(self)
-        results = self.db.databackend.execute(self)
+        results = self.db.databackend.execute(self, raw=raw)
         if eager_mode:
             return self._convert_eager_mode_results(results)
         return results

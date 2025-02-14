@@ -19,7 +19,7 @@ def test_query_dataset(db):
     add_vector_index(db)
     primary_id = db["documents"].primary_id.execute()
 
-    listener_uuid = db.show('listener', 'vector-x', -1)['uuid']
+    listener_uuid = db.show('Listener', 'vector-x', -1)['uuid']
 
     train_data = QueryDataset(
         db=db,

@@ -42,10 +42,13 @@ def asdict(obj, *, copy_method=copy.copy) -> t.Dict[str, t.Any]:
 
 def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
     from superduper.base.leaf import Leaf
+    from superduper.components.datatype import Saveable
 
     if type(obj) in _ATOMIC_TYPES:
         return obj
     elif not top and isinstance(obj, Leaf):
+        return obj
+    elif not top and isinstance(obj, Saveable):
         return obj
     elif dc.is_dataclass(obj) and not isinstance(obj, type):
         # fast path for the common case

@@ -1,4 +1,3 @@
-import copy
 import dataclasses as dc
 import importlib
 import inspect
@@ -17,7 +16,6 @@ _CLASS_REGISTRY = {}
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.components.datatype import BaseDataType
 
 
 def _is_optional_callable(annotation) -> bool:
@@ -328,12 +326,19 @@ class Leaf(metaclass=LeafMeta):
         return out
 
     # TODO the signature does not agree with the `Component.dict` method
-    def dict(self, metadata: bool = True, defaults: bool = True, schema: bool = False):
+    def dict(
+        self,
+        metadata: bool = True,
+        defaults: bool = True,
+        schema: bool = False,
+        path: bool = True,
+    ):
         """Return dictionary representation of the object.
 
         :param metadata: Include metadata.
         :param defaults: Include default values.
         :param schema: Include schema.
+        :param path: Include path.
         """
         from superduper import Document
 
@@ -371,8 +376,11 @@ class Leaf(metaclass=LeafMeta):
                 schema=s,
             )
 
-        path = f'{self.__class__.__module__}.{self.__class__.__name__}'
-        return Document({'_path': path, **r}, schema=s)
+        _path = f'{self.__class__.__module__}.{self.__class__.__name__}'
+        if path:
+            return Document({'_path': _path, **r}, schema=s)
+        else:
+            return Document(r, schema=s)
 
     @classmethod
     def _register_class(cls):

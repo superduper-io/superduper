@@ -90,17 +90,16 @@ class Application(Component):
             if not all(
                 [
                     isinstance(component_info, dict),
-                    "type_id" in component_info,
+                    "component" in component_info,
                     "identifier" in component_info,
                 ]
             ):
                 raise ValueError("Invalid component info.")
 
             component = db.load(
-                type_id=component_info["type_id"],
+                type_id=component_info["component"],
                 identifier=component_info["identifier"],
             )
-
             components.append(component)
 
         # Do not need to include outputs and schema components
@@ -108,16 +107,16 @@ class Application(Component):
         for component in components:
             if any(
                 [
-                    component.type_id == "table"
+                    component.component == "Table"
                     and component.identifier.startswith(CFG.output_prefix),
-                    component.type_id == "schema"
-                    and component.identifier.startswith("_schema/"),
                 ]
             ):
                 logging.info(f"Delete the outputs of {component.identifier}")
-                model_outputs_components.add((component.type_id, component.identifier))
+                model_outputs_components.add(
+                    (component.component, component.identifier)
+                )
                 model_outputs_components.update(
-                    [(c.type_id, c.identifier) for c in component.children]
+                    [(c.component, c.identifier) for c in component.children]
                 )
 
         # Do not need to include components with parent
@@ -128,7 +127,7 @@ class Application(Component):
                 logging.info(f"Delete the children of {component.identifier}:")
                 logging.info(f"Children: {[c.identifier for c in component.children]}")
                 components_with_parent.update(
-                    [(c.type_id, c.identifier) for c in component.children]
+                    [(c.component, c.identifier) for c in component.children]
                 )
 
         remove_components = model_outputs_components | components_with_parent
@@ -136,7 +135,9 @@ class Application(Component):
         logging.info(f"Remove components: {remove_components}")
 
         components = [
-            c for c in components if (c.type_id, c.identifier) not in remove_components
+            c
+            for c in components
+            if (c.component, c.identifier) not in remove_components
         ]
 
         if not components:
@@ -144,7 +145,7 @@ class Application(Component):
 
         logging.info("Combine components to application.")
         components_strings = "\n".join(
-            [f"{c.type_id}.{c.identifier}" for c in components]
+            [f"{c.component}.{c.identifier}" for c in components]
         )
         logging.info(f"Components: \n{components_strings}")
         app = cls(identifier=identifier, components=components)

@@ -1,10 +1,8 @@
 import dataclasses as dc
 import typing as t
-from copy import copy
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
-from superduper.base import exceptions
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.components.cdc import CDC
@@ -46,11 +44,6 @@ class Listener(CDC):
     output_table: t.Optional[Table] = None
     flatten: bool = False
 
-    def _get_metadata(self):
-        """Get metadata of the component."""
-        metadata = super()._get_metadata()
-        return {**metadata, 'output_table': self.output_table}
-
     def postinit(self):
         """Post initialization method."""
         if not self.cdc_table and self.select:
@@ -58,6 +51,10 @@ class Listener(CDC):
         self._set_upstream()
         if isinstance(self.key, tuple):
             self.key = list(self.key)
+
+        self.output_table = Table(
+            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
+        )
         super().postinit()
 
     def handle_update_or_same(self, other):
@@ -68,32 +65,6 @@ class Listener(CDC):
         super().handle_update_or_same(other)
         other.output_table = self.output_table
 
-    # TODO include schema by default
-    def dict(
-        self,
-        metadata: bool = True,
-        defaults: bool = True,
-        refs: bool = False,
-        schema: bool = False,
-    ) -> t.Dict:
-        """Convert to dictionary.
-
-        :param metadata: Include metadata.
-        :param defaults: Include default values.
-        :param refs: Include references.
-        :param schema: Include schema in document
-        """
-        out = super().dict(
-            metadata=metadata, defaults=defaults, refs=refs, schema=schema
-        )
-        if not metadata:
-            try:
-                del out['output_table']
-            except KeyError:
-                logging.warn('output_table not found in listener.dict()')
-                pass
-        return out
-
     def _set_upstream(self):
         deps = self.dependencies
         if deps:
@@ -103,7 +74,7 @@ class Listener(CDC):
                 it = 0
                 for dep in deps:
                     identifier, uuid = dep
-                    self.upstream.append(f'&:component:listener:{identifier}:{uuid}')
+                    self.upstream.append(f'&:component:Listener:{identifier}:{uuid}')
                     it += 1
             except ValueError as e:
                 if 'not enough values' in str(e):
@@ -126,7 +97,7 @@ class Listener(CDC):
         huuids = defaultdict(lambda: [])
         for x in self.upstream:
             if isinstance(x, Component):
-                huuids['&:component:' + x.huuid].append(x)
+                huuids['&:' + x.huuid].append(x)
             else:
                 huuids[x].append(x)
 
@@ -190,79 +161,6 @@ class Listener(CDC):
         if self.cdc_table.startswith(CFG.output_prefix):
             self.cdc_table = self.select.table
 
-    def _get_sample_input(self, db: Datalayer):
-        msg = (
-            'Couldn\'t retrieve outputs to determine schema; '
-            '{table} returned 0 results.'
-        )
-        errors = (
-            StopIteration,
-            KeyError,
-            FileNotFoundError,
-            exceptions.TableNotFoundError,
-        )
-        if self.model.example is not None:
-            input = self.model.example
-        else:
-            if self.dependencies:
-                try:
-                    r = self.select.get()
-                except errors:
-                    try:
-                        if not self.cdc_table.startswith(CFG.output_prefix):
-                            try:
-                                r = db[self.select.table].get()
-                            except errors:
-                                # Note: This is added for sql databases,
-                                # since they return error if key not found
-                                # unlike mongodb
-                                r = {}
-                            r = {**r, **db.startup_cache}
-                        else:
-                            r = copy(db.startup_cache)
-                    except Exception as e:
-                        raise Exception(msg.format(table=self.cdc_table)) from e
-            else:
-                try:
-                    r = self.select.get()
-                except (StopIteration, KeyError, FileNotFoundError) as e:
-                    raise Exception(msg.format(table=self.select)) from e
-            mapping = Mapping(self.key, self.model.signature)
-            input = mapping(r)
-        return input
-
-    def _determine_table_and_schema(self, db: Datalayer):
-
-        if self.model.datatype is not None:
-            fields = {'_source': 'ID', self.outputs: self.model.datatype}
-        elif self.model.output_schema is not None:
-            fields = self.model.output_schema
-        else:
-            input = self._get_sample_input(db)
-
-            if self.model.signature == 'singleton':
-                prediction = self.model.predict(input)
-            elif self.model.signature == '*args':
-                prediction = self.model.predict(*input)
-            elif self.model.signature == '**kwargs':
-                prediction = self.model.predict(**input)
-            else:
-                assert self.model.signature == '*args,**kwargs'
-                prediction = self.model.predict(*input[0], **input[1])
-
-            if self.flatten:
-                prediction = prediction[0]
-
-            db.startup_cache[self.outputs] = prediction
-            fields = db.infer_schema(
-                {'data': prediction}, identifier=self.outputs + '/schema'
-            )
-            datatype = fields['data']
-            self.model.datatype = datatype
-            fields = {'_source': 'ID', 'id': 'ID', self.outputs: datatype}
-
-        self.output_table = Table(self.outputs, fields=fields)
-
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         """Pre-create hook."""
         if self.select is None:
@@ -272,12 +170,8 @@ class Listener(CDC):
             db.startup_cache[self.outputs] = None
             return
 
+        # TODO deprecate this
         self._auto_fill_data(db)
-
-        if self.output_table is not None:
-            return
-
-        self._determine_table_and_schema(db)
 
     @property
     def mapping(self):
@@ -292,9 +186,16 @@ class Listener(CDC):
     @property
     def dependencies(self):
         """Listener model dependencies."""
-        self.model.unpack()
-        args, kwargs = self.mapping.mapping
-        all_ = list(args) + list(kwargs.values())
+        # args, kwargs = self.mapping.mapping
+        key = self.key[:]
+        if isinstance(key, str):
+            all_ = [key]
+        elif isinstance(key, (list, tuple)) and isinstance(key[0], str):
+            all_ = list(key)
+        else:
+            all_ = list(key[0]) + list(key[1].values())
+
+        # all_ = list(args) + list(kwargs.values())
         out = []
         for x in all_:
             if x.startswith(CFG.output_prefix):

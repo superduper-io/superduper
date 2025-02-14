@@ -57,7 +57,7 @@ class LocalComputeBackend(ComputeBackend):
         args, kwargs = job.get_args_kwargs(self.futures[job.context])
 
         assert job.job_id is not None
-        component = self.db.load(uuid=job.uuid)
+        component = self.db.load(component=job.component, uuid=job.uuid)
         self.db.metadata.update_job(job.job_id, 'status', 'running')
 
         try:

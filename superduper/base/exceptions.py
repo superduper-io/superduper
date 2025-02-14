@@ -11,7 +11,12 @@ class ComponentInUseError(Exception):
     :param kwargs: **kwargs for Exception
     """
 
-    pass
+
+class DatabackendError(Exception):
+    """Exception raised when a databackend error occurs.
+
+    # noqa
+    """
 
 
 class BaseException(Exception):

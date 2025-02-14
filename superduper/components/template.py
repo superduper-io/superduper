@@ -28,6 +28,7 @@ class _BaseTemplate(Component):
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
     """
+
     template: st.Dill
     template_variables: t.Optional[t.List[str]] = None
     types: t.Optional[t.Dict] = None
@@ -209,7 +210,7 @@ class Template(_BaseTemplate):
         # TODO this logic is a mess
         if self.blobs or self.files:
             assert self.db is not None
-            assert self.identifier in self.db.show('template')
+            assert self.identifier in self.db.show(self.component)
         if path is None:
             path = './' + self.identifier
         super().export(path, format, zip=False, defaults=defaults, metadata=metadata)

@@ -1,8 +1,9 @@
 import dataclasses as dc
+import json
 import typing as t
 from functools import cached_property
 
-from superduper import logging
+from superduper import CFG
 from superduper.components.datatype import BaseDataType
 from superduper.misc.special_dicts import dict_to_ascii_table
 
@@ -18,6 +19,17 @@ class Schema(BaseDataType):
     """
 
     fields: t.Dict[str, BaseDataType]
+
+    @staticmethod
+    def build(fields: t.Dict[str, str]) -> 'Schema':
+        """Build a schema from a dictionary of fields.
+
+        :param fields: The fields of the schema
+        """
+        from superduper.components.datatype import INBUILT_DATATYPES
+
+        fields = {k: INBUILT_DATATYPES[fields[k]] for k in fields}
+        return Schema(fields)  # type: ignore[arg-type]
 
     def __add__(self, other: 'Schema'):
         new_fields = self.fields.copy()
@@ -53,21 +65,16 @@ class Schema(BaseDataType):
                 decoded[k] = value
                 continue
 
-            try:
-                decoded[k] = field.decode_data(value, builds=builds, db=db)
-            except Exception as e:
-                raise e
-                import traceback
-
-                logging.error(traceback.format_exc())
-                raise ValueError(
-                    f'Error decoding field "{k}" with value "{value}" using {field}'
-                ) from e
-
-            if isinstance(value, str) and value.startswith('?'):
+            if (
+                isinstance(value, str)
+                and value.startswith('?')
+                and not isinstance(builds[value[1:]], dict)
+            ):
                 decoded[k] = builds[value[1:]]
                 continue
             else:
+                if field.dtype == 'json' and not CFG.json_native:
+                    value = json.loads(value)
                 decoded[k] = field.decode_data(value, builds=builds, db=db)
 
         return decoded
@@ -97,13 +104,18 @@ class Schema(BaseDataType):
             if out[k] is None:
                 continue
 
-            result[k] = field.encode_data(
+            encoded = field.encode_data(
                 out[k],
                 builds=builds,
                 blobs=blobs,
                 files=files,
                 leaves_to_keep=leaves_to_keep,
             )
+
+            if field.dtype == 'json' and not CFG.json_native:
+                encoded = json.dumps(encoded)
+
+            result[k] = encoded
 
         return result
 

@@ -152,3 +152,7 @@ class FileSystemArtifactStore(ArtifactStore):
         """Disconnect the client."""
         # Not necessary since just local filesystem
         pass
+
+    def list(self):
+        """List all files in the artifact store."""
+        return sorted(list(set(os.listdir(self.blobs) + os.listdir(self.files))))

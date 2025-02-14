@@ -7,10 +7,11 @@ import uuid
 import click
 import ibis
 import pandas
+from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.orm import sessionmaker
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.base.query import Query, QueryPart
 from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.base import exceptions
@@ -117,22 +118,6 @@ class IbisDataBackend(BaseDataBackend):
         """Build artifact store for the database."""
         return FileSystemArtifactStore(conn=".superduper/artifacts/", name="ibis")
 
-    def build_metadata(self):
-        """Build metadata for the database."""
-        from superduper_sqlalchemy.metadata import SQLAlchemyMetadata
-
-        try:
-            return MetaDataStoreProxy(
-                SQLAlchemyMetadata(callback=lambda: (self.conn.con, self.name))
-            )
-        except Exception as e:
-            logging.warn(
-                f"Unable to connect to the database with self.conn.con: "
-                f"{self.conn.con} and self.name: {self.name}. Error: {e}."
-            )
-            logging.warn(f"Falling back to using the uri: {self.uri}.")
-            return MetaDataStoreProxy(SQLAlchemyMetadata(uri=self.uri))
-
     def drop_table(self, table):
         """Drop the outputs."""
         self.conn.drop_table(table)
@@ -217,6 +202,23 @@ class IbisDataBackend(BaseDataBackend):
         """List all tables or collections in the database."""
         return self.conn.list_tables()
 
+    def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
+        """Replace data.
+
+        :param table: The table to insert into.
+        :param condition: The condition to replace.
+        :param r: The data to replace.
+        """
+        raise NotImplementedError
+
+    def update(self, table, condition, key, value):
+        """Update data in the database."""
+        raise NotImplementedError
+
+    def delete(self, table, condition):
+        """Delete data from the database."""
+        raise NotImplementedError
+
     def insert(self, table, documents):
         """Insert data into the database."""
         primary_id = self.primary_id(self.db[table])
@@ -237,7 +239,9 @@ class IbisDataBackend(BaseDataBackend):
 
     def primary_id(self, query):
         """Get the primary ID of the query."""
-        return self.db.load('table', query.table).primary_id
+        return self.db.metadata.get_component(
+            component='Table', identifier=query.table
+        )['primary_id']
 
     def select(self, query):
         """Select data from the database."""
@@ -245,7 +249,12 @@ class IbisDataBackend(BaseDataBackend):
         return native_query.execute().to_dict(orient='records')
 
     def _build_native_query(self, query):
-        q = self.conn.table(query.table)
+        try:
+            q = self.conn.table(query.table)
+        except ibis.IbisError as e:
+            if 'not found' in str(e):
+                raise exceptions.DatabackendError(f'Table {query.table} not found')
+            raise e
         pid = None
         predict_ids = (
             query.decomposition.outputs.args if query.decomposition.outputs else []
@@ -313,3 +322,65 @@ class IbisDataBackend(BaseDataBackend):
         :param query: The query to execute.
         """
         return pandas.DataFrame(self.conn.raw_sql(query)).to_dict(orient='records')
+
+
+class SQLDatabackend(IbisDataBackend):
+    """SQL data backend for the database."""
+
+    def __init__(self, uri, plugin, flavour=None):
+        super().__init__(uri, plugin, flavour)
+        self.alchemy_engine = create_engine(uri, creator=lambda: self.conn.con)
+        self.sm = sessionmaker(bind=self.alchemy_engine)
+
+    def update(self, table, condition, key, value):
+        """Update data in the database."""
+        with self.sm() as session:
+            metadata = MetaData()
+
+            metadata.reflect(bind=session.bind)
+            table = Table(table, metadata, autoload_with=session.bind)
+
+            stmt = table.update()
+            for c, v in condition.items():
+                stmt = stmt.where(table.c[c] == v)
+
+            stmt = stmt.values(**{key: value})
+
+            session.execute(stmt)
+            session.commit()
+            session.commit()
+
+    def replace(self, table, condition, r):
+        """Replace data."""
+        with self.sm() as session:
+            metadata = MetaData()
+
+            metadata.reflect(bind=session.bind)
+            table = Table(table, metadata, autoload_with=session.bind)
+
+            stmt = table.update()
+            for c, v in condition.items():
+                stmt = stmt.where(table.c[c] == v)
+
+            stmt = stmt.values(**r)
+
+            session.execute(stmt)
+            session.commit()
+            session.commit()
+
+    def delete(self, table, condition):
+        """Delete data from the database."""
+        with self.sm() as session:
+            metadata = MetaData()
+
+            metadata.reflect(bind=session.bind)
+            table = Table(table, metadata, autoload_with=session.bind)
+
+            stmt = table.delete()
+
+            for col_name, value in condition.items():
+                stmt = stmt.where(table.c[col_name] == value)
+
+            session.execute(stmt)
+            session.commit()
+            session.commit()

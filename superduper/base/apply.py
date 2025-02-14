@@ -5,6 +5,7 @@ import click
 from rich.console import Console
 
 from superduper import Component, logging
+from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.backends.base.query import Query
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
@@ -80,12 +81,12 @@ def apply(
     logging.info('METADATA EVENTS:')
     logging.info('-' * 100)
 
-    steps = {c.component['uuid']: str(i) for i, c in enumerate(create_events.values())}
+    steps = {c.data['uuid']: str(i) for i, c in enumerate(create_events.values())}
 
     for i, c in enumerate(create_events.values()):
         if c.parent:
             try:
-                logging.info(f'[{i}]: {c.huuid}: {c.genus} ~ [{steps[c.parent]}]')
+                logging.info(f'[{i}]: {c.huuid}: {c.genus} ~ [{steps[c.parent[1]]}]')
             except KeyError:
                 logging.info(f'[{i}]: {c.huuid}: {c.genus}')
         else:
@@ -159,9 +160,12 @@ def _apply(
     non_breaking_changes: t.Dict,
     context: str | None = None,
     job_events: t.Dict[str, 'Job'] | None = None,
-    parent: t.Optional[str] = None,
+    parent: t.Optional[t.List] = None,
     global_diff: t.Dict | None = None,
 ):
+
+    db.create(type(object))
+
     if context is None:
         context = object.uuid
 
@@ -190,7 +194,7 @@ def _apply(
             object=child,
             context=context,
             job_events=job_events,
-            parent=object.uuid,
+            parent=[object.component, object.uuid],
             global_diff=global_diff,
             non_breaking_changes=non_breaking_changes,
         )
@@ -238,11 +242,12 @@ def _apply(
         return x
 
     try:
-        current = db.load(object.type_id, object.identifier)
+        current = db.load(object.__class__.__name__, object.identifier)
 
         # only check for diff not in metadata/ uuid
         # also only
         current_serialized = current.dict(metadata=False, refs=True, schema=True)
+
         del current_serialized['uuid']
 
         serialized = serialized.map(
@@ -253,8 +258,9 @@ def _apply(
         this_diff = Document(current_serialized, schema=current_serialized.schema).diff(
             serialized
         )
-
         logging.info(f'Found identical {object.huuid}')
+        # if 'object' in this_diff and not callable(this_diff['object']):
+        #     import pdb; pdb.set_trace()
 
         if not this_diff:
             # if no change then update the component
@@ -285,7 +291,8 @@ def _apply(
                 # on an already instantiated object (uuid is not rebuilt)
 
                 raise NotImplementedError(
-                    f'{object.type_id}-{object.identifier} was modified in place. '
+                    f'{object.__class__.__name__}/'
+                    f'{object.identifier} was modified in place. '
                     'This is currently not supported. '
                     'To re-apply a component, rebuild the Python object.'
                 )
@@ -340,7 +347,7 @@ def _apply(
 
             logging.info(f'Found update {object.huuid}')
 
-    except FileNotFoundError:
+    except NonExistentMetadataError:
         # Also replace the existing components with references
         serialized = serialized.map(
             replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
@@ -376,7 +383,8 @@ def _apply(
 
         metadata_event = Create(
             context=context,
-            component=serialized,
+            component=object.__class__.__name__,
+            data=serialized,
             parent=parent,
         )
 
@@ -390,7 +398,8 @@ def _apply(
 
         metadata_event = Update(
             context=context,
-            component=serialized,
+            component=object.__class__.__name__,
+            data=serialized,
             parent=parent,
         )
 
@@ -408,7 +417,7 @@ def _apply(
     # If nothing needs to be done, then don't
     # require the status to be "initializing"
     if not these_job_events:
-        metadata_event.component['status'] = Status.ready
+        metadata_event.data['status'] = Status.ready
         object.status = Status.ready
 
     create_events[metadata_event.huuid] = metadata_event

@@ -1,4 +1,3 @@
-import random
 import typing as t
 from collections import namedtuple
 
@@ -9,22 +8,27 @@ from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.metadata import MetaDataStore
+from superduper.backends.base.metadata import (
+    MetaDataStore,
+    NonExistentMetadataError,
+    UniqueConstraintError,
+)
 from superduper.backends.base.query import Query
 from superduper.base import apply, exceptions
 from superduper.base.config import Config
 from superduper.base.document import Document
+from superduper.base.leaf import Leaf
 from superduper.components.component import Component
-from superduper.components.datatype import LeafType
+from superduper.components.datatype import ComponentType, LeafType
 from superduper.components.table import Table
 
 
+# TODO - deprecate hidden logic (not necessary)
 class Datalayer:
     """
-    Base database connector for superduper.io.
+    Base connector.
 
     :param databackend: Object containing connection to Datastore.
-    :param metadata: Object containing connection to Metadatastore.
     :param artifact_store: Object containing connection to Artifactstore.
     :param cluster: Cluster object containing connections to infrastructure.
     """
@@ -32,21 +36,18 @@ class Datalayer:
     def __init__(
         self,
         databackend: BaseDataBackend,
-        metadata: MetaDataStore,
         artifact_store: ArtifactStore,
         cluster: Cluster,
     ):
         """
-        Initialize Data Layer.
+        Initialize Datalayer.
 
-        :param databackend: Object containing connection to Datastore.
+        :param databackend: Object containing connection to Databackend.
         :param metadata: Object containing connection to Metadatastore.
         :param artifact_store: Object containing connection to Artifactstore.
         :param compute: Object containing connection to ComputeBackend.
         """
         logging.info("Building Data Layer")
-
-        self.metadata = metadata
 
         self.artifact_store = artifact_store
         self.artifact_store.db = self
@@ -59,6 +60,10 @@ class Datalayer:
 
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
+
+        self.metadata = MetaDataStore(self)
+        self.metadata.init()
+
         logging.info("Data Layer built")
 
     def __getitem__(self, item):
@@ -98,11 +103,9 @@ class Datalayer:
         else:
             self.databackend.drop_table()
 
-        self.metadata.drop(force=True)
-
     def show(
         self,
-        type_id: t.Optional[str] = None,
+        component: t.Optional[str] = None,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
@@ -112,45 +115,47 @@ class Datalayer:
 
         If the version is specified, then print full metadata.
 
-        :param type_id: Type_id of component to show ['datatype', 'model', 'listener',
-                       'learning_task', 'training_configuration', 'metric',
-                       'vector_index', 'job'].
+        :param component: Component to show ['Model', 'Listener', etc.]
         :param identifier: Identifying string to component.
         :param version: (Optional) Numerical version - specify for full metadata.
         :param uuid: (Optional) UUID of the component.
         """
         if uuid is not None:
-            return self.metadata.get_component_by_uuid(uuid)
+            assert component is not None
+            return self.metadata.get_component_by_uuid(component, uuid)
 
         if identifier is None and version is not None:
             raise ValueError(f"Must specify {identifier} to go with {version}")
 
-        if type_id is None:
-            nt = namedtuple('nt', ('type_id', 'identifier'))
+        if component is None:
+            nt = namedtuple('nt', ('component', 'identifier'))
             out = self.metadata.show_components()
             out = sorted(list(set([nt(**x) for x in out])))
             out = [x._asdict() for x in out]
             return out
 
         if identifier is None:
-            out = self.metadata.show_components(type_id=type_id)
+            try:
+                out = self.metadata.show_components(component=component)
+            except NonExistentMetadataError:
+                return []
             return sorted(out)
 
         if version is None:
             out = sorted(
                 self.metadata.show_component_versions(
-                    type_id=type_id, identifier=identifier
+                    component=component, identifier=identifier
                 )
             )
             return out
 
         if version == -1:
             return self.metadata.get_component(
-                type_id=type_id, identifier=identifier, version=None
+                component=component, identifier=identifier, version=None
             )
 
         return self.metadata.get_component(
-            type_id=type_id, identifier=identifier, version=version
+            component=component, identifier=identifier, version=version
         )
 
     def pre_insert(
@@ -162,12 +167,14 @@ class Datalayer:
         :param documents: The documents to insert.
         :param auto_schema: Automatically create a schema for the table.
         """
-        for r in documents:
-            r.setdefault(
-                '_fold',
-                'train' if random.random() >= s.CFG.fold_probability else 'valid',
-            )
-
+        try:
+            table = self.load('Table', table)
+            return table
+        except NonExistentMetadataError as e:
+            if auto_schema and self.cfg.auto_schema:
+                logging.info(f"Table {table} does not exist, auto creating...")
+            else:
+                raise e
         if auto_schema and self.cfg.auto_schema:
             self._auto_create_table(table, documents).schema
 
@@ -180,7 +187,7 @@ class Datalayer:
             while time.time() - start < timeout:
                 try:
                     assert table in self.show(
-                        'table'
+                        'Table'
                     ), f'{table} not found, retrying...'
                     exists = True
                 except AssertionError as e:
@@ -208,11 +215,6 @@ class Datalayer:
             self.cluster.cdc.handle_event(event_type='insert', table=table, ids=ids)
 
     def _auto_create_table(self, table_name, documents):
-        try:
-            table = self.load('table', table_name)
-            return table
-        except FileNotFoundError:
-            logging.info(f"Table {table_name} does not exist, auto creating...")
 
         # Should we need to check all the documents?
         document = documents[0]
@@ -246,6 +248,16 @@ class Datalayer:
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)  # type: ignore[arg-type]
 
+    def create(self, object: t.Type[Leaf]):
+        """Create a new type of component/ leaf.
+
+        :param object: The object to create.
+        """
+        try:
+            self.metadata.create(object)
+        except UniqueConstraintError:
+            logging.debug(f'{object} already exists, skipping...')
+
     def apply(
         self,
         object: t.Union[Component, t.Sequence[t.Any], t.Any],
@@ -267,7 +279,7 @@ class Datalayer:
 
     def remove(
         self,
-        type_id: str,
+        component: str,
         identifier: str,
         version: t.Optional[int] = None,
         recursive: bool = False,
@@ -276,9 +288,7 @@ class Datalayer:
         """
         Remove a component (version optional).
 
-        :param type_id: Type ID of the component to remove ('datatype',
-                        'model', 'listener', 'training_configuration',
-                        'vector_index').
+        :param component: Cmponent to remove ('Model', 'Listener', etc.)
         :param identifier: Identifier of the component (refer to
                             `container.base.Component`).
         :param version: [Optional] Numerical version to remove.
@@ -288,19 +298,19 @@ class Datalayer:
         # TODO: versions = [version] if version is not None else ...
         if version is not None:
             return self._remove_component_version(
-                type_id, identifier, version=version, force=force, recursive=recursive
+                component, identifier, version=version, force=force, recursive=recursive
             )
 
-        versions = self.metadata.show_component_versions(type_id, identifier)
+        versions = self.metadata.show_component_versions(component, identifier)
         versions_in_use = []
         for v in versions:
-            if self.metadata.component_version_has_parents(type_id, identifier, v):
+            if self.metadata.component_version_has_parents(component, identifier, v):
                 versions_in_use.append(v)
 
         if versions_in_use:
             component_versions_in_use = []
             for v in versions_in_use:
-                uuid = self.metadata._get_component_uuid(type_id, identifier, v)
+                uuid = self.metadata._get_component_uuid(component, identifier, v)
                 component_versions_in_use.append(
                     f"{uuid} -> "
                     f"{self.metadata.get_component_version_parents(uuid)}",
@@ -311,23 +321,23 @@ class Datalayer:
                 )
 
         if force or click.confirm(
-            f'You are about to delete {type_id}/{identifier}, are you sure?',
+            f'You are about to delete {component}/{identifier}, are you sure?',
             default=False,
         ):
             for v in sorted(list(set(versions) - set(versions_in_use))):
                 self._remove_component_version(
-                    type_id, identifier, v, recursive=recursive, force=True
+                    component, identifier, v, recursive=recursive, force=True
                 )
 
             for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(type_id, identifier, v)
+                self.metadata.hide_component_version(component, identifier, v)
 
         else:
             logging.warn('aborting.')
 
     def load(
         self,
-        type_id: t.Optional[str] = None,
+        component: str,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
         uuid: t.Optional[str] = None,
@@ -337,10 +347,10 @@ class Datalayer:
         """
         Load a component using uniquely identifying information.
 
-        If `uuid` is provided, `type_id` and `identifier` are ignored.
-        If `uuid` is not provided, `type_id` and `identifier` must be provided.
+        If `uuid` is provided, `component` and `identifier` are ignored.
+        If `uuid` is not provided, `component` and `identifier` must be provided.
 
-        :param type_id: Type ID of the component to load
+        :param component: Type ID of the component to load
                          ('datatype', 'model', 'listener', ...).
         :param identifier: Identifier of the component
                            (see `container.base.Component`).
@@ -351,10 +361,10 @@ class Datalayer:
                              of deprecated components.
         """
         if version is not None:
-            assert type_id is not None
+            assert component is not None
             assert identifier is not None
             info = self.metadata.get_component(
-                type_id=type_id,
+                component=component,
                 identifier=identifier,
                 version=version,
                 allow_hidden=allow_hidden,
@@ -372,7 +382,7 @@ class Datalayer:
                     f'Component {uuid} not found in cache, loading from db with uuid'
                 )
                 info = self.metadata.get_component_by_uuid(
-                    uuid=uuid, allow_hidden=allow_hidden
+                    component=component, uuid=uuid
                 )
                 # to prevent deserialization propagating back to the cache
                 builds = {k: v for k, v in info.get('_builds', {}).items()}
@@ -389,24 +399,24 @@ class Datalayer:
                     self.cluster.cache.put(c)
         else:
             try:
-                c = self.cluster.cache[type_id, identifier]
+                c = self.cluster.cache[component, identifier]
                 logging.debug(
-                    f'Component {(type_id, identifier)} was found in cache...'
+                    f'Component {(component, identifier)} was found in cache...'
                 )
             except KeyError:
                 logging.info(
-                    f'Component ({type_id}, {identifier}) not found in cache, '
+                    f'Component ({component}, {identifier}) not found in cache, '
                     'loading from db'
                 )
-                assert type_id is not None
+                assert component is not None
                 assert identifier is not None
-                logging.info(f'Load ({type_id, identifier}) from metadata...')
+                logging.info(f'Load ({component, identifier}) from metadata...')
                 info = self.metadata.get_component(
-                    type_id=type_id,
+                    component=component,
                     identifier=identifier,
                     allow_hidden=allow_hidden,
                 )
-                c = LeafType().decode_data(
+                c = ComponentType().decode_data(
                     info,
                     builds=info.get('_builds', {}),
                     db=self,
@@ -418,21 +428,20 @@ class Datalayer:
 
     def _remove_component_version(
         self,
-        type_id: str,
+        component: str,
         identifier: str,
         version: int,
         force: bool = False,
         recursive: bool = False,
     ):
-        # TODO fix parent-child relationship
         try:
-            r = self.metadata.get_component(type_id, identifier, version=version)
-        except FileNotFoundError:
+            r = self.metadata.get_component(component, identifier, version=version)
+        except NonExistentMetadataError:
             logging.warn(
-                f'Component {type_id}:{identifier}:{version} has already been removed'
+                f'Component {component}:{identifier}:{version} has already been removed'
             )
             return
-        if self.metadata.component_version_has_parents(type_id, identifier, version):
+        if self.metadata.component_version_has_parents(component, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
             raise exceptions.ComponentInUseError(
                 f'{r["uuid"]} is involved in other components: {parents}'
@@ -441,40 +450,42 @@ class Datalayer:
         if not (
             force
             or click.confirm(
-                f'You are about to delete {type_id}/{identifier}{version}, '
+                f'You are about to delete {component}/{identifier}{version}, '
                 'are you sure?',
                 default=False,
             )
         ):
             return
 
-        component = self.load(
-            type_id,
+        object = self.load(
+            component,
             identifier,
             version=version,
         )
         info = self.metadata.get_component(
-            type_id, identifier, version=version, allow_hidden=force
+            component, identifier, version=version, allow_hidden=force
         )
-        component.cleanup(self)
+        object.cleanup(self)
         try:
-            del self.cluster.cache[component.uuid]
+            del self.cluster.cache[object.uuid]
         except KeyError:
             pass
 
         self._delete_artifacts(r['uuid'], info)
-        self.metadata.delete_component_version(type_id, identifier, version=version)
+        self.metadata.delete_component_version(component, identifier, version=version)
+        self.metadata.delete_parent_child_relationships(r['uuid'])
 
         if not recursive:
             return
 
-        children = component.get_children(deep=True)
-        children = component.sort_components(children)[::-1]
+        children = object.get_children(deep=True)
+
+        children = object.sort_components(children)[::-1]
         for c in children:
             assert isinstance(c.version, int)
             try:
                 self._remove_component_version(
-                    c.type_id,
+                    c.component,
                     c.identifier,
                     version=c.version,
                     recursive=False,
@@ -500,7 +511,7 @@ class Datalayer:
         old_uuid = None
         try:
             info = self.metadata.get_component(
-                object.type_id, object.identifier, version=object.version
+                object.__class__.__name__, object.identifier, version=object.version
             )
             old_uuid = info['uuid']
         except FileNotFoundError:
@@ -523,10 +534,7 @@ class Datalayer:
             serialized = self._save_artifact(object.uuid, serialized)
 
             self.metadata.replace_object(
-                serialized,
-                identifier=object.identifier,
-                type_id=object.type_id,
-                version=object.version,
+                object.__class__.__name__, old_uuid, serialized
             )
             self.expire(old_uuid)
         else:
@@ -539,14 +547,15 @@ class Datalayer:
         :param uuid: The UUID of the component to expire.
         """
         self.cluster.cache.expire(uuid)
-        self.metadata.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)
         while parents:
-            for uuid in parents:
-                self.cluster.cache.expire(uuid)
-                self.metadata.expire(uuid)
+            for r in parents:
+                self.cluster.cache.expire(r[1])
             parents = sum(
-                [self.metadata.get_component_version_parents(uuid) for uuid in parents],
+                [
+                    self.metadata.get_component_version_parents(uuid[1])
+                    for uuid in parents
+                ],
                 [],
             )
 
@@ -611,7 +620,7 @@ class Datalayer:
         # TODO deprecate
         # like = self._get_content_for_filter(like)
         logging.info('Getting vector-index')
-        vi = self.load('vector_index', vector_index)
+        vi = self.load('VectorIndex', vector_index)
         if outputs is None:
             outs: t.Dict = {}
         else:

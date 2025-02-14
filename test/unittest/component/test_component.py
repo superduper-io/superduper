@@ -43,7 +43,7 @@ def test_reload(db):
 
     db.apply(m)
 
-    reloaded = db.load('model', 'test')
+    reloaded = db.load('ObjectModel', 'test')
     reloaded.unpack()
 
 
@@ -88,7 +88,7 @@ def test_load_lazily(db):
     db.apply(m)
     db.expire(m.uuid)
 
-    reloaded = db.load("model", m.identifier)
+    reloaded = db.load("ObjectModel", m.identifier)
 
     assert isinstance(reloaded.object, Blob)
     assert reloaded.object.bytes is None
@@ -205,7 +205,7 @@ def test_remove_recursive(db):
 
     assert sorted([r['identifier'] for r in db.show()]) == ['c1', 'c2', 'c3']
 
-    db.remove('component', c3.identifier, recursive=True, force=True)
+    db.remove('NewComponent', c3.identifier, recursive=True, force=True)
 
     assert not db.show()
 

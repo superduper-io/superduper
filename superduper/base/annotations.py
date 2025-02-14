@@ -43,7 +43,7 @@ def trigger(
 
             if job:
                 return Job(
-                    type_id=self.type_id,
+                    component=self.__class__.__name__,
                     identifier=self.identifier,
                     uuid=self.uuid,
                     method=f.__name__,

@@ -20,6 +20,7 @@ from superduper.base.annotations import trigger
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
 from superduper.base.leaf import Leaf, LeafMeta
+from superduper.misc.annotations import lazy_classproperty
 
 if t.TYPE_CHECKING:
     from superduper import Document
@@ -147,6 +148,19 @@ class Component(Leaf, metaclass=ComponentMeta):
     build_variables: t.Dict | None = None
     build_template: str | None = None
 
+    @property
+    def component(self):
+        return self.__class__.__name__
+
+    @lazy_classproperty
+    def _new_fields(cls):
+        """Get the schema of the class."""
+        from superduper.misc.schema import get_schema
+
+        s, a = get_schema(cls)
+        s['version'] = 'int'
+        return s
+
     @staticmethod
     def sort_components(components):
         """Sort components based on topological order.
@@ -169,7 +183,7 @@ class Component(Leaf, metaclass=ComponentMeta):
     @property
     def huuid(self):
         """Return a human-readable uuid."""
-        return f'{self.type_id}:{self.identifier}:{self.uuid}'
+        return f'{self.__class__.__name__}:{self.identifier}:{self.uuid}'
 
     def handle_update_or_same(self, other: 'Component'):
         """Handle when a component is changed without breaking changes.
@@ -213,7 +227,9 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         :param deep: If set `True` get all recursively.
         """
-        r = self.dict(schema=True).encode(leaves_to_keep=(Component,))
+        from superduper.components.datatype import Saveable
+
+        r = self.dict(schema=True).encode(leaves_to_keep=(Component, Saveable))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:
@@ -270,7 +286,9 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         :param status: The status to set the component to.
         """
-        return self.db.metadata.set_component_status(self.uuid, str(status))
+        return self.db.metadata.set_component_status(
+            self.__class__.__name__, self.uuid, str(status)
+        )
 
     def create_jobs(
         self,
@@ -327,7 +345,8 @@ class Component(Leaf, metaclass=ComponentMeta):
                         )
                     except KeyError as e:
                         r = self.db.metadata.get_component_by_uuid(uuid=child_uuid)
-                        huuid = f'{r["type_id"]}:{r["identifier"]}:{r["uuid"]}'
+                        class_name = r['_path'].split('.')[-1]
+                        huuid = f'{class_name}:{r["identifier"]}:{r["uuid"]}'
                         if event_type == 'apply':
                             if r['status'] == 'initializing':
                                 raise Exception(
@@ -409,7 +428,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     def _get_metadata(self):
         """Get metadata of the component."""
         metadata = {
-            'type_id': self.type_id,
             'version': self.version,
             'status': self.status,
         }
@@ -488,14 +506,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         if self.cache:
             logging.info(f'Adding {self.type_id}: {self.identifier} to cache')
             cluster.cache.put(self)
-
-    def on_load(self, db: Datalayer) -> None:
-        """Called when this component is loaded from the data store.
-
-        :param db: the db that loaded the component.
-        """
-        assert db
-        # self.declare_component(db.cluster)
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):
@@ -695,6 +705,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         defaults: bool = True,
         refs: bool = False,
         schema: bool = False,
+        path: bool = True,
     ) -> 'Document':
         """A dictionary representation of the component.
 
@@ -702,10 +713,11 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param defaults: If set `true` include defaults.
         :param refs: If set `true` include references.
         :param schema: If `true` include schema.
+        :param path: If `true` include path.
         """
         from superduper import Document
 
-        r = super().dict(metadata=metadata, defaults=defaults, schema=schema)
+        r = super().dict(metadata=metadata, defaults=defaults, schema=schema, path=path)
 
         def _convert_components_to_refs(r):
             if isinstance(r, dict):
@@ -720,7 +732,6 @@ class Component(Leaf, metaclass=ComponentMeta):
             r = Document(_convert_components_to_refs(r), schema=self.class_schema)
 
         if metadata:
-            r['type_id'] = self.type_id
             r['version'] = self.version
             r['identifier'] = self.identifier
 

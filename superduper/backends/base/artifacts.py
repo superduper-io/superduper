@@ -139,3 +139,7 @@ class ArtifactStore(ABC):
     def disconnect(self):
         """Disconnect the client."""
         pass
+
+    @abstractmethod
+    def list(self):
+        """List all artifacts in the store."""

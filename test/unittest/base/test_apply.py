@@ -15,9 +15,7 @@ class MyValidator(Component):
 
 
 class MyComponent(Component):
-    type_id: t.ClassVar[str] = 'my'
     breaks: t.ClassVar[t.Sequence[str]] = ('b',)
-    _fields = {'sub': 'component'}
 
     a: str
     b: int
@@ -38,8 +36,8 @@ def test_simple_apply(db: Datalayer):
 
     db.apply(c)
 
-    assert db.show('my') == ['test']
-    assert db.show('my', 'test') == [0]
+    assert db.show('MyComponent') == ['test']
+    assert db.show('MyComponent', 'test') == [0]
 
 
 def test_skip_same(db: Datalayer):
@@ -56,7 +54,7 @@ def test_skip_same(db: Datalayer):
     # applying same component again,
     # means nothing happens
     # no computations and no updates
-    assert db.show('my', 'test') == [0]
+    assert db.show('MyComponent', 'test') == [0]
 
 
 def test_update_component_version(db: Datalayer):
@@ -64,7 +62,7 @@ def test_update_component_version(db: Datalayer):
 
     db.apply(c)
 
-    reload = db.load('my', 'test')
+    reload = db.load('MyComponent', 'test')
 
     assert reload.a == 'value'
 
@@ -74,9 +72,9 @@ def test_update_component_version(db: Datalayer):
 
     # creates only one version but
     # updates it
-    assert db.show('my', 'test') == [0]
+    assert db.show('MyComponent', 'test') == [0]
 
-    reload = db.load('my', 'test')
+    reload = db.load('MyComponent', 'test')
 
     assert reload.a == 'new-value'
 
@@ -86,7 +84,7 @@ def test_break_version(db: Datalayer):
 
     db.apply(c)
 
-    reload = db.load('my', 'test')
+    reload = db.load('MyComponent', 'test')
 
     assert reload.b == 1
 
@@ -96,9 +94,9 @@ def test_break_version(db: Datalayer):
 
     # creates only one version but
     # updates it
-    assert db.show('my', 'test') == [0, 1]
+    assert db.show('MyComponent', 'test') == [0, 1]
 
-    reload = db.load('my', 'test')
+    reload = db.load('MyComponent', 'test')
 
     assert reload.b == 2
 
@@ -117,7 +115,7 @@ def test_update_nested(db: Datalayer):
 
     db.apply(c)
 
-    assert set(db.show('my')) == {'test', 'sub'}
+    assert set(db.show('MyComponent')) == {'test', 'sub'}
 
     c = MyComponent(
         'test',
@@ -136,11 +134,11 @@ def test_update_nested(db: Datalayer):
     # version
     db.apply(c)
 
-    assert db.show('my', 'test') == [0]
-    assert db.show('my', 'sub') == [0]
+    assert db.show('MyComponent', 'test') == [0]
+    assert db.show('MyComponent', 'sub') == [0]
 
     # Nonetheless the child is updated
-    assert db.load('my', 'sub').a == 'new-sub-value'
+    assert db.load('MyComponent', 'sub').a == 'new-sub-value'
 
 
 def test_break_nested(db: Datalayer):
@@ -157,7 +155,7 @@ def test_break_nested(db: Datalayer):
 
     db.apply(c)
 
-    assert set(db.show('my')) == {'test', 'sub'}
+    assert set(db.show('MyComponent')) == {'test', 'sub'}
 
     c = MyComponent(
         'test',
@@ -175,9 +173,9 @@ def test_break_nested(db: Datalayer):
     # broken by self.sub, so is only updated
     db.apply(c)
 
-    assert db.show('my', 'test') == [0]
-    assert db.show('my', 'sub') == [0, 1]
-    assert db.load('my', 'sub').b == 4
+    assert db.show('MyComponent', 'test') == [0]
+    assert db.show('MyComponent', 'sub') == [0, 1]
+    assert db.load('MyComponent', 'sub').b == 4
 
 
 def test_job_on_update(db: Datalayer):
@@ -189,12 +187,12 @@ def test_job_on_update(db: Datalayer):
 
     db.apply(c)
 
-    assert db.show('my', 'test') == [0]
+    assert db.show('MyComponent', 'test') == [0]
 
     c = MyComponent('test', a='value', b=2, sub=MyValidator('valid', target=2))
     db.apply(c)
 
-    reload = db.load('my', 'test')
+    reload = db.load('MyComponent', 'test')
 
     assert reload.validate_results is not None
 
@@ -249,7 +247,7 @@ def test_diff(db):
 
     db.apply(c)
 
-    assert set(db.show('my')) == {'test', 'sub'}
+    assert set(db.show('MyComponent')) == {'test', 'sub'}
 
     c = MyComponent(
         'test',

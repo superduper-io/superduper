@@ -47,7 +47,7 @@ def build_graph_listener(db: "Datalayer"):
 
     primary_id = db["documents"].primary_id
 
-    model_a = ObjectModel(identifier="model_a", object=func_a)
+    model_a = ObjectModel(identifier="model_a", object=func_a, datatype='pickleencoder')
 
     listener_a = model_a.to_listener(
         key="x",
@@ -59,7 +59,7 @@ def build_graph_listener(db: "Datalayer"):
     def func_b(x, y, o_a):
         return {"x": x, "y": y, "o_a": o_a, "model": "b"}
 
-    model_b = ObjectModel(identifier="model_b", object=func_b)
+    model_b = ObjectModel(identifier="model_b", object=func_b, datatype='pickleencoder')
     listener_b = model_b.to_listener(
         key=("x", "y", listener_a.outputs),
         select=db["documents"]
@@ -72,7 +72,7 @@ def build_graph_listener(db: "Datalayer"):
     def func_c(x, y, z, o_a, o_b):
         return {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
 
-    model_c = ObjectModel(identifier="model_c", object=func_c)
+    model_c = ObjectModel(identifier="model_c", object=func_c, datatype='pickleencoder')
     listener_c = model_c.to_listener(
         key=("x", "y", "z", listener_a.outputs, listener_b.outputs),
         select=db["documents"]

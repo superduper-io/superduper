@@ -42,7 +42,7 @@ def test_renamings(db):
     add_models(db)
     add_listeners(db)
     t = db["documents"]
-    listener_uuid = [db.load('listener', k).outputs for k in db.show("listener")][0]
+    listener_uuid = [db.load('Listener', k).outputs for k in db.show("Listener")][0]
     q = t.select("id", "x", "y").outputs(listener_uuid.split('__', 1)[-1])
     data = q.execute()
     assert isinstance(data[0].unpack()[listener_uuid], np.ndarray)
@@ -58,7 +58,7 @@ def test_serialize_query(db):
 def test_get_data(db):
     add_random_data(db, n=5)
     db["documents"].limit(2)
-    db.metadata.get_component("table", "documents")
+    db.metadata.get_component("Table", "documents")
 
 
 def test_insert_select(db):

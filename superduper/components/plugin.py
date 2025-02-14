@@ -6,7 +6,7 @@ import sys
 import typing as t
 
 from superduper import Component, logging
-from superduper.components.datatype import FileItem, file
+from superduper.components.datatype import FileItem
 from superduper.misc import typing as st
 
 

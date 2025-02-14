@@ -46,7 +46,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         for component_data in self.db.show():
             type_id = component_data['type_id']
             identifier = component_data['identifier']
-            r = self.db.show(type_id=type_id, identifier=identifier, version=-1)
+            r = self.db.show(component=type_id, identifier=identifier, version=-1)
             if r.get('trigger'):
                 with self.lock:
                     self.queue[type_id, identifier] = []

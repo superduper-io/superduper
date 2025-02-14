@@ -6,7 +6,6 @@ from prettytable import PrettyTable
 import superduper as s
 from superduper import logging
 from superduper.backends.base.data_backend import DataBackendProxy
-from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
@@ -35,31 +34,15 @@ class _Loader:
 
     @classmethod
     def create(cls, uri):
-        """Helper method to create metadata backend."""
+        """Helper method to create backend."""
         plugin, flavour = cls.match(uri)
         if cls.not_supported and (plugin, flavour) in cls.not_supported:
             raise ValueError(
-                f"{plugin} with flavour {flavour} not supported "
-                "to create metadata store."
+                f"{plugin} with flavour {flavour} not supported " "to create store."
             )
         plugin = load_plugin(plugin)
         impl = getattr(plugin, cls.impl)
         return impl(uri, flavour=flavour, plugin=plugin)
-
-
-class _MetaDataLoader(_Loader):
-    impl = 'MetaDataStore'
-    patterns = {
-        r'^mongodb:\/\/': ('mongodb', 'mongodb'),
-        r'^mongodb\+srv:\/\/': ('mongodb', 'atlas'),
-        r'^mongomock:\/\/': ('mongodb', 'mongomock'),
-        r'^sqlite:\/\/': ('sqlalchemy', 'base'),
-        r'^postgresql:\/\/': ('sqlalchemy', 'base'),
-        r'^snowflake:\/\/': ('sqlalchemy', 'base'),
-        r'^duckdb:\/\/': ('sqlalchemy', 'base'),
-        r'^mssql:\/\/': ('sqlalchemy', 'base'),
-        r'^mysql:\/\/': ('sqlalchemy', 'base'),
-    }
 
 
 class _DataBackendLoader(_Loader):
@@ -99,11 +82,6 @@ def _build_databackend(uri):
     return DataBackendProxy(_DataBackendLoader.create(uri))
 
 
-def _build_metadata(uri):
-    db = MetaDataStoreProxy(_MetaDataLoader.create(uri))
-    return db
-
-
 def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
@@ -124,10 +102,6 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
 
     cfg = t.cast(Config, cfg)
     databackend_obj = _build_databackend(cfg.data_backend)
-    if cfg.metadata_store:
-        metadata_obj = _build_metadata(cfg.metadata_store)
-    else:
-        metadata_obj = databackend_obj.build_metadata()
 
     if cfg.artifact_store:
         artifact_store = _build_artifact_store(cfg.artifact_store)
@@ -139,7 +113,6 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
 
     datalayer = Datalayer(
         databackend=databackend_obj,
-        metadata=metadata_obj,
         artifact_store=artifact_store,
         cluster=cluster,
     )
@@ -164,7 +137,6 @@ def show_configuration(cfg):
     table.field_names = ["Configuration", "Value"]
     key_values = [
         ('Data Backend', anonymize_url(cfg.data_backend)),
-        ('Metadata Store', anonymize_url(cfg.metadata_store)),
         ('Artifact Store', anonymize_url(cfg.artifact_store)),
     ]
     for key, value in key_values:

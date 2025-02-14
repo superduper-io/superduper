@@ -3,6 +3,7 @@ import random
 import numpy as np
 
 # ruff: noqa: E402
+from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.base.datalayer import Datalayer
 from superduper.components.dataset import Dataset
 from superduper.components.datatype import Array
@@ -30,13 +31,12 @@ def add_random_data(
     table_name: str = "documents",
     n: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
-    # float_array = Array(dtype="float", shape=(32,))
-
     fields = {
         "id": "str",
         "x": "array[float:32]",
         "y": "int",
         "z": "array[float:32]",
+        "_fold": "str",
     }
     t = Table(identifier=table_name, fields=fields)
     db.apply(t)
@@ -92,21 +92,23 @@ def add_models(db: Datalayer):
             )
         db.apply(m)
 
+    db.show()
+
 
 def add_listeners(db: Datalayer, collection_name="documents"):
     add_models(db)
-    model = db.load("model", "linear_a")
+    model = db.load("ObjectModel", "linear_a")
     model.example = np.random.randn(32)
     select = db[collection_name].select()
 
-    i_list = db.apply(
-        Listener(
-            identifier='vector-x',
-            select=select,
-            key="x",
-            model=model,
-        )
+    i_list = Listener(
+        identifier='vector-x',
+        select=select,
+        key="x",
+        model=model,
     )
+
+    i_list = db.apply(i_list)
 
     c_list = db.apply(
         Listener(
@@ -117,7 +119,7 @@ def add_listeners(db: Datalayer, collection_name="documents"):
         )
     )
 
-    model = db.load("model", "linear_a_multi")
+    model = db.load("ObjectModel", "linear_a_multi")
 
     i_list_flat = db.apply(
         Listener(
@@ -137,9 +139,12 @@ def add_vector_index(
     identifier="test_vector_search",
 ):
     try:
-        i_list = db.load("listener", "vector-x")
-        c_list = db.load("listener", "vector-y")
-    except FileNotFoundError:
+        i_list = db.load("Listener", "vector-x")
+        c_list = db.load("Listener", "vector-y")
+        import pdb
+
+        pdb.set_trace()
+    except NonExistentMetadataError:
         i_list, c_list, _ = add_listeners(db)
 
         db.apply(i_list)

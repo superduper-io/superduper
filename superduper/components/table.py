@@ -4,6 +4,7 @@ from superduper import CFG
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.schema import Schema
+from superduper.misc import typing as st
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -18,21 +19,27 @@ class Table(Component):
     :param fields: The schema of the table
     :param primary_id: The primary id of the table
     :param data: Data to insert post creation
+    :param cls: The class to use for the schema
+    :param path: The path to the class
+    :param component: Whether the table is a component
     """
 
-    type_id: t.ClassVar[str] = 'table'
-
-    fields: t.Dict
+    fields: t.Dict | None = None
     primary_id: str = DEFAULT_PRIMARY_ID
     data: Component | None = None
+    cls: st.PickleEncoder = None
+    path: str | None = None
+    component: bool = False
 
     def postinit(self):
         """Post initialization method."""
-        fields = {**self.fields, '_fold': 'str'}
-        from superduper.components.datatype import INBUILT_DATATYPES
-
-        fields = {k: INBUILT_DATATYPES[fields[k]] for k in fields}
-        self.schema = Schema(fields)
+        if self.cls is None:
+            assert isinstance(self.fields, dict), "Fields must be set if cls is not set"
+            self.schema = Schema.build(self.fields)
+        else:
+            if self.path is None:
+                self.path = self.cls.__module__ + '.' + self.cls.__name__
+            self.schema = self.cls.class_schema
         super().postinit()
 
     def cleanup(self, db):

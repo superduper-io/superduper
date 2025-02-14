@@ -19,6 +19,7 @@ def test_basic_template(db):
         model=ObjectModel(
             object=model,
             identifier='test',
+            datatype='int',
         ),
         select=db['documents'].select(),
         key='<var:key>',
@@ -37,15 +38,16 @@ def test_basic_template(db):
     db.apply(template)
 
     # Check template component has not been added to metadata
-    assert 'my_id' not in db.show('model')
-    assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('listener')])
+    assert 'my_id' not in db.show('ObjectModel')
+
+    assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('Listener')])
     listener = template(key='y')
 
     assert listener.key == 'y'
 
     db.apply(listener)
 
-    reloaded_template = db.load('template', template.identifier)
+    reloaded_template = db.load('Template', template.identifier)
     listener = reloaded_template(key='y')
 
     db.apply(listener)
@@ -67,6 +69,7 @@ def test_template_export(db):
         model=ObjectModel(
             object=lambda x: x + 2,
             identifier='test',
+            datatype='int',
         ),
         select=db['<var:table>'].select(),
         key='<var:key>',
@@ -81,7 +84,7 @@ def test_template_export(db):
 
     db.apply(t)
 
-    t = db.load('template', t.identifier)
+    t = db.load('Template', t.identifier)
 
     import tempfile
 

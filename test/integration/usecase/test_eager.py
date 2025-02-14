@@ -31,21 +31,21 @@ def test_graph_deps(db: "Datalayer"):
     def func_a(x):
         return Tuple(x, "a")
 
-    model_a = ObjectModel(identifier="a", object=func_a)
+    model_a = ObjectModel(identifier="a", object=func_a, datatype='pickleencoder')
 
     output_a = model_a(data["x"])
 
     def func_b(x, y, o_a):
         return Tuple(x, y, o_a, "b")
 
-    model_b = ObjectModel(identifier="b", object=func_b)
+    model_b = ObjectModel(identifier="b", object=func_b, datatype='pickleencoder')
 
     output_b = model_b(data["x"], data["y"], output_a)
 
     def func_c(x, y, z, o_a, o_b):
         return Tuple(x, y, z, o_a, o_b, "c")
 
-    model_c = ObjectModel(identifier="c", object=func_c)
+    model_c = ObjectModel(identifier="c", object=func_c, datatype='pickleencoder')
 
     output_c = model_c(data["x"], data["y"], data["z"], output_a, output_b)
 

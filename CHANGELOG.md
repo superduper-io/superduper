@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No need to add `.signature` to `Model` implementations
 - No need to write `Component.__post_init__` to modify attributes (use `Component.postinit`).
 - Move from in-line encoding to schema-based encoding with `Leaf._fields`
-- No need to define _fields
+- No need to define `_fields`
+- Use databackend to perform metadata duties
 
 #### New Features & Functionality
 

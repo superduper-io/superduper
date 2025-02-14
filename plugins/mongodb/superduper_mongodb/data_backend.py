@@ -6,12 +6,10 @@ import click
 from bson.objectid import ObjectId
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.metadata import MetaDataStoreProxy
 from superduper.backends.base.query import Query
 from superduper.components.schema import Schema
 
 from superduper_mongodb.artifacts import MongoDBArtifactStore
-from superduper_mongodb.metadata import MongoDBMetaDataStore
 from superduper_mongodb.utils import connection_callback
 
 OPS_MAP = {
@@ -51,18 +49,11 @@ class MongoDBDataBackend(BaseDataBackend):
         """Generate a random ID."""
         return ObjectId()
 
-    # TODO move to the super
     def reconnect(self):
         """Reconnect to MongoDB databackend."""
         conn, _ = self.connection_callback()
         self.conn = conn
         self._database = self.conn[self.name]
-
-    def build_metadata(self):
-        """Build the metadata store for the data backend."""
-        return MetaDataStoreProxy(
-            MongoDBMetaDataStore(callback=self.connection_callback)
-        )
 
     def build_artifact_store(self):
         """Build the artifact store for the data backend."""
@@ -126,8 +117,6 @@ class MongoDBDataBackend(BaseDataBackend):
         :param identifier: The identifier for the table
         :param mapping: The mapping for the schema
         """
-        # If the data can be converted to JSON,
-        # then save it as native data in MongoDB.
         pass
 
     ###################################
@@ -138,6 +127,15 @@ class MongoDBDataBackend(BaseDataBackend):
         """Get the primary ID for the query."""
         return '_id'
 
+    def replace(self, table: str, condition: t.Dict, r: t.Dict) -> t.List[str]:
+        """Replace data.
+
+        :param table: The table to insert into.
+        :param condition: The condition to replace.
+        :param r: The data to replace.
+        """
+        self._database[table].replace_one(condition, r, upsert=True)
+
     def insert(self, table, documents):
         """Insert documents into the table."""
         for doc in documents:
@@ -146,6 +144,14 @@ class MongoDBDataBackend(BaseDataBackend):
             if '_source' in doc:
                 doc['_source'] = ObjectId(doc['_source'])
         return self._database[table].insert_many(documents).inserted_ids
+
+    def update(self, table, condition, key, value):
+        """Update the table with the key and value."""
+        self._database[table].update_many(condition, {'$set': {key: value}})
+
+    def delete(self, table, condition):
+        """Delete data from the table."""
+        return self._database[table].delete_many(condition)
 
     def missing_outputs(self, table, predict_id: str):
         """Get the missing outputs for the prediction."""

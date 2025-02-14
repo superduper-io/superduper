@@ -34,11 +34,11 @@ def test_vector_index_cleanup(db):
     build_vector_index(db)
     vector_index = "vector_index"
 
-    uuid = db.show('vector_index', vector_index, -1)['uuid']
+    uuid = db.show('VectorIndex', vector_index, -1)['uuid']
 
     assert vector_index, uuid in db.cluster.vector_search.list()
 
-    db.remove('vector_index', vector_index, force=True)
+    db.remove('VectorIndex', vector_index, force=True)
 
     assert vector_index, uuid not in db.cluster.vector_search.list()
 
@@ -49,7 +49,7 @@ def test_initialize_output_datatype_with_dimensions(db):
 
     import numpy
 
-    @model
+    @model(datatype='vector[float:32]')
     def test(x):
         return numpy.random.randn(32)
 

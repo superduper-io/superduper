@@ -1,8 +1,9 @@
 import dataclasses as dc
+import json
 import typing as t
 from pprint import pprint
 
-from superduper import ObjectModel
+from superduper import CFG, ObjectModel
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
 from superduper.base.leaf import Leaf
@@ -67,12 +68,12 @@ def test_encode_leaf_with_children():
         'uuid': obj.uuid,
         'a': 1,
         'b': 'test_b',
-        'c': '?other_ser',
-        '_builds': {
-            'other_ser': {
-                k: v for k, v in obj.c.dict().unpack().items() if k != 'identifier'
-            },
-        },
+        'c': (
+            obj.c.dict().unpack()
+            if CFG.json_native
+            else json.dumps(obj.c.dict().unpack())
+        ),
+        '_builds': {},
         '_files': {},
         '_blobs': {},
     }
@@ -113,7 +114,7 @@ def test_component_with_document():
     builds = r[KEY_BUILDS]
 
     pprint(r)
-    assert len(builds) == 3
+    assert len(builds) == 2
     assert len(r[KEY_BLOBS]) == 1
 
     for leaf in builds:

@@ -17,7 +17,6 @@ import numpy
 from superduper import CFG
 from superduper.base.leaf import Leaf
 from superduper.components.component import Component
-from superduper.misc.annotations import classproperty
 from superduper.misc.utils import str_shape
 
 Decode = t.Callable[[bytes], t.Any]
@@ -111,10 +110,10 @@ class BaseDataType:
         """
 
 
-class LeafType(BaseDataType):
+class ComponentType(BaseDataType):
     """Datatype for encoding leafs."""
 
-    dtype: t.ClassVar[str] = 'json'
+    dtype: t.ClassVar[str] = 'str'
     encodable: t.ClassVar[str] = 'leaf'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
@@ -128,14 +127,15 @@ class LeafType(BaseDataType):
         """
         if isinstance(item, leaves_to_keep):
             key = (
-                f"{item.type_id}:{item.identifier}"
-                if hasattr(item, 'type_id')
+                f"{item.__class__.__name__}:{item.identifier}"
+                if isinstance(item, Component)
                 else item.identifier
             )
             builds[key] = item
             return '?' + key
 
         r = item.dict(schema=True)
+        # TODO why this clause?
         if r.schema:
             r = dict(
                 r.schema.encode_data(
@@ -150,11 +150,7 @@ class LeafType(BaseDataType):
         if '_schema' in r:
             del r['_schema']
 
-        key = (
-            f"{item.type_id}:{identifier}"
-            if isinstance(item, Component)
-            else identifier
-        )
+        key = f"{item.__class__.__name__}:{identifier}"
         builds[key] = r
         return '?' + key
 
@@ -173,20 +169,80 @@ class LeafType(BaseDataType):
             return builds[key]
 
         elif isinstance(item, str) and item.startswith('&'):
-            uuid = item[1:].split(':')[-1]
-            return db.load(uuid=uuid)
+            _, component, _, uuid = item[2:].split(':')
+            return db.load(component=component, uuid=uuid)
 
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a leaf')
 
         out = _decode_leaf(item, builds, db=db)
 
-        if isinstance(out, Component):
-            key = f"{out.type_id}:{out.identifier}"
-        else:
-            key = out.identifier
-
+        key = f"{out.__class__.__name__}:{out.identifier}"
         builds[key] = out
+
+        return out
+
+
+class LeafType(BaseDataType):
+    """Datatype for encoding leafs."""
+
+    dtype: t.ClassVar[str] = 'json'
+    encodable: t.ClassVar[str] = 'leaf'
+
+    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
+        """Encode the item as `bytes`.
+
+        :param item: The item to encode.
+        :param builds: The build-cache dictionary.
+        :param blobs: The cache of blobs (bytes).
+        :param files: The cache of files (paths).
+        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        """
+        r = item.dict(schema=True)
+        if r.schema:
+            r = dict(
+                r.schema.encode_data(
+                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                )
+            )
+        else:
+            r = dict(r)
+
+        if '_schema' in r:
+            del r['_schema']
+
+        return r
+
+    def decode_data(self, item, builds, db):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param builds: The build-cache dictionary.
+        :param db: The Datalayer.
+        """
+        # # TODO why are both cases necessary?
+        # if isinstance(item, str) and item.startswith('?'):
+        #     key = item[1:]
+        #     if isinstance(builds[key], dict):
+        #         r = {'identifier': key.split(':')[-1], **builds[key]}
+        #         builds[key] = _decode_leaf(r, builds, db=db)
+        #     return builds[key]
+
+        # elif isinstance(item, str) and item.startswith('&'):
+        #     component, _, uuid = item[2:].split(':')
+        #     return db.load(component=component, uuid=uuid)
+
+        # elif isinstance(item, str):
+        #     raise ValueError(f'Unknown reference type {item} for a leaf')
+
+        out = _decode_leaf(item, builds, db=db)
+
+        # if isinstance(out, Component):
+        #     key = f"{out.__class__.__name__}:{out.identifier}"
+        # else:
+        #     key = out.identifier
+
+        # builds[key] = out
 
         return out
 
@@ -238,7 +294,7 @@ class SDict(BaseDataType):
         assert isinstance(item, dict)
         return {
             k: (
-                LeafType().encode_data(
+                ComponentType().encode_data(
                     v, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
                 if isinstance(v, Leaf)
@@ -254,8 +310,7 @@ class SDict(BaseDataType):
         :param builds: The build-cache dictionary.
         :param db: The Datalayer.
         """
-        leaf_type = LeafType()
-        return {k: leaf_type.decode_data(v, builds, db) for k, v in item.items()}
+        return {k: ComponentType().decode_data(v, builds, db) for k, v in item.items()}
 
 
 class SList(BaseDataType):
@@ -276,7 +331,7 @@ class SList(BaseDataType):
         assert isinstance(item, list)
         return [
             (
-                LeafType().encode_data(
+                ComponentType().encode_data(
                     r, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
                 if isinstance(r, Leaf)
@@ -292,8 +347,7 @@ class SList(BaseDataType):
         :param builds: The builds.
         :param db: The Datalayer.
         """
-        leaf_type = LeafType()
-        return [leaf_type.decode_data(r, builds, db) for r in item]
+        return [ComponentType().decode_data(r, builds, db) for r in item]
 
 
 @dc.dataclass(kw_only=True)
@@ -417,12 +471,7 @@ class JSON(BaseDataType):
     """Datatype for encoding json-able items."""
 
     encodable: t.ClassVar[str] = 'native'
-
-    @classproperty
-    def dtype(self):
-        if CFG.json_native:
-            return 'json'
-        return 'str'
+    dtype: t.ClassVar[str] = 'json'
 
     def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
         """Encode the item as a string.
@@ -493,10 +542,14 @@ class _Artifact:
         :param files: The cache of files (paths).
         :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
-        b = Blob(
-            bytes=self._encode_data(item),
-            builder=self._decode_data,
-        )
+        if isinstance(item, Blob):
+            b = item
+            b.init()
+        else:
+            b = Blob(
+                bytes=self._encode_data(item),
+                builder=self._decode_data,
+            )
         blobs[b.identifier] = b.bytes
         return b.reference
 
@@ -507,6 +560,8 @@ class _Artifact:
         :param builds: The build cache
         :param db: The datalayer.
         """
+        if isinstance(item, Blob):
+            return item
         assert isinstance(item, str)
         assert item.startswith('&')
         return Blob(
@@ -660,6 +715,7 @@ class _DatatypeLookup:
             Pickle(),
             File(),
             LeafType(),
+            ComponentType(),
             SDict(),
             SList(),
             FieldType('str'),

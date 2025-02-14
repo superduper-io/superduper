@@ -1,4 +1,4 @@
-from .data_backend import IbisDataBackend as DataBackend
+from .data_backend import SQLDatabackend as DataBackend
 
 __version__ = "0.5.1"
 

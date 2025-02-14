@@ -40,8 +40,6 @@ class FunctionCronJob(CronJob):
     :param function: Callable to run
     """
 
-    _fields = {'function': 'default'}
-
     function: t.Callable
 
     @ensure_initialized

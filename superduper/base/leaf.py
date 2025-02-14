@@ -85,15 +85,6 @@ class LeafMeta(type):
                 param_string += f':param {k}: {v}\n'
             cls.__doc__ = placeholder_doc.replace('!!!', param_string)
 
-        cls._fields = copy.deepcopy(cls._fields)
-        for base in bases:
-            try:
-                cls._fields.update(
-                    {k: v for k, v in base._fields.items() if k not in cls._fields}
-                )
-            except AttributeError:
-                continue
-
         return cls
 
 
@@ -111,9 +102,6 @@ class Leaf(metaclass=LeafMeta):
     """
 
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
-    # TODO no longer needed?
-    literals: t.ClassVar[t.Sequence[str]] = ()
-    _fields: t.ClassVar[t.Dict[str, t.Union['BaseDataType', str]]] = {}
 
     identifier: str
     db: dc.InitVar[t.Optional['Datalayer']] = None
@@ -339,18 +327,6 @@ class Leaf(metaclass=LeafMeta):
                 out[f.name] = value
         return out
 
-    @classmethod
-    def build_class_schema(cls, db):
-        from superduper import Schema
-        from superduper.components.datatype import INBUILT_DATATYPES
-
-        _fields = cls._fields.copy()
-        for k in _fields:
-            if isinstance(_fields[k], str):
-                _fields[k] = INBUILT_DATATYPES[_fields[k].lower()]
-
-        return Schema(_fields)
-
     # TODO the signature does not agree with the `Component.dict` method
     def dict(self, metadata: bool = True, defaults: bool = True, schema: bool = False):
         """Return dictionary representation of the object.
@@ -377,9 +353,6 @@ class Leaf(metaclass=LeafMeta):
             for k in self.metadata:
                 if k in r:
                     del r[k]
-
-        if self.literals:
-            r['_literals'] = list(self.literals)
 
         from superduper.components.datatype import DEFAULT_SERIALIZER
 

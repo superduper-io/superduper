@@ -38,7 +38,6 @@ class Listener(CDC):
 
     type_id: t.ClassVar[str] = 'listener'
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
-    _fields = {'model': 'component', 'select': 'leaf', 'output_table': 'component'}
     key: st.JSON
     model: Model
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)

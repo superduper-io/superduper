@@ -24,9 +24,7 @@ class Application(Component):
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)
-    _fields = {'components': 'slist'}
 
-    literals: t.ClassVar[t.Sequence[str]] = ("template",)
     type_id: t.ClassVar[str] = 'application'
     components: t.List[Component]
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None

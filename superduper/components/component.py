@@ -138,7 +138,6 @@ class Component(Leaf, metaclass=ComponentMeta):
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
     type_id: t.ClassVar[str] = 'component'
-    _fields = {'upstream': 'slist'}
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
     upstream: t.Optional[t.List['Component']] = None
@@ -421,21 +420,18 @@ class Component(Leaf, metaclass=ComponentMeta):
         """Get dependencies on the component."""
         return ()
 
+    # TODO why both methods?
     def init(self):
         """Method to help initiate component field dependencies."""
-        self.unpack(db=self.db)
+        self.unpack()
 
-    # TODO Why both methods?
-    def unpack(self, db=None):
+    def unpack(self):
         """Method to unpack the component.
 
         This method is used to initialize all the fields of the component and leaf
-
-        :param db: The database to use for the operation.
         """
 
         def _init(item):
-            nonlocal db
             if isinstance(item, Component):
                 item.init()
                 return item
@@ -454,12 +450,9 @@ class Component(Leaf, metaclass=ComponentMeta):
 
             return item
 
-        # TODO is this necessary?
         for f in dc.fields(self):
             item = getattr(self, f.name)
             item = _init(item)
-            if f.name in self._fields and isinstance(item, bytes):
-                item = self.class_schema.fields[f.name].decode_data(item)
             setattr(self, f.name, item)
 
         return self

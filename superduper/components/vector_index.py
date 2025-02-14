@@ -107,7 +107,6 @@ class VectorIndex(CDC):
 
     type_id: t.ClassVar[str] = 'vector_index'
     breaks: t.ClassVar[t.Sequence[str]] = ('indexing_listener',)
-    _fields = {'indexing_listener': 'leaf', 'compatible_listener': 'leaf'}
 
     indexing_listener: Listener
     compatible_listener: t.Optional[Listener] = None

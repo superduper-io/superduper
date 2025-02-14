@@ -21,7 +21,6 @@ class Table(Component):
     """
 
     type_id: t.ClassVar[str] = 'table'
-    _fields = {'schema': 'component'}
 
     fields: t.Dict
     primary_id: str = DEFAULT_PRIMARY_ID

@@ -28,9 +28,6 @@ class _BaseTemplate(Component):
     :param files: File identifiers in `Template.component`.
     :param substitutions: Substitutions to be made to create variables.
     """
-
-    literals: t.ClassVar[t.Tuple[str]] = ('template',)
-
     template: st.Dill
     template_variables: t.Optional[t.List[str]] = None
     types: t.Optional[t.Dict] = None
@@ -117,7 +114,6 @@ class Template(_BaseTemplate):
     :param queries: `QueryTemplate` instances to be used with the template.
     """
 
-    _fields = {'staged_file': 'file'}
     type_id: t.ClassVar[str] = "template"
 
     requirements: t.List[str] | None = None

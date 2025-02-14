@@ -27,7 +27,6 @@ class Dataset(Component):
     """
 
     type_id: t.ClassVar[str] = 'dataset'
-    _fields = {'raw_data': 'default', 'select': 'leaf'}
 
     select: t.Optional[Query] = None
     sample_size: t.Optional[int] = None
@@ -116,7 +115,6 @@ class Data(Component):
     :param raw_data: The raw data.
     """
 
-    _fields = {'raw_data': 'default'}
     type_id: t.ClassVar[str] = 'data'
     raw_data: t.Any
 

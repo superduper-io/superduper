@@ -1044,7 +1044,6 @@ class ImportedModel(Model):
 
     """
 
-    _fields = {'object': 'leaf'}
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
     object: Leaf
     method: t.Optional[str] = None

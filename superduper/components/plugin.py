@@ -19,7 +19,6 @@ class Plugin(Component):
     """
 
     type_id: t.ClassVar[str] = "plugin"
-    _fields = {"path": file}
 
     path: st.File
     identifier: str = ""

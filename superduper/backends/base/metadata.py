@@ -145,6 +145,15 @@ class MetaDataStore(ABC):
             ids = [relation['uuid'] for relation in relations]
         return ids
 
+    def get_children_relations(self, parent: str):
+        """
+        Get all children of a component.
+
+        :param parent: parent component
+        """
+        relations = self._get_data('_parent_child', {'parent_id': parent})
+        return [relation['child_id'] for relation in relations]
+
     # TODO: Refactor to use _create_data, _delete_data, _get_data
     @abstractmethod
     def _create_data(self, table_name, datas):

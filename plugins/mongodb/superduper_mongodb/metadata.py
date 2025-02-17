@@ -82,8 +82,8 @@ class MongoMetaDataStore(MetaDataStore):
         """
         self.parent_child_mappings.delete_many(
             {
-                'parent': parent,
-                'child': child,
+                'parent_id': parent,
+                'child_id': child,
             }
         )
 
@@ -95,8 +95,8 @@ class MongoMetaDataStore(MetaDataStore):
         """
         self.parent_child_mappings.insert_one(
             {
-                'parent': parent,
-                'child': child,
+                'parent_id': parent,
+                'child_id': child,
             }
         )
 
@@ -275,7 +275,7 @@ class MongoMetaDataStore(MetaDataStore):
             {'type_id': type_id, 'identifier': identifier, 'version': version},
             {'uuid': 1, 'id': 1},
         )['uuid']
-        doc = {'child': uuid}
+        doc = {'child_id': uuid}
         return self.parent_child_mappings.count_documents(doc)
 
     def delete_component_version(
@@ -358,7 +358,9 @@ class MongoMetaDataStore(MetaDataStore):
 
         :param uuid: unique identifier of component
         """
-        return [r['parent'] for r in self.parent_child_mappings.find({'child': uuid})]
+        return [
+            r['parent_id'] for r in self.parent_child_mappings.find({'child_id': uuid})
+        ]
 
     def _replace_object(
         self,

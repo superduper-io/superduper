@@ -668,6 +668,7 @@ class Datalayer:
         children = component.get_children(deep=True)
         children = component.sort_components(children)[::-1]
         for c in children:
+            self.metadata.delete_parent_child(component.uuid, c.uuid)
             assert isinstance(c.version, int)
             try:
                 self._remove_component_version(
@@ -731,9 +732,18 @@ class Datalayer:
                 version=object.version,
             )
             self.expire(old_uuid)
+            self._remove_old_children_relations(object)
         else:
             serialized = serialized.encode(keep_schema=False)
             self.metadata.create_component(serialized)
+
+
+    def _remove_old_children_relations(self, object: Component):
+        exists_relations = self.metadata.get_children_relations(object.uuid)
+        now_relations = [c.uuid for c in object.get_children(deep=True)]
+        delete_relations = set(exists_relations) - set(now_relations)
+        for c in delete_relations:
+            self.metadata.delete_parent_child(object.uuid, c)
 
     def expire(self, uuid):
         """Expire a component from the cache."""

@@ -306,6 +306,9 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self._table_mapping = {
             '_artifact_relations': self.artifact_table,
+            '_parent_child': self.parent_child_association_table,
+            '_component': self.component_table,
+            '_job': self.job_table,
         }
 
         try:

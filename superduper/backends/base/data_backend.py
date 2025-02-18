@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -78,14 +79,6 @@ class BaseDataBackend(ABC):
     def build_artifact_store(self):
         """Build a default artifact store based on current connection."""
         pass
-
-    @abstractmethod
-    def create_table_and_schema(self, identifier: str, schema: "Schema"):
-        """Create a schema in the data-backend.
-
-        :param identifier: The identifier of the table.
-        :param schema: The schema to create.
-        """
 
     @abstractmethod
     def check_output_dest(self, predict_id) -> bool:
@@ -301,6 +294,27 @@ class BaseDataBackend(ABC):
 
         results = sorted(results, key=lambda x: x['score'], reverse=True)
         return results
+
+    def generate_clean_identifier(self, schema: "Schema") -> str:
+        """Generate a clean identifier from the schema fields.
+
+        :param schema: The schema object(dictionary of field names).
+        :return: A clean identifier.
+        """
+        field_names = [key for key in schema.keys()]
+        schema_string = ','.join(field_names)
+        identifier_hash = hashlib.sha256(schema_string.encode('utf-8')).hexdigest()[:16]
+        return identifier_hash
+
+    def create_table_and_schema(self, identifier: str, schema: "Schema"):
+        """Create a schema in the data-backend.
+
+        :param identifier: The identifier of the table.
+        :param schema: The schema to create.
+        """
+        clean_identifier = self.generate_clean_identifier(schema)
+        self.create_backend_table(clean_identifier, schema)
+        logging.info(f"Created table: {clean_identifier}")
 
 
 class DataBackendProxy:

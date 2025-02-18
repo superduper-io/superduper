@@ -16,8 +16,6 @@ def build_chain_listener(db: "Datalayer"):
 
     db["documents"].insert(data)
 
-    data = list(db["documents"].select().execute(eager_mode=True))[0]
-
     model_a = ObjectModel(identifier="a", object=lambda x: f"{x}->a")
 
     model_b = ObjectModel(identifier="b", object=lambda x: f"{x}->b")

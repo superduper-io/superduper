@@ -7,6 +7,7 @@ import pytest
 from superduper import Application, ObjectModel, Schema, superduper
 from superduper.base.document import Document
 from superduper.components.datatype import pickle_encoder
+from superduper.components.listener import Listener
 from superduper.components.table import Table
 
 if t.TYPE_CHECKING:
@@ -35,7 +36,8 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
 
     model1 = ObjectModel(identifier="model1", object=lambda x: x + 1)
 
-    listener1 = model1.to_listener(
+    listener1 = Listener(
+        model=model1,
         key="x",
         select=db["documents"].select(),
         identifier="listener1",
@@ -43,16 +45,16 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
 
     model2 = ObjectModel(identifier="model2", object=lambda y: y + 2)
 
-    listener2 = model2.to_listener(
-        key="y", select=db["documents"].select(), identifier="listener2"
+    listener2 = Listener(
+        model=model2, key="y", select=db["documents"].select(), identifier="listener2"
     )
 
     model3 = ObjectModel(
         identifier="model3", object=lambda z: z * 3, datatype=pickle_encoder
     )
 
-    listener3 = model3.to_listener(
-        key="z", select=db["documents"].select(), identifier="listener3"
+    listener3 = Listener(
+        model=model3, key="z", select=db["documents"].select(), identifier="listener3"
     )
 
     db.apply(listener1)
@@ -98,8 +100,10 @@ def test_wrap_as_application_from_db(db: "Datalayer"):
 def test_sort_components(db):
     m = ObjectModel('test', object=lambda x: x + 1)
 
-    l1 = m.to_listener(key='x', select=db['docs'].select(), identifier='l1')
-    l2 = m.to_listener(
+    l1 = Listener(model=m, key='x', select=db['docs'].select(), identifier='l1')
+    l1 = Listener(model=m, key='x', select=db['docs'].select(), identifier='l1')
+    l2 = Listener(
+        model=m,
         key=l1.outputs,
         select=db[l1.outputs].select(),
         identifier='l2',

@@ -127,8 +127,10 @@ def test_cross_reference(db):
         identifier='my_id',
     )
 
-    l1 = m.to_listener(select=db['docs'].select(), key='x', identifier='l1')
-    l2 = m.to_listener(select=db[l1.outputs].select(), key=l1.outputs, identifier='l2')
+    l1 = Listener(model=m, select=db['docs'].select(), key='x', identifier='l1')
+    l2 = Listener(
+        model=m, select=db[l1.outputs].select(), key=l1.outputs, identifier='l2'
+    )
 
     app = Application('my-app', components=[l1, l2])
 

@@ -1,4 +1,5 @@
 from superduper import Model
+from superduper.components.listener import Listener
 
 
 class MyModel(Model):
@@ -18,12 +19,14 @@ def test_reapply(db):
 
     def build(name, data):
         model = MyModel('test', a=name, b=data)
-        listener_1 = model.to_listener(
+        listener_1 = Listener(
+            model=model,
             key='x',
             select=db['docs'].select(),
             identifier='listener_1',
         )
-        return model.to_listener(
+        return Listener(
+            model=model,
             key=listener_1.outputs,
             select=db[listener_1.outputs].select(),
             identifier='listener_2',

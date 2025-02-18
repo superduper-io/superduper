@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from superduper import Document
+from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 
 
@@ -33,7 +34,8 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
         datatype=datatype if not flatten else datatype_flat,
     )
 
-    upstream_listener = upstream_model.to_listener(
+    upstream_listener = Listener(
+        model=upstream_model,
         key="x",
         select=db["test"].select(),
         identifier="upstream",
@@ -48,7 +50,8 @@ def test_downstream_task_workflows_are_triggered(db, data, flatten):
         datatype=datatype if not flatten else datatype_flat,
     )
 
-    downstream_listener = downstream_model.to_listener(
+    downstream_listener = Listener(
+        model=downstream_model,
         key=upstream_listener.outputs,
         select=db[upstream_listener.outputs].select(),
         identifier="downstream",

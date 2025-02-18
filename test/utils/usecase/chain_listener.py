@@ -1,6 +1,7 @@
 import typing as t
 
 from superduper import ObjectModel
+from superduper.components.listener import Listener
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -22,21 +23,24 @@ def build_chain_listener(db: "Datalayer"):
 
     model_c = ObjectModel(identifier="c", object=lambda x: f"{x}->c")
 
-    listener_a = model_a.to_listener(
+    listener_a = Listener(
+        model=model_a,
         select=db["documents"].select(),
         key="x",
         identifier="a",
     )
     db.apply(listener_a)
 
-    listener_b = model_b.to_listener(
+    listener_b = Listener(
+        model=model_b,
         select=db[listener_a.outputs].select(),
         key=listener_a.outputs,
         identifier="b",
     )
     db.apply(listener_b)
 
-    listener_c = model_c.to_listener(
+    listener_c = Listener(
+        model=model_c,
         select=db[listener_b.outputs].select(),
         key=listener_b.outputs,
         identifier="c",

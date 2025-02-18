@@ -3,6 +3,7 @@ import typing as t
 import numpy as np
 
 from superduper import Document, ObjectModel
+from superduper.components.listener import Listener
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -49,7 +50,8 @@ def build_graph_listener(db: "Datalayer"):
 
     model_a = ObjectModel(identifier="model_a", object=func_a, datatype='pickleencoder')
 
-    listener_a = model_a.to_listener(
+    listener_a = Listener(
+        model=model_a,
         key="x",
         select=db["documents"].select(),
         identifier="a",
@@ -60,7 +62,9 @@ def build_graph_listener(db: "Datalayer"):
         return {"x": x, "y": y, "o_a": o_a, "model": "b"}
 
     model_b = ObjectModel(identifier="model_b", object=func_b, datatype='pickleencoder')
-    listener_b = model_b.to_listener(
+
+    listener_b = Listener(
+        model=model_b,
         key=("x", "y", listener_a.outputs),
         select=db["documents"]
         .select(primary_id, "x", "y")
@@ -73,7 +77,8 @@ def build_graph_listener(db: "Datalayer"):
         return {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
 
     model_c = ObjectModel(identifier="model_c", object=func_c, datatype='pickleencoder')
-    listener_c = model_c.to_listener(
+    listener_c = Listener(
+        model=model_c,
         key=("x", "y", "z", listener_a.outputs, listener_b.outputs),
         select=db["documents"]
         .select(primary_id, "x", "y", "z")

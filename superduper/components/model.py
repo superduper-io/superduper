@@ -9,7 +9,6 @@ import re
 import sys
 import typing as t
 from abc import abstractmethod
-from collections import defaultdict
 from functools import wraps
 
 import requests
@@ -719,62 +718,6 @@ class Model(Component, metaclass=ModelMeta):
 
         assert isinstance(self.db, Datalayer)
         return self.db[f'{CFG.output_prefix}{predict_id}'].insert(documents)
-
-    def to_vector_index(
-        self,
-        key: str | t.List | t.Dict,
-        select: Query,
-        predict_kwargs: t.Optional[dict] = None,
-        identifier: t.Optional[str] = None,
-        **kwargs,
-    ):
-        """
-        Create a single-model `VectorIndex` from the model.
-
-        :param key: Key to be bound to the model
-        :param select: Object for selecting which data is processed
-        :param predict_kwargs: Keyword arguments to self.model.predict
-        :param identifier: Identifier for the listener
-        :param kwargs: Additional keyword arguments
-        """
-        from superduper.components.vector_index import VectorIndex
-
-        listener = self.to_listener(
-            key=key,
-            select=select,
-            predict_kwargs=predict_kwargs,
-            **kwargs,
-        )
-        identifier = identifier or f'{self.identifier}/vector_index'
-        return VectorIndex(identifier=identifier, indexing_listener=listener)
-
-    def to_listener(
-        self,
-        key: str | t.List | t.Dict,
-        select: Query,
-        predict_kwargs: t.Optional[dict] = None,
-        identifier: t.Optional[str] = None,
-        **kwargs,
-    ):
-        """Convert the model to a listener.
-
-        :param key: Key to be bound to the model
-        :param select: Object for selecting which data is processed
-        :param predict_kwargs: Keyword arguments to self.model.predict
-        :param identifier: Identifier for the listener
-        :param kwargs: Additional keyword arguments to pass to `Listener`
-        """
-        from superduper.components.listener import Listener
-
-        listener = Listener(
-            key=key,
-            select=select,
-            model=self,
-            identifier=identifier or self.identifier,
-            predict_kwargs=predict_kwargs or {},
-            **kwargs,
-        )
-        return listener
 
     def validate(self, key, dataset: Dataset, metrics: t.Sequence[Metric]):
         """Validate `dataset` on metrics.

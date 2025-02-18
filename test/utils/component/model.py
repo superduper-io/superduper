@@ -51,7 +51,8 @@ def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer"):
 
     model.identifier = f'test-{random_id()}'
 
-    listener = model.to_listener(
+    listener = Listener(
+        model=model,
         key="data",
         select=db["datas"].select(),
         identifier=f'test-{random_id()}',

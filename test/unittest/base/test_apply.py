@@ -5,6 +5,7 @@ from superduper.base.annotations import trigger
 from superduper.base.apply import _apply
 from superduper.base.datalayer import Datalayer
 from superduper.components.application import Application
+from superduper.components.listener import Listener
 
 
 class MyValidator(Component):
@@ -209,16 +210,24 @@ def test_duplicate_job_submission(db: Datalayer):
     def my_func(x):
         return x + 1
 
-    listener_1 = ObjectModel(
-        'list1',
-        object=my_func,
-    ).to_listener(key='x', select=db['docs'].select())
+    listener_1 = Listener(
+        model=ObjectModel(
+            'list1',
+            object=my_func,
+        ),
+        key='x',
+        select=db['docs'].select(),
+    )
 
-    listener_2 = ObjectModel(
-        'list2',
-        object=my_func,
-        upstream=listener_1,
-    ).to_listener(key=listener_1.outputs, select=db[listener_1.outputs].select())
+    listener_2 = Listener(
+        ObjectModel(
+            'list2',
+            object=my_func,
+            upstream=listener_1,
+        ),
+        key=listener_1.outputs,
+        select=db[listener_1.outputs].select(),
+    )
 
     c = Application(
         'test',

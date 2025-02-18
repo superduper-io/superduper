@@ -387,9 +387,14 @@ def test_autofill_data_listener(db):
             {"x": 3},
         ]
     )
-    l1 = get_model().to_listener(select=db['test'].select(), key='x', identifier='l1')
-    l2 = get_model().to_listener(
-        select=db[l1.outputs].select(), key=l1.outputs, identifier='l2'
+    l1 = Listener(
+        model=get_model(), select=db['test'].select(), key='x', identifier='l1'
+    )
+    l2 = Listener(
+        model=get_model(),
+        select=db[l1.outputs].select(),
+        key=l1.outputs,
+        identifier='l2',
     )
 
     db.apply(l1)

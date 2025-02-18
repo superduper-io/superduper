@@ -2,6 +2,8 @@ import typing as t
 
 import numpy as np
 
+from superduper.components.listener import Listener
+
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
@@ -56,7 +58,8 @@ def build_vector_index(
         identifier="model", object=predict, datatype=f'vector[int:{VECTOR_SIZE}]'
     )
 
-    indexing_model = indexing_model.to_listener(
+    indexing_listener = Listener(
+        model=indexing_model,
         key="x",
         select=db["documents"].select(),
         identifier="vector",
@@ -67,7 +70,8 @@ def build_vector_index(
         object=lambda y: predict(-y),
     )
 
-    compatible_listener = compatible_model.to_listener(
+    compatible_listener = Listener(
+        model=compatible_model,
         key="y",
         select=None,
         identifier="compatible",
@@ -75,7 +79,7 @@ def build_vector_index(
 
     vector_index = VectorIndex(
         identifier="vector_index",
-        indexing_listener=indexing_model,
+        indexing_listener=indexing_listener,
         compatible_listener=compatible_listener,
     )
     if measure:

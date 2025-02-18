@@ -628,7 +628,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
         from superduper import Document
 
-        if db is not None:
+        if db is not None and os.path.exists(path + '/blobs'):
             for blob in os.listdir(path + '/' + 'blobs'):
                 with open(path + '/blobs/' + blob, 'rb') as f:
                     data = f.read()

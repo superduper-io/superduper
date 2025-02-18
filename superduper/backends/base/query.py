@@ -360,7 +360,7 @@ def outputs(self, *predict_ids):
     return d.to_query()
 
 
-def get(self, eager_mode: bool = False, raw: bool = False, **kwargs):
+def get(self, raw: bool = False, **kwargs):
     """Get a single row of data.
 
     # noqa
@@ -374,8 +374,6 @@ def get(self, eager_mode: bool = False, raw: bool = False, **kwargs):
         query = self.filter(*filters)
 
     result = query.db.databackend.get(query, raw=raw)
-    if eager_mode:
-        return self._convert_eager_mode_results(result)
     return result
 
 
@@ -937,34 +935,15 @@ class Query(_BaseQuery):
 
         return modified_query.execute()
 
-    def execute(self, eager_mode=False, raw: bool = False):
+    def execute(self, raw: bool = False):
         """Execute the query.
 
-        :param eager_mode: Whether to execute in eager mode.
         :param raw: Whether to return raw results.
         """
         if self.parts and self.parts[0] == 'primary_id':
             return self.db.databackend.primary_id(self)
         results = self.db.databackend.execute(self, raw=raw)
-        if eager_mode:
-            return self._convert_eager_mode_results(results)
         return results
-
-    def _convert_eager_mode_results(self, results):
-        from superduper.misc.eager import SuperDuperData, SuperDuperDataType
-
-        new_results = []
-        if isinstance(results, list):
-            for r in results:
-                r = Document(r.unpack())
-                sdd = SuperDuperData(r, type=SuperDuperDataType.DATA, query=self)
-                new_results.append(sdd)
-            return new_results
-
-        elif isinstance(results, dict):
-            return SuperDuperData(results, type=SuperDuperDataType.DATA, query=self)
-
-        raise ValueError(f'Cannot convert {results} to eager mode results')
 
 
 def _parse_op_part(table, col, symbol, operand, db, documents=()):

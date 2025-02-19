@@ -420,7 +420,7 @@ class Datalayer:
 
         if (
             isinstance(self.cluster, LocalCluster)
-            and table in self.metadata.show_cdc_tables() 
+            and table in self.metadata.show_cdc_tables()
             and not table.startswith(CFG.output_prefix)
         ):
             self.cluster.cdc.handle_event(
@@ -736,7 +736,6 @@ class Datalayer:
         else:
             serialized = serialized.encode(keep_schema=False)
             self.metadata.create_component(serialized)
-
 
     def _remove_old_children_relations(self, object: Component):
         exists_relations = self.metadata.get_children_relations(object.uuid)

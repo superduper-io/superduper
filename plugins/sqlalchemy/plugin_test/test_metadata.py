@@ -33,11 +33,11 @@ def test_artifact_relation(metadata):
 
 
 def test_cleanup_metadata():
-
     db = superduper(DATABASE_URL)
 
     @model
-    def test(x): return x + 1
+    def test(x):
+        return x + 1
 
     db.apply(test, force=True)
 
@@ -48,4 +48,3 @@ def test_cleanup_metadata():
     assert not db.show(), 'The metadata was not cleared up'
 
     assert not db.metadata._cache, f'Cache not cleared: {db.metadata._cache}'
-

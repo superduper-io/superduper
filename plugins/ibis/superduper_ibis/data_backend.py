@@ -105,11 +105,11 @@ class IbisDataBackend(BaseDataBackend):
 
     def _check_token(self):
         import datetime
+
         auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
         with open(auth_token) as f:
             expiration_date = datetime.datetime.strptime(
-                f.read().split('\n')[0].strip(),
-                "%Y-%m-%d %H:%M:%S.%f"
+                f.read().split('\n')[0].strip(), "%Y-%m-%d %H:%M:%S.%f"
             )
         if expiration_date < datetime.datetime.now():
             raise Exception("auth token expired")

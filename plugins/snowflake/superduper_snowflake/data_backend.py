@@ -6,14 +6,16 @@ import ibis
 import pandas
 import snowflake.connector
 
-from superduper_snowflake.schema import ibis_schema_to_snowpark_cols, snowpark_cols_to_schema
+from superduper_snowflake.schema import (
+    ibis_schema_to_snowpark_cols,
+    snowpark_cols_to_schema,
+)
 from superduper import logging
 from superduper_ibis.data_backend import IbisDataBackend
 from snowflake.snowpark import Session
 
 
 class SnowflakeDataBackend(IbisDataBackend):
-
     @wraps(IbisDataBackend.__init__)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,8 +24,9 @@ class SnowflakeDataBackend(IbisDataBackend):
 
     @staticmethod
     def _get_snowpark_session(uri):
-        logging.info('Creating Snowpark session for'
-                     ' snowflake vector-search implementation')
+        logging.info(
+            'Creating Snowpark session for' ' snowflake vector-search implementation'
+        )
         if uri == 'snowflake://':
             connection_parameters = dict(
                 host=os.environ['SNOWFLAKE_HOST'],
@@ -37,9 +40,7 @@ class SnowflakeDataBackend(IbisDataBackend):
             )
         else:
             if '?warehouse=' not in uri:
-                match = re.match(
-                    '^snowflake:\/\/(.*):(.*)\@(.*)\/(.*)\/(.*)$', uri
-                )
+                match = re.match('^snowflake:\/\/(.*):(.*)\@(.*)\/(.*)\/(.*)$', uri)
                 user, password, account, database, schema = match.groups()
                 warehouse = None
             else:
@@ -76,7 +77,13 @@ class SnowflakeDataBackend(IbisDataBackend):
     def _connection_callback(self, uri):
         if uri != 'snowflake://':
             return IbisDataBackend._connection_callback(uri)
-        return ibis.snowflake.from_connection(self._do_connection_callback(uri), create_object_udfs=False), 'snowflake', False
+        return (
+            ibis.snowflake.from_connection(
+                self._do_connection_callback(uri), create_object_udfs=False
+            ),
+            'snowflake',
+            False,
+        )
 
     def reconnect(self):
         super().reconnect()
@@ -93,5 +100,4 @@ class SnowflakeDataBackend(IbisDataBackend):
         snowpark_cols = ibis_schema_to_snowpark_cols(ibis_schema)
         snowpark_schema = snowpark_cols_to_schema(snowpark_cols, columns)
         native_df = self.snowpark.create_dataframe(rows, schema=snowpark_schema)
-        return native_df.write.saveAsTable(f'"{table_name}"', mode='append')  
-
+        return native_df.write.saveAsTable(f'"{table_name}"', mode='append')

@@ -41,6 +41,7 @@ def _connect_snowflake():
 
     import snowflake.connector
     import os
+
     if os.environ.get('SUPERDUPER_AUTH_DEBUG'):
         with open(os.environ['SUPERDUPER_AUTH_TOKEN'], 'w') as f:
             f.write('2026-01-01 23:59:59.999999\n')
@@ -107,7 +108,7 @@ class _Cache:
             del self._uuid2metadata[r['uuid']]
             if not self._type_id_identifier2metadata[(type_id, identifier)]:
                 del self._type_id_identifier2metadata[(type_id, identifier)]
-        
+
     def add_metadata(self, metadata):
         metadata = copy.deepcopy(metadata)
         if 'dict' in metadata:
@@ -341,11 +342,11 @@ class SQLAlchemyMetadata(MetaDataStore):
     def _check_token(self):
         import os
         import datetime
+
         auth_token = os.environ['SUPERDUPER_AUTH_TOKEN']
         with open(auth_token) as f:
             expiration_date = datetime.datetime.strptime(
-                f.read().split('\n')[0].strip(),
-                "%Y-%m-%d %H:%M:%S.%f"
+                f.read().split('\n')[0].strip(), "%Y-%m-%d %H:%M:%S.%f"
             )
         if expiration_date < datetime.datetime.now():
             raise Exception("auth token expired")
@@ -470,16 +471,17 @@ class SQLAlchemyMetadata(MetaDataStore):
         with self.session_context(commit=not self.batched) as session:
             if not self.batched:
                 primary_key_value = new_info['id']
-                exists = session.execute(
-                    select(self.component_table).
-                    where(self.component_table.c.id == primary_key_value)
-                ).scalar() is not None
+                exists = (
+                    session.execute(
+                        select(self.component_table).where(
+                            self.component_table.c.id == primary_key_value
+                        )
+                    ).scalar()
+                    is not None
+                )
                 if exists:
                     return
-                stmt = (
-                    insert(self.component_table)
-                        .values(new_info)
-                )
+                stmt = insert(self.component_table).values(new_info)
                 session.execute(stmt)
             else:
                 self._insert_flush['component'].append(copy.deepcopy(new_info))
@@ -749,11 +751,8 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_cdc_tables(self):
         """Show tables to be consumed with cdc."""
         with self.session_context() as session:
-            stmt = (
-                self.component_table.select()
-                .where(
-                    self.component_table.c.cdc_table.isnot(None),
-                )
+            stmt = self.component_table.select().where(
+                self.component_table.c.cdc_table.isnot(None),
             )
             res = self.query_results(self.component_table, stmt, session)
         return [r['cdc_table'] for r in res]

@@ -204,7 +204,8 @@ class DillSerializer(_Artifact, _DillMixin, BaseDataType):
     """
 
 
-class _DillEncoder(_Encodable, _DillMixin, BaseDataType): ...
+class _DillEncoder(_Encodable, _DillMixin, BaseDataType):
+    ...
 
 
 class FileType(BaseDataType):

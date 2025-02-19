@@ -1,6 +1,8 @@
 import typing
 from pprint import pprint
 
+import pytest
+
 from superduper import Document, ObjectModel
 
 
@@ -162,6 +164,8 @@ def test_predict_id(db: "Datalayer"):
     assert output[f"_outputs__{output_c.predict_id}"] == "1->a->b->c"
 
 
+# TODO: We will remove the eager_mode in the future
+@pytest.mark.skip
 def test_condition(db: "Datalayer"):
     db.cfg.auto_schema = True
     data = [

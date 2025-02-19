@@ -323,7 +323,7 @@ def _apply(
             # to understand if they are now referring to the "original"
             # or the "new" version.
             non_breaking_changes[object.uuid] = current.uuid
-            
+
             for event in create_events.values():
                 if isinstance(event, (Create, Update)) and event.parent == object.uuid:
                     event.parent = current.uuid

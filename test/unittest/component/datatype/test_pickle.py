@@ -1,3 +1,5 @@
+from test.utils.component import datatype as datatype_utils
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,7 +10,6 @@ from superduper.components.datatype import (
     pickle_encoder,
     pickle_serializer,
 )
-from test.utils.component import datatype as datatype_utils
 
 
 @pytest.fixture

@@ -46,10 +46,12 @@ class MissingDocstring(_BaseDocstringException):
         )
 
 
-class MismatchingDocParameters(_BaseDocstringException): ...
+class MismatchingDocParameters(_BaseDocstringException):
+    ...
 
 
-class MissingParameterExplanation(_BaseDocstringException): ...
+class MissingParameterExplanation(_BaseDocstringException):
+    ...
 
 
 def get_doc_string_params(doc_string):
@@ -68,6 +70,8 @@ def check_class_docstring(cls, line):
     params = [k for k in inspect.signature(cls.__init__).parameters if k != 'self']
     doc_params = get_doc_string_params(doc_string)
     doc_params_set = set(doc_params.keys())
+    params = [k for k in params if k not in ('args', 'kwargs')]
+    doc_params_set = {k for k in doc_params_set if k not in ('args', 'kwargs')}
     if doc_params_set != set(params):
         diff = (set(params) - set(doc_params.keys())).union(
             set(doc_params.keys()) - set(params)

@@ -20,6 +20,7 @@ def retry(f):
             if 'token' in str(e):
                 self.session = SnowflakeVectorSearcher.create_session(CFG.data_backend)
             return f(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -97,7 +98,8 @@ class SnowflakeVectorSearcher(BaseVectorSearcher):
                 warehouse = None
             else:
                 match = re.match(
-                    '^snowflake://(.*):(.*)@(.*)/(.*)/(.*)?warehouse=(.*)$', vector_search_uri
+                    '^snowflake://(.*):(.*)@(.*)/(.*)/(.*)?warehouse=(.*)$',
+                    vector_search_uri,
                 )
                 user, password, account, database, schema, warehouse = match.groups()
             if match:

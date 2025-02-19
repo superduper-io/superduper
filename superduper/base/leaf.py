@@ -76,9 +76,9 @@ class LeafMeta(type):
             if isinstance(v, (type, dc.InitVar)):
                 annotations[k] = v
             if isinstance(v, dc.Field):
-                annotations[k] = (
-                    v.type
-                )  # Ensure field types are recorded in annotations
+                annotations[
+                    k
+                ] = v.type  # Ensure field types are recorded in annotations
 
         # Update namespace with proper annotations
         namespace['__annotations__'] = annotations

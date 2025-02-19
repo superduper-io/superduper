@@ -6,17 +6,17 @@ from pprint import pprint
 from superduper import CFG, ObjectModel
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component
 
 
-class Test(Leaf):
-    b: t.Optional[str] = 'a'
-    c: t.Optional[t.Union[float, str]] = 1.0
+class Test(Base):
     a: t.Optional[int] = 1
+    b: t.Optional[str] = 'a'
+    c: t.Optional[float] = 1.0
 
 
-class OtherSer(Leaf):
+class OtherSer(Base):
     d: str = 'd'
 
 
@@ -32,20 +32,25 @@ class TestSubModel(Component):
     f: t.Callable
 
 
-class MySer(Leaf):
+class MySer(Base):
     _fields = {'c': 'leaf'}
 
     a: int = 1
     b: str = 'b'
-    c: Leaf = dc.field(default_factory=OtherSer(identifier='test', d='test'))
+    c: Base = dc.field(default_factory=OtherSer(d='test'))
+
+
+def test_insert_and_recall(db):
+    data = [Test(a=i, b='test_b', c=1.5) for i in range(10)]
+    db.insert(data)
+    r = db['Test'].get()
 
 
 def test_encode_leaf():
-    obj = Test('test', a=1, b='test_b', c=1.5)
+    obj = Test(a=1, b='test_b', c=1.5)
     assert obj.dict().encode(keep_schema=False) == {
-        '_path': 'test.unittest.base.test_leaf.Test',
-        'uuid': obj.uuid,
-        'identifier': 'test',
+        '_path': 'test.unittest.base.test_base.Test',
+        # 'uuid': obj.uuid,
         'a': 1,
         'b': 'test_b',
         'c': 1.5,
@@ -57,15 +62,12 @@ def test_encode_leaf():
 
 def test_encode_leaf_with_children():
     obj = MySer(
-        identifier='my_ser',
         a=1,
         b='test_b',
-        c=OtherSer(identifier='other_ser', d='test'),
+        c=OtherSer(d='test'),
     )
-    assert obj.dict(schema=True).encode(keep_schema=False) == {
-        '_path': 'test.unittest.base.test_leaf.MySer',
-        'identifier': 'my_ser',
-        'uuid': obj.uuid,
+    assert obj.dict().encode(keep_schema=False) == {
+        '_path': 'test.unittest.base.test_base.MySer',
         'a': 1,
         'b': 'test_b',
         'c': (
@@ -93,7 +95,7 @@ def test_save_non_string_variables(db):
 
 
 def test_saveable():
-    s = MySer(identifier='sr', a=1, b='test', c=OtherSer(identifier='other', d='test'))
+    s = MySer(a=1, b='test', c=OtherSer(d='test'))
     r = Document(s.dict()).encode()
     print(r)
 
@@ -103,14 +105,14 @@ def test_component_with_document():
         identifier='test-1',
         a=2,
         b='test',
-        c=ObjectModel('test-2', object=lambda x: x + 2),
-        d=[ObjectModel('test-3', object=lambda x: x + 2)],
-        e=OtherSer(identifier='other', d='test'),
+        c=ObjectModel(identifier='test-2', object=lambda x: x + 2),
+        d=[ObjectModel(identifier='test-3', object=lambda x: x + 2)],
+        e=OtherSer(d='test'),
         f=lambda x: x,
     )
     print('encoding')
-    d = t.dict(schema=True)
-    r = d.encode(leaves_to_keep=Leaf)
+    d = t.dict()
+    r = d.encode(leaves_to_keep=Base)
     builds = r[KEY_BUILDS]
 
     pprint(r)
@@ -139,23 +141,3 @@ def test_find_variables(db):
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
-
-
-def test_addressable():
-    from .example import MyClass
-
-    obj = MyClass(2).process
-
-    assert obj(2) == 4
-
-    r = obj.encode()
-
-    import pprint
-
-    pprint.pprint(r)
-
-    rebuilt = Document.decode(r).unpack()
-
-    assert rebuilt(2) == 4
-
-    pprint.pprint(rebuilt)

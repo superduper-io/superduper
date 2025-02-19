@@ -121,7 +121,7 @@ def test_schema_with_file(db, tmp_file):
 def test_component_serializes_with_schema(db, tmp_file):
     c = TestComponent('test', a='testing testing 123', b=tmp_file)
 
-    r = c.dict(schema=True)
+    r = c.dict()
 
     r_encoded = r.encode()
 

@@ -3,7 +3,7 @@ import re
 
 
 def _find_variables(r):
-    from superduper.base.leaf import Leaf
+    from superduper.base.base import Base
 
     if isinstance(r, dict):
         return sum([_find_variables(v) for v in r.values()], [])
@@ -11,7 +11,7 @@ def _find_variables(r):
         return sum([_find_variables(v) for v in r], [])
     if isinstance(r, str):
         return re.findall(r'<var:(.*?)>', r)
-    if isinstance(r, Leaf):
+    if isinstance(r, Base):
         return r.variables
     return []
 

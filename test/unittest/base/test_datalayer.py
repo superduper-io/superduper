@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy
 import pytest
 
+from superduper.base.base import Base
 from superduper.base.datalayer import Datalayer
 from superduper.components.component import Component
 from superduper.components.dataset import Dataset
@@ -393,7 +394,14 @@ def test_insert(db):
 
 
 def test_insert_artifacts(db):
-    db.cfg.auto_schema = True
+
+    db.apply(
+        Table(
+            'documents',
+            fields={'x': 'array[float:100]'}
+        )
+    )
+
     db['documents'].insert([{'x': numpy.random.randn(100)} for _ in range(1)])
     r = db['documents'].get()
     assert isinstance(r['x'], numpy.ndarray)

@@ -1,11 +1,18 @@
 import pytest
 
+from superduper.base.base import Base
 from superduper.components.dataset import Dataset
+
+
+class documents(Base):
+    x: int
+    y: list
 
 
 @pytest.mark.parametrize("pin", [True, False])
 def test_dataset_pin(db, pin):
-    db.cfg.auto_schema = True
+
+    db.create(documents)
 
     datas = [{"x": i, "y": [1, 2, 3]} for i in range(10)]
 

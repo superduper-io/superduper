@@ -4,7 +4,7 @@ import typing as t
 import uuid
 
 from superduper.base.exceptions import DatabackendError
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.cdc import CDC
 from superduper.components.schema import Schema
 from superduper.components.table import Table
@@ -25,7 +25,7 @@ class UniqueConstraintError(Exception):
 
 
 # TODO merge with Event/Job
-class Job(Leaf):
+class Job(Base):
     """Job table.
 
     #noqa
@@ -43,7 +43,7 @@ class Job(Leaf):
     dependencies: t.List[str] = dc.field(default_factory=list)
 
 
-class ParentChildAssociations(Leaf):
+class ParentChildAssociations(Base):
     """Parent-child associations table.
 
     :param parent_component: parent component type
@@ -58,7 +58,7 @@ class ParentChildAssociations(Leaf):
     child_uuid: str
 
 
-class ArtifactRelations(Leaf):
+class ArtifactRelations(Base):
     """Artifact relations table.
 
     :param component_id: UUID of component version
@@ -89,7 +89,7 @@ class MetaDataStore:
 
         self.preset_components = {
             ('Table', 'Table'): Table(
-                'Table',
+                identifier='Table',
                 cls=Table,
                 primary_id='uuid',
                 uuid='abc',
@@ -97,7 +97,7 @@ class MetaDataStore:
                 path='superduper.components.table.Table',
             ).encode(),
             ('Table', 'ParentChildAssociations'): Table(
-                'ParentChildAssociations',
+                identifier='ParentChildAssociations',
                 cls=ParentChildAssociations,
                 primary_id='uuid',
                 uuid='def',
@@ -105,7 +105,7 @@ class MetaDataStore:
                 path='superduper.backends.base.metadata.ParentChildAssociations',
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
-                'ArtifactRelations',
+                identifier='ArtifactRelations',
                 cls=ArtifactRelations,
                 primary_id='uuid',
                 uuid='ghi',
@@ -113,7 +113,7 @@ class MetaDataStore:
                 path='superduper.backends.base.metadata.ArtifactRelations',
             ).encode(),
             ('Table', 'Job'): Table(
-                'Job',
+                identifier='Job',
                 cls=Job,
                 primary_id='uuid',
                 uuid='jkl',
@@ -154,7 +154,7 @@ class MetaDataStore:
                 raise NonExistentMetadataError(f'{table} does not exist in metadata')
             raise e
 
-    def create(self, cls: t.Type[Leaf]):
+    def create(self, cls: t.Type[Base]):
         """
         Create a table in the metadata store.
 
@@ -167,7 +167,7 @@ class MetaDataStore:
                 self.db.databackend.create_table_and_schema('Table', Table.class_schema)
                 t = Table('Table', cls=Table, primary_id='uuid', component=True)
                 r = self.db['Table'].insert(
-                    [t.dict(schema=True, path=False)], auto_schema=False
+                    [t.dict(schema=True, path=False)], 
                 )
             else:
                 raise e
@@ -178,8 +178,9 @@ class MetaDataStore:
             )
 
         self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
-        t = Table(cls.__name__, cls=cls, primary_id='uuid', component=True)
-        self.db['Table'].insert([t.dict(schema=True, path=False)], auto_schema=False)
+        t = Table(identifier=cls.__name__, cls=cls, primary_id='uuid', component=True)
+        self.db['Table'].insert([t.dict(path=False)])
+        return t
 
     def delete_parent_child_relationships(self, parent_uuid: str):
         """
@@ -345,7 +346,7 @@ class MetaDataStore:
             for component in t.filter(t['component'] == True).distinct(  # noqa: E712
                 'identifier'
             ):
-                if component in metaclasses:
+                if component in metaclasses.keys():
                     continue
                 out.extend(
                     [
@@ -353,6 +354,12 @@ class MetaDataStore:
                         for x in self.db[component].distinct('identifier')
                     ]
                 )
+            out.extend(
+                [
+                    {'component': 'Table', 'identifier': x}
+                    for x in self.db['Table'].distinct('identifier')
+                ]
+            )
             return out
         return self.db[component].distinct('identifier')
 

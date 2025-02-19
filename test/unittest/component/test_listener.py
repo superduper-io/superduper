@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from superduper import Application, Document
+from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel, Trainer
@@ -21,11 +22,20 @@ class MyTrainer(Trainer):
             pass
 
 
-@dc.dataclass
-class _Tmp(ObjectModel): ...
+class _Tmp(ObjectModel):
+    ...
+
+
+class test(Base):
+    x: int
+    y: int
+    _fold: str
 
 
 def test_listener_serializes_properly(db):
+
+    db.create(test)
+
     q = db['test'].select()
     listener = Listener(
         identifier="listener",
@@ -43,7 +53,7 @@ def test_listener_serializes_properly(db):
 
 
 def test_listener_chaining(db):
-    db.cfg.auto_schema = True
+    db.create(test)
     table = db['test']
 
     def insert_random(start=0):
@@ -117,7 +127,7 @@ def test_listener_chaining(db):
 )
 @pytest.mark.parametrize("flatten", [False, True])
 def test_create_output_dest(db, data, flatten):
-    db.cfg.auto_schema = True
+    db.create(test)
     table = db["test"]
 
     data, datatype = data
@@ -165,7 +175,7 @@ def test_create_output_dest(db, data, flatten):
     ],
 )
 def test_listener_cleanup(db, data):
-    db.cfg.auto_schema = True
+    db.create(test)
     table = db["test"]
 
     data, datatype = data
@@ -209,7 +219,7 @@ def cleanup():
 
 
 def test_listener_chaining_with_trainer(db, cleanup):
-    db.cfg.auto_schema = True
+    db.create(test)
     table = db['test']
 
     def insert_random(start=0):
@@ -217,16 +227,10 @@ def test_listener_chaining_with_trainer(db, cleanup):
         for i in range(5):
             y = int(random.random() > 0.5)
             data.append(
-                Document(
-                    {
-                        "x": i + start,
-                        "y": y,
-                        '_fold': 'train' if i < 3 else 'valid',
-                    }
-                )
+                test(x=i + start, y=y, _fold='train' if i < 3 else 'valid')
             )
 
-        table.insert(data)
+        db.insert(data)
 
     # Insert data
     insert_random()
@@ -263,7 +267,6 @@ def test_listener_chaining_with_trainer(db, cleanup):
 
 
 def test_upstream_serializes(db):
-    # db.cfg.auto_schema = True
 
     upstream_component = ObjectModel("upstream", object=lambda x: x)
 
@@ -293,7 +296,8 @@ def test_upstream_serializes(db):
 # TODO: Need to fix this test case
 @pytest.mark.skip("This test is not working")
 def test_predict_id_utils(db):
-    db.cfg.auto_schema = True
+    db.create(test)
+
     table = db["test"]
 
     m1 = ObjectModel(
@@ -339,7 +343,8 @@ def test_predict_id_utils(db):
 
 
 def test_complete_uuids(db):
-    db.cfg.auto_schema = True
+
+    db.create(test)
 
     m1 = ObjectModel(
         "m1",
@@ -375,7 +380,8 @@ def test_complete_uuids(db):
 
 
 def test_autofill_data_listener(db):
-    db.cfg.auto_schema = True
+
+    db.create(test)
 
     def get_model():
         return ObjectModel("m1", object=lambda x: x + 2, datatype='int')

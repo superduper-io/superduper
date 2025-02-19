@@ -191,7 +191,7 @@ def _component_metadata(obj):
 
 
 def _display_component(obj, verbosity=1):
-    from superduper.base.leaf import Leaf
+    from superduper.base.base import Base
 
     console = Console()
 
@@ -200,7 +200,7 @@ def _display_component(obj, verbosity=1):
     def _handle_list(lst):
         handled_list = []
         for item in lst:
-            if isinstance(item, Leaf):
+            if isinstance(item, Base):
                 if len(str(item)) > MAX_STR_LENGTH:
                     handled_list.append(str(item)[:MAX_STR_LENGTH] + "...")
                 else:
@@ -216,7 +216,7 @@ def _display_component(obj, verbosity=1):
         for key, value in obj.__dict__.items():
             if value is None:
                 continue
-            if isinstance(value, Leaf):
+            if isinstance(value, Base):
                 if len(str(value)) > MAX_STR_LENGTH:
                     value = str(value)[:MAX_STR_LENGTH] + "..."
                 else:

@@ -2,6 +2,7 @@ import typing as t
 
 from superduper.components.listener import Listener
 from superduper.components.model import Model
+from superduper.components.table import Table
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -22,10 +23,10 @@ def test_predict(model: Model, sample_data: t.Any):
     return result, results
 
 
-def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
+def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer", type: str):
     model.identifier = random_id()
 
-    db.cfg.auto_schema = True
+    db.apply(Table('datas', fields={'data': type, 'i': 'int'}))
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)])
 
@@ -44,8 +45,10 @@ def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer"):
     return results
 
 
-def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer"):
-    db.cfg.auto_schema = True
+# TODO remove these types of general fixtures/ utils (hard to read)
+def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer", type: str):
+
+    db.apply(Table('datas', fields={'data': type, 'i': 'int'}))
 
     db["datas"].insert([{"data": sample_data, "i": i} for i in range(10)])
 

@@ -1,7 +1,7 @@
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 
 
-class New(Leaf):
+class New(Base):
     a: str
 
 

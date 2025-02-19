@@ -10,7 +10,7 @@ from superduper.base.constant import (
     KEY_BUILDS,
     KEY_FILES,
 )
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.base.variables import _replace_variables
 from superduper.components.datatype import Saveable
 from superduper.components.schema import Schema
@@ -43,7 +43,7 @@ def _diff(r1, r2, d):
                 d[k] = subdiff
             continue
 
-        if isinstance(r1[k], Leaf):
+        if isinstance(r1[k], Base):
             r1k = r1[k].dict(metadata=False)
 
             if r2[k] is None:
@@ -349,22 +349,21 @@ class Document(MongoStyleDict):
 
         for k in builds:
             if isinstance(builds[k], dict) and (
-                '_path' in builds[k] or '_object' in builds[k]
+                '_path' in builds[k]
             ):
                 builds[k]['identifier'] = k.split(':')[-1]
 
         # TODO add _path and _object as constants
-        if '_path' in r or '_object' in r:
+        if '_path' in r:
             # TODO this has no place here
             # this should be Component.decode
             # or db.load
-            assert '_path' in r or '_object' in r
 
             if '_path' in r:
-                cls = Leaf.get_cls_from_path(r['_path'])
+                cls = Base.get_cls_from_path(r['_path'])
             else:
                 assert '_object' in r
-                cls = Leaf.get_cls_from_blob(r['_object'], db=db)
+                cls = Base.get_cls_from_blob(r['_object'], db=db)
 
             if inspect.isclass(cls):
                 r = cls.class_schema.decode_data(r, builds=builds, db=db)

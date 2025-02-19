@@ -17,7 +17,7 @@ from superduper.backends.base.query import Query
 from superduper.base import apply, exceptions
 from superduper.base.config import Config
 from superduper.base.document import Document
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component
 from superduper.components.datatype import ComponentType, LeafType
 from superduper.components.table import Table
@@ -68,6 +68,15 @@ class Datalayer:
 
     def __getitem__(self, item):
         return Query(table=item, parts=(), db=self)
+
+    def insert(self, items: t.List[Base]):
+        """
+        Insert data into a table.
+
+        :param items: The instances (`superduper.base.Base`) to insert.
+        """
+        table = self.pre_insert(items)
+        return self[table.identifier].insert([x.dict(path=False) for x in items])
 
     @property
     def cdc(self):
@@ -159,48 +168,19 @@ class Datalayer:
         )
 
     def pre_insert(
-        self, table: str, documents: t.Sequence[t.Dict], auto_schema: bool = True
+        self, items: t.List[Base],
     ):
         """Pre-insert hook for data insertion.
 
-        :param table: The table to insert data into.
-        :param documents: The documents to insert.
-        :param auto_schema: Automatically create a schema for the table.
+        :param items: The items to insert.
         """
+        table = items[0].__class__.__name__
         try:
             table = self.load('Table', table)
             return table
-        except NonExistentMetadataError as e:
-            if auto_schema and self.cfg.auto_schema:
-                logging.info(f"Table {table} does not exist, auto creating...")
-            else:
-                raise e
-        if auto_schema and self.cfg.auto_schema:
-            self._auto_create_table(table, documents).schema
-
-            timeout = 60
-
-            import time
-
-            start = time.time()
-            exists = False
-            while time.time() - start < timeout:
-                try:
-                    assert table in self.show(
-                        'Table'
-                    ), f'{table} not found, retrying...'
-                    exists = True
-                except AssertionError as e:
-                    logging.warn(str(e))
-                    time.sleep(1)
-                    continue
-                break
-
-            if not exists:
-                raise TimeoutError(
-                    f'{table} not found after {timeout} seconds'
-                    ' table auto creation likely has failed or is stalling...'
-                )
+        except NonExistentMetadataError:
+            assert isinstance(items[0], Base)
+            return self.metadata.create(type(items[0]))
 
     def post_insert(self, table: str, ids: t.Sequence[str]):
         """Post-insert hook for data insertion.
@@ -248,7 +228,7 @@ class Datalayer:
         logging.info(f'Publishing {len(events)} events')
         return self.cluster.queue.publish(events)  # type: ignore[arg-type]
 
-    def create(self, object: t.Type[Leaf]):
+    def create(self, object: t.Type[Base]):
         """Create a new type of component/ leaf.
 
         :param object: The object to create.
@@ -517,7 +497,7 @@ class Datalayer:
         except FileNotFoundError:
             pass
 
-        serialized = object.dict(schema=True)
+        serialized = object.dict()
 
         if old_uuid:
 
@@ -634,20 +614,6 @@ class Datalayer:
         """Gracefully shutdown the Datalayer."""
         logging.info("Disconnect from Cluster")
         self.cluster.disconnect()
-
-    def infer_schema(
-        self, data: t.Mapping[str, t.Any], identifier: t.Optional[str] = None
-    ) -> t.Dict:
-        """Infer a schema from a given data object.
-
-        :param data: The data object
-        :param identifier: The identifier for the schema, if None, it will be generated
-        :return: The inferred schema
-        """
-        # TODO have a slightly more user-friendly schema
-        from superduper.misc.auto_schema import infer_schema
-
-        return infer_schema(data, identifier=identifier, db=self)
 
     @property
     def cfg(self) -> Config:

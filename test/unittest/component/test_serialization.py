@@ -8,7 +8,7 @@ def test_model():
         datatype='dill',
         object=lambda x: x + 1,
     )
-    m_dict = m.dict(schema=True)
+    m_dict = m.dict()
 
     encoded = m_dict.encode()
     bytes = encoded['_blobs'][encoded['object'].split(':')[-1]]

@@ -2,7 +2,6 @@ import dataclasses as dc
 import importlib
 import inspect
 import typing as t
-import uuid
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.misc.annotations import (
@@ -18,21 +17,7 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-def _is_optional_callable(annotation) -> bool:
-    """Tell if an annotation is t.Optional[t.Callable].
-
-    >>> is_optional_callable(t.Optional[t.Callable])
-    True
-    """
-    # Check if the annotation is of the form Optional[...]
-    if t.get_origin(annotation) is t.Union:
-        # Get the type inside Optional and check if it is Callable
-        inner_type = t.get_args(annotation)[0]  # Optional[X] means X is at index 0
-        return inner_type is t.Callable
-    return False
-
-
-class LeafMeta(type):
+class BaseMeta(type):
     """Metaclass that merges docstrings # noqa."""
 
     def __new__(mcs, name, bases, namespace):
@@ -52,8 +37,13 @@ class LeafMeta(type):
         # Determine if any bases are dataclasses and
         # apply the appropriate dataclass decorator
         #
+
+        is_base = namespace.get('__module__', '') == 'superduper.base.base' and name == 'Base'
+        is_component = namespace.get('__module__', '') == 'superduper.components.component' and name == 'Component'
+        is_base = is_base or is_component
+
         dataclass_params = namespace.get('_dataclass_params', {}).copy()
-        if bases and any(dc.is_dataclass(b) for b in bases):
+        if bases and any(dc.is_dataclass(b) for b in bases) and not is_base:
             dataclass_params['kw_only'] = True
             dataclass_params['repr'] = not name.endswith('Query')
             # Derived classes: kw_only=True
@@ -86,24 +76,10 @@ class LeafMeta(type):
         return cls
 
 
-def build_uuid():
-    """Build UUID."""
-    return str(uuid.uuid4()).replace('-', '')[:16]
-
-
-class Leaf(metaclass=LeafMeta):
-    """Base class for all leaf classes.
-
-    :param identifier: Identifier of the leaf.
-    :param db: Datalayer instance.
-    :param uuid: UUID of the leaf.
-    """
+class Base(metaclass=BaseMeta):
+    """Base class for all superduper classes."""
 
     set_post_init: t.ClassVar[t.Sequence[str]] = ()
-
-    identifier: str
-    db: dc.InitVar[t.Optional['Datalayer']] = None
-    uuid: str = dc.field(default_factory=build_uuid)
 
     @lazy_classproperty
     def _new_fields(cls):
@@ -157,8 +133,6 @@ class Leaf(metaclass=LeafMeta):
         r = self.dict()
         if '_path' in r:
             r.pop('_path')
-        elif '_object' in r:
-            r.pop('_object')
         return self.from_dict(r, db=db)
 
     @classmethod
@@ -194,21 +168,17 @@ class Leaf(metaclass=LeafMeta):
         """Get metadata of the object."""
         return self._get_metadata()
 
-    def __post_init__(self, db: t.Optional['Datalayer'] = None):
-        self.db = db
-        self.postinit()
-
     @property
     def leaves(self):
         """Get all leaves in the object."""
         return {
             f.name: getattr(self, f.name)
             for f in dc.fields(self)
-            if isinstance(getattr(self, f.name), Leaf)
+            if isinstance(getattr(self, f.name), Base)
         }
 
     @classmethod
-    def cls_encode(cls, item: 'Leaf', builds, blobs, files, leaves_to_keep=()):
+    def cls_encode(cls, item: 'Base', builds, blobs, files, leaves_to_keep=()):
         """Encode a dictionary component into a `Component` instance.
 
         :param r: Object to be encoded.
@@ -287,7 +257,7 @@ class Leaf(metaclass=LeafMeta):
             KEY_FILES: files,
         }
 
-    def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Leaf':
+    def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Base':
         """Set free variables of self.
 
         :param db: Datalayer instance.
@@ -330,14 +300,12 @@ class Leaf(metaclass=LeafMeta):
         self,
         metadata: bool = True,
         defaults: bool = True,
-        schema: bool = False,
         path: bool = True,
     ):
         """Return dictionary representation of the object.
 
         :param metadata: Include metadata.
         :param defaults: Include default values.
-        :param schema: Include schema.
         :param path: Include path.
         """
         from superduper import Document
@@ -346,14 +314,14 @@ class Leaf(metaclass=LeafMeta):
 
         if not defaults:
             for k, v in self.defaults.items():
-                if k in {'identifier'}:
-                    continue
+                # if k in {'identifier'}:
+                #     continue
                 if k in r and r[k] == v:
                     del r[k]
 
         if metadata:
             r.update(self.metadata)
-            r['uuid'] = self.uuid
+            # r['uuid'] = self.uuid
         else:
             for k in self.metadata:
                 if k in r:
@@ -361,26 +329,14 @@ class Leaf(metaclass=LeafMeta):
 
         from superduper.components.datatype import DEFAULT_SERIALIZER
 
-        s = None
-        if schema:
-            s = self.class_schema
-
-        if self.__class__.__module__ == '__main__':
-            return Document(
-                {
-                    '_object': DEFAULT_SERIALIZER.encode_data(
-                        self.__class__, builds={}, blobs={}, files={}
-                    ),
-                    **r,
-                },
-                schema=s,
-            )
-
-        _path = f'{self.__class__.__module__}.{self.__class__.__name__}'
         if path:
-            return Document({'_path': _path, **r}, schema=s)
+            if self.__class__.__module__ == '__main__':
+                raise ValueError('Module name cannot be __main__')
+            _path = f'{self.__class__.__module__}.{self.__class__.__name__}'
+            if path:
+                return Document({'_path': _path, **r}, schema=self.class_schema)
         else:
-            return Document(r, schema=s)
+            return Document(r, schema=self.class_schema)
 
     @classmethod
     def _register_class(cls):
@@ -414,168 +370,9 @@ class Leaf(metaclass=LeafMeta):
         pass
 
 
-def find_leaf_cls(full_import_path) -> t.Type[Leaf]:
+def find_leaf_cls(full_import_path) -> t.Type[Base]:
     """Find leaf class by class full import path.
 
     :param full_import_path: Full import path of the class.
     """
     return _CLASS_REGISTRY[full_import_path]
-
-
-class Address(Leaf):
-    """Address is a base class for all address classes."""
-
-    def __getattr__(self, name):
-        try:
-            super().__getattribute__(name)
-        except AttributeError:
-            return Attribute(
-                identifier=f'{self.identifier}/{name}', parent=self, attribute=name
-            )
-
-    def __getitem__(self, item):
-        return Index(identifier=f'{self.identifier}[{item}]', parent=self, index=item)
-
-    def __call__(self, *args, **kwargs):
-        return self.compile()(*args, **kwargs)
-
-    def compile(self):
-        """Compile the address."""
-        raise NotImplementedError
-
-
-class Import(Address):
-    """
-    Import is a class that imports a class from a module.
-
-    :param import_path: The import path of the class.
-    :param parent: The parent class.
-    :param args: Positional arguments to pass to the class.
-    :param kwargs: Keyword arguments to pass to the class.
-    """
-
-    import_path: str | None
-    parent: dc.InitVar[t.Any | None] = None
-    args: t.List | None = None
-    kwargs: t.Dict | None = None
-
-    def __post_init__(self, db: t.Optional['Datalayer'] = None, parent=None):
-        super().__post_init__(db=db)
-
-        assert parent is not None or self.import_path is not None
-        if self.import_path is None:
-            module = parent.__module__
-            name = parent.__name__
-            self.import_path = f'{module}.{name}'
-        elif parent is None:
-            module = '.'.join(self.import_path.split('.')[:-1])
-            name = self.import_path.split('.')[-1]
-            module = importlib.import_module(module)
-            parent = getattr(module, name)
-
-        if self.args is not None:
-            assert self.kwargs is not None
-            parent = parent.f(*self.args, **self.kwargs)
-        self.parent = parent
-
-    def compile(self):
-        """Compile the import."""
-        return self.parent
-
-
-class ImportCall(Address):
-    """
-    ImportCall is a class that imports a function from a module and calls it.
-
-    :param import_path: The import path of the function.
-    :param args: Positional arguments to pass to the function.
-    :param kwargs: Keyword arguments to pass to the function.
-    """
-
-    import_path: str
-    args: t.Tuple = ()
-    kwargs: t.Dict = dc.field(default_factory=dict)
-
-    def __post_init__(self, db: t.Optional['Datalayer'] = None):
-        super().__post_init__(db=db)
-        name = self.import_path.split('.')[-1]
-        module = '.'.join(self.import_path.split('.')[:-1])
-        module = importlib.import_module(module)
-        object = getattr(module, name)
-        self.parent = object(*self.args, **self.kwargs)
-
-    def compile(self):
-        """Compile the import call."""
-        return self.parent
-
-
-class Attribute(Address):
-    """
-    An Attribute is a class that represents an attribute of a parent class.
-
-    :param parent: The parent class.
-    :param attribute: The attribute to get.
-    """
-
-    parent: Address
-    attribute: str
-
-    def compile(self):
-        """Compile the attribute."""
-        parent = self.parent.compile()
-        return getattr(parent, self.attribute)
-
-
-class Index(Address):
-    """
-    An Index is a class that represents an index of a parent class.
-
-    :param parent: The parent class.
-    :param index: The index to get.
-    """
-
-    parent: Leaf
-    index: int
-
-    def compile(self):
-        """Compile the index."""
-        parent = self.parent.compile()
-        return parent[self.index]
-
-
-def imported_value(f):
-    """Wrap a import to be serialized as a fixed value.
-
-    :param f: The function or class to wrap.
-    """
-    return Import(identifier=f.__name__, import_path=f'{f.__module__}.{f.__name__}')
-
-
-def imported(f):
-    """Wrap a function or class to be imported.
-
-    :param f: The function or class to wrap.
-    """
-    if inspect.isclass(f):
-
-        def wrapper(*args, **kwargs):
-            return Import(
-                identifier=f.__name__,
-                import_path=f'{f.__module__}.{f.__name__}',
-                args=args,
-                kwargs=kwargs,
-            )
-
-        wrapper.f = f
-        return wrapper
-    else:
-
-        def wrapper(*args, **kwargs):
-            return ImportCall(
-                identifier=f.__name__,
-                import_path=f'{f.__module__}.{f.__name__}',
-                args=args,
-                kwargs=kwargs,
-            )
-
-        return wrapper

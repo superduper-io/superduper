@@ -2,7 +2,7 @@
 import inspect
 
 from superduper import logging
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 
 template = """from superduper import code
 
@@ -10,7 +10,7 @@ template = """from superduper import code
 {definition}"""
 
 
-class Code(Leaf):
+class Code(Base):
     """A class to store remote code.
 
     This class stores remote code that can be executed on a remote server.

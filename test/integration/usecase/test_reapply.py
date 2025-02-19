@@ -1,4 +1,5 @@
 from superduper import Model
+from superduper.base.base import Base
 from superduper.components.listener import Listener
 
 
@@ -12,8 +13,12 @@ class MyModel(Model):
         return x + 1
 
 
+class docs(Base):
+    x: int
+
+
 def test_reapply(db):
-    db.cfg.auto_schema = True
+    db.create(docs)
 
     db['docs'].insert([{'x': i} for i in range(10)])
 

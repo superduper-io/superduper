@@ -7,7 +7,7 @@ from superduper import CFG
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.base.variables import _find_variables, _replace_variables
 from superduper.components.component import Component, _build_info_from_path
 from superduper.components.table import Table
@@ -43,7 +43,7 @@ class _BaseTemplate(Component):
 
     def postinit(self):
         """Post initialization method."""
-        if isinstance(self.template, Leaf):
+        if isinstance(self.template, Base):
             self.template = self.template.encode(defaults=True, metadata=False)
         if self.substitutions is not None:
             self.substitutions = {
@@ -299,7 +299,7 @@ class QueryTemplate(_BaseTemplate):
 
     def postinit(self):
         """Post initialization method."""
-        if isinstance(self.template, Leaf):
+        if isinstance(self.template, Base):
             self.template = self.template.dict(metadata=False, defaults=False).encode()
         super().postinit()
 

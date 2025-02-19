@@ -6,7 +6,6 @@ if t.TYPE_CHECKING:
 from test.utils.usecase.vector_search import add_data, build_vector_index
 
 
-# @pytest.mark.skip
 def test_vector_index(db: "Datalayer"):
     def check_result(out, sample_data):
         ids = [o[primary_id] for o in list(out)]

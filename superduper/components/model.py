@@ -19,7 +19,7 @@ from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
@@ -272,7 +272,7 @@ class Mapping:
 
         args = list(args)
         for i, arg in enumerate(args):
-            if isinstance(arg, Leaf):
+            if isinstance(arg, Base):
                 args[i] = arg.unpack()
         args = tuple(args)
 
@@ -892,7 +892,7 @@ class ImportedModel(Model):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
-    object: Leaf
+    object: Base
     method: t.Optional[str] = None
 
     def __post_init__(self, db, example):

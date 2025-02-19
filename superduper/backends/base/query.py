@@ -17,9 +17,10 @@ import uuid
 from types import MethodType
 
 from superduper import CFG, logging
+from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.document import Document, _unpack
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -162,7 +163,7 @@ def _stringify(item, documents, queries):
 
 
 # TODO add to regular Query class
-class _BaseQuery(Leaf):
+class _BaseQuery(Base):
     parts: t.Sequence[t.Union[QueryPart, str]] = dc.field(default_factory=list)
 
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
@@ -292,12 +293,19 @@ def limit(self, n: int):
     return self + QueryPart('limit', (n,), {})
 
 
-def insert(self, documents, raw: bool = False, auto_schema: bool = True):
+def insert(self, documents, raw: bool = False):
     """Insert documents into the table.
 
     # noqa
     """
-    self.db.pre_insert(self.table, documents, auto_schema=auto_schema)
+    try:
+        _ = self.db.load('Table', self.table)
+    except NonExistentMetadataError as e:
+        raise NonExistentMetadataError(
+            f'You tried to insert into a table that does not exist: {self.table}. '
+            f'To generate inline use `db.insert` instead.'
+            f'Table {self.table} does not exist'
+        ) from e
     out = self.db.databackend._do_insert(self.table, documents, raw=raw)
     self.db.post_insert(self.table, ids=out)
     return out
@@ -516,6 +524,7 @@ class Query(_BaseQuery):
 
     :param table: The table to use.
     :param parts: The parts of the query.
+    :param db: The `Datalayer` instance to use.
     """
 
     # mapping between methods and allowed downstream methods
@@ -576,10 +585,13 @@ class Query(_BaseQuery):
 
     flavours: t.ClassVar[t.Dict[str, str]] = {}
     table: str
-    identifier: str = ''
+
+    db: dc.InitVar[t.Optional['Datalayer']] = None
 
     def __post_init__(self, db=None):
-        out = super().__post_init__(db)
+
+        self.db = db
+
         if not self.parts:
             for method in self.mapping:
                 self._bind_base_method(method, eval(method))
@@ -598,8 +610,6 @@ class Query(_BaseQuery):
 
         if self.type == 'insert':
             self._add_fold_to_insert()
-
-        return out
 
     def _add_fold_to_insert(self):
         assert self.type == 'insert'
@@ -703,7 +713,6 @@ class Query(_BaseQuery):
         """Copy the query."""
         r = self.dict()
         del r['_path']
-        del r['identifier']
         return parse_query(**r, db=self.db)
 
     def dict(self, *args, **kwargs):
@@ -720,7 +729,6 @@ class Query(_BaseQuery):
             {
                 '_path': 'superduper.backends.base.query.parse_query',
                 'documents': documents,
-                'identifier': self.identifier,
                 'query': query,
             }
         )
@@ -906,7 +914,6 @@ class Query(_BaseQuery):
         r['documents'] = swap_keys(r['documents'])
 
         del r['_path']
-        del r['identifier']
         out = parser(**r, db=db)
         return out
 

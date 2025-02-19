@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from superduper import Document
+from superduper.base.base import Base
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 
@@ -13,6 +14,10 @@ def assert_output_is_correct(data, output):
         assert output == data
 
 
+class test(Base):
+    x: int
+
+
 @pytest.mark.parametrize(
     "data",
     [
@@ -22,7 +27,8 @@ def assert_output_is_correct(data, output):
 )
 @pytest.mark.parametrize("flatten", [True, False])
 def test_downstream_task_workflows_are_triggered(db, data, flatten):
-    db.cfg.auto_schema = True
+
+    db.create(test)
 
     data, datatype, datatype_flat = data
 

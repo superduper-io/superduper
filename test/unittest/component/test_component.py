@@ -198,7 +198,8 @@ def test_set_db_deep(db):
     assert m.model.db is not None
 
 
-class NewComponent(Component): ...
+class NewComponent(Component):
+    ...
 
 
 def test_remove_recursive(db):

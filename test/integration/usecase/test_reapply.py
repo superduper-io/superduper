@@ -2,11 +2,11 @@ import numpy
 
 from superduper import Model
 from superduper.components.dataset import Data
+from superduper.components.datatype import pickle_encoder
 from superduper.components.model import model
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.components.template import Template
-from superduper.components.datatype import pickle_encoder
 
 
 class MyModel(Model):
@@ -59,7 +59,6 @@ def test_reapply(db):
 
 
 def test_template_component_deps(db):
-
     @model
     def test(x):
         return x + 1
@@ -73,9 +72,11 @@ def test_template_component_deps(db):
             Table(
                 'test_table',
                 schema=Schema('test_schema', fields={'x': 'str', 'y': pickle_encoder}),
-                data=Data('test_data', raw_data=[{'x': '1', 'y': numpy.random.randn(3)}])
+                data=Data(
+                    'test_data', raw_data=[{'x': '1', 'y': numpy.random.randn(3)}]
+                ),
             )
-        ]
+        ],
     )
 
     db.apply(t, force=True)

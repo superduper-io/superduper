@@ -20,7 +20,8 @@ class MyTrainer(Trainer):
 
 
 @dc.dataclass
-class _Tmp(ObjectModel): ...
+class _Tmp(ObjectModel):
+    ...
 
 
 def test_listener_serializes_properly():

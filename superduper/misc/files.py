@@ -7,21 +7,29 @@ from superduper.base.exceptions import IncorrectSecretException, MissingSecretsE
 
 
 def check_openai(name):
-    from openai import Client, AuthenticationError, OpenAIError
+    """Check if the OpenAI credentials are correct.
+
+    :param name: The name of the secret
+    """
+    from openai import AuthenticationError, Client, OpenAIError
+
     try:
         _ = Client().models.list()
     except AuthenticationError:
         raise IncorrectSecretException(
             'OpenAI API key is incorrect. Please check the key and try again.'
         )
-    except OpenAIError as e:
+    except OpenAIError:
         raise MissingSecretsException(
             'OpenAI API key is missing. Set as enviroment variable OPENAI_API_KEY.'
         )
 
 
 def check_s3(name):
+    """Check if the AWS credentials are correct.
 
+    :param name: The name of the secret
+    """
     if name == 'AWS_ACCESS_KEY_ID':
         assert 'AWS_SECRET_ACCESS_KEY' in os.environ, 'AWS_SECRET_ACCESS_KEY not found'
     elif name == 'AWS_SECRET_ACCESS_KEY':
@@ -31,27 +39,34 @@ def check_s3(name):
 
     import boto3
     from botocore.exceptions import ClientError
+
     try:
         session = boto3.Session(
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
         )
         s3_client = session.client('s3')
         s3_client.list_buckets()
-    except KeyError as e:
+    except KeyError:
         raise MissingSecretsException(
-            'AWS credentials are missing. Set as environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.'
+            (
+                'AWS credentials are missing. Set as environment'
+                'variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.'
+            )
         )
     except ClientError as e:
         if 'does not exist' in str(e):
             raise IncorrectSecretException(
-                'AWS credentials are incorrect. Please check the credentials and try again. '
+                'AWS credentials are incorrect. '
+                'Please check the credentials and try again. '
                 'The provided AWS key-pair does not exist.'
             )
         elif 'not authorized' in str(e):
             raise IncorrectSecretException(
-                'AWS credentials are incorrect. Please check the credentials and try again. '
-                'The provided AWS key-pair is not authorized to access the requested resources. '
+                'AWS credentials are incorrect. Please check the credentials and '
+                'try again. '
+                'The provided AWS key-pair is not authorized to access '
+                'the requested resources. '
                 'Minimum required permissions: s3:ListBucket, s3:GetObject.'
             )
         logging.error(traceback.format_exc())
@@ -62,10 +77,16 @@ def check_s3(name):
 
 
 def not_empty(name):
+    """Check if the secret is not empty.
+
+    :param name: The name of the secret
+    """
     assert name in os.environ, f'{name} not found in environment'
 
 
 class MatchersFactory:
+    """Matchers factory for checking secrets."""
+
     def __getitem__(self, key):
         if key.startswith('AWS_ACCESS_KEY_ID'):
             return lambda: check_s3(key)
@@ -78,7 +99,7 @@ MATCHERS = MatchersFactory()
 
 
 def check_secrets():
-    """Check that the secrets connect"""
+    """Check that the secrets connect."""
     required = os.environ.get('SUPERDUPER_REQUIRED_SECRETS', '').split(',')
     logging.info(f'Checking secrets {required}')
     errors = []

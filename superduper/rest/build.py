@@ -19,9 +19,14 @@ try:
     import magic
 except ImportError:
     magic = None
-from fastapi import BackgroundTasks, File, Response, HTTPException
+from fastapi import BackgroundTasks, File, HTTPException, Response
 from fastapi.responses import JSONResponse
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_410_GONE
+from starlette.status import (
+    HTTP_401_UNAUTHORIZED,
+    HTTP_409_CONFLICT,
+    HTTP_410_GONE,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from superduper import CFG, logging
 from superduper.backends.base.query import Query
@@ -105,7 +110,7 @@ def _check_secret_health(db):
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
-    
+
     try:
         if CFG.data_backend == 'snowflake://':
             load_plugin('snowflake').check_secret_updates(db)
@@ -132,7 +137,7 @@ def build_rest_app(app: SuperDuperApp):
             HTTP_410_GONE: {"description": "Secret files are missing"},
             HTTP_401_UNAUTHORIZED: {"description": "Secrets are empty or incorrect"},
             HTTP_409_CONFLICT: {"description": "Secrets are being updated"},
-        }
+        },
     )
     def health(db: 'Datalayer' = DatalayerDependency()):
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
@@ -242,7 +247,9 @@ def build_rest_app(app: SuperDuperApp):
                 except Exception as e:
                     logging.error(f'Exception during application apply :: {e}')
                     logging.error(traceback.format_exc())
-                    PENDING_COMPONENTS.discard((component.type_id, component.identifier))
+                    PENDING_COMPONENTS.discard(
+                        (component.type_id, component.identifier)
+                    )
                     raise
         else:
             try:
@@ -256,9 +263,17 @@ def build_rest_app(app: SuperDuperApp):
     def describe_tables(db: 'Datalayer' = DatalayerDependency()):
         out = db.databackend.list_tables_or_collections()
         return [
-            t for t in out if (
+            t
+            for t in out
+            if (
                 not t.startswith(CFG.output_prefix)
-                and not t.lower() in {'component', 'job', 'parent_child_association', 'artifact_relations'}
+                and t.lower()
+                not in {
+                    'component',
+                    'job',
+                    'parent_child_association',
+                    'artifact_relations',
+                }
             )
         ]
 
@@ -269,7 +284,6 @@ def build_rest_app(app: SuperDuperApp):
         id: str | None = 'test',
         db: 'Datalayer' = DatalayerDependency(),
     ):
-
         msg = 'Identifier (name) of application should match [a-zA-Z\_0-9]+'
         assert re.match('^[a-zA-Z\_0-9]+$', info['identifier']) is not None, msg
 
@@ -279,13 +293,19 @@ def build_rest_app(app: SuperDuperApp):
         cls_path = info['_builds'][info['_base'][1:]]['_path']
         cls = import_object(cls_path)
         type_id = cls.type_id
-        if (type_id, info['identifier']) in PENDING_COMPONENTS and not db.show(type_id, info['identifier']):
-            raise Exception(f'The component you have added ({type_id}, {info["identifier"]}) '
-                            'is in the pending state')
+        if (type_id, info['identifier']) in PENDING_COMPONENTS and not db.show(
+            type_id, info['identifier']
+        ):
+            raise Exception(
+                f'The component you have added ({type_id}, {info["identifier"]}) '
+                'is in the pending state'
+            )
 
         try:
             if db.show(type_id, info['identifier'], -1)['status'] != 'ready':
-                raise Exception(f'The component {type_id}:{info["identifier"]} is being processed')
+                raise Exception(
+                    f'The component {type_id}:{info["identifier"]} is being processed'
+                )
         except FileNotFoundError:
             logging.info(f'Processing a new component {type_id}:{info["identifier"]}')
 

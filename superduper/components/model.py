@@ -673,7 +673,9 @@ class Model(Component, metaclass=ModelMeta):
         )
 
         try:
-            existing = list(self.db[CFG.output_prefix + predict_id].select('_source').execute())
+            existing = list(
+                self.db[CFG.output_prefix + predict_id].select('_source').execute()
+            )
             existing_ids = [str(r['_source']) for r in existing]
         except Exception as e:
             if 'complete' in str(e):
@@ -686,13 +688,17 @@ class Model(Component, metaclass=ModelMeta):
         logging.info(f'Adding {len(outputs)} model outputs to `db`')
 
         try:
-            existing = list(self.db[CFG.output_prefix + predict_id].select('_source').execute())
+            existing = list(
+                self.db[CFG.output_prefix + predict_id].select('_source').execute()
+            )
             existing_ids = [str(r['_source']) for r in existing]
         except Exception as e:
             if 'complete' in str(e):
                 existing_ids = []
 
-        outputs = [output for i, output in enumerate(outputs) if ids[i] not in existing_ids]
+        outputs = [
+            output for i, output in enumerate(outputs) if ids[i] not in existing_ids
+        ]
         ids = [id_ for id_ in ids if id_ not in existing_ids]
 
         assert isinstance(

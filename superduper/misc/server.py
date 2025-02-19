@@ -2,8 +2,8 @@
 import base64
 import json
 import os
-from functools import lru_cache
 import traceback
+from functools import lru_cache
 
 import requests
 
@@ -47,7 +47,12 @@ def _server_request_encoder(x):
 
 # TODO doesn't seem to be used
 def _request_server(
-    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post', timeout: int = 10
+    service: str = 'vector_search',
+    data=None,
+    endpoint='add',
+    args={},
+    type='post',
+    timeout: int = 10,
 ):
     if service == 'cdc':
         service_uri = CFG.cluster.cdc.uri
@@ -88,8 +93,13 @@ def _request_server(
 
 
 def request_server(
-    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post',
-    retries: int = 1, timeout: int = 10
+    service: str = 'vector_search',
+    data=None,
+    endpoint='add',
+    args={},
+    type='post',
+    retries: int = 1,
+    timeout: int = 10,
 ):
     """Request server with data.
 
@@ -102,7 +112,11 @@ def request_server(
     for i in range(retries):
         try:
             return _request_server(
-                service=service, data=data, endpoint=endpoint, args=args, type=type,
+                service=service,
+                data=data,
+                endpoint=endpoint,
+                args=args,
+                type=type,
                 timeout=timeout,
             )
         except requests.exceptions.RequestException as e:

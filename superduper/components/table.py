@@ -51,9 +51,9 @@ class Table(Component):
         assert self.schema is not None, "Schema must be set"
         if db.databackend.in_memory:
             if self.identifier.startswith(CFG.output_prefix):
-                db.databackend.in_memory_tables[self.identifier] = (
-                    db.databackend.create_table_and_schema(self.identifier, self.schema)
-                )
+                db.databackend.in_memory_tables[
+                    self.identifier
+                ] = db.databackend.create_table_and_schema(self.identifier, self.schema)
 
         try:
             db.databackend.create_table_and_schema(self.identifier, self.schema)

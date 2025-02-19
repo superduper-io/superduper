@@ -1,7 +1,8 @@
+from test.utils.database import artifact_store as artifact_store_utils
+
 import pytest
 
 from superduper.backends.local.artifacts import FileSystemArtifactStore
-from test.utils.database import artifact_store as artifact_store_utils
 
 
 @pytest.fixture

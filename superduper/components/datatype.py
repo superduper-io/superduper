@@ -15,7 +15,7 @@ import dill
 import numpy
 
 from superduper import CFG
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component
 from superduper.misc.utils import str_shape
 
@@ -134,7 +134,7 @@ class ComponentType(BaseDataType):
             builds[key] = item
             return '?' + key
 
-        r = item.dict(schema=True)
+        r = item.dict()
         # TODO why this clause?
         if r.schema:
             r = dict(
@@ -198,7 +198,7 @@ class LeafType(BaseDataType):
         :param files: The cache of files (paths).
         :param leaves_to_keep: The `Leaf` type(s) to keep.
         """
-        r = item.dict(schema=True)
+        r = item.dict()
         if r.schema:
             r = dict(
                 r.schema.encode_data(
@@ -220,41 +220,14 @@ class LeafType(BaseDataType):
         :param builds: The build-cache dictionary.
         :param db: The Datalayer.
         """
-        # # TODO why are both cases necessary?
-        # if isinstance(item, str) and item.startswith('?'):
-        #     key = item[1:]
-        #     if isinstance(builds[key], dict):
-        #         r = {'identifier': key.split(':')[-1], **builds[key]}
-        #         builds[key] = _decode_leaf(r, builds, db=db)
-        #     return builds[key]
-
-        # elif isinstance(item, str) and item.startswith('&'):
-        #     component, _, uuid = item[2:].split(':')
-        #     return db.load(component=component, uuid=uuid)
-
-        # elif isinstance(item, str):
-        #     raise ValueError(f'Unknown reference type {item} for a leaf')
-
         out = _decode_leaf(item, builds, db=db)
-
-        # if isinstance(out, Component):
-        #     key = f"{out.__class__.__name__}:{out.identifier}"
-        # else:
-        #     key = out.identifier
-
-        # builds[key] = out
-
         return out
 
 
 def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
-    if '_path' in r:
-        cls = Leaf.get_cls_from_path(path=r['_path'])
-    else:
-        assert '_object' in r, 'Require _path or _blob in object'
-        cls = Leaf.get_cls_from_blob(path=r['_object'])
-
-    dict_ = {k: v for k, v in r.items() if k not in {'_object', '_path'}}
+    assert '_path' in r
+    cls = Base.get_cls_from_path(path=r['_path'])
+    dict_ = {k: v for k, v in r.items() if k != '_path'}
 
     if inspect.isfunction(cls):
         out = cls(
@@ -264,14 +237,11 @@ def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
             db=db,
         )
     else:
-        assert issubclass(cls, Leaf)
+        assert issubclass(cls, Base)
         dict_ = cls.class_schema.decode_data(dict_, builds=builds, db=db)
         out = cls.from_dict(dict_, db=db)
 
-    if isinstance(out, Leaf):
-        builds[out.identifier] = out
-    else:
-        assert isinstance(out, Component)
+    if isinstance(out, Component):
         builds[f'{out.type_id}:{out.identifier}'] = out
     return out
 
@@ -297,7 +267,7 @@ class SDict(BaseDataType):
                 ComponentType().encode_data(
                     v, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
-                if isinstance(v, Leaf)
+                if isinstance(v, Base)
                 else v
             )
             for k, v in item.items()
@@ -334,7 +304,7 @@ class SList(BaseDataType):
                 ComponentType().encode_data(
                     r, builds, blobs, files, leaves_to_keep=leaves_to_keep
                 )
-                if isinstance(r, Leaf)
+                if isinstance(r, Base)
                 else r
             )
             for r in item

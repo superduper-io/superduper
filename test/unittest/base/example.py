@@ -1,4 +1,4 @@
-from superduper import imported
+from superduper.base.base import imported
 
 
 @imported

@@ -11,6 +11,7 @@ import typing as t
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import wraps
+import uuid
 
 import networkx
 import yaml
@@ -19,7 +20,7 @@ from superduper import logging
 from superduper.base.annotations import trigger
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
-from superduper.base.leaf import Leaf, LeafMeta
+from superduper.base.base import Base, BaseMeta
 from superduper.misc.annotations import lazy_classproperty
 
 if t.TYPE_CHECKING:
@@ -90,7 +91,7 @@ def _is_optional_callable(annotation) -> bool:
     return False
 
 
-class ComponentMeta(LeafMeta):
+class ComponentMeta(BaseMeta):
     """Metaclass for the `Component` class.
 
     This component is used to aggregate all the triggers
@@ -119,21 +120,29 @@ class ComponentMeta(LeafMeta):
         return new_cls
 
 
-class Component(Leaf, metaclass=ComponentMeta):
+def build_uuid():
+    """Build UUID."""
+    return str(uuid.uuid4()).replace('-', '')[:16]
+
+
+class Component(Base, metaclass=ComponentMeta):
     """Base class for all components in superduper.io.
 
     Class to represent superduper.io serializable entities
     that can be saved into a database.
 
-    :param upstream: A list of upstream components
-    :param plugins: A list of plugins to be used in the component.
+
+    :param identifier: Identifier of the instance.
+    :param uuid: UUID of the instance.
+    :param upstream: A list of upstream components.
     :param cache: (Optional) If set `true` the component will not be cached
                   during primary job of the component i.e on a distributed
                   cluster this component will be reloaded on every component
                   task e.g model prediction.
     :param status: What part of the lifecycle the component is in.
-    :param build_variables: Variables which were supplied to a template to build
-    :param build_template: Template which was used to build
+    :param build_variables: Variables which were supplied to a template to build.
+    :param build_template: Template which was used to build.
+    :param db: Datalayer instance.
     """
 
     breaks: t.ClassVar[t.Sequence] = ()
@@ -141,12 +150,19 @@ class Component(Leaf, metaclass=ComponentMeta):
     type_id: t.ClassVar[str] = 'component'
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
+    identifier: str
+    uuid: str = dc.field(default_factory=build_uuid)
     upstream: t.Optional[t.List['Component']] = None
-    plugins: t.Optional[t.List['Plugin']] = None
     cache: t.Optional[bool] = True
     status: t.Optional[Status] = None
     build_variables: t.Dict | None = None
     build_template: str | None = None
+
+    db: dc.InitVar[t.Optional['Datalayer']] = None
+
+    def __post_init__(self, db: t.Optional['Datalayer'] = None):
+        self.db = db
+        self.postinit()
 
     @property
     def component(self):
@@ -229,7 +245,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         """
         from superduper.components.datatype import Saveable
 
-        r = self.dict(schema=True).encode(leaves_to_keep=(Component, Saveable))
+        r = self.dict().encode(leaves_to_keep=(Component, Saveable))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
         lookup = {}
         for v in out:
@@ -405,12 +421,8 @@ class Component(Leaf, metaclass=ComponentMeta):
     def leaves(self):
         """Get all the leaves in the component."""
         r = self.dict()
-        leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Leaf)]
+        leaf_keys = [k for k in r.keys(True) if isinstance(r[k], Base)]
         return {k: r[k] for k in leaf_keys}
-
-    def __post_init__(self, db):
-        super().__post_init__(db)
-        self.postinit()
 
     def postinit(self):
         """Post initialization method."""
@@ -592,7 +604,7 @@ class Component(Leaf, metaclass=ComponentMeta):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        r = self.dict(defaults=defaults, metadata=metadata, schema=True)
+        r = self.dict(defaults=defaults, metadata=metadata)
         r = r.encode(defaults=defaults, metadata=metadata)
 
         if not metadata:
@@ -704,7 +716,6 @@ class Component(Leaf, metaclass=ComponentMeta):
         metadata: bool = True,
         defaults: bool = True,
         refs: bool = False,
-        schema: bool = False,
         path: bool = True,
     ) -> 'Document':
         """A dictionary representation of the component.
@@ -712,12 +723,11 @@ class Component(Leaf, metaclass=ComponentMeta):
         :param metadata: If set `true` include metadata.
         :param defaults: If set `true` include defaults.
         :param refs: If set `true` include references.
-        :param schema: If `true` include schema.
         :param path: If `true` include path.
         """
         from superduper import Document
 
-        r = super().dict(metadata=metadata, defaults=defaults, schema=schema, path=path)
+        r = super().dict(metadata=metadata, defaults=defaults, path=path)
 
         def _convert_components_to_refs(r):
             if isinstance(r, dict):

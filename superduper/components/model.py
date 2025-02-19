@@ -19,7 +19,7 @@ from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.annotations import trigger
 from superduper.base.document import Document
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
@@ -122,37 +122,6 @@ def model(
         return decorated_function
 
 
-class Inputs:
-    """Base class to represent the model args and kwargs.
-
-    :param params: List of parameters of the Model object
-    """
-
-    def __init__(self, params):
-        self.params = params
-
-    def __len__(self):
-        return len(self.params)
-
-    def __getattr__(self, attr):
-        return self.params[attr]
-
-    def get_kwargs(self, args):
-        """Get keyword arguments from positional arguments.
-
-        :param args: Parameters to be converted
-        """
-        kwargs = {}
-        for k, arg in zip(self.params, args):
-            kwargs[k] = arg
-        return kwargs
-
-    def __call__(self, *args, **kwargs):
-        """Get the model args and kwargs."""
-        tmp = self.get_kwargs(args)
-        return {**tmp, **kwargs}
-
-
 # TODO migrate this to its own module
 class Trainer(Component):
     """Trainer component to train a model.
@@ -170,14 +139,6 @@ class Trainer(Component):
     :param compute_kwargs: Kwargs for compute backend.
     :param validation: Validation object to measure training performance
     """
-
-    _fields = {
-        'transform': 'default',
-        'select': 'leaf',
-        'metric_values': 'json',
-        'compute_kwargs': 'json',
-        'validation': 'component',
-    }
 
     type_id: t.ClassVar[str] = 'trainer'
     key: st.JSON
@@ -214,8 +175,6 @@ class Validation(Component):
     :param key: Model input type key
     :param datasets: Sequence of dataset.
     """
-
-    _fields = {'datasets': 'slist', 'metrics': 'slist'}
 
     type_id: t.ClassVar[str] = 'validation'
     metrics: t.List[Metric] = dc.field(default_factory=list)
@@ -272,7 +231,7 @@ class Mapping:
 
         args = list(args)
         for i, arg in enumerate(args):
-            if isinstance(arg, Leaf):
+            if isinstance(arg, Base):
                 args[i] = arg.unpack()
         args = tuple(args)
 
@@ -366,17 +325,6 @@ class Model(Component, metaclass=ModelMeta):
     :param deploy: Creates a standalone class instance on compute cluster.
     """
 
-    _fields = {
-        'datatype': 'leaf',
-        'output_schema': 'component',
-        'model_update_kwargs': 'json',
-        'predict_kwargs': 'json',
-        'compute_kwargs': 'json',
-        'validation': 'component',
-        'metric_values': 'json',
-        'trainer': 'component',
-    }
-
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
     type_id: t.ClassVar[str] = 'model'
     datatype: str | None = None
@@ -429,11 +377,6 @@ class Model(Component, metaclass=ModelMeta):
     @property
     def signature(self):
         return self._signature
-
-    @property
-    def inputs(self) -> Inputs:
-        """Instance of `Inputs` to represent model params."""
-        return Inputs(list(inspect.signature(self.predict).parameters.keys()))
 
     def _wrapper(self, data):
         args, kwargs = self.handle_input_type(data, self.signature)
@@ -892,7 +835,7 @@ class ImportedModel(Model):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
-    object: Leaf
+    object: Base
     method: t.Optional[str] = None
 
     def __post_init__(self, db, example):
@@ -962,7 +905,6 @@ class ImportedModel(Model):
 class ObjectModel(ImportedModel):
     """A model to wrap a Python object and serialize it."""
 
-    _fields = {'object': 'default'}
     object: t.Callable
 
 

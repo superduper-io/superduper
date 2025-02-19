@@ -4,7 +4,7 @@ import typing as t
 from dataclasses import fields
 from typing import Any, ForwardRef, get_args, get_origin
 
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.components.component import Component
 
 
@@ -106,7 +106,7 @@ class _DataTypeFactory:
                 return str(cls).split('.')[-1].lower()
             if issubclass(cls, Component):
                 return 'componenttype'
-            if issubclass(cls, Leaf):
+            if issubclass(cls, Base):
                 return 'leaftype'
         except TypeError:
             pass
@@ -116,7 +116,7 @@ class _DataTypeFactory:
 def _map_type_to_superduper(source, name, cls, iterable):
     if iterable is None:
         return _DataTypeFactory(source, name)[cls]
-    if cls and issubclass(cls, Leaf):
+    if cls and issubclass(cls, Base):
         if iterable is list:
             return 'slist'
         if iterable is dict:

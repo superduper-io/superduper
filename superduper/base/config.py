@@ -119,18 +119,6 @@ class Downloads(BaseConfig):
 
 
 @dc.dataclass
-class RestConfig(BaseConfig):
-    """Configuratin for basic rest server.
-
-    :param uri: Rest server uri.
-    :param config: Path configuration file.
-    """
-
-    uri: str = 'localhost:8000'
-    config: t.Optional[str] = None
-
-
-@dc.dataclass
 class DataTypePresets(BaseConfig):
     """Paths of default types of data.
 
@@ -155,22 +143,16 @@ class Config(BaseConfig):
     :param cluster_engine: The engine to use for operating a distributed cluster
     :param retries: Settings for retrying failed operations
     :param downloads: Settings for downloading files
-    :param fold_probability: The probability of validation fold
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
     :param force_apply: Whether to force apply the configuration
     :param datatype_presets: Presets to be applied for default types of data
-    :param auto_schema: Whether to automatically create the schema.
-                        If True, the schema will be created if it does not exist.
     :param json_native: Whether the databackend supports json natively or not.
     :param log_colorize: Whether to colorize the logs
     :param bytes_encoding: (Deprecated)
     :param output_prefix: The prefix for the output table and output field key
     :param vector_search_kwargs: The keyword arguments to pass to the vector search
-    :param rest: Settings for rest server.
     """
-
-    # TODO make _fold optional
 
     envs: dc.InitVar[t.Optional[t.Dict[str, str]]] = None
 
@@ -185,8 +167,6 @@ class Config(BaseConfig):
     retries: Retry = dc.field(default_factory=Retry)
     downloads: Downloads = dc.field(default_factory=Downloads)
 
-    fold_probability: float = 0.05
-
     log_level: LogLevel = LogLevel.INFO
     logging_type: LogType = LogType.SYSTEM
     log_colorize: bool = True
@@ -196,11 +176,9 @@ class Config(BaseConfig):
 
     datatype_presets: DataTypePresets = dc.field(default_factory=DataTypePresets)
 
-    auto_schema: bool = True
     json_native: bool = True
     output_prefix: str = "_outputs__"
     vector_search_kwargs: t.Dict = dc.field(default_factory=dict)
-    rest: RestConfig = dc.field(default_factory=RestConfig)
 
     def __post_init__(self, envs):
         if envs is not None:

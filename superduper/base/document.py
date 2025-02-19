@@ -10,7 +10,7 @@ from superduper.base.constant import (
     KEY_BUILDS,
     KEY_FILES,
 )
-from superduper.base.leaf import Leaf
+from superduper.base.base import Base
 from superduper.base.variables import _replace_variables
 from superduper.components.datatype import Saveable
 from superduper.components.schema import Schema
@@ -43,7 +43,7 @@ def _diff(r1, r2, d):
                 d[k] = subdiff
             continue
 
-        if isinstance(r1[k], Leaf):
+        if isinstance(r1[k], Base):
             r1k = r1[k].dict(metadata=False)
 
             if r2[k] is None:
@@ -349,22 +349,21 @@ class Document(MongoStyleDict):
 
         for k in builds:
             if isinstance(builds[k], dict) and (
-                '_path' in builds[k] or '_object' in builds[k]
+                '_path' in builds[k]
             ):
                 builds[k]['identifier'] = k.split(':')[-1]
 
         # TODO add _path and _object as constants
-        if '_path' in r or '_object' in r:
+        if '_path' in r:
             # TODO this has no place here
             # this should be Component.decode
             # or db.load
-            assert '_path' in r or '_object' in r
 
             if '_path' in r:
-                cls = Leaf.get_cls_from_path(r['_path'])
+                cls = Base.get_cls_from_path(r['_path'])
             else:
                 assert '_object' in r
-                cls = Leaf.get_cls_from_blob(r['_object'], db=db)
+                cls = Base.get_cls_from_blob(r['_object'], db=db)
 
             if inspect.isclass(cls):
                 r = cls.class_schema.decode_data(r, builds=builds, db=db)
@@ -428,88 +427,6 @@ class Document(MongoStyleDict):
         new_doc = Document(**self)
         momo[id(self)] = new_doc
         return new_doc
-
-
-# TODO what is this? Looks like it should be in superduper_mongodb
-class QueryUpdateDocument(Document):
-    """A document that is used to update a document in a database.
-
-    This document is used to update a document in a database.
-    It is a subclass of Document.
-
-    :param args: *args for `dict`
-    :param schema: The schema to use.
-    :param db: The datalayer to use.
-    :param kwargs: **kwargs for `dict`
-    """
-
-    @classmethod
-    def from_document(cls, document):
-        """Create a QueryUpdateDocument from a document.
-
-        :param document: The document to create the QueryUpdateDocument from.
-        """
-        r = dict(document)
-        r = r.get('$set', r)
-        return QueryUpdateDocument(r)
-
-    @staticmethod
-    def _create_metadata_update(update, original=None):
-        # Update leaves
-        if original is None:
-            original = update
-
-        # TODO - what is this?
-        # if not isinstance(original, SuperDuperFlatEncode):
-        #     return {'$set': update}
-
-        for mk in (KEY_BUILDS, KEY_FILES, KEY_BLOBS):
-            m = original.pop(mk, {})
-            for k, v in m.items():
-                update[f'{mk}.{k}'] = v
-
-        update = {'$set': update}
-        return update
-
-    # TODO needed?
-    def to_template(self, **substitutions):
-        """
-        Convert the document to a template with variables.
-
-        :param substitutions: The substitutions to make.
-            `str-to-replace -> variable-name`
-        """
-        substitutions.setdefault(CFG.output_prefix, 'output_prefix')
-
-        def substitute(x):
-            if isinstance(x, str):
-                for k, v in substitutions.items():
-                    x = x.replace(k, f'<var:{v}>')
-                return x
-            if isinstance(x, dict):
-                return {substitute(k): substitute(v) for k, v in x.items()}
-            if isinstance(x, (list, tuple)):
-                return [substitute(v) for v in x]
-            return x
-
-        return substitute(dict(self))
-
-    def encode(
-        self,
-        original: t.Any = None,
-        schema: t.Optional['Schema'] = None,
-        leaves_to_keep: t.Sequence = (),
-    ) -> t.Dict:
-        """Encode the document to a format that can be used in a database.
-
-        :param original: The original document.
-        :param schema: The schema to use.
-        :param leaves_to_keep: The types of leaves to keep.
-        """
-        r = dict(self)
-        r = r.get('$set', r)
-        update = super().encode(schema=schema, leaves_to_keep=leaves_to_keep)
-        return self._create_metadata_update(update, original=original)
 
 
 def _unpack(item: t.Any, leaves_to_keep: t.Sequence = ()) -> t.Any:

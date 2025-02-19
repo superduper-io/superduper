@@ -3,6 +3,7 @@ import typing as t
 import numpy as np
 
 from superduper import Document, ObjectModel
+from superduper.base.base import Base
 from superduper.components.listener import Listener
 
 if t.TYPE_CHECKING:
@@ -29,26 +30,34 @@ def _check_equal(a, b):
     return a == b
 
 
+class documents(Base):
+    x: int
+    y: str
+    z: t.Any
+
+
 def build_graph_listener(db: "Datalayer"):
-    db.cfg.auto_schema = True
     data = [
         {"x": 1, "y": "2", "z": np.array([1, 2, 3])},
         {"x": 2, "y": "3", "z": np.array([4, 5, 6])},
         {"x": 3, "y": "4", "z": np.array([7, 8, 9])},
     ]
 
+    db.create(documents)
+
     db["documents"].insert(data)
 
     data = db['documents'].select().execute()
 
-    assert isinstance(data[0]['z'], np.ndarray)
+    r = data[0].unpack()
+    assert isinstance(r['z'], np.ndarray)
 
     def func_a(x):
         return {"x": x, "model": "a"}
 
     primary_id = db["documents"].primary_id
 
-    model_a = ObjectModel(identifier="model_a", object=func_a, datatype='pickleencoder')
+    model_a = ObjectModel(identifier="model_a", object=func_a, datatype='dillencoder')
 
     listener_a = Listener(
         model=model_a,
@@ -59,7 +68,7 @@ def build_graph_listener(db: "Datalayer"):
     )
 
     def func_b(x, y, o_a):
-        return {"x": x, "y": y, "o_a": o_a, "model": "b"}
+        return Document({"x": x, "y": y, "o_a": o_a, "model": "b"}).unpack()
 
     model_b = ObjectModel(identifier="model_b", object=func_b, datatype='pickleencoder')
 
@@ -74,9 +83,9 @@ def build_graph_listener(db: "Datalayer"):
     )
 
     def func_c(x, y, z, o_a, o_b):
-        return {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
+        return Document({"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}).unpack()
 
-    model_c = ObjectModel(identifier="model_c", object=func_c, datatype='pickleencoder')
+    model_c = ObjectModel(identifier="model_c", object=func_c, datatype='dillencoder')
     listener_c = Listener(
         model=model_c,
         key=("x", "y", "z", listener_a.outputs, listener_b.outputs),

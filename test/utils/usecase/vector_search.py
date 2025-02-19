@@ -2,6 +2,7 @@ import typing as t
 
 import numpy as np
 
+from superduper.base import Base
 from superduper.components.listener import Listener
 
 if t.TYPE_CHECKING:
@@ -10,34 +11,27 @@ if t.TYPE_CHECKING:
 VECTOR_SIZE = 300
 
 
+class documents(Base):
+    x: int
+    label: int
+
+
 def add_data(db: "Datalayer", start: int, end: int):
     """
     :param db: Datalayer
     :param start: int to start assigning to `x` column
     :param end: int to stop assigning to `x` column
     """
-    db.cfg.auto_schema = True
-    data = []
-    for i in range(start, end):
-        data.append(
-            {
-                "x": i,
-                "label": int(i % 2 == 0),
-            }
-        )
-    db["documents"].insert(data)
+    db.insert([documents(x=i, label=int(i % 2 == 0)) for i in range(start, end)])
 
 
 def build_vector_index(
     db: "Datalayer",
     n: int = 100,
     list_embeddings=False,
-    vector_datatype=None,
     measure=None,
 ):
     from superduper import ObjectModel, VectorIndex
-
-    db.cfg.auto_schema = True
 
     add_data(db, 0, n)
 

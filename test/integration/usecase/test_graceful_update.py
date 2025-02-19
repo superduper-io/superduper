@@ -5,6 +5,7 @@ import numpy
 
 from superduper import Listener, Model, VectorIndex, logging
 from superduper.base.annotations import trigger
+from superduper.base.base import Base
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import Validation
 
@@ -32,8 +33,13 @@ class MyValidation(Validation):
         return 0.1
 
 
+class docs(Base):
+    x: int
+
+
 def test(db: Datalayer):
-    db.cfg.auto_schema = True
+
+    db.create(docs)
 
     db['docs'].insert([{'x': random.randrange(10)} for _ in range(10)])
 

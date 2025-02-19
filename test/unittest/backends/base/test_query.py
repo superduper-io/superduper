@@ -1,19 +1,27 @@
 import pytest
 
 from superduper.backends.base.query import parse_query
+from superduper.base import Base
+
+from superduper.components.table import Table
+from superduper.misc import typing as st
+
+
+class This(Base):
+    this: str
 
 
 def test_insert(db):
     db.cfg.auto_schema = True
 
-    # Test insert one
-    db["documents"].insert([{"this": "is a test"}])
-    result = db["documents"].select("this").execute()[0]
+    # Test insert one and infer schema
+    db.insert([This(this="is a test")])
+    result = db["This"].select("this").execute()[0]
     assert result["this"] == "is a test"
 
-    # Test insert multiple
-    db["documents"].insert([{"this": "is a test"}, {"this": "is a test"}])
-    results = db["documents"].select("this").execute()
+    # Test insert multiple with different method
+    db["This"].insert([{"this": "is a test"}, {"this": "is a test"}])
+    results = db["This"].select("this").execute()
     assert len(results) == 3
 
 
@@ -38,21 +46,28 @@ class ToSave:
         self.x = x
 
 
+class UseToSave(Base):
+    x: ToSave
+
+
 def test_encode_decode_data(db):
-    db.cfg.auto_schema = True
-    db['docs'].insert([{'x': ToSave(i)} for i in range(10)])
 
-    results = db['docs'].execute()
+    db.insert([UseToSave(x=ToSave(i)) for i in range(10)])
 
-    assert isinstance(results[0]['x'], ToSave)
+    results = db['UseToSave'].execute()
+
+    assert isinstance(results[0].unpack()['x'], ToSave)
+
+
+class Document(Base):
+    x: int
 
 
 def test_filter_select(db):
-    db.cfg.auto_schema = True
 
-    db['documents'].insert([{'x': i} for i in range(10)])
+    db.insert([Document(x=i) for i in range(10)])
 
-    t = db['documents']
+    t = db['Document']
 
     pid = t.primary_id.execute()
 
@@ -64,11 +79,10 @@ def test_filter_select(db):
 
 
 def test_filter(db):
-    db.cfg.auto_schema = True
 
-    db['documents'].insert([{'x': i} for i in range(10)])
+    db.insert([Document(x=i) for i in range(10)])
 
-    t = db['documents']
+    t = db['Document']
 
     ######## ==
 
@@ -134,11 +148,9 @@ def test_filter(db):
 
 
 def test_select_one_col(db):
-    db.cfg.auto_schema = True
+    db.insert([Document(x=i) for i in range(10)])
 
-    db['documents'].insert([{'x': i} for i in range(10)])
-
-    q = db['documents'].select('x')
+    q = db['Document'].select('x')
 
     results = q.execute()
 
@@ -146,11 +158,9 @@ def test_select_one_col(db):
 
 
 def test_select_all_cols(db):
-    db.cfg.auto_schema = True
+    db.insert([Document(x=i) for i in range(10)])
 
-    db['documents'].insert([{'x': i} for i in range(10)])
-
-    q = db['documents'].select()
+    q = db['Document'].select()
 
     results = q.execute()
 
@@ -158,20 +168,17 @@ def test_select_all_cols(db):
 
 
 def test_select_table(db):
-    db.cfg.auto_schema = True
+    db.insert([Document(x=i) for i in range(10)])
 
-    db['documents'].insert([{'x': i} for i in range(10)])
-
-    results = db['documents'].execute()
+    results = db['Document'].execute()
     assert len(results) == 10
 
 
 def test_ids(db):
-    db.cfg.auto_schema = True
 
-    db['documents'].insert([{'x': i} for i in range(10)])
+    db.insert([Document(x=i) for i in range(10)])
 
-    results = db['documents'].ids()
+    results = db['Document'].ids()
 
     assert len(results) == 10
 
@@ -179,22 +186,22 @@ def test_ids(db):
 
 
 def test_subset(db):
-    db.cfg.auto_schema = True
+    db.insert([Document(x=i) for i in range(10)])
 
-    db['documents'].insert([{'x': i} for i in range(10)])
+    ids = db['Document'].ids()
+    results = db['Document'].subset(ids[:5])
 
-    ids = db['documents'].ids()
-    results = db['documents'].subset(ids[:5])
-
-    pid = db['documents'].primary_id.execute()
+    pid = db['Document'].primary_id.execute()
 
     assert set([r[pid] for r in results]) == set(ids[:5])
+
+    db.apply(Table('_outputs__a__123456789', fields={'_outputs__a__123456789': 'int', '_source': 'str'}))
 
     db['_outputs__a__123456789'].insert(
         [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
     )
 
-    results = db['documents'].outputs('a__123456789').subset(ids[:5])
+    results = db['Document'].outputs('a__123456789').subset(ids[:5])
 
     assert set([r[pid] for r in results]) == set(ids[:5])
 
@@ -202,17 +209,29 @@ def test_subset(db):
 
 
 def test_outputs(db):
-    db.cfg.auto_schema = True
+    ids = db.insert([Document(x=i) for i in range(10)])
 
-    ids = db['documents'].insert([{'x': i} for i in range(10)])
+    db.apply(Table('_outputs__a__123456789', fields={'_outputs__a__123456789': 'int', '_source': 'str'}))
+
     db['_outputs__a__123456789'].insert(
         [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
     )
-    outputs = db['documents'].outputs('a__123456789').execute()
+    outputs = db['Document'].outputs('a__123456789').execute()
     print(outputs)
 
     for r in outputs:
         assert r['x'] + 2 == r['_outputs__a__123']
+
+
+class Special(Base):
+    x: str
+    y: int
+    special_y: int
+    z: float
+    _fold: str
+    n: int
+    special_n: int
+
 
 
 def test_read(db):
@@ -230,34 +249,34 @@ def test_read(db):
             {
                 "x": f"x_{i}",
                 "y": int(i % 2 == 0),
-                "special-y": int(i % 2 == 0),
-                "z": np.random.randn(1),
+                "special_y": int(i % 2 == 0),
+                "z": float(np.random.randn(1)),
                 "_fold": "valid" if i % 2 == 0 else "train",
                 "n": i,
-                "special-n": i,
+                "special_n": i,
             }
         )
 
-    db["documents"].insert(datas)
+    db.insert([Special(**d) for d in datas])
 
     # Test base select
-    results = db["documents"].select().execute()
+    results = db["Special"].select().execute()
     assert len(results) == 10
 
-    primary_id = db["documents"].primary_id.execute()
+    primary_id = db["Special"].primary_id.execute()
 
     for r in results:
         check_keys(r, ["x", "y", "z", primary_id, "_fold", "n"])
 
     # Test field select
-    results = list(db["documents"].select("x").execute())
+    results = list(db["Special"].select("x").execute())
     assert len(results) == 10
     for r in results:
         assert len(r) == 1
         assert r["x"] is not None
 
     # Test filter select
-    table = db["documents"]
+    table = db["Special"]
     primary_id = table.primary_id
     select = table.select("x", "y", "n").filter(table['y'] == 1, table['n'] > 5)
     results = list(select.execute())
@@ -268,12 +287,12 @@ def test_read(db):
         assert r["n"] > 5
         check_keys(r, ["x", "y", "n"])
 
-    select = table.select("x", "special-y", "special-n").filter(
-        table["special-y"] == 1, table["special-n"] > 5
+    select = table.select("x", "special_y", "special_n").filter(
+        table["special_y"] == 1, table["special_n"] > 5
     )
     results = select.execute()
     assert len(results) == 3
-    assert [6, 8, 10] == [r["special-n"] for r in results]
+    assert [6, 8, 10] == [r["special_n"] for r in results]
 
 
 def test_like(db):
@@ -328,48 +347,6 @@ def test_like(db):
     assert len(out) == 4
 
     assert set(r["x"] for r in out) == {47, 49, 51, 53}
-
-
-def test_insert_with_auto_schema(db):
-    db.cfg.auto_schema = True
-    import numpy as np
-
-    data = {
-        "array": np.array([1, 2, 3]),
-    }
-
-    table_or_collection = db["documents"]
-
-    table_or_collection.insert([data])
-
-    datas_from_db = list(table_or_collection.select().execute())
-
-    for d, d_db in zip([data], datas_from_db):
-        assert np.all(d["array"] == d_db["array"])
-
-
-def test_insert_with_diff_schemas(db):
-    db.cfg.auto_schema = True
-    import numpy as np
-    import pandas as pd
-
-    table_or_collection = db["documents"]
-    data = {
-        "array": np.array([1, 2, 3]),
-    }
-    table_or_collection.insert([data])
-
-    datas_from_db = table_or_collection.select().execute()
-
-    assert np.all(data["array"] == datas_from_db[0]["array"])
-
-    data = {
-        "df": pd.DataFrame(np.random.randn(10, 10)),
-    }
-
-    # Do not support different schema
-    with pytest.raises(Exception):
-        table_or_collection.insert(data)
 
 
 def test_parse_outputs_query(db):

@@ -180,7 +180,7 @@ def _apply(
 
     object.db = db
 
-    serialized = object.dict(metadata=False, schema=True)
+    serialized = object.dict(metadata=False)
 
     del serialized['uuid']
 
@@ -218,7 +218,7 @@ def _apply(
                 x = x.replace(uuid, non_breaking_changes[uuid])
 
         elif isinstance(x, Query):
-            r = x.dict(schema=True)
+            r = x.dict()
             for uuid in non_breaking_changes:
                 r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
             for i, doc in enumerate(r['documents']):
@@ -246,7 +246,7 @@ def _apply(
 
         # only check for diff not in metadata/ uuid
         # also only
-        current_serialized = current.dict(metadata=False, refs=True, schema=True)
+        current_serialized = current.dict(metadata=False, refs=True)
 
         del current_serialized['uuid']
 
@@ -301,7 +301,7 @@ def _apply(
             # during the `.map` to the children
             # serializer.map...
             # this means replacing components with references
-            serialized = object.dict(schema=True).update(serialized)
+            serialized = object.dict().update(serialized)
 
             # this is necessary to prevent inconsistencies
             # this takes the difference between
@@ -339,7 +339,7 @@ def _apply(
             # update the existing component with the change
             # data from the applied component
             serialized = (
-                current.dict(schema=True)
+                current.dict()
                 .update(serialized)
                 .update(this_diff)
                 .encode(keep_schema=False)
@@ -354,7 +354,7 @@ def _apply(
         )
         serialized['version'] = 0
 
-        serialized = object.dict(schema=True).update(serialized)
+        serialized = object.dict().update(serialized)
 
         # if the metadata includes components, which
         # need to be applied, do that now

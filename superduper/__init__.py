@@ -17,7 +17,6 @@ except metadata.PackageNotFoundError:
 
 
 from .base.document import Document
-from .base.leaf import imported, imported_value
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
@@ -69,7 +68,5 @@ __all__ = (
     'Component',
     'pickle_serializer',
     'dill_serializer',
-    'imported',
-    'imported_value',
     'Streamlit',
 )

@@ -136,10 +136,10 @@ def _wait_on_events(db, events):
         remaining = len(events)
         for event in events:
             identifier = event.component['identifier']
-            type_id = event.component['type_id']
+            component = event.component['component']
             version = event.component['version']
             try:
-                db.load(type_id=type_id, identifier=identifier, version=version)
+                db.load(component=component, identifier=identifier, version=version)
             except FileNotFoundError:
                 pass
             else:
@@ -374,7 +374,7 @@ def _apply(
         global_diff[object.identifier] = {
             'status': apply_status,
             'changes': dict(this_diff),
-            'type_id': object.type_id,
+            'component': object.component,
         }
 
     serialized = db._save_artifact(object.uuid, serialized)

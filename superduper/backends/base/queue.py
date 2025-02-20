@@ -199,7 +199,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
         for job in sub_jobs:
             job_lookup[component.uuid][job.method] = job.job_id
         jobs += sub_jobs
-        logging.info(f'Streaming with {component.type_id}:{component.identifier}')
+        logging.info(f'Streaming with {component.component}:{component.identifier}')
 
     if False:  # db.metadata.batched:
         for chunk in _chunked_list(jobs):

@@ -250,7 +250,7 @@ def test_model_validate_in_db(db):
     )
 
     db.apply(model_predict)
-    reloaded = db.load('model', model_predict.identifier)
+    reloaded = db.load('ObjectModel', model_predict.identifier)
     assert next(iter(reloaded.metric_values.keys())) == 'my_valid/0'
 
 

@@ -140,7 +140,6 @@ class Trainer(Component):
     :param validation: Validation object to measure training performance
     """
 
-    type_id: t.ClassVar[str] = 'trainer'
     key: st.JSON
     select: st.LeafType
     transform: t.Optional[t.Callable] = None

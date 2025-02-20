@@ -147,7 +147,6 @@ class Component(Base, metaclass=ComponentMeta):
 
     breaks: t.ClassVar[t.Sequence] = ()
     triggers: t.ClassVar[t.List] = []
-    type_id: t.ClassVar[str] = 'component'
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
     identifier: str
@@ -516,7 +515,7 @@ class Component(Base, metaclass=ComponentMeta):
         :param cluster: The cluster to declare the component to.
         """
         if self.cache:
-            logging.info(f'Adding {self.type_id}: {self.identifier} to cache')
+            logging.info(f'Adding {self.component}:{self.identifier} to cache')
             cluster.cache.put(self)
 
     @staticmethod

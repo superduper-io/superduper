@@ -13,8 +13,6 @@ class Streamlit(Component):
     :param is_standalone: Set to `True` if this is a standalone page.
     """
 
-    type_id: t.ClassVar[str] = 'streamlit'
-
     demo_func: t.Callable
     demo_kwargs: t.Dict = dc.field(default_factory=dict)
     default: bool = False

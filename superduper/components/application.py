@@ -25,7 +25,6 @@ class Application(Component):
 
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)
 
-    type_id: t.ClassVar[str] = 'application'
     components: t.List[Component]
     namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
     link: t.Optional[str] = None

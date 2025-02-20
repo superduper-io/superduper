@@ -15,7 +15,7 @@ class CDC(Component):
     """
 
     triggers: t.ClassVar[t.Set] = set()
-    type_id: t.ClassVar[str] = 'cdc'
+
     cdc_table: str
 
     def handle_update_or_same(self, other):

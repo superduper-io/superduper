@@ -107,7 +107,7 @@ def test_duplicate_artifact(capfd, db, artifact_store: FileSystemArtifactStore):
 
     test_component = TestComponentBytes(function=my_func, identifier="test")
     db.apply(test_component)
-    test_component_loaded = db.load("TestComponent", "test")
+    test_component_loaded = db.load("TestComponentBytes", "test")
     test_component_loaded.init()
 
     # This should use skip the artifact since it exists

@@ -10,8 +10,6 @@ class Checkpoint(Component):
     :param step: The step of the checkpoint.
     """
 
-    type_id: t.ClassVar[str] = "checkpoint"
-
     path: t.Optional[str]
     step: int
 

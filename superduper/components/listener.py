@@ -34,8 +34,8 @@ class Listener(CDC):
     :param flatten: Flatten the output into separate records if ``True``.
     """
 
-    type_id: t.ClassVar[str] = 'listener'
     breaks: t.ClassVar[t.Sequence[str]] = ('model', 'key', 'select')
+
     key: st.JSON
     model: Model
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)

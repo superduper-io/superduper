@@ -44,18 +44,18 @@ class LocalQueuePublisher(BaseQueuePublisher):
     def initialize(self):
         """Initialize the queue."""
         for component_data in self.db.show():
-            type_id = component_data['type_id']
+            component = component_data['component']
             identifier = component_data['identifier']
-            r = self.db.show(component=type_id, identifier=identifier, version=-1)
+            r = self.db.show(component=component, identifier=identifier, version=-1)
             if r.get('trigger'):
                 with self.lock:
-                    self.queue[type_id, identifier] = []
+                    self.queue[component, identifier] = []
 
     def _put(self, component):
         msg = 'Table name "_apply" collides with Superduper namespace'
         assert component.cdc_table != '_apply', msg
         assert isinstance(component, CDC)
-        self._component_uuid_mapping[component.type_id, component.identifier] = (
+        self._component_uuid_mapping[component.component, component.identifier] = (
             component.uuid
         )
         if component.cdc_table in self.queue:

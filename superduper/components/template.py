@@ -90,6 +90,10 @@ class _BaseTemplate(Component):
 
         Note that the `db` is needed in order to build queries.
 
+<<<<<<< HEAD
+=======
+        :param db: Datalayer instance to be used to create the component.
+>>>>>>> 02aeb36fb (Add changes necessary for services)
         :param kwargs: Variables to be set in the template.
         """
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})

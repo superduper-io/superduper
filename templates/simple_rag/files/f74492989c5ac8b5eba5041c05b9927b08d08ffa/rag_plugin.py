@@ -7,7 +7,10 @@ import typing as t
 class Chunker(Model):
     chunk_size: int = 200
 <<<<<<< HEAD
+<<<<<<< HEAD
     signature: str = 'singleton'
+=======
+>>>>>>> 02aeb36fb (Add changes necessary for services)
 =======
 >>>>>>> 02aeb36fb (Add changes necessary for services)
 

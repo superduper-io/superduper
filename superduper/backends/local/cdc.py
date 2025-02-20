@@ -34,7 +34,7 @@ class LocalCDCBackend(CDCBackend):
 
     def _put(self, item):
         assert isinstance(item, CDC)
-        self.triggers.add((item.type_id, item.identifier))
+        self.triggers.add((item.component, item.identifier))
 
     def __delitem__(self, item):
         self.triggers.remove(item)

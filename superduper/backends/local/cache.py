@@ -20,7 +20,7 @@ class LocalCache(Cache):
         self._db = None
 
     def list_components(self):
-        """List components by (type_id, identifier) in the cache."""
+        """List components by (component, identifier) in the cache."""
         return list(self._component_to_uuid.keys())
 
     def list_uuids(self):
@@ -29,24 +29,24 @@ class LocalCache(Cache):
 
     def __getitem__(self, item):
         if isinstance(item, tuple):
-            # (type_id, identifier)
+            # (component, identifier)
             item = self._component_to_uuid[item[0], item[1]]
         return self._cache[item]
 
     def _put(self, component: Component):
         """Put a component in the cache."""
         self._cache[component.uuid] = component
-        if (component.type_id, component.identifier) in self._component_to_uuid:
-            current = self._component_to_uuid[component.type_id, component.identifier]
+        if (component.component, component.identifier) in self._component_to_uuid:
+            current = self._component_to_uuid[component.component, component.identifier]
             current_component = self._cache[current]
             current_version = current_component.version
             if current_version < component.version:
-                self._component_to_uuid[component.type_id, component.identifier] = (
+                self._component_to_uuid[component.component, component.identifier] = (
                     component.uuid
                 )
                 self.expire(current_component.uuid)
         else:
-            self._component_to_uuid[component.type_id, component.identifier] = (
+            self._component_to_uuid[component.component, component.identifier] = (
                 component.uuid
             )
 
@@ -55,8 +55,8 @@ class LocalCache(Cache):
             item = self._component_to_uuid[item[0], item[1]]
         tuples = [k for k, v in self._component_to_uuid.items() if v == item]
         if tuples:
-            for type_id, identifier in tuples:
-                del self._component_to_uuid[type_id, identifier]
+            for component, identifier in tuples:
+                del self._component_to_uuid[component, identifier]
         del self._cache[item]
 
     def initialize(self):
@@ -75,10 +75,10 @@ class LocalCache(Cache):
             except KeyError:
                 logging.warn(f'{component.uuid} does not exists in cache')
             try:
-                del self._component_to_uuid[component.type_id, component.identifier]
+                del self._component_to_uuid[component.component, component.identifier]
             except KeyError:
                 logging.warn(
-                    f'{component.identifier}: {component.type_id} '
+                    f'{component.identifier}: {component.component} '
                     'does not exists in cache'
                 )
         else:

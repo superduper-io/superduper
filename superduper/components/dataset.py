@@ -26,8 +26,6 @@ class Dataset(Component):
                 If False, the dataset will cache the datas after we apply to db.
     """
 
-    type_id: t.ClassVar[str] = 'dataset'
-
     select: t.Optional[Query] = None
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None

@@ -105,7 +105,6 @@ class VectorIndex(CDC):
     :param metric_values: Metric values for this index
     """
 
-    type_id: t.ClassVar[str] = 'vector_index'
     breaks: t.ClassVar[t.Sequence[str]] = ('indexing_listener',)
 
     indexing_listener: Listener
@@ -241,7 +240,7 @@ class VectorIndex(CDC):
 
         key: t.Optional[t.Any] = None
         model_name: t.Optional[str] = None
-        for m, k in zip(models, keys):
+        for m, k in zip(list(models.keys()), keys):
             if isinstance(k, str):
                 if k in available_keys:
                     model_name, key = m, k
@@ -263,7 +262,7 @@ class VectorIndex(CDC):
                     f'VectorIndex keys: {keys}, with model: {models}'
                 )
 
-        model = db.load('model', model_name)
+        model = models[model_name]
         data = Mapping(key, model.signature)(document)
         args, kwargs = model.handle_input_type(data, model.signature)
         return (
@@ -334,7 +333,7 @@ class VectorIndex(CDC):
         else:
             listeners = [self.indexing_listener]
 
-        models = [w.model.identifier for w in listeners]
+        models = {w.model.identifier: w.model for w in listeners}
         keys = [w.key for w in listeners]
         return models, keys
 

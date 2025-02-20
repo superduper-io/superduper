@@ -11,8 +11,6 @@ class Metric(Component):
     :param object: Callable or an Artifact to be applied to the data.
     """
 
-    type_id: t.ClassVar[str] = 'metric'
-
     object: t.Callable
 
     @ensure_initialized

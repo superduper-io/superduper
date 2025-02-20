@@ -156,6 +156,6 @@ def test_apply(db, tmpdir):
     plugin = Plugin(identifier="test", path=path)
     db.apply(plugin)
 
-    plugin_reload = db.load("plugin", "test")
+    plugin_reload = db.load("Plugin", "test")
 
     assert plugin_reload.path.startswith(os.path.expanduser("~"))

@@ -12,7 +12,6 @@ class CronJob(Component):
     :param schedule: Schedule in cron format.
     """
 
-    type_id: t.ClassVar[str] = 'cronjob'
     schedule: str = '0 0 * * *'
 
     def declare_component(self, cluster):

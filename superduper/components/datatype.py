@@ -1,3 +1,4 @@
+# TODO move to base
 import base64
 import dataclasses as dc
 import hashlib
@@ -55,7 +56,7 @@ def _convert_bytes_to_base64(bytes_: bytes) -> str:
     return base64.b64encode(bytes_).decode('utf-8')
 
 
-# TODO - shouldn't this be handled by the datatype?
+# TODO - remove since no longer needed
 class DataTypeFactory:
     """Abstract class for creating a DataType # noqa."""
 
@@ -242,7 +243,7 @@ def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
         out = cls.from_dict(dict_, db=db)
 
     if isinstance(out, Component):
-        builds[f'{out.type_id}:{out.identifier}'] = out
+        builds[f'{out.component}:{out.identifier}'] = out
     return out
 
 

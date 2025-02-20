@@ -82,30 +82,3 @@ def safe_retry(exception_to_check, retries=1, delay=0.3, verbose=1):
         return wrapper
 
     return decorator
-
-
-def db_retry(connector='databackend'):
-    """Helper method to retry methods with database calls.
-
-    :param connector: Connector of the datalayer instance.
-    """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
-            try:
-                return func(self, *args, **kwargs)
-            except Exception as e:
-                error_message = str(e).lower()
-                if 'expire' in error_message or 'token' in error_message:
-                    s.logging.warn(
-                        f"Token expiration detected: {e}. Attempting to reconnect..."
-                    )
-                    self.databackend.reconnect()
-                    return func(self, *args, **kwargs)
-                else:
-                    raise e
-
-        return wrapper
-
-    return decorator

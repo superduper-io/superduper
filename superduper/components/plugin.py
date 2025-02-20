@@ -18,8 +18,6 @@ class Plugin(Component):
     :param cache_path: Path to the cache directory where the plugin will be stored.
     """
 
-    type_id: t.ClassVar[str] = "plugin"
-
     path: st.File
     identifier: str = ""
     cache_path: str = "~/.superduper/plugins"

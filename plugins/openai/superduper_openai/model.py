@@ -4,6 +4,7 @@ import json
 import os
 import typing as t
 
+from functools import lru_cache as cache
 import numpy
 import requests
 import tqdm
@@ -18,8 +19,7 @@ from openai._types import NOT_GIVEN
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base import exceptions
 from superduper.base.datalayer import Datalayer
-from superduper.components.model import APIBaseModel, Inputs
-from superduper.misc.compat import cache
+from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry, safe_retry
 
 retry = Retry(
@@ -117,11 +117,6 @@ class OpenAIEmbedding(_OpenAI):
 
     signature: str = 'singleton'
     batch_size: int = 100
-
-    @property
-    def inputs(self):
-        """The inputs of the model."""
-        return Inputs(['input'])
 
     @retry
     def predict(self, X: str):

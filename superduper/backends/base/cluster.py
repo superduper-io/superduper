@@ -78,6 +78,16 @@ class Cluster(ABC):
         self.compute.db = value
         self.cdc.db = value
 
+    def load_custom_plugins(self):
+        """Load user plugins."""
+        from superduper import logging
+
+        if 'Plugin' in self.db.show('Table'):
+            logging.info(f"Found custom plugins - loading...")
+            for plugin in self.db.show('Plugin'):
+                logging.info(f"Loading plugin: {plugin}")
+                plugin = self.db.load('Plugin', plugin)
+
     def initialize(self, with_compute: bool = False):
         """Initialize the cluster.
 
@@ -88,6 +98,9 @@ class Cluster(ABC):
 
         start = time.time()
         assert self.db
+
+        self.load_custom_plugins()
+
         if with_compute:
             self.compute.initialize()
 

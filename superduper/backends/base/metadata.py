@@ -3,11 +3,13 @@ import datetime
 import typing as t
 import uuid
 
+from superduper import logging
 from superduper.base.exceptions import DatabackendError
 from superduper.base.base import Base
 from superduper.components.cdc import CDC
 from superduper.components.schema import Schema
 from superduper.components.table import Table
+from superduper.misc.importing import import_object
 
 
 class NonExistentMetadataError(Exception):
@@ -90,7 +92,6 @@ class MetaDataStore:
         self.preset_components = {
             ('Table', 'Table'): Table(
                 identifier='Table',
-                cls=Table,
                 primary_id='uuid',
                 uuid='abc',
                 component=True,
@@ -98,7 +99,6 @@ class MetaDataStore:
             ).encode(),
             ('Table', 'ParentChildAssociations'): Table(
                 identifier='ParentChildAssociations',
-                cls=ParentChildAssociations,
                 primary_id='uuid',
                 uuid='def',
                 component=True,
@@ -106,7 +106,6 @@ class MetaDataStore:
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
                 identifier='ArtifactRelations',
-                cls=ArtifactRelations,
                 primary_id='uuid',
                 uuid='ghi',
                 component=True,
@@ -114,7 +113,6 @@ class MetaDataStore:
             ).encode(),
             ('Table', 'Job'): Table(
                 identifier='Job',
-                cls=Job,
                 primary_id='uuid',
                 uuid='jkl',
                 component=True,
@@ -142,8 +140,8 @@ class MetaDataStore:
         r = self.db['Table'].get(identifier=table)
         try:
             r = r.unpack()
-            if r['cls'] is not None:
-                return r['cls'].class_schema
+            if r['path'] is not None:
+                return import_object(r['path']).class_schema
             return Schema.build(r['fields'])
         except AttributeError as e:
             if 'unpack' in str(e) and 'NoneType' in str(e):
@@ -165,7 +163,7 @@ class MetaDataStore:
         except DatabackendError as e:
             if 'not found' in str(e):
                 self.db.databackend.create_table_and_schema('Table', Table.class_schema)
-                t = Table('Table', cls=Table, primary_id='uuid', component=True)
+                t = Table('Table', path='superduper.components.table.Table', primary_id='uuid', component=True)
                 r = self.db['Table'].insert(
                     [t.dict(schema=True, path=False)], 
                 )
@@ -178,7 +176,7 @@ class MetaDataStore:
             )
 
         self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
-        t = Table(identifier=cls.__name__, cls=cls, primary_id='uuid', component=True)
+        t = Table(identifier=cls.__name__, path=f'{cls.__module__}.{cls.__name__}', primary_id='uuid', component=True)
         self.db['Table'].insert([t.dict(path=False)])
         return t
 
@@ -334,6 +332,18 @@ class MetaDataStore:
         """
         self.create_entry(info, 'Job', raw=False)
 
+    def show_jobs(self, component: str, identifier: str):
+        """
+        Show all jobs in the metadata store.
+
+        :param component: type of component
+        :param identifier: identifier of component
+        """
+        return self.db['Job'].filter(
+            self.db['Job']['component'] == component,
+            self.db['Job']['identifier'] == identifier,
+        ).distinct('job_id')
+
     def show_components(self, component: str | None = None):
         """
         Show all components in the metadata store.
@@ -348,12 +358,16 @@ class MetaDataStore:
             ):
                 if component in metaclasses.keys():
                     continue
-                out.extend(
-                    [
-                        {'component': component, 'identifier': x}
-                        for x in self.db[component].distinct('identifier')
-                    ]
-                )
+
+                try:
+                    out.extend(
+                        [
+                            {'component': component, 'identifier': x}
+                            for x in self.db[component].distinct('identifier')
+                        ]
+                    )
+                except ModuleNotFoundError as e:
+                    logging.error(f'Component type not found: {component}; ', e)
             out.extend(
                 [
                     {'component': 'Table', 'identifier': x}
@@ -363,19 +377,15 @@ class MetaDataStore:
             return out
         return self.db[component].distinct('identifier')
 
-    def get_classes(self):
-        """Get all classes in the metadata store."""
-        data = self['Metadata'].execute()
-        return [r['cls'] for r in data]
-
     def show_cdc_tables(self):
         """List the tables used for CDC."""
         cdc_classes = []
         for r in self.db['Table'].execute():
-            if r['cls'] is None:
+            if r['path'] is None:
                 continue
+            cls = import_object(r['path'])
             r = r.unpack()
-            if issubclass(r['cls'], CDC):
+            if issubclass(cls, CDC):
                 cdc_classes.append(r)
 
         cdc_tables = []
@@ -391,9 +401,10 @@ class MetaDataStore:
         """
         cdc_classes = []
         for r in self.db['Table'].execute():
-            if r['cls'] is None:
+            if r['path'] is None:
                 continue
-            if issubclass(r['cls'], CDC):
+            cls = import_object(r['path'])
+            if issubclass(cls, CDC):
                 cdc_classes.append(r)
 
         cdcs = []
@@ -481,9 +492,8 @@ class MetaDataStore:
         if uuid in self.preset_uuids:
             return self.preset_uuids[uuid]
         r = self.db[component].get(uuid=uuid, raw=True)
-        cls = self.db['Table'].get(identifier=component)['cls']
-        _path = cls.__module__ + '.' + cls.__name__
-        r['_path'] = _path
+        path = self.db['Table'].get(identifier=component)['path']
+        r['_path'] = path
         return r
 
     def get_component(
@@ -504,6 +514,7 @@ class MetaDataStore:
         if (component, identifier) in self.preset_components:
             return self.preset_components[(component, identifier)]
 
+        # TODO find a more efficient way to do this.
         if version is None:
             version = self.get_latest_version(
                 component=component,

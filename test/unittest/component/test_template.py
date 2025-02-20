@@ -41,14 +41,14 @@ def test_basic_template(db):
     assert 'my_id' not in db.show('ObjectModel')
 
     assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('Listener')])
-    listener = template(key='y')
+    listener = template(key='y', db=db)
 
     assert listener.key == 'y'
 
     db.apply(listener)
 
     reloaded_template = db.load('Template', template.identifier)
-    listener = reloaded_template(key='y')
+    listener = reloaded_template(key='y', db=db)
 
     db.apply(listener)
 
@@ -62,7 +62,6 @@ def test_basic_template(db):
 
 
 def test_template_export(db):
-    db.cfg.auto_schema = True
     add_random_data(db)
     m = Listener(
         identifier='lm',
@@ -94,7 +93,7 @@ def test_template_export(db):
         rt = Component.read(temp_dir, db=db)
         db.apply(rt)
 
-        listener = rt(key='y', table='documents')
+        listener = rt(key='y', table='documents', db=db)
 
         assert listener.key == 'y'
         assert listener.select.table == 'documents'

@@ -23,8 +23,6 @@ from superduper.misc.utils import str_shape
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
 
-# TODO do we need encodable?
-
 
 @dc.dataclass
 class FieldType:
@@ -56,31 +54,6 @@ def _convert_bytes_to_base64(bytes_: bytes) -> str:
     return base64.b64encode(bytes_).decode('utf-8')
 
 
-# TODO - remove since no longer needed
-class DataTypeFactory:
-    """Abstract class for creating a DataType # noqa."""
-
-    @staticmethod
-    @abstractmethod
-    def check(data: t.Any) -> bool:
-        """Check if the data can be encoded by the DataType.
-
-        If the data can be encoded, return True, otherwise False
-
-        :param data: The data to check
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def create(data: t.Any) -> "BaseDataType":
-        """Create a DataType for the data.
-
-        :param data: The data to create the DataType for
-        """
-        raise NotImplementedError
-
-
 @dc.dataclass
 class BaseDataType:
     """Base class for datatype."""
@@ -91,14 +64,11 @@ class BaseDataType:
         return f'{self.__class__.__name__}'
 
     @abstractmethod
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Decode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to decode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
 
     @abstractmethod
@@ -117,42 +87,33 @@ class ComponentType(BaseDataType):
     dtype: t.ClassVar[str] = 'str'
     encodable: t.ClassVar[str] = 'leaf'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
-        if isinstance(item, leaves_to_keep):
+        if isinstance(item, context.leaves_to_keep):
             key = (
                 f"{item.__class__.__name__}:{item.identifier}"
                 if isinstance(item, Component)
                 else item.identifier
             )
-            builds[key] = item
+            context.builds[key] = item
             return '?' + key
 
-        r = item.dict()
-        # TODO why this clause?
+        r = item.dict(metadata=context.metadata, defaults=context.defaults)
         if r.schema:
-            r = dict(
-                r.schema.encode_data(
-                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
-                )
-            )
+            r = dict(r.schema.encode_data(r, context))
         else:
             r = dict(r)
 
         identifier = r.pop('identifier')
-
         if '_schema' in r:
             del r['_schema']
 
         key = f"{item.__class__.__name__}:{identifier}"
-        builds[key] = r
+        context.builds[key] = r
         return '?' + key
 
     def decode_data(self, item, builds, db):
@@ -168,19 +129,15 @@ class ComponentType(BaseDataType):
                 r = {'identifier': key.split(':')[-1], **builds[key]}
                 builds[key] = _decode_leaf(r, builds, db=db)
             return builds[key]
-
         elif isinstance(item, str) and item.startswith('&'):
             _, component, _, uuid = item[2:].split(':')
             return db.load(component=component, uuid=uuid)
-
         elif isinstance(item, str):
             raise ValueError(f'Unknown reference type {item} for a leaf')
 
         out = _decode_leaf(item, builds, db=db)
-
         key = f"{out.__class__.__name__}:{out.identifier}"
         builds[key] = out
-
         return out
 
 
@@ -190,28 +147,24 @@ class LeafType(BaseDataType):
     dtype: t.ClassVar[str] = 'json'
     encodable: t.ClassVar[str] = 'leaf'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
-        r = item.dict()
+        r = item.dict(metadata=context.metadata, defaults=context.defaults)
         if r.schema:
             r = dict(
                 r.schema.encode_data(
-                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                    r,
+                    context,
                 )
             )
         else:
             r = dict(r)
-
         if '_schema' in r:
             del r['_schema']
-
         return r
 
     def decode_data(self, item, builds, db):
@@ -253,20 +206,18 @@ class SDict(BaseDataType):
     dtype: t.ClassVar[str] = 'dict'
     encodable: t.ClassVar[str] = 'native'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         assert isinstance(item, dict)
         return {
             k: (
                 ComponentType().encode_data(
-                    v, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                    v,
+                    context=context,
                 )
                 if isinstance(v, Base)
                 else v
@@ -290,20 +241,18 @@ class SList(BaseDataType):
     dtype: t.ClassVar[str] = 'json'
     encodable: t.ClassVar[str] = 'native'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         assert isinstance(item, list)
         return [
             (
                 ComponentType().encode_data(
-                    r, builds, blobs, files, leaves_to_keep=leaves_to_keep
+                    r,
+                    context,
                 )
                 if isinstance(r, Base)
                 else r
@@ -336,14 +285,11 @@ class BaseVector(BaseDataType):
         return f'{self.__class__.__name__}[{self.dtype}:{self.shape}]'
 
     @abstractmethod
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
 
     @abstractmethod
@@ -367,14 +313,11 @@ class NativeVector(BaseVector):
     encodable: t.ClassVar[str] = 'native'
     dtype: str = 'float'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
+    def encode_data(self, item, context):
         """Encode the item as a list of floats.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         if isinstance(item, numpy.ndarray):
             item = item.tolist()
@@ -415,18 +358,13 @@ class Vector(BaseVector):
             datatype = datatype(dtype=self.dtype, shape=self.shape)
         return datatype
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
-        return self.datatype_impl.encode_data(
-            item, builds, blobs, files, leaves_to_keep=leaves_to_keep
-        )
+        return self.datatype_impl.encode_data(item, context)
 
     def decode_data(self, item, builds, db):
         """Decode the item from `bytes`.
@@ -444,17 +382,13 @@ class JSON(BaseDataType):
     encodable: t.ClassVar[str] = 'native'
     dtype: t.ClassVar[str] = 'json'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as a string.
+    def encode_data(self, item, context):
+        """Encode the item as a JSON-compatible form or string.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         if self.dtype == 'json':
-            # necessary to enforce json-able content
             try:
                 json.dumps(item)
             except Exception:
@@ -477,14 +411,11 @@ class JSON(BaseDataType):
 class _Encodable:
     encodable: t.ClassVar[str] = 'encodable'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         encoded = self._encode_data(item)
         encoded = _convert_bytes_to_base64(encoded)
@@ -504,14 +435,11 @@ class _Encodable:
 class _Artifact:
     encodable: t.ClassVar[str] = 'artifact'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the item as `bytes`.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         if isinstance(item, Blob):
             b = item
@@ -521,7 +449,7 @@ class _Artifact:
                 bytes=self._encode_data(item),
                 builder=self._decode_data,
             )
-        blobs[b.identifier] = b.bytes
+        context.blobs[b.identifier] = b.bytes
         return b.reference
 
     def decode_data(self, item, builds, db):
@@ -583,18 +511,15 @@ class File(BaseDataType):
 
     encodable: t.ClassVar[str] = 'file'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
+    def encode_data(self, item, context):
         """Encode the item as a file path.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         assert os.path.exists(item)
         file = FileItem(path=item)
-        files[file.identifier] = file.path
+        context.files[file.identifier] = file.path
         return file.reference
 
     def decode_data(self, item, builds, db):
@@ -623,14 +548,11 @@ class Array(BaseDataType):
     def __repr__(self):
         return f'{self.__class__.__name__}[{self.dtype}:{str_shape(self.shape)}]'
 
-    def encode_data(self, item, builds, blobs, files, leaves_to_keep=()):
-        """Encode the data.
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
 
-        :param item: The item to encode.
-        :param builds: The build-cache dictionary.
-        :param blobs: The cache of blobs (bytes).
-        :param files: The cache of files (paths).
-        :param leaves_to_keep: The `Leaf` type(s) to keep.
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
         """
         if item.dtype != self.dtype:
             raise TypeError(f'dtype was {item.dtype}, expected {self.dtype}')
@@ -649,30 +571,6 @@ class Array(BaseDataType):
         return numpy.frombuffer(
             _convert_base64_to_bytes(item), dtype=self.dtype
         ).reshape(shape)
-
-
-class NumpyDataTypeFactory(DataTypeFactory):
-    """A factory for numpy arrays # noqa."""
-
-    @staticmethod
-    def check(data: t.Any) -> bool:
-        """Check if the data is a numpy array.
-
-        Used for creating an auto schema.
-
-        :param data: The data to check.
-        """
-        return isinstance(data, numpy.ndarray)
-
-    @staticmethod
-    def create(data: t.Any) -> str:
-        """Create a numpy array datatype.
-
-        Used from creating an auto schema.
-
-        :param data: The numpy array.
-        """
-        return f'array[{str(data.dtype)}:{str_shape(data.shape)}]'
 
 
 class _DatatypeLookup:
@@ -702,23 +600,18 @@ class _DatatypeLookup:
         try:
             return self.presets[item.lower()]
         except KeyError:
-
             import_match = re.match(r'^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+$', item)
-
             if import_match:
-                # only supports datatypes without arguments
                 module, cls = item.rsplit('.', 1)
                 return getattr(import_module(module), cls)
 
             vector_match = re.match(r'^vector\[([a-z0-9]+):([0-9]+)\]', item)
-
             if vector_match:
                 dtype, shape = vector_match.groups()
                 shape = int(shape)
                 return Vector(dtype=dtype, shape=shape)
 
             array_match = re.match(r'^array\[([a-z0-9]+):(.*)\]$', item)
-
             if array_match:
                 dtype, shape = array_match.groups()
                 shape = tuple([int(x) for x in shape.split('x')])

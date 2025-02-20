@@ -18,9 +18,9 @@ from types import MethodType
 
 from superduper import CFG, logging
 from superduper.backends.base.metadata import NonExistentMetadataError
+from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.document import Document, _unpack
-from superduper.base.base import Base
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer

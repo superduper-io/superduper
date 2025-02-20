@@ -10,7 +10,9 @@ def test_list_tables_or_collections(databackend: BaseDataBackend):
 
     for i in range(10):
         table_name = f"table_{i}"
-        databackend.create_table_and_schema(table_name, schema=Schema(fields=fields))
+        databackend.create_table_and_schema(
+            table_name, schema=Schema(fields=fields), primary_id='id'
+        )
 
     tables = databackend.list_tables()
     assert len(tables) == 10

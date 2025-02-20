@@ -7,15 +7,13 @@ class New(Base):
 
 def test(db):
 
-    db.create(New)
-
     data = [
-        New('testa', a='a').dict(path=False),
-        New('testb', a='b').dict(path=False),
-        New('testc', a='c').dict(path=False),
+        New(a='a'),
+        New(a='b'),
+        New(a='c').dict(path=False),
     ]
 
-    db['New'].insert(data)
+    db.insert(data)
 
     loaded = db['New'].execute()
 
@@ -23,17 +21,17 @@ def test(db):
 
     db['New'].update({'a': 'a'}, 'a', 'a2')
 
-    r = db['New'].get(identifier='testa')
+    r = db['New'].get(a='a2')
 
     assert r['a'] == 'a2'
 
     r['a'] = 'a3'
 
-    db['New'].replace({'identifier': 'testa'}, r)
+    db['New'].replace({'a': 'a2'}, r)
 
-    assert db['New'].get(identifier='testa')['a'] == 'a3'
+    assert db['New'].get(a='a3')['a'] == 'a3'
 
-    db['New'].delete({'identifier': 'testa'})
+    db['New'].delete({'a': 'a3'})
     assert len(db['New'].execute()) == 2
 
-    assert db['New'].get(identifier='testa') is None
+    assert db['New'].get(a='a3') is None

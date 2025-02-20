@@ -83,7 +83,9 @@ def build_graph_listener(db: "Datalayer"):
     )
 
     def func_c(x, y, z, o_a, o_b):
-        return Document({"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}).unpack()
+        return Document(
+            {"x": x, "y": y, "z": z, "o_a": o_a, "o_b": o_b, "model": "c"}
+        ).unpack()
 
     model_c = ObjectModel(identifier="model_c", object=func_c, datatype='dillencoder')
     listener_c = Listener(

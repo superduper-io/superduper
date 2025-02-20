@@ -3,8 +3,8 @@ import dataclasses as dc
 import json
 import os
 import typing as t
-
 from functools import lru_cache as cache
+
 import numpy
 import requests
 import tqdm

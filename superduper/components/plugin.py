@@ -3,7 +3,6 @@ import os
 import shutil
 import subprocess
 import sys
-import typing as t
 
 from superduper import Component, logging
 from superduper.components.datatype import FileItem

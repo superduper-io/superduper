@@ -1,10 +1,6 @@
-import pytest
-
 from superduper.backends.base.query import parse_query
 from superduper.base import Base
-
 from superduper.components.table import Table
-from superduper.misc import typing as st
 
 
 class This(Base):
@@ -195,7 +191,12 @@ def test_subset(db):
 
     assert set([r[pid] for r in results]) == set(ids[:5])
 
-    db.apply(Table('_outputs__a__123456789', fields={'_outputs__a__123456789': 'int', '_source': 'str'}))
+    db.apply(
+        Table(
+            '_outputs__a__123456789',
+            fields={'_outputs__a__123456789': 'int', '_source': 'str'},
+        )
+    )
 
     db['_outputs__a__123456789'].insert(
         [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
@@ -211,7 +212,12 @@ def test_subset(db):
 def test_outputs(db):
     ids = db.insert([Document(x=i) for i in range(10)])
 
-    db.apply(Table('_outputs__a__123456789', fields={'_outputs__a__123456789': 'int', '_source': 'str'}))
+    db.apply(
+        Table(
+            '_outputs__a__123456789',
+            fields={'_outputs__a__123456789': 'int', '_source': 'str'},
+        )
+    )
 
     db['_outputs__a__123456789'].insert(
         [{'_outputs__a__123456789': i + 2, '_source': id} for i, id in enumerate(ids)]
@@ -231,7 +237,6 @@ class Special(Base):
     _fold: str
     n: int
     special_n: int
-
 
 
 def test_read(db):

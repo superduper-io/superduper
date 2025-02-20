@@ -4,9 +4,10 @@ import typing as t
 import uuid
 
 from superduper import logging
-from superduper.base.exceptions import DatabackendError
 from superduper.base.base import Base
+from superduper.base.exceptions import DatabackendError
 from superduper.components.cdc import CDC
+from superduper.components.component import Component
 from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.importing import import_object
@@ -113,7 +114,7 @@ class MetaDataStore:
             ).encode(),
             ('Table', 'Job'): Table(
                 identifier='Job',
-                primary_id='uuid',
+                primary_id='job_id',
                 uuid='jkl',
                 component=True,
                 path='superduper.backends.base.metadata.Job',
@@ -127,7 +128,12 @@ class MetaDataStore:
     def init(self):
         """Initialize the metadata store."""
         for cls in metaclasses.values():
-            self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
+            preset = self.preset_components.get(('Table', cls.__name__))
+            self.db.databackend.create_table_and_schema(
+                cls.__name__,
+                cls.class_schema,
+                primary_id=preset['primary_id'],
+            )
 
     def get_schema(self, table: str):
         """Get the schema of a table.
@@ -162,10 +168,18 @@ class MetaDataStore:
             r = self.db['Table'].get(identifier=cls.__name__)
         except DatabackendError as e:
             if 'not found' in str(e):
-                self.db.databackend.create_table_and_schema('Table', Table.class_schema)
-                t = Table('Table', path='superduper.components.table.Table', primary_id='uuid', component=True)
+                self.db.databackend.create_table_and_schema(
+                    'Table', Table.class_schema, 'uuid'
+                )
+                t = Table(
+                    'Table',
+                    path='superduper.components.table.Table',
+                    primary_id='uuid',
+                    component=True,
+                )
+
                 r = self.db['Table'].insert(
-                    [t.dict(schema=True, path=False)], 
+                    [t.dict(schema=True, path=False)],
                 )
             else:
                 raise e
@@ -175,8 +189,16 @@ class MetaDataStore:
                 f'{cls.__name__} already exists in metadata with data: {r}'
             )
 
-        self.db.databackend.create_table_and_schema(cls.__name__, cls.class_schema)
-        t = Table(identifier=cls.__name__, path=f'{cls.__module__}.{cls.__name__}', primary_id='uuid', component=True)
+        pid = 'uuid' if issubclass(cls, Component) else self.db.databackend.id_field
+        self.db.databackend.create_table_and_schema(
+            cls.__name__, cls.class_schema, primary_id=pid
+        )
+        t = Table(
+            identifier=cls.__name__,
+            path=f'{cls.__module__}.{cls.__name__}',
+            primary_id=pid,
+            component=True,
+        )
         self.db['Table'].insert([t.dict(path=False)])
         return t
 
@@ -198,9 +220,17 @@ class MetaDataStore:
         :param component: component name
         :param raw: whether to insert raw data
         """
+        path = None
         if component is None:
             path = info.pop('_path')
             component = path.rsplit('.', 1)[1]
+
+        metadata = self.db['Table'].get(component)
+        if metadata is None:
+            assert path is not None
+            cls = import_object(path)
+            self.create(cls)
+
         self.db[component].insert([info], raw=raw)
 
     def create_component(self, info: t.Dict):
@@ -339,10 +369,14 @@ class MetaDataStore:
         :param component: type of component
         :param identifier: identifier of component
         """
-        return self.db['Job'].filter(
-            self.db['Job']['component'] == component,
-            self.db['Job']['identifier'] == identifier,
-        ).distinct('job_id')
+        return (
+            self.db['Job']
+            .filter(
+                self.db['Job']['component'] == component,
+                self.db['Job']['identifier'] == identifier,
+            )
+            .distinct('job_id')
+        )
 
     def show_components(self, component: str | None = None):
         """
@@ -492,6 +526,10 @@ class MetaDataStore:
         if uuid in self.preset_uuids:
             return self.preset_uuids[uuid]
         r = self.db[component].get(uuid=uuid, raw=True)
+        if r is None:
+            raise NonExistentMetadataError(
+                f'Object {uuid} does not exist in metadata for {component}'
+            )
         path = self.db['Table'].get(identifier=component)['path']
         r['_path'] = path
         return r

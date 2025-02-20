@@ -2,7 +2,9 @@ from test.utils.setup.fake_data import add_listeners, add_models, add_random_dat
 
 import numpy as np
 import pytest
+from superduper.base.base import Base
 from superduper.base.document import Document
+from superduper.components.listener import Listener
 from superduper.components.table import Table
 
 
@@ -83,8 +85,12 @@ def test_filter(db):
     assert len(r) == uq[1][0]
 
 
+class documents(Base):
+    this: 'str'
+
+
 def test_select_using_ids(db):
-    db.cfg.auto_schema = True
+    db.create(documents)
 
     table = db["documents"]
     table.insert([{"this": f"is a test {i}", "id": str(i)} for i in range(4)])
@@ -102,12 +108,17 @@ def test_select_using_ids_of_outputs(db):
     def my_func(x):
         return x + ' ' + x
 
-    db.cfg.auto_schema = True
+    db.create(documents)
 
     table = db["documents"]
     table.insert([{"this": f"is a test {i}", "id": str(i)} for i in range(4)])
 
-    listener = my_func.to_listener(key='this', select=db['documents'].select())
+    listener = Listener(
+        'test',
+        model=my_func,
+        key='this',
+        select=db['documents'].select(),
+    )
     db.apply(listener)
 
     q1 = db[listener.outputs].select()

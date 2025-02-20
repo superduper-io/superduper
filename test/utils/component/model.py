@@ -46,7 +46,9 @@ def test_predict_in_db(model: Model, sample_data: t.Any, db: "Datalayer", type: 
 
 
 # TODO remove these types of general fixtures/ utils (hard to read)
-def test_model_as_a_listener(model: Model, sample_data: t.Any, db: "Datalayer", type: str):
+def test_model_as_a_listener(
+    model: Model, sample_data: t.Any, db: "Datalayer", type: str
+):
 
     db.apply(Table('datas', fields={'data': type, 'i': 'int'}))
 

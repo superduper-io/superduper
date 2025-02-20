@@ -6,7 +6,10 @@ import typing as t
 
 class Chunker(Model):
     chunk_size: int = 200
+<<<<<<< HEAD
     signature: str = 'singleton'
+=======
+>>>>>>> 02aeb36fb (Add changes necessary for services)
 
     def predict(self, text):
         text = text.split()

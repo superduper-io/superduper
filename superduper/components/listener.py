@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as t
 
-from superduper import CFG, logging
+from superduper import CFG
 from superduper.backends.base.query import Query
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
@@ -48,7 +48,6 @@ class Listener(CDC):
         """Post initialization method."""
         if not self.cdc_table and self.select:
             self.cdc_table = self.select.table
-        self._set_upstream()
         if isinstance(self.key, tuple):
             self.key = list(self.key)
 
@@ -65,49 +64,16 @@ class Listener(CDC):
         super().handle_update_or_same(other)
         other.output_table = self.output_table
 
-    def _set_upstream(self):
-        deps = self.dependencies
-        if deps:
-            if not self.upstream:
-                self.upstream = []
-            try:
-                it = 0
-                for dep in deps:
-                    identifier, uuid = dep
-                    self.upstream.append(f'&:component:Listener:{identifier}:{uuid}')
-                    it += 1
-            except ValueError as e:
-                if 'not enough values' in str(e):
-                    logging.warn(
-                        'Deferring dependencies to pre_create based on '
-                        f'dependency {deps[it]}'
-                    )
-
-        if not self.upstream:
-            return
-
-        from collections import defaultdict
-
-        from superduper import Component
-
-        # This is to perform deduplication, in case an upstream
-        # listener has already been provided
-
-        huuids = [x.huuid if isinstance(x, Component) else x for x in self.upstream]
-        huuids = defaultdict(lambda: [])
-        for x in self.upstream:
-            if isinstance(x, Component):
-                huuids['&:' + x.huuid].append(x)
-            else:
-                huuids[x].append(x)
-
-        self.upstream = [x[0] for x in huuids.values()]
+    def _get_metadata(self):
+        r = super()._get_metadata()
+        return {**r, 'output_table': self.output_table}
 
     @property
     def predict_id(self):
         """Predict ID property."""
         return f'{self.identifier}__{self.uuid}'
 
+    # TODO deprecate this
     @staticmethod
     def _complete_key(key, db, listener_uuids=()):
         if isinstance(key, str) and key.startswith(CFG.output_prefix):
@@ -179,6 +145,7 @@ class Listener(CDC):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
 
+    # TODO deprecate
     @property
     def dependencies(self):
         """Listener model dependencies."""

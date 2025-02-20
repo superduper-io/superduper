@@ -83,7 +83,7 @@ class Cluster(ABC):
         from superduper import logging
 
         if 'Plugin' in self.db.show('Table'):
-            logging.info(f"Found custom plugins - loading...")
+            logging.info("Found custom plugins - loading...")
             for plugin in self.db.show('Plugin'):
                 logging.info(f"Loading plugin: {plugin}")
                 plugin = self.db.load('Plugin', plugin)

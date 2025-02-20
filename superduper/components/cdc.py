@@ -35,8 +35,8 @@ class CDC(Component):
         self.db.cluster.queue.put(self)
         self.db.cluster.cdc.put(self)
 
-    def _get_metadata(self):
-        return {**super()._get_metadata(), 'cdc_table': self.cdc_table}
+    # def _get_metadata(self):
+    #     return {**super()._get_metadata(), 'cdc_table': self.cdc_table}
 
     @property
     def dependencies(self):

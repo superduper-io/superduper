@@ -4,6 +4,7 @@ import inspect
 import typing as t
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
+from superduper.base.encoding import EncodeContext
 from superduper.misc.annotations import (
     extract_parameters,
     lazy_classproperty,
@@ -38,8 +39,13 @@ class BaseMeta(type):
         # apply the appropriate dataclass decorator
         #
 
-        is_base = namespace.get('__module__', '') == 'superduper.base.base' and name == 'Base'
-        is_component = namespace.get('__module__', '') == 'superduper.components.component' and name == 'Component'
+        is_base = (
+            namespace.get('__module__', '') == 'superduper.base.base' and name == 'Base'
+        )
+        is_component = (
+            namespace.get('__module__', '') == 'superduper.components.component'
+            and name == 'Component'
+        )
         is_base = is_base or is_component
 
         dataclass_params = namespace.get('_dataclass_params', {}).copy()
@@ -187,34 +193,26 @@ class Base(metaclass=BaseMeta):
             builds=builds, blobs=blobs, files=files, leaves_to_keep=leaves_to_keep
         )
 
-    # TODO signature is inverted from `Component.encode`
     def encode(
         self,
-        leaves_to_keep=(),
-        metadata: bool = True,
-        defaults: bool = True,
-        builds: t.Dict = None,
-        blobs: t.Dict = None,
-        files: t.Dict = None,
+        context: t.Optional['EncodeContext'] = None,
+        **kwargs,
     ):
         """Encode itself.
 
         After encoding everything is a vanilla dictionary (JSON + bytes).
 
-        :param leaves_to_keep: Leaves to keep.
-        :param metadata: Include metadata.
-        :param defaults: Include default values.
-        :param builds: Builds.
-        :param blobs: Blobs.
-        :param files: Files.
+        :param context: Encoding context.
+        :param kwargs: Additional encoding parameters.
         """
-        builds: t.Dict = {}
-        blobs: t.Dict = {}
-        files: t.Dict = {}
-        uuids_to_keys: t.Dict = {}
+        if context is None:
+            context = EncodeContext()
 
-        r = self.dict(metadata=metadata, defaults=defaults)
-        r = self.class_schema.encode_data(r, builds=builds, blobs=blobs, files=files)
+        for k, v in kwargs.items():
+            setattr(context, k, v)
+
+        r = self.dict(metadata=context.metadata, defaults=context.defaults)
+        r = self.class_schema.encode_data(r, context=context)
 
         def _replace_loads_with_references(record, lookup):
             if isinstance(record, str) and record.startswith('&:component:'):
@@ -230,31 +228,34 @@ class Base(metaclass=BaseMeta):
                 }
             return record
 
-        lookup = {v['uuid']: k for k, v in builds.items() if 'uuid' in v}
-        builds = _replace_loads_with_references(builds, lookup)
+        lookup = {v['uuid']: k for k, v in context.builds.items() if 'uuid' in v}
+
+        context.builds = _replace_loads_with_references(context.builds, lookup)
 
         def _replace_uuids_with_keys(record):
             import json
 
             dump = json.dumps(record)
-            for k, v in uuids_to_keys.items():
-                dump = dump.replace(v, f'?({k}.uuid)')
+            for k, v in lookup.items():
+                dump = dump.replace(k, f'?({v}.uuid)')
             return json.loads(dump)
 
-        if not metadata:
-            builds = _replace_uuids_with_keys(builds)
-            for v in builds.values():
+        if not context.metadata:
+            context.builds = _replace_uuids_with_keys(context.builds)
+            for v in context.builds.values():
                 if 'uuid' in v:
                     del v['uuid']
+
             if 'uuid' in r:
                 del r['uuid']
+            r = _replace_uuids_with_keys(r)
 
         # TODO deprecate this wrapper (not needed)
         return {
             **r,
-            KEY_BUILDS: builds,
-            KEY_BLOBS: blobs,
-            KEY_FILES: files,
+            KEY_BUILDS: context.builds,
+            KEY_BLOBS: context.blobs,
+            KEY_FILES: context.files,
         }
 
     def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Base':
@@ -295,7 +296,6 @@ class Base(metaclass=BaseMeta):
                 out[f.name] = value
         return out
 
-    # TODO the signature does not agree with the `Component.dict` method
     def dict(
         self,
         metadata: bool = True,
@@ -314,20 +314,15 @@ class Base(metaclass=BaseMeta):
 
         if not defaults:
             for k, v in self.defaults.items():
-                # if k in {'identifier'}:
-                #     continue
                 if k in r and r[k] == v:
                     del r[k]
 
         if metadata:
             r.update(self.metadata)
-            # r['uuid'] = self.uuid
         else:
             for k in self.metadata:
                 if k in r:
                     del r[k]
-
-        from superduper.components.datatype import DEFAULT_SERIALIZER
 
         if path:
             if self.__class__.__module__ == '__main__':

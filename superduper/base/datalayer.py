@@ -15,9 +15,9 @@ from superduper.backends.base.metadata import (
 )
 from superduper.backends.base.query import Query
 from superduper.base import apply, exceptions
+from superduper.base.base import Base
 from superduper.base.config import Config
 from superduper.base.document import Document
-from superduper.base.base import Base
 from superduper.components.component import Component
 from superduper.components.datatype import ComponentType, LeafType
 from superduper.components.table import Table
@@ -168,7 +168,8 @@ class Datalayer:
         )
 
     def pre_insert(
-        self, items: t.List[Base],
+        self,
+        items: t.List[Base],
     ):
         """Pre-insert hook for data insertion.
 

@@ -75,11 +75,14 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def create_table_and_schema(self, identifier: str, schema: 'Schema'):
+    def create_table_and_schema(
+        self, identifier: str, schema: 'Schema', primary_id: str
+    ):
         """Create a schema in the data-backend.
 
         :param identifier: The identifier of the schema.
         :param schema: The schema to create.
+        :param primary_id: The primary id of the schema.
         """
 
     @abstractmethod

@@ -8,7 +8,6 @@ from superduper.components.template import QueryTemplate, Template
 
 
 def test_basic_template(db):
-    db.cfg.auto_schema = True
     add_random_data(db)
 
     def model(x):
@@ -41,14 +40,15 @@ def test_basic_template(db):
     assert 'my_id' not in db.show('ObjectModel')
 
     assert all([ltr.split('/')[-1] != m.identifier for ltr in db.show('Listener')])
-    listener = template(key='y', db=db)
+
+    listener = template(key='y')
 
     assert listener.key == 'y'
 
     db.apply(listener)
 
     reloaded_template = db.load('Template', template.identifier)
-    listener = reloaded_template(key='y', db=db)
+    listener = reloaded_template(key='y')
 
     db.apply(listener)
 
@@ -90,10 +90,10 @@ def test_template_export(db):
     with tempfile.TemporaryDirectory() as temp_dir:
         t.export(temp_dir)
 
-        rt = Component.read(temp_dir, db=db)
+        rt = Component.read(temp_dir)
         db.apply(rt)
 
-        listener = rt(key='y', table='documents', db=db)
+        listener = rt(key='y', table='documents')
 
         assert listener.key == 'y'
         assert listener.select.table == 'documents'

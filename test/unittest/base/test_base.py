@@ -3,11 +3,12 @@ import json
 import typing as t
 from pprint import pprint
 
-from superduper import CFG, ObjectModel
+from superduper import CFG, ObjectModel, model
+from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
 from superduper.base.document import Document
-from superduper.base.base import Base
 from superduper.components.component import Component
+from superduper.components.listener import Listener
 
 
 class Test(Base):
@@ -44,6 +45,7 @@ def test_insert_and_recall(db):
     data = [Test(a=i, b='test_b', c=1.5) for i in range(10)]
     db.insert(data)
     r = db['Test'].get()
+    assert r is not None
 
 
 def test_encode_leaf():
@@ -141,3 +143,21 @@ def test_find_variables(db):
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
+
+
+def test_defaults_metadata(db):
+
+    @model(datatype='int')
+    def test(x):
+        return x + 1
+
+    c1 = Listener('test', model=test, select=db['test'], key='x')
+    c2 = Listener(
+        'test2', model=test, select=db[c1.outputs], key=c1.outputs, upstream=[c1]
+    )
+
+    r = c2.dict(metadata=False)
+
+    assert 'version' not in r
+
+    r = c2.encode(metadata=False)

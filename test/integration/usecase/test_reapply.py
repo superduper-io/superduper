@@ -1,6 +1,9 @@
+import typing as t
+
 from superduper import Model
 from superduper.base.base import Base
 from superduper.components.listener import Listener
+from superduper.misc import typing as st  # noqa: F401
 
 
 class MyModel(Model):
@@ -23,7 +26,7 @@ def test_reapply(db):
     db['docs'].insert([{'x': i} for i in range(10)])
 
     def build(name, data):
-        model = MyModel('test', a=name, b=data)
+        model = MyModel('test', a=name, b=data, datatype='int')
         listener_1 = Listener(
             model=model,
             key='x',

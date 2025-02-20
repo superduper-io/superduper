@@ -5,12 +5,13 @@ from collections import namedtuple
 
 from superduper import CFG, logging
 from superduper.backends.base.artifacts import ArtifactStore
+from superduper.base.base import Base
 from superduper.base.constant import (
     KEY_BLOBS,
     KEY_BUILDS,
     KEY_FILES,
 )
-from superduper.base.base import Base
+from superduper.base.encoding import EncodeContext
 from superduper.base.variables import _replace_variables
 from superduper.components.datatype import Saveable
 from superduper.components.schema import Schema
@@ -18,9 +19,6 @@ from superduper.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-
-
-LeafMetaType = t.Type['Leaf']
 
 
 def _diff(r1, r2, d):
@@ -157,7 +155,9 @@ class _InMemoryArtifactStore(ArtifactStore):
         elif self.artifact_store:
             return self.artifact_store.get_bytes(file_id)
         else:
-            raise FileNotFoundError(f'Blob {file_id} not found in in-memory artifact store')
+            raise FileNotFoundError(
+                f'Blob {file_id} not found in in-memory artifact store'
+            )
 
     def get_file(self, file_id: str) -> str:
         """
@@ -170,7 +170,9 @@ class _InMemoryArtifactStore(ArtifactStore):
         elif self.artifact_store:
             return self.artifact_store.get_file(file_id)
         else:
-            raise FileNotFoundError(f'File {file_id} not found in in-memory artifact store')
+            raise FileNotFoundError(
+                f'File {file_id} not found in in-memory artifact store'
+            )
 
     def disconnect(self):
         """Disconnect the client."""
@@ -193,12 +195,9 @@ class _TmpDB:
         self.db = db
 
     def __getitem__(self, item):
-        return self.db[item]
-
-    def __getitem__(self, item):
         from superduper.backends.base.query import Query
 
-        return Query(table=item, parts=(), db=self)
+        return Query(table=item, parts=(), db=None)
 
 
 class Document(MongoStyleDict):
@@ -275,11 +274,8 @@ class Document(MongoStyleDict):
     def encode(
         self,
         schema: t.Optional['Schema'] = None,
-        leaves_to_keep: t.Sequence = (),
-        metadata: bool = True,
-        defaults: bool = True,
-        keep_schema: bool = True,
-        db: t.Optional['Datalayer'] = None,
+        context: EncodeContext | None = None,
+        **kwargs,
     ) -> t.Dict:
         """Encode the document to a format that can be used in a database.
 
@@ -287,26 +283,33 @@ class Document(MongoStyleDict):
         (Even a model, or artifact etc..)
 
         :param schema: The schema to use.
-        :param leaves_to_keep: The types of leaves to keep.
-        :param metadata: Whether to include metadata.
-        :param defaults: Whether to include defaults.
-        :param keep_schema: Whether to keep the schema.
-        :param db: The datalayer to use.
+        :param context: The encoding context.
+        :param kwargs: Additional encoding arguments.
         """
-        builds: t.Dict[str, dict] = self.get(KEY_BUILDS, {})
-        blobs: t.Dict[str, bytes] = self.get(KEY_BLOBS, {})
-        files: t.Dict[str, str] = self.get(KEY_FILES, {})
+        if context is None:
+            context = EncodeContext()
+
+        for k, v in kwargs.items():
+            setattr(context, k, v)
+
+        context.builds = self.get(KEY_BUILDS, {})
+        context.blobs = self.get(KEY_BLOBS, {})
+        context.files = self.get(KEY_FILES, {})
 
         # Get schema from database.
         schema = self.schema or schema
         out = dict(self)
 
         if schema is not None:
-            out = schema.encode_data(
-                out, builds, blobs, files, leaves_to_keep=leaves_to_keep
-            )
+            out = schema.encode_data(out, context)
 
-        out.update({KEY_BUILDS: builds, KEY_FILES: files, KEY_BLOBS: blobs})
+        out.update(
+            {
+                KEY_BUILDS: context.builds,
+                KEY_FILES: context.files,
+                KEY_BLOBS: context.blobs,
+            }
+        )
         return out
 
     def __getitem__(self, key: str) -> t.Any:
@@ -320,10 +323,14 @@ class Document(MongoStyleDict):
         return super().__getitem__(key)
 
     @classmethod
-    def build_in_memory_db(cls, blobs, files, db: t.Optional['Datalayer'] | None = None):
+    def build_in_memory_db(
+        cls, blobs, files, db: t.Optional['Datalayer'] | None = None
+    ):
         artifact_store = db.artifact_store if db is not None else None
         return _TmpDB(
-            artifact_store=_InMemoryArtifactStore(blobs=blobs, files=files, artifact_store=artifact_store),
+            artifact_store=_InMemoryArtifactStore(
+                blobs=blobs, files=files, artifact_store=artifact_store
+            ),
             databackend=namedtuple('tmp_databackend', field_names=('bytes_encoding',))(
                 bytes_encoding='bytes'
             ),
@@ -353,22 +360,14 @@ class Document(MongoStyleDict):
         """
         blobs = r.pop('_blobs', {})
         files = r.pop('_files', {})
-        
-        if blobs or files:
-            db = cls.build_in_memory_db(blobs=blobs, files=files, db=db)
 
-        if '_variables' in r:
-            variables = {**r['_variables'], 'output_prefix': CFG.output_prefix}
-            r = _replace_variables(
-                {k: v for k, v in r.items() if k != '_variables'}, **variables
-            )
+        if db is None:
+            db = cls.build_in_memory_db(blobs=blobs, files=files)
 
         builds = r.get(KEY_BUILDS, {})
 
         for k in builds:
-            if isinstance(builds[k], dict) and (
-                '_path' in builds[k]
-            ):
+            if isinstance(builds[k], dict) and ('_path' in builds[k]):
                 builds[k]['identifier'] = k.split(':')[-1]
 
         # TODO add _path and _object as constants
@@ -426,8 +425,6 @@ class Document(MongoStyleDict):
 
         :param kwargs: The vales to set the variables to `_replace_variables`.
         """
-        from superduper.base.variables import _replace_variables
-
         content = _replace_variables(self, **kwargs)
         return Document(**content)
 

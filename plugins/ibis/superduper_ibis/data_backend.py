@@ -133,15 +133,15 @@ class IbisDataBackend(BaseDataBackend):
         except (NoSuchTableError, ibis.IbisError):
             return False
 
-    def create_table_and_schema(self, identifier: str, schema: Schema):
+    def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):
         """Create a schema in the data-backend.
 
         :param identifier: The identifier of the table.
         :param mapping: The mapping of the schema.
         """
         mapping = convert_schema_to_fields(schema)
-        if "id" not in mapping:
-            mapping["id"] = "string"
+        if primary_id not in mapping:
+            mapping[primary_id] = "string"
         try:
             mapping = self.db_helper.process_schema_types(mapping)
             t = self._create_table_with_retry(identifier, schema=ibis.schema(mapping))

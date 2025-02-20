@@ -111,7 +111,7 @@ class MongoDBDataBackend(BaseDataBackend):
         """
         return self._database[f"{CFG.output_prefix}{predict_id}"].find_one() is not None
 
-    def create_table_and_schema(self, identifier: str, schema: Schema):
+    def create_table_and_schema(self, identifier: str, schema: Schema, primary_id: str):
         """Create a table and schema in the data backend.
 
         :param identifier: The identifier for the table

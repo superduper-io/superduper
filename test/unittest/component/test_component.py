@@ -203,7 +203,12 @@ def test_remove_recursive(db):
 
     db.apply(c3)
 
-    assert sorted([r['identifier'] for r in db.show()]) == ['NewComponent', 'c1', 'c2', 'c3']
+    assert sorted([r['identifier'] for r in db.show()]) == [
+        'NewComponent',
+        'c1',
+        'c2',
+        'c3',
+    ]
 
     db.remove('NewComponent', c3.identifier, recursive=True, force=True)
 

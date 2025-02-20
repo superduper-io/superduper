@@ -128,7 +128,14 @@ def apply(
     if wait:
         unique_create_events = list(create_events.values())
         _wait_on_events(db, unique_create_events)
+    _expire_updated_components(db, create_events)
     return object
+
+
+def _expire_updated_components(db, events):
+    update_events = [c for c in events.values() if isinstance(c, Update)]
+    for event in update_events:
+        db.expire(event.component['uuid'])
 
 
 def _wait_on_events(db, events):

@@ -749,14 +749,8 @@ class Datalayer:
         self.cluster.cache.expire(uuid)
         self.metadata.expire(uuid)
         parents = self.metadata.get_component_version_parents(uuid)
-        while parents:
-            for uuid in parents:
-                self.cluster.cache.expire(uuid)
-                self.metadata.expire(uuid)
-            parents = sum(
-                [self.metadata.get_component_version_parents(uuid) for uuid in parents],
-                [],
-            )
+        for parent in parents:
+            self.expire(parent)
 
     def _save_artifact(self, uuid, info: t.Dict):
         """

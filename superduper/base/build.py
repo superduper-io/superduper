@@ -6,14 +6,13 @@ from prettytable import PrettyTable
 import superduper as s
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import DataBackendProxy
+from superduper.backends.local.artifacts import (
+    FileSystemArtifactStore,
+)
 from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
 from superduper.misc.importing import load_plugin
-
-from superduper.backends.local.artifacts import (
-    FileSystemArtifactStore,
-)
 
 
 class _Loader:

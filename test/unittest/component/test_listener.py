@@ -1,4 +1,3 @@
-import dataclasses as dc
 import random
 import typing as t  # noqa: F401
 
@@ -22,8 +21,7 @@ class MyTrainer(Trainer):
             pass
 
 
-class _Tmp(ObjectModel):
-    ...
+class _Tmp(ObjectModel): ...
 
 
 class test(Base):
@@ -226,9 +224,7 @@ def test_listener_chaining_with_trainer(db, cleanup):
         data = []
         for i in range(5):
             y = int(random.random() > 0.5)
-            data.append(
-                test(x=i + start, y=y, _fold='train' if i < 3 else 'valid')
-            )
+            data.append(test(x=i + start, y=y, _fold='train' if i < 3 else 'valid'))
 
         db.insert(data)
 

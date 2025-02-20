@@ -18,8 +18,8 @@ from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.backends.base.query import Query
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base.annotations import trigger
-from superduper.base.document import Document
 from superduper.base.base import Base
+from superduper.base.document import Document
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.metric import Metric
 from superduper.components.schema import Schema
@@ -1161,4 +1161,3 @@ class ModelRouter(Model):
         self.example = self.models[self.model].example
         self.signature = self.models[self.model].signature
         self.models[self.model].init()
-

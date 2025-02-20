@@ -44,7 +44,7 @@ def test(db: Datalayer):
     db['docs'].insert([{'x': random.randrange(10)} for _ in range(10)])
 
     def build_vi(**kwargs):
-        model = MyModel('my-model', example=1, datatype='vector[int:10]', **kwargs)
+        model = MyModel('my-model', example=1, datatype='vector[int:20]', **kwargs)
 
         listener = Listener(
             'my-listener',

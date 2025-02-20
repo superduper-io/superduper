@@ -4,10 +4,10 @@ import subprocess
 import typing as t
 
 from superduper import CFG
+from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
-from superduper.base.base import Base
 from superduper.base.variables import _find_variables, _replace_variables
 from superduper.components.component import Component, _build_info_from_path
 from superduper.components.table import Table
@@ -29,12 +29,12 @@ class _BaseTemplate(Component):
     :param substitutions: Substitutions to be made to create variables.
     """
 
-    template: st.Dill
+    template: st.JSON
     template_variables: t.Optional[t.List[str]] = None
     types: t.Optional[t.Dict] = None
     schema: t.Optional[t.Dict] = None
-    blobs: t.Optional[t.List[str]] = None
-    files: t.Optional[t.List[str]] = None
+    blobs: t.Any = dc.field(default_factory=dict)
+    files: t.Dict = dc.field(default_factory=dict)
     substitutions: dc.InitVar[t.Optional[t.Dict]] = None
 
     def __post_init__(self, db, substitutions):
@@ -45,6 +45,13 @@ class _BaseTemplate(Component):
         """Post initialization method."""
         if isinstance(self.template, Base):
             self.template = self.template.encode(defaults=True, metadata=False)
+
+        if '_blobs' in self.template:
+            self.blobs = self.template.pop('_blobs')
+
+        if '_files' in self.template:
+            self.files = self.template.pop('_files')
+
         if self.substitutions is not None:
             self.substitutions = {
                 self.db.databackend.backend_name: 'databackend',
@@ -52,7 +59,9 @@ class _BaseTemplate(Component):
                 **self.substitutions,
             }
         if self.substitutions is not None:
-            self.template = self._document_to_template(self.template, self.substitutions)
+            self.template = self._document_to_template(
+                self.template, self.substitutions
+            )
         if self.template_variables is None:
             self.template_variables = sorted(list(set(_find_variables(self.template))))
 
@@ -76,32 +85,56 @@ class _BaseTemplate(Component):
         return substitute(dict(r))
 
     @ensure_initialized
-    def __call__(self, db: t.Optional['Datalayer'], **kwargs):
+    def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`.
 
         Note that the `db` is needed in order to build queries.
-        
-        :param db: Datalayer instance to be used to create the component.
+
         :param kwargs: Variables to be set in the template.
         """
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
 
-        assert set(kwargs.keys()) == (
-            set(self.template_variables) - {'output_prefix', 'databackend'}
-        )
+        wants = set(self.template_variables) - {'output_prefix', 'databackend'}
+        got = set(kwargs.keys()) - {'output_prefix', 'databackend'}
+
+        assert got == wants, f"Expected {wants}, got {got}"
+
         kwargs['output_prefix'] = CFG.output_prefix
         try:
             kwargs['databackend'] = self.db.databackend.backend_name
         except AttributeError:
             pass
+
         component = _replace_variables(
             self.template,
             **kwargs,
             build_variables=kwargs,
             build_template=self.identifier,
         )
-        assert db or self.db
-        out = Document.decode(component, db=db or self.db)
+
+        from superduper.components.component import build_uuid
+
+        lookup = {}
+        for k, v in component.get('_builds', {}).items():
+            v['uuid'] = build_uuid()
+            lookup[v['uuid']] = k
+
+        component['uuid'] = build_uuid()
+
+        def _replace_uuids(r):
+            import json
+
+            encoded = json.dumps(r)
+            for k, v in lookup.items():
+                encoded = encoded.replace(f'?({v}.uuid)', k)
+            return json.loads(encoded)
+
+        component = _replace_uuids(component)
+
+        component['_blobs'] = self.blobs
+        component['_files'] = self.files
+
+        out = Document.decode(component, self.db)
         if isinstance(out, Document) and '_base' in out:
             out = out['_base']
         return out
@@ -123,7 +156,7 @@ class _BaseTemplate(Component):
         return {
             'types': self.types,
             'schema': self.schema,
-            **{k: v for k, v in self.template.items() if k != 'identifier'},
+            'template': self.template,
             'build_template': self.identifier,
         }
 
@@ -143,15 +176,6 @@ class Template(_BaseTemplate):
     default_tables: t.List[Table] | None = None
     staged_file: str | None = None
     queries: t.List['QueryTemplate'] | None = None
-
-    # TODO deprecate _pre_create - subsume under postinit
-    def _pre_create(self, db: Datalayer) -> None:
-        """Run before the object is created."""
-        assert isinstance(self.template, dict)
-        self.blobs = list(self.template.get(KEY_BLOBS, {}).keys())
-        self.files = list(self.template.get(KEY_FILES, {}).keys())
-        db.artifact_store.save_artifact(self.template)
-        self.init()
 
     def download(self, name: str = '*', path='./templates'):
         """Download the templates to the given path.
@@ -203,8 +227,6 @@ class Template(_BaseTemplate):
     def export(
         self,
         path: t.Optional[str] = None,
-        format: str = 'json',
-        zip: bool = False,
         defaults: bool = True,
         metadata: bool = False,
     ):
@@ -212,49 +234,25 @@ class Template(_BaseTemplate):
         Save `self` to a directory using super-duper protocol.
 
         :param path: Path to the directory to save the component.
-        :param format: Format to save the component in.
-        :param zip: Whether to zip the directory.
         :param defaults: Whether to save default values.
         :param metadata: Whether to save metadata.
 
         Created directory structure:
         ```
-        |_component.(json|yaml)
+        |_component.json
         |_blobs/*
         |_files/*
         ```
         """
         self.init()
         assert isinstance(self.template, dict)
-        blobs = self.template.pop(KEY_BLOBS, None)
-        files = self.template.pop(KEY_FILES, None)
 
-        # TODO this logic is a mess
-        if self.blobs or self.files:
-            assert self.db is not None
-            assert self.identifier in self.db.show(self.component)
         if path is None:
             path = './' + self.identifier
-        super().export(path, format, zip=False, defaults=defaults, metadata=metadata)
-        if self.blobs is not None and self.blobs:
-            os.makedirs(os.path.join(path, 'blobs'), exist_ok=True)
-            for identifier in self.blobs:
-                blob = self.db.artifact_store.get_bytes(identifier)
-                with open(path + f'/blobs/{identifier}', 'wb') as f:
-                    f.write(blob)
+        super().export(path, defaults=defaults, metadata=metadata)
 
-        if self.files is not None and self.files:
-            os.makedirs(os.path.join(path, 'files'), exist_ok=True)
-            for identifier in self.files:
-                file = self.db.artifact_store.get_bytes(identifier)
-                with open(path + f'/files/{identifier}', 'wb') as f:
-                    f.write(file)
-
-        self._save_blobs_for_export(blobs, path)
-        self._save_files_for_export(files, path)
-
-        if zip:
-            self._zip_export(path)
+        self._save_blobs_for_export(self.blobs, path)
+        self._save_files_for_export(self.files, path)
 
     @property
     def default_values(self):
@@ -296,12 +294,8 @@ class Template(_BaseTemplate):
             )
         # Add blobs and files back to the template
         config_object = _build_info_from_path(path=path)
-        object.template.update(
-            {
-                KEY_BLOBS: config_object.get(KEY_BLOBS, {}),
-                KEY_FILES: config_object.get(KEY_FILES, {}),
-            }
-        )
+        object.blobs = config_object.get(KEY_BLOBS, {})
+        object.files = config_object.get(KEY_FILES, {})
         return object
 
 

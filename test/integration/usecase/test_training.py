@@ -47,7 +47,7 @@ def test_training(db: "Datalayer"):
     db.apply(model)
 
     # Need to reload to get the fitted model
-    reloaded = db.load('model', 'my-model')
+    reloaded = db.load('MyModel', 'my-model')
 
     r = db['documents'].get()
 

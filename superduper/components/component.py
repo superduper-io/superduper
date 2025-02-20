@@ -8,25 +8,23 @@ import json
 import os
 import shutil
 import typing as t
+import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import wraps
-import uuid
 
 import networkx
-import yaml
 
 from superduper import logging
 from superduper.base.annotations import trigger
+from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
-from superduper.base.base import Base, BaseMeta
 from superduper.misc.annotations import lazy_classproperty
 
 if t.TYPE_CHECKING:
     from superduper import Document
     from superduper.base.datalayer import Datalayer
-    from superduper.components.plugin import Plugin
 
 
 class Status(str, Enum):
@@ -40,17 +38,9 @@ class Status(str, Enum):
 
 
 def _build_info_from_path(path: str):
-    try:
-        config = os.path.join(path, "component.json")
-        with open(config) as f:
-            config_object = json.load(f)
-    except FileNotFoundError:
-        try:
-            config = os.path.join(path, "component.yaml")
-            with open(config) as f:
-                config_object = yaml.safe_load(f)
-        except FileNotFoundError as e:
-            raise FileNotFoundError("No component.json or component.yaml found") from e
+    config = os.path.join(path, "component.json")
+    with open(config) as f:
+        config_object = json.load(f)
 
     config_object[KEY_BLOBS] = {}
     if os.path.exists(os.path.join(path, "blobs")):
@@ -572,27 +562,19 @@ class Component(Base, metaclass=ComponentMeta):
     def export(
         self,
         path: t.Optional[str] = None,
-        format: str = "json",
-        zip: bool = False,
         defaults: bool = True,
         metadata: bool = False,
-        hr: bool = False,
-        component: str = 'component',
     ):
         """
         Save `self` to a directory using super-duper protocol.
 
         :param path: Path to the directory to save the component.
-        :param format: Format to save the component in (json/ yaml).
-        :param zip: Whether to zip the directory.
         :param defaults: Whether to save default values.
         :param metadata: Whether to save metadata.
-        :param hr: Whether to save human-readable blobs.
-        :param component: Name of the component file.
 
         Created directory structure:
         ```
-        |_<component>.json/yaml
+        |_<component>.json
         |_blobs/*
         |_files/*
         ```
@@ -603,11 +585,9 @@ class Component(Base, metaclass=ComponentMeta):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        r = self.dict(defaults=defaults, metadata=metadata)
-        r = r.encode(defaults=defaults, metadata=metadata)
-
-        if not metadata:
-            del r['uuid']
+        # r = self.dict(defaults=defaults, metadata=metadata)
+        # r = r.encode(defaults=defaults, metadata=metadata)
+        r = self.encode(defaults=defaults, metadata=metadata)
 
         def rewrite_keys(r, keys):
             if isinstance(r, dict):
@@ -621,10 +601,6 @@ class Component(Base, metaclass=ComponentMeta):
                     r = r.replace(key, keys[key])
             return r
 
-        if hr:
-            blobs = r.get(KEY_BLOBS, {})
-            r = rewrite_keys(r, {k: f"blob_{i}" for i, k in enumerate(blobs)})
-
         if r.get(KEY_BLOBS):
             self._save_blobs_for_export(r[KEY_BLOBS], path)
             r.pop(KEY_BLOBS)
@@ -633,43 +609,8 @@ class Component(Base, metaclass=ComponentMeta):
             self._save_files_for_export(r[KEY_FILES], path)
             r.pop(KEY_FILES)
 
-        if format == "json":
-            with open(os.path.join(path, f"{component}.json"), "w") as f:
-                json.dump(r, f, indent=2)
-
-        elif format == "yaml":
-            import re
-            from io import StringIO
-
-            from ruamel.yaml import YAML
-
-            yaml = YAML()
-
-            def custom_str_representer(dumper, data):
-                if re.search(r"[^_a-zA-Z0-9 ]", data):
-                    return dumper.represent_scalar(
-                        "tag:yaml.org,2002:str", data, style='"'
-                    )
-                else:
-                    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-
-            yaml.representer.add_representer(str, custom_str_representer)
-
-            stream = StringIO()
-            yaml.dump(r, stream)
-
-            output = str(stream.getvalue())
-
-            with open(os.path.join(path, f"{component}.yaml"), "w") as f:
-                f.write(output)
-
-        # No longer relevant with plugins
-        # Needs to be created manually currently
-        # with open(os.path.join(path, "requirements.txt"), "w") as f:
-        #     f.write("\n".join(REQUIRES))
-
-        if zip:
-            self._zip_export(path)
+        with open(os.path.join(path, "component.json"), "w") as f:
+            json.dump(r, f, indent=2)
 
     @staticmethod
     def _save_blobs_for_export(blobs, path):
@@ -698,17 +639,6 @@ class Component(Base, metaclass=ComponentMeta):
                 shutil.copytree(file_path, save_path)
             else:
                 shutil.copy(file_path, save_path)
-
-    @staticmethod
-    def _zip_export(path):
-        import shutil
-
-        name = path.split('/')[-1]
-        os.makedirs(f'{path}/{name}', exist_ok=True)
-        for file in [x for x in os.listdir(path) if x != name]:
-            shutil.move(f'{path}/{file}', f'{path}/{name}/{file}')
-        shutil.make_archive(path, 'zip', path)
-        shutil.rmtree(path)
 
     def dict(
         self,
@@ -739,10 +669,6 @@ class Component(Base, metaclass=ComponentMeta):
 
         if refs:
             r = Document(_convert_components_to_refs(r), schema=self.class_schema)
-
-        if metadata:
-            r['version'] = self.version
-            r['identifier'] = self.identifier
 
         if r.get('status') is not None:
             r['status'] = str(self.status)

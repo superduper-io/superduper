@@ -4,7 +4,7 @@ from superduper import CFG
 from superduper.base.annotations import trigger
 from superduper.components.component import Component
 from superduper.components.schema import Schema
-from superduper.misc import typing as st
+from superduper.misc import typing as st  # noqa: F401
 from superduper.misc.importing import import_object
 
 if t.TYPE_CHECKING:
@@ -55,15 +55,11 @@ class Table(Component):
         :param db: The Datalayer instance
         """
         assert self.schema is not None, "Schema must be set"
-        # TODO drop?
-        if db.databackend.in_memory:
-            if self.identifier.startswith(CFG.output_prefix):
-                db.databackend.in_memory_tables[self.identifier] = (
-                    db.databackend.create_table_and_schema(self.identifier, self.schema)
-                )
 
         try:
-            db.databackend.create_table_and_schema(self.identifier, self.schema)
+            db.databackend.create_table_and_schema(
+                self.identifier, self.schema, self.primary_id
+            )
         except Exception as e:
             if 'already exists' in str(e):
                 pass

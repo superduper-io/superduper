@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move from in-line encoding to schema-based encoding with `Leaf._fields`
 - No need to define `_fields`
 - Use databackend to perform metadata duties
+- Add `db.create` and `db.insert` instead of `auto_schema`
 
 #### New Features & Functionality
 

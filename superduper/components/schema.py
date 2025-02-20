@@ -5,6 +5,7 @@ import typing as t
 from functools import cached_property
 
 from superduper import CFG
+from superduper.base.encoding import EncodeContext
 from superduper.components.datatype import BaseDataType
 from superduper.misc.special_dicts import dict_to_ascii_table
 
@@ -74,23 +75,30 @@ class Schema(BaseDataType):
                 decoded[k] = builds[value[1:]]
                 continue
             else:
+                msg = (
+                    'Expected a string since databackend is not json native;'
+                    ' CFG.json_native is False'
+                )
                 if field.dtype == 'json' and not CFG.json_native:
-                    assert isinstance(value, str), 'Expected a string since databackend is not json native; CFG.json_native is False'
+                    assert isinstance(value, str), msg
                     value = json.loads(value)
                 decoded[k] = field.decode_data(value, builds=builds, db=db)
 
         return decoded
 
-    def encode_data(self, out, builds, blobs, files, leaves_to_keep=()):
+    def encode_data(self, out, context: t.Optional[EncodeContext] = None, **kwargs):
         """Encode data using the schema's encoders.
 
         :param out: Data to encode.
-        :param builds: Builds.
-        :param blobs: Blobs.
-        :param files: Files.
-        :param leaves_to_keep: `Leaf` instances to keep (don't encode)
+        :param context: Encoding context.
+        :param kwargs: Additional encoding arguments.
         """
         result = {k: v for k, v in out.items()}
+
+        if context is None:
+            context = EncodeContext()
+        for k, v in kwargs.items():
+            setattr(context, k, v)
 
         for k in out:
             field = self.fields.get(k)
@@ -108,10 +116,7 @@ class Schema(BaseDataType):
 
             encoded = field.encode_data(
                 out[k],
-                builds=builds,
-                blobs=blobs,
-                files=files,
-                leaves_to_keep=leaves_to_keep,
+                context=context,
             )
 
             if field.dtype == 'json' and not CFG.json_native:

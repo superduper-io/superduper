@@ -215,7 +215,7 @@ class VectorIndex(CDC):
     def get_vector(
         self,
         like: Document,
-        models: t.List[str],
+        models: t.Dict,
         keys: KeyType,
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
@@ -323,7 +323,7 @@ class VectorIndex(CDC):
         db.cluster.vector_search.drop(self)
 
     @property
-    def models_keys(self) -> t.Tuple[t.List[str], t.List]:
+    def models_keys(self):
         """Return a list of model and keys for each listener."""
         assert not isinstance(self.indexing_listener, str)
         assert not isinstance(self.compatible_listener, str)

@@ -1,7 +1,5 @@
 import typing as t
 
-import networkx
-
 from superduper import CFG, logging
 
 from .component import Component
@@ -25,42 +23,6 @@ class Application(Component):
 
     components: t.List[Component]
     link: t.Optional[str] = None
-
-    def postinit(self):
-        """Post initialization method."""
-        logging.info('Resorting components based on topological order.')
-        G = networkx.DiGraph()
-        lookup = {c.huuid: c for c in self.components}
-        for k in lookup:
-            G.add_node(k)
-            for d in lookup[k].get_children_refs():  # dependencies:
-                if d in lookup:
-                    G.add_edge(d, k)
-                    if lookup[d].upstream is None:
-                        lookup[d].upstream = []
-
-        for e in G.edges:
-            if lookup[e[1]].upstream is None:
-                lookup[e[1]].upstream = []
-            lookup[e[1]].upstream.append(lookup[e[0]])
-
-        nodes = list(networkx.topological_sort(G))
-        logging.info(f'New order of components: {nodes}')
-        components = [lookup[n] for n in nodes]
-        self.components = components
-
-        super().postinit()
-
-    def cleanup(self, db: "Datalayer"):
-        """Cleanup hook.
-
-        :param db: Datalayer instance
-        """
-        super().cleanup(db=db)
-        if self.namespace is not None:
-            for type_id, identifier in self.namespace:
-                db.remove(type_id=type_id, identifier=identifier, force=True)
-        return super().cleanup(db)
 
     @classmethod
     def build_from_db(cls, identifier, db: "Datalayer"):

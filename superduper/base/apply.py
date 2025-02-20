@@ -301,11 +301,9 @@ def _apply(
             # during the `.map` to the children
             # serializer.map...
             # this means replacing components with references
-            serialized = object.dict().update(serialized)
+            serialized = object.dict(metadata=False).update(serialized)
 
             # this is necessary to prevent inconsistencies
-            # this takes the difference between
-            # the current and
             serialized = serialized.update(this_diff).encode(keep_schema=False)
 
             # assign/ increment the version since
@@ -339,7 +337,7 @@ def _apply(
             # update the existing component with the change
             # data from the applied component
             serialized = (
-                current.dict()
+                current.dict(metadata=False)
                 .update(serialized)
                 .update(this_diff)
                 .encode(keep_schema=False)
@@ -354,7 +352,11 @@ def _apply(
         )
         serialized['version'] = 0
 
-        serialized = object.dict().update(serialized)
+        # TODO this was set to empty (no metadata specified) previously
+        # Do we even need this?
+        # The metadata components could "simple" sit quietly inside the component
+        # and be applied when the component is applied
+        serialized = object.dict(metadata=False).update(serialized)
 
         # if the metadata includes components, which
         # need to be applied, do that now

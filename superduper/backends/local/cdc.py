@@ -42,11 +42,11 @@ class LocalCDCBackend(CDCBackend):
     def initialize(self):
         """Initialize the CDC."""
         for component_data in self.db.show():
-            type_id = component_data['type_id']
+            component = component_data['component']
             identifier = component_data['identifier']
-            r = self.db.show(component=type_id, identifier=identifier, version=-1)
+            r = self.db.show(component=component, identifier=identifier, version=-1)
             if r.get('trigger'):
-                self.put(self.db.load(type_id=type_id, identifier=identifier))
+                self.put(self.db.load(component=component, identifier=identifier))
             # TODO consider re-initialzing CDC jobs since potentially failure
 
     def drop(self, component: t.Optional['Component'] = None):

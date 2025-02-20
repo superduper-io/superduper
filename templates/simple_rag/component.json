@@ -2,269 +2,10 @@
   "_path": "superduper.components.template.Template",
   "identifier": "simple_rag",
   "upstream": null,
-  "plugins": null,
   "cache": true,
   "build_variables": null,
   "build_template": null,
-  "template": {
-    "_base": "?simple-rag-app",
-    "_builds": {
-      "str": {
-        "_path": "superduper.components.schema.FieldType"
-      },
-      "model:chunker": {
-        "_object": "&:blob:93d64a5bdd6b6a2c6165347026194169870ddf75",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "signature": "singleton",
-        "datatype": "?str",
-        "output_schema": null,
-        "model_update_kwargs": {},
-        "predict_kwargs": {},
-        "compute_kwargs": {},
-        "validation": null,
-        "metric_values": {},
-        "num_workers": 0,
-        "serve": false,
-        "trainer": null,
-        "deploy": false,
-        "chunk_size": 200
-      },
-      "<var:table_name>-select-id-x": {
-        "_path": "superduper_<var:databackend>.query.parse_query",
-        "documents": [],
-        "query": "<var:table_name>.select(\"id\", \"x\")"
-      },
-      "listener:chunker": {
-        "_path": "superduper.components.listener.Listener",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "key": "x",
-        "model": "?model:chunker",
-        "predict_kwargs": {},
-        "select": "?<var:table_name>-select-id-x",
-        "flatten": true
-      },
-      "datatype:vector[1536]": {
-        "_path": "superduper.components.datatype.Vector",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "shape": [
-          1536
-        ],
-        "dtype": "float32"
-      },
-      "model:text-embedding": {
-        "_path": "superduper_openai.model.OpenAIEmbedding",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "signature": "singleton",
-        "datatype": "?datatype:vector[1536]",
-        "output_schema": null,
-        "model_update_kwargs": {},
-        "predict_kwargs": {},
-        "compute_kwargs": {},
-        "validation": null,
-        "metric_values": {},
-        "num_workers": 0,
-        "serve": false,
-        "trainer": null,
-        "deploy": false,
-        "model": "<var:embedding_model>",
-        "max_batch_size": 8,
-        "postprocess": null,
-        "openai_api_key": null,
-        "openai_api_base": null,
-        "client_kwargs": {},
-        "batch_size": 100
-      },
-      "outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)": {
-        "_path": "superduper_<var:databackend>.query.parse_query",
-        "documents": [],
-        "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select(\"id\", \"_source\", \"<var:output_prefix>chunker__?(listener:chunker.uuid)\")"
-      },
-      "listener:embeddinglistener": {
-        "_path": "superduper.components.listener.Listener",
-        "upstream": [
-          "?listener:chunker"
-        ],
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
-        "model": "?model:text-embedding",
-        "predict_kwargs": {},
-        "select": "?outputs-chunker-?(listener:chunker.uuid)-select-id-source-outputs-chunker-?(listener:chunker.uuid)",
-        "flatten": false
-      },
-      "vector_index:vectorindex": {
-        "_path": "superduper.components.vector_index.VectorIndex",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "indexing_listener": "?listener:embeddinglistener",
-        "compatible_listener": null,
-        "measure": "cosine",
-        "metric_values": {}
-      },
-      "outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5": {
-        "_path": "superduper_<var:databackend>.query.parse_query",
-        "documents": [
-          {
-            "<var:output_prefix>chunker__?(listener:chunker.uuid)": "<var:query>"
-          }
-        ],
-        "query": "<var:output_prefix>chunker__?(listener:chunker.uuid).select().like(documents[0], vector_index=\"vectorindex\", n=5)"
-      },
-      "model:llm-model": {
-        "_path": "superduper_openai.model.OpenAIChatCompletion",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "signature": "singleton",
-        "datatype": "str",
-        "output_schema": null,
-        "model_update_kwargs": {},
-        "predict_kwargs": {},
-        "compute_kwargs": {},
-        "validation": null,
-        "metric_values": {},
-        "num_workers": 0,
-        "serve": false,
-        "trainer": null,
-        "deploy": false,
-        "model": "<var:llm_model>",
-        "max_batch_size": 8,
-        "postprocess": null,
-        "openai_api_key": null,
-        "openai_api_base": null,
-        "client_kwargs": {},
-        "batch_size": 1,
-        "prompt": ""
-      },
-      "model:simple_rag": {
-        "_path": "superduper.components.model.RAGModel",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "signature": "singleton",
-        "datatype": null,
-        "output_schema": null,
-        "model_update_kwargs": {},
-        "predict_kwargs": {},
-        "compute_kwargs": {},
-        "validation": null,
-        "metric_values": {},
-        "num_workers": 0,
-        "serve": false,
-        "trainer": null,
-        "deploy": false,
-        "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question. Please answer in 20 words or less.\n\n{context}\n\nHere's the question: {query}",
-        "select": "?outputs-chunker-?(listener:chunker.uuid)-select-like-outputs-chunker-?(listener:chunker.uuid)-var-query-vector-index-vectorindex-n-5",
-        "key": "<var:output_prefix>chunker__?(listener:chunker.uuid)",
-        "llm": "?model:llm-model"
-      },
-      "plugin:plugin-demo_py": {
-        "_path": "superduper.components.plugin.Plugin",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "path": "&:file:9c9e4b89367007582586a03565c5b6b43f070f1f",
-        "cache_path": "~/.superduper/plugins"
-      },
-      "streamlit:simple-rag-demo": {
-        "_path": "superduper.components.streamlit.Streamlit",
-        "upstream": [
-          "?plugin:plugin-demo_py"
-        ],
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "demo_func": "&:blob:c663645459821c0f6a085c0f21d2ae498d037bdd",
-        "demo_kwargs": {},
-        "default": false,
-        "is_standalone": false
-      },
-      "simple-rag-app": {
-        "_path": "superduper.components.application.Application",
-        "upstream": null,
-        "plugins": null,
-        "cache": true,
-        "build_variables": null,
-        "build_template": null,
-        "components": [
-          "?listener:chunker",
-          "?vector_index:vectorindex",
-          "?model:simple_rag",
-          "?streamlit:simple-rag-demo"
-        ],
-        "namespace": [
-          {
-            "type_id": "listener",
-            "identifier": "chunker"
-          },
-          {
-            "type_id": "vector_index",
-            "identifier": "vectorindex"
-          },
-          {
-            "type_id": "model",
-            "identifier": "simple_rag"
-          },
-          {
-            "type_id": "streamlit",
-            "identifier": "simple-rag-demo"
-          },
-          {
-            "type_id": "model",
-            "identifier": "chunker"
-          },
-          {
-            "type_id": "listener",
-            "identifier": "embeddinglistener"
-          },
-          {
-            "type_id": "model",
-            "identifier": "text-embedding"
-          },
-          {
-            "type_id": "model",
-            "identifier": "llm-model"
-          },
-          {
-            "type_id": "plugin",
-            "identifier": "plugin-demo_py"
-          }
-        ],
-        "link": null,
-        "_literals": [
-          "template"
-        ]
-      }
-    }
-  },
+  "template": "&:blob:e0118855ffa323ab53007d397141d97c8b0a7de7",
   "template_variables": [
     "table_name",
     "id_field",
@@ -308,52 +49,38 @@
   "files": null,
   "requirements": null,
   "default_tables": [
-    "?table:sample_simple_rag"
+    "?Table:sample_simple_rag"
   ],
   "staged_file": null,
   "queries": null,
-  "_literals": [
-    "template"
-  ],
   "_builds": {
-    "str": {
-      "_path": "superduper.components.schema.FieldType",
-      "uuid": "ae55fb5f14ec469f"
-    },
-    "schema:sample_simple_rag/schema": {
-      "_path": "superduper.components.schema.Schema",
-      "uuid": "ca5c4adf0ad84f57",
+    "RemoteData:superduper-docs": {
+      "_path": "superduper.components.dataset.RemoteData",
+      "uuid": "1954ce25159c4ba4",
       "upstream": null,
-      "plugins": null,
       "cache": true,
+      "status": null,
+      "build_variables": null,
+      "build_template": null,
+      "getter": "&:blob:a73f7ca4548f13dfd69738f554a2c861aedc835e",
+      "version": null
+    },
+    "Table:sample_simple_rag": {
+      "_path": "superduper.components.table.Table",
+      "uuid": "956931223fb3461a",
+      "upstream": null,
+      "cache": true,
+      "status": null,
       "build_variables": null,
       "build_template": null,
       "fields": {
-        "x": "?str",
-        "_fold": "?str"
-      }
-    },
-    "dataset:superduper-docs": {
-      "_path": "superduper.components.dataset.RemoteData",
-      "uuid": "d272e9aabcf04f4f",
-      "upstream": null,
-      "plugins": null,
-      "cache": true,
-      "build_variables": null,
-      "build_template": null,
-      "getter": "&:blob:54970773529b5b5a8f67db3346fa5fc357e86a92"
-    },
-    "table:sample_simple_rag": {
-      "_path": "superduper.components.table.Table",
-      "uuid": "ff5bc33ff4f54881",
-      "upstream": null,
-      "plugins": null,
-      "cache": true,
-      "build_variables": null,
-      "build_template": null,
-      "schema": "?schema:sample_simple_rag/schema",
+        "x": "str"
+      },
       "primary_id": "id",
-      "data": "?dataset:superduper-docs"
+      "data": "?RemoteData:superduper-docs",
+      "path": null,
+      "component": false,
+      "version": null
     }
   },
   "_files": {}

@@ -147,7 +147,7 @@ class VectorIndex(CDC):
             )
         except StopIteration:
             raise Exception(
-                f'Couldn\'t get a vector shape for '
+                f'Couldn\'t get a vector shape for\n'
                 f'{self.indexing_listener.output_table.schema}'
             )
 

@@ -17,8 +17,6 @@ class Application(Component):
     Components are sorted in a way that respects their mutual dependencies.
 
     :param components: List of components to group together and apply to `superduper`.
-    :param namespace: List of tuples with type_id and identifier of components to
-        assist in managing application.
     :param link: A reference link to web app serving the application
                  i.e. streamlit, gradio, etc
     """
@@ -26,7 +24,6 @@ class Application(Component):
     breaks: t.ClassVar[t.Sequence[str]] = ('components',)
 
     components: t.List[Component]
-    namespace: t.Optional[t.Sequence[t.Tuple[str, str]]] = None
     link: t.Optional[str] = None
 
     def postinit(self):
@@ -53,17 +50,6 @@ class Application(Component):
         self.components = components
 
         super().postinit()
-
-    def pre_create(self, db: "Datalayer"):
-        """Pre-create hook.
-
-        :param db: Datalayer instance
-        """
-        self.namespace = [
-            {"type_id": c.type_id, "identifier": c.identifier}
-            for c in self.get_children(deep=True)
-        ]
-        return super().pre_create(db)
 
     def cleanup(self, db: "Datalayer"):
         """Cleanup hook.

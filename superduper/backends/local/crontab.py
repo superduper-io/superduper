@@ -84,11 +84,11 @@ class LocalCrontabBackend(CrontabBackend):
     def initialize(self):
         """Initialize the crontab."""
         for component_data in self.db.show():
-            type_id = component_data['type_id']
+            component = component_data['component']
             identifier = component_data['identifier']
-            r = self.db.show(component=type_id, identifier=identifier, version=-1)
+            r = self.db.show(component=component, identifier=identifier, version=-1)
             if r.get('schedule'):
-                obj = self.db.load(type_id=type_id, identifier=identifier)
+                obj = self.db.load(component=component, identifier=identifier)
                 from superduper.components.cron_job import CronJob
 
                 if isinstance(obj, CronJob):

@@ -4,12 +4,16 @@ import typing as t
 from prettytable import PrettyTable
 
 import superduper as s
-from superduper import logging
+from superduper import CFG, logging
 from superduper.backends.base.data_backend import DataBackendProxy
 from superduper.base.config import Config
 from superduper.base.datalayer import Datalayer
 from superduper.misc.anonymize import anonymize_url
 from superduper.misc.importing import load_plugin
+
+from superduper.backends.local.artifacts import (
+    FileSystemArtifactStore,
+)
 
 
 class _Loader:
@@ -74,8 +78,8 @@ class _ArtifactStoreLoader(_Loader):
     }
 
 
-def _build_artifact_store(uri):
-    return _ArtifactStoreLoader.create(uri)
+def _build_artifact_store():
+    return FileSystemArtifactStore(CFG.artifact_store)
 
 
 def _build_databackend(uri):
@@ -103,10 +107,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     cfg = t.cast(Config, cfg)
     databackend_obj = _build_databackend(cfg.data_backend)
 
-    if cfg.artifact_store:
-        artifact_store = _build_artifact_store(cfg.artifact_store)
-    else:
-        artifact_store = databackend_obj.build_artifact_store()
+    artifact_store = _build_artifact_store()
 
     backend = getattr(load_plugin(cfg.cluster_engine), 'Cluster')
     cluster = backend.build(cfg, **kwargs)

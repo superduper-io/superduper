@@ -92,9 +92,10 @@ def _update(r, s):
 
 
 class _InMemoryArtifactStore(ArtifactStore):
-    def __init__(self, blobs, files):
+    def __init__(self, blobs, files, artifact_store=None):
         self.blobs = blobs
         self.files = files
+        self.artifact_store = artifact_store
 
     def url(self):
         """Artifact store connection url."""
@@ -151,7 +152,12 @@ class _InMemoryArtifactStore(ArtifactStore):
 
         :param file_id: Identifier of artifact in the store
         """
-        return self.blobs[file_id]
+        if file_id in self.blobs:
+            return self.blobs[file_id]
+        elif self.artifact_store:
+            return self.artifact_store.get_bytes(file_id)
+        else:
+            raise FileNotFoundError(f'Blob {file_id} not found in in-memory artifact store')
 
     def get_file(self, file_id: str) -> str:
         """
@@ -159,7 +165,12 @@ class _InMemoryArtifactStore(ArtifactStore):
 
         :param file_id: Identifier of artifact in the store
         """
-        return self.files[file_id]
+        if file_id in self.files:
+            return self.files[file_id]
+        elif self.artifact_store:
+            return self.artifact_store.get_file(file_id)
+        else:
+            raise FileNotFoundError(f'File {file_id} not found in in-memory artifact store')
 
     def disconnect(self):
         """Disconnect the client."""
@@ -176,9 +187,13 @@ class _TmpDB:
     :param databackend: The databackend to use.
     """
 
-    def __init__(self, artifact_store, databackend):
+    def __init__(self, artifact_store, databackend, db: t.Optional['Datalayer'] = None):
         self.artifact_store = artifact_store
         self.databackend = databackend
+        self.db = db
+
+    def __getitem__(self, item):
+        return self.db[item]
 
     def __getitem__(self, item):
         from superduper.backends.base.query import Query
@@ -305,12 +320,14 @@ class Document(MongoStyleDict):
         return super().__getitem__(key)
 
     @classmethod
-    def build_in_memory_db(cls, blobs, files):
+    def build_in_memory_db(cls, blobs, files, db: t.Optional['Datalayer'] | None = None):
+        artifact_store = db.artifact_store if db is not None else None
         return _TmpDB(
-            artifact_store=_InMemoryArtifactStore(blobs=blobs, files=files),
+            artifact_store=_InMemoryArtifactStore(blobs=blobs, files=files, artifact_store=artifact_store),
             databackend=namedtuple('tmp_databackend', field_names=('bytes_encoding',))(
                 bytes_encoding='bytes'
             ),
+            db=db,
         )
 
     def dict(self, *args, **kwargs):
@@ -334,10 +351,11 @@ class Document(MongoStyleDict):
         :param schema: The schema to use.
         :param db: The datalayer to use.
         """
-        if db is None:
-            blobs = r.pop('_blobs', {})
-            files = r.pop('_files', {})
-            db = cls.build_in_memory_db(blobs=blobs, files=files)
+        blobs = r.pop('_blobs', {})
+        files = r.pop('_files', {})
+        
+        if blobs or files:
+            db = cls.build_in_memory_db(blobs=blobs, files=files, db=db)
 
         if '_variables' in r:
             variables = {**r['_variables'], 'output_prefix': CFG.output_prefix}

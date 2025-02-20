@@ -76,8 +76,14 @@ class _BaseTemplate(Component):
         return substitute(dict(r))
 
     @ensure_initialized
-    def __call__(self, **kwargs):
-        """Method to create component from the given template and `kwargs`."""
+    def __call__(self, db: t.Optional['Datalayer'], **kwargs):
+        """Method to create component from the given template and `kwargs`.
+
+        Note that the `db` is needed in order to build queries.
+        
+        :param db: Datalayer instance to be used to create the component.
+        :param kwargs: Variables to be set in the template.
+        """
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
 
         assert set(kwargs.keys()) == (
@@ -94,7 +100,8 @@ class _BaseTemplate(Component):
             build_variables=kwargs,
             build_template=self.identifier,
         )
-        out = Document.decode(component, db=self.db)
+        assert db or self.db
+        out = Document.decode(component, db=db or self.db)
         if isinstance(out, Document) and '_base' in out:
             out = out['_base']
         return out
@@ -255,6 +262,7 @@ class Template(_BaseTemplate):
         return self._replace_stage_file(default_values)
 
     @property
+    @ensure_initialized
     def form_template(self):
         """Form to be diplayed to user."""
         form_template = super().form_template

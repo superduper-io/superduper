@@ -8,13 +8,13 @@ import numpy
 import pytest
 
 from superduper.base.datalayer import Datalayer
-from superduper.components.component import Component
-from superduper.components.dataset import Dataset
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     BaseDataType,
     Blob,
     dill_serializer,
 )
+from superduper.components.component import Component
+from superduper.components.dataset import Dataset
 from superduper.components.listener import Listener
 from superduper.components.model import Model, ObjectModel, Trainer
 from superduper.components.table import Table

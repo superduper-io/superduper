@@ -3,7 +3,7 @@ import typing as t
 import pytest
 
 from superduper import Component, Schema, Table
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     Blob,
     FileItem,
     dill_serializer,

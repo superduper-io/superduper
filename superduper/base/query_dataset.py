@@ -1,6 +1,6 @@
 import typing as t
 
-from superduper.backends.base.query import Query
+from superduper.base.query import Query
 from superduper.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:

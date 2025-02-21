@@ -42,7 +42,7 @@ def asdict(obj, *, copy_method=copy.copy) -> t.Dict[str, t.Any]:
 
 def _asdict_inner(obj, dict_factory, copy_method, top=False) -> t.Any:
     from superduper.base.base import Base
-    from superduper.components.datatype import Saveable
+    from superduper.base.datatype import Saveable
 
     if type(obj) in _ATOMIC_TYPES:
         return obj

@@ -5,21 +5,21 @@ import click
 
 import superduper as s
 from superduper import CFG, logging
-from superduper.backends.base.artifacts import ArtifactStore
 from superduper.backends.base.cluster import Cluster
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.metadata import (
+from superduper.base import apply, exceptions
+from superduper.base.artifacts import ArtifactStore
+from superduper.base.base import Base
+from superduper.base.config import Config
+from superduper.base.datatype import ComponentType, LeafType
+from superduper.base.document import Document
+from superduper.base.metadata import (
     MetaDataStore,
     NonExistentMetadataError,
     UniqueConstraintError,
 )
-from superduper.backends.base.query import Query
-from superduper.base import apply, exceptions
-from superduper.base.base import Base
-from superduper.base.config import Config
-from superduper.base.document import Document
+from superduper.base.query import Query
 from superduper.components.component import Component
-from superduper.components.datatype import ComponentType, LeafType
 from superduper.components.table import Table
 
 
@@ -276,7 +276,6 @@ class Datalayer:
         :param recursive: Toggle to remove all descendants of the component.
         :param force: Force skip confirmation (use with caution).
         """
-        # TODO: versions = [version] if version is not None else ...
         if version is not None:
             return self._remove_component_version(
                 component, identifier, version=version, force=force, recursive=recursive
@@ -415,6 +414,10 @@ class Datalayer:
         force: bool = False,
         recursive: bool = False,
     ):
+        # TODO - change this logic for a not version-by-version deletion
+        if version is None:
+            return
+
         try:
             r = self.metadata.get_component(component, identifier, version=version)
         except NonExistentMetadataError:
@@ -463,7 +466,9 @@ class Datalayer:
 
         children = object.sort_components(children)[::-1]
         for c in children:
-            assert isinstance(c.version, int)
+            if c.version is None:
+                logging.warn(f'Found uninitialized component {c.huuid}, skipping...')
+                continue
             try:
                 self._remove_component_version(
                     c.component,

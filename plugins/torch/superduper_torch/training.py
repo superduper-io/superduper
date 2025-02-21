@@ -3,8 +3,8 @@ import typing as t
 
 import torch
 from superduper import logging
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.dataset import Dataset
 from superduper.components.model import Trainer
 from torch.utils.data import DataLoader

@@ -1,12 +1,12 @@
 from ibis.expr.datatypes import dtype
 from superduper import CFG
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     ID,
     BaseDataType,
     FieldType,
     FileItem,
 )
-from superduper.components.schema import Schema
+from superduper.base.schema import Schema
 
 SPECIAL_ENCODABLES_FIELDS = {
     FileItem: "str",

@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 
-from superduper.backends.base.metadata import MetaDataStore
 from superduper.base.event import Job
+from superduper.base.metadata import MetaDataStore
 
 
 def test_component(metadata: MetaDataStore):

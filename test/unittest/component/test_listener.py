@@ -21,7 +21,9 @@ class MyTrainer(Trainer):
             pass
 
 
-class _Tmp(ObjectModel): ...
+class _Tmp(ObjectModel):
+    def predict(self, X):
+        return X
 
 
 class test(Base):

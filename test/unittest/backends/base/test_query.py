@@ -1,5 +1,5 @@
-from superduper.backends.base.query import parse_query
 from superduper.base import Base
+from superduper.base.query import parse_query
 from superduper.components.table import Table
 
 

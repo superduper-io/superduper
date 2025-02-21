@@ -3,7 +3,7 @@ from test.utils.component import datatype as datatype_utils
 
 import pytest
 
-from superduper.components.datatype import file
+from superduper.base.datatype import file
 
 
 @pytest.fixture

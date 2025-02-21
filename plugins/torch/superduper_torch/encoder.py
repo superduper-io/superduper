@@ -2,7 +2,7 @@ import typing as t
 
 import numpy
 import torch
-from superduper.components.datatype import BaseDataType, DataTypeFactory
+from superduper.base.datatype import BaseDataType, DataTypeFactory
 from superduper.misc.utils import str_shape
 
 if t.TYPE_CHECKING:

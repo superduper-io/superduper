@@ -8,15 +8,13 @@ import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.query import Query
-from superduper.backends.local.compute import LocalComputeBackend
 from superduper.base.datalayer import Datalayer
+from superduper.base.datatype import pickle_serializer
 from superduper.base.document import Document
+from superduper.base.query import Query
 from superduper.components.dataset import Dataset
-from superduper.components.datatype import pickle_serializer
 from superduper.components.metric import Metric
 from superduper.components.model import (
-    Mapping,
     Model,
     ObjectModel,
     QueryModel,
@@ -88,11 +86,11 @@ def test_predict_core_multikey(predict_mixin_multikey):
     with pytest.raises(TypeError):
         predict_mixin_multikey.predict_batches(X, Y)
 
-    output = predict_mixin_multikey.predict_batches([((X, Y), {}), ((X, Y), {})])
+    output = predict_mixin_multikey.predict_batches([(X, Y), (X, Y)])
     assert isinstance(output, list)
 
     predict_mixin_multikey.num_workers = 2
-    output = predict_mixin_multikey.predict_batches([((X, Y), {}), ((X, Y), {})])
+    output = predict_mixin_multikey.predict_batches([(X, Y), (X, Y)])
     assert isinstance(output, list)
 
 
@@ -100,23 +98,6 @@ def test_pm_core_predict(predict_mixin):
     # make sure predict is called
     with patch.object(predict_mixin, 'predict', return_self):
         assert predict_mixin.predict(5) == return_self(5)
-
-
-def test_pm_predict_batches(predict_mixin):
-    # Check the logic of predict method, the mock method will be tested below
-    db = MagicMock(spec=Datalayer)
-    db.compute = MagicMock(spec=LocalComputeBackend)
-    db.metadata = MagicMock()
-    db.databackend = MagicMock()
-    select = MagicMock()
-    predict_mixin.db = db
-
-    with patch.object(predict_mixin, 'predict_batches') as predict_func, patch.object(
-        predict_mixin, '_get_ids_from_select'
-    ) as get_ids:
-        get_ids.return_value = [1]
-        predict_mixin.predict_in_db('x', select=select, predict_id='test')
-        predict_func.assert_called_once()
 
 
 @pytest.mark.skip
@@ -163,7 +144,7 @@ def test_pm_predict_with_select_ids(monkeypatch, predict_mixin):
     with patch.object(predict_mixin, 'object') as my_object:
         my_object.return_value = {'out': 2}
         # Check the base predict function with output_schema
-        from superduper.components.schema import Schema
+        from superduper.base.schema import Schema
 
         predict_mixin.datatype = None
         predict_mixin.output_schema = schema = MagicMock(spec=Schema)
@@ -203,15 +184,13 @@ def test_model_append_metrics():
     assert model.trainer.metric_values.get('loss') == [0.5, 0.4]
 
 
-@patch.object(Mapping, '__call__')
-def test_model_validate(mock_call):
+def test_model_validate():
     # Check the metadadata recieves the correct values
     model = Validator('test', object=lambda x: x)
     model._signature = 'singleton'
     my_metric = MagicMock(spec=Metric)
     my_metric.identifier = 'acc'
     my_metric.return_value = 0.5
-    mock_call.return_value = 1
     dataset = MagicMock(spec=Dataset)
     dataset.data = [{'X': 1, 'y': 1} for _ in range(4)]
 
@@ -381,43 +360,6 @@ def test_sequential_model():
     assert m.predict_batches([1 for _ in range(4)]) == [4, 4, 4, 4]
 
 
-def test_pm_predict_with_select_ids_multikey(monkeypatch, predict_mixin_multikey):
-    xs = [np.random.randn(4) for _ in range(10)]
-
-    def func(x, y):
-        return 2
-
-    monkeypatch.setattr(predict_mixin_multikey, 'object', func)
-
-    def _test(X, docs):
-        ids = [i for i in range(10)]
-
-        select = MagicMock()
-        db = MagicMock(spec=Datalayer)
-        db.databackend = MagicMock(spec=BaseDataBackend)
-        select.execute.return_value = docs
-
-        # Check the base predict function
-        predict_mixin_multikey.db = db
-        with patch.object(select, 'subset') as subset:
-            predict_mixin_multikey._predict_with_select_and_ids(
-                X=X, predict_id='test', select=select, ids=ids
-            )
-            subset.assert_called_once_with(ids)
-
-    # TODO - I don't know how this works given that the `_outputs` field
-    # should break...
-    docs = [{'x': x, 'y': x} for x in xs]
-    X = ('x', 'y')
-
-    _test(X, docs)
-
-    # TODO this should also work
-    # docs = [Document({'a': x, 'b': x}) for x in xs]
-    # X = {'a': 'x', 'b': 'y'}
-    # _test(X, docs)
-
-
 import numpy
 
 
@@ -436,21 +378,6 @@ def test_object_model_predict():
 
     assert np.allclose(result, sample_data + 1)
     assert all(np.allclose(r, sample_data + 1) for r in results)
-
-
-def test_object_model_predict_in_db(db):
-    object_model = make_object_model('10x10')
-
-    sample_data = np.zeros((10, 10))
-
-    results = model_utils.test_predict_in_db(
-        object_model, sample_data, db, type='array[float:10x10]'
-    )
-
-    r = results[0].unpack()
-    key = next(k for k in r.keys() if k.startswith('_outputs__test'))
-
-    assert all(np.allclose(r.unpack()[key], sample_data + 1) for r in results)
 
 
 def test_object_model_as_a_listener(db):

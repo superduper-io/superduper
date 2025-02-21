@@ -2,11 +2,10 @@ import dataclasses as dc
 import typing as t
 
 from superduper import CFG
-from superduper.backends.base.query import Query
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
+from superduper.base.query import Query
 from superduper.components.cdc import CDC
-from superduper.components.model import Mapping
 from superduper.components.table import Table
 from superduper.misc import typing as st
 
@@ -136,11 +135,6 @@ class Listener(CDC):
         self._auto_fill_data(db)
 
     @property
-    def mapping(self):
-        """Mapping property."""
-        return Mapping(self.key, signature=self.model.signature)
-
-    @property
     def outputs(self):
         """Get reference to outputs of listener model."""
         return f'{CFG.output_prefix}{self.predict_id}'
@@ -165,20 +159,67 @@ class Listener(CDC):
                 out.append(tuple(x[len(CFG.output_prefix) :].split('.')[0].split('__')))
         return out
 
+    def _check_signature(self):
+        model_signature = self.model.signature
+
+        msg = 'Invalid lookup key {self.key} for model signature {model_signature}'
+
+        if model_signature == 'singleton':
+            assert isinstance(self.key, str) or self.key is None, msg
+        elif model_signature == '*args':
+            assert isinstance(self.key, (list, tuple)), msg
+            assert all(isinstance(x, str) for x in self.key), msg
+        elif model_signature == '**kwargs':
+            assert isinstance(self.key, dict), msg
+        elif model_signature == '*args,**kwargs':
+            assert isinstance(self.key, (list, tuple)), msg
+            assert isinstance(self.key[0], (list, tuple)), msg
+            assert all(isinstance(x, str) for x in self.key[0]), msg
+            assert isinstance(self.key[1], dict), msg
+            assert all(isinstance(x, str) for x in self.key[1].values()), msg
+        else:
+            raise ValueError(f'Invalid signature: {model_signature}')
+
     @trigger('apply', 'insert', 'update', requires='select')
-    def run(self, ids: t.Sequence[str] | None = None) -> t.List[str]:
-        """Run the listener."""
+    def run(self, ids: t.List[str] | None = None):
+
+        self._check_signature()
+
         assert self.select is not None
-        # Returns a list of ids where the outputs were inserted
-        out = self.model.predict_in_db(
-            X=self.key,
-            predict_id=self.predict_id,
-            select=self.select,
-            ids=ids,
-            flatten=self.flatten,
-            **(self.predict_kwargs or {}),
-        )
-        return out
+        assert isinstance(self.db, Datalayer)
+
+        if ids is None:
+            ids = self.select.missing_outputs(self.predict_id)
+
+        if not ids:
+            return
+
+        documents = self.select.subset(ids)
+        primary_id = self.select.primary_id.execute()
+        ids = [r[primary_id] for r in documents]
+
+        inputs = self.model._map_inputs(self.model.signature, documents, self.key)
+        outputs = self.model.predict_batches(inputs)
+        if self.flatten:
+            output_documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    self.outputs: sub_output,
+                }
+                for id, output in zip(ids, outputs)
+                for sub_output in output
+            ]
+        else:
+            output_documents = [
+                {
+                    self.db.databackend.id_field: self.db.databackend.random_id(),
+                    '_source': self.db.databackend.to_id(id),
+                    self.outputs: output,
+                }
+                for id, output in zip(ids, outputs)
+            ]
+        return self.db[self.outputs].insert(output_documents)
 
     def cleanup(self, db: "Datalayer") -> None:
         """Clean up when the listener is deleted.

@@ -2,7 +2,7 @@ import os
 import sys
 
 from superduper import Schema, Table
-from superduper.components.datatype import file
+from superduper.base.datatype import file
 
 
 pdf_folder = sys.argv[1]

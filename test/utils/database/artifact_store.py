@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from superduper.backends.base.artifacts import ArtifactStore
+from superduper.base.artifacts import ArtifactStore
 
 
 def test_bytes(artifact_store: ArtifactStore):

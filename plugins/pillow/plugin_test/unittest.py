@@ -1,6 +1,6 @@
 import PIL.Image
-from superduper.backends.base.query import Query
 from superduper.base.document import Document
+from superduper.base.query import Query
 
 from superduper_pillow import pil_image
 

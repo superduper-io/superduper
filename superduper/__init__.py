@@ -16,11 +16,12 @@ except metadata.PackageNotFoundError:
     __version__ = "dev"
 
 
+from .base.datatype import BaseDataType, dill_serializer, pickle_serializer
 from .base.document import Document
+from .base.schema import Schema
 from .components.application import Application
 from .components.component import Component
 from .components.dataset import Dataset
-from .components.datatype import BaseDataType, dill_serializer, pickle_serializer
 from .components.listener import Listener
 from .components.metric import Metric
 from .components.model import (
@@ -31,7 +32,6 @@ from .components.model import (
     model,
 )
 from .components.plugin import Plugin
-from .components.schema import Schema
 from .components.streamlit import Streamlit
 from .components.table import Table
 from .components.template import QueryTemplate, Template

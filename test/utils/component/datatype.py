@@ -6,10 +6,10 @@ from pprint import pprint
 import numpy as np
 
 from superduper.base.datalayer import Datalayer
+from superduper.base.datatype import BaseDataType, pickle_serializer
 from superduper.base.document import Document
+from superduper.base.schema import Schema
 from superduper.components.component import Component
-from superduper.components.datatype import BaseDataType, pickle_serializer
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 

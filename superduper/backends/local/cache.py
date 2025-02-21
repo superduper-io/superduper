@@ -4,8 +4,6 @@ from superduper.backends.base.cache import Cache
 from superduper.components.component import Component
 
 
-# TODO implement redis cache
-# TODO - doesn't need to be local, could work for services too
 class LocalCache(Cache):
     """Local cache for caching components.
 

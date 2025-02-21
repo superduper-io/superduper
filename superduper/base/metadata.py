@@ -6,9 +6,9 @@ import uuid
 from superduper import logging
 from superduper.base.base import Base
 from superduper.base.exceptions import DatabackendError
+from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
 from superduper.components.component import Component
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.importing import import_object
 
@@ -103,21 +103,21 @@ class MetaDataStore:
                 primary_id='uuid',
                 uuid='def',
                 component=True,
-                path='superduper.backends.base.metadata.ParentChildAssociations',
+                path='superduper.base.metadata.ParentChildAssociations',
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
                 identifier='ArtifactRelations',
                 primary_id='uuid',
                 uuid='ghi',
                 component=True,
-                path='superduper.backends.base.metadata.ArtifactRelations',
+                path='superduper.base.metadata.ArtifactRelations',
             ).encode(),
             ('Table', 'Job'): Table(
                 identifier='Job',
                 primary_id='job_id',
                 uuid='jkl',
                 component=True,
-                path='superduper.backends.base.metadata.Job',
+                path='superduper.base.metadata.Job',
             ).encode(),
         }
 

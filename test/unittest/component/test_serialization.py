@@ -1,4 +1,4 @@
-from superduper.components.datatype import dill_serializer
+from superduper.base.datatype import dill_serializer
 from superduper.components.model import ObjectModel
 
 

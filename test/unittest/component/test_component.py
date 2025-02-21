@@ -8,11 +8,11 @@ import pytest
 
 from superduper import ObjectModel, Table
 from superduper.base.annotations import trigger
-from superduper.components.component import Component
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     Blob,
     dill_serializer,
 )
+from superduper.components.component import Component
 from superduper.components.listener import Listener
 
 

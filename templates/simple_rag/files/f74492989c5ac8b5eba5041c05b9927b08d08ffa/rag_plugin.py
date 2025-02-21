@@ -1,5 +1,5 @@
 from superduper import Model
-from superduper.backends.base.query import Query
+from superduper.base.query import Query
 
 import typing as t
 

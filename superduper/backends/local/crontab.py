@@ -44,7 +44,7 @@ class LocalCrontabBackend(CrontabBackend):
         from superduper.components.cron_job import CronJob
 
         assert isinstance(item, CronJob)
-        self.jobs.add((item.type_id, item.identifier))
+        self.jobs.add((item.component, item.identifier))
         self._job_uuids.add(item.uuid)
         self._add_job_to_scheduler(item)
 

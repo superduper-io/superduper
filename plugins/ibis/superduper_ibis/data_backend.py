@@ -12,10 +12,10 @@ from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.orm import sessionmaker
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.query import Query, QueryPart
-from superduper.backends.local.artifacts import FileSystemArtifactStore
 from superduper.base import exceptions
-from superduper.components.schema import Schema
+from superduper.base.artifacts import FileSystemArtifactStore
+from superduper.base.query import Query, QueryPart
+from superduper.base.schema import Schema
 
 from superduper_ibis.db_helper import get_db_helper
 from superduper_ibis.utils import convert_schema_to_fields
@@ -231,11 +231,12 @@ class IbisDataBackend(BaseDataBackend):
 
     def missing_outputs(self, query, predict_id: str) -> t.List[str]:
         """Get missing outputs from the database."""
-        query = self._build_native_query(query)
         pid = self.primary_id(query)
+        query = self._build_native_query(query)
         output_table = self.conn.table(f"{CFG.output_prefix}{predict_id}")
         q = query.anti_join(output_table, output_table['_source'] == query[pid])
-        return q.execute().to_dict(orient='records')
+        rows = q.execute().to_dict(orient='records')
+        return [r[pid] for r in rows]
 
     def primary_id(self, query):
         """Get the primary ID of the query."""

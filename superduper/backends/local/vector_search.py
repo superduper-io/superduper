@@ -3,13 +3,13 @@ import typing as t
 import numpy
 
 from superduper import logging
-from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorItem,
     VectorSearchBackend,
     measures,
 )
+from superduper.base.metadata import NonExistentMetadataError
 
 if t.TYPE_CHECKING:
     from superduper import Component, VectorIndex

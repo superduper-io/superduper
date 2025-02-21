@@ -4,9 +4,9 @@ import typing as t
 import numpy
 from sklearn.base import BaseEstimator
 from superduper import logging
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
-from superduper.components.datatype import pickle_serializer
+from superduper.base.datatype import pickle_serializer
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import (
     Model,
     ModelInputType,

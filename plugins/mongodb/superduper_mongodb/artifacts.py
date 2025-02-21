@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 import gridfs
 from superduper import CFG, logging
-from superduper.backends.base.artifacts import ArtifactStore
+from superduper.base.artifacts import ArtifactStore
 from tqdm import tqdm
 
 from superduper_mongodb.utils import connection_callback

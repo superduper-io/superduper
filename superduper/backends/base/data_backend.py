@@ -3,12 +3,12 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduper import CFG, logging
-from superduper.backends.base.query import Query
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES
 from superduper.base.document import Document
+from superduper.base.query import Query
 
 if t.TYPE_CHECKING:
-    from superduper.components.schema import Schema
+    from superduper.base.schema import Schema
 
 
 class BaseDataBackend(ABC):

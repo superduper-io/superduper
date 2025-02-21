@@ -2,7 +2,7 @@ import typing as t
 from test.utils.setup.fake_data import add_random_data
 
 from superduper.base.datalayer import Datalayer
-from superduper.components.datatype import pickle_serializer
+from superduper.base.datatype import pickle_serializer
 from superduper.components.model import Model, Trainer
 from superduper.misc import typing as st  # noqa: F401
 

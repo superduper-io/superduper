@@ -5,9 +5,9 @@ import typing as t
 
 import pytest
 
-from superduper.backends.local.artifacts import FileSystemArtifactStore
+from superduper.base.artifacts import FileSystemArtifactStore
+from superduper.base.datatype import INBUILT_DATATYPES
 from superduper.components.component import Component
-from superduper.components.datatype import INBUILT_DATATYPES
 from superduper.misc import typing as st
 
 

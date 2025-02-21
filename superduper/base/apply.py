@@ -5,12 +5,12 @@ import click
 from rich.console import Console
 
 from superduper import Component, logging
-from superduper.backends.base.metadata import NonExistentMetadataError
-from superduper.backends.base.query import Query
+from superduper.base.datatype import Blob
 from superduper.base.document import Document
 from superduper.base.event import Create, Signal, Update
+from superduper.base.metadata import NonExistentMetadataError
+from superduper.base.query import Query
 from superduper.components.component import Status
-from superduper.components.datatype import Blob
 from superduper.misc.tree import dict_to_tree
 
 if t.TYPE_CHECKING:

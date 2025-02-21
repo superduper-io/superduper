@@ -17,10 +17,10 @@ import uuid
 from types import MethodType
 
 from superduper import CFG, logging
-from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.base.base import Base
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS, KEY_FILES, KEY_PATH
 from superduper.base.document import Document, _unpack
+from superduper.base.metadata import NonExistentMetadataError
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
@@ -534,6 +534,7 @@ class Query(_BaseQuery):
         'update': [],
         'delete': [],
         'replace': [],
+        'missing_outputs': [],
         'select': [
             'filter',
             'outputs',
@@ -727,7 +728,7 @@ class Query(_BaseQuery):
         query = '\n'.join(queries)
         return Document(
             {
-                '_path': 'superduper.backends.base.query.parse_query',
+                '_path': 'superduper.base.query.parse_query',
                 'documents': documents,
                 'query': query,
             }

@@ -1,6 +1,6 @@
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.components.datatype import FieldType
-from superduper.components.schema import Schema
+from superduper.base.datatype import FieldType
+from superduper.base.schema import Schema
 
 
 def test_list_tables_or_collections(databackend: BaseDataBackend):

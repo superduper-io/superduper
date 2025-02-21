@@ -16,9 +16,9 @@ from openai import (
     RateLimitError,
 )
 from openai._types import NOT_GIVEN
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base import exceptions
 from superduper.base.datalayer import Datalayer
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry, safe_retry
 

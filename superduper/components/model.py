@@ -13,16 +13,12 @@ from functools import wraps
 
 import requests
 
-from superduper import CFG, logging
-from superduper.backends.base.metadata import NonExistentMetadataError
-from superduper.backends.base.query import Query
-from superduper.backends.query_dataset import QueryDataset
+from superduper import logging
 from superduper.base.annotations import trigger
-from superduper.base.base import Base
-from superduper.base.document import Document
+from superduper.base.query import Query
+from superduper.base.schema import Schema
 from superduper.components.component import Component, ComponentMeta, ensure_initialized
 from superduper.components.metric import Metric
-from superduper.components.schema import Schema
 from superduper.misc import typing as st
 from superduper.misc.schema import (
     _map_type_to_superduper,
@@ -36,7 +32,6 @@ if t.TYPE_CHECKING:
     from superduper.components.dataset import Dataset
 
 
-# ModelInputType = t.Union[str, t.List[str], t.Tuple[t.List[str], t.Dict[str, str]]]
 Signature = t.Literal['*args', '**kwargs', '*args,**kwargs', 'singleton']
 
 
@@ -134,28 +129,42 @@ class Trainer(Component):
     :param select: Model select query for training.
     :param transform: (optional) transform callable.
     :param metric_values: Dictionary for metric defaults.
-    :param signature: Model signature.
     :param in_memory: If training in memory.
     :param compute_kwargs: Kwargs for compute backend.
     :param validation: Validation object to measure training performance
     """
 
     key: st.JSON
-    select: st.LeafType
+    select: st.LeafType  # TODO change LeafType to BaseType
     transform: t.Optional[t.Callable] = None
     metric_values: t.Dict = dc.field(default_factory=lambda: {})
-    signature: Signature = '*args'
     in_memory: bool = True
     compute_kwargs: t.Dict = dc.field(default_factory=dict)
     validation: t.Optional[Validation] = None
+
+    @property
+    def signature(self):
+        """Signature or the trainer."""
+        if isinstance(self.key, str):
+            return 'singleton'
+        if isinstance(self.key, (list, tuple)) and isinstance(self.key[0], str):
+            return '*args'
+        if isinstance(self.key, (list, tuple)) and isinstance(
+            self.key[0], [list, tuple]
+        ):
+            assert isinstance(self.key[1], dict)
+            return '*args,**kwargs'
+        if isinstance(self.key, dict):
+            return '**kwargs'
+        raise ValueError(f'Could not infer a signature from {self.key}')
 
     @abstractmethod
     def fit(
         self,
         model: Model,
         db: Datalayer,
-        train_dataset: QueryDataset,
-        valid_dataset: QueryDataset,
+        train_dataset: t.List,
+        valid_dataset: t.List,
     ):
         """Fit on the model on training dataset with `valid_dataset` for validation.
 
@@ -175,81 +184,9 @@ class Validation(Component):
     :param datasets: Sequence of dataset.
     """
 
-    type_id: t.ClassVar[str] = 'validation'
     metrics: t.List[Metric] = dc.field(default_factory=list)
     key: st.JSON
     datasets: t.List[Dataset] = dc.field(default_factory=list)
-
-
-class Mapping:
-    """Class to represent model inputs for mapping database collections or tables.
-
-    :param mapping: Mapping that represents a collection or table map.
-    :param signature: Signature for the model.
-    """
-
-    def __init__(self, mapping: t.Dict | t.List, signature: Signature):
-        self.mapping = self._map_args_kwargs(mapping)
-        self.signature = signature
-
-    @staticmethod
-    def _map_args_kwargs(mapping):
-        if isinstance(mapping, str):
-            return ([mapping], {})
-        elif isinstance(mapping, (list, tuple)) and isinstance(mapping[0], str):
-            return (mapping, {})
-        elif isinstance(mapping, dict):
-            return ((), mapping)
-        else:
-            assert isinstance(mapping[0], (list, tuple))
-            assert isinstance(mapping[1], dict)
-            return mapping
-
-    def __call__(self, r):
-        """Get the model inputs from the mapping.
-
-        >>> r = {'a': 1, 'b': 2}
-        >>> self.mapping = [('a', 'b'), {}]
-        >>> _Predictor._data_from_input_type(docs)
-        ([1, 2], {})
-        >>> self.mapping = [('a',), {'b': 'X'}]
-        >>> _Predictor._data_from_input_type(docs)
-        ([1], {'X': 2})
-        """
-        if not isinstance(r, Document):
-            r = Document(r)
-        args = []
-        kwargs = {}
-        try:
-            for k in self.mapping[0]:
-                args.append(r[k])
-            for k, v in self.mapping[1].items():
-                kwargs[v] = r[k]
-        except KeyError:
-            raise KeyError(f'Key `{k}` not found in document {r}.')
-
-        args = list(args)
-        for i, arg in enumerate(args):
-            if isinstance(arg, Base):
-                args[i] = arg.unpack()
-        args = tuple(args)
-
-        kwargs = Document(kwargs).unpack()
-        if self.signature == '**kwargs':
-            return kwargs
-        elif self.signature == '*args':
-            return (*args, *list(kwargs.values()))
-        elif self.signature == 'singleton':
-            if args:
-                assert not kwargs
-                assert len(args) == 1
-                return args[0]
-            else:
-                assert kwargs
-                assert len(kwargs) == 1
-                return next(kwargs.values())
-        assert self.signature == '*args,**kwargs'
-        return args, kwargs
 
 
 def init_decorator(func):
@@ -325,7 +262,7 @@ class Model(Component, metaclass=ModelMeta):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('trainer',)
-    type_id: t.ClassVar[str] = 'model'
+
     datatype: str | None = None
     output_schema: t.Optional[t.Dict] = None
     model_update_kwargs: t.Dict = dc.field(default_factory=dict)
@@ -373,13 +310,31 @@ class Model(Component, metaclass=ModelMeta):
         super().cleanup(db=db)
         db.cluster.compute.drop(self)
 
+    @staticmethod
+    def _infer_signature(object):
+        # find positional and key-word parameters from the object
+        # using the inspect module
+        sig = inspect.signature(object)
+        positional = []
+        keyword = []
+        for k, v in sig.parameters.items():
+            if v.default == v.empty:
+                positional.append(k)
+            else:
+                keyword.append(k)
+        if not keyword:
+            if len(positional) == 1:
+                return 'singleton'
+            return '*args'
+        if not positional:
+            return '**kwargs'
+        return '*args,**kwargs'
+
     @property
     def signature(self):
+        if self._signature is None:
+            self._signature = self._infer_signature(self.predict)
         return self._signature
-
-    def _wrapper(self, data):
-        args, kwargs = self.handle_input_type(data, self.signature)
-        return self.predict(*args, **kwargs)
 
     def declare_component(self, cluster: 'Cluster'):
         """Declare model on compute.
@@ -402,7 +357,27 @@ class Model(Component, metaclass=ModelMeta):
         """
         pass
 
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def _wrapper(self, item):
+        """Wrap the item with the model.
+
+        :param item: Item to wrap.
+        """
+        if self.signature == 'singleton':
+            return self.predict(item)
+        if self.signature == '*args':
+            assert isinstance(item, (list, tuple))
+            return self.predict(*item)
+        if self.signature == '**kwargs':
+            assert isinstance(item, dict)
+            return self.predict(**item)
+        if self.signature == '*args,**kwargs':
+            assert isinstance(item, (list, tuple))
+            assert isinstance(item[0], (list, tuple))
+            assert isinstance(item[1], dict)
+            return self.predict(*item[0], **item[1])
+        raise ValueError(f'Unexpected signature {self.signature}')
+
+    def predict_batches(self, dataset: t.List) -> t.List:
         """Execute on a series of data points defined in the dataset.
 
         :param dataset: Series of data points to predict on.
@@ -410,7 +385,7 @@ class Model(Component, metaclass=ModelMeta):
         outputs = []
         if self.num_workers:
             pool = multiprocessing.Pool(processes=self.num_workers)
-            for r in pool.map(self._wrapper, dataset):  # type: ignore[arg-type]
+            for r in pool.map(self._wrapper, dataset):
                 outputs.append(r)
             pool.close()
             pool.join()
@@ -419,157 +394,8 @@ class Model(Component, metaclass=ModelMeta):
                 outputs.append(self._wrapper(dataset[i]))
         return outputs
 
-    # TODO handle in job creation
-    def _prepare_select_for_predict(self, select, db):
-        if isinstance(select, dict):
-            select = Document.decode(select).unpack()
-        select.db = db
-        return select
-
-    # TODO use query chunking not id chunking
-    def _get_ids_from_select(
-        self,
-        *,
-        X,
-        select,
-        ids: t.Sequence[str] | None = None,
-        predict_id: str,
-        overwrite: bool = False,
-    ):
-        # TODO why all this complex logic just to get ids
-        if not self.db.databackend.check_output_dest(predict_id):
-            overwrite = True
-        try:
-            if not overwrite:
-                if ids:
-                    select = select.select(select.primary_id)
-                # TODO - this is broken
-                # query = select.select_ids_of_missing_outputs(predict_id=predict_id)
-                predict_ids = select.missing_outputs(predict_id)
-            else:
-                if ids:
-                    return ids
-                predict_ids = select.ids()
-        except NonExistentMetadataError:
-            # This is case for sql where Table is not created yet
-            # and we try to access `db.load('table', name)`.
-            return []
-
-        if ids and len(predict_ids) > len(ids):
-            raise Exception(
-                f'Got {len(predict_ids)} ids from select,'
-                f'but {len(ids)} ids were provided'
-            )
-        return predict_ids
-
-    # TODO - move this logic to `Listenen.run`
-    def predict_in_db(
-        self,
-        X: str | t.List | t.Dict,
-        predict_id: str,
-        select: Query,
-        ids: t.Sequence[str] | None = None,
-        max_chunk_size: t.Optional[int] = None,
-        in_memory: bool = True,
-        overwrite: bool = True,
-        flatten: bool = False,
-    ) -> t.Any:
-        """Predict on the data points in the database.
-
-        Execute a single prediction on a data point
-        given by positional and keyword arguments as a job.
-
-        :param X: combination of input keys to be mapped to the model
-        :param predict_id: Identifier for saving outputs.
-        :param select: CompoundSelect query
-        :param ids: Iterable of ids
-        :param max_chunk_size: Chunks of data
-        :param in_memory: Load data into memory or not
-        :param overwrite: Overwrite all documents or only new documents
-        :param flatten: Flatten outputs.
-        """
-        message = (
-            f'Requesting prediction in db - '
-            f'[{self.identifier}] with predict_id {predict_id}\n'
-        )
-        logging.info(message)
-
-        message = f'Using select {select} and ids {ids}'
-        logging.debug(message)
-
-        select = self._prepare_select_for_predict(select, self.db)
-
-        # TODO ids are not propagated on trigger
-        predict_ids = self._get_ids_from_select(
-            X=X,
-            select=select,
-            ids=ids,
-            overwrite=overwrite,
-            predict_id=predict_id,
-        )
-
-        out = self._predict_with_select_and_ids(
-            X=X,
-            predict_id=predict_id,
-            select=select,
-            ids=predict_ids,
-            max_chunk_size=max_chunk_size,
-            in_memory=in_memory,
-            flatten=flatten,
-        )
-        return out
-
-    def _prepare_inputs_from_select(
-        self,
-        X: str | t.List | t.Dict,
-        select: Query,
-        ids,
-        in_memory: bool = True,
-    ):
-        X_data: t.Any
-        mapping = Mapping(X, self.signature)  # type: ignore[arg-type]
-
-        if in_memory:
-            docs = select.subset(ids)
-            X_data = list(map(lambda x: mapping(x), docs))
-        else:
-            assert isinstance(self.db, Datalayer)
-            X_data = QueryDataset(
-                select=select,
-                ids=ids,
-                fold=None,
-                db=self.db,
-                in_memory=False,
-                mapping=mapping,
-            )
-
-        flat = False
-        if 'outputs' in str(select):
-            sample = select.get()
-            upstream_predict_ids = [
-                k for k in sample if k.startswith(CFG.output_prefix)
-            ]
-            for pid in upstream_predict_ids:
-                if self.db.show('Listener', uuid=pid.split('__')[-1]).get(
-                    'flatten', False
-                ):
-                    flat = True
-                    break
-
-        if not flat and len(X_data) > len(ids):
-            logging.error("Your select is returning more documents than unique ids.")
-            logging.error(f"X_data: {len(X_data)}; ids: {len(ids)}")
-            logging.error(f"ids: {ids}")
-            logging.error(f"select: {select}")
-            raise Exception(
-                'You\'ve specified more documents than unique ids;'
-                ' Is it possible that the primary_id'
-                ' isn\'t uniquely identifying?'
-            )
-        return X_data, mapping
-
     @staticmethod
-    def handle_input_type(data, signature):
+    def check_input_type(data, signature):
         """Method to transform data with respect to signature.
 
         :param data: Data to be transformed
@@ -590,77 +416,6 @@ class Model(Component, metaclass=ModelMeta):
                 '\'singleton\', \'*args,**kwargs\'.'
             )
 
-    def _predict_with_select_and_ids(
-        self,
-        X: t.Any,
-        predict_id: str,
-        select: Query,
-        ids: t.List[str],
-        in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
-        flatten: bool = False,
-    ):
-        if not ids:
-            return []
-
-        if max_chunk_size is not None:
-            it = 0
-            output_ids = []
-            for i in range(0, len(ids), max_chunk_size):
-                logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
-                output_ids.extend(
-                    self._predict_with_select_and_ids(
-                        X=X,
-                        ids=ids[i : i + max_chunk_size],
-                        select=select,
-                        max_chunk_size=None,
-                        in_memory=in_memory,
-                        predict_id=predict_id,
-                        flatten=flatten,
-                    )
-                )
-                it += 1
-            return output_ids
-
-        dataset, _ = self._prepare_inputs_from_select(
-            X=X,
-            select=select,
-            ids=ids,
-            in_memory=in_memory,
-        )
-
-        outputs = self.predict_batches(dataset)
-        logging.info(f'Adding {len(outputs)} model outputs to `db`')
-
-        assert isinstance(
-            self.version, int
-        ), 'Version has not been set, can\'t save outputs...'
-
-        if flatten:
-            documents = [
-                {
-                    self.db.databackend.id_field: self.db.databackend.random_id(),
-                    '_source': self.db.databackend.to_id(id),
-                    f'{CFG.output_prefix}{predict_id}': sub_output,
-                }
-                for id, output in zip(ids, outputs)
-                for sub_output in output
-            ]
-        else:
-            documents = [
-                {
-                    self.db.databackend.id_field: self.db.databackend.random_id(),
-                    '_source': self.db.databackend.to_id(id),
-                    f'{CFG.output_prefix}{predict_id}': output,
-                }
-                for id, output in zip(ids, outputs)
-            ]
-
-        from superduper.base.datalayer import Datalayer
-
-        assert isinstance(self.db, Datalayer)
-        return self.db[f'{CFG.output_prefix}{predict_id}'].insert(documents)
-
     def validate(self, key, dataset: Dataset, metrics: t.Sequence[Metric]):
         """Validate `dataset` on metrics.
 
@@ -671,11 +426,9 @@ class Model(Component, metaclass=ModelMeta):
         if isinstance(key, str):
             # metrics are currently functions of 2 inputs.
             key = [key, key]
-        mapping1 = Mapping(key[0], self.signature)
-        mapping2 = Mapping(key[1], 'singleton')
-        inputs = [mapping1(r) for r in dataset.data]
+        inputs = self._map_inputs(self.signature, dataset.data, key[0])
+        targets = self._map_inputs('singleton', dataset.data, key[1])
         predictions = self.predict_batches(inputs)
-        targets = [mapping2(r) for r in dataset.data]
         results = {}
         for m in metrics:
             results[m.identifier] = m(predictions, targets)
@@ -696,6 +449,8 @@ class Model(Component, metaclass=ModelMeta):
                 metrics=self.validation.metrics,
             )
             self.metric_values[f'{dataset.identifier}/{dataset.version}'] = results
+
+        # TODO create self.save()
         self.db.replace(self)
 
     def _create_datasets(self, X, db, select):
@@ -713,25 +468,48 @@ class Model(Component, metaclass=ModelMeta):
         )
         return train_dataset, valid_dataset
 
-    def _create_dataset(self, X, db, select, fold=None, **kwargs):
-        kwargs = kwargs.copy()
-        dataset = QueryDataset(
-            select=select,
-            fold=fold,
-            db=db,
-            mapping=Mapping(X, signature=self.trainer.signature),
-            in_memory=self.trainer.in_memory,
-            transform=(
-                self.trainer.transform if self.trainer.transform is not None else None
-            ),
-            **kwargs,
+    def _create_dataset(self, X, db, select, fold=None):
+        if fold is not None:
+            t = db[select.table]
+            select = select.filter(t['_fold'] == fold)
+        documents = select.execute()
+        return self._map_inputs(self.trainer.signature, documents, X)
+
+    @staticmethod
+    def _map_inputs(signature, documents, key):
+        if signature == 'singleton':
+            if key is None:
+                return documents
+            return [r[key] for r in documents]
+        if signature == '*args':
+            out = []
+            for r in documents:
+                out.append([r[x] for x in key])
+            return out
+        if signature == '**kwargs':
+            out = []
+            for r in documents:
+                out.append({k: r[v] for k, v in key.items()})
+            return out
+        if signature == '*args,**kwargs':
+            out = []
+            for r in documents:
+                out.append(
+                    (
+                        [r[x] for x in key[0]],
+                        {k: r[v] for k, v in key[1].items()},
+                    )
+                )
+            return out
+        raise ValueError(
+            f'Invalid signature: {signature}'
+            'Allowed signatures are: singleton, *args, **kwargs, *args,**kwargs'
         )
-        return dataset
 
     def fit(
         self,
-        train_dataset: QueryDataset,
-        valid_dataset: QueryDataset,
+        train_dataset: t.List[t.Any],
+        valid_dataset: t.List[t.Any],
         db: Datalayer,
     ):
         """Fit the model on the training dataset with `valid_dataset` for validation.
@@ -816,9 +594,7 @@ class IndexableNode:
         return _Node(item)
 
 
-# This is if the user would like to
-# import the object
-class ImportedModel(Model):
+class ObjectModel(Model):
     """Model component which wraps a Model to become serializable.
 
     Example:
@@ -834,32 +610,12 @@ class ImportedModel(Model):
     """
 
     breaks: t.ClassVar[t.Sequence] = ('object', 'trainer')
-    object: Base
+    object: t.Callable
     method: t.Optional[str] = None
 
     def __post_init__(self, db, example):
         super().__post_init__(db, example)
         self._inferred_signature = None
-
-    @staticmethod
-    def _infer_signature(object):
-        # find positional and key-word parameters from the object
-        # using the inspect module
-        sig = inspect.signature(object)
-        positional = []
-        keyword = []
-        for k, v in sig.parameters.items():
-            if v.default == v.empty:
-                positional.append(k)
-            else:
-                keyword.append(k)
-        if not keyword:
-            if len(positional) == 1:
-                return 'singleton'
-            return '*args'
-        if not positional:
-            return '**kwargs'
-        return '*args,**kwargs'
 
     @property
     @ensure_initialized
@@ -896,15 +652,12 @@ class ImportedModel(Model):
         :param args: Positional arguments of model
         :param kwargs: Keyword arguments of model
         """
-        if self.method is None:
+        object = self.object
+        if self.method is not None:
             return self.object(*args, **kwargs)
-        return getattr(self.object, self.method)(*args, **kwargs)
+            object = getattr(object, self.method)
 
-
-class ObjectModel(ImportedModel):
-    """A model to wrap a Python object and serialize it."""
-
-    object: t.Callable
+        return object(*args, **kwargs)
 
 
 class APIBaseModel(Model):
@@ -926,9 +679,7 @@ class APIBaseModel(Model):
         super().postinit()
 
     @ensure_initialized
-    def predict_batches(
-        self, dataset: t.Union[t.List, QueryDataset], *args, **kwargs
-    ) -> t.List:
+    def predict_batches(self, dataset: t.List, *args, **kwargs) -> t.List:
         """Use multi-threading to predict on a series of data points.
 
         :param dataset: Series of data points.
@@ -941,7 +692,7 @@ class APIBaseModel(Model):
             results = list(
                 executor.map(
                     lambda x: self.predict(x, *args, **kwargs),
-                    dataset,  # type: ignore[arg-type]
+                    dataset,
                 )
             )
         return results
@@ -1026,7 +777,7 @@ class QueryModel(Model):
             return self.postprocess(out)
         return out
 
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.List) -> t.List:
         """Execute on a series of data points defined in the dataset.
 
         :param dataset: Series of data points to predict on.
@@ -1096,7 +847,7 @@ class SequentialModel(Model):
                     out = p.predict(*out[0], **out[1])
         return out
 
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
+    def predict_batches(self, dataset: t.List) -> t.List:
         """Execute on series of data point defined in dataset.
 
         :param dataset: Series of data point to predict on.

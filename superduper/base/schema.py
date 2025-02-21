@@ -5,8 +5,8 @@ import typing as t
 from functools import cached_property
 
 from superduper import CFG
+from superduper.base.datatype import BaseDataType
 from superduper.base.encoding import EncodeContext
-from superduper.components.datatype import BaseDataType
 from superduper.misc.special_dicts import dict_to_ascii_table
 
 if t.TYPE_CHECKING:
@@ -28,7 +28,7 @@ class Schema(BaseDataType):
 
         :param fields: The fields of the schema
         """
-        from superduper.components.datatype import INBUILT_DATATYPES
+        from superduper.base.datatype import INBUILT_DATATYPES
 
         fields = {k: INBUILT_DATATYPES[fields[k]] for k in fields}
         return Schema(fields)  # type: ignore[arg-type]

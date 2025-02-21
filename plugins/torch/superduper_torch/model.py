@@ -6,8 +6,8 @@ import typing as t
 from contextlib import contextmanager
 
 import torch
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.component import ensure_initialized
 from superduper.components.model import (
     CallableInputs,

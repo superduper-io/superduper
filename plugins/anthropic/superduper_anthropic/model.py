@@ -3,7 +3,7 @@ import typing as t
 
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
-from superduper.backends.query_dataset import QueryDataset
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry
 from superduper.misc.utils import format_prompt, get_key

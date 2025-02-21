@@ -44,7 +44,7 @@ class Application(Component):
                 raise ValueError("Invalid component info.")
 
             component = db.load(
-                type_id=component_info["component"],
+                component=component_info["component"],
                 identifier=component_info["identifier"],
             )
             components.append(component)

@@ -6,14 +6,14 @@ import numpy as np
 import pytest
 
 from superduper.base.constant import KEY_BLOBS, KEY_BUILDS
-from superduper.base.document import Document
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     pickle_encoder,
     pickle_serializer,
 )
+from superduper.base.document import Document
+from superduper.base.schema import Schema
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 
 
@@ -46,7 +46,7 @@ def test_flat_query_encoding(db):
 
 def test_encode_decode_flattened_document():
     data = np.array([1, 2, 3])
-    from superduper.components.datatype import pickle_serializer
+    from superduper.base.datatype import pickle_serializer
 
     schema = Schema({'data': pickle_serializer})
 

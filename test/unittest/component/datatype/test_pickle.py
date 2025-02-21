@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from superduper.components.datatype import (
+from superduper.base.datatype import (
     BaseDataType,
     pickle_encoder,
     pickle_serializer,

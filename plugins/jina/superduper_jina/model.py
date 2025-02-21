@@ -1,7 +1,7 @@
 import typing as t
 
 import tqdm
-from superduper.backends.query_dataset import QueryDataset
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 
 from superduper_jina.client import JinaAPIClient

@@ -2,12 +2,9 @@ import typing as t
 
 from superduper import CFG
 from superduper.base.annotations import trigger
+from superduper.base.schema import Schema
 from superduper.components.component import Component
-from superduper.components.schema import Schema
-<<<<<<< HEAD
 from superduper.misc import typing as st  # noqa: F401
-=======
->>>>>>> 02aeb36fb (Add changes necessary for services)
 from superduper.misc.importing import import_object
 
 if t.TYPE_CHECKING:

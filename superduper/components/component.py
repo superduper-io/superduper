@@ -63,10 +63,6 @@ def _build_info_from_path(path: str):
     return config_object
 
 
-ComponentTuple = namedtuple('ComponentTuple', ['type_id', 'identifier', 'version'])
-ComponentTuple.__doc__ = 'noqa'
-
-
 def _is_optional_callable(annotation) -> bool:
     """Tell if an annotation is t.Optional[t.Callable].
 
@@ -232,7 +228,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param deep: If set `True` get all recursively.
         """
-        from superduper.components.datatype import Saveable
+        from superduper.base.datatype import Saveable
 
         r = self.dict().encode(leaves_to_keep=(Component, Saveable))
         out = [v for v in r['_builds'].values() if isinstance(v, Component)]
@@ -461,7 +457,7 @@ class Component(Base, metaclass=ComponentMeta):
             if isinstance(item, list):
                 return [_init(i) for i in item]
 
-            from superduper.components.datatype import Saveable
+            from superduper.base.datatype import Saveable
 
             if isinstance(item, Saveable):
                 item.init()
@@ -543,7 +539,7 @@ class Component(Base, metaclass=ComponentMeta):
 
             out = Document.decode(config_object, db=db).unpack()
         else:
-            from superduper.backends.local.artifacts import FileSystemArtifactStore
+            from superduper.base.artifacts import FileSystemArtifactStore
 
             artifact_store = FileSystemArtifactStore(
                 conn=path,

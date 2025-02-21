@@ -213,7 +213,7 @@ def _consume_event_type(event_type, ids, table, db: 'Datalayer'):
     db.cluster.compute.release_futures(context)
 
 
-table_type_ids = {'table', 'schema', 'data', 'datatype', 'dataset'}
+table_components = {'Table', 'Data', 'Dataset'}
 
 
 def consume_events(events, table: str, db=None):
@@ -238,7 +238,10 @@ def consume_events(events, table: str, db=None):
         non_table_events = []
 
         for ix, event in enumerate(events):
-            if event.genus == 'create' and event.component['type_id'] in table_type_ids:
+            if (
+                event.genus == 'create'
+                and event.component['component'] in table_components
+            ):
                 table_events.append(event)
             else:
                 non_table_events.append(event)

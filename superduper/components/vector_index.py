@@ -9,11 +9,9 @@ from superduper.backends.base.vector_search import VectorItem
 from superduper.base.annotations import trigger
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
+from superduper.base.schema import Schema
 from superduper.components.cdc import CDC
-from superduper.components.component import Component
 from superduper.components.listener import Listener
-from superduper.components.model import Mapping
-from superduper.components.schema import Schema
 from superduper.components.table import Table
 from superduper.misc.special_dicts import MongoStyleDict
 
@@ -47,7 +45,7 @@ def backfill_vector_search(db, vi, searcher):
     :param vi: Identifier of vector index.
     :param searcher: FastVectorSearch instance to load model outputs as vectors.
     """
-    from superduper.components.datatype import _BaseEncodable
+    from superduper.base.datatype import _BaseEncodable
 
     logging.info(f"Loading vectors of vector-index: '{vi.identifier}'")
 
@@ -117,17 +115,6 @@ class VectorIndex(CDC):
         """Post-initialization method."""
         self.cdc_table = self.cdc_table or self.indexing_listener.outputs
         super().postinit()
-
-    # TODO why this?
-    def __hash__(self):
-        return hash((self.type_id, self.identifier))
-
-    def __eq__(self, other: t.Any):
-        if isinstance(other, Component):
-            return (
-                self.identifier == other.identifier and self.type_id and other.type_id
-            )
-        return False
 
     def _pre_create(self, db: Datalayer, startup_cache: t.Dict = {}):
         assert isinstance(self.indexing_listener, Listener)
@@ -263,10 +250,9 @@ class VectorIndex(CDC):
                 )
 
         model = models[model_name]
-        data = Mapping(key, model.signature)(document)
-        args, kwargs = model.handle_input_type(data, model.signature)
+        assert model.signature == 'singleton'
         return (
-            model.predict(*args, **kwargs),
+            model.predict(document[key]),
             model.identifier,
             key,
         )

@@ -88,12 +88,6 @@ class _BaseTemplate(Component):
     def __call__(self, **kwargs):
         """Method to create component from the given template and `kwargs`.
 
-        Note that the `db` is needed in order to build queries.
-
-<<<<<<< HEAD
-=======
-        :param db: Datalayer instance to be used to create the component.
->>>>>>> 02aeb36fb (Add changes necessary for services)
         :param kwargs: Variables to be set in the template.
         """
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
@@ -173,8 +167,6 @@ class Template(_BaseTemplate):
     :param staged_file: A file which should be staged after installing the template.
     :param queries: `QueryTemplate` instances to be used with the template.
     """
-
-    type_id: t.ClassVar[str] = "template"
 
     requirements: t.List[str] | None = None
     default_tables: t.List[Table] | None = None
@@ -315,8 +307,6 @@ class QueryTemplate(_BaseTemplate):
     ['limit']
 
     """
-
-    type_id: t.ClassVar[str] = 'query_template'
 
     def postinit(self):
         """Post initialization method."""

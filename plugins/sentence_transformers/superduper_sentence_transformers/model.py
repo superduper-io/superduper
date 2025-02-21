@@ -1,7 +1,7 @@
 import typing as t
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
-from superduper.backends.query_dataset import QueryDataset
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.component import ensure_initialized
 from superduper.components.model import Model, Signature, _DeviceManaged
 

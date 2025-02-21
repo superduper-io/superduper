@@ -6,7 +6,6 @@ from functools import reduce
 from logging import WARNING, getLogger
 
 from superduper import logging
-from superduper.backends.query_dataset import QueryDataset
 from superduper.components.component import ensure_initialized
 from superduper.components.llm.prompter import Prompter
 from superduper.components.model import Model
@@ -60,9 +59,7 @@ class BaseLLM(Model):
         return self._generate(x, **kwargs)
 
     @ensure_initialized
-    def predict_batches(
-        self, dataset: t.Union[t.List, QueryDataset], **kwargs
-    ) -> t.Sequence:
+    def predict_batches(self, dataset: t.List, **kwargs) -> t.Sequence:
         """Generate text from a dataset.
 
         :param dataset: The dataset to generate text from.

@@ -98,8 +98,8 @@ class Base(metaclass=BaseMeta):
     @lazy_classproperty
     def class_schema(cls):
         fields = {}
-        from superduper.components.datatype import INBUILT_DATATYPES
-        from superduper.components.schema import Schema
+        from superduper.base.datatype import INBUILT_DATATYPES
+        from superduper.base.schema import Schema
 
         named_fields = cls._new_fields
         for f in named_fields:
@@ -126,7 +126,7 @@ class Base(metaclass=BaseMeta):
         :param blob_ref: Blob reference identifier.
         :param db: Datalayer instance.
         """
-        from superduper.components.datatype import DEFAULT_SERIALIZER, Blob
+        from superduper.base.datatype import DEFAULT_SERIALIZER, Blob
 
         bytes_ = Blob(identifier=blob_ref.split(':')[-1], db=db).unpack()
         return DEFAULT_SERIALIZER.decode_data(bytes_)

@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from superduper import ObjectModel, Schema, superduper
+from superduper.base.datatype import pickle_encoder
 from superduper.base.document import Document
-from superduper.components.datatype import pickle_encoder
 from superduper.components.listener import Listener
 from superduper.components.table import Table
 

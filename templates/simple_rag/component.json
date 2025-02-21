@@ -59,11 +59,12 @@
         "cache": true,
         "build_variables": null,
         "build_template": null,
+        "cdc_table": "<var:table_name>",
         "key": "x",
         "model": "?Chunker:chunker",
         "predict_kwargs": {},
         "select": {
-          "_path": "superduper.backends.base.query.parse_query",
+          "_path": "superduper.base.query.parse_query",
           "documents": [],
           "query": "<var:table_name>"
         },
@@ -103,11 +104,12 @@
         "cache": true,
         "build_variables": null,
         "build_template": null,
+        "cdc_table": "<var:output_prefix>chunker__?(Listener:chunker.uuid)",
         "key": "<var:output_prefix>chunker__?(Listener:chunker.uuid)",
         "model": "?OpenAIEmbedding:text-embedding",
         "predict_kwargs": {},
         "select": {
-          "_path": "superduper.backends.base.query.parse_query",
+          "_path": "superduper.base.query.parse_query",
           "documents": [],
           "query": "<var:output_prefix>chunker__?(Listener:chunker.uuid)"
         },
@@ -119,6 +121,7 @@
         "cache": true,
         "build_variables": null,
         "build_template": null,
+        "cdc_table": "<var:output_prefix>embeddinglistener__?(Listener:embeddinglistener.uuid)",
         "indexing_listener": "?Listener:embeddinglistener",
         "compatible_listener": null,
         "measure": "cosine",
@@ -170,7 +173,7 @@
         "deploy": false,
         "prompt_template": "Use the following context snippets, these snippets are not ordered!, Answer the question based on this context.\nThese snippets are samples from our internal data-repositories, and should be used exclusively and as a matter of priority to answer the question. Please answer in 20 words or less.\n\n{context}\n\nHere's the question: {query}",
         "select": {
-          "_path": "superduper.backends.base.query.parse_query",
+          "_path": "superduper.base.query.parse_query",
           "documents": [
             {
               "<var:output_prefix>chunker__?(Listener:chunker.uuid)": "<var:query>"
@@ -258,7 +261,7 @@
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:903ae6a3bf1cddd85c07a87a9aa535a2a8cf860b"
+      "getter": "&:blob:7194de984ef2a5fd0f84198fa51f32f40b63a511"
     },
     "Table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",

@@ -6,7 +6,7 @@ import pytest
 import torch
 from superduper import superduper
 from superduper.base.datalayer import Datalayer
-from superduper.components.datatype import pickle_encoder
+from superduper.base.datatype import pickle_encoder
 
 from superduper_torch.model import TorchModel
 from superduper_torch.training import TorchTrainer

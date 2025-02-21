@@ -6,8 +6,8 @@ import click
 from bson.objectid import ObjectId
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import BaseDataBackend
-from superduper.backends.base.query import Query
-from superduper.components.schema import Schema
+from superduper.base.query import Query
+from superduper.base.schema import Schema
 
 from superduper_mongodb.artifacts import MongoDBArtifactStore
 from superduper_mongodb.utils import connection_callback
@@ -60,7 +60,7 @@ class MongoDBDataBackend(BaseDataBackend):
         from mongomock import MongoClient as MockClient
 
         if isinstance(self.conn, MockClient):
-            from superduper.backends.local.artifacts import (
+            from superduper.base.artifacts import (
                 FileSystemArtifactStore,
             )
 
@@ -153,7 +153,7 @@ class MongoDBDataBackend(BaseDataBackend):
         """Delete data from the table."""
         return self._database[table].delete_many(condition)
 
-    def missing_outputs(self, table, predict_id: str):
+    def missing_outputs(self, query, predict_id: str):
         """Get the missing outputs for the prediction."""
         key = f'{CFG.output_prefix}{predict_id}'
         lookup = [
@@ -167,7 +167,7 @@ class MongoDBDataBackend(BaseDataBackend):
             },
             {'$match': {key: {'$size': 0}}},
         ]
-        collection = self._database[table]
+        collection = self._database[query.table]
         results = list(collection.aggregate(lookup))
         return [r['_id'] for r in results]
 

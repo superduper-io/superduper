@@ -26,7 +26,7 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def list_components(self):
-        """List type_ids, and identifiers deployed."""
+        """List components, and identifiers deployed."""
         pass
 
     @abstractmethod

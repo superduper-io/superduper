@@ -5,8 +5,8 @@ import pymongo
 import pytest
 import superduper as s
 from superduper import CFG, superduper
+from superduper.base.datatype import Vector
 from superduper.base.document import Document
-from superduper.components.datatype import Vector
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.vector_index import VectorIndex

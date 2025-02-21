@@ -5,8 +5,8 @@ import torch
 import transformers
 from datasets import Dataset as NativeDataset
 from superduper import logging
-from superduper.backends.query_dataset import QueryDataset
 from superduper.base.datalayer import Datalayer
+from superduper.base.query_dataset import QueryDataset
 from superduper.components.component import ensure_initialized
 from superduper.components.llm.model import BaseLLM
 from superduper.components.model import (

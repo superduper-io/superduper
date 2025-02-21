@@ -6,7 +6,7 @@ from prettytable import PrettyTable
 import superduper as s
 from superduper import CFG, logging
 from superduper.backends.base.data_backend import DataBackendProxy
-from superduper.backends.local.artifacts import (
+from superduper.base.artifacts import (
     FileSystemArtifactStore,
 )
 from superduper.base.config import Config

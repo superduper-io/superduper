@@ -8,9 +8,9 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from superduper import superduper
-from superduper.backends.base.query import Query
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document
+from superduper.base.query import Query
 
 from superduper_sklearn.model import Estimator, SklearnTrainer
 

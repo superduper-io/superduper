@@ -2,11 +2,12 @@ import random
 
 import numpy as np
 
-# ruff: noqa: E402
-from superduper.backends.base.metadata import NonExistentMetadataError
 from superduper.base.datalayer import Datalayer
+from superduper.base.datatype import Array
+
+# ruff: noqa: E402
+from superduper.base.metadata import NonExistentMetadataError
 from superduper.components.dataset import Dataset
-from superduper.components.datatype import Array
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.table import Table

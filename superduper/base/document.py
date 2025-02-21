@@ -4,17 +4,17 @@ import typing as t
 from collections import namedtuple
 
 from superduper import CFG, logging
-from superduper.backends.base.artifacts import ArtifactStore
+from superduper.base.artifacts import ArtifactStore
 from superduper.base.base import Base
 from superduper.base.constant import (
     KEY_BLOBS,
     KEY_BUILDS,
     KEY_FILES,
 )
+from superduper.base.datatype import Saveable
 from superduper.base.encoding import EncodeContext
+from superduper.base.schema import Schema
 from superduper.base.variables import _replace_variables
-from superduper.components.datatype import Saveable
-from superduper.components.schema import Schema
 from superduper.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -195,7 +195,7 @@ class _TmpDB:
         self.db = db
 
     def __getitem__(self, item):
-        from superduper.backends.base.query import Query
+        from superduper.base.query import Query
 
         return Query(table=item, parts=(), db=None)
 

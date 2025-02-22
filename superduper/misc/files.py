@@ -1,3 +1,4 @@
+import concurrent.futures
 import hashlib
 import os
 import traceback
@@ -103,11 +104,16 @@ def check_secrets():
     required = os.environ.get('SUPERDUPER_REQUIRED_SECRETS', '').split(',')
     logging.info(f'Checking secrets {required}')
     errors = []
-    for secret in required:
-        try:
-            MATCHERS[secret]()
-        except Exception as e:
-            errors.append(e)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        for secret in required:
+            future = executor.submit(MATCHERS[secret])
+            try:
+                future.result(timeout=3)
+            except concurrent.futures.TimeoutError:
+                errors.append(f'Timeout for secret: {secret} after 3 seconds; '
+                              'check your connectivity and secret(s).')
+            except Exception as e:
+                errors.append(e)
 
     if errors:
         raise IncorrectSecretException(

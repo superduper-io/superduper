@@ -229,7 +229,7 @@ class VllmChat(_VLLMCore):
         self,
         messages: list["ChatCompletionMessageParam"],
         **kwargs,
-    ) -> list["RequestOutput"]:
+    ) -> t.Any:
         """Chat with the model.
 
         :param messages: List of messages to chat with the model
@@ -278,7 +278,7 @@ class VllmCompletion(_VLLMCore):
         self,
         prompt: str,
         **kwargs,
-    ) -> "RequestOutput":
+    ) -> t.Any:
         """Generate completion for the given prompt.
 
         :param prompt: Prompt to generate completion for the model

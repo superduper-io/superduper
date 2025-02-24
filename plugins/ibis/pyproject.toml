@@ -29,13 +29,12 @@ dependencies = [
   "ibis-framework[sqlite]>=9.0.1,<10.0.0",
   "click",
   'pandas',
-  "sqlalchemy"
+  "sqlalchemy>=1.4.0",
 ]
 
 [project.optional-dependencies]
 test = [
     # Annotation plugin dependencies will be installed in CI
-    # :CI: plugins/sqlalchemy
 ]
 
 [project.urls]

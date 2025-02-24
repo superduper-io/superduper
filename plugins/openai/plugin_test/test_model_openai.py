@@ -11,8 +11,6 @@ from superduper_openai.model import (
     OpenAIAudioTranslation,
     OpenAIChatCompletion,
     OpenAIEmbedding,
-    OpenAIImageCreation,
-    OpenAIImageEdit,
     _available_models,
 )
 
@@ -120,76 +118,6 @@ def test_batch_chat():
 
     assert isinstance(resp, list)
     assert isinstance(resp[0], str)
-
-
-@vcr.use_cassette()
-def test_create_url():
-    e = OpenAIImageCreation(
-        identifier='dall-e',
-        prompt='a close up, studio photographic portrait of a {context}',
-        response_format='url',
-    )
-    resp = e.predict('cat')
-
-    # PNG 8-byte signature
-    assert resp[0:16] == PNG_BYTE_SIGNATURE
-
-
-@vcr.use_cassette()
-def test_create_url_batch():
-    e = OpenAIImageCreation(
-        identifier='dall-e',
-        prompt='a close up, studio photographic portrait of a',
-        response_format='url',
-    )
-    resp = e.predict_batches(['cat', 'dog'])
-
-    for img in resp:
-        # PNG 8-byte signature
-        assert img[0:16] == PNG_BYTE_SIGNATURE
-
-
-@vcr.use_cassette()
-def test_edit_url():
-    e = OpenAIImageEdit(
-        identifier='dall-e',
-        prompt='A celebration party at the launch of {context}',
-        response_format='url',
-    )
-    with open('test/material/data/rickroll.png', 'rb') as f:
-        buffer = io.BytesIO(f.read())
-    resp = e.predict(buffer, context=['superduper'])
-    buffer.close()
-
-    # PNG 8-byte signature
-    assert resp[0:16] == PNG_BYTE_SIGNATURE
-
-
-@vcr.use_cassette()
-def test_edit_url_batch():
-    e = OpenAIImageEdit(
-        identifier='dall-e',
-        prompt='A celebration party at the launch of superduper',
-        response_format='url',
-    )
-    with open('test/material/data/rickroll.png', 'rb') as f:
-        buffer_one = io.BytesIO(f.read())
-    with open('test/material/data/rickroll.png', 'rb') as f:
-        buffer_two = io.BytesIO(f.read())
-
-    resp = e.predict_batches(
-        [
-            ((buffer_one,), {}),
-            ((buffer_two,), {}),
-        ]
-    )
-
-    buffer_one.close()
-    buffer_two.close()
-
-    for img in resp:
-        # PNG 8-byte signature
-        assert img[0:16] == PNG_BYTE_SIGNATURE
 
 
 @vcr.use_cassette()

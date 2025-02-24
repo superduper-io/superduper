@@ -500,7 +500,7 @@ class Datalayer:
                 object.__class__.__name__, object.identifier, version=object.version
             )
             old_uuid = info['uuid']
-        except FileNotFoundError:
+        except NonExistentMetadataError:
             pass
 
         serialized = object.dict()

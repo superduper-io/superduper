@@ -20,7 +20,7 @@ def test_template():
 
     db.apply(t)
 
-    assert f'sample_{template_name}' in db.show('table')
+    assert f'sample_{template_name}' in db.show('Table')
 
     sample = db[f'sample_{template_name}'].limit(2).execute()
 

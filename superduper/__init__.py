@@ -28,6 +28,7 @@ from .components.model import (
     Model,
     ObjectModel,
     QueryModel,
+    Trainer,
     Validation,
     model,
 )
@@ -53,6 +54,7 @@ __all__ = (
     'QueryModel',
     'Validation',
     'Model',
+    'Trainer',
     'model',
     'Listener',
     'VectorIndex',

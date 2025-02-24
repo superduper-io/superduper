@@ -64,7 +64,6 @@ jobs:
         python -m pip install plugins/mongodb
         python -m pip install plugins/openai
         python -m pip install plugins/ibis
-        python -m pip install plugins/sqlalchemy
 
 
     - name: Lint and type-check

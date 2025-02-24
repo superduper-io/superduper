@@ -264,7 +264,7 @@ class LLM(BaseLLM):
 
     identifier: str = ""
     model_name_or_path: t.Optional[str] = None
-    adapter_id: t.Optional[t.Union[str, Checkpoint]] = None
+    adapter_id: t.Optional[Checkpoint] = None
     model_kwargs: t.Dict = dc.field(default_factory=dict)
     tokenizer_kwargs: t.Dict = dc.field(default_factory=dict)
     prompt_template: str = "{input}"

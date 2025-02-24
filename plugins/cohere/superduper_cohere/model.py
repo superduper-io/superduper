@@ -1,4 +1,5 @@
 import dataclasses as dc
+import os
 import typing as t
 
 import cohere
@@ -7,7 +8,7 @@ from cohere.error import CohereAPIError, CohereConnectionError
 from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry
-from superduper.misc.utils import format_prompt, get_key
+from superduper.misc.utils import format_prompt
 
 retry = Retry(exception_types=(CohereAPIError, CohereConnectionError))
 
@@ -42,16 +43,7 @@ class CohereEmbed(Cohere):
 
     """
 
-    shapes: t.ClassVar[t.Dict] = {'embed-english-v2.0': (4096,)}
-    shape: t.Optional[t.Sequence[int]] = None
     batch_size: int = 100
-    signature: str = 'singleton'
-
-    def postinit(self):
-        """Post-initialization method."""
-        if self.shape is None:
-            self.shape = self.shapes[self.identifier]
-        return super().postinit()
 
     @retry
     def predict(self, X: str):
@@ -59,13 +51,13 @@ class CohereEmbed(Cohere):
 
         :param X: The text to predict the embedding of.
         """
-        client = cohere.Client(get_key(KEY_NAME), **self.client_kwargs)
+        client = cohere.Client(os.environ[KEY_NAME], **self.client_kwargs)
         e = client.embed(texts=[X], model=self.identifier, **self.predict_kwargs)
         return e.embeddings[0]
 
     @retry
     def _predict_a_batch(self, texts: t.List[str]):
-        client = cohere.Client(get_key(KEY_NAME), **self.client_kwargs)
+        client = cohere.Client(os.environ[KEY_NAME], **self.client_kwargs)
         out = client.embed(texts=texts, model=self.identifier, **self.predict_kwargs)
         return [r for r in out.embeddings]
 
@@ -111,7 +103,7 @@ class CohereGenerate(Cohere):
         """
         if context is not None:
             prompt = format_prompt(prompt, self.prompt, context=context)
-        client = cohere.Client(get_key(KEY_NAME), **self.client_kwargs)
+        client = cohere.Client(os.environ[KEY_NAME], **self.client_kwargs)
         resp = client.generate(
             prompt=prompt, model=self.identifier, **self.predict_kwargs
         )

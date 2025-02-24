@@ -4,8 +4,8 @@ import typing as t
 import numpy
 
 from superduper import Listener, Model, VectorIndex, logging
+from superduper.base import Base
 from superduper.base.annotations import trigger
-from superduper.base.base import Base
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import Validation
 
@@ -66,7 +66,9 @@ def test(db: Datalayer):
     assert db.show('MyModel', 'my-model') == [0]
 
     component = build_vi()
-    component.indexing_listener.select = db['other'].select()
+    t = db['docs']
+    q = t.filter(t['x'] > 3)
+    component.indexing_listener.select = q
 
     db.apply(component)
 

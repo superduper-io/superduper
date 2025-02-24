@@ -600,10 +600,6 @@ class _DatatypeLookup:
         try:
             return self.presets[item.lower()]
         except KeyError:
-            import_match = re.match(r'^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+$', item)
-            if import_match:
-                module, cls = item.rsplit('.', 1)
-                return getattr(import_module(module), cls)
 
             vector_match = re.match(r'^vector\[([a-z0-9]+):([0-9]+)\]', item)
             if vector_match:
@@ -616,6 +612,34 @@ class _DatatypeLookup:
                 dtype, shape = array_match.groups()
                 shape = tuple([int(x) for x in shape.split('x')])
                 return Array(dtype=dtype, shape=shape)
+
+            import_match = re.match(r'^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+$', item)
+            if import_match:
+                module, cls = item.rsplit('.', 1)
+                return getattr(import_module(module), cls)
+
+            parametrized_import_match = re.match(
+                r'^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+\[.*\]$', item
+            )
+            if parametrized_import_match:
+                module, cls = item.split('[')[0].rsplit('.', 1)
+                parameters = item.split('[')[1].split(']')[0]
+                parameters = [x.strip() for x in parameters.split(':')]
+                for i, p in enumerate(parameters):
+                    if p.isdigit():
+                        parameters[i] = int(p)
+                    elif p.isnumeric():
+                        parameters[i] = float(p)
+                    elif p.replace('x', '').isdigit():
+                        parameters[i] = tuple([int(x) for x in p.split('x')])
+
+                cls = getattr(import_module(module), cls)
+                # exclude self
+                parameter_names = list(
+                    inspect.signature(cls.__init__).parameters.keys()
+                )[1:]
+                parameters = {k: v for k, v in zip(parameter_names, parameters)}
+                return cls(**parameters)
 
             raise KeyError(f'Unknown datatype {item}')
 

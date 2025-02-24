@@ -139,7 +139,7 @@ class Component(Base, metaclass=ComponentMeta):
     uuid: str = dc.field(default_factory=build_uuid)
     upstream: t.Optional[t.List['Component']] = None
     cache: t.Optional[bool] = True
-    status: t.Optional[Status] = None
+    status: t.Optional[str] = None
     build_variables: t.Dict | None = None
     build_template: str | None = None
 

@@ -1,4 +1,5 @@
 import dataclasses as dc
+import os
 import typing as t
 
 import anthropic
@@ -6,7 +7,7 @@ from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutEr
 from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry
-from superduper.misc.utils import format_prompt, get_key
+from superduper.misc.utils import format_prompt
 
 retry = Retry(
     exception_types=(APIConnectionError, APIError, APIStatusError, APITimeoutError)
@@ -34,7 +35,7 @@ class Anthropic(APIBaseModel):
         :param db: The database to use.
         """
         self.client = anthropic.Anthropic(
-            api_key=get_key(KEY_NAME), **self.client_kwargs
+            api_key=os.environ[KEY_NAME], **self.client_kwargs
         )
         super().init(db=db)
 

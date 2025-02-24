@@ -7,6 +7,7 @@ import torch
 from superduper import superduper
 from superduper.base.datalayer import Datalayer
 from superduper.base.datatype import pickle_encoder
+from superduper.components.table import Table
 
 from superduper_torch.model import TorchModel
 from superduper_torch.training import TorchTrainer
@@ -72,6 +73,20 @@ def model():
 
 
 def test_fit(db, model):
+
+    db.apply(
+        Table(
+            'documents',
+            fields={
+                'id': 'str',
+                'x': 'superduper_torch.Tensor[float32:32]',
+                'y': 'int',
+                'z': 'superduper_torch.Tensor[float32:32]',
+                '_fold': 'str',
+            },
+        )
+    )
+
     data = []
     for i in range(500):
         y = int(random.random() > 0.5)
@@ -81,8 +96,7 @@ def test_fit(db, model):
         fold = "valid" if fold else "train"
         data.append({"id": str(i), "x": x, "y": y, "z": z, "_fold": fold})
 
-    db.cfg.auto_schema = True
-    db['documents'].insert(data).execute()
+    db['documents'].insert(data)
 
     select = db['documents'].select()
     trainer = TorchTrainer(
@@ -98,6 +112,6 @@ def test_fit(db, model):
     model.trainer = trainer
     db.apply(model)
 
-    model = db.load("model", model.identifier)
+    model = db.load("TorchModel", model.identifier)
     objective = model.trainer.metric_values['objective']
     assert objective[-1] < objective[0]

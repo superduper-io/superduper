@@ -23,10 +23,12 @@ class Schema(BaseDataType):
     fields: t.Dict[str, BaseDataType]
 
     @staticmethod
-    def build(fields: t.Dict[str, str]) -> 'Schema':
+    def build(**fields: t.Dict[str, str]) -> 'Schema':
         """Build a schema from a dictionary of fields.
 
         :param fields: The fields of the schema
+
+        # noqa
         """
         from superduper.base.datatype import INBUILT_DATATYPES
 

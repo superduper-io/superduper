@@ -1,7 +1,8 @@
+import dataclasses as dc
 import os
 import random
 
-from superduper.base.document import Document
+from superduper.base.base import Base
 from superduper.components.dataset import Dataset
 from superduper.components.metric import Metric
 
@@ -20,16 +21,32 @@ except ImportError:
     trl = None
 
 
+def create_fold():
+    import random
+
+    if random.random() < 0.2:
+        return 'valid'
+    return 'train'
+
+
+class documents(Base):
+    text: str
+    id: str
+    _fold: str = dc.field(default_factory=create_fold)
+
+
 def test_training(db, tmpdir):
-    db.cfg.auto_schema = True
+
+    db.create(documents)
+
     datas = []
     for i in range(32 + 8):
         text = f"{i}+1={i+1}"
         fold = "train" if i < 32 else "valid"
         datas.append({"text": text, "id": str(i), "_fold": fold})
 
-    collection = db['doc']
-    db.execute(collection.insert(list(map(Document, datas))))
+    collection = db['documents']
+    collection.insert(datas)
     select = collection.select()
 
     transform = None
@@ -103,12 +120,12 @@ def test_training(db, tmpdir):
     db.apply(model)
 
     # Load from db directly
-    llm = db.load("model", "llm")
+    llm = db.load("LLM", "llm")
     assert isinstance(llm.predict("1+1="), str)
 
     # load from checkpoint
-    experiment_id = db.show("checkpoint")[-1]
-    checkpoint = db.load("checkpoint", experiment_id)
+    experiment_id = db.show("Checkpoint")[-1]
+    checkpoint = db.load("Checkpoint", experiment_id)
 
     llm = LLM(
         identifier="llm_checkpoint",

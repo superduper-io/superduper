@@ -34,7 +34,7 @@ class Table(Component):
         """Post initialization method."""
         if self.path is None:
             assert isinstance(self.fields, dict), "Fields must be set if cls is not set"
-            self.schema = Schema.build(self.fields)
+            self.schema = Schema.build(**self.fields)
             self.cls = None
         else:
             self.cls = import_object(self.path)

@@ -97,6 +97,16 @@ def _check_secret_health(db):
         )
 
     try:
+        if CFG.data_backend == 'snowflake://':
+            load_plugin('snowflake').check_secret_updates(db)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=HTTP_409_CONFLICT,
+            detail=str(e),
+        )
+
+    try:
         check_secrets()
     except IncorrectSecretException as e:
         logging.error(traceback.format_exc())
@@ -108,16 +118,6 @@ def _check_secret_health(db):
         logging.error(traceback.format_exc())
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-
-    try:
-        if CFG.data_backend == 'snowflake://':
-            load_plugin('snowflake').check_secret_updates(db)
-    except Exception as e:
-        logging.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=HTTP_409_CONFLICT,
             detail=str(e),
         )
 

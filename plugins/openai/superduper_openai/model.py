@@ -32,13 +32,6 @@ retry = Retry(
 )
 
 
-@cache
-@retry
-def _available_models(skwargs):
-    kwargs = json.loads(skwargs)
-    return tuple([r.id for r in SyncOpenAI(**kwargs).models.list().data])
-
-
 class _OpenAI(APIBaseModel):
     """Base class for OpenAI models.
 
@@ -63,29 +56,9 @@ class _OpenAI(APIBaseModel):
             self.client_kwargs['base_url'] = self.openai_api_base
             self.client_kwargs['default_headers'] = self.openai_api_base
 
-    @safe_retry(exceptions.MissingSecretsException, verbose=0)
-    def init(self, db=None):
-        """Initialize the model.
-
-        :param db: Database instance.
-        """
-        super().init(db=db)
-
-        # dall-e is not currently included in list returned by OpenAI model endpoint
-        if 'OPENAI_API_KEY' not in os.environ or (
-            'api_key' not in self.client_kwargs.keys() and self.client_kwargs
-        ):
-            raise exceptions.MissingSecretsException(
-                'OPENAI_API_KEY not available neither in environment vars '
-                'nor in `client_kwargs`'
-            )
-
-        if self.model not in (
-            mo := _available_models(json.dumps(self.client_kwargs))
-        ) and self.model not in ('dall-e'):
-            msg = f'model {self.model} not in OpenAI available models, {mo}'
-            raise ValueError(msg)
-        self.syncClient = SyncOpenAI(**self.client_kwargs)
+    @property
+    def syncClient(self):
+        return SyncOpenAI(**self.client_kwargs)
 
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.

@@ -1,3 +1,4 @@
+import inspect
 import sys
 import types
 import typing as t
@@ -6,6 +7,19 @@ from typing import Any, ForwardRef, get_args, get_origin
 
 from superduper.base.base import Base
 from superduper.components.component import Component
+
+
+def gather_mro_globals(cls):
+    """Return a merged dictionary of the module global from the MRO of `cls`.
+
+    :param cls: The class to gather the MRO globals from.
+    """
+    merged = {}
+    for base in cls.__mro__:
+        # We skip anything that doesn't have a __module__ (e.g., a built-in type)
+        if hasattr(base, "__module__") and base.__module__ in sys.modules:
+            merged.update(sys.modules[base.__module__].__dict__)
+    return merged
 
 
 def _evaluate_forward_ref(ref: ForwardRef, globalns: dict, localns: dict = None):
@@ -47,6 +61,7 @@ def _safe_get_type_hints(cls: t.Type[t.Any]) -> dict[str, t.Any]:
     #   - If not, return None instead of raising NameError.
     # We'll pull the module in which `cls` is defined, so that forward references
     # can see the same globals that `cls` sees:
+    mro_globals = gather_mro_globals(cls)
     module_globals = sys.modules[cls.__module__].__dict__
     superduper_globals = sys.modules['superduper'].__dict__
 
@@ -54,7 +69,7 @@ def _safe_get_type_hints(cls: t.Type[t.Any]) -> dict[str, t.Any]:
 
     for f in fields(cls):
         hints[f.name] = _safe_resolve_annotation(
-            f.type, {**module_globals, **superduper_globals}
+            f.type, {**module_globals, **superduper_globals, **mro_globals}
         )
     return hints
 

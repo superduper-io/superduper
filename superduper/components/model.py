@@ -689,12 +689,7 @@ class APIBaseModel(Model):
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_batch_size
         ) as executor:
-            results = list(
-                executor.map(
-                    lambda x: self.predict(x, *args, **kwargs),
-                    dataset,
-                )
-            )
+            results = list(executor.map(self._wrapper, dataset))
         return results
 
 

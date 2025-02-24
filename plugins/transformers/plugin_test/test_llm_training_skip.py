@@ -4,7 +4,6 @@ import pytest
 import transformers
 from superduper import superduper
 from superduper.base.document import Document
-from superduper_mongodb import MongoQuery
 
 from superduper_transformers.model import LLM
 
@@ -62,8 +61,7 @@ def db():
     db_.drop(force=True)
 
 
-@pytest.fixture
-def trainer():
+def get_trainer(db):
     return LLMTrainer(
         identifier="llm-finetune-training-config",
         overwrite_output_dir=True,
@@ -81,7 +79,7 @@ def trainer():
         max_seq_length=512,
         use_lora=True,
         key="text",
-        select=MongoQuery(table="datas").find(),
+        select=db["datas"],
         training_kwargs=dict(dataset_text_field="text"),
     )
 
@@ -90,7 +88,9 @@ def trainer():
 @pytest.mark.skipif(
     not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
 )
-def test_full_finetune(db, trainer):
+def test_full_finetune(db):
+
+    trainer = get_trainer(db)
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
@@ -119,7 +119,8 @@ def test_full_finetune(db, trainer):
 @pytest.mark.skipif(
     not RUN_LLM_FINETUNE, reason="The peft, datasets and trl are not installed"
 )
-def test_lora_finetune(db, trainer):
+def test_lora_finetune(db):
+    trainer = get_trainer(db)
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
@@ -142,7 +143,10 @@ def test_lora_finetune(db, trainer):
     not (RUN_LLM_FINETUNE and GPU_AVAILABLE),
     reason="The peft, datasets and trl are not installed",
 )
-def test_qlora_finetune(db, trainer):
+def test_qlora_finetune(db):
+
+    trainer = get_trainer(db)
+
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,
@@ -165,7 +169,10 @@ def test_qlora_finetune(db, trainer):
 @pytest.mark.skipif(
     not (RUN_LLM_FINETUNE and GPU_AVAILABLE), reason="Deepspeed need GPU"
 )
-def test_local_ray_deepspeed_lora_finetune(db, trainer):
+def test_local_ray_deepspeed_lora_finetune(db):
+
+    trainer = get_trainer(db)
+
     llm = LLM(
         identifier="llm-finetune",
         model_name_or_path=model,

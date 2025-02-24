@@ -148,7 +148,7 @@ class MetaDataStore:
             r = r.unpack()
             if r['path'] is not None:
                 return import_object(r['path']).class_schema
-            return Schema.build(r['fields'])
+            return Schema.build(**r['fields'])
         except AttributeError as e:
             if 'unpack' in str(e) and 'NoneType' in str(e):
                 raise NonExistentMetadataError(f'{table} does not exist in metadata')
@@ -225,8 +225,9 @@ class MetaDataStore:
             path = info.pop('_path')
             component = path.rsplit('.', 1)[1]
 
-        metadata = self.db['Table'].get(component)
-        if metadata is None:
+        try:
+            self.get_component('Table', component)
+        except NonExistentMetadataError:
             assert path is not None
             cls = import_object(path)
             self.create(cls)
@@ -560,14 +561,15 @@ class MetaDataStore:
             )
         r = self.db[component].get(identifier=identifier, version=version, raw=True)
 
-        if component == 'Table':
-            r['_path'] = 'superduper.components.table.Table'
-        else:
-            r['_path'] = self.db['Table'].get(identifier=component)['path']
         if r is None:
             raise NonExistentMetadataError(
                 f'Object {identifier} does not exist in metadata for {component}'
             )
+
+        if component == 'Table':
+            r['_path'] = 'superduper.components.table.Table'
+        else:
+            r['_path'] = self.db['Table'].get(identifier=component)['path']
         return r
 
     def replace_object(self, component: str, uuid: str, info: t.Dict[str, t.Any]):

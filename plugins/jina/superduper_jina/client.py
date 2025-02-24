@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 import aiohttp
@@ -5,7 +6,6 @@ import requests
 from aiohttp import ClientConnectionError, ClientResponseError
 from requests.exceptions import HTTPError
 from superduper.misc.retry import Retry
-from superduper.misc.utils import get_key
 
 JINA_API_URL: str = "https://api.jina.ai/v1/embeddings"
 KEY_NAME = 'JINA_API_KEY'
@@ -34,7 +34,7 @@ class JinaAPIClient:
         # if the user does not provide the API key,
         # check if it is set in the environment variable
         if api_key is None:
-            api_key = get_key(KEY_NAME)
+            api_key = os.environ[KEY_NAME]
 
         self.model_name = model_name
         self._session = requests.Session()

@@ -5,9 +5,6 @@
   "cache": true,
   "build_variables": null,
   "build_template": null,
-<<<<<<< HEAD
-  "template": "&:blob:e0118855ffa323ab53007d397141d97c8b0a7de7",
-=======
   "template": {
     "_path": "superduper.components.application.Application",
     "identifier": "simple-rag-app",
@@ -199,7 +196,6 @@
       }
     }
   },
->>>>>>> 02aeb36fb (Add changes necessary for services)
   "template_variables": [
     "table_name",
     "id_field",
@@ -252,43 +248,16 @@
   "_builds": {
     "RemoteData:superduper-docs": {
       "_path": "superduper.components.dataset.RemoteData",
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "uuid": "1954ce25159c4ba4",
-=======
-=======
       "upstream": null,
       "cache": true,
       "build_variables": null,
       "build_template": null,
-      "getter": "&:blob:7194de984ef2a5fd0f84198fa51f32f40b63a511"
+      "getter": "&:blob:3718875cf9937ce6c0a6a78eff1954924cc641ef"
     },
     "Table:sample_simple_rag": {
       "_path": "superduper.components.table.Table",
->>>>>>> 02aeb36fb (Add changes necessary for services)
       "upstream": null,
       "cache": true,
-      "build_variables": null,
-      "build_template": null,
-      "getter": "&:blob:903ae6a3bf1cddd85c07a87a9aa535a2a8cf860b"
-    },
-    "Table:sample_simple_rag": {
-      "_path": "superduper.components.table.Table",
->>>>>>> 02aeb36fb (Add changes necessary for services)
-      "upstream": null,
-      "cache": true,
-      "status": null,
-      "build_variables": null,
-      "build_template": null,
-      "getter": "&:blob:a73f7ca4548f13dfd69738f554a2c861aedc835e",
-      "version": null
-    },
-    "Table:sample_simple_rag": {
-      "_path": "superduper.components.table.Table",
-      "uuid": "956931223fb3461a",
-      "upstream": null,
-      "cache": true,
-      "status": null,
       "build_variables": null,
       "build_template": null,
       "fields": {
@@ -297,16 +266,7 @@
       "primary_id": "id",
       "data": "?RemoteData:superduper-docs",
       "path": null,
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "component": false,
-      "version": null
-=======
       "component": false
->>>>>>> 02aeb36fb (Add changes necessary for services)
-=======
-      "component": false
->>>>>>> 02aeb36fb (Add changes necessary for services)
     }
   },
   "_files": {}

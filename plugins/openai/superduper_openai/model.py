@@ -1,4 +1,3 @@
-import base64
 import dataclasses as dc
 import json
 import os
@@ -6,7 +5,6 @@ import typing as t
 from functools import lru_cache as cache
 
 import numpy
-import requests
 import tqdm
 from httpx import ResponseNotRead
 from openai import (
@@ -15,10 +13,8 @@ from openai import (
     OpenAI as SyncOpenAI,
     RateLimitError,
 )
-from openai._types import NOT_GIVEN
 from superduper.base import exceptions
 from superduper.base.datalayer import Datalayer
-from superduper.base.query_dataset import QueryDataset
 from superduper.components.model import APIBaseModel
 from superduper.misc.retry import Retry, safe_retry
 
@@ -87,19 +83,6 @@ class _OpenAI(APIBaseModel):
             raise ValueError(msg)
         self.syncClient = SyncOpenAI(**self.client_kwargs)
 
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """Predict on a dataset.
-
-        :param dataset: The dataset to predict on.
-        """
-        out = []
-        for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
-            batch = [
-                dataset[i] for i in range(i, min(len(dataset), i + self.batch_size))
-            ]
-            out.extend(self._predict_a_batch(batch))
-        return out
-
 
 class OpenAIEmbedding(_OpenAI):
     """OpenAI embedding predictor.
@@ -131,6 +114,19 @@ class OpenAIEmbedding(_OpenAI):
         out = numpy.array(e.data[0].embedding).astype('float32')
         if self.postprocess is not None:
             out = self.postprocess(out)
+        return out
+
+    def predict_batches(self, dataset: t.List) -> t.List:
+        """Predict on a dataset.
+
+        :param dataset: The dataset to predict on.
+        """
+        out = []
+        for i in tqdm.tqdm(range(0, len(dataset), self.batch_size)):
+            batch = [
+                dataset[i] for i in range(i, min(len(dataset), i + self.batch_size))
+            ]
+            out.extend(self._predict_a_batch(batch))
         return out
 
     @retry
@@ -198,199 +194,6 @@ class OpenAIChatCompletion(_OpenAI):
             .message.content
         )
 
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """Generates text completions from prompts.
-
-        :param dataset: The dataset of prompts.
-        """
-        out = []
-        for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
-        return out
-
-
-class OpenAIImageCreation(_OpenAI):
-    """OpenAI image creation predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to use to seed the response.
-    :param n: The number of images to generate.
-    :param response_format: The response format to use.
-
-    Example:
-    -------
-    >>> from superduper_openai.model import OpenAIImageCreation
-    >>>
-    >>> model = OpenAIImageCreation(
-    >>>     model="dall-e",
-    >>>     prompt="a close up, studio photographic portrait of a {context}",
-    >>>     response_format="url",
-    >>> )
-    >>> model.predict("cat")
-
-    """
-
-    signature: str = 'singleton'
-    takes_context: bool = True
-    prompt: str = ''
-    n: int = 1
-    response_format: str = 'b64_json'
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'bytes'
-
-    def _format_prompt(self, context, X):
-        prompt = self.prompt.format(context='\n'.join(context))
-        return prompt + X
-
-    @retry
-    def predict(self, X: str):
-        """Generates images from text prompts.
-
-        :param X: The text prompt.
-        """
-        if self.response_format == 'b64_json':
-            resp = self.syncClient.images.generate(
-                prompt=X,
-                n=self.n,
-                response_format='b64_json',
-                **self.predict_kwargs,
-            )
-            b64_json = resp.data[0].b64_json
-            assert b64_json is not None
-            return base64.b64decode(b64_json)
-        else:
-            url = (
-                self.syncClient.images.generate(
-                    prompt=X, n=self.n, **self.predict_kwargs
-                )
-                .data[0]
-                .url
-            )
-            return requests.get(url).content
-
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """Generates images from text prompts.
-
-        :param dataset: The dataset of text prompts.
-        """
-        out = []
-        for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
-        return out
-
-
-class OpenAIImageEdit(_OpenAI):
-    """OpenAI image edit predictor.
-
-    :param takes_context: Whether the model takes context into account.
-    :param prompt: The prompt to use to seed the response.
-    :param response_format: The response format to use.
-    :param n: The number of images to generate.
-
-    Example:
-    -------
-    >>> import io
-    >>>
-    >>> from superduper_openai.model import OpenAIImageEdit
-    >>>
-    >>> model = OpenAIImageEdit(
-    >>>     model="dall-e",
-    >>>     prompt="A celebration party at the launch of {context}",
-    >>>     response_format="url",
-    >>> )
-    >>> with open("test/material/data/rickroll.png", "rb") as f:
-    >>>     buffer = io.BytesIO(f.read())
-    >>> model.predict(buffer, context=["superduper"])
-
-    """
-
-    takes_context: bool = True
-    prompt: str = ''
-    response_format: str = 'b64_json'
-    n: int = 1
-
-    def _format_prompt(self, context):
-        prompt = self.prompt.format(context='\n'.join(context))
-        return prompt
-
-    def _pre_create(self, db: Datalayer):
-        """Pre creates the model.
-
-        :param db: The datalayer instance.
-        """
-        self.datatype = self.datatype or 'bytes'
-
-    @retry
-    def predict(
-        self,
-        image: t.BinaryIO,
-        mask: t.Optional[t.BinaryIO] = None,
-        context: t.Optional[t.List[str]] = None,
-    ):
-        """Edits an image.
-
-        :param image: The image to edit.
-        :param mask: The mask to apply to the image.
-        :param context: The context to use for the prompt.
-        """
-        if context is not None:
-            self.prompt = self._format_prompt(context)
-
-        maybe_mask = mask or NOT_GIVEN
-
-        if self.response_format == 'b64_json':
-            b64_json = (
-                self.syncClient.images.edit(
-                    image=image,
-                    mask=maybe_mask,
-                    prompt=self.prompt,
-                    n=self.n,
-                    response_format='b64_json',
-                    **self.predict_kwargs,
-                )
-                .data[0]
-                .b64_json
-            )
-            out = base64.b64decode(b64_json)
-        else:
-            url = (
-                self.syncClient.images.edit(
-                    image=image,
-                    mask=maybe_mask,
-                    prompt=self.prompt,
-                    n=self.n,
-                    **self.predict_kwargs,
-                )
-                .data[0]
-                .url
-            )
-            out = requests.get(url).content
-        return out
-
-    def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
-        """Predicts the output for a dataset of images.
-
-        :param dataset: The dataset of images.
-        """
-        out = []
-        for i in range(len(dataset)):
-            args, kwargs = self.handle_input_type(
-                data=dataset[i], signature=self.signature
-            )
-            out.append(self.predict(*args, **kwargs))
-        return out
-
 
 class OpenAIAudioTranscription(_OpenAI):
     """OpenAI audio transcription predictor.
@@ -441,17 +244,6 @@ class OpenAIAudioTranscription(_OpenAI):
             prompt=self.prompt,
             **self.predict_kwargs,
         ).text
-
-    @retry
-    def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
-        """Converts multiple file-like Audio recordings to text."""
-        resps = [
-            self.syncClient.audio.transcriptions.create(
-                file=file, model=self.model, **self.predict_kwargs
-            )
-            for file in files
-        ]
-        return [resp.text for resp in resps]
 
 
 class OpenAIAudioTranslation(_OpenAI):
@@ -514,15 +306,3 @@ class OpenAIAudioTranslation(_OpenAI):
                 **self.predict_kwargs,
             )
         ).text
-
-    @retry
-    def _predict_a_batch(self, files: t.List[t.BinaryIO]):
-        """Translates multiple file-like Audio recordings to English."""
-        # TODO use async or threads
-        resps = [
-            self.syncClient.audio.translations.create(
-                file=file, model=self.model, **self.predict_kwargs
-            )
-            for file in files
-        ]
-        return [resp.text for resp in resps]

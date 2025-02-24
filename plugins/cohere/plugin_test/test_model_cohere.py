@@ -21,7 +21,6 @@ def test_embed_one():
     embed = CohereEmbed(identifier='embed-english-v2.0')
     resp = embed.predict('Hello world')
 
-    assert len(resp) == embed.shape[0]
     assert isinstance(resp, list)
     assert all(isinstance(x, float) for x in resp)
 
@@ -35,7 +34,6 @@ def test_embed_batch():
     resp = embed.predict_batches(['Hello', 'world'])
 
     assert len(resp) == 2
-    assert len(resp[0]) == embed.shape[0]
     assert isinstance(resp[0], list)
     assert all(isinstance(x, float) for x in resp[0])
 

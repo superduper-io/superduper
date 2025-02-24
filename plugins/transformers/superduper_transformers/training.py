@@ -1,4 +1,5 @@
 import dataclasses as dc
+import hashlib
 import os
 import typing as t
 from copy import deepcopy
@@ -15,7 +16,6 @@ from superduper.base.query_dataset import QueryDataset
 from superduper.components.dataset import Dataset
 from superduper.components.model import Trainer as SuperDuperTrainer
 from superduper.components.training import Checkpoint
-from superduper.misc.hash import random_sha1
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -27,6 +27,14 @@ from transformers.integrations.deepspeed import is_deepspeed_zero3_enabled
 
 if t.TYPE_CHECKING:
     from superduper_transformers.model import LLM
+
+
+def random_sha1():
+    """Generate random sha1 values."""
+    random_data = os.urandom(256)
+    sha1 = hashlib.sha1()
+    sha1.update(random_data)
+    return sha1.hexdigest()
 
 
 class LLMCallback(TrainerCallback):
@@ -231,8 +239,7 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         :param model: The model to use.
         :param dataset: The dataset to prepare.
         """
-        if isinstance(self.key, str):
-            dataset.transform = lambda x: {self.key: x}
+        return [{self.key: x} for x in dataset]
 
     def fit(
         self,
@@ -248,21 +255,20 @@ class LLMTrainer(TrainingArguments, SuperDuperTrainer):
         :param train_dataset: The training dataset to use.
         :param valid_dataset: The validation dataset to use.
         """
-        if isinstance(train_dataset, QueryDataset):
-            self.prepare_dataset(model, train_dataset)
-            train_dataset = NativeDataset.from_list(
-                list(train_dataset)  # type: ignore[call-overload]
-            )
+        if isinstance(train_dataset, list):
+            train_dataset = self.prepare_dataset(model, train_dataset)
+            train_dataset = NativeDataset.from_list(train_dataset)
 
         eval_datasets = {}
 
         if model.validation:
             for vs in model.validation.datasets:
                 qvs = model._create_dataset(model.validation.key, db, select=vs.select)
-                self.prepare_dataset(model, qvs)
-                eval_datasets[vs.identifier] = NativeDataset.from_list(list(qvs))
-        if isinstance(valid_dataset, QueryDataset):
-            self.prepare_dataset(model, valid_dataset)
+                qvs = self.prepare_dataset(model, qvs)
+                eval_datasets[vs.identifier] = NativeDataset.from_list(qvs)
+
+        if isinstance(valid_dataset, list):
+            valid_dataset = self.prepare_dataset(model, valid_dataset)
             valid_dataset = NativeDataset.from_list(
                 list(valid_dataset)  # type: ignore[call-overload]
             )

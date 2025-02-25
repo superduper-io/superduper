@@ -19,12 +19,10 @@ def check_secret_updates(db):
         if k not in os.environ:
             raise MissingSecretsException(f'Secret {k} is missing')
 
-        if os.environ[k] == '':
-            raise MissingSecretsException(f'Secret {k} is empty')
-
         value = os.environ[k]
         target = hashlib.sha256(value.encode()).hexdigest()
         if lookup[k] != target:
             updating.append(k)
+
     if updating:
         raise UpdatingSecretException(f'Secrets {updating} are still updating.')

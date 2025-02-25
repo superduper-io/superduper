@@ -26,6 +26,7 @@ def convert_schema_to_fields(schema: Schema):
 
     Get a dictionary of fields as keys and datatypes as values.
     This is used to create ibis tables.
+
     :param schema: The schema to convert
     """
     fields = {}

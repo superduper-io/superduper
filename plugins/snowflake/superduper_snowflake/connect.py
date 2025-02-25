@@ -22,6 +22,7 @@ def connect(uri):
             database=os.environ['SNOWFLAKE_DATABASE'],
             schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
         )
+        schema = os.environ['SUPERDUPER_DATA_SCHEMA']
     else:
         if '?warehouse=' not in uri:
             match = re.match('^snowflake:\/\/(.*):(.*)\@(.*)\/(.*)\/(.*)$', uri)
@@ -42,4 +43,4 @@ def connect(uri):
             schema=schema,
         )
 
-    return Session.builder.configs(connection_parameters).create()
+    return Session.builder.configs(connection_parameters).create(), schema

@@ -19,6 +19,7 @@ class BaseDataBackend(ABC):
     :param flavour: Flavour of the databackend.
     """
 
+    batched: bool = False
     id_field: str = 'id'
 
     # TODO plugin not required
@@ -220,6 +221,14 @@ class BaseDataBackend(ABC):
             return result
         return [Document.decode(r, schema=schema, db=self.db) for r in result]
 
+    def execute_events(self, events: t.List[t.Dict]):
+        """Execute events.
+
+        :param events: The events
+        """
+        for event in events:
+            event.execute(self.db)
+
     def execute(self, query: Query, raw: bool = False):
         """Execute a query.
 
@@ -352,6 +361,14 @@ class BaseDataBackend(ABC):
         results = sorted(results, key=lambda x: x['score'], reverse=True)
         return results
 
+    @abstractmethod
+    def execute_native(self, query: str):
+        """Execute a native query provided as a str.
+
+        :param query: The query to execute.
+        """
+        pass
+
 
 class DataBackendProxy:
     """
@@ -380,14 +397,6 @@ class DataBackendProxy:
     def type(self):
         """Instance of databackend."""
         return self._backend
-
-    @abstractmethod
-    def execute_native(self, query: str):
-        """Execute a native query provided as a str.
-
-        :param query: The query to execute.
-        """
-        pass
 
     def _try_execute(self, attr):
         @functools.wraps(attr)

@@ -1074,3 +1074,11 @@ def parse_query(
         query[i] = _parse_query_part(q, documents, query[:i], db=db)
 
     return query[-1]
+
+
+class _PlaceholderDB:
+    def __getitem__(self, item):
+        return Query(table=item, parts=(), db=self)
+
+
+db = _PlaceholderDB()

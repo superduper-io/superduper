@@ -101,3 +101,6 @@ class SnowflakeDataBackend(IbisDataBackend):
         snowpark_schema = snowpark_cols_to_schema(snowpark_cols, columns)
         native_df = self.snowpark.create_dataframe(rows, schema=snowpark_schema)
         return native_df.write.saveAsTable(f'"{table_name}"', mode='append')
+
+    def raw_sql(self, query):
+        return self.conn.raw_sql(query)

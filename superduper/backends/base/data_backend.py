@@ -21,6 +21,8 @@ class BaseDataBackend(ABC):
 
     id_field: str = 'id'
 
+    # TODO plugin not required
+    # TODO flavour required?
     def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.conn = None
         self.flavour = flavour
@@ -51,6 +53,7 @@ class BaseDataBackend(ABC):
         :param table: The table to drop.
         """
 
+    # TODO needed?
     @abstractmethod
     def random_id(self):
         """Generate random-id."""
@@ -68,11 +71,6 @@ class BaseDataBackend(ABC):
         :param value: The datalayer.
         """
         self._db = value
-
-    @abstractmethod
-    def build_artifact_store(self):
-        """Build a default artifact store based on current connection."""
-        pass
 
     @abstractmethod
     def create_table_and_schema(

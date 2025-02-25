@@ -227,34 +227,6 @@ def consume_events(events, table: str, db=None):
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        # if not db.metadata.batched:
-        if True:
-            for event in events:
-                event.execute(db)
-            return
-
-        # table events
-        table_events = []
-        non_table_events = []
-
-        for ix, event in enumerate(events):
-            if (
-                event.genus == 'create'
-                and event.component['component'] in table_components
-            ):
-                table_events.append(event)
-            else:
-                non_table_events.append(event)
-
-        for event in table_events:
+        for event in events:
             event.execute(db)
-
-        db.metadata.commit()
-
-        # non table events
-        for event in non_table_events:
-            event.execute(db)
-            if event.genus == 'update':
-                db.metadata.commit()
-
-        db.metadata.commit()
+        return

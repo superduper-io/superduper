@@ -39,6 +39,7 @@ class Table(Component):
         else:
             self.cls = import_object(self.path)
             self.schema = self.cls.class_schema
+            self.fields = self.cls._new_fields
         super().postinit()
 
     def cleanup(self, db):

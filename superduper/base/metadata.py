@@ -177,9 +177,8 @@ class MetaDataStore:
                     primary_id='uuid',
                     component=True,
                 )
-
                 r = self.db['Table'].insert(
-                    [t.dict(schema=True, path=False)],
+                    [t.dict(path=False)],
                 )
             else:
                 raise e
@@ -197,9 +196,11 @@ class MetaDataStore:
             identifier=cls.__name__,
             path=f'{cls.__module__}.{cls.__name__}',
             primary_id=pid,
-            component=True,
+            component=issubclass(cls, Component),
         )
+
         self.db['Table'].insert([t.dict(path=False)])
+
         return t
 
     def delete_parent_child_relationships(self, parent_uuid: str):

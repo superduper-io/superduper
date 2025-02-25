@@ -1,5 +1,3 @@
-import glob
-import os
 import time
 import typing as t
 import uuid
@@ -25,54 +23,11 @@ BASE64_PREFIX = "base64:"
 INPUT_KEY = "_source"
 
 
-def _snowflake_connection_callback():
-    # In the Snowflake native apps framework, the
-    # inbuild database is provided by env variables
-    # and authentication is via OAuth with a
-    # mounted token. In this case, as a convention
-    # we connect with `"snowflake://"`
-
-    logging.info('Using env variables and OAuth to connect!')
-
-    import snowflake.connector
-
-    conn = snowflake.connector.connect(
-        host=os.environ['SNOWFLAKE_HOST'],
-        port=int(os.environ['SNOWFLAKE_PORT']),
-        account=os.environ['SNOWFLAKE_ACCOUNT'],
-        authenticator='oauth',
-        token=open('/snowflake/session/token').read(),
-        warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
-        database=os.environ['SNOWFLAKE_DATABASE'],
-        schema=os.environ['SUPERDUPER_DATA_SCHEMA'],
-    )
-
-    return ibis.snowflake.from_connection(conn)
-
-
 def _connection_callback(uri, flavour):
-    if flavour == "pandas":
-        uri = uri.split("://")[-1]
-        csv_files = glob.glob(uri)
-        dir_name = os.path.dirname(uri)
-        tables = {}
-        for csv_file in csv_files:
-            filename = os.path.basename(csv_file)
-            if os.path.getsize(csv_file) == 0:
-                df = pandas.DataFrame()
-            else:
-                df = pandas.read_csv(csv_file)
-            tables[filename.split(".")[0]] = df
-        ibis_conn = ibis.pandas.connect(tables)
-        in_memory = True
-        return ibis_conn, dir_name, in_memory
-    elif uri == 'snowflake://':
-        return _snowflake_connection_callback(), 'snowflake', False
-    else:
-        name = uri.split("//")[0]
-        in_memory = False
-        ibis_conn = ibis.connect(uri)
-        return ibis_conn, name, in_memory
+    name = uri.split("//")[0]
+    in_memory = False
+    ibis_conn = ibis.connect(uri)
+    return ibis_conn, name, in_memory
 
 
 class IbisDataBackend(BaseDataBackend):

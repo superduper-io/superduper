@@ -227,8 +227,8 @@ def consume_events(events, table: str, db=None):
     if table != '_apply':
         consume_streaming_events(events=events, table=table, db=db)
     else:
-        # if not db.metadata.batched:
-        if True:
+        import pdb; pdb.set_trace()
+        if not db.databackend.batched:
             for event in events:
                 event.execute(db)
             return

@@ -19,8 +19,11 @@ class BaseDataBackend(ABC):
     :param flavour: Flavour of the databackend.
     """
 
+    batched: bool = False
     id_field: str = 'id'
 
+    # TODO plugin not required
+    # TODO flavour required?
     def __init__(self, uri: str, plugin: t.Any, flavour: t.Optional[str] = None):
         self.conn = None
         self.flavour = flavour
@@ -51,6 +54,7 @@ class BaseDataBackend(ABC):
         :param table: The table to drop.
         """
 
+    # TODO needed?
     @abstractmethod
     def random_id(self):
         """Generate random-id."""
@@ -68,11 +72,6 @@ class BaseDataBackend(ABC):
         :param value: The datalayer.
         """
         self._db = value
-
-    @abstractmethod
-    def build_artifact_store(self):
-        """Build a default artifact store based on current connection."""
-        pass
 
     @abstractmethod
     def create_table_and_schema(
@@ -222,6 +221,14 @@ class BaseDataBackend(ABC):
             return result
         return [Document.decode(r, schema=schema, db=self.db) for r in result]
 
+    def execute_events(self, events: t.List[t.Dict]):
+        """Execute events.
+
+        :param events: The events
+        """
+        for event in events:
+            event.execute(self.db)
+
     def execute(self, query: Query, raw: bool = False):
         """Execute a query.
 
@@ -354,6 +361,14 @@ class BaseDataBackend(ABC):
         results = sorted(results, key=lambda x: x['score'], reverse=True)
         return results
 
+    @abstractmethod
+    def execute_native(self, query: str):
+        """Execute a native query provided as a str.
+
+        :param query: The query to execute.
+        """
+        pass
+
 
 class DataBackendProxy:
     """
@@ -382,14 +397,6 @@ class DataBackendProxy:
     def type(self):
         """Instance of databackend."""
         return self._backend
-
-    @abstractmethod
-    def execute_native(self, query: str):
-        """Execute a native query provided as a str.
-
-        :param query: The query to execute.
-        """
-        pass
 
     def _try_execute(self, attr):
         @functools.wraps(attr)

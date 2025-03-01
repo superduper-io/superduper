@@ -9,7 +9,7 @@ import os
 import shutil
 import typing as t
 import uuid
-from collections import defaultdict, namedtuple
+from collections import OrderedDict, defaultdict, namedtuple
 from enum import Enum
 from functools import wraps
 
@@ -21,6 +21,8 @@ from superduper.base.base import Base, BaseMeta
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.event import Job
 from superduper.misc.annotations import lazy_classproperty
+from superduper.misc.importing import import_object
+from superduper.misc.utils import hash_item
 
 if t.TYPE_CHECKING:
     from superduper import Document
@@ -35,6 +37,10 @@ class Status(str, Enum):
 
     initializing = 'initializing'
     ready = 'ready'
+    failed = 'failed'
+
+    def __str__(self):
+        return self.value
 
 
 def _build_info_from_path(path: str):
@@ -119,7 +125,6 @@ class Component(Base, metaclass=ComponentMeta):
 
 
     :param identifier: Identifier of the instance.
-    :param uuid: UUID of the instance.
     :param upstream: A list of upstream components.
     :param cache: (Optional) If set `true` the component will not be cached
                   during primary job of the component i.e on a distributed
@@ -136,7 +141,6 @@ class Component(Base, metaclass=ComponentMeta):
     set_post_init: t.ClassVar[t.Sequence] = ('version',)
 
     identifier: str
-    uuid: str = dc.field(default_factory=build_uuid)
     upstream: t.Optional[t.List['Component']] = None
     cache: t.Optional[bool] = True
     status: t.Optional[str] = None
@@ -148,6 +152,56 @@ class Component(Base, metaclass=ComponentMeta):
     def __post_init__(self, db: t.Optional['Datalayer'] = None):
         self.db = db
         self.postinit()
+
+    @property
+    def uuid(self):
+        """Get UUID."""
+        t = self.get_merkle_tree(breaks=True)
+        breaking = hash_item(
+            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
+        )
+        return breaking[:32]
+
+    def get_merkle_tree(self, breaks: bool):
+        """Get the merkle tree of the component.
+
+        :param breaks: If set `true` only regard the parameters which break a version.
+        """
+        r = self._dict()
+        s = self.class_schema
+        keys = sorted(
+            [k for k in r.keys() if k in s.fields and k not in {'uuid', 'status'}]
+        )
+
+        def get_hash(x):
+            if breaks:
+                return s.fields[x].hash(r[x])[:32]
+            else:
+                return s.fields[x].hash(r[x])
+
+        tree = OrderedDict(
+            [(k, get_hash(k) if r[k] is not None else hash_item(None)) for k in keys]
+        )
+        return tree
+
+    def diff(self, other: 'Component'):
+        """Get the difference between two components.
+
+        :param other: The other component to compare.
+        """
+        if not isinstance(other, type(self)):
+            raise ValueError('Cannot compare different types of components')
+
+        if other.hash == self.hash:
+            return {}
+
+        m1 = self.get_merkle_tree(breaks=True)
+        m2 = other.get_merkle_tree(breaks=True)
+        d = []
+        for k in m1:
+            if m1[k] != m2[k]:
+                d.append(k)
+        return d
 
     @property
     def component(self):
@@ -550,7 +604,11 @@ class Component(Base, metaclass=ComponentMeta):
             db = namedtuple('tmp_db', field_names=('artifact_store',))(
                 artifact_store=artifact_store
             )
-            out = Document.decode(config_object, db=db).unpack()
+            cls = import_object(config_object['_path'])
+            out = Document.decode(
+                config_object, schema=cls.class_schema, db=db
+            ).unpack()
+            out = cls.from_dict(out, db=db)
             if was_zipped:
                 shutil.rmtree(path)
         return out
@@ -636,40 +694,25 @@ class Component(Base, metaclass=ComponentMeta):
             else:
                 shutil.copy(file_path, save_path)
 
-    def dict(
-        self,
-        metadata: bool = True,
-        defaults: bool = True,
-        refs: bool = False,
-        path: bool = True,
-    ) -> 'Document':
-        """A dictionary representation of the component.
+    def _dict(self):
+        return super().dict()
 
-        :param metadata: If set `true` include metadata.
-        :param defaults: If set `true` include defaults.
-        :param refs: If set `true` include references.
-        :param path: If `true` include path.
-        """
-        from superduper import Document
-
-        r = super().dict(metadata=metadata, defaults=defaults, path=path)
-
-        def _convert_components_to_refs(r):
-            if isinstance(r, dict):
-                return {k: _convert_components_to_refs(v) for k, v in r.items()}
-            if isinstance(r, list):
-                return [_convert_components_to_refs(x) for x in r]
-            if isinstance(r, Component):
-                return f'&:component:{r.huuid}'
-            return r
-
-        if refs:
-            r = Document(_convert_components_to_refs(r), schema=self.class_schema)
-
-        if r.get('status') is not None:
-            r['status'] = str(self.status)
-
+    def dict(self):
+        """Get the dictionary representation of the component."""
+        r = self._dict()
+        r['version'] = self.version
+        r['uuid'] = self.uuid
+        r['_path'] = self.__module__ + '.' + self.__class__.__name__
         return r
+
+    @property
+    def hash(self):
+        t = self.get_merkle_tree(breaks=False)
+        breaking = hash_item(
+            [self.component, self.identifier] + [t[k] for k in self.breaks if k in t]
+        )
+        non_breaking = hash_item([t[k] for k in t if k not in self.breaks])
+        return breaking[:32] + non_breaking[:32]
 
     def info(self, verbosity: int = 1):
         """Method to display the component information.

@@ -244,7 +244,7 @@ def test_model_create_fit_job(db):
 
     add_random_data(db)
     # Check the fit job is created correctly
-    model = Validator('test', object=object())
+    model = Validator('test', object=lambda x: x)
     # TODO move these parameters into the `Trainer` (same thing for validation)
     model.trainer = MyTrainer('test', select=db['documents'].select(), key='x')
     db.apply(model)

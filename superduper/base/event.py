@@ -115,7 +115,7 @@ class Create(Event):
     Class for component creation events.
 
     :param context: the component context of creation.
-    :param component: the component to be created
+    :param path: path of the component to be created
     :param data: the data of the component
     :param parent: the parent of the component (if any)
     """
@@ -124,9 +124,13 @@ class Create(Event):
     queue: t.ClassVar[str] = '_apply'
 
     context: str
-    component: str
+    path: str
     data: t.Dict
     parent: list | None = None
+
+    @property
+    def component(self):
+        return self.path.split('.')[-1]
 
     def execute(self, db: 'Datalayer'):
         """Execute the create event.
@@ -137,7 +141,7 @@ class Create(Event):
         artifact_ids, _ = db._find_artifacts(self.data)
         db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
 
-        db.metadata.create_component(self.data)
+        db.metadata.create_component(self.data, path=self.path)
         component = db.load(component=self.component, uuid=self.data['uuid'])
 
         if self.parent:

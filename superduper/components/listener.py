@@ -28,8 +28,6 @@ class Listener(CDC):
     :param model: Model for processing data.
     :param predict_kwargs: Keyword arguments to self.model.predict().
     :param select: Query to "listen" for input on.
-    :param identifier: A string used to identify the listener and it's outputs.
-    :param output_table: Table to store the outputs.
     :param flatten: Flatten the output into separate records if ``True``.
     """
 
@@ -40,7 +38,6 @@ class Listener(CDC):
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     select: t.Optional[Query] = None
     cdc_table: str = ''
-    output_table: t.Optional[Table] = None
     flatten: bool = False
 
     def postinit(self):
@@ -50,18 +47,13 @@ class Listener(CDC):
         if isinstance(self.key, tuple):
             self.key = list(self.key)
 
-        self.output_table = Table(
-            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
-        )
         super().postinit()
 
-    def handle_update_or_same(self, other):
-        """If the component is new, but does not contain breaking changes.
-
-        :param other: Other listener object.
-        """
-        super().handle_update_or_same(other)
-        other.output_table = self.output_table
+    @property
+    def output_table(self):
+        return Table(
+            self.outputs, fields={self.outputs: self.model.datatype, '_source': 'str'}
+        )
 
     def _get_metadata(self):
         r = super()._get_metadata()
@@ -195,6 +187,8 @@ class Listener(CDC):
             return
 
         documents = self.select.subset(ids)
+        if not documents:
+            return
         primary_id = self.select.primary_id.execute()
         ids = [r[primary_id] for r in documents]
 

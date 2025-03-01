@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No need to define `_fields`
 - Use databackend to perform metadata duties
 - Add `db.create` and `db.insert` instead of `auto_schema`
+- Merkel-tree implementation replacing random `.uuid` with deterministic implementation
 
 #### New Features & Functionality
 

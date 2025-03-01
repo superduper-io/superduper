@@ -279,7 +279,6 @@ def test_diff(db):
 
     print(json.dumps(diff, indent=2))
 
-    assert set(diff['sub']['changes'].keys()) == {'b'}
-    assert diff['sub']['changes']['b'] == 4
+    assert set(diff['sub']['changes']) == {'b'}
 
     db.apply(c)

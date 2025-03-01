@@ -1,6 +1,7 @@
 # TODO move to base
 import base64
 import dataclasses as dc
+import datetime
 import hashlib
 import inspect
 import json
@@ -11,14 +12,15 @@ import typing as t
 from abc import abstractmethod
 from functools import cached_property
 from importlib import import_module
+from pathlib import Path
 
 import dill
 import numpy
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.base.base import Base
 from superduper.components.component import Component
-from superduper.misc.utils import str_shape
+from superduper.misc.utils import hash_item, str_shape
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -37,6 +39,10 @@ class FieldType:
 
     def __repr__(self):
         return self.identifier
+
+    @classmethod
+    def hash(cls, item):
+        return hash_item(item)
 
 
 ID = FieldType(identifier='ID')
@@ -80,6 +86,11 @@ class BaseDataType:
         :param db: The datalayer.
         """
 
+    @classmethod
+    def hash(cls, item):
+        """Get the hash of the datatype."""
+        return hashlib.sha256(str(hash(item)).encode()).hexdigest()
+
 
 class ComponentType(BaseDataType):
     """Datatype for encoding leafs."""
@@ -102,7 +113,7 @@ class ComponentType(BaseDataType):
             context.builds[key] = item
             return '?' + key
 
-        r = item.dict(metadata=context.metadata, defaults=context.defaults)
+        r = item.dict()
         if r.schema:
             r = dict(r.schema.encode_data(r, context))
         else:
@@ -140,6 +151,11 @@ class ComponentType(BaseDataType):
         builds[key] = out
         return out
 
+    @classmethod
+    def hash(cls, item):
+        """Get the hash of the datatype."""
+        return item.hash
+
 
 class LeafType(BaseDataType):
     """Datatype for encoding leafs."""
@@ -153,7 +169,7 @@ class LeafType(BaseDataType):
         :param item: The object/instance to encode.
         :param context: A context object containing caches.
         """
-        r = item.dict(metadata=context.metadata, defaults=context.defaults)
+        r = item.dict()
         if r.schema:
             r = dict(
                 r.schema.encode_data(
@@ -176,6 +192,10 @@ class LeafType(BaseDataType):
         """
         out = _decode_leaf(item, builds, db=db)
         return out
+
+    @classmethod
+    def hash(cls, item):
+        return hash_item(item.dict())
 
 
 def _decode_leaf(r, builds, db: t.Optional['Datalayer'] = None):
@@ -234,6 +254,10 @@ class SDict(BaseDataType):
         """
         return {k: ComponentType().decode_data(v, builds, db) for k, v in item.items()}
 
+    @classmethod
+    def hash(cls, item):
+        return hash_item({k: v.hash for k, v in item.items()})
+
 
 class SList(BaseDataType):
     """Datatype for encoding lists which are supported as list by databackend."""
@@ -269,6 +293,10 @@ class SList(BaseDataType):
         """
         return [ComponentType().decode_data(r, builds, db) for r in item]
 
+    @classmethod
+    def hash(cls, item):
+        return hash_item([x.hash for x in item])
+
 
 @dc.dataclass(kw_only=True)
 class BaseVector(BaseDataType):
@@ -300,6 +328,12 @@ class BaseVector(BaseDataType):
         :param builds: The build cache.
         :param db: The Datalayer.
         """
+
+    @classmethod
+    def hash(cls, item):
+        if not isinstance(item, numpy.ndarray):
+            item = numpy.array(item)
+        return hashlib.sha256(item.tobytes()).hexdigest()
 
 
 @dc.dataclass(kw_only=True)
@@ -407,6 +441,43 @@ class JSON(BaseDataType):
             return item
         return json.loads(item)
 
+    @classmethod
+    def hash(cls, item):
+        return hash_item(item)
+
+
+def hash_indescript(item):
+    """Hash a range of items.
+
+    :param item: The item to hash.
+    """
+    if inspect.isfunction(item):
+        module = item.__module__
+        body = f'{module}\n{inspect.getsource(item)}'
+        return hashlib.sha256(body.encode()).hexdigest()
+    if inspect.isclass(item):
+        module = item.__module__
+        body = f'{module}\n{inspect.getsource(item)}'
+        return hashlib.sha256(body.encode()).hexdigest()
+    if isinstance(item, (list, dict, int, str, float)):
+        return hash_item(item)
+    if not isinstance(item, type):
+        cls = item.__class__
+        params = set(inspect.signature(cls.__init__).parameters.keys())
+        if params.issubset({'self', 'args', 'kwargs'}):
+            module = cls.__module__
+            try:
+                body = f'{module}\n{inspect.getsource(cls)}'
+                return hashlib.sha256(body.encode()).hexdigest()
+            except (TypeError, OSError):
+                logging.warn(f'Could not hash {item}')
+    try:
+        # For items implementing custom __hash__
+        return hashlib.sha256(str(hash(item)).encode()).hexdigest()
+    except Exception:
+        logging.warn(f'Could not hash {item}, using string representation')
+        return hashlib.sha256(str(item).encode()).hexdigest()
+
 
 class _Encodable:
     encodable: t.ClassVar[str] = 'encodable'
@@ -431,6 +502,10 @@ class _Encodable:
         item = _convert_base64_to_bytes(item)
         return self._decode_data(item)
 
+    @classmethod
+    def hash(cls, item):
+        return hash_indescript(item)
+
 
 class _Artifact:
     encodable: t.ClassVar[str] = 'artifact'
@@ -445,7 +520,9 @@ class _Artifact:
             b = item
             b.init()
         else:
+            h = _Artifact.hash(item)
             b = Blob(
+                identifier=h,
                 bytes=self._encode_data(item),
                 builder=self._decode_data,
             )
@@ -468,6 +545,13 @@ class _Artifact:
             builder=self._decode_data,
             db=db,
         )
+
+    @classmethod
+    def hash(cls, item):
+        if isinstance(item, Blob):
+            return item.identifier
+        h = hash_indescript(item)
+        return h
 
 
 class _PickleMixin:
@@ -518,7 +602,7 @@ class File(BaseDataType):
         :param context: A context object containing caches.
         """
         assert os.path.exists(item)
-        file = FileItem(path=item)
+        file = FileItem(identifier=self.hash(item), path=item)
         context.files[file.identifier] = file.path
         return file.reference
 
@@ -530,6 +614,23 @@ class File(BaseDataType):
         :param db: Datalayer.
         """
         return FileItem(identifier=item.split(':')[-1], db=db)
+
+    @classmethod
+    def hash(cls, item):
+        if isinstance(item, FileItem):
+            return item.identifier
+        try:
+            with open(item, 'rb') as f:
+                header = f.read(1024)
+        except IsADirectoryError:
+            header = []
+            for file in Path(item).iterdir():
+                if file.is_file():
+                    creation_time = file.stat().st_ctime
+                    creation_date = datetime.datetime.fromtimestamp(creation_time)
+                    header.append(f"{str(file)}: {creation_date}")
+            header = '\n'.join(header).encode()
+        return hashlib.sha256(header).hexdigest()
 
 
 @dc.dataclass(kw_only=True)
@@ -571,6 +672,10 @@ class Array(BaseDataType):
         return numpy.frombuffer(
             _convert_base64_to_bytes(item), dtype=self.dtype
         ).reshape(shape)
+
+    @classmethod
+    def hash(cls, item):
+        return hashlib.sha256(item.tobytes()).hexdigest()
 
 
 class _DatatypeLookup:
@@ -666,7 +771,7 @@ class Saveable:
     :param db: The Datalayer.
     """
 
-    identifier: str = ''
+    identifier: str
     db: 'Datalayer' = None
 
     @property
@@ -698,8 +803,6 @@ class FileItem(Saveable):
 
     def __post_init__(self):
         """Post init."""
-        if not self.identifier:
-            self.identifier = get_hash(self.path)
 
     def init(self):
         """Initialize the file to local disk."""

@@ -12,6 +12,7 @@ from superduper.base.datatype import (
 )
 from superduper.base.document import Document
 from superduper.base.schema import Schema
+from superduper.components.component import Component
 from superduper.components.listener import Listener
 from superduper.components.model import ObjectModel
 from superduper.components.table import Table
@@ -142,7 +143,7 @@ def test_encode_model(db):
 
     pprint.pprint(encoded_r)
 
-    decoded_r = Document.decode(encoded_r)
+    decoded_r = ObjectModel.decode(encoded_r)
 
     print(decoded_r)
 
@@ -212,7 +213,7 @@ def test_encode_same_identifier():
     listener = Listener(model=model, identifier="a", key="a", select=None)
 
     encode_data = listener.encode()
-    listener = Document.decode(encode_data).unpack()
+    listener = Component.decode(encode_data)
 
     assert listener.identifier == "a"
     assert listener.model.identifier == "a"

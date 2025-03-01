@@ -413,7 +413,8 @@ def test_autofill_data_listener(db):
     import pprint
 
     pprint.pprint({k: v for k, v in r.items() if k not in {'_blobs', '_files'}})
-    out = Document.decode(r, db=db).unpack()
+    out = Document.decode(r, schema=app.class_schema, db=db).unpack()
+    out = Application.from_dict(out, db=db)
 
     assert isinstance(out, Application)
 

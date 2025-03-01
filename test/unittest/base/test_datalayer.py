@@ -101,7 +101,6 @@ def test_add_version(db: Datalayer):
     original_serialized = component.dict().encode()
     saved_serialized = component_loaded.dict().encode()
 
-    assert original_serialized['_path'] == saved_serialized['_path']
     assert original_serialized['identifier'] == saved_serialized['identifier']
 
     # Check duplicate components are not added
@@ -379,7 +378,6 @@ def test_load(db):
 
 
 def test_insert(db):
-    db.cfg.auto_schema = True
     add_fake_model(db)
     inserted_ids = db['documents'].insert([{'x': i} for i in range(5)])
     assert len(inserted_ids) == 5

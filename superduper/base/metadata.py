@@ -94,32 +94,32 @@ class MetaDataStore:
             ('Table', 'Table'): Table(
                 identifier='Table',
                 primary_id='uuid',
-                uuid='abc',
                 component=True,
                 path='superduper.components.table.Table',
             ).encode(),
             ('Table', 'ParentChildAssociations'): Table(
                 identifier='ParentChildAssociations',
                 primary_id='uuid',
-                uuid='def',
                 component=True,
                 path='superduper.base.metadata.ParentChildAssociations',
             ).encode(),
             ('Table', 'ArtifactRelations'): Table(
                 identifier='ArtifactRelations',
                 primary_id='uuid',
-                uuid='ghi',
                 component=True,
                 path='superduper.base.metadata.ArtifactRelations',
             ).encode(),
             ('Table', 'Job'): Table(
                 identifier='Job',
                 primary_id='job_id',
-                uuid='jkl',
                 component=True,
                 path='superduper.base.metadata.Job',
             ).encode(),
         }
+
+        for v in self.preset_components.values():
+            v['_path'] = 'superduper.components.table.Table'
+            v['version'] = 0
 
         self.preset_uuids = {}
         for info in self.preset_components.values():
@@ -178,7 +178,7 @@ class MetaDataStore:
                     component=True,
                 )
                 r = self.db['Table'].insert(
-                    [t.dict(path=False)],
+                    [{**t.dict(), 'version': 0, 'uuid': t.uuid}],
                 )
             else:
                 raise e
@@ -199,7 +199,12 @@ class MetaDataStore:
             component=issubclass(cls, Component),
         )
 
-        self.db['Table'].insert([t.dict(path=False)])
+        r = t.dict()
+        try:
+            r.pop('_path')
+        except KeyError:
+            pass
+        self.db['Table'].insert([{**r, 'uuid': t.uuid, 'version': 0}])
 
         return t
 
@@ -211,37 +216,30 @@ class MetaDataStore:
         """
         self.db['ParentChildAssociations'].delete({'parent_uuid': parent_uuid})
 
-    def create_entry(
-        self, info: t.Dict, component: str | None = None, raw: bool = True
-    ):
+    def create_component(self, info: t.Dict, path: str, raw: bool = True):
         """
         Create a component in the metadata store.
 
         :param info: dictionary containing information about the component.
-        :param component: component name
-        :param raw: whether to insert raw data
+        :param path: path to the component class.
+        :param raw: whether to insert raw data.
         """
-        path = None
-        if component is None:
-            path = info.pop('_path')
-            component = path.rsplit('.', 1)[1]
+        component = path.rsplit('.', 1)[1]
 
         try:
-            self.get_component('Table', component)
+            msg = f'Component {component} with different path {path} already exists'
+            r = self.get_component('Table', component)
+            if r is None:
+                raise NonExistentMetadataError
+            assert r['path'] == path, msg
         except NonExistentMetadataError:
             assert path is not None
             cls = import_object(path)
             self.create(cls)
 
+        if '_path' in info:
+            del info['_path']
         self.db[component].insert([info], raw=raw)
-
-    def create_component(self, info: t.Dict):
-        """
-        Create a component in the metadata store.
-
-        :param info: dictionary containing information about the component.
-        """
-        return self.create_entry(info)
 
     def create_parent_child(
         self,
@@ -258,14 +256,15 @@ class MetaDataStore:
         :param child_component: child component type
         :param child_uuid: child component uuid
         """
-        self.create_entry(
-            {
-                'parent_component': parent_component,
-                'parent_uuid': parent_uuid,
-                'child_component': child_component,
-                'child_uuid': child_uuid,
-            },
-            'ParentChildAssociations',
+        self.db['ParentChildAssociations'].insert(
+            [
+                {
+                    'parent_component': parent_component,
+                    'parent_uuid': parent_uuid,
+                    'child_component': child_component,
+                    'child_uuid': child_uuid,
+                }
+            ]
         )
 
     def create_artifact_relation(self, uuid, artifact_ids):
@@ -283,7 +282,7 @@ class MetaDataStore:
             data.append({'component_id': uuid, 'artifact_id': artifact_id})
 
         if data:
-            self.db['ArtifactRelations'].insert(data)
+            self.db['ArtifactRelations'].insert(data, raw=True)
 
     def delete_artifact_relation(self, uuid, artifact_ids):
         """
@@ -362,7 +361,7 @@ class MetaDataStore:
 
         :param info: dictionary containing information about the job.
         """
-        self.create_entry(info, 'Job', raw=False)
+        self.db['Job'].insert([info])
 
     def show_jobs(self, component: str, identifier: str):
         """
@@ -532,7 +531,11 @@ class MetaDataStore:
             raise NonExistentMetadataError(
                 f'Object {uuid} does not exist in metadata for {component}'
             )
-        path = self.db['Table'].get(identifier=component)['path']
+        try:
+            metadata = self.preset_components[('Table', component)]
+        except KeyError:
+            metadata = self.db['Table'].get(identifier=component)
+        path = metadata['path']
         r['_path'] = path
         return r
 
@@ -567,10 +570,11 @@ class MetaDataStore:
                 f'Object {identifier} does not exist in metadata for {component}'
             )
 
-        if component == 'Table':
-            r['_path'] = 'superduper.components.table.Table'
-        else:
-            r['_path'] = self.db['Table'].get(identifier=component)['path']
+        if '_path' not in r:
+            metadata = self.preset_components.get(('Table', component))
+            if metadata is None:
+                metadata = self.db['Table'].get(identifier=component)
+            r['_path'] = metadata['path']
         return r
 
     def replace_object(self, component: str, uuid: str, info: t.Dict[str, t.Any]):

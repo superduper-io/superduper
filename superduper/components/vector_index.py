@@ -101,6 +101,7 @@ class VectorIndex(CDC):
     :param compatible_listener: Listener which is applied to vectors to be compared
     :param measure: Measure to use for comparison
     :param metric_values: Metric values for this index
+    :param cdc_table: Table to use for CDC
     """
 
     breaks: t.ClassVar[t.Sequence[str]] = ('indexing_listener',)

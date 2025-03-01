@@ -12,8 +12,6 @@ from superduper.misc.annotations import (
 )
 from superduper.misc.serialization import asdict
 
-_CLASS_REGISTRY = {}
-
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
@@ -142,7 +140,16 @@ class Base(metaclass=BaseMeta):
         return self.from_dict(r, db=db)
 
     @classmethod
-    def from_dict(cls, r: t.Dict, db: 'Datalayer'):
+    def from_dict(cls, r: t.Dict, db: t.Optional['Datalayer'] = None):
+        if hasattr(cls, '_alternative_init'):
+            return cls._alternative_init(
+                **{
+                    k: v
+                    for k, v in r.items()
+                    if k in inspect.signature(cls._alternative_init).parameters
+                },
+                db=db,
+            )
         try:
             out = cls(**{k: v for k, v in r.items() if k != '_path'}, db=db)
             return out
@@ -193,6 +200,22 @@ class Base(metaclass=BaseMeta):
             builds=builds, blobs=blobs, files=files, leaves_to_keep=leaves_to_keep
         )
 
+    @staticmethod
+    def decode(r, db: t.Optional['Datalayer'] = None):
+        """Decode a dictionary component into a `Component` instance.
+
+        :param r: Object to be decoded.
+        :param db: Datalayer instance.
+        """
+        from superduper.base.document import Document
+
+        if '_path' in r:
+            from superduper.misc.importing import import_object
+
+            cls = import_object(r['_path'])
+        r = Document.decode(r, schema=cls.class_schema, db=db)
+        return cls.from_dict(r, db=None)
+
     def encode(
         self,
         context: t.Optional['EncodeContext'] = None,
@@ -211,7 +234,7 @@ class Base(metaclass=BaseMeta):
         for k, v in kwargs.items():
             setattr(context, k, v)
 
-        r = self.dict(metadata=context.metadata, defaults=context.defaults)
+        r = self.dict()  # metadata=context.metadata, defaults=context.defaults)
         r = self.class_schema.encode_data(r, context=context)
 
         def _replace_loads_with_references(record, lookup):
@@ -258,6 +281,7 @@ class Base(metaclass=BaseMeta):
             KEY_FILES: context.files,
         }
 
+    # TODO needed?
     def set_variables(self, db: t.Union['Datalayer', None] = None, **kwargs) -> 'Base':
         """Set free variables of self.
 
@@ -269,7 +293,8 @@ class Base(metaclass=BaseMeta):
 
         r = self.encode()
         rr = _replace_variables(r, **kwargs)
-        return Document.decode(rr, db=db).unpack()
+        decoded = Document.decode(rr, schema=self.class_schema, db=db)
+        return self.from_dict(decoded, db=db)
 
     @property
     def variables(self) -> t.List[str]:
@@ -296,49 +321,13 @@ class Base(metaclass=BaseMeta):
                 out[f.name] = value
         return out
 
-    def dict(
-        self,
-        metadata: bool = True,
-        defaults: bool = True,
-        path: bool = True,
-    ):
-        """Return dictionary representation of the object.
-
-        :param metadata: Include metadata.
-        :param defaults: Include default values.
-        :param path: Include path.
-        """
+    def dict(self):
+        """Return dictionary representation of the object."""
         from superduper import Document
 
         r = asdict(self)
-
-        if not defaults:
-            for k, v in self.defaults.items():
-                if k in r and r[k] == v:
-                    del r[k]
-
-        if metadata:
-            r.update(self.metadata)
-        else:
-            for k in self.metadata:
-                if k in r:
-                    del r[k]
-
-        if path:
-            if self.__class__.__module__ == '__main__':
-                raise ValueError('Module name cannot be __main__')
-            _path = f'{self.__class__.__module__}.{self.__class__.__name__}'
-            if path:
-                return Document({'_path': _path, **r}, schema=self.class_schema)
-        else:
-            return Document(r, schema=self.class_schema)
-
-    @classmethod
-    def _register_class(cls):
-        """Register class in the class registry and set the full import path."""
-        full_import_path = f"{cls.__module__}.{cls.__name__}"
-        cls.full_import_path = full_import_path
-        _CLASS_REGISTRY[full_import_path] = cls
+        r['_path'] = self.__class__.__module__ + '.' + self.__class__.__name__
+        return Document(r, schema=self.class_schema)
 
     def unpack(self):
         """Unpack object."""
@@ -363,11 +352,3 @@ class Base(metaclass=BaseMeta):
         :param db: Datalayer instance.
         """
         pass
-
-
-def find_leaf_cls(full_import_path) -> t.Type[Base]:
-    """Find leaf class by class full import path.
-
-    :param full_import_path: Full import path of the class.
-    """
-    return _CLASS_REGISTRY[full_import_path]

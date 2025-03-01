@@ -106,6 +106,7 @@ class ArtifactStore(ABC):
                 continue
 
         # After we save the artifacts, we can remove the blobs and files
+        # TODO move this logic
         r[KEY_FILES] = {}
         r[KEY_BLOBS] = {}
 

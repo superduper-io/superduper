@@ -1,3 +1,5 @@
+import hashlib
+import inspect
 import typing as t
 
 
@@ -35,3 +37,35 @@ def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) 
             raise ValueError(f'A context is required for prompt {prompt}')
 
     return prompt.format(**format_params)
+
+
+def hash_item(item: t.Any) -> str:
+    """Hash an item.
+
+    :param item: The item to hash.
+    """
+    if item is None:
+        return hashlib.sha256(('<NoneType>' + str(item)).encode()).hexdigest()
+    if isinstance(item, bytearray):
+        return hashlib.sha256(item).hexdigest()
+    if isinstance(item, str):
+        return hashlib.sha256(str(item).encode()).hexdigest()
+    if isinstance(item, float):
+        return hashlib.sha256(('<float>' + str(item)).encode()).hexdigest()
+    if isinstance(item, int):
+        return hashlib.sha256(('<int>' + str(item)).encode()).hexdigest()
+    if isinstance(item, bool):
+        return hashlib.sha256(('<bool>' + str(item)).encode()).hexdigest()
+    if isinstance(item, (list, tuple)):
+        hashes = []
+        for i in item:
+            hashes.append(hash_item(i))
+        hashes = ''.join(hashes)
+        return hashlib.sha256(hashes.encode()).hexdigest()
+    if isinstance(item, dict):
+        keys = sorted(item.keys())
+        hashes = []
+        for k in keys:
+            hashes.append((hash_item(k), hash_item(item[k])))  # type: ignore[arg-type]
+        return hashlib.sha256(str(hashes).encode()).hexdigest()
+    return hashlib.sha256(str(item).encode()).hexdigest()

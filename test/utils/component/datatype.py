@@ -83,13 +83,11 @@ def check_data_with_schema_and_db(data, datatype: BaseDataType, db: Datalayer):
     return document, decoded
 
 
-@dc.dataclass(kw_only=True)
 class ChildComponent(Component):
     type_id: t.ClassVar[str] = "ChildComponent"
     y: int | None = None
 
 
-@dc.dataclass(kw_only=True)
 class TestComponent(Component):
     type_id: t.ClassVar[str] = "TestComponent"
     y: int = 1
@@ -114,7 +112,7 @@ def check_component(data, datatype: BaseDataType):
     pprint(encoded)
     print_sep()
 
-    decoded = Document.decode(encoded).unpack()
+    decoded = Component.decode(encoded)
     decoded.init()
     pprint(decoded)
 
@@ -140,7 +138,7 @@ def check_component_with_db(data, datatype, db):
     pprint(encoded)
     print_sep()
 
-    decoded = Document.decode(encoded, db=db).unpack()
+    decoded = Component.decode(encoded, db=db)
     decoded.init()
     pprint(decoded)
     assert_equal(c.x, decoded.x)

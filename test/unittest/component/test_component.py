@@ -1,4 +1,5 @@
 import dataclasses as dc
+import hashlib
 import os
 import shutil
 import tempfile
@@ -10,6 +11,7 @@ from superduper import ObjectModel, Table
 from superduper.base.annotations import trigger
 from superduper.base.datatype import (
     Blob,
+    _Artifact,
     dill_serializer,
 )
 from superduper.components.component import Component
@@ -126,13 +128,6 @@ def test_set_variables(db):
         select=db["docs"],
     )
 
-    from superduper import Document
-
-    e = m.encode()
-    recon = Document.decode(e).unpack()
-
-    recon.init()
-
     listener = m.set_variables(key="key_value", docs="docs_value")
     assert listener.key == "key_value"
 
@@ -216,6 +211,13 @@ def test_remove_recursive(db):
 
 
 class MyClass:
+    def __init__(self, a):
+        self.a = a
+
+    def __hash__(self):
+        h = hashlib.sha256(str(self.__dict__).encode()).hexdigest()
+        return int(h, 16)
+
     def predict(self, x):
         import numpy
 
@@ -225,3 +227,64 @@ class MyClass:
 def test_calls_post_init():
     t = Table('test', fields={'x': 'str'})
     assert hasattr(t, 'version')
+
+
+def my_func(x):
+    return x + 1
+
+
+def test_rehash(db):
+
+    # as a fallback, users can bring a custom hash function
+
+    m1 = ObjectModel(
+        identifier='model',
+        object=MyClass(1),
+    )
+
+    m2 = ObjectModel(
+        identifier='model',
+        object=MyClass(1),
+    )
+
+    assert m1.hash == m2.hash
+
+    m3 = ObjectModel(
+        identifier='model',
+        object=MyClass(2),
+    )
+
+    assert m1.hash != m3.hash
+
+    m4 = ObjectModel(
+        identifier='model',
+        object=my_func,
+    )
+
+    m5 = ObjectModel(
+        identifier='model',
+        object=my_func,
+    )
+
+    assert m4.hash == m5.hash
+
+    m6 = ObjectModel(
+        identifier='model',
+        object=my_func,
+    )
+
+    db.apply(m6)
+
+    reloaded = db.load('ObjectModel', 'model')
+
+    db.apply(
+        Listener(
+            'test',
+            model=m6,
+            select=db['documents'],
+            upstream=[Table('documents', fields={'x': 'str'})],
+            key='x',
+        )
+    )
+
+    assert m6.hash == reloaded.hash

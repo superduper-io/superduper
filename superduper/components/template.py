@@ -132,10 +132,7 @@ class _BaseTemplate(Component):
         component['_blobs'] = self.blobs
         component['_files'] = self.files
 
-        out = Document.decode(component, self.db)
-        if isinstance(out, Document) and '_base' in out:
-            out = out['_base']
-        return out
+        return Component.decode(component)
 
     @property
     def default_values(self):

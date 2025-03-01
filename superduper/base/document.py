@@ -367,51 +367,13 @@ class Document(MongoStyleDict):
         builds = r.get(KEY_BUILDS, {})
 
         for k in builds:
-            if isinstance(builds[k], dict) and ('_path' in builds[k]):
+            if isinstance(builds[k], dict):  # and ('_path' in builds[k]):
                 builds[k]['identifier'] = k.split(':')[-1]
 
-        # TODO add _path and _object as constants
-        if '_path' in r:
-            # TODO this has no place here
-            # this should be Component.decode
-            # or db.load
+        assert schema is not None
+        r = schema.decode_data(r, builds=builds, db=db)
 
-            if '_path' in r:
-                cls = Base.get_cls_from_path(r['_path'])
-            else:
-                assert '_object' in r
-                cls = Base.get_cls_from_blob(r['_object'], db=db)
-
-            if inspect.isclass(cls):
-                r = cls.class_schema.decode_data(r, builds=builds, db=db)
-
-            if inspect.isclass(cls):
-                return cls.from_dict(r, db)
-            else:
-                # TODO the only time this occurs is with BaseQuery
-                # Add documents and query as parameters to BaseQuery
-                # Then deprecate this option
-                r = {
-                    k: v for k, v in r.items() if k in inspect.signature(cls).parameters
-                }
-                return cls(**r, db=db)
-        else:
-            # TODO remove this _schema key
-            if schema is None:
-                from superduper.base.datalayer import Datalayer
-
-                assert isinstance(db, Datalayer)
-                schema: Schema = db.load('schema', r['_schema'])
-
-            assert schema is not None
-            # schema: Schema = schema.reconnect(db=db)
-            r = schema.decode_data(r, builds=builds, db=db)
-
-        # TODO don't need these 2 options
-        if isinstance(r, dict):
-            return Document(r, schema=schema)
-        else:
-            return r
+        return Document(r, schema=schema)
 
     @property
     def variables(self) -> t.List[str]:

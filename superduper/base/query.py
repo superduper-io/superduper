@@ -589,6 +589,10 @@ class Query(_BaseQuery):
 
     db: dc.InitVar[t.Optional['Datalayer']] = None
 
+    @classmethod
+    def _alternative_init(cls, documents, query, db):
+        return parse_query(query, documents, db)
+
     def __post_init__(self, db=None):
 
         self.db = db

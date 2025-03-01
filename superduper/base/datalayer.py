@@ -76,7 +76,10 @@ class Datalayer:
         :param items: The instances (`superduper.base.Base`) to insert.
         """
         table = self.pre_insert(items)
-        return self[table.identifier].insert([x.dict(path=False) for x in items])
+        data = [x.dict() for x in items]
+        for r in data:
+            del r['_path']
+        return self[table.identifier].insert(data)
 
     @property
     def cdc(self):

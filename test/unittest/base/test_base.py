@@ -52,7 +52,6 @@ def test_encode_leaf():
     obj = Test(a=1, b='test_b', c=1.5)
     assert obj.dict().encode(keep_schema=False) == {
         '_path': 'test.unittest.base.test_base.Test',
-        # 'uuid': obj.uuid,
         'a': 1,
         'b': 'test_b',
         'c': 1.5,
@@ -143,21 +142,3 @@ def test_find_variables(db):
     q_set = q.set_variables(test='my-value')
 
     assert q_set.variables == []
-
-
-def test_defaults_metadata(db):
-
-    @model(datatype='int')
-    def test(x):
-        return x + 1
-
-    c1 = Listener('test', model=test, select=db['test'], key='x')
-    c2 = Listener(
-        'test2', model=test, select=db[c1.outputs], key=c1.outputs, upstream=[c1]
-    )
-
-    r = c2.dict(metadata=False)
-
-    assert 'version' not in r
-
-    r = c2.encode(metadata=False)

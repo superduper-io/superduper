@@ -113,12 +113,12 @@ def test_directory(tmpdir):
 
 def test_repeated_loading(tmpdir):
     path = create_module_plugin(tmpdir, "repeated")
-    Plugin(path=path, uuid="test")
+    p = Plugin(path=path)
     assert "p_repeated" in sys.modules
-    assert "_PLUGIN_test" in os.environ
+    assert f"_PLUGIN_{p.uuid}" in os.environ
 
     sys.modules.pop("p_repeated")
-    Plugin(path=path, uuid="test")
+    Plugin(path=path)
     assert "p_repeated" not in sys.modules
 
 

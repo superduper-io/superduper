@@ -70,10 +70,7 @@ def apply(
 
     if diff:
         logging.info('Found this diff:')
-        to_show = Document(diff).map(
-            lambda x: f'&:blob:{x.identifier}', condition=lambda x: isinstance(x, Blob)
-        )
-        Console().print(dict_to_tree(to_show, root=object.identifier), soft_wrap=True)
+        Console().print(dict_to_tree(diff, root=object.identifier), soft_wrap=True)
 
     logging.info('Found these changes and/ or additions that need to be made:')
 
@@ -164,8 +161,6 @@ def _apply(
     global_diff: t.Dict | None = None,
 ):
 
-    db.create(type(object))
-
     if context is None:
         context = object.uuid
 
@@ -179,10 +174,6 @@ def _apply(
         return [], []
 
     object.db = db
-
-    serialized = object.dict(metadata=False)
-
-    del serialized['uuid']
 
     create_events = {}
 
@@ -204,188 +195,67 @@ def _apply(
 
         return f'&:component:{child.huuid}'
 
+    try:
+        current = db.load(object.__class__.__name__, object.identifier)
+        if current.hash == object.hash:
+            apply_status = 'same'
+            object.version = current.version
+            object.status = Status.ready
+        elif current.uuid == object.uuid:
+            apply_status = 'update'
+            object.version = current.version
+        else:
+            apply_status = 'breaking'
+            assert current.version is not None
+            object.version = current.version + 1
+    except NonExistentMetadataError:
+        apply_status = 'new'
+        object.version = 0
+
+    if apply_status in {'update', 'breaking'}:
+
+        diff = object.diff(current)
+
+        if global_diff is not None:
+            global_diff[object.identifier] = {
+                'status': apply_status,
+                'changes': diff,
+                'component': object.component,
+            }
+
+    serialized = object.dict()
+
     # This map function applies `wrapper` to anything
     # "found" inside the `Document`, which is a `Component`
     # The output document has the output of `wrapper`
     # as replacement for those leaves which are `Component`
     # instances.
-
     serialized = serialized.map(wrapper, lambda x: isinstance(x, Component))
+    Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
+    serialized = db._save_artifact(object.uuid, serialized.encode())
 
-    def replace_existing(x):
-        if isinstance(x, str):
-            for uuid in non_breaking_changes:
-                x = x.replace(uuid, non_breaking_changes[uuid])
+    if apply_status == 'same':
+        return create_events, job_events
 
-        elif isinstance(x, Query):
-            r = x.dict()
-            for uuid in non_breaking_changes:
-                r['query'] = r['query'].replace(uuid, non_breaking_changes[uuid])
-            for i, doc in enumerate(r['documents']):
-                replace = {}
-                if not isinstance(doc, Document):
-                    doc = Document(doc)
-                doc = doc.map(
-                    lambda x: replace_existing(x),
-                    condition=lambda x: isinstance(x, str),
-                )
-                for k in doc.keys():
-                    replace_k = k
-                    for uuid in non_breaking_changes:
-                        replace_k = replace_k.replace(uuid, non_breaking_changes[uuid])
-                    replace[replace_k] = doc[k]
-                r['documents'][i] = replace
-            x = Document.decode(r, db=db).unpack()
-
-        else:
-            raise TypeError("Unexpected target of substitution in db.apply")
-        return x
-
-    try:
-        current = db.load(object.__class__.__name__, object.identifier)
-
-        # only check for diff not in metadata/ uuid
-        # also only
-        current_serialized = current.dict(metadata=False, refs=True)
-
-        del current_serialized['uuid']
-
-        serialized = serialized.map(
-            replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
-        )
-
-        # finds the fields where there is a difference
-        this_diff = Document(current_serialized, schema=current_serialized.schema).diff(
-            serialized
-        )
-        logging.info(f'Found identical {object.huuid}')
-        # if 'object' in this_diff and not callable(this_diff['object']):
-        #     import pdb; pdb.set_trace()
-
-        if not this_diff:
-            # if no change then update the component
-            # to have the same info as the "existing" version
-
-            if object.uuid != current.uuid:
-                # This happens if the developer performs "surgery"
-                # on an already instantiated object (uuid is not rebuilt)
-                non_breaking_changes[object.uuid] = current.uuid
-
-            current.handle_update_or_same(object)
-
-            return create_events, job_events
-
-        elif '_path' in this_diff:
-            # TODO use custom exception
-            raise ValueError(
-                f'Cannot update a version of {current_serialized["_path"]} '
-                f'with a new class {serialized["_path"]}.'
-            )
-
-        elif set(this_diff.keys(deep=True)).intersection(object.breaks):
-            # if this is a breaking change then create a new version
-            apply_status = 'breaking'
-
-            if object.uuid == current.uuid:
-                # This happens if the developer performs "surgery"
-                # on an already instantiated object (uuid is not rebuilt)
-
-                raise NotImplementedError(
-                    f'{object.__class__.__name__}/'
-                    f'{object.identifier} was modified in place. '
-                    'This is currently not supported. '
-                    'To re-apply a component, rebuild the Python object.'
-                )
-
-            # this overwrites the fields which were made
-            # during the `.map` to the children
-            # serializer.map...
-            # this means replacing components with references
-            serialized = object.dict(metadata=False).update(serialized)
-
-            # this is necessary to prevent inconsistencies
-            serialized = serialized.update(this_diff).encode(keep_schema=False)
-
-            # assign/ increment the version since
-            # this breaks a previous version
-            assert current.version is not None
-            object.version = current.version + 1
-
-            serialized['version'] = current.version + 1
-            logging.info(f'Found breaking changes in {object.huuid}')
-
-            # if the metadata includes components, which
-            # need to be applied, do that now
-            Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
-
-        else:
-            apply_status = 'update'
-
-            # the non-breaking changes lookup table
-            # allows components which are downstream
-            # from this component via references
-            # (e.g. `Listener` instances which listen to these outputs)
-            # to understand if they are now referring to the "original"
-            # or the "new" version.
-            non_breaking_changes[object.uuid] = current.uuid
-
-            current.handle_update_or_same(object)
-
-            serialized['version'] = current.version
-            serialized['uuid'] = current.uuid
-
-            # update the existing component with the change
-            # data from the applied component
-            serialized = (
-                current.dict(metadata=False)
-                .update(serialized)
-                .update(this_diff)
-                .encode(keep_schema=False)
-            )
-
-            logging.info(f'Found update {object.huuid}')
-
-    except NonExistentMetadataError:
-        # Also replace the existing components with references
-        serialized = serialized.map(
-            replace_existing, lambda x: isinstance(x, str) or isinstance(x, Query)
-        )
-        serialized['version'] = 0
-
-        # TODO this was set to empty (no metadata specified) previously
-        # Do we even need this?
-        # The metadata components could "simple" sit quietly inside the component
-        # and be applied when the component is applied
-        serialized = object.dict(metadata=False).update(serialized)
-
-        # if the metadata includes components, which
-        # need to be applied, do that now
-        Document(object.metadata).map(wrapper, lambda x: isinstance(x, Component))
-
-        serialized = serialized.encode(keep_schema=False)
-
-        object.version = 0
-        apply_status = 'new'
-        logging.info(f'Found new {object.huuid}')
-
-    if global_diff is not None and apply_status in {'update', 'breaking'}:
-        this_diff = this_diff.map(
-            lambda x: '?' + x.split(':')[3],
-            lambda x: isinstance(x, str) and x.startswith('&:component:'),
-        )
-        global_diff[object.identifier] = {
-            'status': apply_status,
-            'changes': dict(this_diff),
-            'component': object.component,
-        }
-
-    serialized = db._save_artifact(object.uuid, serialized)
-
-    if apply_status in {'new', 'breaking'}:
+    elif apply_status == 'new':
 
         metadata_event = Create(
             context=context,
-            component=object.__class__.__name__,
+            path=object.__module__ + '.' + object.__class__.__name__,
+            data=serialized,
+            parent=parent,
+        )
+
+        these_job_events = object.create_jobs(
+            event_type='apply',
+            jobs=list(job_events.values()),
+            context=context,
+        )
+    elif apply_status == 'breaking':
+
+        metadata_event = Create(
+            context=context,
+            path=object.__module__ + '.' + object.__class__.__name__,
             data=serialized,
             parent=parent,
         )
@@ -413,7 +283,7 @@ def _apply(
             event_type='apply',
             jobs=list(job_events.values()),
             context=context,
-            requires=list(this_diff.keys()),
+            requires=diff,
         )
 
     # If nothing needs to be done, then don't

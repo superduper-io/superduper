@@ -15,7 +15,6 @@ class MyModel(Model):
 
     a: int = 1
     b: int = 2
-    signature: str = 'singleton'
 
     def predict(self, x):
         return numpy.array([x + self.a * self.b + 2 for _ in range(20)])
@@ -61,6 +60,8 @@ def test(db: Datalayer):
     db.apply(build_vi())
     db.apply(build_vi())
 
+    # TODO for some reason the model is "updating" even after no changes.
+
     assert db.show('VectorIndex', 'my-vector-index') == [0]
     assert db.show('Listener', 'my-listener') == [0]
     assert db.show('MyModel', 'my-model') == [0]
@@ -68,6 +69,7 @@ def test(db: Datalayer):
     component = build_vi()
     t = db['docs']
     q = t.filter(t['x'] > 3)
+
     component.indexing_listener.select = q
 
     db.apply(component)

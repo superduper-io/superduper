@@ -178,6 +178,8 @@ class MongoDBDataBackend(BaseDataBackend):
 
         collection = self._database[query.table]
 
+        logging.info(str(query))
+
         limit = self._get_limit(query)
         if limit:
             return list(

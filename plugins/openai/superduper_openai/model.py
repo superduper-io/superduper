@@ -1,7 +1,6 @@
 import base64
 import dataclasses as dc
-import json
-import os
+import traceback
 import typing as t
 
 import numpy
@@ -9,17 +8,21 @@ import requests
 import tqdm
 from httpx import ResponseNotRead
 from openai import (
+    APIError,
     APITimeoutError,
     InternalServerError,
     OpenAI as SyncOpenAI,
     RateLimitError,
 )
 from openai._types import NOT_GIVEN
+from superduper import logging
 from superduper.backends.query_dataset import QueryDataset
 from superduper.base import exceptions
 from superduper.base.datalayer import Datalayer
 from superduper.components.model import APIBaseModel, Inputs
+from superduper.ext import openai
 from superduper.misc.compat import cache
+from superduper.misc.files import load_secrets
 from superduper.misc.retry import Retry, safe_retry
 
 retry = Retry(
@@ -58,8 +61,16 @@ class _OpenAI(APIBaseModel):
 
     @property
     def syncClient(self):
+        if 'OPENAI_API_KEY' not in self.client_kwargs:
+            try:
+                load_secrets()
+            except Exception as e:
+                logging.error(traceback.format_exc())
+                logging.error(f'Error loading secrets: {e}')
+                raise e
         return SyncOpenAI(**self.client_kwargs)
 
+    @safe_retry(APIError)
     def predict_batches(self, dataset: t.Union[t.List, QueryDataset]) -> t.List:
         """Predict on a dataset.
 
@@ -97,6 +108,7 @@ class OpenAIEmbedding(_OpenAI):
         return Inputs(['input'])
 
     @retry
+    @safe_retry(APIError)
     def predict(self, X: str):
         """Generates embeddings from text.
 
@@ -112,6 +124,7 @@ class OpenAIEmbedding(_OpenAI):
         return out
 
     @retry
+    @safe_retry(APIError)
     def _predict_a_batch(self, texts: t.List[t.Dict]):
         out = self.syncClient.embeddings.create(
             input=texts, model=self.model, **self.predict_kwargs
@@ -156,6 +169,7 @@ class OpenAIChatCompletion(_OpenAI):
         self.datatype = self.datatype or 'str'
 
     @retry
+    @safe_retry(APIError)
     def predict(self, X: str, context: t.Optional[str] = None, **kwargs):
         """Generates text completions from prompts.
 

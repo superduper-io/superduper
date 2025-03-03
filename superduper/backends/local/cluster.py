@@ -1,3 +1,4 @@
+import os
 import typing as t
 
 import click
@@ -34,9 +35,15 @@ class LocalCluster(Cluster):
     def build(cls, CFG, **kwargs):
         """Build the local cluster."""
         searcher_impl = load_plugin(CFG.vector_search_engine).VectorSearcher
+        if CFG.cache.startswith('redis'):
+            cache = load_plugin('redis').Cache(uri=CFG.cache)
+        else:
+            assert CFG.cache == 'in-process'
+            cache = LocalCache()
+
         return LocalCluster(
             compute=LocalComputeBackend(),
-            cache=LocalCache(),
+            cache=cache,
             queue=LocalQueuePublisher(),
             vector_search=LocalVectorSearchBackend(searcher_impl=searcher_impl),
             cdc=LocalCDCBackend(),

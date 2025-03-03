@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "superduper_redis"
+readme = "README.md"
+description = "superduper allows users to work with arbitrary sklearn estimators, with additional support for pre-, post-processing and input/ output data-types."
+license = {file = "LICENSE"}
+maintainers = [{name = "superduper.io, Inc.", email = "opensource@superduper.io"}]
+keywords = [
+    "databases",
+    "mongodb",
+    "data-science",
+    "machine-learning",
+    "mlops",
+    "vector-database",
+    "ai",
+]
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "redis"
+]
+
+[project.optional-dependencies]
+test = [
+    # Annotation plugin dependencies will be installed in CI
+    # :CI: plugins/mongodb
+]
+
+[project.urls]
+homepage = "https://superduper.io"
+documentation = "https://docs.superduper.io/docs/intro"
+source = "https://github.com/superduper-io/superduper"
+
+[tool.setuptools.packages.find]
+include = ["superduper_redis*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "superduper_redis.__version__"}
+
+[tool.black]
+skip-string-normalization = true
+target-version = ["py38"]
+
+[tool.mypy]
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_unused_ignores = true
+disable_error_code = ["has-type", "attr-defined", "assignment", "misc", "override", "call-arg"]
+
+[tool.pytest.ini_options]
+addopts = "-W ignore"
+
+[tool.ruff.lint]
+extend-select = [
+    "I", # Missing required import (auto-fixable)
+    "F", # PyFlakes
+    #"W", # PyCode Warning
+    "E", # PyCode Error
+    #"N", # pep8-naming
+    "D", # pydocstyle
+]
+ignore = [
+  "D100", # Missing docstring in public module
+  "D104", # Missing docstring in public package
+  "D107", # Missing docstring in __init__
+  "D105", # Missing docstring in magic method
+  "D203", # 1 blank line required before class docstring
+  "D212", # Multi-line docstring summary should start at the first line
+  "D213", # Multi-line docstring summary should start at the second line
+  "D401",
+  "E402",
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"test/**" = ["D"]
+"plugin_test/**" = ["D"]

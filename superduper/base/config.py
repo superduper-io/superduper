@@ -139,6 +139,7 @@ class Config(BaseConfig):
     :param secrets_volume: The secrets volume mount for secrets env vars.
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
+    :param cache: A URI for an in-memory cache
     :param vector_search_engine: The engine to use for vector search
     :param cluster_engine: The engine to use for operating a distributed cluster
     :param retries: Settings for retrying failed operations
@@ -162,6 +163,7 @@ class Config(BaseConfig):
     # TODO drop the "filesystem://" prefix
     artifact_store: str = 'filesystem://./artifact_store'
     metadata_store: t.Optional[str] = None
+    cache: str = 'in-process'
     vector_search_engine: str = 'local'
     cluster_engine: str = 'local'
 

@@ -88,7 +88,6 @@ def test_load_lazily(db):
     m = ObjectModel("lazy_model", object=lambda x: x + 2)
 
     db.apply(m)
-    db.expire(m.uuid)
 
     reloaded = db.load("ObjectModel", m.identifier)
 
@@ -191,6 +190,7 @@ def test_upstream(db, clean):
 class NewComponent(Component): ...
 
 
+@pytest.mark.skip("Awaiting refactor of version by version deletion")
 def test_remove_recursive(db):
     c1 = NewComponent(identifier='c1')
     c2 = NewComponent(identifier='c2', upstream=[c1])

@@ -138,6 +138,7 @@ def show_configuration(cfg):
     key_values = [
         ('Data Backend', anonymize_url(cfg.data_backend)),
         ('Artifact Store', anonymize_url(cfg.artifact_store)),
+        ('Cache', anonymize_url(cfg.cache)),
     ]
     for key, value in key_values:
         if value:

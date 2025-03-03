@@ -192,7 +192,7 @@ def test_add_with_artifact(db):
     )
 
     db.apply(m)
-    db.cluster.cache.expire(m.uuid)
+    db.cluster.cache.delete_uuid(m.uuid)
 
     m = db.load('ObjectModel', m.identifier)
 
@@ -417,7 +417,7 @@ def test_replace(db: Datalayer):
     new_model.version = 0
     db.replace(new_model)
 
-    assert model.uuid not in db.cluster.cache._cache
+    assert f'{model.component}:{model.identifier}:{model.uuid}' not in db.cluster.cache
 
     time.sleep(0.1)
     assert db.load('ObjectModel', 'm').predict_batches([1]) == [3]

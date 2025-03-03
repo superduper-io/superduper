@@ -383,10 +383,21 @@ def _apply(
     serialized = db._save_artifact(object.uuid, serialized)
 
     if apply_status in {'new', 'breaking'}:
+        additional_children = []
+        for child in object.get_children(deep=False):
+            huuid = child.huuid
+            if huuid not in create_events:
+                additional_children.append(child.uuid)
+                continue
+
+            if create_events[huuid].parent != object.uuid:
+                additional_children.append(child.uuid)
+
         metadata_event = Create(
             context=context,
             component=serialized,
             parent=parent,
+            additional_children=additional_children,
         )
 
         these_job_events = object.create_jobs(

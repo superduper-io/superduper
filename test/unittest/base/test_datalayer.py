@@ -174,6 +174,15 @@ def test_add_child(db):
     parents = db.metadata.get_component_version_parents(child_component_2.uuid)
     assert parents == [component_3.uuid]
 
+    child_component_2 = TestComponent(identifier='child-2')
+    component_4 = TestComponent(identifier='test-4', child=child_component_2)
+    db.apply(component_4)
+    assert db.show('test-component', 'test-4') == [0]
+    assert db.show('test-component', 'child-2') == [0]
+
+    parents = db.metadata.get_component_version_parents(child_component_2.uuid)
+    assert parents == [component_3.uuid, component_4.uuid]
+
 
 def test_add(db):
     component = TestComponent(identifier='test')

@@ -110,8 +110,10 @@ def check_secrets():
             try:
                 future.result(timeout=3)
             except concurrent.futures.TimeoutError:
-                errors.append(f'Timeout for secret: {secret} after 3 seconds; '
-                              'check your connectivity and secret(s).')
+                errors.append(
+                    f'Timeout for secret: {secret} after 3 seconds; '
+                    'check your connectivity and secret(s).'
+                )
             except Exception as e:
                 errors.append(e)
 

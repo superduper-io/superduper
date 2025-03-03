@@ -1,3 +1,6 @@
+import copy
+import fnmatch
+import re
 import typing as t
 
 from superduper.backends.base.cache import Cache
@@ -10,78 +13,45 @@ class LocalCache(Cache):
     :param init_cache: Initialize cache
     """
 
-    def __init__(self, init_cache: bool = True):
-        super().__init__()
-        self.init_cache = init_cache
+    def __init__(self):
         self._cache: t.Dict = {}
-        self._component_to_uuid: t.Dict = {}
-        self._db = None
-
-    def list_components(self):
-        """List components by (component, identifier) in the cache."""
-        return list(self._component_to_uuid.keys())
-
-    def list_uuids(self):
-        """List UUIDs in the cache."""
-        return list(self._cache.keys())
-
-    def __getitem__(self, item):
-        if isinstance(item, tuple):
-            # (component, identifier)
-            item = self._component_to_uuid[item[0], item[1]]
-        return self._cache[item]
-
-    def _put(self, component: Component):
-        """Put a component in the cache."""
-        self._cache[component.uuid] = component
-        if (component.component, component.identifier) in self._component_to_uuid:
-            current = self._component_to_uuid[component.component, component.identifier]
-            current_component = self._cache[current]
-            current_version = current_component.version
-            if current_version < component.version:
-                self._component_to_uuid[component.component, component.identifier] = (
-                    component.uuid
-                )
-                self.expire(current_component.uuid)
-        else:
-            self._component_to_uuid[component.component, component.identifier] = (
-                component.uuid
-            )
 
     def __delitem__(self, item):
-        if isinstance(item, tuple):
-            item = self._component_to_uuid[item[0], item[1]]
-        tuples = [k for k, v in self._component_to_uuid.items() if v == item]
-        if tuples:
-            for component, identifier in tuples:
-                del self._component_to_uuid[component, identifier]
         del self._cache[item]
+
+    def __setitem__(self, key, value):
+        if isinstance(value, str):
+            import pdb
+
+            pdb.set_trace()
+        self._cache[key] = copy.deepcopy(value)
+
+    def __getitem__(self, item):
+        out = self._cache[item]
+        return copy.deepcopy(out)
+
+    def __contains__(self, key):
+        return key in self._cache
+
+    def keys(self, *pattern):
+        if not pattern:
+            return list(self._cache.keys())
+        else:
+            pattern = ':'.join(pattern)
+        keys = [':'.join(x) for x in self._cache.keys()]
+        matched = fnmatch.filter(list(keys), pattern)
+        return [tuple(x.split(':')) for x in matched]
 
     def initialize(self):
         """Initialize the cache."""
+        pass
 
-    def drop(self, component: t.Optional['Component'] = None):
-        """Drop the cache.
+    def drop(self, force: bool = False):
+        """Drop component from the cache.
 
-        :param component: Component to drop.
+        :param uuid: Component uuid.
         """
-        from superduper import logging
-
-        if component:
-            try:
-                del self._cache[component.uuid]
-            except KeyError:
-                logging.warn(f'{component.uuid} does not exists in cache')
-            try:
-                del self._component_to_uuid[component.component, component.identifier]
-            except KeyError:
-                logging.warn(
-                    f'{component.identifier}: {component.component} '
-                    'does not exists in cache'
-                )
-        else:
-            self._cache = {}
-            self._component_to_uuid = {}
+        self._cache = {}
 
     @property
     def db(self):
@@ -95,20 +65,3 @@ class LocalCache(Cache):
         :param value: The value to set the ``db`` to.
         """
         self._db = value
-
-    def __iter__(self):
-        return iter(self._cache.keys())
-
-    def expire(self, item):
-        """Expire an item from the cache.
-
-        :param item: The item to expire.
-        """
-        try:
-            del self._cache[item]
-            for (t, i), uuid in self._component_to_uuid.items():
-                if uuid == item:
-                    del self._component_to_uuid[t, i]
-                    break
-        except KeyError:
-            pass

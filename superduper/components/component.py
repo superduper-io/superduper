@@ -554,9 +554,7 @@ class Component(Base, metaclass=ComponentMeta):
 
         :param cluster: The cluster to declare the component to.
         """
-        if self.cache:
-            logging.info(f'Adding {self.component}:{self.identifier} to cache')
-            cluster.cache.put(self)
+        pass
 
     @staticmethod
     def read(path: str, db: t.Optional[Datalayer] = None):

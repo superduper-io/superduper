@@ -81,7 +81,12 @@ class Schema(BaseDataType):
                     'Expected a string since databackend is not json native;'
                     ' CFG.json_native is False'
                 )
-                if field.dtype == 'json' and not CFG.json_native:
+                # If the item has been cached, it will not be a string
+                if (
+                    isinstance(value, str)
+                    and field.dtype == 'json'
+                    and not CFG.json_native
+                ):
                     assert isinstance(value, str), msg
                     value = json.loads(value)
                 decoded[k] = field.decode_data(value, builds=builds, db=db)

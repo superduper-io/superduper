@@ -4,6 +4,7 @@ import typing as t
 import uuid
 
 from superduper import logging
+from superduper.backends.base.cache import Cache
 from superduper.base.base import Base
 from superduper.base.exceptions import DatabackendError
 from superduper.base.schema import Schema
@@ -85,10 +86,12 @@ class MetaDataStore:
     Abstraction for storing meta-data separately from primary data.
 
     :param db: Datalayer instance.
+    :param cache: Cache instance.
     """
 
-    def __init__(self, db):
+    def __init__(self, db, cache: Cache | None = None):
         self.db = db
+        self.cache = cache
 
         self.preset_components = {
             ('Table', 'Table'): Table(
@@ -204,7 +207,12 @@ class MetaDataStore:
             r.pop('_path')
         except KeyError:
             pass
-        self.db['Table'].insert([{**r, 'uuid': t.uuid, 'version': 0}])
+        r = {**r, 'version': 0, 'uuid': t.uuid}
+
+        if self.cache:
+            self.cache['Table', cls.__name__, r["uuid"]] = r
+
+        self.db['Table'].insert([r])
 
         return t
 
@@ -239,6 +247,10 @@ class MetaDataStore:
 
         if '_path' in info:
             del info['_path']
+
+        if self.cache:
+            self.cache[component, info["identifier"], info["uuid"]] = info
+
         self.db[component].insert([info], raw=raw)
 
     def create_parent_child(
@@ -387,35 +399,86 @@ class MetaDataStore:
         """
         if component is None:
             out = []
-            t = self.db['Table']
-            for component in t.filter(t['component'] == True).distinct(  # noqa: E712
-                'identifier'
-            ):
+
+            if self.cache:
+                metadata = self.cache.get_with_component('Table')
+                components = [r['identifier'] for r in metadata if r['component']]
+            else:
+                t = self.db['Table']
+                components = t.filter(t['component'] == True).distinct(  # noqa: E712
+                    'identifier'
+                )
+
+            for component in components:
                 if component in metaclasses.keys():
                     continue
 
+                if self.cache:
+                    identifiers = sorted(
+                        list(
+                            set(
+                                [
+                                    r['identifier']
+                                    for r in self.cache.get_with_component(component)
+                                ]
+                            )
+                        )
+                    )
+                else:
+                    identifiers = self.db[component].distinct('identifier')
+
                 try:
                     out.extend(
-                        [
-                            {'component': component, 'identifier': x}
-                            for x in self.db[component].distinct('identifier')
-                        ]
+                        [{'component': component, 'identifier': x} for x in identifiers]
                     )
                 except ModuleNotFoundError as e:
                     logging.error(f'Component type not found: {component}; ', e)
-            out.extend(
-                [
-                    {'component': 'Table', 'identifier': x}
-                    for x in self.db['Table'].distinct('identifier')
-                ]
-            )
+
+            if self.cache:
+                identifiers = sorted(
+                    list(
+                        set(
+                            [
+                                r['identifier']
+                                for r in self.cache.get_with_component('Table')
+                            ]
+                        )
+                    )
+                )
+            else:
+                identifiers = self.db['Table'].distinct('identifier')
+
+            out.extend([{'component': 'Table', 'identifier': x} for x in identifiers])
             return out
-        return self.db[component].distinct('identifier')
+
+        if self.cache:
+            return sorted(
+                list(
+                    set(
+                        [
+                            r['identifier']
+                            for r in self.cache.get_with_component(component)
+                        ]
+                    )
+                )
+            )
+        else:
+            return self.db[component].distinct('identifier')
 
     def show_cdc_tables(self):
         """List the tables used for CDC."""
+        from superduper.base.document import Document
+
+        metadata = []
+
+        if self.cache:
+            metadata = self.cache.get_with_component('Table')
+            metadata = [Document(r) for r in metadata]
+        else:
+            metadata = self.db['Table'].execute()
+
         cdc_classes = []
-        for r in self.db['Table'].execute():
+        for r in metadata:
             if r['path'] is None:
                 continue
             cls = import_object(r['path'])
@@ -435,7 +498,13 @@ class MetaDataStore:
         :param table: ``Table`` to consider.
         """
         cdc_classes = []
-        for r in self.db['Table'].execute():
+
+        if self.cache:
+            metadata = self.cache.get_with_component('Table')
+        else:
+            metadata = self.db['Table'].execute()
+
+        for r in metadata:
             if r['path'] is None:
                 continue
             cls = import_object(r['path'])
@@ -468,6 +537,12 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param version: version of component
         """
+        if self.cache:
+            try:
+                uuid = self.get_uuid(component, identifier, version)
+                del self.cache[component, identifier, uuid]
+            except KeyError:
+                pass
         self.db[component].delete({'identifier': identifier, 'version': version})
 
     def get_uuid(self, component: str, identifier: str, version: int):
@@ -478,12 +553,23 @@ class MetaDataStore:
         :param identifier: identifier of component
         :param version: version of component
         """
+        if self.cache:
+            r = self.cache.get_with_component_identifier_version(
+                component, identifier, version
+            )
+            if r is not None:
+                assert isinstance(r, dict)
+                return r['uuid']
         t = self.db[component]
         r = (
             t.filter(t['identifier'] == identifier, t['version'] == version)
             .select('uuid')
             .get()
         )
+        if r is None:
+            raise NonExistentMetadataError(
+                f'{identifier} does not exist in metadata for {component}'
+            )
         return r['uuid']
 
     def component_version_has_parents(
@@ -526,17 +612,36 @@ class MetaDataStore:
         """
         if uuid in self.preset_uuids:
             return self.preset_uuids[uuid]
-        r = self.db[component].get(uuid=uuid, raw=True)
+
+        if self.cache:
+            try:
+                r = self.cache.get_with_uuid(uuid)
+            except KeyError:
+                r = self.db[component].get(uuid=uuid, raw=True)
+
         if r is None:
             raise NonExistentMetadataError(
                 f'Object {uuid} does not exist in metadata for {component}'
             )
+
+        if self.cache:
+            self.cache[component, r['identifier'], r['uuid']] = r
+
+        # TODO replace database query with cache query
         try:
             metadata = self.preset_components[('Table', component)]
         except KeyError:
-            metadata = self.db['Table'].get(identifier=component)
+            if self.cache:
+                metadata = self.cache.get_with_component_identifier('Table', component)
+            if metadata is None:
+                metadata = self.db['Table'].get(identifier=component)
+
+            if metadata is None:
+                raise NonExistentMetadataError(f'No such Table: {component}')
+
         path = metadata['path']
         r['_path'] = path
+
         return r
 
     def get_component(
@@ -544,7 +649,7 @@ class MetaDataStore:
         component: str,
         identifier: str,
         version: t.Optional[int] = None,
-        allow_hidden: bool = False,
+        allow_hidden: bool = False,  # TODO remove this
     ) -> t.Dict[str, t.Any]:
         """
         Get a component from the metadata store.
@@ -557,24 +662,43 @@ class MetaDataStore:
         if (component, identifier) in self.preset_components:
             return self.preset_components[(component, identifier)]
 
-        # TODO find a more efficient way to do this.
-        if version is None:
-            version = self.get_latest_version(
-                component=component,
-                identifier=identifier,
-            )
-        r = self.db[component].get(identifier=identifier, version=version, raw=True)
+        r = None
+        if self.cache:
+            try:
+                if version is None:
+                    r = self.cache.get_with_component_identifier(component, identifier)
+                else:
+                    r = self.cache.get_with_component_identifier_version(
+                        component, identifier, version
+                    )
+            except KeyError:
+                pass
+
+        if r is None:
+            if version is None:
+                version = self.get_latest_version(
+                    component=component,
+                    identifier=identifier,
+                )
+            r = self.db[component].get(identifier=identifier, version=version, raw=True)
 
         if r is None:
             raise NonExistentMetadataError(
                 f'Object {identifier} does not exist in metadata for {component}'
             )
 
+        if self.cache:
+            self.cache[component, identifier, r["uuid"]] = r
+
+        # TODO Does it have path or not? Let's pin it down please.
         if '_path' not in r:
             metadata = self.preset_components.get(('Table', component))
+            if metadata is None and self.cache:
+                metadata = self.cache.get_with_component_identifier('Table', component)
             if metadata is None:
                 metadata = self.db['Table'].get(identifier=component)
             r['_path'] = metadata['path']
+
         return r
 
     def replace_object(self, component: str, uuid: str, info: t.Dict[str, t.Any]):
@@ -585,7 +709,21 @@ class MetaDataStore:
         :param uuid: unique identifier of the object.
         :param info: dictionary containing information about the object.
         """
+        if self.cache:
+            self.cache[component, info["identifier"], uuid] = info
         self.db[component].replace({'uuid': uuid}, info)
+
+    def remove_by_uuid(self, component: str, uuid: str):
+        """
+        Remove an object in the metadata store.
+
+        :param component: type of component.
+        :param uuid: unique identifier of the object.
+        """
+        if self.cache:
+            self.cache.delete_uuid(uuid)
+
+        self.db[component].delete({'uuid': uuid})
 
     def get_component_version_parents(self, uuid: str):
         """

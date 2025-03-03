@@ -61,7 +61,7 @@ class Datalayer:
         self._cfg = s.CFG
         self.startup_cache: t.Dict[str, t.Any] = {}
 
-        self.metadata = MetaDataStore(self)
+        self.metadata = MetaDataStore(self, cache=self.cluster.cache)
         self.metadata.init()
 
         logging.info("Data Layer built")
@@ -293,7 +293,7 @@ class Datalayer:
         if versions_in_use:
             component_versions_in_use = []
             for v in versions_in_use:
-                uuid = self.metadata._get_component_uuid(component, identifier, v)
+                uuid = self.metadata.get_uuid(component, identifier, v)
                 component_versions_in_use.append(
                     f"{uuid} -> "
                     f"{self.metadata.get_component_version_parents(uuid)}",
@@ -358,55 +358,34 @@ class Datalayer:
             uuid = huuid.split(':')[-1]
 
         if uuid is not None:
-            try:
-                return self.cluster.cache[uuid]
-            except KeyError:
-                logging.info(
-                    f'Component {uuid} not found in cache, loading from db with uuid'
-                )
-                info = self.metadata.get_component_by_uuid(
-                    component=component, uuid=uuid
-                )
-                # to prevent deserialization propagating back to the cache
-                builds = {k: v for k, v in info.get('_builds', {}).items()}
-                for k in builds:
-                    builds[k]['identifier'] = k.split(':')[-1]
+            info = self.metadata.get_component_by_uuid(
+                component=component,
+                uuid=uuid,
+            )
+            # to prevent deserialization propagating back to the cache
+            builds = {k: v for k, v in info.get('_builds', {}).items()}
+            for k in builds:
+                builds[k]['identifier'] = k.split(':')[-1]
 
-                c = LeafType().decode_data(
-                    {k: v for k, v in info.items() if k != '_builds'},
-                    builds=builds,
-                    db=self,
-                )
-                if c.cache:
-                    logging.info(f'Adding {c.huuid} to cache')
-                    self.cluster.cache.put(c)
+            c = LeafType().decode_data(
+                {k: v for k, v in info.items() if k != '_builds'},
+                builds=builds,
+                db=self,
+            )
         else:
-            try:
-                c = self.cluster.cache[component, identifier]
-                logging.debug(
-                    f'Component {(component, identifier)} was found in cache...'
-                )
-            except KeyError:
-                logging.info(
-                    f'Component ({component}, {identifier}) not found in cache, '
-                    'loading from db'
-                )
-                assert component is not None
-                assert identifier is not None
-                logging.info(f'Load ({component, identifier}) from metadata...')
-                info = self.metadata.get_component(
-                    component=component,
-                    identifier=identifier,
-                    allow_hidden=allow_hidden,
-                )
-                c = ComponentType().decode_data(
-                    info,
-                    builds=info.get('_builds', {}),
-                    db=self,
-                )
-                if c.cache:
-                    logging.info(f'Adding {c.huuid} to cache')
-                    self.cluster.cache.put(c)
+            assert component is not None
+            assert identifier is not None
+            logging.info(f'Load ({component, identifier}) from metadata...')
+            info = self.metadata.get_component(
+                component=component,
+                identifier=identifier,
+                allow_hidden=allow_hidden,
+            )
+            c = ComponentType().decode_data(
+                info,
+                builds=info.get('_builds', {}),
+                db=self,
+            )
         return c
 
     def _remove_component_version(
@@ -428,6 +407,7 @@ class Datalayer:
                 f'Component {component}:{identifier}:{version} has already been removed'
             )
             return
+
         if self.metadata.component_version_has_parents(component, identifier, version):
             parents = self.metadata.get_component_version_parents(r['uuid'])
             raise exceptions.ComponentInUseError(
@@ -453,11 +433,6 @@ class Datalayer:
             component, identifier, version=version, allow_hidden=force
         )
         object.cleanup(self)
-        try:
-            del self.cluster.cache[object.uuid]
-        except KeyError:
-            pass
-
         self._delete_artifacts(r['uuid'], info)
         self.metadata.delete_component_version(component, identifier, version=version)
         self.metadata.delete_parent_child_relationships(r['uuid'])
@@ -497,6 +472,8 @@ class Datalayer:
 
         :param object: The object to replace.
         """
+        assert object.version is not None
+
         old_uuid = None
         try:
             info = self.metadata.get_component(
@@ -522,31 +499,17 @@ class Datalayer:
             self.metadata.create_artifact_relation(object.uuid, artifact_ids)
             serialized = self._save_artifact(object.uuid, serialized)
 
-            self.metadata.replace_object(
-                object.__class__.__name__, old_uuid, serialized
-            )
-            self.expire(old_uuid)
+            if old_uuid == object.uuid:
+                self.metadata.replace_object(
+                    object.__class__.__name__, object.uuid, serialized
+                )
+            else:
+                self.metadata.create_component(serialized, path=serialized['_path'])
+                self.metadata.remove_by_uuid(info['_path'].split('.')[-1], old_uuid)
+
         else:
             serialized = serialized.encode(keep_schema=False)
             self.metadata.create_component(serialized)
-
-    def expire(self, uuid):
-        """Expire a component from the cache.
-
-        :param uuid: The UUID of the component to expire.
-        """
-        self.cluster.cache.expire(uuid)
-        parents = self.metadata.get_component_version_parents(uuid)
-        while parents:
-            for r in parents:
-                self.cluster.cache.expire(r[1])
-            parents = sum(
-                [
-                    self.metadata.get_component_version_parents(uuid[1])
-                    for uuid in parents
-                ],
-                [],
-            )
 
     def _save_artifact(self, uuid, info: t.Dict):
         """

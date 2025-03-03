@@ -201,7 +201,6 @@ class Update(Event):
         db.metadata.replace_object(
             self.component, uuid=self.data['uuid'], info=self.data
         )
-        db.expire(self.data['uuid'])
 
     @property
     def huuid(self):

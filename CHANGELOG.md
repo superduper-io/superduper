@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deprecate "free" queries
 - Create simpler developer contract for databackend
 - Snowflake native data-backend implementation
+- Add redis cache inside `db.metadata` for quick multi-process loading
 
 #### Bug Fixes
 

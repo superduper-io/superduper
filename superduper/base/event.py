@@ -117,6 +117,7 @@ class Create(Event):
     :param context: the component context of creation.
     :param component: the component to be created
     :param parent: the parent of the component (if any)
+    :param additional_children: The relationships with additional children
     """
 
     genus: t.ClassVar[str] = 'create'
@@ -125,6 +126,7 @@ class Create(Event):
     context: str
     component: t.Dict
     parent: str | None = None
+    additional_children: t.Sequence[str] = ()
 
     def execute(self, db: 'Datalayer'):
         """Execute the create event."""
@@ -146,6 +148,10 @@ class Create(Event):
                     component.uuid,
                     dep,
                 )
+
+        if self.additional_children:
+            for child_uuid in self.additional_children:
+                db.metadata.create_parent_child(component.uuid, child_uuid)
 
         component.on_create(db=db)
 
@@ -185,6 +191,13 @@ class Update(Event):
         artifact_ids, _ = db._find_artifacts(self.component)
         db.metadata.create_artifact_relation(self.component['uuid'], artifact_ids)
         db.metadata.replace_object(self.component, uuid=self.component['uuid'])
+
+        if self.parent:
+            if self.parent not in db.metadata.get_component_version_parents(
+                self.component['uuid']
+            ):
+                db.metadata.create_parent_child(self.parent, self.component['uuid'])
+
         db.expire(self.component['uuid'])
 
     @property

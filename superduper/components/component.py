@@ -531,6 +531,7 @@ class Component(Leaf, metaclass=ComponentMeta):
 
     def cleanup(self, db: Datalayer):
         """Method to clean the component."""
+        db.expire(self.uuid)
         db.cluster.cache.drop(self)
 
     def _get_metadata(self):

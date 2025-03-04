@@ -665,7 +665,7 @@ class Datalayer:
         if not recursive:
             return
 
-        children = component.get_children(deep=True)
+        children = component.get_children(deep=False)
         children = component.sort_components(children)[::-1]
         for c in children:
             self.metadata.delete_parent_child(component.uuid, c.uuid)
@@ -675,7 +675,7 @@ class Datalayer:
                     c.type_id,
                     c.identifier,
                     version=c.version,
-                    recursive=False,
+                    recursive=True,
                     force=force,
                 )
             except exceptions.ComponentInUseError as e:

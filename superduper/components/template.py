@@ -2,7 +2,7 @@ import dataclasses as dc
 import os
 import typing as t
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.base.constant import KEY_BLOBS, KEY_FILES
 from superduper.base.datalayer import Datalayer
 from superduper.base.document import Document, QueryUpdateDocument
@@ -61,9 +61,16 @@ class _BaseTemplate(Component):
         """Method to create component from the given template and `kwargs`."""
         kwargs.update({k: v for k, v in self.default_values.items() if k not in kwargs})
 
-        assert set(kwargs.keys()) == (
-            set(self.template_variables) - {'output_prefix', 'databackend'}
-        )
+        required_keys = set(self.template_variables) - {'output_prefix', 'databackend'}
+        extra_keys = set(kwargs.keys()) - required_keys
+        missing_keys = required_keys - set(kwargs.keys())
+        if missing_keys:
+            raise AssertionError(f"Missing required template variables: {missing_keys}")
+        if extra_keys:
+            logging.warn(
+                f"Extra variables provided but not in template_variables: {extra_keys}"
+            )
+
         kwargs['output_prefix'] = CFG.output_prefix
         kwargs['databackend'] = self.db.databackend.backend_name
         component = _replace_variables(
@@ -123,6 +130,41 @@ class Template(_BaseTemplate):
         self.files = list(self.template.get(KEY_FILES, {}).keys())
         db.artifact_store.save_artifact(self.template)
         self.init(db)
+
+    @ensure_initialized
+    def __call__(self, **kwargs):
+        """Method to create component from the given template and `kwargs`."""
+        self._extend_kwargs(kwargs)
+        return super().__call__(**kwargs)
+
+    def _extend_kwargs(self, kwargs):
+        if "application_identifier" in kwargs:
+            return
+        # Add application_identifier to the kwargs
+        base_component = self.template.get('_base', "")
+        identifier = base_component[1:]
+        builds = self.template.get('_builds', {})
+        base_build = builds.get(identifier, {})
+        _path = base_build.get('_path', "")
+        if _path == "superduper.components.application.Application":
+            kwargs['application_identifier'] = self.identifier
+
+        try:
+            # Check if the component is subclass of Application
+            import importlib
+
+            module, cls_name = _path.rsplit('.', 1)
+            module = importlib.import_module(module)
+            cls = getattr(module, cls_name)
+            from superduper.components.application import Application
+
+            if issubclass(cls, Application):
+                kwargs['application_identifier'] = self.identifier
+        except Exception as e:
+            logging.info(
+                f"Error while checking if {_path} is subclass of Application: {e}"
+            )
+            pass
 
     def export(
         self,

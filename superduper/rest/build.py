@@ -313,6 +313,7 @@ def build_rest_app(app: SuperDuperApp):
         if '_variables' in info:
             info['_variables']['output_prefix'] = CFG.output_prefix
             info['_variables']['databackend'] = db.databackend.backend_name
+            info['_variables']['application_identifier'] = info['identifier']
         background_tasks.add_task(_process_db_apply, db, info, id)
         return {'status': 'ok'}
 

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the measure of vector search
 - Fix the Snowflake vector-search implementation
 - Fix: Missing relationship data creation behavior when a new version of a parent component references an existing subcomponent
+- Add application_identifier as a default variable during template execution
 
 ## [0.5.0](https://github.com/superduper-io/superduper/compare/0.5.0...0.4.0])    (2024-Nov-02)
 

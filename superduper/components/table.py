@@ -50,7 +50,7 @@ class Table(Component):
         if self.identifier.startswith(CFG.output_prefix):
             db.databackend.drop_table(self.identifier)
 
-    def on_create(self, db: 'Datalayer'):
+    def on_create(self):
         """Create the table, on creation of the component.
 
         :param db: The Datalayer instance
@@ -58,7 +58,7 @@ class Table(Component):
         assert self.schema is not None, "Schema must be set"
 
         try:
-            db.databackend.create_table_and_schema(
+            self.db.databackend.create_table_and_schema(
                 self.identifier, self.schema, self.primary_id
             )
         except Exception as e:

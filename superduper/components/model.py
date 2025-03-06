@@ -336,15 +336,15 @@ class Model(Component, metaclass=ModelMeta):
             self._signature = self._infer_signature(self.predict)
         return self._signature
 
-    def declare_component(self, cluster: 'Cluster'):
+    def declare_component(self):
         """Declare model on compute.
 
         :param cluster: Cluster instance to declare the model.
         """
-        super().declare_component(cluster)
+        super().declare_component()
         # TODO why both of these options??
         if self.deploy or self.serve:
-            cluster.scheduler.compute_put_component(self)
+            self.db.cluster.scheduler.compute_put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:
@@ -807,7 +807,7 @@ class SequentialModel(Model):
     def signature(self):
         return self.models[0].signature
 
-    def on_create(self, db: Datalayer):
+    def on_create(self):
         """Post create hook.
 
         :param db: Datalayer instance.
@@ -815,7 +815,7 @@ class SequentialModel(Model):
         for p in self.models:
             if isinstance(p, str):
                 continue
-            p.on_create(db)
+            p.on_create()
 
     def predict(self, *args, **kwargs):
         """Predict on a single data point.

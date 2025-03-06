@@ -211,7 +211,6 @@ class Base(metaclass=BaseMeta):
 
         if '_path' in r:
             from superduper.misc.importing import import_object
-
             cls = import_object(r['_path'])
         r = Document.decode(r, schema=cls.class_schema, db=db)
         return cls.from_dict(r, db=None)

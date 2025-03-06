@@ -572,7 +572,7 @@ class Datalayer:
         # TODO deprecate
         # like = self._get_content_for_filter(like)
         logging.info('Getting vector-index')
-        vi = self.load('VectorIndex', vector_index)
+        vector_index = self.load('VectorIndex', vector_index)
         if outputs is None:
             outs: t.Dict = {}
         else:
@@ -580,7 +580,7 @@ class Datalayer:
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
         logging.info(str(outs))
-        return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+        return vector_index.get_nearest(like, ids=ids, n=n, outputs=outs)
 
     def disconnect(self):
         """Gracefully shutdown the Datalayer."""

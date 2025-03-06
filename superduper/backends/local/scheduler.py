@@ -2,20 +2,29 @@ import threading
 import typing as t
 
 from superduper import logging
+from superduper.backends.base.backends import Bookkeeping
 from superduper.backends.base.compute import ComputeBackend
 from superduper.backends.base.scheduler import (
-    BaseQueueConsumer,
     BaseScheduler,
     consume_events,
 )
 from superduper.base.event import Event
 from superduper.components.cdc import CDC
 
-if t.TYPE_CHECKING:
-    from superduper.base.datalayer import Datalayer
+
+class QueueWrapper:
+    def __init__(self, queue_name: str, scheduler: 'LocalScheduler'):
+        self.scheduler = scheduler
+        self.queue_name = queue_name
+
+    def initialize(self):
+        self.scheduler.Q[self.queue_name] = []
+
+    def drop(self):
+        del self.scheduler.Q[self.queue_name]
 
 
-class LocalScheduler(BaseScheduler):
+class LocalScheduler(Bookkeeping, BaseScheduler):
     """
     Class for handling publisher and consumer processes.
 
@@ -26,11 +35,9 @@ class LocalScheduler(BaseScheduler):
     """
 
     def __init__(self, compute: ComputeBackend):
-        super().__init__()
         self.compute = compute
-        self.consumer = LocalQueueConsumer()
-        self._component_uuid_mapping: t.Dict = {}
         self.lock = threading.Lock()
+        self.Q = {}
 
     @property
     def db(self):
@@ -43,12 +50,16 @@ class LocalScheduler(BaseScheduler):
 
     def drop(self):
         """Drop the queue."""
-        self.queue = {}
+        self.Q = {}
+
+    def build_tool(self, component, uuid):
+        c = self.db.load(component=component, uuid=uuid)
+        return super().build_tool(component, uuid)
 
     def drop_component(self, component, identifier):
         c = self.db.load(component=component, identifier=identifier)
         if isinstance(c, CDC):
-            del self.queue[c.cdc_table]
+            del self.Q[c.cdc_table]
 
     def initialize(self):
         """Initialize the queue."""
@@ -58,26 +69,18 @@ class LocalScheduler(BaseScheduler):
             r = self.db.show(component=component, identifier=identifier, version=-1)
             if r.get('trigger'):
                 with self.lock:
-                    self.queue[component, identifier] = []
+                    self.Q[component, identifier] = []
 
-    def _put(self, component):
+    def put_component(self, component):
         msg = 'Table name "_apply" collides with Superduper namespace'
         assert component.cdc_table != '_apply', msg
         assert isinstance(component, CDC)
         self._component_uuid_mapping[component.component, component.identifier] = (
             component.uuid
         )
-        if component.cdc_table in self.queue:
+        if component.cdc_table in self.Q:
             return
-        self.queue[component.cdc_table] = []
-
-    def list_components(self):
-        """List all components."""
-        return list(self._component_uuid_mapping.keys())
-
-    def list_uuids(self):
-        """List all UUIDs."""
-        return list(self._component_uuid_mapping.values())
+        self.Q[component.cdc_table] = []
 
     def publish(self, events: t.List[Event]):
         """
@@ -87,42 +90,8 @@ class LocalScheduler(BaseScheduler):
         """
         with self.lock:
             for event in events:
-                self.queue[event.queue].append(event)
-            self.consumer.consume(db=self.db, compute=self.compute, queue=self.queue)
+                self.Q[event.queue].append(event)
 
-
-class LocalQueueConsumer(BaseQueueConsumer):
-    """LocalQueueConsumer for consuming message from queue.
-
-    :param uri: Uri to connect.
-    :param queue_name: Queue to consume.
-    :param callback: Callback for consumed messages.
-    """
-
-    def start_consuming(self):
-        """Start consuming."""
-
-    def consume(self, db: 'Datalayer', compute: ComputeBackend, queue: t.Dict[str, t.List[Event]]):
-        """Consume the current queue and run jobs.
-
-        :param db: Datalayer instance.
-        :param queue: Queue to consume.
-        """
-        keys = list(queue.keys())[:]
-        for k in keys:
-            consume_events(events=queue[k], table=k, db=db, compute=compute)
-            queue[k] = []
-
-        logging.info('Consumed all events')
-
-    @property
-    def db(self):
-        """Instance of Datalayer."""
-        return self._db
-
-    @db.setter
-    def db(self, db):
-        self._db = db
-
-    def close_connection(self):
-        """Close connection to queue."""
+        for queue in self.Q:
+            consume_events(events=self.Q[queue], table=queue, db=self.db, compute=self.compute)
+            self.Q[queue] = []

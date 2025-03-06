@@ -23,11 +23,11 @@ class Plugin(Component):
 
     def postinit(self):
         """Post initialization method."""
-        if isinstance(self.path, FileItem):
-            self._prepare_plugin()
-        else:
-            path_name = os.path.basename(self.path.rstrip("/"))
-            self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
+        self.init()
+        self._prepare_plugin()
+
+        path_name = os.path.basename(self.path.rstrip("/"))
+        self.identifier = self.identifier or f"plugin-{path_name}".replace(".", "_")
         self._install()
         super().postinit()
 
@@ -91,19 +91,22 @@ class Plugin(Component):
 
     def _prepare_plugin(self):
         plugin_name_tag = f"{self.identifier}"
-        assert isinstance(self.path, FileItem)
+        if isinstance(self.path, FileItem):
+            self.path = self.path.unpack()
+
         cache_path = os.path.expanduser(self.cache_path)
         uuid_path = os.path.join(cache_path, self.uuid)
+
         # Check if plugin is already in cache
         if os.path.exists(uuid_path):
             names = os.listdir(uuid_path)
             names = [name for name in names if name != "__pycache__"]
             assert len(names) == 1, f"Multiple plugins found in {uuid_path}"
             self.path = os.path.join(uuid_path, names[0])
+            sys.path.append(uuid_path)
             return
 
         logging.info(f"Preparing plugin {plugin_name_tag}")
-        self.path = self.path.unpack()
         assert os.path.exists(
             self.path
         ), f"Plugin {plugin_name_tag} not found at {self.path}"

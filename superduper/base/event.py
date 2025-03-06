@@ -4,6 +4,7 @@ import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
+from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 
 if t.TYPE_CHECKING:
@@ -142,6 +143,8 @@ class Create(Event):
         :param db: Datalayer instance.
         """
         # TODO decide where to assign version
+        logging.info(f'Creating {self.path.split("/")[-1]}:{self.data["identifier"]}:{self.data["uuid"]}')
+
         artifact_ids, _ = db._find_artifacts(self.data)
         db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
 

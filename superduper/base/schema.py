@@ -1,10 +1,11 @@
 # TODO move to base
 import dataclasses as dc
 import json
+import re
 import typing as t
 from functools import cached_property
 
-from superduper import CFG
+from superduper import CFG, logging
 from superduper.base.datatype import BaseDataType
 from superduper.base.encoding import EncodeContext
 from superduper.misc.special_dicts import dict_to_ascii_table
@@ -40,13 +41,43 @@ class Schema(BaseDataType):
         new_fields.update(other.fields)
         return Schema(fields=new_fields)
 
-    @cached_property
+    @property
     def trivial(self):
         """Determine if the schema contains only trivial fields."""
         return not any([isinstance(v, BaseDataType) for v in self.fields.values()])
 
     def __repr__(self):
         return dict_to_ascii_table(self.fields)
+
+    @staticmethod
+    def handle_references(item, builds):
+        if '?(' not in str(item):
+            return item
+
+        if isinstance(item, str):
+            instances = re.findall(r'\?\((.*?)\)', item)
+
+            for k in instances:
+                name = k.split('.')[0]
+                attr = k.split('.')[-1]
+
+                if name not in builds:
+                    logging.warn(f'Could not find reference {name} from reference in {item} in builds')
+                    return item
+
+                to_replace = getattr(builds[name], attr)
+                item = item.replace(f'?({k})', str(to_replace))
+
+            return item
+        elif isinstance(item, list):
+            return [Schema.handle_references(i, builds) for i in item]
+        elif isinstance(item, dict):
+            return {
+                Schema.handle_references(k, builds): Schema.handle_references(v, builds)
+                for k, v in item.items()
+            }
+        else:
+            return item
 
     def decode_data(
         self, data: dict[str, t.Any], builds: t.Dict, db
@@ -62,8 +93,16 @@ class Schema(BaseDataType):
 
         decoded = {}
 
+        # reorder the component so that references go first
+        is_ref = lambda x: isinstance(x, str) and x.startswith('?')
+        data_is_ref = {k: v for k, v in data.items() if is_ref(v)}
+        data_not_ref = {k: v for k, v in data.items() if not is_ref(v)}
+        data = {**data_is_ref, **data_not_ref}
+
         for k, value in data.items():
             field = self.fields.get(k)
+
+            value = self.handle_references(value, builds)
 
             if not isinstance(field, BaseDataType) or value is None:
                 decoded[k] = value
@@ -132,6 +171,9 @@ class Schema(BaseDataType):
             result[k] = encoded
 
         return result
+
+    def __getitem__(self, item: str):
+        return self.fields[item]
 
 
 def get_schema(db, schema: t.Union[Schema, str]) -> t.Optional[Schema]:

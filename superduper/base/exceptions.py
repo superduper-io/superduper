@@ -55,3 +55,11 @@ class MissingSecretsException(BaseException):
 
     :param msg: msg for BaseException
     """
+
+
+class ServiceRequestException(BaseException):
+    """
+    Service request exception.
+
+    :param msg: msg for BaseException
+    """

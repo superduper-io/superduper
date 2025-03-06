@@ -30,19 +30,11 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def _put(self, item):
-        pass
-
-    @abstractmethod
-    def __delitem__(self, item):
-        pass
-
-    @abstractmethod
     def initialize(self):
         """To be called on program start."""
         pass
 
-    def put(self, component: 'Component', **kwargs):
+    def put_component(self, component: 'Component', **kwargs):
         """Add a component to the deployment.
 
         :param component: ``Component`` to put.
@@ -62,9 +54,11 @@ class BaseBackend(ABC):
             return
         if identifier in self.list_components():
             del self[component.identifier]
+
         self._put(component, **kwargs)
 
-    def drop_component(self, identifier: str):
+    @abstractmethod
+    def drop_component(self, component: str, identifier: str):
         """Drop the component from backend.
 
         :param identifier: Component identifier

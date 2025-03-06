@@ -67,7 +67,8 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         """List UUIDs of components."""
         return list(self._identifier_uuid_map.values())
 
-    def __delitem__(self, identifier):
+    def drop_component(self, component, identifier):
+        assert component == 'VectorIndex'
         del self._cache[identifier]
         del self._identifier_uuid_map[identifier]
 

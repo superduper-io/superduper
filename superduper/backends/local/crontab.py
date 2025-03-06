@@ -92,4 +92,4 @@ class LocalCrontabBackend(CrontabBackend):
                 from superduper.components.cron_job import CronJob
 
                 if isinstance(obj, CronJob):
-                    self.put(obj)
+                    self.put_component(obj)

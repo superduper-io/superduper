@@ -2,10 +2,11 @@ import typing as t
 from abc import abstractmethod
 
 from superduper.backends.base.backends import BaseBackend
-from superduper.base.event import Job
 
 if t.TYPE_CHECKING:
+    from superduper.components.component import Component
     from superduper.base.datalayer import Datalayer
+    from superduper.base.event import Job
 
 
 class ComputeBackend(BaseBackend):
@@ -18,12 +19,6 @@ class ComputeBackend(BaseBackend):
     # noqa
     """
 
-    @property
-    @abstractmethod
-    def type(self) -> str:
-        """Return the type of compute engine."""
-        pass
-
     @abstractmethod
     def release_futures(self, context: str):
         """Release futures from backend.
@@ -32,18 +27,12 @@ class ComputeBackend(BaseBackend):
         """
         pass
 
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of current compute engine."""
-        pass
-
     def get_local_client(self):
         """Returns a local version of self."""
         pass
 
     @abstractmethod
-    def submit(self, job: Job) -> t.Any:
+    def submit(self, job: 'Job') -> t.Any:
         """
         Submits a function to the server for execution.
 
@@ -59,7 +48,7 @@ class ComputeBackend(BaseBackend):
     def initialize(self):
         """Connect to address."""
 
-    def create_handler(self, *args, **kwargs):
+    def put_component(self, component: 'Component'):
         """Create handler on component declare.
 
         :param args: *args for `create_handler`

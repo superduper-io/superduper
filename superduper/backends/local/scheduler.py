@@ -2,9 +2,10 @@ import threading
 import typing as t
 
 from superduper import logging
-from superduper.backends.base.queue import (
+from superduper.backends.base.compute import ComputeBackend
+from superduper.backends.base.scheduler import (
     BaseQueueConsumer,
-    BaseQueuePublisher,
+    BaseScheduler,
     consume_events,
 )
 from superduper.base.event import Event
@@ -14,32 +15,40 @@ if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
 
 
-class LocalQueuePublisher(BaseQueuePublisher):
+class LocalScheduler(BaseScheduler):
     """
-    LocalQueuePublisher for handling publisher and consumer process.
+    Class for handling publisher and consumer processes.
 
-    Local queue which holds listeners, vector indices as queue which
+    Contains a local queue which holds listeners, vector indices in a queue which
     consists of events to be consumed by the corresponding components.
 
     :param uri: uri to connect.
     """
 
-    def __init__(self, uri: t.Optional[str] = None):
-        super().__init__(uri=uri)
-        self.consumer = self.build_consumer()
+    def __init__(self, compute: ComputeBackend):
+        super().__init__()
+        self.compute = compute
+        self.consumer = LocalQueueConsumer()
         self._component_uuid_mapping: t.Dict = {}
         self.lock = threading.Lock()
 
-    def list(self):
-        """List all components."""
-        return self.queue.keys()
+    @property
+    def db(self):
+        return self._db
+
+    @db.setter
+    def db(self, value):
+        self._db = value
+        self.compute.db = value
 
     def drop(self):
         """Drop the queue."""
         self.queue = {}
 
-    def __delitem__(self, item):
-        del self.queue[item]
+    def drop_component(self, component, identifier):
+        c = self.db.load(component=component, identifier=identifier)
+        if isinstance(c, CDC):
+            del self.queue[c.cdc_table]
 
     def initialize(self):
         """Initialize the queue."""
@@ -70,13 +79,6 @@ class LocalQueuePublisher(BaseQueuePublisher):
         """List all UUIDs."""
         return list(self._component_uuid_mapping.values())
 
-    def build_consumer(self, **kwargs):
-        """Build consumer client.
-
-        :param kwargs: Additional arguments.
-        """
-        return LocalQueueConsumer()
-
     def publish(self, events: t.List[Event]):
         """
         Publish events to local queue.
@@ -86,7 +88,7 @@ class LocalQueuePublisher(BaseQueuePublisher):
         with self.lock:
             for event in events:
                 self.queue[event.queue].append(event)
-            self.consumer.consume(db=self.db, queue=self.queue)
+            self.consumer.consume(db=self.db, compute=self.compute, queue=self.queue)
 
 
 class LocalQueueConsumer(BaseQueueConsumer):
@@ -100,7 +102,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
     def start_consuming(self):
         """Start consuming."""
 
-    def consume(self, db: 'Datalayer', queue: t.Dict[str, t.List[Event]]):
+    def consume(self, db: 'Datalayer', compute: ComputeBackend, queue: t.Dict[str, t.List[Event]]):
         """Consume the current queue and run jobs.
 
         :param db: Datalayer instance.
@@ -108,7 +110,7 @@ class LocalQueueConsumer(BaseQueueConsumer):
         """
         keys = list(queue.keys())[:]
         for k in keys:
-            consume_events(events=queue[k], table=k, db=db)
+            consume_events(events=queue[k], table=k, db=db, compute=compute)
             queue[k] = []
 
         logging.info('Consumed all events')

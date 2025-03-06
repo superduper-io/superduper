@@ -133,13 +133,20 @@ def build_rest_app(app: SuperDuperApp):
     @app.add(
         "/health",
         method="get",
+    )
+    def health(db: 'Datalayer' = DatalayerDependency()):
+        return {"status": 200}
+
+    @app.add(
+        "/check_secrets",
+        method="get",
         responses={
             HTTP_410_GONE: {"description": "Secret files are missing"},
             HTTP_401_UNAUTHORIZED: {"description": "Secrets are empty or incorrect"},
             HTTP_409_CONFLICT: {"description": "Secrets are being updated"},
         },
     )
-    def health(db: 'Datalayer' = DatalayerDependency()):
+    def check_secrets(db: 'Datalayer' = DatalayerDependency()):
         if 'SUPERDUPER_REQUIRED_SECRETS' in os.environ:
             _check_secret_health(db)
         return {"status": 200}

@@ -46,10 +46,10 @@ class TestComponent(Component):
     def pre_create(self, db):
         self.is_on_create = True
 
-    def on_create(self, db):
+    def on_create(self):
         self.is_after_create = True
 
-    def cleanup(self, db):
+    def cleanup(self):
         if self.check_clean_up:
             raise Exception('cleanup')
 

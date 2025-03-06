@@ -6,38 +6,35 @@ from dataclasses import dataclass
 import numpy
 import numpy.typing
 
-from superduper.backends.base.backends import BaseBackend
+from superduper.backends.base.backends import BaseBackend, Bookkeeping
 
 if t.TYPE_CHECKING:
     from superduper.base.datalayer import Datalayer
-    from superduper.components.vector_index import VectorIndex
+    from superduper.components.vector_index import VectorIndex, VectorItem
 
 
-class VectorSearchBackend(BaseBackend):
+class VectorSearchBackend(Bookkeeping, BaseBackend):
     """Base vector-search backend."""
 
     def __init__(self):
-        self._cache = {}
+        Bookkeeping.__init__(self)
+        BaseBackend.__init__(self)
 
-    @abstractmethod
-    def __getitem__(self, identifier):
-        pass
-
-    def add(self, identifier, vectors):
+    def add(self, uuid: str, vectors: t.List['VectorItem']):
         """Add vectors to a vector-index.
 
-        :param identifier: Identifier of index.
+        :param uuid: Identifier of index.
         :param vectors: Vectors.
         """
-        self.get(identifier).add(vectors)
+        self.get_tool(uuid).add(vectors)
 
-    def delete(self, identifier, ids):
+    def delete(self, uuid, ids):
         """Delete ids from index.
 
-        :param identifier: Identifier of index.
+        :param uuid: uuid of index.
         :param ids: Ids to delete.
         """
-        self.get(identifier).delete(ids)
+        self.get_tool(uuid).delete(ids)
 
     @property
     def db(self) -> 'Datalayer':
@@ -52,12 +49,49 @@ class VectorSearchBackend(BaseBackend):
         """
         self._db = value
 
+    @abstractmethod
+    def find_nearest_from_array(
+        self,
+        h: numpy.typing.ArrayLike,
+        vector_index: str,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
+
+        :param h: vector.
+        :param vector_index: vector index identifier.
+        :param n: number of nearest vectors to return.
+        :param within_ids: list of ids to search within.
+        """
+
+    @abstractmethod
+    def find_nearest_from_id(
+        self,
+        id: str,
+        vector_index: str,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
+
+        :param id: id of the vector to search with
+        :param vector_index: vector index
+        :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
+        """
+
 
 class VectorSearcherInterface(ABC):
     """Interface for vector searchers.
 
     # noqa
     """
+
+    def __init__(self, identifier: str):
+        self.identifier = identifier
 
     @abstractmethod
     def add(self, items: t.Sequence['VectorItem']) -> None:
@@ -75,21 +109,6 @@ class VectorSearcherInterface(ABC):
         """
 
     @abstractmethod
-    def find_nearest_from_id(
-        self,
-        _id,
-        n: int = 100,
-        within_ids: t.Sequence[str] = (),
-    ) -> t.Tuple[t.List[str], t.List[float]]:
-        """
-        Find the nearest vectors to the vector with the given id.
-
-        :param _id: id of the vector
-        :param n: number of nearest vectors to return
-        :param within_ids: list of ids to search within
-        """
-
-    @abstractmethod
     def find_nearest_from_array(
         self,
         h: numpy.typing.ArrayLike,
@@ -100,6 +119,21 @@ class VectorSearcherInterface(ABC):
         Find the nearest vectors to the given vector.
 
         :param h: vector
+        :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
+        """
+
+    @abstractmethod
+    def find_nearest_from_id(
+        self,
+        id: str,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
+
+        :param id: id of the vector to search with
         :param n: number of nearest vectors to return
         :param within_ids: list of ids to search within
         """
@@ -115,9 +149,9 @@ class VectorSearcherInterface(ABC):
 class BaseVectorSearcher(VectorSearcherInterface):
     """Base class for vector searchers.
 
-    :param uuid: Unique string identifier of index
-    :param dimensions: Dimension of the vector embeddings
-    :param measure: measure to assess similarity
+    :param identifier: Unique string identifier of index.
+    :param dimensions: Number of dimensions of the vectors.
+    :param measure: Measure type of the vectors.
     """
 
     native_service: t.ClassVar[bool] = True
@@ -125,11 +159,19 @@ class BaseVectorSearcher(VectorSearcherInterface):
     @abstractmethod
     def __init__(
         self,
-        uuid: str,
+        identifier: str,
         dimensions: int,
         measure: str,
     ):
         pass
+
+    @property
+    def db(self) -> 'Datalayer':
+        return self._db
+
+    @db.setter
+    def db(self, value: 'Datalayer'):
+        self._db = value
 
     @classmethod
     def from_component(cls, index: 'VectorIndex'):
@@ -137,7 +179,9 @@ class BaseVectorSearcher(VectorSearcherInterface):
 
         :param vi: ``VectorIndex`` instance
         """
-        return cls(uuid=index.uuid, dimensions=index.dimensions, measure=index.measure)
+        return cls(
+            identifier=index.uuid, dimensions=index.dimensions, measure=index.measure
+        )
 
     @abstractmethod
     def initialize(self, db):

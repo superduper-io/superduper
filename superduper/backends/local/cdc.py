@@ -32,9 +32,9 @@ class LocalCDCBackend(CDCBackend):
         """List UUIDs of components."""
         return list(self._trigger_uuid_mapping.values())
 
-    def _put(self, item):
-        assert isinstance(item, CDC)
-        self.triggers.add((item.component, item.identifier))
+    def put_component(self, component):
+        assert isinstance(component, CDC)
+        self.triggers.add((component.component, component.identifier))
 
     def drop_component(self, component, identifier):
         c = self.db.load(component=component, identifier=identifier)
@@ -48,7 +48,9 @@ class LocalCDCBackend(CDCBackend):
             identifier = component_data['identifier']
             r = self.db.show(component=component, identifier=identifier, version=-1)
             if r.get('trigger'):
-                self.put_component(self.db.load(component=component, identifier=identifier))
+                self.put_component(
+                    self.db.load(component=component, identifier=identifier)
+                )
             # TODO consider re-initialzing CDC jobs since potentially failure
 
     def drop(self, component: t.Optional['Component'] = None):

@@ -215,11 +215,8 @@ class Listener(CDC):
             ]
         return self.db[self.outputs].insert(output_documents)
 
-    def cleanup(self, db: "Datalayer") -> None:
-        """Clean up when the listener is deleted.
-
-        :param db: Data layer instance to process.
-        """
-        super().cleanup(db=db)
+    def cleanup(self):
+        """Clean up when the listener is deleted."""
+        super().cleanup()
         if self.select is not None:
-            db.databackend.drop_table(self.outputs)
+            self.db.databackend.drop_table(self.outputs)

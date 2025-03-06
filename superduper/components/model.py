@@ -302,13 +302,12 @@ class Model(Component, metaclass=ModelMeta):
             raise Exception('_Predictor identifier must be non-empty')
         super().postinit()
 
-    def cleanup(self, db: "Datalayer") -> None:
-        """Clean up when the model is deleted.
-
-        :param db: Data layer instance to process.
-        """
-        super().cleanup(db=db)
-        db.cluster.compute.drop(self)
+    def cleanup(self):
+        """Clean up when the model is deleted."""
+        super().cleanup()
+        self.db.cluster.scheduler.compute_drop_component(
+            self.component, self.identifier
+        )
 
     @staticmethod
     def _infer_signature(object):
@@ -336,15 +335,12 @@ class Model(Component, metaclass=ModelMeta):
             self._signature = self._infer_signature(self.predict)
         return self._signature
 
-    def declare_component(self, cluster: 'Cluster'):
-        """Declare model on compute.
-
-        :param cluster: Cluster instance to declare the model.
-        """
-        super().declare_component(cluster)
+    def declare_component(self):
+        """Declare model on cluster."""
+        super().declare_component()
         # TODO why both of these options??
         if self.deploy or self.serve:
-            cluster.scheduler.compute_put_component(self)
+            self.db.cluster.scheduler.compute_put_component(self)
 
     @abstractmethod
     def predict(self, *args, **kwargs) -> t.Any:
@@ -807,15 +803,12 @@ class SequentialModel(Model):
     def signature(self):
         return self.models[0].signature
 
-    def on_create(self, db: Datalayer):
-        """Post create hook.
-
-        :param db: Datalayer instance.
-        """
+    def on_create(self):
+        """Post create hook."""
         for p in self.models:
             if isinstance(p, str):
                 continue
-            p.on_create(db)
+            p.on_create()
 
     def predict(self, *args, **kwargs):
         """Predict on a single data point.

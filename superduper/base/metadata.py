@@ -619,7 +619,7 @@ class MetaDataStore:
                 r = self.cache.get_with_uuid(uuid)
             except KeyError:
                 pass
-        
+
         if r is None:
             r = self.db[component].get(uuid=uuid, raw=True)
 

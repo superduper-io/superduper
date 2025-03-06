@@ -3,6 +3,7 @@ import typing as t
 import numpy
 
 from superduper import logging
+from superduper.backends.base.backends import Bookkeeping
 from superduper.backends.base.vector_search import (
     BaseVectorSearcher,
     VectorItem,
@@ -12,7 +13,7 @@ from superduper.backends.base.vector_search import (
 from superduper.base.metadata import NonExistentMetadataError
 
 if t.TYPE_CHECKING:
-    from superduper import Component, VectorIndex
+    from superduper import VectorIndex
 
 
 class LocalVectorSearchBackend(VectorSearchBackend):
@@ -22,15 +23,23 @@ class LocalVectorSearchBackend(VectorSearchBackend):
     """
 
     def __init__(self, searcher_impl: BaseVectorSearcher):
-        self._cache = {}
+        super().__init__()
         self.searcher_impl = searcher_impl
-        self._identifier_uuid_map: t.Dict = {}
         self._db = None
 
-    def _put(self, vector_index):
-        searcher = self.searcher_impl.from_component(vector_index)
-        self._cache[vector_index.identifier] = searcher
-        self._identifier_uuid_map[vector_index.identifier] = vector_index.uuid
+    @property
+    def db(self):
+        return self._db
+
+    @db.setter
+    def db(self, value):
+        self._db = value
+        for tool in self.tools:
+            tool.db = value
+
+    def build_tool(self, component):
+        searcher = self.searcher_impl.from_component(component)
+        return searcher
 
     def initialize(self):
         """Initialize the vector search."""
@@ -38,7 +47,7 @@ class LocalVectorSearchBackend(VectorSearchBackend):
             for identifier in self.db.show('VectorIndex'):
                 try:
                     vector_index = self.db.load('VectorIndex', identifier=identifier)
-                    self._put(vector_index)
+                    self.put_component(vector_index)
                     vector_index.copy_vectors()
                 except FileNotFoundError:
                     logging.error(
@@ -55,37 +64,45 @@ class LocalVectorSearchBackend(VectorSearchBackend):
         except NonExistentMetadataError:
             pass
 
-    # TODO needed?
-    def __contains__(self, item):
-        return item in self._cache
+    def find_nearest_from_array(
+        self,
+        h: numpy.typing.ArrayLike,
+        vector_index: str,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
 
-    def list_components(self):
-        """List components."""
-        return list(self._cache.keys())
+        :param vector_index: name of vector-index
+        :param h: vector
+        :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
+        """
+        return self[vector_index].find_nearest_from_array(h, n=n, within_ids=within_ids)
 
-    def list_uuids(self):
-        """List UUIDs of components."""
-        return list(self._identifier_uuid_map.values())
+    def find_nearest_from_id(
+        self,
+        id: str,
+        vector_index: str,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
 
-    def drop_component(self, component, identifier):
-        assert component == 'VectorIndex'
-        del self._cache[identifier]
-        del self._identifier_uuid_map[identifier]
+        :param vector_index: name of vector-index
+        :param id: id of the vector to search with
+        :param n: number of nearest vectors to return
+        :param within_ids: list of ids to search within
+        """
+        return self[vector_index].find_nearest_from_id(id, n=n, within_ids=within_ids)
 
     def __getitem__(self, identifier):
-        return self._cache[identifier]
-
-    def drop(self, component: t.Optional['Component'] = None):
-        """Drop the CDC.
-
-        :param component: Component to remove.
-        """
-        # TODO: drop actual vector search not the cache
-        if component is None:
-            self._cache = {}
-        else:
-            del self._cache[component.identifier]
-            del self._identifier_uuid_map[component.identifier]
+        c = self.db.load('VectorIndex', identifier=identifier)
+        if c.uuid not in self.uuid_tool_mapping:
+            self.put_component(c)
+        return self.get_tool(c.uuid)
 
 
 class InMemoryVectorSearcher(BaseVectorSearcher):
@@ -99,11 +116,11 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
 
     def __init__(
         self,
-        uuid: str,
+        identifier: str,
         dimensions: int,
         measure: str = 'cosine',
     ):
-        self.uuid = uuid
+        self.identifier = identifier
         self.dimensions = dimensions
 
         self._cache: t.Sequence[VectorItem] = []
@@ -119,6 +136,9 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.h = None
         self.index = None
         self.lookup = None
+
+    def drop(self):
+        """Drop the vector index."""
 
     def __len__(self):
         if self.h is not None:
@@ -137,14 +157,16 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))
 
-    def find_nearest_from_id(self, _id, n=100):
+    def find_nearest_from_id(self, _id, n=100, within_ids=None):
         """Find the nearest vectors to the given ID.
 
         :param _id: ID of the vector
         :param n: number of nearest vectors to return
         """
         self.post_create()
-        return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
+        return self.find_nearest_from_array(
+            self.h[self.lookup[_id]], n=n, within_ids=within_ids
+        )
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
         """Find the nearest vectors to the given vector.
@@ -183,12 +205,17 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         _ids = [self.index[i] for i in ix]
         return _ids, scores
 
-    def initialize(self, vector_index: 'VectorIndex'):
+    def initialize(self):
         """Initialize the vector index.
 
         :param vector_index: Vector index to initialize
         """
-        vector_index.copy_vectors()
+        c: VectorIndex = self.db.load('VectorIndex', uuid=self.identifier)
+        vectors = c.get_vectors()
+        vectors = [
+            VectorItem(id=vector['id'], vector=vector['vector']) for vector in vectors
+        ]
+        self.add(vectors, cache=True)
 
     def add(self, items: t.Sequence[VectorItem] = (), cache: bool = False) -> None:
         """Add vectors to the index.
@@ -223,7 +250,8 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
             h = numpy.concatenate((self.h[ix_old], h), axis=0)
             index = [self.index[i] for i in ix_old] + index
 
-        return self._setup(h, index)
+        out = self._setup(h, index)
+        return out
 
     def delete(self, ids):
         """Delete vectors from the index.

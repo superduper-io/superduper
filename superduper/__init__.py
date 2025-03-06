@@ -21,6 +21,7 @@ from .base.document import Document
 from .base.schema import Schema
 from .components.application import Application
 from .components.component import Component
+from .components.cron_job import CronJob, FunctionCronJob
 from .components.dataset import Dataset
 from .components.listener import Listener
 from .components.metric import Metric
@@ -35,7 +36,7 @@ from .components.model import (
 from .components.plugin import Plugin
 from .components.streamlit import Streamlit
 from .components.table import Table
-from .components.template import QueryTemplate, Template
+from .components.template import Template
 from .components.vector_index import VectorIndex
 
 REQUIRES = [
@@ -54,6 +55,8 @@ __all__ = (
     'QueryModel',
     'Validation',
     'Model',
+    'CronJob',
+    'FunctionCronJob',
     'Trainer',
     'model',
     'Listener',
@@ -65,7 +68,6 @@ __all__ = (
     'Table',
     'Application',
     'Template',
-    'QueryTemplate',
     'Application',
     'Component',
     'pickle_serializer',

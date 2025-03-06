@@ -25,12 +25,9 @@ class CDC(Component):
         super().handle_update_or_same(other)
         other.cdc_table = self.cdc_table
 
-    def declare_component(self, cluster):
-        """Declare the component to the cluster.
-
-        :param cluster: The cluster to declare the component to.
-        """
-        super().declare_component(cluster)
+    def declare_component(self):
+        """Declare the component to the cluster."""
+        super().declare_component()
         self.db.cluster.scheduler.put_component(self)
         self.db.cluster.cdc.put_component(self)
 

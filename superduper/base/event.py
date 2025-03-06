@@ -4,6 +4,7 @@ import typing as t
 import uuid
 from abc import ABC, abstractmethod
 
+from superduper import logging
 from superduper.backends.base.compute import ComputeBackend
 
 if t.TYPE_CHECKING:
@@ -69,8 +70,8 @@ class Signal(Event):
     ):
         """Execute the signal.
 
-        :param db: Datalayer instance
-
+        :param db: Datalayer instance.
+        :param compute: The compute backend.
         """
         if self.msg.lower() == 'done':
             compute.release_futures(self.context)
@@ -108,7 +109,8 @@ class Change(Event):
     ):
         """Execute the change event.
 
-        :param db: Datalayer instance
+        :param db: Datalayer instance.
+        :param kwargs: additional arguments.
         """
         raise NotImplementedError('Not relevant for this event class')
 
@@ -140,8 +142,14 @@ class Create(Event):
         """Execute the create event.
 
         :param db: Datalayer instance.
+        :param kwargs: additional arguments.
         """
         # TODO decide where to assign version
+        logging.info(
+            f'Creating {self.path.split("/")[-1]}:'
+            f'{self.data["identifier"]}:{self.data["uuid"]}'
+        )
+
         artifact_ids, _ = db._find_artifacts(self.data)
         db.metadata.create_artifact_relation(self.data['uuid'], artifact_ids)
 
@@ -164,7 +172,7 @@ class Create(Event):
                     dep,
                 )
 
-        component.on_create(db=db)
+        component.on_create()
 
     @property
     def huuid(self):
@@ -199,6 +207,7 @@ class Update(Event):
         """Execute the create event.
 
         :param db: Datalayer instance.
+        :param kwargs: additional arguments.
         """
         # TODO decide where to assign version
         artifact_ids, _ = db._find_artifacts(self.data)
@@ -284,6 +293,7 @@ class Job(Event):
         """Execute the job event.
 
         :param db: Datalayer instance
+        :param compute: The compute backend.
         """
         meta = {k: v for k, v in self.dict().items() if k not in {'genus', 'queue'}}
         db.metadata.create_job(meta)

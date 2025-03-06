@@ -298,6 +298,34 @@ class SList(BaseDataType):
         return hash_item([x.hash for x in item])
 
 
+class FDict(BaseDataType):
+    """Datatype for encoding dictionaries of files."""
+
+    dtype: t.ClassVar[str] = 'json'
+
+    def encode_data(self, item, context):
+        """Encode the given item into a bytes-like object or reference.
+
+        :param item: The object/instance to encode.
+        :param context: A context object containing caches.
+        """
+        assert isinstance(item, dict)
+        return {k: File().encode_data(v, context) for k, v in item.items()}
+
+    def decode_data(self, item, builds, db):
+        """Decode the item from `bytes`.
+
+        :param item: The item to decode.
+        :param builds: The builds.
+        :param db: The Datalayer.
+        """
+        return {k: File().decode_data(v, builds, db) for k, v in item.items()}
+
+    @classmethod
+    def hash(cls, item):
+        return hash_item({k: File.hash(v) for k, v in item.items()})
+
+
 @dc.dataclass(kw_only=True)
 class BaseVector(BaseDataType):
     """Base class for vector.
@@ -453,8 +481,11 @@ def hash_indescript(item):
     """
     if inspect.isfunction(item):
         module = item.__module__
-        body = f'{module}\n{inspect.getsource(item)}'
-        return hashlib.sha256(body.encode()).hexdigest()
+        try:
+            body = f'{module}\n{inspect.getsource(item)}'
+            return hashlib.sha256(body.encode()).hexdigest()
+        except OSError:
+            return hashlib.sha256(str(item).encode()).hexdigest()
     if inspect.isclass(item):
         module = item.__module__
         body = f'{module}\n{inspect.getsource(item)}'
@@ -601,6 +632,8 @@ class File(BaseDataType):
         :param item: The object/instance to encode.
         :param context: A context object containing caches.
         """
+        if isinstance(item, FileItem):
+            return item.reference
         assert os.path.exists(item)
         file = FileItem(identifier=self.hash(item), path=item)
         context.files[file.identifier] = file.path
@@ -690,6 +723,7 @@ class _DatatypeLookup:
             File(),
             LeafType(),
             ComponentType(),
+            FDict(),
             SDict(),
             SList(),
             FieldType('str'),
